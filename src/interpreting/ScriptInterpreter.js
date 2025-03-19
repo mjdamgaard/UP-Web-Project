@@ -254,7 +254,9 @@ export class ScriptInterpreter {
 
 
 
-  static async executeSubmoduleOfImportStatement(impStmt, callerModuleEnv, globalEnv) {
+  static async executeSubmoduleOfImportStatement(
+    impStmt, callerModuleEnv, globalEnv
+  ) {
     decrCompGas(impStmt, globalEnv);
     decrGas(impStmt, globalEnv, "import");
     let {liveModules, parsedEntities} = globalEnv.scriptGlobals;

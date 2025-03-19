@@ -15,7 +15,7 @@ export class MainDBInterface {
 
   /* Entity selects */
 
-  static selectEntity(entID, maxLen = 0, startPos = 0) {
+  static fetchEntity(entID, maxLen = 0, startPos = 0) {
     let sql = `CALL selectEntity (?, ?, ?)`;
     paramValArr = [entID, maxLen, startPos];
     paramNameArr = ["entID", "maxLen", "startPos"];
@@ -26,7 +26,7 @@ export class MainDBInterface {
     return [entType, defStr, creatorID, isEditable, whitelistID];
   }
 
-  static selectFormalEntityID(defStr, whitelistID = "0") {
+  static fetchFormalEntityID(defStr, whitelistID = "0") {
     let sql = `CALL selectEntityIDFromSecKey ("f", ?, ?)`;
     paramValArr = [whitelistID, defStr];
     paramNameArr = ["whitelistID", "defStr"];

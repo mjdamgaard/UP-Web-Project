@@ -10,6 +10,7 @@ import {entityCache} from "entityCache";
 import * as io from "io";
 
 
+
 export function executeUserOrJSCallback(
   callback, res, callerNode, callerEnv, interpreter
 ) {
@@ -23,40 +24,15 @@ export function executeUserOrJSCallback(
 
 
 
-
-export function _fetchEntity(
-  {callerNode, callerEnv, interpreter, isAsync}, entRef, callback
-) {
+export function getOrFetchEntity(entID, callback) {
   decrCompGas(callerNode, callerEnv);
-
-  if (!(entRef instanceof EntityReference)) {
-    let err = new RuntimeError(
-      "fetchEntity(): entRef has to be an EntityReference instance",
-      callerNode, callerEnv
-    );
-    throwExceptionAsyncOrNot(err, node, environment, isAsync);
-  }
-  let entID = entRef.id;
 
   // Try to get the entity from the entity cache.
   let [
     parsedEnt, entType, creatorID, isEditable, whitelistID
   ] = entityCache.get(entID);
   if (parsedEnt) {
-    if (whitelistID != "0") {
-      executeUserOrJSCallback(
-        callback, ["access denied"], callerNode, callerEnv, interpreter
-      );
-    }
-    else {
-      // If the entity was found in the cache, and it is a public entity,
-      // get an appropriate class-wrapped entity, and call callback on
-      // that.
-      let ent = getEntity(entType, parsedEnt, creatorID, isEditable);
-      executeUserOrJSCallback(
-        callback, ent, callerNode, callerEnv, interpreter
-      );
-    }
+    callback(parsedEnt, entType, creatorID, isEditable, whitelistID);
     return;
   }
 
@@ -67,32 +43,59 @@ export function _fetchEntity(
     io.fetchEntity(entID).then(res => {
       let [entType, defStr, creatorID, isEditable, whitelistID] = res;
       if (!entType) {
+        callback("missing entity");
+      }
+
+      // If the entity was gotten successfully, first parse it, and also make
+      // sure to cache the parsed entity.
+      let parsedEnt = getParsedEntity(entType, defStr);
+      entityCacheServerSide.set(entID, parsedEnt);
+
+      callback(parsedEnt, entType, creatorID, isEditable, whitelistID);
+    });
+  }
+}
+
+
+
+
+
+export function _fetchEntity(
+  {callerNode, callerEnv, interpreter, isAsync}, entRef, callback
+) {
+
+  if (!(entRef instanceof EntityReference)) {
+    let err = new RuntimeError(
+      "fetchEntity(): entRef is not an EntityReference instance",
+      callerNode, callerEnv
+    );
+    throwExceptionAsyncOrNot(err, node, environment, isAsync);
+  }
+  let entID = entRef.id;
+
+  getOrFetchEntity(
+    entID,
+    (parsedEnt, entType, creatorID, isEditable, whitelistID) => {
+      if (parsedEnt === "missing entity") {
         executeUserOrJSCallback(
-          callback, ["missing entity"], callerNode, callerEnv, interpreter
+          callback, "missing entity", callerNode, callerEnv, interpreter
         );
         return;
       }
 
-      // If the entity was gotten successfully, first parse it.
-      let parsedEnt = getParsedEntity(entType, defStr);
-
-      // Also make sure to cache the parsed entity.
-      entityCacheServerSide.set(entID, parsedEnt);
-
       if (whitelistID != "0") {
         executeUserOrJSCallback(
-          callback, ["access denied"], callerNode, callerEnv, interpreter
+          callback, "access denied", callerNode, callerEnv, interpreter
         );
-      } else {
-        // Then get call the callback on an appropriate class-wrapped
-        // entity.
+      }
+      else {
         let ent = getEntity(entType, parsedEnt, creatorID, isEditable);
         executeUserOrJSCallback(
           callback, ent, callerNode, callerEnv, interpreter
         );
       }
-    });
-  }
+    },
+  );
 }
 
 
@@ -111,86 +114,65 @@ export function _fetchEntityAsUser(
 
   if (!(entRef instanceof EntityReference)) {
     let err = new RuntimeError(
-      "fetchEntity(): entRef has to be an EntityReference instance",
+      "fetchEntityAsUser(): entRef is not an EntityReference instance",
       callerNode, callerEnv
     );
     throwExceptionAsyncOrNot(err, node, environment, isAsync);
   }
   let entID = entRef.id;
 
-  // Try to get the entity from the entity cache.
-  let [
-    parsedEnt, entType, creatorID, isEditable, whitelistID
-  ] = entityCache.get(entID);
-  if (parsedEnt) {
-    let ent = getEntity(
-      entType, parsedEnt, creatorID, isEditable, whitelistID
-    );
-    if (whitelistID != "0") {
-      let {gas, reqUserID} = callerEnv.scriptGlobals;
-      checkWhitelistThenResolve(
-        whitelistID, callerNode, callerEnv, interpreter, gas, reqUserID,
-        ent, callback
-      );
-    }
-    else {
-      executeUserOrJSCallback(
-        callback, ent, callerNode, callerEnv, interpreter
-      );
-    }
-    return;
-  }
 
-  // Else fetch and parse the entity from the database.
-  else {
-    decrGas(callerNode, callerEnv, "fetch");
-
-    io.fetchEntity(entID).then(res => {
-      let [entType, defStr, creatorID, isEditable, whitelistID] = res;
-      if (!entType) {
+  getOrFetchEntity(
+    entID,
+    (parsedEnt, entType, creatorID, isEditable, whitelistID) => {
+      if (parsedEnt === "missing entity") {
         executeUserOrJSCallback(
-          callback, ["missing entity"], callerNode, callerEnv, interpreter
+          callback, "missing entity", callerNode, callerEnv, interpreter
         );
         return;
       }
 
-      // If the entity was gotten successfully, first parse it.
-      let parsedEnt = getParsedEntity(entType, defStr);
       let ent = getEntity(
         entType, parsedEnt, creatorID, isEditable, whitelistID
       );
-
-      // Also make sure to cache the parsed entity.
-      entityCacheServerSide.set(entID, parsedEnt);
-
-      if (whitelistID != "0") {
-        let {gas, reqUserID} = callerEnv.scriptGlobals;
-        checkWhitelistThenResolve(
-          whitelistID, callerNode, callerEnv, interpreter, gas, reqUserID,
-          ent, callback
-        );
-      } else {
-        executeUserOrJSCallback(
-          callback, ent, callerNode, callerEnv, interpreter
-        );
-      }
-    });
-  }
+      let {gas, reqUserID} = callerEnv.scriptGlobals;
+      checkIfUserIsWhitelisted(
+        whitelistID, callerNode, callerEnv, interpreter, gas, reqUserID,
+        (output) => {
+          if (output) {
+            executeUserOrJSCallback(
+              callback, ent, callerNode, callerEnv, interpreter
+            );
+          } else {
+            executeUserOrJSCallback(
+              callback, "access denied", callerNode, callerEnv, interpreter
+            );
+          }
+        },
+        (err) => {
+          interpreter.throwAsyncException(err, callerNode, callerEnv);
+        },
+      );
+    },
+  );
 }
 
+export const fetchFormalEntityMatch = new DeveloperFunction(
+  "10", "read", _fetchFormalEntityMatch
+);
 
 
 
 
-
-export function checkWhitelistThenResolve(
-  whitelistID, callerNode, callerEnv, interpreter, gas, reqUserID,
-  res, callback
+export function checkIfUserIsWhitelisted(
+  whitelistID, callerNode, callerEnv, interpreter, gas, userID,
+  resolve, reject
 ) {
-  if (whitelistID == reqUserID) {
-    executeUserOrJSCallback(
-      callback, ent, callerNode, callerEnv, interpreter
-    );
+  if (whitelistID == "0" || whitelistID == userID) {
+    resolve(true);
+  }
+  else if (whitelistID == userID) {
+    resolve(true);
   }
   else {
     _fetchEntityAsUser(
@@ -199,22 +181,101 @@ export function checkWhitelistThenResolve(
       ([whitelistScriptEnt]) => {
         interpreter.interpretScript(
           gas, undefined, whitelistScriptEnt.id,
-          [new EntityReference(reqUserID)]
+          [new EntityReference(userID)]
         )
         .then(([output]) => {
-          if (output){
-            executeUserOrJSCallback(
-              callback, res, callerNode, callerEnv, interpreter
-            );
-          }
+          resolve(output);
         })
         .catch((err) => {
-          interpreter.throwAsyncException(err, callerNode, callerEnv);
+          reject(err)
         });
       }, 
     );
   }
 }
+
+
+export const isWhitelisted = new DeveloperFunction(
+  "10", "read",
+  ({callerNode, callerEnv, interpreter}, userRef, whitelistRef, callback) => {
+    decrCompGas(callerNode, callerEnv);
+
+    if (!(userRef instanceof EntityReference)) {
+      let err = new RuntimeError(
+        "fetchEntityAsUser(): userRef is not an EntityReference instance",
+        callerNode, callerEnv
+      );
+      throwExceptionAsyncOrNot(err, node, environment, isAsync);
+    }
+    let userID = userRef.id;
+
+    if (!(whitelistRef instanceof EntityReference)) {
+      let err = new RuntimeError(
+        "fetchEntityAsUser(): whitelistRef is not an EntityReference instance",
+        callerNode, callerEnv
+      );
+      throwExceptionAsyncOrNot(err, node, environment, isAsync);
+    }
+    let whitelistID = whitelistRef?.id;
+
+    let {gas} = callerEnv.scriptGlobals;
+    checkIfUserIsWhitelisted(
+      whitelistID, callerNode, callerEnv, interpreter, gas, userID,
+      (output) => {
+        executeUserOrJSCallback(
+          callback, output, callerNode, callerEnv, interpreter
+        );
+      },
+      (err) => {
+        interpreter.throwAsyncException(err, callerNode, callerEnv);
+      },
+    );
+  },
+);
+
+
+
+
+
+
+export function fetchFormalEntity(
+  {callerNode, callerEnv, interpreter, isAsync},
+  funEntRef, inputArr, whitelistID, callback
+) {
+  if (callback === undefined) {
+    callback = whitelistID;
+    whitelistID = "0";
+  }
+  decrCompGas(callerNode, callerEnv);
+
+  if (!(funEntRef instanceof EntityReference)) {
+    let err = new RuntimeError(
+      "fetchFormalEntityMatch(): funEntRef is not an EntityReference instance",
+      callerNode, callerEnv
+    );
+    throwExceptionAsyncOrNot(err, node, environment, isAsync);
+  }
+  if (!(inputArr instanceof Array)) {
+    let err = new RuntimeError(
+      "fetchFormalEntityMatch(): inputArr is not an array",
+      callerNode, callerEnv
+    );
+    throwExceptionAsyncOrNot(err, node, environment, isAsync);
+  }
+  let funEntID = funEntRef.id;
+
+  // ...
+}
+
+export const fetchEntityAsUser = new DeveloperFunction(
+  "10", "read_prv", _fetchEntityAsUser
+);
+
+
+
+
+
+
 
 
 
@@ -263,58 +324,3 @@ export function getEntity(
 }
 
 
-
-
-
-// function callFunction({callerNode, callerEnv}, fun, inputArr) {
-//   if (fun instanceof Function) {
-//     return fun(...inputArr);
-//   }
-//   else if (
-//     fun instanceof DefinedFunction || fun instanceof BuiltInFunction ||
-//     fun instanceof ThisBoundFunction 
-//   ) {
-//     let {scriptInterpreter} = callerEnv.runtimeGlobals;
-//     scriptInterpreter.executeFunction(
-//       callback, inputArr, callerNode, callerEnv
-//     );
-//   }
-//   else throw "callFunction(): callback is not a function";
-// }
-
-
-
-export const basicBuiltInFunctions = {
-
-  getStructModuleIDs: new DeveloperFunction(function ({callerEnv}, structDef) {
-    decrCompGas(callerEnv);
-    return getStructModuleIDs(structDef)
-  }),
-
-
-  fetchEntity: new BuiltInFunction(function (
-    {gas, callerEnv, callerNode, options: {dataFetcher}},
-    entID, callback // TODO: Change to entRef instead.
-  ) {
-    decrCompGas(callerEnv);
-    // TODO: Check permissions first.
-    let {scriptInterpreter} = callerEnv.runtimeGlobals;
-    dataFetcher.fetchEntity(gas, entID).then(res => {
-      scriptInterpreter.executeFunction(callback, [res], callerNode, callerEnv);
-    });
-  }),
-
-  fetchAndParseEntity: new BuiltInFunction(function (
-    {gas, callerEnv, callerNode, options: {dataFetcher}},
-    entID, entType = "any", callback
-  ) {
-    decrCompGas(callerEnv);
-    // TODO: Check permissions first.
-    let {scriptInterpreter} = callerEnv.runtimeGlobals;
-    dataFetcher.fetchAndParseEntity(gas, entID, entType).then(res => {
-      scriptInterpreter.executeFunction(callback, [res], callerNode, callerEnv);
-    });
-  }),
-
-
-}
