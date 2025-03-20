@@ -17,22 +17,17 @@ export class MainDBInterface {
 
   static fetchEntity(entID, maxLen = 0, startPos = 0) {
     let sql = `CALL selectEntity (?, ?, ?)`;
-    paramValArr = [entID, maxLen, startPos];
-    paramNameArr = ["entID", "maxLen", "startPos"];
-    typeArr = ["id", "uint", "uint"];
+    let paramValArr = [entID, maxLen, startPos];
     // TODO: Possibly wrap in more destructuring:
     let [entType, defStr, creatorID, isEditable, whitelistID] =
-      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+      mainDBConnector.connectAndQuery(sql, paramValArr);
     return [entType, defStr, creatorID, isEditable, whitelistID];
   }
 
-  static fetchFormalEntityID(defStr, whitelistID = "0") {
-    let sql = `CALL selectEntityIDFromSecKey ("f", ?, ?)`;
-    paramValArr = [whitelistID, defStr];
-    paramNameArr = ["whitelistID", "defStr"];
-    typeArr = ["id", "string"];
-    let [entID] =
-      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+  static fetchFormalEntityID(defStr, editorID = "0", whitelistID = "0") {
+    let sql = `CALL selectEntityIDFromSecKey ("f", ?, ?, ?)`;
+    let paramValArr = [editorID, whitelistID, defStr];
+    let [entID] = mainDBConnector.connectAndQuery(sql, paramValArr);
     return entID;
   }
 

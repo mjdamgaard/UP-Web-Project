@@ -42,6 +42,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE selectEntityIDFromSecKey (
     IN entType CHAR,
+    IN editorID BIGINT UNSIGNED,
     IN whitelistID BIGINT UNSIGNED,
     IN defKey VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
 )
@@ -50,6 +51,7 @@ proc: BEGIN
     FROM EntitySecKeys FORCE INDEX (PRIMARY)
     WHERE (
         ent_type = entType AND
+        editor_id = editorID AND
         whitelist_id = whitelistID AND
         def_key = defKey
     );

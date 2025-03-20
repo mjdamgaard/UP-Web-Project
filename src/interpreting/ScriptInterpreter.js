@@ -190,7 +190,7 @@ export class ScriptInterpreter {
       let parsedScript = await new Promise((resolve, reject) => {
         fundMod._fetchEntityAsUser(
           {callerNode: callerNode, callerEnv: callerEnv, interpreter: this},
-          new EntityReference(scriptID),
+          scriptID,
           (ent) => {
             if (!(ent instanceof ScriptEntity)) reject(new LoadError(
               `Entity #${scriptID} is not a script`,
@@ -1899,6 +1899,12 @@ export class FormalEntity {
     this.creatorRef = creatorRef;
     this.isEditable = isEditable;
     this.whitelistRef = whitelistRef;
+  }
+}
+export class UserEntity {
+  constructor(username, entID) {
+    this.username = username;
+    this.entRef = new EntityReference(entID);
   }
 }
 

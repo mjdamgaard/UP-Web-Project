@@ -61,18 +61,8 @@ export function getOrFetchEntity(entID, callback) {
 
 
 export function _fetchEntity(
-  {callerNode, callerEnv, interpreter, isAsync}, entRef, callback
+  {callerNode, callerEnv, interpreter}, entID, callback
 ) {
-
-  if (!(entRef instanceof EntityReference)) {
-    let err = new RuntimeError(
-      "fetchEntity(): entRef is not an EntityReference instance",
-      callerNode, callerEnv
-    );
-    throwExceptionAsyncOrNot(err, node, environment, isAsync);
-  }
-  let entID = entRef.id;
-
   getOrFetchEntity(
     entID,
     (parsedEnt, entType, creatorID, isEditable, whitelistID) => {
@@ -100,7 +90,16 @@ export function _fetchEntity(
 
 
 export const fetchEntity = new DeveloperFunction(
-  "10", "read", _fetchEntity
+  "10", "read",
+  ({callerNode, callerEnv, interpreter}, entRef, callback) => {
+    if (!(entRef instanceof EntityReference)) throw new RuntimeError(
+      "fetchEntity(): entRef is not an EntityReference instance",
+      callerNode, callerEnv
+  );
+    let entID = entRef.id;
+
+    _fetchEntity({callerNode, callerEnv, interpreter}, entID, callback);
+  }
 );
 
 
@@ -108,19 +107,9 @@ export const fetchEntity = new DeveloperFunction(
 
 
 export function _fetchEntityAsUser(
-  {callerNode, callerEnv, interpreter, isAsync}, entRef, callback
+  {callerNode, callerEnv, interpreter}, entID, callback
 ) {
   decrCompGas(callerNode, callerEnv);
-
-  if (!(entRef instanceof EntityReference)) {
-    let err = new RuntimeError(
-      "fetchEntityAsUser(): entRef is not an EntityReference instance",
-      callerNode, callerEnv
-    );
-    throwExceptionAsyncOrNot(err, node, environment, isAsync);
-  }
-  let entID = entRef.id;
-
 
   getOrFetchEntity(
     entID,
@@ -157,8 +146,17 @@ export function _fetchEntityAsUser(
   );
 }
 
-export const fetchFormalEntityMatch = new DeveloperFunction(
-  "10", "read", _fetchFormalEntityMatch
+export const fetchEntityAsUser = new DeveloperFunction(
+  "10", "read",
+  ({callerNode, callerEnv, interpreter, isAsync}, entRef, callback) => {
+    if (!(entRef instanceof EntityReference)) throw new RuntimeError(
+      "fetchEntityAsUser(): entRef is not an EntityReference instance",
+      callerNode, callerEnv
+  );
+    let entID = entRef.id;
+
+    _fetchEntityAsUser({callerNode, callerEnv, interpreter}, entID, callback);
+  }
 );
 
 
@@ -177,14 +175,14 @@ export function checkIfUserIsWhitelisted(
   else {
     _fetchEntityAsUser(
       {callerNode, callerEnv, interpreter},
-      new EntityReference(whitelistID),
+      whitelistID,
       ([whitelistScriptEnt]) => {
         interpreter.interpretScript(
           gas, undefined, whitelistScriptEnt.id,
           [new EntityReference(userID)]
         )
         .then(([output]) => {
-          resolve(output);
+          resolve(output ? true : false);
         })
         .catch((err) => {
           reject(err)
@@ -200,23 +198,17 @@ export const isWhitelisted = new DeveloperFunction(
   ({callerNode, callerEnv, interpreter}, userRef, whitelistRef, callback) => {
     decrCompGas(callerNode, callerEnv);
 
-    if (!(userRef instanceof EntityReference)) {
-      let err = new RuntimeError(
-        "fetchEntityAsUser(): userRef is not an EntityReference instance",
-        callerNode, callerEnv
-      );
-      throwExceptionAsyncOrNot(err, node, environment, isAsync);
-    }
+    if (!(userRef instanceof EntityReference)) throw new RuntimeError(
+      "fetchEntityAsUser(): userRef is not an EntityReference instance",
+      callerNode, callerEnv
+    );
     let userID = userRef.id;
 
-    if (!(whitelistRef instanceof EntityReference)) {
-      let err = new RuntimeError(
-        "fetchEntityAsUser(): whitelistRef is not an EntityReference instance",
-        callerNode, callerEnv
-      );
-      throwExceptionAsyncOrNot(err, node, environment, isAsync);
-    }
-    let whitelistID = whitelistRef?.id;
+    if (!(whitelistRef instanceof EntityReference)) throw new RuntimeError(
+      "fetchEntityAsUser(): whitelistRef is not an EntityReference instance",
+      callerNode, callerEnv
+    );
+    let whitelistID = whitelistRef.id;
 
     let {gas} = callerEnv.scriptGlobals;
     checkIfUserIsWhitelisted(
@@ -238,39 +230,95 @@ export const isWhitelisted = new DeveloperFunction(
 
 
 
-export function fetchFormalEntity(
-  {callerNode, callerEnv, interpreter, isAsync},
-  funEntRef, inputArr, whitelistID, callback
+export function _fetchFormalEntRef(
+  {callerNode, callerEnv, interpreter},
+  funID, inputArr, editorID, whitelistID, callback
 ) {
-  if (callback === undefined) {
-    callback = whitelistID;
-    whitelistID = "0";
-  }
   decrCompGas(callerNode, callerEnv);
 
-  if (!(funEntRef instanceof EntityReference)) {
-    let err = new RuntimeError(
-      "fetchFormalEntityMatch(): funEntRef is not an EntityReference instance",
+  _fetchEntity(
+    {callerNode, callerEnv, interpreter}, entID, (ent) => {
+      if (!(ent instanceof ExpressionEntity)) {
+        executeUserOrJSCallback(
+          callback, "invalid function", callerNode, callerEnv, interpreter
+        );
+      }
+      else {
+        let defStr = getFormalEntityDefStr(funID, inputArr);
+        io.fetchFormalEntityID(defStr, editorID, whitelistID).then(entID => {
+          if (!entID) {
+            executeUserOrJSCallback(
+              callback, "missing entity", callerNode, callerEnv, interpreter
+            );
+          }
+          else {
+            let entRef = new EntityReference(entID);
+            executeUserOrJSCallback(
+              callback, entRef, callerNode, callerEnv, interpreter
+            );
+          }
+        });
+      }
+    }
+  )
+}
+
+
+export const fetchFormalEntRef = new DeveloperFunction(
+  "10", "read",
+  (
+    {callerNode, callerEnv, interpreter}, funRef, inputArr, editorRef,
+    whitelistRef, callback
+  ) => {
+    if (callback === undefined) {
+      callback = whitelistRef;
+      whitelistRef = editorRef ?? new EntityReference("0");
+    }
+    if (callback === undefined) {
+      callback = editorRef;
+      editorRef = new EntityReference("0");
+    }
+
+    if (!(funRef instanceof EntityReference)) throw new RuntimeError(
+      "fetchFormalEntityMatch(): funRef is not an EntityReference instance",
       callerNode, callerEnv
     );
-    throwExceptionAsyncOrNot(err, node, environment, isAsync);
-  }
-  if (!(inputArr instanceof Array)) {
-    let err = new RuntimeError(
+    let funID = funRef.id;
+
+    if (!(
+      inputArr instanceof Array ||
+      inputArr instanceof Immutable && inputArr.val instanceof Array
+    )) throw new RuntimeError(
       "fetchFormalEntityMatch(): inputArr is not an array",
       callerNode, callerEnv
     );
-    throwExceptionAsyncOrNot(err, node, environment, isAsync);
+
+    if (!(editorRef instanceof EntityReference)) new RuntimeError(
+      "fetchFormalEntityMatch(): editorRef is not an EntityReference instance",
+      callerNode, callerEnv
+    );
+    let editorID = editorRef.id;
+
+    if (!(whitelistRef instanceof EntityReference)) new RuntimeError(
+      "fetchFormalEntityMatch(): whitelistRef is not an EntityReference instance",
+      callerNode, callerEnv
+    );
+    let whitelistID = whitelistRef.id;
+
+    _fetchFormalEntity(
+      {callerNode, callerEnv, interpreter}, funID, inputArr, editorID,
+      whitelistID, callback
+    );
   }
-  let funEntID = funEntRef.id;
-
-  // ...
-}
-
-export const fetchEntityAsUser = new DeveloperFunction(
-  "10", "read_prv", _fetchEntityAsUser
 );
 
+
+
+function getFormalEntityDefStr(funID, inputArr) {
+  // TODO: Implement. And make sure to handle the fact that inputArr, and/or
+  // nested elements of it might be wrapped in Immutable().
+
+}
 
 
 
