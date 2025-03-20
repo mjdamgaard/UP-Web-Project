@@ -236,6 +236,9 @@ export function _fetchFormalEntRef(
 ) {
   decrCompGas(callerNode, callerEnv);
 
+  // TODO: Also make a formal entity ID cache at some point, and then query
+  // that first here.
+
   _fetchEntity(
     {callerNode, callerEnv, interpreter}, entID, (ent) => {
       if (!(ent instanceof ExpressionEntity)) {
@@ -300,7 +303,8 @@ export const fetchFormalEntRef = new DeveloperFunction(
     let editorID = editorRef.id;
 
     if (!(whitelistRef instanceof EntityReference)) new RuntimeError(
-      "fetchFormalEntityMatch(): whitelistRef is not an EntityReference instance",
+      "fetchFormalEntityMatch(): whitelistRef is not an EntityReference " +
+      "instance",
       callerNode, callerEnv
     );
     let whitelistID = whitelistRef.id;
@@ -314,14 +318,86 @@ export const fetchFormalEntRef = new DeveloperFunction(
 
 
 
+
+export function _insertFormalEntity(
+  {callerNode, callerEnv, interpreter}, funRef, inputArr, isAnonymous,
+  isEditable, whitelistID, callback
+) {
+  let defStr = getFormalEntityDefStr(funRef.id, inputArr);
+  io.insertFormalEntity(defStr, isAnonymous, isEditable, whitelistID).then(
+    (outID, exitCode) => {
+      if (exitCode == "0") {
+        let entRef = new EntityReference(outID);
+        executeUserOrJSCallback(
+          callback, entRef, callerNode, callerEnv, interpreter
+        );
+      }
+      else {
+        // TODO ...
+      }
+    }
+  );
+}
+
+
+export const insertFormalEntity = new DeveloperFunction(
+  "10", "read",
+  (
+    {callerNode, callerEnv, interpreter}, funRef, inputArr, editorRef,
+    whitelistRef, callback
+  ) => {
+    if (callback === undefined) {
+      callback = whitelistRef;
+      whitelistRef = editorRef ?? new EntityReference("0");
+    }
+    if (callback === undefined) {
+      callback = editorRef;
+      editorRef = new EntityReference("0");
+    }
+
+    if (!(funRef instanceof EntityReference)) throw new RuntimeError(
+      "fetchFormalEntityMatch(): funRef is not an EntityReference instance",
+      callerNode, callerEnv
+    );
+    let funID = funRef.id;
+
+    if (!(
+      inputArr instanceof Array ||
+      inputArr instanceof Immutable && inputArr.val instanceof Array
+    )) throw new RuntimeError(
+      "fetchFormalEntityMatch(): inputArr is not an array",
+      callerNode, callerEnv
+    );
+
+    if (!(editorRef instanceof EntityReference)) new RuntimeError(
+      "fetchFormalEntityMatch(): editorRef is not an EntityReference instance",
+      callerNode, callerEnv
+    );
+    let editorID = editorRef.id;
+
+    if (!(whitelistRef instanceof EntityReference)) new RuntimeError(
+      "fetchFormalEntityMatch(): whitelistRef is not an EntityReference instance",
+      callerNode, callerEnv
+    );
+    let whitelistID = whitelistRef.id;
+
+    _insertFormalEntity(
+      {callerNode, callerEnv, interpreter}, funID, inputArr, editorID,
+      whitelistID, callback
+    );
+  }
+);
+
+
+
+
+
+
 function getFormalEntityDefStr(funID, inputArr) {
   // TODO: Implement. And make sure to handle the fact that inputArr, and/or
   // nested elements of it might be wrapped in Immutable().
 
 }
-
-
-
 
 
 
@@ -339,6 +415,13 @@ export function getParsedEntity(entType, defStr) {
   }
   else if (entType === "f") {
     [parsedEnt] = formEntParser.parse(defStr);
+  }
+  else if (entType === "u") {
+    // TODO: Implement.
+    throw "getParsedEntity(): 'u' not implemented yet";
+  }
+  else {
+    throw `getParsedEntity(): Unrecognized entType: '${entType}'`
   }
 
   // Then swap parsedEnt for its result (res) property, only if it was parsed
@@ -370,5 +453,9 @@ export function getEntity(
     );
   }
 }
+
+
+
+
 
 

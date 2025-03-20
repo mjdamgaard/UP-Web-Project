@@ -7,10 +7,10 @@ const mainDBConnector = new MainDBConnector();
 
 export class MainDBInterface {
 
-  static #validateAndQuery(sql, paramValArr, typeArr, paramNameArr) {
-    InputValidator.validateParams(paramValArr, typeArr, paramNameArr);
-    return mainDBConnector.connectAndQuery(sql, paramValArr);
-  }
+  // static #validateAndQuery(sql, paramValArr, typeArr, paramNameArr) {
+  //   InputValidator.validateParams(paramValArr, typeArr, paramNameArr);
+  //   return mainDBConnector.connectAndQuery(sql, paramValArr);
+  // }
 
 
   /* Entity selects */
@@ -35,39 +35,31 @@ export class MainDBInterface {
   /* Entity inserts */
 
   static insertScriptEntity(
-    script, isAnonymous = 0, creatorID = "0", isEditable = 0, whitelistID = "0",
+    defStr, isAnonymous = 0, creatorID = "0", isEditable = 0, whitelistID = "0"
   ) {
     let sql = `CALL insertEntityWithoutSecKey ("s", ?, ?, ?, ?, ?)`;
-    paramValArr = [creatorID, script, whitelistID, isAnonymous, isEditable];
-    paramNameArr = [
-      "creatorID", "script", "whitelistID", "isAnonymous", "isEditable"
-    ];
-    typeArr = ["id", "text", "id", "bool", "bool"];
-    return this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    let paramValArr = [creatorID, defStr, whitelistID, isAnonymous, isEditable];
+    let [outID, exitCode] = mainDBConnector.connectAndQuery(sql, paramValArr);
+    return [outID, exitCode];
   }
 
 
   static insertExpressionEntity(
-    exp, isAnonymous = 0, creatorID = "0", isEditable = 0, whitelistID = "0",
+    defStr, isAnonymous = 0, creatorID = "0", isEditable = 0, whitelistID = "0"
   ) {
     let sql = `CALL insertEntityWithoutSecKey ("e", ?, ?, ?, ?, ?)`;
-    paramValArr = [creatorID, exp, whitelistID, isAnonymous, isEditable];
-    paramNameArr = [
-      "creatorID", "exp", "whitelistID", "isAnonymous", "isEditable"
-    ];
-    typeArr = ["id", "text", "id", "bool", "bool"];
-    return this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    let paramValArr = [creatorID, defStr, whitelistID, isAnonymous, isEditable];
+    let [outID, exitCode] = mainDBConnector.connectAndQuery(sql, paramValArr);
+    return [outID, exitCode];
   }
 
-
   static insertFormalEntity(
-    defStr, isAnonymous = 0, creatorID = "0", whitelistID = "0",
+    defStr, isAnonymous = 0, creatorID = "0", isEditable = 0, whitelistID = "0"
   ) {
-    let sql = `CALL insertEntityWithSecKey ("f", ?, ?, ?, ?)`;
-    paramValArr = [creatorID, defStr, whitelistID, isAnonymous];
-    paramNameArr = ["creatorID", "defStr", "whitelistID", "isAnonymous"];
-    typeArr = ["id", "string", "id", "bool"];
-    return this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    let sql = `CALL insertEntityWithSecKey ("f", ?, ?, ?, ?, ?)`;
+    let paramValArr = [creatorID, defStr, whitelistID, isAnonymous, isEditable];
+    let [outID, exitCode] = mainDBConnector.connectAndQuery(sql, paramValArr);
+    return [outID, exitCode];
   }
 
 
@@ -76,25 +68,34 @@ export class MainDBInterface {
   static editScriptEntity(
     entID, userID, defStr, isAnonymous = 0, isEditable = 1, whitelistID = "0",
   ) {
-    let sql = `CALL editEntity ("s", ?, ?, ?, ?, ?, ?)`;
-    paramValArr = [userID, entID, defStr, whitelistID, isAnonymous, isEditable];
-    paramNameArr = [
-      "userID", "entID", "defStr", "whitelistID", "isAnonymous", "isEditable"
+    let sql = `CALL editEntityWithoutSecKey ("s", ?, ?, ?, ?, ?, ?)`;
+    let paramValArr = [
+      userID, entID, defStr, whitelistID, isAnonymous, isEditable
     ];
-    typeArr = ["id", "id", "text", "id", "bool", "bool"];
-    return this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    let [outID, exitCode] = mainDBConnector.connectAndQuery(sql, paramValArr);
+    return [outID, exitCode];
   }
 
   static editExpressionEntity(
     entID, userID, defStr, isAnonymous = 0, isEditable = 1, whitelistID = "0",
   ) {
-    let sql = `CALL editEntity ("e", ?, ?, ?, ?, ?, ?)`;
-    paramValArr = [userID, entID, defStr, whitelistID, isAnonymous, isEditable];
-    paramNameArr = [
-      "userID", "entID", "defStr", "whitelistID", "isAnonymous", "isEditable"
+    let sql = `CALL editEntityWithoutSecKey ("e", ?, ?, ?, ?, ?, ?)`;
+    let paramValArr = [
+      userID, entID, defStr, whitelistID, isAnonymous, isEditable
     ];
-    typeArr = ["id", "id", "text", "id", "bool", "bool"];
-    return this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    let [outID, exitCode] = mainDBConnector.connectAndQuery(sql, paramValArr);
+    return [outID, exitCode];
+  }
+
+  static editFormalEntity(
+    entID, userID, defStr, isAnonymous = 0, isEditable = 1, whitelistID = "0",
+  ) {
+    let sql = `CALL editEntityWithSecKey ("f", ?, ?, ?, ?, ?, ?)`;
+    let paramValArr = [
+      userID, entID, defStr, whitelistID, isAnonymous, isEditable
+    ];
+    let [outID, exitCode] = mainDBConnector.connectAndQuery(sql, paramValArr);
+    return [outID, exitCode];
   }
 
 
@@ -102,18 +103,16 @@ export class MainDBInterface {
 
   static finalizeEntity(entID, userID) {
     let sql = `CALL finalizeEntity (?, ?)`;
-    paramValArr = [userID, entID];
-    paramNameArr = ["userID", "entID"];
-    typeArr = ["id", "id"];
-    return this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    let paramValArr = [userID, entID];
+    let [outID, exitCode] = mainDBConnector.connectAndQuery(sql, paramValArr);
+    return [outID, exitCode];
   }
 
   static anonymizeEntity(entID, userID) {
     let sql = `CALL anonymizeEntity (?, ?)`;
-    paramValArr = [userID, entID];
-    paramNameArr = ["userID", "entID"];
-    typeArr = ["id", "id"];
-    return this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    let paramValArr = [userID, entID];
+    let [outID, exitCode] = mainDBConnector.connectAndQuery(sql, paramValArr);
+    return [outID, exitCode];
   }
 
 
