@@ -15,7 +15,7 @@ export class MainDBInterface {
 
   /* Entity selects */
 
-  static fetchDirMetaData(dirID) {
+  static selectDirMetaData(dirID) {
     let sql =
       "SELECT parent_dir_id, dir_name, is_private, is_home_dir " +
       "FROM Directories FORCE INDEX (PRIMARY) " +
@@ -29,8 +29,62 @@ export class MainDBInterface {
     return [parentDirID, name, isPrivate, isHomeDir];
   }
 
+  static selectFileMetaData(fileID) {
+    let sql =
+      "SELECT dir_id, file_name, file_type, is_private " +
+      "FROM Files FORCE INDEX (PRIMARY) " +
+      "WHERE file_id = ?;";
+    let paramValArr = [fileID];
+    let paramNameArr = ["fileID"];
+    let typeArr = ["ulong"];
+    let [[dirID, name, type, isPrivate, isHomeDir]] =
+      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    return [dirID, name, type, isPrivate, isHomeDir];
+  }
 
-  static fetchChildDirID(parentDirID, name) {
+  static selectTextFileContent(fileID) {
+    let sql =
+      "SELECT CAST(content_data AS CHAR) " +
+      "FROM Files FORCE INDEX (PRIMARY) " +
+      "WHERE file_id = ?;";
+    let paramValArr = [fileID];
+    let paramNameArr = ["fileID"];
+    let typeArr = ["ulong"];
+    let [[contentStr]] =
+      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    return contentStr;
+  }
+
+  static selectTextFileData(fileID) {
+    let sql =
+      "SELECT dir_id, file_name, file_type, is_private, " +
+      "  CAST(content_data AS CHAR) " +
+      "FROM Files FORCE INDEX (PRIMARY) " +
+      "WHERE file_id = ?;";
+    let paramValArr = [fileID];
+    let paramNameArr = ["fileID"];
+    let typeArr = ["ulong"];
+    let [[dirID, name, type, isPrivate, isHomeDir, contentStr]] =
+      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    return [dirID, name, type, isPrivate, isHomeDir, contentStr];
+  }
+
+  static selectFileData(fileID) {
+    let sql =
+      "SELECT dir_id, file_name, file_type, is_private, HEX(content_data) " +
+      "FROM Files FORCE INDEX (PRIMARY) " +
+      "WHERE file_id = ?;";
+    let paramValArr = [fileID];
+    let paramNameArr = ["fileID"];
+    let typeArr = ["ulong"];
+    let [[dirID, name, type, isPrivate, isHomeDir, contentHexStr]] =
+      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    return [dirID, name, type, isPrivate, isHomeDir, contentHexStr];
+  }
+
+
+
+  static selectChildDirID(parentDirID, name) {
     let sql =
       "SELECT dir_id " +
       "FROM Directories FORCE INDEX (sec_idx) " +
@@ -43,8 +97,21 @@ export class MainDBInterface {
     return dirID;
   }
 
+  static selectChildFileID(dirID, name) {
+    let sql =
+      "SELECT file_id " +
+      "FROM Files FORCE INDEX (sec_idx) " +
+      "WHERE dir_id = ? AND file_name = ?;";
+    let paramValArr = [dirID, name,];
+    let paramNameArr = ["dirID", "name"];
+    let typeArr = ["ulong", "tiny_str"];
+    let [[dirID]] =
+      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    return dirID;
+  }
 
-  static fetchDirChildren(
+
+  static selectDirChildren(
     parentDirID, maxNum = 100, numOffset = 0, isAscending = true
   ) {
     let sql =
@@ -61,8 +128,26 @@ export class MainDBInterface {
     return res;
   }
 
+  static selectFileChildren(
+    dirID, maxNum = 100, numOffset = 0, isAscending = true
+  ) {
+    let sql =
+      "SELECT file_name, file_id " +
+      "FROM Files FORCE INDEX (sec_idx) " +
+      "WHERE dir_id = ? " +
+      "ORDER BY dir_name " + (isAscending ? "ASC " : "DESC ") +
+      "LIMIT ?, ?;";
+    let paramValArr = [dirID, numOffset, maxNum];
+    let paramNameArr = ["dirID", "numOffset", "maxNum"];
+    let typeArr = ["ulong", "uint", "uint"];
+    let res =
+      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    return res;
+  }
 
-  static fetchDirAdmins(
+
+
+  static selectDirAdmins(
     dirID, maxNum = 100, numOffset = 0, isAscending = true
   ) {
     let sql =
@@ -80,7 +165,7 @@ export class MainDBInterface {
   }
 
 
-  static fetchDirCloneChildren(
+  static selectDirCloneChildren(
     dirID, maxNum = 100, numOffset = 0, isAscending = true
   ) {
     let sql =
@@ -97,7 +182,7 @@ export class MainDBInterface {
     return res;
   }
 
-  static fetchDirCloneParent(dirID) {
+  static selectDirCloneParent(dirID) {
     let sql =
       "SELECT clone_parent_dir_id " +
       "FROM ClonedDirectories FORCE INDEX (PRIMARY) " +
@@ -114,116 +199,45 @@ export class MainDBInterface {
 
 
 
-
-
-
-
-  static fetchFormalEntityID(defStr, editorID = "0", whitelistID = "0") {
-    let sql = `CALL selectEntityIDFromSecKey ("f", ?, ?, ?)`;
-    let paramValArr = [editorID, whitelistID, defStr];
-    let [entID] = mainDBConnector.connectAndQuery(sql, paramValArr);
-    return entID;
+  static selectBinTableElemData(dirID, listKeyBase64, elemKeyBase64) {
+    let sql =
+      "SELECT TO_BASE64(elem_payload) " +
+      "FROM BinKeyDataTables FORCE INDEX (PRIMARY) " +
+      "WHERE dir_id = ? AND list_key = FROM_BASE64(?) AND " +
+      "  elem_key = FROM_BASE64(?);";
+    let paramValArr = [dirID, listKeyBase64, elemKeyBase64];
+    let paramNameArr = ["dirID", "listKeyBase64", "elemKeyBase64"];
+    let typeArr = ["ulong", "tiny_base64_str", "tiny_base64_str"];
+    let [[elemPayloadHexStr]] =
+      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    return elemPayloadHexStr;
   }
 
-
-  /* Entity inserts */
-
-  static insertScriptEntity(
-    defStr, isAnonymous = 0, creatorID = "0", isEditable = 0, whitelistID = "0"
+  static selectBinTable(
+    dirID, listKeyBase64, loBase64 = "", hiBase64 = "", maxNum = null, numOffset = 0,
+    isAscending = true,
   ) {
-    let sql = `CALL insertEntityWithoutSecKey ("s", ?, ?, ?, ?, ?)`;
-    let paramValArr = [creatorID, defStr, whitelistID, isAnonymous, isEditable];
-    let [outID, exitCode] = mainDBConnector.connectAndQuery(sql, paramValArr);
-    return [outID, exitCode];
-  }
-
-
-  static insertExpressionEntity(
-    defStr, isAnonymous = 0, creatorID = "0", isEditable = 0, whitelistID = "0"
-  ) {
-    let sql = `CALL insertEntityWithoutSecKey ("e", ?, ?, ?, ?, ?)`;
-    let paramValArr = [creatorID, defStr, whitelistID, isAnonymous, isEditable];
-    let [outID, exitCode] = mainDBConnector.connectAndQuery(sql, paramValArr);
-    return [outID, exitCode];
-  }
-
-  static insertFormalEntity(
-    defStr, isAnonymous = 0, creatorID = "0", isEditable = 0, whitelistID = "0"
-  ) {
-    let sql = `CALL insertEntityWithSecKey ("f", ?, ?, ?, ?, ?)`;
-    let paramValArr = [creatorID, defStr, whitelistID, isAnonymous, isEditable];
-    let [outID, exitCode] = mainDBConnector.connectAndQuery(sql, paramValArr);
-    return [outID, exitCode];
-  }
-
-
-  /* Entity edits */
-
-  static editScriptEntity(
-    entID, userID, defStr, isAnonymous = 0, isEditable = 1, whitelistID = "0",
-  ) {
-    let sql = `CALL editEntityWithoutSecKey ("s", ?, ?, ?, ?, ?, ?)`;
-    let paramValArr = [
-      userID, entID, defStr, whitelistID, isAnonymous, isEditable
+    let sql =
+      "SELECT TO_BASE64(elem_key), TO_BASE64(elem_payload)" +
+      "FROM BinKeyDataTables FORCE INDEX (PRIMARY) " +
+      "WHERE dir_id = ? AND list_key >= FROM_BASE64(?) AND " +
+      (hiBase64 ? "list_key <= FROM_BASE64(?) " : "NOT ? ") +
+      "ORDER BY elem_key " + (isAscending ? "ASC " : "DESC ") +
+      "LIMIT ?, ?;";
+    let paramValArr =
+      [dirID, listKeyBase64, loBase64, hiBase64, maxNum, numOffset];
+    let paramNameArr =
+      ["dirID", "listKeyBase64", "loBase64", "hiBase64", "maxNum", "numOffset"];
+    let typeArr = [
+      "ulong", "tiny_base64_str", "tiny_base64_str", "tiny_base64_str",
+      "unit", "uint",
     ];
-    let [outID, exitCode] = mainDBConnector.connectAndQuery(sql, paramValArr);
-    return [outID, exitCode];
-  }
-
-  static editExpressionEntity(
-    entID, userID, defStr, isAnonymous = 0, isEditable = 1, whitelistID = "0",
-  ) {
-    let sql = `CALL editEntityWithoutSecKey ("e", ?, ?, ?, ?, ?, ?)`;
-    let paramValArr = [
-      userID, entID, defStr, whitelistID, isAnonymous, isEditable
-    ];
-    let [outID, exitCode] = mainDBConnector.connectAndQuery(sql, paramValArr);
-    return [outID, exitCode];
-  }
-
-  static editFormalEntity(
-    entID, userID, defStr, isAnonymous = 0, isEditable = 1, whitelistID = "0",
-  ) {
-    let sql = `CALL editEntityWithSecKey ("f", ?, ?, ?, ?, ?, ?)`;
-    let paramValArr = [
-      userID, entID, defStr, whitelistID, isAnonymous, isEditable
-    ];
-    let [outID, exitCode] = mainDBConnector.connectAndQuery(sql, paramValArr);
-    return [outID, exitCode];
+    let res =
+      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    return res;
   }
 
 
-  /* Entity miscellaneous */
-
-  static finalizeEntity(entID, userID) {
-    let sql = `CALL finalizeEntity (?, ?)`;
-    let paramValArr = [userID, entID];
-    let [outID, exitCode] = mainDBConnector.connectAndQuery(sql, paramValArr);
-    return [outID, exitCode];
-  }
-
-  static anonymizeEntity(entID, userID) {
-    let sql = `CALL anonymizeEntity (?, ?)`;
-    let paramValArr = [userID, entID];
-    let [outID, exitCode] = mainDBConnector.connectAndQuery(sql, paramValArr);
-    return [outID, exitCode];
-  }
-
-
-  static substitutePlaceholdersInEntity() {
-    // TODO: Make soon.
-  }
-
-  static nullUserRefsInEntity() {
-    // TODO: Make at some point.
-  }
-
-
-
-
-  /*  Data structure reads */
-
-  // TODO: Make data read and write methods.
 
 }
 

@@ -85,7 +85,7 @@ CREATE TABLE Files (
 
     file_name VARCHAR(255) NOT NULL CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
 
-    file_type VARCHAR(32),
+    file_type VARCHAR(32) NOT NULL CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
 
     is_private BOOL NOT NULL,
 
@@ -143,7 +143,8 @@ CREATE TABLE StorageGasPayments (
 
 CREATE TABLE GlobalDirectoryReferences (
 
-    global_ref VARCHAR(255) PRIMARY KEY,
+    global_ref VARCHAR(255) PRIMARY KEY
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
 
     dir_id BIGINT UNSIGNED NOT NULL
 
@@ -154,15 +155,15 @@ CREATE TABLE GlobalDirectoryReferences (
 
 /* Data tables  */
 
-CREATE TABLE DataTables_SingleIndex (
+CREATE TABLE BinKeyDataTables (
 
-    dir_id VARBINARY(8) NOT NULL, -- Type can be changed.
+    dir_id BIGINT UNSIGNED NOT NULL,
 
-    list_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
+    list_key VARBINARY(255) NOT NULL,
 
-    elem_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
+    elem_key VARBINARY(255) NOT NULL,
 
-    elem_payload VARBINARY(64) NOT NULL, -- Type can be resized/changed.
+    elem_payload VARBINARY(255) NOT NULL DEFAULT "",
 
     PRIMARY KEY (
         dir_id,
@@ -173,17 +174,17 @@ CREATE TABLE DataTables_SingleIndex (
 ) ROW_FORMAT = COMPRESSED;
 
 
-CREATE TABLE DataTables_DoubleIndex (
+CREATE TABLE BinKeyScoredDataTables (
 
-    dir_id VARBINARY(8) NOT NULL, -- Type can be changed.
+    dir_id BIGINT UNSIGNED NOT NULL,
 
-    list_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
+    list_key VARBINARY(255) NOT NULL,
 
-    elem_score VARBINARY(64) NOT NULL, -- Type can be resized/changed.
+    elem_score VARBINARY(255) NOT NULL,
 
-    elem_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
+    elem_key VARBINARY(255) NOT NULL,
 
-    elem_payload VARBINARY(64) NOT NULL, -- Type can be resized/changed.
+    elem_payload VARBINARY(255) NOT NULL DEFAULT "",
 
     PRIMARY KEY (
         dir_id,
@@ -201,15 +202,15 @@ CREATE TABLE DataTables_DoubleIndex (
 ) ROW_FORMAT = COMPRESSED;
 
 
-CREATE TABLE DataTables_SingleIndex_CharKey (
+CREATE TABLE CharKeyDataTables (
 
-    dir_id VARBINARY(8) NOT NULL, -- Type can be changed.
+    dir_id BIGINT UNSIGNED NOT NULL,
 
-    list_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
+    list_key VARBINARY(255) NOT NULL,
 
-    elem_key VARCHAR(255) NOT NULL, -- Type can be resized/changed.
+    elem_key VARCHAR(255) NOT NULL CHARACTER SET utf8mb4,
 
-    elem_payload VARBINARY(32) NOT NULL, -- Type can be resized/changed.
+    elem_payload VARBINARY(255) NOT NULL DEFAULT "",
 
     PRIMARY KEY (
         dir_id,
@@ -220,15 +221,15 @@ CREATE TABLE DataTables_SingleIndex_CharKey (
 ) ROW_FORMAT = COMPRESSED;
 
 
-CREATE TABLE DataTables_SingleIndex_FloatKey (
+CREATE TABLE FloatKeyDataTables (
 
-    dir_id VARBINARY(8) NOT NULL, -- Type can be changed.
+    dir_id BIGINT UNSIGNED NOT NULL,
 
-    list_key VARBINARY(64) NOT NULL, -- Type can be resized/changed.
+    list_key VARBINARY(255) NOT NULL,
 
-    elem_key FLOAT NOT NULL, -- Type can be resized/changed.
+    elem_key FLOAT NOT NULL,
 
-    elem_payload VARBINARY(32) NOT NULL, -- Type can be resized/changed.
+    elem_payload VARBINARY(255) NOT NULL DEFAULT "",
 
     PRIMARY KEY (
         dir_id,
