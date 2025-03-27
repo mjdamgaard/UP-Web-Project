@@ -11,7 +11,6 @@ export {LexError, SyntaxError};
 
 const INIT_PROTECT_DOC_ID = "10";
 const INIT_DEV_LIB_DOC_ID = "11";
-const INIT_PROTECT_MODULE_ID = "12";
 
 // const MAX_ARRAY_INDEX = 1E+15;
 const MINIMAL_TIME_GAS = 10;
@@ -22,6 +21,7 @@ const GAS_NAMES = {
   fetch: "fetching",
   cachePriority: "cache priority",
   time: "time",
+  conn: "connection",
 };
 
 export function getParsingGasCost(str) {

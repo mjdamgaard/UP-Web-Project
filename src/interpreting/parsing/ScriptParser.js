@@ -14,8 +14,7 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
   "true|false|null|undefined|Infinity|NaN|try|catch|finally|for|while|do|" +
-  "default|public|debugger|new|exit|Protected|Private|Public|" +
-  "PassAsMutable)$"
+  "default|public|debugger|new|exit|Protected|PassAsMutable)$"
   // TODO: Continue this list.
 );
 
@@ -40,61 +39,25 @@ export const scriptGrammar = {
   },
   "import-statement": {
     rules: [
-      ["/import/", "import-list", "/from/!", "module-reference", "/;/"],
-      ["/import/", "/from/", "module-reference", "/;/"],
+      ["/import/", "import-list", "/from/!", "string", "/;/"],
+      ["/import/", "/from/", "string", "/;/"],
     ],
     process: (children, ruleInd) => {
-      return (ruleInd === 0) ? {
+      let str = (ruleInd == 0) ? children[3].str : children[2].str;
+      let isChildPath, isParentPath, isAbsPath, isDevLibPath;
+      isChildPath = (str.substring(0, 2) === "./");
+      isParentPath = (str.substring(0, 3) === "../");
+      isAbsPath = (str.substring(0, 1) === "/");
+      isDevLibPath = !isChildPath && !isParentPath && !isAbsPath;
+      let ret = {
         type: "import-statement",
-        importArr: children[1].children,
-        entID: children[3].id,
-        placeholderPath: children[3].placeholderPath,
-        libPath: children[3].libPath,
-      } : {
-        type: "import-statement",
-        importArr: [],
-        entID: children[2].id,
-        placeholderPath: children[2].placeholderPath,
-        libPath: children[2].libPath,
+        isChildPath: isChildPath,
+        isParentPath: isParentPath,
+        isAbsPath: isAbsPath,
+        isDevLibPath: isDevLibPath,
       };
-    },
-  },
-  "module-reference": {
-    rules: [
-      [/"#[$_a-zA-Z0-9]+"/],
-      [/"#\{[$_\-a-zA-Z0-9]+(\/[$_\-a-zA-Z0-9]+)*\}"/],
-      [/"\/#[$_a-zA-Z0-9]+(\/[_\-a-zA-Z0-9])+"/],
-      [/"\/#\{[$_\-a-zA-Z0-9]+(\/[$_\-a-zA-Z0-9]+)*\}(\/[_\-a-zA-Z0-9])+"/],
-    ],
-    process: (children) => {
-      let str = children[0];
-      if (ruleInd === 0) {
-        return {
-          type: "module-reference",
-          id: str.slice(2, -1),
-        };
-      } else if (ruleInd === 1) {
-        return {
-          type: "module-reference",
-          placeholderPath: str.slice(3, -2),
-        };
-      } else if (ruleInd === 2) {
-        let indOfSlash = str.indexOf("/");
-        return {
-          type: "module-reference",
-          id: str.slice(3, indOfSlash),
-          libPath: str.slice(indOfSlash, -1),
-        };
-      } else {
-        let [placeholderPath] =
-          str.match(/[$_\-a-zA-Z0-9]+(\/[$_\-a-zA-Z0-9]+)*/);
-        let indOfSlash = str.indexOf("/", 3 + placeholderPath.length);
-        return {
-          type: "module-reference",
-          placeholderPath: placeholderPath,
-          libPath: str.slice(indOfSlash, -1),
-        };
-      }
+      ret.importArr = (ruleInd === 0) ? children[1].children : [];
+      return ret;
     },
   },
   "import-list": {
@@ -155,7 +118,7 @@ export const scriptGrammar = {
     rules: [
       [
         "/export/", "/const/", "identifier", "/=/", "/Protected|Private/!1",
-        /\(/, "entity-reference", "/,/", "string", "/,/", "expression", "/,/?",
+        /\(/, "string", "/,/", "string", "/,/", "expression", "/,/?",
         /\)/, "/;/"
       ],
       [
@@ -173,7 +136,7 @@ export const scriptGrammar = {
           subtype: "protected-object-export",
           ident: children[2].ident,
           isPrivate: (children[4] === "Private") ? true : false,
-          docID: children[6].id,
+          docID: children[6].str,
           signal: children[8].str,
           exp: children[10],
         };
@@ -758,7 +721,6 @@ export const scriptGrammar = {
       ["array!1"],
       ["object!1"],
       ["this-keyword"],
-      ["entity-reference"],
       ["exit-call!1"],
       ["pass-as-mutable-call!1"],
       ["identifier"],
@@ -840,21 +802,6 @@ export const scriptGrammar = {
       ["/this/"],
     ],
     process: () => ({type: "this-keyword"}),
-  },
-  "entity-reference": {
-    rules: [
-      [/"#[$_a-zA-Z0-9]+"/],
-      [/"#\{[$_\-a-zA-Z0-9]+(\/[$_\-a-zA-Z0-9]+)*\}"/],
-    ],
-    process: (children, ruleInd) => {
-      return (ruleInd === 0) ? {
-        type: "entity-reference",
-        id: children[0].slice(2, -1),
-      } : {
-        type: "entity-reference",
-        placeholderPath: children[0].slice(3, -2),
-      };
-    },
   },
   "exit-call": {
     rules: [
