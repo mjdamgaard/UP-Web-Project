@@ -34,11 +34,13 @@ CREATE TABLE Directories (
 
     parent_dir_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
-    dir_name VARCHAR(255) NOT NULL CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    dir_name VARCHAR(255) NOT NULL CHARACTER SET utf8mb4,
 
     is_private BOOL NOT NULL DEFAULT 0,
 
     is_home_dir BOOL NOT NULL DEFAULT 0,
+
+    admin_id BIGINT UNSIGNED,
 
     UNIQUE INDEX sec_idx (
         parent_dir_id,
@@ -48,19 +50,8 @@ CREATE TABLE Directories (
 
 ) ROW_FORMAT = COMPRESSED;
 
-
-CREATE TABLE DirectoryAdmins (
-
-    dir_id BIGINT UNSIGNED NOT NULL,
-
-    admin_id BIGINT UNSIGNED NOT NULL,
-
-    PRIMARY KEY (
-        dir_id,
-        admin_id
-    )
-
-) ROW_FORMAT = COMPRESSED;
+INSERT INTO Directories (dir_id, dir_name)
+VALUES (1, "");
 
 
 CREATE TABLE ClonedDirectories (
@@ -83,9 +74,9 @@ CREATE TABLE Files (
 
     dir_id BIGINT UNSIGNED NOT NULL,
 
-    file_name VARCHAR(255) NOT NULL CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    file_name VARCHAR(255) NOT NULL CHARACTER SET utf8mb4,
 
-    file_type VARCHAR(32) NOT NULL CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+    file_type VARCHAR(32) NOT NULL CHARACTER SET utf8mb4,
 
     is_private BOOL NOT NULL,
 
@@ -128,27 +119,27 @@ CREATE TABLE StorageGasPayments (
 
 
 
--- TODO: Once we expend this system to a distributed system, the so-called
--- global directory references will be a reference that contains a hash of a
--- signature, which is then typically used to authenticate the original creator
--- (admin) of the given folder. This signature will then have to be checked by
--- any DB node ("UP-Web node") before inserting into this table. This does not,
--- however, need to happen at creation time, as the signature only tells that
--- the owner of the public keys within the signature has signed off on some
--- statement about the contents of the directory (including potentially any
--- non-public data). In particular, global directory references will be a good
--- way to pair "sibling directory nodes" across different UPW nodes, which are
--- directories that have the same source code, and is created for the same
--- purpose, working together across UP-Web nodes to serve that purpose.
+-- -- TODO: Once we expend this system to a distributed system, the so-called
+-- -- global directory references will be a reference that contains a hash of a
+-- -- signature, which is then typically used to authenticate the original creator
+-- -- (admin) of the given folder. This signature will then have to be checked by
+-- -- any DB node ("UP-Web node") before inserting into this table. This does not,
+-- -- however, need to happen at creation time, as the signature only tells that
+-- -- the owner of the public keys within the signature has signed off on some
+-- -- statement about the contents of the directory (including potentially any
+-- -- non-public data). In particular, global directory references will be a good
+-- -- way to pair "sibling directory nodes" across different UPW nodes, which are
+-- -- directories that have the same source code, and is created for the same
+-- -- purpose, working together across UP-Web nodes to serve that purpose.
 
-CREATE TABLE GlobalDirectoryReferences (
+-- CREATE TABLE GlobalDirectoryReferences (
 
-    global_ref VARCHAR(255) PRIMARY KEY
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+--     global_ref VARCHAR(255) PRIMARY KEY
+--         CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
 
-    dir_id BIGINT UNSIGNED NOT NULL
+--     dir_id BIGINT UNSIGNED NOT NULL
 
-); -- ROW_FORMAT = COMPRESSED;
+-- ); -- ROW_FORMAT = COMPRESSED;
 
 
 
@@ -180,9 +171,9 @@ CREATE TABLE BinKeyScoredDataTables (
 
     list_key VARBINARY(255) NOT NULL,
 
-    elem_score VARBINARY(255) NOT NULL,
-
     elem_key VARBINARY(255) NOT NULL,
+
+    elem_score VARBINARY(255) NOT NULL,
 
     elem_payload VARBINARY(255) NOT NULL DEFAULT "",
 
@@ -221,23 +212,23 @@ CREATE TABLE CharKeyDataTables (
 ) ROW_FORMAT = COMPRESSED;
 
 
-CREATE TABLE FloatKeyDataTables (
+-- CREATE TABLE FloatKeyDataTables (
 
-    dir_id BIGINT UNSIGNED NOT NULL,
+--     dir_id BIGINT UNSIGNED NOT NULL,
 
-    list_key VARBINARY(255) NOT NULL,
+--     list_key VARBINARY(255) NOT NULL,
 
-    elem_key FLOAT NOT NULL,
+--     elem_key FLOAT NOT NULL,
 
-    elem_payload VARBINARY(255) NOT NULL DEFAULT "",
+--     elem_payload VARBINARY(255) NOT NULL DEFAULT "",
 
-    PRIMARY KEY (
-        dir_id,
-        list_key,
-        elem_key
-    )
+--     PRIMARY KEY (
+--         dir_id,
+--         list_key,
+--         elem_key
+--     )
 
-) ROW_FORMAT = COMPRESSED;
+-- ) ROW_FORMAT = COMPRESSED;
 
 
 
@@ -262,127 +253,6 @@ CREATE TABLE FulltextIndexEntries (
     FULLTEXT idx (text_str)
 
 ) ENGINE = InnoDB;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- /* Entities */
-
-
--- CREATE TABLE Entities (
---     -- Entity ID.
---     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
---     -- Type identifier.
---     ent_type CHAR NOT NULL,
-
---     -- A string (possibly a JSON object) that defines the entity. The format
---     -- depends on ent_type.
---     def_str TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-
---     -- The user who submitted the entity, unless creator_id = 0, which means
---     -- that the creator is anonymous.
---     creator_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
---     -- A whitelist script entity that outputs whether the user is allowed to
---     -- read the entity. Can also just be a single user ID (the creator, i.e.).
---     -- Also, whitelist_id = 0 means that everyone can read it.
---     whitelist_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
---     -- Whether the creator can edit the entity or not. (is_editable = 1 will
---     -- also typically mean that the creator's profile info (username and
---     -- possibly profile icon) is shown as well when rendering the entity.)
---     -- Even when is_editable = 0, however, the creator is still able to
---     -- substitute any '@[<path>]' placeholders with real entity ID references.
---     is_editable TINYINT UNSIGNED NOT NULL DEFAULT 0, CHECK (is_editable <= 1),
-
---     -- If creator_id = 0, then the entity cannot be edited.
---     CHECK (creator_id != 0 OR is_editable = 0)
--- );
-
-
-
--- /* Entity indexes */
-
--- CREATE TABLE EntitySecKeys (
-
---     ent_type CHAR NOT NULL,
-
---     editor_id BIGINT UNSIGNED NOT NULL, -- (0 means 'not editable.')
-
---     whitelist_id BIGINT UNSIGNED NOT NULL, -- (0 means 'public.')
-
---     -- is_hashed TINYINT UNSIGNED NOT NULL, CHECK (is_hashed <= 1),
-
---     def_key VARCHAR(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-
---     ent_id BIGINT UNSIGNED NOT NULL,
-
---     PRIMARY KEY (
---         ent_type,
---         editor_id,
---         whitelist_id,
---         def_key
---     )
--- );
-
-
-
-
-
-
-
-
--- /* Initial entities */
-
--- INSERT INTO Entities (
---     id, ent_type, def_str
--- )
--- VALUES
---     -- (2, "t", "u"),
---     -- (3, "t", "e"),
---     -- (4, "t", "s"),
---     -- (5, "t", "f"),
---     -- (7, "t", "h"),
---     -- (8, "t", "8"),
---     -- (18, "d", "original_DB_node"),
---     (19, "u", "initial_admin");
-
--- INSERT INTO Entities (
---     id, ent_type, def_str, creator_id, is_editable
--- )
--- VALUES (20, "e", '{}', 19, 1);
-
-
-
-
--- INSERT INTO EntitySecKeys (
---     ent_type, def_key, ent_id
--- )
--- VALUES
---     -- ("t", "u", 2),
---     -- ("t", "e", 3),
---     -- ("t", "s", 4),
---     -- ("t", "f", 5),
---     -- ("t", "h", 7),
---     -- ("t", "8", 8),
---     -- ("d", "original_DB_node", 18),
---     ("u", "initial_admin", 19);
---     -- No sec. key for ("e", '{}', 9).
-
-
-
-
 
 
 
