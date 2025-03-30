@@ -544,6 +544,9 @@ export class ScriptInterpreter {
 
 
   static executeAsyncCallback(fun, inputArr, callerNode, callerEnv) {
+    if (callerEnv.scriptGlobals.isExiting) {
+      throw new ExitException();
+    }
     try {
       this.executeFunction(fun, inputArr, callerNode, callerEnv)
     }

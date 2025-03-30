@@ -32,15 +32,15 @@ export class MainDBInterface {
 
   static readFileMetaData(fileID) {
     let sql =
-      "SELECT dir_id, file_name, file_type, is_private " +
+      "SELECT dir_id, file_name, is_private, LENGTH(content_data) " +
       "FROM Files FORCE INDEX (PRIMARY) " +
       "WHERE file_id = ?;";
     let paramValArr = [fileID];
     let paramNameArr = ["fileID"];
     let typeArr = ["ulong"];
-    let [[dirID, name, type, isPrivate, isHomeDir]] =
+    let [[dirID, name, isPrivate, isHomeDir, contentLen]] =
       this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return [dirID, name, type, isPrivate, isHomeDir];
+    return [dirID, name, isPrivate, isHomeDir, contentLen];
   }
 
   static readTextFileContent(fileID) {
@@ -58,30 +58,30 @@ export class MainDBInterface {
 
   static readTextFileData(fileID) {
     let sql =
-      "SELECT dir_id, file_name, file_type, is_private, " +
+      "SELECT dir_id, file_name, is_private, " +
         "CAST(content_data AS CHAR) " +
       "FROM Files FORCE INDEX (PRIMARY) " +
       "WHERE file_id = ?;";
     let paramValArr = [fileID];
     let paramNameArr = ["fileID"];
     let typeArr = ["ulong"];
-    let [[dirID, name, type, isPrivate, isHomeDir, contentStr]] =
+    let [[dirID, name, isPrivate, isHomeDir, contentStr]] =
       this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return [dirID, name, type, isPrivate, isHomeDir, contentStr];
+    return [dirID, name, isPrivate, isHomeDir, contentStr];
   }
 
   static readFileData(fileID) {
     let sql =
-      "SELECT dir_id, file_name, file_type, is_private, " +
+      "SELECT dir_id, file_name, is_private, " +
       "  TO_BASE64(content_data) " +
       "FROM Files FORCE INDEX (PRIMARY) " +
       "WHERE file_id = ?;";
     let paramValArr = [fileID];
     let paramNameArr = ["fileID"];
     let typeArr = ["ulong"];
-    let [[dirID, name, type, isPrivate, isHomeDir, contentBase64]] =
+    let [[dirID, name, isPrivate, isHomeDir, contentBase64]] =
       this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return [dirID, name, type, isPrivate, isHomeDir, contentBase64];
+    return [dirID, name, isPrivate, isHomeDir, contentBase64];
   }
 
 
@@ -93,7 +93,7 @@ export class MainDBInterface {
       "WHERE parent_dir_id = ? AND dir_name = ?;";
     let paramValArr = [parentDirID, name,];
     let paramNameArr = ["parentDirID", "name"];
-    let typeArr = ["ulong", "tiny_str"];
+    let typeArr = ["ulong", "str255"];
     let [[dirID]] =
       this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
     return dirID;
@@ -106,7 +106,7 @@ export class MainDBInterface {
       "WHERE dir_id = ? AND file_name = ?;";
     let paramValArr = [dirID, name,];
     let paramNameArr = ["dirID", "name"];
-    let typeArr = ["ulong", "tiny_str"];
+    let typeArr = ["ulong", "str255"];
     let [[dirID]] =
       this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
     return dirID;
@@ -183,6 +183,158 @@ export class MainDBInterface {
 
 
 
+
+
+  /* File/directory creations, edits, moves, and deletions */
+
+  static createDir(
+    parentDirID = 1, name, isPrivate = 0, isHome = 0, adminID = 0
+  ) {
+    isPrivate = isPrivate ? 1 : 0;
+    isHome = isHome ? 1 : 0;
+    let sql =
+      "INSERT IGNORE INTO Directories " +
+      "(parent_dir_id, dir_name, is_private, is_home, admin_id)"
+      "VALUES (?, ?, ?, ?, " + (adminID ? "?" : "NULL AND ?") + "); " +
+      "SELECT LAST_INSERT_ID() AS dirID;";
+    let paramValArr = [parentDirID, name, isPrivate, isHome, adminID];
+    let paramNameArr =
+      ["parentDirID", "name", "isPrivate", "isHome", "adminID"];
+    let typeArr = ["ulong", "str255", "bool", "bool", "ulong"];
+    let [[dirID]] =
+      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    return dirID;
+  }
+
+  static editDir(
+    dirID, name, isPrivate = 0, isHome = 0, adminID = 0
+  ) {
+    isPrivate = isPrivate ? 1 : 0;
+    isHome = isHome ? 1 : 0;
+    let sql =
+      "UPDATE IGNORE Directories " +
+      "SET dir_name = ?, is_private = ?, is_home = ?, " +
+        "admin_id = " + (adminID ? "? " : "NULL AND ? ")
+      "WHERE dir_id = ?;" +
+      "SELECT ROW_COUNT() AS wasEdited";
+    let paramValArr = [name, isPrivate, isHome, adminID, dirID];
+    let paramNameArr = ["name", "isPrivate", "isHome", "adminID", "dirID"];
+    let typeArr = ["str255", "bool", "bool", "ulong", "ulong"];
+    let [[wasEdited]] =
+      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    return wasEdited;
+  }
+
+  static moveDir(dirID, newParentID) {
+    let sql =
+      "UPDATE IGNORE Directories " +
+      "SET parent_dir_id = ? " +
+      "WHERE dir_id = ?;" +
+      "SELECT ROW_COUNT() AS wasEdited";
+    let paramValArr = [newParentID, dirID];
+    let paramNameArr = ["newParentID", "dirID"];
+    let typeArr = ["ulong", "ulong"];
+    let [[wasEdited]] =
+      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    return wasEdited;
+  }
+
+  static deleteDir(dirID) {
+    let sql =
+      "DELETE FROM Directories " +
+      "WHERE dir_id = ?;" +
+      "SELECT ROW_COUNT() AS wasDeleted";
+    let paramValArr = [dirID];
+    let paramNameArr = ["dirID"];
+    let typeArr = ["ulong"];
+    let [[wasDeleted]] =
+      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    return wasDeleted;
+  }
+
+
+
+
+
+  static createTextFile(dirID, name, isPrivate = 0, contentStr) {
+    isPrivate = isPrivate ? 1 : 0;
+    let sql =
+      "INSERT IGNORE INTO Files " +
+      "(dir_id, file_name, is_private, content_data)"
+      "VALUES (?, ?, ?, CAST(? AS BINARY)); " +
+      "SELECT LAST_INSERT_ID() AS dirID;";
+    let paramValArr = [dirID, name, isPrivate, contentStr];
+    let paramNameArr = ["dirID", "name", "isPrivate", "contentStr"];
+    let typeArr = ["ulong", "str255", "bool", "blob_text"];
+    let [[dirID]] =
+      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    return dirID;
+  }
+
+  static createFile(dirID, name, isPrivate = 0, contentBase64) {
+    isPrivate = isPrivate ? 1 : 0;
+    let sql =
+      "INSERT IGNORE INTO Files " +
+      "(dir_id, file_name, is_private, content_data)"
+      "VALUES (?, ?, ?, FROM_BASE64(?)); " +
+      "SELECT LAST_INSERT_ID() AS dirID;";
+    let paramValArr = [dirID, name, isPrivate, contentBase64];
+    let paramNameArr = ["dirID", "name", "isPrivate", "contentBase64"];
+    let typeArr = ["ulong", "str255", "bool", "blob_base64"];
+    let [[dirID]] =
+      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    return dirID;
+  }
+
+  static editTextFile(
+    fileID, name, isPrivate = 0, contentStr
+  ) {
+    isPrivate = isPrivate ? 1 : 0;
+    let sql =
+      "UPDATE IGNORE Files " +
+      "SET file_name = ?, is_private = ?, content_data = CAST(? AS BINARY) " +
+      "WHERE file_id = ?;" +
+      "SELECT ROW_COUNT() AS wasEdited";
+    let paramValArr = [name, isPrivate, contentStr, fileID];
+    let paramNameArr = ["name", "isPrivate", "contentStr", "fileID"];
+    let typeArr = ["str255", "bool", "blob_text", "ulong"];
+    let [[wasEdited]] =
+      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    return wasEdited;
+  }
+
+  static moveFile(fileID, newParentID) {
+    let sql =
+      "UPDATE IGNORE Files " +
+      "SET dir_id = ? " +
+      "WHERE file_id = ?;" +
+      "SELECT ROW_COUNT() AS wasEdited";
+    let paramValArr = [newParentID, fileID];
+    let paramNameArr = ["newParentID", "fileID"];
+    let typeArr = ["ulong", "ulong"];
+    let [[wasEdited]] =
+      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    return wasEdited;
+  }
+
+  static deleteFile(fileID) {
+    let sql =
+      "DELETE FROM Directories " +
+      "WHERE file_id = ?;" +
+      "SELECT ROW_COUNT() AS wasDeleted";
+    let paramValArr = [fileID];
+    let paramNameArr = ["fileID"];
+    let typeArr = ["ulong"];
+    let [[wasDeleted]] =
+      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
+    return wasDeleted;
+  }
+
+
+
+
+
+
   /* Data table reads */
 
   static readBinKeyTableElemData(dirID, listKeyBase64, elemKeyBase64) {
@@ -193,7 +345,7 @@ export class MainDBInterface {
         "elem_key = FROM_BASE64(?);";
     let paramValArr = [dirID, listKeyBase64, elemKeyBase64];
     let paramNameArr = ["dirID", "listKeyBase64", "elemKeyBase64"];
-    let typeArr = ["ulong", "tiny_base64_str", "tiny_base64_str"];
+    let typeArr = ["ulong", "str255_base64", "str255_base64"];
     let [[elemPayloadBase64]] =
       this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
     return elemPayloadBase64;
@@ -216,7 +368,7 @@ export class MainDBInterface {
     let paramNameArr =
       ["dirID", "listKeyBase64", "loBase64", "hiBase64", "maxNum", "numOffset"];
     let typeArr = [
-      "ulong", "tiny_base64_str", "tiny_base64_str", "tiny_base64_str",
+      "ulong", "str255_base64", "str255_base64", "str255_base64",
       "unit", "uint",
     ];
     let res =
@@ -232,7 +384,7 @@ export class MainDBInterface {
       "WHERE dir_id = ? AND list_key = FROM_BASE64(?) AND elem_key = ?;";
     let paramValArr = [dirID, listKeyBase64, elemKey];
     let paramNameArr = ["dirID", "listKeyBase64", "elemKey"];
-    let typeArr = ["ulong", "tiny_base64_str", "tiny_str"];
+    let typeArr = ["ulong", "str255_base64", "str255"];
     let [[elemPayloadBase64]] =
       this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
     return [elemPayloadBase64];
@@ -255,7 +407,7 @@ export class MainDBInterface {
     let paramNameArr =
       ["dirID", "listKeyBase64", "lo", "hi", "maxNum", "numOffset"];
     let typeArr = [
-      "ulong", "tiny_base64_str", "tiny_str", "tiny_str", "unit", "uint",
+      "ulong", "str255_base64", "str255", "str255", "unit", "uint",
     ];
     let res =
       this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
@@ -272,7 +424,7 @@ export class MainDBInterface {
       "  elem_key = FROM_BASE64(?);";
     let paramValArr = [dirID, listKeyBase64, elemKeyBase64];
     let paramNameArr = ["dirID", "listKeyBase64", "elemKeyBase64"];
-    let typeArr = ["ulong", "tiny_base64_str", "tiny_base64_str"];
+    let typeArr = ["ulong", "str255_base64", "str255_base64"];
     let [[elemScoreBase64, elemPayloadBase64]] =
       this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
     return [elemScoreBase64, elemPayloadBase64];
@@ -296,7 +448,7 @@ export class MainDBInterface {
     let paramNameArr =
       ["dirID", "listKeyBase64", "loBase64", "hiBase64", "maxNum", "numOffset"];
     let typeArr = [
-      "ulong", "tiny_base64_str", "tiny_base64_str", "tiny_base64_str",
+      "ulong", "str255_base64", "str255_base64", "str255_base64",
       "unit", "uint",
     ];
     let res =
@@ -322,7 +474,7 @@ export class MainDBInterface {
     let paramNameArr =
       ["dirID", "listKeyBase64", "loBase64", "hiBase64", "maxNum", "numOffset"];
     let typeArr = [
-      "ulong", "tiny_base64_str", "tiny_base64_str", "tiny_base64_str",
+      "ulong", "str255_base64", "str255_base64", "str255_base64",
       "unit", "uint",
     ];
     let res =
@@ -332,88 +484,20 @@ export class MainDBInterface {
 
 
 
+  /* Data table writes */
 
-
-  /* File/directory creations, edits, moves, and deletions */
-
-  static createDir(
-    parentDirID = 1, name, isPrivate = 0, isHome = 0, adminID = 0
-  ) {
-    isPrivate = isPrivate ? 1 : 0;
-    isHome = isHome ? 1 : 0;
+  static writeBinKeyTableElemData(dirID, listKeyBase64, elemKeyBase64) {
     let sql =
-      "INSERT IGNORE INTO Directories " +
-      "(parent_dir_id, dir_name, is_private, is_home, admin_id)"
-      "VALUES (?, ?, ?, ?, " + (adminID ? "?" : "NULL AND ?") + "); " +
-      "SELECT LAST_INSERT_ID() AS dirID;";
-    let paramValArr = [parentDirID, name, isPrivate, isHome, adminID];
-    let paramNameArr =
-      ["parentDirID", "name", "isPrivate", "isHome", "adminID"];
-    let typeArr = ["ulong", "tiny_str", "bool", "bool", "ulong"];
-    let [[dirID]] =
+      "SELECT TO_BASE64(elem_payload) " +
+      "FROM BinKeyDataTables FORCE INDEX (PRIMARY) " +
+      "WHERE dir_id = ? AND list_key = FROM_BASE64(?) AND " +
+        "elem_key = FROM_BASE64(?);";
+    let paramValArr = [dirID, listKeyBase64, elemKeyBase64];
+    let paramNameArr = ["dirID", "listKeyBase64", "elemKeyBase64"];
+    let typeArr = ["ulong", "str255_base64", "str255_base64"];
+    let [[elemPayloadBase64]] =
       this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return dirID;
+    return elemPayloadBase64;
   }
-
-  static editDir(
-    dirID, name, isPrivate = 0, isHome = 0, adminID = 0
-  ) {
-    isPrivate = isPrivate ? 1 : 0;
-    isHome = isHome ? 1 : 0;
-    let sql =
-      "UPDATE IGNORE Directories " +
-      "SET dir_name = ?, is_private = ?, is_home = ?, " +
-        "admin_id = " + (adminID ? "? " : "NULL AND ? ")
-      "WHERE dir_id = ?;" +
-      "SELECT ROW_COUNT() AS wasEdited";
-    let paramValArr = [name, isPrivate, isHome, adminID, dirID];
-    let paramNameArr = ["name", "isPrivate", "isHome", "adminID", "dirID"];
-    let typeArr = ["tiny_str", "bool", "bool", "ulong", "ulong"];
-    let [[wasEdited]] =
-      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return wasEdited;
-  }
-
-  static moveDir(dirID, newParentID) {
-    isPrivate = isPrivate ? 1 : 0;
-    isHome = isHome ? 1 : 0;
-    let sql =
-      "UPDATE IGNORE Directories " +
-      "SET parent_dir_id = ? " +
-      "WHERE dir_id = ?;" +
-      "SELECT ROW_COUNT() AS wasEdited";
-    let paramValArr = [newParentID, dirID];
-    let paramNameArr = ["newParentID", "dirID"];
-    let typeArr = ["ulong", "ulong"];
-    let [[wasEdited]] =
-      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return wasEdited;
-  }
-
-  static deleteDir(dirID) {
-    isPrivate = isPrivate ? 1 : 0;
-    isHome = isHome ? 1 : 0;
-    let sql =
-      "DELETE FROM Directories " +
-      "WHERE dir_id = ?;" +
-      "SELECT ROW_COUNT() AS wasDeleted";
-    let paramValArr = [dirID];
-    let paramNameArr = ["dirID"];
-    let typeArr = ["ulong"];
-    let [[wasDeleted]] =
-      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return wasDeleted;
-  }
-
-  static cloneDir(
-    targetDirID, destDirID, name, isPrivate = 0, isHome = 0, adminID = 0
-  ) {
-    isPrivate = isPrivate ? 1 : 0;
-    isHome = isHome ? 1 : 0;
-    // TODO: Create a new directory as a child of destDir, and then opy all
-    // public files and directories within targetDir to the new directory, and
-    // also insert the clone into ClonedDirectories.
-  }
-
 }
 

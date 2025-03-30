@@ -54,19 +54,6 @@ INSERT INTO Directories (dir_id, dir_name)
 VALUES (1, "");
 
 
-CREATE TABLE ClonedDirectories (
-
-    clone_child_dir_id BIGINT UNSIGNED PRIMARY KEY,
-
-    clone_parent_dir_id BIGINT UNSIGNED NOT NULL,
-
-    UNIQUE INDEX sec_idx (
-        clone_parent_dir_id,
-        clone_child_dir_id
-    )
-
-) ROW_FORMAT = COMPRESSED;
-
 
 CREATE TABLE Files (
 
@@ -76,11 +63,9 @@ CREATE TABLE Files (
 
     file_name VARCHAR(255) NOT NULL CHARACTER SET utf8mb4,
 
-    file_type VARCHAR(32) NOT NULL CHARACTER SET utf8mb4,
+    is_private BOOL NOT NULL DEFAULT 0,
 
-    is_private BOOL NOT NULL,
-
-    content_data BLOB,
+    content_data BLOB NOT NULL DEFAULT "",
 
     UNIQUE INDEX sec_idx (
         dir_id,
@@ -91,30 +76,6 @@ CREATE TABLE Files (
 ) ROW_FORMAT = COMPRESSED;
 
 
-
-
-
-CREATE TABLE StorageGasPayments (
-
-    dir_id BIGINT UNSIGNED PRIMARY KEY,
-
-    payments_today BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    payments_this_week BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    payments_this_month BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    payments_this_quarter BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    payments_this_year BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    payments_last_five_years BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    payments_all_time BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    last_updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-
-) ROW_FORMAT = COMPRESSED;
 
 
 
@@ -258,6 +219,35 @@ CREATE TABLE FulltextIndexEntries (
 
 
 
+
+
+
+
+
+
+
+
+CREATE TABLE StorageGasPayments (
+
+    dir_id BIGINT UNSIGNED PRIMARY KEY,
+
+    payments_today BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+    payments_this_week BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+    payments_this_month BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+    payments_this_quarter BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+    payments_this_year BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+    payments_last_five_years BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+    payments_all_time BIGINT UNSIGNED NOT NULL DEFAULT 0,
+
+    last_updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+
+) ROW_FORMAT = COMPRESSED;
 
 
 
