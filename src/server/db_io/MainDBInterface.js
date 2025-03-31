@@ -1,10 +1,4 @@
 
-import {MainDBConnector} from "./DBConnector";
-import {InputValidator} from "../user_input/InputValidator";
-
-const mainDBConnector = new MainDBConnector();
-
-
 
 export class MainDBInterface {
 
@@ -16,169 +10,138 @@ export class MainDBInterface {
 
   /* File/directory reads */
 
-  static readDirMetaData(dirID) {
+  static async readModDirMetaData(conn, dirID) {
     let sql =
-      "SELECT parent_dir_id, dir_name, is_private, is_home_dir, admin_id " +
-      "FROM Directories FORCE INDEX (PRIMARY) " +
-      "WHERE dir_id = ?;";
-    let paramValArr = [dirID];
-    let paramNameArr = ["dirID"];
-    let typeArr = ["ulong"];
-// TODO: Possibly wrap in more destructuring:
-    let [[parentDirID, name, isPrivate, isHomeDir, adminID]] =
-      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return [parentDirID, name, isPrivate, isHomeDir, adminID];
+`BEGIN proc:
+  DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
+  IF (dirID IS NULL) THEN
+    LEAVE proc;
+  END IF;
+  SELECT admin_id, is_private
+  FROM ModuleDirectories FORCE INDEX (PRIMARY)
+  WHERE dir_id = dirID;
+END proc`;
+    let options = {sql: sql, rowsAsArray: true};
+    let [[[
+      adminID, isPrivate
+    ]]] = await conn.query(options, [
+      dirID
+    ]);
+    return [adminID, isPrivate];
   }
 
-  static readFileMetaData(fileID) {
-    let sql =
-      "SELECT dir_id, file_name, is_private, LENGTH(content_data) " +
-      "FROM Files FORCE INDEX (PRIMARY) " +
-      "WHERE file_id = ?;";
-    let paramValArr = [fileID];
-    let paramNameArr = ["fileID"];
-    let typeArr = ["ulong"];
-    let [[dirID, name, isPrivate, isHomeDir, contentLen]] =
-      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return [dirID, name, isPrivate, isHomeDir, contentLen];
-  }
 
-  static readTextFileContent(fileID) {
+  static async readModDirDescendants(conn, dirID, maxNum, numOffset) {
     let sql =
-      "SELECT CAST(content_data AS CHAR) " +
-      "FROM Files FORCE INDEX (PRIMARY) " +
-      "WHERE file_id = ?;";
-    let paramValArr = [fileID];
-    let paramNameArr = ["fileID"];
-    let typeArr = ["ulong"];
-    let [[contentStr]] =
-      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return contentStr;
-  }
-
-  static readTextFileData(fileID) {
-    let sql =
-      "SELECT dir_id, file_name, is_private, " +
-        "CAST(content_data AS CHAR) " +
-      "FROM Files FORCE INDEX (PRIMARY) " +
-      "WHERE file_id = ?;";
-    let paramValArr = [fileID];
-    let paramNameArr = ["fileID"];
-    let typeArr = ["ulong"];
-    let [[dirID, name, isPrivate, isHomeDir, contentStr]] =
-      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return [dirID, name, isPrivate, isHomeDir, contentStr];
-  }
-
-  static readFileData(fileID) {
-    let sql =
-      "SELECT dir_id, file_name, is_private, " +
-      "  TO_BASE64(content_data) " +
-      "FROM Files FORCE INDEX (PRIMARY) " +
-      "WHERE file_id = ?;";
-    let paramValArr = [fileID];
-    let paramNameArr = ["fileID"];
-    let typeArr = ["ulong"];
-    let [[dirID, name, isPrivate, isHomeDir, contentBase64]] =
-      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return [dirID, name, isPrivate, isHomeDir, contentBase64];
+`BEGIN proc:
+  DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
+  DECLARE maxNum INT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
+  DECLARE numOffset INT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
+  IF (dirID IS NULL) THEN
+    LEAVE proc;
+  END IF;
+  SELECT file_path
+  FROM Files FORCE INDEX (PRIMARY)
+  WHERE dir_id = dirID
+  ORDER BY file_path ASC
+  LIMIT numOffset, maxNum;
+END proc`;
+    let options = {sql: sql, rowsAsArray: true};
+    let [[pathArr]] = await conn.query(options, [
+      dirID, maxNum, numOffset
+    ]);
+    return [pathArr];
   }
 
 
 
-  static readChildDirID(parentDirID, name) {
+  static async readFileMetaData(conn, dirID, filePath) {
+    if (typeof filePath !== "string" || filePath.length > 700) throw (
+      "readFileMetaData(): filePath is not a string, or too long"
+    );
     let sql =
-      "SELECT dir_id " +
-      "FROM Directories FORCE INDEX (sec_idx) " +
-      "WHERE parent_dir_id = ? AND dir_name = ?;";
-    let paramValArr = [parentDirID, name,];
-    let paramNameArr = ["parentDirID", "name"];
-    let typeArr = ["ulong", "str255"];
-    let [[dirID]] =
-      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return dirID;
+`BEGIN proc:
+  DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
+  DECLARE filePath VARCHAR(700) DEFAULT (CAST(? AS CHAR));
+  IF (dirID IS NULL OR filePath IS NULL) THEN
+    LEAVE proc;
+  END IF;
+  SELECT modified_at, prev_modified_at
+  FROM Files FORCE INDEX (PRIMARY)
+  WHERE dir_id = dirID AND file_path = filePath;
+END proc`;
+    let options = {sql: sql, rowsAsArray: true};
+    let [[[
+      modifiedAt, prevModifiedAt
+    ]]] = await conn.query(options, [
+      dirID, filePath
+    ]);
+    return [modifiedAt, prevModifiedAt];
   }
 
-  static readChildFileID(dirID, name) {
+
+
+  static async readTextFileContent(conn, dirID, filePath) {
+    if (typeof filePath !== "string" || filePath.length > 700) throw (
+      "readFileMetaData(): filePath is too long"
+    );
     let sql =
-      "SELECT file_id " +
-      "FROM Files FORCE INDEX (sec_idx) " +
-      "WHERE dir_id = ? AND file_name = ?;";
-    let paramValArr = [dirID, name,];
-    let paramNameArr = ["dirID", "name"];
-    let typeArr = ["ulong", "str255"];
-    let [[dirID]] =
-      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return dirID;
+`BEGIN proc:
+  DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
+  DECLARE filePath VARCHAR(700) DEFAULT (CAST(? AS CHAR));
+  DECLARE fileID BIGINT UNSIGNED;
+  IF (dirID IS NULL OR filePath IS NULL) THEN
+    LEAVE proc;
+  END IF;
+  SELECT file_id INTO fileID
+  FROM Files FORCE INDEX (PRIMARY)
+  WHERE dir_id = dirID AND file_path = filePath;
+  SELECT content_data
+  FROM TextFileContents FORCE INDEX (PRIMARY)
+  WHERE file_id = fileID;
+END proc`;
+    let options = {sql: sql, rowsAsArray: true};
+    let [[[
+      modifiedAt, prevModifiedAt
+    ]]] = await conn.query(options, [
+      dirID, filePath
+    ]);
+    return [modifiedAt, prevModifiedAt];
   }
 
 
-  static readDirChildren(
-    parentDirID, maxNum = 100, numOffset = 0, isAscending = true
+
+  static async readBSTFileScoreOrderedList(
+    conn, dirID, filePath, loBase64 = "", hiBase64 = "", maxNum, numOffset = 0,
   ) {
     let sql =
-      "SELECT dir_name, dir_id " +
-      "FROM Directories FORCE INDEX (sec_idx) " +
-      "WHERE parent_dir_id = ? " +
-      "ORDER BY dir_name " + (isAscending ? "ASC " : "DESC ") +
-      "LIMIT ?, ?;";
-    let paramValArr = [parentDirID, numOffset, maxNum];
-    let paramNameArr = ["parentDirID", "numOffset", "maxNum"];
-    let typeArr = ["ulong", "uint", "uint"];
-    let res =
-      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return res;
+`BEGIN proc:
+  DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
+  DECLARE filePath VARCHAR(700) DEFAULT (CAST(? AS CHAR));
+  DECLARE lo VARBINARY(255) DEFAULT (FROM_BASE64(CAST(? AS CHAR)));
+  DECLARE hi VARBINARY(255) DEFAULT (FROM_BASE64(CAST(? AS CHAR)));
+  DECLARE maxNum INT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
+  DECLARE numOffset INT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
+  ...
+  DECLARE fileID BIGINT UNSIGNED;
+  IF (dirID IS NULL OR filePath IS NULL) THEN
+    LEAVE proc;
+  END IF;
+  SELECT file_id INTO fileID
+  FROM Files FORCE INDEX (PRIMARY)
+  WHERE dir_id = dirID AND file_path = filePath;
+  SELECT content_data
+  FROM TextFileContents FORCE INDEX (PRIMARY)
+  WHERE file_id = fileID;
+END proc`;
+    let options = {sql: sql, rowsAsArray: true};
+    let [[[
+      modifiedAt, prevModifiedAt
+    ]]] = await conn.query(options, [
+      dirID, filePath
+    ]);
+    return [modifiedAt, prevModifiedAt];
   }
-
-  static readFileChildren(
-    dirID, maxNum = 100, numOffset = 0, isAscending = true
-  ) {
-    let sql =
-      "SELECT file_name, file_id " +
-      "FROM Files FORCE INDEX (sec_idx) " +
-      "WHERE dir_id = ? " +
-      "ORDER BY dir_name " + (isAscending ? "ASC " : "DESC ") +
-      "LIMIT ?, ?;";
-    let paramValArr = [dirID, numOffset, maxNum];
-    let paramNameArr = ["dirID", "numOffset", "maxNum"];
-    let typeArr = ["ulong", "uint", "uint"];
-    let res =
-      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return res;
-  }
-
-
-
-  static readDirCloneChildren(
-    dirID, maxNum = 100, numOffset = 0, isAscending = true
-  ) {
-    let sql =
-      "SELECT clone_child_dir_id " +
-      "FROM ClonedDirectories FORCE INDEX (sec_idx) " +
-      "WHERE clone_parent_dir_id = ? " +
-      "ORDER BY clone_child_dir_id " + (isAscending ? "ASC " : "DESC ") +
-      "LIMIT ?, ?;";
-    let paramValArr = [dirID, numOffset, maxNum];
-    let paramNameArr = ["dirID", "numOffset", "maxNum"];
-    let typeArr = ["ulong", "uint", "uint"];
-    let res =
-      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return res;
-  }
-
-  static readDirCloneParent(dirID) {
-    let sql =
-      "SELECT clone_parent_dir_id " +
-      "FROM ClonedDirectories FORCE INDEX (PRIMARY) " +
-      "WHERE clone_child_dir_id = ?;";
-    let paramValArr = [dirID];
-    let paramNameArr = ["dirID"];
-    let typeArr = ["ulong"];
-    let [[cloneParentDirID]] =
-      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return cloneParentDirID;
-  }
-
 
 
 
