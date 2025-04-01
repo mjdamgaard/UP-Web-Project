@@ -475,32 +475,35 @@ export class ScriptInterpreter {
 
 
   static executeFunction(
-    fun, inputArr, callerNode, callerEnv, thisVal, docRef, signal, funName
+    fun, inputArr, callerNode, callerEnv, thisVal, signalDocName, signal,
+    isServerSide, funName
   ) {
-    let {
-      protect, protectModuleID, permissions, settings
-    } = callerEnv.scriptGlobals;
+    let {protect, permissions} = callerEnv.scriptGlobals;
     let protectData = callerEnv.getProtectData();
 
     // If the function is a method of a protected object, call protect() in
-    // order to check the signal pair (docRef and signal), and also to get the
-    // new protectData to give to the new function environment.
+    // order to check the signal, and also to get the new protectData to give
+    // to the new function environment.
     if (thisVal instanceof ProtectedObject) {
-      protectData = protect(
-        docRef, signal, protectModuleID, permissions, protectData,
-        thisVal.moduleRef
-      );
+      // Then finally, if signal is truthy signal, emit that signal to
+      // protect(), together with the name, signalDocName, of the document
+      // that defines the meaning of the signal.
+      if (signal) {
+        protectData = protect(
+          signalDocName, signal, permissions, protectData, thisVal.modDirID
+        );
+      }
 
-      // And in case the returned protectData tells us to run the method on the
-      // server, then we send a request to the server instead of running the
+      // And if the method is a server-side method, and we are on the client
+      // side, we then send a request to the server instead of running the
       // function client-side. We also always expect the callback to be the
       // last input in inputArr, so we execute that upon the return of the
       // result from the server.
-      if (protectData.runOnServer && !IS_SERVER_SIDE) {
+      if (isServerSide && !IS_SERVER_SIDE) {
         let callback = inputArr.at(-1);
         let inputDataArr = inputArr.slice(0, -1);
         this.executeProtectedMethodOnServer(
-          thisVal.moduleID, funName, inputDataArr, callback,
+          thisVal.modDirID, funName, inputDataArr, callback,
           callerNode, callerEnv
         );
         return;
@@ -514,7 +517,7 @@ export class ScriptInterpreter {
       // value.
       if (fun.signal !== undefined) {
         protectData = protect(
-          fun.docRef, fun.signal, protectModuleID, permissions, protectData
+          fun.signalDocName, fun.signal, permissions, protectData
         );
       }
 
@@ -536,7 +539,7 @@ export class ScriptInterpreter {
       );
     }
     else throw new RuntimeError(
-      "Function call with a non-function-valued expression",
+      "Function call to a non-function",
       callerNode, callerEnv
     );
   }
@@ -1280,8 +1283,8 @@ export class ScriptInterpreter {
     decrCompGas(rootExp, environment);
 
     // Evaluate the chained expression accumulatively, one postfix at a time. 
-    let postfix, objVal, thisVal, safeIndex, docRef, signal, funName;
-    let protectData = environment.getProtectData();
+    let postfix, objVal, thisVal, safeIndex, funName,
+      isPrivate, isServerSide, signalDocName, signal;
     for (let i = 0; i < len; i++) {
       postfix = postfixArr[i];
 
@@ -1289,7 +1292,7 @@ export class ScriptInterpreter {
       // current val to objVal.
       if (postfix.type === "member-accessor") {
         objVal = thisVal = val;
-        docRef, signal = funName = undefined;
+        signalDocName = signal = funName = undefined;
 
         // Throw a BrokenOptionalChainException if an optional chaining is
         // broken.
@@ -1323,11 +1326,21 @@ export class ScriptInterpreter {
           val = objVal.val[safeIndex];
         }
 
-        // Else if objVal is a protected object, get the public method/property,
-        // or the protected or private property with some additional checks.
+        // Else if objVal is a protected object, get the method, and also make
+        // some checks.
         else if (objVal instanceof ProtectedObject) {
-          // We first of all want to check that the object isn't being used
-          // outside of its own declaration environment call stack.
+          // Get the member, and record the method's name in funName.
+          [val, isPrivate, isServerSide, signalDocName, signal] =
+            objVal.methods[safeIndex];
+          funName = postfix.ident;
+
+          // If no such member exist, continue with an undefined val.
+          if (val === undefined) {
+            continue;
+          }
+
+          // Else, first of all check that the object isn't being used outside
+          // its own declaration environment call stack.
           let isValid = environment.isCallStackDescendentOf(objVal.decEnv);
           if (!isValid) throw new RuntimeError(
             "A protected object was used outside of the " +
@@ -1335,10 +1348,19 @@ export class ScriptInterpreter {
             postfix, environment
           );
 
-          // Then first look in the private members, and if one is found, check
-          // that rootExp is a 'this' keyword, and that i === 1.
-          [val, docRef, signal] = objVal.privateMembers[safeIndex];
-          if (val !== undefined) {
+          // Also check that the method is called immediately, as the methods
+          // of protected objects cannot be accessed otherwise.
+          if (postfixArr[i + 1]?.type !== "expression-tuple") {
+            throw new RuntimeError(
+              "Cannot access a method of a protected object without " +
+              "calling it",
+              postfix, environment
+            );
+          }
+
+          // If the method is private, check that rootExp is a 'this' keyword,
+          // and that i === 1.
+          if (isPrivate) {
             if (i !== 1 || rootExp.type !== "this-keyword") {
               throw new RuntimeError(
                 "Trying to access a private member from outside a protected " +
@@ -1346,69 +1368,29 @@ export class ScriptInterpreter {
                 postfix, environment
               );
             }
-
-            // Also, if the accessed member is a method, check that the user
-            // isn't trying to assign to it.
-            if (
-              val instanceof DeveloperFunction || val instanceof DefinedFunction
-            ) {
-              if (forAssignment) throw new RuntimeError(
-                "Assignment to a read-only private method",
-                postfix, environment
-              );
-            }
-
-            // And if it is a private attribute, either emit a "get" or a
-            // "set" signal, depending on whether it is accessed forAssignment
-            // or not. 
-            else {
-              let {protect, protectModuleID, permissions} =
-                environment.scriptGlobals;
-              protectData = protect(
-                INIT_PROTECT_DOC_ID, forAssignment ? "set" : "get",
-                protectModuleID, permissions, protectData, objVal.moduleRef
-              );
-            }
           }
 
-          // Else look in the protected members.
-          else {
-            [val, docRef, signal] = objVal.protectedMembers[safeIndex];
+          // Also check that the user isn't trying to assign to the method.
+          if (forAssignment) throw new RuntimeError(
+            "Assignment to a read-only method of a protected object",
+            postfix, environment
+          );
 
-            // And throw if the user tries to assign to a non-private member,
-            if (val !== undefined && forAssignment) throw new RuntimeError(
-              "Assignment to a read-only non-private member of a " +
-              "protected object",
+          // Check that a client-side method isn't called on the server, and
+          // that a *private* server-side method isn't called client-side.
+          if (!isServerSide && IS_SERVER_SIDE) throw new RuntimeError(
+            "Call to a client-side method on the server side",
+            postfix, environment
+          );
+          if (isServerSide && isPrivate && !IS_SERVER_SIDE) {
+            throw new RuntimeError(
+              "Call to a private server-side method on the client side",
               postfix, environment
             );
           }
 
-          // Then if val is defined and is a method (function-valued), check
-          // that it is also called immediately, as the methods of protected
-          // objects cannot be accessed without being called immediately.
-          if (
-            val instanceof DeveloperFunction || val instanceof DefinedFunction
-          ) {
-            funName = postfix.ident;
-            if (postfixArr[i + 1]?.type !== "expression-tuple") {
-              throw new RuntimeError(
-                "Cannot access a method of a protected object without " +
-                "calling it",
-                postfix, environment
-              );
-            }
-          }
-
-          // Then finally, if a value was found, and with a truthy signal, emit
-          // that signal to protect(), together with the protectModuleID of the
-          // protected object, which defines the meaning of the signal.
-          if (val !== undefined && signal) {
-            let {protect, permissions} = environment.scriptGlobals;
-            protectData = protect(
-              docRef, signal, protectModuleID, permissions, protectData,
-              objVal.moduleRef
-            );
-          }
+          // And after all these check, we continue, with val and other
+          // parameters ready for the following function call.
         }
 
         // Else throw if objVal is not an (accessible) object at all.
@@ -1447,8 +1429,8 @@ export class ScriptInterpreter {
         // immutable, to val.
         val = turnImmutable(
           this.executeFunction(
-            val, inputValArr, postfix, environment, thisVal, docRef, signal,
-            funName
+            val, inputValArr, postfix, environment, thisVal, signalDocName,
+            signal, isServerSide, funName
           )
         );
       }
@@ -1830,30 +1812,25 @@ export class DefinedFunction {
 }
 
 export class DeveloperFunction {
-  constructor(fun, docRef = undefined, signal = undefined) {
+  constructor(fun, signalDocName = undefined, signal = undefined) {
     this.fun = fun;
-    if (docRef) this.docRef = docRef;
+    if (signalDocName) this.signalDocName = signalDocName;
     if (signal) this.signal = signal;
-  }
-}
-
-export class EntityReference {
-  constructor(id, placeholderPath) {
-    if (id) this.id = id;
-    if (placeholderPath) this.placeholderPath = placeholderPath;
   }
 }
 
 export class ProtectedObject {
   constructor(
-    moduleID, protectModuleID, decEnv, privateMembers, protectedMembers,
+    modDirID, protectModuleID, decEnv, methods,
   ) {
-    this.moduleRef = new EntityReference(moduleID);
+    this.modDirID = modDirID;
     this.protectModuleID = protectModuleID;
     this.decEnv = decEnv;
-    // prt./prv. member := [propVal : any, docRef: EntRef, signal : string].
-    this.privateMembers = privateMembers;
-    this.protectedMembers = protectedMembers;
+    // methods := [
+    //   fun : DefFun | UserFun, isPrivate : bool, isServerSide : bool,
+    //   signalDocName: string, signal : string
+    // ].
+    this.methods = methods;
   }
 }
 
@@ -1866,48 +1843,6 @@ export class Immutable {
 export class PassAsMutable {
   constructor(val) {
     this.val = val;
-  }
-}
-
-
-export class ScriptEntity {
-  constructor(
-    scriptNode, entID, creatorRef, isEditable, whitelistRef = null
-  ) {
-    this.scriptNode = scriptNode;
-    this.entRef = new EntityReference(entID);
-    this.creatorRef = creatorRef;
-    this.isEditable = isEditable;
-    this.whitelistRef = whitelistRef;
-  }
-}
-export class ExpressionEntity {
-  constructor(
-    expNode, entID, creatorRef, isEditable, whitelistRef = null
-  ) {
-    this.expNode = expNode;
-    this.entRef = new EntityReference(entID);
-    this.creatorRef = creatorRef;
-    this.isEditable = isEditable;
-    this.whitelistRef = whitelistRef;
-  }
-}
-export class FormalEntity {
-  constructor(
-    funEntRef, inputArr, entID, creatorRef, isEditable, whitelistRef = null
-  ) {
-    this.funEntRef = funEntRef;
-    this.inputArr = inputArr;
-    this.entRef = new EntityReference(entID);
-    this.creatorRef = creatorRef;
-    this.isEditable = isEditable;
-    this.whitelistRef = whitelistRef;
-  }
-}
-export class UserEntity {
-  constructor(username, entID) {
-    this.username = username;
-    this.entRef = new EntityReference(entID);
   }
 }
 

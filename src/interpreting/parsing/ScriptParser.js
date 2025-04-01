@@ -117,9 +117,9 @@ export const scriptGrammar = {
   "export-statement": {
     rules: [
       [
-        "/export/", "/const/", "identifier", "/=/", "/Protected|Private/!1",
-        /\(/, "string", "/,/", "string", "/,/", "expression", "/,/?",
-        /\)/, "/;/"
+        "/export/", "/const/", "identifier", "/=/", "/Protected/!1",
+        /\(/, "constant", "/,/", "constant", "/,/",
+        "string", "/,/", "string", "/,/", "expression", "/,/?", /\)/, "/;/"
       ],
       [
         "/export/", "/default/?", "/const/", "identifier!", "/=/",
@@ -135,10 +135,11 @@ export const scriptGrammar = {
           type: "export-statement",
           subtype: "protected-object-export",
           ident: children[2].ident,
-          isPrivate: (children[4] === "Private") ? true : false,
-          docID: children[6].str,
-          signal: children[8].str,
-          exp: children[10],
+          isPrivate: (children[6].lexeme === "true") ? true : false,
+          isServerSide: (children[8].lexeme === "true") ? true : false,
+          signalDocPath: children[10].str,
+          signal: children[12].str,
+          exp: children[14],
         };
       }
       else if (ruleInd === 1) {
