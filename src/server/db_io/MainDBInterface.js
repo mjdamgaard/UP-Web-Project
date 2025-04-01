@@ -8,13 +8,13 @@ export class MainDBInterface {
   }
 
 
-  /* File/directory reads */
 
   static async readModDirMetaData(conn, dirID) {
     let sql =
 `BEGIN proc:
   DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   IF (dirID IS NULL) THEN
+    SELECT NULL;
     LEAVE proc;
   END IF;
   SELECT admin_id, is_private
@@ -37,7 +37,8 @@ END proc`;
   DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   DECLARE maxNum INT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   DECLARE numOffset INT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
-  IF (dirID IS NULL) THEN
+  IF (dirID IS NULL OR maxNum IS NULL OR numOffset IS NULL) THEN
+    SELECT NULL;
     LEAVE proc;
   END IF;
   SELECT file_path
@@ -55,15 +56,100 @@ END proc`;
 
 
 
+  static async createModDir(conn, adminID, isPrivate) {
+    isPrivate = isPrivate ? 1 : 0;
+    let sql =
+`BEGIN proc:
+  DECLARE adminID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
+  DECLARE isPrivate BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
+  IF (adminID IS NULL) THEN
+    SELECT NULL;
+    LEAVE proc;
+  END IF;
+  INSERT INTO ModuleDirectories (admin_id, is_private)
+  VALUES (adminID, isPrivate);
+  SELECT LAST_INSERT_ID() AS dirID;
+END proc`;
+    let options = {sql: sql, rowsAsArray: true};
+    let [[[
+      dirID
+    ]]] = await conn.query(options, [
+      adminID, isPrivate
+    ]);
+    return dirID;
+  }
+
+
+  static async editModDir(conn, dirID, adminID, isPrivate) {
+    isPrivate = isPrivate ? 1 : 0;
+    let sql =
+`BEGIN proc:
+  DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
+  DECLARE adminID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
+  DECLARE isPrivate BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
+  IF (dirID IS NULL OR adminID IS NULL) THEN
+    SELECT NULL;
+    LEAVE proc;
+  END IF;
+  UPDATE ModuleDirectories
+  SET admin_id = adminID, is_private = isPrivate
+  WHERE dir_id = dirID;
+  SELECT ROW_COUNT() AS wasEdited;
+END proc`;
+    let options = {sql: sql, rowsAsArray: true};
+    let [[[
+      wasEdited
+    ]]] = await conn.query(options, [
+      dirID, adminID, isPrivate
+    ]);
+    return wasEdited;
+  }
+
+
+  static async deleteModDir(conn, dirID) {
+    let sql =
+`BEGIN proc:
+  DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
+  DECLARE firstFileID BIGINT UNSIGNED;
+  IF (dirID IS NULL) THEN
+    SELECT NULL;
+    LEAVE proc;
+  END IF;
+  SELECT file_id INTO firstFileID
+  FROM Files FORCE INDEX (PRIMARY)
+  WHERE dir_id = dirID
+  ORDER BY file_path
+  LIMIT 1;
+  IF (firstFileID IS NOT NULL) THEN
+    SELECT NULL;
+    LEAVE proc;
+  END IF;
+  DELETE FROM ModuleDirectories
+  WHERE dir_id = dirID;
+  SELECT ROW_COUNT() AS wasDeleted;
+END proc`;
+    let options = {sql: sql, rowsAsArray: true};
+    let [[[
+      wasDeleted
+    ]]] = await conn.query(options, [
+      dirID
+    ]);
+    return wasDeleted;
+  }
+
+
+
+
   static async readFileMetaData(conn, dirID, filePath) {
     if (typeof filePath !== "string" || filePath.length > 700) throw (
-      "readFileMetaData(): filePath is not a string, or too long"
+      "readFileMetaData(): filePath is not a string, or is too long"
     );
     let sql =
 `BEGIN proc:
   DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   DECLARE filePath VARCHAR(700) DEFAULT (CAST(? AS CHAR));
   IF (dirID IS NULL OR filePath IS NULL) THEN
+    SELECT NULL;
     LEAVE proc;
   END IF;
   SELECT modified_at, prev_modified_at
@@ -80,10 +166,41 @@ END proc`;
   }
 
 
+  static async moveFile(conn, dirID, filePath, newFilePath) {
+    if (typeof filePath !== "string" || filePath.length > 700) throw (
+      "readFileMetaData(): filePath is not a string, or is too long"
+    );
+    if (typeof newFilePath !== "string" || newFilePath.length > 700) throw (
+      "readFileMetaData(): newFilePath is not a string, or is too long"
+    );
+    let sql =
+`BEGIN proc:
+  DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
+  DECLARE filePath VARCHAR(700) DEFAULT (CAST(? AS CHAR));
+  DECLARE newFilePath VARCHAR(700) DEFAULT (CAST(? AS CHAR));
+  IF (dirID IS NULL OR filePath IS NULL OR newFilePath IS NULL) THEN
+    SELECT NULL;
+    LEAVE proc;
+  END IF;
+  UPDATE IGNORE Files
+  SET file_path = newFilePath
+  WHERE dir_id = dirID AND file_path = filePath;
+  SELECT ROW_COUNT() AS wasMoved;
+END proc`;
+    let options = {sql: sql, rowsAsArray: true};
+    let [[[
+      wasMoved
+    ]]] = await conn.query(options, [
+      dirID, filePath, newFilePath
+    ]);
+    return wasMoved;
+  }
+
+
 
   static async readTextFileContent(conn, dirID, filePath) {
     if (typeof filePath !== "string" || filePath.length > 700) throw (
-      "readFileMetaData(): filePath is too long"
+      "readFileMetaData(): filePath is not a string, or is too long"
     );
     let sql =
 `BEGIN proc:
@@ -91,6 +208,7 @@ END proc`;
   DECLARE filePath VARCHAR(700) DEFAULT (CAST(? AS CHAR));
   DECLARE fileID BIGINT UNSIGNED;
   IF (dirID IS NULL OR filePath IS NULL) THEN
+    SELECT NULL;
     LEAVE proc;
   END IF;
   SELECT file_id INTO fileID
@@ -110,9 +228,112 @@ END proc`;
   }
 
 
+  static async createTextFile(conn, dirID, filePath, contentText) {
+    if (typeof filePath !== "string" || filePath.length > 700) throw (
+      "readFileMetaData(): filePath not a string, or is too long"
+    );
+    if (typeof contentText !== "string" || contentText.length > 65535) throw (
+      "readFileMetaData(): contentText not a string, or is too long"
+    );
+    let sql =
+`BEGIN proc:
+  DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
+  DECLARE filePath VARCHAR(700) DEFAULT (CAST(? AS CHAR));
+  DECLARE contentText TEXT DEFAULT (CAST(? AS CHAR));
+  DECLARE fileID BIGINT UNSIGNED;
+  IF (dirID IS NULL OR filePath IS NULL OR contentText IS NULL) THEN
+    SELECT NULL;
+    LEAVE proc;
+  END IF;
+  INSERT INTO FileIDs () VALUES ();
+  SET fileID = LAST_INSERT_ID();
+  DELETE FROM FileIDs WHERE file_id < fileID;
+  INSERT INTO TextFileContents (file_id, content_text)
+  VALUES (fileID, contentText);
+  SELECT 1 AS wasCreated;
+END proc`;
+    let options = {sql: sql, rowsAsArray: true};
+    let [[[
+      wasCreated
+    ]]] = await conn.query(options, [
+      dirID, filePath, contentText
+    ]);
+    return wasCreated;
+  }
+
+
+  static async editTextFile(conn, dirID, filePath, contentText) {
+    if (typeof filePath !== "string" || filePath.length > 700) throw (
+      "readFileMetaData(): filePath not a string, or is too long"
+    );
+    if (typeof contentText !== "string" || contentText.length > 65535) throw (
+      "readFileMetaData(): filePath not a string, or is too long"
+    );
+    let sql =
+`BEGIN proc:
+  DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
+  DECLARE filePath VARCHAR(700) DEFAULT (CAST(? AS CHAR));
+  DECLARE contentText TEXT DEFAULT (CAST(? AS CHAR));
+  DECLARE fileID BIGINT UNSIGNED;
+  IF (dirID IS NULL OR filePath IS NULL OR contentText IS NULL) THEN
+    SELECT NULL;
+    LEAVE proc;
+  END IF;
+  SELECT file_id INTO fileID
+  FROM Files FORCE INDEX (PRIMARY)
+  WHERE dir_id = dirID AND file_path = filePath;
+  UPDATE TextFileContents
+  SET content_text = contentText
+  WHERE file_id = fileID;
+  SELECT ROW_COUNT() AS wasEdited;
+END proc`;
+    let options = {sql: sql, rowsAsArray: true};
+    let [[[
+      wasEdited
+    ]]] = await conn.query(options, [
+      dirID, filePath, contentText
+    ]);
+    return wasEdited;
+  }
+
+
+  static async deleteTextFile(conn, dirID, filePath) {
+    if (typeof filePath !== "string" || filePath.length > 700) throw (
+      "readFileMetaData(): filePath not a string, or is too long"
+    );
+    let sql =
+`BEGIN proc:
+  DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
+  DECLARE filePath VARCHAR(700) DEFAULT (CAST(? AS CHAR));
+  DECLARE fileID BIGINT UNSIGNED;
+  IF (dirID IS NULL OR filePath IS NULL) THEN
+    SELECT NULL;
+    LEAVE proc;
+  END IF;
+  SELECT file_id INTO fileID
+  FROM Files FORCE INDEX (PRIMARY)
+  WHERE dir_id = dirID AND file_path = filePath;
+  DELETE FROM TextFileContents
+  WHERE file_id = fileID;
+  DELETE FROM Files
+  WHERE dir_id = dirID AND file_path = filePath;
+  SELECT ROW_COUNT() AS wasDeleted;
+END proc`;
+    let options = {sql: sql, rowsAsArray: true};
+    let [[[
+      wasDeleted
+    ]]] = await conn.query(options, [
+      dirID, filePath
+    ]);
+    return wasDeleted;
+  }
+
+
+
 
   static async readBSTFileScoreOrderedList(
-    conn, dirID, filePath, loBase64 = "", hiBase64 = "", maxNum, numOffset = 0,
+    conn, dirID, filePath, loBase64 = null, hiBase64 = null, maxNum,
+    numOffset = 0, isAscending = 0
   ) {
     let sql =
 `BEGIN proc:
@@ -122,98 +343,80 @@ END proc`;
   DECLARE hi VARBINARY(255) DEFAULT (FROM_BASE64(CAST(? AS CHAR)));
   DECLARE maxNum INT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   DECLARE numOffset INT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
-  ...
   DECLARE fileID BIGINT UNSIGNED;
-  IF (dirID IS NULL OR filePath IS NULL) THEN
+  IF (
+    dirID IS NULL OR filePath IS NULL OR lo IS NULL OR hi IS NULL OR
+    maxNum IS NULL OR numOffset IS NULL
+  ) THEN
+    SELECT NULL;
     LEAVE proc;
   END IF;
   SELECT file_id INTO fileID
   FROM Files FORCE INDEX (PRIMARY)
   WHERE dir_id = dirID AND file_path = filePath;
-  SELECT content_data
-  FROM TextFileContents FORCE INDEX (PRIMARY)
-  WHERE file_id = fileID;
+  SELECT TO_BASE64(elem_key), TO_BASE64(elem_score), TO_BASE64(elem_payload)
+  FROM BinKeyScoredDataTables FORCE INDEX (sec_idx)
+  WHERE file_id = fileID
+    ${(hi !== null) ? "AND elem_score >= lo" : ""}
+    ${(hi !== null) ? "AND elem_score <= hi" : ""}
+  ORDER BY elem_score ${isAscending ? "ASC" : "DESC"}
+  LIMIT numOffset, maxNum;
 END proc`;
     let options = {sql: sql, rowsAsArray: true};
-    let [[[
-      modifiedAt, prevModifiedAt
-    ]]] = await conn.query(options, [
-      dirID, filePath
+    let [[rowArr]] = await conn.query(options, [
+      dirID, filePath, loBase64, hiBase64, maxNum, numOffset, isAscending
     ]);
-    return [modifiedAt, prevModifiedAt];
+    return rowArr;
   }
 
 
+  static async readBSTFileRow(
+    conn, dirID, filePath, elemKeyBase64
+  ) {
+    let sql =
+`BEGIN proc:
+  DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
+  DECLARE filePath VARCHAR(700) DEFAULT (CAST(? AS CHAR));
+  DECLARE elemKey VARBINARY(255) DEFAULT (FROM_BASE64(CAST(? AS CHAR)));
+  DECLARE fileID BIGINT UNSIGNED;
+  IF (
+    dirID IS NULL OR filePath IS NULL OR lo IS NULL OR hi IS NULL OR
+    maxNum IS NULL OR numOffset IS NULL
+  ) THEN
+    SELECT NULL;
+    LEAVE proc;
+  END IF;
+  SELECT file_id INTO fileID
+  FROM Files FORCE INDEX (PRIMARY)
+  WHERE dir_id = dirID AND file_path = filePath;
+  SELECT TO_BASE64(elem_score), TO_BASE64(elem_payload)
+  FROM BinKeyScoredDataTables FORCE INDEX (PRIMARY)
+  WHERE file_id = fileID AND elem_key = elemKey;
+END proc`;
+    let options = {sql: sql, rowsAsArray: true};
+    let [[[
+      elemScoreBase64, elemPayloadBase64
+    ]]] = await conn.query(options, [
+      dirID, filePath, elemKeyBase64
+    ]);
+    return [elemScoreBase64, elemPayloadBase64];
+  }
+
+
+  // TODO: Make binary-key scored table (BST) write functions as well.
+
+  // TODO: Make other kinds of data table file types for other purposes, also
+  // including a full-text index file type.
 
 
 
 
   /* File/directory creations, edits, moves, and deletions */
 
-  static createDir(
-    parentDirID = 1, name, isPrivate = 0, isHome = 0, adminID = 0
-  ) {
-    isPrivate = isPrivate ? 1 : 0;
-    isHome = isHome ? 1 : 0;
-    let sql =
-      "INSERT IGNORE INTO Directories " +
-      "(parent_dir_id, dir_name, is_private, is_home, admin_id)"
-      "VALUES (?, ?, ?, ?, " + (adminID ? "?" : "NULL AND ?") + "); " +
-      "SELECT LAST_INSERT_ID() AS dirID;";
-    let paramValArr = [parentDirID, name, isPrivate, isHome, adminID];
-    let paramNameArr =
-      ["parentDirID", "name", "isPrivate", "isHome", "adminID"];
-    let typeArr = ["ulong", "str255", "bool", "bool", "ulong"];
-    let [[dirID]] =
-      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return dirID;
-  }
 
-  static editDir(
-    dirID, name, isPrivate = 0, isHome = 0, adminID = 0
-  ) {
-    isPrivate = isPrivate ? 1 : 0;
-    isHome = isHome ? 1 : 0;
-    let sql =
-      "UPDATE IGNORE Directories " +
-      "SET dir_name = ?, is_private = ?, is_home = ?, " +
-        "admin_id = " + (adminID ? "? " : "NULL AND ? ")
-      "WHERE dir_id = ?;" +
-      "SELECT ROW_COUNT() AS wasEdited";
-    let paramValArr = [name, isPrivate, isHome, adminID, dirID];
-    let paramNameArr = ["name", "isPrivate", "isHome", "adminID", "dirID"];
-    let typeArr = ["str255", "bool", "bool", "ulong", "ulong"];
-    let [[wasEdited]] =
-      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return wasEdited;
-  }
 
-  static moveDir(dirID, newParentID) {
-    let sql =
-      "UPDATE IGNORE Directories " +
-      "SET parent_dir_id = ? " +
-      "WHERE dir_id = ?;" +
-      "SELECT ROW_COUNT() AS wasEdited";
-    let paramValArr = [newParentID, dirID];
-    let paramNameArr = ["newParentID", "dirID"];
-    let typeArr = ["ulong", "ulong"];
-    let [[wasEdited]] =
-      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return wasEdited;
-  }
 
-  static deleteDir(dirID) {
-    let sql =
-      "DELETE FROM Directories " +
-      "WHERE dir_id = ?;" +
-      "SELECT ROW_COUNT() AS wasDeleted";
-    let paramValArr = [dirID];
-    let paramNameArr = ["dirID"];
-    let typeArr = ["ulong"];
-    let [[wasDeleted]] =
-      this.#validateAndQuery(sql, paramValArr, typeArr, paramNameArr);
-    return wasDeleted;
-  }
+
 
 
 

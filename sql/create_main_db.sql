@@ -77,7 +77,7 @@ CREATE TABLE TextFileContents (
 
     file_id BIGINT UNSIGNED PRIMARY KEY,
 
-    content_data TEXT CHARACTER SET utf8mb4 NOT NULL DEFAULT ""
+    content_text TEXT CHARACTER SET utf8mb4 NOT NULL DEFAULT ""
 
 ); -- ROW_FORMAT = COMPRESSED;
 
