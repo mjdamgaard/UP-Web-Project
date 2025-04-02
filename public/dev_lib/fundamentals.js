@@ -3,7 +3,7 @@ import {
   DeveloperFunction, decrCompGas, decrGas, payGas, RuntimeError,
   getParsingGasCost, EntityReference, ScriptEntity, ExpressionEntity,
   FormalEntity, throwExceptionAsyncOrNot,
-} from "../../../src/interpreting/ScriptInterpreter.js";
+} from "../../src/interpreting/ScriptInterpreter.js";
 
 // Following module paths are substituted by module mapping webpack plugin.
 import {entityCache} from "entityCache";

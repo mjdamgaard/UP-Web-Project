@@ -117,11 +117,6 @@ export const scriptGrammar = {
   "export-statement": {
     rules: [
       [
-        "/export/", "/const/", "identifier", "/=/", "/Protected/!1",
-        /\(/, "constant", "/,/", "constant", "/,/",
-        "string", "/,/", "string", "/,/", "expression", "/,/?", /\)/, "/;/"
-      ],
-      [
         "/export/", "/default/?", "/const/", "identifier!", "/=/",
         "expression", "/;/"
       ],
@@ -723,6 +718,7 @@ export const scriptGrammar = {
       ["object!1"],
       ["this-keyword"],
       ["exit-call!1"],
+      ["protected-call!1"],
       ["pass-as-mutable-call!1"],
       ["identifier"],
       ["literal"],
@@ -812,6 +808,16 @@ export const scriptGrammar = {
     process: (children, ruleInd) => ({
       type: "exit-call",
       exp: (ruleInd === 0) ? children[2] : undefined,
+    }),
+  },
+  "protected-call": {
+    rules: [
+      ["/Protected/", /\(/, "expression", "/,/", "expression", /\)/],
+    ],
+    process: (children) => ({
+      type: "protected-call",
+      optionsExp: children[2],
+      valExp: children[4],
     }),
   },
   "pass-as-mutable-call": {

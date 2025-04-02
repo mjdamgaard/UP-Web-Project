@@ -4,13 +4,15 @@ import {scriptParser} from "./parsing/ScriptParser.js";
 import {LexError, SyntaxError} from "./parsing/Parser.js";
 
 // Following module paths are substituted by module mapping webpack plugin.
-import {IS_SERVER_SIDE, getDevLibPath, stdProtect} from "interpreter_config";
+import {
+  IS_SERVER_SIDE, getDevLibPath, stdProtect, stdSignalDocName
+} from "interpreter_config";
 
 export {LexError, SyntaxError};
 
 
-const INIT_PROTECT_DOC_ID = "10";
-const INIT_DEV_LIB_DOC_ID = "11";
+// const INIT_PROTECT_DOC_ID = "10";
+// const INIT_DEV_LIB_DOC_ID = "11";
 
 // const MAX_ARRAY_INDEX = 1E+15;
 const MINIMAL_TIME_GAS = 10;
@@ -37,13 +39,13 @@ export class ScriptInterpreter {
   static async interpretScript(
     gas, script = "", scriptID = "0", mainInputs = [], reqUserID = undefined,
     protect = stdProtect, permissions = {}, settings = {},
-    parsedEntities = new Map(), liveModules = new Map(),
+    parsedScripts = new Map(), liveModules = new Map(),
   ) {
     let scriptGlobals = {
       gas: gas, log: {}, scriptID: scriptID, reqUserID: reqUserID,
       protect: protect, permissions: permissions, settings: settings,
       isExiting: false, resolveScript: undefined, interpreter: this,
-      parsedEntities: parsedEntities, liveModules: liveModules,
+      parsedScripts: parsedScripts, liveModules: liveModules,
     };
 
     // First create global environment if not yet done, and then create an
@@ -58,12 +60,12 @@ export class ScriptInterpreter {
       let [scriptSyntaxTree] = scriptParser.parse(script);
       if (scriptSyntaxTree.error) throw scriptSyntaxTree.error;
       parsedScript = scriptSyntaxTree.res;
-      parsedEntities.set(scriptID, parsedScript);
+      parsedScripts.set(scriptID, parsedScript);
     }
     // Else fetch and parse the script first thing.
     else {
       parsedScript = await this.fetchParsedScript(
-        scriptID, parsedEntities, undefined, globalEnv
+        scriptID, parsedScripts, undefined, globalEnv
       );
     }
 
@@ -181,9 +183,9 @@ export class ScriptInterpreter {
 
 
   static async fetchParsedScript(
-    scriptID, parsedEntities, callerNode, callerEnv
+    scriptID, parsedScripts, callerNode, callerEnv
   ) {
-    let parsedScript = parsedEntities.get(scriptID);
+    let parsedScript = parsedScripts.get(scriptID);
     if (!parsedScript) {
       let fundPath = getDevLibPath("11/fundamentals");
       let fundMod = await import(fundPath);
@@ -205,7 +207,7 @@ export class ScriptInterpreter {
           },
         );
       }); 
-      parsedEntities.set(scriptID, parsedScript);
+      parsedScripts.set(scriptID, parsedScript);
     }
     return parsedScript;
   }
@@ -259,7 +261,7 @@ export class ScriptInterpreter {
   ) {
     decrCompGas(impStmt, globalEnv);
     decrGas(impStmt, globalEnv, "import");
-    let {liveModules, parsedEntities} = globalEnv.scriptGlobals;
+    let {liveModules, parsedScripts} = globalEnv.scriptGlobals;
 
     // If the module is referenced by a path, and not directly by an ID, first
     // convert it to an ID via a lookup in moduleIDs.
@@ -313,10 +315,10 @@ export class ScriptInterpreter {
     }
 
     // Else if the module is a user module, first try to get it from the
-    // parsedEntities buffer, then try to fetch it from the database.
+    // parsedScripts buffer, then try to fetch it from the database.
     let submoduleID = impStmt.entID;
     let submoduleNode = await this.fetchParsedScript(
-      submoduleID, parsedEntities, impStmt, callerModuleEnv
+      submoduleID, parsedScripts, impStmt, callerModuleEnv
     );
 
     // Then execute the module, inside the global environment, and return the
@@ -475,8 +477,7 @@ export class ScriptInterpreter {
 
 
   static executeFunction(
-    fun, inputArr, callerNode, callerEnv, thisVal, signalDocName, signal,
-    isServerSide, funName
+    fun, inputArr, callerNode, callerEnv, thisVal, isThisKeyword
   ) {
     let {protect, permissions} = callerEnv.scriptGlobals;
     let protectData = callerEnv.getProtectData();
@@ -484,7 +485,7 @@ export class ScriptInterpreter {
     // If the function is a method of a protected object, call protect() in
     // order to check the signal, and also to get the new protectData to give
     // to the new function environment.
-    if (thisVal instanceof ProtectedObject) {
+    if (thisVal instanceof ModuleObject) {
       // Then finally, if signal is truthy signal, emit that signal to
       // protect(), together with the name, signalDocName, of the document
       // that defines the meaning of the signal.
@@ -1283,16 +1284,14 @@ export class ScriptInterpreter {
     decrCompGas(rootExp, environment);
 
     // Evaluate the chained expression accumulatively, one postfix at a time. 
-    let postfix, objVal, thisVal, safeIndex, funName,
-      isPrivate, isServerSide, signalDocName, signal;
+    let postfix, objVal, safeIndex, isThisKeyword;
     for (let i = 0; i < len; i++) {
       postfix = postfixArr[i];
 
       // If postfix is a member accessor, get the member value, and assign the
       // current val to objVal.
       if (postfix.type === "member-accessor") {
-        objVal = thisVal = val;
-        signalDocName = signal = funName = undefined;
+        objVal = val;
 
         // Throw a BrokenOptionalChainException if an optional chaining is
         // broken.
@@ -1328,69 +1327,36 @@ export class ScriptInterpreter {
 
         // Else if objVal is a protected object, get the method, and also make
         // some checks.
-        else if (objVal instanceof ProtectedObject) {
-          // Get the member, and record the method's name in funName.
-          [val, isPrivate, isServerSide, signalDocName, signal] =
-            objVal.methods[safeIndex];
-          funName = postfix.ident;
+        else if (objVal instanceof ModuleObject) {
+          // First of all check that the object isn't being used outside
+          // its own declaration environment call stack.
+          let isValid = environment.isCallStackDescendentOf(objVal.decEnv);
+          if (!isValid) throw new RuntimeError(
+            "Use of a module object outside of the " +
+            "environmental call stack in which it was declared",
+            postfix, environment
+          );
+
+          // Then get the member.
+          val = objVal.methods[safeIndex];
 
           // If no such member exist, continue with an undefined val.
           if (val === undefined) {
             continue;
           }
 
-          // Else, first of all check that the object isn't being used outside
-          // its own declaration environment call stack.
-          let isValid = environment.isCallStackDescendentOf(objVal.decEnv);
-          if (!isValid) throw new RuntimeError(
-            "A protected object was used outside of the " +
-            "environment call stack in which it was defined",
-            postfix, environment
-          );
-
-          // Also check that the method is called immediately, as the methods
-          // of protected objects cannot be accessed otherwise.
-          if (postfixArr[i + 1]?.type !== "expression-tuple") {
-            throw new RuntimeError(
-              "Cannot access a method of a protected object without " +
-              "calling it",
-              postfix, environment
-            );
-          }
-
-          // If the method is private, check that rootExp is a 'this' keyword,
-          // and that i === 1.
-          if (isPrivate) {
-            if (i !== 1 || rootExp.type !== "this-keyword") {
-              throw new RuntimeError(
-                "Trying to access a private member from outside a protected " +
-                "object",
-                postfix, environment
-              );
-            }
-          }
-
-          // Also check that the user isn't trying to assign to the method.
+          // Also check that the user isn't trying to assign to the member.
           if (forAssignment) throw new RuntimeError(
-            "Assignment to a read-only method of a protected object",
+            "Assignment to a read-only member of a module object",
             postfix, environment
           );
 
-          // Check that a client-side method isn't called on the server, and
-          // that a *private* server-side method isn't called client-side.
-          if (!isServerSide && IS_SERVER_SIDE) throw new RuntimeError(
-            "Call to a client-side method on the server side",
-            postfix, environment
-          );
-          if (isServerSide && isPrivate && !IS_SERVER_SIDE) {
-            throw new RuntimeError(
-              "Call to a private server-side method on the client side",
-              postfix, environment
-            );
-          }
+          // Set isThisKeyword to true iff rootExp is a 'this' keyword and
+          // i === 1.
+          isThisKeyword = (i === 1 && rootExp.type === "this-keyword");
 
-          // And after all these check, we continue, with val and other
-          // parameters ready for the following function call.
+          // And finally continue, with val and isThisKeyword (and objVal)
+          // defined.
         }
 
         // Else throw if objVal is not an (accessible) object at all.
@@ -1410,15 +1376,6 @@ export class ScriptInterpreter {
           postfix, environment
         );
 
-        // Throw if val is not a function.
-        if (
-          !(val instanceof DefinedFunction || val instanceof DeveloperFunction)
-        ) {
-          throw new RuntimeError(
-            "Call to a non-function", postfix, environment
-          );
-        }
-
         // Evaluate the expressions inside the tuple.
         let inputExpArr = postfix.children;
         let inputValArr = inputExpArr.map(exp => (
@@ -1429,8 +1386,7 @@ export class ScriptInterpreter {
         // immutable, to val.
         val = turnImmutable(
           this.executeFunction(
-            val, inputValArr, postfix, environment, thisVal, signalDocName,
-            signal, isServerSide, funName
+            val, inputValArr, postfix, environment, objVal, isThisKeyword
           )
         );
       }
@@ -1773,7 +1729,7 @@ export function getType(val) {
       val instanceof DefinedFunction || val instanceof DeveloperFunction
     ) {
       return "function";
-    } else if (val instanceof ProtectedObject) {
+    } else if (val instanceof ModuleObject) {
       return "protected";
     } else if (val instanceof Immutable) {
       return getType(val.val);
@@ -1812,25 +1768,23 @@ export class DefinedFunction {
 }
 
 export class DeveloperFunction {
-  constructor(fun, signalDocName = undefined, signal = undefined) {
+  constructor(fun, signal = undefined) {
     this.fun = fun;
-    if (signalDocName) this.signalDocName = signalDocName;
     if (signal) this.signal = signal;
   }
 }
 
-export class ProtectedObject {
-  constructor(
-    modDirID, protectModuleID, decEnv, methods,
-  ) {
-    this.modDirID = modDirID;
-    this.protectModuleID = protectModuleID;
+export class ModuleObject {
+  constructor(modID, decEnv, members) {
+    this.modID = modID;
     this.decEnv = decEnv;
-    // methods := [
-    //   fun : DefFun | UserFun, isPrivate : bool, isServerSide : bool,
-    //   signalDocName: string, signal : string
-    // ].
-    this.methods = methods;
+    this.members = members;
+  }
+}
+
+export class ServerSide {
+  constructor(funVal) {
+    this.funVal = funVal;
   }
 }
 
