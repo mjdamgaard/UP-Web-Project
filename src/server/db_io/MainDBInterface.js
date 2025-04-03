@@ -220,11 +220,11 @@ END proc`;
 END proc`;
     let options = {sql: sql, rowsAsArray: true};
     let [[[
-      modifiedAt, prevModifiedAt
+      contentData
     ]]] = await conn.query(options, [
       dirID, filePath
     ]);
-    return [modifiedAt, prevModifiedAt];
+    return contentData;
   }
 
 

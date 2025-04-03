@@ -14,7 +14,7 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
   "true|false|null|undefined|Infinity|NaN|try|catch|finally|for|while|do|" +
-  "default|public|debugger|new|exit|Protected|PassAsMutable)$"
+  "default|public|debugger|new|exit|PassAsMutable)$"
   // TODO: Continue this list.
 );
 
@@ -128,18 +128,6 @@ export const scriptGrammar = {
       if (ruleInd === 0) {
         return {
           type: "export-statement",
-          subtype: "protected-object-export",
-          ident: children[2].ident,
-          isPrivate: (children[6].lexeme === "true") ? true : false,
-          isServerSide: (children[8].lexeme === "true") ? true : false,
-          signalDocPath: children[10].str,
-          signal: children[12].str,
-          exp: children[14],
-        };
-      }
-      else if (ruleInd === 1) {
-        return {
-          type: "export-statement",
           subtype: "variable-export",
           isDefault: children[1][0] ? true : false,
           // isConst: children[2] === "const",
@@ -147,7 +135,7 @@ export const scriptGrammar = {
           exp: children[5],
         };
       }
-      else if (ruleInd === 2) {
+      else if (ruleInd === 1) {
         return {
           type: "export-statement",
           subtype: "function-export",
@@ -156,7 +144,7 @@ export const scriptGrammar = {
           stmt: children[2],
         };
       }
-      else if (ruleInd === 3) {
+      else if (ruleInd === 2) {
         return {
           type: "export-statement",
           subtype: "anonymous-export",
@@ -718,7 +706,6 @@ export const scriptGrammar = {
       ["object!1"],
       ["this-keyword"],
       ["exit-call!1"],
-      ["protected-call!1"],
       ["pass-as-mutable-call!1"],
       ["identifier"],
       ["literal"],
@@ -808,16 +795,6 @@ export const scriptGrammar = {
     process: (children, ruleInd) => ({
       type: "exit-call",
       exp: (ruleInd === 0) ? children[2] : undefined,
-    }),
-  },
-  "protected-call": {
-    rules: [
-      ["/Protected/", /\(/, "expression", "/,/", "expression", /\)/],
-    ],
-    process: (children) => ({
-      type: "protected-call",
-      optionsExp: children[2],
-      valExp: children[4],
     }),
   },
   "pass-as-mutable-call": {

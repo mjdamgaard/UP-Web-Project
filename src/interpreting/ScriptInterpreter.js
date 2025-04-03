@@ -181,7 +181,7 @@ export class ScriptInterpreter {
   }
 
 
-
+// TODO: Reimplement.
   static async fetchParsedScript(
     scriptID, parsedScripts, callerNode, callerEnv
   ) {
@@ -307,7 +307,7 @@ export class ScriptInterpreter {
           val instanceof ScriptEntity || val instanceof Immutable ||
           typeof val === "number" || typeof val === "string"
         ) {
-          liveModule["&" + key] = [val];
+          liveModule["&" + key] = val;
         }
       });
       liveModules.set(moduleRefStr, liveModule);
@@ -341,9 +341,7 @@ export class ScriptInterpreter {
       let impType = imp.importType
       if (impType === "namespace-import") {
         let namespaceObj = Object.fromEntries(
-          Object.entries(liveSubmodule).map(
-            ([safeIdent, [val]]) => [safeIdent, val]
-          )
+          Object.entries(liveSubmodule)
         );
         moduleEnv.declare(imp.ident, namespaceObj, true, imp);
       }
@@ -351,12 +349,12 @@ export class ScriptInterpreter {
         imp.namedImportArr.forEach(namedImp => {
           let ident = namedImp.ident ?? "default";
           let alias = namedImp.alias ?? ident;
-          let [val] = liveSubmodule["&" + ident];
+          let val = liveSubmodule["&" + ident];
           moduleEnv.declare(alias, val, true, namedImp);
         });
       }
       else if (impType === "default-import") {
-        let [val] = liveSubmodule["&default"];
+        let val = liveSubmodule["&default"];
         moduleEnv.declare(imp.ident, val, true, imp);
       }
       else throw "finalizeImportStatement(): Unrecognized import type";
@@ -412,15 +410,7 @@ export class ScriptInterpreter {
   static executeExportStatement(stmtNode, environment) {
     decrCompGas(stmtNode, environment);
 
-    if (stmtNode.subtype === "protected-object-export") {
-      let val = this.evaluateExpression(stmtNode.exp, environment);
-      environment.declare(stmtNode.ident, val, true, stmtNode);
-      environment.export(
-        stmtNode.ident, undefined, stmtNode, stmtNode.signal,
-        stmtNode.isPrivate
-      );
-    }
-    else if (stmtNode.subtype === "variable-export") {
+    if (stmtNode.subtype === "variable-export") {
       let val = this.evaluateExpression(stmtNode.exp, environment);
       environment.declare(stmtNode.ident, val, true, stmtNode);
       environment.export(stmtNode.ident, undefined, stmtNode);
@@ -482,43 +472,26 @@ export class ScriptInterpreter {
     let {protect, permissions} = callerEnv.scriptGlobals;
     let protectData = callerEnv.getProtectData();
 
-    // If the function is a method of a protected object, call protect() in
-    // order to check the signal, and also to get the new protectData to give
-    // to the new function environment.
+    // If the function is a method of a module object, call protect() on
+    // moduleID and isThisKeyword, thus signalling that a method of a module
+    // object is being called, either from the inside or the outside, so to
+    // speak.
     if (thisVal instanceof ModuleObject) {
-      // Then finally, if signal is truthy signal, emit that signal to
-      // protect(), together with the name, signalDocName, of the document
-      // that defines the meaning of the signal.
-      if (signal) {
-        protectData = protect(
-          signalDocName, signal, permissions, protectData, thisVal.modDirID
-        );
-      }
-
-      // And if the method is a server-side method, and we are on the client
-      // side, we then send a request to the server instead of running the
-      // function client-side. We also always expect the callback to be the
-      // last input in inputArr, so we execute that upon the return of the
-      // result from the server.
-      if (isServerSide && !IS_SERVER_SIDE) {
-        let callback = inputArr.at(-1);
-        let inputDataArr = inputArr.slice(0, -1);
-        this.executeProtectedMethodOnServer(
-          thisVal.modDirID, funName, inputDataArr, callback,
-          callerNode, callerEnv
-        );
-        return;
-      } 
+      protectData = protect(
+        permissions, protectData, thisVal.moduleID, isThisKeyword, undefined,
+        undefined, thisVal, callerEnv, callerNode
+      );
     }
 
-    // Execute the function depending on its type.
+    // Then execute the function depending on its type.
     if (fun instanceof DeveloperFunction) {
       // If the called developer function has a signal, then call protect()
       // (again, if called already), and also reassign protectData the return
       // value.
       if (fun.signal !== undefined) {
         protectData = protect(
-          fun.signalDocName, fun.signal, permissions, protectData
+          permissions, protectData, undefined, isThisKeyword, fun.signal,
+          inputArr, thisVal, callerEnv, callerNode
         );
       }
 
@@ -1571,10 +1544,7 @@ export class Environment {
   }
 
 
-  export(
-    ident, alias = ident, node, signal = undefined, isPrivate = undefined,
-    nodeEnvironment = this
-  ) {
+  export(ident, alias = ident, node, nodeEnvironment = this) {
     let prevExport = this.exports["&" + alias];
     if (prevExport !== undefined) throw new RuntimeError(
       `Duplicate export of the same name: "${alias}"`,
@@ -1587,7 +1557,7 @@ export class Environment {
       `Exported variable or function is undefined: "${ident}"`,
       node, nodeEnvironment
     );
-    this.exports.push([alias, turnImmutable(val), signal, isPrivate]);
+    this.exports.push([alias, turnImmutable(val)]);
   }
 
   getLiveModule() {
@@ -1595,8 +1565,8 @@ export class Environment {
       let liveModule = this.liveModule = {
         protectModuleID: this.protectModuleID
       };
-      this.exports.forEach(([alias, val, signal, isPrivate]) => {
-        liveModule["&" + alias] = [val, signal, isPrivate];
+      this.exports.forEach(([alias, val]) => {
+        liveModule["&" + alias] = val;
       });
     }
     return this.liveModule;
@@ -1775,16 +1745,10 @@ export class DeveloperFunction {
 }
 
 export class ModuleObject {
-  constructor(modID, decEnv, members) {
-    this.modID = modID;
+  constructor(moduleID, decEnv, members) {
+    this.moduleID = moduleID;
     this.decEnv = decEnv;
     this.members = members;
-  }
-}
-
-export class ServerSide {
-  constructor(funVal) {
-    this.funVal = funVal;
   }
 }
 

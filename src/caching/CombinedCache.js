@@ -3,6 +3,10 @@ import {LRUCache} from "./LRUCache.js";
 import {PriorityDecayCache} from "./PriorityDecayCache.js";
 
 
+
+// TODO: Make the LRU cache entries decay as well (probably also factoring the
+// decay part out to become a responsibility only of this CombinedCache class).
+
 export class CombinedCache {
 
   constructor(
