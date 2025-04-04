@@ -1,7 +1,8 @@
 
 import * as http from 'http';
-import {InputGetter} from './user_input/InputGetter.js';
 import {ClientError, endWithError, endWithInternalError} from './err/errors.js';
+import {InputGetter} from './user_input/InputGetter.js';
+import {DBQueryHandler} from './DBQueryHandler.js';
 
 // console.log(String({toString: null}))
 
@@ -18,6 +19,7 @@ http.createServer(async function(req, res) {
     }
   }
 }).listen(8080);
+
 
 
 
@@ -44,27 +46,31 @@ async function requestHandler(req, res) {
 
 
   // Branch according to the action.
+  let result;
   switch (action) {
-    case "read":
-      // ...
+    case "read": {
+      let [
+        route, clientCacheTime, minServerCacheTime
+      ] = await InputGetter.getParamsPromise(
+        body, ["route", "cct", "mct"], [undefined, null, null]
+      );
+      result = await DBQueryHandler.read(
+        route, reqUserID, clientCacheTime, minServerCacheTime
+      );
+      // result: JSON([wasReady, data])
       break;
+    }
+    case "write":
+      // TODO: Implement.
+    case "delete":
+      // TODO: Implement.
+    case "call":
+      // TODO: Implement.
     default:
         throw new ClientError(`Unrecognized action: "${action}"`);
   }
 
-
-  // Get the required input for the given request type.
-  let paramValArr = await InputGetter.getParamsPromise(
-    req, paramNameArr, defaultValArr
-  );
-
-  // Validate the input.
-  InputValidator.validateParams(paramValArr, typeArr, paramNameArr);
-
-  // Query the database.
-  let results = await DBConnector.connectAndQuery(sql, paramValArr);
-
   // Return the results.
   res.writeHead(200, {'Content-Type': 'text/json'});
-  res.end(JSON.stringify(results));
+  res.end(result);
 }
