@@ -1,6 +1,7 @@
 
 import {scriptParser} from "./parsing/ScriptParser.js";
 import {LexError, SyntaxError} from "./parsing/Parser.js";
+import {exitSignal} from "../../public/signals/fundamental_signals.js";
 
 // // Following module paths are substituted by module mapping webpack plugin.
 // import {
@@ -43,7 +44,7 @@ export function getFullPath(curPath, path, callerNode, callerEnv) {
   }
 
   // Remove the last file name from the current path, if any.
-  let moddedCurPath = (curPath.match(/^(\/[^./]+)+\/?/) ?? [""])[0];
+  let [moddedCurPath] = curPath.match(/^(\/[^./]+)+\/?/) ?? [""];
   if (!moddedCurPath) throw new LoadError(
     `Ill-formed absolute path: "${curPath}"`, callerNode, callerEnv
   );
@@ -274,7 +275,7 @@ export class ScriptInterpreter {
     moduleNode.importStmtArr.forEach((impStmt, ind) => {
       let [liveSubmodule, submodulePath] = liveSubmoduleAndPathArr[ind];
       this.finalizeImportStatement(
-        impStmt, liveSubmodule, submodulePath, moduleEnv
+        impStmt, liveSubmodule, submodulePath, modulePath, moduleEnv
       );
     });
 
@@ -358,9 +359,9 @@ export class ScriptInterpreter {
 
 
   static finalizeImportStatement(
-    impStmt, liveSubmodule, submodulePath, moduleEnv
+    impStmt, liveSubmodule, submodulePath, curModulePath, curModuleEnv
   ) {
-    decrCompGas(impStmt, moduleEnv);
+    decrCompGas(impStmt, curModuleEnv);
 
     // Iterate through all the imports and add each import to the environment.
     impStmt.importArr.forEach(imp => {
@@ -369,19 +370,28 @@ export class ScriptInterpreter {
         let namespaceObj = Object.fromEntries(
           Object.entries(liveSubmodule)
         );
-        moduleEnv.declare(imp.ident, namespaceObj, true, imp);
+        let [curModuleDirID] = curModulePath.match(/^[1-9][0-9]*/) ?? [];
+        let [submoduleDirID] = submodulePath.match(/^[1-9][0-9]*/) ?? [];
+        if (submoduleDirID === curModuleDirID) {
+          curModuleEnv.declare(imp.ident, namespaceObj, true, imp);
+        } else {
+          let moduleObject = new ModuleObject(
+            submoduleDirID, curModuleEnv, namespaceObj
+          );
+          curModuleEnv.declare(imp.ident, moduleObject, true, imp);
+        }
       }
       else if (impType === "named-imports") {
         imp.namedImportArr.forEach(namedImp => {
           let ident = namedImp.ident ?? "default";
           let alias = namedImp.alias ?? ident;
           let val = liveSubmodule["&" + ident];
-          moduleEnv.declare(alias, val, true, namedImp);
+          curModuleEnv.declare(alias, val, true, namedImp);
         });
       }
       else if (impType === "default-import") {
         let val = liveSubmodule["&default"];
-        moduleEnv.declare(imp.ident, val, true, imp);
+        curModuleEnv.declare(imp.ident, val, true, imp);
       }
       else throw "finalizeImportStatement(): Unrecognized import type";
     });
@@ -1159,18 +1169,18 @@ export class ScriptInterpreter {
         return environment.getThisVal();
       }
       case "exit-call": {
-        // Send an "exit" signal to protect.
-        // Then evaluate the argument, record the resulting output, and throw
-        // an exit exception.
+        // Evaluate the argument.
         let expVal = (!expNode.exp) ? undefined :
           this.evaluateExpression(expNode.exp, environment);
         let {protect, permissions, resolveScript} = environment.scriptGlobals;
         let protectData = environment.getProtectData();
+        // Send an "exit" signal to protect, before resolving the script.
         protect(
-          permissions, protectData, undefined, undefined, "exit",
+          permissions, protectData, undefined, undefined, exitSignal,
           [expVal], undefined, environment, expNode
         );
         resolveScript(expVal);
+        // Throw an exit exception.
         throw new ExitException();
       }
       case "pass-as-mutable-call": {
@@ -1705,10 +1715,6 @@ export function getType(val) {
       return "array"
     } else if (val === null) {
       return "null";
-    } else if (
-      val instanceof EntityReference // || val instanceof EntityPlaceholder
-    ) {
-      return "entity";
     } else if (
       val instanceof DefinedFunction || val instanceof DeveloperFunction
     ) {
