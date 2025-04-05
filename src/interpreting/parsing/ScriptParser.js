@@ -766,10 +766,10 @@ export const scriptGrammar = {
   },
   "jsx-element": {
     rules: [
-      [/</, /\/>/],
-      [/</, /[a-zA-Z][a-zA-Z_0-9]*/, "jsx-property*", /\/>/],
+      ["/</", "/>/", "jsx-content*", "/</", /\/>/],
+      ["/</", /[a-zA-Z][a-zA-Z_0-9]*/, "jsx-property*", /\/>/],
       [
-        /</, /[a-zA-Z][a-zA-Z_0-9]*/, "jsx-property*", />/, "jsx-content*",
+        "/</", /[a-zA-Z][a-zA-Z_0-9]*/, "jsx-property*", "/>/", "jsx-content*",
         /<\//, /[a-zA-Z][a-zA-Z_0-9]*/, />/
       ],
     ],
@@ -777,7 +777,8 @@ export const scriptGrammar = {
       if (ruleInd === 0) {
         return {
           type: "jsx-element",
-          isEmpty: true,
+          isFragment: true,
+          contentArr: children[2],
         };
       } else if (ruleInd === 1) {
         return {
@@ -791,13 +792,12 @@ export const scriptGrammar = {
         let endTagName = children[6];
         if (endTagName !== tagName) {
           return (
-            `End tag name, "\{endTagName}", did not match start tag name, ` +
+            `End tag name, "${endTagName}", did not match start tag name, ` +
             `"${tagName}"`
           );
         }
         return {
           type: "jsx-element",
-          isVoidElement: true,
           tagName: children[1],
           propArr: children[2],
           contentArr: children[4],

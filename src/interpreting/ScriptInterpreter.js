@@ -1,7 +1,12 @@
 
 import {scriptParser} from "./parsing/ScriptParser.js";
 import {LexError, SyntaxError} from "./parsing/Parser.js";
-import {exitSignal} from "../../public/signals/fundamental_signals.js";
+import {exitSignal} from "../dev_lib/signals/fundamental_signals.js";
+
+import * as fundamentalsMod from "../dev_lib/fundamentals.js";
+
+const staticDevLibs = new Map();
+staticDevLibs.set("fundamentals", fundamentalsMod);
 
 // // Following module paths are substituted by module mapping webpack plugin.
 // import {
@@ -95,14 +100,14 @@ export class ScriptInterpreter {
     // scripts/modules.
     let globalEnv = this.createGlobalEnvironment(scriptGlobals);
 
-    // If script is provided, rather than the moduleDirID, first parse it.
+    // If script is provided, rather than the scriptPath, first parse it.
     let parsedScript;
     if (scriptPath === null) {
       payGas(globalEnv, {comp: getParsingGasCost(script)});
       let [scriptSyntaxTree] = scriptParser.parse(script);
       if (scriptSyntaxTree.error) throw scriptSyntaxTree.error;
       parsedScript = scriptSyntaxTree.res;
-      parsedScripts.set(moduleDirID, parsedScript);
+      parsedScripts.set(scriptPath, parsedScript);
     }
     // Else fetch and parse the script first thing.
     else {
@@ -310,19 +315,21 @@ export class ScriptInterpreter {
     // in the form of a bare module specifier (left over in the build step, if
     // any), try to import the given library.
     if (submodulePath[0] !== "/") {
-      let devLibURL = devLibURLs(submodulePath);
-      if (!devLibURL) throw new LoadError(
-        `Developer library "${submodulePath}" not found`,
-        impStmt, callerModuleEnv
-      );
-      let devMod;
-      try {
-        devMod = await import(devLibURL);
-      } catch (err) {
-        throw new LoadError(
+      let devMod = staticDevLibs(submodulePath);
+      if (!devMod) {
+        let devLibURL = devLibURLs(submodulePath);
+        if (!devLibURL) throw new LoadError(
           `Developer library "${submodulePath}" not found`,
           impStmt, callerModuleEnv
         );
+        try {
+          devMod = await import(devLibURL);
+        } catch (err) {
+          throw new LoadError(
+            `Developer library "${submodulePath}" not found`,
+            impStmt, callerModuleEnv
+          );
+        }
       }
 
       // If the dev library module was found, create a "liveModule" object from
@@ -851,12 +858,7 @@ export class ScriptInterpreter {
           type: "function-declaration",
           ...expNode,
         };
-        let funVal = new DefinedFunction(funNode, environment);
-        if (type === "arrow-function") {
-          let thisVal = environment.getThisVal();
-          funVal = new ThisBoundFunction(funVal, thisVal);
-        }
-        return funVal;
+        return new DefinedFunction(funNode, environment);
       }
       case "assignment": {
         let val = this.evaluateExpression(expNode.exp2, environment);
@@ -1739,8 +1741,7 @@ export function getType(val) {
 
 export function isFunction(val) {
   return (
-    val instanceof DefinedFunction || val instanceof DeveloperFunction ||
-    val instanceof ThisBoundFunction
+    val instanceof DefinedFunction || val instanceof DeveloperFunction
   );
 }
 
@@ -1808,6 +1809,9 @@ class ContinueException {
     this.node = node;
     this.environment = environment;
   }
+}
+class BrokenOptionalChainException {
+  constructor() {}
 }
 
 
