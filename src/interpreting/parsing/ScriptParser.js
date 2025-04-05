@@ -692,6 +692,7 @@ export const scriptGrammar = {
       [/\(/, "expression", /\)/],
       ["array!1"],
       ["object!1"],
+      ["jsx-element!1"],
       ["this-keyword"],
       ["exit-call!1"],
       ["pass-as-mutable-call!1"],
@@ -704,6 +705,7 @@ export const scriptGrammar = {
         copyFromChild(children, ruleInd);
     },
   },
+// TODO: Implement spread operator for for both arrays and objects.
   "array": {
     rules: [
       [/\[/, "expression-list!1", /\]/],
@@ -762,6 +764,66 @@ export const scriptGrammar = {
       return ret;
     },
   },
+  "jsx-element": {
+    rules: [
+      [/</, /\/>/],
+      [/</, /[a-zA-Z][a-zA-Z_0-9]*/, "jsx-property*", /\/>/],
+      [
+        /</, /[a-zA-Z][a-zA-Z_0-9]*/, "jsx-property*", />/, "jsx-content*",
+        /<\//, /[a-zA-Z][a-zA-Z_0-9]*/, />/
+      ],
+    ],
+    process: (children, ruleInd) => {
+      if (ruleInd === 0) {
+        return {
+          type: "jsx-element",
+          isEmpty: true,
+        };
+      } else if (ruleInd === 1) {
+        return {
+          type: "jsx-element",
+          isVoidElement: true,
+          tagName: children[1],
+          propArr: children[2],
+        };
+      } else {
+        let tagName = children[1];
+        let endTagName = children[6];
+        if (endTagName !== tagName) {
+          return (
+            `End tag name, "\{endTagName}", did not match start tag name, ` +
+            `"${tagName}"`
+          );
+        }
+        return {
+          type: "jsx-element",
+          isVoidElement: true,
+          tagName: children[1],
+          propArr: children[2],
+          contentArr: children[4],
+        };
+      }
+    },
+  },
+  "jsx-property": {
+    rules: [
+      ["identifier", "/=/", "literal"],
+      ["identifier", "/=/", /\{/, "expression!", /\}/],
+      [/\{/, /\.\.\./, "identifier", /\}/],
+    ],
+    process: (children, ruleInd) => {
+      
+    },
+  },
+  "jsx-content": {
+    rules: [
+      ["jsx-element!1"],
+      [/\{/, "expression", /\}/],
+    ],
+    process: (children, ruleInd) => {
+      
+    },
+  },
   "literal-list": {
     rules: [
       ["literal", "/,/", "literal-list!1"],
@@ -816,12 +878,10 @@ export class ScriptParser extends Parser {
         /(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
         /\+=|\-=|\*=|\/=|&&=|\|\|=|\?\?=/,
         /&&|\|\||\?\?|\+\+|\-\-|\*\*/,
-        /\?\.|=>/,
+        /\?\.|\.\.\.|=>|\/>|<\//,
         /===|==|!==|!=|<=|>=/,
         /[\.,:;\[\]\{\}\(\)<>\?=\+\-\*\|\^&!%\/]/,
         /[_\$a-zA-Z0-9]+/,
-        /#[_\$a-zA-Z0-9]+/,
-        /#"([^"\\]|\\[.\n])*"/,
       ],
       /\s+|\/\/.*\n\s*|\/\*([^\*]|\*(?!\/))*(\*\/\s*|$)/
     );
