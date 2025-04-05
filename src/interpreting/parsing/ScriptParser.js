@@ -42,23 +42,11 @@ export const scriptGrammar = {
       ["/import/", "import-list", "/from/!", "string", "/;/"],
       ["/import/", "/from/", "string", "/;/"],
     ],
-    process: (children, ruleInd) => {
-      let str = (ruleInd == 0) ? children[3].str : children[2].str;
-      let isChildPath, isParentPath, isAbsPath, isDevLibPath;
-      isChildPath = (str.substring(0, 2) === "./");
-      isParentPath = (str.substring(0, 3) === "../");
-      isAbsPath = (str.substring(0, 1) === "/");
-      isDevLibPath = !isChildPath && !isParentPath && !isAbsPath;
-      let ret = {
-        type: "import-statement",
-        isChildPath: isChildPath,
-        isParentPath: isParentPath,
-        isAbsPath: isAbsPath,
-        isDevLibPath: isDevLibPath,
-      };
-      ret.importArr = (ruleInd === 0) ? children[1].children : [];
-      return ret;
-    },
+    process: (children, ruleInd) => ({
+      type: "import-statement",
+      str: (ruleInd == 0) ? children[3].str : children[2].str,
+      importArr: (ruleInd === 0) ? children[1].children : [],
+    }),
   },
   "import-list": {
     rules: [

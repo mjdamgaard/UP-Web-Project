@@ -31,21 +31,60 @@ export function getParsingGasCost(str) {
 }
 
 
+export function getFullPath(curPath, path, callerNode, callerEnv) {
+  if (!curPath) curPath = "/";
+
+  if (!path || !/^([^/]+)?(\/[^/]+)*$/.test(path)) throw new LoadError(
+    `Ill-formed path: "${path}"`, callerNode, callerEnv
+  );
+
+  if (path[0] === "/" || path[0] !== ".") {
+    return path;
+  }
+
+  // Remove the last file name from the current path, if any.
+  let moddedCurPath = (curPath.match(/^(\/[^./]+)+\/?/) ?? [""])[0];
+  if (!moddedCurPath) throw new LoadError(
+    `Ill-formed absolute path: "${curPath}"`, callerNode, callerEnv
+  );
+
+  // Then concatenate the two paths.
+  let fullPath;
+  if (curPath.at(-1) === "/") {
+    fullPath = moddedCurPath + path;
+  } else {
+    fullPath = moddedCurPath + "/" + path;
+  }
+
+  // Then replace any occurrences of "/./" and "<dirName>/../" with "/".
+  fullPath = fullPath.replaceAll(/(\/\.\/|[^/]+\/\.\.\/)/, "/");
+
+  if (fullPath.substring(0, 4) === "/../") throw new LoadError(
+    `Ill-formed path: "${path}"`, callerNode, callerEnv
+  );
+  
+  return fullPath;
+}
+
+
+
 
 
 
 export class ScriptInterpreter {
 
   static async interpretScript(
-    gas, script = "", scriptPath = null, mainInputs = [], reqUserID = null,
-    fetchScript = () => {}, protect = () => {}, devLibPaths = new Map(), 
+    script = "", scriptPath = null, mainInputs = [], gas, reqUserID = null,
     permissions = {}, settings = {},
+    fetchScript = () => {}, protect = () => {}, devLibURLs = new Map(),
+    isServerSide = false,
     parsedScripts = new Map(), liveModules = new Map(),
   ) {
     let scriptGlobals = {
       gas: gas, log: {}, scriptPath: scriptPath, reqUserID: reqUserID,
-      fetchScript: fetchScript, protect: protect, devLibPaths: devLibPaths,
       permissions: permissions, settings: settings,
+      fetchScript: fetchScript, protect: protect, devLibURLs: devLibURLs,
+      isServerSide: isServerSide,
       isExiting: false, resolveScript: undefined, interpreter: this,
       parsedScripts: parsedScripts, liveModules: liveModules,
     };
@@ -190,7 +229,12 @@ export class ScriptInterpreter {
     let parsedScript = parsedScripts.get(scriptPath);
     if (!parsedScript) {
       let {fetchScript, reqUserID} = callerEnv.scriptGlobals;
-      let script = await fetchScript(scriptPath, reqUserID);
+      let script;
+      try {
+       script = await fetchScript(scriptPath, reqUserID);
+      } catch (err) {
+        throw new LoadError(err, callerNode, callerEnv);
+      }
       payGas(callerEnv, {comp: getParsingGasCost(script)});
       [parsedScript] = scriptParser.parse(script);
       parsedScripts.set(scriptPath, parsedScript);
@@ -216,9 +260,11 @@ export class ScriptInterpreter {
 
     // Run all the import statements in parallel and get their live
     // environments, but without making any changes to moduleEnv yet.
-    let liveSubmoduleArr = await Promise.all(
+    let liveSubmoduleAndPathArr = await Promise.all(
       moduleNode.importStmtArr.map(impStmt => (
-        this.executeSubmoduleOfImportStatement(impStmt, moduleEnv, globalEnv)
+        this.executeSubmoduleOfImportStatement(
+          impStmt, modulePath, moduleEnv, globalEnv
+        )
       ))
     );
 
@@ -226,7 +272,10 @@ export class ScriptInterpreter {
     // import statement is paired with the environment from the already
     // executed module, and where the changes are now made to moduleEnv.
     moduleNode.importStmtArr.forEach((impStmt, ind) => {
-      this.finalizeImportStatement(impStmt, liveSubmoduleArr[ind], moduleEnv);
+      let [liveSubmodule, submodulePath] = liveSubmoduleAndPathArr[ind];
+      this.finalizeImportStatement(
+        impStmt, liveSubmodule, submodulePath, moduleEnv
+      );
     });
 
     // Then execute the body of the script, consisting of "outer statements"
@@ -243,33 +292,34 @@ export class ScriptInterpreter {
 
 
   static async executeSubmoduleOfImportStatement(
-    impStmt, callerModuleEnv, globalEnv
+    impStmt, curModulePath, callerModuleEnv, globalEnv
   ) {
     decrCompGas(impStmt, globalEnv);
     decrGas(impStmt, globalEnv, "import");
-    let {liveModules, parsedScripts} = globalEnv.scriptGlobals;
+    let {liveModules, parsedScripts, devLibURLs} = globalEnv.scriptGlobals;
 
     // If the module has already been executed, we can return early.
-    let moduleRefStr = impStmt.entID + (impStmt.libPath ?? "");
-    let liveModule = liveModules.get(moduleRefStr);
+    let submodulePath = getFullPath(curModulePath, impStmt.str);
+    let liveModule = liveModules.get(submodulePath);
     if (liveModule) {
       return liveModule;
     }
 
-    // If the module reference is a dev library reference, try to import the
-    // given library.
-    if (impStmt.libPath) {
-      let trueLibraryPath = getDevLibPath(moduleRefStr);
-      if (!trueLibraryPath) throw new LoadError(
-        `Library "${impStmt.libPath}" not found`,
+    // If the module reference is a dev library reference, which always comes
+    // in the form of a bare module specifier (left over in the build step, if
+    // any), try to import the given library.
+    if (submodulePath[0] !== "/") {
+      let devLibURL = devLibURLs(submodulePath);
+      if (!devLibURL) throw new LoadError(
+        `Developer library "${submodulePath}" not found`,
         impStmt, callerModuleEnv
       );
       let devMod;
       try {
-        devMod = await import(trueLibraryPath);
+        devMod = await import(devLibURL);
       } catch (err) {
         throw new LoadError(
-          `Library "${impStmt.libPath}" not found`,
+          `Developer library "${submodulePath}" not found`,
           impStmt, callerModuleEnv
         );
       }
@@ -279,21 +329,18 @@ export class ScriptInterpreter {
       let liveModule = {};
       Object.entries(devMod).forEach(([key, val]) => {
         if (
-          val instanceof DeveloperFunction || val instanceof EntityReference ||
-          val instanceof FormalEntity || val instanceof ExpressionEntity ||
-          val instanceof ScriptEntity || val instanceof Immutable ||
+          val instanceof DeveloperFunction || val instanceof Immutable ||
           typeof val === "number" || typeof val === "string"
         ) {
           liveModule["&" + key] = val;
         }
       });
-      liveModules.set(moduleRefStr, liveModule);
-      return liveModule;
+      liveModules.set(submodulePath, liveModule);
+      return [liveModule, submodulePath];
     }
 
     // Else if the module is a user module, first try to get it from the
     // parsedScripts buffer, then try to fetch it from the database.
-    let submodulePath = impStmt.entID;
     let submoduleNode = await this.fetchParsedScript(
       submodulePath, parsedScripts, impStmt, callerModuleEnv
     );
@@ -304,13 +351,15 @@ export class ScriptInterpreter {
       submoduleNode, submodulePath, globalEnv
     );
     liveModules.set(submodulePath, liveModule);
-    return liveModule;
+    return [liveModule, submodulePath];
   }
 
 
 
 
-  static finalizeImportStatement(impStmt, liveSubmodule, moduleEnv) {
+  static finalizeImportStatement(
+    impStmt, liveSubmodule, submodulePath, moduleEnv
+  ) {
     decrCompGas(impStmt, moduleEnv);
 
     // Iterate through all the imports and add each import to the environment.
