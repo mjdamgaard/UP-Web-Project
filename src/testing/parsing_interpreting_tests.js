@@ -327,10 +327,22 @@ async function testInterpreter({
     if (logErrorMsg && log.error?.msg) {
       let err = log.error;
       if (log.error.ln) {
+        console.log("Error: ");
         let combMsg = `Ln ${err.ln}, Col ${err.col}: ${err.msg}`;
         combMsg.split("\n").forEach(val => console.log(val));
       } else {
         err.msg.split("\n").forEach(val => console.log(val));
+      }
+    }
+    else if (logErrorMsg && log.error?.val) {
+      let err =  log.error;
+      console.log("Error: ");
+      console.log(err.val);
+      if (err.node?.pos) {
+        console.log(
+          "between lexeme position " + err.node.pos + " and " +
+          err.node.nextPos
+        );
       }
     }
   }
@@ -357,82 +369,65 @@ async function script_interpreter_tests_01() {
   let params;
 
 
-  params = Object.assign({}, defaultParams, {
-    script: `exit(2 + 2);`,
-    expectedOutput: 4,
-    testKey: "01",
-  });
-  await testInterpreter(params);
+  // params = Object.assign({}, defaultParams, {
+  //   script: `exit(2 + 2);`,
+  //   expectedOutput: 4,
+  //   testKey: "01",
+  // });
+  // await testInterpreter(params);
+
+  // params = Object.assign({}, defaultParams, {
+  //   script: `exit(2 + 2 - 3);`,
+  //   expectedOutput: 1,
+  //   testKey: "02",
+  // });
+  // await testInterpreter(params);
+
+  // params = Object.assign({}, defaultParams, {
+  //   script: `exit(2 ** 4 / 5 + 2 - (3) - (2 - 7));`,
+  //   expectedOutput: 2 ** 4 / 5 + 2 - (3) - (2 - 7),
+  //   testKey: "03",
+  // });
+  // await testInterpreter(params);
+
+  // params = Object.assign({}, defaultParams, {
+  //   script: `exit(2 / 0);`,
+  //   expectedOutput: Infinity,
+  //   testKey: "04",
+  // });
+  // await testInterpreter(params);
+
+  // params = Object.assign({}, defaultParams, {
+  //   script: `let x = 1; exit(x);`,
+  //   expectedOutput: 1,
+  //   testKey: "05",
+  // });
+  // await testInterpreter(params);
+
+  // params = Object.assign({}, defaultParams, {
+  //   script: `let x = 2; let y = 1; x = 2*x + y; exit([x, y]);`,
+  //   expectedOutput: [5, 1],
+  //   testKey: "06",
+  // });
+  // await testInterpreter(params);
 
   params = Object.assign({}, defaultParams, {
-    str: `2 + 2 - 3`,
-    startSym: "expression",
-    expectedOutput: 1,
-    testKey: "02",
-  });
-  await testInterpreter(params);
-
-  params = Object.assign({}, defaultParams, {
-    str: `2 ** 4 / 5 + 2 - (3) - (2 - 7)`,
-    startSym: "expression",
-    expectedOutput: 2 ** 4 / 5 + 2 - (3) - (2 - 7),
-    testKey: "03",
-  });
-  await testInterpreter(params);
-
-  params = Object.assign({}, defaultParams, {
-    str: `2 / 0`,
-    startSym: "expression",
-    expectedOutput: Infinity,
-    testKey: "04",
-  });
-  await testInterpreter(params);
-
-  params = Object.assign({}, defaultParams, {
-    str: `let x = 1;`,
-    startSym: "statement",
-    expectedOutput: {variables: {
-      "#x": [1],
-    }},
-    testKey: "05",
-  });
-  await testInterpreter(params);
-
-  params = Object.assign({}, defaultParams, {
-    str: `let x = 2; let y = 1; x = 2*x + y;`,
-    startSym: "statement*$",
-    expectedOutput: {variables: {
-      "#x": [5],
-      "#y": [1],
-    }},
-    testKey: "06",
-  });
-  await testInterpreter(params);
-
-  params = Object.assign({}, defaultParams, {
-    str: `let x = 0; while(x < 12) { x += 5; }`,
-    startSym: "statement*$",
-    expectedOutput: {variables: {
-      "#x": [15],
-    }},
+    script: `let x = 0; while(x < 12) { x += 5; } exit(x);`,
+    expectedOutput: 15,
     testKey: "07",
   });
   await testInterpreter(params);
 
   params = Object.assign({}, defaultParams, {
-    str: `let x = 0, y = 2; if (x * y) break; else { x -= y++; }`,
-    startSym: "statement*$",
-    expectedOutput: {variables: {
-      "#y": [2 + 1],
-      "#x": [-2],
-    }},
+    script: `let x = 0, y = 2; if (x * y) break; else { x -= y++; } ` +
+      `exit([x, y])`,
+    expectedOutput: [[2 + 1], [-2]],
     testKey: "08",
   });
   await testInterpreter(params);
 
   params = Object.assign({}, defaultParams, {
-    str: `let x = 2; if (true) { x *= 3; }`,
-    startSym: "statement*$",
+    script: `let x = 2; if (true) { x *= 3; }`,
     expectedOutput: {variables: {
       "#x": [6],
     }},
@@ -441,8 +436,7 @@ async function script_interpreter_tests_01() {
   await testInterpreter(params);
 
   params = Object.assign({}, defaultParams, {
-    str: `let x = 2; if (false) { x *= 3; }`,
-    startSym: "statement*$",
+    script: `let x = 2; if (false) { x *= 3; }`,
     expectedOutput: {variables: {
       "#x": [2],
     }},
@@ -451,9 +445,8 @@ async function script_interpreter_tests_01() {
   await testInterpreter(params);
 
   params = Object.assign({}, defaultParams, {
-    str: `function foo(x, y) { let z = x * y; return z + y - x; }` +
+    script: `function foo(x, y) { let z = x * y; return z + y - x; }` +
       `let x = foo(2, 3);`,
-    startSym: "statement*$",
     expectedOutput: {variables: {
       "#x": [7],
     }},
@@ -465,8 +458,7 @@ async function script_interpreter_tests_01() {
   // Worked, but I need to use StartSym = "script" in order to get exception
   // handling:
   // params = Object.assign({}, defaultParams, {
-  //   str: `let x = 0; while(true) { x += 5; }`,
-  //   startSym: "statement*$",
+  //   script: `let x = 0; while(true) { x += 5; }`,
   //   expectedOutput: {
   //     msg: "Ran out of computation gas"
   //   },

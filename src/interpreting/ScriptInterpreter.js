@@ -485,9 +485,9 @@ export class ScriptInterpreter {
   static executeMainFunction(
     liveScriptModule, inputArr, scriptNode, scriptEnv
   ) {
-    let [mainFun] = liveScriptModule["&main"];
+    let [mainFun] = liveScriptModule["&main"] ?? [];
     if (mainFun === undefined) {
-      [mainFun] = liveScriptModule["&default"];
+      [mainFun] = liveScriptModule["&default"] ?? [];
     }
     if (mainFun !== undefined) {
       this.executeFunction(
@@ -708,7 +708,7 @@ export class ScriptInterpreter {
         }
         break;
       }
-      case "loop-statement": {
+      case "loop-statement": {debugger;
         let newEnv = new Environment(environment);
         let innerStmt = stmtNode.stmt;
         let updateExp = stmtNode.updateExp;
@@ -1218,19 +1218,13 @@ export class ScriptInterpreter {
 
 
   static assignToVariableOrMember(expNode, environment, assignFun) {
-    if(expNode.type !== "chained-expression") throw new RuntimeError(
-      "Invalid assignment", expNode, environment
-    );
-    let postfixArrLen = expNode.postfixArr.length;
-    if (postfixArrLen === 0) {
-      if(expNode.rootExp.type !== "identifier") throw new RuntimeError(
-        "Invalid assignment", expNode, environment
-      );
-      return environment.assign(
-        expNode.rootExp.ident, expNode.rootExp, assignFun
-      );
+    if(expNode.type === "identifier") {
+      return environment.assign(expNode.ident, assignFun, expNode);
     }
     else {
+      if(expNode.type !== "chained-expression") throw new RuntimeError(
+        "Invalid assignment", expNode, environment
+      );
       let lastPostfix = expNode.postfixArr.at(-1);
       if (lastPostfix.type !== "member-accessor") throw new RuntimeError(
         "Invalid assignment", expNode, environment
