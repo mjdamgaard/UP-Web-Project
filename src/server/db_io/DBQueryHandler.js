@@ -57,4 +57,32 @@ export class DBQueryHandler {
     }
   }
 
+  static async write(
+    reqUserID, route, content, isBase64
+  ) {
+    if (
+      /^\/[1-9][0-9]*\/[a-zA-Z0-9_\-]+(\/[a-zA-Z0-9_\-]+)*\.(js|txt|json|html)$/
+        .test(route)
+    ) {
+      let indOfSecondSlash = route.indexOf("/", 1);
+      let dirID = route.substring(1, indOfSecondSlash);
+      let filePath = route.substring(indOfSecondSlash + 1);
+      if (path.length > 700) throw new ClientError(
+        "File path is too long"
+      );
+      let conn = MainDBConnector.connect();
+
+      // TODO: Verify that reqUser is the admin here.
+
+      let wasCreated = await MainDBInterface.putTextFile(
+        conn, dirID, filePath, content
+      );
+      conn.end();
+      return wasCreated;
+    }
+    else {
+      // TODO: Implement other file types.
+    }
+  }
+
 }

@@ -57,11 +57,19 @@ async function requestHandler(req, res) {
       result = await DBQueryHandler.read(
         route, reqUserID, clientCacheTime, minServerCacheTime
       );
-      // result: JSON([wasReady, data])
+      // result: JSON([wasReady, data]).
       break;
     }
     case "write":
-      // TODO: Implement.
+      let [
+        route, content, isBase64
+      ] = await InputGetter.getParamsPromise(
+        body, ["route", "cct", "mct"], [undefined, undefined, false]
+      );
+      result = await DBQueryHandler.write(
+        reqUserID, route, content, isBase64
+      );
+      // result: wasCreated.
     case "delete":
       // TODO: Implement.
     case "call":

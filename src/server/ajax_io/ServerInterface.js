@@ -3,14 +3,14 @@
 
 export class ServerInterface {
 
-  static #postReqQueue = new Map();
+  static #postReqBuffer = new Map();
 
   static #post(reqData) {
       let reqKey = JSON.stringify(reqData);
 
       // If there is already an ongoing request with this reqData object,
       // simply return the promise of that.
-      let responseTextPromise = this.#postReqQueue(reqKey);
+      let responseTextPromise = this.#postReqBuffer(reqKey);
       if (responseTextPromise) {
         return responseTextPromise;
       }
@@ -20,27 +20,37 @@ export class ServerInterface {
       let url = "http://localhost:8080";
       responseTextPromise = postData(url, reqData);
 
-      // Then add it to #postReqQueue, and also give it a then-callback to
-      // remove itself from said queue, before return ing the promise.
-      this.#postReqQueue.set(reqKey, responseTextPromise);
+      // Then add it to #postReqBuffer, and also give it a then-callback to
+      // remove itself from said buffer, before return ing the promise.
+      this.#postReqBuffer.set(reqKey, responseTextPromise);
       responseTextPromise.then(() => {
-        this.#postReqQueue.delete(reqKey);
+        this.#postReqBuffer.delete(reqKey);
       });
       return responseTextPromise;
   }
 
 
-  static fetchScript(filePath) {
+  static fetchScript(filePath, credentials) {
     if(filePath.slice(-3) !== ".js") throw (
       'Trying to fetch a script without a last name of ".js"'
     );
-    return this.fetchTextFileContent(filePath)
+    return this.fetchTextFileContent(filePath, credentials)
   }
 
 
-  static fetchTextFileContent(filePath) {
-    return this.#post({route: filePath});
+  static fetchTextFileContent(filePath, credentials) {
+    return this.#post({
+      credentials: credentials, action: "read", route: filePath,
+    });
   }
+
+  static putTextFile(credentials, filePath, contentText) {
+    return this.#post({
+      credentials: credentials, action: "write", route: filePath,
+      content: contentText
+    });
+  }
+
 
 }
 

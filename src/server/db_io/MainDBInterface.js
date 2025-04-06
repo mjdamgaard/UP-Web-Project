@@ -228,7 +228,7 @@ END proc`;
   }
 
 
-  static async createTextFile(conn, dirID, filePath, contentText) {
+  static async putTextFile(conn, dirID, filePath, contentText) {
     if (typeof filePath !== "string" || filePath.length > 700) throw (
       "readFileMetaData(): filePath not a string, or is too long"
     );
@@ -245,12 +245,22 @@ END proc`;
     SELECT NULL;
     LEAVE proc;
   END IF;
-  INSERT INTO FileIDs () VALUES ();
-  SET fileID = LAST_INSERT_ID();
-  DELETE FROM FileIDs WHERE file_id < fileID;
-  INSERT INTO TextFileContents (file_id, content_text)
-  VALUES (fileID, contentText);
-  SELECT 1 AS wasCreated;
+  SELECT file_id INTO fileID
+  FROM Files FORCE INDEX (PRIMARY)
+  WHERE dir_id = dirID AND file_path = filePath;
+  IF (fileID IS NOT NULL) THEN
+    UPDATE TextFileContents
+    SET content_text = contentText
+    WHERE file_id = fileID;
+    SELECT 0 AS wasCreated;
+  ELSE
+    INSERT INTO FileIDs () VALUES ();
+    SET fileID = LAST_INSERT_ID();
+    DELETE FROM FileIDs WHERE file_id < fileID;
+    INSERT INTO TextFileContents (file_id, content_text)
+    VALUES (fileID, contentText);
+    SELECT 1 AS wasCreated;
+  END IF;
 END proc`;
     let options = {sql: sql, rowsAsArray: true};
     let [[[
