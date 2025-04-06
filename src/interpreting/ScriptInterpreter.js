@@ -708,7 +708,7 @@ export class ScriptInterpreter {
         }
         break;
       }
-      case "loop-statement": {debugger;
+      case "loop-statement": {
         let newEnv = new Environment(environment);
         let innerStmt = stmtNode.stmt;
         let updateExp = stmtNode.updateExp;
@@ -1475,6 +1475,8 @@ export class Environment {
       let val = this.parent.get(ident, node, nodeEnvironment);
       if (this.scopeType === "function") {
         return turnImmutable(val);
+      } else {
+        return val;
       }
     }
     else {

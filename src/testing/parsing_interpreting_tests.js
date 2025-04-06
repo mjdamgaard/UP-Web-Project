@@ -10,7 +10,7 @@ let scriptParser = new ScriptParser();
 
 export function runTests() {
   // script_parsing_tests_01(); // Last tested: (06.04.25).
-  script_interpreter_tests_01();
+  script_interpreter_tests_01(); // Last tested: (06.04.25).
 
 }
 
@@ -364,52 +364,52 @@ async function script_interpreter_tests_01() {
     settings: undefined, // ...
     expectedOutput: undefined, expectedLog: {},
     testMsgPrefix: testMsgPrefix, testKey: "",
-    logOutput: true, logLog: true, logErrorMsg: true, logOnlyFailures: false,
+    logOutput: true, logLog: true, logErrorMsg: true, logOnlyFailures: true,
   }
   let params;
 
 
-  // params = Object.assign({}, defaultParams, {
-  //   script: `exit(2 + 2);`,
-  //   expectedOutput: 4,
-  //   testKey: "01",
-  // });
-  // await testInterpreter(params);
+  params = Object.assign({}, defaultParams, {
+    script: `exit(2 + 2);`,
+    expectedOutput: 4,
+    testKey: "01",
+  });
+  await testInterpreter(params);
 
-  // params = Object.assign({}, defaultParams, {
-  //   script: `exit(2 + 2 - 3);`,
-  //   expectedOutput: 1,
-  //   testKey: "02",
-  // });
-  // await testInterpreter(params);
+  params = Object.assign({}, defaultParams, {
+    script: `exit(2 + 2 - 3);`,
+    expectedOutput: 1,
+    testKey: "02",
+  });
+  await testInterpreter(params);
 
-  // params = Object.assign({}, defaultParams, {
-  //   script: `exit(2 ** 4 / 5 + 2 - (3) - (2 - 7));`,
-  //   expectedOutput: 2 ** 4 / 5 + 2 - (3) - (2 - 7),
-  //   testKey: "03",
-  // });
-  // await testInterpreter(params);
+  params = Object.assign({}, defaultParams, {
+    script: `exit(2 ** 4 / 5 + 2 - (3) - (2 - 7));`,
+    expectedOutput: 2 ** 4 / 5 + 2 - (3) - (2 - 7),
+    testKey: "03",
+  });
+  await testInterpreter(params);
 
-  // params = Object.assign({}, defaultParams, {
-  //   script: `exit(2 / 0);`,
-  //   expectedOutput: Infinity,
-  //   testKey: "04",
-  // });
-  // await testInterpreter(params);
+  params = Object.assign({}, defaultParams, {
+    script: `exit(2 / 0);`,
+    expectedOutput: Infinity,
+    testKey: "04",
+  });
+  await testInterpreter(params);
 
-  // params = Object.assign({}, defaultParams, {
-  //   script: `let x = 1; exit(x);`,
-  //   expectedOutput: 1,
-  //   testKey: "05",
-  // });
-  // await testInterpreter(params);
+  params = Object.assign({}, defaultParams, {
+    script: `let x = 1; exit(x);`,
+    expectedOutput: 1,
+    testKey: "05",
+  });
+  await testInterpreter(params);
 
-  // params = Object.assign({}, defaultParams, {
-  //   script: `let x = 2; let y = 1; x = 2*x + y; exit([x, y]);`,
-  //   expectedOutput: [5, 1],
-  //   testKey: "06",
-  // });
-  // await testInterpreter(params);
+  params = Object.assign({}, defaultParams, {
+    script: `let x = 2; let y = 1; x = 2*x + y; exit([x, y]);`,
+    expectedOutput: [5, 1],
+    testKey: "06",
+  });
+  await testInterpreter(params);
 
   params = Object.assign({}, defaultParams, {
     script: `let x = 0; while(x < 12) { x += 5; } exit(x);`,
@@ -420,36 +420,30 @@ async function script_interpreter_tests_01() {
 
   params = Object.assign({}, defaultParams, {
     script: `let x = 0, y = 2; if (x * y) break; else { x -= y++; } ` +
-      `exit([x, y])`,
-    expectedOutput: [[2 + 1], [-2]],
+      `exit([x, y]);`,
+    expectedOutput: [0 - 2, 2 + 1],
     testKey: "08",
   });
   await testInterpreter(params);
 
   params = Object.assign({}, defaultParams, {
-    script: `let x = 2; if (true) { x *= 3; }`,
-    expectedOutput: {variables: {
-      "#x": [6],
-    }},
+    script: `let x = 2; if (true) { x *= 3; } exit(x);`,
+    expectedOutput: 6,
     testKey: "09",
   });
   await testInterpreter(params);
 
   params = Object.assign({}, defaultParams, {
-    script: `let x = 2; if (false) { x *= 3; }`,
-    expectedOutput: {variables: {
-      "#x": [2],
-    }},
+    script: `let x = 2; if (false) { x *= 3; } ;exit(x);`,
+    expectedOutput: 2,
     testKey: "10",
   });
   await testInterpreter(params);
 
   params = Object.assign({}, defaultParams, {
     script: `function foo(x, y) { let z = x * y; return z + y - x; }` +
-      `let x = foo(2, 3);`,
-    expectedOutput: {variables: {
-      "#x": [7],
-    }},
+      `let x = foo(2, 3); exit (x) ;`,
+    expectedOutput: 7,
     testKey: "11",
   });
   await testInterpreter(params);
