@@ -735,10 +735,10 @@ export const scriptGrammar = {
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
         type: "object",
-        children: children[1].children,
+        members: children[1].children,
       } : {
         type: "object",
-        children: [],
+        members: [],
       }
     },
   },
@@ -877,7 +877,7 @@ export class ScriptParser extends Parser {
   constructor() {
     super(
       scriptGrammar,
-      "function",
+      "script",
       [
         /"([^"\\]|\\[.\n])*"/,
         /'([^'\\]|\\[.\n])*'/,

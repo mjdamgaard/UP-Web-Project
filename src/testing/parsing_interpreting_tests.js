@@ -5,7 +5,6 @@ import {
 } from "../interpreting/ScriptInterpreter.js";
 
 let scriptParser = new ScriptParser();
-let scriptInterpreter = new ScriptInterpreter({}, {}, {dataFetcher: {}});
 
 
 
@@ -54,6 +53,8 @@ function testParser({
     }
   }
 }
+
+
 
 
 function script_parsing_tests_01() {
@@ -293,61 +294,21 @@ function script_parsing_tests_01() {
 
 
 
-function testInterpreter({
-  str, startSym = "script",
-  gas = {comp: 1000},
-  expectedOutput, expectedLog,
+async function testInterpreter({
+  script, scriptPath, mainInputs,
+  gas, reqUserID, permissions, settings, // ...
+  expectedOutput, expectedLog = {},
   testMsgPrefix, testKey,
-  logParserOutput, logOutput, logLog, logOnlyFailures,
+  logOutput, logLog, logErrorMsg, logOnlyFailures,
 }) {
-  let [syntaxTree] = scriptParser.parse(str, startSym);
-  if (!syntaxTree.isSuccess) {
-    scriptParser.log(syntaxTree);
-    debugger;throw "Could not lex or parse input";
-  }
-
-  let initNode = syntaxTree.res; 
-  let log = {};
   gas = Object.assign({}, gas);
-  let env = new Environment(
-    undefined, undefined, "module", "0", {gas: gas, log: log},
+
+  let [output, log] = await ScriptInterpreter.interpretScript(
+    script, scriptPath, mainInputs, gas, reqUserID, permissions, settings,
   );
 
-  let output;
-  switch (startSym) {
-    case "expression":
-      output = scriptInterpreter.evaluateExpression(initNode, env);
-      break;
-    case "statement":
-      try {
-        scriptInterpreter.executeStatement(initNode, env);
-        output = env;
-      } catch (err) {
-        if (err instanceof RuntimeError || err instanceof CustomException) {
-          output = err;
-        }
-        else throw err;
-      }
-      break;
-    case "statement*$":
-      try {
-        syntaxTree.children.forEach(stmtSyntaxTree => {
-          scriptInterpreter.executeStatement(stmtSyntaxTree.res, env);
-        });
-        output = env;
-      } catch (err) {
-        if (err instanceof RuntimeError || err instanceof CustomException) {
-          output = err;
-        }
-        else throw err;
-      }
-      break;
-    default:
-      debugger;throw `testing of "${startSym}" not implemented`;
-  }
-
   let isSuccessMsg;
-  if (getMissingMember({out: output}, {out: expectedOutput})) {
+  if (getMissingMember([output, log], [expectedOutput, expectedLog])) {
     isSuccessMsg = "FAILURE";
   } else {
     isSuccessMsg = "SUCCESS";
@@ -355,14 +316,22 @@ function testInterpreter({
 
   if (!logOnlyFailures || isSuccessMsg === "FAILURE") {
     console.log(
-      testMsgPrefix + "." + testKey + ": " + isSuccessMsg +
-      (logParserOutput ? ":" : "")
+      testMsgPrefix + "." + testKey + ": " + isSuccessMsg
     );
     if (logOutput) {
       console.log("Output: ", output);
     }
-    if (logParserOutput) {
-      scriptParser.log(syntaxTree);
+    if (logLog) {
+      console.log("Log: ", log);
+    }
+    if (logErrorMsg && log.error?.msg) {
+      let err = log.error;
+      if (log.error.ln) {
+        let combMsg = `Ln ${err.ln}, Col ${err.col}: ${err.msg}`;
+        combMsg.split("\n").forEach(val => console.log(val));
+      } else {
+        err.msg.split("\n").forEach(val => console.log(val));
+      }
     }
   }
 }
@@ -372,29 +341,28 @@ function testInterpreter({
 
 
 
-function script_interpreter_tests_01() {
+async function script_interpreter_tests_01() {
   let testMsgPrefix = "script_interpreter_tests_01";
 
   console.log("Running " + testMsgPrefix + ":");
 
   let defaultParams = {
-    parser: scriptParser, str: "", startSym: undefined,
-    gas: {comp: 1000},
-    expectedOutput: undefined, expectedLog: undefined,
+    script: "", scriptPath: null, mainInputs: [],
+    gas: {comp: 10000}, reqUserID: undefined, permissions: undefined,
+    settings: undefined, // ...
+    expectedOutput: undefined, expectedLog: {},
     testMsgPrefix: testMsgPrefix, testKey: "",
-    logOutput: true, logLog: undefined,
-    logParserOutput: true, logOnlyFailures: false,
+    logOutput: true, logLog: true, logErrorMsg: true, logOnlyFailures: false,
   }
   let params;
 
 
   params = Object.assign({}, defaultParams, {
-    str: `2 + 2`,
-    startSym: "expression",
+    script: `exit(2 + 2);`,
     expectedOutput: 4,
     testKey: "01",
   });
-  testInterpreter(params);
+  await testInterpreter(params);
 
   params = Object.assign({}, defaultParams, {
     str: `2 + 2 - 3`,
@@ -402,7 +370,7 @@ function script_interpreter_tests_01() {
     expectedOutput: 1,
     testKey: "02",
   });
-  testInterpreter(params);
+  await testInterpreter(params);
 
   params = Object.assign({}, defaultParams, {
     str: `2 ** 4 / 5 + 2 - (3) - (2 - 7)`,
@@ -410,7 +378,7 @@ function script_interpreter_tests_01() {
     expectedOutput: 2 ** 4 / 5 + 2 - (3) - (2 - 7),
     testKey: "03",
   });
-  testInterpreter(params);
+  await testInterpreter(params);
 
   params = Object.assign({}, defaultParams, {
     str: `2 / 0`,
@@ -418,7 +386,7 @@ function script_interpreter_tests_01() {
     expectedOutput: Infinity,
     testKey: "04",
   });
-  testInterpreter(params);
+  await testInterpreter(params);
 
   params = Object.assign({}, defaultParams, {
     str: `let x = 1;`,
@@ -428,7 +396,7 @@ function script_interpreter_tests_01() {
     }},
     testKey: "05",
   });
-  testInterpreter(params);
+  await testInterpreter(params);
 
   params = Object.assign({}, defaultParams, {
     str: `let x = 2; let y = 1; x = 2*x + y;`,
@@ -439,7 +407,7 @@ function script_interpreter_tests_01() {
     }},
     testKey: "06",
   });
-  testInterpreter(params);
+  await testInterpreter(params);
 
   params = Object.assign({}, defaultParams, {
     str: `let x = 0; while(x < 12) { x += 5; }`,
@@ -449,7 +417,7 @@ function script_interpreter_tests_01() {
     }},
     testKey: "07",
   });
-  testInterpreter(params);
+  await testInterpreter(params);
 
   params = Object.assign({}, defaultParams, {
     str: `let x = 0, y = 2; if (x * y) break; else { x -= y++; }`,
@@ -460,7 +428,7 @@ function script_interpreter_tests_01() {
     }},
     testKey: "08",
   });
-  testInterpreter(params);
+  await testInterpreter(params);
 
   params = Object.assign({}, defaultParams, {
     str: `let x = 2; if (true) { x *= 3; }`,
@@ -470,7 +438,7 @@ function script_interpreter_tests_01() {
     }},
     testKey: "09",
   });
-  testInterpreter(params);
+  await testInterpreter(params);
 
   params = Object.assign({}, defaultParams, {
     str: `let x = 2; if (false) { x *= 3; }`,
@@ -480,7 +448,7 @@ function script_interpreter_tests_01() {
     }},
     testKey: "10",
   });
-  testInterpreter(params);
+  await testInterpreter(params);
 
   params = Object.assign({}, defaultParams, {
     str: `function foo(x, y) { let z = x * y; return z + y - x; }` +
@@ -491,7 +459,7 @@ function script_interpreter_tests_01() {
     }},
     testKey: "11",
   });
-  testInterpreter(params);
+  await testInterpreter(params);
 
 
   // Worked, but I need to use StartSym = "script" in order to get exception
@@ -504,7 +472,7 @@ function script_interpreter_tests_01() {
   //   },
   //   testKey: "08",
   // });
-  // testInterpreter(params);
+  // await testInterpreter(params);
 
 
   console.log("Finished " + testMsgPrefix + ".");

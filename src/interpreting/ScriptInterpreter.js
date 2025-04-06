@@ -27,7 +27,6 @@ const GAS_NAMES = {
   comp: "computation",
   import: "import",
   fetch: "fetching",
-  cachePriority: "cache priority",
   time: "time",
   conn: "connection",
 };
@@ -103,9 +102,13 @@ export class ScriptInterpreter {
     // If script is provided, rather than the scriptPath, first parse it.
     let parsedScript;
     if (scriptPath === null) {
-      payGas(globalEnv, {comp: getParsingGasCost(script)});
-      let [scriptSyntaxTree] = scriptParser.parse(script);
-      if (scriptSyntaxTree.error) throw scriptSyntaxTree.error;
+      payGas(null, globalEnv, {comp: getParsingGasCost(script)});
+      let [scriptSyntaxTree, lexArr, strPosArr] = scriptParser.parse(script);
+      if (scriptSyntaxTree.error) {
+        return [
+          undefined, {error: scriptSyntaxTree.error},
+        ];
+      }
       parsedScript = scriptSyntaxTree.res;
       parsedScripts.set(scriptPath, parsedScript);
     }
@@ -127,6 +130,7 @@ export class ScriptInterpreter {
         resolve([output, log]);
       };
     });
+
 
     // Now execute the script as a module, followed by an execution of any
     // function called 'main,' or the default export if no 'main' function is
@@ -241,7 +245,7 @@ export class ScriptInterpreter {
       } catch (err) {
         throw new LoadError(err, callerNode, callerEnv);
       }
-      payGas(callerEnv, {comp: getParsingGasCost(script)});
+      payGas(callerNode, callerEnv, {comp: getParsingGasCost(script)});
       [parsedScript] = scriptParser.parse(script);
       parsedScripts.set(scriptPath, parsedScript);
     }
@@ -433,19 +437,10 @@ export class ScriptInterpreter {
 
   static executeOuterStatement(stmtNode, environment) {
     let type = stmtNode.type;
-    switch (type) {
-      case "statement": {
-        this.executeStatement(stmtNode, environment);
-        break;
-      }
-      case "export-statement": {
-        this.executeExportStatement(stmtNode, environment);
-        break;
-      }
-      default: throw (
-        "ScriptInterpreter.executeOuterStatement(): Unrecognized " +
-        `statement type: "${type}"`
-      );
+    if (type === "export-statement") {
+      this.executeExportStatement(stmtNode, environment);
+    } else {
+      this.executeStatement(stmtNode, environment);
     }
   }
 
@@ -1159,11 +1154,11 @@ export class ScriptInterpreter {
       }
       case "object": {
         let ret = Object.create(null);
-        expNode.children.forEach(exp => {
+        expNode.members.forEach(member => {
           let safeIndex = this.getSafeIndex(
-            postfix.ident, postfix.nameExp, environment
+            member.ident, member.nameExp, member, environment
           );
-          ret[safeIndex] = this.evaluateExpression(exp.valExp, environment);
+          ret[safeIndex] = this.evaluateExpression(member.valExp, environment);
         });
         return ret;
       }
@@ -1303,7 +1298,9 @@ export class ScriptInterpreter {
 
         // Else, first get the safe index (safe from object injection) and
         // throw if it is not a string or a number.
-        safeIndex = this.getSafeIndex(postfix.ident, postfix.exp, environment);
+        safeIndex = this.getSafeIndex(
+          postfix.ident, postfix.exp, postfix, environment
+        );
 
         // If objVal is regular object or array, just get the member.
         if (Object.getPrototypeOf(objVal) === null || objVal instanceof Array) {
@@ -1403,13 +1400,13 @@ export class ScriptInterpreter {
   }
 
 
-  static getSafeIndex(ident = undefined, exp = undefined, environment) {
+  static getSafeIndex(ident = undefined, exp = undefined, node, environment) {
     let index = ident;
     if (exp) index = this.evaluateExpression(exp, environment);
     if (typeof index !== "string" && typeof index !== "number") {
       throw new RuntimeError(
         "Indexing with a value that is not a string or a number",
-        postfix, environment
+        node, environment
       );
     }
     return (parseInt(index) == index) ? index : "&" + index;
@@ -1481,7 +1478,7 @@ export class Environment {
       return (val === UNDEFINED) ? undefined : val;
     }
     else if (this.parent) {
-      let val = parent.get(ident, node, nodeEnvironment);
+      let val = this.parent.get(ident, node, nodeEnvironment);
       if (this.scopeType === "function") {
         return turnImmutable(val);
       }
@@ -1537,7 +1534,7 @@ export class Environment {
   getThisVal() {
     let thisVal = this.thisVal;
     if (thisVal !== undefined) {
-      return (val === UNDEFINED) ? undefined : val;
+      return (thisVal === UNDEFINED) ? undefined : thisVal;
     }
     else if (this.scopeType !== "function" && this.parent) {
       return this.parent.getThisVal();
@@ -1604,11 +1601,11 @@ export class Environment {
       let {interpreter} = this.scriptGlobals;
       let catchEnv = new Environment(this.parent);
       catchEnv.declare(this.errIdent, err.val, false);
-      if (stmtNode.numIdent) {
+      if (this.numIdent) {
         catchEnv.declare(this.numIdent, ++this.numOfAsyncExceptions, false);
       }
       try {
-        stmtNode.catchStmt.forEach(stmt => {
+        this.catchStmtArr.forEach(stmt => {
           interpreter.executeStatement(stmt, catchEnv);
         });
       } catch (err2) {
@@ -1663,7 +1660,7 @@ function turnImmutable(val) {
 
 export function payGas(node, environment, gasCost, isAsync) {
   let {gas} = environment.scriptGlobals;
-  Object.keys(this.gasCost).forEach(key => {
+  Object.keys(gasCost).forEach(key => {
     if (gas[key] ??= 0) {
       gas[key] -= gasCost[key];
     }
