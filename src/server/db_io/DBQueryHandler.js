@@ -1,7 +1,7 @@
 
 import {MainDBInterface} from "./MainDBInterface.js";
 import {MainDBConnector} from "./DBConnector.js";
-import {ClientError} from './err/errors.js';
+import {ClientError} from '../err/errors.js';
 
 
 

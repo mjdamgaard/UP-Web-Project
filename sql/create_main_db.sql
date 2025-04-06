@@ -1,26 +1,13 @@
 
-/* Scores */
-DROP TABLE EntityLists;
-DROP TABLE ListMetadata;
 
-/* Requests */
-DROP TABLE ScheduledRequests;
+DROP TABLE ModuleDirectories;
+DROP TABLE Files;
+DROP TABLE FileIDs;
 
-/* Entities */
-DROP TABLE Entities;
-DROP TABLE EntitySecKeys;
+DROP TABLE TextFileContents;
 
-/* Indexes */
--- DROP TABLE FulltextIndexedEntities;
 
-/* Private user data */
-DROP TABLE Private_UserData;
--- DROP TABLE Private_Sessions;
--- DROP TABLE Private_EMails;
-
-/* Debugging */
-DROP TABLE DebugLogEntries;
--- DROP PROCEDURE logMsg;
+DROP TABLE StorageGasPayments;
 
 
 
@@ -38,17 +25,19 @@ CREATE TABLE ModuleDirectories (
 
 ) ROW_FORMAT = COMPRESSED;
 
+INSERT INTO ModuleDirectories (dir_id, admin_id)
+VALUES (1, 1);
 
 
 CREATE TABLE Files (
 
     dir_id BIGINT UNSIGNED NOT NULL,
 
-    file_path VARCHAR(700) NOT NULL CHARACTER SET utf8mb4,
-
-    prev_modified_at INT UNSIGNED DEFAULT (modified_at),
+    file_path VARCHAR(700) CHARACTER SET utf8mb4 NOT NULL,
 
     modified_at INT UNSIGNED NOT NULL DEFAULT (NOW()),
+
+    prev_modified_at INT UNSIGNED DEFAULT (modified_at),
 
     file_id BIGINT UNSIGNED NOT NULL,
 
@@ -64,7 +53,7 @@ CREATE TABLE FileIDs (
 
     file_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY
 
-) ROW_FORMAT = COMPRESSED;
+); -- ROW_FORMAT = COMPRESSED;
 
 
 
@@ -77,7 +66,7 @@ CREATE TABLE TextFileContents (
 
     file_id BIGINT UNSIGNED PRIMARY KEY,
 
-    content_text TEXT CHARACTER SET utf8mb4 NOT NULL DEFAULT ""
+    content_text TEXT CHARACTER SET utf8mb4
 
 ); -- ROW_FORMAT = COMPRESSED;
 
@@ -104,7 +93,7 @@ CREATE TABLE CharKeyDataTables (
 
     file_id BIGINT UNSIGNED NOT NULL,
 
-    elem_key VARCHAR(255) NOT NULL CHARACTER SET utf8mb4,
+    elem_key VARCHAR(255) CHARACTER SET utf8mb4 NOT NULL,
 
     elem_payload VARBINARY(255) NOT NULL DEFAULT "",
 
@@ -146,7 +135,7 @@ CREATE TABLE BinKeyScoredDataTables (
     PRIMARY KEY (
         file_id,
         elem_key
-    )
+    ),
 
     UNIQUE INDEX sec_idx (
         file_id,

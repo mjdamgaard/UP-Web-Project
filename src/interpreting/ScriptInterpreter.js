@@ -8,7 +8,7 @@ import * as fundamentalsMod from "../dev_lib/fundamentals.js";
 const staticDevLibs = new Map();
 staticDevLibs.set("fundamentals", fundamentalsMod);
 
-// // Following module paths are substituted by module mapping webpack plugin.
+// // Following module paths are substituted by "module mapping webpack plugin."
 // import {
 //   IS_SERVER_SIDE, getDevLibPath, stdProtect, stdSignalDocName
 // } from "interpreter_config";
@@ -34,44 +34,6 @@ const GAS_NAMES = {
 export function getParsingGasCost(str) {
   return {comp: str.length / 100 + 1};
 }
-
-
-export function getFullPath(curPath, path, callerNode, callerEnv) {
-  if (!curPath) curPath = "/";
-
-  if (!path || !/^([^/]+)?(\/[^/]+)*$/.test(path)) throw new LoadError(
-    `Ill-formed path: "${path}"`, callerNode, callerEnv
-  );
-
-  if (path[0] === "/" || path[0] !== ".") {
-    return path;
-  }
-
-  // Remove the last file name from the current path, if any.
-  let [moddedCurPath] = curPath.match(/^(\/[^./]+)+\/?/) ?? [""];
-  if (!moddedCurPath) throw new LoadError(
-    `Ill-formed absolute path: "${curPath}"`, callerNode, callerEnv
-  );
-
-  // Then concatenate the two paths.
-  let fullPath;
-  if (curPath.at(-1) === "/") {
-    fullPath = moddedCurPath + path;
-  } else {
-    fullPath = moddedCurPath + "/" + path;
-  }
-
-  // Then replace any occurrences of "/./" and "<dirName>/../" with "/".
-  fullPath = fullPath.replaceAll(/(\/\.\/|[^/]+\/\.\.\/)/, "/");
-
-  if (fullPath.substring(0, 4) === "/../") throw new LoadError(
-    `Ill-formed path: "${path}"`, callerNode, callerEnv
-  );
-  
-  return fullPath;
-}
-
-
 
 
 
@@ -1650,6 +1612,46 @@ function turnImmutable(val) {
     return val;
   }
 }
+
+
+
+
+
+export function getFullPath(curPath, path, callerNode, callerEnv) {
+  if (!curPath) curPath = "/";
+
+  if (!path || !/^([^/]+)?(\/[^/]+)*$/.test(path)) throw new LoadError(
+    `Ill-formed path: "${path}"`, callerNode, callerEnv
+  );
+
+  if (path[0] === "/" || path[0] !== ".") {
+    return path;
+  }
+
+  // Remove the last file name from the current path, if any.
+  let [moddedCurPath] = curPath.match(/^(\/[^./]+)+\/?/) ?? [""];
+  if (!moddedCurPath) throw new LoadError(
+    `Ill-formed absolute path: "${curPath}"`, callerNode, callerEnv
+  );
+
+  // Then concatenate the two paths.
+  let fullPath;
+  if (curPath.at(-1) === "/") {
+    fullPath = moddedCurPath + path;
+  } else {
+    fullPath = moddedCurPath + "/" + path;
+  }
+
+  // Then replace any occurrences of "/./" and "<dirName>/../" with "/".
+  fullPath = fullPath.replaceAll(/(\/\.\/|[^/]+\/\.\.\/)/, "/");
+
+  if (fullPath.substring(0, 4) === "/../") throw new LoadError(
+    `Ill-formed path: "${path}"`, callerNode, callerEnv
+  );
+  
+  return fullPath;
+}
+
 
 
 

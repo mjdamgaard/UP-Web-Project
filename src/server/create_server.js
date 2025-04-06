@@ -2,7 +2,7 @@
 import * as http from 'http';
 import {ClientError, endWithError, endWithInternalError} from './err/errors.js';
 import {InputGetter} from './user_input/InputGetter.js';
-import {DBQueryHandler} from './DBQueryHandler.js';
+import {DBQueryHandler} from './db_io/DBQueryHandler.js';
 
 // console.log(String({toString: null}))
 
