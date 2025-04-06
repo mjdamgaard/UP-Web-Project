@@ -10,7 +10,7 @@ let scriptInterpreter = new ScriptInterpreter({}, {}, {dataFetcher: {}});
 
 
 export function runTests() {
-  // script_parsing_tests_01(); // Last tested: (...).
+  // script_parsing_tests_01(); // Last tested: (06.04.25).
   script_interpreter_tests_01();
 
 }
@@ -54,6 +54,240 @@ function testParser({
     }
   }
 }
+
+
+function script_parsing_tests_01() {
+  let testMsgPrefix = "regEnt_parsing_tests_01";
+
+  console.log("Running " + testMsgPrefix + ":");
+
+  let defaultParams = {
+    parser: scriptParser, str: "", startSym: undefined, isPartial: undefined,
+    keepLastLexeme: undefined,
+    expectedIsSuccess: true, expectedNextPos: null,
+    testMsgPrefix: testMsgPrefix, testKey: "",
+    logParserOutput: true, logOnlyFailures: false,
+    additionalTest: undefined,
+  }
+  let params;
+
+
+  params = Object.assign({}, defaultParams, {
+    str: `2 + 2`,
+    startSym: "expression",
+    expectedIsSuccess: true,
+    expectedOutput: {res: {
+      type: "additive-expression",
+      children: [
+        {type: "number", lexeme: "2"},
+        "+",
+        {type: "number", lexeme: "2"},
+      ],
+    }},
+    testKey: "01",
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `2 + 2 - 3`,
+    startSym: "expression",
+    expectedIsSuccess: true,
+    expectedOutput: {res: {
+      type: "additive-expression",
+      children: [
+        {type: "number", lexeme: "2"},
+        "+",
+        {type: "number", lexeme: "2"},
+        "-",
+        {type: "number", lexeme: "3"},
+      ],
+    }},
+    testKey: "02",
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `2 ** 4 / 5 + 2 - (3) + (2 + 2) || true`,
+    startSym: "expression",
+    expectedIsSuccess: true,
+    expectedOutput: {res: {
+      type: "or-expression",
+      children: [
+        {
+          type: "additive-expression",
+          children: [
+            {
+              type: "multiplicative-expression",
+              children: [
+                {
+                  type: "exponential-expression",
+                  root: {type: "number", lexeme: "2"},
+                  exp: {type: "number", lexeme: "4"},
+                },
+                "/",
+                {type: "number", lexeme: "5"},
+              ],
+            },
+            "+",
+            {type: "number", lexeme: "2"},
+            "-",
+            {
+              type: "grouped-expression",
+              exp: {type: "number", lexeme: "3"},
+            },
+            "+",
+            {
+              type: "grouped-expression",
+              exp: {
+                type: "additive-expression",
+                children: [
+                  {type: "number", lexeme: "2"},
+                  "+",
+                  {type: "number", lexeme: "2"},
+                ],
+              },
+            },
+          ],
+        },
+        "||",
+        {type: "constant", lexeme: "true"},
+      ],
+    }},
+    testKey: "03",
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `let x = 1;`,
+    startSym: "statement",
+    expectedIsSuccess: true,
+    expectedOutput: {res: {
+      type: "variable-declaration",
+      decType: "definition-list",
+      defArr: [
+        {
+          type: "variable-definition",
+          ident: "x",
+          exp: {type: "number", lexeme: "1"}
+        },
+      ],
+    }},
+    testKey: "04",
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `let x = 1, y = 2 + 3, z;`,
+    startSym: "statement",
+    expectedIsSuccess: true,
+    expectedOutput: {res: {
+      type: "variable-declaration",
+      decType: "definition-list",
+      defArr: [
+        {
+          type: "variable-definition",
+          ident: "x",
+          exp: {type: "number", lexeme: "1"}
+        },
+        {
+          type: "variable-definition",
+          ident: "y",
+          exp: {
+            type: "additive-expression",
+            children: [
+              {type: "number", lexeme: "2"},
+              "+",
+              {type: "number", lexeme: "3"},
+            ],
+          },
+        },
+        {
+          type: "variable-definition",
+          ident: "z",
+          exp: undefined,
+        },
+      ],
+    }},
+    testKey: "05",
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `{ let x = 2; let y = 1; x = 2*x + y; }`,
+    startSym: "statement",
+    expectedIsSuccess: true,
+    expectedOutput: {res: {
+      type: "block-statement",
+      stmtArr: [
+        {type: "variable-declaration"},
+        {type: "variable-declaration"},
+        {
+          type: "expression-statement",
+          exp: {
+            type: "assignment",
+            op: "=",
+            exp1: {type: "identifier"},
+            exp2: {type: "additive-expression"},
+          }
+        },
+      ],
+    }},
+    testKey: "06",
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `function foo(x, y) { let z = x * y; return z + y; }`,
+    startSym: "statement",
+    expectedIsSuccess: true,
+    expectedOutput: {res: {
+      type: "function-declaration",
+      name: "foo",
+      params: [
+        {type: "parameter", ident: "x"},
+        {type: "parameter", ident: "y"},
+      ],
+      body: {stmtArr: [
+        {type: "variable-declaration"},
+        {type: "return-statement"},
+      ]},
+    }},
+    testKey: "07",
+  });
+  testParser(params);
+
+  params = Object.assign({}, defaultParams, {
+    str: `foo(x, y)(z);`,
+    startSym: "statement",
+    expectedIsSuccess: true,
+    expectedOutput: {res: {
+      type: "expression-statement",
+      exp: {
+        type: "chained-expression",
+        rootExp: {type: "identifier", ident: "foo"},
+        postfixArr: [
+          {type: "expression-tuple", children: [
+            {type: "identifier", ident: "x"},
+            {type: "identifier", ident: "y"},
+          ]},
+          {type: "expression-tuple", children: [
+            {type: "identifier", ident: "z"},
+          ]},
+        ],
+      }
+    }},
+    testKey: "08",
+  });
+  testParser(params);
+
+
+
+  console.log("Finished " + testMsgPrefix + ".");
+}
+
+
+
+
 
 
 
@@ -311,237 +545,6 @@ function getMissingMember(testObj, propObj, prefix = "") {
 
 
 
-
-
-function script_parsing_tests_01() {
-  let testMsgPrefix = "regEnt_parsing_tests_01";
-
-  console.log("Running " + testMsgPrefix + ":");
-
-  let defaultParams = {
-    parser: scriptParser, str: "", startSym: undefined, isPartial: undefined,
-    keepLastLexeme: undefined,
-    expectedIsSuccess: true, expectedNextPos: null,
-    testMsgPrefix: testMsgPrefix, testKey: "",
-    logParserOutput: true, logOnlyFailures: true,
-    additionalTest: undefined,
-  }
-  let params;
-
-
-  params = Object.assign({}, defaultParams, {
-    str: `2 + 2`,
-    startSym: "expression",
-    expectedIsSuccess: true,
-    expectedOutput: {res: {
-      type: "additive-expression",
-      children: [
-        {type: "number", lexeme: "2"},
-        "+",
-        {type: "number", lexeme: "2"},
-      ],
-    }},
-    testKey: "01",
-  });
-  testParser(params);
-
-  params = Object.assign({}, defaultParams, {
-    str: `2 + 2 - 3`,
-    startSym: "expression",
-    expectedIsSuccess: true,
-    expectedOutput: {res: {
-      type: "additive-expression",
-      children: [
-        {type: "number", lexeme: "2"},
-        "+",
-        {type: "number", lexeme: "2"},
-        "-",
-        {type: "number", lexeme: "3"},
-      ],
-    }},
-    testKey: "02",
-  });
-  testParser(params);
-
-  params = Object.assign({}, defaultParams, {
-    str: `2 ** 4 / 5 + 2 - (3) + (2 + 2) || true`,
-    startSym: "expression",
-    expectedIsSuccess: true,
-    expectedOutput: {res: {
-      type: "or-expression",
-      children: [
-        {
-          type: "additive-expression",
-          children: [
-            {
-              type: "multiplicative-expression",
-              children: [
-                {
-                  type: "exponential-expression",
-                  root: {type: "number", lexeme: "2"},
-                  exp: {type: "number", lexeme: "4"},
-                },
-                "/",
-                {type: "number", lexeme: "5"},
-              ],
-            },
-            "+",
-            {type: "number", lexeme: "2"},
-            "-",
-            {
-              type: "grouped-expression",
-              exp: {type: "number", lexeme: "3"},
-            },
-            "+",
-            {
-              type: "grouped-expression",
-              exp: {
-                type: "additive-expression",
-                children: [
-                  {type: "number", lexeme: "2"},
-                  "+",
-                  {type: "number", lexeme: "2"},
-                ],
-              },
-            },
-          ],
-        },
-        "||",
-        {type: "constant", lexeme: "true"},
-      ],
-    }},
-    testKey: "03",
-  });
-  testParser(params);
-
-  params = Object.assign({}, defaultParams, {
-    str: `let x = 1;`,
-    startSym: "statement",
-    expectedIsSuccess: true,
-    expectedOutput: {res: {
-      type: "variable-declaration",
-      decType: "definition-list",
-      defArr: [
-        {
-          type: "variable-definition",
-          ident: "x",
-          exp: {type: "number", lexeme: "1"}
-        },
-      ],
-    }},
-    testKey: "04",
-  });
-  testParser(params);
-
-  params = Object.assign({}, defaultParams, {
-    str: `let x = 1, y = 2 + 3, z;`,
-    startSym: "statement",
-    expectedIsSuccess: true,
-    expectedOutput: {res: {
-      type: "variable-declaration",
-      decType: "definition-list",
-      defArr: [
-        {
-          type: "variable-definition",
-          ident: "x",
-          exp: {type: "number", lexeme: "1"}
-        },
-        {
-          type: "variable-definition",
-          ident: "y",
-          exp: {
-            type: "additive-expression",
-            children: [
-              {type: "number", lexeme: "2"},
-              "+",
-              {type: "number", lexeme: "3"},
-            ],
-          },
-        },
-        {
-          type: "variable-definition",
-          ident: "z",
-          exp: undefined,
-        },
-      ],
-    }},
-    testKey: "05",
-  });
-  testParser(params);
-
-  params = Object.assign({}, defaultParams, {
-    str: `{ let x = 2; let y = 1; x = 2*x + y; }`,
-    startSym: "statement",
-    expectedIsSuccess: true,
-    expectedOutput: {res: {
-      type: "block-statement",
-      stmtArr: [
-        {type: "variable-declaration"},
-        {type: "variable-declaration"},
-        {
-          type: "expression-statement",
-          exp: {
-            type: "assignment",
-            op: "=",
-            exp1: {type: "identifier"},
-            exp2: {type: "additive-expression"},
-          }
-        },
-      ],
-    }},
-    testKey: "06",
-  });
-  testParser(params);
-
-  params = Object.assign({}, defaultParams, {
-    str: `function foo(x, y) { let z = x * y; return z + y; }`,
-    startSym: "statement",
-    expectedIsSuccess: true,
-    expectedOutput: {res: {
-      type: "function-declaration",
-      name: "foo",
-      params: [
-        {type: "parameter", ident: "x"},
-        {type: "parameter", ident: "y"},
-      ],
-      body: {stmtArr: [
-        {type: "variable-declaration"},
-        {type: "return-statement"},
-      ]},
-    }},
-    testKey: "07",
-  });
-  testParser(params);
-
-  params = Object.assign({}, defaultParams, {
-    str: `foo(x, y)(z);`,
-    startSym: "statement",
-    expectedIsSuccess: true,
-    expectedOutput: {res: {
-      type: "expression-statement",
-      exp: {
-        type: "function-call",
-        exp: {
-          type: "function-call",
-          exp: {type: "identifier", ident: "foo"},
-          postfix: {type: "expression-tuple", children: [
-            {type: "identifier", ident: "x"},
-            {type: "identifier", ident: "y"},
-          ]}
-        },
-        postfix: {type: "expression-tuple", children: [
-          {type: "identifier", ident: "z"},
-        ]}
-      }
-    }},
-    testKey: "08",
-  });
-  testParser(params);
-
-
-
-  console.log("Finished " + testMsgPrefix + ".");
-}
 
 
 

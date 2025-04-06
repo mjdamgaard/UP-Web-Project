@@ -432,7 +432,7 @@ export const scriptGrammar = {
         "statement!1*", /\}/
       ],
     ],
-    process: (children) => {
+    process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
         type: "try-catch-statement",
         tryStmtArr: children[2],
@@ -640,11 +640,17 @@ export const scriptGrammar = {
     rules: [
       ["expression^(15)", "member-accessor-or-expression-tuple!1*"],
     ],
-    process: (children) => ({
-      type: "chained-expression",
-      rootExp: children[0],
-      postfixArr: children[1],
-    }),
+    process: (children) => {
+      let postfixArr = children[1];
+      if (!postfixArr[0]) {
+        return children[0];
+      }
+      else return {
+        type: "chained-expression",
+        rootExp: children[0],
+        postfixArr: postfixArr,
+      };
+    },
   },
   "member-accessor-or-expression-tuple": {
     rules: [
