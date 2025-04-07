@@ -22,8 +22,6 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
 
 
 export const scriptGrammar = {
-  ...regEntGrammar, // TODO: Remove such that the whole grammar is contained
-  // here.
   "script": {
     rules: [
       [ 
@@ -773,10 +771,10 @@ export const scriptGrammar = {
   "jsx-element": {
     rules: [
       ["/</", "/>/", "jsx-content*", "/</", /\/>/],
-      ["/</", /[a-zA-Z][a-zA-Z_0-9]*/, "jsx-property*", /\/>/],
+      ["/</", "tag-name", "jsx-property*", /\/>/],
       [
-        "/</", /[a-zA-Z][a-zA-Z_0-9]*/, "jsx-property*", "/>/", "jsx-content*",
-        /<\//, /[a-zA-Z][a-zA-Z_0-9]*/, />/
+        "/</", "tag-name", "jsx-property*", "/>/", "jsx-content*",
+        /<\//, "tag-name", />/
       ],
     ],
     process: (children, ruleInd) => {
@@ -787,38 +785,78 @@ export const scriptGrammar = {
           contentArr: children[2],
         };
       } else if (ruleInd === 1) {
+        let tagName = children[1].lexeme;
+        let isModule = /^[A-Z]/.test(tagName);
+        if (!isModule && tagName !== "br" && tagName !== "hr") {
+          return (
+            `Invalid void element tag name: "${tagName}"`
+          );
+        }
         return {
           type: "jsx-element",
           isVoidElement: true,
-          tagName: children[1],
+          tagName: tagName,
+          isModule: isModule,
           propArr: children[2],
         };
       } else {
-        let tagName = children[1];
-        let endTagName = children[6];
+        let tagName = children[1].lexeme;
+        let endTagName = children[6].lexeme;
         if (endTagName !== tagName) {
           return (
             `End tag name, "${endTagName}", did not match start tag name, ` +
             `"${tagName}"`
           );
         }
+        if (tagName === "br" || tagName === "hr") {
+          return (
+            `Tags of the type "${tagName}" need to be self-closing`
+          );
+        }
         return {
           type: "jsx-element",
-          tagName: children[1],
+          tagName: tagName,
+          isModule: /^[A-Z]/.test(tagName),
           propArr: children[2],
           contentArr: children[4],
         };
       }
     },
   },
+  "tag-name": {
+    rules: [
+      [/[A-Z][a-zA-z0-9_$]|div|span|i|b|br|hr/],
+    ],
+    process: copyLexemeFromChild,
+  },
   "jsx-property": {
     rules: [
       ["identifier", "/=/", "literal"],
-      ["identifier", "/=/", /\{/, "expression!", /\}/],
-      [/\{/, /\.\.\./, "identifier", /\}/],
+      ["identifier", "/=/!1", /\{/, "expression", /\}/],
+      ["identifier"],
+      [/\{/, /\.\.\./, "expression", /\}/],
     ],
     process: (children, ruleInd) => {
-      
+      if (ruleInd <= 2) {
+        let ret = {
+          type: "jsx-property",
+          ident: children[0].ident,
+        };
+        if (ruleInd === 0) {
+          ret.literal = children[2];
+        }
+        else if (ruleInd === 1) {
+          ret.exp = children[3];
+        }
+        return ret;
+      }
+      else {
+        return {
+          type: "jsx-property",
+          isSpread: true,
+          exp: children[2],
+        };
+      }
     },
   },
   "jsx-content": {
@@ -827,7 +865,14 @@ export const scriptGrammar = {
       [/\{/, "expression", /\}/],
     ],
     process: (children, ruleInd) => {
-      
+      if (ruleInd === 0) {
+        return children[0];
+      } else {
+        return {
+          type: "expression-content",
+          exp: children[1],
+        }
+      }
     },
   },
   "literal-list": {
@@ -836,6 +881,43 @@ export const scriptGrammar = {
       ["literal", "/,/?"],
     ],
     process: straightenListSyntaxTree,
+  },
+  "literal": {
+    rules: [
+      ["string"],
+      ["number"],
+      ["constant"],
+    ],
+    process: copyFromChild,
+  },
+  "string": {
+    rules: [
+      [/"([^"\\]|\\[.\n])*"/],
+    ],
+    process: (children) => {
+      let stringLiteral = children[0];
+      let str;
+      try {
+        str = JSON.parse(stringLiteral);
+      } catch (error) {
+        return [false, `Invalid JSON string: ${stringLiteral}`];
+      }
+      return {type: "string", str: str};
+    },
+  },
+  "number": {
+    rules: [
+      [/\-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/],
+    ],
+    process: copyLexemeFromChild,
+    params: ["number"],
+  },
+  "constant": {
+    rules: [
+      ["/true|false|null|undefined|Infinity|NaN/"],
+    ],
+    process: copyLexemeFromChild,
+    params: ["constant"],
   },
   "this-keyword": {
     rules: [
@@ -861,13 +943,6 @@ export const scriptGrammar = {
       type: "pass-as-mutable-call",
       exp: children[2],
     }),
-  },
-  "constant": {
-    rules: [
-      ["/true|false|null|undefined|Infinity|NaN/"],
-    ],
-    process: copyLexemeFromChild,
-    params: ["constant"],
   },
 };
 

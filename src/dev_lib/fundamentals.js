@@ -11,16 +11,16 @@
 
 
 
-// export function executeUserOrJSCallback(
-//   callback, res, callerNode, callerEnv, interpreter
-// ) {
-//   if (callback instanceof Function) {
-//     callback(res);
-//   }
-//   else {
-//     interpreter.executeAsyncCallback( callback, [res], callerNode, callerEnv);
-//   }
-// }
+export function executeUserOrJSCallback(
+  callback, res, callerNode, callerEnv, interpreter
+) {
+  if (callback instanceof Function) {
+    callback(res);
+  }
+  else {
+    interpreter.executeAsyncCallback(callback, [res], callerNode, callerEnv);
+  }
+}
 
 
 

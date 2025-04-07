@@ -246,7 +246,7 @@ export class ScriptInterpreter {
     moduleNode.importStmtArr.forEach((impStmt, ind) => {
       let [liveSubmodule, submodulePath] = liveSubmoduleAndPathArr[ind];
       this.finalizeImportStatement(
-        impStmt, liveSubmodule, submodulePath, modulePath, moduleEnv
+        impStmt, liveSubmodule, submodulePath, moduleEnv
       );
     });
 
@@ -303,7 +303,7 @@ export class ScriptInterpreter {
       let liveModule = {};
       Object.entries(devMod).forEach(([key, val]) => {
         if (
-          val instanceof DeveloperFunction || val instanceof Immutable ||
+          val instanceof DevFunction || val instanceof Immutable ||
           typeof val === "number" || typeof val === "string"
         ) {
           liveModule["&" + key] = val;
@@ -332,7 +332,7 @@ export class ScriptInterpreter {
 
 
   static finalizeImportStatement(
-    impStmt, liveSubmodule, submodulePath, curModulePath, curModuleEnv
+    impStmt, liveSubmodule, submodulePath, curModuleEnv
   ) {
     decrCompGas(impStmt, curModuleEnv);
 
@@ -340,19 +340,10 @@ export class ScriptInterpreter {
     impStmt.importArr.forEach(imp => {
       let impType = imp.importType
       if (impType === "namespace-import") {
-        let namespaceObj = Object.fromEntries(
-          Object.entries(liveSubmodule)
+        let moduleObject = new ModuleObject(
+          submodulePath, curModuleEnv, liveSubmodule
         );
-        let [curModuleDirID] = curModulePath.match(/^[1-9][0-9]*/) ?? [];
-        let [submoduleDirID] = submodulePath.match(/^[1-9][0-9]*/) ?? [];
-        if (submoduleDirID === curModuleDirID) {
-          curModuleEnv.declare(imp.ident, namespaceObj, true, imp);
-        } else {
-          let moduleObject = new ModuleObject(
-            submoduleDirID, curModuleEnv, namespaceObj
-          );
-          curModuleEnv.declare(imp.ident, moduleObject, true, imp);
-        }
+        curModuleEnv.declare(imp.ident, moduleObject, true, imp);
       }
       else if (impType === "named-imports") {
         imp.namedImportArr.forEach(namedImp => {
@@ -484,7 +475,7 @@ export class ScriptInterpreter {
     }
 
     // Then execute the function depending on its type.
-    if (fun instanceof DeveloperFunction) {
+    if (fun instanceof DevFunction) {
       // If the called developer function has a signal, then call protect()
       // (again, if called already), and also reassign protectData the return
       // value.
@@ -932,11 +923,17 @@ export class ScriptInterpreter {
               acc = parseInt(acc) & parseInt(nextVal);
               break;
             case "===":
-              acc = acc === nextVal;
+            case "==": {
+              let a = acc, n = nextVal;
+              if (a instanceof Immutable || a instanceof PassAsMutable) {
+                a = acc.val;
+              }
+              if (n instanceof Immutable || n instanceof PassAsMutable) {
+                n = nextVal.val;
+              }
+              acc = (op === "==") ? (a == n) : (a === n);
               break;
-            case "==":
-              acc = acc == nextVal;
-              break;
+            }
             case "!==":
               acc = acc !== nextVal;
               break;
@@ -1124,6 +1121,28 @@ export class ScriptInterpreter {
         });
         return ret;
       }
+      case "jsx-element": {
+        return new JSXElement(expNode, environment);
+      }
+      case "identifier": {
+        let ident = expNode.ident;
+        return environment.get(ident, expNode);
+      }
+      case "string": {
+        return expNode.str;
+      }
+      case "number": {
+        return parseFloat(expNode.lexeme);
+      }
+      case "constant": {
+        let lexeme = expNode.lexeme;
+        return (lexeme === "true") ? true :
+               (lexeme === "false") ? false :
+               (lexeme === "null") ? null :
+               (lexeme === "Infinity") ? Infinity :
+               (lexeme === "NaN") ? NaN :
+               undefined;
+      }
       case "this-keyword": {
         return environment.getThisVal();
       }
@@ -1151,25 +1170,6 @@ export class ScriptInterpreter {
             "PassAsMutable() called on with non-mutable argument"
           );
         }
-      }
-      case "identifier": {
-        let ident = expNode.ident;
-        return environment.get(ident, expNode);
-      }
-      case "string": {
-        return expNode.str;
-      }
-      case "number": {
-        return parseFloat(expNode.lexeme);
-      }
-      case "constant": {
-        let lexeme = expNode.lexeme;
-        return (lexeme === "true") ? true :
-               (lexeme === "false") ? false :
-               (lexeme === "null") ? null :
-               (lexeme === "Infinity") ? Infinity :
-               (lexeme === "NaN") ? NaN :
-               undefined;
       }
       default: throw (
         "ScriptInterpreter.evaluateExpression(): Unrecognized type: " +
@@ -1713,7 +1713,7 @@ export function getType(val) {
     } else if (val === null) {
       return "null";
     } else if (
-      val instanceof DefinedFunction || val instanceof DeveloperFunction
+      val instanceof DefinedFunction || val instanceof DevFunction
     ) {
       return "function";
     } else if (val instanceof ModuleObject) {
@@ -1736,7 +1736,7 @@ export function getType(val) {
 
 export function isFunction(val) {
   return (
-    val instanceof DefinedFunction || val instanceof DeveloperFunction
+    val instanceof DefinedFunction || val instanceof DevFunction
   );
 }
 
@@ -1753,8 +1753,8 @@ export class DefinedFunction {
   }
 }
 
-export class DeveloperFunction {
-  constructor(fun, signal = undefined) {
+export class DevFunction {
+  constructor(signal = undefined, fun) {
     this.fun = fun;
     if (signal) this.signal = signal;
   }
@@ -1780,6 +1780,12 @@ export class PassAsMutable {
   }
 }
 
+export class JSXElement {
+  constructor(node, decEnv) {
+    this.node = node;
+    this.decEnv = decEnv;
+  }
+}
 
 
 
