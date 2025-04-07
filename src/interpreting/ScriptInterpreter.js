@@ -1122,7 +1122,7 @@ export class ScriptInterpreter {
         return ret;
       }
       case "jsx-element": {
-        return new JSXElement(expNode, environment);
+        return new JSXElement(expNode, environment, this);
       }
       case "identifier": {
         let ident = expNode.ident;
@@ -1781,9 +1781,34 @@ export class PassAsMutable {
 }
 
 export class JSXElement {
-  constructor(node, decEnv) {
-    this.node = node;
-    this.decEnv = decEnv;
+  constructor(
+    node, decEnv, interpreter
+  ) {
+    let {
+      tagName, isFragment, isVoidElement, isModule, propArr, contentArr
+    } = node;
+    this.tagName = tagName;
+    if (isFragment) this.isFragment = isFragment;
+    if (isVoidElement) this.isVoidElement = isVoidElement;
+    if (isModule) this.isModule = isModule;
+    if (propArr) this.propArr = propArr.map(propNode => {
+      if (propNode.isSpread) {
+        return {
+          isSpread: true,
+          exp: interpreter.evaluateExpression(propNode.exp, decEnv),
+        };
+      } else {
+        return {
+          ident: propNode.ident,
+          exp: propNode.exp ?
+            interpreter.evaluateExpression(propNode.exp, decEnv) :
+            true,
+        };
+      }
+    });
+    if (contentArr) this.contentArr = contentArr.map(contentNode => (
+      interpreter.evaluateExpression(contentNode, decEnv)
+    ));
   }
 }
 

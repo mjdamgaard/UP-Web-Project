@@ -843,7 +843,7 @@ export const scriptGrammar = {
           ident: children[0].ident,
         };
         if (ruleInd === 0) {
-          ret.literal = children[2];
+          ret.exp = children[2];
         }
         else if (ruleInd === 1) {
           ret.exp = children[3];

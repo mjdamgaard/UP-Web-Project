@@ -15,7 +15,16 @@ export function runTests() {
 
 }
 
-
+// // Hm, this little test causes React's (probably webpack's) build step to
+// // get stuck (maybe in an infinite loop).. ..But on mozilla.org's 'Try it'
+// editor, it throws a  ReferenceError..
+// let x = 50;
+// (function () {
+//   return function() {
+//     console.log(x);
+//   }
+//   let x = 90;
+// })()();
 
 
 

@@ -12,11 +12,12 @@ export const createJSXApp = new DevFunction(createAppSignal, function(
 });
 
 
+
 class JSXModuleInstance {
 
   constructor (moduleObject, parent = null, key = null, props = {}) {
     this.moduleObject = moduleObject;
-    this.childModules = moduleObject.members["&childModules"];
+    this.childModules = moduleObject.members["&childModules"]?.val;
     this.parent = parent;
     this.key = key;
     this.props = props;
@@ -37,6 +38,11 @@ class JSXModuleInstance {
   // childKey.
   dispatch(action, inputArr, receiverModule = undefined, childKey = undefined) {
 
+  }
+
+
+  addChildModule(moduleObject) {
+    // TODO: Implement.
   }
 
 }
