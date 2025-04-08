@@ -782,7 +782,7 @@ export const scriptGrammar = {
         return {
           type: "jsx-element",
           isFragment: true,
-          contentArr: children[2],
+          children: children[2],
         };
       } else if (ruleInd === 1) {
         let tagName = children[1].lexeme;
@@ -817,7 +817,7 @@ export const scriptGrammar = {
           tagName: tagName,
           isModule: /^[A-Z]/.test(tagName),
           propArr: children[2],
-          contentArr: children[4],
+          children: children[4],
         };
       }
     },

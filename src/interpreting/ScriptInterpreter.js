@@ -1765,6 +1765,18 @@ export class Immutable {
   get(key) {
     return this.val.get(key);
   }
+  entries(key) {
+    return this.val.entries(key);
+  }
+  keys(key) {
+    return this.val.keys(key);
+  }
+  values(key) {
+    return this.val.values(key);
+  }
+  forEach(val, key, map) {
+    return this.val.forEach(val, key, map);
+  }
 }
 
 export class PassAsMutable extends Immutable {
@@ -1777,7 +1789,7 @@ export class JSXElement {
   constructor(
     node, decEnv, interpreter
   ) {
-    let {tagName, isModule, isFragment, propArr, contentArr} = node;
+    let {tagName, isModule, isFragment, propArr, children} = node;
     if (tagName) this.tagName = tagName;
     if (isModule) this.moduleObject = decEnv.get(tagName, node);
     if (isFragment) this.isFragment = isFragment;
@@ -1796,9 +1808,9 @@ export class JSXElement {
         };
       }
     });
-    if (contentArr) this.propArr.push({
+    if (children) this.propArr.push({
       ident: "children",
-      exp: contentArr.map(contentNode => (
+      exp: children.map(contentNode => (
         interpreter.evaluateExpression(contentNode, decEnv)
       )),
     });
