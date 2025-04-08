@@ -20,19 +20,19 @@ class JSXModuleInstance {
     this.moduleObject = moduleObject;
     this.moduleParent = moduleParent;
     this.key = key;
-    this.props = null;
-    this.state = {};
-    this.refs = {};
+    this.props = undefined;
+    this.state = undefined;
     this.moduleChildren = new Map();
     this.htmlElement = undefined;
   }
 
-  render(props = Object.create(null), callerNode, callerEnv, isThisKeyword) {
+  render(props = new Map(), callerNode, callerEnv, isThisKeyword) {
     if (compareProps(props, this.props)) {
       return;
     }
+    let prevRefs = this.props?.$refs
     this.props = props;
-    let fun = this.moduleObject.members["$render"];
+    let fun = this.moduleObject.members.$render;
     let inputArr = [props, new Immutable(this)];
     let jsxElement = interpreter.executeFunction(
       fun, inputArr, callerNode, callerEnv, this.moduleObject, isThisKeyword

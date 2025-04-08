@@ -758,10 +758,10 @@ export const scriptGrammar = {
         ident: children[0].ident,
         valExp: children[2],
       } : (ruleInd === 1) ? {
-        nameExp: children[0],
+        keyExp: children[0],
         valExp: children[2],
       } : {
-        nameExp: children[1],
+        keyExp: children[1],
         valExp: children[4],
       };
       ret.type = "member";

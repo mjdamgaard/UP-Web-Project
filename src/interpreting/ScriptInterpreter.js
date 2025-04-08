@@ -1109,15 +1109,16 @@ export class ScriptInterpreter {
         let expValArr = expNode.children.map(exp => (
           this.evaluateExpression(exp, environment)
         ));
-        return expValArr;
+        return new Map(Object.entries(expValArr));
       }
       case "object": {
-        let ret = Object.create(null);
+        let ret = new Map();
         expNode.members.forEach(member => {
-          let safeIndex = this.getSafeIndex(
-            member.ident, member.nameExp, member, environment
-          );
-          ret[safeIndex] = this.evaluateExpression(member.valExp, environment);
+          let index = member.ident;
+          if (index === undefined) {
+            index = this.evaluateExpression(member.keyExp, environment);
+          }
+          ret.set(index, this.evaluateExpression(member.valExp, environment));
         });
         return ret;
       }
@@ -1163,11 +1164,11 @@ export class ScriptInterpreter {
       }
       case "pass-as-mutable-call": {
         let expVal = this.evaluateExpression(expNode.exp, environment);
-        if (Object.getPrototypeOf(expVal) === null || expVal instanceof Array) {
+        if (expVal.set instanceof Function) {
           return new PassAsMutable(expVal);
         } else {
           throw new RuntimeError(
-            "PassAsMutable() called on with non-mutable argument"
+            "passAsMutable() called with a non-mutable argument"
           );
         }
       }
@@ -1196,9 +1197,9 @@ export class ScriptInterpreter {
         "an assignment",
         expNode, environment
       );
-      let prevVal, objVal, safeIndex;
+      let prevVal, objVal, index;
       try {
-        [prevVal, objVal, safeIndex] = this.evaluateChainedExpression(
+        [prevVal, objVal, index] = this.evaluateChainedExpression(
           expNode.rootExp, expNode.postfixArr, environment, true
         );
       }
@@ -1216,13 +1217,13 @@ export class ScriptInterpreter {
       // Then assign newVal to the member of objVal and return ret, where
       // newVal and ret are both specified by the assignFun.
       let [newVal, ret] = assignFun(prevVal);
-      objVal[safeIndex] = newVal;
+      objVal.set(index, newVal);
       return ret;
     }
   }
 
 
-  // evaluateChainedExpression() => [val, objVal, safeIndex], or throws
+  // evaluateChainedExpression() => [val, objVal, index], or throws
   // a BrokenOptionalChainException. Here, val is the value of the whole
   // expression, and objVal, is the value of the object before the last member
   // accessor (if the last postfix is a member accessor and not a tuple).
@@ -1237,7 +1238,7 @@ export class ScriptInterpreter {
     decrCompGas(rootExp, environment);
 
     // Evaluate the chained expression accumulatively, one postfix at a time. 
-    let postfix, objVal, safeIndex, isThisKeyword;
+    let postfix, objVal, index, isThisKeyword;
     for (let i = 0; i < len; i++) {
       postfix = postfixArr[i];
 
@@ -1252,37 +1253,30 @@ export class ScriptInterpreter {
           throw new BrokenOptionalChainException();
         }
 
-        // Else, first get the safe index (safe from object injection) and
-        // throw if it is not a string or a number.
-        safeIndex = this.getSafeIndex(
-          postfix.ident, postfix.exp, postfix, environment
-        );
-
-        // If objVal is regular object or array, just get the member.
-        if (Object.getPrototypeOf(objVal) === null || objVal instanceof Array) {
-          val = objVal[safeIndex];
+        // Else, first get the index.
+        index = postfix.ident;
+        if (index === undefined) {
+          index = this.evaluateExpression(postfix.exp, environment);
         }
 
-        // Else if it is an instance of Immutable, also get the member, but
-        // turn it Immutable of it is not so already. And throw if forAssignment
-        // = true.
-        else if (objVal instanceof Immutable) {
-          val = turnImmutable(objVal.val[safeIndex]);
-          if (forAssignment) throw new RuntimeError(
-            "Assignment to a member of an immutable object",
-            postfix, environment
-          );
-        }
+        // // If objVal is an array, check that index is either a non-negative
+        // // integer smaller than 2**32, or 'length,' then get the value.
+        // if (objVal instanceof Array) {
+        //   let n = parseInt(index);
+        //   if (
+        //     index !== "length" &&
+        //     (typeof index !== number || n!== index || n < 0 || n > 4294967296)
+        //   ) {
+        //     throw new RuntimeError(
+        //       "Invalid array index", postfix, environment
+        //     );
+        //   }
+        //   val = objVal[index];
+        // }
 
-        // Else if the object is wrapped in PassAsMutable(), simply get the
-        // member.
-        else if (objVal instanceof PassAsMutable) {
-          val = objVal.val[safeIndex];
-        }
-
-        // Else if objVal is a protected object, get the method, and also make
+        // If objVal is a protected object, get the method, and also make
         // some checks.
-        else if (objVal instanceof ModuleObject) {
+        if (objVal instanceof ModuleObject) {
           // First of all check that the object isn't being used outside
           // its own declaration environment call stack.
           let isValid = environment.isCallStackDescendentOf(objVal.decEnv);
@@ -1292,33 +1286,42 @@ export class ScriptInterpreter {
             postfix, environment
           );
 
-          // Then get the member.
-          val = objVal.methods[safeIndex];
-
-          // If no such member exist, continue with an undefined val.
-          if (val === undefined) {
-            continue;
-          }
-
           // Also check that the user isn't trying to assign to the member.
           if (forAssignment) throw new RuntimeError(
             "Assignment to a read-only member of a module object",
             postfix, environment
           );
 
+          // Then get the member.
+          val = objVal.members[index];
+
+          // If no such member exist, continue with an undefined val.
+          if (val === undefined) {
+            continue;
+          }
+
           // Set isThisKeyword to true iff rootExp is a 'this' keyword and
           // i === 1.
           isThisKeyword = (i === 1 && rootExp.type === "this-keyword");
-
-          // And finally continue, with val and isThisKeyword (and objVal)
-          // defined.
         }
 
-        // Else throw if objVal is not an (accessible) object at all.
-        else throw new RuntimeError(
-          "Trying to access a member of a non-object",
-          postfix, environment
-        );
+        // Else check that the object has a get() method, and a set() method if
+        // accessed for assignment, and then use the get() method to get the
+        // value.
+        else {
+          if (!(objVal.get instanceof Function)) throw new RuntimeError(
+            "Trying to access a member of a non-object",
+            postfix, environment
+          );
+          if (forAssignment && !(objVal.set instanceof Function)) {
+            throw new RuntimeError(
+              "Trying to assign to a member of a non-object, or an object " +
+              "that is immutable in the current context",
+              postfix, environment
+            );
+          }
+          val = objVal.get(index);
+        }
       }
 
       // Else if postfix is an expression tuple, execute the current val as a
@@ -1351,21 +1354,8 @@ export class ScriptInterpreter {
     // Finally return val and objVal, which should now respectively hold the
     // value of the full expression and the value of the object before the
     // last member access, or undefined if the last postfix was an expression
-    // tuple. Also return the safeIndex.
-    return [val, objVal, safeIndex];
-  }
-
-
-  static getSafeIndex(ident = undefined, exp = undefined, node, environment) {
-    let index = ident;
-    if (exp) index = this.evaluateExpression(exp, environment);
-    if (typeof index !== "string" && typeof index !== "number") {
-      throw new RuntimeError(
-        "Indexing with a value that is not a string or a number",
-        node, environment
-      );
-    }
-    return (parseInt(index) == index) ? index : "$" + index;
+    // tuple. Also return the index.
+    return [val, objVal, index];
   }
 
 }
@@ -1606,7 +1596,7 @@ function getSafeObj(obj) {
 
 
 function turnImmutable(val) {
-  if (Object.getPrototypeOf(val) === null || val instanceof Array) {
+  if (val.set instanceof Function) {
     return new Immutable(val);
   } else {
     return val;
@@ -1772,11 +1762,14 @@ export class Immutable {
   constructor(val) {
     this.val = val;
   }
+  get(key) {
+    return this.val.get(key);
+  }
 }
 
-export class PassAsMutable {
+export class PassAsMutable extends Immutable {
   constructor(val) {
-    this.val = val;
+    super(val);
   }
 }
 
