@@ -9,7 +9,7 @@ export class MainDBInterface {
 
 
 
-  static async readModDirMetaData(conn, dirID) {
+  static async readHomeDirMetaData(conn, dirID) {
     let sql =
 `BEGIN proc:
   DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
@@ -18,7 +18,7 @@ export class MainDBInterface {
     LEAVE proc;
   END IF;
   SELECT admin_id, is_private
-  FROM ModuleDirectories FORCE INDEX (PRIMARY)
+  FROM HomeDirectories FORCE INDEX (PRIMARY)
   WHERE dir_id = dirID;
 END proc`;
     let options = {sql: sql, rowsAsArray: true};
@@ -31,7 +31,7 @@ END proc`;
   }
 
 
-  static async readModDirDescendants(conn, dirID, maxNum, numOffset) {
+  static async readHomeDirDescendants(conn, dirID, maxNum, numOffset) {
     let sql =
 `BEGIN proc:
   DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
@@ -56,7 +56,7 @@ END proc`;
 
 
 
-  static async createModDir(conn, adminID, isPrivate) {
+  static async createHomeDir(conn, adminID, isPrivate) {
     isPrivate = isPrivate ? 1 : 0;
     let sql =
 `BEGIN proc:
@@ -66,7 +66,7 @@ END proc`;
     SELECT NULL;
     LEAVE proc;
   END IF;
-  INSERT INTO ModuleDirectories (admin_id, is_private)
+  INSERT INTO HomeDirectories (admin_id, is_private)
   VALUES (adminID, isPrivate);
   SELECT LAST_INSERT_ID() AS dirID;
 END proc`;
@@ -80,7 +80,7 @@ END proc`;
   }
 
 
-  static async editModDir(conn, dirID, adminID, isPrivate) {
+  static async editHomeDir(conn, dirID, adminID, isPrivate) {
     isPrivate = isPrivate ? 1 : 0;
     let sql =
 `BEGIN proc:
@@ -91,7 +91,7 @@ END proc`;
     SELECT NULL;
     LEAVE proc;
   END IF;
-  UPDATE ModuleDirectories
+  UPDATE HomeDirectories
   SET admin_id = adminID, is_private = isPrivate
   WHERE dir_id = dirID;
   SELECT ROW_COUNT() AS wasEdited;
@@ -106,7 +106,7 @@ END proc`;
   }
 
 
-  static async deleteModDir(conn, dirID) {
+  static async deleteHomeDir(conn, dirID) {
     let sql =
 `BEGIN proc:
   DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
@@ -124,7 +124,7 @@ END proc`;
     SELECT NULL;
     LEAVE proc;
   END IF;
-  DELETE FROM ModuleDirectories
+  DELETE FROM HomeDirectories
   WHERE dir_id = dirID;
   SELECT ROW_COUNT() AS wasDeleted;
 END proc`;

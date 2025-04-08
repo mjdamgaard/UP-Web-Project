@@ -14,7 +14,7 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
   "true|false|null|undefined|Infinity|NaN|try|catch|finally|for|while|do|" +
-  "default|public|debugger|new|exit|PassAsMutable)$"
+  "default|public|debugger|new|exit|passAsMutable)$"
   // TODO: Continue this list.
 );
 
@@ -794,7 +794,6 @@ export const scriptGrammar = {
         }
         return {
           type: "jsx-element",
-          isVoidElement: true,
           tagName: tagName,
           isModule: isModule,
           propArr: children[2],
@@ -937,7 +936,7 @@ export const scriptGrammar = {
   },
   "pass-as-mutable-call": {
     rules: [
-      ["/PassAsMutable/", /\(/, "expression", /\)/],
+      ["/passAsMutable/", /\(/, "expression", /\)/],
     ],
     process: (children) => ({
       type: "pass-as-mutable-call",

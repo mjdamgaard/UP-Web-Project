@@ -306,7 +306,7 @@ export class ScriptInterpreter {
           val instanceof DevFunction || val instanceof Immutable ||
           typeof val === "number" || typeof val === "string"
         ) {
-          liveModule["&" + key] = val;
+          liveModule["$" + key] = val;
         }
       });
       liveModules.set(submodulePath, liveModule);
@@ -349,12 +349,12 @@ export class ScriptInterpreter {
         imp.namedImportArr.forEach(namedImp => {
           let ident = namedImp.ident ?? "default";
           let alias = namedImp.alias ?? ident;
-          let val = liveSubmodule["&" + ident];
+          let val = liveSubmodule["$" + ident];
           curModuleEnv.declare(alias, val, true, namedImp);
         });
       }
       else if (impType === "default-import") {
-        let val = liveSubmodule["&default"];
+        let val = liveSubmodule["$default"];
         curModuleEnv.declare(imp.ident, val, true, imp);
       }
       else throw "finalizeImportStatement(): Unrecognized import type";
@@ -365,10 +365,10 @@ export class ScriptInterpreter {
 
   // checkPermissions(flagStr, importerID, exporterID, permissions) {
   //   let globalFlags = permissions.global;
-  //   let importFlags = permissions.import["&" + importerID];
-  //   let exportFlags = permissions.export["&" + exporterID];
+  //   let importFlags = permissions.import["$" + importerID];
+  //   let exportFlags = permissions.export["$" + exporterID];
   //   let importExportFlags =
-  //     permissions.importExport["&" + importerID]["&" + exporterID];
+  //     permissions.importExport["$" + importerID]["$" + exporterID];
   //   let combPermissions = globalFlags + importFlags + exportFlags +
   //     importExportFlags;
   //   return this.checkPermissionFlags(combPermissions, flagStr);
@@ -438,9 +438,9 @@ export class ScriptInterpreter {
   static executeMainFunction(
     liveScriptModule, inputArr, scriptNode, scriptEnv
   ) {
-    let [mainFun] = liveScriptModule["&main"] ?? [];
+    let [mainFun] = liveScriptModule["$main"] ?? [];
     if (mainFun === undefined) {
-      [mainFun] = liveScriptModule["&default"] ?? [];
+      [mainFun] = liveScriptModule["$default"] ?? [];
     }
     if (mainFun !== undefined) {
       this.executeFunction(
@@ -1365,7 +1365,7 @@ export class ScriptInterpreter {
         node, environment
       );
     }
-    return (parseInt(index) == index) ? index : "&" + index;
+    return (parseInt(index) == index) ? index : "$" + index;
   }
 
 }
@@ -1415,7 +1415,7 @@ export class Environment {
 
   declare(ident, val, isConst, node, nodeEnvironment = this) {
     val = (val === undefined) ? UNDEFINED : val;
-    let safeIdent = "&" + ident;
+    let safeIdent = "$" + ident;
     let [prevVal] = this.variables[safeIdent] ?? [];
     if (prevVal !== undefined) {
       throw new RuntimeError(
@@ -1428,7 +1428,7 @@ export class Environment {
   }
 
   get(ident, node, nodeEnvironment = this) {
-    let safeIdent = "&" + ident;
+    let safeIdent = "$" + ident;
     let [val] = this.variables[safeIdent] ?? [];
     if (val !== undefined) {
       return (val === UNDEFINED) ? undefined : val;
@@ -1450,7 +1450,7 @@ export class Environment {
   }
 
   assign(ident, assignFun, node, nodeEnvironment = this) {
-    let safeIdent = "&" + ident;
+    let safeIdent = "$" + ident;
     let [prevVal, isConst] = this.variables[safeIdent] ?? [];
     if (isConst) throw new RuntimeError(
       "Reassignment of constant variable or function '" + ident + "'",
@@ -1528,7 +1528,7 @@ export class Environment {
 
 
   export(ident, alias = ident, node, nodeEnvironment = this) {
-    let prevExport = this.exports["&" + alias];
+    let prevExport = this.exports["$" + alias];
     if (prevExport !== undefined) throw new RuntimeError(
       `Duplicate export of the same name: "${alias}"`,
       node, nodeEnvironment
@@ -1547,7 +1547,7 @@ export class Environment {
     if (!this.liveModule ) {
       let liveModule = this.liveModule = {};
       this.exports.forEach(([alias, val]) => {
-        liveModule["&" + alias] = val;
+        liveModule["$" + alias] = val;
       });
     }
     return this.liveModule;
@@ -1599,7 +1599,7 @@ function getSafeObj(obj) {
     return obj.map(val => getSafeObj(val));
   } else {
     return Object.fromEntries(
-      Object.entries(obj).map(([key, val]) => ["&" + key, getSafeObj(val)])
+      Object.entries(obj).map(([key, val]) => ["$" + key, getSafeObj(val)])
     );
   }
 }
@@ -1784,13 +1784,10 @@ export class JSXElement {
   constructor(
     node, decEnv, interpreter
   ) {
-    let {
-      tagName, isFragment, isVoidElement, isModule, propArr, contentArr
-    } = node;
-    this.tagName = tagName;
+    let {tagName, isModule, isFragment, propArr, contentArr} = node;
+    if (tagName) this.tagName = tagName;
+    if (isModule) this.moduleObject = decEnv.get(tagName, node);
     if (isFragment) this.isFragment = isFragment;
-    if (isVoidElement) this.isVoidElement = isVoidElement;
-    if (isModule) this.isModule = isModule;
     if (propArr) this.propArr = propArr.map(propNode => {
       if (propNode.isSpread) {
         return {
@@ -1806,9 +1803,12 @@ export class JSXElement {
         };
       }
     });
-    if (contentArr) this.contentArr = contentArr.map(contentNode => (
-      interpreter.evaluateExpression(contentNode, decEnv)
-    ));
+    if (contentArr) this.propArr.push({
+      ident: "children",
+      exp: contentArr.map(contentNode => (
+        interpreter.evaluateExpression(contentNode, decEnv)
+      )),
+    });
   }
 }
 

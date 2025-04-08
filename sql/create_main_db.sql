@@ -1,6 +1,6 @@
 
 
-DROP TABLE ModuleDirectories;
+DROP TABLE HomeDirectories;
 DROP TABLE Files;
 DROP TABLE FileIDs;
 
@@ -15,7 +15,7 @@ DROP TABLE StorageGasPayments;
 
 /* Directories and files */
 
-CREATE TABLE ModuleDirectories (
+CREATE TABLE HomeDirectories (
 
     dir_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
@@ -25,7 +25,7 @@ CREATE TABLE ModuleDirectories (
 
 ) ROW_FORMAT = COMPRESSED;
 
-INSERT INTO ModuleDirectories (dir_id, admin_id)
+INSERT INTO HomeDirectories (dir_id, admin_id)
 VALUES (1, 1);
 
 
