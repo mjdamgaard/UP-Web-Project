@@ -1,14 +1,20 @@
-import {DevFunction, Immutable} from "../interpreting/ScriptInterpreter.js";
+import {DevFunction} from "../interpreting/ScriptInterpreter.js";
 import {createAppSignal} from "./signals/fundamental_signals.js";
 
+
+
+const devComponents = new Map(
+  // TODO: Make some dev components (possibly in another module and then import
+  // devComponents here instead).
+);
 
 
 // Create a JSX (React-like) app and mounting it in the index HTML page, in
 // the element with an id of "up-root".
 export const createJSXApp = new DevFunction(createAppSignal, function(
-  {callerNode, callerEnv, interpreter}, moduleObject, props
+  {callerNode, callerEnv, interpreter}, component, props
 ) {
-  const rootInstance = new JSXComponentInstance(moduleObject, props);
+  const rootInstance = new JSXComponentInstance(component, props);
   // ...
 });
 
@@ -16,16 +22,20 @@ export const createJSXApp = new DevFunction(createAppSignal, function(
 
 class JSXComponentInstance {
 
-  constructor (moduleObject, index, moduleParent = null, key = null) {
-    this.moduleObject = moduleObject;
-    this.index = index;
-    this.moduleParent = moduleParent;
+  constructor (
+    component, htmlElement, instanceParent = null, key = null,
+    isDecorated = false,
+  ) {
+    this.component = component;
+    this.htmlElement = htmlElement;
+    this.instanceParent = instanceParent;
     this.key = key;
+    if (isDecorated) this.isDecorated = true;
     this.props = undefined;
     this.state = undefined;
     this.refs = undefined;
-    this.moduleChildren = new Map();
-    this.htmlElement = undefined;
+    // instanceChildren : [child : JSXComponentInstance, mark : boolean].
+    this.instanceChildren = new Map();
   }
 
   get(key) {
@@ -45,41 +55,97 @@ class JSXComponentInstance {
 
 
   render(props = new Map(), callerNode, callerEnv) {
+    // Return early of the props are the same as on the last render.
     if (this.props !== undefined && compareProps(props, this.props)) {
       return;
     }
     this.props = props;
 
+    // Record the refs property on the first render, and only then. 
     if (this.refs === undefined) {
-      this.refs = props.get("refs");
+      this.refs = props.get("refs") ?? new Map();
     }
 
-    let fun = this.moduleObject.members.$render;
-    let inputArr = [props, new Immutable(this)];
+    // Call the component's render() method in order to get the props-dependent
+    // JSXElement.
+    let fun = this.component.get("render");
+    let inputArr = [props, this];
     let jsxElement = interpreter.executeFunction(
-      fun, inputArr, callerNode, callerEnv, this.moduleObject
+      fun, inputArr, callerNode, callerEnv, this.component
     );
 
-    let newHTMLElement = this.createNewHTMLElement(jsxElement);
-    this.htmlElement.replaceWith(newHTMLElement);
-    this.htmlElement = newHTMLElement;
+    // Call updateHTML() to update the HTMLElement held in this.htmlElement
+    // according to jsxElement. We also assign the return value of said method
+    // to this.htmlElement, in case the outer element was updated. 
+    this.htmlElement = this.updateHTML(this.htmlElement, jsxElement, callerEnv);
+
+    // And in case this component instance is "decorated" by its  parent, by
+    // which we mean that this component is the outer element returned by the
+    // parent's render() method, we also need to update this.htmlElement of
+    // the parent, as well as of all decorating ancestors.
+    this.updateDecoratingAncestors();
+  
+    // Finally, remove any existing child that wasn't marked during the
+    // execution of updateHTML(), and make sure to un-mark all others again.
+    this.instanceChildren.forEach((val, key, map) => {
+      if (!val[1]) {
+        map.delete(key);
+      } else {
+        val[1] = false;
+      }
+    });
   }
+
+
+  updateDecoratingAncestors() {
+    if (this.isDecorated) {
+      this.instanceParent.htmlElement = this.htmlElement;
+      this.instanceParent.updateDecoratingAncestors();
+    }
+  }
+
+
+
+  updateHTML(htmlElement, jsxElement, callerEnv) {
+    let component = jsxElement.component;
+    if (component) {
+      // If the component value is a reference to a dev component, get the
+      // HTML element directly from the dev component
+      let devComponent = devComponents(component);
+      if (devComponent) {
+        return devComponent.updateHTML(
+          htmlElement, jsxElement, callerEnv
+        );
+      }
+
+      // Else, we first check if the componentChildren to see if the 
+    }
+  }
+
+
 
 
   // If receiverModule is undefined, dispatch to self. Else if childKey is
   // undefined, dispatch to parent. Else dispatch to the child with the key =
   // childKey.
   dispatch = new DevFunction(null, function(
+    {callerNode, callerEnv, interpreter, thisVal},
     action, inputArr, receiverModule = undefined, childKey = undefined
   ) {
     // ...
   });
 
-  initState = new DevFunction(null, function(state) {
+  initState = new DevFunction(null, function(
+    {callerNode, callerEnv, interpreter, thisVal},
+    state
+  ) {
     // ...
   });
 
-  setState = new DevFunction(null, function(state) {
+  setState = new DevFunction(null, function(
+    {callerNode, callerEnv, interpreter, thisVal},
+    state
+  ) {
     // ...
   });
 }

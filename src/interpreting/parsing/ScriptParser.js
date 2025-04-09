@@ -786,8 +786,8 @@ export const scriptGrammar = {
         };
       } else if (ruleInd === 1) {
         let tagName = children[1].lexeme;
-        let isModule = /^[A-Z]/.test(tagName);
-        if (!isModule && tagName !== "br" && tagName !== "hr") {
+        let isComponent = /^[A-Z]/.test(tagName);
+        if (!isComponent && tagName !== "br" && tagName !== "hr") {
           return (
             `Invalid void element tag name: "${tagName}"`
           );
@@ -795,7 +795,7 @@ export const scriptGrammar = {
         return {
           type: "jsx-element",
           tagName: tagName,
-          isModule: isModule,
+          isComponent: isComponent,
           propArr: children[2],
         };
       } else {
@@ -815,7 +815,7 @@ export const scriptGrammar = {
         return {
           type: "jsx-element",
           tagName: tagName,
-          isModule: /^[A-Z]/.test(tagName),
+          isComponent: /^[A-Z]/.test(tagName),
           propArr: children[2],
           children: children[4],
         };

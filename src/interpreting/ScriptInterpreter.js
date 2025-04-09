@@ -1106,10 +1106,11 @@ export class ScriptInterpreter {
         return this.evaluateExpression(expNode.exp, environment);
       }
       case "array": {
-        let expValArr = expNode.children.map(exp => (
-          this.evaluateExpression(exp, environment)
-        ));
-        return new Map(Object.entries(expValArr));
+        let ret = new Map();
+        expNode.children.forEach((exp, ind) => {
+          ret.set(ind, this.evaluateExpression(exp, environment));
+        });
+        return ret;
       }
       case "object": {
         let ret = new Map();
@@ -1789,31 +1790,44 @@ export class JSXElement {
   constructor(
     node, decEnv, interpreter
   ) {
-    let {tagName, isModule, isFragment, propArr, children} = node;
-    if (tagName) this.tagName = tagName;
-    if (isModule) this.moduleObject = decEnv.get(tagName, node);
-    if (isFragment) this.isFragment = isFragment;
-    if (propArr) this.propArr = propArr.map(propNode => {
+    this.node = node;
+    this.decEnv = decEnv;
+    let {tagName, isComponent, isFragment, propArr, children} = node;
+    this.tagName = tagName;
+    if (isComponent) this.component = decEnv.get(tagName, node);
+    this.isFragment = isFragment;
+    this.props = new Map();
+    if (propArr) propArr.forEach(propNode => {
+      let expVal = propNode.exp ?
+        interpreter.evaluateExpression(propNode.exp, decEnv) :
+        true;
       if (propNode.isSpread) {
-        return {
-          isSpread: true,
-          exp: interpreter.evaluateExpression(propNode.exp, decEnv),
-        };
+        if (!(expVal.forEach instanceof Function)) throw new RuntimeError(
+          "Trying to iterate over a non-iterable",
+          propNode.exp, decEnv
+        );
+        expVal.forEach((val, key) => {
+          this.props.set(key, val);
+        });
       } else {
-        return {
-          ident: propNode.ident,
-          exp: propNode.exp ?
-            interpreter.evaluateExpression(propNode.exp, decEnv) :
-            true,
-        };
+        this.props.set(propNode.ident, expVal);
       }
     });
-    if (children) this.propArr.push({
-      ident: "children",
-      exp: children.map(contentNode => (
-        interpreter.evaluateExpression(contentNode, decEnv)
-      )),
-    });
+    if (children) {
+      let childrenProp = new Map();
+      children.forEach((contentNode, ind) => {
+        let val = interpreter.evaluateExpression(contentNode, decEnv);
+        childrenProp.set(ind, val);
+      });
+      this.props.set("children", childrenProp);
+    }
+    if (isComponent) {
+      this.key = this.props.get("key");
+      if (this.key === undefined) throw new RuntimeError(
+        'JSX component element defined without a "key" prop',
+        node, decEnv
+      );
+    }
   }
 }
 
