@@ -1794,7 +1794,7 @@ export class JSXElement {
     this.decEnv = decEnv;
     let {tagName, isComponent, isFragment, propArr, children} = node;
     this.tagName = tagName;
-    if (isComponent) this.component = decEnv.get(tagName, node);
+    if (isComponent) this.componentRef = decEnv.get(tagName, node);
     this.isFragment = isFragment;
     this.props = new Map();
     if (propArr) propArr.forEach(propNode => {

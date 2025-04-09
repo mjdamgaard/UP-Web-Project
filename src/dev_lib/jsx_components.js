@@ -1,4 +1,6 @@
-import {DevFunction, RuntimeError} from "../interpreting/ScriptInterpreter.js";
+import {
+  DevFunction, JSXElement, RuntimeError
+} from "../interpreting/ScriptInterpreter.js";
 import {createAppSignal} from "./signals/fundamental_signals.js";
 
 
@@ -23,10 +25,10 @@ export const createJSXApp = new DevFunction(createAppSignal, function(
 class JSXComponentInstance {
 
   constructor (
-    component, htmlElement, parentInstance = null, key = null,
-    isDecorated = false,
+    htmlElement, parentInstance = null, key = null, isDecorated = false,
+    componentModule
   ) {
-    this.component = component;
+    this.componentModule = componentModule;
     this.htmlElement = htmlElement;
     this.parentInstance = parentInstance;
     this.key = key;
@@ -66,12 +68,12 @@ class JSXComponentInstance {
       this.refs = props.get("refs") ?? new Map();
     }
 
-    // Call the component's render() method in order to get the props-dependent
-    // JSXElement.
-    let fun = this.component.get("render");
+    // Call the componentModule's render() method in order to get the props-
+    // dependent JSXElement.
+    let fun = this.componentModule.get("render");
     let inputArr = [props, this];
     let jsxElement = interpreter.executeFunction(
-      fun, inputArr, callerNode, callerEnv, this.component
+      fun, inputArr, callerNode, callerEnv, this.componentModule
     );
 
     // Call updateHTML() to update the HTMLElement held in this.htmlElement
@@ -82,7 +84,7 @@ class JSXComponentInstance {
     );
 
     // And in case this component instance is "decorated" by its  parent, by
-    // which we mean that this component is the outer element returned by the
+    // which we mean that this instance is the outer element returned by the
     // parent's render() method, we also need to update this.htmlElement of
     // the parent, as well as of all decorating ancestors.
     this.updateDecoratingAncestors();
@@ -112,35 +114,48 @@ class JSXComponentInstance {
     htmlElement, jsxElement, interpreter, callerNode, callerEnv,
     isOuterElement = true
   ) {
-    let component = jsxElement.component;
-    if (component) {
-      // If the component value is a reference to a dev component, get the
-      // HTML element directly from the dev component
-      let devComponent = devComponents(component);
+    // Return a sanitized string if jsxElement is not a JSXElement instance.
+    if (!(jsxElement instanceof JSXElement)) {
+      return sanitize(jsxElement.toString());
+    }
+
+    // TODO: Correct this comment, and the one after, below.
+    // If componentRef references an available dev component,
+    // which are always
+    // implemented as extensions of JSXComponentInstance,
+    // HTML element directly from the dev component
+    let componentRef = jsxElement.componentRef;
+    if (componentRef) {
+      let componentInstanceClass, componentModule;
+      let devComponent = devComponents.get(componentRef);
       if (devComponent) {
-        return devComponent.updateHTML(
-          htmlElement, jsxElement, callerEnv, interpreter, callerNode,
-          callerEnv, isOuterElement // ..?
-        );
+        componentInstanceClass = devComponent;
+      } else {
+        componentInstanceClass = JSXComponentInstance;
+        componentModule = componentRef;
       }
 
-      // Else, we first check if the childInstances to see if the child
+      // ..., we first check if the childInstances to see if the child
       // component instance already exists, and if not, create a new one. In
       // both case, we also make sure to mark the childInstance as being used.
       let key = jsxElement.key;
-      let childInstanceEntry;
-      let [childInstance] = childInstanceEntry = this.childInstances.get(key);
+      let entry;
+      let [childInstance, mark] = entry = this.childInstances.get(key);
       if (!childInstance) {
-        childInstance = new JSXComponentInstance(
-          component, htmlElement, this, key, isOuterElement
+        childInstance = new componentInstanceClass(
+          htmlElement, this, key, isOuterElement, componentModule
         );
         this.childInstances.set(key, [childInstance, true])
       }
       else {
-        // Mark the childInstance as being used, and also make sure to update
-        // the child instance's isDecorated property, as this might have
-        // changed.
-        childInstanceEntry[1] = true;
+        // Mark the childInstance as being used, unless already marked as such,
+        // in which case throw an error. Also make sure to update the child
+        // instance's isDecorated property, as this might have changed.
+        if (mark) throw new RuntimeError(
+          `Key is already being used by another child component element`,
+          jsxElement.node, jsxElement.decEnv
+        );
+        entry[1] = true;
         childInstance.isDecorated = isOuterElement;
       }
 
@@ -164,7 +179,7 @@ class JSXComponentInstance {
       // Update allowed selection of attributes, and throw an invalid/non-
       // implemented attribute is set. Also record the children prop for the
       // next step afterwards.
-      let children;
+      let children = [];
       jsxElement.props.forEach((val, key) => {
         switch (key) {
           case "children" : {
@@ -172,7 +187,11 @@ class JSXComponentInstance {
                `Elements of type "${tagName}" cannot have children`,
               jsxElement.node, jsxElement.decEnv
             );
-            children = val;
+            if (!(children.values instanceof Function)) throw new RuntimeError(
+              `Non-iterable 'children' prop was used`,
+             jsxElement.node, jsxElement.decEnv
+           );
+            children = val.values();
           }
           case "className" : {
             if (typeof val !== "string") throw new RuntimeError(
@@ -195,10 +214,19 @@ class JSXComponentInstance {
       });
     }
 
-    // Then remove all current children, and replace them with the rendered 
-    // elements corresponding to the contents of children.
-
+    // Then remove all current children and replace them first with some
+    // initial template nodes, which we then immediately replace again by
+    // calling updateHTML() recursively.
+    htmlElement.replaceChildren(...children.map(_ => (
+      document.createElement("template")
+    )));
+    htmlElement.childNodes.forEach((childNode, ind) => {
+      this.updateHTML(
+        childNode, children[ind], interpreter, callerNode, callerEnv, false
+      );
+    });
   }
+
 
 
 
@@ -248,4 +276,16 @@ export function compareProps(props1, props2) {
     }
   });
   return ret;
+}
+
+
+
+
+function sanitize(str) {
+  return str
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
 }
