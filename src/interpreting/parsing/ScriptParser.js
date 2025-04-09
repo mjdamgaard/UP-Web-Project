@@ -796,6 +796,7 @@ export const scriptGrammar = {
           type: "jsx-element",
           tagName: tagName,
           isComponent: isComponent,
+          isVoid: true,
           propArr: children[2],
         };
       } else {

@@ -1,4 +1,4 @@
-import {DevFunction} from "../interpreting/ScriptInterpreter.js";
+import {DevFunction, RuntimeError} from "../interpreting/ScriptInterpreter.js";
 import {createAppSignal} from "./signals/fundamental_signals.js";
 
 
@@ -23,19 +23,19 @@ export const createJSXApp = new DevFunction(createAppSignal, function(
 class JSXComponentInstance {
 
   constructor (
-    component, htmlElement, instanceParent = null, key = null,
+    component, htmlElement, parentInstance = null, key = null,
     isDecorated = false,
   ) {
     this.component = component;
     this.htmlElement = htmlElement;
-    this.instanceParent = instanceParent;
+    this.parentInstance = parentInstance;
     this.key = key;
     if (isDecorated) this.isDecorated = true;
     this.props = undefined;
     this.state = undefined;
     this.refs = undefined;
-    // instanceChildren : [child : JSXComponentInstance, mark : boolean].
-    this.instanceChildren = new Map();
+    // childInstances : [child : JSXComponentInstance, mark : boolean].
+    this.childInstances = new Map();
   }
 
   get(key) {
@@ -54,7 +54,7 @@ class JSXComponentInstance {
   }
 
 
-  render(props = new Map(), callerNode, callerEnv) {
+  render(props = new Map(), interpreter, callerNode, callerEnv) {
     // Return early of the props are the same as on the last render.
     if (this.props !== undefined && compareProps(props, this.props)) {
       return;
@@ -77,7 +77,9 @@ class JSXComponentInstance {
     // Call updateHTML() to update the HTMLElement held in this.htmlElement
     // according to jsxElement. We also assign the return value of said method
     // to this.htmlElement, in case the outer element was updated. 
-    this.htmlElement = this.updateHTML(this.htmlElement, jsxElement, callerEnv);
+    this.htmlElement = this.updateHTML(
+      this.htmlElement, jsxElement, interpreter, callerNode, callerEnv
+    );
 
     // And in case this component instance is "decorated" by its  parent, by
     // which we mean that this component is the outer element returned by the
@@ -87,7 +89,7 @@ class JSXComponentInstance {
   
     // Finally, remove any existing child that wasn't marked during the
     // execution of updateHTML(), and make sure to un-mark all others again.
-    this.instanceChildren.forEach((val, key, map) => {
+    this.childInstances.forEach((val, key, map) => {
       if (!val[1]) {
         map.delete(key);
       } else {
@@ -99,14 +101,17 @@ class JSXComponentInstance {
 
   updateDecoratingAncestors() {
     if (this.isDecorated) {
-      this.instanceParent.htmlElement = this.htmlElement;
-      this.instanceParent.updateDecoratingAncestors();
+      this.parentInstance.htmlElement = this.htmlElement;
+      this.parentInstance.updateDecoratingAncestors();
     }
   }
 
 
 
-  updateHTML(htmlElement, jsxElement, callerEnv) {
+  updateHTML(
+    htmlElement, jsxElement, interpreter, callerNode, callerEnv,
+    isOuterElement = true
+  ) {
     let component = jsxElement.component;
     if (component) {
       // If the component value is a reference to a dev component, get the
@@ -114,12 +119,85 @@ class JSXComponentInstance {
       let devComponent = devComponents(component);
       if (devComponent) {
         return devComponent.updateHTML(
-          htmlElement, jsxElement, callerEnv
+          htmlElement, jsxElement, callerEnv, interpreter, callerNode,
+          callerEnv, isOuterElement // ..?
         );
       }
 
-      // Else, we first check if the componentChildren to see if the 
+      // Else, we first check if the childInstances to see if the child
+      // component instance already exists, and if not, create a new one. In
+      // both case, we also make sure to mark the childInstance as being used.
+      let key = jsxElement.key;
+      let childInstanceEntry;
+      let [childInstance] = childInstanceEntry = this.childInstances.get(key);
+      if (!childInstance) {
+        childInstance = new JSXComponentInstance(
+          component, htmlElement, this, key, isOuterElement
+        );
+        this.childInstances.set(key, [childInstance, true])
+      }
+      else {
+        // Mark the childInstance as being used, and also make sure to update
+        // the child instance's isDecorated property, as this might have
+        // changed.
+        childInstanceEntry[1] = true;
+        childInstance.isDecorated = isOuterElement;
+      }
+
+      // Now that we have the childInstance, we call its render() method to
+      // render it.
+      childInstance.render(jsxElement.props, callerNode, callerEnv);
     }
+
+    // If the JSXElement is not a component element, update its type, and
+    // update a small selection of attributes allowed, and then append all its
+    // children, if any.
+    else {
+      // Update the tagName if needed.
+      let tagName = jsxElement.tagName;
+      if (htmlElement.tagName !== tagName) {
+        let newHTMLElement = document.createElement(tagName);
+        htmlElement.replaceWith(newHTMLElement);
+        htmlElement = newHTMLElement;
+      }
+
+      // Update allowed selection of attributes, and throw an invalid/non-
+      // implemented attribute is set. Also record the children prop for the
+      // next step afterwards.
+      let children;
+      jsxElement.props.forEach((val, key) => {
+        switch (key) {
+          case "children" : {
+            if (tagName === "br" || tagName === "hr") throw new RuntimeError(
+               `Elements of type "${tagName}" cannot have children`,
+              jsxElement.node, jsxElement.decEnv
+            );
+            children = val;
+          }
+          case "className" : {
+            if (typeof val !== "string") throw new RuntimeError(
+              "Non-string value used for a className attribute",
+              jsxElement.node, jsxElement.decEnv
+            );
+            htmlElement.setAttribute("class", val);
+          }
+          case "onclick" : {
+            htmlElement.onclick = () => {
+              interpreter.executeFunction(val, [this], callerNode, callerEnv);
+            }
+          }
+          default: throw new RuntimeError(
+            `Invalid or not-yet-implemented attribute, "${key}" for ` +
+            "non-component elements",
+            jsxElement.node, jsxElement.decEnv
+          );
+        }
+      });
+    }
+
+    // Then remove all current children, and replace them with the rendered 
+    // elements corresponding to the contents of children.
+
   }
 
 
