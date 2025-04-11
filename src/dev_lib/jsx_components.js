@@ -16,28 +16,25 @@ const devComponents = new Map(
 export const createJSXApp = new DevFunction(createAppSignal, function(
   {callerNode, callerEnv, interpreter}, component, props
 ) {
-  const rootInstance = new JSXComponentInstance(component, props);
+  const rootInstance = new JSXInstance(component, props);
   // ...
 });
 
 
 
-class JSXComponentInstance {
+export class JSXInstance {
 
   constructor (
-    htmlElement, parentInstance = null, key = null, isDecorated = false,
-    componentModule
+    parentInstance = undefined, componentModule = undefined
   ) {
-    this.componentModule = componentModule;
-    this.htmlElement = htmlElement;
+    this.domNodes = [];
     this.parentInstance = parentInstance;
-    this.key = key;
-    if (isDecorated) this.isDecorated = true;
+    this.componentModule = componentModule;
     this.props = undefined;
     this.state = undefined;
     this.refs = undefined;
-    // childInstances : [child : JSXComponentInstance, mark : boolean].
     this.childInstances = new Map();
+    this.jsxElement = undefined;
   }
 
   get(key) {
@@ -56,10 +53,57 @@ class JSXComponentInstance {
   }
 
 
-  render(props = new Map(), interpreter, callerNode, callerEnv) {
+
+  renderInPlace(props, interpreter, callerNode, callerEnv, force) {
+    // Given that the component instance was a fragment list on the previous
+    // render, first remove all existing DOM nodes that makes up the instance,
+    // except for one, which can then be replaced in a renderAndReplace() call.
+    let remainingNode = this.removeAllDOMNodesExceptOneAndReturnThat(
+      this.domNodes
+    );
+    return this.renderAndReplace(
+      remainingNode, props, interpreter, callerNode, callerEnv, force
+    );
+  }
+
+
+  removeAllDOMNodesExceptOneAndReturnThat(domNodes) {
+    let len = domNodes.length;
+    for (let i = 1; i < len; i++) {
+      this.removeAllDOMNodes(domNodes[i]);
+    }
+    if (domNodes[0] instanceof Array) {
+      return this.removeAllDOMNodesExceptOneAndReturnThat(domNodes[0]);
+    } else {
+      return domNodes[0];
+    }
+  }
+
+  removeAllDOMNodes(domNode) {
+    if (domNodes[0] instanceof Array) {
+      domNode.forEach(val => this.removeAllDOMNodes(val));
+    } else {
+      domNode.remove();
+    }
+  }
+
+
+  replace(domNode) {
+    let explodedDomNodeArray = getExplodedArray(this.domNodes);
+    domNode.replaceWith(...explodedDomNodeArray);
+  }
+
+
+
+
+  renderAndReplace(
+    domNode, props = new Map(), interpreter, callerNode, callerEnv,
+    force = false
+  ) {
     // Return early of the props are the same as on the last render.
-    if (this.props !== undefined && compareProps(props, this.props)) {
-      return;
+    if (this.props !== undefined && !force && compareProps(props, this.props)) {
+      this.replace(domNode);
+      return this.domNodes;
     }
     this.props = props;
 
@@ -76,21 +120,56 @@ class JSXComponentInstance {
       fun, inputArr, callerNode, callerEnv, this.componentModule
     );
 
-    // Call updateHTML() to update the HTMLElement held in this.htmlElement
-    // according to jsxElement. We also assign the return value of said method
-    // to this.htmlElement, in case the outer element was updated. 
-    this.htmlElement = this.updateHTML(
-      this.htmlElement, jsxElement, interpreter, callerNode, callerEnv
+    // Initialize a marks Map to keep track of which existing child instances
+    // was used or created in the render, such that instances that are no
+    // longer used can be removed afterwards.
+    let marks = new Map(); 
+
+    // Call generateAndReplaceHTMLElement() to generate the new HTMLElement
+    // instance from the jsxElement, and replacing domNode with it.  
+    let [newDOMNodes, storeJSX] = this.generateAndReplaceHTMLElement(
+      domNode, jsxElement, marks, interpreter, callerNode, callerEnv
     );
 
-    // And in case this component instance is "decorated" by its  parent, by
-    // which we mean that this instance is the outer element returned by the
-    // parent's render() method, we also need to update this.htmlElement of
-    // the parent, as well as of all decorating ancestors.
-    this.updateDecoratingAncestors();
+    // Rather than reassigning this.domNodes, we deliberately mute it instead
+    // such that the same mutations also happens in any and all of the
+    // potential fragment instance ancestors, whose this.domNoes arrays contain
+    // the current instance's this.domNodes array nested within them.
+    this.domNodes.length = 0;
+    this.domNodes.push(...newDOMNodes);
+
+    // We store the jsxElement conditioned on the storeJSX value, which is true
+    // if an instance child has no DOM element to hold on to, and needs its
+    // parent, this instance, to rerender it.
+    if (storeJSX) this.jsxElement = jsxElement;
+
+    // ...
+
+    // Then remove all previous child nodes contained in this.domNodes
+    // from the DOM except one, which is then replaced with newHTMLElement.
+    // Also make sure to assign the resulting array of nodes to this.domNodes.
+    let domNodes = this.domNodes, len = domNodes.length;
+    for (let i = 1; i < len; i++) {
+      this.removeRecursively(domNodes[i]);
+    }
+    if (newHTMLElement instanceof Array) {
+      domNodes[0].replaceWith(...newHTMLElement);
+      this.domNodes = newHTMLElement;
+    } else {
+      domNodes[0].replaceWith(newHTMLElement);
+      this.domNodes = [newHTMLElement];
+    }
+
+    // Then, in case this component instance is held in the parent instance's
+    // this.domNodes (which happens if the parent is a fragment with this
+    // instance as one if the fragment children, or if this instance occupies
+    // the same DOM node as the parent), update the parent as well, as well as
+    // potentially its parent, and so on recursively.
+    this.updateAncestors();
   
     // Finally, remove any existing child that wasn't marked during the
-    // execution of updateHTML(), and make sure to un-mark all others again.
+    // execution of updateHTML(), and make sure to un-mark all others again,
+    // and then return this.domNode.
     this.childInstances.forEach((val, key, map) => {
       if (!val[1]) {
         map.delete(key);
@@ -98,40 +177,59 @@ class JSXComponentInstance {
         val[1] = false;
       }
     });
-  }
-
-
-  updateDecoratingAncestors() {
-    if (this.isDecorated) {
-      this.parentInstance.htmlElement = this.htmlElement;
-      this.parentInstance.updateDecoratingAncestors();
-    }
+    return this.domNodes;
   }
 
 
 
-  updateHTML(
-    htmlElement, jsxElement, interpreter, callerNode, callerEnv,
-    isOuterElement = true
+
+
+  generateAndReplaceHTMLElement(
+    domNode, jsxElement, marks, interpreter, callerNode, callerEnv
   ) {
-    // Return a sanitized string if jsxElement is not a JSXElement instance.
+    // If jsxElement is not a JSXElement instance (which can only occur when
+    // getHTMLElement() calls itself recursively), simply return a sanitized
+    // string derived from JSXElement.
     if (!(jsxElement instanceof JSXElement)) {
       return sanitize(jsxElement.toString());
+    }
+
+    // If jsxElement is a fragment, first replace domNode with a list of
+    // template elements, and then replace each one in a recursive call to
+    // generateAndReplaceHTMLElement().
+    if (jsxElement.isFragment) {
+      let ret = [];
+      let children = jsxElement.props.get("children");
+
+      // If the fragment is empty, simply insert an empty template element in
+      // domNode's place.
+      if (!children) {
+        let emptyTemplate = document.createElement("template");
+        domNode.replace(emptyTemplate);
+        return [emptyTemplate];
+      }
+      else {
+        children.forEach(child => {
+          let newChildElement = this.getHTMLElement(
+            child, interpreter, callerNode, callerEnv, false
+          );
+        });
+      }
     }
 
     // TODO: Correct this comment, and the one after, below.
     // If componentRef references an available dev component,
     // which are always
-    // implemented as extensions of JSXComponentInstance,
+    // implemented as extensions of JSXInstance,
     // HTML element directly from the dev component
     let componentRef = jsxElement.componentRef;
     if (componentRef) {
-      let componentInstanceClass, componentModule;
+      let jsxInstanceClass, componentModule;
       let devComponent = devComponents.get(componentRef);
       if (devComponent) {
-        componentInstanceClass = devComponent;
+        jsxInstanceClass = devComponent;
       } else {
-        componentInstanceClass = JSXComponentInstance;
+        jsxInstanceClass = JSXInstance;
         componentModule = componentRef;
       }
 
@@ -142,8 +240,8 @@ class JSXComponentInstance {
       let entry;
       let [childInstance, mark] = entry = this.childInstances.get(key);
       if (!childInstance) {
-        childInstance = new componentInstanceClass(
-          htmlElement, this, key, isOuterElement, componentModule
+        childInstance = new jsxInstanceClass(
+          domNode, this, key, isOuterElement, componentModule
         );
         this.childInstances.set(key, [childInstance, true])
       }
@@ -152,7 +250,8 @@ class JSXComponentInstance {
         // in which case throw an error. Also make sure to update the child
         // instance's isDecorated property, as this might have changed.
         if (mark) throw new RuntimeError(
-          `Key is already being used by another child component element`,
+          `Key "${key}" is already being used by another child component ` +
+          "instance",
           jsxElement.node, jsxElement.decEnv
         );
         entry[1] = true;
@@ -170,10 +269,10 @@ class JSXComponentInstance {
     else {
       // Update the tagName if needed.
       let tagName = jsxElement.tagName;
-      if (htmlElement.tagName !== tagName) {
+      if (domNode.tagName !== tagName) {
         let newHTMLElement = document.createElement(tagName);
-        htmlElement.replaceWith(newHTMLElement);
-        htmlElement = newHTMLElement;
+        domNode.replaceWith(newHTMLElement);
+        domNode = newHTMLElement;
       }
 
       // Update allowed selection of attributes, and throw an invalid/non-
@@ -198,10 +297,10 @@ class JSXComponentInstance {
               "Non-string value used for a className attribute",
               jsxElement.node, jsxElement.decEnv
             );
-            htmlElement.setAttribute("class", val);
+            domNode.setAttribute("class", val);
           }
           case "onclick" : {
-            htmlElement.onclick = () => {
+            domNode.onclick = () => {
               interpreter.executeFunction(val, [this], callerNode, callerEnv);
             }
           }
@@ -217,14 +316,18 @@ class JSXComponentInstance {
     // Then remove all current children and replace them first with some
     // initial template nodes, which we then immediately replace again by
     // calling updateHTML() recursively.
-    htmlElement.replaceChildren(...children.map(_ => (
+    domNode.replaceChildren(...children.map(_ => (
       document.createElement("template")
     )));
-    htmlElement.childNodes.forEach((childNode, ind) => {
+    domNode.childNodes.forEach((childNode, ind) => {
       this.updateHTML(
         childNode, children[ind], interpreter, callerNode, callerEnv, false
       );
     });
+
+    // Finally return the updated (and perhaps different, if the outer type
+    // changed) element.
+    return domNode;
   }
 
 
@@ -280,8 +383,21 @@ export function compareProps(props1, props2) {
 
 
 
+export function getExplodedArray(arr) {
+  let ret = [];
+  arr.forEach(val => {
+    if (val instanceof Array) {
+      ret = ret.concat(getExplodedArray(val));
+    } else {
+      ret.push(val);
+    }
+  });
+  return ret;
+}
 
-function sanitize(str) {
+
+
+export function sanitize(str) {
   return str
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")

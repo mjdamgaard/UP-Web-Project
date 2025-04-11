@@ -303,8 +303,9 @@ export class ScriptInterpreter {
       let liveModule = {};
       Object.entries(devMod).forEach(([key, val]) => {
         if (
-          val instanceof DevFunction || val instanceof Immutable ||
-          typeof val === "number" || typeof val === "string"
+          val instanceof DevFunction || val?.get instanceof Function ||
+          typeof val === "number" || typeof val === "string" ||
+          typeof val === "boolean" || typeof val === "symbol"
         ) {
           liveModule["$" + key] = val;
         }
