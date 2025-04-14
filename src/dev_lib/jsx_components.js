@@ -24,17 +24,20 @@ export const createJSXApp = new DevFunction(createAppSignal, function(
 
 export class JSXInstance {
 
-  constructor (
-    parentInstance = undefined, componentModule = undefined
-  ) {
-    this.domNodes = [];
+  constructor (key = undefined, parentInstance = undefined, componentModule) {
+    this.key = key.toString();
     this.parentInstance = parentInstance;
     this.componentModule = componentModule;
+    this.domContent = domContent; // The instance's DOM node, unless the JSX
+    // element is a fragment, in which case domContent is the JSX element where
+    // each component child is substituted for the given child's own domContent
+    // (and each fragment is substituted with an array).
+    this.isDecorated = undefined; // Falsy unless the instance shares its DOM
+    // node with its parent.
     this.props = undefined;
     this.state = undefined;
     this.refs = undefined;
     this.childInstances = new Map();
-    this.jsxElement = undefined;
   }
 
   get(key) {
@@ -54,67 +57,31 @@ export class JSXInstance {
 
 
 
-  renderInPlace(props, interpreter, callerNode, callerEnv, force) {
-    // Given that the component instance was a fragment list on the previous
-    // render, first remove all existing DOM nodes that makes up the instance,
-    // except for one, which can then be replaced in a renderAndReplace() call.
-    let remainingNode = this.removeAllDOMNodesExceptOneAndReturnThat(
-      this.domNodes
-    );
-    return this.renderAndReplace(
-      remainingNode, props, interpreter, callerNode, callerEnv, force
-    );
-  }
 
-
-  removeAllDOMNodesExceptOneAndReturnThat(domNodes) {
-    let len = domNodes.length;
-    for (let i = 1; i < len; i++) {
-      this.removeAllDOMNodes(domNodes[i]);
-    }
-    if (domNodes[0] instanceof Array) {
-      return this.removeAllDOMNodesExceptOneAndReturnThat(domNodes[0]);
-    } else {
-      return domNodes[0];
-    }
-  }
-
-  removeAllDOMNodes(domNode) {
-    if (domNodes[0] instanceof Array) {
-      domNode.forEach(val => this.removeAllDOMNodes(val));
-    } else {
-      domNode.remove();
-    }
-  }
-
-
-  replace(domNode) {
-    let explodedDomNodeArray = getExplodedArray(this.domNodes);
-    domNode.replaceWith(...explodedDomNodeArray);
-  }
-
-
-
-
-  renderAndReplace(
-    domNode, props = new Map(), interpreter, callerNode, callerEnv,
-    force = false
+  render(
+    interpreter, callerNode, callerEnv, props = undefined,
+    isDecorated = undefined, replaceSelf = true, force = false
   ) {
+    if (isDecorated !== undefined) this.isDecorated = isDecorated;
+  
     // Return early of the props are the same as on the last render.
     if (this.props !== undefined && !force && compareProps(props, this.props)) {
-      this.replace(domNode);
-      return this.domNodes;
-    }
-    this.props = props;
-
-    // Record the refs property on the first render, and only then. 
-    if (this.refs === undefined) {
-      this.refs = props.get("refs") ?? new Map();
+      return this.domContent;
     }
 
-    // Call the componentModule's render() method in order to get the props-
-    // dependent JSXElement.
+    // Record the props, if supplied, and on the first render only, record the
+    // refs.
+    if (props) this.props = props;
+    if (this.refs === undefined) this.refs = props.get("refs") ?? new Map();
+
+    // Call the componentModule's render() function in order to get the props-
+    // dependent JSX element.
     let fun = this.componentModule.get("render");
+    if (!fun) throw new RuntimeError(
+      "Component module is missing a render function " +
+      '(absolute instance key = "' + this.getFullKey() + '")',
+      callerNode, callerEnv
+    );
     let inputArr = [props, this];
     let jsxElement = interpreter.executeFunction(
       fun, inputArr, callerNode, callerEnv, this.componentModule
@@ -125,81 +92,67 @@ export class JSXInstance {
     // longer used can be removed afterwards.
     let marks = new Map(); 
 
-    // Call generateAndReplaceHTMLElement() to generate the new HTMLElement
-    // instance from the jsxElement, and replacing domNode with it.  
-    let [newDOMNodes, storeJSX] = this.generateAndReplaceHTMLElement(
-      domNode, jsxElement, marks, interpreter, callerNode, callerEnv
+    // Call getDOMContent() to generate the new instance's new DOM content.
+    let newDOMContent = this.getDOMContent(
+      jsxElement, marks, interpreter, callerNode, callerEnv
     );
 
-    // Rather than reassigning this.domNodes, we deliberately mute it instead
-    // such that the same mutations also happens in any and all of the
-    // potential fragment instance ancestors, whose this.domNoes arrays contain
-    // the current instance's this.domNodes array nested within them.
-    this.domNodes.length = 0;
-    this.domNodes.push(...newDOMNodes);
-
-    // We store the jsxElement conditioned on the storeJSX value, which is true
-    // if an instance child has no DOM element to hold on to, and needs its
-    // parent, this instance, to rerender it.
-    if (storeJSX) this.jsxElement = jsxElement;
-
-    // ...
-
-    // Then remove all previous child nodes contained in this.domNodes
-    // from the DOM except one, which is then replaced with newHTMLElement.
-    // Also make sure to assign the resulting array of nodes to this.domNodes.
-    let domNodes = this.domNodes, len = domNodes.length;
-    for (let i = 1; i < len; i++) {
-      this.removeRecursively(domNodes[i]);
-    }
-    if (newHTMLElement instanceof Array) {
-      domNodes[0].replaceWith(...newHTMLElement);
-      this.domNodes = newHTMLElement;
-    } else {
-      domNodes[0].replaceWith(newHTMLElement);
-      this.domNodes = [newHTMLElement];
-    }
-
-    // Then, in case this component instance is held in the parent instance's
-    // this.domNodes (which happens if the parent is a fragment with this
-    // instance as one if the fragment children, or if this instance occupies
-    // the same DOM node as the parent), update the parent as well, as well as
-    // potentially its parent, and so on recursively.
-    this.updateAncestors();
-  
-    // Finally, remove any existing child that wasn't marked during the
-    // execution of updateHTML(), and make sure to un-mark all others again,
-    // and then return this.domNode.
-    this.childInstances.forEach((val, key, map) => {
-      if (!val[1]) {
-        map.delete(key);
+    // If replaceSelf is true, replace the previous DOM content with the new
+    // content in the DOM tree. If the current and the previous this.domContent
+    // values are both DOM nodes, and if it's not decorated by the parent,
+    // this can be done by a call to the Node.replaceWith() method. Else, call
+    // up to the parent to make it rerender. (Note that this won't cause this
+    // instance to rerender again, unless the parent changes the props.)
+    if (replaceSelf) {
+      if (
+        this.domContent instanceof Node && newDOMContent instanceof Node &&
+        !this.isDecorated
+      ) {
+        this.domContent.replaceWith(newDOMContent);
+        this.domContent = newDOMContent;
       } else {
-        val[1] = false;
+        // (Make sure to update this.domContent before calling the parent.)
+        this.domContent = newDOMContent;
+        this.parentInstance.render(
+          interpreter, callerNode, callerEnv, undefined, undefined,
+          true, true
+        );
+      }
+    }
+
+    // Then remove any existing child instance that wasn't marked during the
+    // execution of getDOMContent().
+    this.childInstances.forEach((_, key, map) => {
+      if (!marks.get(key)) {
+        map.delete(key);
       }
     });
-    return this.domNodes;
+
+    // And finally return the new DOM content.
+    return newDOMContent;
   }
 
 
 
-
-
-  generateAndReplaceHTMLElement(
-    domNode, jsxElement, marks, interpreter, callerNode, callerEnv
+  getDOMContent(
+    jsxElement, marks, interpreter, callerNode, callerEnv, isOuterElement = true
   ) {
-    // If jsxElement is not a JSXElement instance (which can only occur when
-    // getHTMLElement() calls itself recursively), simply return a sanitized
-    // string derived from JSXElement.
+    // If jsxElement is not a JSXElement instance, return a sanitized string
+    // derived from JSXElement.
     if (!(jsxElement instanceof JSXElement)) {
       return sanitize(jsxElement.toString());
     }
 
     // If jsxElement is a fragment, first replace domNode with a list of
     // template elements, and then replace each one in a recursive call to
-    // generateAndReplaceHTMLElement().
+    // getDOMContent().
     if (jsxElement.isFragment) {
-      let ret = [];
-      let children = jsxElement.props.get("children");
+      let children = jsxElement.props.get("children") ?? new Map();
+      return children.values().map(val => (
+        this.getDOMContent(
+          val, marks, interpreter, callerNode, callerEnv, false
+        )
+      ));
 
       // If the fragment is empty, simply insert an empty template element in
       // domNode's place.
@@ -210,7 +163,7 @@ export class JSXInstance {
       }
       else {
         children.forEach(child => {
-          let newChildElement = this.getHTMLElement(
+          let newChildElement = this.getDOMContent(
             child, interpreter, callerNode, callerEnv, false
           );
         });
@@ -330,6 +283,13 @@ export class JSXInstance {
     return domNode;
   }
 
+
+
+  getFullKey() {
+    return this.parentInstance ?
+      this.parentInstance.getFullKey() + "." + this.key :
+      this.key;
+  }
 
 
 
