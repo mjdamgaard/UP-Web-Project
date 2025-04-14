@@ -28,16 +28,12 @@ export class JSXInstance {
     this.key = key.toString();
     this.parentInstance = parentInstance;
     this.componentModule = componentModule;
-    this.domContent = domContent; // The instance's DOM node, unless the JSX
-    // element is a fragment, in which case domContent is the JSX element where
-    // each component child is substituted for the given child's own domContent
-    // (and each fragment is substituted with an array).
-    this.isDecorated = undefined; // Falsy unless the instance shares its DOM
-    // node with its parent.
+    this.domNode = undefined;
+    this.jsxElement = undefined;
+    this.childInstances = new Map();
     this.props = undefined;
     this.state = undefined;
     this.refs = undefined;
-    this.childInstances = new Map();
   }
 
   get(key) {
@@ -60,17 +56,19 @@ export class JSXInstance {
 
   render(
     interpreter, callerNode, callerEnv, props = undefined,
-    isDecorated = undefined, replaceSelf = true, force = false
-  ) {
-    if (isDecorated !== undefined) this.isDecorated = isDecorated;
-  
-    // Return early of the props are the same as on the last render.
-    if (this.props !== undefined && !force && compareProps(props, this.props)) {
-      return this.domContent;
+    replaceSelf = true, force = false, rerenderChildren = false
+  ) {  
+    // Return early of the props are the same as on the last render, and if not
+    // forced to rerender the instance or its child instances.
+    if (
+      !force && !rerenderChildren && this.props !== undefined &&
+      compareProps(props, this.props)
+    ) {
+      return this.domNode ?? this.jsxElement;
     }
 
-    // Record the props, if supplied, and on the first render only, record the
-    // refs.
+    // Record the props, if supplied. And on the first render only, record the
+    // refs as well.
     if (props) this.props = props;
     if (this.refs === undefined) this.refs = props.get("refs") ?? new Map();
 
@@ -92,7 +90,7 @@ export class JSXInstance {
     // longer used can be removed afterwards.
     let marks = new Map(); 
 
-    // Call getDOMContent() to generate the new instance's new DOM content.
+    // Call getDOMContent() to generate the instance's new DOM content.
     let newDOMContent = this.getDOMContent(
       jsxElement, marks, interpreter, callerNode, callerEnv
     );
