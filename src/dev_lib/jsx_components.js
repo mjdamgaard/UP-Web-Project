@@ -1,3 +1,4 @@
+
 import {
   DevFunction, JSXElement, RuntimeError
 } from "../interpreting/ScriptInterpreter.js";
@@ -5,20 +6,19 @@ import {createAppSignal} from "./signals/fundamental_signals.js";
 
 
 
-const devComponents = new Map(
-  // TODO: Make some dev components (possibly in another module and then import
-  // devComponents here instead).
-);
-
-
-// Create a JSX (React-like) app and mounting it in the index HTML page, in
-// the element with an id of "up-root".
+// Create a JSX (React-like) app and mount it in the index HTML page, in the
+// element with an id of "up-app-root".
 export const createJSXApp = new DevFunction(createAppSignal, function(
   {callerNode, callerEnv, interpreter}, component, props
 ) {
-  const rootInstance = new JSXInstance(component, props);
-  // ...
+  const rootInstance = new JSXInstance("root", undefined, component);
+  let rootParent = document.getElementById("up-app-root");
+  let appNode = rootInstance.render(
+    props, false, interpreter, callerNode, callerEnv
+  );
+  rootParent.replaceChildren(appNode);
 });
+
 
 
 
@@ -289,24 +289,24 @@ export class JSXInstance {
     {callerNode, callerEnv, interpreter, thisVal},
     action, inputArr, receiverModule = undefined, childKey = undefined
   ) {
-    // ...
+    // TODO: Make.
   });
 
   initState = new DevFunction(null, function(
     {callerNode, callerEnv, interpreter, thisVal},
     state
   ) {
-    // ...
+    // TODO: Make.
   });
 
   setState = new DevFunction(null, function(
     {callerNode, callerEnv, interpreter, thisVal},
     state
   ) {
-    // ...
+    // TODO: Make.
   });
-}
 
+}
 
 
 
@@ -329,19 +329,6 @@ export function compareProps(props1, props2) {
   return ret;
 }
 
-
-
-export function getExplodedArray(arr) {
-  let ret = [];
-  arr.forEach(val => {
-    if (val instanceof Array) {
-      ret = ret.concat(getExplodedArray(val));
-    } else {
-      ret.push(val);
-    }
-  });
-  return ret;
-}
 
 
 

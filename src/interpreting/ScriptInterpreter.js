@@ -1,7 +1,9 @@
 
 import {scriptParser} from "./parsing/ScriptParser.js";
 import {LexError, SyntaxError} from "./parsing/Parser.js";
-import {exitSignal} from "../dev_lib/signals/fundamental_signals.js";
+import {
+  exitSignal, moduleObjectSignal
+} from "../dev_lib/signals/fundamental_signals.js";
 
 import * as fundamentalsMod from "../dev_lib/fundamentals.js";
 
@@ -464,14 +466,12 @@ export class ScriptInterpreter {
     let {protect, permissions} = callerEnv.scriptGlobals;
     let protectData = callerEnv.getProtectData();
 
-    // If the function is a method of a module object, call protect() on
-    // modulePath and isThisKeyword, thus signalling that a method of a module
-    // object is being called, either from the inside or the outside, so to
-    // speak.
-    if (thisVal instanceof ModuleObject) {
+    // If the function is a method of a protected object, call protect() on
+    // its signal, also passing the object itself as the thisVal argument.
+    if (thisVal instanceof ProtectedObject) {
       protectData = protect(
-        permissions, protectData, thisVal.modulePath, isThisKeyword, undefined,
-        undefined, thisVal, callerEnv, callerNode
+        thisVal.signal, protectData, permissions, thisVal, isThisKeyword,
+        undefined, callerEnv, callerNode
       );
     }
 
@@ -482,8 +482,8 @@ export class ScriptInterpreter {
       // value.
       if (fun.signal !== undefined) {
         protectData = protect(
-          permissions, protectData, undefined, isThisKeyword, fun.signal,
-          inputArr, thisVal, callerEnv, callerNode
+          fun.signal, protectData, permissions, thisVal, isThisKeyword,
+          inputArr, callerEnv, callerNode
         );
       }
 
@@ -1157,8 +1157,8 @@ export class ScriptInterpreter {
         let protectData = environment.getProtectData();
         // Send an "exit" signal to protect, before resolving the script.
         protect(
-          permissions, protectData, undefined, undefined, exitSignal,
-          [expVal], undefined, environment, expNode
+          exitSignal, protectData, permissions, undefined, undefined,
+          [expVal], environment, expNode
         );
         resolveScript(expVal);
         // Throw an exit exception.
@@ -1248,6 +1248,7 @@ export class ScriptInterpreter {
       // current val to objVal.
       if (postfix.type === "member-accessor") {
         objVal = val;
+        isThisKeyword = (i === 1 && rootExp.type === "this-keyword");
 
         // Throw a BrokenOptionalChainException if an optional chaining is
         // broken.
@@ -1261,29 +1262,14 @@ export class ScriptInterpreter {
           index = this.evaluateExpression(postfix.exp, environment);
         }
 
-        // // If objVal is an array, check that index is either a non-negative
-        // // integer smaller than 2**32, or 'length,' then get the value.
-        // if (objVal instanceof Array) {
-        //   let n = parseInt(index);
-        //   if (
-        //     index !== "length" &&
-        //     (typeof index !== number || n!== index || n < 0 || n > 4294967296)
-        //   ) {
-        //     throw new RuntimeError(
-        //       "Invalid array index", postfix, environment
-        //     );
-        //   }
-        //   val = objVal[index];
-        // }
-
         // If objVal is a protected object, get the method, and also make
         // some checks.
-        if (objVal instanceof ModuleObject) {
-          // First of all check that the object isn't being used outside
-          // its own declaration environment call stack.
+        if (objVal instanceof ProtectedObject) {
+          // Check that the object isn't being used outside its own declaration
+          // environment call stack.
           let isValid = environment.isCallStackDescendentOf(objVal.decEnv);
           if (!isValid) throw new RuntimeError(
-            "Use of a module object outside of the " +
+            "Use of a protected object outside of the " +
             "environmental call stack in which it was declared",
             postfix, environment
           );
@@ -1296,15 +1282,6 @@ export class ScriptInterpreter {
 
           // Then get the member.
           val = objVal.members[index];
-
-          // If no such member exist, continue with an undefined val.
-          if (val === undefined) {
-            continue;
-          }
-
-          // Set isThisKeyword to true iff rootExp is a 'this' keyword and
-          // i === 1.
-          isThisKeyword = (i === 1 && rootExp.type === "this-keyword");
         }
 
         // Else check that the object has a get() method, and a set() method if
@@ -1752,8 +1729,15 @@ export class DevFunction {
   }
 }
 
-export class ModuleObject {
+export class ProtectedObject {
+  constructor(signal) {
+    this.signal = signal;
+  }
+}
+
+export class ModuleObject extends ProtectedObject {
   constructor(modulePath, decEnv, members) {
+    super(moduleObjectSignal);
     this.modulePath = modulePath;
     this.decEnv = decEnv;
     this.members = members;
