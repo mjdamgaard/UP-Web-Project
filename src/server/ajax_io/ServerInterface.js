@@ -53,7 +53,9 @@ export class ServerInterface {
   }
 
 
-  static createHomeDir(adminID, credentials, isPrivate) {
+
+  
+  static createHomeDir(credentials, isPrivate) {
     return this.#post({
       credentials: credentials, action: "write", route: "/",
       content: isPrivate
