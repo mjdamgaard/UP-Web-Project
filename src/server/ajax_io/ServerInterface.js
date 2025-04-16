@@ -1,4 +1,6 @@
 
+import {serverURL} from "./config";
+
 
 
 export class ServerInterface {
@@ -17,8 +19,7 @@ export class ServerInterface {
 
       // Else send the request to the server and create the new response text
       // promise.
-      let url = "http://localhost:8080";
-      responseTextPromise = postData(url, reqData);
+      responseTextPromise = postData(serverURL, reqData);
 
       // Then add it to #postReqBuffer, and also give it a then-callback to
       // remove itself from said buffer, before return ing the promise.
@@ -52,6 +53,13 @@ export class ServerInterface {
   }
 
 
+  static createHomeDir(adminID, credentials, isPrivate) {
+    return this.#post({
+      credentials: credentials, action: "write", route: "/",
+      content: isPrivate
+    });
+  }
+
 }
 
 
@@ -75,6 +83,6 @@ export async function postData(url, reqData) {
     return;
   }
   else {
-    return await response.text();
+    return await JSON.parse(response.text());
   }
 }

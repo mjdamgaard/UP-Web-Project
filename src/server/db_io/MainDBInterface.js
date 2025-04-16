@@ -1,5 +1,12 @@
 
 
+function nullIfNULL(res) {
+  return (res === "NULL") ? null : res
+}
+
+
+
+
 export class MainDBInterface {
 
   static #validateAndQuery(sql, paramValArr, typeArr, paramNameArr) {
@@ -27,7 +34,7 @@ END proc`;
     ]]] = await conn.query(options, [
       dirID
     ]);
-    return [adminID, isPrivate];
+    return [nullIfNULL(adminID), isPrivate];
   }
 
 
@@ -51,7 +58,7 @@ END proc`;
     let [[pathArr]] = await conn.query(options, [
       dirID, maxNum, numOffset
     ]);
-    return [pathArr];
+    return [nullIfNULL(pathArr)];
   }
 
 
@@ -76,7 +83,7 @@ END proc`;
     ]]] = await conn.query(options, [
       adminID, isPrivate
     ]);
-    return dirID;
+    return nullIfNULL(dirID);
   }
 
 
@@ -102,7 +109,7 @@ END proc`;
     ]]] = await conn.query(options, [
       dirID, adminID, isPrivate
     ]);
-    return wasEdited;
+    return nullIfNULL(wasEdited);
   }
 
 
@@ -134,7 +141,7 @@ END proc`;
     ]]] = await conn.query(options, [
       dirID
     ]);
-    return wasDeleted;
+    return nullIfNULL(wasDeleted);
   }
 
 
@@ -162,7 +169,7 @@ END proc`;
     ]]] = await conn.query(options, [
       dirID, filePath
     ]);
-    return [modifiedAt, prevModifiedAt];
+    return [nullIfNULL(modifiedAt), prevModifiedAt];
   }
 
 
@@ -193,7 +200,7 @@ END proc`;
     ]]] = await conn.query(options, [
       dirID, filePath, newFilePath
     ]);
-    return wasMoved;
+    return nullIfNULL(wasMoved);
   }
 
 
@@ -224,7 +231,7 @@ END proc`;
     ]]] = await conn.query(options, [
       dirID, filePath
     ]);
-    return contentData;
+    return nullIfNULL(contentData);
   }
 
 
@@ -268,7 +275,7 @@ END proc`;
     ]]] = await conn.query(options, [
       dirID, filePath, contentText
     ]);
-    return wasCreated;
+    return nullIfNULL(wasCreated);
   }
 
 
@@ -303,7 +310,7 @@ END proc`;
     ]]] = await conn.query(options, [
       dirID, filePath, contentText
     ]);
-    return wasEdited;
+    return nullIfNULL(wasEdited);
   }
 
 
@@ -335,7 +342,7 @@ END proc`;
     ]]] = await conn.query(options, [
       dirID, filePath
     ]);
-    return wasDeleted;
+    return nullIfNULL(wasDeleted);
   }
 
 

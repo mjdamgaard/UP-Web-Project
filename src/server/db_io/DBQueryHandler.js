@@ -50,16 +50,20 @@ export class DBQueryHandler {
         conn, dirID, filePath
       );
       conn.end();
-      return JSON.stringify([false, contentData]);
+      return [false, contentData];
     }
     else {
       // TODO: Implement other file types.
     }
   }
 
+
+
   static async write(
     reqUserID, route, content, isBase64
   ) {
+    // If route has the type of a (UTF-8-encoded) text file, create or
+    // overwrite that file with the content.
     if (
       /^\/[1-9][0-9]*\/[a-zA-Z0-9_\-]+(\/[a-zA-Z0-9_\-]+)*\.(js|txt|json|html)$/
         .test(route)
@@ -72,7 +76,7 @@ export class DBQueryHandler {
       );
       let conn = MainDBConnector.connect();
 
-      // TODO: Verify that reqUser is the admin here.
+      // TODO: Verify that reqUser is the admin of the given home dir here.
 
       let wasCreated = await MainDBInterface.putTextFile(
         conn, dirID, filePath, content
@@ -80,9 +84,22 @@ export class DBQueryHandler {
       conn.end();
       return wasCreated;
     }
-    else {
-      // TODO: Implement other file types.
+
+    // If route is the root path, "/", create a new directory, with reqUserID
+    // as the admin, and return the new dirID. The "content" parameter here
+    // specifies the isPrivate parameter
+    else if (route === "/") {
+      let conn = MainDBConnector.connect();
+
+      let adminID = reqUserID, isPrivate = content;
+      let dirID = await MainDBInterface.createHomeDir(
+        conn, adminID, isPrivate
+      );
+      conn.end();
+      return dirID;
     }
+
+    // TODO: Implement other file types.
   }
 
 }

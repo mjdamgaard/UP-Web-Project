@@ -10,7 +10,7 @@ let scriptParser = new ScriptParser();
 
 
 export function runTests() {
-  // script_parsing_tests_01(); // Last tested: (06.04.25).
+  script_parsing_tests_01(); // Last tested: (06.04.25).
   script_interpreter_tests_01(); // Last tested: (06.04.25).
 
 }
@@ -77,7 +77,7 @@ function script_parsing_tests_01() {
     keepLastLexeme: undefined,
     expectedIsSuccess: true, expectedNextPos: null,
     testMsgPrefix: testMsgPrefix, testKey: "",
-    logParserOutput: true, logOnlyFailures: false,
+    logParserOutput: true, logOnlyFailures: true,
     additionalTest: undefined,
   }
   let params;
@@ -417,7 +417,7 @@ async function script_interpreter_tests_01() {
 
   params = Object.assign({}, defaultParams, {
     script: `let x = 2; let y = 1; x = 2*x + y; exit([x, y]);`,
-    expectedOutput: [5, 1],
+    expectedOutput: new Map([[0, 5], [1, 1]]),
     testKey: "06",
   });
   await testInterpreter(params);
@@ -432,7 +432,7 @@ async function script_interpreter_tests_01() {
   params = Object.assign({}, defaultParams, {
     script: `let x = 0, y = 2; if (x * y) break; else { x -= y++; } ` +
       `exit([x, y]);`,
-    expectedOutput: [0 - 2, 2 + 1],
+    expectedOutput: new Map([[0, -2], [1, 3]]),
     testKey: "08",
   });
   await testInterpreter(params);
@@ -486,7 +486,16 @@ async function script_interpreter_tests_01() {
 
 
 function getMissingMember(testObj, propObj, prefix = "") {
-  let ret = undefined;
+  let ret; 
+  if (propObj instanceof Map) {
+    if (!(testObj instanceof Map)) {
+      console.log("Test object, ", testObj, ", is not a Map, at " + prefix);
+      return undefined;
+    }
+    propObj = Object.fromEntries(Array.from(propObj.entries));
+    testObj = Object.fromEntries(Array.from(testObj.entries));
+  }
+  
   Object.entries(propObj).some(([key, propObjVal]) => {
     let testObjVal = testObj[key];
     if (typeof propObjVal === "object" && propObjVal !== null) {

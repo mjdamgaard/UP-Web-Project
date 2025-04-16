@@ -57,7 +57,7 @@ async function requestHandler(req, res) {
       result = await DBQueryHandler.read(
         route, reqUserID, clientCacheTime, minServerCacheTime
       );
-      // result: JSON([wasReady, data]).
+      // result: [wasReady, data].
       break;
     }
     case "write":
@@ -80,5 +80,5 @@ async function requestHandler(req, res) {
 
   // Return the results.
   res.writeHead(200, {'Content-Type': 'text/json'});
-  res.end(result);
+  res.end(JSON.stringify(result));
 }

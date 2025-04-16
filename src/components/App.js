@@ -10,10 +10,14 @@ import {useState, useLayoutEffect, createContext, useCallback} from "react";
 import {AppHeader} from "./header/AppHeader.js";
 // import {AppPage} from "./app_pages/AppPage.js";
 
+
 /* Tests */
 import {runTests} from "../testing/parsing_interpreting_tests.js";
 
-runTests();
+
+import {
+  ScriptInterpreter
+} from "../interpreting/ScriptInterpreter.js";
 
 
 // export const HOME_ENTITY_ID = basicEntIDs["entities"];
@@ -118,6 +122,12 @@ export const App = (props) => {
   //   return <></>
   // }
 
+
+  useLayoutEffect(() => {
+    runTests();
+    ScriptInterpreter
+  }, [])
+
   return (
     <div className="app" // ref={refCallback}
       // ref={(node) => {
@@ -135,6 +145,7 @@ export const App = (props) => {
           {appPages}
         </div> */}
       {/* </ProfileContext.Provider> */}
+      <div id="up-app-root"></div>
     </div>
   );
 };
