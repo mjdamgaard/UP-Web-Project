@@ -48,9 +48,9 @@ export class InputGetter {
         }
       }
       else {
-        if (typeof body[name] !== "string") {
-          throw new ClientError("Received same parameter twice");
-        }
+        // if (typeof body[name] !== "string") {
+        //   throw new ClientError("Received same parameter twice");
+        // }
         paramValArr[ind] = body[name];
       }
     });

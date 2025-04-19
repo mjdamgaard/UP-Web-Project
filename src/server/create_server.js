@@ -60,16 +60,30 @@ async function requestHandler(req, res) {
       // result: [wasReady, data].
       break;
     }
-    case "write":
+    case "put": {
       let [
         route, content, isBase64
       ] = await InputGetter.getParamsPromise(
-        body, ["route", "cct", "mct"], [undefined, undefined, false]
+        body, ["route", "content", "isBase64"], [undefined, undefined, false]
       );
-      result = await DBQueryHandler.write(
+      result = await DBQueryHandler.put(
         reqUserID, route, content, isBase64
       );
       // result: wasCreated.
+      break;
+    }
+    // case "create": {
+    //   let [
+    //     route, content, isBase64
+    //   ] = await InputGetter.getParamsPromise(
+    //     body, ["route"], [undefined, undefined, false]
+    //   );
+    //   result = await DBQueryHandler.write(
+    //     reqUserID, route, content, isBase64
+    //   );
+    //   // result: wasCreated.
+    //   break;
+    // }
     case "delete":
       // TODO: Implement.
     case "call":

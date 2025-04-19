@@ -47,7 +47,7 @@ export class ServerInterface {
 
   static putTextFile(credentials, filePath, contentText) {
     return this.#post({
-      credentials: credentials, action: "write", route: filePath,
+      credentials: credentials, action: "put", route: filePath,
       content: contentText
     });
   }
@@ -57,7 +57,7 @@ export class ServerInterface {
 
   static createHomeDir(credentials, isPrivate) {
     return this.#post({
-      credentials: credentials, action: "write", route: "/",
+      credentials: credentials, action: "put", route: "/",
       content: isPrivate
     });
   }
