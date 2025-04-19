@@ -1,14 +1,26 @@
 
-import * as http from 'http';
-const path = require('node:path');
+import path from 'path';
+import {read} from 'read';
 
-import {serverURL} from './src/config.js';
+import {DirectoryUploader} from './src/DirectoryUploader.js';
+
 
 // Get the directory path from the arguments, and combine it with __dirname if
 // it is a relative path.
-let [dirPath] = process.argv;
+let [dirPath = "./", isPrivate = false] = process.argv ?? [];
 if (dirPath[0] === ".") {
   dirPath = path.normalize(__dirname + "/" + dirPath);
 }
 
+// Prompt for username and password, then request the new directory.
+let credentials;
+read({prompt: "Username: "}).then(name => {
+  credentials = name + ":";
+  read({prompt: "Password: ", silent: true}).then(pw => {
+    console.log("\n")
+    credentials += pw;
 
+    // Create/Update the directory on the server side.
+    DirectoryUploader.uploadDir(dirPath, credentials, isPrivate);
+  });
+});

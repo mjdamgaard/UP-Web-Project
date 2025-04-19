@@ -1,5 +1,5 @@
 
-import {serverURL} from "./config";
+import {serverURL} from "./config.js";
 
 
 
@@ -12,7 +12,7 @@ export class ServerInterface {
 
       // If there is already an ongoing request with this reqData object,
       // simply return the promise of that.
-      let responseTextPromise = this.#postReqBuffer(reqKey);
+      let responseTextPromise = this.#postReqBuffer.get(reqKey);
       if (responseTextPromise) {
         return responseTextPromise;
       }
@@ -54,7 +54,7 @@ export class ServerInterface {
 
 
 
-  
+
   static createHomeDir(credentials, isPrivate) {
     return this.#post({
       credentials: credentials, action: "write", route: "/",
