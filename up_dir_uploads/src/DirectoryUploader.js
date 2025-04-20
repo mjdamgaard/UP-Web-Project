@@ -27,7 +27,7 @@ export class DirectoryUploader {
     // If no dirID was gotten, request the server to create a new directory and
     // get the new dirID.
     if (!dirID) {
-      let dirID = await ServerInterface.createHomeDir(credentials, isPrivate);
+      dirID = await ServerInterface.createHomeDir(credentials, isPrivate);
       fs.writeFileSync(idFilePath, `${dirID}`);
     }
 
