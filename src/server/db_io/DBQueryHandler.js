@@ -97,7 +97,7 @@ export class DBQueryHandler {
     let sql = "CALL createHomeDir (?, ?)";
 
     let conn = new MainDBConnection();
-    let [dirID] = await conn.query(sql, paramValArr);
+    let [[dirID]] = await conn.query(sql, paramValArr);
 
     conn.end();
     return dirID;

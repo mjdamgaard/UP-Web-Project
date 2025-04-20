@@ -70,7 +70,7 @@ export async function postData(url, reqData) {
   let options = {
     method: "POST",
     body: JSON.stringify(reqData),
-  };debugger;
+  };
 
   let response = await fetch(url, options);
 
@@ -84,6 +84,7 @@ export async function postData(url, reqData) {
     return;
   }
   else {
-    return JSON.parse(await response.text());
+    let result = await response.text()
+    return JSON.parse(result);
   }
 }

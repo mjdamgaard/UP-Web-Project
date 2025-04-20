@@ -28,7 +28,7 @@ export class DirectoryUploader {
     // get the new dirID.
     if (!dirID) {
       let dirID = await ServerInterface.createHomeDir(credentials, isPrivate);
-      await fs.promises.writeFile(idFilePath, `${dirID}`);
+      fs.writeFileSync(idFilePath, `${dirID}`);
     }
 
     // TODO: Request a list of all the files in the server-side directory, and
