@@ -45,7 +45,7 @@ export class DirectoryUploader {
   }
 
 
-  static async #uploadDirHelper(dirPath, credentials, homeDirID, promiseArr) {
+  static async #uploadDirHelper(dirPath, credentials, relPath, promiseArr) {
     // Get each file in the directory at path, and loop through and handle each
     // one according to its extension (or lack thereof).
     let fileNames;
@@ -55,19 +55,24 @@ export class DirectoryUploader {
       return;
     }
     fileNames.forEach(name => {
-      let filePath = path.normalize(dirPath + "/" + name);
+      let childAbsPath = dirPath + "/" + name;
+      let childRelPath = relPath + "/" + name;
 
       // If the file has no extensions, treat it as a folder, and call this
       // helper method recursively.
       if (name.indexOf(".") <= 0) {
-        this.#uploadDirHelper(filePath, credentials, homeDirID, promiseArr);
+        this.#uploadDirHelper(
+          childAbsPath, credentials, childRelPath, promiseArr
+        );
       }
 
       // Else if the file is a text file, upload it as is to the server.
       else if (/\.(js|txt|json|html)$/.test(name)) {
-        let contentText = fs.readFileSync(filePath, 'utf8');
+        let contentText = fs.readFileSync(childAbsPath, 'utf8');
         promiseArr.push(
-          ServerInterface.putTextFile(credentials, filePath, contentText)
+          ServerInterface.putTextFile(
+            credentials, "/" + childRelPath, contentText
+          )
         );
       }
 

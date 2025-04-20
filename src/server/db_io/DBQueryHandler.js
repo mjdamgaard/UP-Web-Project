@@ -71,16 +71,18 @@ export class DBQueryHandler {
       let indOfSecondSlash = route.indexOf("/", 1);
       let dirID = route.substring(1, indOfSecondSlash);
       let filePath = route.substring(indOfSecondSlash + 1);
-      if (path.length > 700) throw new ClientError(
+      if (filePath.length > 700) throw new ClientError(
         "File path is too long"
       );
-      let conn = await mainDBConnection.connect();
 
       // TODO: Verify that reqUser is the admin of the given home dir here.
 
-      let wasCreated = await MainDBInterface.putTextFile(
-        conn, dirID, filePath, content
-      );
+      let paramValArr = [dirID, filePath, content];
+      let sql = "CALL putTextFile (?, ?, ?)";
+
+      let conn = new MainDBConnection();
+      let [[wasCreated]] = await conn.query(sql, paramValArr);
+
       conn.end();
       return wasCreated;
     }
