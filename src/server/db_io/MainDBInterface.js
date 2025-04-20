@@ -18,7 +18,7 @@ export class MainDBInterface {
 
   static async readHomeDirMetaData(conn, dirID) {
     let sql =
-`BEGIN proc:
+`proc: BEGIN
   DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   IF (dirID IS NULL) THEN
     SELECT NULL;
@@ -40,7 +40,7 @@ END proc`;
 
   static async readHomeDirDescendants(conn, dirID, maxNum, numOffset) {
     let sql =
-`BEGIN proc:
+`proc: BEGIN
   DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   DECLARE maxNum INT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   DECLARE numOffset INT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
@@ -65,8 +65,9 @@ END proc`;
 
   static async createHomeDir(conn, adminID, isPrivate) {
     isPrivate = isPrivate ? 1 : 0;
-    let sql =
-`BEGIN proc:
+    let sql = `
+DELIMITER //
+proc: BEGIN
   DECLARE adminID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   DECLARE isPrivate BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   IF (adminID IS NULL) THEN
@@ -76,7 +77,9 @@ END proc`;
   INSERT INTO HomeDirectories (admin_id, is_private)
   VALUES (adminID, isPrivate);
   SELECT LAST_INSERT_ID() AS dirID;
-END proc`;
+END proc //
+DELIMITER ;
+    `;
     let options = {sql: sql, rowsAsArray: true};
     let [[[
       dirID
@@ -90,7 +93,7 @@ END proc`;
   static async editHomeDir(conn, dirID, adminID, isPrivate) {
     isPrivate = isPrivate ? 1 : 0;
     let sql =
-`BEGIN proc:
+`proc: BEGIN
   DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   DECLARE adminID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   DECLARE isPrivate BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
@@ -115,7 +118,7 @@ END proc`;
 
   static async deleteHomeDir(conn, dirID) {
     let sql =
-`BEGIN proc:
+`proc: BEGIN
   DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   DECLARE firstFileID BIGINT UNSIGNED;
   IF (dirID IS NULL) THEN
@@ -152,7 +155,7 @@ END proc`;
       "readFileMetaData(): filePath is not a string, or is too long"
     );
     let sql =
-`BEGIN proc:
+`proc: BEGIN
   DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   DECLARE filePath VARCHAR(700) DEFAULT (CAST(? AS CHAR));
   IF (dirID IS NULL OR filePath IS NULL) THEN
@@ -181,7 +184,7 @@ END proc`;
       "readFileMetaData(): newFilePath is not a string, or is too long"
     );
     let sql =
-`BEGIN proc:
+`proc: BEGIN
   DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   DECLARE filePath VARCHAR(700) DEFAULT (CAST(? AS CHAR));
   DECLARE newFilePath VARCHAR(700) DEFAULT (CAST(? AS CHAR));
@@ -210,7 +213,7 @@ END proc`;
       "readFileMetaData(): filePath is not a string, or is too long"
     );
     let sql =
-`BEGIN proc:
+`proc: BEGIN
   DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   DECLARE filePath VARCHAR(700) DEFAULT (CAST(? AS CHAR));
   DECLARE fileID BIGINT UNSIGNED;
@@ -243,7 +246,7 @@ END proc`;
       "readFileMetaData(): contentText not a string, or is too long"
     );
     let sql =
-`BEGIN proc:
+`proc: BEGIN
   DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   DECLARE filePath VARCHAR(700) DEFAULT (CAST(? AS CHAR));
   DECLARE contentText TEXT DEFAULT (CAST(? AS CHAR));
@@ -287,7 +290,7 @@ END proc`;
       "readFileMetaData(): filePath not a string, or is too long"
     );
     let sql =
-`BEGIN proc:
+`proc: BEGIN
   DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   DECLARE filePath VARCHAR(700) DEFAULT (CAST(? AS CHAR));
   DECLARE contentText TEXT DEFAULT (CAST(? AS CHAR));
@@ -319,7 +322,7 @@ END proc`;
       "readFileMetaData(): filePath not a string, or is too long"
     );
     let sql =
-`BEGIN proc:
+`proc: BEGIN
   DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   DECLARE filePath VARCHAR(700) DEFAULT (CAST(? AS CHAR));
   DECLARE fileID BIGINT UNSIGNED;
@@ -353,7 +356,7 @@ END proc`;
     numOffset = 0, isAscending = 0
   ) {
     let sql =
-`BEGIN proc:
+`proc: BEGIN
   DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   DECLARE filePath VARCHAR(700) DEFAULT (CAST(? AS CHAR));
   DECLARE lo VARBINARY(255) DEFAULT (FROM_BASE64(CAST(? AS CHAR)));
@@ -391,7 +394,7 @@ END proc`;
     conn, dirID, filePath, elemKeyBase64
   ) {
     let sql =
-`BEGIN proc:
+`proc: BEGIN
   DECLARE dirID BIGINT UNSIGNED DEFAULT (CAST(? AS UNSIGNED));
   DECLARE filePath VARCHAR(700) DEFAULT (CAST(? AS CHAR));
   DECLARE elemKey VARBINARY(255) DEFAULT (FROM_BASE64(CAST(? AS CHAR)));

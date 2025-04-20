@@ -25,8 +25,6 @@ CREATE TABLE HomeDirectories (
 
 ) ROW_FORMAT = COMPRESSED;
 
-INSERT INTO HomeDirectories (dir_id, admin_id)
-VALUES (1, 1);
 
 
 CREATE TABLE Files (

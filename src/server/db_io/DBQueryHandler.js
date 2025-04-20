@@ -1,9 +1,8 @@
 
 import {MainDBInterface} from "./MainDBInterface.js";
-import {MainDBConnector} from "./DBConnector.js";
+import {MainDBConnection} from "./DBConnection.js";
 import {ClientError} from '../err/errors.js';
 
-const mainDBConnector = new MainDBConnector();
 
 
 export class DBQueryHandler {
@@ -46,7 +45,7 @@ export class DBQueryHandler {
       if (path.length > 700) throw new ClientError(
         "File path is too long"
       );
-      let conn = mainDBConnector.connect();
+      let conn = mainDBConnection.connect();
       let contentData = await MainDBInterface.readTextFileContent(
         conn, dirID, filePath
       );
@@ -75,7 +74,7 @@ export class DBQueryHandler {
       if (path.length > 700) throw new ClientError(
         "File path is too long"
       );
-      let conn = mainDBConnector.connect();
+      let conn = await mainDBConnection.connect();
 
       // TODO: Verify that reqUser is the admin of the given home dir here.
 
@@ -86,21 +85,22 @@ export class DBQueryHandler {
       return wasCreated;
     }
 
-    // If route is the root path, "/", create a new directory, with reqUserID
-    // as the admin, and return the new dirID. The "content" parameter here
-    // specifies the isPrivate parameter
-    else if (route === "/") {
-      let conn = mainDBConnector.connect();
-
-      let adminID = reqUserID, isPrivate = content;
-      let dirID = await MainDBInterface.createHomeDir(
-        conn, adminID, isPrivate
-      );
-      conn.end();
-      return dirID;
-    }
-
     // TODO: Implement other file types.
+  }
+
+
+  static async mkdir(
+    reqUserID, isPrivate
+  ) {
+    let adminID = reqUserID;
+    let paramValArr = [adminID, isPrivate];
+    let sql = "CALL createHomeDir (?, ?)";
+
+    let conn = new MainDBConnection();
+    let [dirID] = await conn.query(sql, paramValArr);
+
+    conn.end();
+    return dirID;
   }
 
 }

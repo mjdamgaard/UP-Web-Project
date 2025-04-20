@@ -42,7 +42,7 @@ async function requestHandler(req, res) {
 
   // TODO: If credentials is not null, authenticate the user here, throwing an
   // error on failure, and setting the reqUserID to the user's ID on success.
-  let reqUserID = undefined;
+  let reqUserID = 9;
 
 
   // Branch according to the action.
@@ -72,18 +72,18 @@ async function requestHandler(req, res) {
       // result: wasCreated.
       break;
     }
-    // case "create": {
-    //   let [
-    //     route, content, isBase64
-    //   ] = await InputGetter.getParamsPromise(
-    //     body, ["route"], [undefined, undefined, false]
-    //   );
-    //   result = await DBQueryHandler.write(
-    //     reqUserID, route, content, isBase64
-    //   );
-    //   // result: wasCreated.
-    //   break;
-    // }
+    case "mkdir": {
+      let [
+        isPrivate
+      ] = await InputGetter.getParamsPromise(
+        body, ["isPrivate"], [false]
+      );
+      result = await DBQueryHandler.mkdir(
+        reqUserID, isPrivate
+      );
+      // result: dirID.
+      break;
+    }
     case "delete":
       // TODO: Implement.
     case "call":
@@ -94,5 +94,5 @@ async function requestHandler(req, res) {
 
   // Return the results.
   res.writeHead(200, {'Content-Type': 'text/json'});
-  res.end(JSON.stringify(result));
+  res.end(JSON.stringify(result ?? null));
 }

@@ -57,8 +57,7 @@ export class ServerInterface {
 
   static createHomeDir(credentials, isPrivate) {
     return this.#post({
-      credentials: credentials, action: "put", route: "/",
-      content: isPrivate
+      credentials: credentials, action: "mkdir", isPrivate: isPrivate
     });
   }
 
@@ -71,7 +70,7 @@ export async function postData(url, reqData) {
   let options = {
     method: "POST",
     body: JSON.stringify(reqData),
-  };
+  };debugger;
 
   let response = await fetch(url, options);
 
@@ -85,6 +84,6 @@ export async function postData(url, reqData) {
     return;
   }
   else {
-    return await JSON.parse(response.text());
+    return JSON.parse(await response.text());
   }
 }
