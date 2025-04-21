@@ -10,6 +10,17 @@ import {
 } from "../interpreting/ScriptInterpreter.js";
 
 
+import * as fundamentalsMod from "../dev_lib/fundamentals.js";
+import * as jsxMod from "../dev_lib/jsx_components.js";
+
+const staticDevLibs = new Map();
+staticDevLibs.set("fundamentals", fundamentalsMod);
+staticDevLibs.set("jsx", jsxMod);
+
+
+const scriptInterpreter = new ScriptInterpreter(
+  false, undefined, undefined, staticDevLibs, undefined
+);
 
 
 if (typeof(Storage) === "undefined") {
@@ -46,18 +57,21 @@ const appScript = `
 
   createJSXApp(testComp);
 `;
+const renderNumMonad = [0];
 
 
 export const App = (props) => {
 
   useLayoutEffect(() => {
-    // runTests();
-    ScriptInterpreter.interpretScript(appGas, appScript).then(
-      ([output, log]) => {
-        console.log(output);
-        console.log(log);
-      }
-    );
+    if (renderNumMonad[0]++ === 0) {
+      runTests();
+      scriptInterpreter.interpretScript(appGas, appScript).then(
+        ([output, log]) => {
+          console.log(output);
+          console.log(log);
+        }
+      );
+    }
   }, [])
 
   return (

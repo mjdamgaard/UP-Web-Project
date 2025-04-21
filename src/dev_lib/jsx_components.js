@@ -115,7 +115,7 @@ export class JSXInstance {
     if (replaceSelf) {
       this.domNode.replaceWith(newDOMNode);
       this.domNode = newDOMNode;
-      this.updateDecoratingAncestors();
+      this.updateDecoratingAncestors(newDOMNode);
     }
 
     // And finally return the new DOM node.
@@ -124,10 +124,10 @@ export class JSXInstance {
 
 
 
-  updateDecoratingAncestors() {
+  updateDecoratingAncestors(newDOMNode) {
     if (this.isDecorated) {
       this.parentInstance.domNode = newDOMNode;
-      this.parentInstance.updateDecoratingAncestors();
+      this.parentInstance.updateDecoratingAncestors(newDOMNode);
     }
   }
 

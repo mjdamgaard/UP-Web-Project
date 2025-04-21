@@ -5,7 +5,8 @@ import {
 } from "../interpreting/ScriptInterpreter.js";
 import {ServerInterface} from "../server/ajax_io/ServerInterface.js";
 
-let scriptParser = new ScriptParser();
+const scriptParser = new ScriptParser();
+const scriptInterpreter = new ScriptInterpreter();
 
 
 
@@ -313,7 +314,7 @@ async function testInterpreter({
 }) {
   gas = Object.assign({}, gas);
 
-  let [output, log] = await ScriptInterpreter.interpretScript(
+  let [output, log] = await scriptInterpreter.interpretScript(
     gas, script, scriptPath, mainInputs, reqUserID, permissions, settings,
   );
 

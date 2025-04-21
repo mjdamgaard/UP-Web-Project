@@ -893,10 +893,15 @@ export const scriptGrammar = {
   "string": {
     rules: [
       [/"([^"\\]|\\[.\n])*"/],
+      [/'([^'\\]|\\[.\n])*'/],
     ],
-    process: (children) => {
+    process: (children, ruleInd) => {
       let stringLiteral = children[0];
       let str;
+      if (ruleInd === 1) {
+        stringLiteral =
+          '"' + stringLiteral.replaceAll('"', '\\"').slice(1, -1) + '"';
+      }
       try {
         str = JSON.parse(stringLiteral);
       } catch (error) {

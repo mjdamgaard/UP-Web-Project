@@ -5,10 +5,6 @@ import {
   exitSignal, moduleObjectSignal
 } from "../dev_lib/signals/fundamental_signals.js";
 
-import * as fundamentalsMod from "../dev_lib/fundamentals.js";
-
-const staticDevLibs = new Map();
-staticDevLibs.set("fundamentals", fundamentalsMod);
 
 // // Following module paths are substituted by "module mapping webpack plugin."
 // import {
@@ -42,18 +38,25 @@ export function getParsingGasCost(str) {
 
 export class ScriptInterpreter {
 
-  static async interpretScript(
+  constructor(
+    isServerSide = false, fetchScript = async () => {}, protect = () => {},
+    staticDevLibs = new Map(), devLibURLs = new Map()
+  ) {
+    this.isServerSide = isServerSide;
+    this.fetchScript = fetchScript;
+    this.protect = protect;
+    this.staticDevLibs = staticDevLibs;
+    this.devLibURLs = devLibURLs;
+  }
+
+  async interpretScript(
     gas, script = "", scriptPath = null, mainInputs = [], reqUserID = null,
     permissions = {}, settings = {},
-    fetchScript = () => {}, protect = () => {}, devLibURLs = new Map(),
-    isServerSide = false,
     parsedScripts = new Map(), liveModules = new Map(),
   ) {
     let scriptGlobals = {
       gas: gas, log: {}, scriptPath: scriptPath, reqUserID: reqUserID,
       permissions: permissions, settings: settings,
-      fetchScript: fetchScript, protect: protect, devLibURLs: devLibURLs,
-      isServerSide: isServerSide,
       isExiting: false, resolveScript: undefined, interpreter: this,
       parsedScripts: parsedScripts, liveModules: liveModules,
     };
@@ -185,7 +188,7 @@ export class ScriptInterpreter {
 
 
 
-  static createGlobalEnvironment(scriptGlobals) {
+  createGlobalEnvironment(scriptGlobals) {
     let globalEnv = new Environment(
       undefined, "global",
       undefined, undefined, undefined, undefined,
@@ -197,15 +200,15 @@ export class ScriptInterpreter {
 
 
 
-  static async fetchParsedScript(
+  async fetchParsedScript(
     scriptPath, parsedScripts, callerNode, callerEnv
   ) {
     let parsedScript = parsedScripts.get(scriptPath);
     if (!parsedScript) {
-      let {fetchScript, reqUserID} = callerEnv.scriptGlobals;
+      let {reqUserID} = callerEnv.scriptGlobals;
       let script;
       try {
-       script = await fetchScript(scriptPath, reqUserID);
+       script = await this.fetchScript(scriptPath, reqUserID);
       } catch (err) {
         throw new LoadError(err, callerNode, callerEnv);
       }
@@ -222,7 +225,7 @@ export class ScriptInterpreter {
 
 
 
-  static async executeModule(moduleNode, modulePath, globalEnv) {
+  async executeModule(moduleNode, modulePath, globalEnv) {
     decrCompGas(moduleNode, globalEnv);
 
     // Create a new environment for the module.
@@ -265,12 +268,12 @@ export class ScriptInterpreter {
 
 
 
-  static async executeSubmoduleOfImportStatement(
+  async executeSubmoduleOfImportStatement(
     impStmt, curModulePath, callerModuleEnv, globalEnv
   ) {
     decrCompGas(impStmt, globalEnv);
     decrGas(impStmt, globalEnv, "import");
-    let {liveModules, parsedScripts, devLibURLs} = globalEnv.scriptGlobals;
+    let {liveModules, parsedScripts} = globalEnv.scriptGlobals;
 
     // If the module has already been executed, we can return early.
     let submodulePath = getFullPath(curModulePath, impStmt.str);
@@ -283,9 +286,9 @@ export class ScriptInterpreter {
     // in the form of a bare module specifier (left over in the build step, if
     // any), try to import the given library.
     if (submodulePath[0] !== "/") {
-      let devMod = staticDevLibs(submodulePath);
+      let devMod = this.staticDevLibs.get(submodulePath);
       if (!devMod) {
-        let devLibURL = devLibURLs(submodulePath);
+        let devLibURL = this.devLibURLs.get(submodulePath);
         if (!devLibURL) throw new LoadError(
           `Developer library "${submodulePath}" not found`,
           impStmt, callerModuleEnv
@@ -334,7 +337,7 @@ export class ScriptInterpreter {
 
 
 
-  static finalizeImportStatement(
+  finalizeImportStatement(
     impStmt, liveSubmodule, submodulePath, curModuleEnv
   ) {
     decrCompGas(impStmt, curModuleEnv);
@@ -391,7 +394,7 @@ export class ScriptInterpreter {
 
 
 
-  static executeOuterStatement(stmtNode, environment) {
+  executeOuterStatement(stmtNode, environment) {
     let type = stmtNode.type;
     if (type === "export-statement") {
       this.executeExportStatement(stmtNode, environment);
@@ -401,7 +404,7 @@ export class ScriptInterpreter {
   }
 
 
-  static executeExportStatement(stmtNode, environment) {
+  executeExportStatement(stmtNode, environment) {
     decrCompGas(stmtNode, environment);
 
     if (stmtNode.subtype === "variable-export") {
@@ -438,7 +441,7 @@ export class ScriptInterpreter {
 
 
 
-  static executeMainFunction(
+  executeMainFunction(
     liveScriptModule, inputArr, scriptNode, scriptEnv
   ) {
     let [mainFun] = liveScriptModule["$main"] ?? [];
@@ -460,16 +463,16 @@ export class ScriptInterpreter {
 
 
 
-  static executeFunction(
+  executeFunction(
     fun, inputArr, callerNode, callerEnv, thisVal, isThisKeyword
   ) {
-    let {protect, permissions} = callerEnv.scriptGlobals;
+    let {permissions} = callerEnv.scriptGlobals;
     let protectData = callerEnv.getProtectData();
 
     // If the function is a method of a protected object, call protect() on
     // its signal, also passing the object itself as the thisVal argument.
     if (thisVal instanceof ProtectedObject) {
-      protectData = protect(
+      protectData = this.protect(
         thisVal.signal, protectData, permissions, thisVal, isThisKeyword,
         undefined, callerEnv, callerNode
       );
@@ -481,7 +484,7 @@ export class ScriptInterpreter {
       // (again, if called already), and also reassign protectData the return
       // value.
       if (fun.signal !== undefined) {
-        protectData = protect(
+        protectData = this.protect(
           fun.signal, protectData, permissions, thisVal, isThisKeyword,
           inputArr, callerEnv, callerNode
         );
@@ -493,7 +496,7 @@ export class ScriptInterpreter {
       return fun.fun(
         {
           callerNode: callerNode, callerEnv: callerEnv, thisVal: thisVal,
-          protectData: protectData, protect: protect, interpreter: this,
+          protectData: protectData, protect: this.protect, interpreter: this,
         },
         ...inputArr
       );
@@ -512,7 +515,7 @@ export class ScriptInterpreter {
 
 
 
-  static executeAsyncCallback(fun, inputArr, callerNode, callerEnv) {
+  executeAsyncCallback(fun, inputArr, callerNode, callerEnv) {
     if (callerEnv.scriptGlobals.isExiting) {
       throw new ExitException();
     }
@@ -534,7 +537,7 @@ export class ScriptInterpreter {
     }
   }
 
-  static throwAsyncException(err, callerNode, callerEnv) {
+  throwAsyncException(err, callerNode, callerEnv) {
     let wasCaught = callerEnv.runNearestCatchStmtAncestor(err, callerNode);
     if (!wasCaught) {
       callerEnv.scriptGlobals.resolveScript(undefined, err);
@@ -546,10 +549,10 @@ export class ScriptInterpreter {
 
 
 
-  static executeDefinedFunction(
+  executeDefinedFunction(
     funNode, funDecEnv, inputValueArr, callerNode, callerEnv,
     thisVal = undefined, protectData = undefined,
-  ) {debugger;
+  ) {
     decrCompGas(callerNode, callerEnv);
     let scriptGlobals = callerEnv.scriptGlobals;
 
@@ -611,7 +614,7 @@ export class ScriptInterpreter {
   }
 
 
-  static declareInputParameters(environment, params, inputArr) {
+  declareInputParameters(environment, params, inputArr) {
     params.forEach((param, ind) => {
       let paramName = param.ident;
       let paramVal = inputArr[ind];
@@ -639,7 +642,7 @@ export class ScriptInterpreter {
 
 
 
-  static executeStatement(stmtNode, environment) {
+  executeStatement(stmtNode, environment) {
     decrCompGas(stmtNode, environment);
 
     let type = stmtNode.type;
@@ -796,7 +799,7 @@ export class ScriptInterpreter {
 
 
 
-  static evaluateExpression(expNode, environment) {
+  evaluateExpression(expNode, environment) {
     decrCompGas(expNode, environment);
 
     let type = expNode.type;
@@ -1153,10 +1156,10 @@ export class ScriptInterpreter {
         // Evaluate the argument.
         let expVal = (!expNode.exp) ? undefined :
           this.evaluateExpression(expNode.exp, environment);
-        let {protect, permissions, resolveScript} = environment.scriptGlobals;
+        let {permissions, resolveScript} = environment.scriptGlobals;
         let protectData = environment.getProtectData();
         // Send an "exit" signal to protect, before resolving the script.
-        protect(
+        this.protect(
           exitSignal, protectData, permissions, undefined, undefined,
           [expVal], environment, expNode
         );
@@ -1182,7 +1185,7 @@ export class ScriptInterpreter {
   }
 
 
-  static assignToVariableOrMember(expNode, environment, assignFun) {
+  assignToVariableOrMember(expNode, environment, assignFun) {
     if(expNode.type === "identifier") {
       return environment.assign(expNode.ident, assignFun, expNode);
     }
@@ -1229,7 +1232,7 @@ export class ScriptInterpreter {
   // a BrokenOptionalChainException. Here, val is the value of the whole
   // expression, and objVal, is the value of the object before the last member
   // accessor (if the last postfix is a member accessor and not a tuple).
-  static evaluateChainedExpression(
+  evaluateChainedExpression(
     rootExp, postfixArr, environment, forAssignment
   ) {
     let val = this.evaluateExpression(rootExp, environment);
