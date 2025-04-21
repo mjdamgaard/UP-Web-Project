@@ -31,21 +31,35 @@ export class DirectoryUploader {
       fs.writeFileSync(idFilePath, `${dirID}`);
     }
 
-    // TODO: Request a list of all the files in the server-side directory, and
-    // then go through each one and check that it also exist nested in the
-    // client-side directory, and for each one that doesn't, request deletion
-    // of that file server-side. 
+    // Request a list of all the files in the server-side directory, and then
+    // go through each one and check that it also exist nested in the client-
+    // side directory, and for each one that doesn't, request deletion of that
+    // file server-side.
+    let filePaths = await ServerInterface.fetchHomeDirDescendants(
+      credentials, isPrivate
+    );
+    let deletionPromises = [];
+    filePaths.forEach(relPath => {
+      let clientFilePath = path.normalize(dirPath + "/" + relPath);
+      let serverFilePath = path.normalize(dirID + "/" + relPath);
+      if (!fs.existsSync(clientFilePath)) {
+        deletionPromises.push(
+          ServerInterface.deleteFile(credentials, serverFilePath)
+        );
+      }
+    });
+    await Promise.all(deletionPromises);
 
     // Then call a helper method to recursively loop through all files in the
     // directory itself or any of its nested directories and uploads them,
-    // pushing a promise for the response of each one to promiseArr.
-    let promiseArr = [];
-    this.#uploadDirHelper(dirPath, credentials, dirID, promiseArr);
-    await Promise.all(promiseArr);
+    // pushing a promise for the response of each one to uploadPromises.
+    let uploadPromises = [];
+    this.#uploadDirHelper(dirPath, credentials, dirID, uploadPromises);
+    await Promise.all(uploadPromises);
   }
 
 
-  static async #uploadDirHelper(dirPath, credentials, relPath, promiseArr) {
+  static async #uploadDirHelper(dirPath, credentials, relPath, uploadPromises) {
     // Get each file in the directory at path, and loop through and handle each
     // one according to its extension (or lack thereof).
     let fileNames;
@@ -62,14 +76,14 @@ export class DirectoryUploader {
       // helper method recursively.
       if (name.indexOf(".") <= 0) {
         this.#uploadDirHelper(
-          childAbsPath, credentials, childRelPath, promiseArr
+          childAbsPath, credentials, childRelPath, uploadPromises
         );
       }
 
       // Else if the file is a text file, upload it as is to the server.
       else if (/\.(js|txt|json|html)$/.test(name)) {
         let contentText = fs.readFileSync(childAbsPath, 'utf8');
-        promiseArr.push(
+        uploadPromises.push(
           ServerInterface.putTextFile(
             credentials, "/" + childRelPath, contentText
           )

@@ -2,6 +2,31 @@
 import {serverURL} from "./config.js";
 
 
+export async function postData(url, reqData) {
+  let options = {
+    method: "POST",
+    body: JSON.stringify(reqData),
+  };
+
+  let response = await fetch(url, options);
+
+  if (!response.ok) {
+    response.text().then(responseText => {
+      throw (
+        "HTTP error " + response.status +
+        (responseText ? ": " + responseText : "")
+      );
+    });
+    return;
+  }
+  else {
+    let result = await response.text()
+    return JSON.parse(result);
+  }
+}
+
+
+
 
 export class ServerInterface {
 
@@ -31,6 +56,14 @@ export class ServerInterface {
   }
 
 
+
+  static fetchHomeDirDescendants(dirID, credentials) {
+    return this.#post({
+      credentials: credentials, action: "read", route: "/" + dirID,
+    });
+  }
+
+
   static fetchScript(filePath, credentials) {
     if(filePath.slice(-3) !== ".js") throw (
       'Expected a script file name with the extension ".js", but got ' +
@@ -54,6 +87,11 @@ export class ServerInterface {
   }
 
 
+  static deleteFile(credentials, filePath) {
+    return this.#post({
+      credentials: credentials, action: "delete", route: filePath
+    });
+  }
 
 
   static createHomeDir(credentials, isPrivate) {
@@ -66,26 +104,3 @@ export class ServerInterface {
 
 
 
-
-export async function postData(url, reqData) {
-  let options = {
-    method: "POST",
-    body: JSON.stringify(reqData),
-  };
-
-  let response = await fetch(url, options);
-
-  if (!response.ok) {
-    response.text().then(responseText => {
-      throw (
-        "HTTP error " + response.status +
-        (responseText ? ": " + responseText : "")
-      );
-    });
-    return;
-  }
-  else {
-    let result = await response.text()
-    return JSON.parse(result);
-  }
-}

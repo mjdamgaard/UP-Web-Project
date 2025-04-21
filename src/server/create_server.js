@@ -84,8 +84,18 @@ async function requestHandler(req, res) {
       // result: dirID.
       break;
     }
-    case "delete":
-      // TODO: Implement.
+    case "delete": {
+      let [
+        route
+      ] = await InputGetter.getParamsPromise(
+        body, ["route"], [undefined]
+      );
+      result = await DBQueryHandler.delete(
+        reqUserID, route
+      );
+      // result: wasCreated.
+      break;
+    }
     case "call":
       // TODO: Implement.
     default:

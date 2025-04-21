@@ -38,16 +38,9 @@ export class DBQueryHandler {
       /^\/[1-9][0-9]*\/[a-zA-Z0-9_\-]+(\/[a-zA-Z0-9_\-]+)*\.(js|txt|json|html)$/
         .test(route)
     ) {
-      let indOfSecondSlash = route.indexOf("/", 1);
-      let dirID = route.substring(1, indOfSecondSlash);
-      let filePath = route.substring(indOfSecondSlash + 1);
-      let queryString = undefined;
-      if (filePath.length > 700) throw new ClientError(
-        "File path is too long"
-      );
+      let [dirID, filePath] = parseDirIDAndFilePath(route);
 
-
-      let paramValArr = [dirID, filePath];console.log(paramValArr)
+      let paramValArr = [dirID, filePath];
       let sql = "CALL readTextFileContent (?, ?)";
 
       let conn = new MainDBConnection();
@@ -55,6 +48,22 @@ export class DBQueryHandler {
       conn.end();
 
       return contentText;
+    }
+    else if (
+      /^\/[1-9][0-9]*$/.test(route)
+      ) {
+        let dirID = route.substring(1);
+
+        let paramValArr = [dirID];
+        let sql = "CALL readHomeDirDescendants (?, 10000, 0)";
+  
+        let conn = new MainDBConnection();
+        let filePaths = (await conn.query(sql, paramValArr) ?? []).map(val => (
+          val[0]
+        ));
+        conn.end();
+  
+        return filePaths;
     }
     else if (false) {
       // TODO: Implement other file types.
@@ -77,12 +86,7 @@ export class DBQueryHandler {
       /^\/[1-9][0-9]*\/[a-zA-Z0-9_\-]+(\/[a-zA-Z0-9_\-]+)*\.(js|txt|json|html)$/
         .test(route)
     ) {
-      let indOfSecondSlash = route.indexOf("/", 1);
-      let dirID = route.substring(1, indOfSecondSlash);
-      let filePath = route.substring(indOfSecondSlash + 1);
-      if (filePath.length > 700) throw new ClientError(
-        "File path is too long"
-      );
+      let [dirID, filePath] = parseDirIDAndFilePath(route);
 
       // TODO: Verify that reqUser is the admin of the given home dir here.
 
@@ -100,9 +104,7 @@ export class DBQueryHandler {
   }
 
 
-  static async mkdir(
-    reqUserID, isPrivate
-  ) {
+  static async mkdir(reqUserID, isPrivate) {
     let adminID = reqUserID;
     let paramValArr = [adminID, isPrivate];
     let sql = "CALL createHomeDir (?, ?)";
@@ -114,4 +116,53 @@ export class DBQueryHandler {
     return dirID;
   }
 
+
+
+  static async delete(reqUserID, route) {
+
+    // TODO: Remove data from cache when a file, or directory, is deleted.
+
+    if (
+      /^\/[1-9][0-9]*\/[a-zA-Z0-9_\-]+(\/[a-zA-Z0-9_\-]+)*\.(js|txt|json|html)$/
+        .test(route)
+    ) {
+      let [dirID, filePath] = parseDirIDAndFilePath(route);
+
+      let paramValArr = [dirID, filePath];
+      let sql = "CALL deleteTextFile (?, ?)";
+
+      let conn = new MainDBConnection();
+      let [wasDeleted] = (await conn.query(sql, paramValArr))[0] ?? [];
+      conn.end();
+
+      return wasDeleted;
+    }
+    else if (
+      /^\/[1-9][0-9]*$/.test(route)
+      ) {
+        // TODO: IMplement directory deletion.
+    }
+    else if (false) {
+      // TODO: Implement other file types.
+    }
+    else {
+      throw new ClientError(
+        'Unrecognized type of "delete" request'
+      );
+    }
+  }
+
+}
+
+
+
+
+function parseDirIDAndFilePath(route) {
+  let indOfSecondSlash = route.indexOf("/", 1);
+  let dirID = route.substring(1, indOfSecondSlash);
+  let filePath = route.substring(indOfSecondSlash + 1);
+  if (filePath.length > 700) throw new ClientError(
+    "File path is too long"
+  );
+  return [dirID, filePath];
 }
