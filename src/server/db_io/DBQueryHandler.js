@@ -47,7 +47,7 @@ export class DBQueryHandler {
       );
 
 
-      let paramValArr = [dirID, filePath];
+      let paramValArr = [dirID, filePath];console.log(paramValArr)
       let sql = "CALL readTextFileContent (?, ?)";
 
       let conn = new MainDBConnection();

@@ -203,6 +203,8 @@ proc: BEGIN
         INSERT INTO FileIDs () VALUES ();
         SET fileID = LAST_INSERT_ID();
         DELETE FROM FileIDs WHERE file_id < fileID;
+        INSERT INTO Files (dir_id, file_path, file_id)
+        VALUES (dirID, filePath, fileID);
         INSERT INTO TextFileContents (file_id, content_text)
         VALUES (fileID, contentText);
         SELECT 1 AS wasCreated;

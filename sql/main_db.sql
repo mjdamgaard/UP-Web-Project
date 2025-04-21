@@ -33,7 +33,7 @@ CREATE TABLE Files (
 
     file_path VARCHAR(700) CHARACTER SET utf8mb4 NOT NULL,
 
-    modified_at INT UNSIGNED NOT NULL DEFAULT (NOW()),
+    modified_at INT UNSIGNED NOT NULL DEFAULT (UNIX_TIMESTAMP()),
 
     prev_modified_at INT UNSIGNED DEFAULT (modified_at),
 

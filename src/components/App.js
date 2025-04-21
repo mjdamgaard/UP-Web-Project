@@ -82,6 +82,7 @@ export const App = (props) => {
       // runTests();
       scriptInterpreter.interpretScript(appGas, appScript).then(
         ([output, log]) => {
+          console.log("UP app script exited with output and log:");
           console.log(output);
           console.log(log);
         }

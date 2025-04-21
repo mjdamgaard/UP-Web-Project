@@ -217,7 +217,8 @@ export class ScriptInterpreter {
         callerNode, callerEnv
       );
       payGas(callerNode, callerEnv, {comp: getParsingGasCost(script)});
-      [parsedScript] = scriptParser.parse(script);
+      let [scriptSyntaxTree, lexArr, strPosArr] = scriptParser.parse(script);
+      parsedScript = scriptSyntaxTree.res;
       parsedScripts.set(scriptPath, parsedScript);
     }
     return parsedScript;
