@@ -10,11 +10,11 @@ import {createAppSignal} from "./signals/fundamental_signals.js";
 // element with an id of "up-app-root".
 export const createJSXApp = new DevFunction(createAppSignal, function(
   {callerNode, callerEnv, interpreter}, component, props
-) {debugger;
+) {
   const rootInstance = new JSXInstance("root", undefined, component);
   let rootParent = document.getElementById("up-app-root");
   let appNode = rootInstance.render(
-    props, false, interpreter, callerNode, callerEnv
+    props, false, interpreter, callerNode, callerEnv, false
   );
   rootParent.replaceChildren(appNode);
 });
@@ -225,14 +225,17 @@ export class JSXInstance {
              jsxElement.node, jsxElement.decEnv
            );
             childArr = val.values();
+            break;
           }
           case "className" : {
             newDOMNode.setAttribute("class", val.toString());
+            break;
           }
           case "onclick" : {
             newDOMNode.onclick = () => {
               interpreter.executeFunction(val, [this], callerNode, callerEnv);
             }
+            break;
           }
           default: throw new RuntimeError(
             `Invalid or not-yet-implemented attribute, "${key}" for ` +

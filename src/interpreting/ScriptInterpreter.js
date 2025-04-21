@@ -1578,7 +1578,7 @@ function getSafeObj(obj) {
 
 
 function turnImmutable(val) {
-  if (val.set instanceof Function) {
+  if (val && val.set instanceof Function) {
     return new Immutable(val);
   } else {
     return val;

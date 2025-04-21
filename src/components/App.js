@@ -64,7 +64,7 @@ export const App = (props) => {
 
   useLayoutEffect(() => {
     if (renderNumMonad[0]++ === 0) {
-      runTests();
+      // runTests();
       scriptInterpreter.interpretScript(appGas, appScript).then(
         ([output, log]) => {
           console.log(output);

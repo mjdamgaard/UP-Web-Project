@@ -868,10 +868,7 @@ export const scriptGrammar = {
       if (ruleInd === 0) {
         return children[0];
       } else {
-        return {
-          type: "expression-content",
-          exp: children[1],
-        }
+        return children[1];
       }
     },
   },
