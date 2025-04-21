@@ -1,14 +1,18 @@
 
 import {useState, useLayoutEffect, createContext, useCallback} from "react";
 
-/* Tests */
-import {runTests} from "../testing/parsing_interpreting_tests.js";
-
+import {ServerInterface} from "../server/ajax_io/ServerInterface.js";
 
 import {
   ScriptInterpreter
 } from "../interpreting/ScriptInterpreter.js";
 
+/* Tests */
+
+import {runTests} from "../testing/parsing_interpreting_tests.js";
+
+
+/* Static developer libraries */
 
 import * as fundamentalsMod from "../dev_lib/fundamentals.js";
 import * as jsxMod from "../dev_lib/jsx_components.js";
@@ -18,9 +22,6 @@ staticDevLibs.set("fundamentals", fundamentalsMod);
 staticDevLibs.set("jsx", jsxMod);
 
 
-const scriptInterpreter = new ScriptInterpreter(
-  false, undefined, undefined, staticDevLibs, undefined
-);
 
 
 if (typeof(Storage) === "undefined") {
@@ -30,6 +31,16 @@ if (typeof(Storage) === "undefined") {
     "or use a different browser."
   );
 }
+
+
+
+// Initialize script interpreter.
+async function fetchScript(filePath) {
+  return await ServerInterface.fetchScript(filePath, undefined);
+}
+const scriptInterpreter = new ScriptInterpreter(
+  false, fetchScript, undefined, staticDevLibs, undefined
+);
 
 
 // Initialize a continuously self-refilling gas object for the app.
@@ -46,8 +57,10 @@ setInterval(
 );
 
 // The script the initializes the UP app.
+const TEST_APP_ID = 1;
 const appScript = `
   import {createJSXApp} from 'jsx';
+  import * as testApp from "/${TEST_APP_ID}/main.js";
 
   const testComp = {
     render: function() {
@@ -55,9 +68,11 @@ const appScript = `
     },
   };
 
-  createJSXApp(testComp);
+  createJSXApp(testApp);
 `;
 const renderNumMonad = [0];
+
+
 
 
 export const App = (props) => {

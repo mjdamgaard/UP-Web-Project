@@ -33,7 +33,8 @@ export class ServerInterface {
 
   static fetchScript(filePath, credentials) {
     if(filePath.slice(-3) !== ".js") throw (
-      'Trying to fetch a script without a last name of ".js"'
+      'Expected a script file name with the extension ".js", but got ' +
+      `"${filePath}"`
     );
     return this.fetchTextFileContent(filePath, credentials)
   }

@@ -44,7 +44,7 @@ export class InputGetter {
           throw new ClientError("Missing mandatory parameter: " + name);
         }
         else {
-          paramValArr[ind] = defaultVal.toString();
+          paramValArr[ind] = `${defaultVal}`;
         }
       }
       else {

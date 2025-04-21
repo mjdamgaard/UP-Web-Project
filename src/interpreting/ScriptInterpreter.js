@@ -212,6 +212,10 @@ export class ScriptInterpreter {
       } catch (err) {
         throw new LoadError(err, callerNode, callerEnv);
       }
+      if (typeof script !== "string") throw new LoadError(
+        `No script was found at ${scriptPath}`,
+        callerNode, callerEnv
+      );
       payGas(callerNode, callerEnv, {comp: getParsingGasCost(script)});
       [parsedScript] = scriptParser.parse(script);
       parsedScripts.set(scriptPath, parsedScript);

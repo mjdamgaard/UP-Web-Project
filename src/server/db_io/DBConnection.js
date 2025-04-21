@@ -17,7 +17,7 @@ export class DBConnection {
     // Query the database and get the results table as a multidimensional array. 
     let options = {sql: sql, rowsAsArray: true};
     let [[results]] = await conn.query(options, paramValArr);
-    return results;
+    return results ?? [];
   }
 
   async end() {

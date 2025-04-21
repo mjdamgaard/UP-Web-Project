@@ -42,18 +42,27 @@ export class DBQueryHandler {
       let dirID = route.substring(1, indOfSecondSlash);
       let filePath = route.substring(indOfSecondSlash + 1);
       let queryString = undefined;
-      if (path.length > 700) throw new ClientError(
+      if (filePath.length > 700) throw new ClientError(
         "File path is too long"
       );
-      let conn = mainDBConnection.connect();
-      let contentData = await MainDBInterface.readTextFileContent(
-        conn, dirID, filePath
-      );
+
+
+      let paramValArr = [dirID, filePath];
+      let sql = "CALL readTextFileContent (?, ?)";
+
+      let conn = new MainDBConnection();
+      let [contentText] = (await conn.query(sql, paramValArr))[0] ?? [];
       conn.end();
-      return [false, contentData];
+
+      return contentText;
+    }
+    else if (false) {
+      // TODO: Implement other file types.
     }
     else {
-      // TODO: Implement other file types.
+      throw new ClientError(
+        'Unrecognized type of "read" request'
+      );
     }
   }
 
@@ -81,9 +90,9 @@ export class DBQueryHandler {
       let sql = "CALL putTextFile (?, ?, ?)";
 
       let conn = new MainDBConnection();
-      let [[wasCreated]] = await conn.query(sql, paramValArr);
-
+      let [wasCreated] = (await conn.query(sql, paramValArr))[0] ?? [];
       conn.end();
+
       return wasCreated;
     }
 
@@ -99,7 +108,7 @@ export class DBQueryHandler {
     let sql = "CALL createHomeDir (?, ?)";
 
     let conn = new MainDBConnection();
-    let [[dirID]] = await conn.query(sql, paramValArr);
+    let [dirID] = (await conn.query(sql, paramValArr))[0] ?? [];
 
     conn.end();
     return dirID;

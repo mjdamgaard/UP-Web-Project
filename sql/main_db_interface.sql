@@ -4,6 +4,11 @@ DROP PROCEDURE readHomeDirDescendants;
 DROP PROCEDURE createHomeDir;
 DROP PROCEDURE editHomeDir;
 DROP PROCEDURE deleteHomeDir;
+DROP PROCEDURE readFileMetaData;
+DROP PROCEDURE moveFile;
+DROP PROCEDURE readTextFileContent;
+DROP PROCEDURE putTextFile;
+DROP PROCEDURE deleteTextFile;
 
 
 
@@ -167,7 +172,7 @@ proc: BEGIN
     SELECT file_id INTO fileID
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
-    SELECT content_data AS contentText
+    SELECT content_text AS contentText
     FROM TextFileContents FORCE INDEX (PRIMARY)
     WHERE file_id = fileID;
 END proc //
