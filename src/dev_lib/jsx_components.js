@@ -10,7 +10,7 @@ import {createAppSignal} from "./signals/fundamental_signals.js";
 // element with an id of "up-app-root".
 export const createJSXApp = new DevFunction(createAppSignal, function(
   {callerNode, callerEnv, interpreter}, component, props
-) {
+) {debugger;
   const rootInstance = new JSXInstance("root", undefined, component);
   let rootParent = document.getElementById("up-app-root");
   let appNode = rootInstance.render(

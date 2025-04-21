@@ -326,7 +326,10 @@ export class Parser {
     let failedSymArr = [];
     rules.forEach(rule => {
       if (rule.length < childrenLen) return;
-      let partialRule = rule.slice(0, childrenLen - 1);
+      let partialRule = rule.slice(0, childrenLen - 1).map(sym => {
+        let indOfBang = sym.indexOf("!");
+        return (indOfBang === -1) ? sym : sym.substring(0, indOfBang);
+      });
       let isAlmostSuccessful = partialRule.reduce(
         (acc, sym, ind) => acc && (children[ind] ?? {}).sym === sym,
         true

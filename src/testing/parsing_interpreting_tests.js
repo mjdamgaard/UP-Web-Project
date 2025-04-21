@@ -314,7 +314,7 @@ async function testInterpreter({
   gas = Object.assign({}, gas);
 
   let [output, log] = await ScriptInterpreter.interpretScript(
-    script, scriptPath, mainInputs, gas, reqUserID, permissions, settings,
+    gas, script, scriptPath, mainInputs, reqUserID, permissions, settings,
   );
 
   let isSuccessMsg;

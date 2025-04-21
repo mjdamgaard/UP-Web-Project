@@ -43,7 +43,7 @@ export function getParsingGasCost(str) {
 export class ScriptInterpreter {
 
   static async interpretScript(
-    script = "", scriptPath = null, mainInputs = [], gas, reqUserID = null,
+    gas, script = "", scriptPath = null, mainInputs = [], reqUserID = null,
     permissions = {}, settings = {},
     fetchScript = () => {}, protect = () => {}, devLibURLs = new Map(),
     isServerSide = false,
@@ -549,7 +549,7 @@ export class ScriptInterpreter {
   static executeDefinedFunction(
     funNode, funDecEnv, inputValueArr, callerNode, callerEnv,
     thisVal = undefined, protectData = undefined,
-  ) {
+  ) {debugger;
     decrCompGas(callerNode, callerEnv);
     let scriptGlobals = callerEnv.scriptGlobals;
 

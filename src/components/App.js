@@ -1,16 +1,6 @@
 
 import {useState, useLayoutEffect, createContext, useCallback} from "react";
 
-// import {useDispatch} from "../hooks/useDispatch.js";
-// import {useRestore} from "../hooks/useRestore.js";
-// import {basicEntIDs} from "../entity_ids/basic_entity_ids.js";
-
-// import {appReducers} from "./appReducers.js";
-
-import {AppHeader} from "./header/AppHeader.js";
-// import {AppPage} from "./app_pages/AppPage.js";
-
-
 /* Tests */
 import {runTests} from "../testing/parsing_interpreting_tests.js";
 
@@ -20,30 +10,75 @@ import {
 } from "../interpreting/ScriptInterpreter.js";
 
 
-// export const HOME_ENTITY_ID = basicEntIDs["entities"];
 
 
-
-const PAGE_LIST_CONTAINER_SELECTOR = ".page-list-container";
-const PAGE_CONTAINER_SELECTOR = ".page-container";
-
-
-// if (typeof(Storage) === "undefined") {
-//   alert(
-//     "This web application requires browser support for local " +
-//     "storage in order to function correctly. It seems that your " +
-//     "browser does not support local storage."
-//   );
-//   return;
-// }
+if (typeof(Storage) === "undefined") {
+  alert(
+    "This web application requires browser support for local " +
+    "storage in order to function correctly. Please turn on local storage, " +
+    "or use a different browser."
+  );
+}
 
 
-export const ProfileContext = createContext();
+// Initialize a continuously self-refilling gas object for the app.
+const FRESH_APP_GAS = {
+  comp: 100000,
+  import: 100,
+  fetch: 100,
+  time: Infinity,
+};
+const appGas = Object.assign({}, FRESH_APP_GAS);
+setInterval(
+  () => Object.assign(appGas, FRESH_APP_GAS),
+  10000
+);
 
+// The script the initializes the UP app.
+const appScript = `
+  import {createJSXApp} from 'jsx';
 
+  const testComp = {
+    render: function() {
+      return <div>{"Hello, World!"}</div>;
+    },
+  };
+
+  createJSXApp(testComp);
+`;
 
 
 export const App = (props) => {
+
+  useLayoutEffect(() => {
+    // runTests();
+    ScriptInterpreter.interpretScript(appGas, appScript).then(
+      ([output, log]) => {
+        console.log(output);
+        console.log(log);
+      }
+    );
+  }, [])
+
+  return (
+    <div className="app">
+      <div id="up-app-root"></div>
+    </div>
+  );
+};
+
+
+
+
+
+
+
+
+
+// export const ProfileContext = createContext();
+
+
+// export const App = (props) => {
   // const pathname = window.location.pathname;
   // const hasPath = pathname !== "/";
   // // const [state, setState] = useRestorableState("app", {
@@ -121,36 +156,35 @@ export const App = (props) => {
   // if (!isReady) {
   //   return <></>
   // }
+//   return (
+//     <div className="app" // ref={refCallback}
+//       // ref={(node) => {
+//       //   refCallback(node);
+//       //   refCallback2(node);
+//       // }}
+//     >
+//       {/* <ProfileContext.Provider value={getProfileData}> */}
+//         <AppHeader
+//           // setAppPage={void(0)}
+//           // pageKeyArr={pageKeyArr} pagePathStore={pagePathStore}
+//           // curInd={curInd}
+//         />
+//         {/* <div className="page-list-container">
+//           {appPages}
+//         </div> */}
+//       {/* </ProfileContext.Provider> */}
+//     </div>
+//   );
+// };
 
 
-  useLayoutEffect(() => {
-    runTests();
-    ScriptInterpreter
-  }, [])
-
-  return (
-    <div className="app" // ref={refCallback}
-      // ref={(node) => {
-      //   refCallback(node);
-      //   refCallback2(node);
-      // }}
-    >
-      {/* <ProfileContext.Provider value={getProfileData}> */}
-        <AppHeader
-          // setAppPage={void(0)}
-          // pageKeyArr={pageKeyArr} pagePathStore={pagePathStore}
-          // curInd={curInd}
-        />
-        {/* <div className="page-list-container">
-          {appPages}
-        </div> */}
-      {/* </ProfileContext.Provider> */}
-      <div id="up-app-root"></div>
-    </div>
-  );
-};
 
 
+
+
+
+const PAGE_LIST_CONTAINER_SELECTOR = ".page-list-container";
+const PAGE_CONTAINER_SELECTOR = ".page-container";
 
 
 
