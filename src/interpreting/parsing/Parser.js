@@ -247,11 +247,10 @@ export class Parser {
       let subStr = str.substring(0, strPos);
       let [ln, col] = getLnAndCol(subStr);
       syntaxTree.error = new SyntaxError(
-        'Incomplete parsing after:\n' +
-          subStr.substring(strPos - ERROR_ECHO_STR_LEN) +
-          "\n--------\n" +
-          "Expected an empty string, but got:\n" +
-          str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4)),
+        'Incomplete parsing after `' +
+        subStr.substring(strPos - ERROR_ECHO_STR_LEN) +
+        "`. Expected an empty string, but got: `" +
+        str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4)) + "`",
         ln, col
       );
     }
@@ -265,10 +264,8 @@ export class Parser {
         let subStr = str.substring(0, strPos);
         let [ln, col] = getLnAndCol(subStr);
         syntaxTree.error = new SyntaxError(
-          'Error after:\n' +
-            subStr.substring(strPos - ERROR_ECHO_STR_LEN) +
-            "\n--------\n" +
-            'Error:\n  ' + error.replaceAll("\n", "\n  "),
+          'Error after `' + subStr.substring(strPos - ERROR_ECHO_STR_LEN) +
+          '`. Error: ' + error,
           ln, col
         );
         syntaxTree.lexArr = lexArr;
@@ -277,11 +274,11 @@ export class Parser {
         let subStr = str.substring(0, strPos);
         let [ln, col] = getLnAndCol(subStr);
         syntaxTree.error = new SyntaxError(
-          `Failed symbol '${failedNodeSymbol}' after:\n` +
-            subStr.substring(strPos - ERROR_ECHO_STR_LEN) +
-            "\n--------\n" +
-            `Expected symbol(s) ${expectedSymbols}, but got:\n` +
-            str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4)),
+          `Failed symbol '${failedNodeSymbol}' after \`` +
+          subStr.substring(strPos - ERROR_ECHO_STR_LEN) +
+          `\`. Expected symbol(s) ${expectedSymbols}, but got \`` +
+          str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4)) +
+          "`",
           ln, col
         );
       }
@@ -755,7 +752,6 @@ export class Parser {
     let err = syntaxTree.error;
     if (err) {
       let combMsg = `Ln ${err.ln}, Col ${err.col}: ${err.msg}`;
-      combMsg.split("\n").forEach(val => console.log(val));
     };
   }
 }
@@ -818,11 +814,10 @@ export class Lexer {
         let prevStr = unfilteredLexArr.slice(0, -1).join("");
         let [ln, col] = getLnAndCol(prevStr);
         throw new LexError(
-          "Lexer error after: \n" +
-            prevStr.slice(-ERROR_ECHO_STR_LEN) +
-            "\n--------\n" +
-            "Invalid lexeme at:\n" +
-            lastMatch.substring(0, Math.floor(ERROR_ECHO_STR_LEN/4)),
+          "Lexer error after `" +
+          prevStr.slice(-ERROR_ECHO_STR_LEN) +
+          "`. Invalid lexeme at `" +
+          lastMatch.substring(0, Math.floor(ERROR_ECHO_STR_LEN/4)) + "`",
           ln, col
         );
       } else {

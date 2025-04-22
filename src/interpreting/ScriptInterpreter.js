@@ -67,10 +67,11 @@ export class ScriptInterpreter {
     let globalEnv = this.createGlobalEnvironment(scriptGlobals);
 
     // If script is provided, rather than the scriptPath, first parse it.
-    let parsedScript;
+    let parsedScript, lexArr, strPosArr;
     if (scriptPath === null) {
       payGas(null, globalEnv, {comp: getParsingGasCost(script)});
-      let [scriptSyntaxTree, lexArr, strPosArr] = scriptParser.parse(script);
+      let scriptSyntaxTree;
+      [scriptSyntaxTree, lexArr, strPosArr] = scriptParser.parse(script);
       if (scriptSyntaxTree.error) {
         return [
           undefined, {error: scriptSyntaxTree.error},
@@ -81,7 +82,7 @@ export class ScriptInterpreter {
     }
     // Else fetch and parse the script first thing.
     else {
-      parsedScript = await this.fetchParsedScript(
+      [parsedScript, lexArr, strPosArr] = await this.fetchParsedScript(
         scriptPath, parsedScripts, undefined, globalEnv
       );
     }
@@ -104,7 +105,7 @@ export class ScriptInterpreter {
     // found, and make sure to try-catch any exceptions or errors.
     try {
       let [liveScriptModule, scriptEnv] = await this.executeModule(
-        parsedScript, scriptPath, globalEnv
+        parsedScript, lexArr, strPosArr, scriptPath, globalEnv
       );
       this.executeMainFunction(
         liveScriptModule, mainInputs, parsedScript, scriptEnv
@@ -192,7 +193,7 @@ export class ScriptInterpreter {
     let globalEnv = new Environment(
       undefined, "global",
       undefined, undefined, undefined, undefined,
-      undefined,
+      undefined, undefined, undefined,
       scriptGlobals
     );
     return globalEnv;
@@ -203,6 +204,7 @@ export class ScriptInterpreter {
   async fetchParsedScript(
     scriptPath, parsedScripts, callerNode, callerEnv
   ) {
+    let lexArr, strPosArr;
     let parsedScript = parsedScripts.get(scriptPath);
     if (!parsedScript) {
       let {reqUserID} = callerEnv.scriptGlobals;
@@ -217,11 +219,12 @@ export class ScriptInterpreter {
         callerNode, callerEnv
       );
       payGas(callerNode, callerEnv, {comp: getParsingGasCost(script)});
-      let [scriptSyntaxTree, lexArr, strPosArr] = scriptParser.parse(script);
+      let scriptSyntaxTree;
+      [scriptSyntaxTree, lexArr, strPosArr] = scriptParser.parse(script);
       parsedScript = scriptSyntaxTree.res;
       parsedScripts.set(scriptPath, parsedScript);
     }
-    return parsedScript;
+    return [parsedScript, lexArr, strPosArr];
   }
 
 
@@ -230,14 +233,14 @@ export class ScriptInterpreter {
 
 
 
-  async executeModule(moduleNode, modulePath, globalEnv) {
+  async executeModule(moduleNode, lexArr, strPosArr, modulePath, globalEnv) {
     decrCompGas(moduleNode, globalEnv);
 
     // Create a new environment for the module.
     let moduleEnv = new Environment(
       globalEnv, "module",
       undefined, undefined, undefined, undefined,
-      modulePath,
+      modulePath, lexArr, strPosArr,
     );
 
     // Run all the import statements in parallel and get their live
@@ -310,12 +313,12 @@ export class ScriptInterpreter {
 
       // If the dev library module was found, create a "liveModule" object from
       // it, store it in the liveModules buffer, and return it. 
-      let liveModule = {};
+      let liveModule = new Map();
       Object.entries(devMod).forEach(([key, val]) => {
         // If a dev library exports a function, it is meant only for other dev
         // libraries, so we filter all those out here. 
         if (!(val instanceof Function)) {
-          liveModule["$" + key] = val;
+          liveModule.set(key, val);
         }
 
         // And if the imported object is an extension of the JSXInstance class,
@@ -331,14 +334,14 @@ export class ScriptInterpreter {
 
     // Else if the module is a user module, first try to get it from the
     // parsedScripts buffer, then try to fetch it from the database.
-    let submoduleNode = await this.fetchParsedScript(
+    let [submoduleNode, lexArr, strPosArr] = await this.fetchParsedScript(
       submodulePath, parsedScripts, impStmt, callerModuleEnv
     );
 
     // Then execute the module, inside the global environment, and return the
     // resulting liveModule, after also adding it to liveModules.
     [liveModule] = await this.executeModule(
-      submoduleNode, submodulePath, globalEnv
+      submoduleNode, lexArr, strPosArr, submodulePath, globalEnv
     );
     liveModules.set(submodulePath, liveModule);
     return [liveModule, submodulePath];
@@ -365,12 +368,12 @@ export class ScriptInterpreter {
         imp.namedImportArr.forEach(namedImp => {
           let ident = namedImp.ident ?? "default";
           let alias = namedImp.alias ?? ident;
-          let val = liveSubmodule["$" + ident];
+          let val = liveSubmodule.get(ident);
           curModuleEnv.declare(alias, val, true, namedImp);
         });
       }
       else if (impType === "default-import") {
-        let val = liveSubmodule["$default"];
+        let val = liveSubmodule.get("default");
         curModuleEnv.declare(imp.ident, val, true, imp);
       }
       else throw "finalizeImportStatement(): Unrecognized import type";
@@ -454,9 +457,9 @@ export class ScriptInterpreter {
   executeMainFunction(
     liveScriptModule, inputArr, scriptNode, scriptEnv
   ) {
-    let [mainFun] = liveScriptModule["$main"] ?? [];
+    let [mainFun] = liveScriptModule.get("main") ?? [];
     if (mainFun === undefined) {
-      [mainFun] = liveScriptModule["$default"] ?? [];
+      [mainFun] = liveScriptModule.get("default") ?? [];
     }
     if (mainFun !== undefined) {
       this.executeFunction(
@@ -715,7 +718,7 @@ export class ScriptInterpreter {
         let tryCatchEnv = new Environment(
           environment, "try-catch",
           undefined, undefined, undefined, undefined,
-          undefined,
+          undefined, undefined, undefined,
           undefined,
           stmtNode.catchStmtArr, stmtNode.errIdent, stmtNode.numIdent,
         );
@@ -1366,6 +1369,8 @@ export class Environment {
     callerNode = undefined, callerEnv = undefined, thisVal = undefined,
     protectData = undefined,
     modulePath = undefined,
+    lexArr = undefined,
+    strPosArr = undefined,
     scriptGlobals = undefined,
     catchStmtArr = undefined, errIdent, numIdent,
   ) {
@@ -1380,6 +1385,8 @@ export class Environment {
     }
     else if (scopeType === "module") {
       this.modulePath = modulePath;
+      this.lexArr = lexArr;
+      this.strPosArr = strPosArr;
       this.protectData = {modulePath: modulePath};
       this.exports = [];
       this.liveModule = undefined;
@@ -1527,9 +1534,9 @@ export class Environment {
 
   getLiveModule() {
     if (!this.liveModule ) {
-      let liveModule = this.liveModule = {};
+      let liveModule = this.liveModule = new Map();
       this.exports.forEach(([alias, val]) => {
-        liveModule["$" + alias] = val;
+        liveModule.set(alias, val);
       });
     }
     return this.liveModule;
@@ -1754,6 +1761,10 @@ export class ModuleObject extends ProtectedObject {
     this.modulePath = modulePath;
     this.decEnv = decEnv;
     this.members = members;
+  }
+
+  get(key) {
+    return this.members.get(key);
   }
 }
 

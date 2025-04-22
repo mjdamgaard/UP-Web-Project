@@ -476,7 +476,7 @@ export const scriptGrammar = {
       ["expression^(1)", /\?/, "expression!", /:/, "expression"],
       ["expression^(1)"],
     ],
-    process: (children, ruleInd) => {
+    process: (children, ruleInd) => { if (ruleInd <= 2) debugger;
       return (ruleInd === 0) ? {
         type: "arrow-function",
         params: children[1].children,
