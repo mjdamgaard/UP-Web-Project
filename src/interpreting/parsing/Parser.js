@@ -889,7 +889,7 @@ export function getExtendedErrorMsg(err) {
 
 
 export function getLnAndCol(str) {
-  let lineArr = str.match(/.*(\n|$)/).filter(val => val !== "");
+  let lineArr = str.match(/.*(\n|$)/g).filter(val => val !== "");
   if (lineArr.length === 0) {
     lineArr = [""];
   }

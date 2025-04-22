@@ -1931,7 +1931,9 @@ export function getExtendedErrorMsg(error) {
 
   // If error is thrown from the global environment, return an appropriate error
   // message.
-  let {lexArr, strPosArr, script} = error.environment.getModuleEnv();
+  let {
+    modulePath, lexArr, strPosArr, script
+  } = error.environment.getModuleEnv();
   if (!lexArr) {
     return type + ": " + msg;
   }
@@ -1948,8 +1950,8 @@ export function getExtendedErrorMsg(error) {
       " »" + curLexeme + "« " + script.substring(strPos + curLexeme.length)
         .substring(0, SNIPPET_AFTER_MAX_LEN);
     return (
-      type + ` at Ln ${ln}, Col ${col}: ${msg}. Error occurred at ` +
-      `\`${codeSnippet}\`.`
+      type + ` in ${modulePath ?? "root script"} at Ln ${ln}, Col ${col}: ` +
+      `${msg}. Error occurred at \`\n${codeSnippet}\n\`.`
     );
   }
 }
