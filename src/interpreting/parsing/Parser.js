@@ -247,9 +247,9 @@ export class Parser {
       let subStr = str.substring(0, strPos);
       let [ln, col] = getLnAndCol(subStr);
       syntaxTree.error = new SyntaxError(
-        'Incomplete parsing after `' +
+        'Incomplete parsing after `\n' +
         subStr.substring(strPos - ERROR_ECHO_STR_LEN) +
-        "`. Expected an empty string, but got: `" +
+        "\n`.\nExpected an empty string, but got: `" +
         str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4)) + "`",
         ln, col
       );
@@ -264,8 +264,8 @@ export class Parser {
         let subStr = str.substring(0, strPos);
         let [ln, col] = getLnAndCol(subStr);
         syntaxTree.error = new SyntaxError(
-          'Error after `' + subStr.substring(strPos - ERROR_ECHO_STR_LEN) +
-          '`. Error: ' + error,
+          'Error after `\n' + subStr.substring(strPos - ERROR_ECHO_STR_LEN) +
+          '\n`.\nError: ' + error,
           ln, col
         );
         syntaxTree.lexArr = lexArr;
@@ -274,9 +274,9 @@ export class Parser {
         let subStr = str.substring(0, strPos);
         let [ln, col] = getLnAndCol(subStr);
         syntaxTree.error = new SyntaxError(
-          `Failed symbol '${failedNodeSymbol}' after \`` +
+          `Failed symbol '${failedNodeSymbol}' after \`\n` +
           subStr.substring(strPos - ERROR_ECHO_STR_LEN) +
-          `\`. Expected symbol(s) ${expectedSymbols}, but got \`` +
+          `\n\`.\nExpected symbol(s) ${expectedSymbols}, but got \`` +
           str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4)) +
           "`",
           ln, col
@@ -805,9 +805,9 @@ export class Lexer {
         let prevStr = unfilteredLexArr.slice(0, -1).join("");
         let [ln, col] = getLnAndCol(prevStr);
         throw new LexError(
-          "Lexer error after `" +
+          "Lexer error after `\n" +
           prevStr.slice(-ERROR_ECHO_STR_LEN) +
-          "`. Invalid lexeme at `" +
+          "\n`.\nInvalid lexeme at `" +
           lastMatch.substring(0, Math.floor(ERROR_ECHO_STR_LEN/4)) + "`",
           ln, col
         );

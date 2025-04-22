@@ -224,6 +224,7 @@ export class ScriptInterpreter {
       let scriptSyntaxTree;
       [scriptSyntaxTree, lexArr, strPosArr] = scriptParser.parse(script);
       parsedScript = scriptSyntaxTree.res;
+      if (scriptSyntaxTree.error) throw scriptSyntaxTree.error;
       parsedScripts.set(scriptPath, parsedScript);
     }
     return [parsedScript, lexArr, strPosArr, script];
@@ -1649,7 +1650,7 @@ export function getFullPath(curPath, path, callerNode, callerEnv) {
   }
 
   // Then replace any occurrences of "/./" and "<dirName>/../" with "/".
-  fullPath = fullPath.replaceAll(/(\/\.\/|[^/]+\/\.\.\/)/, "/");
+  fullPath = fullPath.replaceAll(/(\/\.\/|[^/]+\/\.\.\/)/g, "/");
 
   if (fullPath.substring(0, 4) === "/../") throw new LoadError(
     `Ill-formed path: "${path}"`, callerNode, callerEnv
@@ -1905,7 +1906,7 @@ export class CustomException {
 
 
 const SNIPPET_BEFORE_MAX_LEN = 400;
-const SNIPPET_AFTER_MAX_LEN = 50;
+const SNIPPET_AFTER_MAX_LEN = 100;
 
 export function getExtendedErrorMsg(error) {
   // Get the error type.
@@ -1914,7 +1915,7 @@ export function getExtendedErrorMsg(error) {
     type = "RuntimeError";
   }
   else if (error instanceof LoadError) {
-    type = "RuntimeError";
+    type = "LoadError";
   }
   else if (error instanceof OutOfGasError) {
     type = "OutOfGasError";
@@ -1941,14 +1942,15 @@ export function getExtendedErrorMsg(error) {
   // Else construct an error message containing the line and column number, as
   // well as a code snippet around where the error occurred. 
   else {
-    let lexPos = error.node.pos;
-    let curLexeme = lexArr[lexPos];
-    let strPos = strPosArr[lexPos];
+    let pos = error.node.pos;
+    let nextPos = error.node.nextPos;
+    let strPos = strPosArr[pos];
+    let finStrPos = strPosArr[nextPos - 1] + lexArr[nextPos - 1].length;
     let [ln, col] = getLnAndCol(script.substring(0, strPos));
     let codeSnippet =
       script.substring(strPos - SNIPPET_BEFORE_MAX_LEN, strPos) +
-      " »" + curLexeme + "« " + script.substring(strPos + curLexeme.length)
-        .substring(0, SNIPPET_AFTER_MAX_LEN);
+      "⏵⏵⏵" + script.substring(strPos, finStrPos) + "⏴⏴⏴" +
+      script.substring(finStrPos, SNIPPET_AFTER_MAX_LEN);
     return (
       type + ` in ${modulePath ?? "root script"} at Ln ${ln}, Col ${col}: ` +
       `${msg}. Error occurred at \`\n${codeSnippet}\n\`.`

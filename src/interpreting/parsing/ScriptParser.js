@@ -770,10 +770,10 @@ export const scriptGrammar = {
   },
   "jsx-element": {
     rules: [
-      ["/</", "/>/", "jsx-content*", "/</", /\/>/],
+      ["/</", "/>/", "jsx-content!1*", "/</", /\/>/],
       ["/</", "tag-name", "jsx-property*", /\/>/],
       [
-        "/</", "tag-name", "jsx-property*", "/>/", "jsx-content*",
+        "/</", "tag-name", "jsx-property*", "/>/", "jsx-content!1*",
         /<\//, "tag-name", />/
       ],
     ],
@@ -825,7 +825,7 @@ export const scriptGrammar = {
   },
   "tag-name": {
     rules: [
-      [/[A-Z][a-zA-z0-9_$]|div|span|i|b|br|hr|template/],
+      [/[A-Z][a-zA-z0-9_$]*|div|span|i|b|br|hr|template/],
     ],
     process: copyLexemeFromChild,
   },
