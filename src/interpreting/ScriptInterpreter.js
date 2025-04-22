@@ -580,7 +580,7 @@ export class ScriptInterpreter {
     // "caller environment stack" that has its funDecEnv as an ancestor in the
     // stack.
     let newEnv;
-    if (funNode.type = "arrow-function") {
+    if (funNode.type === "arrow-function") {
       let isValid = callerEnv.isCallStackDescendentOf(funDecEnv);
       if (!isValid) throw new RuntimeError(
         "An arrow function was called outside of the call stack " +
