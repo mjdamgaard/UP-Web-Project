@@ -1636,10 +1636,11 @@ export function getFullPath(curPath, path, callerNode, callerEnv) {
   }
 
   // Remove the last file name from the current path, if any.
-  let [moddedCurPath] = curPath.match(/^(\/[^./]+)+\/?/) ?? [""];
-  if (!moddedCurPath) throw new LoadError(
-    `Ill-formed absolute path: "${curPath}"`, callerNode, callerEnv
-  );
+  let moddedCurPath;
+  let [filenamePart] = curPath.match(/\/[^./]+\.[^/]+$/) ?? [""];
+  if (filenamePart) {
+    moddedCurPath = curPath.slice(0, -filenamePart.length);
+  }
 
   // Then concatenate the two paths.
   let fullPath;
