@@ -62,12 +62,6 @@ const appScript = `
   import {createJSXApp} from 'jsx';
   import * as testApp from "/${TEST_APP_ID}/main.js";
 
-  const testComp = {
-    render: function() {
-      return <div>{"Hello, World!"}</div>;
-    },
-  };
-
   createJSXApp(testApp);
 `;
 const renderNumMonad = [0];

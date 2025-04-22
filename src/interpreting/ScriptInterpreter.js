@@ -312,12 +312,17 @@ export class ScriptInterpreter {
       // it, store it in the liveModules buffer, and return it. 
       let liveModule = {};
       Object.entries(devMod).forEach(([key, val]) => {
-        if (
-          val instanceof DevFunction || val?.get instanceof Function ||
-          typeof val === "number" || typeof val === "string" ||
-          typeof val === "boolean" || typeof val === "symbol"
-        ) {
+        // If a dev library exports a function, it is meant only for other dev
+        // libraries, so we filter all those out here. 
+        if (!(val instanceof Function)) {
           liveModule["$" + key] = val;
+        }
+
+        // And if the imported object is an extension of the JSXInstance class,
+        // we also give it the componentPath property equal to submodulePath +
+        // "." + key.
+        if (val instanceof JSXInstance) {
+          val.componentPath = submodulePath + "." + `${key}`;
         }
       });
       liveModules.set(submodulePath, liveModule);
@@ -1823,6 +1828,15 @@ export class JSXElement {
     }
   }
 }
+
+// This class is meant to be extended by dev libraries. The class implements
+// what's similar to React components.
+export class JSXInstance {
+  constructor() {
+    this.componentPath = undefined;
+  }
+}
+
 
 
 

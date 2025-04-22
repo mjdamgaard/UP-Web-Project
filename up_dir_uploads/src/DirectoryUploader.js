@@ -36,7 +36,7 @@ export class DirectoryUploader {
     // side directory, and for each one that doesn't, request deletion of that
     // file server-side.
     let filePaths = await ServerInterface.fetchHomeDirDescendants(
-      credentials, isPrivate
+      dirID, credentials
     );
     let deletionPromises = [];
     filePaths.forEach(relPath => {

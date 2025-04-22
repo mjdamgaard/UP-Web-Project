@@ -1,6 +1,6 @@
 
 import {
-  DevFunction, JSXElement, RuntimeError
+  DevFunction, JSXElement, JSXInstance, ModuleObject, RuntimeError
 } from "../interpreting/ScriptInterpreter.js";
 import {createAppSignal} from "./signals/fundamental_signals.js";
 
@@ -11,7 +11,7 @@ import {createAppSignal} from "./signals/fundamental_signals.js";
 export const createJSXApp = new DevFunction(createAppSignal, function(
   {callerNode, callerEnv, interpreter}, component, props
 ) {
-  const rootInstance = new JSXInstance("root", undefined, component);
+  const rootInstance = new UserDefinedJSXInstance("root", undefined, component);
   let rootParent = document.getElementById("up-app-root");
   let appNode = rootInstance.render(
     props, false, interpreter, callerNode, callerEnv, false
@@ -22,15 +22,26 @@ export const createJSXApp = new DevFunction(createAppSignal, function(
 
 
 
-export class JSXInstance {
+class UserDefinedJSXInstance extends JSXInstance {
 
-  constructor (key = undefined, parentInstance = undefined, componentModule) {
-    this.key = key.toString();
+  constructor (
+    key = undefined, parentInstance = undefined, componentModule,
+    callerNode, callerEnv
+  ) {
+    if (!(componentModule instanceof ModuleObject)) throw new RuntimeError(
+      "JSX component needs to be an imported module namespace object, or a " +
+      "developer component",
+      callerNode, callerEnv
+    );
+    super();
+    this.componentPath = (componentModule instanceof ModuleObject) ?
+      componentModule.modulePath : undefined;
+    this.key = `${key}`;
     this.parentInstance = parentInstance;
     this.componentModule = componentModule;
     this.domNode = undefined;
     this.isDecorated = undefined;
-    this.childInstances = new Map();
+    this.childInstances = new Map(); // : key -> JSXInstance.
     this.props = undefined;
     this.state = undefined;
     this.refs = undefined;
@@ -166,14 +177,16 @@ export class JSXInstance {
     if (componentRef) {
       // componentRef is either a component module object, where .get("render")
       // is supposed to return the render function of the component, or it is
-      // a JS class that extends JSXInstance (with a static isJSXInstanceClass
-      // property returning true).
-      let jsxInstanceClass, componentModule;
-      if (componentRef.isJSXInstanceClass) {
+      // a JS class that extends JSXInstance.
+      let jsxInstanceClass, componentModule, componentPath;
+      if (componentRef instanceof JSXInstance) {
         jsxInstanceClass = componentRef;
-      } else {
-        jsxInstanceClass = JSXInstance;
+        componentPath = jsxInstanceClass.componentPath;
+      }
+      else {
+        jsxInstanceClass = UserDefinedJSXInstance;
         componentModule = componentRef;
+        componentPath = componentModule?.modulePath;
       }
 
       // First we check if the childInstances to see if the child component
@@ -181,8 +194,11 @@ export class JSXInstance {
       // we also make sure to mark the childInstance as being used.
       let key = jsxElement.key;
       let childInstance = this.childInstances.get(key);
-      if (!childInstance) {
-        childInstance = new jsxInstanceClass(key, this, componentModule);
+      if (!childInstance || childInstance) {
+        childInstance = new jsxInstanceClass(
+          key, this, componentModule, jsxElement.node, jsxElement.decEnv
+        );
+        this.childInstances.set(key, childInstance);
       }
       else {
         if (marks.get(key)) throw new RuntimeError(
@@ -190,6 +206,15 @@ export class JSXInstance {
           "instance",
           jsxElement.node, jsxElement.decEnv
         );
+        if (childInstance.componentPath !== componentPath) {
+          throw new RuntimeError(
+            `A component instance was replaced by an instance of a ` +
+            `different component (with shared key = "${key}", ` +
+            `previous component path = ${childInstance.componentPath}, ` +
+            `and new component path = ${componentPath})`,
+            jsxElement.node, jsxElement.decEnv
+          );
+        }
       }
       marks.set(key, true);
 

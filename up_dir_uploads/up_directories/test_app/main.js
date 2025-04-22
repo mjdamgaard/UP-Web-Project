@@ -1,2 +1,4 @@
 
-exit("Hello, World!");
+export function render() {
+  return <div>{"Hello, World!"}</div>;
+}
