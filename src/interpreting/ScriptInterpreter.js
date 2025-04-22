@@ -1,6 +1,9 @@
 
 import {scriptParser} from "./parsing/ScriptParser.js";
-import {LexError, SyntaxError} from "./parsing/Parser.js";
+import {
+  LexError, SyntaxError, getExtendedErrorMsg as getExtendedErrorMsgHelper,
+  getLnAndCol,
+} from "./parsing/Parser.js";
 import {
   exitSignal, moduleObjectSignal
 } from "../dev_lib/signals/fundamental_signals.js";
@@ -82,7 +85,7 @@ export class ScriptInterpreter {
     }
     // Else fetch and parse the script first thing.
     else {
-      [parsedScript, lexArr, strPosArr] = await this.fetchParsedScript(
+      [parsedScript, lexArr, strPosArr, script] = await this.fetchParsedScript(
         scriptPath, parsedScripts, undefined, globalEnv
       );
     }
@@ -105,7 +108,7 @@ export class ScriptInterpreter {
     // found, and make sure to try-catch any exceptions or errors.
     try {
       let [liveScriptModule, scriptEnv] = await this.executeModule(
-        parsedScript, lexArr, strPosArr, scriptPath, globalEnv
+        parsedScript, lexArr, strPosArr, script, scriptPath, globalEnv
       );
       this.executeMainFunction(
         liveScriptModule, mainInputs, parsedScript, scriptEnv
@@ -193,7 +196,7 @@ export class ScriptInterpreter {
     let globalEnv = new Environment(
       undefined, "global",
       undefined, undefined, undefined, undefined,
-      undefined, undefined, undefined,
+      undefined, undefined, undefined, undefined,
       scriptGlobals
     );
     return globalEnv;
@@ -204,11 +207,10 @@ export class ScriptInterpreter {
   async fetchParsedScript(
     scriptPath, parsedScripts, callerNode, callerEnv
   ) {
-    let lexArr, strPosArr;
+    let lexArr, strPosArr, script;
     let parsedScript = parsedScripts.get(scriptPath);
     if (!parsedScript) {
       let {reqUserID} = callerEnv.scriptGlobals;
-      let script;
       try {
        script = await this.fetchScript(scriptPath, reqUserID);
       } catch (err) {
@@ -224,7 +226,7 @@ export class ScriptInterpreter {
       parsedScript = scriptSyntaxTree.res;
       parsedScripts.set(scriptPath, parsedScript);
     }
-    return [parsedScript, lexArr, strPosArr];
+    return [parsedScript, lexArr, strPosArr, script];
   }
 
 
@@ -233,14 +235,16 @@ export class ScriptInterpreter {
 
 
 
-  async executeModule(moduleNode, lexArr, strPosArr, modulePath, globalEnv) {
+  async executeModule(
+    moduleNode, lexArr, strPosArr, script, modulePath, globalEnv
+  ) {
     decrCompGas(moduleNode, globalEnv);
 
     // Create a new environment for the module.
     let moduleEnv = new Environment(
       globalEnv, "module",
       undefined, undefined, undefined, undefined,
-      modulePath, lexArr, strPosArr,
+      modulePath, lexArr, strPosArr, script,
     );
 
     // Run all the import statements in parallel and get their live
@@ -334,14 +338,16 @@ export class ScriptInterpreter {
 
     // Else if the module is a user module, first try to get it from the
     // parsedScripts buffer, then try to fetch it from the database.
-    let [submoduleNode, lexArr, strPosArr] = await this.fetchParsedScript(
+    let [
+      submoduleNode, lexArr, strPosArr, script
+    ] = await this.fetchParsedScript(
       submodulePath, parsedScripts, impStmt, callerModuleEnv
     );
 
     // Then execute the module, inside the global environment, and return the
     // resulting liveModule, after also adding it to liveModules.
     [liveModule] = await this.executeModule(
-      submoduleNode, lexArr, strPosArr, submodulePath, globalEnv
+      submoduleNode, lexArr, strPosArr, script, submodulePath, globalEnv
     );
     liveModules.set(submodulePath, liveModule);
     return [liveModule, submodulePath];
@@ -718,7 +724,7 @@ export class ScriptInterpreter {
         let tryCatchEnv = new Environment(
           environment, "try-catch",
           undefined, undefined, undefined, undefined,
-          undefined, undefined, undefined,
+          undefined, undefined, undefined, undefined,
           undefined,
           stmtNode.catchStmtArr, stmtNode.errIdent, stmtNode.numIdent,
         );
@@ -1368,9 +1374,8 @@ export class Environment {
     parent = undefined, scopeType = "block",
     callerNode = undefined, callerEnv = undefined, thisVal = undefined,
     protectData = undefined,
-    modulePath = undefined,
-    lexArr = undefined,
-    strPosArr = undefined,
+    modulePath = undefined, lexArr = undefined, strPosArr = undefined,
+    script = undefined,
     scriptGlobals = undefined,
     catchStmtArr = undefined, errIdent, numIdent,
   ) {
@@ -1387,6 +1392,7 @@ export class Environment {
       this.modulePath = modulePath;
       this.lexArr = lexArr;
       this.strPosArr = strPosArr;
+      this.script = script;
       this.protectData = {modulePath: modulePath};
       this.exports = [];
       this.liveModule = undefined;
@@ -1577,6 +1583,17 @@ export class Environment {
     else return false;
   }
 
+
+  getModuleEnv() {
+    if (this.scopeType === "module") {
+      return this;
+    } else if (this.parent) {
+      return this.parent.getModuleEnv();
+    } else {
+      return this;
+    }
+  }
+
 }
 
 
@@ -1693,35 +1710,8 @@ export function throwExceptionAsyncOrNot(err, node, environment, isAsync) {
 }
 
 
-// TODO: Correct.
-export function getType(val) {
-  let jsType = typeof val;
-  if (jsType === "object") {
-    if (Array.isArray(val)) {
-      return "array"
-    } else if (val === null) {
-      return "null";
-    } else if (
-      val instanceof DefinedFunction || val instanceof DevFunction
-    ) {
-      return "function";
-    } else if (val instanceof ModuleObject) {
-      return "protected";
-    } else if (val instanceof Immutable) {
-      return getType(val.val);
-    } else {
-      return "object";
-    }
-  }
-  else if (jsType === "number") {
-    if (parseInt(val).toString() === val.toString()) {
-      return "int"
-    } else {
-      return "float";
-    }
-  }
-  else return jsType;
-}
+
+
 
 export function isFunction(val) {
   return (
@@ -1909,6 +1899,58 @@ export class CustomException {
     this.val = val;
     this.node = node;
     this.environment = environment;
+  }
+}
+
+
+
+const SNIPPET_BEFORE_MAX_LEN = 400;
+const SNIPPET_AFTER_MAX_LEN = 50;
+
+export function getExtendedErrorMsg(error) {
+  // Get the error type.
+  let type;
+  if (error instanceof RuntimeError) {
+    type = "RuntimeError";
+  }
+  else if (error instanceof LoadError) {
+    type = "RuntimeError";
+  }
+  else if (error instanceof OutOfGasError) {
+    type = "OutOfGasError";
+  }
+  else if (error instanceof CustomException) {
+    type = "Uncaught (or re-thrown) custom exception";
+  }
+  else {
+    return getExtendedErrorMsgHelper(error);
+  }
+
+  // Get the message defined by error.val.
+  let msg = JSON.stringify(error?.val ?? null);
+
+  // If error is thrown from the global environment, return an appropriate error
+  // message.
+  let {lexArr, strPosArr, script} = error.environment.getModuleEnv();
+  if (!lexArr) {
+    return type + ": " + msg;
+  }
+
+  // Else construct an error message containing the line and column number, as
+  // well as a code snippet around where the error occurred. 
+  else {
+    let lexPos = error.node.pos;
+    let curLexeme = lexArr[lexPos];
+    let strPos = strPosArr[lexPos];
+    let [ln, col] = getLnAndCol(script.substring(0, strPos));
+    let codeSnippet =
+      script.substring(strPos - SNIPPET_BEFORE_MAX_LEN, strPos) +
+      " »" + curLexeme + "« " + script.substring(strPos + curLexeme.length)
+        .substring(0, SNIPPET_AFTER_MAX_LEN);
+    return (
+      type + ` at Ln ${ln}, Col ${col}: ${msg}. Error occurred at ` +
+      `\`${codeSnippet}\`.`
+    );
   }
 }
 

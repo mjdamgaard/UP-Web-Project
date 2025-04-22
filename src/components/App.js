@@ -4,7 +4,7 @@ import {useState, useLayoutEffect, createContext, useCallback} from "react";
 import {ServerInterface} from "../server/ajax_io/ServerInterface.js";
 
 import {
-  ScriptInterpreter
+  ScriptInterpreter, getExtendedErrorMsg
 } from "../interpreting/ScriptInterpreter.js";
 
 /* Tests */
@@ -79,6 +79,9 @@ export const App = (props) => {
           console.log("UP app script exited with output and log:");
           console.log(output);
           console.log(log);
+          if (log?.error) {
+            console.error(getExtendedErrorMsg(log.error));
+          }
         }
       );
     }

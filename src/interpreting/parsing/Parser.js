@@ -745,15 +745,6 @@ export class Parser {
     return this.parseLexArr(lexArr, pos, sym, triedSymbols);
   }
 
-
-
-  log(syntaxTree) {
-    console.log(syntaxTree);
-    let err = syntaxTree.error;
-    if (err) {
-      let combMsg = `Ln ${err.ln}, Col ${err.col}: ${err.msg}`;
-    };
-  }
 }
 
 
@@ -861,6 +852,8 @@ export class Lexer {
 
 
 
+const EOS = Symbol("EOS");
+
 
 export class LexError {
   constructor(msg, ln, col) {
@@ -878,7 +871,19 @@ export class SyntaxError {
   }
 }
 
-const EOS = Symbol("EOS");
+
+
+export function getExtendedErrorMsg(err) {
+  if (err instanceof SyntaxError) {
+    return `SyntaxError at Ln ${err.ln}, Col ${err.col}: "${err.msg}"`;
+  }
+  else if (err instanceof LexError) {
+    return `LexError at Ln ${err.ln}, Col ${err.col}: "${err.msg}"`;
+  }
+  else {
+    throw "getExtendedErrorMsg(): Unrecognized error"
+  }
+}
 
 
 
