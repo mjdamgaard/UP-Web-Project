@@ -490,6 +490,19 @@ export class ScriptInterpreter {
     let {permissions} = callerEnv.scriptGlobals;
     let protectData = callerEnv.getProtectData();
 
+    // If the function is an arrow function, check that it isn't called outside
+    // of the "caller environment stack" that has its funDecEnv as an ancestor
+    // in the stack.
+    if (fun.isArrowFun) {
+      let isValid = callerEnv.isCallStackDescendentOf(fun.decEnv);
+      if (!isValid) throw new RuntimeError(
+        "An arrow function was called outside of the call stack " +
+        "in which it was declared. (Do not return arrow functions created " +
+        "within a function, or use them as methods, or export them.)",
+        callerNode, callerEnv
+      );
+    }
+
     // If the function is a method of a protected object, call protect() on
     // its signal, also passing the object itself as the thisVal argument.
     if (thisVal instanceof ProtectedObject) {
@@ -577,19 +590,9 @@ export class ScriptInterpreter {
     decrCompGas(callerNode, callerEnv);
     let scriptGlobals = callerEnv.scriptGlobals;
 
-    // Initialize a new environment for the execution of the function. If the
-    // function is an arrow function, check that it isn't called outside of the
-    // "caller environment stack" that has its funDecEnv as an ancestor in the
-    // stack.
+    // Initialize a new environment for the execution of the function.
     let newEnv;
     if (funNode.type === "arrow-function") {
-      let isValid = callerEnv.isCallStackDescendentOf(funDecEnv);
-      if (!isValid) throw new RuntimeError(
-        "An arrow function was called outside of the call stack " +
-        "in which it was declared. (Do not return arrow functions created " +
-        "within a function, or use them as methods, or export them.)",
-        callerNode, callerEnv
-      );
       newEnv = new Environment(
         funDecEnv, "arrow-function", callerNode, callerEnv
       );
@@ -1733,12 +1736,21 @@ export class DefinedFunction {
     this.node = node;
     this.decEnv = decEnv;
   }
+
+  get isArrowFun() {
+    return this.node.type === "arrow-function";
+  }
 }
 
 export class DevFunction {
-  constructor(signal = undefined, fun) {
+  constructor(signal = undefined, decEnv = undefined, fun) {
     this.fun = fun;
     if (signal) this.signal = signal;
+    if (decEnv) this.decEnv = decEnv;
+  }
+
+  get(key) {
+    return this.decEnv ? true : false;
   }
 }
 
@@ -1890,10 +1902,11 @@ export class OutOfGasError {
 }
 
 export class RuntimeError {
-  constructor(val, node, environment) {
+  constructor(val, node, environment, callerEnv = undefined) {
     this.val = val;
     this.node = node;
     this.environment = environment;
+    this.callerEnv = callerEnv;
   }
 }
 

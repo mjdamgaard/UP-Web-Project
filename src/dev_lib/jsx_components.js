@@ -2,13 +2,15 @@
 import {
   DevFunction, JSXElement, JSXInstance, ModuleObject, RuntimeError
 } from "../interpreting/ScriptInterpreter.js";
-import {createAppSignal} from "./signals/fundamental_signals.js";
+import {
+  createAppSignal, dispatchSignal
+} from "./signals/fundamental_signals.js";
 
 
 
 // Create a JSX (React-like) app and mount it in the index HTML page, in the
 // element with an id of "up-app-root".
-export const createJSXApp = new DevFunction(createAppSignal, function(
+export const createJSXApp = new DevFunction(createAppSignal, false, function(
   {callerNode, callerEnv, interpreter}, component, props
 ) {
   const rootInstance = new UserDefinedJSXInstance("root", undefined, component);
@@ -34,8 +36,7 @@ class UserDefinedJSXInstance extends JSXInstance {
       callerNode, callerEnv
     );
     super();
-    this.componentPath = (componentModule instanceof ModuleObject) ?
-      componentModule.modulePath : undefined;
+    this.componentPath = componentModule.modulePath;
     this.key = `${key}`;
     this.parentInstance = parentInstance;
     this.componentModule = componentModule;
@@ -43,7 +44,7 @@ class UserDefinedJSXInstance extends JSXInstance {
     this.isDecorated = undefined;
     this.childInstances = new Map(); // : key -> JSXInstance.
     this.props = undefined;
-    this.state = undefined;
+    this.state = componentModule.get("initState");
     this.refs = undefined;
   }
 
@@ -100,7 +101,7 @@ class UserDefinedJSXInstance extends JSXInstance {
     // returning) on the JSXElement to be rendered. This resolve() callback's
     // job is to get us the newDOMNode to insert in the DOM.
     let newDOMNode, resolveHasBeenCalled = false;
-    let resolve = new DevFunction(undefined, (
+    let resolve = new DevFunction(undefined, callerEnv, (
       {interpreter, callerNode, callerEnv}, jsxElement
     ) => {
       resolveHasBeenCalled = true;
@@ -134,6 +135,16 @@ class UserDefinedJSXInstance extends JSXInstance {
       }
     });
 
+    // Also define a dispatch callback used for dispatching calls to the
+    // component's action methods (any method of the component module that is
+    // not called 'render' or 'initState') in order to change the state and
+    // queue a rerender.
+    let dispatch = new DevFunction(undefined, true, (
+      {interpreter, callerNode, callerEnv}, jsxElement
+    ) => {
+
+    });
+
     // Now call the render() function, and check that resolve has been called
     // synchronously by it.
     let inputArr = [resolve, props, this];
@@ -143,7 +154,7 @@ class UserDefinedJSXInstance extends JSXInstance {
     if (!resolveHasBeenCalled) throw new RuntimeError(
       "A JSX component's render() method did not call its resolve() " +
       "callback before returning",
-      fun.node, fun.decEnv
+      fun.node, fun.decEnv, callerEnv
     );
 
     // Then return the instance's new DOM node.
@@ -335,7 +346,7 @@ class UserDefinedJSXInstance extends JSXInstance {
     // TODO: Make.
   });
 
-  setState = new DevFunction(null, function(
+  setState = new DevFunction(dispatchSignal, function(
     {callerNode, callerEnv, interpreter, thisVal},
     state
   ) {
