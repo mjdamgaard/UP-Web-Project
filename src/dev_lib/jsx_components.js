@@ -46,6 +46,10 @@ class UserDefinedJSXInstance extends JSXInstance {
     this.props = undefined;
     this.state = componentModule.get("initState");
     this.refs = undefined;
+    this.lastCallerNode = undefined;
+    this.lastCallerEnv = undefined;
+    this.isDiscarded = undefined;
+    this.rerenderPromise = undefined;
   }
 
   static get isJSXInstanceClass() {
@@ -75,6 +79,8 @@ class UserDefinedJSXInstance extends JSXInstance {
     replaceSelf = true, force = false
   ) {  
     this.isDecorated = isDecorated;
+    this.lastCallerNode = callerNode;
+    this.lastCallerEnv = callerEnv;
 
     // Return early of the props are the same as on the last render, and if not
     // forced to rerender the instance or its child instances.
@@ -120,6 +126,7 @@ class UserDefinedJSXInstance extends JSXInstance {
       // execution of getDOMNode().
       this.childInstances.forEach((_, key, map) => {
         if (!marks.get(key)) {
+          map.get(key).isDiscarded = true;
           map.delete(key);
         }
       });
@@ -404,7 +411,46 @@ class UserDefinedJSXInstance extends JSXInstance {
   receiveDispatch(
     action, inputArr, interpreter, callerNode, callerEnv
   ) {
+    // Throw if the user dispatches a reserved action, such as "render" or
+    // "initState".
+    if (action === "render" || action === "initState") throw new RuntimeError(
+      `Dispatched action cannot be the reserved identifier, ${action}`,
+      callerNode, callerEnv
+    );
 
+    // Get the action method, and throw if it is not defined in the component's
+    // module.
+    let actionMethod = this.componentModule.get(action);
+    if (!actionMethod) throw new RuntimeError(
+      `Dispatched action, ${action}, does not exist for component at ` +
+      `${this.componentPath}`,
+      callerNode, callerEnv
+    );
+
+    // Call the dispatch method to get the new state, and assign this to
+    // this.state immediately.
+    this.state = interpreter.executeFunction(
+      actionMethod, inputArr, callerNode, callerEnv, this.componentModule
+    );
+
+    // Then, unless one is already created, create a Promise (that is executed
+    // on the next tick), to rerender the instance, if it has not been
+    // discarded since then.
+    if (!this.rerenderPromise) {
+      this.rerenderPromise = new Promise(resolve => resolve()).then(() => {
+        delete this.rerenderPromise;
+        if (!this.isDiscarded) {
+          // Make sure to use the same callerNode and callerEnv as on the
+          // previous render, which is done in order to not increase the memory
+          // for every single action (storing the function execution
+          // environment of each, action as well as that of each single render).
+          this.render(
+            this.props, this.isDecorated, interpreter,
+            this.lastCallerNode, this.lastCallerEnv, true, true
+          );
+        }
+      });
+    }
   }
 
 
