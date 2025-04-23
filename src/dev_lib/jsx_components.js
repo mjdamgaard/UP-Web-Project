@@ -139,15 +139,23 @@ class UserDefinedJSXInstance extends JSXInstance {
     // component's action methods (any method of the component module that is
     // not called 'render' or 'initState') in order to change the state and
     // queue a rerender.
-    let dispatch = new DevFunction(undefined, true, (
-      {interpreter, callerNode, callerEnv}, jsxElement
+    let dispatch = new DevFunction(dispatchSignal, callerEnv, (
+      {interpreter, callerNode, callerEnv},
+      action, inputArr, receiverModule, childKey
     ) => {
-
+      if (!(inputArr instanceof Map)) throw new RuntimeError(
+        "Dispatching an action with an invalid input array",
+        callerNode, callerEnv
+      );
+      this.dispatch(
+        action, [...inputArr], receiverModule, childKey,
+        interpreter, callerNode, callerEnv
+      );
     });
 
     // Now call the render() function, and check that resolve has been called
     // synchronously by it.
-    let inputArr = [resolve, props, this];
+    let inputArr = [resolve, props, dispatch, this.state];
     interpreter.executeFunction(
       fun, inputArr, callerNode, callerEnv, this.componentModule
     );
@@ -329,22 +337,78 @@ class UserDefinedJSXInstance extends JSXInstance {
 
 
 
-  // If receiverModule is undefined, dispatch to self. Else if childKey is
-  // undefined, dispatch to parent. Else dispatch to the child with the key =
-  // childKey.
-  dispatch = new DevFunction(null, function(
-    {callerNode, callerEnv, interpreter, thisVal},
-    action, inputArr, receiverModule = undefined, childKey = undefined
+  // dispatch() dispatches an action, either to self, to an ancestor instance,
+  // or to a child instance. If receiverComponentPath is undefined, dispatch
+  // to self. Else if childKey is undefined, dispatch to parent. Else dispatch
+  // to the child with the key = childKey.
+  dispatch(
+    action, inputArr, receiverComponentPath = undefined, childKey = undefined,
+    interpreter, callerNode, callerEnv
   ) {
-    // TODO: Make.
-  });
+    childKey = `${childKey}`;
 
-  initState = new DevFunction(null, function(
-    {callerNode, callerEnv, interpreter, thisVal},
-    state
+    // If receiverComponentPath is undefined, dispatch to self.
+    if (receiverComponentPath === undefined) {
+      this.receiveDispatch(
+        action, inputArr, interpreter, callerNode, callerEnv
+      );
+    }
+
+    // Else if childKey is defined, dispatch to that child, but only if the
+    // receiverComponentPath is a match.
+    else if (childKey !== undefined) {
+      let childInstance = this.childInstances.get(childKey);
+      if (!childInstance) throw new RuntimeError(
+        `Dispatch to a non-existing child instance of key = ${childKey}`,
+        callerNode, callerEnv
+      );
+      if (childInstance.componentPath !== receiverComponentPath) {
+        throw new RuntimeError(
+          `Dispatch to a child instance with a non-matching component path, ` +
+          `"${childInstance.componentPath}" !== "${receiverComponentPath}", `
+          `with child key = ${childKey}`,
+          callerNode, callerEnv
+        );
+      }
+      childInstance.receiveDispatch(
+        action, inputArr, interpreter, callerNode, callerEnv
+      );
+    }
+
+    // Else if both optional arguments are undefined, dispatch to the nearest
+    // ancestor with the given receiverComponentPath, and do nothing if the
+    // instance has no ancestor of that type.
+    else {
+      let parentInstance = this.parentInstance;
+      if (parentInstance) {
+        if (parentInstance.componentPath === receiverComponentPath) {
+          parentInstance.receiveDispatch(
+            action, inputArr, interpreter, callerNode, callerEnv
+          );
+        }
+        else {
+          parentInstance.dispatch(
+            action, inputArr, receiverComponentPath, undefined,
+            interpreter, callerNode, callerEnv
+          );
+        }
+      }
+    }
+  }
+
+
+  // For this UserDefinedJSXInstance class, receiveDispatch() calls the
+  // appropriate method, of the same name as held by the action input, of the
+  // instance's componentModule. It then queues a rerender of the instance,
+  // which happens on the next tick.
+  receiveDispatch(
+    action, inputArr, interpreter, callerNode, callerEnv
   ) {
-    // TODO: Make.
-  });
+
+  }
+
+
+
 
   setState = new DevFunction(dispatchSignal, function(
     {callerNode, callerEnv, interpreter, thisVal},
