@@ -1,4 +1,6 @@
 
-export function render() {
-  return <span>{"Foo"}</span>;
+export function render(resolve) {
+  resolve(
+    <span>{"Foo"}</span>
+  );
 }

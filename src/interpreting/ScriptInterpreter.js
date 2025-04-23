@@ -469,7 +469,7 @@ export class ScriptInterpreter {
       [mainFun] = liveScriptModule.get("default") ?? [];
     }
     if (mainFun !== undefined) {
-      this.executeFunction(
+      return this.executeFunction(
         mainFun, inputArr,
         mainFun instanceof DefinedFunction ? mainFun.node : scriptNode,
         scriptEnv
@@ -477,6 +477,7 @@ export class ScriptInterpreter {
     }
     // If no main function was found, simply do nothing (expecting the script
     // to eventually exit itself via a callback function (or timing out)).
+    return;
   }
 
 

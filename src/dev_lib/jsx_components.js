@@ -88,48 +88,65 @@ class UserDefinedJSXInstance extends JSXInstance {
     if (props) this.props = props;
     if (this.refs === undefined) this.refs = props.get("refs") ?? new Map();
 
-    // Call the componentModule's render() function in order to get the props-
-    // dependent JSX element.
+    // Get the componentModule's render() function.
     let fun = this.componentModule.get("render");
     if (!fun) throw new RuntimeError(
       "Component module is missing a render function " +
       '(absolute instance key = "' + this.getFullKey() + '")',
       callerNode, callerEnv
     );
-    let inputArr = [props, this];
-    let jsxElement = interpreter.executeFunction(
-      fun, inputArr, callerNode, callerEnv, this.componentModule
-    );
+    
+    // And construct the resolve() callback that render() should call (before
+    // returning) on the JSXElement to be rendered. This resolve() callback's
+    // job is to get us the newDOMNode to insert in the DOM.
+    let newDOMNode, resolveHasBeenCalled = false;
+    let resolve = new DevFunction(undefined, (
+      {interpreter, callerNode, callerEnv}, jsxElement
+    ) => {
+      resolveHasBeenCalled = true;
 
-    // Initialize a marks Map to keep track of which existing child instances
-    // was used or created in the render, such that instances that are no
-    // longer used can be removed afterwards.
-    let marks = new Map(); 
-
-    // Call getDOMNode() to generate the instance's new DOM node.
-    let newDOMNode = this.getDOMNode(
-      jsxElement, marks, interpreter, callerNode, callerEnv
-    );
-
-    // Then remove any existing child instance that wasn't marked during the
-    // execution of getDOMNode().
-    this.childInstances.forEach((_, key, map) => {
-      if (!marks.get(key)) {
-        map.delete(key);
+      // Initialize a marks Map to keep track of which existing child instances
+      // was used or created in the render, such that instances that are no
+      // longer used can be removed afterwards.
+      let marks = new Map(); 
+  
+      // Call getDOMNode() to generate the instance's new DOM node.
+      newDOMNode = this.getDOMNode(
+        jsxElement, marks, interpreter, callerNode, callerEnv
+      );
+  
+      // Then remove any existing child instance that wasn't marked during the
+      // execution of getDOMNode().
+      this.childInstances.forEach((_, key, map) => {
+        if (!marks.get(key)) {
+          map.delete(key);
+        }
+      });
+  
+      // If replaceSelf is true, replace the previous DOM node with the new one
+      // in the DOM tree. Also call updateDecoratingAncestors() to update the
+      // this.domNode property of any potential decorating ancestor (i.e. one
+      // that shares the same DOM node as this one).
+      if (replaceSelf) {
+        this.domNode.replaceWith(newDOMNode);
+        this.domNode = newDOMNode;
+        this.updateDecoratingAncestors(newDOMNode);
       }
     });
 
-    // If replaceSelf is true, replace the previous DOM node with the new one
-    // in the DOM tree. Also call updateDecoratingAncestors() to update the
-    // this.domNode property of any potential decorating ancestor (i.e. one
-    // that shares the same DOM node as this one).
-    if (replaceSelf) {
-      this.domNode.replaceWith(newDOMNode);
-      this.domNode = newDOMNode;
-      this.updateDecoratingAncestors(newDOMNode);
-    }
+    // Now call the render() function, and check that resolve has been called
+    // synchronously by it.
+    let inputArr = [resolve, props, this];
+    interpreter.executeFunction(
+      fun, inputArr, callerNode, callerEnv, this.componentModule
+    );
+    if (!resolveHasBeenCalled) throw new RuntimeError(
+      "A JSX component's render() method did not call its resolve() " +
+      "callback before returning",
+      fun.node, fun.decEnv
+    );
 
-    // And finally return the new DOM node.
+    // Then return the instance's new DOM node.
     return newDOMNode;
   }
 
@@ -194,7 +211,7 @@ class UserDefinedJSXInstance extends JSXInstance {
       // we also make sure to mark the childInstance as being used.
       let key = jsxElement.key;
       let childInstance = this.childInstances.get(key);
-      if (!childInstance || childInstance) {
+      if (!childInstance || childInstance.componentPath !== componentPath) {
         childInstance = new jsxInstanceClass(
           key, this, componentModule, jsxElement.node, jsxElement.decEnv
         );
@@ -206,15 +223,6 @@ class UserDefinedJSXInstance extends JSXInstance {
           "instance",
           jsxElement.node, jsxElement.decEnv
         );
-        if (childInstance.componentPath !== componentPath) {
-          throw new RuntimeError(
-            `A component instance was replaced by an instance of a ` +
-            `different component (with shared key = "${key}", ` +
-            `previous component path = ${childInstance.componentPath}, ` +
-            `and new component path = ${componentPath})`,
-            jsxElement.node, jsxElement.decEnv
-          );
-        }
       }
       marks.set(key, true);
 
