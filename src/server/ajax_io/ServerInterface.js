@@ -72,6 +72,14 @@ export class ServerInterface {
     return this.fetchTextFileContent(filePath, credentials)
   }
 
+  static fetchAdminID(filePath) {
+    let [ , dirID] = /^\/?([^/]+)\//.exec(filePath) ?? [];
+    return this.#post({
+      action: "read", route: "/" + dirID + "?get=adminID",
+    });
+  }
+
+
 
   static fetchTextFileContent(filePath, credentials) {
     return this.#post({
@@ -94,9 +102,9 @@ export class ServerInterface {
   }
 
 
-  static createHomeDir(credentials, isPrivate) {
+  static createHomeDir(credentials) {
     return this.#post({
-      credentials: credentials, action: "mkdir", isPrivate: isPrivate
+      credentials: credentials, action: "mkdir"
     });
   }
 

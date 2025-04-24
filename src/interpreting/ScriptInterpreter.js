@@ -207,12 +207,12 @@ export class ScriptInterpreter {
   async fetchParsedScript(
     scriptPath, parsedScripts, callerNode, callerEnv
   ) {
-    let lexArr, strPosArr, script;
+    let lexArr, strPosArr, script, adminID;
     let parsedScript = parsedScripts.get(scriptPath);
     if (!parsedScript) {
       let {reqUserID} = callerEnv.scriptGlobals;
       try {
-       script = await this.fetchScript(scriptPath, reqUserID);
+       [script, adminID] = await this.fetchScript(scriptPath, reqUserID);
       } catch (err) {
         throw new LoadError(err, callerNode, callerEnv);
       }
@@ -227,7 +227,7 @@ export class ScriptInterpreter {
       if (scriptSyntaxTree.error) throw scriptSyntaxTree.error;
       parsedScripts.set(scriptPath, parsedScript);
     }
-    return [parsedScript, lexArr, strPosArr, script];
+    return [parsedScript, lexArr, strPosArr, script, adminID];
   }
 
 
@@ -262,9 +262,10 @@ export class ScriptInterpreter {
     // import statement is paired with the environment from the already
     // executed module, and where the changes are now made to moduleEnv.
     moduleNode.importStmtArr.forEach((impStmt, ind) => {
-      let [liveSubmodule, submodulePath] = liveSubmoduleAndPathArr[ind];
+      let [liveSubmodule, submodulePath, adminID] =
+        liveSubmoduleAndPathArr[ind];
       this.finalizeImportStatement(
-        impStmt, liveSubmodule, submodulePath, moduleEnv
+        impStmt, liveSubmodule, submodulePath, adminID, moduleEnv
       );
     });
 
@@ -340,7 +341,7 @@ export class ScriptInterpreter {
     // Else if the module is a user module, first try to get it from the
     // parsedScripts buffer, then try to fetch it from the database.
     let [
-      submoduleNode, lexArr, strPosArr, script
+      submoduleNode, lexArr, strPosArr, script, adminID
     ] = await this.fetchParsedScript(
       submodulePath, parsedScripts, impStmt, callerModuleEnv
     );
@@ -351,14 +352,14 @@ export class ScriptInterpreter {
       submoduleNode, lexArr, strPosArr, script, submodulePath, globalEnv
     );
     liveModules.set(submodulePath, liveModule);
-    return [liveModule, submodulePath];
+    return [liveModule, submodulePath, adminID];
   }
 
 
 
 
   finalizeImportStatement(
-    impStmt, liveSubmodule, submodulePath, curModuleEnv
+    impStmt, liveSubmodule, submodulePath, adminID, curModuleEnv
   ) {
     decrCompGas(impStmt, curModuleEnv);
 
@@ -367,7 +368,7 @@ export class ScriptInterpreter {
       let impType = imp.importType
       if (impType === "namespace-import") {
         let moduleObject = new ModuleObject(
-          submodulePath, curModuleEnv, liveSubmodule
+          submodulePath, adminID, curModuleEnv, liveSubmodule,
         );
         curModuleEnv.declare(imp.ident, moduleObject, true, imp);
       }
@@ -1763,14 +1764,16 @@ export class ProtectedObject {
 }
 
 export class ModuleObject extends ProtectedObject {
-  constructor(modulePath, decEnv, members) {
+  constructor(modulePath, adminID, decEnv, members) {
     super(moduleObjectSignal, decEnv);
     this.modulePath = modulePath;
+    this.adminID = adminID;
     this.members = members;
   }
 
   get(key) {
-    return this.members.get(key);
+    if (key === "adminID") return this.adminID;
+    else return this.members.get(key);
   }
 }
 

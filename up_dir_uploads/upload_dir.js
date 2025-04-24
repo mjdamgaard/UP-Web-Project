@@ -8,7 +8,7 @@ import {DirectoryUploader} from './src/DirectoryUploader.js';
 
 // Get the directory path from the arguments, and combine it with __dirname if
 // it is a relative path.
-let [ , curPath, dirPath, isPrivate = false] = process.argv ?? [];
+let [ , curPath, dirPath] = process.argv ?? [];
 if (!dirPath) throw (
   "Specify dirPath in '$ node <program path> <dirPath> [isPrivate]'"
 );
@@ -25,6 +25,6 @@ read({prompt: "Username: "}).then(name => {
     credentials += pw;
 
     // Create/Update the directory on the server side.
-    DirectoryUploader.uploadDir(dirPath, credentials, isPrivate);
+    DirectoryUploader.uploadDir(dirPath, credentials);
   });
 });

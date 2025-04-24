@@ -16,7 +16,7 @@ export class DirectoryUploader {
   // as is, as well as file extensions of abstract files (often implemented via
   // one or several relational DB tables), for which the file content, if any,
   // will have to conform to a specific format.
-  static async uploadDir(dirPath, credentials, isPrivate) {
+  static async uploadDir(dirPath, credentials) {
     // Read the dirID.
     let idFilePath = path.normalize(dirPath + "/.id");
     let dirID;
@@ -27,7 +27,7 @@ export class DirectoryUploader {
     // If no dirID was gotten, request the server to create a new directory and
     // get the new dirID.
     if (!dirID) {
-      dirID = await ServerInterface.createHomeDir(credentials, isPrivate);
+      dirID = await ServerInterface.createHomeDir(credentials);
       fs.writeFileSync(idFilePath, `${dirID}`);
     }
 

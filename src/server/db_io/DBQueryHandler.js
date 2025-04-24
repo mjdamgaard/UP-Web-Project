@@ -65,6 +65,20 @@ export class DBQueryHandler {
   
         return filePaths;
     }
+    else if (
+      /^\/[1-9][0-9]*\?get=adminID$/.test(route)
+      ) {
+        let dirID = route.substring(1, route.indexOf("?"));
+
+        let paramValArr = [dirID];
+        let sql = "CALL readHomeDirAdminID (?)";
+  
+        let conn = new MainDBConnection();
+        let [adminID] = (await conn.query(sql, paramValArr))[0] ?? [];
+        conn.end();
+  
+        return adminID;
+    }
     else if (false) {
       // TODO: Implement other file types.
     }
@@ -104,10 +118,10 @@ export class DBQueryHandler {
   }
 
 
-  static async mkdir(reqUserID, isPrivate) {
+  static async mkdir(reqUserID) {
     let adminID = reqUserID;
-    let paramValArr = [adminID, isPrivate];
-    let sql = "CALL createHomeDir (?, ?)";
+    let paramValArr = [adminID];
+    let sql = "CALL createHomeDir (?)";
 
     let conn = new MainDBConnection();
     let [dirID] = (await conn.query(sql, paramValArr))[0] ?? [];

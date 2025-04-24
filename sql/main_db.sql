@@ -19,9 +19,7 @@ CREATE TABLE HomeDirectories (
 
     dir_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    admin_id BIGINT UNSIGNED,
-
-    is_private BOOL NOT NULL DEFAULT 0
+    admin_id BIGINT UNSIGNED
 
 ) ROW_FORMAT = COMPRESSED;
 

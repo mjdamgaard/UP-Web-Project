@@ -1,5 +1,5 @@
 
-DROP PROCEDURE readHomeDirMetaData;
+DROP PROCEDURE readHomeDirAdminID;
 DROP PROCEDURE readHomeDirDescendants;
 DROP PROCEDURE createHomeDir;
 DROP PROCEDURE editHomeDir;
@@ -15,7 +15,7 @@ DROP PROCEDURE deleteTextFile;
 
 
 DELIMITER //
-CREATE PROCEDURE readHomeDirMetaData (
+CREATE PROCEDURE readHomeDirAdminID (
     IN dirID BIGINT UNSIGNED
 )
 proc: BEGIN
@@ -23,7 +23,7 @@ proc: BEGIN
         SELECT NULL;
         LEAVE proc;
     END IF;
-    SELECT admin_id AS adminID, is_private AS isPrivate
+    SELECT admin_id AS adminID
     FROM HomeDirectories FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID;
 END proc //
@@ -53,16 +53,15 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE createHomeDir (
-    IN adminID BIGINT UNSIGNED,
-    IN isPrivate BOOL
+    IN adminID BIGINT UNSIGNED
 )
 proc: BEGIN
-    IF (adminID IS NULL OR isPrivate IS NULL) THEN
+    IF (adminID IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
     END IF;
-    INSERT INTO HomeDirectories (admin_id, is_private)
-    VALUES (adminID, isPrivate);
+    INSERT INTO HomeDirectories (admin_id)
+    VALUES (adminID);
     SELECT LAST_INSERT_ID() AS dirID;
 END proc //
 DELIMITER ;
@@ -71,16 +70,15 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE editHomeDir (
     IN dirID BIGINT UNSIGNED,
-    IN adminID BIGINT UNSIGNED,
-    IN isPrivate BOOL
+    IN adminID BIGINT UNSIGNED
 )
 proc: BEGIN
-    IF (dirID IS NULL OR adminID IS NULL OR isPrivate IS NULL) THEN
+    IF (dirID IS NULL OR adminID IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
     END IF;
     UPDATE HomeDirectories
-    SET admin_id = adminID, is_private = isPrivate
+    SET admin_id = adminID
     WHERE dir_id = dirID;
     SELECT ROW_COUNT() AS wasEdited;
 END proc //
