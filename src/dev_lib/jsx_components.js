@@ -1,9 +1,10 @@
 
 import {
-  DevFunction, JSXElement, JSXInstance, ModuleObject, RuntimeError
+  DevFunction, JSXElement, JSXInstance, ModuleObject, ProtectedObject,
+  RuntimeError, turnImmutable,
 } from "../interpreting/ScriptInterpreter.js";
 import {
-  createAppSignal, dispatchSignal
+  createAppSignal, dispatchSignal, setStateSignal,
 } from "./signals/fundamental_signals.js";
 
 
@@ -51,27 +52,6 @@ class UserDefinedJSXInstance extends JSXInstance {
     this.isDiscarded = undefined;
     this.rerenderPromise = undefined;
   }
-
-  static get isJSXInstanceClass() {
-    return true;
-  }
-
-  get(key) {
-    if (key === "dispatch") {
-      return this.dispatch;
-    }
-    else if (key === "state") {
-      return this.state;
-    }
-    else if (key === "initState") {
-      return this.initState;
-    }
-    else if (key === "setState") {
-      return this.setState;
-    }
-  }
-
-
 
 
   render(
@@ -146,19 +126,7 @@ class UserDefinedJSXInstance extends JSXInstance {
     // component's action methods (any method of the component module that is
     // not called 'render' or 'initState') in order to change the state and
     // queue a rerender.
-    let dispatch = new DevFunction(dispatchSignal, callerEnv, (
-      {interpreter, callerNode, callerEnv},
-      action, inputArr, receiverModule, childKey
-    ) => {
-      if (!(inputArr instanceof Map)) throw new RuntimeError(
-        "Dispatching an action with an invalid input array",
-        callerNode, callerEnv
-      );
-      this.dispatch(
-        action, [...inputArr], receiverModule, childKey,
-        interpreter, callerNode, callerEnv
-      );
-    });
+    let dispatch = new DispatchFunction(this, callerEnv);
 
     // Now call the render() function, and check that resolve has been called
     // synchronously by it.
@@ -333,14 +301,11 @@ class UserDefinedJSXInstance extends JSXInstance {
   }
 
 
-
-
   getFullKey() {
     return this.parentInstance ?
       this.parentInstance.getFullKey() + "." + this.key :
       this.key;
   }
-
 
 
 
@@ -406,8 +371,8 @@ class UserDefinedJSXInstance extends JSXInstance {
 
   // For this UserDefinedJSXInstance class, receiveDispatch() calls the
   // appropriate method, of the same name as held by the action input, of the
-  // instance's componentModule. It then queues a rerender of the instance,
-  // which happens on the next tick.
+  // instance's componentModule. (A rerender of the component is only queued
+  // if the called action method makes a call to instance.setState() inside it.)
   receiveDispatch(
     action, inputArr, interpreter, callerNode, callerEnv
   ) {
@@ -430,12 +395,17 @@ class UserDefinedJSXInstance extends JSXInstance {
     // Call the dispatch method to get the new state, and assign this to
     // this.state immediately.
     this.state = interpreter.executeFunction(
-      actionMethod, inputArr, callerNode, callerEnv, this.componentModule
+      actionMethod, [new JSXInstanceObject(this, callerEnv), ...inputArr],
+      callerNode, callerEnv, this.componentModule
     );
 
-    // Then, unless one is already created, create a Promise (that is executed
-    // on the next tick), to rerender the instance, if it has not been
-    // discarded since then.
+  }
+
+
+  queueRerender(interpreter) {
+    // Unless one is already currently queued, queue a Promise (that is
+    // executed on the next tick) to rerender the instance, but only if it has
+    // not been discarded since then.
     if (!this.rerenderPromise) {
       this.rerenderPromise = new Promise(resolve => resolve()).then(() => {
         delete this.rerenderPromise;
@@ -453,18 +423,97 @@ class UserDefinedJSXInstance extends JSXInstance {
     }
   }
 
+}
 
 
 
-  setState = new DevFunction(dispatchSignal, function(
-    {callerNode, callerEnv, interpreter, thisVal},
+
+class JSXInstanceObject extends ProtectedObject {
+  constructor(jsxInstance, decEnv) {
+    super(null, decEnv);
+    this.instance = jsxInstance;
+    // Note that we don't need to pass decEnv to DispatchFunction() here,
+    // since this class extends ProtectedObject, which means that all method
+    // calls can already only happen within the environmental call stack of
+    // decEnv.
+    this.dispatch = new DispatchFunction(jsxInstance, false);
+  }
+
+  get(key) {
+    if (key === "dispatch") {
+      return this.dispatch;
+    }
+    else if (key === "state") {
+      return this.instance.state;
+    }
+    else if (key === "setState") {
+      return this.setState;
+    }
+    else if (key === "rerender") {
+      return this.rerender;
+    }
+    // TODO: Add more instance methods, such as a method to get bounding box
+    // data, or a method to get a PromiseObject that resolves a short time
+    // after the bounding box data, and similar data, is ready.
+  }
+
+  // setState() assigns to jsxInstance.state immediately, which means that the
+  // state changes will be visible to all subsequently dispatched actions to
+  // this instance. However, since the render() method can only the state via
+  // its arguments (i.e. the 'state' argument), the state changes will not be
+  // visible in the continued execution of a render() after it has dispatched
+  // an action, but only be visible on a subsequent render. setState() also
+  // always queues a rerender, even if the new state is equivalent to the old
+  // one.
+  setState = new DevFunction(setStateSignal, (
+    {interpreter},
     state
-  ) {
-    // TODO: Make.
+  ) => {
+    this.jsxInstance.state = turnImmutable(state);
+    this.jsxInstance.queueRerender(interpreter);
   });
+
+  // Rerender is equivalent of calling setState() on the current state; it just
+  // forces a rerender.
+  rerender = new DevFunction(null, (
+    {interpreter},
+  ) => {
+    this.jsxInstance.queueRerender(interpreter);
+  });
+
+
 
 }
 
+
+class DispatchFunction extends DevFunction {
+  constructor(jsxInstance, decEnv) {
+    super(dispatchSignal, decEnv, (
+      {interpreter, callerNode, callerEnv},
+      action, inputArr, receiverComponentRef, childKey
+    ) => {
+      if (!(inputArr instanceof Map)) throw new RuntimeError(
+        "Dispatching an action with an invalid input array",
+        callerNode, callerEnv
+      );
+      if (!(
+        receiverComponentRef instanceof JSXInstance ||
+        receiverComponentRef instanceof ModuleObject
+      )) {
+        throw new RuntimeError(
+          "Dispatching an action with an invalid receiver component",
+          callerNode, callerEnv
+        );
+      }
+      let componentPath = receiverComponentRef.componentPath ??
+        receiverComponentRef.modulePath;
+      jsxInstance.dispatch(
+        action, [...inputArr], componentPath, childKey,
+        interpreter, callerNode, callerEnv
+      );
+    });
+  }
+}
 
 
 

@@ -503,9 +503,10 @@ export class ScriptInterpreter {
       );
     }
 
-    // If the function is a method of a protected object, call protect() on
-    // its signal, also passing the object itself as the thisVal argument.
-    if (thisVal instanceof ProtectedObject) {
+    // If the function is a method of a protected object, and it holds a truthy
+    // signal, call protect() on said signal, also passing the object itself as
+    // the thisVal argument.
+    if (thisVal instanceof ProtectedObject && thisVal.signal) {
       protectData = this.protect(
         thisVal.signal, protectData, permissions, thisVal, isThisKeyword,
         undefined, callerEnv, callerNode
@@ -1616,7 +1617,7 @@ function getSafeObj(obj) {
 }
 
 
-function turnImmutable(val) {
+export function turnImmutable(val) {
   if (val && val.set instanceof Function) {
     return new Immutable(val);
   } else {
@@ -1755,16 +1756,16 @@ export class DevFunction {
 }
 
 export class ProtectedObject {
-  constructor(signal) {
+  constructor(signal, decEnv) {
     this.signal = signal;
+    this.decEnv = decEnv;
   }
 }
 
 export class ModuleObject extends ProtectedObject {
   constructor(modulePath, decEnv, members) {
-    super(moduleObjectSignal);
+    super(moduleObjectSignal, decEnv);
     this.modulePath = modulePath;
-    this.decEnv = decEnv;
     this.members = members;
   }
 
@@ -1851,6 +1852,11 @@ export class JSXInstance {
   constructor() {
     this.componentPath = undefined;
   }
+}
+
+// TODO: Implement a Promise wrapper:
+export class PromiseObject {
+  constructor() {/* TODO: Implement. */}
 }
 
 
