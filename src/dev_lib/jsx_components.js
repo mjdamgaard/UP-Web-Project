@@ -517,19 +517,33 @@ class DispatchFunction extends DevFunction {
 
 
 
-// TODO: Change to a deep comparison, comparing leafs of primitive, Symbol, and
-// Function types.
-export function compareProps(props1, props2) {
-  let ret = true;
-  props1.forEach((val, key) => {
-    if (key !== "refs" && val !== props2[key]) {
-      ret = false;
+
+export function compareProps(props1, props2, compareRefs = false) {
+  // Get the keys, and return false immediately if the two props Maps have
+  // different keys.
+  let keys = props1.keys;
+  let unionedKeys = [...new Set(keys.concat(props2.keys))];
+  if (unionedKeys.length > keys.length) {
+    return false;
+  }
+
+  // Loop through each pair of values, val1 and val2, and if both are Map
+  // instances, call compareProps recursively, and if not, check that they are
+  // equal to each other. Also, when compareProps() is called non-recursively,
+  // with a falsy compareProps, refrain from comparing the 'refs' prop.
+  let ret;
+  props1.forEach((val1, key) => {
+    if (!compareRefs && key === "refs") {
+      return;
     }
-  });
-  if (!ret) return ret;
-  props2.forEach((val, key) => {
-    if (key !== "refs" && val !== props1[key]) {
-      ret = false;
+    let val2 = props2[key];
+    if (val1 !== val2) {
+      if (val1 instanceof Map && val2 instanceof Map) {
+        ret &&= compareProps(val1, val2, true);
+      }
+      else {
+        ret &&= val1 === val2;
+      }
     }
   });
   return ret;
