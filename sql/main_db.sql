@@ -5,7 +5,13 @@ DROP TABLE Files;
 DROP TABLE FileIDs;
 
 DROP TABLE TextFileContents;
+DROP TABLE AutoKeyTextStructs;
+DROP TABLE BinKeyStructs;
+DROP TABLE CharKeyStructs;
+DROP TABLE FloatKeyStructs;
+DROP TABLE ScoredBinKeyStructs;
 
+DROP TABLE FulltextIndexEntries;
 
 DROP TABLE StorageGasPayments;
 
@@ -55,7 +61,7 @@ CREATE TABLE FileIDs (
 
 
 
-/* File contents (some "files" are actually relational data tables) */
+/* Simple text files */
 
 
 CREATE TABLE TextFileContents (
@@ -69,7 +75,28 @@ CREATE TABLE TextFileContents (
 
 
 
-CREATE TABLE BinKeyDataTables (
+
+/* More abstract "struct" files */
+
+
+CREATE TABLE AutoKeyTextStructs (
+
+    file_id BIGINT UNSIGNED NOT NULL,
+
+    text_id BIGINT UNSIGNED NOT NULL,
+
+    text_data TEXT CHARACTER SET utf8mb4,
+
+    PRIMARY KEY (
+        file_id,
+        text_id
+    )
+
+) ROW_FORMAT = COMPRESSED;
+
+
+
+CREATE TABLE BinKeyStructs (
 
     file_id BIGINT UNSIGNED NOT NULL,
 
@@ -85,7 +112,7 @@ CREATE TABLE BinKeyDataTables (
 ) ROW_FORMAT = COMPRESSED;
 
 
-CREATE TABLE CharKeyDataTables (
+CREATE TABLE CharKeyStructs (
 
     file_id BIGINT UNSIGNED NOT NULL,
 
@@ -101,7 +128,7 @@ CREATE TABLE CharKeyDataTables (
 ) ROW_FORMAT = COMPRESSED;
 
 
-CREATE TABLE FloatKeyDataTables (
+CREATE TABLE FloatKeyStructs (
 
     file_id BIGINT UNSIGNED NOT NULL,
 
@@ -118,7 +145,7 @@ CREATE TABLE FloatKeyDataTables (
 
 
 
-CREATE TABLE BinKeyScoredDataTables (
+CREATE TABLE ScoredBinKeyStructs (
 
     file_id BIGINT UNSIGNED NOT NULL,
 

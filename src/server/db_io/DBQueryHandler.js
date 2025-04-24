@@ -41,7 +41,7 @@ export class DBQueryHandler {
       let [dirID, filePath] = parseDirIDAndFilePath(route);
 
       let paramValArr = [dirID, filePath];
-      let sql = "CALL readTextFileContent (?, ?)";
+      let sql = "CALL readTextFile (?, ?)";
 
       let conn = new MainDBConnection();
       let [contentText] = (await conn.query(sql, paramValArr))[0] ?? [];
