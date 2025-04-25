@@ -108,6 +108,16 @@ export class ServerInterface {
     });
   }
 
+
+
+  static putStructFile(credentials, filePath) {
+    // TODO: Implement
+  }
+
+
+  static touchStructFile(credentials, filePath) {
+    // TODO: Implement
+  }
 }
 
 

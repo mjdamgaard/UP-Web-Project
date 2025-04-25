@@ -1,8 +1,12 @@
 
+import * as querystring from 'querystring';
+
 import {MainDBInterface} from "./MainDBInterface.js";
 import {MainDBConnection} from "./DBConnection.js";
 import {ClientError} from '../err/errors.js';
 
+
+const DEFAULT_LIST_MAX_NUM = 4000;
 
 
 export class DBQueryHandler {
@@ -78,6 +82,70 @@ export class DBQueryHandler {
         conn.end();
   
         return adminID;
+    }
+    else if (
+      /^\/[1-9][0-9]*\/[a-zA-Z0-9_\-]+(\/[a-zA-Z0-9_\-]+)*\.ats\?/.test(route)
+    ) {
+      // TODO: Implement.
+    }
+    else if (
+      /^\/[1-9][0-9]*\/[a-zA-Z0-9_\-]+(\/[a-zA-Z0-9_\-]+)*\.bbs\?/.test(route)
+    ) {
+      let dirID = route.substring(1, route.indexOf("/", 1));
+      let indOfQMark = route.indexOf("?");
+      let filePath = route.substring(dirID.length + 2, indOfQMark);
+      let queryString = route.substring(indOfQMark + 1);
+      let queryObj = querystring.parse(queryString);
+
+      if (queryObj.get === "entry") {
+        let {elemKey = null} = queryObj;
+
+        let paramValArr = [dirID, filePath, elemKey];
+        let sql = "CALL readBinScoredBinKeyStructEntry (?, ?, ?)";
+  
+        let conn = new MainDBConnection();
+        let [elemScore, elemPayload] =
+          (await conn.query(sql, paramValArr))[0] ?? [];
+        conn.end();
+  
+        return [elemScore, elemPayload];
+      }
+      else if (queryObj.get === "list") {
+        let {
+          lo = null, hi = null, offset = 0, maxNum = DEFAULT_LIST_MAX_NUM,
+          isAsc = 0
+        } = queryObj;
+
+        let paramValArr = [dirID, filePath, lo, hi, offset, maxNum, isAsc];
+        let sql = "CALL readBinScoredBinKeyStructList (?, ?, ?, ?, ?, ?, ?)";
+  
+        let conn = new MainDBConnection();
+        let keyScorePayloadList = await conn.query(sql, paramValArr);
+        conn.end();
+  
+        return keyScorePayloadList;
+      }
+      else if (queryObj.get === "keyList") {
+        let {
+          lo = null, hi = null, offset = 0, maxNum = DEFAULT_LIST_MAX_NUM,
+          isAsc = 0
+        } = queryObj;
+
+        let paramValArr = [dirID, filePath, lo, hi, offset, maxNum, isAsc];
+        let sql =
+          "CALL readBinScoredBinKeyStructKeyOrderedList (?, ?, ?, ?, ?, ?, ?)";
+  
+        let conn = new MainDBConnection();
+        let keyScorePayloadList = await conn.query(sql, paramValArr);
+        conn.end();
+  
+        return keyScorePayloadList;
+      }
+      else {
+        throw new ClientError(
+          `Unrecognized "get" value for .bbs files: ${queryObj.get}`
+        );
+      }
     }
     else if (false) {
       // TODO: Implement other file types.

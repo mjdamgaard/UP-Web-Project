@@ -12,11 +12,21 @@ DROP PROCEDURE putTextFile;
 DROP PROCEDURE deleteTextFile;
 
 DROP PROCEDURE putAutoKeyTextStruct;
+DROP PROCEDURE touchAutoKeyTextStruct;
 DROP PROCEDURE deleteAutoKeyTextStruct;
 DROP PROCEDURE createAutoKeyText;
 DROP PROCEDURE deleteAutoKeyText;
 DROP PROCEDURE readAutoKeyText;
 
+
+DROP PROCEDURE putBinScoredBinKeyStruct;
+DROP PROCEDURE touchBinScoredBinKeyStruct;
+DROP PROCEDURE deleteBinScoredBinKeyStruct;
+DROP PROCEDURE insertBinScoredBinKeyStructEntry;
+DROP PROCEDURE deleteBinScoredBinKeyStructEntry;
+DROP PROCEDURE readBinScoredBinKeyStructEntry;
+DROP PROCEDURE readBinScoredBinKeyStructList;
+DROP PROCEDURE readBinScoredBinKeyStructKeyOrderedList;
 
 
 
@@ -253,7 +263,7 @@ DELIMITER ;
 /* Structs */
 
 
-/* Auto-key text structs */
+/* Auto-key text structs (.ats) */
 
 DELIMITER //
 CREATE PROCEDURE putAutoKeyTextStruct (
@@ -270,7 +280,6 @@ proc: BEGIN
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
-
     IF (fileID IS NOT NULL) THEN
         DO GET_LOCK(CONCAT("AutoKeyTextStruct.", fileID), 10);
 
@@ -279,6 +288,35 @@ proc: BEGIN
         SELECT 0 AS wasCreated;
 
         DO RELEASE_LOCK(CONCAT("AutoKeyTextStruct.", fileID));
+    ELSE
+        INSERT INTO FileIDs () VALUES ();
+        SET fileID = LAST_INSERT_ID();
+        DELETE FROM FileIDs WHERE file_id < fileID;
+        INSERT INTO Files (dir_id, file_path, file_id)
+        VALUES (dirID, filePath, fileID);
+        SELECT 1 AS wasCreated;
+    END IF;
+END proc //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE touchAutoKeyTextStruct (
+    IN dirID BIGINT UNSIGNED,
+    IN filePath VARCHAR(700)
+)
+proc: BEGIN
+    DECLARE fileID BIGINT UNSIGNED;
+    IF (dirID IS NULL OR filePath IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    IF (fileID IS NOT NULL) THEN
+        SELECT 0 AS wasCreated;
     ELSE
         INSERT INTO FileIDs () VALUES ();
         SET fileID = LAST_INSERT_ID();
@@ -317,7 +355,6 @@ proc: BEGIN
     DO RELEASE_LOCK(CONCAT("AutoKeyTextStruct.", fileID));
 END proc //
 DELIMITER ;
-
 
 
 
@@ -417,12 +454,10 @@ DELIMITER ;
 
 
 
-/* Scored binary-key structs */
-
--- TODO: Implement:
+/* Binary-scored binary-key structs (.bbs) */
 
 DELIMITER //
-CREATE PROCEDURE putScoredBinKeyStruct (
+CREATE PROCEDURE putBinScoredBinKeyStruct (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700)
 )
@@ -436,15 +471,14 @@ proc: BEGIN
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
-
     IF (fileID IS NOT NULL) THEN
-        DO GET_LOCK(CONCAT("AutoKeyTextStruct.", fileID), 10);
+        DO GET_LOCK(CONCAT("BinScoredBinKeyStruct.", fileID), 10);
 
-        DELETE FROM AutoKeyTextStructs
+        DELETE FROM BinScoredBinKeyStructs
         WHERE file_id = fileID;
         SELECT 0 AS wasCreated;
 
-        DO RELEASE_LOCK(CONCAT("AutoKeyTextStruct.", fileID));
+        DO RELEASE_LOCK(CONCAT("BinScoredBinKeyStruct.", fileID));
     ELSE
         INSERT INTO FileIDs () VALUES ();
         SET fileID = LAST_INSERT_ID();
@@ -458,7 +492,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE deleteScoredBinKeyStruct (
+CREATE PROCEDURE touchBinScoredBinKeyStruct (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700)
 )
@@ -472,15 +506,44 @@ proc: BEGIN
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
-    DO GET_LOCK(CONCAT("AutoKeyTextStruct.", fileID), 10);
+    IF (fileID IS NOT NULL) THEN
+        SELECT 0 AS wasCreated;
+    ELSE
+        INSERT INTO FileIDs () VALUES ();
+        SET fileID = LAST_INSERT_ID();
+        DELETE FROM FileIDs WHERE file_id < fileID;
+        INSERT INTO Files (dir_id, file_path, file_id)
+        VALUES (dirID, filePath, fileID);
+        SELECT 1 AS wasCreated;
+    END IF;
+END proc //
+DELIMITER ;
 
-    DELETE FROM AutoKeyTextStructs
+
+DELIMITER //
+CREATE PROCEDURE deleteBinScoredBinKeyStruct (
+    IN dirID BIGINT UNSIGNED,
+    IN filePath VARCHAR(700)
+)
+proc: BEGIN
+    DECLARE fileID BIGINT UNSIGNED;
+    IF (dirID IS NULL OR filePath IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    DO GET_LOCK(CONCAT("BinScoredBinKeyStruct.", fileID), 10);
+
+    DELETE FROM BinScoredBinKeyStructs
     WHERE file_id = fileID;
     DELETE FROM Files
     WHERE dir_id = dirID AND file_path = filePath;
     SELECT ROW_COUNT() AS wasDeleted;
 
-    DO RELEASE_LOCK(CONCAT("AutoKeyTextStruct.", fileID));
+    DO RELEASE_LOCK(CONCAT("BinScoredBinKeyStruct.", fileID));
 END proc //
 DELIMITER ;
 
@@ -488,14 +551,22 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE insertScoredBinKeyStructEntry (
+CREATE PROCEDURE insertBinScoredBinKeyStructEntry (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
-    IN textData TEXT
+    IN elemKeyBase64 VARCHAR(340),
+    IN elemScoreBase64 VARCHAR(340),
+    IN elemPayloadBase64 VARCHAR(340)
 )
 proc: BEGIN
     DECLARE fileID, newTextID BIGINT UNSIGNED;
-    IF (dirID IS NULL OR filePath IS NULL OR textData IS NULL) THEN
+    DECLARE elemKey VARBINARY(255) DEFAULT FROM_BASE64(elemKeyBase64);
+    DECLARE elemScore VARBINARY(255) DEFAULT FROM_BASE64(elemScoreBase64);
+    DECLARE elemPayload VARBINARY(255) DEFAULT FROM_BASE64(elemPayloadBase64);
+    IF (
+        dirID IS NULL OR filePath IS NULL OR
+        elemKey IS NULL OR elemScore IS NULL OR elemPayload IS NULL
+    ) THEN
         SELECT NULL;
         LEAVE proc;
     END IF;
@@ -508,30 +579,31 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    DO GET_LOCK(CONCAT("AutoKeyTextStruct.", fileID), 10);
+    INSERT INTO BinScoredBinKeyStructs (
+        file_id, elem_key, elem_score, elem_payload
+    )
+    VALUES (
+        fileID, elemKey, elemScore, elemPayload
+    )
+    ON DUPLICATE KEY UPDATE
+        elem_score = elemScore,
+        elem_payload = elemPayload;
 
-    SELECT IFNULL(MAX(text_id), 0) + 1 INTO newTextID
-    FROM AutoKeyTextStructs FORCE INDEX (PRIMARY)
-    WHERE file_id = fileID;
-
-    INSERT INTO AutoKeyTextStructs (file_id, text_id, text_data)
-    VALUES (fileID, newTextID, textData);
-
-    DO RELEASE_LOCK(CONCAT("AutoKeyTextStruct.", fileID));
-    SELECT newTextID;
+    SELECT ROW_COUNT() AS rowCount;
 END proc //
 DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE deleteScoredBinKeyStructEntry (
+CREATE PROCEDURE deleteBinScoredBinKeyStructEntry (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
-    IN textID BIGINT UNSIGNED
+    IN elemKeyBase64 VARCHAR(340)
 )
 proc: BEGIN
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
-    IF (dirID IS NULL OR filePath IS NULL OR textID IS NULL) THEN
+    DECLARE elemKey VARBINARY(255) DEFAULT FROM_BASE64(elemKeyBase64);
+    IF (dirID IS NULL OR filePath IS NULL OR elemKey IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
     END IF;
@@ -544,27 +616,25 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    DO GET_LOCK(CONCAT("AutoKeyTextStruct.", fileID), 10);
+    DELETE FROM BinScoredBinKeyStructs
+    WHERE file_id = fileID AND elem_key = elemKey;
 
-    DELETE FROM AutoKeyTextStructs
-    WHERE file_id = fileID AND text_id = textID;
     SELECT ROW_COUNT() AS wasDeleted;
-
-    DO RELEASE_LOCK(CONCAT("AutoKeyTextStruct.", fileID));
 END proc //
 DELIMITER ;
 
 
 
 DELIMITER //
-CREATE PROCEDURE readScoredBinKeyStructEntry (
+CREATE PROCEDURE readBinScoredBinKeyStructEntry (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
-    IN textID BIGINT UNSIGNED
+    IN elemKeyBase64 VARCHAR(340)
 )
 proc: BEGIN
-    DECLARE fileID BIGINT UNSIGNED;
-    IF (dirID IS NULL OR filePath IS NULL OR textID IS NULL) THEN
+    DECLARE fileID, maxTextID BIGINT UNSIGNED;
+    DECLARE elemKey VARBINARY(255) DEFAULT FROM_BASE64(elemKeyBase64);
+    IF (dirID IS NULL OR filePath IS NULL OR elemKey IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
     END IF;
@@ -572,22 +642,38 @@ proc: BEGIN
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
-    SELECT text_data AS textData
-    FROM AutoKeyTextStructs FORCE INDEX (PRIMARY)
-    WHERE file_id = fileID AND text_id = textID;
+    IF (fileID IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+
+    SELECT
+        TO_BASE64(elem_score) AS elemScore,
+        TO_BASE64(elem_payload) AS elemPayload
+    FROM BinScoredBinKeyStructs FORCE INDEX (PRIMARY)
+    WHERE file_id = fileID AND elem_key = elemKey;
 END proc //
 DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE readScoredBinKeyStructList (
+CREATE PROCEDURE readBinScoredBinKeyStructList (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
-    IN textID BIGINT UNSIGNED
+    IN loBase64 VARCHAR(340),
+    IN hiBase64 VARCHAR(340),
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN isAscending BOOL
 )
 proc: BEGIN
     DECLARE fileID BIGINT UNSIGNED;
-    IF (dirID IS NULL OR filePath IS NULL OR textID IS NULL) THEN
+    DECLARE lo VARBINARY(255) DEFAULT FROM_BASE64(loBase64);
+    DECLARE hi VARBINARY(255) DEFAULT FROM_BASE64(hiBase64);
+    IF (
+        dirID IS NULL OR filePath IS NULL OR
+        maxNum IS NULL OR numOffset IS NULL OR isAscending IS NULL
+    ) THEN
         SELECT NULL;
         LEAVE proc;
     END IF;
@@ -595,8 +681,54 @@ proc: BEGIN
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
-    SELECT text_data AS textData
-    FROM AutoKeyTextStructs FORCE INDEX (PRIMARY)
-    WHERE file_id = fileID AND text_id = textID;
+    SELECT TO_BASE64(elem_key), TO_BASE64(elem_score), TO_BASE64(elem_payload)
+    FROM BinScoredBinKeyStructs FORCE INDEX (sec_idx)
+    WHERE
+        file_id = fileID AND
+        (lo IS NULL OR elem_score >= lo) AND
+        (hi IS NULL OR elem_score <= hi)
+    ORDER BY
+        CASE WHEN isAscending THEN elem_score END ASC,
+        CASE WHEN NOT isAscending THEN elem_score END DESC
+    LIMIT numOffset, maxNum;
+END proc //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE readBinScoredBinKeyStructKeyOrderedList (
+    IN dirID BIGINT UNSIGNED,
+    IN filePath VARCHAR(700),
+    IN loBase64 VARCHAR(340),
+    IN hiBase64 VARCHAR(340),
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN isAscending BOOL
+)
+proc: BEGIN
+    DECLARE fileID BIGINT UNSIGNED;
+    DECLARE lo VARBINARY(255) DEFAULT FROM_BASE64(loBase64);
+    DECLARE hi VARBINARY(255) DEFAULT FROM_BASE64(hiBase64);
+    IF (
+        dirID IS NULL OR filePath IS NULL OR
+        maxNum IS NULL OR numOffset IS NULL OR isAscending IS NULL
+    ) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    SELECT TO_BASE64(elem_key), TO_BASE64(elem_score), TO_BASE64(elem_payload)
+    FROM BinScoredBinKeyStructs FORCE INDEX (PRIMARY)
+    WHERE
+        file_id = fileID AND
+        (lo IS NULL OR elem_key >= lo) AND
+        (hi IS NULL OR elem_key <= hi)
+    ORDER BY
+        CASE WHEN isAscending THEN elem_key END ASC,
+        CASE WHEN NOT isAscending THEN elem_key END DESC
+    LIMIT numOffset, maxNum;
 END proc //
 DELIMITER ;

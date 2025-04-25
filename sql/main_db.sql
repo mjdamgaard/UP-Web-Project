@@ -6,10 +6,10 @@ DROP TABLE FileIDs;
 
 DROP TABLE TextFileContents;
 DROP TABLE AutoKeyTextStructs;
-DROP TABLE BinKeyStructs;
-DROP TABLE CharKeyStructs;
-DROP TABLE FloatKeyStructs;
-DROP TABLE ScoredBinKeyStructs;
+DROP TABLE UnscoredBinKeyStructs;
+DROP TABLE UnscoredCharKeyStructs;
+DROP TABLE UnscoredFloatKeyStructs;
+DROP TABLE BinScoredBinKeyStructs;
 
 DROP TABLE FulltextIndexEntries;
 
@@ -96,7 +96,7 @@ CREATE TABLE AutoKeyTextStructs (
 
 
 
-CREATE TABLE BinKeyStructs (
+CREATE TABLE UnscoredBinKeyStructs (
 
     file_id BIGINT UNSIGNED NOT NULL,
 
@@ -112,7 +112,7 @@ CREATE TABLE BinKeyStructs (
 ) ROW_FORMAT = COMPRESSED;
 
 
-CREATE TABLE CharKeyStructs (
+CREATE TABLE UnscoredCharKeyStructs (
 
     file_id BIGINT UNSIGNED NOT NULL,
 
@@ -128,7 +128,7 @@ CREATE TABLE CharKeyStructs (
 ) ROW_FORMAT = COMPRESSED;
 
 
-CREATE TABLE FloatKeyStructs (
+CREATE TABLE UnscoredFloatKeyStructs (
 
     file_id BIGINT UNSIGNED NOT NULL,
 
@@ -145,7 +145,7 @@ CREATE TABLE FloatKeyStructs (
 
 
 
-CREATE TABLE ScoredBinKeyStructs (
+CREATE TABLE BinScoredBinKeyStructs (
 
     file_id BIGINT UNSIGNED NOT NULL,
 

@@ -16,7 +16,7 @@ export class DirectoryUploader {
   // as is, as well as file extensions of abstract files (often implemented via
   // one or several relational DB tables), for which the file content, if any,
   // will have to conform to a specific format.
-  static async uploadDir(dirPath, credentials) {
+  static async uploadDir(dirPath, credentials, deleteStructData) {
     // Read the dirID.
     let idFilePath = path.normalize(dirPath + "/.id");
     let dirID;
@@ -54,12 +54,16 @@ export class DirectoryUploader {
     // directory itself or any of its nested directories and uploads them,
     // pushing a promise for the response of each one to uploadPromises.
     let uploadPromises = [];
-    this.#uploadDirHelper(dirPath, credentials, dirID, uploadPromises);
+    this.#uploadDirHelper(
+      dirPath, credentials, dirID, deleteStructData, uploadPromises
+    );
     await Promise.all(uploadPromises);
   }
 
 
-  static async #uploadDirHelper(dirPath, credentials, relPath, uploadPromises) {
+  static async #uploadDirHelper(
+    dirPath, credentials, relPath, deleteStructData, uploadPromises
+  ) {
     // Get each file in the directory at path, and loop through and handle each
     // one according to its extension (or lack thereof).
     let fileNames;
@@ -76,7 +80,8 @@ export class DirectoryUploader {
       // helper method recursively.
       if (name.indexOf(".") <= 0) {
         this.#uploadDirHelper(
-          childAbsPath, credentials, childRelPath, uploadPromises
+          childAbsPath, credentials, childRelPath, deleteStructData,
+          uploadPromises
         );
       }
 
@@ -88,6 +93,18 @@ export class DirectoryUploader {
             credentials, "/" + childRelPath, contentText
           )
         );
+      }
+      else if (/\.[a-z]+$/.test(name)) {
+        if (deleteStructData) {
+          uploadPromises.push(
+            ServerInterface.putStructFile(credentials, "/" + childRelPath)
+          );
+        }
+        else {
+          uploadPromises.push(
+            ServerInterface.touchStructFile(credentials, "/" + childRelPath)
+          );
+        }
       }
 
       // TODO: Implement some abstract DB table files as well.
