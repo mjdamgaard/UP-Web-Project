@@ -64,8 +64,9 @@ async function requestHandler(req, res) {
   let reqUserID = 9;
 
 
-/(\/[^/?.]+)*(\/[^/?.]+\.[^/?]+)?(\/[^/?]+)*/;
-  // TODO: Relocate this function and import it instead:
+
+  // TODO: Relocate this parseRoute() function and import it instead:
+
   const dirPathRegEx = /^(\/[^/?.]+)+/;
   const filenameRegEx = /^\/([^/?.]+\.[^/?]+)/;
   const queryStringRegEx = /^\?([^=&]+=[^=&]*(&[^=&]+=[^=&])*)/;
@@ -99,48 +100,59 @@ async function requestHandler(req, res) {
       `Invalid route: ${route}. Filename has to be preceded by a directory path`
     );
 
-    // Extract the (home) dirID from dirPath, if any.
-    let dirID;
+    // Extract the homeDirID from dirPath, if any, and also construct the
+    // filePath (after the initial homeDirID).
+    let homeDirID, filePath;
     if (dirPath) {
-      dirID = dirPath.substring(1, dirPath.indexOf("/", 1));
+      homeDirID = dirPath.substring(1, dirPath.indexOf("/", 1));
+      filePath = dirPath.substring(homeDirID + 2);
+      if (filename) {
+        filePath +=  "/" + filename;
+      }
+    }
+
+    // Extract the file extension, if any.
+    let fileExt;
+    if (filename) {
+      fileExt = filename.substring(filename.indexOf(".") + 1);
     }
 
     // Parse whether the given file or directory, or query path, is locked for
-    // the admin only...
-    if (dirPath) {
-      dirID = dirPath.substring(1, dirPath.indexOf("/", 1));
+    // the admin only.
+    let isLocked = false;
+    if (filePath) {
+      isLocked = filePath.indexOf("/_");
+    }
+    if (queryPath) {
+      isLocked ||= filePath.indexOf("/_");
     }
 
-
-
-
-    // Get the file extension, and if the filename includes no ".", treat it as
-    // a directory and add it to path, with a trailing "/" added as well.
-    let fileExt;
-    if (filename) {
-      let indOfDot = filename.indexOf(".");
-      if (indOfDot === 0) throw new ClientError(
-        "Hidden files (with a leading '.') are not allowed in routes"
-      );
-      else if (indOfDot === -1) {
-        path += filename + "/";
-        filename = undefined;
-      }
-      else {
-        fileExt = filename.substring(indOfDot + 1);
-      }
-    }
+    return [
+      homeDirID, filePath, fileExt, queryPath, isLocked, queryString
+    ];
   }
+
 
   // Parse the route to get the filetype, among other parameters and qualities.
   let [
-    dirID, filePath, fileExt, queryPath, isLocked, isHidden, queryString
+    homeDirID, filePath, fileExt, queryPath, isLocked, queryString
   ] = parseRoute(route);
+
+
+  // If the route is locked for the admin only, query for the adminID,
+  // straightaway, and verify that reqUserID equals adminID.
+  // TODO: Do this.
+  let adminID = isLocked ? 9 : undefined;
+
 
   // Branch according to the filetype.
   let wasReady, result;
-  switch (route) {
-    case "read": {
+  switch (fileExt) {
+    case "js": 
+    case "txt": 
+    case "json": 
+    case "html": 
+    case "md": {
       let [
         route, clientCacheTime, minServerCacheTime
       ] = await InputGetter.getParamsPromise(

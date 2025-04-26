@@ -877,27 +877,28 @@ export class ScriptInterpreter {
                 return [newVal, newVal];
               }
             );
-          case "&&=":
-            return this.assignToVariableOrMember(
-              expNode.exp1, environment, prevVal => {
-                let newVal = prevVal && val;
-                return [newVal, newVal];
-              }
-            );
-          case "||=":
-            return this.assignToVariableOrMember(
-              expNode.exp1, environment, prevVal => {
-                let newVal = prevVal || val;
-                return [newVal, newVal];
-              }
-            );
-          case "??=":
-            return this.assignToVariableOrMember(
-              expNode.exp1, environment, prevVal => {
-                let newVal = prevVal ?? val;
-                return [newVal, newVal];
-              }
-            );
+          // TODO: Reimplement these to be short-circuiting.
+          // case "&&=":
+          //   return this.assignToVariableOrMember(
+          //     expNode.exp1, environment, prevVal => {
+          //       let newVal = prevVal && val;
+          //       return [newVal, newVal];
+          //     }
+          //   );
+          // case "||=":
+          //   return this.assignToVariableOrMember(
+          //     expNode.exp1, environment, prevVal => {
+          //       let newVal = prevVal || val;
+          //       return [newVal, newVal];
+          //     }
+          //   );
+          // case "??=":
+          //   return this.assignToVariableOrMember(
+          //     expNode.exp1, environment, prevVal => {
+          //       let newVal = prevVal ?? val;
+          //       return [newVal, newVal];
+          //     }
+          //   );
           default: throw (
             "ScriptInterpreter.evaluateExpression(): Unrecognized " +
             `operator: "${op}"`
