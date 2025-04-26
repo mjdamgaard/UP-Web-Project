@@ -9,8 +9,8 @@ import * as directoriesMod from "../dev_lib/server/directories.js";
 import * as textFilesMod from "../dev_lib/server/text_files.js";
 import * as autoKeyTextStructFilesMod from
   "../dev_lib/server/auto_key_text_structs.js";
-  import * as binaryScoredBinaryKeyStructFilesMod from
-    "../dev_lib/server/binary_scored_binary_key_structs.js";
+import * as binaryScoredBinaryKeyStructFilesMod from
+  "../dev_lib/server/binary_scored_binary_key_structs.js";
 
 const staticDevLibs = new Map();
 staticDevLibs.set("dir", directoriesMod);
@@ -69,6 +69,7 @@ async function requestHandler(req, res) {
 
   const dirPathRegEx = /^(\/[^/?.]+)+/;
   const filenameRegEx = /^\/([^/?.]+\.[^/?]+)/;
+  const queryPathRegEx = /^\/?([^/?.]+(\/[^/?.]+)*)/;
   const queryStringRegEx = /^\?([^=&]+=[^=&]*(&[^=&]+=[^=&])*)/;
 
   function parseRoute(route) {
@@ -83,7 +84,7 @@ async function requestHandler(req, res) {
     routeRemainder = routeRemainder.substring(match.length);
 
     // Get the abstract "query path" following the filename, if any.
-    [match, queryPath] = dirPathRegEx.exec(routeRemainder) ?? [""];
+    [match, queryPath] = queryPathRegEx.exec(routeRemainder) ?? [""];
     routeRemainder = routeRemainder.substring(match.length);
 
     // Get the final query string, if any.
@@ -124,18 +125,24 @@ async function requestHandler(req, res) {
       isLocked = filePath.indexOf("/_");
     }
     if (queryPath) {
-      isLocked ||= filePath.indexOf("/_");
+      isLocked ||= queryPath.indexOf("/_");
     }
 
+    // Split queryPath into an array, if it exists, and split queryString into
+    // a key--value entries array, if it exists.
+    let queryPathArr = !queryPath ? undefined : queryPath.split("/");
+    let queryStringArr = !queryString ? undefined :
+      queryString.split("&").map(val => val.split("="));
+
     return [
-      homeDirID, filePath, fileExt, queryPath, isLocked, queryString
+      homeDirID, filePath, fileExt, queryPathArr, isLocked, queryStringArr
     ];
   }
 
 
   // Parse the route to get the filetype, among other parameters and qualities.
   let [
-    homeDirID, filePath, fileExt, queryPath, isLocked, queryString
+    homeDirID, filePath, fileExt, queryPathArr, isLocked, queryStringArr
   ] = parseRoute(route);
 
 
@@ -146,80 +153,85 @@ async function requestHandler(req, res) {
 
 
   // Branch according to the filetype.
-  let wasReady, result;
+  let filetypeModule;
   switch (fileExt) {
-    case "js": 
-    case "txt": 
-    case "json": 
-    case "html": 
-    case "md": {
-      let [
-        route, clientCacheTime, minServerCacheTime
-      ] = await InputGetter.getParamsPromise(
-        // 'cct': client cache time, 'mct': max (server) cache time.
-        body, ["route", "cct", "mct"], [undefined, null, null]
-      );
-      result = await DBQueryHandler.read(
-        route, reqUserID, clientCacheTime, minServerCacheTime
-      );
-      // result: [wasReady, data].
+    case undefined:
+      filetypeModule = directoriesMod;
       break;
-    }
-    case "put": {
-      let [
-        route, content, isBase64
-      ] = await InputGetter.getParamsPromise(
-        body, ["route", "content", "isBase64"], [undefined, null, false]
-      );
-      result = await DBQueryHandler.put(
-        reqUserID, route, content, isBase64
-      );
-      // result: wasCreated.
+    case "js":
+    case "txt":
+    case "json":
+    case "html":
+    case "md":
+      filetypeModule = textFilesMod;
       break;
-    }
-    case "touch": {
-      let [
-        route
-      ] = await InputGetter.getParamsPromise(
-        body, ["route"], [undefined]
-      );
-      result = await DBQueryHandler.touch(
-        reqUserID, route
-      );
-      // result: wasCreated.
+    case "ats":
+      filetypeModule = textFilesMod;
       break;
-    }
-    case "mkdir": {
-      let [
-        isPrivate
-      ] = await InputGetter.getParamsPromise(
-        body, ["isPrivate"], [false]
-      );
-      result = await DBQueryHandler.mkdir(
-        reqUserID, isPrivate
-      );
-      // result: dirID.
+    case "bbs":
+      filetypeModule = textFilesMod;
       break;
-    }
-    case "delete": {
-      let [
-        route
-      ] = await InputGetter.getParamsPromise(
-        body, ["route"], [undefined]
-      );
-      result = await DBQueryHandler.delete(
-        reqUserID, route
-      );
-      // result: wasCreated.
-      break;
-    }
-    case "call":
-      // TODO: Implement.
+    // case "put": {
+    //   let [
+    //     route, content, isBase64
+    //   ] = await InputGetter.getParamsPromise(
+    //     body, ["route", "content", "isBase64"], [undefined, null, false]
+    //   );
+    //   result = await DBQueryHandler.put(
+    //     reqUserID, route, content, isBase64
+    //   );
+    //   // result: wasCreated.
+    //   break;
+    // }
+    // case "touch": {
+    //   let [
+    //     route
+    //   ] = await InputGetter.getParamsPromise(
+    //     body, ["route"], [undefined]
+    //   );
+    //   result = await DBQueryHandler.touch(
+    //     reqUserID, route
+    //   );
+    //   // result: wasCreated.
+    //   break;
+    // }
+    // case "mkdir": {
+    //   let [
+    //     isPrivate
+    //   ] = await InputGetter.getParamsPromise(
+    //     body, ["isPrivate"], [false]
+    //   );
+    //   result = await DBQueryHandler.mkdir(
+    //     reqUserID, isPrivate
+    //   );
+    //   // result: dirID.
+    //   break;
+    // }
+    // case "delete": {
+    //   let [
+    //     route
+    //   ] = await InputGetter.getParamsPromise(
+    //     body, ["route"], [undefined]
+    //   );
+    //   result = await DBQueryHandler.delete(
+    //     reqUserID, route
+    //   );
+    //   // result: wasCreated.
+    //   break;
+    // }
+    // case "call":
+    //   // TODO: Implement.
     default:
-        throw new ClientError(`Unrecognized action: "${action}"`);
+      throw new ClientError(`Unrecognized action: "${action}"`);
   }
+
+
+  let [wasReady, result] = await filetypeModule.query(
+    homeDirID, filePath, fileExt, queryPathArr, isLocked, queryStringArr,
+    reqUserID, adminID, cct, mct
+  );
 
   // Return the results.
   res.writeHead(200, {'Content-Type': 'text/json'});
-  res.end(JSON.stringify(result ?? null));
+  res.end(JSON.stringify([wasReady ?? null, result ?? null]));
 }
