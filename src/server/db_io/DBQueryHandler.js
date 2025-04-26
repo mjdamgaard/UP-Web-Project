@@ -162,6 +162,8 @@ export class DBQueryHandler {
   static async put(
     reqUserID, route, content, isBase64
   ) {
+    // TODO: Fetch the adminID, and verify that user is the admin.
+
     // If route has the type of a (UTF-8-encoded) text file, create or
     // overwrite that file with the content.
     if (
@@ -201,6 +203,7 @@ export class DBQueryHandler {
 
 
   static async delete(reqUserID, route) {
+    // TODO: Fetch the adminID, and verify that user is the admin.
 
     // TODO: Remove data from cache when a file, or directory, is deleted.
 

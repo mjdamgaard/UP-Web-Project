@@ -111,12 +111,16 @@ export class ServerInterface {
 
 
   static putStructFile(credentials, filePath) {
-    // TODO: Implement
+    return this.#post({
+      credentials: credentials, action: "put", route: filePath
+    });
   }
 
 
   static touchStructFile(credentials, filePath) {
-    // TODO: Implement
+    return this.#post({
+      credentials: credentials, action: "touch", route: filePath
+    });
   }
 }
 
