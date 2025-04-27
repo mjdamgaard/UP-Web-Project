@@ -68,9 +68,8 @@ async function requestHandler(req, res) {
   // TODO: Relocate this parseRoute() function and import it instead:
 
   const dirPathRegEx = /^(\/[^/?.]+)+/;
-  const filenameRegEx = /^\/([^/?.]+\.[^/?]+)/;
-  const queryPathRegEx = /^\/?([^/?.]+(\/[^/?.]+)*)/;
-  const queryStringRegEx = /^\?([^=&]+=[^=&]*(&[^=&]+=[^=&])*)/;
+  const filenameRegEx = /^\/([^/?.]*\.[^/?]*)/;
+  const queryStringRegEx = /^\?([^=&]+(=[^=&]*)?(&[^=&]+(=[^=&])*)?)/;
 
   function parseRoute(route) {
     let dirPath, filename, queryPath, queryString;
@@ -81,10 +80,6 @@ async function requestHandler(req, res) {
 
     // Get the filename, if any.
     [match, filename] = filenameRegEx.exec(routeRemainder) ?? [""];
-    routeRemainder = routeRemainder.substring(match.length);
-
-    // Get the abstract "query path" following the filename, if any.
-    [match, queryPath] = queryPathRegEx.exec(routeRemainder) ?? [""];
     routeRemainder = routeRemainder.substring(match.length);
 
     // Get the final query string, if any.
@@ -118,31 +113,35 @@ async function requestHandler(req, res) {
       fileExt = filename.substring(filename.indexOf(".") + 1);
     }
 
+    // If it is defined, split the queryString into an array of key--value
+    // entries array for key--value pairs, and string values in case of boolean
+    // query parameters (with no "=").
+    let queryStringArr;
+    if (queryString) {
+      queryStringArr = queryString.split("&").map(val => (
+        (val.indexOf("=") === -1) ? val : val.split("=")
+      ));
+    }
+
     // Parse whether the given file or directory, or query path, is locked for
     // the admin only.
     let isLocked = false;
     if (filePath) {
-      isLocked = filePath.indexOf("/_");
+      isLocked = filePath.indexOf("/_") >= 0;
     }
-    if (queryPath) {
-      isLocked ||= queryPath.indexOf("/_");
+    if (queryString) {
+      isLocked ||= queryString.indexOf("&_") >= 0;
     }
-
-    // Split queryPath into an array, if it exists, and split queryString into
-    // a key--value entries array, if it exists.
-    let queryPathArr = !queryPath ? undefined : queryPath.split("/");
-    let queryStringArr = !queryString ? undefined :
-      queryString.split("&").map(val => val.split("="));
 
     return [
-      homeDirID, filePath, fileExt, queryPathArr, isLocked, queryStringArr
+      homeDirID, filePath, fileExt, isLocked, queryStringArr
     ];
   }
 
 
   // Parse the route to get the filetype, among other parameters and qualities.
   let [
-    homeDirID, filePath, fileExt, queryPathArr, isLocked, queryStringArr
+    homeDirID, filePath, fileExt, isLocked, queryStringArr
   ] = parseRoute(route);
 
 
@@ -227,7 +226,7 @@ async function requestHandler(req, res) {
 
 
   let [wasReady, result] = await filetypeModule.query(
-    homeDirID, filePath, fileExt, queryPathArr, isLocked, queryStringArr,
+    homeDirID, filePath, fileExt, isLocked, queryStringArr,
     reqUserID, adminID, cct, mct
   );
 

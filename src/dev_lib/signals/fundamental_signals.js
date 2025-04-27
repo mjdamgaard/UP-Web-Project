@@ -17,3 +17,8 @@ export const dispatchSignal = Symbol("dispatch");
 
 // Signal emitted by the setState() method.
 export const setStateSignal = Symbol("set_state");
+
+
+
+// Signal emitted when creating a new home directory.
+export const mkdirSignal = Symbol("mkdir");

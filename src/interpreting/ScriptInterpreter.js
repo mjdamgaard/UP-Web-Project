@@ -1746,14 +1746,23 @@ export class DefinedFunction {
 }
 
 export class DevFunction {
-  constructor(signal = undefined, decEnv = undefined, fun) {
+  constructor(signal, decEnv, fun) {
     this.fun = fun;
     if (signal) this.signal = signal;
     if (decEnv) this.decEnv = decEnv;
   }
 
-  get(key) {
+  get isArrowFun() {
     return this.decEnv ? true : false;
+  }
+}
+
+export class DevFunctionFromSyncFun extends DevFunction{
+  constructor(signal, decEnv, syncFun) {
+    let fun = ({callerNode, callerEnv, interpreter}, ...inputArr) => {
+      return syncFun(...inputArr);
+    }
+    super(signal, decEnv, fun);
   }
 }
 
