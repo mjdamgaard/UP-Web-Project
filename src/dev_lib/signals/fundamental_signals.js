@@ -15,8 +15,6 @@ export const createAppSignal = Symbol("create_app");
 // Signal emitted by the dispatch() function/method.
 export const dispatchSignal = Symbol("dispatch");
 
-// Signal emitted by the setState() method.
-export const setStateSignal = Symbol("set_state");
 
 
 // Signal emitted by functions that can only be accessed by the admin.

@@ -19,7 +19,7 @@ export async function query(
     if (queryStringArr[0] === "mkdir") {
       let requestedAdminID = queryStringArr[1];
       let dirID = await _mkdir(gas, requestedAdminID);
-      return dirID;
+      return [dirID];
     }
     else throw new ClientError(
       `Unrecognized route: ${route}`
@@ -35,8 +35,8 @@ export async function query(
   // a list of all nested file paths of the home directory, except paths of
   // files nested inside locked subdirectories (starting with "_").
   if (!queryStringArr) {
-    let visibleDescList = await _getAllDescendants(gas, homeDirID);
-    return visibleDescList;
+    let visibleDescList = await _getDescendants(gas, homeDirID);
+    return [visibleDescList];
   }
 
   let queryType = queryStringArr[0];
@@ -45,13 +45,44 @@ export async function query(
   // file paths of the home directory, including paths of
   // files nested inside locked subdirectories (starting with "_").
   if (queryType === "_all") {
-
+    let fullDescList = await _getAllDescendants(gas, homeDirID);
+    return [fullDescList];
   }
 
+  // If route equals just "/<homeDirID>?_delete", request a deletion of the
+  // directory, ut note that directories can only be deleted after each nested
+  // file in it has been deleted (as this query does not delete the files).
   if (queryType === "_delete") {
-
+    let wasDeleted = await _deleteHomeDir(gas, homeDirID);
+    return [wasDeleted];
   }
   
+  // If route equals just "/<homeDirID>?call&<funName>&<inputArr>", get the
+  // module.js file at the home level of the directory, then execute that
+  // module and run the function named <funName>, with the optional <inputArr>
+  // as its input.
+  if (queryType === "call") {
+    let [funName, inputArrStr] = queryStringArr;
+    let inputArr = [];
+    if (inputArrStr) {
+      let isValidJSONArr = true;
+      try {
+        inputArr = JSON.parse(inputArrStr);
+        if (!(inputArr instanceof Array)) {
+          isValidJSONArr = false;
+        }
+      } catch (err) {
+        isValidJSONArr = false;
+      }
+      if (!isValidJSONArr) throw new ClientError(
+        `inputArr query parameter needs to be a JSON array, but received ` +
+        `${inputArrStr}`
+      );
+    }
+    // TODO: Implement further, and add a similar "_call" request.
+    let res = await callServerModule(gas, homeDirID, funName, inputArr);
+    return [res];
+  }
 
 
 }
@@ -98,4 +129,17 @@ export async function _getAllDescendants(gas, dirID) {
 
 export const getAllDescendants = new DevFunctionFromAsyncFun(
   adminOnlySignal, null, _getDescendants
+);
+
+
+
+export async function _deleteHomeDir(_, dirID) {
+  let wasDeleted = await MainDBConnection.querySingleValue(
+    "readHomeDirDescendants", [dirID]
+  );
+  return wasDeleted;
+}
+
+export const deleteHomeDir = new DevFunctionFromAsyncFun(
+  null, null, _deleteHomeDir
 );

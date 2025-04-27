@@ -1780,7 +1780,7 @@ export class DevFunctionFromSyncFun extends DevFunction{
       try {
         ret = syncFun(gas, ...inputArr);
       } catch (err) {
-        if (err instanceof OutOfGasError) {
+        if (err instanceof OutOfGasError || err instanceof RuntimeError) {
           err.node = callerNode;
           err.environment = callerEnv;
         }
@@ -1802,7 +1802,7 @@ export class DevFunctionFromAsyncFun extends DevFunction{
           callback, [ret], callerNode, callerEnv
         );
       }).catch(err => {
-        if (err instanceof OutOfGasError) {
+        if (err instanceof OutOfGasError || err instanceof RuntimeError) {
           err.node = callerNode;
           err.environment = callerEnv;
         }

@@ -229,12 +229,12 @@ async function requestHandler(req, res) {
   }
 
 
-  let [wasReady, result] = await filetypeModule.query(
+  let [result, wasReady] = await filetypeModule.query(
     route, homeDirID, filePath, queryStringArr, reqUserID, adminID, cct, mct,
     gas
   );
 
   // Return the results.
   res.writeHead(200, {'Content-Type': 'text/json'});
-  res.end(JSON.stringify([wasReady ?? null, result ?? null]));
+  res.end(JSON.stringify([result ?? null, wasReady ?? null]));
 }

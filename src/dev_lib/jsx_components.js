@@ -4,14 +4,14 @@ import {
   RuntimeError, turnImmutable,
 } from "../interpreting/ScriptInterpreter.js";
 import {
-  createAppSignal, dispatchSignal, setStateSignal,
+  createAppSignal, dispatchSignal,
 } from "./signals/fundamental_signals.js";
 
 
 
 // Create a JSX (React-like) app and mount it in the index HTML page, in the
 // element with an id of "up-app-root".
-export const createJSXApp = new DevFunction(createAppSignal, false, function(
+export const createJSXApp = new DevFunction(createAppSignal, null, function(
   {callerNode, callerEnv, interpreter}, component, props
 ) {
   const rootInstance = new UserDefinedJSXInstance("root", undefined, component);
@@ -465,7 +465,7 @@ class JSXInstanceObject extends ProtectedObject {
   // an action, but only be visible on a subsequent render. setState() also
   // always queues a rerender, even if the new state is equivalent to the old
   // one.
-  setState = new DevFunction(setStateSignal, (
+  setState = new DevFunction(null, null, (
     {interpreter},
     state
   ) => {
@@ -475,7 +475,7 @@ class JSXInstanceObject extends ProtectedObject {
 
   // Rerender is equivalent of calling setState() on the current state; it just
   // forces a rerender.
-  rerender = new DevFunction(null, (
+  rerender = new DevFunction(null, null, (
     {interpreter},
   ) => {
     this.jsxInstance.queueRerender(interpreter);
