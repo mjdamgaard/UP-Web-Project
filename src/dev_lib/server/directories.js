@@ -1,7 +1,7 @@
 
 import {MainDBConnection} from "./DBConnection.js";
 import {
-  DevFunction,
+  DevFunctionFromAsyncFun,
 } from "../../interpreting/ScriptInterpreter.js";
 import {mkdirSignal} from "../signals/fundamental_signals.js";
 
@@ -43,9 +43,4 @@ export async function _mkdir(adminID) {
   return dirID;
 } 
 
-
-export const mkdir = new DevFunction(mkdirSignal, (
-
-) => {
-
-})
+export const mkdir = new DevFunctionFromAsyncFun(mkdirSignal, null, _mkdir);

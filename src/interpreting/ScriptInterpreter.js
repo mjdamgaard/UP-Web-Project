@@ -527,14 +527,13 @@ export class ScriptInterpreter {
       }
 
       // Then execute the dev function, with a first argument in the form of an
-      // object with some standard members, followed by all the other inputs
-      // in the inputArr.
+      // object with some standard members, followed by inputArr.
       return fun.fun(
         {
           callerNode: callerNode, callerEnv: callerEnv, thisVal: thisVal,
           protectData: protectData, protect: this.protect, interpreter: this,
         },
-        ...inputArr
+        inputArr
       );
     }
     else if (fun instanceof DefinedFunction) {
@@ -1759,8 +1758,24 @@ export class DevFunction {
 
 export class DevFunctionFromSyncFun extends DevFunction{
   constructor(signal, decEnv, syncFun) {
-    let fun = ({callerNode, callerEnv, interpreter}, ...inputArr) => {
+    let fun = ({}, inputArr) => {
       return syncFun(...inputArr);
+    }
+    super(signal, decEnv, fun);
+  }
+}
+
+export class DevFunctionFromAsyncFun extends DevFunction{
+  constructor(signal, decEnv, asyncFun) {
+    let fun = ({callerNode, callerEnv, interpreter}, inputArr) => {
+      let callback = inputArr.at(-1);
+      asyncFun(...inputArr.slice(0, -1)).then(ret => {
+        interpreter.executeAsyncCallback(
+          callback, [ret], callerNode, callerEnv
+        );
+      }).catch(err => {
+        interpreter.throwAsyncException(err, callerNode, callerEnv);
+      });
     }
     super(signal, decEnv, fun);
   }
