@@ -226,8 +226,7 @@ async function requestHandler(req, res) {
 
 
   let [wasReady, result] = await filetypeModule.query(
-    homeDirID, filePath, fileExt, isLocked, queryStringArr,
-    reqUserID, adminID, cct, mct
+    route, homeDirID, filePath, queryStringArr, reqUserID, adminID, cct, mct
   );
 
   // Return the results.

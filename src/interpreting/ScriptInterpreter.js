@@ -28,8 +28,10 @@ const GAS_NAMES = {
   comp: "computation",
   import: "import",
   fetch: "fetching",
+  dbRead: "DB fetching",
   time: "time",
   conn: "connection",
+  mkdir: "directory creation",
 };
 
 export function getParsingGasCost(str) {
@@ -72,7 +74,7 @@ export class ScriptInterpreter {
     // If script is provided, rather than the scriptPath, first parse it.
     let parsedScript, lexArr, strPosArr;
     if (scriptPath === null) {
-      payGas(null, globalEnv, {comp: getParsingGasCost(script)});
+      payGas(null, globalEnv, false, {comp: getParsingGasCost(script)});
       let scriptSyntaxTree;
       [scriptSyntaxTree, lexArr, strPosArr] = scriptParser.parse(script);
       if (scriptSyntaxTree.error) {
@@ -220,7 +222,7 @@ export class ScriptInterpreter {
         `No script was found at ${scriptPath}`,
         callerNode, callerEnv
       );
-      payGas(callerNode, callerEnv, {comp: getParsingGasCost(script)});
+      payGas(callerNode, callerEnv, false, {comp: getParsingGasCost(script)});
       let scriptSyntaxTree;
       [scriptSyntaxTree, lexArr, strPosArr] = scriptParser.parse(script);
       parsedScript = scriptSyntaxTree.res;
@@ -1670,7 +1672,7 @@ export function getFullPath(curPath, path, callerNode, callerEnv) {
 
 
 
-export function payGas(node, environment, gasCost, isAsync) {
+export function payGas(node, environment, isAsync, gasCost) {
   let {gas} = environment.scriptGlobals;
   Object.keys(gasCost).forEach(key => {
     if (gas[key] ??= 0) {
@@ -1756,20 +1758,11 @@ export class DevFunction {
   }
 }
 
-export class DevFunctionFromSyncFun extends DevFunction{
-  constructor(signal, decEnv, syncFun) {
-    let fun = ({}, inputArr) => {
-      return syncFun(...inputArr);
-    }
-    super(signal, decEnv, fun);
-  }
-}
-
 export class DevFunctionFromAsyncFun extends DevFunction{
   constructor(signal, decEnv, asyncFun) {
     let fun = ({callerNode, callerEnv, interpreter}, inputArr) => {
       let callback = inputArr.at(-1);
-      asyncFun(...inputArr.slice(0, -1)).then(ret => {
+      asyncFun({callerNode, callerEnv}, ...inputArr.slice(0, -1)).then(ret => {
         interpreter.executeAsyncCallback(
           callback, [ret], callerNode, callerEnv
         );

@@ -19,6 +19,5 @@ export const dispatchSignal = Symbol("dispatch");
 export const setStateSignal = Symbol("set_state");
 
 
-
-// Signal emitted when creating a new home directory.
-export const mkdirSignal = Symbol("mkdir");
+// Signal emitted by functions that can only be accessed by the admin.
+export const adminOnlySignal = Symbol("admin_only");
