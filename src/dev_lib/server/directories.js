@@ -2,7 +2,7 @@
 import {MainDBConnection} from "./DBConnection.js";
 import {ClientError} from "../../server/err/errors.js";
 import {
-  DevFunctionFromAsyncFun, payGas,
+  DevFunctionFromAsyncFun, payGasWithNoContext,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   adminOnlySignal,
@@ -10,14 +10,15 @@ import {
 
 
 export async function query(
-  route, homeDirID, filePath, queryStringArr, reqUserID, adminID, cct, mct
+  route, homeDirID, filePath, queryStringArr, reqUserID, adminID, cct, mct,
+  gas
 ) {
   // If route equals "mkdir?<adminID>", create a new home directory with the
   // requested adminID as the admin. 
   if (!homeDirID) {
     if (queryStringArr[0] === "mkdir") {
       let requestedAdminID = queryStringArr[1];
-      let dirID = await _mkdir(requestedAdminID);
+      let dirID = await _mkdir(gas, requestedAdminID);
       return dirID;
     }
     else throw new ClientError(
@@ -34,7 +35,7 @@ export async function query(
   // a list of all nested file paths of the home directory, except paths of
   // files nested inside locked subdirectories (starting with "_").
   if (!queryStringArr) {
-    let visibleDescList = await _getAllDescendants("...", homeDirID);
+    let visibleDescList = await _getAllDescendants(gas, homeDirID);
     return visibleDescList;
   }
 
@@ -57,8 +58,8 @@ export async function query(
 
 
 
-export async function _mkdir({node, env}, adminID) {
-  payGas(node, env, true, {mkdir: 1})
+export async function _mkdir(gas, adminID) {
+  payGasWithNoContext(gas, {mkdir: 1});
   let dirID = await MainDBConnection.querySingleValue(
     "createHomeDir", [adminID]
   );
@@ -70,8 +71,8 @@ export const mkdir = new DevFunctionFromAsyncFun(null, null, _mkdir);
 
 
 
-export async function _getDescendants({node, env}, dirID) {
-  payGas(node, env, true, {dbRead: 1})
+export async function _getDescendants(gas, dirID) {
+  payGasWithNoContext(gas, {dbRead: 1})
   let fullDescList = await MainDBConnection.querySingleList(
     "readHomeDirDescendants", [dirID]
   );
@@ -87,8 +88,8 @@ export const getDescendants = new DevFunctionFromAsyncFun(
 );
 
 
-export async function _getAllDescendants({node, env}, dirID) {
-  payGas(node, env, true, {dbRead: 1})
+export async function _getAllDescendants(gas, dirID) {
+  payGasWithNoContext(gas, {dbRead: 1})
   let fullDescList = await MainDBConnection.querySingleList(
     "readHomeDirDescendants", [dirID]
   );

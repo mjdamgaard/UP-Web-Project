@@ -2,7 +2,7 @@
 import * as http from 'http';
 import {ClientError, endWithError, endWithInternalError} from './err/errors.js';
 import {InputGetter} from './user_input/InputGetter.js';
-import {DBQueryHandler} from './db_io/DBQueryHandler.js';
+import {ScriptInterpreter} from "../interpreting/ScriptInterpreter.js"
 
 
 import * as directoriesMod from "../dev_lib/server/directories.js";
@@ -62,6 +62,10 @@ async function requestHandler(req, res) {
   // TODO: If credentials is not null, authenticate the user here, throwing an
   // error on failure, and setting the reqUserID to the user's ID on success.
   let reqUserID = 9;
+
+
+  // TODO: Get the gas object.
+  let gas = {};
 
 
 
@@ -226,7 +230,8 @@ async function requestHandler(req, res) {
 
 
   let [wasReady, result] = await filetypeModule.query(
-    route, homeDirID, filePath, queryStringArr, reqUserID, adminID, cct, mct
+    route, homeDirID, filePath, queryStringArr, reqUserID, adminID, cct, mct,
+    gas
   );
 
   // Return the results.

@@ -45,13 +45,14 @@ export class ScriptInterpreter {
 
   constructor(
     isServerSide = false, fetchScript = async () => {}, protect = () => {},
-    staticDevLibs = new Map(), devLibURLs = new Map()
+    staticDevLibs = new Map(), devLibURLs = new Map(), gas = undefined
   ) {
     this.isServerSide = isServerSide;
     this.fetchScript = fetchScript;
     this.protect = protect;
     this.staticDevLibs = staticDevLibs;
     this.devLibURLs = devLibURLs;
+    this.gas = gas;
   }
 
   async interpretScript(
@@ -60,8 +61,8 @@ export class ScriptInterpreter {
     parsedScripts = new Map(), liveModules = new Map(),
   ) {
     let scriptGlobals = {
-      gas: gas, log: {}, scriptPath: scriptPath, reqUserID: reqUserID,
-      permissions: permissions, settings: settings,
+      gas: gas ?? this.gas, log: {}, scriptPath: scriptPath,
+      reqUserID: reqUserID, permissions: permissions, settings: settings,
       isExiting: false, resolveScript: undefined, interpreter: this,
       parsedScripts: parsedScripts, liveModules: liveModules,
     };
@@ -1688,6 +1689,20 @@ export function payGas(node, environment, isAsync, gasCost) {
   });
 }
 
+export function payGasWithNoContext(gas, gasCost) {
+  Object.keys(gasCost).forEach(key => {
+    if (gas[key] ??= 0) {
+      gas[key] -= gasCost[key];
+    }
+    if (gas[key] < 0) {
+      throw new OutOfGasError(
+        "Ran out of " + GAS_NAMES[key] + "gas",
+        null, null,
+      );
+    }
+  });
+}
+
 export function decrCompGas(node, environment, isAsync) {
   let {gas} = environment.scriptGlobals;
   if (0 > --gas.comp) {
@@ -1758,15 +1773,39 @@ export class DevFunction {
   }
 }
 
+export class DevFunctionFromSyncFun extends DevFunction{
+  constructor(signal, decEnv, syncFun) {
+    let fun = ({callerNode, callerEnv}, inputArr) => {
+      let ret, {gas} = callerEnv.scriptGlobals;
+      try {
+        ret = syncFun(gas, ...inputArr);
+      } catch (err) {
+        if (err instanceof OutOfGasError) {
+          err.node = callerNode;
+          err.environment = callerEnv;
+        }
+        throw err;
+      }
+      return ret;
+    }
+    super(signal, decEnv, fun);
+  }
+}
+
 export class DevFunctionFromAsyncFun extends DevFunction{
   constructor(signal, decEnv, asyncFun) {
     let fun = ({callerNode, callerEnv, interpreter}, inputArr) => {
       let callback = inputArr.at(-1);
-      asyncFun({callerNode, callerEnv}, ...inputArr.slice(0, -1)).then(ret => {
+      let {gas} = callerEnv.scriptGlobals;
+      asyncFun(gas, ...inputArr.slice(0, -1)).then(ret => {
         interpreter.executeAsyncCallback(
           callback, [ret], callerNode, callerEnv
         );
       }).catch(err => {
+        if (err instanceof OutOfGasError) {
+          err.node = callerNode;
+          err.environment = callerEnv;
+        }
         interpreter.throwAsyncException(err, callerNode, callerEnv);
       });
     }
