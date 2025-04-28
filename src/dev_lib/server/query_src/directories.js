@@ -1,12 +1,12 @@
 
 import {MainDBConnection} from "./DBConnection.js";
-import {ClientError} from "../../server/err/errors.js";
+import {ClientError} from "../../../server/err/errors.js";
 import {
   DevFunctionFromAsyncFun, payGasWithNoContext,
-} from "../../interpreting/ScriptInterpreter.js";
+} from "../../../interpreting/ScriptInterpreter.js";
 import {
   adminOnlySignal,
-} from "../signals/fundamental_signals.js";
+} from "../../signals/fundamental_signals.js";
 
 
 export async function query(

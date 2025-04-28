@@ -84,7 +84,7 @@ export class ScriptInterpreter {
         ];
       }
       parsedScript = scriptSyntaxTree.res;
-      parsedScripts.set(scriptPath, parsedScript);
+      parsedScripts.set(scriptPath, [parsedScript, lexArr, strPosArr, script]);
     }
     // Else fetch and parse the script first thing.
     else {
@@ -210,8 +210,8 @@ export class ScriptInterpreter {
   async fetchParsedScript(
     scriptPath, parsedScripts, callerNode, callerEnv
   ) {
-    let lexArr, strPosArr, script, adminID;
-    let parsedScript = parsedScripts.get(scriptPath);
+    let parsedScript, lexArr, strPosArr, script, adminID;
+    [parsedScript, lexArr, strPosArr, script] = parsedScripts.get(scriptPath);
     if (!parsedScript) {
       let {reqUserID} = callerEnv.scriptGlobals;
       try {
@@ -228,7 +228,7 @@ export class ScriptInterpreter {
       [scriptSyntaxTree, lexArr, strPosArr] = scriptParser.parse(script);
       parsedScript = scriptSyntaxTree.res;
       if (scriptSyntaxTree.error) throw scriptSyntaxTree.error;
-      parsedScripts.set(scriptPath, parsedScript);
+      parsedScripts.set(scriptPath, [parsedScript, lexArr, strPosArr, script]);
     }
     return [parsedScript, lexArr, strPosArr, script, adminID];
   }
@@ -1774,11 +1774,11 @@ export class DevFunction {
 }
 
 export class DevFunctionFromSyncFun extends DevFunction{
-  constructor(signal, decEnv, syncFun) {
+  constructor(signal, decEnv, argNum, syncFun) {
     let fun = ({callerNode, callerEnv}, inputArr) => {
       let ret, {gas} = callerEnv.scriptGlobals;
       try {
-        ret = syncFun(gas, ...inputArr);
+        ret = syncFun(gas, ...inputArr.slice(0, argNum));
       } catch (err) {
         if (err instanceof OutOfGasError || err instanceof RuntimeError) {
           err.node = callerNode;
@@ -1793,11 +1793,11 @@ export class DevFunctionFromSyncFun extends DevFunction{
 }
 
 export class DevFunctionFromAsyncFun extends DevFunction{
-  constructor(signal, decEnv, asyncFun) {
+  constructor(signal, decEnv, argNum, asyncFun) {
     let fun = ({callerNode, callerEnv, interpreter}, inputArr) => {
-      let callback = inputArr.at(-1);
+      let callback = inputArr[argNum];
       let {gas} = callerEnv.scriptGlobals;
-      asyncFun(gas, ...inputArr.slice(0, -1)).then(ret => {
+      asyncFun(gas, ...inputArr.slice(0, argNum)).then(ret => {
         interpreter.executeAsyncCallback(
           callback, [ret], callerNode, callerEnv
         );
