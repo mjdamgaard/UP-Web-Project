@@ -35,7 +35,7 @@ export async function query(
   // a list of all nested file paths of the home directory, except paths of
   // files nested inside locked subdirectories (starting with "_").
   if (!queryStringArr) {
-    let visibleDescList = await _getDescendants(gas, homeDirID);
+    let visibleDescList = await _readDirDescendants(gas, homeDirID);
     return [visibleDescList];
   }
 
@@ -102,7 +102,7 @@ export const mkdir = new DevFunctionFromAsyncFun(null, null, _mkdir);
 
 
 
-export async function _getDescendants(gas, dirID) {
+export async function _readDirDescendants(gas, dirID) {
   payGasWithNoContext(gas, {dbRead: 1})
   let fullDescList = await MainDBConnection.querySingleList(
     "readHomeDirDescendants", [dirID]
@@ -114,8 +114,8 @@ export async function _getDescendants(gas, dirID) {
   return visibleDescList;
 } 
 
-export const getDescendants = new DevFunctionFromAsyncFun(
-  null, null, _getDescendants
+export const readDirDescendants = new DevFunctionFromAsyncFun(
+  null, null, _readDirDescendants
 );
 
 
@@ -128,7 +128,7 @@ export async function _getAllDescendants(gas, dirID) {
 } 
 
 export const getAllDescendants = new DevFunctionFromAsyncFun(
-  adminOnlySignal, null, _getDescendants
+  adminOnlySignal, null, _readDirDescendants
 );
 
 
