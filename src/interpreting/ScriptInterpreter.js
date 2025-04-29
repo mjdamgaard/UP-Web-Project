@@ -487,8 +487,11 @@ export class ScriptInterpreter {
 
 
   executeFunction(
-    fun, inputArr, callerNode, callerEnv, thisVal, isThisKeyword
+    fun, inputArr, callerNode, callerEnv, flagQueue, thisVal
   ) {
+    // TODO: Make the function execution environment here, and raise the flags
+    // from the flagQueue immediately in it.
+
     // If the function is an arrow function, check that it isn't called outside
     // of the "caller environment stack" that has its funDecEnv as an ancestor
     // in the stack.
@@ -502,28 +505,12 @@ export class ScriptInterpreter {
       );
     }
 
-    // If the function is a method of a protected object, and it holds a truthy
-    // signal, call protect() on said signal, also passing the object itself as
-    // the thisVal argument.
-    if (thisVal instanceof ProtectedObject && thisVal.signal) {
-      flags = this.protect(
-        thisVal.signal, thisVal.signalParams, flags, initFlags,
-        thisVal, isThisKeyword, undefined, callerEnv, callerNode
-      );
-    }
-
     // Then execute the function depending on its type.
     if (fun instanceof DevFunction) {
-      // Execute the dev function, with an initial 'execution variables'
-      // argument containing data about the function call and its environment,
-      // followed by the inputArr as the second argument.
-      return fun.fun(
-        {
-          callerNode: callerNode, callerEnv: callerEnv, thisVal: thisVal,
-          interpreter: this,
-        },
-        inputArr
+      let [ret] = this.executeDevFunction(
+        devFun, inputArr, callerNode, callerEnv, thisVal
       );
+      return ret;
     }
     else if (fun instanceof DefinedFunction) {
       return this.executeDefinedFunction(
@@ -538,12 +525,63 @@ export class ScriptInterpreter {
 
 
 
-  executeAsyncCallback(fun, inputArr, callerNode, callerEnv) {
+
+  executeDevFunction(devFun, inputArr, callerNode, callerEnv, thisVal) {
+    // Define "execution variables" (functions) to queue flags, call async.
+    // callbacks, and to throw async. errors.
+    let flagQueue = [];
+    let queueFlag = (flag, raiseParams) => {
+      flagQueue.push([flag, raiseParams]);
+    };
+    let callAsync = (fun, inputArr, thisVal) => {
+      this.executeAsyncCallback(
+        fun, inputArr, callerNode, callerEnv, flagQueue, thisVal
+      );
+    };
+    let callSync = (fun, inputArr, thisVal) => {
+      return this.executeFunction(
+        fun, inputArr, callerNode, callerEnv, flagQueue, thisVal
+      );
+    };
+
+    // Execute the dev function, with an 'execution variables' (execVars) object
+    // as the fist argument, containing data about the function call and its
+    // environment, followed by the inputArr as the second argument.
+    let ret;
+    try {
+      ret = devFun.fun(
+        {
+          queueFlag: queueFlag, callAsync: callAsync, callSync: callSync,
+          callerNode: callerNode, callerEnv: callerEnv, thisVal: thisVal,
+          interpreter: this,
+        },
+        inputArr
+      );
+    }
+    catch (err) {
+      if (
+        err instanceof RuntimeError || err instanceof CustomException ||
+        err instanceof OutOfGasError || err instanceof LoadError
+      ) {
+        err.node ??= callerNode;
+        err.environment ??= callerEnv;
+      }
+      else throw err;
+    }
+
+    // Then return the return value, wrapped in an array together with the
+    // flagQueue.
+    return [ret, flagQueue];
+  }
+
+
+
+  executeAsyncCallback(fun, inputArr, callerNode, callerEnv, flagQueue) {
     if (callerEnv.scriptVars.isExiting) {
       throw new ExitException();
     }
     try {
-      this.executeFunction(fun, inputArr, callerNode, callerEnv)
+      this.executeFunction(fun, inputArr, callerNode, callerEnv, flagQueue);
     }
     catch (err) {
       if (
@@ -573,8 +611,7 @@ export class ScriptInterpreter {
 
 
   executeDefinedFunction(
-    funNode, funDecEnv, inputValueArr, callerNode, callerEnv,
-    thisVal = undefined,
+    funNode, funDecEnv, inputValueArr, callerNode, callerEnv, thisVal,
   ) {
     decrCompGas(callerNode, callerEnv);
     let scriptVars = callerEnv.scriptVars;
@@ -1597,7 +1634,9 @@ export class Environment {
       }
       return true;
     }
-    else if (this.scopeType === "function") {
+    else if (
+      this.scopeType === "function" || this.scopeType === "arrow-function"
+    ) {
       return this.callerEnv.runNearestCatchStmtAncestor(
         err, node, nodeEnvironment
       );
