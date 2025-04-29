@@ -1515,25 +1515,19 @@ export class Environment {
   checkFlag(flag, checkParams, node, env = this) {
     let raiseParams = this.getFlags().get(flag);
 
-    // If the flag in question is restrictive, throw iff it is raised and its
-    // function returns true.
+    // If the flag in question is restrictive, throw iff its checkFun returns
+    // true.
     if (flag.isRestrictive) {
-      if (
-        raiseParams !== undefined && flag.fun(raiseParams, checkParams, env)
-      ) {
+      if (flag.checkFun(raiseParams, checkParams, env)) {
         throw new RuntimeError(
           `Flag "${flag.name}" (restrictive) was checked as being raised`,
           node, env
         );
       }
     }
-
-    // Else if it is permissive, throw iff it is not raised or its function
-    // returns false.
+    // Else if it is permissive, throw iff its checkFun returns false.
     else {
-      if (
-        raiseParams === undefined || !flag.fun(raiseParams, checkParams, env)
-      ) {
+      if (!flag.checkFun(raiseParams, checkParams, env)) {
         throw new RuntimeError(
           `Flag "${flag.name}" (permissive) was checked as not being raised`,
           node, env
@@ -1707,7 +1701,7 @@ export function payGas(node, environment, isAsync, gasCost) {
         "Ran out of " + GAS_NAMES[key] + "gas",
         node, environment,
       );
-      throwExceptionAsyncOrNot(err, node, environment, isAsync);
+      throwException(err, node, environment, isAsync);
     }
   });
 }
@@ -1733,7 +1727,7 @@ export function decrCompGas(node, environment, isAsync) {
       "Ran out of " + GAS_NAMES.comp + " gas",
       node, environment,
     );
-    throwExceptionAsyncOrNot(err, node, environment, isAsync);
+    throwException(err, node, environment, isAsync);
   }
 }
 export function decrGas(node, environment, gasName, isAsync) {
@@ -1743,11 +1737,11 @@ export function decrGas(node, environment, gasName, isAsync) {
       "Ran out of " + GAS_NAMES[gasName] + " gas",
       node, environment,
     );
-    throwExceptionAsyncOrNot(err, node, environment, isAsync);
+    throwException(err, node, environment, isAsync);
   }
 }
 
-export function throwExceptionAsyncOrNot(err, node, environment, isAsync) {
+export function throwException(err, node, environment, isAsync) {
   if (isAsync) {
     let {interpreter} = environment.scriptVars;
     interpreter.throwAsyncException(err, node, environment);
@@ -1785,10 +1779,8 @@ export class DefinedFunction {
 }
 
 export class DevFunction {
-  constructor(signal, signalParams, decEnv, fun) {
+  constructor(decEnv, fun) {
     this.fun = fun;
-    if (signal) this.signal = signal;
-    if (signalParams) this.signalParams = signalParams;
     if (decEnv) this.decEnv = decEnv;
   }
 
@@ -1798,7 +1790,7 @@ export class DevFunction {
 }
 
 export class DevFunctionFromSyncFun extends DevFunction{
-  constructor(signal, signalParams, decEnv, argNum, syncFun) {
+  constructor(decEnv, argNum, syncFun) {
     let fun = (execVars, inputArr) => {
       let ret;
       try {
@@ -1812,12 +1804,12 @@ export class DevFunctionFromSyncFun extends DevFunction{
       }
       return ret;
     }
-    super(signal, signalParams, decEnv, fun);
+    super(decEnv, fun);
   }
 }
 
 export class DevFunctionFromAsyncFun extends DevFunction{
-  constructor(signal, signalParams, decEnv, argNum, asyncFun) {
+  constructor(decEnv, argNum, asyncFun) {
     let fun = (execVars, inputArr) => {
       let {callerNode, callerEnv, interpreter} = execVars;
       let callback = inputArr[argNum];
@@ -1829,25 +1821,25 @@ export class DevFunctionFromAsyncFun extends DevFunction{
         if (err instanceof OutOfGasError || err instanceof RuntimeError) {
           err.node = callerNode;
           err.environment = callerEnv;
+          interpreter.throwAsyncException(err, callerNode, callerEnv);
         }
-        interpreter.throwAsyncException(err, callerNode, callerEnv);
+        else throw err;
       });
     }
-    super(signal, signalParams, decEnv, fun);
+    super(decEnv, fun);
   }
 }
 
 export class ProtectedObject {
-  constructor(signal, signalParams, decEnv) {
-    this.signal = signal;
-    this.signalParams = signalParams;
+  constructor(decEnv, accessDevFun) {
     this.decEnv = decEnv;
+    this.accessDevFun = accessDevFun;
   }
 }
 
 export class ModuleObject extends ProtectedObject {
   constructor(modulePath, adminID, decEnv, members) {
-    super(moduleObjectSignal, undefined, decEnv);
+    super(decEnv, "TODO...");
     this.modulePath = modulePath;
     this.adminID = adminID;
     this.members = members;
@@ -2013,7 +2005,7 @@ export class CustomException {
 
 
 export class Flag {
-  constructor(name, isRestrictive, fun = () => true) {
+  constructor(name, isRestrictive, checkFun = undefined) {
     this.name = name;
 
     // When checking a flag, if isRestrictive is true for that flag, an error
@@ -2022,11 +2014,11 @@ export class Flag {
     // flag is not raised.   
     this.isRestrictive = isRestrictive;
 
-    // If a raised flag holds a (defined) function, the check will treat the
-    // flag as being raised iff the function returns true (or truthy). This
-    // function receives two inputs: one which is provided when signaling to
-    // raise the flag, and one provided when signaling to check the flag.
-    this.fun = fun;
+    // The function that decides if the flag is considered up or not, which can
+    // depend on the parameters that the flag was raised with (the raiseParams),
+    // and/or the parameters provided when signalling to check the flag (the
+    // checkParams).
+    this.checkFun = checkFun ?? ((raiseParams) => raiseParams !== undefined);
   }
 }
 
