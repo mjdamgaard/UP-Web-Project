@@ -11,9 +11,9 @@ import * as binaryScoredBinaryKeyStructFilesMod from
 
 
 
-export const query = new DevFunction(null, null, (
-  {}, route, cct, mct
-) => {
+export function _query(
+  {callerNode, callerEnv, protect, protectData}, route, cct, mct
+) {
   // Parse the route to get the filetype, among other parameters and qualities.
   let [
     homeDirID, filePath, fileExt, isLocked, queryStringArr
@@ -40,10 +40,10 @@ export const query = new DevFunction(null, null, (
       filetypeModule = textFilesMod;
       break;
     case "ats":
-      filetypeModule = textFilesMod;
+      filetypeModule = autoKeyTextStructFilesMod;
       break;
     case "bbs":
-      filetypeModule = textFilesMod;
+      filetypeModule = binaryScoredBinaryKeyStructFilesMod;
       break;
     default:
       throw new ClientError(`Unrecognized action: "${action}"`);
@@ -55,4 +55,6 @@ export const query = new DevFunction(null, null, (
     gas
   );
   
-});
+}
+
+export const query = new DevFunctionFromAsyncFun(null, null, 3, _query);

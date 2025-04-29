@@ -44,25 +44,23 @@ export function getParsingGasCost(str) {
 export class ScriptInterpreter {
 
   constructor(
-    isServerSide = false, fetchScript = async () => {}, protect = () => {},
-    staticDevLibs = new Map(), devLibURLs = new Map(), gas = undefined
+    isServerSide = false, fetchScript = async () => {},
+    staticDevLibs = new Map(), devLibURLs = new Map(),
   ) {
     this.isServerSide = isServerSide;
     this.fetchScript = fetchScript;
-    this.protect = protect;
     this.staticDevLibs = staticDevLibs;
     this.devLibURLs = devLibURLs;
-    this.gas = gas;
   }
 
   async interpretScript(
     gas, script = "", scriptPath = null, mainInputs = [], reqUserID = null,
-    permissions = {}, settings = {},
+    initFlags = new Map(), settings = {},
     parsedScripts = new Map(), liveModules = new Map(),
   ) {
-    let scriptGlobals = {
-      gas: gas ?? this.gas, log: {}, scriptPath: scriptPath,
-      reqUserID: reqUserID, permissions: permissions, settings: settings,
+    let scriptVars = {
+      gas: gas, log: {}, scriptPath: scriptPath,
+      reqUserID: reqUserID, initFlags: initFlags, settings: settings,
       isExiting: false, resolveScript: undefined, interpreter: this,
       parsedScripts: parsedScripts, liveModules: liveModules,
     };
@@ -70,7 +68,7 @@ export class ScriptInterpreter {
     // First create global environment if not yet done, and then create an
     // initial global environment, used as a parent environment for all
     // scripts/modules.
-    let globalEnv = this.createGlobalEnvironment(scriptGlobals);
+    let globalEnv = this.createGlobalEnvironment(scriptVars);
 
     // If script is provided, rather than the scriptPath, first parse it.
     let parsedScript, lexArr, strPosArr;
@@ -94,13 +92,13 @@ export class ScriptInterpreter {
     }
 
     // Create a promise to get the output and log, and store a modified
-    // resolve() callback on scriptGlobals (which is contained by globalEnv).
+    // resolve() callback on scriptVars (which is contained by globalEnv).
     // This promise is resolved when the user calls the exit() function.
     let outputAndLogPromise = new Promise(resolve => {
-      scriptGlobals.resolveScript = (output, error) => {
-        let {log} = scriptGlobals;
+      scriptVars.resolveScript = (output, error) => {
+        let {log} = scriptVars;
         if (!log.error) log.error = error;
-        scriptGlobals.isExiting = true;
+        scriptVars.isExiting = true;
         resolve([output, log]);
       };
     });
@@ -125,24 +123,24 @@ export class ScriptInterpreter {
         err instanceof LoadError || err instanceof RuntimeError ||
         err instanceof CustomException || err instanceof OutOfGasError
       ) {
-        scriptGlobals.resolveScript(undefined, err);
+        scriptVars.resolveScript(undefined, err);
       } else if (err instanceof ReturnException) {
-        scriptGlobals.resolveScript(undefined, new RuntimeError(
+        scriptVars.resolveScript(undefined, new RuntimeError(
           "Cannot return from outside of a function",
           err.node, err.environment
         ));
       } else if (err instanceof CustomException) {
-        scriptGlobals.resolveScript(undefined, new RuntimeError(
+        scriptVars.resolveScript(undefined, new RuntimeError(
           `Uncaught exception: "${err.val.toString()}"`,
           err.node, err.environment
         ));
       } else if (err instanceof BreakException) {
-        scriptGlobals.resolveScript(undefined, new RuntimeError(
+        scriptVars.resolveScript(undefined, new RuntimeError(
           `Invalid break statement outside of loop or switch-case statement`,
           err.node, err.environment
         ));
       } else if (err instanceof ContinueException) {
-        scriptGlobals.resolveScript(undefined, new RuntimeError(
+        scriptVars.resolveScript(undefined, new RuntimeError(
           "Invalid continue statement outside of loop",
           err.node, err.environment
         ));
@@ -155,7 +153,7 @@ export class ScriptInterpreter {
     } 
 
     // If isExiting is true, we can return the resulting output and log.
-    if (scriptGlobals.isExiting) {
+    if (scriptVars.isExiting) {
       return await outputAndLogPromise;
     }
 
@@ -166,7 +164,7 @@ export class ScriptInterpreter {
     // error first.
     else {
       if (gas.time < MINIMAL_TIME_GAS) {
-        scriptGlobals.resolveScript(undefined, new OutOfGasError(
+        scriptVars.resolveScript(undefined, new OutOfGasError(
           "Ran out of " + GAS_NAMES.time + " gas (no exit statement reached)",
           parsedScript, globalEnv,
         ));
@@ -176,7 +174,7 @@ export class ScriptInterpreter {
         // error. 
         setTimeout(
           () => {
-            scriptGlobals.resolveScript(undefined, new OutOfGasError(
+            scriptVars.resolveScript(undefined, new OutOfGasError(
               "Ran out of " + GAS_NAMES.time +
                 " gas (no exit statement reached)",
               parsedScript, globalEnv,
@@ -195,12 +193,12 @@ export class ScriptInterpreter {
 
 
 
-  createGlobalEnvironment(scriptGlobals) {
+  createGlobalEnvironment(scriptVars) {
     let globalEnv = new Environment(
       undefined, "global",
+      undefined, undefined, undefined,
       undefined, undefined, undefined, undefined,
-      undefined, undefined, undefined, undefined,
-      scriptGlobals
+      scriptVars
     );
     return globalEnv;
   }
@@ -213,7 +211,7 @@ export class ScriptInterpreter {
     let parsedScript, lexArr, strPosArr, script, adminID;
     [parsedScript, lexArr, strPosArr, script] = parsedScripts.get(scriptPath);
     if (!parsedScript) {
-      let {reqUserID} = callerEnv.scriptGlobals;
+      let {reqUserID} = callerEnv.scriptVars;
       try {
        [script, adminID] = await this.fetchScript(scriptPath, reqUserID);
       } catch (err) {
@@ -247,7 +245,7 @@ export class ScriptInterpreter {
     // Create a new environment for the module.
     let moduleEnv = new Environment(
       globalEnv, "module",
-      undefined, undefined, undefined, undefined,
+      undefined, undefined, undefined,
       modulePath, lexArr, strPosArr, script,
     );
 
@@ -290,7 +288,7 @@ export class ScriptInterpreter {
   ) {
     decrCompGas(impStmt, globalEnv);
     decrGas(impStmt, globalEnv, "import");
-    let {liveModules, parsedScripts} = globalEnv.scriptGlobals;
+    let {liveModules, parsedScripts} = globalEnv.scriptVars;
 
     // If the module has already been executed, we can return early.
     let submodulePath = getFullPath(curModulePath, impStmt.str);
@@ -491,9 +489,6 @@ export class ScriptInterpreter {
   executeFunction(
     fun, inputArr, callerNode, callerEnv, thisVal, isThisKeyword
   ) {
-    let {permissions} = callerEnv.scriptGlobals;
-    let protectData = callerEnv.getProtectData();
-
     // If the function is an arrow function, check that it isn't called outside
     // of the "caller environment stack" that has its funDecEnv as an ancestor
     // in the stack.
@@ -511,38 +506,28 @@ export class ScriptInterpreter {
     // signal, call protect() on said signal, also passing the object itself as
     // the thisVal argument.
     if (thisVal instanceof ProtectedObject && thisVal.signal) {
-      protectData = this.protect(
-        thisVal.signal, protectData, permissions, thisVal, isThisKeyword,
-        undefined, callerEnv, callerNode
+      flags = this.protect(
+        thisVal.signal, thisVal.signalParams, flags, initFlags,
+        thisVal, isThisKeyword, undefined, callerEnv, callerNode
       );
     }
 
     // Then execute the function depending on its type.
     if (fun instanceof DevFunction) {
-      // If the called developer function has a signal, then call protect()
-      // (again, if called already), and also reassign protectData the return
-      // value.
-      if (fun.signal !== undefined) {
-        protectData = this.protect(
-          fun.signal, protectData, permissions, thisVal, isThisKeyword,
-          inputArr, callerEnv, callerNode
-        );
-      }
-
-      // Then execute the dev function, with a first argument in the form of an
-      // object with some standard members, followed by inputArr.
+      // Execute the dev function, with an initial 'execution variables'
+      // argument containing data about the function call and its environment,
+      // followed by the inputArr as the second argument.
       return fun.fun(
         {
           callerNode: callerNode, callerEnv: callerEnv, thisVal: thisVal,
-          protectData: protectData, protect: this.protect, interpreter: this,
+          interpreter: this,
         },
         inputArr
       );
     }
     else if (fun instanceof DefinedFunction) {
       return this.executeDefinedFunction(
-        fun.node, fun.decEnv, inputArr, callerNode, callerEnv,
-        thisVal, protectData
+        fun.node, fun.decEnv, inputArr, callerNode, callerEnv, thisVal
       );
     }
     else throw new RuntimeError(
@@ -554,7 +539,7 @@ export class ScriptInterpreter {
 
 
   executeAsyncCallback(fun, inputArr, callerNode, callerEnv) {
-    if (callerEnv.scriptGlobals.isExiting) {
+    if (callerEnv.scriptVars.isExiting) {
       throw new ExitException();
     }
     try {
@@ -567,7 +552,7 @@ export class ScriptInterpreter {
       ) {
         let wasCaught = callerEnv.runNearestCatchStmtAncestor(err, callerNode);
         if (!wasCaught) {
-          callerEnv.scriptGlobals.resolveScript(undefined, err);
+          callerEnv.scriptVars.resolveScript(undefined, err);
         }
       } else {
         throw err;
@@ -578,7 +563,7 @@ export class ScriptInterpreter {
   throwAsyncException(err, callerNode, callerEnv) {
     let wasCaught = callerEnv.runNearestCatchStmtAncestor(err, callerNode);
     if (!wasCaught) {
-      callerEnv.scriptGlobals.resolveScript(undefined, err);
+      callerEnv.scriptVars.resolveScript(undefined, err);
     }
   }
 
@@ -589,10 +574,10 @@ export class ScriptInterpreter {
 
   executeDefinedFunction(
     funNode, funDecEnv, inputValueArr, callerNode, callerEnv,
-    thisVal = undefined, protectData = undefined,
+    thisVal = undefined,
   ) {
     decrCompGas(callerNode, callerEnv);
-    let scriptGlobals = callerEnv.scriptGlobals;
+    let scriptVars = callerEnv.scriptVars;
 
     // Initialize a new environment for the execution of the function.
     let newEnv;
@@ -603,7 +588,7 @@ export class ScriptInterpreter {
     }
     else {
       newEnv = new Environment(
-        funDecEnv, "function", callerNode, callerEnv, thisVal, protectData
+        funDecEnv, "function", callerNode, callerEnv, thisVal
       );
     }
 
@@ -732,7 +717,7 @@ export class ScriptInterpreter {
       case "try-catch-statement": {
         let tryCatchEnv = new Environment(
           environment, "try-catch",
-          undefined, undefined, undefined, undefined,
+          undefined, undefined, undefined,
           undefined, undefined, undefined, undefined,
           undefined,
           stmtNode.catchStmtArr, stmtNode.errIdent, stmtNode.numIdent,
@@ -1185,12 +1170,12 @@ export class ScriptInterpreter {
         // Evaluate the argument.
         let expVal = (!expNode.exp) ? undefined :
           this.evaluateExpression(expNode.exp, environment);
-        let {permissions, resolveScript} = environment.scriptGlobals;
-        let protectData = environment.getProtectData();
+        let {initFlags, resolveScript} = environment.scriptVars;
+        let flags = environment.getFlags();
         // Send an "exit" signal to protect, before resolving the script.
         this.protect(
-          exitSignal, protectData, permissions, undefined, undefined,
-          [expVal], environment, expNode
+          exitSignal, undefined, protectData, initFlags,
+          undefined, undefined, [expVal], environment, expNode
         );
         resolveScript(expVal);
         // Throw an exit exception.
@@ -1383,10 +1368,9 @@ export class Environment {
   constructor(
     parent = undefined, scopeType = "block",
     callerNode = undefined, callerEnv = undefined, thisVal = undefined,
-    protectData = undefined,
     modulePath = undefined, lexArr = undefined, strPosArr = undefined,
     script = undefined,
-    scriptGlobals = undefined,
+    scriptVars = undefined,
     catchStmtArr = undefined, errIdent, numIdent,
   ) {
     this.parent = parent;
@@ -1396,14 +1380,13 @@ export class Environment {
       this.callerNode = callerNode;
       this.callerEnv = callerEnv;
       if (thisVal) this.thisVal = thisVal;
-      if (protectData) this.protectData = protectData;
+      this.flags = new Map(callerEnv.getFlags().entries);
     }
     else if (scopeType === "module") {
       this.modulePath = modulePath;
       this.lexArr = lexArr;
       this.strPosArr = strPosArr;
       this.script = script;
-      this.protectData = {modulePath: modulePath};
       this.exports = [];
       this.liveModule = undefined;
     }
@@ -1413,8 +1396,11 @@ export class Environment {
       this.numIdent = numIdent;
       this.numOfAsyncExceptions = 0;
     }
-    this.scriptGlobals = scriptGlobals ?? parent?.scriptGlobals ?? (() => {
-      throw "Environment: No scriptGlobals object provided";
+    else if (scopeType === "global") {
+      this.flags = new Map(scriptVars.initFlags.entries);
+    }
+    this.scriptVars = scriptVars ?? parent?.scriptVars ?? (() => {
+      throw "Environment: No scriptVars object provided";
     })();
   }
 
@@ -1507,18 +1493,55 @@ export class Environment {
     }
   }
 
-  getProtectData() {
-    let protectData = this.protectData;
-    if (protectData !== undefined) {
-      return protectData;
+  getFlags() {
+    let flags = this.flags;
+    if (flags !== undefined) {
+      return flags;
     }
     else if (this.scopeType !== "function" && this.parent) {
-      return this.parent.getProtectData();
+      return this.parent.getFlags();
     }
     else {
-      return this.callerEnv.getProtectData();
+      return this.callerEnv.getFlags();
     }
   }
+
+
+  raiseFlag(flag, raiseParams) {
+    let flags = this.getFlags();
+    flags.set(flag, raiseParams ?? null);
+  }
+
+  checkFlag(flag, checkParams, node, env = this) {
+    let raiseParams = this.getFlags().get(flag);
+
+    // If the flag in question is restrictive, throw iff it is raised and its
+    // function returns true.
+    if (flag.isRestrictive) {
+      if (
+        raiseParams !== undefined && flag.fun(raiseParams, checkParams, env)
+      ) {
+        throw new RuntimeError(
+          `Flag "${flag.name}" (restrictive) was checked as being raised`,
+          node, env
+        );
+      }
+    }
+
+    // Else if it is permissive, throw iff it is not raised or its function
+    // returns false.
+    else {
+      if (
+        raiseParams === undefined || !flag.fun(raiseParams, checkParams, env)
+      ) {
+        throw new RuntimeError(
+          `Flag "${flag.name}" (permissive) was checked as not being raised`,
+          node, env
+        );
+      }
+    }
+  }
+
 
   isCallStackDescendentOf(decEnv) {
     let curCallerEnv = this;
@@ -1561,7 +1584,7 @@ export class Environment {
 
   runNearestCatchStmtAncestor(err, node, nodeEnvironment = this) {
     if (this.scopeType === "try-catch") {
-      let {interpreter} = this.scriptGlobals;
+      let {interpreter} = this.scriptVars;
       let catchEnv = new Environment(this.parent);
       catchEnv.declare(this.errIdent, err.val, false);
       if (this.numIdent) {
@@ -1674,7 +1697,7 @@ export function getFullPath(curPath, path, callerNode, callerEnv) {
 
 
 export function payGas(node, environment, isAsync, gasCost) {
-  let {gas} = environment.scriptGlobals;
+  let {gas} = environment.scriptVars;
   Object.keys(gasCost).forEach(key => {
     if (gas[key] ??= 0) {
       gas[key] -= gasCost[key];
@@ -1704,7 +1727,7 @@ export function payGasWithNoContext(gas, gasCost) {
 }
 
 export function decrCompGas(node, environment, isAsync) {
-  let {gas} = environment.scriptGlobals;
+  let {gas} = environment.scriptVars;
   if (0 > --gas.comp) {
     let err = new OutOfGasError(
       "Ran out of " + GAS_NAMES.comp + " gas",
@@ -1714,7 +1737,7 @@ export function decrCompGas(node, environment, isAsync) {
   }
 }
 export function decrGas(node, environment, gasName, isAsync) {
-  let {gas} = environment.scriptGlobals;
+  let {gas} = environment.scriptVars;
   if (0 > --gas[gasName]) {
     let err = new OutOfGasError(
       "Ran out of " + GAS_NAMES[gasName] + " gas",
@@ -1726,7 +1749,7 @@ export function decrGas(node, environment, gasName, isAsync) {
 
 export function throwExceptionAsyncOrNot(err, node, environment, isAsync) {
   if (isAsync) {
-    let {interpreter} = environment.scriptGlobals;
+    let {interpreter} = environment.scriptVars;
     interpreter.throwAsyncException(err, node, environment);
   }
   else {
@@ -1762,9 +1785,10 @@ export class DefinedFunction {
 }
 
 export class DevFunction {
-  constructor(signal, decEnv, fun) {
+  constructor(signal, signalParams, decEnv, fun) {
     this.fun = fun;
     if (signal) this.signal = signal;
+    if (signalParams) this.signalParams = signalParams;
     if (decEnv) this.decEnv = decEnv;
   }
 
@@ -1774,11 +1798,11 @@ export class DevFunction {
 }
 
 export class DevFunctionFromSyncFun extends DevFunction{
-  constructor(signal, decEnv, argNum, syncFun) {
-    let fun = ({callerNode, callerEnv}, inputArr) => {
-      let ret, {gas} = callerEnv.scriptGlobals;
+  constructor(signal, signalParams, decEnv, argNum, syncFun) {
+    let fun = (execVars, inputArr) => {
+      let ret;
       try {
-        ret = syncFun(gas, ...inputArr.slice(0, argNum));
+        ret = syncFun(execVars, ...inputArr.slice(0, argNum));
       } catch (err) {
         if (err instanceof OutOfGasError || err instanceof RuntimeError) {
           err.node = callerNode;
@@ -1788,16 +1812,16 @@ export class DevFunctionFromSyncFun extends DevFunction{
       }
       return ret;
     }
-    super(signal, decEnv, fun);
+    super(signal, signalParams, decEnv, fun);
   }
 }
 
 export class DevFunctionFromAsyncFun extends DevFunction{
-  constructor(signal, decEnv, argNum, asyncFun) {
-    let fun = ({callerNode, callerEnv, interpreter}, inputArr) => {
+  constructor(signal, signalParams, decEnv, argNum, asyncFun) {
+    let fun = (execVars, inputArr) => {
+      let {callerNode, callerEnv, interpreter} = execVars;
       let callback = inputArr[argNum];
-      let {gas} = callerEnv.scriptGlobals;
-      asyncFun(gas, ...inputArr.slice(0, argNum)).then(ret => {
+      asyncFun(execVars, ...inputArr.slice(0, argNum)).then(ret => {
         interpreter.executeAsyncCallback(
           callback, [ret], callerNode, callerEnv
         );
@@ -1809,20 +1833,21 @@ export class DevFunctionFromAsyncFun extends DevFunction{
         interpreter.throwAsyncException(err, callerNode, callerEnv);
       });
     }
-    super(signal, decEnv, fun);
+    super(signal, signalParams, decEnv, fun);
   }
 }
 
 export class ProtectedObject {
-  constructor(signal, decEnv) {
+  constructor(signal, signalParams, decEnv) {
     this.signal = signal;
+    this.signalParams = signalParams;
     this.decEnv = decEnv;
   }
 }
 
 export class ModuleObject extends ProtectedObject {
   constructor(modulePath, adminID, decEnv, members) {
-    super(moduleObjectSignal, decEnv);
+    super(moduleObjectSignal, undefined, decEnv);
     this.modulePath = modulePath;
     this.adminID = adminID;
     this.members = members;
@@ -1983,6 +2008,28 @@ export class CustomException {
     this.environment = environment;
   }
 }
+
+
+
+
+export class Flag {
+  constructor(name, isRestrictive, fun = () => true) {
+    this.name = name;
+
+    // When checking a flag, if isRestrictive is true for that flag, an error
+    // is thrown iff the flag is raised. If on the other hand isRestrictive is
+    // false (and the flag is permissive instead), an error is thrown iff the
+    // flag is not raised.   
+    this.isRestrictive = isRestrictive;
+
+    // If a raised flag holds a (defined) function, the check will treat the
+    // flag as being raised iff the function returns true (or truthy). This
+    // function receives two inputs: one which is provided when signaling to
+    // raise the flag, and one provided when signaling to check the flag.
+    this.fun = fun;
+  }
+}
+
 
 
 
