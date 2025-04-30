@@ -391,29 +391,6 @@ export class ScriptInterpreter {
 
 
 
-  // checkPermissions(flagStr, importerID, exporterID, permissions) {
-  //   let globalFlags = permissions.global;
-  //   let importFlags = permissions.import["$" + importerID];
-  //   let exportFlags = permissions.export["$" + exporterID];
-  //   let importExportFlags =
-  //     permissions.importExport["$" + importerID]["$" + exporterID];
-  //   let combPermissions = globalFlags + importFlags + exportFlags +
-  //     importExportFlags;
-  //   return this.checkPermissionFlags(combPermissions, flagStr);
-  // }
-
-  // checkPermissionFlags(flagStr, requiredFlagStr) {
-  //   let flagArr = flagStr.split("");
-  //   let requiredFlagArr = requiredFlagStr.split("");
-  //   for (let requiredFlag of requiredFlagArr) {
-  //     if (!flagArr.includes(requiredFlag)) {
-  //       return false;
-  //     }
-  //   }
-  //   return true;
-  // }
-
-
 
 
   executeOuterStatement(stmtNode, environment) {
@@ -559,6 +536,24 @@ export class ScriptInterpreter {
 
 
   executeDevFunction(devFun, inputArr, callerNode, callerEnv, thisVal) {
+
+//     let fun = (execVars, inputArr) => {
+//       let {callerNode, callerEnv, interpreter} = execVars;
+//       let callback = inputArr[argNum];
+//       asyncFun(execVars, ...inputArr.slice(0, argNum)).then(ret => {
+//         interpreter.executeAsyncCallback(
+//           callback, [ret], callerNode, callerEnv
+//         );
+//       }).catch(err => {
+//         if (err instanceof OutOfGasError || err instanceof RuntimeError) {
+//           err.node = callerNode;
+//           err.environment = callerEnv;
+//           interpreter.throwAsyncException(err, callerNode, callerEnv);
+//         }
+//         else throw err;
+//       });
+//     }
+
     // Define "execution variables" (functions) to queue flags, call async.
     // callbacks, and to throw async. errors.
     let flagQueue = [];
@@ -1421,7 +1416,7 @@ export class Environment {
   constructor(
     parent, scopeType = "block",
     callerNode, callerEnv, thisVal, isArrowFun = false,
-    isOuterProtectedMethod = false, flagInheritMap,
+    protectedObject = false,
     modulePath, lexArr, strPosArr, script,
     scriptVars,
     catchStmtArr, errIdent, numIdent,
@@ -1434,11 +1429,14 @@ export class Environment {
       this.callerEnv = callerEnv;
       if (thisVal) this.thisVal = thisVal;
       if (isArrowFun) this.isArrowFun = isArrowFun;
-      if (isOuterProtectedMethod) {
+      if (protectedObject) {
+        // First inherit flags from the parent environment via the standard
+        // inherit() method for the given flag, or an altered inherit()
+        // function if the protected object specifies one.
         this.flags = new Map(callerEnv.getFlags().entries.map(
           ([flag, parentFlagParams]) => {
             let inherit = flag.inherit;
-            let alteredInherit = flagInheritMap.get(flag);
+            let alteredInherit = protectedObject.flagInheritMap.get(flag);
             let inheritedFlagParams = alteredInherit ?
               alteredInherit(parentFlagParams, inherit, callerNode, this) :
               inherit(parentFlagParams, callerNode, this);
@@ -1447,6 +1445,11 @@ export class Environment {
         ).filter(
           ([ , flagParams]) => flagParams !== undefined
         ));
+
+        // Then raise any flags that the protected object specifies.
+        protectedObject.flags.forEach((flagParams, flag) => {
+          this.raiseFlag(flag, flagParams, callerNode, this);
+        });
       }
     }
     else if (scopeType === "module") {
@@ -1580,7 +1583,8 @@ export class Environment {
 
   raiseFlag(flag, flagParams = true, node, env = this) {
     let flags = this.getFlags();
-    flagParams = flag.onRaise(flagParams, node, env) ?? flagParams;
+    let prevFlagParams = flags.get(flag);
+    flagParams = flag.raise(flagParams, prevFlagParams, node, env);
     if (flagParams !== undefined) flags.set(flag, flagParams);
   }
 
@@ -1861,58 +1865,67 @@ export class DevFunction {
   }
 }
 
-export class DevFunctionFromSyncFun extends DevFunction{
-  constructor(decEnv, argNum, syncFun) {
-    let fun = (execVars, inputArr) => {
-      let ret;
-      try {
-        ret = syncFun(execVars, ...inputArr.slice(0, argNum));
-      } catch (err) {
-        if (err instanceof OutOfGasError || err instanceof RuntimeError) {
-          err.node = callerNode;
-          err.environment = callerEnv;
-        }
-        throw err;
-      }
-      return ret;
-    }
-    super(decEnv, fun);
+export class AsyncDevFunction extends DevFunction{
+  constructor(decEnv, asyncFun) {
+    super(decEnv, asyncFun);
   }
 }
 
-export class DevFunctionFromAsyncFun extends DevFunction{
-  constructor(decEnv, argNum, asyncFun) {
-    let fun = (execVars, inputArr) => {
-      let {callerNode, callerEnv, interpreter} = execVars;
-      let callback = inputArr[argNum];
-      asyncFun(execVars, ...inputArr.slice(0, argNum)).then(ret => {
-        interpreter.executeAsyncCallback(
-          callback, [ret], callerNode, callerEnv
-        );
-      }).catch(err => {
-        if (err instanceof OutOfGasError || err instanceof RuntimeError) {
-          err.node = callerNode;
-          err.environment = callerEnv;
-          interpreter.throwAsyncException(err, callerNode, callerEnv);
-        }
-        else throw err;
-      });
-    }
-    super(decEnv, fun);
-  }
-}
+// export class DevFunctionFromSyncFun extends DevFunction{
+//   constructor(decEnv, argNum, syncFun) {
+//     let fun = (execVars, inputArr) => {
+//       let ret;
+//       try {
+//         ret = syncFun(execVars, ...inputArr.slice(0, argNum));
+//       } catch (err) {
+//         if (err instanceof OutOfGasError || err instanceof RuntimeError) {
+//           err.node = callerNode;
+//           err.environment = callerEnv;
+//         }
+//         throw err;
+//       }
+//       return ret;
+//     }
+//     super(decEnv, fun);
+//   }
+// }
+
+// export class DevFunctionFromAsyncFun extends DevFunction{
+//   constructor(decEnv, argNum, asyncFun) {
+//     let fun = (execVars, inputArr) => {
+//       let {callerNode, callerEnv, interpreter} = execVars;
+//       let callback = inputArr[argNum];
+//       asyncFun(execVars, ...inputArr.slice(0, argNum)).then(ret => {
+//         interpreter.executeAsyncCallback(
+//           callback, [ret], callerNode, callerEnv
+//         );
+//       }).catch(err => {
+//         if (err instanceof OutOfGasError || err instanceof RuntimeError) {
+//           err.node = callerNode;
+//           err.environment = callerEnv;
+//           interpreter.throwAsyncException(err, callerNode, callerEnv);
+//         }
+//         else throw err;
+//       });
+//     }
+//     super(decEnv, fun);
+//   }
+// }
 
 export class ProtectedObject {
-  constructor(members, decEnv, flagInheritMap = new Map()) {
+  constructor(members, decEnv, flags = new Map(), flagInheritMap = new Map()) {
     this.members = members;
     this.decEnv = decEnv;
+    this.flags = flags;
     this.flagInheritMap = flagInheritMap;
   }
 }
 
 export class ModuleObject extends ProtectedObject {
-  constructor(members, decEnv, flagInheritMap, members, modulePath, adminID) {
-    super(members, decEnv, flagInheritMap);
+  constructor(
+    members, decEnv, flags, flagInheritMap, members, modulePath, adminID
+  ) {
+    super(members, decEnv, flags, flagInheritMap);
     this.modulePath = modulePath;
     this.adminID = adminID;
   }
@@ -2089,7 +2102,7 @@ export class CustomException {
 export class Flag {
   constructor(
     name, isRestrictive,
-    inherit = true, check = undefined, onRaise = undefined
+    inherit = true, check = undefined, raise = undefined
   ) {
     this.name = name;
 
@@ -2103,12 +2116,18 @@ export class Flag {
     // depend on the parameters that the flag was raised with (the flagParams),
     // and/or the parameters provided when signalling to check the flag (the
     // checkParams).
-    this.check = check ?? ((flagParams, node, env) => flagParams !== undefined);
+    this.check = check ?? (
+      (flagParams, node, env) => flagParams !== undefined
+    );
 
     // Function that is called when the flag is raised, with flagParams as its
     // input. This function might be used  check the same or other flags
-    // automatically when raising this flag.
-    this.onRaise = onRaise ?? ((flagParams, node, env) => {});
+    // automatically when raising this flag. It can also alter the flagParams
+    // by returning a new value. If it returns undefined, the flag is not
+    // raised after all, and is in fact removed if raised beforehand.
+    this.raise = raise ??(
+      (flagParams, prevFlagParams, node, env) => flagParams
+    );
 
     // Function that determines when a flag should bev inherited to a new
     // protected object environment. This function should return undefined if
