@@ -38,6 +38,8 @@ export function getParsingGasCost(str) {
   return {comp: str.length / 100 + 1};
 }
 
+let NO_EXIT_FLAG; // Is defined below.
+
 
 
 
@@ -1177,9 +1179,7 @@ export class ScriptInterpreter {
           this.evaluateExpression(expNode.exp, environment);
         let {resolveScript} = environment.scriptVars;
         // Check the restrictive "no exit" flag, before resolving the script.
-        environment.checkFlag(
-          exitFlag, "..."
-        );
+        environment.checkFlag(NO_EXIT_FLAG);
         resolveScript(expVal);
         // Throw an exit exception.
         throw new ExitException();
@@ -1826,47 +1826,6 @@ export class AsyncDevFunction extends DevFunction{
   }
 }
 
-// export class DevFunctionFromSyncFun extends DevFunction{
-//   constructor(decEnv, argNum, syncFun) {
-//     let fun = (execVars, inputArr) => {
-//       let ret;
-//       try {
-//         ret = syncFun(execVars, ...inputArr.slice(0, argNum));
-//       } catch (err) {
-//         if (err instanceof OutOfGasError || err instanceof RuntimeError) {
-//           err.node = callerNode;
-//           err.environment = callerEnv;
-//         }
-//         throw err;
-//       }
-//       return ret;
-//     }
-//     super(decEnv, fun);
-//   }
-// }
-
-// export class DevFunctionFromAsyncFun extends DevFunction{
-//   constructor(decEnv, argNum, asyncFun) {
-//     let fun = (execVars, inputArr) => {
-//       let {callerNode, callerEnv, interpreter} = execVars;
-//       let callback = inputArr[argNum];
-//       asyncFun(execVars, ...inputArr.slice(0, argNum)).then(ret => {
-//         interpreter.executeAsyncCallback(
-//           callback, [ret], callerNode, callerEnv
-//         );
-//       }).catch(err => {
-//         if (err instanceof OutOfGasError || err instanceof RuntimeError) {
-//           err.node = callerNode;
-//           err.environment = callerEnv;
-//           interpreter.throwAsyncException(err, callerNode, callerEnv);
-//         }
-//         else throw err;
-//       });
-//     }
-//     super(decEnv, fun);
-//   }
-// }
-
 export class ProtectedObject {
   constructor(members, decEnv, flags = new Map(), flagInheritMap = new Map()) {
     this.members = members;
@@ -2056,8 +2015,7 @@ export class CustomException {
 
 export class Flag {
   constructor(
-    name, isRestrictive,
-    inherit = true, check = undefined, raise = undefined
+    name, isRestrictive, inherit = true, check = undefined, raise = undefined
   ) {
     this.name = name;
 
@@ -2093,6 +2051,9 @@ export class Flag {
         (flagParams, node, env) => undefined;
   }
 }
+
+
+NO_EXIT_FLAG = new Flag("no_exit", true);
 
 
 
