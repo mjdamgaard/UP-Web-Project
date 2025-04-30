@@ -464,11 +464,8 @@ export class ScriptInterpreter {
 
 
   executeFunction(
-    fun, inputArr, callerNode, callerEnv, flagQueue, thisVal
+    fun, inputArr, callerNode, callerEnv, thisVal, isThisKeyword
   ) {
-    // TODO: Make the function execution environment here, and raise the flags
-    // from the flagQueue immediately in it.
-
     // If the function is an arrow function, check that it isn't called outside
     // of the "caller environment stack" that has its funDecEnv as an ancestor
     // in the stack.
@@ -482,21 +479,27 @@ export class ScriptInterpreter {
       );
     }
 
+    // If the function is called as a method of a protected object, and if
+    // the object was not accessed by the 'this' keyword (i.e. inside another
+    // one of its methods), assign the protected object held by thisVal to a
+    // protectedObject variable, which is passed the Environment() to make it a
+    // new protected object environment.
+    let protectedObject =
+      (thisVal instanceof ProtectedObject && !isThisKeyword) ? thisVal :
+      undefined; 
+
     // Then execute the function depending on its type.
     if (fun instanceof DevFunction) {
       // Initialize a new environment for the execution of the function.
-        newEnv = new Environment(
-          fun.decEnv, "function", callerNode, callerEnv
-        );
-
-      // Raise any and all the flags in the flagQueue for this new environment.
-      this.raiseFlagsFromQueue(newEnv, flagQueue);
+      let newEnv = new Environment(
+        fun.decEnv, "function", callerNode, callerEnv, undefined, false,
+        protectedObject
+      );
 
       // Then execute the developer function and returns its first output.
-      let [ret] = this.executeDevFunction(
-        devFun, inputArr, callerNode, callerEnv, thisVal
+      return this.executeDevFunction(
+        devFun, inputArr, callerNode, newEnv, thisVal
       );
-      return ret;
     }
     else if (fun instanceof DefinedFunction) {
       // Initialize a new environment for the execution of the function.
@@ -504,16 +507,15 @@ export class ScriptInterpreter {
       if (funNode.type === "arrow-function") {
         newEnv = new Environment(
           fun.decEnv, "function", callerNode, callerEnv, undefined, true,
+          protectedObject
         );
       }
       else {
         newEnv = new Environment(
-          fun.decEnv, "function", callerNode, callerEnv, thisVal
+          fun.decEnv, "function", callerNode, callerEnv, thisVal, false,
+          protectedObject
         );
       }
-
-      // Raise any and all the flags in the flagQueue for this new environment.
-      this.raiseFlagsFromQueue(newEnv, flagQueue);
 
       // Then execute the user-defined function and return is return value.
       return this.executeDefinedFunction(
@@ -527,78 +529,35 @@ export class ScriptInterpreter {
   }
 
 
-  raiseFlagsFromQueue(newEnv, flagQueue) {
-    flagQueue.forEach(([flag, flagParams]) => {
-      newEnv.raiseFlag(flag, flagParams);
-    });
-  }
 
-
-
-  executeDevFunction(devFun, inputArr, callerNode, callerEnv, thisVal) {
-
-//     let fun = (execVars, inputArr) => {
-//       let {callerNode, callerEnv, interpreter} = execVars;
-//       let callback = inputArr[argNum];
-//       asyncFun(execVars, ...inputArr.slice(0, argNum)).then(ret => {
-//         interpreter.executeAsyncCallback(
-//           callback, [ret], callerNode, callerEnv
-//         );
-//       }).catch(err => {
-//         if (err instanceof OutOfGasError || err instanceof RuntimeError) {
-//           err.node = callerNode;
-//           err.environment = callerEnv;
-//           interpreter.throwAsyncException(err, callerNode, callerEnv);
-//         }
-//         else throw err;
-//       });
-//     }
-
-    // Define "execution variables" (functions) to queue flags, call async.
-    // callbacks, and to throw async. errors.
-    let flagQueue = [];
-    let queueFlag = (flag, flagParams) => {
-      flagQueue.push([flag, flagParams]);
-    };
-    let callAsync = (fun, inputArr, thisVal) => {
-      this.executeAsyncCallback(
-        fun, inputArr, callerNode, callerEnv, flagQueue, thisVal
-      );
-    };
-    let callSync = (fun, inputArr, thisVal) => {
-      return this.executeFunction(
-        fun, inputArr, callerNode, callerEnv, flagQueue, thisVal
-      );
+  executeDevFunction(devFun, inputArr, callerNode, newEnv, thisVal) {
+    let execVars = {
+      callerNode: callerNode, callerEnv: newEnv, thisVal: thisVal,
+      interpreter: this,
     };
 
-    // Execute the dev function, with an 'execution variables' (execVars) object
-    // as the fist argument, containing data about the function call and its
-    // environment, followed by the inputArr as the second argument.
-    let ret;
-    try {
-      ret = devFun.fun(
-        {
-          queueFlag: queueFlag, callAsync: callAsync, callSync: callSync,
-          callerNode: callerNode, callerEnv: callerEnv, thisVal: thisVal,
-          interpreter: this,
-        },
-        inputArr
-      );
+    // If the dev function is a wrapper for an async function, call it and then
+    // call either executeAsyncCallback() or throwAsyncException() when it
+    // resolves or rejects, respectively.
+    if (devFun instanceof AsyncDevFunction) {
+      // Extract the callback from inputArr, which is always the last argument
+      // (even if the user provided a wrong number of arguments).
+      let callbackFun = inputArr.at(-1);
+      inputArr = inputArr.slice(0, -1);
+
+      // Call the async function and handle its result.
+      devFun.fun(execVars, inputArr).then(ret => {
+        this.executeAsyncCallback(
+          callbackFun, [ret], callerNode, callerEnv
+        );
+      }).catch(err => {
+        this.throwAsyncException(err, callerNode, callerEnv);
+      });
     }
-    catch (err) {
-      if (
-        err instanceof RuntimeError || err instanceof CustomException ||
-        err instanceof OutOfGasError || err instanceof LoadError
-      ) {
-        err.node ??= callerNode;
-        err.environment ??= callerEnv;
-      }
-      else throw err;
+    // Else call the dev function synchronously and return what it returns.
+    else {
+      return devFun.fun(execVars, inputArr);
     }
-
-    // Then return the return value, wrapped in an array together with the
-    // flagQueue.
-    return [ret, flagQueue];
   }
 
 
@@ -638,13 +597,11 @@ export class ScriptInterpreter {
 
 
   executeDefinedFunction(funNode, inputValueArr, callerNode, newEnv) {
-    decrCompGas(callerNode, callerEnv);
+    decrCompGas(callerNode, newEnv);
 
     // Add the input parameters to the environment (and turn all object inputs
     // immutable, unless wrapped in PassAsMutable()).
-    this.declareInputParameters(
-      newEnv, funNode.params, inputValueArr, callerNode, callerEnv
-    );
+    this.declareInputParameters(newEnv, funNode.params, inputValueArr);
 
     // Now execute the statements inside a try-catch statement to catch any
     // return exception, or any uncaught break or continue exceptions. On a
@@ -1218,12 +1175,10 @@ export class ScriptInterpreter {
         // Evaluate the argument.
         let expVal = (!expNode.exp) ? undefined :
           this.evaluateExpression(expNode.exp, environment);
-        let {initFlags, resolveScript} = environment.scriptVars;
-        let flags = environment.getFlags();
-        // Send an "exit" signal to protect, before resolving the script.
-        this.protect(
-          exitSignal, undefined, protectData, initFlags,
-          undefined, undefined, [expVal], environment, expNode
+        let {resolveScript} = environment.scriptVars;
+        // Check the restrictive "no exit" flag, before resolving the script.
+        environment.checkFlag(
+          exitFlag, "..."
         );
         resolveScript(expVal);
         // Throw an exit exception.
@@ -1341,7 +1296,7 @@ export class ScriptInterpreter {
 
           // Also check that the user isn't trying to assign to the member.
           if (forAssignment) throw new RuntimeError(
-            "Assignment to a read-only member of a module object",
+            "Assignment to a read-only member of a protected object",
             postfix, environment
           );
 
