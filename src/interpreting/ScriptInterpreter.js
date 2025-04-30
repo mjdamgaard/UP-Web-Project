@@ -996,10 +996,10 @@ export class ScriptInterpreter {
             case "===":
             case "==": {
               let a = acc, n = nextVal;
-              if (a instanceof Immutable || a instanceof PassAsMutable) {
+              if (a instanceof ValueWrapper) {
                 a = acc.val;
               }
-              if (n instanceof Immutable || n instanceof PassAsMutable) {
+              if (n instanceof ValueWrapper) {
                 n = nextVal.val;
               }
               acc = (op === "==") ? (a == n) : (a === n);
@@ -1419,13 +1419,12 @@ export class ScriptInterpreter {
 
 export class Environment {
   constructor(
-    parent = undefined, scopeType = "block",
-    callerNode = undefined, callerEnv = undefined, thisVal = undefined,
-    isArrowFun = false, isOuterProtectedMethod = false, 
-    modulePath = undefined, lexArr = undefined, strPosArr = undefined,
-    script = undefined,
-    scriptVars = undefined,
-    catchStmtArr = undefined, errIdent, numIdent,
+    parent, scopeType = "block",
+    callerNode, callerEnv, thisVal, isArrowFun = false,
+    isOuterProtectedMethod = false, flagInheritMap,
+    modulePath, lexArr, strPosArr, script,
+    scriptVars,
+    catchStmtArr, errIdent, numIdent,
   ) {
     this.parent = parent;
     this.scopeType = scopeType;
@@ -1437,7 +1436,14 @@ export class Environment {
       if (isArrowFun) this.isArrowFun = isArrowFun;
       if (isOuterProtectedMethod) {
         this.flags = new Map(callerEnv.getFlags().entries.map(
-          ([flag, parentFlagParams]) => [flag, flag.inherit(parentFlagParams)]
+          ([flag, parentFlagParams]) => {
+            let inherit = flag.inherit;
+            let alteredInherit = flagInheritMap.get(flag);
+            let inheritedFlagParams = alteredInherit ?
+              alteredInherit(parentFlagParams, inherit, callerNode, this) :
+              inherit(parentFlagParams, callerNode, this);
+            return [flag, inheritedFlagParams];
+          }
         ).filter(
           ([ , flagParams]) => flagParams !== undefined
         ));
@@ -1897,18 +1903,18 @@ export class DevFunctionFromAsyncFun extends DevFunction{
 }
 
 export class ProtectedObject {
-  constructor(decEnv, checkAndRaiseFlags) {
+  constructor(members, decEnv, flagInheritMap = new Map()) {
+    this.members = members;
     this.decEnv = decEnv;
-    this.checkAndRaiseFlags = checkAndRaiseFlags ?? ((node, env) => {});
+    this.flagInheritMap = flagInheritMap;
   }
 }
 
 export class ModuleObject extends ProtectedObject {
-  constructor(modulePath, adminID, decEnv, members) {
-    super(decEnv, "TODO...");
+  constructor(members, decEnv, flagInheritMap, members, modulePath, adminID) {
+    super(members, decEnv, flagInheritMap);
     this.modulePath = modulePath;
     this.adminID = adminID;
-    this.members = members;
   }
 
   get(key) {
@@ -1917,12 +1923,15 @@ export class ModuleObject extends ProtectedObject {
   }
 }
 
-export class Immutable {
+export class ValueWrapper {
   constructor(val) {
     this.val = val;
   }
   get(key) {
     return this.val.get(key);
+  }
+  set(key, val) {
+    return this.val.set(key, val);
   }
   entries(key) {
     return this.val.entries(key);
@@ -1938,7 +1947,14 @@ export class Immutable {
   }
 }
 
-export class PassAsMutable extends Immutable {
+export class Immutable extends ValueWrapper {
+  constructor(val) {
+    super(val);
+  }
+  set = null;
+}
+
+export class PassAsMutable extends ValueWrapper {
   constructor(val) {
     super(val);
   }
@@ -2087,7 +2103,7 @@ export class Flag {
     // depend on the parameters that the flag was raised with (the flagParams),
     // and/or the parameters provided when signalling to check the flag (the
     // checkParams).
-    this.check = check ?? ((flagParams) => flagParams !== undefined);
+    this.check = check ?? ((flagParams, node, env) => flagParams !== undefined);
 
     // Function that is called when the flag is raised, with flagParams as its
     // input. This function might be used  check the same or other flags
@@ -2099,15 +2115,15 @@ export class Flag {
     // the flag should not be inherited, or should return the new flagParams
     // otherwise.
     this.inherit = (inherit instanceof Function) ? inherit :
-      inherit ? (parentFlagParams) => parentFlagParams :
-        () => undefined;
+      inherit ? (parentFlagParams, node, env) => parentFlagParams :
+        (flagParams, node, env) => undefined;
   }
 }
 
 
 
 
-const SNIPPET_BEFORE_MAX_LEN = 400;
+const SNIPPET_BEFORE_MAX_LEN = 600;
 const SNIPPET_AFTER_MAX_LEN = 100;
 
 export function getExtendedErrorMsg(error) {
