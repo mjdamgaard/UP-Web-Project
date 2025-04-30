@@ -507,14 +507,40 @@ export class ScriptInterpreter {
 
     // Then execute the function depending on its type.
     if (fun instanceof DevFunction) {
+      // Initialize a new environment for the execution of the function.
+        newEnv = new Environment(
+          fun.decEnv, "function", callerNode, callerEnv
+        );
+
+      // Raise any and all the flags in the flagQueue for this new environment.
+      this.raiseFlagsFromQueue(newEnv, flagQueue);
+
+      // Then execute the developer function and returns its first output.
       let [ret] = this.executeDevFunction(
         devFun, inputArr, callerNode, callerEnv, thisVal
       );
       return ret;
     }
     else if (fun instanceof DefinedFunction) {
+      // Initialize a new environment for the execution of the function.
+      let newEnv;
+      if (funNode.type === "arrow-function") {
+        newEnv = new Environment(
+          fun.decEnv, "function", callerNode, callerEnv, undefined, true,
+        );
+      }
+      else {
+        newEnv = new Environment(
+          fun.decEnv, "function", callerNode, callerEnv, thisVal
+        );
+      }
+
+      // Raise any and all the flags in the flagQueue for this new environment.
+      this.raiseFlagsFromQueue(newEnv, flagQueue);
+
+      // Then execute the user-defined function and return is return value.
       return this.executeDefinedFunction(
-        fun.node, fun.decEnv, inputArr, callerNode, callerEnv, thisVal
+        fun.node, inputArr, callerNode, newEnv
       );
     }
     else throw new RuntimeError(
@@ -524,14 +550,20 @@ export class ScriptInterpreter {
   }
 
 
+  raiseFlagsFromQueue(newEnv, flagQueue) {
+    flagQueue.forEach(([flag, flagParams]) => {
+      newEnv.raiseFlag(flag, flagParams);
+    });
+  }
+
 
 
   executeDevFunction(devFun, inputArr, callerNode, callerEnv, thisVal) {
     // Define "execution variables" (functions) to queue flags, call async.
     // callbacks, and to throw async. errors.
     let flagQueue = [];
-    let queueFlag = (flag, raiseParams) => {
-      flagQueue.push([flag, raiseParams]);
+    let queueFlag = (flag, flagParams) => {
+      flagQueue.push([flag, flagParams]);
     };
     let callAsync = (fun, inputArr, thisVal) => {
       this.executeAsyncCallback(
@@ -610,24 +642,8 @@ export class ScriptInterpreter {
 
 
 
-  executeDefinedFunction(
-    funNode, funDecEnv, inputValueArr, callerNode, callerEnv, thisVal,
-  ) {
+  executeDefinedFunction(funNode, inputValueArr, callerNode, newEnv) {
     decrCompGas(callerNode, callerEnv);
-    let scriptVars = callerEnv.scriptVars;
-
-    // Initialize a new environment for the execution of the function.
-    let newEnv;
-    if (funNode.type === "arrow-function") {
-      newEnv = new Environment(
-        funDecEnv, "arrow-function", callerNode, callerEnv
-      );
-    }
-    else {
-      newEnv = new Environment(
-        funDecEnv, "function", callerNode, callerEnv, thisVal
-      );
-    }
 
     // Add the input parameters to the environment (and turn all object inputs
     // immutable, unless wrapped in PassAsMutable()).
@@ -1405,6 +1421,7 @@ export class Environment {
   constructor(
     parent = undefined, scopeType = "block",
     callerNode = undefined, callerEnv = undefined, thisVal = undefined,
+    isArrowFun = false, isOuterProtectedMethod = false, 
     modulePath = undefined, lexArr = undefined, strPosArr = undefined,
     script = undefined,
     scriptVars = undefined,
@@ -1417,7 +1434,14 @@ export class Environment {
       this.callerNode = callerNode;
       this.callerEnv = callerEnv;
       if (thisVal) this.thisVal = thisVal;
-      this.flags = new Map(callerEnv.getFlags().entries);
+      if (isArrowFun) this.isArrowFun = isArrowFun;
+      if (isOuterProtectedMethod) {
+        this.flags = new Map(callerEnv.getFlags().entries.map(
+          ([flag, parentFlagParams]) => [flag, flag.inherit(parentFlagParams)]
+        ).filter(
+          ([ , flagParams]) => flagParams !== undefined
+        ));
+      }
     }
     else if (scopeType === "module") {
       this.modulePath = modulePath;
@@ -1439,6 +1463,10 @@ export class Environment {
     this.scriptVars = scriptVars ?? parent?.scriptVars ?? (() => {
       throw "Environment: No scriptVars object provided";
     })();
+  }
+
+  get isNonArrowFunction() {
+    return this.scopeType === "function" && !this.isArrowFun;
   }
 
   declare(ident, val, isConst, node, nodeEnvironment = this) {
@@ -1463,7 +1491,7 @@ export class Environment {
     }
     else if (this.parent) {
       let val = this.parent.get(ident, node, nodeEnvironment);
-      if (this.scopeType === "function") {
+      if (this.isNonArrowFunction) {
         return turnImmutable(val);
       } else {
         return val;
@@ -1491,9 +1519,9 @@ export class Environment {
       return ret;
     }
     else if (this.parent) {
-      if (this.scopeType === "function") {
-        // Throw `Undeclared variable "${ident}"` error if the variable is
-        // undefined.
+      if (this.isNonArrowFunction) {
+        // Throw an `Undeclared variable "${ident}"` error if the variable is
+        // undefined (get() does this).
         this.get(ident, node, nodeEnvironment);
 
         // And else throw an error stating that you cannot assign to a non-
@@ -1522,11 +1550,11 @@ export class Environment {
     if (thisVal !== undefined) {
       return (thisVal === UNDEFINED) ? undefined : thisVal;
     }
-    else if (this.scopeType !== "function" && this.parent) {
-      return this.parent.getThisVal();
+    else if (this.isNonArrowFunction) {
+      return undefined;
     }
     else {
-      return undefined;
+      return this.parent.getThisVal();
     }
   }
 
@@ -1535,36 +1563,37 @@ export class Environment {
     if (flags !== undefined) {
       return flags;
     }
-    else if (this.scopeType !== "function" && this.parent) {
-      return this.parent.getFlags();
+    else if (this.isNonArrowFunction) {
+      return this.callerEnv.getFlags();
     }
     else {
-      return this.callerEnv.getFlags();
+      return this.parent.getFlags();
     }
   }
 
 
-  raiseFlag(flag, raiseParams) {
+  raiseFlag(flag, flagParams = true, node, env = this) {
     let flags = this.getFlags();
-    flags.set(flag, raiseParams ?? null);
+    flagParams = flag.onRaise(flagParams, node, env) ?? flagParams;
+    if (flagParams !== undefined) flags.set(flag, flagParams);
   }
 
   checkFlag(flag, checkParams, node, env = this) {
-    let raiseParams = this.getFlags().get(flag);
+    let flagParams = this.getFlags().get(flag);
 
-    // If the flag in question is restrictive, throw iff its checkFun returns
+    // If the flag in question is restrictive, throw iff its check returns
     // true.
     if (flag.isRestrictive) {
-      if (flag.checkFun(raiseParams, checkParams, env)) {
+      if (flag.check(flagParams, checkParams, node, env)) {
         throw new RuntimeError(
           `Flag "${flag.name}" (restrictive) was checked as being raised`,
           node, env
         );
       }
     }
-    // Else if it is permissive, throw iff its checkFun returns false.
+    // Else if it is permissive, throw iff its check returns false.
     else {
-      if (!flag.checkFun(raiseParams, checkParams, env)) {
+      if (!flag.check(flagParams, checkParams, node, env)) {
         throw new RuntimeError(
           `Flag "${flag.name}" (permissive) was checked as not being raised`,
           node, env
@@ -1634,9 +1663,7 @@ export class Environment {
       }
       return true;
     }
-    else if (
-      this.scopeType === "function" || this.scopeType === "arrow-function"
-    ) {
+    else if (this.scopeType === "function") {
       return this.callerEnv.runNearestCatchStmtAncestor(
         err, node, nodeEnvironment
       );
@@ -1870,9 +1897,9 @@ export class DevFunctionFromAsyncFun extends DevFunction{
 }
 
 export class ProtectedObject {
-  constructor(decEnv, accessDevFun) {
+  constructor(decEnv, checkAndRaiseFlags) {
     this.decEnv = decEnv;
-    this.accessDevFun = accessDevFun;
+    this.checkAndRaiseFlags = checkAndRaiseFlags ?? ((node, env) => {});
   }
 }
 
@@ -2044,7 +2071,10 @@ export class CustomException {
 
 
 export class Flag {
-  constructor(name, isRestrictive, checkFun = undefined) {
+  constructor(
+    name, isRestrictive,
+    inherit = true, check = undefined, onRaise = undefined
+  ) {
     this.name = name;
 
     // When checking a flag, if isRestrictive is true for that flag, an error
@@ -2054,10 +2084,23 @@ export class Flag {
     this.isRestrictive = isRestrictive;
 
     // The function that decides if the flag is considered up or not, which can
-    // depend on the parameters that the flag was raised with (the raiseParams),
+    // depend on the parameters that the flag was raised with (the flagParams),
     // and/or the parameters provided when signalling to check the flag (the
     // checkParams).
-    this.checkFun = checkFun ?? ((raiseParams) => raiseParams !== undefined);
+    this.check = check ?? ((flagParams) => flagParams !== undefined);
+
+    // Function that is called when the flag is raised, with flagParams as its
+    // input. This function might be used  check the same or other flags
+    // automatically when raising this flag.
+    this.onRaise = onRaise ?? ((flagParams, node, env) => {});
+
+    // Function that determines when a flag should bev inherited to a new
+    // protected object environment. This function should return undefined if
+    // the flag should not be inherited, or should return the new flagParams
+    // otherwise.
+    this.inherit = (inherit instanceof Function) ? inherit :
+      inherit ? (parentFlagParams) => parentFlagParams :
+        () => undefined;
   }
 }
 
