@@ -465,37 +465,37 @@ export class ScriptInterpreter {
 
 
 
-  executeFunction(
-    fun, inputArr, callerNode, callerEnv, thisVal, isThisKeyword
-  ) {
+  executeFunction(fun, inputArr, callerNode, callerEnv, thisVal) {
     // If the function is an arrow function, check that it isn't called outside
     // of the "caller environment stack" that has its funDecEnv as an ancestor
     // in the stack.
-    if (fun.isArrowFun) {
+    if (fun.isArrowFun || fun instanceof ModuleMethod) {
       let isValid = callerEnv.isCallStackDescendentOf(fun.decEnv);
       if (!isValid) throw new RuntimeError(
-        "An arrow function was called outside of the call stack " +
-        "in which it was declared. (Do not return arrow functions created " +
-        "within a function, or use them as methods, or export them.)",
+        "An arrow function or module method was called outside of the " +
+        "environmental call stack in which it was declared.",
         callerNode, callerEnv
       );
     }
 
-    // If the function is called as a method of a protected object, and if
+    // If the function is called as a method of a module object, and if
     // the object was not accessed by the 'this' keyword (i.e. inside another
-    // one of its methods), assign the protected object held by thisVal to a
-    // protectedObject variable, which is passed the Environment() to make it a
-    // new protected object environment.
-    let protectedObject =
-      (thisVal instanceof ProtectedObject && !isThisKeyword) ? thisVal :
-      undefined; 
+    // one of its methods), assign the module object held by thisVal to a
+    // moduleObject variable, which is passed the Environment() to make it a
+    // new module object environment.
+    let moduleObject;
+    if (fun instanceof ModuleMethod) {
+      moduleObject = thisVal;
+      thisVal = fun.thisVal;
+      fun = fun.fun;
+    }
 
     // Then execute the function depending on its type.
     if (fun instanceof DevFunction) {
       // Initialize a new environment for the execution of the function.
       let newEnv = new Environment(
         fun.decEnv, "function", callerNode, callerEnv, undefined, false,
-        protectedObject
+        moduleObject
       );
 
       // Then execute the developer function and returns its first output.
@@ -509,13 +509,13 @@ export class ScriptInterpreter {
       if (funNode.type === "arrow-function") {
         newEnv = new Environment(
           fun.decEnv, "function", callerNode, callerEnv, undefined, true,
-          protectedObject
+          moduleObject
         );
       }
       else {
         newEnv = new Environment(
           fun.decEnv, "function", callerNode, callerEnv, thisVal, false,
-          protectedObject
+          moduleObject
         );
       }
 
@@ -1179,7 +1179,7 @@ export class ScriptInterpreter {
           this.evaluateExpression(expNode.exp, environment);
         let {resolveScript} = environment.scriptVars;
         // Check the can-exit flag, before resolving the script.
-        environment.raiseFlag(CAN_EXIT_FLAG, true, node, environment);
+        environment.raiseFlag(CAN_EXIT_FLAG, true, node);
         resolveScript(expVal);
         // Throw an exit exception.
         throw new ExitException();
@@ -1282,14 +1282,13 @@ export class ScriptInterpreter {
           index = this.evaluateExpression(postfix.exp, environment);
         }
 
-        // If objVal is a protected object, get the method, and also make
-        // some checks.
-        if (objVal instanceof ProtectedObject) {
+        // If objVal is a module object, get the member, and make some checks.
+        if (objVal instanceof ModuleObject) {
           // Check that the object isn't being used outside its own declaration
           // environment call stack.
           let isValid = environment.isCallStackDescendentOf(objVal.decEnv);
           if (!isValid) throw new RuntimeError(
-            "Use of a protected object outside of the " +
+            "Accessing module object outside of the " +
             "environmental call stack in which it was declared",
             postfix, environment
           );
@@ -1303,12 +1302,12 @@ export class ScriptInterpreter {
           // Then get the member.
           val = objVal.members[index];
 
-          // And if the member is a function, i.e. a protected object's method,
+          // And if the member is a function, i.e. a module object's method,
           // bind 'this' here at access time, rather than at call time, such
           // that the owner of the method cannot be changed, even if assigned
           // and called from another object.
           if (val instanceof DefinedFunction || val instanceof DevFunction) {
-            val = new ThisBoundFunction(val, objVal);
+            val = new ModuleMethod(val, objVal, environment);
           }
         }
 
@@ -1379,7 +1378,7 @@ export class Environment {
   constructor(
     parent, scopeType = "block",
     callerNode, callerEnv, thisVal, isArrowFun = false,
-    protectedObject = false,
+    moduleObject = false,
     modulePath, lexArr, strPosArr, script,
     scriptVars,
     catchStmtArr, errIdent, numIdent,
@@ -1392,27 +1391,11 @@ export class Environment {
       this.callerEnv = callerEnv;
       if (thisVal) this.thisVal = thisVal;
       if (isArrowFun) this.isArrowFun = isArrowFun;
-      if (protectedObject) {
-        // First inherit flags from the parent environment via the standard
-        // inherit() method for the given flag, or an altered inherit()
-        // function if the protected object specifies one.
-        this.flags = new Map(callerEnv.getFlags().entries.map(
-          ([flag, parentFlagParams]) => {
-            let inherit = flag.inherit;
-            let alteredInherit = protectedObject.flagInheritMap.get(flag);
-            let inheritedFlagParams = alteredInherit ?
-              alteredInherit(parentFlagParams, inherit, callerNode, this) :
-              inherit(parentFlagParams, callerNode, this);
-            return [flag, inheritedFlagParams];
-          }
-        ).filter(
-          ([ , flagParams]) => flagParams !== undefined
-        ));
-
-        // Then raise any flags that the protected object specifies.
-        protectedObject.flags.forEach((flagParams, flag) => {
-          this.raiseFlag(flag, flagParams, callerNode, this);
-        });
+      if (moduleObject) {
+        this.flagEnv = new FlagEnvironment(
+          this.getFlagEnvironment(),
+          moduleObject.modulePath
+        );
       }
     }
     else if (scopeType === "module") {
@@ -1525,54 +1508,34 @@ export class Environment {
     else if (this.isNonArrowFunction) {
       return undefined;
     }
-    else {
+    else if (this.parent) {
       return this.parent.getThisVal();
     }
+    else {
+      return undefined;
+    }
   }
 
-  getFlags() {
-    let flags = this.flags;
-    if (flags !== undefined) {
-      return flags;
+  getFlagEnvironment() {
+    let flagEnv = this.flagEnv;
+    if (flagEnv) {
+      return flagEnv;
     }
     else if (this.isNonArrowFunction) {
-      return this.callerEnv.getFlags();
+      return this.callerEnv.getFlagEnvironment();
+    }
+    else if (this.parent) {
+      return this.parent.getFlagEnvironment();
     }
     else {
-      return this.parent.getFlags();
+      return undefined;
     }
   }
 
-
-  raiseFlag(flag, flagParams = true, node, env = this) {
-    let flags = this.getFlags();
-    let prevFlagParams = flags.get(flag);
-    flagParams = flag.raise(flagParams, prevFlagParams, node, env);
-    if (flagParams !== undefined) flags.set(flag, flagParams);
-  }
-
-  checkFlag(flag, checkParams, node, env = this) {
-    let flagParams = this.getFlags().get(flag);
-
-    // If the flag in question is restrictive, throw iff its check returns
-    // true.
-    if (flag.isRestrictive) {
-      if (flag.check(flagParams, checkParams, node, env)) {
-        throw new RuntimeError(
-          `Flag "${flag.name}" (restrictive) was checked as being raised`,
-          node, env
-        );
-      }
-    }
-    // Else if it is permissive, throw iff its check returns false.
-    else {
-      if (!flag.check(flagParams, checkParams, node, env)) {
-        throw new RuntimeError(
-          `Flag "${flag.name}" (permissive) was checked as not being raised`,
-          node, env
-        );
-      }
-    }
+  raiseFlag(flag, flagParams, node, env = this) {
+    let flagEnv = this.getFlagEnvironment();
+    let flagParams = flag.raise(flagParams, flagEnv, node, env);
+    if (flagParams !== undefined) flagEnv.flags.set(flag, flagParams);
   }
 
 
@@ -1887,7 +1850,6 @@ export class DefinedFunction {
     this.node = node;
     this.decEnv = decEnv;
   }
-
   get isArrowFun() {
     return this.node.type === "arrow-function";
   }
@@ -1898,7 +1860,6 @@ export class DevFunction {
     this.fun = fun;
     if (decEnv) this.decEnv = decEnv;
   }
-
   get isArrowFun() {
     return this.decEnv ? true : false;
   }
@@ -1910,34 +1871,23 @@ export class AsyncDevFunction extends DevFunction {
   }
 }
 
-export class ThisBoundFunction {
-  constructor(fun, thisVal) {
+export class ModuleMethod {
+  constructor(fun, thisVal, modulePath, accessEnv) {
     this.fun = fun;
     this.thisVal = thisVal;
-  }
-}
-
-export class ProtectedObject {
-  constructor(members, decEnv, flags = new Map(), flagInheritMap = new Map()) {
-    this.members = members;
-    this.decEnv = decEnv;
-    this.flags = flags;
-    this.flagInheritMap = flagInheritMap;
-  }
-}
-
-export class ModuleObject extends ProtectedObject {
-  constructor(
-    members, decEnv, flags, flagInheritMap, members, modulePath, adminID
-  ) {
-    super(members, decEnv, flags, flagInheritMap);
     this.modulePath = modulePath;
-    this.adminID = adminID;
+    this.accessEnv = accessEnv;
   }
+  get isArrowFun() {
+    return false;
+  }
+}
 
-  get(key) {
-    if (key === "adminID") return this.adminID;
-    else return this.members.get(key);
+export class ModuleObject {
+  constructor(modulePath, decEnv, members) {
+    this.modulePath = modulePath;
+    this.decEnv = decEnv;
+    this.members = members;
   }
 }
 
