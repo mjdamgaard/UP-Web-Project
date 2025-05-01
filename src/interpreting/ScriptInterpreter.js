@@ -38,7 +38,7 @@ export function getParsingGasCost(str) {
   return {comp: str.length / 100 + 1};
 }
 
-let NO_EXIT_FLAG; // Is defined below.
+let CAN_EXIT_FLAG; // is defined below.
 
 
 
@@ -1178,8 +1178,8 @@ export class ScriptInterpreter {
         let expVal = (!expNode.exp) ? undefined :
           this.evaluateExpression(expNode.exp, environment);
         let {resolveScript} = environment.scriptVars;
-        // Check the restrictive "no exit" flag, before resolving the script.
-        environment.checkFlag(NO_EXIT_FLAG);
+        // Check the can-exit flag, before resolving the script.
+        environment.raiseFlag(CAN_EXIT_FLAG, true, node, environment);
         resolveScript(expVal);
         // Throw an exit exception.
         throw new ExitException();
@@ -1302,6 +1302,14 @@ export class ScriptInterpreter {
 
           // Then get the member.
           val = objVal.members[index];
+
+          // And if the member is a function, i.e. a protected object's method,
+          // bind 'this' here at access time, rather than at call time, such
+          // that the owner of the method cannot be changed, even if assigned
+          // and called from another object.
+          if (val instanceof DefinedFunction || val instanceof DevFunction) {
+            val = new ThisBoundFunction(val, objVal);
+          }
         }
 
         // Else check that the object has a get() method, and a set() method if
@@ -1656,6 +1664,88 @@ export class Environment {
 
 
 
+
+
+export class Flag {
+  constructor(raise) {
+    // Function that is called when the flag is raised. It typically first
+    // checks if it is allowed to be raised giving the previously raised flags,
+    // and then raises the flag on success, typically with the same flag
+    // parameters the flagParams input, although raise() might also change
+    // these flag parameters to something else, depending on the previously
+    // raised flags.   
+    this.raise = raise ?? (
+      (flagParams, flagEnv, node, env) => flagParams
+    );
+  }
+}
+
+
+CAN_EXIT_FLAG = new Flag((canExit, flagEnv, node, env) => {
+  let [prevCanExit] = flagEnv.getFlag(CAN_EXIT_FLAG);
+  if (prevCanExit === undefined || prevCanExit === canExit) {
+    return canExit;
+  }
+  else {
+    throw new RuntimeError(
+      canExit ?
+        "Script is not allowed to exit" :
+        'A cannot-exit flag was raised after a can-exit flag',
+      node, env
+    );
+  }
+});
+
+
+
+
+
+export class FlagEnvironment {
+  constructor(parent, modulePath) {
+    this.parent = parent;
+    this.modulePath = modulePath;
+    this.level = parent?.level + 1 ?? 0;
+    this.flags = new Map();
+  }
+
+  getFirstFlag(flagArr) {
+    let retFlag, retFlagParams;
+    flagArr.some(flag => {
+      let flagParams = this.flags.get(flag);
+      if (flagParams !== undefined) {
+        retFlag = flag;
+        retFlagParams = flagParams;
+        return true; // breaks the some iteration.
+      }
+    });
+    if (retFlag) {
+      return [retFlag, retFlagParams, this.modulePath, this.level];
+    }
+    else if (this.parent) {
+      return this.parent.getFirstFlag(flagArr);
+    }
+    else {
+      return undefined;
+    }
+  }
+
+  getFlag(flag) {
+    let [ , flagParams, modulePath, level] = this.getFirstFlag([flag]);
+    return [flagParams, modulePath, level];
+  }
+
+  // TODO: Potentially add more useful methods here.
+
+}
+
+
+
+
+
+
+
+
+
 function getSafeObj(obj) {
   if (!obj || typeof object !== "object") {
     return obj;
@@ -1786,12 +1876,6 @@ export function throwException(err, node, environment, isAsync) {
 
 
 
-export function isFunction(val) {
-  return (
-    val instanceof DefinedFunction || val instanceof DevFunction
-  );
-}
-
 
 
 export const UNDEFINED = Symbol("undefined");
@@ -1820,9 +1904,16 @@ export class DevFunction {
   }
 }
 
-export class AsyncDevFunction extends DevFunction{
+export class AsyncDevFunction extends DevFunction {
   constructor(decEnv, asyncFun) {
     super(decEnv, asyncFun);
+  }
+}
+
+export class ThisBoundFunction {
+  constructor(fun, thisVal) {
+    this.fun = fun;
+    this.thisVal = thisVal;
   }
 }
 
@@ -2011,49 +2102,6 @@ export class CustomException {
 }
 
 
-
-
-export class Flag {
-  constructor(
-    name, isRestrictive, inherit = true, check = undefined, raise = undefined
-  ) {
-    this.name = name;
-
-    // When checking a flag, if isRestrictive is true for that flag, an error
-    // is thrown iff the flag is raised. If on the other hand isRestrictive is
-    // false (and the flag is permissive instead), an error is thrown iff the
-    // flag is not raised.   
-    this.isRestrictive = isRestrictive;
-
-    // The function that decides if the flag is considered up or not, which can
-    // depend on the parameters that the flag was raised with (the flagParams),
-    // and/or the parameters provided when signalling to check the flag (the
-    // checkParams).
-    this.check = check ?? (
-      (flagParams, node, env) => flagParams !== undefined
-    );
-
-    // Function that is called when the flag is raised, with flagParams as its
-    // input. This function might be used  check the same or other flags
-    // automatically when raising this flag. It can also alter the flagParams
-    // by returning a new value. If it returns undefined, the flag is not
-    // raised after all, and is in fact removed if raised beforehand.
-    this.raise = raise ??(
-      (flagParams, prevFlagParams, node, env) => flagParams
-    );
-
-    // Function that determines when a flag should bev inherited to a new
-    // protected object environment. This function should return undefined if
-    // the flag should not be inherited, or should return the new flagParams
-    // otherwise.
-    this.inherit = (inherit instanceof Function) ? inherit :
-      inherit ? (parentFlagParams, node, env) => parentFlagParams :
-        (flagParams, node, env) => undefined;
-  }
-}
-
-
-NO_EXIT_FLAG = new Flag("no_exit", true);
 
 
 
