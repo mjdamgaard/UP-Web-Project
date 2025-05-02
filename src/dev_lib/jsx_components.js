@@ -89,8 +89,8 @@ class JSXInstance {
     // returning) on the JSXElement to be rendered. This resolve() callback's
     // job is to get us the newDOMNode to insert in the DOM.
     let newDOMNode, resolveHasBeenCalled = false;
-    let resolve = new DevFunction(undefined, callerEnv, (
-      {interpreter, callerNode, callerEnv}, jsxElement
+    let resolve = new DevFunction(callerEnv, (
+      {interpreter, callerNode, callerEnv}, [jsxElement]
     ) => {
       resolveHasBeenCalled = true;
 
@@ -140,7 +140,7 @@ class JSXInstance {
 
     // Now call the render() function, and check that resolve has been called
     // synchronously by it.
-    let inputArr = [resolve, props, dispatch, this.state];
+    let inputArr = [resolve, props, dispatch, this.state, this];
     interpreter.executeFunction(
       fun, inputArr, callerNode, callerEnv, this.componentModule
     );
@@ -464,19 +464,14 @@ class JSXInstanceObject extends ProtectedObject {
   // an action, but only be visible on a subsequent render. setState() also
   // always queues a rerender, even if the new state is equivalent to the old
   // one.
-  setState = new DevFunction(null, null, (
-    {interpreter},
-    state
-  ) => {
+  setState = new DevFunction(({interpreter}, [state]) => {
     this.jsxInstance.state = turnImmutable(state);
     this.jsxInstance.queueRerender(interpreter);
   });
 
   // Rerender is equivalent of calling setState() on the current state; it just
   // forces a rerender.
-  rerender = new DevFunction(null, null, (
-    {interpreter},
-  ) => {
+  rerender = new DevFunction(({interpreter}) => {
     this.jsxInstance.queueRerender(interpreter);
   });
 

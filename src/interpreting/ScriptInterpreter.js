@@ -1205,6 +1205,29 @@ export class ScriptInterpreter {
           );
         }
       }
+      case "promise-call": {
+        let expVal = this.evaluateExpression(expNode.exp, environment);
+        return new PromiseObject(expVal, this, expNode.exp, environment);
+      }
+      case "promise-all-call": {
+        let expVal = this.evaluateExpression(expNode.exp, environment);
+        if (!(expVal.values instanceof Function)) throw new RuntimeError(
+          "Expression is not iterable",
+          expNode.exp, environment
+        );
+        return new PromiseObject(Promise.all(
+          expVal.values().map((promiseObject, key) => {
+            if (promiseObject instanceof PromiseObject) {
+              return promiseObject.promise;
+            }
+            else throw new RuntimeError(
+              "Promise.all() received a non-promise-valued element, at " +
+              `index/key = ${key}`,
+              expNode, environment
+            );
+          })
+        ));
+      }
       default: throw (
         "ScriptInterpreter.evaluateExpression(): Unrecognized type: " +
         `"${type}"`
@@ -1737,6 +1760,10 @@ export class DefinedFunction extends DevOrDefinedFunction{
 
 export class DevFunction extends DevOrDefinedFunction {
   constructor(decEnv, fun) {
+    if (fun === undefined) {
+      fun = decEnv;
+      decEnv = undefined;
+    }
     this.fun = fun;
     if (decEnv) this.decEnv = decEnv;
   }
@@ -1863,16 +1890,47 @@ export class JSXElement {
   }
 }
 
-// // This class is meant to be extended by dev libraries. The class implements
-// // what's similar to React components.
-// export class JSXInstance {
-//   static isJSXComponent = true;
-// }
 
-// TODO: Implement a Promise wrapper:
 export class PromiseObject {
-  constructor() {/* TODO: Implement. */}
+  constructor(promiseOrFun, interpreter, node, env) {
+    if (promiseOrFun instanceof Promise) {
+      this.promise = promiseOrFun;
+    }
+    else {
+      let fun = promiseOrFun;
+      this.promise = new Promise((resolve) => {
+        let userResolve = new DevFunction(env, ({}, [res]) => {
+          resolve(res);
+        });
+        interpreter.executeFunction(fun, [userResolve], node, env);
+      });
+    }
+  }
+
+  get(key) {
+    if (key === "then") {
+      return new DevFunction((
+        {callerNode, callerEnv, interpreter}, [callbackFun]
+      ) => {
+        handlePromise(
+          this.promise, callbackFun, callerNode, callerEnv, interpreter
+        );
+      });
+    }
+  }
 }
+
+
+export function handlePromise(
+  promise, callbackFun, callerNode, callerEnv, interpreter
+) {
+  promise.then(res => {
+    interpreter.executeFunction(callbackFun, [res], callerNode, callerEnv);
+  }).catch(err => {
+    interpreter.throwAsyncException(err, callerNode, callerEnv);
+  });
+}
+
 
 
 

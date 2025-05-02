@@ -697,9 +697,10 @@ export const scriptGrammar = {
       ["array!1"],
       ["object!1"],
       ["jsx-element!1"],
-      ["this-keyword"],
       ["exit-call!1"],
       ["pass-as-mutable-call!1"],
+      ["promise-call!1"],
+      ["this-keyword"],
       ["identifier"],
       ["literal"],
     ],
@@ -945,6 +946,21 @@ export const scriptGrammar = {
       type: "pass-as-mutable-call",
       exp: children[2],
     }),
+  },
+  "promise-call": {
+    rules: [
+      ["/Promise/", /\./, "/all/", /\(/, "expression", /\)/],
+      ["/Promise/", /\(/, "expression", /\)/],
+    ],
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
+        type: "promise-all-call",
+        exp: children[4],
+      } : {
+        type: "promise-call",
+        exp: children[2],
+      };
+    },
   },
 };
 
