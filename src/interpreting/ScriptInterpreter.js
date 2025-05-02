@@ -553,24 +553,38 @@ export class ScriptInterpreter {
     // call either executeAsyncCallback() or throwAsyncException() when it
     // resolves or rejects, respectively.
     if (devFun instanceof AsyncDevFunction) {
-      // Extract the callback from inputArr, which is always the last argument
-      // (even if the user provided a wrong number of arguments).
-      let callbackFun = inputArr.at(-1);
-      inputArr = inputArr.slice(0, -1);
-
-      // Call the async function and handle its result.
-      devFun.fun(execVars, inputArr).then(ret => {
-        this.executeAsyncCallback(
-          callbackFun, [ret], callerNode, callerEnv
-        );
-      }).catch(err => {
-        this.throwAsyncException(err, callerNode, callerEnv);
-      });
+      // If the argument number exceeds minArgNum and the last argument is a
+      // function, then treat this last argument as the callback to call when
+      // the promise is ready.
+      let minArgNum = devFun.minArgNum;
+      let lastArg = inputArr.at(-1);
+      if (
+        (devFun.minArgNum ?? 0) <= inputArr.length &&
+        lastArg instanceof FunctionWrapper
+      ) {
+        let callbackFun = lastArg;
+        let promise = devFun.fun(execVars, inputArr.slice(0, -1));
+        this.handlePromise(promise, callbackFun, callerNode, callerEnv);
+      }
+      // And if not, simply return the promise wrapped in PromiseObject().
+      else {
+        let promise = devFun.fun(execVars, inputArr);
+        return new PromiseObject(promise);
+      }
     }
     // Else call the dev function synchronously and return what it returns.
     else {
       return devFun.fun(execVars, inputArr);
     }
+  }
+
+
+  handlePromise(promise, callbackFun, callerNode, callerEnv) {
+    promise.then(res => {
+      this.executeFunction(callbackFun, [res], callerNode, callerEnv);
+    }).catch(err => {
+      this.throwAsyncException(err, callerNode, callerEnv);
+    });
   }
 
 
@@ -1745,8 +1759,22 @@ export class FlagEnvironment {
 
 
 
+export class ModuleObject {
+  constructor(modulePath, members) {
+    this.modulePath = modulePath;
+    this.members = members;
+  }
+}
 
-export class DevOrDefinedFunction {};
+export class ProtectedObject extends ModuleObject {
+  constructor(modulePath, members, decEnv) {
+    super(modulePath, members);
+    this.decEnv = decEnv;
+  }
+}
+
+export class FunctionWrapper {};
+export class DevOrDefinedFunction extends FunctionWrapper {};
 
 export class DefinedFunction extends DevOrDefinedFunction{
   constructor(node, decEnv) {
@@ -1773,12 +1801,17 @@ export class DevFunction extends DevOrDefinedFunction {
 }
 
 export class AsyncDevFunction extends DevFunction {
-  constructor(decEnv, asyncFun) {
+  constructor(decEnv, minArgNum, asyncFun) {
+    if (asyncFun === undefined) {
+      asyncFun = minArgNum;
+    } else {
+      this.minArgNum = minArgNum;
+    }
     super(decEnv, asyncFun);
   }
 }
 
-export class ProtectedMethod {
+export class ProtectedMethod extends FunctionWrapper {
   constructor(fun, thisVal) {
     this.fun = fun;
     this.thisVal = thisVal;
@@ -1791,20 +1824,6 @@ export class ProtectedMethod {
   }
   get isArrowFun() {
     return this.fun.isArrowFun;
-  }
-}
-
-export class ModuleObject {
-  constructor(modulePath, members) {
-    this.modulePath = modulePath;
-    this.members = members;
-  }
-}
-
-export class ProtectedObject extends ModuleObject {
-  constructor(modulePath, members, decEnv) {
-    super(modulePath, members);
-    this.decEnv = decEnv;
   }
 }
 
@@ -1912,24 +1931,14 @@ export class PromiseObject {
       return new DevFunction((
         {callerNode, callerEnv, interpreter}, [callbackFun]
       ) => {
-        handlePromise(
-          this.promise, callbackFun, callerNode, callerEnv, interpreter
+        interpreter.handlePromise(
+          this.promise, callbackFun, callerNode, callerEnv
         );
       });
     }
   }
 }
 
-
-export function handlePromise(
-  promise, callbackFun, callerNode, callerEnv, interpreter
-) {
-  promise.then(res => {
-    interpreter.executeFunction(callbackFun, [res], callerNode, callerEnv);
-  }).catch(err => {
-    interpreter.throwAsyncException(err, callerNode, callerEnv);
-  });
-}
 
 
 

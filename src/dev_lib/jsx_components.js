@@ -43,7 +43,7 @@ class JSXInstance {
     this.isDecorated = undefined;
     this.childInstances = new Map(); // : key -> JSXInstance.
     this.props = undefined;
-    this.state = componentModule.get("initState");
+    this.state = componentModule.get("initState") ?? new Map();
     this.refs = undefined;
     this.lastCallerNode = undefined;
     this.lastCallerEnv = undefined;
@@ -140,7 +140,7 @@ class JSXInstance {
 
     // Now call the render() function, and check that resolve has been called
     // synchronously by it.
-    let inputArr = [resolve, props, dispatch, this.state, this];
+    let inputArr = [resolve, props, dispatch, this.state];
     interpreter.executeFunction(
       fun, inputArr, callerNode, callerEnv, this.componentModule
     );
