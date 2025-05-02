@@ -210,12 +210,12 @@ export class ScriptInterpreter {
   async fetchParsedScript(
     scriptPath, parsedScripts, callerNode, callerEnv
   ) {
-    let parsedScript, lexArr, strPosArr, script, adminID;
+    let parsedScript, lexArr, strPosArr, script;
     [parsedScript, lexArr, strPosArr, script] = parsedScripts.get(scriptPath);
     if (!parsedScript) {
       let {reqUserID} = callerEnv.scriptVars;
       try {
-       [script, adminID] = await this.fetchScript(scriptPath, reqUserID);
+       script = await this.fetchScript(scriptPath, reqUserID);
       } catch (err) {
         throw new LoadError(err, callerNode, callerEnv);
       }
@@ -230,7 +230,7 @@ export class ScriptInterpreter {
       if (scriptSyntaxTree.error) throw scriptSyntaxTree.error;
       parsedScripts.set(scriptPath, [parsedScript, lexArr, strPosArr, script]);
     }
-    return [parsedScript, lexArr, strPosArr, script, adminID];
+    return [parsedScript, lexArr, strPosArr, script];
   }
 
 
@@ -265,10 +265,10 @@ export class ScriptInterpreter {
     // import statement is paired with the environment from the already
     // executed module, and where the changes are now made to moduleEnv.
     moduleNode.importStmtArr.forEach((impStmt, ind) => {
-      let [liveSubmodule, submodulePath, adminID] =
+      let [liveSubmodule, submodulePath] =
         liveSubmoduleAndPathArr[ind];
       this.finalizeImportStatement(
-        impStmt, liveSubmodule, submodulePath, adminID, moduleEnv
+        impStmt, liveSubmodule, submodulePath, moduleEnv
       );
     });
 
@@ -294,18 +294,19 @@ export class ScriptInterpreter {
 
     // If the module has already been executed, we can return early.
     let submodulePath = getFullPath(curModulePath, impStmt.str);
-    let liveModule = liveModules.get(submodulePath);
+    let [liveModule, isProtected] = liveModules.get(submodulePath);
     if (liveModule) {
-      return liveModule;
+      return [liveModule, submodulePath, isProtected];
     }
 
     // If the module reference is a dev library reference, which always comes
     // in the form of a bare module specifier (left over in the build step, if
     // any), try to import the given library.
     if (submodulePath[0] !== "/") {
-      let devMod = this.staticDevLibs.get(submodulePath);
+      let devMod, devLibURL, isProtected;
+      [devMod, isProtected] = this.staticDevLibs.get(submodulePath);
       if (!devMod) {
-        let devLibURL = this.devLibURLs.get(submodulePath);
+        [devMod, isProtected] = this.devLibURLs.get(submodulePath);
         if (!devLibURL) throw new LoadError(
           `Developer library "${submodulePath}" not found`,
           impStmt, callerModuleEnv
@@ -333,18 +334,18 @@ export class ScriptInterpreter {
         // And if the imported object is an extension of the JSXInstance class,
         // we also give it the componentPath property equal to submodulePath +
         // "." + key.
-        if (val instanceof JSXInstance) {
+        if (val.isJSXComponent) {
           val.componentPath = submodulePath + "." + `${key}`;
         }
       });
-      liveModules.set(submodulePath, liveModule);
+      liveModules.set(submodulePath, [liveModule, isProtected]);
       return [liveModule, submodulePath];
     }
 
     // Else if the module is a user module, first try to get it from the
     // parsedScripts buffer, then try to fetch it from the database.
     let [
-      submoduleNode, lexArr, strPosArr, script, adminID
+      submoduleNode, lexArr, strPosArr, script
     ] = await this.fetchParsedScript(
       submodulePath, parsedScripts, impStmt, callerModuleEnv
     );
@@ -354,15 +355,16 @@ export class ScriptInterpreter {
     [liveModule] = await this.executeModule(
       submoduleNode, lexArr, strPosArr, script, submodulePath, globalEnv
     );
-    liveModules.set(submodulePath, liveModule);
-    return [liveModule, submodulePath, adminID];
+    isProtected = submodulePath.slice(-10) === "?protected";
+    liveModules.set(submodulePath, [liveModule]);
+    return [liveModule, submodulePath];
   }
 
 
 
 
   finalizeImportStatement(
-    impStmt, liveSubmodule, submodulePath, adminID, curModuleEnv
+    impStmt, liveSubmodule, submodulePath, curModuleEnv
   ) {
     decrCompGas(impStmt, curModuleEnv);
 
@@ -371,7 +373,7 @@ export class ScriptInterpreter {
       let impType = imp.importType
       if (impType === "namespace-import") {
         let moduleObject = new ModuleObject(
-          submodulePath, adminID, curModuleEnv, liveSubmodule,
+          submodulePath, liveSubmodule,
         );
         curModuleEnv.declare(imp.ident, moduleObject, true, imp);
       }
@@ -465,27 +467,25 @@ export class ScriptInterpreter {
 
 
 
-  executeFunction(fun, inputArr, callerNode, callerEnv, thisVal) {
+  executeFunction(fun, inputArr, callerNode, callerEnv, thisVal) {  
     // If the function is an arrow function, check that it isn't called outside
     // of the "caller environment stack" that has its funDecEnv as an ancestor
     // in the stack.
-    if (fun.isArrowFun || fun instanceof ModuleMethod) {
+    if (fun.isArrowFun || fun instanceof ProtectedMethod) {
       let isValid = callerEnv.isCallStackDescendentOf(fun.decEnv);
       if (!isValid) throw new RuntimeError(
-        "An arrow function or module method was called outside of the " +
+        "An arrow function or protected method was called outside of the " +
         "environmental call stack in which it was declared.",
         callerNode, callerEnv
       );
     }
 
-    // If the function is called as a method of a module object, and if
-    // the object was not accessed by the 'this' keyword (i.e. inside another
-    // one of its methods), assign the module object held by thisVal to a
-    // moduleObject variable, which is passed the Environment() to make it a
-    // new module object environment.
-    let moduleObject;
-    if (fun instanceof ModuleMethod) {
-      moduleObject = thisVal;
+    // If the function is called as a method of a protected object, assign the
+    // protected object held by thisVal to a protectedObject variable, which is
+    // passed the Environment() to make it a new protected object environment.
+    let protectedObject;
+    if (fun instanceof ProtectedMethod) {
+      protectedObject = thisVal;
       thisVal = fun.thisVal;
       fun = fun.fun;
     }
@@ -495,7 +495,7 @@ export class ScriptInterpreter {
       // Initialize a new environment for the execution of the function.
       let newEnv = new Environment(
         fun.decEnv, "function", callerNode, callerEnv, undefined, false,
-        moduleObject
+        protectedObject
       );
 
       // Then execute the developer function and returns its first output.
@@ -509,13 +509,13 @@ export class ScriptInterpreter {
       if (funNode.type === "arrow-function") {
         newEnv = new Environment(
           fun.decEnv, "function", callerNode, callerEnv, undefined, true,
-          moduleObject
+          protectedObject
         );
       }
       else {
         newEnv = new Environment(
           fun.decEnv, "function", callerNode, callerEnv, thisVal, false,
-          moduleObject
+          protectedObject
         );
       }
 
@@ -1282,13 +1282,13 @@ export class ScriptInterpreter {
           index = this.evaluateExpression(postfix.exp, environment);
         }
 
-        // If objVal is a module object, get the member, and make some checks.
-        if (objVal instanceof ModuleObject) {
+        // If objVal is a protected object, make some checks and get the member.
+        if (objVal instanceof ProtectedObject) {
           // Check that the object isn't being used outside its own declaration
           // environment call stack.
           let isValid = environment.isCallStackDescendentOf(objVal.decEnv);
           if (!isValid) throw new RuntimeError(
-            "Accessing module object outside of the " +
+            "Accessing protected object outside of the " +
             "environmental call stack in which it was declared",
             postfix, environment
           );
@@ -1302,12 +1302,12 @@ export class ScriptInterpreter {
           // Then get the member.
           val = objVal.members[index];
 
-          // And if the member is a function, i.e. a module object's method,
+          // And if the member is a function, i.e. a protected object's method,
           // bind 'this' here at access time, rather than at call time, such
           // that the owner of the method cannot be changed, even if assigned
           // and called from another object.
           if (val instanceof DefinedFunction || val instanceof DevFunction) {
-            val = new ModuleMethod(val, objVal, environment);
+            val = new ProtectedMethod(val, objVal);
           }
         }
 
@@ -1373,12 +1373,14 @@ export class ScriptInterpreter {
 
 
 
+export const UNDEFINED = Symbol("undefined");
+
 
 export class Environment {
   constructor(
     parent, scopeType = "block",
     callerNode, callerEnv, thisVal, isArrowFun = false,
-    moduleObject = false,
+    protectedObject = false,
     modulePath, lexArr, strPosArr, script,
     scriptVars,
     catchStmtArr, errIdent, numIdent,
@@ -1391,10 +1393,10 @@ export class Environment {
       this.callerEnv = callerEnv;
       if (thisVal) this.thisVal = thisVal;
       if (isArrowFun) this.isArrowFun = isArrowFun;
-      if (moduleObject) {
+      if (protectedObject) {
         this.flagEnv = new FlagEnvironment(
           this.getFlagEnvironment(),
-          moduleObject.modulePath
+          protectedObject.modulePath
         );
       }
     }
@@ -1644,6 +1646,8 @@ export class Flag {
 }
 
 
+
+
 CAN_EXIT_FLAG = new Flag((canExit, flagEnv, node, env) => {
   let [prevCanExit] = flagEnv.getFlag(CAN_EXIT_FLAG);
   if (prevCanExit === undefined || prevCanExit === canExit) {
@@ -1709,17 +1713,221 @@ export class FlagEnvironment {
 
 
 
-function getSafeObj(obj) {
-  if (!obj || typeof object !== "object") {
-    return obj;
-  } else if (Array.isArray(obj)) {
-    return obj.map(val => getSafeObj(val));
-  } else {
-    return Object.fromEntries(
-      Object.entries(obj).map(([key, val]) => ["$" + key, getSafeObj(val)])
-    );
+export class DefinedFunction {
+  constructor(node, decEnv) {
+    this.node = node;
+    this.decEnv = decEnv;
+  }
+  get isArrowFun() {
+    return this.node.type === "arrow-function";
   }
 }
+
+export class DevFunction {
+  constructor(decEnv, fun) {
+    this.fun = fun;
+    if (decEnv) this.decEnv = decEnv;
+  }
+  get isArrowFun() {
+    return this.decEnv ? true : false;
+  }
+}
+
+export class AsyncDevFunction extends DevFunction {
+  constructor(decEnv, asyncFun) {
+    super(decEnv, asyncFun);
+  }
+}
+
+export class ProtectedMethod {
+  constructor(fun, thisVal, modulePath) {
+    this.fun = fun;
+    this.thisVal = thisVal;
+    this.modulePath = modulePath;
+  }
+  get decEnv() {
+    return thisVal.decEnv;
+  }
+  get isArrowFun() {
+    return false;
+  }
+}
+
+export class ModuleObject {
+  constructor(modulePath, members) {
+    this.modulePath = modulePath;
+    this.members = members;
+  }
+}
+
+export class ProtectedObject extends ModuleObject {
+  constructor(modulePath, members, decEnv) {
+    super(modulePath, members);
+    this.decEnv = decEnv;
+  }
+}
+
+export class ValueWrapper {
+  constructor(val) {
+    this.val = val;
+  }
+  get(key) {
+    return this.val.get(key);
+  }
+  set(key, val) {
+    return this.val.set(key, val);
+  }
+  entries(key) {
+    return this.val.entries(key);
+  }
+  keys(key) {
+    return this.val.keys(key);
+  }
+  values(key) {
+    return this.val.values(key);
+  }
+  forEach(val, key, map) {
+    return this.val.forEach(val, key, map);
+  }
+}
+
+export class Immutable extends ValueWrapper {
+  constructor(val) {
+    super(val);
+  }
+  set = null;
+}
+
+export class PassAsMutable extends ValueWrapper {
+  constructor(val) {
+    super(val);
+  }
+}
+
+export class JSXElement {
+  constructor(
+    node, decEnv, interpreter
+  ) {
+    this.node = node;
+    this.decEnv = decEnv;
+    let {tagName, isComponent, isFragment, propArr, children} = node;
+    this.tagName = tagName;
+    if (isComponent) this.componentModule = decEnv.get(tagName, node);
+    this.isFragment = isFragment;
+    this.props = new Map();
+    if (propArr) propArr.forEach(propNode => {
+      let expVal = propNode.exp ?
+        interpreter.evaluateExpression(propNode.exp, decEnv) :
+        true;
+      if (propNode.isSpread) {
+        if (!(expVal.forEach instanceof Function)) throw new RuntimeError(
+          "Trying to iterate over a non-iterable",
+          propNode.exp, decEnv
+        );
+        expVal.forEach((val, key) => {
+          this.props.set(key, val);
+        });
+      } else {
+        this.props.set(propNode.ident, expVal);
+      }
+    });
+    if (children) {
+      let childrenProp = new Map();
+      children.forEach((contentNode, ind) => {
+        let val = interpreter.evaluateExpression(contentNode, decEnv);
+        childrenProp.set(ind, val);
+      });
+      this.props.set("children", childrenProp);
+    }
+    if (isComponent) {
+      this.key = this.props.get("key");
+      if (this.key === undefined) throw new RuntimeError(
+        'JSX component element defined without a "key" prop',
+        node, decEnv
+      );
+    }
+  }
+}
+
+// // This class is meant to be extended by dev libraries. The class implements
+// // what's similar to React components.
+// export class JSXInstance {
+//   static isJSXComponent = true;
+// }
+
+// TODO: Implement a Promise wrapper:
+export class PromiseObject {
+  constructor() {/* TODO: Implement. */}
+}
+
+
+
+
+class ReturnException {
+  constructor(val, node, environment) {
+    this.val = val;
+    this.node = node;
+    this.environment = environment;
+  }
+}
+class ExitException {
+  constructor() {}
+}
+class BreakException {
+  constructor(node, environment) {
+    this.node = node;
+    this.environment = environment;
+  }
+}
+class ContinueException {
+  constructor(node, environment) {
+    this.node = node;
+    this.environment = environment;
+  }
+}
+class BrokenOptionalChainException {
+  constructor() {}
+}
+
+
+
+
+export class LoadError {
+  constructor(val, node, environment) {
+    this.val = val;
+    this.node = node;
+    this.environment = environment;
+  }
+}
+
+export class OutOfGasError {
+  constructor(val, node, environment) {
+    this.val = val;
+    this.node = node;
+    this.environment = environment;
+  }
+}
+
+export class RuntimeError {
+  constructor(val, node, environment, callerEnv = undefined) {
+    this.val = val;
+    this.node = node;
+    this.environment = environment;
+    this.callerEnv = callerEnv;
+  }
+}
+
+export class CustomException {
+  constructor(val, node, environment) {
+    this.val = val;
+    this.node = node;
+    this.environment = environment;
+  }
+}
+
+
+
+
 
 
 export function turnImmutable(val) {
@@ -1832,222 +2040,6 @@ export function throwException(err, node, environment, isAsync) {
   }
   else {
     throw err;
-  }
-}
-
-
-
-
-
-
-
-export const UNDEFINED = Symbol("undefined");
-
-
-
-export class DefinedFunction {
-  constructor(node, decEnv) {
-    this.node = node;
-    this.decEnv = decEnv;
-  }
-  get isArrowFun() {
-    return this.node.type === "arrow-function";
-  }
-}
-
-export class DevFunction {
-  constructor(decEnv, fun) {
-    this.fun = fun;
-    if (decEnv) this.decEnv = decEnv;
-  }
-  get isArrowFun() {
-    return this.decEnv ? true : false;
-  }
-}
-
-export class AsyncDevFunction extends DevFunction {
-  constructor(decEnv, asyncFun) {
-    super(decEnv, asyncFun);
-  }
-}
-
-export class ModuleMethod {
-  constructor(fun, thisVal, modulePath, accessEnv) {
-    this.fun = fun;
-    this.thisVal = thisVal;
-    this.modulePath = modulePath;
-    this.accessEnv = accessEnv;
-  }
-  get isArrowFun() {
-    return false;
-  }
-}
-
-export class ModuleObject {
-  constructor(modulePath, decEnv, members) {
-    this.modulePath = modulePath;
-    this.decEnv = decEnv;
-    this.members = members;
-  }
-}
-
-export class ValueWrapper {
-  constructor(val) {
-    this.val = val;
-  }
-  get(key) {
-    return this.val.get(key);
-  }
-  set(key, val) {
-    return this.val.set(key, val);
-  }
-  entries(key) {
-    return this.val.entries(key);
-  }
-  keys(key) {
-    return this.val.keys(key);
-  }
-  values(key) {
-    return this.val.values(key);
-  }
-  forEach(val, key, map) {
-    return this.val.forEach(val, key, map);
-  }
-}
-
-export class Immutable extends ValueWrapper {
-  constructor(val) {
-    super(val);
-  }
-  set = null;
-}
-
-export class PassAsMutable extends ValueWrapper {
-  constructor(val) {
-    super(val);
-  }
-}
-
-export class JSXElement {
-  constructor(
-    node, decEnv, interpreter
-  ) {
-    this.node = node;
-    this.decEnv = decEnv;
-    let {tagName, isComponent, isFragment, propArr, children} = node;
-    this.tagName = tagName;
-    if (isComponent) this.componentRef = decEnv.get(tagName, node);
-    this.isFragment = isFragment;
-    this.props = new Map();
-    if (propArr) propArr.forEach(propNode => {
-      let expVal = propNode.exp ?
-        interpreter.evaluateExpression(propNode.exp, decEnv) :
-        true;
-      if (propNode.isSpread) {
-        if (!(expVal.forEach instanceof Function)) throw new RuntimeError(
-          "Trying to iterate over a non-iterable",
-          propNode.exp, decEnv
-        );
-        expVal.forEach((val, key) => {
-          this.props.set(key, val);
-        });
-      } else {
-        this.props.set(propNode.ident, expVal);
-      }
-    });
-    if (children) {
-      let childrenProp = new Map();
-      children.forEach((contentNode, ind) => {
-        let val = interpreter.evaluateExpression(contentNode, decEnv);
-        childrenProp.set(ind, val);
-      });
-      this.props.set("children", childrenProp);
-    }
-    if (isComponent) {
-      this.key = this.props.get("key");
-      if (this.key === undefined) throw new RuntimeError(
-        'JSX component element defined without a "key" prop',
-        node, decEnv
-      );
-    }
-  }
-}
-
-// This class is meant to be extended by dev libraries. The class implements
-// what's similar to React components.
-export class JSXInstance {
-  constructor() {
-    this.componentPath = undefined;
-  }
-}
-
-// TODO: Implement a Promise wrapper:
-export class PromiseObject {
-  constructor() {/* TODO: Implement. */}
-}
-
-
-
-
-class ReturnException {
-  constructor(val, node, environment) {
-    this.val = val;
-    this.node = node;
-    this.environment = environment;
-  }
-}
-class ExitException {
-  constructor() {}
-}
-class BreakException {
-  constructor(node, environment) {
-    this.node = node;
-    this.environment = environment;
-  }
-}
-class ContinueException {
-  constructor(node, environment) {
-    this.node = node;
-    this.environment = environment;
-  }
-}
-class BrokenOptionalChainException {
-  constructor() {}
-}
-
-
-
-
-export class LoadError {
-  constructor(val, node, environment) {
-    this.val = val;
-    this.node = node;
-    this.environment = environment;
-  }
-}
-
-export class OutOfGasError {
-  constructor(val, node, environment) {
-    this.val = val;
-    this.node = node;
-    this.environment = environment;
-  }
-}
-
-export class RuntimeError {
-  constructor(val, node, environment, callerEnv = undefined) {
-    this.val = val;
-    this.node = node;
-    this.environment = environment;
-    this.callerEnv = callerEnv;
-  }
-}
-
-export class CustomException {
-  constructor(val, node, environment) {
-    this.val = val;
-    this.node = node;
-    this.environment = environment;
   }
 }
 

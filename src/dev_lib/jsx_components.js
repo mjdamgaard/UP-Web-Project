@@ -1,7 +1,7 @@
 
 import {
-  DevFunction, JSXElement, JSXInstance, ModuleObject, ProtectedObject,
-  RuntimeError, turnImmutable,
+  DevFunction, JSXElement, ModuleObject, ProtectedObject,
+  RuntimeError, turnImmutable, jsxComponentPaths
 } from "../interpreting/ScriptInterpreter.js";
 import {
   createAppSignal, dispatchSignal,
@@ -14,7 +14,7 @@ import {
 export const createJSXApp = new DevFunction(createAppSignal, null, function(
   {callerNode, callerEnv, interpreter}, component, props
 ) {
-  const rootInstance = new UserDefinedJSXInstance("root", undefined, component);
+  const rootInstance = new JSXInstance(component, "root", undefined);
   let rootParent = document.getElementById("up-app-root");
   let appNode = rootInstance.render(
     props, false, interpreter, callerNode, callerEnv, false
@@ -25,10 +25,10 @@ export const createJSXApp = new DevFunction(createAppSignal, null, function(
 
 
 
-class UserDefinedJSXInstance extends JSXInstance {
+class JSXInstance {
 
   constructor (
-    key = undefined, parentInstance = undefined, componentModule,
+    componentModule, key = undefined, parentInstance = undefined,
     callerNode, callerEnv
   ) {
     if (!(componentModule instanceof ModuleObject)) throw new RuntimeError(
@@ -36,11 +36,9 @@ class UserDefinedJSXInstance extends JSXInstance {
       "developer component",
       callerNode, callerEnv
     );
-    super();
-    this.componentPath = componentModule.modulePath;
+    this.componentModule = componentModule;
     this.key = `${key}`;
     this.parentInstance = parentInstance;
-    this.componentModule = componentModule;
     this.domNode = undefined;
     this.isDecorated = undefined;
     this.childInstances = new Map(); // : key -> JSXInstance.
@@ -51,6 +49,10 @@ class UserDefinedJSXInstance extends JSXInstance {
     this.lastCallerEnv = undefined;
     this.isDiscarded = undefined;
     this.rerenderPromise = undefined;
+  }
+
+  get componentPath() {
+    return this.componentModule.componentPath;
   }
 
 
@@ -97,12 +99,20 @@ class UserDefinedJSXInstance extends JSXInstance {
       // longer used can be removed afterwards.
       let marks = new Map(); 
   
-      // Call getDOMNode() to generate the instance's new DOM node.
-      newDOMNode = this.getDOMNode(
-        jsxElement, marks, interpreter, callerNode, callerEnv
-      );
+      // Call getDOMNode() to generate the instance's new DOM node, unless
+      // render() is a dev function that returns a DOM node directly, wrapped
+      // in the DOMNodeWrapper class exported below, in which case just use
+      // that DOM node.
+      if (jsxElement instanceof DOMNodeWrapper) {
+        newDOMNode = jsxElement.domNode;
+      }
+      else {
+        newDOMNode = this.getDOMNode(
+          jsxElement, marks, interpreter, callerNode, callerEnv
+        );
+      }
   
-      // Then remove any existing child instance that wasn't marked during the
+      // Then remove any existing child instances that wasn't marked during the
       // execution of getDOMNode().
       this.childInstances.forEach((_, key, map) => {
         if (!marks.get(key)) {
@@ -183,31 +193,20 @@ class UserDefinedJSXInstance extends JSXInstance {
       ));
     }
 
-    // If componentRef is defined, render the component instance.
-    let componentRef = jsxElement.componentRef;
-    if (componentRef) {
-      // componentRef is either a component module object, where .get("render")
-      // is supposed to return the render function of the component, or it is
-      // a JS class that extends JSXInstance.
-      let jsxInstanceClass, componentModule, componentPath;
-      if (componentRef instanceof JSXInstance) {
-        jsxInstanceClass = componentRef;
-        componentPath = jsxInstanceClass.componentPath;
-      }
-      else {
-        jsxInstanceClass = UserDefinedJSXInstance;
-        componentModule = componentRef;
-        componentPath = componentModule?.modulePath;
-      }
-
+    // If componentModule is defined, render the component instance.
+    let componentModule = jsxElement.componentModule;
+    if (componentModule) {
       // First we check if the childInstances to see if the child component
       // instance already exists, and if not, create a new one. In both cases,
       // we also make sure to mark the childInstance as being used.
       let key = jsxElement.key;
       let childInstance = this.childInstances.get(key);
-      if (!childInstance || childInstance.componentPath !== componentPath) {
-        childInstance = new jsxInstanceClass(
-          key, this, componentModule, jsxElement.node, jsxElement.decEnv
+      if (
+        !childInstance ||
+        childInstance.componentPath !== componentModule.componentPath
+      ) {
+        childInstance = new JSXInstance(
+          componentModule, key, this, jsxElement.node, jsxElement.decEnv
         );
         this.childInstances.set(key, childInstance);
       }
@@ -369,10 +368,10 @@ class UserDefinedJSXInstance extends JSXInstance {
   }
 
 
-  // For this UserDefinedJSXInstance class, receiveDispatch() calls the
-  // appropriate method, of the same name as held by the action input, of the
-  // instance's componentModule. (A rerender of the component is only queued
-  // if the called action method makes a call to instance.setState() inside it.)
+  // receiveDispatch() calls the appropriate method, of the same name as held
+  // by the action input, of the instance's componentModule. (A rerender of the
+  // component is only queued if the called action method makes a call to
+  // instance.setState() inside it.)
   receiveDispatch(
     action, inputArr, interpreter, callerNode, callerEnv
   ) {
@@ -490,23 +489,19 @@ class DispatchFunction extends DevFunction {
   constructor(jsxInstance, decEnv) {
     super(dispatchSignal, decEnv, (
       {interpreter, callerNode, callerEnv},
-      action, inputArr, receiverComponentRef, childKey
+      action, inputArr, componentModule, childKey
     ) => {
       if (!(inputArr instanceof Map)) throw new RuntimeError(
         "Dispatching an action with an invalid input array",
         callerNode, callerEnv
       );
-      if (!(
-        receiverComponentRef instanceof JSXInstance ||
-        receiverComponentRef instanceof ModuleObject
-      )) {
+      if (!(componentModule instanceof ModuleObject)) {
         throw new RuntimeError(
           "Dispatching an action with an invalid receiver component",
           callerNode, callerEnv
         );
       }
-      let componentPath = receiverComponentRef.componentPath ??
-        receiverComponentRef.modulePath;
+      let componentPath = componentModule.modulePath;
       jsxInstance.dispatch(
         action, [...inputArr], componentPath, childKey,
         interpreter, callerNode, callerEnv
@@ -515,6 +510,16 @@ class DispatchFunction extends DevFunction {
   }
 }
 
+
+
+
+
+
+class DOMNodeWrapper {
+  constructor(domNode) {
+    this.domNode = domNode;
+  }
+}
 
 
 

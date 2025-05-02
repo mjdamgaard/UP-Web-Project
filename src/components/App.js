@@ -35,11 +35,8 @@ if (typeof(Storage) === "undefined") {
 
 
 // Initialize script interpreter.
-async function fetchScript(filePath) {
-  let scriptPromise = ServerInterface.fetchScript(filePath, undefined);
-  let adminIDPromise = ServerInterface.fetchAdminID(filePath);
-  let [script, adminID] = await Promise.all([scriptPromise, adminIDPromise]);
-  return [script, adminID];
+function fetchScript(filePath) {
+  return ServerInterface.fetchScript(filePath, undefined);
 }
 const scriptInterpreter = new ScriptInterpreter(
   false, fetchScript, undefined, staticDevLibs, undefined
