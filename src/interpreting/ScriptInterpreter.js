@@ -1696,8 +1696,8 @@ export class Flag {
 
 
 
-CAN_EXIT_FLAG = new Flag((canExit, flagEnv, node, env) => {
-  let [prevCanExit] = flagEnv.getFlag(CAN_EXIT_FLAG);
+CAN_EXIT_FLAG = new Flag(function(canExit, flagEnv, node, env) {
+  let [prevCanExit] = flagEnv.getFlag(this);
   if (prevCanExit === undefined || prevCanExit === canExit) {
     return canExit;
   }
