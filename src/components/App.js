@@ -18,8 +18,8 @@ import * as fundamentalsMod from "../dev_lib/fundamentals.js";
 import * as jsxMod from "../dev_lib/jsx_components.js";
 
 const staticDevLibs = new Map();
-staticDevLibs.set("fundamentals", fundamentalsMod);
-staticDevLibs.set("jsx", jsxMod);
+staticDevLibs.set("fundamentals", [fundamentalsMod]);
+staticDevLibs.set("jsx", [jsxMod]);
 
 
 

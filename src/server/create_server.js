@@ -9,7 +9,7 @@ import {scriptParser} from "./parsing/ScriptParser.js";
 import {parseRoute} from './misc/parseRoute.js';
 
 
-import * as queryMod from "../dev_lib/server/query.js";
+import * as dbMod from "../dev_lib/server/db.js";
 import * as directoriesMod from "../dev_lib/server/file_types/directories.js";
 import * as textFilesMod from "../dev_lib/server/file_types/text_files.js";
 import * as autoKeyTextStructFilesMod from
@@ -19,11 +19,11 @@ import * as binaryScoredBinaryKeyStructFilesMod from
 import { permission } from 'process';
 
 const staticDevLibs = new Map();
-staticDevLibs.set("query", queryMod);
-staticDevLibs.set("dir", directoriesMod);
-staticDevLibs.set("text_files", textFilesMod);
-staticDevLibs.set("ats_files", autoKeyTextStructFilesMod);
-staticDevLibs.set("bbs_files", binaryScoredBinaryKeyStructFilesMod);
+staticDevLibs.set("db", [dbMod, true]);
+staticDevLibs.set("dir", [directoriesMod]);
+staticDevLibs.set("text_files", [textFilesMod]);
+staticDevLibs.set("ats_files", [autoKeyTextStructFilesMod]);
+staticDevLibs.set("bbs_files", [binaryScoredBinaryKeyStructFilesMod]);
 
 
 const mainScript = fs.readFileSync("./main_script/main.js", "utf8");

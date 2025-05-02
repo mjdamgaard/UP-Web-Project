@@ -253,7 +253,7 @@ export class ScriptInterpreter {
 
     // Run all the import statements in parallel and get their live
     // environments, but without making any changes to moduleEnv yet.
-    let liveSubmoduleAndPathArr = await Promise.all(
+    let liveSubmodulePathAndIsProtectedArr = await Promise.all(
       moduleNode.importStmtArr.map(impStmt => (
         this.executeSubmoduleOfImportStatement(
           impStmt, modulePath, moduleEnv, globalEnv
@@ -265,10 +265,10 @@ export class ScriptInterpreter {
     // import statement is paired with the environment from the already
     // executed module, and where the changes are now made to moduleEnv.
     moduleNode.importStmtArr.forEach((impStmt, ind) => {
-      let [liveSubmodule, submodulePath] =
-        liveSubmoduleAndPathArr[ind];
+      let [liveSubmodule, submodulePath, isProtected] =
+      liveSubmodulePathAndIsProtectedArr[ind];
       this.finalizeImportStatement(
-        impStmt, liveSubmodule, submodulePath, moduleEnv
+        impStmt, liveSubmodule, submodulePath, isProtected, moduleEnv
       );
     });
 
@@ -294,8 +294,10 @@ export class ScriptInterpreter {
 
     // If the module has already been executed, we can return early.
     let submodulePath = getFullPath(curModulePath, impStmt.str);
-    let [liveModule, isProtected] = liveModules.get(submodulePath);
+    let isProtectedPath = submodulePath.slice(-10) === "?protected";
+    let [liveModule, isProtectedDevMod] = liveModules.get(submodulePath);
     if (liveModule) {
+      let isProtected = isProtectedDevMod || isProtectedPath;
       return [liveModule, submodulePath, isProtected];
     }
 
@@ -303,10 +305,10 @@ export class ScriptInterpreter {
     // in the form of a bare module specifier (left over in the build step, if
     // any), try to import the given library.
     if (submodulePath[0] !== "/") {
-      let devMod, devLibURL, isProtected;
-      [devMod, isProtected] = this.staticDevLibs.get(submodulePath);
+      let devMod, devLibURL;
+      [devMod, isProtectedDevMod] = this.staticDevLibs.get(submodulePath);
       if (!devMod) {
-        [devMod, isProtected] = this.devLibURLs.get(submodulePath);
+        [devMod, isProtectedDevMod] = this.devLibURLs.get(submodulePath);
         if (!devLibURL) throw new LoadError(
           `Developer library "${submodulePath}" not found`,
           impStmt, callerModuleEnv
@@ -338,8 +340,9 @@ export class ScriptInterpreter {
           val.componentPath = submodulePath + "." + `${key}`;
         }
       });
-      liveModules.set(submodulePath, [liveModule, isProtected]);
-      return [liveModule, submodulePath];
+      liveModules.set(submodulePath, [liveModule, isProtectedDevMod]);
+      let isProtected = isProtectedDevMod || isProtectedPath;
+      return [liveModule, submodulePath, isProtected];
     }
 
     // Else if the module is a user module, first try to get it from the
@@ -357,24 +360,26 @@ export class ScriptInterpreter {
     );
     isProtected = submodulePath.slice(-10) === "?protected";
     liveModules.set(submodulePath, [liveModule]);
-    return [liveModule, submodulePath];
+    return [liveModule, submodulePath, isProtected];
   }
 
 
 
 
   finalizeImportStatement(
-    impStmt, liveSubmodule, submodulePath, curModuleEnv
+    impStmt, liveSubmodule, submodulePath, isProtected, curModuleEnv
   ) {
     decrCompGas(impStmt, curModuleEnv);
 
     // Iterate through all the imports and add each import to the environment.
     impStmt.importArr.forEach(imp => {
       let impType = imp.importType
+      let moduleObject = isProtected ? new ProtectedObject(
+        submodulePath, liveSubmodule, curModuleEnv
+      ) : new ModuleObject(
+        submodulePath, liveSubmodule
+      );
       if (impType === "namespace-import") {
-        let moduleObject = new ModuleObject(
-          submodulePath, liveSubmodule,
-        );
         curModuleEnv.declare(imp.ident, moduleObject, true, imp);
       }
       else if (impType === "named-imports") {
@@ -382,11 +387,17 @@ export class ScriptInterpreter {
           let ident = namedImp.ident ?? "default";
           let alias = namedImp.alias ?? ident;
           let val = liveSubmodule.get(ident);
+          if (isProtected && val instanceof DevOrDefinedFunction) {
+            val = new ProtectedMethod(val, moduleObject);
+          }
           curModuleEnv.declare(alias, val, true, namedImp);
         });
       }
       else if (impType === "default-import") {
         let val = liveSubmodule.get("default");
+        if (isProtected && val instanceof DevOrDefinedFunction) {
+          val = new ProtectedMethod(val, moduleObject);
+        }
         curModuleEnv.declare(imp.ident, val, true, imp);
       }
       else throw "finalizeImportStatement(): Unrecognized import type";
@@ -469,9 +480,9 @@ export class ScriptInterpreter {
 
   executeFunction(fun, inputArr, callerNode, callerEnv, thisVal) {  
     // If the function is an arrow function, check that it isn't called outside
-    // of the "caller environment stack" that has its funDecEnv as an ancestor
+    // of the "environmental call stack" that has its fun.decEnv as an ancestor
     // in the stack.
-    if (fun.isArrowFun || fun instanceof ProtectedMethod) {
+    if (fun.isArrowFun) {
       let isValid = callerEnv.isCallStackDescendentOf(fun.decEnv);
       if (!isValid) throw new RuntimeError(
         "An arrow function or protected method was called outside of the " +
@@ -1284,16 +1295,16 @@ export class ScriptInterpreter {
 
         // If objVal is a protected object, make some checks and get the member.
         if (objVal instanceof ProtectedObject) {
-          // Check that the object isn't being used outside its own declaration
-          // environment call stack.
-          let isValid = environment.isCallStackDescendentOf(objVal.decEnv);
-          if (!isValid) throw new RuntimeError(
-            "Accessing protected object outside of the " +
-            "environmental call stack in which it was declared",
-            postfix, environment
-          );
+          // // Check that the object isn't being used outside its own declaration
+          // // environment call stack.
+          // let isValid = environment.isCallStackDescendentOf(objVal.decEnv);
+          // if (!isValid) throw new RuntimeError(
+          //   "Accessing protected object outside of the " +
+          //   "environmental call stack in which it was declared",
+          //   postfix, environment
+          // );
 
-          // Also check that the user isn't trying to assign to the member.
+          // Check that the user isn't trying to assign to the member.
           if (forAssignment) throw new RuntimeError(
             "Assignment to a read-only member of a protected object",
             postfix, environment
@@ -1306,7 +1317,7 @@ export class ScriptInterpreter {
           // bind 'this' here at access time, rather than at call time, such
           // that the owner of the method cannot be changed, even if assigned
           // and called from another object.
-          if (val instanceof DefinedFunction || val instanceof DevFunction) {
+          if (val instanceof DevOrDefinedFunction) {
             val = new ProtectedMethod(val, objVal);
           }
         }
@@ -1712,8 +1723,9 @@ export class FlagEnvironment {
 
 
 
+export class DevOrDefinedFunction {};
 
-export class DefinedFunction {
+export class DefinedFunction extends DevOrDefinedFunction{
   constructor(node, decEnv) {
     this.node = node;
     this.decEnv = decEnv;
@@ -1723,7 +1735,7 @@ export class DefinedFunction {
   }
 }
 
-export class DevFunction {
+export class DevFunction extends DevOrDefinedFunction {
   constructor(decEnv, fun) {
     this.fun = fun;
     if (decEnv) this.decEnv = decEnv;
@@ -1740,16 +1752,18 @@ export class AsyncDevFunction extends DevFunction {
 }
 
 export class ProtectedMethod {
-  constructor(fun, thisVal, modulePath) {
+  constructor(fun, thisVal) {
     this.fun = fun;
     this.thisVal = thisVal;
-    this.modulePath = modulePath;
+  }
+  get modulePath() {
+    return thisVal.modulePath;
   }
   get decEnv() {
-    return thisVal.decEnv;
+    return fun.decEnv;
   }
   get isArrowFun() {
-    return false;
+    return this.fun.isArrowFun;
   }
 }
 
