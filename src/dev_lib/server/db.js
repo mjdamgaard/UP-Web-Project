@@ -20,18 +20,13 @@ export async function _query(
   let [
     homeDirID, filePath, fileExt, isLocked, queryStringArr
   ] = parseRoute(route);
-  
+
+  // If the route is locked, check that you have admin privileges on homeDirID.
   if (isLocked) {
     callerEnv.raiseFlag(GET_ADMIN_PRIVILEGES_FLAG, homeDirID, callerNode);
-  }
+  }  
   
-  // If the route is locked for the admin only, query for the adminID,
-  // straightaway, and verify that reqUserID equals adminID.
-  // TODO: Do this.
-  let adminID = isLocked ? 9 : undefined;
-  
-  
-  // Branch according to the filetype.
+  // Branch according to the file type.
   let filetypeModule;
   switch (fileExt) {
     case undefined:
@@ -51,7 +46,7 @@ export async function _query(
       filetypeModule = binaryScoredBinaryKeyStructFilesMod;
       break;
     default:
-      throw new ClientError(`Unrecognized action: "${action}"`);
+      throw new ClientError(`Unrecognized file type: ".${fileExt}"`);
   }
   
   

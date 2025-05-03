@@ -57,12 +57,12 @@ export class ScriptInterpreter {
 
   async interpretScript(
     gas, script = "", scriptPath = null, mainInputs = [], reqUserID = null,
-    initFlags = new Map(), settings = {},
+    privilegedModules = new Map(), settings = {},
     parsedScripts = new Map(), liveModules = new Map(),
   ) {
     let scriptVars = {
-      gas: gas, log: {}, scriptPath: scriptPath,
-      reqUserID: reqUserID, initFlags: initFlags, settings: settings,
+      gas: gas, log: {}, scriptPath: scriptPath, reqUserID: reqUserID,
+      privilegedModules: privilegedModules, settings: settings,
       isExiting: false, resolveScript: undefined, interpreter: this,
       parsedScripts: parsedScripts, liveModules: liveModules,
     };
@@ -374,10 +374,8 @@ export class ScriptInterpreter {
     // Iterate through all the imports and add each import to the environment.
     impStmt.importArr.forEach(imp => {
       let impType = imp.importType
-      let moduleObject = isProtected ? new ProtectedObject(
-        submodulePath, liveSubmodule, curModuleEnv
-      ) : new ModuleObject(
-        submodulePath, liveSubmodule
+      let moduleObject = new ModuleObject(
+        submodulePath, curModuleEnv.scriptVars.privilegedModules, liveSubmodule
       );
       if (impType === "namespace-import") {
         curModuleEnv.declare(imp.ident, moduleObject, true, imp);
@@ -386,17 +384,14 @@ export class ScriptInterpreter {
         imp.namedImportArr.forEach(namedImp => {
           let ident = namedImp.ident ?? "default";
           let alias = namedImp.alias ?? ident;
-          let val = liveSubmodule.get(ident);
-          if (isProtected && val instanceof DevOrDefinedFunction) {
-            val = new ProtectedMethod(val, moduleObject);
-          }
+          let val = moduleObject.members.get(ident);
           curModuleEnv.declare(alias, val, true, namedImp);
         });
       }
       else if (impType === "default-import") {
         let val = liveSubmodule.get("default");
-        if (isProtected && val instanceof DevOrDefinedFunction) {
-          val = new ProtectedMethod(val, moduleObject);
+        if (isProtected && val instanceof FunctionObject) {
+          val = new PrivilegedMethod(val, moduleObject);
         }
         curModuleEnv.declare(imp.ident, val, true, imp);
       }
@@ -495,7 +490,7 @@ export class ScriptInterpreter {
     // protected object held by thisVal to a protectedObject variable, which is
     // passed the Environment() to make it a new protected object environment.
     let protectedObject;
-    if (fun instanceof ProtectedMethod) {
+    if (fun instanceof PrivilegedMethod) {
       protectedObject = thisVal;
       thisVal = fun.thisVal;
       fun = fun.fun;
@@ -1331,16 +1326,7 @@ export class ScriptInterpreter {
         }
 
         // If objVal is a protected object, make some checks and get the member.
-        if (objVal instanceof ProtectedObject) {
-          // // Check that the object isn't being used outside its own declaration
-          // // environment call stack.
-          // let isValid = environment.isCallStackDescendentOf(objVal.decEnv);
-          // if (!isValid) throw new RuntimeError(
-          //   "Accessing protected object outside of the " +
-          //   "environmental call stack in which it was declared",
-          //   postfix, environment
-          // );
-
+        if (objVal instanceof ModuleObject) {
           // Check that the user isn't trying to assign to the member.
           if (forAssignment) throw new RuntimeError(
             "Assignment to a read-only member of a protected object",
@@ -1349,14 +1335,6 @@ export class ScriptInterpreter {
 
           // Then get the member.
           val = objVal.members[index];
-
-          // And if the member is a function, i.e. a protected object's method,
-          // bind 'this' here at access time, rather than at call time, such
-          // that the owner of the method cannot be changed, even if assigned
-          // and called from another object.
-          if (val instanceof DevOrDefinedFunction) {
-            val = new ProtectedMethod(val, objVal);
-          }
         }
 
         // Else check that the object has a get() method, and a set() method if
@@ -1421,8 +1399,6 @@ export class ScriptInterpreter {
 
 
 
-export const UNDEFINED = Symbol("undefined");
-
 
 export class Environment {
   constructor(
@@ -1433,6 +1409,9 @@ export class Environment {
     scriptVars,
     catchStmtArr, errIdent, numIdent,
   ) {
+    this.scriptVars = scriptVars ?? parent?.scriptVars ?? (() => {
+      throw "Environment: No scriptVars object provided";
+    })();
     this.parent = parent;
     this.scopeType = scopeType;
     this.variables = {};
@@ -1446,6 +1425,11 @@ export class Environment {
           this.getFlagEnvironment(),
           protectedObject.modulePath
         );
+        if (protectedObject.initFlags) {
+          protectedObject.initFlags.forEach(([flag, flagParams]) => {
+            this.raiseFlag(flag, flagParams);
+          });
+        }
       }
     }
     else if (scopeType === "module") {
@@ -1463,11 +1447,14 @@ export class Environment {
       this.numOfAsyncExceptions = 0;
     }
     else if (scopeType === "global") {
-      this.flags = new Map(scriptVars.initFlags.entries);
+      this.flagEnv = new FlagEnvironment(undefined, "/");
+      let initGlobalFlags = this.scriptVars.privilegedModules.get("/");
+      if (initGlobalFlags) {
+        initGlobalFlags.forEach(([flag, flagParams]) => {
+          this.raiseFlag(flag, flagParams);
+        });
+      }
     }
-    this.scriptVars = scriptVars ?? parent?.scriptVars ?? (() => {
-      throw "Environment: No scriptVars object provided";
-    })();
   }
 
   get isNonArrowFunction() {
@@ -1675,6 +1662,8 @@ export class Environment {
 
 }
 
+export const UNDEFINED = Symbol("undefined");
+
 
 
 
@@ -1760,23 +1749,38 @@ export class FlagEnvironment {
 
 
 export class ModuleObject {
-  constructor(modulePath, members) {
+  constructor(modulePath, privilegedModules, memberEntries) {
     this.modulePath = modulePath;
-    this.members = members;
+    this.initFlags = privilegedModules.get(modulePath);
+    let isPrivileged = this.initFlags ? true : false;
+    this.members = new Map();
+    memberEntries.forEach(([key, val]) => {
+      // Filter out any Function instance, which might be exported from a dev
+      // library, in which case it is meant only for other dev libraries.
+      // TODO: Potentially filter out more object types if they are deemed
+      // unsafe to be given to the user (i.e. if they hold an unsafe get() or
+      // set() method, or unsafe forEach() or values(), etc.). 
+      if (val instanceof Function) {
+        return;
+      }
+
+      // If the module is privileged and the exported value is a FunctionObject,
+      // wrap it in a PrivilegedMethod class, before setting the module member.
+      if (isPrivileged && val instanceof FunctionObject) {
+        val = new PrivilegedMethod(val, this)
+      }
+      this.members.set(key, val);
+    });
   }
+  // get isPrivileged() {
+  //   return this.initFlags ? true : false;
+  // }
 }
 
-export class ProtectedObject extends ModuleObject {
-  constructor(modulePath, members, decEnv) {
-    super(modulePath, members);
-    this.decEnv = decEnv;
-  }
-}
 
-export class FunctionWrapper {};
-export class DevOrDefinedFunction extends FunctionWrapper {};
+export class FunctionObject {};
 
-export class DefinedFunction extends DevOrDefinedFunction{
+export class DefinedFunction extends FunctionObject{
   constructor(node, decEnv) {
     this.node = node;
     this.decEnv = decEnv;
@@ -1786,7 +1790,7 @@ export class DefinedFunction extends DevOrDefinedFunction{
   }
 }
 
-export class DevFunction extends DevOrDefinedFunction {
+export class DevFunction extends FunctionObject {
   constructor(decEnv, fun) {
     if (fun === undefined) {
       fun = decEnv;
@@ -1811,9 +1815,9 @@ export class AsyncDevFunction extends DevFunction {
   }
 }
 
-export class ProtectedMethod extends FunctionWrapper {
+export class PrivilegedMethod extends FunctionObject {
   constructor(fun, thisVal) {
-    this.fun = fun;
+    this.fun = (fun instanceof PrivilegedMethod) ? fun.fun : fun;
     this.thisVal = thisVal;
   }
   get modulePath() {
