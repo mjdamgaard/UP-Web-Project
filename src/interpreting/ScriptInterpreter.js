@@ -195,12 +195,9 @@ export class ScriptInterpreter {
 
 
 
-  createGlobalEnvironment(scriptVars) {debugger; // TODO: Correct Environment() args.
+  createGlobalEnvironment(scriptVars) {
     let globalEnv = new Environment( 
-      undefined, "global",
-      undefined, undefined, undefined,
-      undefined, undefined, undefined, undefined,
-      scriptVars
+      undefined, "global", {scriptVars: scriptVars},
     );
     return globalEnv;
   }
@@ -246,9 +243,10 @@ export class ScriptInterpreter {
 
     // Create a new environment for the module.
     let moduleEnv = new Environment(
-      globalEnv, "module",
-      undefined, undefined, undefined,
-      modulePath, lexArr, strPosArr, script,
+      globalEnv, "module", {
+       modulePath: modulePath, lexArr: lexArr, strPosArr: strPosArr,
+       script: script,
+      }
     );
 
     // Run all the import statements in parallel and get their live
@@ -373,7 +371,7 @@ export class ScriptInterpreter {
     // Iterate through all the imports and add each import to the environment.
     impStmt.importArr.forEach(imp => {
       let impType = imp.importType
-      let moduleObject = new ModuleObject(
+      let moduleObject = new LiveModule(
         submodulePath, curModuleEnv.scriptVars.privilegedModules, liveSubmodule
       );
       if (impType === "namespace-import") {
@@ -499,8 +497,10 @@ export class ScriptInterpreter {
     if (fun instanceof DevFunction) {
       // Initialize a new environment for the execution of the function.
       let newEnv = new Environment(
-        fun.decEnv, "function", callerNode, callerEnv, undefined, false,
-        protectedObject
+        fun.decEnv, "function", {
+          callerNode: callerNode, callerEnv: callerEnv, isArrowFun: false,
+          privilegedFunction: privilegedFunction,
+        }
       );
 
       // Then execute the developer function and returns its first output.
@@ -513,14 +513,18 @@ export class ScriptInterpreter {
       let newEnv;
       if (funNode.type === "arrow-function") {
         newEnv = new Environment(
-          fun.decEnv, "function", callerNode, callerEnv, undefined, true,
-          protectedObject
+          fun.decEnv, "function", {
+            callerNode: callerNode, callerEnv: callerEnv, isArrowFun: true,
+            privilegedFunction: privilegedFunction,
+          }
         );
       }
       else {
         newEnv = new Environment(
-          fun.decEnv, "function", callerNode, callerEnv, thisVal, false,
-          protectedObject
+          fun.decEnv, "function", {
+            callerNode: callerNode, callerEnv: callerEnv, isArrowFun: false,
+            thisVal: thisVal, privilegedFunction: privilegedFunction,
+          }
         );
       }
 
@@ -741,12 +745,11 @@ export class ScriptInterpreter {
         throw new CustomException(expVal, stmtNode, environment);
       }
       case "try-catch-statement": {
+        let {catchStmtArr, errIdent, numIdent} = stmtNode;
         let tryCatchEnv = new Environment(
-          environment, "try-catch",
-          undefined, undefined, undefined,
-          undefined, undefined, undefined, undefined,
-          undefined,
-          stmtNode.catchStmtArr, stmtNode.errIdent, stmtNode.numIdent,
+          environment, "try-catch", {
+            catchStmtArr: catchStmtArr, errIdent: errIdent, numIdent: numIdent,
+          }
         );
         try {
           stmtNode.tryStmtArr.forEach(stmt => {
@@ -1399,12 +1402,12 @@ export class ScriptInterpreter {
 
 export class Environment {
   constructor(
-    parent, scopeType = "block",
-    callerNode, callerEnv, thisVal, isArrowFun = false, initFlags,
-    modulePath,
-    lexArr, strPosArr, script,
-    scriptVars,
-    catchStmtArr, errIdent, numIdent,
+    parent, scopeType = "block", {
+      callerNode, callerEnv, isArrowFun, thisVal, privilegedFunction,
+      modulePath, lexArr, strPosArr, script,
+      scriptVars,
+      catchStmtArr, errIdent, numIdent,
+    },
   ) {
     this.scriptVars = scriptVars ?? parent?.scriptVars ?? (() => {
       throw "Environment: No scriptVars object provided";
@@ -1417,12 +1420,15 @@ export class Environment {
       this.callerEnv = callerEnv;
       if (thisVal) this.thisVal = thisVal;
       if (isArrowFun) this.isArrowFun = isArrowFun;
-      if (initFlags) {
+      if (privilegedFunction) {
+        let {initFlags, modulePath, funName} = privilegedFunction;
         this.flagEnv = new FlagEnvironment(
-          this.getFlagEnvironment(), modulePath, "...funName"
+          this.getFlagEnvironment(), modulePath, funName
         );
         initFlags.forEach(([flag, params]) => {
-          this.flagEnv.raiseFlag(flag, params, callerNode, this);
+          this.flagEnv.raiseFlag(
+            flag, params, callerNode, this, modulePath, funName
+          );
         });
       }
     }
@@ -1442,12 +1448,10 @@ export class Environment {
     }
     else if (scopeType === "global") {
       this.flagEnv = new FlagEnvironment(undefined, "/");
-      let initFlags = this.scriptVars.initFlags;
-      if (initFlags) {
-        initFlags.forEach(([flag, params]) => {
-          this.flagEnv.raiseFlag(flag, params, null, this);
-        });
-      }
+      let initFlags = this.scriptVars.initFlags.get(GLOBAL) ?? [];
+      initFlags.forEach(([flag, params]) => {
+        this.flagEnv.raiseFlag(flag, params, null, this, "/");
+      });
     }
   }
 
@@ -1657,7 +1661,42 @@ export class Environment {
 
 export const UNDEFINED = Symbol("undefined");
 
+export const GLOBAL = Symbol("global");
+export const MODULE = Symbol("module");
 
+
+
+
+
+export class LiveModule {
+  constructor(modulePath, moduleEnv) {
+    this.modulePath = modulePath;
+    this.moduleEnv = moduleEnv;
+    this.initFlags = moduleEnv.ScriptVars.privilegedModules.get(modulePath);
+    let isPrivileged = this.initFlags !== undefined;
+    this.members = new Map();
+    memberEntries.forEach(([key, val]) => {
+      // Filter out any Function instance, which might be exported from a dev
+      // library, in which case it is meant only for other dev libraries.
+      // TODO: Potentially filter out more object types if they are deemed
+      // unsafe to be given to the user (i.e. if they hold an unsafe get() or
+      // set() method, or unsafe forEach() or values(), etc.). 
+      if (val instanceof Function) {
+        return;
+      }
+
+      // If the module is privileged and the exported value is a FunctionObject,
+      // wrap it in a PrivilegedMethod class, before setting the module member.
+      if (isPrivileged && val instanceof FunctionObject) {
+        val = new PrivilegedFunction(val, this)
+      }
+      this.members.set(key, val);
+    });
+  }
+  // get isPrivileged() {
+  //   return this.initFlags ? true : false;
+  // }
+}
 
 
 
@@ -1700,9 +1739,14 @@ export class FlagEnvironment {
   }
 
   raiseFlag(flag, params, node, env) {
-    let permanentParams = flag.raise(
-      params, flagEnv, node, env, this.modulePath, this.funName
-    );
+    let modifiedRaise = env.scriptVars.modifiedFlags.get(flag);
+    let permanentParams = modifiedRaise ?
+      modifiedRaise(
+        params, flagEnv, node, env, this.modulePath, this.funName
+      ) :
+      flag.raise(
+        params, flagEnv, node, env, this.modulePath, this.funName
+      );
     if (permanentParams !== undefined) this.flags.set(flag, permanentParams);
   }
 
@@ -1757,36 +1801,6 @@ export const CAN_EXIT_FLAG = new Flag(function(canExit, flagEnv, node, env) {
 
 
 
-export class ModuleObject {
-  constructor(modulePath, moduleEnv, memberEntries) {
-    this.modulePath = modulePath;
-    this.moduleEnv = moduleEnv;
-    this.initFlags = moduleEnv.ScriptVars.privilegedModules.get(modulePath);
-    let isPrivileged = this.initFlags !== undefined;
-    this.members = new Map();
-    memberEntries.forEach(([key, val]) => {
-      // Filter out any Function instance, which might be exported from a dev
-      // library, in which case it is meant only for other dev libraries.
-      // TODO: Potentially filter out more object types if they are deemed
-      // unsafe to be given to the user (i.e. if they hold an unsafe get() or
-      // set() method, or unsafe forEach() or values(), etc.). 
-      if (val instanceof Function) {
-        return;
-      }
-
-      // If the module is privileged and the exported value is a FunctionObject,
-      // wrap it in a PrivilegedMethod class, before setting the module member.
-      if (isPrivileged && val instanceof FunctionObject) {
-        val = new PrivilegedFunction(val, this)
-      }
-      this.members.set(key, val);
-    });
-  }
-  // get isPrivileged() {
-  //   return this.initFlags ? true : false;
-  // }
-}
-
 
 export class FunctionObject {};
 
@@ -1829,20 +1843,14 @@ export class PrivilegedFunction extends FunctionObject {
   constructor(initFlags, fun) {
     this.initFlags = initFlags;
     this.fun = (fun instanceof PrivilegedFunction) ? fun.fun : fun;
-    this.modulePath = undefined;
+    this.modulePath = undefined; // set when exported.
+    this.funName = undefined; // set when exported.
   }
   get decEnv() {
     return fun.decEnv;
   }
   get isArrowFun() {
     return this.fun.isArrowFun;
-  }
-  set modulePath(modulePath) {
-    if (this.modulePath === undefined) {
-      this.modulePath = modulePath;
-    } else if (modulePath !== this.modulePath) {
-      throw "A PrivilegedFunction instance was given to different modulePaths";
-    }
   }
 }
 
