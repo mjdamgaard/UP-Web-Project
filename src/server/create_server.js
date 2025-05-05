@@ -16,14 +16,14 @@ import * as autoKeyTextStructFilesMod from
   "../dev_lib/server/file_types/auto_key_text_structs.js";
 import * as binaryScoredBinaryKeyStructFilesMod from
   "../dev_lib/server/file_types/binary_scored_binary_key_structs.js";
-import { permission } from 'process';
+
 
 const staticDevLibs = new Map();
-staticDevLibs.set("db", [dbMod, true]);
-staticDevLibs.set("dir", [directoriesMod]);
-staticDevLibs.set("text_files", [textFilesMod]);
-staticDevLibs.set("ats_files", [autoKeyTextStructFilesMod]);
-staticDevLibs.set("bbs_files", [binaryScoredBinaryKeyStructFilesMod]);
+staticDevLibs.set("db", dbMod);
+staticDevLibs.set("dir", directoriesMod);
+staticDevLibs.set("text_files", textFilesMod);
+staticDevLibs.set("ats_files", autoKeyTextStructFilesMod);
+staticDevLibs.set("bbs_files", binaryScoredBinaryKeyStructFilesMod);
 
 
 const mainScript = fs.readFileSync("./main_script/main.js", "utf8");

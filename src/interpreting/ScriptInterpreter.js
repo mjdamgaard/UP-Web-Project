@@ -246,7 +246,7 @@ export class ScriptInterpreter {
 
     // Run all the import statements in parallel and get their live
     // environments, but without making any changes to moduleEnv yet.
-    let liveSubmoduleAndPathArr = await Promise.all(
+    let liveSubmoduleArr = await Promise.all(
       moduleNode.importStmtArr.map(impStmt => (
         this.executeSubmoduleOfImportStatement(
           impStmt, modulePath, moduleEnv, globalEnv
@@ -258,10 +258,8 @@ export class ScriptInterpreter {
     // import statement is paired with the environment from the already
     // executed module, and where the changes are now made to moduleEnv.
     moduleNode.importStmtArr.forEach((impStmt, ind) => {
-      let [liveSubmodule, submodulePath] = liveSubmoduleAndPathArr[ind];
-      this.finalizeImportStatement(
-        impStmt, liveSubmodule, submodulePath, isProtected, moduleEnv
-      );
+      let liveSubmodule = liveSubmoduleArr[ind];
+      this.finalizeImportStatement(impStmt, liveSubmodule, moduleEnv);
     });
 
     // Then execute the body of the script, consisting of "outer statements"
@@ -286,11 +284,9 @@ export class ScriptInterpreter {
 
     // If the module has already been executed, we can return early.
     let submodulePath = getFullPath(curModulePath, impStmt.str);
-    let isProtectedPath = submodulePath.slice(-10) === "?protected";
-    let [liveModule, isProtectedDevMod] = liveModules.get(submodulePath);
+    let liveModule = liveModules.get(submodulePath);
     if (liveModule) {
-      let isProtected = isProtectedDevMod || isProtectedPath;
-      return [liveModule, submodulePath, isProtected];
+      return liveModule;
     }
 
     // If the module reference is a dev library reference, which always comes
@@ -298,9 +294,9 @@ export class ScriptInterpreter {
     // any), try to import the given library.
     if (submodulePath[0] !== "/") {
       let devMod, devLibURL;
-      [devMod, isProtectedDevMod] = this.staticDevLibs.get(submodulePath);
+      devMod = this.staticDevLibs.get(submodulePath);
       if (!devMod) {
-        [devMod, isProtectedDevMod] = this.devLibURLs.get(submodulePath);
+        devMod = this.devLibURLs.get(submodulePath);
         if (!devLibURL) throw new LoadError(
           `Developer library "${submodulePath}" not found`,
           impStmt, callerModuleEnv
@@ -317,24 +313,10 @@ export class ScriptInterpreter {
 
       // If the dev library module was found, create a "liveModule" object from
       // it, store it in the liveModules buffer, and return it. 
-      let liveModule = new Map();
-      Object.entries(devMod).forEach(([key, val]) => {
-        // If a dev library exports a function, it is meant only for other dev
-        // libraries, so we filter all those out here. 
-        if (!(val instanceof Function)) {
-          liveModule.set(key, val);
-        }
-
-        // And if the imported object is an extension of the JSXInstance class,
-        // we also give it the componentPath property equal to submodulePath +
-        // "." + key.
-        if (val.isJSXComponent) {
-          val.componentPath = submodulePath + "." + `${key}`;
-        }
-      });
-      liveModules.set(submodulePath, [liveModule, isProtectedDevMod]);
-      let isProtected = isProtectedDevMod || isProtectedPath;
-      return [liveModule, submodulePath, isProtected];
+      let liveModule = new LiveModule(
+        submodulePath, Object.entries(devMod), globalEnv.scriptVars
+      );
+      return liveModule;
     }
 
     // Else if the module is a user module, first try to get it from the
@@ -350,41 +332,34 @@ export class ScriptInterpreter {
     [liveModule] = await this.executeModule(
       submoduleNode, lexArr, strPosArr, script, submodulePath, globalEnv
     );
-    isProtected = submodulePath.slice(-10) === "?protected";
-    liveModules.set(submodulePath, [liveModule]);
-    return [liveModule, submodulePath, isProtected];
+    liveModules.set(submodulePath, liveModule);
+    return liveModule;
   }
 
 
 
 
-  finalizeImportStatement(
-    impStmt, liveSubmodule, submodulePath, isProtected, curModuleEnv
-  ) {
+  finalizeImportStatement(impStmt, liveSubmodule, curModuleEnv) {
     decrCompGas(impStmt, curModuleEnv);
 
     // Iterate through all the imports and add each import to the environment.
+    let submodulePath = liveSubmodule.modulePath;
     impStmt.importArr.forEach(imp => {
       let impType = imp.importType
-      let moduleObject = new LiveModule(
-        submodulePath, curModuleEnv.scriptVars.enclosedModules, liveSubmodule
-      );
       if (impType === "namespace-import") {
-        curModuleEnv.declare(imp.ident, moduleObject, true, imp);
+        let moduleNameSpaceObj = new Immutable(liveSubmodule.members);
+        curModuleEnv.declare(imp.ident, moduleNameSpaceObj, true, imp);
       }
       else if (impType === "named-imports") {
         imp.namedImportArr.forEach(namedImp => {
           let ident = namedImp.ident ?? "default";
           let alias = namedImp.alias ?? ident;
-          let val = moduleObject.members.get(ident);
+          let val = liveSubmodule.get(ident);
           curModuleEnv.declare(alias, val, true, namedImp);
         });
       }
       else if (impType === "default-import") {
         let val = liveSubmodule.get("default");
-        if (isProtected && val instanceof FunctionObject) {
-          val = new PrivilegedFunction(val, moduleObject);
-        }
         curModuleEnv.declare(imp.ident, val, true, imp);
       }
       else throw "finalizeImportStatement(): Unrecognized import type";
@@ -488,7 +463,7 @@ export class ScriptInterpreter {
     );
 
     // Then execute the function depending on its type.
-    if (fun instanceof DevFunction) {
+    if (fun instanceof LiveDevFunction) {
       return this.executeDevFunction(
         devFun, inputArr, callerNode, execEnv, thisVal
       );
@@ -507,11 +482,11 @@ export class ScriptInterpreter {
 
 
   executeDevFunction(devFun, inputArr, callerNode, execEnv, thisVal) {
+    let {isAsync, minArgNum, liveModule} = devFun;
     let execVars = {
       callerNode: callerNode, callerEnv: execEnv, thisVal: thisVal,
-      interpreter: this,
+      interpreter: this, liveModule: liveModule,
     };
-    let {isAsync, minArgNum} = devFun;
 
     // If the dev function an async function, call it and then either return a
     // PromiseObject to the user or call a user-provided callbackFun depending
@@ -1568,10 +1543,9 @@ export class Environment {
 
   getLiveModule() {
     if (!this.liveModule ) {
-      let liveModule = this.liveModule = new Map();
-      this.exports.forEach(([alias, val]) => {
-        liveModule.set(alias, val);
-      });
+      this.liveModule = new LiveModule(
+        this.modulePath, this.exports, this.scriptVars
+      );
     }
     return this.liveModule;
   }
@@ -1634,34 +1608,67 @@ export const MODULE = Symbol("module");
 
 
 export class LiveModule {
-  constructor(modulePath, moduleEnv) {
+  constructor(modulePath, exports, scriptVars) {
     this.modulePath = modulePath;
-    this.moduleEnv = moduleEnv;
-    this.initSignals = moduleEnv.ScriptVars.enclosedModules.get(modulePath);
-    let isPrivileged = this.initSignals !== undefined;
     this.members = new Map();
-    memberEntries.forEach(([key, val]) => {
+    exports.forEach(([alias, val]) => {
       // Filter out any Function instance, which might be exported from a dev
       // library, in which case it is meant only for other dev libraries.
       // TODO: Potentially filter out more object types if they are deemed
       // unsafe to be given to the user (i.e. if they hold an unsafe get() or
-      // set() method, or unsafe forEach() or values(), etc.). 
+      // set() method, or unsafe forEach() or values(), etc.).
       if (val instanceof Function) {
         return;
       }
 
-      // If the module is enclosed and the exported value is a FunctionObject,
-      // wrap it in a PrivilegedMethod class, before setting the module member.
-      if (isPrivileged && val instanceof FunctionObject) {
-        val = new PrivilegedFunction(val, this)
+      // If val is a FunctionObject, first look in enclosedFunctions and
+      // initSignals to see if these contain some security modifications/
+      // features, and if not use the ones that is already defined for the 
+      // function (in case of a dev function). 
+      let isEnclosed, initSignals;
+      if (val instanceof FunctionObject) {
+        let {enclosedFunctions, initSignals} = scriptVars;
+        enclosedFunctions = enclosedFunctions.get(modulePath);
+        initSignals = initSignals.get(modulePath);
+        if (enclosedFunctions) {
+          isEnclosed = enclosedFunctions.get(alias) ?? val.isEnclosed;
+        }
+        if (initSignals) {
+          initSignals = initSignals.get(alias) ?? val.initSignals;
+        }
       }
+
+      // If the export is a DevFunction, we set its modulePath, funName,
+      // isEnclosed, and initSignals properties here, not by muting it, but by
+      // exchanging the DevFunction instance for a LiveDevFunction instance.
+      if (val instanceof DevFunction) {
+        if (alias === "default") throw (
+          "A dev library must not have a default export, at least not a " +
+          "DevFunction instance"
+        );
+        val = new LiveDevFunction(
+          val, this, modulePath, alias, isEnclosed, initSignals
+        );
+      }
+
+      // Else if the export is a DefinedFunction, simply mute it to set the
+      // right modulePath, funName, isEnclosed, and initSignals properties.
+      else if (val instanceof DefinedFunction) {
+        val.modulePath = modulePath;
+        val.funName = alias;
+        val.isEnclosed = isEnclosed;
+        val.initSignals = initSignals;
+      }
+  
       this.members.set(key, val);
     });
   }
-  // get isPrivileged() {
-  //   return this.initSignals ? true : false;
-  // }
+
+  get(key) {
+    return this.members.get(key);
+  }
 }
+
 
 
 
@@ -1779,13 +1786,14 @@ export const WILL_EXIT_SIGNAL = new Signal((flagEnv, node, env) => {
 export class FunctionObject {};
 
 export class DefinedFunction extends FunctionObject{
-  constructor(node, decEnv, {isEnclosed, modulePath, funName, initSignals}) {
+  constructor(node, decEnv) {
     this.node = node;
     this.decEnv = decEnv;
-    if (isEnclosed) this.isEnclosed = isEnclosed;
-    if (modulePath) this.modulePath = modulePath;
-    if (funName) this.funName = funName;
-    if (initSignals) this.initSignals = initSignals;
+    // These properties are set when exporting the function:
+    // this.isEnclosed = undefined;
+    // this.modulePath = undefined;
+    // this.funName = undefined;
+    // this.initSignals = undefined;
   }
   get isArrowFun() {
     return this.node.type === "arrow-function";
@@ -1793,15 +1801,10 @@ export class DefinedFunction extends FunctionObject{
 }
 
 export class DevFunction extends FunctionObject {
-  constructor(
-  {isAsync, minArgNum, isEnclosed, modulePath, funName, initSignals, decEnv},
-  fun
-  ) {
+  constructor({isAsync, minArgNum, isEnclosed, initSignals, decEnv}, fun) {
     if (isAsync) this.isAsync = isAsync;
     if (minArgNum) this.minArgNum = minArgNum;
     if (isEnclosed) this.isEnclosed = isEnclosed;
-    if (modulePath) this.modulePath = modulePath;
-    if (funName) this.funName = funName;
     if (initSignals) this.initSignals = initSignals;
     if (decEnv) this.decEnv = decEnv;
     this.fun = fun;
@@ -1810,6 +1813,20 @@ export class DevFunction extends FunctionObject {
     return this.decEnv ? true : false;
   }
 }
+
+export class LiveDevFunction extends DevFunction {
+  constructor(
+    devFun, liveModule, modulePath, funName, isEnclosed, initSignals
+  ) {
+    let {isAsync, minArgNum, decEnv} = devFun;
+    super({isAsync, minArgNum, isEnclosed, initSignals, decEnv}, devFun.fun);
+
+    if (liveModule) this.liveModule = liveModule;
+    if (modulePath) this.modulePath = modulePath;
+    if (funName) this.funName = funName;
+  }
+}
+
 
 export class ValueWrapper {
   constructor(val) {
@@ -1847,6 +1864,7 @@ export class PassAsMutable extends ValueWrapper {
     super(val);
   }
 }
+
 
 export class JSXElement {
   constructor(
