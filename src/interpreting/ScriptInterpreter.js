@@ -57,13 +57,14 @@ export class ScriptInterpreter {
 
   async interpretScript(
     gas, script = "", scriptPath = null, mainInputs = [], reqUserID = null,
-    initSignals = new Map(), signalModifications = new Map(), settings = {},
+    enclosedFunctions = new Map(), initSignals = new Map(),
+    signalModifications = new Map(),
     parsedScripts = new Map(), liveModules = new Map(),
   ) {
     let scriptVars = {
       gas: gas, log: {}, scriptPath: scriptPath, reqUserID: reqUserID,
-      initSignals: initSignals, signalModifications: signalModifications,
-      settings: settings,
+      enclosedFunctions: enclosedFunctions, initSignals: initSignals,
+      signalModifications: signalModifications,
       isExiting: false, resolveScript: undefined, interpreter: this,
       parsedScripts: parsedScripts, liveModules: liveModules,
     };
@@ -366,7 +367,7 @@ export class ScriptInterpreter {
     impStmt.importArr.forEach(imp => {
       let impType = imp.importType
       let moduleObject = new LiveModule(
-        submodulePath, curModuleEnv.scriptVars.protectedModules, liveSubmodule
+        submodulePath, curModuleEnv.scriptVars.enclosedModules, liveSubmodule
       );
       if (impType === "namespace-import") {
         curModuleEnv.declare(imp.ident, moduleObject, true, imp);
@@ -464,68 +465,37 @@ export class ScriptInterpreter {
 
 
 
-  executeFunction(fun, inputArr, callerNode, callerEnv, thisVal) {  
+  executeFunction(fun, inputArr, callerNode, callerEnv, thisVal) {
+    decrCompGas(callerNode, callerEnv);
+
     // If the function is an arrow function, check that it isn't called outside
     // of the "environmental call stack" that has its fun.decEnv as an ancestor
     // in the stack.
     if (fun.isArrowFun) {
       let isValid = callerEnv.isCallStackDescendentOf(fun.decEnv);
       if (!isValid) throw new RuntimeError(
-        "An arrow function or protected method was called outside of the " +
+        "An arrow function was called outside of the " +
         "environmental call stack in which it was declared.",
         callerNode, callerEnv
       );
     }
 
-    // If the function is a "protected function", assign it to a
-    // protectedFunction variable which is passed to Environment(), and assign
-    // undefined to thisVal, and extract the Dev/DefinedFunction that held in
-    // its 'fun' property.
-    let protectedFunction;
-    if (fun instanceof PrivilegedFunction) {
-      protectedFunction = fun;
-      thisVal = undefined;
-      fun = fun.fun;
-    }
+    // Initialize a new environment for the execution of the function.
+    let execEnv = new Environment(
+      fun.decEnv, "function", {
+        fun: fun, callerNode: callerNode, callerEnv: callerEnv, thisVal: thisVal
+      }
+    );
 
     // Then execute the function depending on its type.
     if (fun instanceof DevFunction) {
-      // Initialize a new environment for the execution of the function.
-      let newEnv = new Environment(
-        fun.decEnv, "function", {
-          callerNode: callerNode, callerEnv: callerEnv, isArrowFun: false,
-          protectedFunction: protectedFunction,
-        }
-      );
-
-      // Then execute the developer function and returns its first output.
       return this.executeDevFunction(
-        devFun, inputArr, callerNode, newEnv, thisVal
+        devFun, inputArr, callerNode, execEnv, thisVal
       );
     }
     else if (fun instanceof DefinedFunction) {
-      // Initialize a new environment for the execution of the function.
-      let newEnv;
-      if (funNode.type === "arrow-function") {
-        newEnv = new Environment(
-          fun.decEnv, "function", {
-            callerNode: callerNode, callerEnv: callerEnv, isArrowFun: true,
-            protectedFunction: protectedFunction,
-          }
-        );
-      }
-      else {
-        newEnv = new Environment(
-          fun.decEnv, "function", {
-            callerNode: callerNode, callerEnv: callerEnv, isArrowFun: false,
-            thisVal: thisVal, protectedFunction: protectedFunction,
-          }
-        );
-      }
-
-      // Then execute the user-defined function and return is return value.
       return this.executeDefinedFunction(
-        fun.node, inputArr, callerNode, newEnv
+        fun.node, inputArr, execEnv
       );
     }
     else throw new RuntimeError(
@@ -536,35 +506,37 @@ export class ScriptInterpreter {
 
 
 
-  executeDevFunction(devFun, inputArr, callerNode, newEnv, thisVal) {
+  executeDevFunction(devFun, inputArr, callerNode, execEnv, thisVal) {
     let execVars = {
-      callerNode: callerNode, callerEnv: newEnv, thisVal: thisVal,
+      callerNode: callerNode, callerEnv: execEnv, thisVal: thisVal,
       interpreter: this,
     };
+    let {isAsync, minArgNum} = devFun;
 
-    // If the dev function is a wrapper for an async function, call it and then
-    // call either executeAsyncCallback() or throwAsyncException() when it
-    // resolves or rejects, respectively.
-    if (devFun instanceof AsyncDevFunction) {
+    // If the dev function an async function, call it and then either return a
+    // PromiseObject to the user or call a user-provided callbackFun depending
+    // on the inputArr and on minArgNum.
+    if (isAsync) {
       // If the argument number exceeds minArgNum and the last argument is a
       // function, then treat this last argument as the callback to call when
       // the promise is ready.
-      let minArgNum = devFun.minArgNum;
       let lastArg = inputArr.at(-1);
       if (
-        (devFun.minArgNum ?? 0) <= inputArr.length &&
-        lastArg instanceof FunctionWrapper
+        (minArgNum ?? 0) <= inputArr.length &&
+        lastArg instanceof FunctionObject
       ) {
         let callbackFun = lastArg;
         let promise = devFun.fun(execVars, inputArr.slice(0, -1));
         this.handlePromise(promise, callbackFun, callerNode, callerEnv);
       }
+
       // And if not, simply return the promise wrapped in PromiseObject().
       else {
         let promise = devFun.fun(execVars, inputArr);
         return new PromiseObject(promise);
       }
     }
+
     // Else call the dev function synchronously and return what it returns.
     else {
       return devFun.fun(execVars, inputArr);
@@ -616,19 +588,17 @@ export class ScriptInterpreter {
 
 
 
-  executeDefinedFunction(funNode, inputValueArr, callerNode, newEnv) {
-    decrCompGas(callerNode, newEnv);
-
+  executeDefinedFunction(funNode, inputValueArr, execEnv) {
     // Add the input parameters to the environment (and turn all object inputs
     // immutable, unless wrapped in PassAsMutable()).
-    this.declareInputParameters(newEnv, funNode.params, inputValueArr);
+    this.declareInputParameters(execEnv, funNode.params, inputValueArr);
 
     // Now execute the statements inside a try-catch statement to catch any
     // return exception, or any uncaught break or continue exceptions. On a
     // return exception, return the held value. 
     let stmtArr = funNode.body.stmtArr;
     try {
-      stmtArr.forEach(stmt => this.executeStatement(stmt, newEnv));
+      stmtArr.forEach(stmt => this.executeStatement(stmt, execEnv));
     } catch (err) {
       if (err instanceof ReturnException) {
         return err.val;
@@ -1398,7 +1368,8 @@ export class ScriptInterpreter {
 export class Environment {
   constructor(
     parent, scopeType = "block", {
-      callerNode, callerEnv, isArrowFun, thisVal, protectedFunction,
+      fun: {isArrowFun, isEnclosed, modulePath, funName, initSignals},
+      callerNode, callerEnv, thisVal,
       modulePath, lexArr, strPosArr, script,
       scriptVars,
       catchStmtArr, errIdent, numIdent,
@@ -1415,15 +1386,14 @@ export class Environment {
       this.callerEnv = callerEnv;
       if (thisVal) this.thisVal = thisVal;
       if (isArrowFun) this.isArrowFun = isArrowFun;
-      if (protectedFunction) {
-        let {initSignals, modulePath, funName} = protectedFunction;
+      if (isEnclosed) {
         this.flagEnv = new FlagEnvironment(
           this.#getFlagEnvironment(), modulePath, funName
         );
-        initSignals.forEach(([signal, flags]) => {
-          this.flagEnv.emitSignal(
-            signal, flags, callerNode, this, modulePath, funName
-          );
+      }
+      if (initSignals) {
+        initSignals.forEach(([signal, signalParams]) => {
+          this.flagEnv.emitSignal(signal, callerNode, this, signalParams);
         });
       }
     }
@@ -1442,10 +1412,10 @@ export class Environment {
       this.numOfAsyncExceptions = 0;
     }
     else if (scopeType === "global") {
-      this.flagEnv = new FlagEnvironment(undefined, "/");
+      this.flagEnv = new FlagEnvironment(null, "/");
       let initSignals = this.scriptVars.initSignals.get(GLOBAL) ?? [];
-      initSignals.forEach(([signal, flags]) => {
-        this.flagEnv.emitSignal(signal, flags, null, this, "/");
+      initSignals.forEach(([signal, signalParams]) => {
+        this.flagEnv.emitSignal(signal, null, this, signalParams);
       });
     }
   }
@@ -1667,7 +1637,7 @@ export class LiveModule {
   constructor(modulePath, moduleEnv) {
     this.modulePath = modulePath;
     this.moduleEnv = moduleEnv;
-    this.initSignals = moduleEnv.ScriptVars.protectedModules.get(modulePath);
+    this.initSignals = moduleEnv.ScriptVars.enclosedModules.get(modulePath);
     let isPrivileged = this.initSignals !== undefined;
     this.members = new Map();
     memberEntries.forEach(([key, val]) => {
@@ -1680,7 +1650,7 @@ export class LiveModule {
         return;
       }
 
-      // If the module is protected and the exported value is a FunctionObject,
+      // If the module is enclosed and the exported value is a FunctionObject,
       // wrap it in a PrivilegedMethod class, before setting the module member.
       if (isPrivileged && val instanceof FunctionObject) {
         val = new PrivilegedFunction(val, this)
@@ -1809,9 +1779,13 @@ export const WILL_EXIT_SIGNAL = new Signal((flagEnv, node, env) => {
 export class FunctionObject {};
 
 export class DefinedFunction extends FunctionObject{
-  constructor(node, decEnv) {
+  constructor(node, decEnv, {isEnclosed, modulePath, funName, initSignals}) {
     this.node = node;
     this.decEnv = decEnv;
+    if (isEnclosed) this.isEnclosed = isEnclosed;
+    if (modulePath) this.modulePath = modulePath;
+    if (funName) this.funName = funName;
+    if (initSignals) this.initSignals = initSignals;
   }
   get isArrowFun() {
     return this.node.type === "arrow-function";
@@ -1819,42 +1793,21 @@ export class DefinedFunction extends FunctionObject{
 }
 
 export class DevFunction extends FunctionObject {
-  constructor(decEnv, fun) {
-    if (fun === undefined) {
-      fun = decEnv;
-      decEnv = undefined;
-    }
-    this.fun = fun;
+  constructor(
+  {isAsync, minArgNum, isEnclosed, modulePath, funName, initSignals, decEnv},
+  fun
+  ) {
+    if (isAsync) this.isAsync = isAsync;
+    if (minArgNum) this.minArgNum = minArgNum;
+    if (isEnclosed) this.isEnclosed = isEnclosed;
+    if (modulePath) this.modulePath = modulePath;
+    if (funName) this.funName = funName;
+    if (initSignals) this.initSignals = initSignals;
     if (decEnv) this.decEnv = decEnv;
+    this.fun = fun;
   }
   get isArrowFun() {
     return this.decEnv ? true : false;
-  }
-}
-
-export class AsyncDevFunction extends DevFunction {
-  constructor(decEnv, minArgNum, asyncFun) {
-    if (asyncFun === undefined) {
-      asyncFun = minArgNum;
-    } else {
-      this.minArgNum = minArgNum;
-    }
-    super(decEnv, asyncFun);
-  }
-}
-
-export class PrivilegedFunction extends FunctionObject {
-  constructor(initSignals, fun) {
-    this.initSignals = initSignals;
-    this.fun = (fun instanceof PrivilegedFunction) ? fun.fun : fun;
-    this.modulePath = undefined; // set when exported.
-    this.funName = undefined; // set when exported.
-  }
-  get decEnv() {
-    return fun.decEnv;
-  }
-  get isArrowFun() {
-    return this.fun.isArrowFun;
   }
 }
 
