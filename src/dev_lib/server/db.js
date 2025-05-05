@@ -1,6 +1,6 @@
 
 import {
-  AsyncDevFunction, Environment, Flag, RuntimeError,
+  AsyncDevFunction, Signal, RuntimeError,
 } from '../../interpreting/ScriptInterpreter.js';
 import {parseRoute} from './misc/parseRoute.js';
 
@@ -23,7 +23,7 @@ export async function _query(
 
   // If the route is locked, check that you have admin privileges on homeDirID.
   if (isLocked) {
-    callerEnv.raiseFlag(GET_ADMIN_PRIVILEGES_FLAG, homeDirID, callerNode);
+    callerEnv.emitSignal(CHECK_ADMIN_PRIVILEGES_SIGNAL, callerNode, homeDirID);
   }  
   
   // Branch according to the file type.
@@ -57,24 +57,28 @@ export async function _query(
   return [result, wasReady];
 }
 
-export const query = new AsyncDevFunction(_query);
+export const query = new DevFunction(
+  {isAsync: true, minArgNum: 1, isEnclosed: true},
+  _query
+);
 
 
 
-const SET_ADMIN_PRIVILEGES_FLAG = new Flag(
-  function(homeDirID, flagEnv, node, env) {
-    return homeDirID;
+export const ADMIN_PRIVILEGES_FLAG = Symbol("admin_privileges");
+
+export const SET_ADMIN_PRIVILEGES_SIGNAL = new Flag(
+  function(flagEnv, _, _, homeDirID) {
+    flagEnv.raiseFlag(ADMIN_PRIVILEGES_FLAG, homeDirID);
   }
 );
-const GET_ADMIN_PRIVILEGES_FLAG = new Flag(
-  function(homeDirID, flagEnv, node, env) {
-    let [ , prevHomeDirID] = flagEnv.getFirstFlag([
-      this, SET_ADMIN_PRIVILEGES_FLAG
-    ]);
-    if (prevHomeDirID !== homeDirID) throw new RuntimeError(
+
+export const CHECK_ADMIN_PRIVILEGES_SIGNAL = new Flag(
+  function(flagEnv, node, env, homeDirID) {
+    let [wasFound, prevHomeDirID] = flagEnv.getFlag(ADMIN_PRIVILEGES_FLAG);
+    if (!wasFound || prevHomeDirID !== homeDirID) throw new RuntimeError(
       `Requested admin privileges on Directory ${homeDirID} not granted`,
       node, env
     );
-    return homeDirID;
+    flagEnv.raiseFlag(ADMIN_PRIVILEGES_FLAG, homeDirID);
   }
 );

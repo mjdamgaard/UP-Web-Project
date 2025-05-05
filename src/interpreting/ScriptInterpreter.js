@@ -1507,9 +1507,9 @@ export class Environment {
     }
   }
 
-  emitSignal(signal, node, env = this, signalParams) {
+  emitSignal(signal, node, signalParams) {
     let flagEnv = this.#getFlagEnvironment();
-    flagEnv.emitSignal(signal, node, env, signalParams);
+    flagEnv.emitSignal(signal, node, this, signalParams);
   }
 
 
@@ -1728,7 +1728,7 @@ export class FlagEnvironment {
   }
 
   removeFlag(flag) {
-    this.flags.delete(flag);
+    this.flags.set(flag, null);
   }
 
   getFirstFlag(flagArr) {
@@ -1766,6 +1766,10 @@ export class FlagEnvironment {
 
 
 export const NO_EXIT_FLAG = Symbol("no_exit");
+
+export const NO_EXIT_SIGNAL = new Signal((flagEnv) => {
+    flagEnv.raiseFlag(NO_EXIT_FLAG);
+});
 
 export const WILL_EXIT_SIGNAL = new Signal((flagEnv, node, env) => {
   let [wasFound] = flagEnv.getFlag(NO_EXIT_FLAG);
