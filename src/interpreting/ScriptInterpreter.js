@@ -38,7 +38,7 @@ export function getParsingGasCost(str) {
   return {comp: str.length / 100 + 1};
 }
 
-// let CAN_EXIT_FLAG; // is defined below.
+// let CAN_EXIT_SIGNAL; // is defined below.
 
 
 
@@ -57,20 +57,22 @@ export class ScriptInterpreter {
 
   async interpretScript(
     gas, script = "", scriptPath = null, mainInputs = [], reqUserID = null,
-    initFlags = new Map(), flagModifications = new Map(), settings = {},
+    initSignals = new Map(), signalModifications = new Map(), settings = {},
     parsedScripts = new Map(), liveModules = new Map(),
   ) {
     let scriptVars = {
       gas: gas, log: {}, scriptPath: scriptPath, reqUserID: reqUserID,
-      privilegedModules: privilegedModules, settings: settings,
+      initSignals: initSignals, signalModifications: signalModifications,
+      settings: settings,
       isExiting: false, resolveScript: undefined, interpreter: this,
       parsedScripts: parsedScripts, liveModules: liveModules,
     };
 
-    // First create global environment if not yet done, and then create an
-    // initial global environment, used as a parent environment for all
-    // scripts/modules.
-    let globalEnv = this.createGlobalEnvironment(scriptVars);
+    // First create a global environment, which is used as a parent environment
+    // for all modules.
+    let globalEnv = new Environment( 
+      undefined, "global", {scriptVars: scriptVars},
+    );
 
     // If script is provided, rather than the scriptPath, first parse it.
     let parsedScript, lexArr, strPosArr;
@@ -193,14 +195,6 @@ export class ScriptInterpreter {
   }
 
 
-
-
-  createGlobalEnvironment(scriptVars) {
-    let globalEnv = new Environment( 
-      undefined, "global", {scriptVars: scriptVars},
-    );
-    return globalEnv;
-  }
 
 
 
@@ -372,7 +366,7 @@ export class ScriptInterpreter {
     impStmt.importArr.forEach(imp => {
       let impType = imp.importType
       let moduleObject = new LiveModule(
-        submodulePath, curModuleEnv.scriptVars.privilegedModules, liveSubmodule
+        submodulePath, curModuleEnv.scriptVars.protectedModules, liveSubmodule
       );
       if (impType === "namespace-import") {
         curModuleEnv.declare(imp.ident, moduleObject, true, imp);
@@ -483,13 +477,14 @@ export class ScriptInterpreter {
       );
     }
 
-    // If the function is called as a method of a protected object, assign the
-    // protected object held by thisVal to a protectedObject variable, which is
-    // passed the Environment() to make it a new protected object environment.
-    let protectedObject;
+    // If the function is a "protected function", assign it to a
+    // protectedFunction variable which is passed to Environment(), and assign
+    // undefined to thisVal, and extract the Dev/DefinedFunction that held in
+    // its 'fun' property.
+    let protectedFunction;
     if (fun instanceof PrivilegedFunction) {
-      protectedObject = thisVal;
-      thisVal = fun.thisVal;
+      protectedFunction = fun;
+      thisVal = undefined;
       fun = fun.fun;
     }
 
@@ -499,7 +494,7 @@ export class ScriptInterpreter {
       let newEnv = new Environment(
         fun.decEnv, "function", {
           callerNode: callerNode, callerEnv: callerEnv, isArrowFun: false,
-          privilegedFunction: privilegedFunction,
+          protectedFunction: protectedFunction,
         }
       );
 
@@ -515,7 +510,7 @@ export class ScriptInterpreter {
         newEnv = new Environment(
           fun.decEnv, "function", {
             callerNode: callerNode, callerEnv: callerEnv, isArrowFun: true,
-            privilegedFunction: privilegedFunction,
+            protectedFunction: protectedFunction,
           }
         );
       }
@@ -523,7 +518,7 @@ export class ScriptInterpreter {
         newEnv = new Environment(
           fun.decEnv, "function", {
             callerNode: callerNode, callerEnv: callerEnv, isArrowFun: false,
-            thisVal: thisVal, privilegedFunction: privilegedFunction,
+            thisVal: thisVal, protectedFunction: protectedFunction,
           }
         );
       }
@@ -579,7 +574,7 @@ export class ScriptInterpreter {
 
   handlePromise(promise, callbackFun, callerNode, callerEnv) {
     promise.then(res => {
-      this.executeFunction(callbackFun, [res], callerNode, callerEnv);
+      this.executeAsyncCallback(callbackFun, [res], callerNode, callerEnv);
     }).catch(err => {
       this.throwAsyncException(err, callerNode, callerEnv);
     });
@@ -587,12 +582,12 @@ export class ScriptInterpreter {
 
 
 
-  executeAsyncCallback(fun, inputArr, callerNode, callerEnv, flagQueue) {
+  executeAsyncCallback(fun, inputArr, callerNode, callerEnv) {
     if (callerEnv.scriptVars.isExiting) {
       throw new ExitException();
     }
     try {
-      this.executeFunction(fun, inputArr, callerNode, callerEnv, flagQueue);
+      this.executeFunction(fun, inputArr, callerNode, callerEnv);
     }
     catch (err) {
       if (
@@ -1200,8 +1195,8 @@ export class ScriptInterpreter {
         let expVal = (!expNode.exp) ? undefined :
           this.evaluateExpression(expNode.exp, environment);
         let {resolveScript} = environment.scriptVars;
-        // Check the can-exit flag, before resolving the script.
-        environment.raiseFlag(CAN_EXIT_FLAG, true, node);
+        // Check the can-exit signal, before resolving the script.
+        environment.emitSignal(WILL_EXIT_SIGNAL, node);
         resolveScript(expVal);
         // Throw an exit exception.
         throw new ExitException();
@@ -1403,7 +1398,7 @@ export class ScriptInterpreter {
 export class Environment {
   constructor(
     parent, scopeType = "block", {
-      callerNode, callerEnv, isArrowFun, thisVal, privilegedFunction,
+      callerNode, callerEnv, isArrowFun, thisVal, protectedFunction,
       modulePath, lexArr, strPosArr, script,
       scriptVars,
       catchStmtArr, errIdent, numIdent,
@@ -1420,14 +1415,14 @@ export class Environment {
       this.callerEnv = callerEnv;
       if (thisVal) this.thisVal = thisVal;
       if (isArrowFun) this.isArrowFun = isArrowFun;
-      if (privilegedFunction) {
-        let {initFlags, modulePath, funName} = privilegedFunction;
+      if (protectedFunction) {
+        let {initSignals, modulePath, funName} = protectedFunction;
         this.flagEnv = new FlagEnvironment(
-          this.getFlagEnvironment(), modulePath, funName
+          this.#getFlagEnvironment(), modulePath, funName
         );
-        initFlags.forEach(([flag, params]) => {
-          this.flagEnv.raiseFlag(
-            flag, params, callerNode, this, modulePath, funName
+        initSignals.forEach(([signal, flags]) => {
+          this.flagEnv.emitSignal(
+            signal, flags, callerNode, this, modulePath, funName
           );
         });
       }
@@ -1448,9 +1443,9 @@ export class Environment {
     }
     else if (scopeType === "global") {
       this.flagEnv = new FlagEnvironment(undefined, "/");
-      let initFlags = this.scriptVars.initFlags.get(GLOBAL) ?? [];
-      initFlags.forEach(([flag, params]) => {
-        this.flagEnv.raiseFlag(flag, params, null, this, "/");
+      let initSignals = this.scriptVars.initSignals.get(GLOBAL) ?? [];
+      initSignals.forEach(([signal, flags]) => {
+        this.flagEnv.emitSignal(signal, flags, null, this, "/");
       });
     }
   }
@@ -1551,7 +1546,7 @@ export class Environment {
     }
   }
 
-  getFlagEnvironment() {
+  #getFlagEnvironment() {
     let flagEnv = this.flagEnv;
     if (flagEnv) {
       return flagEnv;
@@ -1567,9 +1562,9 @@ export class Environment {
     }
   }
 
-  raiseFlag(flag, params, node, env = this) {
-    let flagEnv = this.getFlagEnvironment();
-    flagEnv.raiseFlag(flag, params, node, env);
+  emitSignal(signal, node, env = this, signalParams) {
+    let flagEnv = this.#getFlagEnvironment();
+    flagEnv.emitSignal(signal, node, env, signalParams);
   }
 
 
@@ -1672,8 +1667,8 @@ export class LiveModule {
   constructor(modulePath, moduleEnv) {
     this.modulePath = modulePath;
     this.moduleEnv = moduleEnv;
-    this.initFlags = moduleEnv.ScriptVars.privilegedModules.get(modulePath);
-    let isPrivileged = this.initFlags !== undefined;
+    this.initSignals = moduleEnv.ScriptVars.protectedModules.get(modulePath);
+    let isPrivileged = this.initSignals !== undefined;
     this.members = new Map();
     memberEntries.forEach(([key, val]) => {
       // Filter out any Function instance, which might be exported from a dev
@@ -1685,7 +1680,7 @@ export class LiveModule {
         return;
       }
 
-      // If the module is privileged and the exported value is a FunctionObject,
+      // If the module is protected and the exported value is a FunctionObject,
       // wrap it in a PrivilegedMethod class, before setting the module member.
       if (isPrivileged && val instanceof FunctionObject) {
         val = new PrivilegedFunction(val, this)
@@ -1694,42 +1689,46 @@ export class LiveModule {
     });
   }
   // get isPrivileged() {
-  //   return this.initFlags ? true : false;
+  //   return this.initSignals ? true : false;
   // }
 }
 
 
 
-// Flags are signals that can be raised in the environment. They carry a raise()
-// function that is called when they are raised. This function can first of
-// all check other previously raised flags in the environment, and throw an
-// error if the "flag environment" does not allow it to be raised. And if
-// raise() returns a value other than undefined, the flag will stay up
-// permanently for the duration of the flag environment, which means that
-// subsequent flags that are raised, including itself, can use the flag as part
-// of their checks. Important to note, the "flag environment" is similar to the
-// regular variable environment except that the only scopes are ones created
-// when a "privileged function" is called. So whenever a flag is raised
-// permanently, it is raised at that scope, and will thus overwrite any
-// existing flag there of the same type. The privileged functions are all the
-// functions that has a list of initial flags attached to them, either coming
-// from the initFlags Map contained in scriptVars, and/or determined by the dev
-// library that exports them, if so.
-export class Flag {
-  constructor(raise) {
-    // raise() takes some parameters, the flag environment with which to get
-    // access to existing flags, the modulePath of the privileged function of
-    // the current flag scope, as well as that function's name (plus node and
-    // env which are useful for throwing runtime errors).
-    this.raise = raise ?? (
-      (params, flagEnv, node, env, modulePath, funName) => params
+// Signals are emitted either to check that that a certain type of action is
+// permitted in the current environment, or to permit or restrict subsequent
+// actions in the environment, or a combination of these things, The latter is
+// generally done by raising or replacing "flags" in the current "flag
+// environment." A flag environment works similar to the regular variable
+// environments, except the only scopes for flags are the global scope, as well
+// as all function execution scopes of "enclosed functions." A function is
+// "enclosed" either if exported as such by a dev library, or if the
+// 'enclosedFunctions' Map contained in scriptVars points to it. An enclosed
+// scope will still see all the flags raised by any ancestor, but when raising
+// or replacing a flag, the change will not affect the ancestors outside of the
+// enclosure.
+export class Signal {
+  constructor(emit) {
+    // emit() is the function/method that handles the signal when it is being
+    // emitted. It takes some signal parameters, first of all, and the flag
+    // environment with which to interface with the flags, as well as getting
+    // the modulePath and funName of the enclosed function of the current
+    // enclosed scope where the flag environment sits. (It also takes node and
+    // env as well, which are useful for throwing runtime errors.)
+    this.emit = emit ?? (
+      (flagEnv, node, env, signalParams = undefined) => undefined
     );
   }
 }
 
 
 
-
+// A flag environment sits on every "enclosed" scope, and on the global one and
+// is the interface for checking and raising flags. Aside from the Environment
+// class above that creates and retrieves the flag environment, the only
+// other functions that should ever interact with FlagEnvironment it the emit()
+// functions/methods of Signal instances. Thus, as a developer, you should never
+// handle flags directly unless defining a Signal.emit() function.  
 export class FlagEnvironment {
   constructor(parent, modulePath, funName) {
     this.parent = parent;
@@ -1738,42 +1737,48 @@ export class FlagEnvironment {
     this.flags = new Map();
   }
 
-  raiseFlag(flag, params, node, env) {
-    let modifiedRaise = env.scriptVars.modifiedFlags.get(flag);
-    let permanentParams = modifiedRaise ?
-      modifiedRaise(
-        params, flagEnv, node, env, this.modulePath, this.funName
-      ) :
-      flag.raise(
-        params, flagEnv, node, env, this.modulePath, this.funName
-      );
-    if (permanentParams !== undefined) this.flags.set(flag, permanentParams);
+  emitSignal(signal, node, env, signalParams) {
+    let modifiedEmit = env.scriptVars.modifiedSignals.get(signal);
+    if (modifiedEmit) {
+      modifiedEmit(this, node, env, signalParams);
+    } else {
+      signal.emit(this, node, env, signalParams);
+    }
+  }
+
+  setFlag(flag, flagParams) {
+    this.flags.set(flag, flagParams ?? null);
+  }
+
+  removeFlag(flag) {
+    this.flags.delete(flag);
   }
 
   getFirstFlag(flagArr) {
-    let retFlag, retParams;
+    let retFlag, retFlagParams;
     flagArr.some(flag => {
-      let params = this.flags.get(flag);
-      if (params !== undefined) {
+      let flagParams = this.flags.get(flag);
+      if (flagParams !== undefined) {
         retFlag = flag;
-        retParams = params;
+        retFlagParams = flagParams;
         return true; // breaks the some iteration.
       }
     });
     if (retFlag) {
-      return [retFlag, retParams, this.modulePath, this.funName];
+      return [retFlag, retFlagParams, this.modulePath, this.funName];
     }
     else if (this.parent) {
-      return this.parent.getFirstFlag(flagArr);
+      return this.parent.getFirstSignal(flagArr);
     }
     else {
-      return undefined;
+      return [];
     }
   }
 
   getFlag(flag) {
-    let [ , params, modulePath, funName] = this.getFirstFlag([flag]);
-    return [params, modulePath, funName];
+    let [retFlag, flagParams, modulePath, funName] = this.getFirstFlag([flag]);
+    let wasFound = retFlag ? true : false;
+    return [wasFound, flagParams, modulePath, funName];
   }
 
   // TODO: Potentially add more useful methods here.
@@ -1782,19 +1787,18 @@ export class FlagEnvironment {
 
 
 
-export const CAN_EXIT_FLAG = new Flag(function(canExit, flagEnv, node, env) {
-  let [prevCanExit] = flagEnv.getFlag(this);
-  if (prevCanExit === undefined || prevCanExit === canExit) {
-    return canExit;
-  }
-  else {
-    throw new RuntimeError(
-      canExit ? "Script is not allowed to exit" :
-        'A cannot-exit flag was raised after a can-exit flag',
-      node, env
-    );
-  }
+
+export const NO_EXIT_FLAG = Symbol("no_exit");
+
+export const WILL_EXIT_SIGNAL = new Signal((flagEnv, node, env) => {
+  let [wasFound] = flagEnv.getFlag(NO_EXIT_FLAG);
+  if (wasFound) throw new RuntimeError(
+    "Script is not allowed to exit here",
+    node, env
+  );
 });
+
+
 
 
 
@@ -1840,8 +1844,8 @@ export class AsyncDevFunction extends DevFunction {
 }
 
 export class PrivilegedFunction extends FunctionObject {
-  constructor(initFlags, fun) {
-    this.initFlags = initFlags;
+  constructor(initSignals, fun) {
+    this.initSignals = initSignals;
     this.fun = (fun instanceof PrivilegedFunction) ? fun.fun : fun;
     this.modulePath = undefined; // set when exported.
     this.funName = undefined; // set when exported.
