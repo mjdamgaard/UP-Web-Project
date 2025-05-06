@@ -67,20 +67,6 @@ export const query = new DevFunction(
 
 
 
-export const callServerModuleMethod = new DevFunction(
-  {isAsync: true, minArgNum: 2, isEnclosed: true},
-  async function(
-    {callerNode, callerEnv, interpreter}, [homeDirID, funName, inputArr]
-  ) {
-    callerEnv.emitSignal(SET_ELEVATED_PRIVILEGES_SIGNAL, homeDirID);
-    let liveServerModule = await interpreter.import(`/${homeDirID}/module.js`);
-    let method = liveServerModule.get(funName);
-    return this.interpreter.executeAsyncFunction(
-      method, inputArr, callerNode, callerEnv, liveServerModule
-    );
-  }
-);
-
 
 
 

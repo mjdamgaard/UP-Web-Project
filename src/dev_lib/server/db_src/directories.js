@@ -2,7 +2,7 @@
 import {MainDBConnection} from "./DBConnection.js";
 import {ClientError} from "../../../server/err/errors.js";
 import {
-  DevFunctionFromAsyncFun, payGasWithNoContext,
+  LiveDevFunction,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
   adminOnlySignal,
@@ -80,9 +80,17 @@ export async function query(
         `${inputArrStr}`
       );
     }
-    let liveDevFunction = liveDBModule.get("callServerModuleMethod");
+    let liveServerModule = await interpreter.import(`/${homeDirID}/module.js`);
+    let liveDevFunction = new LiveDevFunction({
+      devFun: callServerModuleMethod,
+      liveModule: liveDBModule,
+      funName: "_callServerModuleMethod",
+      isEnclosed: true,
+    }
+    );
     let res = await interpreter.executeFunction(
-      liveDevFunction, [homeDirID, funName, inputArr], callerNode, callerEnv
+      liveDevFunction, [liveServerModule, homeDirID, funName, inputArr],
+      callerNode, callerEnv
     );
     return [res];
   }
@@ -90,6 +98,20 @@ export async function query(
 
 }
 
+
+const callServerModuleMethod = new DevFunction(
+  {isAsync: true, minArgNum: 2, isEnclosed: true},
+  async function(
+    {callerNode, callerEnv, interpreter},
+    [liveServerModule, homeDirID, funName, inputArr]
+  ) {
+    callerEnv.emitSignal(SET_ELEVATED_PRIVILEGES_SIGNAL, homeDirID);
+    let method = liveServerModule.get(funName);
+    return interpreter.executeAsyncFunction(
+      method, inputArr, callerNode, callerEnv, liveServerModule
+    );
+  }
+);
 
 
 export async function _mkdir(gas, adminID) {

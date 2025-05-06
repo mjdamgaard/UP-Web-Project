@@ -1856,12 +1856,11 @@ export class ModifiedDefinedFunction extends DefinedFunction {
 }
 
 export class DevFunction extends FunctionObject {
-  constructor({isAsync, minArgNum, initSignals, isEnclosed, decEnv}, fun) {
+  constructor({isAsync, minArgNum, initSignals, isEnclosed}, fun) {
     if (isAsync) this.isAsync = isAsync;
     if (minArgNum) this.minArgNum = minArgNum;
     if (initSignals) this.initSignals = initSignals;
     if (isEnclosed) this.isEnclosed = isEnclosed;
-    if (decEnv) this.decEnv = decEnv;
     this.fun = fun;
   }
   get isArrowFun() {
@@ -1871,14 +1870,15 @@ export class DevFunction extends FunctionObject {
 
 export class LiveDevFunction extends DevFunction {
   constructor(
-    {devFun, liveModule, modulePath, funName, initSignals, isEnclosed}
+    {devFun, liveModule, modulePath, funName, initSignals, isEnclosed, decEnv}
   ) {
     let {isAsync, minArgNum, decEnv} = devFun;
     super({isAsync, minArgNum, initSignals, isEnclosed, decEnv}, devFun.fun);
 
     if (liveModule) this.liveModule = liveModule;
-    if (modulePath) this.modulePath = modulePath;
+    if (modulePath) this.modulePath = modulePath ?? liveModule?.modulePath;
     if (funName) this.funName = funName;
+    if (decEnv) this.decEnv = decEnv;
   }
 }
 
