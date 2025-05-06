@@ -248,9 +248,7 @@ export class ScriptInterpreter {
     // environments, but without making any changes to moduleEnv yet.
     let liveSubmoduleArr = await Promise.all(
       moduleNode.importStmtArr.map(impStmt => (
-        this.executeSubmoduleOfImportStatement(
-          impStmt, modulePath, moduleEnv, globalEnv
-        )
+        this.executeSubmoduleOfImportStatement(impStmt, modulePath, moduleEnv)
       ))
     );
 
@@ -275,16 +273,23 @@ export class ScriptInterpreter {
 
 
 
-  async executeSubmoduleOfImportStatement(
-    impStmt, curModulePath, callerModuleEnv, globalEnv
-  ) {
-    decrCompGas(impStmt, globalEnv);
-    decrGas(impStmt, globalEnv, "import");
-    let {liveModules, parsedScripts} = globalEnv.scriptVars;
+
+  executeSubmoduleOfImportStatement( impStmt, curModulePath, callerModuleEnv) {
+    let submodulePath = getFullPath(curModulePath, impStmt.str);
+    
+    return this.import(submodulePath, impStmt, callerModuleEnv);
+  }
+
+
+  async import(modulePath, callerNode, callerEnv) {
+    decrCompGas(callerNode, callerEnv);
+    decrGas(callerNode, callerEnv, "import");
+
+    let {liveModules, parsedScripts} = callerEnv.scriptVars;
+    let globalEnv = callerEnv.getGlobalEnv();
 
     // If the module has already been executed, we can return early.
-    let submodulePath = getFullPath(curModulePath, impStmt.str);
-    let liveModule = liveModules.get(submodulePath);
+    let liveModule = liveModules.get(modulePath);
     if (liveModule) {
       return liveModule;
     }
@@ -292,21 +297,21 @@ export class ScriptInterpreter {
     // If the module reference is a dev library reference, which always comes
     // in the form of a bare module specifier (left over in the build step, if
     // any), try to import the given library.
-    if (submodulePath[0] !== "/") {
+    if (modulePath[0] !== "/") {
       let devMod, devLibURL;
-      devMod = this.staticDevLibs.get(submodulePath);
+      devMod = this.staticDevLibs.get(modulePath);
       if (!devMod) {
-        devMod = this.devLibURLs.get(submodulePath);
+        devMod = this.devLibURLs.get(modulePath);
         if (!devLibURL) throw new LoadError(
-          `Developer library "${submodulePath}" not found`,
-          impStmt, callerModuleEnv
+          `Developer library "${modulePath}" not found`,
+          callerNode, callerEnv
         );
         try {
           devMod = await import(devLibURL);
         } catch (err) {
           throw new LoadError(
-            `Developer library "${submodulePath}" not found`,
-            impStmt, callerModuleEnv
+            `Developer library "${modulePath}" not found`,
+            callerNode, callerEnv
           );
         }
       }
@@ -314,7 +319,7 @@ export class ScriptInterpreter {
       // If the dev library module was found, create a "liveModule" object from
       // it, store it in the liveModules buffer, and return it. 
       let liveModule = new LiveModule(
-        submodulePath, Object.entries(devMod), globalEnv.scriptVars
+        modulePath, Object.entries(devMod), globalEnv.scriptVars
       );
       return liveModule;
     }
@@ -324,15 +329,15 @@ export class ScriptInterpreter {
     let [
       submoduleNode, lexArr, strPosArr, script
     ] = await this.fetchParsedScript(
-      submodulePath, parsedScripts, impStmt, callerModuleEnv
+      modulePath, parsedScripts, callerNode, callerModuleEnv
     );
 
     // Then execute the module, inside the global environment, and return the
     // resulting liveModule, after also adding it to liveModules.
     [liveModule] = await this.executeModule(
-      submoduleNode, lexArr, strPosArr, script, submodulePath, globalEnv
+      submoduleNode, lexArr, strPosArr, script, modulePath, globalEnv
     );
-    liveModules.set(submodulePath, liveModule);
+    liveModules.set(modulePath, liveModule);
     return liveModule;
   }
 
@@ -347,8 +352,8 @@ export class ScriptInterpreter {
     impStmt.importArr.forEach(imp => {
       let impType = imp.importType
       if (impType === "namespace-import") {
-        let moduleNameSpaceObj = turnImmutable(liveSubmodule.members);
-        curModuleEnv.declare(imp.ident, moduleNameSpaceObj, true, imp);
+        let moduleNamespaceObj = turnImmutable(liveSubmodule);
+        curModuleEnv.declare(imp.ident, moduleNamespaceObj, true, imp);
       }
       else if (impType === "named-imports") {
         imp.namedImportArr.forEach(namedImp => {
@@ -1186,6 +1191,21 @@ export class ScriptInterpreter {
           })
         ));
       }
+      case "import-call": {
+        let path = this.evaluateExpression(expNode.pathExp, environment);
+        let namespaceObjPromise = this.import(path, expNode, environment);
+        if (expNode.callback) {
+          let callback = this.evaluateExpression(expNode.callback, environment);
+          this.handlePromise(
+            namespaceObjPromise, callback, expNode, environment
+          );
+        }
+        else {
+          return new PromiseObject(
+            namespaceObjPromise, this, expNode, environment
+          );
+        }
+      }
       default: throw (
         "ScriptInterpreter.evaluateExpression(): Unrecognized type: " +
         `"${type}"`
@@ -1479,6 +1499,16 @@ export class Environment {
   }
 
 
+  getGlobalEnv() {
+    if (this.parent) {
+      return this.parent.getGlobalEnv();
+    }
+    else {
+      return this;
+    }
+  }
+
+
   getThisVal() {
     let thisVal = this.thisVal;
     if (thisVal !== undefined) {
@@ -1737,7 +1767,10 @@ export class FlagEnvironment {
     this.flags.set(flag, null);
   }
 
-  getFirstFlag(flagArr) {
+  getFirstFlag(flagArr, maxStep = Infinity, curStep = 0) {
+    if (curStep > maxStep) {
+      return [];
+    }
     let retFlag, retFlagParams;
     flagArr.some(flag => {
       let flagParams = this.flags.get(flag);
@@ -1748,20 +1781,22 @@ export class FlagEnvironment {
       }
     });
     if (retFlag) {
-      return [retFlag, retFlagParams, this.modulePath, this.funName];
+      return [retFlag, retFlagParams, this.modulePath, this.funName, curStep];
     }
     else if (this.parent) {
-      return this.parent.getFirstSignal(flagArr);
+      return this.parent.getFirstSignal(flagArr, maxStep, curStep + 1);
     }
     else {
       return [];
     }
   }
 
-  getFlag(flag) {
-    let [retFlag, flagParams, modulePath, funName] = this.getFirstFlag([flag]);
+  getFlag(flag, maxStep = undefined) {
+    let [
+      retFlag, flagParams, modulePath, funName, step
+    ] = this.getFirstFlag([flag], maxStep);
     let wasFound = retFlag ? true : false;
-    return [wasFound, flagParams, modulePath, funName];
+    return [wasFound, flagParams, modulePath, funName, step];
   }
 
   // TODO: Potentially add more useful methods here.

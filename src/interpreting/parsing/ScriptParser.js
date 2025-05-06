@@ -14,7 +14,7 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
   "true|false|null|undefined|Infinity|NaN|try|catch|finally|for|while|do|" +
-  "default|public|debugger|new|exit|passAsMutable|Promise|console)$"
+  "default|public|debugger|new|exit|passAsMutable|Promise|console|import)$"
   // TODO: Continue this list.
 );
 
@@ -959,6 +959,22 @@ export const scriptGrammar = {
       } : {
         type: "promise-call",
         exp: children[2],
+      };
+    },
+  },
+  "import-call": {
+    rules: [
+      ["/import/", /\(/, "expression", "/,/", "expression", /\)/],
+      ["/import/", /\(/, "expression", /\)/],
+    ],
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
+        type: "import-call",
+        pathExp: children[2],
+        callback: children[4],
+      } : {
+        type: "import-call",
+        pathExp: children[2],
       };
     },
   },

@@ -1,6 +1,6 @@
 
 import {
-  AsyncDevFunction, Signal, RuntimeError,
+  DevFunction, Signal, RuntimeError,
 } from '../../interpreting/ScriptInterpreter.js';
 import {parseRoute} from './misc/parseRoute.js';
 
@@ -14,7 +14,8 @@ import * as binaryScoredBinaryKeyStructFilesMod from
 
 
 export async function _query(
-  {callerNode, callerEnv, interpreter}, [route, cct, mct]
+  {callerNode, callerEnv, interpreter, liveModule},
+  [route, clientCacheTime, minServerCacheTime]
 ) {
   // Parse the route to get the filetype, among other parameters and qualities.
   let [
@@ -23,7 +24,9 @@ export async function _query(
 
   // If the route is locked, check that you have admin privileges on homeDirID.
   if (isLocked) {
-    callerEnv.emitSignal(CHECK_ELEVATED_PRIVILEGES_SIGNAL, callerNode, homeDirID);
+    callerEnv.emitSignal(
+      CHECK_ELEVATED_PRIVILEGES_SIGNAL, callerNode, homeDirID
+    );
   }  
   
   // Branch according to the file type.
@@ -51,8 +54,10 @@ export async function _query(
   
   
   let [result, wasReady] = await filetypeModule.query(
-    route, homeDirID, filePath, queryStringArr, reqUserID, adminID, cct, mct,
-    gas
+    {callerNode, callerEnv, interpreter, liveModule},
+    route, homeDirID, filePath, queryStringArr, reqUserID, adminID,
+    clientCacheTime, minServerCacheTime,
+    
   );
   return [result, wasReady];
 }
@@ -61,6 +66,25 @@ export const query = new DevFunction(
   {isAsync: true, minArgNum: 1, isEnclosed: true},
   _query
 );
+
+
+
+
+export async function _callServerModuleMethod(
+  {callerNode, callerEnv, interpreter, liveModule},
+  [homeDirID, funName]
+) {
+  // Implement..
+
+}
+
+export const callServerModuleMethod = new DevFunction(
+  {isAsync: true, minArgNum: 2, isEnclosed: true},
+  _callServerModuleMethod
+);
+
+
+
 
 
 
