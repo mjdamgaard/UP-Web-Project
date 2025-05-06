@@ -347,7 +347,7 @@ export class ScriptInterpreter {
     impStmt.importArr.forEach(imp => {
       let impType = imp.importType
       if (impType === "namespace-import") {
-        let moduleNameSpaceObj = new Immutable(liveSubmodule.members);
+        let moduleNameSpaceObj = turnImmutable(liveSubmodule.members);
         curModuleEnv.declare(imp.ident, moduleNameSpaceObj, true, imp);
       }
       else if (impType === "named-imports") {
@@ -453,6 +453,18 @@ export class ScriptInterpreter {
         "environmental call stack in which it was declared.",
         callerNode, callerEnv
       );
+    }
+
+    // Check that the function hasn't been turned noncallable by being passed
+    // to an enclosed function, and not being an arrow function.
+    if (fun.isNoncallable) throw new RuntimeError(
+      "A non-arrow function was passed to and called by an enclosed function",
+      callerNode, callerEnv
+    );
+
+    // And if the function is itself enclosed, turn all arguments noncallable.
+    if (fun.isEnclosed) {
+      inputArr = inputArr.map(val => turnNoncallable(val));
     }
 
     // Initialize a new environment for the execution of the function.
@@ -565,7 +577,8 @@ export class ScriptInterpreter {
 
   executeDefinedFunction(funNode, inputValueArr, execEnv) {
     // Add the input parameters to the environment (and turn all object inputs
-    // immutable, unless wrapped in PassAsMutable()).
+    // immutable, unless the passAsMutable property is true, in which case just
+    // turn this property false).
     this.declareInputParameters(execEnv, funNode.params, inputValueArr);
 
     // Now execute the statements inside a try-catch statement to catch any
@@ -612,8 +625,8 @@ export class ScriptInterpreter {
 
       // If the paramVal is wrapped in PassAsMutable(), we remove that wrapper,
       // and else we turn the paramVal immutable.
-      if (paramVal instanceof PassAsMutable) {
-        paramVal = paramVal.val;
+      if (paramVal.passAsMutable) {
+        paramVal = notPassedAsMutable(paramVal);
       } else {
         paramVal = turnImmutable(paramVal);
       }
@@ -1148,13 +1161,7 @@ export class ScriptInterpreter {
       }
       case "pass-as-mutable-call": {
         let expVal = this.evaluateExpression(expNode.exp, environment);
-        if (expVal.set instanceof Function) {
-          return new PassAsMutable(expVal);
-        } else {
-          throw new RuntimeError(
-            "passAsMutable() called with a non-mutable argument"
-          );
-        }
+        return passedAsMutable(expVal);
       }
       case "promise-call": {
         let expVal = this.evaluateExpression(expNode.exp, environment);
@@ -1267,18 +1274,6 @@ export class ScriptInterpreter {
           index = this.evaluateExpression(postfix.exp, environment);
         }
 
-        // // If objVal is a protected object, make some checks and get the member.
-        // if (objVal instanceof ModuleObject) {
-        //   // Check that the user isn't trying to assign to the member.
-        //   if (forAssignment) throw new RuntimeError(
-        //     "Assignment to a read-only member of a protected object",
-        //     postfix, environment
-        //   );
-
-        //   // Then get the member.
-        //   val = objVal.members.get(index);
-        // }
-
         // Else Check that the object has a get() method, and a set() method if
         // accessed for assignment, and then use the get() method to get the
         // value.
@@ -1294,6 +1289,15 @@ export class ScriptInterpreter {
           );
         }
         val = objVal.get(index);
+
+        // Lastly, if objVal was immutable or nonCallable, turn the retrieved
+        // value into that as well.
+        if (!(objVal.set instanceof Function)) {
+          val = turnImmutable(val);
+        }
+        if (objVal.isNoncallable) {
+          val = turnNoncallable(val);
+        }
       }
 
       // Else if postfix is an expression tuple, execute the current val as a
@@ -1359,7 +1363,7 @@ export class Environment {
     if (scopeType === "function") {
       this.callerNode = callerNode;
       this.callerEnv = callerEnv;
-      if (thisVal) this.thisVal = thisVal;
+      if (thisVal && !isArrowFun) this.thisVal = thisVal;
       if (isArrowFun) this.isArrowFun = isArrowFun;
       if (isEnclosed) {
         this.flagEnv = new FlagEnvironment(
@@ -1538,7 +1542,7 @@ export class Environment {
       `Exported variable or function is undefined: "${ident}"`,
       node, nodeEnvironment
     );
-    this.exports.push([alias, turnImmutable(val)]);
+    this.exports.push([alias, val]);
   }
 
   getLiveModule() {
@@ -1660,7 +1664,7 @@ export class LiveModule {
         val.initSignals = initSignals;
       }
   
-      this.members.set(key, val);
+      this.members.set(key, turnImmutable(val));
     });
   }
 
@@ -1685,7 +1689,9 @@ export class LiveModule {
 // or replacing a flag, the change will not affect the ancestors outside of the
 // enclosure.
 export class Signal {
-  constructor(emit) {
+  constructor(name, emit) {
+    // Names are only used for clarity and debugging purposes.
+    this.name = name;
     // emit() is the function/method that handles the signal when it is being
     // emitted. It takes some signal parameters, first of all, and the flag
     // environment with which to interface with the flags, as well as getting
@@ -1771,13 +1777,16 @@ export const NO_EXIT_SIGNAL = new Signal((flagEnv) => {
     flagEnv.raiseFlag(NO_EXIT_FLAG);
 });
 
-export const WILL_EXIT_SIGNAL = new Signal((flagEnv, node, env) => {
-  let [wasFound] = flagEnv.getFlag(NO_EXIT_FLAG);
-  if (wasFound) throw new RuntimeError(
-    "Script is not allowed to exit here",
-    node, env
-  );
-});
+export const WILL_EXIT_SIGNAL = new Signal(
+  "will_exit",
+  (flagEnv, node, env) => {
+    let [wasFound] = flagEnv.getFlag(NO_EXIT_FLAG);
+    if (wasFound) throw new RuntimeError(
+      "Script is not allowed to exit here",
+      node, env
+    );
+  }
+);
 
 
 
@@ -1813,9 +1822,6 @@ export class DevFunction extends FunctionObject {
     if (decEnv) this.decEnv = decEnv;
     this.fun = fun;
   }
-  get isArrowFun() {
-    return this.decEnv ? true : false;
-  }
 }
 
 export class LiveDevFunction extends DevFunction {
@@ -1829,45 +1835,48 @@ export class LiveDevFunction extends DevFunction {
     if (modulePath) this.modulePath = modulePath;
     if (funName) this.funName = funName;
   }
-}
-
-
-export class ValueWrapper {
-  constructor(val) {
-    this.val = val;
-  }
-  get(key) {
-    return this.val.get(key);
-  }
-  set(key, val) {
-    return this.val.set(key, val);
-  }
-  entries(key) {
-    return this.val.entries(key);
-  }
-  keys(key) {
-    return this.val.keys(key);
-  }
-  values(key) {
-    return this.val.values(key);
-  }
-  forEach(val, key, map) {
-    return this.val.forEach(val, key, map);
+  get isArrowFun() {
+    return this.decEnv ? true : false;
   }
 }
 
-export class Immutable extends ValueWrapper {
-  constructor(val) {
-    super(val);
-  }
-  set = null;
-}
 
-export class PassAsMutable extends ValueWrapper {
-  constructor(val) {
-    super(val);
-  }
-}
+// export class ValueWrapper {
+//   constructor(val) {
+//     this.val = val;
+//   }
+//   get(key) {
+//     return this.val.get(key);
+//   }
+//   set(key, val) {
+//     return this.val.set(key, val);
+//   }
+//   entries(key) {
+//     return this.val.entries(key);
+//   }
+//   keys(key) {
+//     return this.val.keys(key);
+//   }
+//   values(key) {
+//     return this.val.values(key);
+//   }
+//   forEach(val, key, map) {
+//     return this.val.forEach(val, key, map);
+//   }
+// }
+
+// export class Immutable extends ValueWrapper {
+//   constructor(val) {
+//     super(val);
+//   }
+//   set = null;
+// }
+
+// export class PassAsMutable extends ValueWrapper {
+//   constructor(val) {
+//     super(val);
+//   }
+// }
 
 
 export class JSXElement {
@@ -2019,7 +2028,28 @@ export class CustomException {
 
 export function turnImmutable(val) {
   if (val && val.set instanceof Function) {
-    return new Immutable(val);
+    return Object.create(val, {set: false});
+  } else {
+    return val;
+  }
+}
+export function passedAsMutable(val) {
+  if (val && val.set instanceof Function && !val.passAsMutable) {
+    return Object.create(val, {passAsMutable: true});
+  } else {
+    return val;
+  }
+}
+export function notPassedAsMutable(val) {
+  if (val && val.set instanceof Function && val.passAsMutable) {
+    return Object.create(val, {passAsMutable: false});
+  } else {
+    return val;
+  }
+}
+export function turnNoncallable(val) {
+  if (val && !val.isNoncallable) {
+    return Object.create(val, {isNoncallable: true});
   } else {
     return val;
   }

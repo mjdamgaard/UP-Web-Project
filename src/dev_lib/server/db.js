@@ -23,7 +23,7 @@ export async function _query(
 
   // If the route is locked, check that you have admin privileges on homeDirID.
   if (isLocked) {
-    callerEnv.emitSignal(CHECK_ADMIN_PRIVILEGES_SIGNAL, callerNode, homeDirID);
+    callerEnv.emitSignal(CHECK_ELEVATED_PRIVILEGES_SIGNAL, callerNode, homeDirID);
   }  
   
   // Branch according to the file type.
@@ -64,21 +64,23 @@ export const query = new DevFunction(
 
 
 
-export const ADMIN_PRIVILEGES_FLAG = Symbol("admin_privileges");
+export const ELEVATED_PRIVILEGES_FLAG = Symbol("elevated_privileges");
 
-export const SET_ADMIN_PRIVILEGES_SIGNAL = new Flag(
+export const SET_ELEVATED_PRIVILEGES_SIGNAL = new Signal(
+  "set_elevated_privileges",
   function(flagEnv, _, _, homeDirID) {
-    flagEnv.raiseFlag(ADMIN_PRIVILEGES_FLAG, homeDirID);
+    flagEnv.raiseFlag(ELEVATED_PRIVILEGES_FLAG, homeDirID);
   }
 );
 
-export const CHECK_ADMIN_PRIVILEGES_SIGNAL = new Flag(
+export const CHECK_ELEVATED_PRIVILEGES_SIGNAL = new Signal(
+  "check_elevated_privileges",
   function(flagEnv, node, env, homeDirID) {
-    let [wasFound, prevHomeDirID] = flagEnv.getFlag(ADMIN_PRIVILEGES_FLAG);
+    let [wasFound, prevHomeDirID] = flagEnv.getFlag(ELEVATED_PRIVILEGES_FLAG);
     if (!wasFound || prevHomeDirID !== homeDirID) throw new RuntimeError(
       `Requested admin privileges on Directory ${homeDirID} not granted`,
       node, env
     );
-    flagEnv.raiseFlag(ADMIN_PRIVILEGES_FLAG, homeDirID);
+    flagEnv.raiseFlag(ELEVATED_PRIVILEGES_FLAG, homeDirID);
   }
 );
