@@ -448,6 +448,11 @@ export class ScriptInterpreter {
   executeFunction(fun, inputArr, callerNode, callerEnv, thisVal) {
     decrCompGas(callerNode, callerEnv);
 
+    // If inputArr is iterable, turn it into an array.
+    if (!(inputArr instanceof Array)) {
+      inputArr = inputArr.values();
+    }
+
     // If the function is an arrow function, check that it isn't called outside
     // of the "environmental call stack" that has its fun.decEnv as an ancestor
     // in the stack.
@@ -538,7 +543,7 @@ export class ScriptInterpreter {
 
   handlePromise(promise, callbackFun, callerNode, callerEnv) {
     promise.then(res => {
-      this.executeAsyncCallback(callbackFun, [res], callerNode, callerEnv);
+      this.executeAsyncFunction(callbackFun, [res], callerNode, callerEnv);
     }).catch(err => {
       this.throwAsyncException(err, callerNode, callerEnv);
     });
@@ -546,12 +551,12 @@ export class ScriptInterpreter {
 
 
 
-  executeAsyncCallback(fun, inputArr, callerNode, callerEnv) {
+  executeAsyncFunction(fun, inputArr, callerNode, callerEnv, thisVal) {
     if (callerEnv.scriptVars.isExiting) {
       throw new ExitException();
     }
     try {
-      this.executeFunction(fun, inputArr, callerNode, callerEnv);
+      this.executeFunction(fun, inputArr, callerNode, callerEnv, thisVal);
     }
     catch (err) {
       if (
@@ -927,16 +932,12 @@ export class ScriptInterpreter {
             case "&":
               acc = parseInt(acc) & parseInt(nextVal);
               break;
+            // Don't expect comparison of objects always to work.
             case "===":
+              acc = acc === nextVal;
+              break;
             case "==": {
-              let a = acc, n = nextVal;
-              if (a instanceof ValueWrapper) {
-                a = acc.val;
-              }
-              if (n instanceof ValueWrapper) {
-                n = nextVal.val;
-              }
-              acc = (op === "==") ? (a == n) : (a === n);
+              acc = acc == nextVal;
               break;
             }
             case "!==":
@@ -1673,25 +1674,24 @@ export class LiveModule {
       }
 
       // If the export is a DevFunction, we set its modulePath, funName,
-      // isEnclosed, and initSignals properties here, not by muting it, but by
+      // initSignals, and isEnclosed properties here, not by muting it, but by
       // exchanging the DevFunction instance for a LiveDevFunction instance.
       if (val instanceof DevFunction) {
         if (alias === "default") throw (
           "A dev library must not have a default export, at least not a " +
           "DevFunction instance"
         );
-        val = new LiveDevFunction(
-          val, this, modulePath, alias, isEnclosed, initSignals
-        );
+        val = new LiveDevFunction({
+          devFun: val, liveModule: this, modulePath: modulePath,
+          funName: alias, initSignals: initSignals, isEnclosed: isEnclosed,
+        });
       }
 
-      // Else if the export is a DefinedFunction, simply mute it to set the
-      // right modulePath, funName, isEnclosed, and initSignals properties.
+      // Else if the export is a DefinedFunction set the modulePath, funName, isEnclosed, and initSignals properties.
       else if (val instanceof DefinedFunction) {
-        val.modulePath = modulePath;
-        val.funName = alias;
-        val.isEnclosed = isEnclosed;
-        val.initSignals = initSignals;
+        val = new ModifiedDefinedFunction(
+          val, initSignals, isEnclosed, modulePath, alias
+        );
       }
   
       this.members.set(key, turnImmutable(val));
@@ -1833,45 +1833,52 @@ export const WILL_EXIT_SIGNAL = new Signal(
 
 export class FunctionObject {};
 
-export class DefinedFunction extends FunctionObject{
+export class DefinedFunction extends FunctionObject {
   constructor(node, decEnv) {
     this.node = node;
     this.decEnv = decEnv;
-    // These properties are set when exporting the function:
-    // this.isEnclosed = undefined;
-    // this.modulePath = undefined;
-    // this.funName = undefined;
-    // this.initSignals = undefined;
   }
   get isArrowFun() {
     return this.node.type === "arrow-function";
   }
 }
+export class ModifiedDefinedFunction extends DefinedFunction {
+  constructor(defFun, initSignals, isEnclosed, modulePath, funName) {
+    super(defFun.node, defFun.decEnv);
+    this.initSignals = initSignals;
+    this.isEnclosed = isEnclosed;
+    this.modulePath = modulePath;
+    this.funName = funName;
+  }
+  get isEnclosed() {
+    return modulePath ? true : false;
+  }
+}
 
 export class DevFunction extends FunctionObject {
-  constructor({isAsync, minArgNum, isEnclosed, initSignals, decEnv}, fun) {
+  constructor({isAsync, minArgNum, initSignals, isEnclosed, decEnv}, fun) {
     if (isAsync) this.isAsync = isAsync;
     if (minArgNum) this.minArgNum = minArgNum;
-    if (isEnclosed) this.isEnclosed = isEnclosed;
     if (initSignals) this.initSignals = initSignals;
+    if (isEnclosed) this.isEnclosed = isEnclosed;
     if (decEnv) this.decEnv = decEnv;
     this.fun = fun;
+  }
+  get isArrowFun() {
+    return this.decEnv ? true : false;
   }
 }
 
 export class LiveDevFunction extends DevFunction {
   constructor(
-    devFun, liveModule, modulePath, funName, isEnclosed, initSignals
+    {devFun, liveModule, modulePath, funName, initSignals, isEnclosed}
   ) {
     let {isAsync, minArgNum, decEnv} = devFun;
-    super({isAsync, minArgNum, isEnclosed, initSignals, decEnv}, devFun.fun);
+    super({isAsync, minArgNum, initSignals, isEnclosed, decEnv}, devFun.fun);
 
     if (liveModule) this.liveModule = liveModule;
     if (modulePath) this.modulePath = modulePath;
     if (funName) this.funName = funName;
-  }
-  get isArrowFun() {
-    return this.decEnv ? true : false;
   }
 }
 
@@ -1897,19 +1904,6 @@ export class LiveDevFunction extends DevFunction {
 //   }
 //   forEach(val, key, map) {
 //     return this.val.forEach(val, key, map);
-//   }
-// }
-
-// export class Immutable extends ValueWrapper {
-//   constructor(val) {
-//     super(val);
-//   }
-//   set = null;
-// }
-
-// export class PassAsMutable extends ValueWrapper {
-//   constructor(val) {
-//     super(val);
 //   }
 // }
 
@@ -2083,8 +2077,18 @@ export function notPassedAsMutable(val) {
   }
 }
 export function turnNoncallable(val) {
-  if (val && !val.isNoncallable) {
+  if (
+    val && (val instanceof FunctionObject || val.get instanceof Function) &&
+    !val.isNoncallable
+  ) {
     return Object.create(val, {isNoncallable: true});
+  } else {
+    return val;
+  }
+}
+export function turnEnclosed(val) {
+  if (!val.isEnclosed) {
+    return Object.create(val, {isEnclosed: true});
   } else {
     return val;
   }

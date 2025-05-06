@@ -10,6 +10,7 @@ import {
 
 
 export async function query(
+  {callerNode, callerEnv, interpreter, liveDBModule},
   route, homeDirID, filePath, queryStringArr, reqUserID, adminID, cct, mct,
   gas
 ) {
@@ -79,8 +80,10 @@ export async function query(
         `${inputArrStr}`
       );
     }
-    // TODO: Implement further, and add a similar "_call" request.
-    let res = await callServerModule(gas, homeDirID, funName, inputArr);
+    let liveDevFunction = liveDBModule.get("callServerModuleMethod");
+    let res = await interpreter.executeFunction(
+      liveDevFunction, [homeDirID, funName, inputArr], callerNode, callerEnv
+    );
     return [res];
   }
 
