@@ -855,14 +855,6 @@ export class Lexer {
 const EOS = Symbol("EOS");
 
 
-export class LexError {
-  constructor(msg, ln, col) {
-    this.msg = msg;
-    this.ln = ln;
-    this.col = col;
-  }
-}
-
 export class SyntaxError {
   constructor(msg, ln, col) {
     this.msg = msg;
@@ -871,14 +863,20 @@ export class SyntaxError {
   }
 }
 
+export class LexError extends SyntaxError {
+  constructor(msg, ln, col) {
+    super(msg, ln, col);
+  }
+}
+
 
 
 export function getExtendedErrorMsg(err) {
-  if (err instanceof SyntaxError) {
-    return `SyntaxError at Ln ${err.ln}, Col ${err.col}: "${err.msg}"`;
-  }
-  else if (err instanceof LexError) {
+  if (err instanceof LexError) {
     return `LexError at Ln ${err.ln}, Col ${err.col}: "${err.msg}"`;
+  }
+  else if (err instanceof SyntaxError) {
+    return `SyntaxError at Ln ${err.ln}, Col ${err.col}: "${err.msg}"`;
   }
   else {
     throw "getExtendedErrorMsg(): Unrecognized error"

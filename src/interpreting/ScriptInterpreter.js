@@ -124,9 +124,7 @@ export class ScriptInterpreter {
       // If any non-internal error occurred, log it in log.error and resolve
       // the script with an undefined output.
       if (
-        err instanceof LexError || err instanceof SyntaxError ||
-        err instanceof LoadError || err instanceof RuntimeError ||
-        err instanceof CustomException || err instanceof OutOfGasError
+        err instanceof SyntaxError || err instanceof RuntimeError
       ) {
         scriptVars.resolveScript(undefined, err);
       } else if (err instanceof ReturnException) {
@@ -2029,36 +2027,31 @@ class BrokenOptionalChainException {
 
 
 
-export class LoadError {
-  constructor(val, node, environment) {
-    this.val = val;
-    this.node = node;
-    this.environment = environment;
-  }
-}
-
-export class OutOfGasError {
-  constructor(val, node, environment) {
-    this.val = val;
-    this.node = node;
-    this.environment = environment;
-  }
-}
-
 export class RuntimeError {
-  constructor(val, node, environment, callerEnv = undefined) {
-    this.val = val;
-    this.node = node;
-    this.environment = environment;
-    this.callerEnv = callerEnv;
-  }
-}
-
-export class CustomException {
   constructor(val, node, environment) {
     this.val = val;
     this.node = node;
     this.environment = environment;
+  }
+}
+export class LoadError extends RuntimeError {
+  constructor(val, node, environment) {
+    super(val, node, environment);
+  }
+}
+export class OutOfGasError extends RuntimeError {
+  constructor(val, node, environment) {
+    super(val, node, environment);
+  }
+}
+export class CustomException extends RuntimeError {
+  constructor(val, node, environment) {
+    super(val, node, environment);
+  }
+}
+export class TypeError extends RuntimeError {
+  constructor(val, node, environment) {
+    super(val, node, environment);
   }
 }
 
