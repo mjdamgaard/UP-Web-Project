@@ -21,7 +21,7 @@ export {LexError, SyntaxError};
 // const INIT_PROTECT_DOC_ID = "10";
 // const INIT_DEV_LIB_DOC_ID = "11";
 
-// const MAX_ARRAY_INDEX = 1E+15;
+const MAX_ARRAY_INDEX = 4294967294;
 const MINIMAL_TIME_GAS = 10;
 
 const GAS_NAMES = {
@@ -123,36 +123,38 @@ export class ScriptInterpreter {
     catch (err) {
       // If any non-internal error occurred, log it in log.error and resolve
       // the script with an undefined output.
-      if (
-        err instanceof SyntaxError || err instanceof RuntimeError
-      ) {
+      if (err instanceof SyntaxError || err instanceof RuntimeError) {
         scriptVars.resolveScript(undefined, err);
-      } else if (err instanceof ReturnException) {
+      }
+      else if (err instanceof ReturnException) {
         scriptVars.resolveScript(undefined, new RuntimeError(
           "Cannot return from outside of a function",
           err.node, err.environment
         ));
-      } else if (err instanceof CustomException) {
+      }
+      else if (err instanceof CustomException) {
         scriptVars.resolveScript(undefined, new RuntimeError(
           `Uncaught exception: "${err.val.toString()}"`,
           err.node, err.environment
         ));
-      } else if (err instanceof BreakException) {
+      }
+      else if (err instanceof BreakException) {
         scriptVars.resolveScript(undefined, new RuntimeError(
           `Invalid break statement outside of loop or switch-case statement`,
           err.node, err.environment
         ));
-      } else if (err instanceof ContinueException) {
+      }
+      else if (err instanceof ContinueException) {
         scriptVars.resolveScript(undefined, new RuntimeError(
           "Invalid continue statement outside of loop",
           err.node, err.environment
         ));
-      } else if (err instanceof ExitException) {
+      }
+      else if (err instanceof ExitException) {
         // Do nothing, as the the script will already have been resolved,
         // before the exception was thrown.
-      } else {
-        throw err;
       }
+      else throw err;
     } 
 
     // If isExiting is true, we can return the resulting output and log.
@@ -1118,20 +1120,20 @@ export class ScriptInterpreter {
         return this.evaluateExpression(expNode.exp, environment);
       }
       case "array": {
-        let ret = new Map();
-        expNode.children.forEach((exp, ind) => {
-          ret.set(ind, this.evaluateExpression(exp, environment));
-        });
-        return ret;
+        return new ArrayWrapper(
+          expNode.children.map(exp => (
+            this.evaluateExpression(exp, environment)
+          ))
+        );
       }
       case "object": {
-        let ret = new Map();
+        let ret = ObjectWrapper(new Map());
         expNode.members.forEach(member => {
-          let index = member.ident;
-          if (index === undefined) {
-            index = this.evaluateExpression(member.keyExp, environment);
+          let key = member.ident;
+          if (key === undefined) {
+            key = this.evaluateExpression(member.keyExp, environment);
           }
-          ret.set(index, this.evaluateExpression(member.valExp, environment));
+          ret.set(key, this.evaluateExpression(member.valExp, environment));
         });
         return ret;
       }
@@ -1837,7 +1839,119 @@ export const WILL_EXIT_SIGNAL = new Signal(
 
 
 
+export class ValueWrapper {
+  constructor(val) {
+    this.val = val;
+  }
+  get(key) {
+    return this.val.get(key);
+  }
+  set(key, val) {
+    return this.val.set(key, val);
+  }
+  entries() {
+    return this.val.entries();
+  }
+  keys() {
+    return this.val.keys();
+  }
+  values() {
+    return this.val.values();
+  }
+  forEach(fun) {
+    return this.val.forEach(fun);
+  }
+  toString() {
+    return this.val.toString();
+  }
+  stringify() {
+    return JSON.stringify(this.val);
+  }
+}
 
+export class ArrayWrapper extends ValueWrapper {
+  constructor(val) {
+    super(val);
+  }
+
+  get(key, node, env) {
+    if (key === "length"){
+      return this.val.length;
+    }
+    let ind = parseInt(key);
+    if (ind !== NaN && 0 <= ind && ind < MAX_ARRAY_INDEX) {
+      return this.val[ind];
+    }
+    else throw new TypeError(
+      `Invalid array index: ${key}`,
+      node, env
+    );
+  }
+
+  set(key, val, node, env) {
+    if (key === "length") {
+      let ind = parseInt(val);
+      if (ind !== NaN && 0 <= ind && ind < MAX_ARRAY_INDEX + 1) {
+        this.val.length = ind;
+      }
+      else throw new TypeError(
+        `Invalid array length: ${val}`,
+        node, env
+      );
+    }
+    let ind = parseInt(key);
+    if (ind !== NaN && 0 <= ind && ind < MAX_ARRAY_INDEX) {
+      this.val[ind] = val;
+    }
+    else throw new TypeError(
+      `Invalid array index: ${key}`,
+      node, env
+    );
+  }
+
+  values() {
+    return this.val;
+  }
+
+  toString() {
+    return this.val.map(val => val.toString()).join(",");
+  }
+  stringify() {
+    return "[" +
+      this.val.map(val => (
+        (val instanceof ValueWrapper) ? val.stringify() : JSON.stringify(val)
+      )).join(",") +
+    "]";
+  }
+}
+
+
+export class ObjectWrapper extends ValueWrapper {
+  constructor(val) {
+    super(val);
+  }
+
+  get(key) {
+    return this.val.get(key.toString());
+  }
+
+  set(key, val) {
+    return this.val.set(key.toString(), val);
+  }
+
+  toString() {
+    return "[object Object]";
+  }
+
+  stringify() {
+    return "{" +
+      this.val.entries((key, [val]) => (
+        `"${key.replaceAll('"', '\\"')}":` +
+        (val instanceof ValueWrapper) ? val.stringify() : JSON.stringify(val)
+      )).join(",") +
+    "}";
+  }
+}
 
 
 export class FunctionObject {};
@@ -1893,29 +2007,6 @@ export class ExportedFunction extends FunctionObject {
 }
 
 
-// export class ValueWrapper {
-//   constructor(val) {
-//     this.val = val;
-//   }
-//   get(key) {
-//     return this.val.get(key);
-//   }
-//   set(key, val) {
-//     return this.val.set(key, val);
-//   }
-//   entries(key) {
-//     return this.val.entries(key);
-//   }
-//   keys(key) {
-//     return this.val.keys(key);
-//   }
-//   values(key) {
-//     return this.val.values(key);
-//   }
-//   forEach(val, key, map) {
-//     return this.val.forEach(val, key, map);
-//   }
-// }
 
 
 export class JSXElement {
