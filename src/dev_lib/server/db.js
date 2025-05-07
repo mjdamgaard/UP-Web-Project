@@ -11,13 +11,23 @@ import * as autoKeyTextStructFilesMod from
 import * as binaryScoredBinaryKeyStructFilesMod from
   "../dev_lib/server/db_src/binary_scored_binary_key_structs.js";
 
+import {
+  ELEVATED_PRIVILEGES_FLAG, SET_ELEVATED_PRIVILEGES_SIGNAL,
+  CHECK_ELEVATED_PRIVILEGES_SIGNAL
+} from "../dev_lib/server/db_src/directories.js";
+
+export {
+  ELEVATED_PRIVILEGES_FLAG, SET_ELEVATED_PRIVILEGES_SIGNAL,
+  CHECK_ELEVATED_PRIVILEGES_SIGNAL
+};
+
 
 
 export const query = new DevFunction(
-  {isAsync: true, minArgNum: 1, isEnclosed: true},
+  {isAsync: true, minArgNum: 1, isEnclosed: true}, // initSignals: [QUERY_SIGNAL]},
   async function(
     {callerNode, callerEnv, interpreter, liveModule},
-    [route, clientCacheTime, minServerCacheTime]
+    [route, cachePeriod, clientCacheTime]
   ) {
     // Parse the route to get the filetype, among other parameters and qualities.
     let [
@@ -57,8 +67,8 @@ export const query = new DevFunction(
     
     let [result, wasReady] = await filetypeModule.query(
       {callerNode, callerEnv, interpreter, liveModule},
-      route, homeDirID, filePath, queryStringArr, reqUserID, adminID,
-      clientCacheTime, minServerCacheTime,
+      route, homeDirID, filePath, fileExt, queryStringArr, reqUserID, adminID,
+      cachePeriod, clientCacheTime
       
     );
     return [result, wasReady];
@@ -71,24 +81,13 @@ export const query = new DevFunction(
 
 
 
+// export const QUERY_FLAG = Symbol("query");
 
-export const ELEVATED_PRIVILEGES_FLAG = Symbol("elevated_privileges");
+// export const QUERY_SIGNAL = new Signal(
+//   "query",
+//   function(flagEnv) {
+//     flagEnv.raiseFlag(QUERY_FLAG);
+//   }
+// );
 
-export const SET_ELEVATED_PRIVILEGES_SIGNAL = new Signal(
-  "set_elevated_privileges",
-  function(flagEnv, _, _, homeDirID) {
-    flagEnv.raiseFlag(ELEVATED_PRIVILEGES_FLAG, homeDirID);
-  }
-);
 
-export const CHECK_ELEVATED_PRIVILEGES_SIGNAL = new Signal(
-  "check_elevated_privileges",
-  function(flagEnv, node, env, homeDirID) {
-    let [wasFound, prevHomeDirID] = flagEnv.getFlag(ELEVATED_PRIVILEGES_FLAG);
-    if (!wasFound || prevHomeDirID !== homeDirID) throw new RuntimeError(
-      `Requested admin privileges on Directory ${homeDirID} not granted`,
-      node, env
-    );
-    flagEnv.raiseFlag(ELEVATED_PRIVILEGES_FLAG, homeDirID);
-  }
-);

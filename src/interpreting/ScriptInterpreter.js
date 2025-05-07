@@ -1869,6 +1869,7 @@ export class ValueWrapper {
   }
 }
 
+
 export class ArrayWrapper extends ValueWrapper {
   constructor(val) {
     super(val);
@@ -1952,6 +1953,7 @@ export class ObjectWrapper extends ValueWrapper {
     "}";
   }
 }
+
 
 
 export class FunctionObject {};
@@ -2234,23 +2236,8 @@ export function getFullPath(curPath, path, callerNode, callerEnv) {
 
 
 
-export function payGas(node, environment, isAsync, gasCost) {
+export function payGas(node, environment, gasCost) {
   let {gas} = environment.scriptVars;
-  Object.keys(gasCost).forEach(key => {
-    if (gas[key] ??= 0) {
-      gas[key] -= gasCost[key];
-    }
-    if (gas[key] < 0) {
-      let err = new OutOfGasError(
-        "Ran out of " + GAS_NAMES[key] + "gas",
-        node, environment,
-      );
-      throwException(err, node, environment, isAsync);
-    }
-  });
-}
-
-export function payGasWithNoContext(gas, gasCost) {
   Object.keys(gasCost).forEach(key => {
     if (gas[key] ??= 0) {
       gas[key] -= gasCost[key];
@@ -2258,30 +2245,29 @@ export function payGasWithNoContext(gas, gasCost) {
     if (gas[key] < 0) {
       throw new OutOfGasError(
         "Ran out of " + GAS_NAMES[key] + "gas",
-        null, null,
+        node, environment,
       );
     }
   });
 }
 
-export function decrCompGas(node, environment, isAsync) {
+export function decrCompGas(node, environment) {
   let {gas} = environment.scriptVars;
   if (0 > --gas.comp) {
-    let err = new OutOfGasError(
+    throw new OutOfGasError(
       "Ran out of " + GAS_NAMES.comp + " gas",
       node, environment,
     );
-    throwException(err, node, environment, isAsync);
   }
 }
-export function decrGas(node, environment, gasName, isAsync) {
+
+export function decrGas(node, environment, gasName) {
   let {gas} = environment.scriptVars;
   if (0 > --gas[gasName]) {
-    let err = new OutOfGasError(
+    throw new OutOfGasError(
       "Ran out of " + GAS_NAMES[gasName] + " gas",
       node, environment,
     );
-    throwException(err, node, environment, isAsync);
   }
 }
 
