@@ -61,7 +61,8 @@ export class ScriptInterpreter {
     parsedScripts = new Map(), liveModules = new Map(),
   ) {
     let scriptVars = {
-      gas: gas, log: {}, scriptPath: scriptPath, reqUserID: reqUserID,
+      gas: gas, log: {entries: []}, scriptPath: scriptPath,
+      reqUserID: reqUserID,
       enclosedFunctions: enclosedFunctions, initSignals: initSignals,
       signalModifications: signalModifications, globalEnv: undefined,
       isExiting: false, resolveScript: undefined, interpreter: this,
@@ -1215,12 +1216,48 @@ export class ScriptInterpreter {
           );
         }
       }
+      case "map-call": {
+        let expVal;
+        if (expNode.exp) {
+          expVal = this.evaluateExpression(expNode.exp, environment);
+        }
+        let ret;
+        if (expVal === undefined) {
+          ret = new MapWrapper();
+        }
+        else {
+          try {
+            ret = new MapWrapper(expVal);
+          }
+          catch (err) {
+            throw new TypeError(
+              "Map expects a key-value entries array, but got: " +
+              getVerboseString(expVal),
+              expNode.exp, environment
+            );
+          }
+        }
+        return ret;
+      }
+      case "console-call": {
+        if (expNode.subtype === "log") {
+          let {isServerSide, log} = environment.scriptVars;
+          let expVal = this.evaluateExpression(expNode.exp, environment);
+          if (!isServerSide) {
+            console.log(getVerboseString(expVal));
+          }
+          log.entries.push(expVal);
+          return undefined;
+        }
+      }
       default: throw (
         "ScriptInterpreter.evaluateExpression(): Unrecognized type: " +
         `"${type}"`
       );
     }
   }
+
+
 
 
   assignToVariableOrMember(expNode, environment, assignFun) {
@@ -1955,6 +1992,16 @@ export class ObjectWrapper extends ValueWrapper {
 }
 
 
+export class MapWrapper extends Map {
+  constructor(entries) {
+    super(entries);
+  }
+
+  stringify() {
+    return this.toString();
+  }
+}
+
 
 export class FunctionObject {};
 
@@ -2193,6 +2240,12 @@ export function turnEnclosed(val) {
 }
 
 
+
+
+
+export function getVerboseString(val) {
+  return (val.stringify instanceof Function) ? val.stringify() : val.toString();
+}
 
 
 
