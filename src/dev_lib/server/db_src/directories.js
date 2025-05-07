@@ -19,7 +19,7 @@ export async function query(
   if (!homeDirID) {
     if (queryStringArr[0] === "mkdir") {
       let requestedAdminID = queryStringArr[1];
-      let dirID = await _mkdir(gas, requestedAdminID);
+      let dirID = await mkdir(gas, requestedAdminID);
       return [dirID];
     }
     else throw new ClientError(
@@ -36,7 +36,7 @@ export async function query(
   // a list of all nested file paths of the home directory, except paths of
   // files nested inside locked subdirectories (starting with "_").
   if (!queryStringArr) {
-    let visibleDescList = await _readDirDescendants(gas, homeDirID);
+    let visibleDescList = await readDirDescendants(gas, homeDirID);
     return [visibleDescList];
   }
 
@@ -46,7 +46,7 @@ export async function query(
   // file paths of the home directory, including paths of
   // files nested inside locked subdirectories (starting with "_").
   if (queryType === "_all") {
-    let fullDescList = await _getAllDescendants(gas, homeDirID);
+    let fullDescList = await getAllDirDescendants(gas, homeDirID);
     return [fullDescList];
   }
 
@@ -54,7 +54,7 @@ export async function query(
   // directory, ut note that directories can only be deleted after each nested
   // file in it has been deleted (as this query does not delete the files).
   if (queryType === "_delete") {
-    let wasDeleted = await _deleteHomeDir(gas, homeDirID);
+    let wasDeleted = await deleteHomeDir(gas, homeDirID);
     return [wasDeleted];
   }
   
@@ -99,6 +99,8 @@ export async function query(
 }
 
 
+
+
 const callServerModuleMethod = new DevFunction(
   {isAsync: true, minArgNum: 2, isEnclosed: true},
   async function(
@@ -114,7 +116,9 @@ const callServerModuleMethod = new DevFunction(
 );
 
 
-export async function _mkdir(gas, adminID) {
+
+
+export async function mkdir(gas, adminID) {
   payGasWithNoContext(gas, {mkdir: 1});
   let dirID = await MainDBConnection.querySingleValue(
     "createHomeDir", [adminID]
@@ -122,12 +126,12 @@ export async function _mkdir(gas, adminID) {
   return dirID;
 } 
 
-export const mkdir = new DevFunctionFromAsyncFun(null, null, _mkdir);
+export const mkdir = new DevFunctionFromAsyncFun(null, null, mkdir);
 
 
 
 
-export async function _readDirDescendants(gas, dirID) {
+export async function readDirDescendants(gas, dirID) {
   payGasWithNoContext(gas, {dbRead: 1})
   let fullDescList = await MainDBConnection.querySingleList(
     "readHomeDirDescendants", [dirID]
@@ -137,34 +141,21 @@ export async function _readDirDescendants(gas, dirID) {
     !/\/_[^/]*\//.test(filePath)
   ));
   return visibleDescList;
-} 
-
-export const readDirDescendants = new DevFunctionFromAsyncFun(
-  null, null, _readDirDescendants
-);
+}
 
 
-export async function _getAllDescendants(gas, dirID) {
+export async function getAllDirDescendants(gas, dirID) {
   payGasWithNoContext(gas, {dbRead: 1})
   let fullDescList = await MainDBConnection.querySingleList(
     "readHomeDirDescendants", [dirID]
   );
   return fullDescList;
-} 
-
-export const getAllDescendants = new DevFunctionFromAsyncFun(
-  adminOnlySignal, null, _readDirDescendants
-);
+}
 
 
-
-export async function _deleteHomeDir(_, dirID) {
+export async function deleteHomeDir(_, dirID) {
   let wasDeleted = await MainDBConnection.querySingleValue(
     "readHomeDirDescendants", [dirID]
   );
   return wasDeleted;
 }
-
-export const deleteHomeDir = new DevFunctionFromAsyncFun(
-  null, null, _deleteHomeDir
-);

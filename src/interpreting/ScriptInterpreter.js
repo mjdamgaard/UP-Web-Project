@@ -57,14 +57,13 @@ export class ScriptInterpreter {
 
   async interpretScript(
     gas, script = "", scriptPath = null, mainInputs = [], reqUserID = null,
-    enclosedFunctions = new Map(), initSignals = new Map(),
-    signalModifications = new Map(),
+    enclosedFunctions = new Map(), signalModifications = new Map(),
     parsedScripts = new Map(), liveModules = new Map(),
   ) {
     let scriptVars = {
       gas: gas, log: {}, scriptPath: scriptPath, reqUserID: reqUserID,
       enclosedFunctions: enclosedFunctions, initSignals: initSignals,
-      signalModifications: signalModifications,
+      signalModifications: signalModifications, globalEnv: undefined,
       isExiting: false, resolveScript: undefined, interpreter: this,
       parsedScripts: parsedScripts, liveModules: liveModules,
     };
@@ -74,6 +73,7 @@ export class ScriptInterpreter {
     let globalEnv = new Environment( 
       undefined, "global", {scriptVars: scriptVars},
     );
+    scriptVars.globalEnv = globalEnv;
 
     // If script is provided, rather than the scriptPath, first parse it.
     let parsedScript, lexArr, strPosArr;
@@ -448,7 +448,8 @@ export class ScriptInterpreter {
   executeFunction(fun, inputArr, callerNode, callerEnv, thisVal) {
     decrCompGas(callerNode, callerEnv);
 
-    // If inputArr is iterable, turn it into an array.
+    // If inputArr is not an array, expect an iterable and turn it into an
+    // array.
     if (!(inputArr instanceof Array)) {
       inputArr = inputArr.values();
     }
@@ -479,20 +480,25 @@ export class ScriptInterpreter {
 
     // Initialize a new environment for the execution of the function.
     let execEnv = new Environment(
-      fun.decEnv, "function", {
+      fun.decEnv ?? callerEnv.getGlobalEnv(), "function", {
         fun: fun, callerNode: callerNode, callerEnv: callerEnv, thisVal: thisVal
       }
     );
 
-    // Then execute the function depending on its type.
-    if (fun instanceof LiveDevFunction) {
-      return this.executeDevFunction(
-        devFun, inputArr, callerNode, execEnv, thisVal
-      );
+    // If fun is an ExportedFunction instance, extract the wrapped function.
+    // (The other properties of ExportedFunction is taken care of by
+    // Environment().)
+    if (fun instanceof ExportedFunction) {
+      fun = fun.fun;
     }
-    else if (fun instanceof DefinedFunction) {
-      return this.executeDefinedFunction(
-        fun.node, inputArr, execEnv
+
+    // Then execute the function depending on its type.
+    if (fun instanceof DefinedFunction) {
+      return this.executeDefinedFunction(fun.node, inputArr, execEnv);
+    }
+    else if (fun instanceof DevFunction) {
+      return this.executeDevFunction(
+        fun, inputArr, callerNode, callerEnv, execEnv, thisVal
       );
     }
     else throw new RuntimeError(
@@ -503,11 +509,13 @@ export class ScriptInterpreter {
 
 
 
-  executeDevFunction(devFun, inputArr, callerNode, execEnv, thisVal) {
+  executeDevFunction(
+    devFun, inputArr, callerNode, callerEnv, execEnv, thisVal
+  ) {
     let {isAsync, minArgNum, liveModule} = devFun;
     let execVars = {
-      callerNode: callerNode, callerEnv: execEnv, thisVal: thisVal,
-      interpreter: this, liveModule: liveModule,
+      callerNode: callerNode, callerEnv: callerEnv, execEnv: execEnv,
+      thisVal: thisVal, interpreter: this, liveModule: liveModule,
     };
 
     // If the dev function an async function, call it and then either return a
@@ -543,15 +551,15 @@ export class ScriptInterpreter {
 
   handlePromise(promise, callbackFun, callerNode, callerEnv) {
     promise.then(res => {
-      this.executeAsyncFunction(callbackFun, [res], callerNode, callerEnv);
+      this.#executeAsyncFunction(callbackFun, [res], callerNode, callerEnv);
     }).catch(err => {
-      this.throwAsyncException(err, callerNode, callerEnv);
+      this.#throwAsyncException(err, callerNode, callerEnv);
     });
   }
 
 
 
-  executeAsyncFunction(fun, inputArr, callerNode, callerEnv, thisVal) {
+  #executeAsyncFunction(fun, inputArr, callerNode, callerEnv, thisVal) {
     if (callerEnv.scriptVars.isExiting) {
       throw new ExitException();
     }
@@ -573,7 +581,7 @@ export class ScriptInterpreter {
     }
   }
 
-  throwAsyncException(err, callerNode, callerEnv) {
+  #throwAsyncException(err, callerNode, callerEnv) {
     let wasCaught = callerEnv.runNearestCatchStmtAncestor(err, callerNode);
     if (!wasCaught) {
       callerEnv.scriptVars.resolveScript(undefined, err);
@@ -1501,12 +1509,7 @@ export class Environment {
 
 
   getGlobalEnv() {
-    if (this.parent) {
-      return this.parent.getGlobalEnv();
-    }
-    else {
-      return this;
-    }
+    return this.scriptVars.globalEnv;
   }
 
 
@@ -1645,6 +1648,7 @@ export const MODULE = Symbol("module");
 export class LiveModule {
   constructor(modulePath, exports, scriptVars) {
     this.modulePath = modulePath;
+    this.interpreter = scriptVars.interpreter;
     this.members = new Map();
     exports.forEach(([alias, val]) => {
       // Filter out any Function instance, which might be exported from a dev
@@ -1662,36 +1666,36 @@ export class LiveModule {
       // function (in case of a dev function). 
       let isEnclosed, initSignals;
       if (val instanceof FunctionObject) {
-        let {enclosedFunctions, initSignals} = scriptVars;
-        enclosedFunctions = enclosedFunctions.get(modulePath);
-        initSignals = initSignals.get(modulePath);
-        if (enclosedFunctions) {
-          isEnclosed = enclosedFunctions.get(alias) ?? val.isEnclosed;
+        // Make a check that we might omit at some point in the future:
+        if (val instanceof DevFunction) {
+          if (alias === "default") throw (
+            "A dev library must not have a default export, at least not a " +
+            "DevFunction instance"
+          );
         }
-        if (initSignals) {
-          initSignals = initSignals.get(alias) ?? val.initSignals;
-        }
-      }
 
-      // If the export is a DevFunction, we set its modulePath, funName,
-      // initSignals, and isEnclosed properties here, not by muting it, but by
-      // exchanging the DevFunction instance for a LiveDevFunction instance.
-      if (val instanceof DevFunction) {
-        if (alias === "default") throw (
-          "A dev library must not have a default export, at least not a " +
-          "DevFunction instance"
-        );
-        val = new LiveDevFunction({
-          devFun: val, liveModule: this, modulePath: modulePath,
-          funName: alias, initSignals: initSignals, isEnclosed: isEnclosed,
+        // Parse the initSignals, if any, from the enclosedFunctions data
+        // structure, which is an array of regex--getInitSignals() pairs, where
+        // if regex.exec() succeeds, getInitSignals() is then called on the
+        // output.
+        let {enclosedFunctions} = scriptVars;
+        let funPath = modulePath + ":" + alias;
+        let initSignals;
+        enclosedFunctions.some(([regex, getInitSignals]) => {
+          let execOutput = regex.exec(funPath);
+          if (execOutput) {
+            initSignals = getInitSignals(execOutput);
+            return true; // breaks the some iteration.
+          }
         });
-      }
 
-      // Else if the export is a DefinedFunction set the modulePath, funName, isEnclosed, and initSignals properties.
-      else if (val instanceof DefinedFunction) {
-        val = new ModifiedDefinedFunction(
-          val, initSignals, isEnclosed, modulePath, alias
-        );
+        // Then we create a ExportedFunction instance wrapping the exported
+        // function, adding some metadata, and not least the initSignals. Note
+        // that if initSignals here is undefined, and the function is a
+        // DevFunction, the functions original initSignals will be used instead
+        // (which will often be the case, except when enclosedFunctions modifies
+        // the signals of dev functions).
+        val = new ExportedFunction(val, modulePath, alias, initSignals);
       }
   
       this.members.set(key, turnImmutable(val));
@@ -1700,6 +1704,13 @@ export class LiveModule {
 
   get(key) {
     return this.members.get(key);
+  }
+
+  call(funName, inputArr, callerNode, callerEnv, thisVal) {
+    let fun = this.get(funName);
+    this.interpreter.executeFunction(
+      fun, inputArr, callerNode, callerEnv, thisVal
+    );
   }
 }
 
@@ -1835,6 +1846,7 @@ export class FunctionObject {};
 
 export class DefinedFunction extends FunctionObject {
   constructor(node, decEnv) {
+    super();
     this.node = node;
     this.decEnv = decEnv;
   }
@@ -1842,43 +1854,43 @@ export class DefinedFunction extends FunctionObject {
     return this.node.type === "arrow-function";
   }
 }
-export class ModifiedDefinedFunction extends DefinedFunction {
-  constructor(defFun, initSignals, isEnclosed, modulePath, funName) {
-    super(defFun.node, defFun.decEnv);
-    this.initSignals = initSignals;
-    this.isEnclosed = isEnclosed;
-    this.modulePath = modulePath;
-    this.funName = funName;
-  }
-  get isEnclosed() {
-    return modulePath ? true : false;
-  }
-}
 
 export class DevFunction extends FunctionObject {
-  constructor({isAsync, minArgNum, initSignals, isEnclosed}, fun) {
+  constructor({isAsync, minArgNum, initSignals, decEnv}, fun) {
+    super();
     if (isAsync) this.isAsync = isAsync;
     if (minArgNum) this.minArgNum = minArgNum;
     if (initSignals) this.initSignals = initSignals;
-    if (isEnclosed) this.isEnclosed = isEnclosed;
+    if (decEnv) this.isEnclosed = isEnclosed;
     this.fun = fun;
   }
   get isArrowFun() {
     return this.decEnv ? true : false;
   }
+  get isEnclosed() {
+    return this.initSignals ? true : false;
+  }
 }
 
-export class LiveDevFunction extends DevFunction {
-  constructor(
-    {devFun, liveModule, modulePath, funName, initSignals, isEnclosed, decEnv}
-  ) {
-    let {isAsync, minArgNum, decEnv} = devFun;
-    super({isAsync, minArgNum, initSignals, isEnclosed, decEnv}, devFun.fun);
-
-    if (liveModule) this.liveModule = liveModule;
-    if (modulePath) this.modulePath = modulePath ?? liveModule?.modulePath;
-    if (funName) this.funName = funName;
-    if (decEnv) this.decEnv = decEnv;
+export class ExportedFunction extends FunctionObject {
+  constructor(fun, modulePath, funName, initSignals) {
+    super();
+    this._fun = fun;
+    this.modulePath = modulePath;
+    this.funName = funName;
+    this._initSignals = initSignals;
+  }
+  get fun() {
+    return this._fun ?? this._fun.fun;
+  }
+  get isArrowFun() {
+    return this.fun.isArrowFun;
+  }
+  get initSignals() {
+    return this._initSignals ?? this.fun.initSignals;
+  }
+  get isEnclosed() {
+    return this.initSignals ? true : false;
   }
 }
 
@@ -2189,15 +2201,6 @@ export function decrGas(node, environment, gasName, isAsync) {
   }
 }
 
-export function throwException(err, node, environment, isAsync) {
-  if (isAsync) {
-    let {interpreter} = environment.scriptVars;
-    interpreter.throwAsyncException(err, node, environment);
-  }
-  else {
-    throw err;
-  }
-}
 
 
 
