@@ -986,7 +986,7 @@ export const scriptGrammar = {
     ],
     process: (children) => ({
       type: "console-call",
-      subtype: "log",
+      subtype: children[2],
       exp: children[4],
     }),
   },

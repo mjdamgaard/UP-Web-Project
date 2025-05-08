@@ -71,6 +71,6 @@ export function parseRoute(route) {
   }
 
   return [
-    homeDirID, filePath, fileExt, isLocked, queryStringArr
+    homeDirID, filePath, fileExt, queryStringArr, isLocked
   ];
 }

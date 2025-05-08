@@ -1,42 +1,36 @@
 
 import {
-  DevFunction, Signal, RuntimeError, turnEnclosed,
+  DevFunction, Signal, RuntimeError, TypeError
 } from '../../interpreting/ScriptInterpreter.js';
 import {parseRoute} from './misc/parseRoute.js';
 
-import * as directoriesMod from "../dev_lib/server/db_src/directories.js";
-import * as textFilesMod from "../dev_lib/server/db_src/text_files.js";
-import * as autoKeyTextStructFilesMod from
-  "../dev_lib/server/db_src/auto_key_text_structs.js";
+import * as directoriesMod from ".//db_src/directories.js";
+import * as textFilesMod from ".//db_src/text_files.js";
+import * as autoKeyTextStructFilesMod from ".//db_src/auto_key_text_structs.js";
 import * as binaryScoredBinaryKeyStructFilesMod from
-  "../dev_lib/server/db_src/binary_scored_binary_key_structs.js";
+  ".//db_src/binary_scored_binary_key_structs.js";
 
-import {
-  ELEVATED_PRIVILEGES_FLAG, SET_ELEVATED_PRIVILEGES_SIGNAL,
-  CHECK_ELEVATED_PRIVILEGES_SIGNAL
-} from "../dev_lib/server/db_src/directories.js";
+import {CHECK_ELEVATED_PRIVILEGES_SIGNAL} from "./db_src/signals.js";
 
-export {
-  ELEVATED_PRIVILEGES_FLAG, SET_ELEVATED_PRIVILEGES_SIGNAL,
-  CHECK_ELEVATED_PRIVILEGES_SIGNAL
-};
 
 
 
 export const query = new DevFunction(
-  {isAsync: true, minArgNum: 1, isEnclosed: true}, // initSignals: [QUERY_SIGNAL]},
+  {isAsync: true, minArgNum: 2, isEnclosed: true},
   async function(
-    {callerNode, callerEnv, interpreter, liveModule},
-    [route, cachePeriod, clientCacheTime]
+    {callerNode, callerEnv, execEnv, interpreter, liveModule},
+    [method, route, postData, receiverCacheTime, cachePeriod, onWasReady]
   ) {
-    // Parse the route to get the filetype, among other parameters and qualities.
+    // Parse the route to get the filetype, among other parameters and
+    // qualities.
     let [
-      homeDirID, filePath, fileExt, isLocked, queryStringArr
+      homeDirID, filePath, fileExt, queryStringArr, isLocked
     ] = parseRoute(route);
   
-    // If the route is locked, check that you have admin privileges on homeDirID.
+    // If the route is locked, check that you have admin privileges on the
+    // directory of homeDirID.
     if (isLocked) {
-      callerEnv.emitSignal(
+      execEnv.emitSignal(
         CHECK_ELEVATED_PRIVILEGES_SIGNAL, callerNode, homeDirID
       );
     }  
@@ -60,34 +54,73 @@ export const query = new DevFunction(
       case "bbs":
         filetypeModule = binaryScoredBinaryKeyStructFilesMod;
         break;
+      // More file types can be added here in the future.
       default:
         throw new ClientError(`Unrecognized file type: ".${fileExt}"`);
     }
+
+
+    // Query the database via the filetypeModule, with the method depending on
+    // the 'method' argument.
+    let result, wasReady;
+    if (method === "fetch") {
+      [result, wasReady] = await filetypeModule.fetch(
+        {callerNode, callerEnv, interpreter, liveModule},
+        route, homeDirID, filePath, fileExt, queryStringArr,
+        cachePeriod, receiverCacheTime
+      );
+    }
+    else if (method === "post") {
+      result = await filetypeModule.post(
+        {callerNode, callerEnv, interpreter, liveModule},
+        route, homeDirID, filePath, fileExt, queryStringArr,
+        postData
+      );
+    }
+    else {
+      throw new TypeError(
+        'The only supported query methods are "fetch" and "post", but ' +
+        `received "${method}"`,
+        callerNode, callerEnv
+      );
+    }
+
+    // If wasReady, i.e. the result was retrieved from the cache with a
+    // timestamp there less than the receiverCacheTime, call the onWasReady()
+    // function, given that one is provided.
+    if (onWasReady && wasReady) {
+      interpreter.executeFunction(onWasReady, [], callerNode, execEnv);
+    }
     
-    
-    let [result, wasReady] = await filetypeModule.query(
-      {callerNode, callerEnv, interpreter, liveModule},
-      route, homeDirID, filePath, fileExt, queryStringArr, reqUserID, adminID,
-      cachePeriod, clientCacheTime
-      
-    );
-    return [result, wasReady];
+    return result;
   }
 );
 
 
 
+export const fetch = new DevFunction(
+  {isAsync: true, minArgNum: 1, isEnclosed: true},
+  function(
+    {callerNode, execEnv, liveModule},
+    [route, cachePeriod]
+  ) {
+    return liveModule.call(
+      "query", ["fetch", route, undefined, undefined, cachePeriod],
+      callerNode, execEnv
+    );
+  }
+);
 
 
-
-
-// export const QUERY_FLAG = Symbol("query");
-
-// export const QUERY_SIGNAL = new Signal(
-//   "query",
-//   function(flagEnv) {
-//     flagEnv.raiseFlag(QUERY_FLAG);
-//   }
-// );
-
-
+export const post = new DevFunction(
+  {isAsync: true, minArgNum: 1, isEnclosed: true},
+  function(
+    {callerNode, execEnv, liveModule},
+    [route, postData]
+  ) {
+    return liveModule.call(
+      "query", ["post", route, postData],
+      callerNode, execEnv
+    );
+  }
+);

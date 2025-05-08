@@ -1,15 +1,17 @@
 
 import {MainDBConnection} from "./DBConnection.js";
 import {
-  DevFunctionFromAsyncFun, payGasWithNoContext,
+  RuntimeError, payGas,
 } from "../../../interpreting/ScriptInterpreter.js";
 
 
 export async function query(
-  {callerNode, callerEnv, interpreter, liveModule},
-  route, homeDirID, filePath, queryStringArr, reqUserID, adminID,
-  clientCacheTime, minServerCacheTime,
+  execVars,
+  route, homeDirID, filePath, fileExt, queryStringArr,
+  cachePeriod, clientCacheTime
 ) {
+  let {callerNode, callerEnv, execEnv, interpreter} = execVars;
+
   // If route equals just "/<homeDirID>/<filePath>", without any query string,
   // return the text stored in the file.
   if (!queryStringArr) {
@@ -23,29 +25,28 @@ export async function query(
   // file with contentText, if any, or create a new file with that content.
   if (queryType === "_put") {
     let contentText = queryStringArr[1] ?? "";
-    let wasCreated = await putTextFile(gas, homeDirID, filePath);
-    return [fullDescList];
+    let wasCreated = await putTextFile(
+      execVars, homeDirID, filePath, contentText
+    );
+    return [wasCreated];
   }
 
-  // If route equals "/<homeDirID>?_delete", ...
+  // If route equals "/<homeDirID>/<filePath>?_delete", ...
   if (queryType === "_delete") {
-    let fullDescList = await getAllDescendants(gas, homeDirID);
-    return [fullDescList];
+    // ...
   }
 
 }
 
 
 
-export async function readTextFile(gas, homeDirID, filePath) {
-  payGasWithNoContext(gas, {mkdir: 1});
-  let dirID = await MainDBConnection.querySingleValue(
+export async function readTextFile(
+  {callerNode, callerEnv}, homeDirID, filePath
+) {
+  payGas(callerNode, callerEnv, {dbRead: 1});
+  let text = await MainDBConnection.querySingleValue(
     "readTextFile", [homeDirID, filePath]
   );
-  return dirID;
+  return [text];
 } 
-
-export const readTextFile = new DevFunctionFromAsyncFun(
-  null, null, readTextFile
-);
 

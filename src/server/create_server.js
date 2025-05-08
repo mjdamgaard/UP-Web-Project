@@ -6,16 +6,17 @@ import {ClientError, endWithError, endWithInternalError} from './err/errors.js';
 import {InputGetter} from './user_input/InputGetter.js';
 import {ScriptInterpreter} from "../interpreting/ScriptInterpreter.js";
 import {scriptParser} from "./parsing/ScriptParser.js";
-import {parseRoute} from './misc/parseRoute.js';
 
+import {SET_ELEVATED_PRIVILEGES_SIGNAL}
+  from "../dev_lib/server/db_src/signals.js";
 
 import * as dbMod from "../dev_lib/server/db.js";
 import * as directoriesMod from "../dev_lib/server/file_types/directories.js";
 import * as textFilesMod from "../dev_lib/server/file_types/text_files.js";
-import * as autoKeyTextStructFilesMod from
-  "../dev_lib/server/file_types/auto_key_text_structs.js";
-import * as binaryScoredBinaryKeyStructFilesMod from
-  "../dev_lib/server/file_types/binary_scored_binary_key_structs.js";
+import * as autoKeyTextStructFilesMod
+  from "../dev_lib/server/file_types/auto_key_text_structs.js";
+import * as binaryScoredBinaryKeyStructFilesMod
+  from "../dev_lib/server/file_types/binary_scored_binary_key_structs.js";
 
 
 const staticDevLibs = new Map();
@@ -32,6 +33,10 @@ const [parsedMainScript, lexArr, strPosArr] = scriptParser.parse(mainScript);
 const scriptInterpreter = new ScriptInterpreter(
   true, undefined, undefined, staticDevLibs, undefined
 );
+
+const LOCKED_ROUTE_REGEX = /[&/]_/;
+
+
 
 
 http.createServer(async function(req, res) {
@@ -66,10 +71,14 @@ async function requestHandler(req, res) {
   // get the optional client cache time, 'cct', and the requested maximum
   // server-side) cache time, 'mct', which are used for read requests.
   let body = await InputGetter.getBodyPromise(req);
-  let [credentials, route, cct, mct] = await InputGetter.getParamsPromise(
+  let [
+    credentials, method, route, postData, receiverCacheTime, cachePeriod
+  ] = await InputGetter.getParamsPromise(
+    body,
+    ["credentials", "method", "route", "data", "rct", "cp"],
     // (An undefined default value means that it is required. The 'route'
     // parameter is thus required here, whereas 'credentials' is not.)
-    body, ["credentials", "route", "cct", "mct"], [null, undefined, null, null]
+    [null, "fetch", undefined, null, null]
   );
 
 
@@ -81,16 +90,33 @@ async function requestHandler(req, res) {
   // TODO: Get the gas object.
   let gas = {};
 
+
+  // Parse whether the route is a "locked" route (that can only be accessed by
+  // the admin, if any, or by a server module method (SMM)).
+  let isLocked = LOCKED_ROUTE_REGEX.test(route);
+
+  // TODO: If the route it locked, get the adminID of the homeDir, and verify
+  // that reqUser is the admin, then initialize initScriptSignals with a
+  // SET_ELEVATED_PRIVILEGES_SIGNAL on homeDirID. And if the route is not
+  // locked, initialize an empty initScriptSignals array.
+  let initScriptSignals = [SET_ELEVATED_PRIVILEGES_SIGNAL, route[1]];
+
   // Call the main.js script which redirects to the query dev function, whose
   // arguments are route, cct (client cache time), and mct (minimum server
   // cache time).
-  let [result, wasReady] = await scriptInterpreter.interpret(
-    gas, undefined, "main.js", [route, cct, mct], reqUserID, undefined,
-    undefined,
-    new Map(["main.js", [parsedMainScript, lexArr, strPosArr, mainScript]])
+  let parsedScripts = new Map(
+    ["main.js", [parsedMainScript, lexArr, strPosArr, mainScript]]
   );
+  let [output, log] = await scriptInterpreter.interpret(
+    gas, undefined, "main.js",
+    [method, route, postData, receiverCacheTime, cachePeriod],
+    reqUserID, initScriptSignals, undefined, undefined, parsedScripts,
+  );
+  let [result, wasReady] = output ?? [];
+
+  // TODO: Parse and reformat log hee, before handing it to JSON.stringify().
 
   // Return the results.
   res.writeHead(200, {'Content-Type': 'text/json'});
-  res.end(JSON.stringify([result ?? null, wasReady ?? null]));
+  res.end(JSON.stringify([result, log, wasReady]));
 }

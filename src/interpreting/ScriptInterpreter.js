@@ -57,13 +57,14 @@ export class ScriptInterpreter {
 
   async interpretScript(
     gas, script = "", scriptPath = null, mainInputs = [], reqUserID = null,
-    enclosedFunctions = new Map(), signalModifications = new Map(),
-    parsedScripts = new Map(), liveModules = new Map(),
+    initScriptSignals = [], initSignalModifications = [],
+    signalModifications = new Map(), parsedScripts = new Map(),
+    liveModules = new Map(),
   ) {
     let scriptVars = {
       gas: gas, log: {entries: []}, scriptPath: scriptPath,
-      reqUserID: reqUserID,
-      enclosedFunctions: enclosedFunctions, initSignals: initSignals,
+      reqUserID: reqUserID, initScriptSignals: initScriptSignals,
+      initSignalModifications: initSignalModifications,
       signalModifications: signalModifications, globalEnv: undefined,
       isExiting: false, resolveScript: undefined, interpreter: this,
       parsedScripts: parsedScripts, liveModules: liveModules,
@@ -513,7 +514,7 @@ export class ScriptInterpreter {
   executeDevFunction(
     devFun, inputArr, callerNode, callerEnv, execEnv, thisVal
   ) {
-    let {isAsync, minArgNum, liveModule} = devFun;
+    let {isAsync, minArgNum = 0, liveModule} = devFun;
     let execVars = {
       callerNode: callerNode, callerEnv: callerEnv, execEnv: execEnv,
       thisVal: thisVal, interpreter: this, liveModule: liveModule,
@@ -528,8 +529,7 @@ export class ScriptInterpreter {
       // the promise is ready.
       let lastArg = inputArr.at(-1);
       if (
-        (minArgNum ?? 0) <= inputArr.length &&
-        lastArg instanceof FunctionObject
+        minArgNum <= inputArr.length && lastArg instanceof FunctionObject
       ) {
         let callbackFun = lastArg;
         let promise = devFun.fun(execVars, inputArr.slice(0, -1));
@@ -1690,18 +1690,14 @@ export class LiveModule {
     exports.forEach(([alias, val]) => {
       // Filter out any Function instance, which might be exported from a dev
       // library, in which case it is meant only for other dev libraries.
-      // TODO: Potentially filter out more object types if they are deemed
-      // unsafe to be given to the user (i.e. if they hold an unsafe get() or
-      // set() method, or unsafe forEach() or values(), etc.).
       if (val instanceof Function) {
         return;
       }
 
-      // If val is a FunctionObject, first look in enclosedFunctions and
-      // initSignals to see if these contain some security modifications/
-      // features, and if not use the ones that is already defined for the 
-      // function (in case of a dev function). 
-      let isEnclosed, initSignals;
+      // If val is a FunctionObject, first look in initSignalModifications to
+      // see if it contains some security modifications/features, and if not,
+      // use the ones that is already defined for the  function (in case of a
+      // dev function).
       if (val instanceof FunctionObject) {
         // Make a check that we might omit at some point in the future:
         if (val instanceof DevFunction) {
@@ -1711,14 +1707,14 @@ export class LiveModule {
           );
         }
 
-        // Parse the initSignals, if any, from the enclosedFunctions data
+        // Parse the initSignals, if any, from the initSignalModifications data
         // structure, which is an array of regex--getInitSignals() pairs, where
         // if regex.exec() succeeds, getInitSignals() is then called on the
         // output.
-        let {enclosedFunctions} = scriptVars;
+        let {initSignalModifications} = scriptVars;
         let funPath = modulePath + ":" + alias;
         let initSignals;
-        enclosedFunctions.some(([regex, getInitSignals]) => {
+        initSignalModifications.some(([regex, getInitSignals]) => {
           let execOutput = regex.exec(funPath);
           if (execOutput) {
             initSignals = getInitSignals(execOutput);
@@ -1730,8 +1726,8 @@ export class LiveModule {
         // function, adding some metadata, and not least the initSignals. Note
         // that if initSignals here is undefined, and the function is a
         // DevFunction, the functions original initSignals will be used instead
-        // (which will often be the case, except when enclosedFunctions modifies
-        // the signals of dev functions).
+        // (which will often be the case, except when initSignalModifications
+        // modifies the signals of dev functions).
         val = new ExportedFunction(val, modulePath, alias, initSignals);
       }
   
@@ -1847,7 +1843,7 @@ export class FlagEnvironment {
     return [wasFound, flagParams, modulePath, funName, step];
   }
 
-  // TODO: Potentially add more useful methods here.
+  // Potentially add more useful methods here.
 
 }
 
@@ -2227,13 +2223,6 @@ export function turnNoncallable(val) {
     !val.isNoncallable
   ) {
     return Object.create(val, {isNoncallable: true});
-  } else {
-    return val;
-  }
-}
-export function turnEnclosed(val) {
-  if (!val.isEnclosed) {
-    return Object.create(val, {isEnclosed: true});
   } else {
     return val;
   }
