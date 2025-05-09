@@ -2,9 +2,9 @@
 import {MainDBConnection} from "./DBConnection.js";
 import {
   payGas, RuntimeError,
-} from "../../../interpreting/ScriptInterpreter.js";
+} from "../../../../interpreting/ScriptInterpreter.js";
 
-import {SET_ELEVATED_PRIVILEGES_SIGNAL} from "./signals.js";
+import {SET_ELEVATED_PRIVILEGES_SIGNAL} from "../signals.js";
 
 
 
@@ -101,8 +101,8 @@ export async function post(
   if (!homeDirID) {
     if (queryStringArr[0] === "mkdir") {
       let requestedAdminID = queryStringArr[1];
-      let dirID = await mkdir(execVars, requestedAdminID);
-      return [dirID];
+      let newDirID = await mkdir(execVars, requestedAdminID);
+      return newDirID;
     }
     else throw new RuntimeError(
       `Unrecognized route for the "post" method: ${route}`,
@@ -116,12 +116,32 @@ export async function post(
     callerNode, callerEnv
   );
 
+  // If route equals just "/<homeDirID>", without any query string, return
+  // a list of all nested file paths of the home directory, except paths of
+  // files nested inside locked subdirectories (starting with "_").
+  if (!queryStringArr) {
+    // TODO: Look in the cache first.
+    let visibleDescList = await readDirDescendants(execVars, homeDirID);
+    return visibleDescList;
+  }
+
+  let queryType = queryStringArr[0];
+
+  // If route equals just "/<homeDirID>?_all", return a list of all nested
+  // file paths of the home directory, including paths of
+  // files nested inside locked subdirectories (starting with "_").
+  if (queryType === "_all") {
+    // TODO: Look in the cache first.
+    let fullDescList = await getAllDirDescendants(execVars, homeDirID);
+    return fullDescList;
+  }
+
   // If route equals "/<homeDirID>?_delete", request a deletion of the
   // directory, ut note that directories can only be deleted after each nested
   // file in it has been deleted (as this query does not delete the files).
   if (queryType === "_delete") {
     let wasDeleted = await deleteHomeDir(execVars, homeDirID);
-    return [wasDeleted];
+    return wasDeleted;
   }
   
   // If route equals just "/<homeDirID>?call&<funName>&<inputArr>", get the
@@ -150,7 +170,7 @@ export async function post(
     let liveServerModule = await interpreter.import(`/${homeDirID}/module.js`);
     execEnv.emitSignal(SET_ELEVATED_PRIVILEGES_SIGNAL, homeDirID);
     liveServerModule.call(funName, inputArr, null, execEnv);
-    return [res];
+    return res;
   }
 
   // If the route was not matched at this point, throw an error.
@@ -158,7 +178,6 @@ export async function post(
     `Unrecognized route for the "post" method: ${route}`,
     callerNode, callerEnv
   );
-
 }
 
 

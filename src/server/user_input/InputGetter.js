@@ -34,7 +34,7 @@ export class InputGetter {
     });
   }
 
-  static async getParamsPromise(body, paramNameArr, defaultValArr) {
+  static getParams(body, paramNameArr, defaultValArr) {
     let paramValArr = [];
     let receivedParamNames = Object.keys(body);
     paramNameArr.forEach((name, ind) => {

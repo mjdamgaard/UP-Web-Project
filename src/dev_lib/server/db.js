@@ -4,11 +4,12 @@ import {
 } from '../../interpreting/ScriptInterpreter.js';
 import {parseRoute} from './misc/parseRoute.js';
 
-import * as directoriesMod from ".//db_src/directories.js";
-import * as textFilesMod from ".//db_src/text_files.js";
-import * as autoKeyTextStructFilesMod from ".//db_src/auto_key_text_structs.js";
+import * as directoriesMod from "./db_src/filetypes/directories.js";
+import * as textFilesMod from "./db_src/filetypes/text_files.js";
+import * as autoKeyTextStructFilesMod
+  from "./db_src/filetypes/auto_key_text_structs.js";
 import * as binaryScoredBinaryKeyStructFilesMod from
-  ".//db_src/binary_scored_binary_key_structs.js";
+  "./db_src/filetypes/binary_scored_binary_key_structs.js";
 
 import {CHECK_ELEVATED_PRIVILEGES_SIGNAL} from "./db_src/signals.js";
 
@@ -19,8 +20,23 @@ export const query = new DevFunction(
   {isAsync: true, minArgNum: 2, isEnclosed: true},
   async function(
     {callerNode, callerEnv, execEnv, interpreter, liveModule},
-    [method, route, postData, receiverCacheTime, cachePeriod, onWasReady]
+    [method, route, postData, maxAge, noCache, lastModified]
   ) {
+    // Verify that method is either "post" or "fetch", and turn it into a
+    // boolean, 'isPost.'
+    let isPost;
+    if (method === "fetch") {
+      isPost = false;
+    }
+    else if (method === "post") {
+      isPost = true;
+    }
+    else throw new TypeError(
+      'The only supported query methods are "fetch" and "post", but ' +
+      `received "${method}"`,
+      callerNode, callerEnv
+    );
+
     // Parse the route to get the filetype, among other parameters and
     // qualities.
     let [
@@ -60,39 +76,14 @@ export const query = new DevFunction(
     }
 
 
-    // Query the database via the filetypeModule, with the method depending on
-    // the 'method' argument.
-    let result, wasReady;
-    if (method === "fetch") {
-      [result, wasReady] = await filetypeModule.fetch(
-        {callerNode, callerEnv, interpreter, liveModule},
-        route, homeDirID, filePath, fileExt, queryStringArr,
-        cachePeriod, receiverCacheTime
-      );
-    }
-    else if (method === "post") {
-      result = await filetypeModule.post(
-        {callerNode, callerEnv, interpreter, liveModule},
-        route, homeDirID, filePath, fileExt, queryStringArr,
-        postData
-      );
-    }
-    else {
-      throw new TypeError(
-        'The only supported query methods are "fetch" and "post", but ' +
-        `received "${method}"`,
-        callerNode, callerEnv
-      );
-    }
-
-    // If wasReady, i.e. the result was retrieved from the cache with a
-    // timestamp there less than the receiverCacheTime, call the onWasReady()
-    // function, given that one is provided.
-    if (onWasReady && wasReady) {
-      interpreter.executeFunction(onWasReady, [], callerNode, execEnv);
-    }
+    // Query the database via the filetypeModule.
+    let [result, wasReady] = await filetypeModule.query(
+      {callerNode, callerEnv, execEnv, interpreter, liveModule},
+      isPost, route, homeDirID, filePath, fileExt, queryStringArr,
+      postData, maxAge, receiverCacheTime
+    );
     
-    return result;
+    return [result, wasReady];
   }
 );
 
@@ -100,27 +91,29 @@ export const query = new DevFunction(
 
 export const fetch = new DevFunction(
   {isAsync: true, minArgNum: 1, isEnclosed: true},
-  function(
+  async function(
     {callerNode, execEnv, liveModule},
-    [route, cachePeriod]
+    [route, maxAge, noCache]
   ) {
-    return liveModule.call(
-      "query", ["fetch", route, undefined, undefined, cachePeriod],
+    let [result] = liveModule.call(
+      "query", ["fetch", route, undefined, maxAge, noCache],
       callerNode, execEnv
     );
+    return result;
   }
 );
 
 
 export const post = new DevFunction(
   {isAsync: true, minArgNum: 1, isEnclosed: true},
-  function(
+  async function(
     {callerNode, execEnv, liveModule},
     [route, postData]
   ) {
-    return liveModule.call(
+    let [result] = liveModule.call(
       "query", ["post", route, postData],
       callerNode, execEnv
     );
+    return result;
   }
 );

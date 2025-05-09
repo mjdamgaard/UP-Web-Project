@@ -59,7 +59,7 @@ export class ScriptInterpreter {
     gas, script = "", scriptPath = null, mainInputs = [], reqUserID = null,
     initScriptSignals = [], initSignalModifications = [],
     signalModifications = new Map(), parsedScripts = new Map(),
-    liveModules = new Map(),
+    liveModules = new Map(), rest,
   ) {
     let scriptVars = {
       gas: gas, log: {entries: []}, scriptPath: scriptPath,
@@ -67,7 +67,7 @@ export class ScriptInterpreter {
       initSignalModifications: initSignalModifications,
       signalModifications: signalModifications, globalEnv: undefined,
       isExiting: false, resolveScript: undefined, interpreter: this,
-      parsedScripts: parsedScripts, liveModules: liveModules,
+      parsedScripts: parsedScripts, liveModules: liveModules, rest: rest,
     };
 
     // First create a global environment, which is used as a parent environment
@@ -1241,9 +1241,9 @@ export class ScriptInterpreter {
       }
       case "console-call": {
         if (expNode.subtype === "log") {
-          let {isServerSide, log} = environment.scriptVars;
+          let {isExiting, log} = environment.scriptVars;
           let expVal = this.evaluateExpression(expNode.exp, environment);
-          if (!isServerSide) {
+          if (!this.isServerSide && !isExiting) {
             console.log(getVerboseString(expVal));
           }
           log.entries.push(expVal);
