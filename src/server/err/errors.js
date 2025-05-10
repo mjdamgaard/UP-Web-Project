@@ -6,15 +6,15 @@ export class ClientError {
   }
 }
 
-export function endWithError(res, error) {
+export function endWithError(res, err) {
   res.writeHead(400, {'Content-Type': 'text/json'});
-  if (error instanceof ClientError) {
-    res.end(`ClientError: "${error.msg}"`);
+  if (err instanceof ClientError) {
+    res.end(`ClientError: "${err.error}"`);
   }
-  else if (typeof error === "object") {
-    res.end(JSON.stringify(error));
+  else if (typeof err === "object") {
+    res.end(JSON.stringify(err));
   } else {
-    res.end(JSON.stringify({error: error}));
+    res.end(JSON.stringify({error: err}));
   }
 }
 

@@ -1805,7 +1805,7 @@ export class FlagEnvironment {
   }
 
   emitSignal(signal, node, env, signalParams) {
-    let modifiedEmit = env.scriptVars.modifiedSignals.get(signal);
+    let modifiedEmit = env.scriptVars.signalModifications.get(signal);
     if (modifiedEmit) {
       modifiedEmit(this, node, env, signalParams);
     } else {

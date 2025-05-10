@@ -1,6 +1,8 @@
 
 import * as http from 'http';
 import fs from 'fs';
+import path from 'path';
+import * as process from 'process';
 
 import {ClientError, endWithError, endWithInternalError} from './err/errors.js';
 import {ScriptInterpreter} from "../interpreting/ScriptInterpreter.js";
@@ -15,7 +17,12 @@ const staticDevLibs = new Map();
 staticDevLibs.set("db", dbMod);
 
 
-const mainScript = fs.readFileSync("./main_script/main.js", "utf8");
+const [ , curPath] = process.argv;
+const mainScriptPath = path.normalize(
+  path.dirname(curPath) + "/main_script/main.js"
+);
+const mainScript = fs.readFileSync(mainScriptPath, "utf8");
+
 const [parsedMainScript, lexArr, strPosArr] = scriptParser.parse(mainScript);
 
 const scriptInterpreter = new ScriptInterpreter(
@@ -46,8 +53,6 @@ http.createServer(async function(req, res) {
 
 async function requestHandler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
-  // res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
-  // res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   let data;
   if (req.method === "POST") {
@@ -74,7 +79,7 @@ async function requestHandler(req, res) {
   // First get and parse the request params.
   let reqParams, isValidJSON = true;
   try {
-    resolve(JSON.parse(data));
+    reqParams = JSON.parse(data);
   }
   catch (err) {
     isValidJSON = false;
@@ -87,6 +92,8 @@ async function requestHandler(req, res) {
 
   // Then extract the parameters from it.
   let {
+    // Get the optional user credentials (username and password/token).
+    credentials,
     // Get the 'method', and the optional postData parameter (used when
     // method == "post").
     method = "fetch", postData,
@@ -107,17 +114,10 @@ async function requestHandler(req, res) {
   if (!method) throw new ClientError(
     "No 'method' parameter was specified in the POST body"
   );
-  if (!route) throw new ClientError(
-    "No 'route' parameter was specified in the POST body"
-  );
 
   // And get the "route" from the URL, which is an extended path that points to
   // the file or directory that is the target of the request.
   let route = req.url;
-
-  // And get the optional credentials from the (Basic) Authorization header.
-  let authHeader = req.getHeader("authorization") ?? "";
-  let [ , credentials] = /^Basic (.+)$/.exec(authHeader) ?? [];
 
 
   // Get the userID of the requesting user, if the user has supplied their
@@ -134,15 +134,15 @@ async function requestHandler(req, res) {
   // that reqUser is the admin, then initialize scriptSignals with a
   // SET_ELEVATED_PRIVILEGES_SIGNAL on homeDirID. And if the route is not
   // locked, initialize an empty scriptSignals array.
-  let scriptSignals = [SET_ELEVATED_PRIVILEGES_SIGNAL, route[1]];
+  let scriptSignals = [[SET_ELEVATED_PRIVILEGES_SIGNAL, route[1]]];
 
 
   // Call the main.js script which redirects to the query() dev function, whose
   // arguments are: method, route, postData, maxAge, noCache, and lastModified.
-  let parsedScripts = new Map(
+  let parsedScripts = new Map([
     ["main.js", [parsedMainScript, lexArr, strPosArr, mainScript]]
-  );
-  let [output, log] = await scriptInterpreter.interpret(
+  ]);
+  let [output, log] = await scriptInterpreter.interpretScript(
     gas, undefined, "main.js",
     [method, route, postData, maxAge, noCache, lastModified],
     reqUserID, scriptSignals, undefined, undefined, parsedScripts,
@@ -187,6 +187,14 @@ async function requestHandler(req, res) {
 async function getGasAndReqUserID(credentials) {
   let username, password;
   // TODO...
+  return [{
+    comp: 100000,
+    import: 100,
+    fetch: 100,
+    time: Infinity,
+    dbRead: 100,
+    dbWrite: 10000,
+  }];
 }
 
 
@@ -199,7 +207,6 @@ function getDataChunksPromise(req) {
       req.on('data', chunk => {
         chunks.push(chunk);
         size += chunk.length ?? chunk.size;
-        data += chunk.toString();
         if (size > 10000) reject(
           new ClientError("Post data maximum size exceeded")
         );

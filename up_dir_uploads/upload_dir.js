@@ -8,7 +8,7 @@ import {DirectoryUploader} from './src/DirectoryUploader.js';
 
 // Get the directory path from the arguments, and combine it with __dirname if
 // it is a relative path.
-let [ , curPath, dirPath, deleteStructData = false] = process.argv ?? [];
+let [ , curPath, dirPath, deleteStructData = false] = process.argv;
 if (!dirPath) throw (
   "Specify dirPath in '$ node <program path> <dirPath> [isPrivate]'"
 );

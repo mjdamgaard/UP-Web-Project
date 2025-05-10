@@ -2,13 +2,13 @@
 import {serverDomainURL} from "./config.js";
 
 
-export async function postData(url, reqData, credentials) {
+export async function postData(url, reqData) {
   let options = {
     method: "POST",
     body: JSON.stringify(reqData),
-    headers: {
-      "Authorization": credentials ? `Basic ${credentials}` : undefined,
-    }
+    // headers: {
+    //   "Authorization": credentials ? `Basic ${credentials}` : undefined,
+    // }
   };
 
   let response = await fetch(url, options);
@@ -65,8 +65,7 @@ export class ServerInterface {
   static fetchHomeDirDescendants(homeDirID, credentials) {
     return this.#post(
       `/${homeDirID}`,
-      {noCache: true},
-      credentials
+      {credentials: credentials, noCache: true},
     );
   }
 
@@ -83,8 +82,7 @@ export class ServerInterface {
     let [ , homeDirID] = /^\/?([^/]+)\//.exec(filePath) ?? [];
     return this.#post(
       `/${homeDirID}?admin`,
-      {},
-      credentials
+      {credentials: credentials},
     );
   }
 
@@ -93,16 +91,14 @@ export class ServerInterface {
   static fetchTextFileContent(filePath, credentials) {
     return this.#post(
       filePath,
-      {},
-      credentials
+      {credentials: credentials},
     );
   }
 
   static putTextFile(filePath, text, credentials) {
     return this.#post(
       `/${filePath}?_put`,
-      {method: "post", postData: text},
-      credentials
+      {credentials: credentials, method: "post", postData: text},
     );
   }
 
@@ -110,8 +106,7 @@ export class ServerInterface {
   static deleteFile(filePath, credentials) {
     return this.#post(
       `/${filePath}?_delete`,
-      {method: "post"},
-      credentials
+      {credentials: credentials, method: "post"},
     );
   }
 
@@ -119,8 +114,7 @@ export class ServerInterface {
   static createHomeDir(credentials) {
     return this.#post(
       `/?mkdir`,
-      {method: "post"},
-      credentials
+      {credentials: credentials, method: "post"},
     );
   }
 
