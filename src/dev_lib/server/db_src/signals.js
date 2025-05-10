@@ -7,7 +7,7 @@ export const ELEVATED_PRIVILEGES_FLAG = Symbol("elevated_privileges");
 export const SET_ELEVATED_PRIVILEGES_SIGNAL = new Signal(
   "set_elevated_privileges",
   function(flagEnv, _1, _2, homeDirID) {
-    flagEnv.raiseFlag(ELEVATED_PRIVILEGES_FLAG, homeDirID);
+    flagEnv.setFlag(ELEVATED_PRIVILEGES_FLAG, homeDirID);
   }
 );
 
@@ -19,7 +19,7 @@ export const CHECK_ELEVATED_PRIVILEGES_SIGNAL = new Signal(
       `Requested admin privileges on Directory ${homeDirID} not granted`,
       node, env
     );
-    flagEnv.raiseFlag(ELEVATED_PRIVILEGES_FLAG, homeDirID);
+    flagEnv.setFlag(ELEVATED_PRIVILEGES_FLAG, homeDirID);
   }
 );
 

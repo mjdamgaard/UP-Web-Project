@@ -579,7 +579,7 @@ export var CAN_CREATE_APP_FLAG = Symbol("can_create_app");
 export var CAN_CREATE_APP_SIGNAL = new Signal(
   "can_create_app",
   function(flagEnv) {
-    flagEnv.raiseFlag(CAN_CREATE_APP_FLAG);
+    flagEnv.setFlag(CAN_CREATE_APP_FLAG);
   }
 );
 

@@ -23,7 +23,8 @@ const mainScriptPath = path.normalize(
 );
 const mainScript = fs.readFileSync(mainScriptPath, "utf8");
 
-const [parsedMainScript, lexArr, strPosArr] = scriptParser.parse(mainScript);
+const [syntaxTree, lexArr, strPosArr] = scriptParser.parse(mainScript);
+const parsedMainScript = syntaxTree.res;
 
 const scriptInterpreter = new ScriptInterpreter(
   true, undefined, undefined, staticDevLibs, undefined
@@ -154,7 +155,7 @@ async function requestHandler(req, res) {
   // stringified log to the client.
   if (log.error) {
     // TODO: Parse and reformat log hee, before handing it to JSON.stringify().
-    endWithError(res, log);
+    endWithError(res, log.error);
   }
 
   // Else if returnLog is true, write back an array containing the result and

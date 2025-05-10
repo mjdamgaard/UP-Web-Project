@@ -301,7 +301,7 @@ export class ScriptInterpreter {
       devMod = this.staticDevLibs.get(modulePath);
       if (!devMod) {
         devMod = this.devLibURLs.get(modulePath);
-        if (!devLibURL) throw new LoadError(
+        if (!devMod) throw new LoadError(
           `Developer library "${modulePath}" not found`,
           callerNode, callerEnv
         );
@@ -1870,7 +1870,7 @@ export class FlagEnvironment {
 export const NO_EXIT_FLAG = Symbol("no_exit");
 
 export const NO_EXIT_SIGNAL = new Signal((flagEnv) => {
-    flagEnv.raiseFlag(NO_EXIT_FLAG);
+    flagEnv.setFlag(NO_EXIT_FLAG);
 });
 
 export const WILL_EXIT_SIGNAL = new Signal(
