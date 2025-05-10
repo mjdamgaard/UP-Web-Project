@@ -79,7 +79,7 @@ export class ServerInterface {
     return this.fetchTextFileContent(filePath, credentials)
   }
 
-  static fetchAdminID(filePath) {
+  static fetchAdminID(filePath, credentials) {
     let [ , homeDirID] = /^\/?([^/]+)\//.exec(filePath) ?? [];
     return this.#post(
       `/${homeDirID}?admin`,

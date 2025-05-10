@@ -2,7 +2,7 @@
 import {
   DevFunction, Signal, RuntimeError, TypeError
 } from '../../interpreting/ScriptInterpreter.js';
-import {parseRoute} from './misc/parseRoute.js';
+import {parseRoute} from './db_src/parseRoute.js';
 
 import * as directoriesMod from "./db_src/filetypes/directories.js";
 import * as textFilesMod from "./db_src/filetypes/text_files.js";
@@ -39,9 +39,15 @@ export const query = new DevFunction(
 
     // Parse the route to get the filetype, among other parameters and
     // qualities.
-    let [
+    let homeDirID, filePath, fileExt, queryStringArr, isLocked;
+    try {
+    [
       homeDirID, filePath, fileExt, queryStringArr, isLocked
     ] = parseRoute(route);
+    }
+    catch(errMsg) {
+      throw new RuntimeError(errMsg, callerNode, callerEnv);
+    }
   
     // If the route is locked, check that you have admin privileges on the
     // directory of homeDirID.

@@ -1,26 +1,26 @@
 
 import {
-  DevFunction, JSXElement, ModuleObject, ProtectedObject,
-  RuntimeError, turnImmutable, jsxComponentPaths
+  DevFunction, JSXElement, LiveModule, RuntimeError, turnImmutable,
+  ArrayWrapper, Signal
 } from "../interpreting/ScriptInterpreter.js";
-import {
-  createAppSignal, dispatchSignal,
-} from "./signals/fundamental_signals.js";
 
 
 
 // Create a JSX (React-like) app and mount it in the index HTML page, in the
 // element with an id of "up-app-root".
-export const createJSXApp = new DevFunction(createAppSignal, null, function(
-  {callerNode, callerEnv, interpreter}, component, props
-) {
-  const rootInstance = new JSXInstance(component, "root", undefined);
-  let rootParent = document.getElementById("up-app-root");
-  let appNode = rootInstance.render(
-    props, false, interpreter, callerNode, callerEnv, false
-  );
-  rootParent.replaceChildren(appNode);
-});
+export const createJSXApp = new DevFunction(
+  {callerSignals: [[WILL_CREATE_APP_SIGNAL]]},
+  function(
+    {callerNode, callerEnv, interpreter}, component, props
+  ) {
+    const rootInstance = new JSXInstance(component, "root", undefined);
+    let rootParent = document.getElementById("up-app-root");
+    let appNode = rootInstance.render(
+      props, false, interpreter, callerNode, callerEnv, false
+    );
+    rootParent.replaceChildren(appNode);
+  }
+);
 
 
 
@@ -31,9 +31,8 @@ class JSXInstance {
     componentModule, key = undefined, parentInstance = undefined,
     callerNode, callerEnv
   ) {
-    if (!(componentModule instanceof ModuleObject)) throw new RuntimeError(
-      "JSX component needs to be an imported module namespace object, or a " +
-      "developer component",
+    if (!(componentModule instanceof LiveModule)) throw new RuntimeError(
+      "JSX component needs to be an imported module namespace object",
       callerNode, callerEnv
     );
     this.componentModule = componentModule;
@@ -89,7 +88,7 @@ class JSXInstance {
     // returning) on the JSXElement to be rendered. This resolve() callback's
     // job is to get us the newDOMNode to insert in the DOM.
     let newDOMNode, resolveHasBeenCalled = false;
-    let resolve = new DevFunction(callerEnv, (
+    let resolve = new DevFunction({decEnv: callerEnv}, (
       {interpreter, callerNode, callerEnv}, [jsxElement]
     ) => {
       resolveHasBeenCalled = true;
@@ -427,15 +426,19 @@ class JSXInstance {
 
 
 
-class JSXInstanceObject extends ProtectedObject {
+class JSXInstanceObject {
   constructor(jsxInstance, decEnv) {
-    super(null, decEnv);
-    this.instance = jsxInstance;
+    this.jsxInstance = jsxInstance;
+    this.decEnv = decEnv;
     // Note that we don't need to pass decEnv to DispatchFunction() here,
     // since this class extends ProtectedObject, which means that all method
     // calls can already only happen within the environmental call stack of
     // decEnv.
-    this.dispatch = new DispatchFunction(jsxInstance, false);
+    this.dispatch = new DispatchFunction(jsxInstance);
+  }
+
+  get isConfined() {
+    return true;
   }
 
   get(key) {
@@ -480,28 +483,32 @@ class JSXInstanceObject extends ProtectedObject {
 }
 
 
+
 class DispatchFunction extends DevFunction {
   constructor(jsxInstance, decEnv) {
-    super(dispatchSignal, decEnv, (
-      {interpreter, callerNode, callerEnv},
-      action, inputArr, componentModule, childKey
-    ) => {
-      if (!(inputArr instanceof Map)) throw new RuntimeError(
-        "Dispatching an action with an invalid input array",
-        callerNode, callerEnv
-      );
-      if (!(componentModule instanceof ModuleObject)) {
-        throw new RuntimeError(
-          "Dispatching an action with an invalid receiver component",
+    super(
+      {decEnv: decEnv},
+      (
+        {interpreter, callerNode, callerEnv},
+        action, inputArr, componentModule, childKey
+      ) => {
+        if (!(inputArr instanceof ArrayWrapper)) throw new RuntimeError(
+          "Dispatching an action with an invalid input array",
           callerNode, callerEnv
         );
+        if (!(componentModule instanceof LiveModule)) {
+          throw new RuntimeError(
+            "Dispatching an action with an invalid receiver component",
+            callerNode, callerEnv
+          );
+        }
+        let componentPath = componentModule.modulePath;
+        jsxInstance.dispatch(
+          action, [...inputArr], componentPath, childKey,
+          interpreter, callerNode, callerEnv
+        );
       }
-      let componentPath = componentModule.modulePath;
-      jsxInstance.dispatch(
-        action, [...inputArr], componentPath, childKey,
-        interpreter, callerNode, callerEnv
-      );
-    });
+    );
   }
 }
 
@@ -560,3 +567,29 @@ export function sanitize(str) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&apos;");
 }
+
+
+
+
+
+
+
+export var CAN_CREATE_APP_FLAG = Symbol("can_create_app");
+
+export var CAN_CREATE_APP_SIGNAL = new Signal(
+  "can_create_app",
+  function(flagEnv) {
+    flagEnv.raiseFlag(CAN_CREATE_APP_FLAG);
+  }
+);
+
+export var WILL_CREATE_APP_SIGNAL = new Signal(
+  "will_create_app",
+  function(flagEnv, node, env) {
+    let [wasFound] = flagEnv.getFlag(CAN_CREATE_APP_FLAG, 0);
+    if (!wasFound ) throw new RuntimeError(
+      "Cannot create a new the app from here",
+      node, env
+    );
+  }
+);

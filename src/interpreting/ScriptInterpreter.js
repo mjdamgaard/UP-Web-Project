@@ -4,10 +4,6 @@ import {
   LexError, SyntaxError, getExtendedErrorMsg as getExtendedErrorMsgHelper,
   getLnAndCol,
 } from "./parsing/Parser.js";
-import {
-  exitSignal, moduleObjectSignal
-} from "../dev_lib/signals/fundamental_signals.js";
-
 
 // // Following module paths are substituted by "module mapping webpack plugin."
 // import {
@@ -205,7 +201,8 @@ export class ScriptInterpreter {
     scriptPath, parsedScripts, callerNode, callerEnv
   ) {
     let parsedScript, lexArr, strPosArr, script;
-    [parsedScript, lexArr, strPosArr, script] = parsedScripts.get(scriptPath);
+    [parsedScript, lexArr, strPosArr, script] = parsedScripts.get(scriptPath)
+      ?? [];
     if (!parsedScript) {
       let {reqUserID} = callerEnv.scriptVars;
       try {
@@ -276,7 +273,7 @@ export class ScriptInterpreter {
 
 
 
-  executeSubmoduleOfImportStatement( impStmt, curModulePath, callerModuleEnv) {
+  executeSubmoduleOfImportStatement(impStmt, curModulePath, callerModuleEnv) {
     let submodulePath = getFullPath(curModulePath, impStmt.str);
     
     return this.import(submodulePath, impStmt, callerModuleEnv);
@@ -331,7 +328,7 @@ export class ScriptInterpreter {
     let [
       submoduleNode, lexArr, strPosArr, script
     ] = await this.fetchParsedScript(
-      modulePath, parsedScripts, callerNode, callerModuleEnv
+      modulePath, parsedScripts, callerNode, callerEnv
     );
 
     // Then execute the module, inside the global environment, and return the
@@ -350,7 +347,6 @@ export class ScriptInterpreter {
     decrCompGas(impStmt, curModuleEnv);
 
     // Iterate through all the imports and add each import to the environment.
-    let submodulePath = liveSubmodule.modulePath;
     impStmt.importArr.forEach(imp => {
       let impType = imp.importType
       if (impType === "namespace-import") {
@@ -463,7 +459,7 @@ export class ScriptInterpreter {
       let isValid = callerEnv.isCallStackDescendentOf(fun.decEnv);
       if (!isValid) throw new RuntimeError(
         "An arrow function was called outside of the " +
-        "environmental call stack in which it was declared.",
+        "environmental call stack in which it was declared",
         callerNode, callerEnv
       );
     }
@@ -1172,7 +1168,7 @@ export class ScriptInterpreter {
           this.evaluateExpression(expNode.exp, environment);
         let {resolveScript} = environment.scriptVars;
         // Check the can-exit signal, before resolving the script.
-        environment.emitSignal(WILL_EXIT_SIGNAL, node);
+        environment.emitSignal(WILL_EXIT_SIGNAL, expNode);
         resolveScript(expVal);
         // Throw an exit exception.
         throw new ExitException();
@@ -1343,9 +1339,8 @@ export class ScriptInterpreter {
           index = this.evaluateExpression(postfix.exp, environment);
         }
 
-        // Else Check that the object has a get() method, and a set() method if
-        // accessed for assignment, and then use the get() method to get the
-        // value.
+        // Then check that the object has a get() method, and a set() method if
+        // accessed for assignment.
         if (!(objVal.get instanceof Function)) throw new RuntimeError(
           "Trying to access a member of a non-object",
           postfix, environment
@@ -1357,6 +1352,19 @@ export class ScriptInterpreter {
             postfix, environment
           );
         }
+
+        // If objVal is "confined", also check that it isn't called outside
+        // of an environmental call stack in which it is declared.
+        if (objVal.isConfined) {
+          let isValid = environment.isCallStackDescendentOf(objVal.decEnv);
+          if (!isValid) throw new RuntimeError(
+            "A member of a confined object was accessed outside of the " +
+            "environmental call stack in which the object was was declared",
+            postfix, environment
+          );
+        }
+
+        // Then use the get() method to get the value.
         val = objVal.get(index);
 
         // Lastly, if objVal was immutable or nonCallable, turn the retrieved
@@ -1416,11 +1424,7 @@ export class ScriptInterpreter {
 export class Environment {
   constructor(
     parent, scopeType = "block", {
-      fun: {
-        isArrowFun, isEnclosed, modulePath, funName,
-        callerSignals, initSignals, isEnclosed,
-      },
-      callerNode, callerEnv, thisVal,
+      fun, callerNode, callerEnv, thisVal,
       modulePath, lexArr, strPosArr, script,
       scriptVars,
       catchStmtArr, errIdent, numIdent,
@@ -1433,6 +1437,10 @@ export class Environment {
     this.scopeType = scopeType;
     this.variables = new Map();
     if (scopeType === "function") {
+      let {
+        isArrowFun, modulePath, funName,
+        callerSignals, initSignals, isEnclosed,
+      } = fun;
       this.callerNode = callerNode;
       this.callerEnv = callerEnv;
       if (thisVal && !isArrowFun) this.thisVal = thisVal;
@@ -1733,7 +1741,7 @@ export class LiveModule {
         val = new ExportedFunction(val, modulePath, alias, signals ?? {});
       }
   
-      this.members.set(key, turnImmutable(val));
+      this.members.set(alias, turnImmutable(val));
     });
   }
 
@@ -1844,7 +1852,7 @@ export class FlagEnvironment {
     }
   }
 
-  getFlag(flag, maxStep = undefined) {
+  getFlag(flag, maxStep = Infinity) {
     let [
       retFlag, flagParams, modulePath, funName, step
     ] = this.getFirstFlag([flag], maxStep);
@@ -2022,10 +2030,14 @@ export class DefinedFunction extends FunctionObject {
 }
 
 export class DevFunction extends FunctionObject {
-  constructor({
-    isAsync, minArgNum, callerSignals, initSignals, isEnclosed, decEnv},
-    fun
-  ) {
+  constructor(options, fun) {
+    if (!fun) {
+      fun = options;
+      options = {};
+    }
+    let {
+      isAsync, minArgNum, callerSignals, initSignals, isEnclosed, decEnv
+    } = options;
     super();
     if (isAsync) this.isAsync = isAsync;
     if (minArgNum) this.minArgNum = minArgNum;

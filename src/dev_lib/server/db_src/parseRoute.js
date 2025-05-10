@@ -1,7 +1,4 @@
 
-import {ClientError} from './err/errors.js';
-
-
 const dirPathRegEx = /^(\/[^/?.]+)+/;
 const filenameRegEx = /^\/([^/?.]*\.[^/?]*)/;
 const queryStringRegEx = /^\?([^=&]*(=[^=&]*)?(&[^=&]*(=[^=&])*)?)/;
@@ -24,12 +21,12 @@ export function parseRoute(route) {
   routeRemainder = routeRemainder.substring(match.length);
 
   // Throw if this did not exhaust the full route.
-  if (routeRemainder !== "") throw new ClientError(
+  if (routeRemainder !== "") throw (
     `Invalid route: ${route}`
   );
 
   // Throw if a filename is used outside of any directory.
-  if (filename && ! dirPath) throw new ClientError(
+  if (filename && ! dirPath) throw (
     `Invalid route: ${route}. Filename has to be preceded by a directory path`
   );
 

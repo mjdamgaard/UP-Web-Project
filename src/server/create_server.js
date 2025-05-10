@@ -4,26 +4,15 @@ import fs from 'fs';
 
 import {ClientError, endWithError, endWithInternalError} from './err/errors.js';
 import {ScriptInterpreter} from "../interpreting/ScriptInterpreter.js";
-import {scriptParser} from "./parsing/ScriptParser.js";
+import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
 
 import {SET_ELEVATED_PRIVILEGES_SIGNAL}
   from "../dev_lib/server/db_src/signals.js";
 
 import * as dbMod from "../dev_lib/server/db.js";
-import * as directoriesMod from "../dev_lib/server/file_types/directories.js";
-import * as textFilesMod from "../dev_lib/server/file_types/text_files.js";
-import * as autoKeyTextStructFilesMod
-  from "../dev_lib/server/file_types/auto_key_text_structs.js";
-import * as binaryScoredBinaryKeyStructFilesMod
-  from "../dev_lib/server/file_types/binary_scored_binary_key_structs.js";
-
 
 const staticDevLibs = new Map();
 staticDevLibs.set("db", dbMod);
-staticDevLibs.set("dir", directoriesMod);
-staticDevLibs.set("text_files", textFilesMod);
-staticDevLibs.set("ats_files", autoKeyTextStructFilesMod);
-staticDevLibs.set("bbs_files", binaryScoredBinaryKeyStructFilesMod);
 
 
 const mainScript = fs.readFileSync("./main_script/main.js", "utf8");
@@ -57,6 +46,8 @@ http.createServer(async function(req, res) {
 
 async function requestHandler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+  // res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
+  // res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   let data;
   if (req.method === "POST") {

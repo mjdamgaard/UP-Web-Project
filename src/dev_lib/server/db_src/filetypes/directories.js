@@ -1,5 +1,5 @@
 
-import {MainDBConnection} from "./DBConnection.js";
+import {MainDBConnection} from "../../../../server/db_io/DBConnection.js";
 import {
   payGas, RuntimeError,
 } from "../../../../interpreting/ScriptInterpreter.js";
@@ -119,6 +119,7 @@ export async function query(
 
 
 
+
 export async function mkdir({callerNode, callerEnv}, adminID) {
   payGas(callerNode, callerEnv, {mkdir: 1});
   let homeDirID = await MainDBConnection.querySingleValue(
@@ -126,9 +127,6 @@ export async function mkdir({callerNode, callerEnv}, adminID) {
   );
   return homeDirID;
 } 
-
-export const mkdir = new DevFunctionFromAsyncFun(null, null, mkdir);
-
 
 
 

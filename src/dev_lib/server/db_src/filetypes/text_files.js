@@ -1,5 +1,5 @@
 
-import {MainDBConnection} from "./DBConnection.js";
+import {MainDBConnection} from "../../../../server/db_io/DBConnection.js";
 import {
   RuntimeError, payGas,
 } from "../../../../interpreting/ScriptInterpreter.js";
@@ -86,10 +86,10 @@ export async function putTextFile(
   {callerNode, callerEnv}, homeDirID, filePath, text
 ) {
   payGas(callerNode, callerEnv, {dbWrite: text.length});
-  let text = await MainDBConnection.querySingleValue(
+  let wasCreated = await MainDBConnection.querySingleValue(
     "putTextFile", [homeDirID, filePath, text]
   );
-  return [text];
+  return [wasCreated];
 } 
 
 
