@@ -1,11 +1,14 @@
 
-import {serverURL} from "./config.js";
+import {serverDomainURL} from "./config.js";
 
 
-export async function postData(url, reqData) {
+export async function postData(url, reqData, credentials) {
   let options = {
     method: "POST",
     body: JSON.stringify(reqData),
+    headers: {
+      "Authorization": credentials ? `Basic ${credentials}` : undefined,
+    }
   };
 
   let response = await fetch(url, options);
@@ -32,7 +35,7 @@ export class ServerInterface {
 
   static #postReqBuffer = new Map();
 
-  static #post(reqData) {
+  static #post(route, reqData, credentials) {
       let reqKey = JSON.stringify(reqData);
 
       // If there is already an ongoing request with this reqData object,
@@ -44,7 +47,9 @@ export class ServerInterface {
 
       // Else send the request to the server and create the new response text
       // promise.
-      responseTextPromise = postData(serverURL, reqData);
+      let url = serverDomainURL + route;
+      // let credentials = btoa(`${username}:${password}`)
+      responseTextPromise = postData(url, reqData, credentials);
 
       // Then add it to #postReqBuffer, and also give it a then-callback to
       // remove itself from said buffer, before return ing the promise.
@@ -57,10 +62,12 @@ export class ServerInterface {
 
 
 
-  static fetchHomeDirDescendants(dirID, credentials) {
-    return this.#post({
-      credentials: credentials, action: "read", route: "/" + dirID,
-    });
+  static fetchHomeDirDescendants(homeDirID, credentials) {
+    return this.#post(
+      `/${homeDirID}`,
+      {noCache: true},
+      credentials
+    );
   }
 
 
@@ -73,39 +80,48 @@ export class ServerInterface {
   }
 
   static fetchAdminID(filePath) {
-    let [ , dirID] = /^\/?([^/]+)\//.exec(filePath) ?? [];
-    return this.#post({
-      action: "read", route: "/" + dirID + "?get=adminID",
-    });
+    let [ , homeDirID] = /^\/?([^/]+)\//.exec(filePath) ?? [];
+    return this.#post(
+      `/${homeDirID}?admin`,
+      {},
+      credentials
+    );
   }
 
 
 
   static fetchTextFileContent(filePath, credentials) {
-    return this.#post({
-      credentials: credentials, action: "read", route: filePath,
-    });
+    return this.#post(
+      filePath,
+      {},
+      credentials
+    );
   }
 
-  static putTextFile(credentials, filePath, contentText) {
-    return this.#post({
-      credentials: credentials, action: "put", route: filePath,
-      content: contentText
-    });
+  static putTextFile(filePath, text, credentials) {
+    return this.#post(
+      `/${filePath}?_put`,
+      {method: "post", postData: text},
+      credentials
+    );
   }
 
 
-  static deleteFile(credentials, filePath) {
-    return this.#post({
-      credentials: credentials, action: "delete", route: filePath
-    });
+  static deleteFile(filePath, credentials) {
+    return this.#post(
+      `/${filePath}?_delete`,
+      {method: "post"},
+      credentials
+    );
   }
 
 
   static createHomeDir(credentials) {
-    return this.#post({
-      credentials: credentials, action: "mkdir"
-    });
+    return this.#post(
+      `/?mkdir`,
+      {method: "post"},
+      credentials
+    );
   }
 
 

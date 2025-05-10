@@ -98,7 +98,7 @@ async function requestHandler(req, res) {
   let {
     // Get the 'method', and the optional postData parameter (used when
     // method == "post").
-    method, postData,
+    method = "fetch", postData,
     // Get the optional maxAge, noCache, and lastModified parameters used by
     // caches.
     maxAge, noCache, lastModified,

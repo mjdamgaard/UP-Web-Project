@@ -75,12 +75,11 @@ export const query = new DevFunction(
         throw new ClientError(`Unrecognized file type: ".${fileExt}"`);
     }
 
-
     // Query the database via the filetypeModule.
     let [result, wasReady] = await filetypeModule.query(
       {callerNode, callerEnv, execEnv, interpreter, liveModule},
       isPost, route, homeDirID, filePath, fileExt, queryStringArr,
-      postData, maxAge, receiverCacheTime
+      postData, maxAge, noCache ?? isPost, lastModified
     );
     
     return [result, wasReady];

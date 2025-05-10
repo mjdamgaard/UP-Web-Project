@@ -1,2 +1,2 @@
 
-export const serverURL = "http://localhost:8080";
+export const serverDomainURL = "http://localhost:8080";

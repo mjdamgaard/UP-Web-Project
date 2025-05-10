@@ -7,8 +7,8 @@ import {
 
 export async function fetch(
   execVars,
-  route, homeDirID, filePath, fileExt, queryStringArr,
-  cachePeriod = undefined, clientCacheTime = undefined
+  isPost, route, homeDirID, filePath, _, queryStringArr,
+  postData, maxAge, noCache, lastModified
 ) {
   let {callerNode, callerEnv, execEnv, interpreter} = execVars;
 
@@ -21,6 +21,28 @@ export async function fetch(
   }
 
   let queryType = queryStringArr[0];
+
+  // If route equals "/<homeDirID>?_put&<contentText>", overwrite the existing
+  // file with contentText, if any, or create a new file with that content.
+  if (queryType === "_put") {
+    if (!isPost) throw new RuntimeError(
+      `Unrecognized route for the "fetch" method: ${route}`,
+      callerNode, callerEnv
+    );
+    let text = postData;
+    let wasCreated = await putTextFile(execVars, homeDirID, filePath, text);
+    return [wasCreated];
+  }
+
+  // If route equals "/<homeDirID>/<filePath>?_delete", ...
+  if (queryType === "_delete") {
+    if (!isPost) throw new RuntimeError(
+      `Unrecognized route for the "fetch" method: ${route}`,
+      callerNode, callerEnv
+    );
+    let wasDeleted = await deleteTextFile(execVars, homeDirID, filePath);
+    return [wasDeleted];
+  }
 
   // If route equals "/<homeDirID>/<filePath>?_get&<alias>", verify that
   // fileExt = "js", and if so, execute the module and return the variables
@@ -47,44 +69,6 @@ export async function fetch(
 
 
 
-export async function post(
-  execVars,
-  route, homeDirID, filePath, fileExt, queryStringArr,
-  cachePeriod = undefined, clientCacheTime = undefined
-) {
-  let {callerNode, callerEnv, execEnv, interpreter} = execVars;
-
-  // If route equals just "/<homeDirID>/<filePath>", without any query string,
-  // return the text stored in the file.
-  if (!queryStringArr) {
-    let [text] = await readTextFile(gas, homeDirID, filePath);
-    return [text];
-  }
-
-  let queryType = queryStringArr[0];
-
-  // If route equals "/<homeDirID>?_put&<contentText>", overwrite the existing
-  // file with contentText, if any, or create a new file with that content.
-  if (queryType === "_put") {
-    let contentText = queryStringArr[1] ?? "";
-    let wasCreated = await putTextFile(
-      execVars, homeDirID, filePath, contentText
-    );
-    return [wasCreated];
-  }
-
-  // If route equals "/<homeDirID>/<filePath>?_delete", ...
-  if (queryType === "_delete") {
-    // ...
-  }
-
-  // If the route was not matched at this point, throw an error.
-  throw new RuntimeError(
-    `Unrecognized route for the "fetch" method: ${route}`,
-    callerNode, callerEnv
-  );
-}
-
 
 export async function readTextFile(
   {callerNode, callerEnv}, homeDirID, filePath
@@ -96,3 +80,24 @@ export async function readTextFile(
   return [text];
 } 
 
+
+
+export async function putTextFile(
+  {callerNode, callerEnv}, homeDirID, filePath, text
+) {
+  payGas(callerNode, callerEnv, {dbWrite: text.length});
+  let text = await MainDBConnection.querySingleValue(
+    "putTextFile", [homeDirID, filePath, text]
+  );
+  return [text];
+} 
+
+
+export async function deleteTextFile(
+  {}, homeDirID, filePath, text
+) {
+  let wasDeleted = await MainDBConnection.querySingleValue(
+    "deleteTextFile", [homeDirID, filePath]
+  );
+  return [wasDeleted];
+} 
