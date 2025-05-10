@@ -27,7 +27,7 @@ const [syntaxTree, lexArr, strPosArr] = scriptParser.parse(mainScript);
 const parsedMainScript = syntaxTree.res;
 
 const scriptInterpreter = new ScriptInterpreter(
-  true, undefined, undefined, staticDevLibs, undefined
+  true, undefined, staticDevLibs, undefined
 );
 
 const LOCKED_ROUTE_REGEX = /[&/]_/;

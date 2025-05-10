@@ -300,8 +300,8 @@ export class ScriptInterpreter {
       let devMod, devLibURL;
       devMod = this.staticDevLibs.get(modulePath);
       if (!devMod) {
-        devMod = this.devLibURLs.get(modulePath);
-        if (!devMod) throw new LoadError(
+        let devLibURL = this.devLibURLs.get(modulePath);
+        if (!devLibURL) throw new LoadError(
           `Developer library "${modulePath}" not found`,
           callerNode, callerEnv
         );
@@ -309,7 +309,8 @@ export class ScriptInterpreter {
           devMod = await import(devLibURL);
         } catch (err) {
           throw new LoadError(
-            `Developer library "${modulePath}" not found`,
+            `Developer library "${modulePath}" failed to import ` +
+            `from ${devLibURL}`,
             callerNode, callerEnv
           );
         }
@@ -643,7 +644,7 @@ export class ScriptInterpreter {
 
       // If the paramVal is wrapped in PassAsMutable(), we remove that wrapper,
       // and else we turn the paramVal immutable.
-      if (paramVal.passAsMutable) {
+      if (paramVal && paramVal.passAsMutable) {
         paramVal = notPassedAsMutable(paramVal);
       } else {
         paramVal = turnImmutable(paramVal);
