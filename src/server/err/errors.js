@@ -8,7 +8,10 @@ export class ClientError {
 
 export function endWithError(res, error) {
   res.writeHead(400, {'Content-Type': 'text/json'});
-  if (typeof error === "object") {
+  if (error instanceof ClientError) {
+    res.end(`ClientError: "${error.msg}"`);
+  }
+  else if (typeof error === "object") {
     res.end(JSON.stringify(error));
   } else {
     res.end(JSON.stringify({error: error}));

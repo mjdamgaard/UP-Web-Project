@@ -73,12 +73,14 @@ async function requestHandler(req, res) {
     );
   }
 
-  // At this point, the server only implements POST requests where all the
-  // parameters are stored in a JSON object. Parse from this the 'method' and
-  // the 'route' (an extended path), which points to the file or directory that
-  // is the target of the request, as well as the optional user credentials,
-  // the optional maxAge, noCache, and lastModified parameters. Also get the
-  // optional postData parameter (used when method == "post").
+  // At this point, the server only implements POST requests where most of the
+  // parameters are stored in a JSON object. Parse from this the 'method', as
+  // well as the optional maxAge, noCache, and lastModified parameters, and the
+  // optional postData parameter (used when method == "post"). Also get the a
+  // gasEnum and a scriptSignalsEnum, which points to a gas and a scriptSignals
+  // object, respectively, which can influence whether the script succeeds or
+  // fails (but don't change the result on a success).
+  // First get and parse the request params.
   let reqParams, isValidJSON = true;
   try {
     resolve(JSON.parse(data));
@@ -92,8 +94,23 @@ async function requestHandler(req, res) {
     );
   }
 
+  // Then extract the parameters from it.
   let {
-    method, route, credentials, maxAge, noCache, lastModified, postData
+    // Get the 'method', and the optional postData parameter (used when
+    // method == "post").
+    method, postData,
+    // Get the optional maxAge, noCache, and lastModified parameters used by
+    // caches.
+    maxAge, noCache, lastModified,
+    // Get the optional gasEnum and a scriptSignalsEnum, which points to a gas
+    // and a scriptSignals object, respectively, which can both influence
+    // whether the script succeeds or fails (but don't change the result on a
+    // success).
+    gasEnum, scriptSignalsEnum,
+    // Get the returnLog boolean, which if not present means that the script's
+    // result will be returned on its own, without the log (which might be
+    // empty anyway).
+    returnLog,
   } = reqParams;
 
   if (!method) throw new ClientError(
@@ -103,11 +120,19 @@ async function requestHandler(req, res) {
     "No 'route' parameter was specified in the POST body"
   );
 
+  // And get the "route" from the URL, which is an extended path that points to
+  // the file or directory that is the target of the request.
+  let route = req.url;
+
+  // And get the optional credentials from the (Basic) Authorization header.
+  let authHeader = req.getHeader("authorization") ?? "";
+  let [ , credentials] = /^Basic (.+)$/.exec(authHeader) ?? [];
+
 
   // Get the userID of the requesting user, if the user has supplied their
   // credentials to the request, failing if those credentials couldn't be
   // authenticated. Also get the gas for the request in the same process.
-  let [gas, reqUserID] = await getGasAndReqUserID(req);
+  let [gas, reqUserID] = await getGasAndReqUserID(credentials, gasEnum);
 
 
   // Parse whether the route is a "locked" route (that can only be accessed by
@@ -115,10 +140,11 @@ async function requestHandler(req, res) {
   let isLocked = LOCKED_ROUTE_REGEX.test(route);
 
   // TODO: If the route it locked, get the adminID of the homeDir, and verify
-  // that reqUser is the admin, then initialize initScriptSignals with a
+  // that reqUser is the admin, then initialize scriptSignals with a
   // SET_ELEVATED_PRIVILEGES_SIGNAL on homeDirID. And if the route is not
-  // locked, initialize an empty initScriptSignals array.
-  let initScriptSignals = [SET_ELEVATED_PRIVILEGES_SIGNAL, route[1]];
+  // locked, initialize an empty scriptSignals array.
+  let scriptSignals = [SET_ELEVATED_PRIVILEGES_SIGNAL, route[1]];
+
 
   // Call the main.js script which redirects to the query() dev function, whose
   // arguments are: method, route, postData, maxAge, noCache, and lastModified.
@@ -128,15 +154,37 @@ async function requestHandler(req, res) {
   let [output, log] = await scriptInterpreter.interpret(
     gas, undefined, "main.js",
     [method, route, postData, maxAge, noCache, lastModified],
-    reqUserID, initScriptSignals, undefined, undefined, parsedScripts,
+    reqUserID, scriptSignals, undefined, undefined, parsedScripts,
   );
   let [result, wasReady] = output ?? [];
 
-  // TODO: Parse and reformat log hee, before handing it to JSON.stringify().
 
-  // Return the results.
-  res.writeHead(200, {'Content-Type': 'text/json'});
-  res.end(JSON.stringify([result, log, wasReady]));
+  // If the script logged an error, set an error status and write back the
+  // stringified log to the client.
+  if (log.error) {
+    // TODO: Parse and reformat log hee, before handing it to JSON.stringify().
+    endWithError(res, log);
+  }
+
+  // Else if returnLog is true, write back an array containing the result and
+  // the log, and also add wasReady to the array, for good measure.
+  else if (returnLog) {
+    res.writeHead(200, {'Content-Type': 'text/json'});
+    res.end(JSON.stringify([result, log, wasReady]));
+  }
+
+  // Else if wasReady is true, write back a 204 No Content response.
+  else if (wasReady) {
+    res.writeHead(204);
+    res.end("");
+  }
+
+  // And else simply write back the stringified result.
+  else {
+    res.writeHead(200, {'Content-Type': 'text/json'});
+    res.end(JSON.stringify(result));
+  }
+
 }
 
 
@@ -145,12 +193,9 @@ async function requestHandler(req, res) {
 
 
 
-async function getGasAndReqUserID(req) {
+async function getGasAndReqUserID(credentials) {
   let username, password;
-  let [ , credentials] = /^Basic (.+)$/.exec(
-    req.getHeader("authorization") ?? ""
-  );
-
+  // TODO...
 }
 
 
