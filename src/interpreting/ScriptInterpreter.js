@@ -297,7 +297,7 @@ export class ScriptInterpreter {
     // in the form of a bare module specifier (left over in the build step, if
     // any), try to import the given library.
     if (modulePath[0] !== "/") {
-      let devMod, devLibURL;
+      let devMod;
       devMod = this.staticDevLibs.get(modulePath);
       if (!devMod) {
         let devLibURL = this.devLibURLs.get(modulePath);
@@ -753,8 +753,10 @@ export class ScriptInterpreter {
       case "instruction-statement": {
         if (stmtNode.lexeme === "break") {
           throw new BreakException(stmtNode, environment);
-        } else {
+        } else if (stmtNode.lexeme === "continue") {
           throw new ContinueException(stmtNode, environment);
+        } else if (stmtNode.lexeme === "debugger") {
+          debugger;
         }
       }
       case "empty-statement": {
@@ -1318,7 +1320,7 @@ export class ScriptInterpreter {
     decrCompGas(rootExp, environment);
 
     // Evaluate the chained expression accumulatively, one postfix at a time. 
-    let postfix, objVal, index, isThisKeyword;
+    let postfix, objVal, index;
     for (let i = 0; i < len; i++) {
       postfix = postfixArr[i];
 
@@ -1326,7 +1328,6 @@ export class ScriptInterpreter {
       // current val to objVal.
       if (postfix.type === "member-accessor") {
         objVal = val;
-        isThisKeyword = (i === 1 && rootExp.type === "this-keyword");
 
         // Throw a BrokenOptionalChainException if an optional chaining is
         // broken.
@@ -1397,9 +1398,7 @@ export class ScriptInterpreter {
         // Then execute the function and assign its return value, turned
         // immutable, to val.
         val = turnImmutable(
-          this.executeFunction(
-            val, inputValArr, postfix, environment, objVal, isThisKeyword
-          )
+          this.executeFunction(val, inputValArr, postfix, environment, objVal)
         );
       }
       else throw "evaluateChainedExpression(); Unrecognized postfix type";
@@ -1447,12 +1446,12 @@ export class Environment {
       if (thisVal && !isArrowFun) this.thisVal = thisVal;
       if (isArrowFun) this.isArrowFun = isArrowFun;
       if (callerSignals) {
-        let parentFlagEnv = this.#getFlagEnvironment();
+        let parentFlagEnv = this.getFlagEnvironment();
         parentFlagEnv.emitSignals(callerSignals, callerNode, callerEnv);
       }
       if (isEnclosed) {
         this.flagEnv = new FlagEnvironment(
-          this.#getFlagEnvironment(), modulePath, funName
+          this.getFlagEnvironment(), modulePath, funName
         );
       }
       if (initSignals) {
@@ -1578,7 +1577,7 @@ export class Environment {
     }
   }
 
-  #getFlagEnvironment() {
+  getFlagEnvironment() {
     let flagEnv = this.flagEnv;
     if (flagEnv) {
       return flagEnv;
@@ -1595,7 +1594,7 @@ export class Environment {
   }
 
   emitSignal(signal, node, signalParams) {
-    let flagEnv = this.#getFlagEnvironment();
+    let flagEnv = this.getFlagEnvironment();
     flagEnv.emitSignal(signal, node, this, signalParams);
   }
 
@@ -2071,6 +2070,9 @@ export class ExportedFunction extends FunctionObject {
   get fun() {
     return this._fun ?? this._fun.fun;
   }
+  get decEnv() {
+    return this._fun?.decEnv;
+  }
   get isArrowFun() {
     return this.fun.isArrowFun;
   }
@@ -2232,21 +2234,27 @@ export class TypeError extends RuntimeError {
 
 export function turnImmutable(val) {
   if (val && val.set instanceof Function) {
-    return Object.create(val, {set: false});
+    val = Object.create(val);
+    val.set = false;
+    return val;
   } else {
     return val;
   }
 }
 export function passedAsMutable(val) {
   if (val && val.set instanceof Function && !val.passAsMutable) {
-    return Object.create(val, {passAsMutable: true});
+    val = Object.create(val);
+    val.passAsMutable = true;
+    return val;
   } else {
     return val;
   }
 }
 export function notPassedAsMutable(val) {
   if (val && val.set instanceof Function && val.passAsMutable) {
-    return Object.create(val, {passAsMutable: false});
+    val = Object.create(val);
+    val.passAsMutable = false;
+    return val;
   } else {
     return val;
   }
@@ -2256,7 +2264,9 @@ export function turnNoncallable(val) {
     val && (val instanceof FunctionObject || val.get instanceof Function) &&
     !val.isNoncallable
   ) {
-    return Object.create(val, {isNoncallable: true});
+    val = Object.create(val);
+    val.isNoncallable = true;
+    return val;
   } else {
     return val;
   }

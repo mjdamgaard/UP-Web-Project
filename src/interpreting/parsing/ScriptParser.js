@@ -447,7 +447,7 @@ export const scriptGrammar = {
   },
   "instruction-statement": {
     rules: [
-      ["/break|continue/", "/;/"],
+      ["/break|continue|debugger/", "/;/"],
     ],
     process: copyLexemeFromChild,
     params: ["instruction-statement"],

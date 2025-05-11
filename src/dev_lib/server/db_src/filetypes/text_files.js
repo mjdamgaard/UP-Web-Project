@@ -5,7 +5,7 @@ import {
 } from "../../../../interpreting/ScriptInterpreter.js";
 
 
-export async function fetch(
+export async function query(
   execVars,
   isPost, route, homeDirID, filePath, _, queryStringArr,
   postData, maxAge, noCache, lastModified
@@ -16,7 +16,7 @@ export async function fetch(
   // return the text stored in the file.
   if (!queryStringArr) {
     // TODO: Look in the cache first.
-    let [text] = await readTextFile(gas, homeDirID, filePath);
+    let [text] = await readTextFile(execVars, homeDirID, filePath);
     return [text];
   }
 

@@ -1,19 +1,21 @@
 
-const dirPathRegEx = /^(\/[^/?.]+)+/;
-const filenameRegEx = /^\/([^/?.]*\.[^/?]*)/;
+const homeDirIDRegEx = /^\/([a-zA-Z0-9_\-]+)?/;
+const filePathRegEx =
+  /^\/(([a-zA-Z0-9_\-.]+(?<!\.)\/)*[a-zA-Z0-9_\-.]+(?<!\.))(?=($|\?))/;
 const queryStringRegEx = /^\?([^=&]*(=[^=&]*)?(&[^=&]*(=[^=&])*)?)/;
+const lastFileExtRegEx = /\.([^.]+)$/
 
 
 export function parseRoute(route) {
-  let dirPath, filename, queryString;
+  let homeDirID, filePath, queryString;
   let match, routeRemainder = route;
 
-  // Get the directory path, if any.
-  [match, dirPath] = dirPathRegEx.exec(routeRemainder) ?? [""];
+  // Get the home directory ID, if any.
+  [match, homeDirID] = homeDirIDRegEx.exec(routeRemainder) ?? [""];
   routeRemainder = routeRemainder.substring(match.length);
 
-  // Get the filename, if any.
-  [match, filename] = filenameRegEx.exec(routeRemainder) ?? [""];
+  // Get the file path, if any.
+  [match, filePath] = filePathRegEx.exec(routeRemainder) ?? [""];
   routeRemainder = routeRemainder.substring(match.length);
 
   // Get the final query string, if any.
@@ -25,27 +27,13 @@ export function parseRoute(route) {
     `Invalid route: ${route}`
   );
 
-  // Throw if a filename is used outside of any directory.
-  if (filename && ! dirPath) throw (
-    `Invalid route: ${route}. Filename has to be preceded by a directory path`
+  // Throw if a file path is used outside of any directory.
+  if (filePath && ! homeDirID) throw (
+    `Invalid route: ${route}`
   );
 
-  // Extract the homeDirID from dirPath, if any, and also construct the
-  // filePath (after the initial homeDirID).
-  let homeDirID, filePath;
-  if (dirPath) {
-    homeDirID = dirPath.substring(1, dirPath.indexOf("/", 1));
-    filePath = dirPath.substring(homeDirID + 2);
-    if (filename) {
-      filePath +=  "/" + filename;
-    }
-  }
-
   // Extract the file extension, if any.
-  let fileExt;
-  if (filename) {
-    fileExt = filename.substring(filename.indexOf(".") + 1);
-  }
+  let [ , fileExt] = lastFileExtRegEx.exec(filePath);
 
   // If it is defined, split the queryString into an array of key--value
   // entries array for key--value pairs, and string values in case of boolean
@@ -61,10 +49,10 @@ export function parseRoute(route) {
   // the admin only.
   let isLocked = false;
   if (filePath) {
-    isLocked = filePath.indexOf("/_") >= 0;
+    isLocked = filePath[0] === "_" || filePath.indexOf("/_") >= 0;
   }
   if (queryString) {
-    isLocked ||= queryString.indexOf("&_") >= 0;
+    isLocked ||= queryString[0] === "_" || queryString.indexOf("&_") >= 0;
   }
 
   return [

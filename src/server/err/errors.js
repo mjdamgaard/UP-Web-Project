@@ -32,9 +32,7 @@ export function endWithError(res, err) {
   else if (typeof err === "string") {
     res.end(JSON.stringify(err));
   }
-  else {
-    res.end("endWithError(): Unrecognized type of error");
-  }
+  else throw err;
 }
 
 
