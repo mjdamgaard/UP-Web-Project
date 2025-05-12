@@ -37,9 +37,11 @@ export const query = new DevFunction(
       callerNode, callerEnv
     );
 
-    // Parse the maxAge integer (in ms) and the lastUpToDate UNIX time integer.
+    // Parse the maxAge integer (in ms) and the lastUpToDate UNIX time integer,
+    // and use a default value of isPost for noCache.
     maxAge = parseInt(maxAge);
     lastUpToDate = parseInt(lastUpToDate);
+    noCache ??= isPost;
 
     // Parse the route to get the filetype, among other parameters and
     // qualities.

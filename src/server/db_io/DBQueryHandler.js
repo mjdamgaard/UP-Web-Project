@@ -4,8 +4,10 @@ import * as querystring from 'querystring';
 import {MainDBConnection, getProcCallSQL} from "./DBConnection.js";
 import {payGas} from '../../interpreting/ScriptInterpreter.js';
 
-
-const mainDBCache = {get: () => {}, set: () => {}, "placeholder": true};
+// Cache placeholder:
+const mainDBCache = {
+  get: () => {}, set: () => {}, remove: () => {}, removeExtensions: () => {},
+};
 
 
 export class DBQueryHandler {
@@ -27,7 +29,8 @@ export class DBQueryHandler {
   // stored directly at the route in the cache, or simply not cached at all,
   // namely when the noCache parameter is truthy.
   static async queryDBProcOrCache(
-    procName, paramValArr, node, env, route, maxAge, noCache, lastUpToDate
+    procName, paramValArr, node, env, route, maxAge, noCache, lastUpToDate,
+    routesToEvict,
   ) {
     // Get a connection the the main DB.
     let conn = DBQueryHandler.#getMainDBConn();
@@ -37,7 +40,8 @@ export class DBQueryHandler {
   
     // Query the DB or the cache.
     let [result, wasReady] = await this.#queryDBOrCache(
-      conn, sql, paramValArr, node, env, route, maxAge, noCache, lastUpToDate
+      conn, sql, paramValArr, node, env, route, maxAge, noCache, lastUpToDate,
+      routesToEvict,
     )
 
     // Release the connection again.
@@ -49,7 +53,8 @@ export class DBQueryHandler {
 
 
   static async #queryDBOrCache(
-    conn, sql, paramValArr, node, env, route, maxAge, noCache, lastUpToDate
+    conn, sql, paramValArr, node, env, route, maxAge, noCache, lastUpToDate,
+    routesToEvict,
   ) {
     maxAge = maxAge ? maxAge : 60000;
 
@@ -78,18 +83,42 @@ export class DBQueryHandler {
       }
     }
 
-    // Query the database for the result.
+    // Query the database for the result. (TODO: Make the dbRead cost depend on
+    // the size of the result list, perhaps divided by 1000, or something like
+    // that, and then rounded up.)
     payGas(callerNode, callerEnv, {dbRead: 1});
     result = await conn.queryRowsAsArray(sql, paramValArr);
 
-    // If noCache is not truthy, we also update the cache, before returning the
-    // result.
+    // If noCache is not truthy, we also update the cache.
     if (!noCache) {
       payGas(node, env, {cacheWrite: 1});
-      cachedAt = cachedAt ? cachedAt : now;
+      cachedAt ??= now;
       lastUpdated = now;
       mainDBCache.set(route, [result, cachedAt, lastUpdated]);
     }
+
+    // If routesToEvict is defined, it means that the query modifies the
+    // database, and therefore should also evict previously stored results in
+    // the cache (at least when the query is expected to potentially out-date
+    // some cache entries). Note that whenever a route is evicted from the
+    // cache, not only the route
+    if (routesToEvict) {
+      routesToEvict.forEach(route => {
+        // If a route entry in the array is not a string, treat it as a route--
+        // removeExtensions pair, where if removeExtensions is true, it means
+        // that all routes that are extensions of route should also be removed.
+        let removeExtensions = false; 
+        if (typeof route !== "string") {
+          [route, removeExtensions] = route;
+        }
+        if (removeExtensions) {
+          mainDBCache.removeExtensions(route);
+        }
+        mainDBCache.remove(route);
+      });
+    }
+
+    // Then we return the result (with a falsy wasReady).
     return [result];
   }
 

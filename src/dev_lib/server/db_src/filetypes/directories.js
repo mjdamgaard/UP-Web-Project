@@ -1,5 +1,5 @@
 
-import {MainDBConnection} from "../../../../server/db_io/DBConnection.js";
+import {DBQueryHandler} from "../../../../server/db_io/DBQueryHandler.js";
 import {
   payGas, RuntimeError,
 } from "../../../../interpreting/ScriptInterpreter.js";
@@ -24,8 +24,11 @@ export async function query(
         callerNode, callerEnv
       );
       let requestedAdminID = queryStringArr[1];
-      let newDirID = await mkdir(execVars, requestedAdminID);
-      return [newDirID];
+      payGas(callerNode, callerEnv, {mkdir: 1});
+      return await DBQueryHandler.queryDBProcOrCache(
+        "createHomeDir", [requestedAdminID],
+        callerNode, callerEnv, route, maxAge, noCache, lastUpToDate,
+      );
     }
     else throw new RuntimeError(
       `Unrecognized route: ${route}`,
@@ -43,9 +46,17 @@ export async function query(
   // a list of all nested file paths of the home directory, except paths of
   // files nested inside locked subdirectories (starting with "_").
   if (!queryStringArr) {
-    // TODO: Look in the cache first.
-    let visibleDescList = await readDirDescendants(execVars, homeDirID);
-    return [visibleDescList];
+    let [fullDescList, wasReady] = await DBQueryHandler.queryDBProcOrCache(
+      "readHomeDirDescendants", [homeDirID],
+      callerNode, callerEnv, route, maxAge, noCache, lastUpToDate,
+    );
+    let visibleDescList;
+    if (!wasReady) {
+      visibleDescList = (fullDescList ?? []).filter(([filePath]) => (
+        !/\/_[^/]*\//.test(filePath)
+      ));
+    }
+    return [visibleDescList, wasReady];
   }
 
   let queryType = queryStringArr[0];
@@ -54,17 +65,31 @@ export async function query(
   // file paths of the home directory, *including* paths of files nested
   // inside locked subdirectories (starting with "_").
   if (queryType === "_all") {
-    // TODO: Look in the cache first.
-    let fullDescList = await getAllDirDescendants(execVars, homeDirID);
-    return [fullDescList];
+    return await DBQueryHandler.queryDBProcOrCache(
+      "readHomeDirDescendants", [homeDirID],
+      callerNode, callerEnv, route, maxAge, noCache, lastUpToDate,
+    );
   }
 
   // If route equals just "/<homeDirID>?admin", return the adminID of the home
   // directory.
   if (queryType === "admin") {
-    // TODO: Look in the cache first.
-    let adminID = await getAdminID(execVars, homeDirID);
-    return [adminID];
+    return await DBQueryHandler.queryDBProcOrCache(
+      "readHomeDirAdminID", [homeDirID],
+      callerNode, callerEnv, route, maxAge, noCache, lastUpToDate,
+    );
+  }
+
+  // If route equals "/<homeDirID>?_setAdmin&<adminID>", set a new admin of the
+  // home directory.
+  if (queryType === "_setAdmin") {
+    let requestedAdminID = queryStringArr[1];
+    let routesToEvict = [`/${homeDirID}?admin`];
+    return await DBQueryHandler.queryDBProcOrCache(
+      "readHomeDirAdminID", [homeDirID, requestedAdminID],
+      callerNode, callerEnv, route, maxAge, noCache, lastUpToDate,
+      routesToEvict,
+    );
   }
 
   // If route equals "/<homeDirID>?_delete", request a deletion of the
@@ -75,8 +100,16 @@ export async function query(
       `Unrecognized route for the "fetch" method: ${route}`,
       callerNode, callerEnv
     );
-    let wasDeleted = await deleteHomeDir(execVars, homeDirID);
-    return [wasDeleted];
+    let routesToEvict = [
+      [`/${homeDirID}/`, true],
+      [`/${homeDirID}?`, true],
+      [`/${homeDirID}`, false],
+    ];
+    return await DBQueryHandler.queryDBProcOrCache(
+      "deleteHomeDir", [homeDirID],
+      callerNode, callerEnv, route, maxAge, noCache, lastUpToDate,
+      routesToEvict,
+    );
   }
 
 
@@ -110,60 +143,10 @@ export async function query(
     return [res];
   }
 
+
   // If the route was not matched at this point, throw an error.
   throw new RuntimeError(
     `Unrecognized route for the "fetch" method: ${route}`,
     callerNode, callerEnv
   );
 }
-
-
-
-
-export async function mkdir({callerNode, callerEnv}, adminID) {
-  payGas(callerNode, callerEnv, {mkdir: 1});
-  let homeDirID = await MainDBConnection.querySingleValue(
-    "createHomeDir", [adminID],
-  );
-  return homeDirID;
-} 
-
-
-
-export async function readDirDescendants({callerNode, callerEnv}, homeDirID) {
-  payGas(callerNode, callerEnv, {dbRead: 1})
-  let fullDescList = await MainDBConnection.querySingleList(
-    "readHomeDirDescendants", [homeDirID]
-  );
-
-  let visibleDescList = fullDescList.filter(([filePath]) => (
-    !/\/_[^/]*\//.test(filePath)
-  ));
-  return visibleDescList;
-}
-
-
-export async function getAllDirDescendants({callerNode, callerEnv}, homeDirID) {
-  payGas(callerNode, callerEnv, {dbRead: 1})
-  let fullDescList = await MainDBConnection.querySingleList(
-    "readHomeDirDescendants", [homeDirID]
-  );
-  return fullDescList;
-}
-
-export async function getAdminID({callerNode, callerEnv}, homeDirID) {
-  payGas(callerNode, callerEnv, {dbRead: 1})
-  let adminID = await MainDBConnection.querySingleValue(
-    "readHomeDirAdminID", [homeDirID]
-  );
-  return adminID;
-}
-
-
-export async function deleteHomeDir(_, homeDirID) {
-  let wasDeleted = await MainDBConnection.querySingleValue(
-    "readHomeDirDescendants", [homeDirID]
-  );
-  return wasDeleted;
-}
-

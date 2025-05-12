@@ -6,12 +6,10 @@ import {
 
 
 export async function query(
-  execVars,
+  {callerNode, callerEnv},
   isPost, route, homeDirID, filePath, _, queryStringArr,
   postData, maxAge, noCache, lastUpToDate
 ) {
-  let {callerNode, callerEnv, execEnv, interpreter} = execVars;
-
   // If route equals just "/<homeDirID>/<filePath>", without any query string,
   // return the text stored in the file.
   if (!queryStringArr) {
@@ -32,9 +30,11 @@ export async function query(
     );
     let text = postData;
     payGas(callerNode, callerEnv, {dbWrite: text.length});
+    let routesToEvict = [[`/${homeDirID}/${filePath}`, true]];
     return await DBQueryHandler.queryDBProcOrCache(
       "putTextFile", [homeDirID, filePath, text],
       callerNode, callerEnv, route, maxAge, noCache, lastUpToDate,
+      routesToEvict,
     );
   }
 
@@ -44,9 +44,11 @@ export async function query(
       `Unrecognized route for the "fetch" method: ${route}`,
       callerNode, callerEnv
     );
+    let routesToEvict = [[`/${homeDirID}/${filePath}`, true]];
     return await DBQueryHandler.queryDBProcOrCache(
       "deleteTextFile", [homeDirID, filePath],
       callerNode, callerEnv, route, maxAge, noCache, lastUpToDate,
+      routesToEvict,
     );
   }
 
@@ -72,33 +74,3 @@ export async function query(
     callerNode, callerEnv
   );
 }
-
-
-
-
-export async function readTextFile(
-  {callerNode, callerEnv}, homeDirID, filePath
-) {
-  payGas(callerNode, callerEnv, {dbRead: 1});
-  let text = await MainDBConnection.querySingleValue(
-    "readTextFile", [homeDirID, filePath]
-  );
-  return [text];
-} 
-
-
-
-export async function putTextFile(
-  {callerNode, callerEnv}, homeDirID, filePath, text
-) {
-} 
-
-
-export async function deleteTextFile(
-  {}, homeDirID, filePath, text
-) {
-  let wasDeleted = await MainDBConnection.querySingleValue(
-    "deleteTextFile", [homeDirID, filePath]
-  );
-  return [wasDeleted];
-} 
