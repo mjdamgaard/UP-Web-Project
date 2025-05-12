@@ -576,7 +576,7 @@ export class ScriptInterpreter {
         if (!wasCaught) {
           callerEnv.scriptVars.resolveScript(undefined, err);
         }
-      } else {
+      } else if (!(err instanceof ExitException)) {
         throw err;
       }
     }

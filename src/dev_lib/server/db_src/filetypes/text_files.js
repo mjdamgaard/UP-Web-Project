@@ -1,5 +1,5 @@
 
-import {MainDBConnection} from "../../../../server/db_io/DBConnection.js";
+import {DBQueryHandler} from "../../../../server/db_io/DBQueryHandler.js";
 import {
   RuntimeError, payGas,
 } from "../../../../interpreting/ScriptInterpreter.js";
@@ -8,16 +8,17 @@ import {
 export async function query(
   execVars,
   isPost, route, homeDirID, filePath, _, queryStringArr,
-  postData, maxAge, noCache, lastModified
+  postData, maxAge, noCache, lastUpToDate
 ) {
   let {callerNode, callerEnv, execEnv, interpreter} = execVars;
 
   // If route equals just "/<homeDirID>/<filePath>", without any query string,
   // return the text stored in the file.
   if (!queryStringArr) {
-    // TODO: Look in the cache first.
-    let [text] = await readTextFile(execVars, homeDirID, filePath);
-    return [text];
+    return await DBQueryHandler.queryDBProcOrCache(
+      "readTextFile", [homeDirID, filePath],
+      callerNode, callerEnv, route, maxAge, noCache, lastUpToDate,
+    );
   }
 
   let queryType = queryStringArr[0];
@@ -30,8 +31,11 @@ export async function query(
       callerNode, callerEnv
     );
     let text = postData;
-    let wasCreated = await putTextFile(execVars, homeDirID, filePath, text);
-    return [wasCreated];
+    payGas(callerNode, callerEnv, {dbWrite: text.length});
+    return await DBQueryHandler.queryDBProcOrCache(
+      "putTextFile", [homeDirID, filePath, text],
+      callerNode, callerEnv, route, maxAge, noCache, lastUpToDate,
+    );
   }
 
   // If route equals "/<homeDirID>/<filePath>?_delete", ...
@@ -40,8 +44,10 @@ export async function query(
       `Unrecognized route for the "fetch" method: ${route}`,
       callerNode, callerEnv
     );
-    let wasDeleted = await deleteTextFile(execVars, homeDirID, filePath);
-    return [wasDeleted];
+    return await DBQueryHandler.queryDBProcOrCache(
+      "deleteTextFile", [homeDirID, filePath],
+      callerNode, callerEnv, route, maxAge, noCache, lastUpToDate,
+    );
   }
 
   // If route equals "/<homeDirID>/<filePath>?_get&<alias>", verify that
@@ -85,11 +91,6 @@ export async function readTextFile(
 export async function putTextFile(
   {callerNode, callerEnv}, homeDirID, filePath, text
 ) {
-  payGas(callerNode, callerEnv, {dbWrite: text.length});
-  let wasCreated = await MainDBConnection.querySingleValue(
-    "putTextFile", [homeDirID, filePath, text]
-  );
-  return [wasCreated];
 } 
 
 

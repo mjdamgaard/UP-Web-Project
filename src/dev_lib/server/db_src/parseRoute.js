@@ -27,9 +27,13 @@ export function parseRoute(route) {
     `Invalid route: ${route}`
   );
 
-  // Throw if a file path is used outside of any directory.
+  // Throw if a file path is used outside of any directory, or if it is too
+  // long.
   if (filePath && ! homeDirID) throw (
     `Invalid route: ${route}`
+  );
+  if (filePath.length > 700) throw (
+    "File path is too long"
   );
 
   // Extract the file extension, if any.

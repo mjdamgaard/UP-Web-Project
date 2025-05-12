@@ -20,7 +20,7 @@ export const query = new DevFunction(
   {isAsync: true, minArgNum: 2, isEnclosed: true},
   async function(
     {callerNode, callerEnv, execEnv, interpreter, liveModule},
-    [method, route, postData, maxAge, noCache, lastModified]
+    [method, route, postData, maxAge, noCache, lastUpToDate]
   ) {
     // Verify that method is either "post" or "fetch", and turn it into a
     // boolean, 'isPost.'
@@ -36,6 +36,10 @@ export const query = new DevFunction(
       `received "${method}"`,
       callerNode, callerEnv
     );
+
+    // Parse the maxAge integer (in ms) and the lastUpToDate UNIX time integer.
+    maxAge = parseInt(maxAge);
+    lastUpToDate = parseInt(lastUpToDate);
 
     // Parse the route to get the filetype, among other parameters and
     // qualities.
@@ -85,7 +89,7 @@ export const query = new DevFunction(
     let [result, wasReady] = await filetypeModule.query(
       {callerNode, callerEnv, execEnv, interpreter, liveModule},
       isPost, route, homeDirID, filePath, fileExt, queryStringArr,
-      postData, maxAge, noCache ?? isPost, lastModified
+      postData, maxAge, noCache ?? isPost, lastUpToDate
     );
     
     return [result, wasReady];

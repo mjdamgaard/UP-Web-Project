@@ -1,253 +1,161 @@
 
 import * as querystring from 'querystring';
 
-import {MainDBInterface} from "./MainDBInterface.js";
-import {MainDBConnection} from "./DBConnection.js";
-import {ClientError} from '../err/errors.js';
+import {MainDBConnection, getProcCallSQL} from "./DBConnection.js";
+import {payGas} from '../../interpreting/ScriptInterpreter.js';
 
 
-const DEFAULT_LIST_MAX_NUM = 4000;
+const mainDBCache = {get: () => {}, set: () => {}, "placeholder": true};
 
 
 export class DBQueryHandler {
 
-  static async read(
-    route, reqUserID = null, clientCacheTime = null, minServerCacheTime = null
-  ) {
-
-    // TODO: Step 1: Look in the server cache for the requested data. If the
-    // cacheUpdateTime there is less than the minServerCacheTime, first look in
-    // the DB to get the modified_at time of the file in question. If this is
-    // less than or equal to the previous cacheUpdateTime in the server cache,
-    // set the cacheUpdateTime to Date-now(), and also set the dbModifiedTime
-    // to the new modified-at, then move on to Step 2. If on the other hand the
-    // cacheUpdateTime is greater than the minServerCacheTime, do nothing else
-    // for Step 1 and continue to Step 2. *(I forgot about also looking in the
-    // DB for data if the cache's dbModifiedTime is less than the gotten
-    // modified_at time, and then set the new data in the cache.)
-    // Step 2: Look at the, perhaps just updated, dbModifiedTime in the cache
-    // entry, and compare it to clientCacheTime. If the former is greater than
-    // the latter, return [wasReady, data] = [false, entryData], where wasReady
-    // = false means that the data that the client holds is not sufficiently
-    // up-to-date. Else simply return [wasReady, data] = [true, undefined],
-    // meaning that the client can go ahead and just use the data they already
-    // have.
-
-    // But for now, we just forget about the cache and the querying
-
-    // ...
-
-    // Else we branch according to route and query the database for the data.
-    if (
-      /^\/[1-9][0-9]*\/[a-zA-Z0-9_\-]+(\/[a-zA-Z0-9_\-]+)*\.(js|txt|json|html)$/
-        .test(route)
-    ) {
-      let [dirID, filePath] = parseDirIDAndFilePath(route);
-
-      let paramValArr = [dirID, filePath];
-      let sql = "CALL readTextFile (?, ?)";
-
-      let conn = new MainDBConnection();
-      let [contentText] = (await conn.query(sql, paramValArr))[0] ?? [];
-      conn.end();
-
-      return contentText;
-    }
-    else if (
-      /^\/[1-9][0-9]*$/.test(route)
-      ) {
-        let dirID = route.substring(1);
-
-        let paramValArr = [dirID];
-        let sql = "CALL readHomeDirDescendants (?, 10000, 0)";
-  
-        let conn = new MainDBConnection();
-        let filePaths = (await conn.query(sql, paramValArr) ?? []).map(val => (
-          val[0]
-        ));
-        conn.end();
-  
-        return filePaths;
-    }
-    else if (
-      /^\/[1-9][0-9]*\?get=adminID$/.test(route)
-      ) {
-        let dirID = route.substring(1, route.indexOf("?"));
-
-        let paramValArr = [dirID];
-        let sql = "CALL readHomeDirAdminID (?)";
-  
-        let conn = new MainDBConnection();
-        let [adminID] = (await conn.query(sql, paramValArr))[0] ?? [];
-        conn.end();
-  
-        return adminID;
-    }
-    else if (
-      /^\/[1-9][0-9]*\/[a-zA-Z0-9_\-]+(\/[a-zA-Z0-9_\-]+)*\.ats\?/.test(route)
-    ) {
-      // TODO: Implement.
-    }
-    else if (
-      /^\/[1-9][0-9]*\/[a-zA-Z0-9_\-]+(\/[a-zA-Z0-9_\-]+)*\.bbs\?/.test(route)
-    ) {
-      let dirID = route.substring(1, route.indexOf("/", 1));
-      let indOfQMark = route.indexOf("?");
-      let filePath = route.substring(dirID.length + 2, indOfQMark);
-      let queryString = route.substring(indOfQMark + 1);
-      let queryObj = querystring.parse(queryString);
-
-      if (queryObj.get === "entry") {
-        let {elemKey = null} = queryObj;
-
-        let paramValArr = [dirID, filePath, elemKey];
-        let sql = "CALL readBinScoredBinKeyStructEntry (?, ?, ?)";
-  
-        let conn = new MainDBConnection();
-        let [elemScore, elemPayload] =
-          (await conn.query(sql, paramValArr))[0] ?? [];
-        conn.end();
-  
-        return [elemScore, elemPayload];
-      }
-      else if (queryObj.get === "list") {
-        let {
-          lo = null, hi = null, offset = 0, maxNum = DEFAULT_LIST_MAX_NUM,
-          isAsc = 0
-        } = queryObj;
-
-        let paramValArr = [dirID, filePath, lo, hi, offset, maxNum, isAsc];
-        let sql = "CALL readBinScoredBinKeyStructList (?, ?, ?, ?, ?, ?, ?)";
-  
-        let conn = new MainDBConnection();
-        let keyScorePayloadList = await conn.query(sql, paramValArr);
-        conn.end();
-  
-        return keyScorePayloadList;
-      }
-      else if (queryObj.get === "keyList") {
-        let {
-          lo = null, hi = null, offset = 0, maxNum = DEFAULT_LIST_MAX_NUM,
-          isAsc = 0
-        } = queryObj;
-
-        let paramValArr = [dirID, filePath, lo, hi, offset, maxNum, isAsc];
-        let sql =
-          "CALL readBinScoredBinKeyStructKeyOrderedList (?, ?, ?, ?, ?, ?, ?)";
-  
-        let conn = new MainDBConnection();
-        let keyScorePayloadList = await conn.query(sql, paramValArr);
-        conn.end();
-  
-        return keyScorePayloadList;
-      }
-      else {
-        throw new ClientError(
-          `Unrecognized "get" value for .bbs files: ${queryObj.get}`
-        );
-      }
-    }
-    else if (false) {
-      // TODO: Implement other file types.
-    }
-    else {
-      throw new ClientError(
-        'Unrecognized type of "read" request'
-      );
-    }
+  // #getMainDBConn() and #releaseMainDBConn() can be modified if we want to
+  // implement/use a connection pool.
+ 
+  static #getMainDBConn() {
+    return new MainDBConnection();
   }
 
-
-
-  static async put(
-    reqUserID, route, content, isBase64
-  ) {
-    // TODO: Fetch the adminID, and verify that user is the admin.
-
-    // If route has the type of a (UTF-8-encoded) text file, create or
-    // overwrite that file with the content.
-    if (
-      /^\/[1-9][0-9]*\/[a-zA-Z0-9_\-]+(\/[a-zA-Z0-9_\-]+)*\.(js|txt|json|html)$/
-        .test(route)
-    ) {
-      let [dirID, filePath] = parseDirIDAndFilePath(route);
-
-      // TODO: Verify that reqUser is the admin of the given home dir here.
-
-      let paramValArr = [dirID, filePath, content];
-      let sql = "CALL putTextFile (?, ?, ?)";
-
-      let conn = new MainDBConnection();
-      let [wasCreated] = (await conn.query(sql, paramValArr))[0] ?? [];
-      conn.end();
-
-      return wasCreated;
-    }
-
-    // TODO: Implement other file types.
-  }
-
-
-  static async mkdir(reqUserID) {
-    let adminID = reqUserID;
-    let paramValArr = [adminID];
-    let sql = "CALL createHomeDir (?)";
-
-    let conn = new MainDBConnection();
-    let [dirID] = (await conn.query(sql, paramValArr))[0] ?? [];
-
+  static #releaseMainDBConn(conn) {
     conn.end();
-    return dirID;
   }
 
 
+  // queryDBProcOrCache() handles a lot of common queries, namely ones that
+  // is implemented via a single DB procedure, and where the whole result is
+  // stored directly at the route in the cache, or simply not cached at all,
+  // namely when the noCache parameter is truthy.
+  static async queryDBProcOrCache(
+    procName, paramValArr, node, env, route, maxAge, noCache, lastUpToDate
+  ) {
+    // Get a connection the the main DB.
+    let conn = DBQueryHandler.#getMainDBConn();
 
-  static async delete(reqUserID, route) {
-    // TODO: Fetch the adminID, and verify that user is the admin.
+    // Generate the SQL (with '?' placeholders in it).
+    let sql = getProcCallSQL(procName, paramValArr.length);
+  
+    // Query the DB or the cache.
+    let [result, wasReady] = await this.#queryDBOrCache(
+      conn, sql, paramValArr, node, env, route, maxAge, noCache, lastUpToDate
+    )
 
-    // TODO: Remove data from cache when a file, or directory, is deleted.
+    // Release the connection again.
+    DBQueryHandler.#releaseMainDBConn(conn);
 
-    if (
-      /^\/[1-9][0-9]*\/[a-zA-Z0-9_\-]+(\/[a-zA-Z0-9_\-]+)*\.(js|txt|json|html)$/
-        .test(route)
-    ) {
-      let [dirID, filePath] = parseDirIDAndFilePath(route);
-
-      let paramValArr = [dirID, filePath];
-      let sql = "CALL deleteTextFile (?, ?)";
-
-      let conn = new MainDBConnection();
-      let [wasDeleted] = (await conn.query(sql, paramValArr))[0] ?? [];
-      conn.end();
-
-      return wasDeleted;
-    }
-    else if (
-      /^\/[1-9][0-9]*$/.test(route)
-      ) {
-        // TODO: IMplement directory deletion.
-    }
-    else if (false) {
-      // TODO: Implement other file types.
-    }
-    else {
-      throw new ClientError(
-        'Unrecognized type of "delete" request'
-      );
-    }
+    // Return the result and/or wasReady boolean.
+    return [result, wasReady];
   }
+
+
+  static async #queryDBOrCache(
+    conn, sql, paramValArr, node, env, route, maxAge, noCache, lastUpToDate
+  ) {
+    maxAge = maxAge ? maxAge : 60000;
+
+    // If noCache is not true, look in the cache first.
+    let result, cachedAt, lastUpdated, now;
+    if (!noCache) {
+      payGas(node, env, {cacheRead: 1});
+      now = Date.now();
+      [result, cachedAt, lastUpdated] = mainDBCache.get(route);
+      if (result !== undefined) {
+        // If the resource was cached, check if it is still considered fresh
+        // by the client, and if so, either return the result, or if the
+        // resource was also stored in the client's cache, with a lastUdToDate
+        // time greater than the time that the resource was first cached on the
+        // server (since it was last evicted), simply return wasReady = true.
+        let isFresh = now - lastUpdated <= maxAge;
+        if (isFresh) {
+          let wasReady = lastUpToDate && cachedAt <= lastUpToDate;
+          if (wasReady) {
+            return [undefined, wasReady];
+          } else {
+            return [result];
+          }
+        }
+        // Else if not fresh, we still continue to query the DB.
+      }
+    }
+
+    // Query the database for the result.
+    payGas(callerNode, callerEnv, {dbRead: 1});
+    result = await conn.queryRowsAsArray(sql, paramValArr);
+
+    // If noCache is not truthy, we also update the cache, before returning the
+    // result.
+    if (!noCache) {
+      payGas(node, env, {cacheWrite: 1});
+      cachedAt = cachedAt ? cachedAt : now;
+      lastUpdated = now;
+      mainDBCache.set(route, [result, cachedAt, lastUpdated]);
+    }
+    return [result];
+  }
+
 
 }
 
 
 
 
-function parseDirIDAndFilePath(route) {
-  let indOfSecondSlash = route.indexOf("/", 1);
-  let dirID = route.substring(1, indOfSecondSlash);
-  let filePath = route.substring(indOfSecondSlash + 1);
-  if (filePath.length > 700) throw new ClientError(
-    "File path is too long"
-  );
-  return [dirID, filePath];
-}
+
+    // else if (
+    //   /^\/[1-9][0-9]*\/[a-zA-Z0-9_\-]+(\/[a-zA-Z0-9_\-]+)*\.bbs\?/.test(route)
+    // ) {
+    //   let dirID = route.substring(1, route.indexOf("/", 1));
+    //   let indOfQMark = route.indexOf("?");
+    //   let filePath = route.substring(dirID.length + 2, indOfQMark);
+    //   let queryString = route.substring(indOfQMark + 1);
+    //   let queryObj = querystring.parse(queryString);
+
+    //   if (queryObj.get === "entry") {
+    //     let {elemKey = null} = queryObj;
+
+    //     let paramValArr = [dirID, filePath, elemKey];
+    //     let sql = "CALL readBinScoredBinKeyStructEntry (?, ?, ?)";
+  
+    //     let conn = new MainDBConnection();
+    //     let [elemScore, elemPayload] =
+    //       (await conn.query(sql, paramValArr))[0] ?? [];
+    //     conn.end();
+  
+    //     return [elemScore, elemPayload];
+    //   }
+    //   else if (queryObj.get === "list") {
+    //     let {
+    //       lo = null, hi = null, offset = 0, maxNum = DEFAULT_LIST_MAX_NUM,
+    //       isAsc = 0
+    //     } = queryObj;
+
+    //     let paramValArr = [dirID, filePath, lo, hi, offset, maxNum, isAsc];
+    //     let sql = "CALL readBinScoredBinKeyStructList (?, ?, ?, ?, ?, ?, ?)";
+  
+    //     let conn = new MainDBConnection();
+    //     let keyScorePayloadList = await conn.query(sql, paramValArr);
+    //     conn.end();
+  
+    //     return keyScorePayloadList;
+    //   }
+    //   else if (queryObj.get === "keyList") {
+    //     let {
+    //       lo = null, hi = null, offset = 0, maxNum = DEFAULT_LIST_MAX_NUM,
+    //       isAsc = 0
+    //     } = queryObj;
+
+    //     let paramValArr = [dirID, filePath, lo, hi, offset, maxNum, isAsc];
+    //     let sql =
+    //       "CALL readBinScoredBinKeyStructKeyOrderedList (?, ?, ?, ?, ?, ?, ?)";
+  
+    //     let conn = new MainDBConnection();
+    //     let keyScorePayloadList = await conn.query(sql, paramValArr);
+    //     conn.end();
+  
+    //     return keyScorePayloadList;
+    //   }
+    //   else {
+    //     throw new ClientError(
+    //       `Unrecognized "get" value for .bbs files: ${queryObj.get}`
+    //     );
+    //   }
+    // }

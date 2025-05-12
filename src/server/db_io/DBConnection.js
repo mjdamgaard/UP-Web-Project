@@ -28,50 +28,32 @@ export class DBConnection {
   }
 
 
-  async queryList(procName, paramValArr) {
+  queryProcCall(procName, paramValArr) {
     // Generate the sql from the procedure name and the paramValArr.
-    let sql = "CALL " + procName + " (" +
-      paramValArr.map(() => "?").join(", ") + ")";
-  
-    let list = await this.queryRowsAsArray(sql, paramValArr);
-    return list;
-  }
-
-  async queryRow(procName, paramValArr) {
-    let [row = []] = await this.queryList(procName, paramValArr);
-    return row;
-  }
-
-  async queryValue(procName, paramValArr) {
-    let [val = null] = await this.queryRow(procName, paramValArr);
-    return val;
+    let sql = getProcCallSQL(procName, paramValArr.length);
+    return this.queryRowsAsArray(sql, paramValArr);
   }
 
 
 
-  static async querySingleList(procName, paramValArr) {
-    let conn = new MainDBConnection();
-    let list = await conn.queryList(sql, paramValArr);
-    conn.end();
-    return list;
-  }
+  // async queryRow(procName, paramValArr) {
+  //   let [row = []] = await this.queryList(procName, paramValArr);
+  //   return row;
+  // }
 
-  async querySingleRow(procName, paramValArr) {
-    let conn = new MainDBConnection();
-    let row = await conn.queryRow(sql, paramValArr);
-    conn.end();
-    return row;
-  }
-
-  async querySingleValue(procName, paramValArr) {
-    let conn = new MainDBConnection();
-    let val = await conn.queryValue(sql, paramValArr);
-    conn.end();
-    return val;
-  }
+  // async queryValue(procName, paramValArr) {
+  //   let [val = null] = await this.queryRow(procName, paramValArr);
+  //   return val;
+  // }
 
 }
 
+
+export function getProcCallSQL(procName, paramNum = 0) {
+  return (
+    "CALL " + procName + " (" + Array(paramNum).fill("?").join(", ") + ")"
+  );
+}
 
 
 export class MainDBConnection extends DBConnection {

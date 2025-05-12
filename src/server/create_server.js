@@ -72,7 +72,7 @@ async function requestHandler(req, res) {
 
   // At this point, the server only implements POST requests where most of the
   // parameters are stored in a JSON object. Parse from this the 'method', as
-  // well as the optional maxAge, noCache, and lastModified parameters, and the
+  // well as the optional maxAge, noCache, and lastUpToDate parameters, and the
   // optional postData parameter (used when method == "post"). Also get the a
   // gasEnum and a scriptSignalsEnum, which points to a gas and a scriptSignals
   // object, respectively, which can influence whether the script succeeds or
@@ -98,9 +98,9 @@ async function requestHandler(req, res) {
     // Get the 'method', and the optional postData parameter (used when
     // method == "post").
     method = "fetch", postData,
-    // Get the optional maxAge, noCache, and lastModified parameters used by
+    // Get the optional maxAge, noCache, and lastUpToDate parameters used by
     // caches.
-    maxAge, noCache, lastModified,
+    maxAge, noCache, lastUpToDate,
     // Get the optional gasEnum and a scriptSignalsEnum, which points to a gas
     // and a scriptSignals object, respectively, which can both influence
     // whether the script succeeds or fails (but don't change the result on a
@@ -139,13 +139,13 @@ async function requestHandler(req, res) {
 
 
   // Call the main.js script which redirects to the query() dev function, whose
-  // arguments are: method, route, postData, maxAge, noCache, and lastModified.
+  // arguments are: method, route, postData, maxAge, noCache, and lastUpToDate.
   let parsedScripts = new Map([
     ["main.js", [parsedMainScript, lexArr, strPosArr, mainScript]]
   ]);
   let [output, log] = await scriptInterpreter.interpretScript(
     gas, undefined, "main.js",
-    [method, route, postData, maxAge, noCache, lastModified],
+    [method, route, postData, maxAge, noCache, lastUpToDate],
     reqUserID, scriptSignals, undefined, undefined, parsedScripts,
   );
   let [result, wasReady] = output ?? [];
@@ -155,7 +155,7 @@ async function requestHandler(req, res) {
   // stringified log to the client.
   if (log.error) {
     // TODO: Parse and reformat log hee, before handing it to JSON.stringify().
-    endWithError(res, log.error);
+    throw log.error;
   }
 
   // Else if returnLog is true, write back an array containing the result and

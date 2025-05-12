@@ -11,7 +11,7 @@ import {SET_ELEVATED_PRIVILEGES_SIGNAL} from "../signals.js";
 export async function query(
   execVars,
   isPost, route, homeDirID, filePath, _, queryStringArr,
-  postData, maxAge, noCache, lastModified
+  postData, maxAge, noCache, lastUpToDate
 ) {
   let {callerNode, callerEnv, execEnv, interpreter} = execVars;
 
