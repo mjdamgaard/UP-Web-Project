@@ -1,5 +1,5 @@
 
-import {ServerInterface} from '../../src/server/ajax_io/ServerInterface.js';
+import {ServerInterface} from '../../src/server/ajax_io/ServerQueryHandler.js';
 
 import fs from 'fs';
 import path from 'path';

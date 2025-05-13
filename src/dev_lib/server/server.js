@@ -1,18 +1,24 @@
 
 import {
-  DevFunction, Signal, RuntimeError, TypeError
+  DevFunction, FunctionObject, Signal, RuntimeError, TypeError
 } from '../../interpreting/ScriptInterpreter.js';
-import {parseRoute} from './db_src/parseRoute.js';
+import {parseRoute} from './src/parseRoute.js';
+import {ServerQueryHandler} from "../../server/db_io/DBQueryHandler.js";
 
-import * as directoriesMod from "./db_src/filetypes/directories.js";
-import * as textFilesMod from "./db_src/filetypes/text_files.js";
+import * as directoriesMod from "./src/filetypes/directories.js";
+import * as textFilesMod from "./src/filetypes/text_files.js";
 import * as autoKeyTextStructFilesMod
-  from "./db_src/filetypes/auto_key_text_structs.js";
+  from "./src/filetypes/auto_key_text_structs.js";
 import * as binaryScoredBinaryKeyStructFilesMod from
-  "./db_src/filetypes/binary_scored_binary_key_structs.js";
+  "./src/filetypes/binary_scored_binary_key_structs.js";
 
-import {CHECK_ELEVATED_PRIVILEGES_SIGNAL} from "./db_src/signals.js";
+import {CHECK_ELEVATED_PRIVILEGES_SIGNAL} from "./src/signals.js";
 
+// Instantiate serverQueryHandler for client-side HTTP queries (requests), and
+// declare dbQueryHandler for server-side DB queries, which is instantiated
+// dynamically below, and only if the function is run server-side.
+const serverQueryHandler = new ServerQueryHandler();
+var dbQueryHandler;
 
 
 
@@ -20,7 +26,7 @@ export const query = new DevFunction(
   {isAsync: true, minArgNum: 2, isEnclosed: true},
   async function(
     {callerNode, callerEnv, execEnv, interpreter, liveModule},
-    [method, route, postData, maxAge, noCache, lastUpToDate]
+    [method, route, postData, maxAge, noCache, lastUpToDate, onCached]
   ) {
     // Verify that method is either "post" or "fetch", and turn it into a
     // boolean, 'isPost.'
@@ -87,14 +93,24 @@ export const query = new DevFunction(
         throw new ClientError(`Unrecognized file type: ".${fileExt}"`);
     }
 
-    // Query the database via the filetypeModule.
-    let [result, wasReady] = await filetypeModule.query(
+    // If on the server side, and dbQueryHandler has not been imported yet, do
+    // so.
+    if (interpreter.isServerSide && !dbQueryHandler) {
+      let dbQueryHandlerMod = await import(
+        "../../server/db_io/DBQueryHandler.js"
+      );
+      dbQueryHandler = new dbQueryHandlerMod.DBQueryHandler();
+    }
+
+    // Query the database via the filetypeModule, and return the output (which
+    // will often be [result, wasReady] (on success) server-side, and will
+    // simply be result client-side).
+    return await filetypeModule.query(
       {callerNode, callerEnv, execEnv, interpreter, liveModule},
       isPost, route, homeDirID, filePath, fileExt, queryStringArr,
-      postData, maxAge, noCache ?? isPost, lastUpToDate
+      postData, maxAge, noCache ?? isPost, lastUpToDate, onCached,
+      serverQueryHandler, dbQueryHandler,
     );
-    
-    return [result, wasReady];
   }
 );
 
@@ -104,8 +120,18 @@ export const fetch = new DevFunction(
   {isAsync: true, minArgNum: 1, isEnclosed: true},
   async function(
     {callerNode, execEnv, liveModule},
-    [route, maxAge, noCache]
+    [route, maxAge, noCache, onCached]
   ) {
+    if (onCached === undefined) {
+      if (noCache instanceof FunctionObject) {
+        onCached = noCache;
+        noCache = undefined;
+      }
+      else if (noCache === undefined && maxAge instanceof FunctionObject) {
+        onCached = maxAge;
+        maxAge = undefined;
+      }
+    }
     let [result] = liveModule.call(
       "query", ["fetch", route, undefined, maxAge, noCache],
       callerNode, execEnv

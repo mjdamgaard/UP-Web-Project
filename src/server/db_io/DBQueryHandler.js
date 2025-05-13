@@ -15,11 +15,11 @@ export class DBQueryHandler {
   // #getMainDBConn() and #releaseMainDBConn() can be modified if we want to
   // implement/use a connection pool.
  
-  static #getMainDBConn() {
+  #getMainDBConn() {
     return new MainDBConnection();
   }
 
-  static #releaseMainDBConn(conn) {
+  #releaseMainDBConn(conn) {
     conn.end();
   }
 
@@ -28,37 +28,37 @@ export class DBQueryHandler {
   // is implemented via a single DB procedure, and where the whole result is
   // stored directly at the route in the cache, or simply not cached at all,
   // namely when the noCache parameter is truthy.
-  static async queryDBProcOrCache(
-    procName, paramValArr, node, env, route, maxAge, noCache, lastUpToDate,
+  async queryDBProcOrCache(
+    procName, paramValArr, route, maxAge, noCache, lastUpToDate, node, env,
     routesToEvict,
   ) {
     // Get a connection the the main DB.
-    let conn = DBQueryHandler.#getMainDBConn();
+    let conn = this.#getMainDBConn();
 
     // Generate the SQL (with '?' placeholders in it).
     let sql = getProcCallSQL(procName, paramValArr.length);
   
     // Query the DB or the cache.
     let [result, wasReady] = await this.#queryDBOrCache(
-      conn, sql, paramValArr, node, env, route, maxAge, noCache, lastUpToDate,
+      conn, sql, paramValArr, route, maxAge, noCache, lastUpToDate, node, env,
       routesToEvict,
     )
 
     // Release the connection again.
-    DBQueryHandler.#releaseMainDBConn(conn);
+    this.#releaseMainDBConn(conn);
 
     // Return the result and/or wasReady boolean.
     return [result, wasReady];
   }
 
 
-  static async #queryDBOrCache(
-    conn, sql, paramValArr, node, env, route, maxAge, noCache, lastUpToDate,
+  async #queryDBOrCache(
+    conn, sql, paramValArr, route, maxAge, noCache, lastUpToDate, node, env,
     routesToEvict,
   ) {
     maxAge = maxAge ? maxAge : 60000;
 
-    // If noCache is not true, look in the cache first.
+    // If noCache is falsy, look in the cache first.
     let result, cachedAt, lastUpdated, now;
     if (!noCache) {
       payGas(node, env, {cacheRead: 1});
@@ -86,7 +86,7 @@ export class DBQueryHandler {
     // Query the database for the result. (TODO: Make the dbRead cost depend on
     // the size of the result list, perhaps divided by 1000, or something like
     // that, and then rounded up.)
-    payGas(callerNode, callerEnv, {dbRead: 1});
+    payGas(node, env, {dbRead: 1});
     result = await conn.queryRowsAsArray(sql, paramValArr);
 
     // If noCache is not truthy, we also update the cache.
@@ -100,9 +100,12 @@ export class DBQueryHandler {
     // If routesToEvict is defined, it means that the query modifies the
     // database, and therefore should also evict previously stored results in
     // the cache (at least when the query is expected to potentially out-date
-    // some cache entries). Note that whenever a route is evicted from the
-    // cache, not only the route
+    // some cache entries).
     if (routesToEvict) {
+      if (!noCache) throw (
+        "ServerQueryHandler.queryServerOrCache(): routesToEvict must not be " +
+        "used with a falsy noCache"
+      )
       routesToEvict.forEach(route => {
         // If a route entry in the array is not a string, treat it as a route--
         // removeExtensions pair, where if removeExtensions is true, it means

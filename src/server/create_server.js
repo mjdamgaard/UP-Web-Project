@@ -9,9 +9,9 @@ import {ScriptInterpreter} from "../interpreting/ScriptInterpreter.js";
 import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
 
 import {SET_ELEVATED_PRIVILEGES_SIGNAL}
-  from "../dev_lib/server/db_src/signals.js";
+  from "../dev_lib/server/src/signals.js";
 
-import * as dbMod from "../dev_lib/server/db.js";
+import * as dbMod from "../dev_lib/server/server.js";
 
 const staticDevLibs = new Map();
 staticDevLibs.set("db", dbMod);
@@ -55,6 +55,8 @@ http.createServer(async function(req, res) {
 async function requestHandler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
 
+  // At this point, the server only implements POST requests where most of the
+  // parameters are stored in a JSON object.
   let data;
   if (req.method === "POST") {
     data = await getData(req);
@@ -70,13 +72,6 @@ async function requestHandler(req, res) {
     );
   }
 
-  // At this point, the server only implements POST requests where most of the
-  // parameters are stored in a JSON object. Parse from this the 'method', as
-  // well as the optional maxAge, noCache, and lastUpToDate parameters, and the
-  // optional postData parameter (used when method == "post"). Also get the a
-  // gasEnum and a scriptSignalsEnum, which points to a gas and a scriptSignals
-  // object, respectively, which can influence whether the script succeeds or
-  // fails (but don't change the result on a success).
   // First get and parse the request params.
   let reqParams, isValidJSON = true;
   try {
@@ -101,11 +96,11 @@ async function requestHandler(req, res) {
     // Get the optional maxAge, noCache, and lastUpToDate parameters used by
     // caches.
     maxAge, noCache, lastUpToDate,
-    // Get the optional gasEnum and a scriptSignalsEnum, which points to a gas
+    // Get the optional gasID and a scriptSignalsID, which points to a gas
     // and a scriptSignals object, respectively, which can both influence
     // whether the script succeeds or fails (but don't change the result on a
     // success).
-    gasEnum, scriptSignalsEnum,
+    gasID, scriptSignalsID,
     // Get the returnLog boolean, which if not present means that the script's
     // result will be returned on its own, without the log (which might be
     // empty anyway).
@@ -124,7 +119,7 @@ async function requestHandler(req, res) {
   // Get the userID of the requesting user, if the user has supplied their
   // credentials to the request, failing if those credentials couldn't be
   // authenticated. Also get the gas for the request in the same process.
-  let [gas, reqUserID] = await getGasAndReqUserID(credentials, gasEnum);
+  let [gas, reqUserID] = await getGasAndReqUserID(credentials, gasID);
 
 
   // Parse whether the route is a "locked" route (that can only be accessed by
@@ -158,23 +153,23 @@ async function requestHandler(req, res) {
     throw log.error;
   }
 
-  // Else if returnLog is true, write back an array containing the result and
-  // the log, and also add wasReady to the array, for good measure.
+  // Else if returnLog is true, write back an array containing the result,
+  // wasReady, and also the log.
   else if (returnLog) {
     res.writeHead(200, {'Content-Type': 'text/json'});
     res.end(JSON.stringify([result, log, wasReady]));
   }
 
-  // Else if wasReady is true, write back a 204 No Content response.
-  else if (wasReady) {
-    res.writeHead(204);
-    res.end("");
-  }
+  // // Else if wasReady is true, write back a 204 No Content response.
+  // else if (wasReady) {
+  //   res.writeHead(204);
+  //   res.end("");
+  // }
 
-  // And else simply write back the stringified result.
+  // And else simply write back the stringified [result, wasReady].
   else {
     res.writeHead(200, {'Content-Type': 'text/json'});
-    res.end(JSON.stringify(result));
+    res.end(JSON.stringify([result, wasReady]));
   }
 
 }

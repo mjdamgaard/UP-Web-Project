@@ -1,5 +1,4 @@
 
-import {DBQueryHandler} from "../../../../server/db_io/DBQueryHandler.js";
 import {
   RuntimeError, payGas,
 } from "../../../../interpreting/ScriptInterpreter.js";
@@ -8,15 +7,23 @@ import {
 export async function query(
   {callerNode, callerEnv},
   isPost, route, homeDirID, filePath, _, queryStringArr,
-  postData, maxAge, noCache, lastUpToDate
+  postData, maxAge, noCache, lastUpToDate, onCached,
+  serverQueryHandler, dbQueryHandler,
 ) {
   // If route equals just "/<homeDirID>/<filePath>", without any query string,
   // return the text stored in the file.
   if (!queryStringArr) {
-    return await DBQueryHandler.queryDBProcOrCache(
-      "readTextFile", [homeDirID, filePath],
-      callerNode, callerEnv, route, maxAge, noCache, lastUpToDate,
-    );
+    if (interpreter.isServerSide) {
+      return await dbQueryHandler.queryDBProcOrCache(
+        "readTextFile", [homeDirID, filePath],
+        route, maxAge, noCache, lastUpToDate, callerNode, callerEnv,
+      );
+    } else {
+      return serverQueryHandler.queryServerOrCache(
+        isPost, route, maxAge, noCache, onCached, interpreter,
+        callerNode, callerEnv,
+      );
+    }
   }
 
   let queryType = queryStringArr[0];
@@ -31,11 +38,18 @@ export async function query(
     let text = postData;
     payGas(callerNode, callerEnv, {dbWrite: text.length});
     let routesToEvict = [[`/${homeDirID}/${filePath}`, true]];
-    return await DBQueryHandler.queryDBProcOrCache(
-      "putTextFile", [homeDirID, filePath, text],
-      callerNode, callerEnv, route, maxAge, noCache, lastUpToDate,
-      routesToEvict,
-    );
+    if (interpreter.isServerSide) {
+      return await dbQueryHandler.queryDBProcOrCache(
+        "putTextFile", [homeDirID, filePath, text],
+        route, maxAge, noCache, lastUpToDate, callerNode, callerEnv,
+        routesToEvict,
+      );
+    } else {
+      return serverQueryHandler.queryServerOrCache(
+        isPost, route, maxAge, noCache, onCached, interpreter,
+        callerNode, callerEnv, routesToEvict,
+      );
+    }
   }
 
   // If route equals "/<homeDirID>/<filePath>?_delete", ...
@@ -45,11 +59,18 @@ export async function query(
       callerNode, callerEnv
     );
     let routesToEvict = [[`/${homeDirID}/${filePath}`, true]];
-    return await DBQueryHandler.queryDBProcOrCache(
-      "deleteTextFile", [homeDirID, filePath],
-      callerNode, callerEnv, route, maxAge, noCache, lastUpToDate,
-      routesToEvict,
-    );
+    if (interpreter.isServerSide) {
+      return await dbQueryHandler.queryDBProcOrCache(
+        "deleteTextFile", [homeDirID, filePath],
+        route, maxAge, noCache, lastUpToDate, callerNode, callerEnv,
+        routesToEvict,
+      );
+    } else {
+      return serverQueryHandler.queryServerOrCache(
+        isPost, route, maxAge, noCache, onCached, interpreter,
+        callerNode, callerEnv, routesToEvict,
+      );
+    }
   }
 
   // If route equals "/<homeDirID>/<filePath>?_get&<alias>", verify that
