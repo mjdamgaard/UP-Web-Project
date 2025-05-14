@@ -131,7 +131,7 @@ export const fetch = new DevFunction(
         maxAge = undefined;
       }
     }
-    let [result] = liveModule.call(
+    let [result] = await liveModule.call(
       "query", ["fetch", route, undefined, maxAge, noCache],
       callerNode, execEnv
     );
@@ -146,7 +146,7 @@ export const post = new DevFunction(
     {callerNode, execEnv, liveModule},
     [route, postData]
   ) {
-    let [result] = liveModule.call(
+    let [result] = await liveModule.call(
       "query", ["post", route, postData],
       callerNode, execEnv
     );

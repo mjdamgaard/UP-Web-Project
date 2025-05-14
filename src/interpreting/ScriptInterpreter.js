@@ -77,6 +77,14 @@ export class ScriptInterpreter {
     );
     scriptVars.globalEnv = globalEnv;
 
+    // Add the 'server' dev library (used for fetching scripts and other data)
+    // to liveModules from the beginning.
+    liveModules.set(
+      "server", new LiveModule(
+        "server", Object.entries(this.staticDevLibs.get("server")), scriptVars
+      )
+    );
+
     // If script is provided, rather than the scriptPath, first parse it.
     let parsedScript, lexArr, strPosArr;
     if (scriptPath === null) {
@@ -241,7 +249,7 @@ export class ScriptInterpreter {
 
 
   fetch(callerNode, callerEnv, route, maxAge, noCache, onCached) {
-    let fetchFun = this.staticDevLibs.get("server").fetch;
+    let fetchFun = callerEnv.scriptVars.liveModules.get("server").get("fetch");
     return new Promise(resolve => {
       this.executeFunction(
         fetchFun, [route, maxAge, noCache, onCached, new DevFunction(
@@ -253,7 +261,7 @@ export class ScriptInterpreter {
   }
 
   post(callerNode, callerEnv, route, postData) {
-    let postFun = this.staticDevLibs.get("server").post;
+    let postFun = callerEnv.scriptVars.liveModules.get("server").get("post");
     return new Promise(resolve => {
       this.executeFunction(
         postFun, [route, postData, new DevFunction(
@@ -560,17 +568,18 @@ export class ScriptInterpreter {
     // If fun is an ExportedFunction instance, extract the wrapped function.
     // (The other properties of ExportedFunction is taken care of by
     // Environment().)
+    let wrappedFun;
     if (fun instanceof ExportedFunction) {
-      fun = fun.fun;
+      wrappedFun = fun.fun;
     }
 
     // Then execute the function depending on its type.
-    if (fun instanceof DefinedFunction) {
-      return this.#executeDefinedFunction(fun.node, inputArr, execEnv);
+    if (wrappedFun instanceof DefinedFunction) {
+      return this.#executeDefinedFunction(wrappedFun.node, inputArr, execEnv);
     }
-    else if (fun instanceof DevFunction) {
+    else if (wrappedFun instanceof DevFunction) {
       return this.#executeDevFunction(
-        fun, inputArr, callerNode, execEnv, thisVal
+        wrappedFun, fun, inputArr, callerNode, execEnv, thisVal
       );
     }
     else throw new RuntimeError(
@@ -582,9 +591,9 @@ export class ScriptInterpreter {
 
 
   #executeDevFunction(
-    devFun, inputArr, callerNode, execEnv, thisVal
+    devFun, exportedFun, inputArr, callerNode, execEnv, thisVal
   ) {
-    let {isAsync, minArgNum = 0, liveModule} = devFun;
+    let {isAsync, minArgNum = 0, liveModule} = exportedFun;
     let execVars = {
       callerNode: callerNode, execEnv: execEnv,
       thisVal: thisVal, interpreter: this, liveModule: liveModule,
@@ -1811,7 +1820,7 @@ export class LiveModule {
         // the functions original signals will be used instead (which will
         // often be the case, except when functionModifications modifies the
         // signals of dev functions).
-        val = new ExportedFunction(val, modulePath, alias, signals ?? {});
+        val = new ExportedFunction(val, modulePath, alias, this, signals ?? {});
       }
   
       this.members.set(alias, turnImmutable(val));
@@ -1822,11 +1831,22 @@ export class LiveModule {
     return this.members.get(key);
   }
 
-  call(funName, inputArr, callerNode, callerEnv, thisVal) {
+  call(funName, inputArr, callerNode, callerEnv, callback) {
     let fun = this.get(funName);
-    this.interpreter.executeFunction(
-      fun, inputArr, callerNode, callerEnv, thisVal
+    let ret = this.interpreter.executeFunction(
+      fun, inputArr, callerNode, callerEnv
     );
+    if (ret instanceof PromiseObject) {
+      if (callback instanceof Function) {
+        ret.promise.then(() => callback());
+      }
+      else {
+        return ret.promise;
+      }
+    }
+    else {
+      return ret;
+    }
   }
 }
 
@@ -2133,12 +2153,14 @@ export class DevFunction extends FunctionObject {
 
 export class ExportedFunction extends FunctionObject {
   constructor(
-    fun, modulePath, funName, {callerSignals, initSignals, isEnclosed}
+    fun, modulePath, funName, liveModule,
+    {callerSignals, initSignals, isEnclosed}
   ) {
     super();
     this._fun = fun;
     this.modulePath = modulePath;
     this.funName = funName;
+    this.liveModule = liveModule;
     if (callerSignals) this._callerSignals = callerSignals;
     if (initSignals) this.initSignals = initSignals;
     if (isEnclosed) this._isEnclosed = isEnclosed;

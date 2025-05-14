@@ -54,7 +54,7 @@ export class ServerQueryHandler {
     if (!noCache) {
       payGas(node, env, {cacheRead: 1});
       now = Date.now();
-      [cachedResult, lastUpToDate] = clientCache.get(route);
+      [cachedResult, lastUpToDate] = clientCache.get(route) ?? [];
       if (cachedResult !== undefined) {
         // If the resource was cached, check if it is still considered fresh
         // according to the maxAge argument, and if so return the result.
@@ -165,7 +165,7 @@ export async function postData(url, reqData) {
     return;
   }
   else {
-    let result = await response.text();debugger;
+    let result = await response.text();
     return JSON.parse(result);
   }
 }

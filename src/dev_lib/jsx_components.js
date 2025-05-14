@@ -12,7 +12,7 @@ export const createJSXApp = new DevFunction(
   {callerSignals: [[WILL_CREATE_APP_SIGNAL]]},
   function(
     {callerNode, execEnv, interpreter}, component, props
-  ) {
+  ) {debugger;
     const rootInstance = new JSXInstance(component, "root", undefined);
     let rootParent = document.getElementById("up-app-root");
     let appNode = rootInstance.render(

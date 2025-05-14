@@ -106,7 +106,7 @@ export class DirectoryUploader {
       else if (/\.(js|txt|json|html)$/.test(name)) {
         let contentText = fs.readFileSync(childAbsPath, 'utf8');
         uploadPromises.push(
-          serverQueryHandler.post("/" + childRelPath, {
+          serverQueryHandler.post(`/${childRelPath}?_put`, {
             method: "post",
             credentials: credentials,
             postData: contentText,
