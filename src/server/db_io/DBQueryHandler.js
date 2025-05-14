@@ -62,7 +62,7 @@ export class DBQueryHandler {
     if (!noCache) {
       payGas(node, env, {cacheRead: 1});
       now = Date.now();
-      [result, cachedAt, lastUpdated] = mainDBCache.get(route);
+      [result, cachedAt, lastUpdated] = mainDBCache.get(route) ?? [];
       if (result !== undefined) {
         // If the resource was cached, check if it is still considered fresh
         // by the client, and if so, either return the result, or if the

@@ -11,10 +11,10 @@ import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
 import {SET_ELEVATED_PRIVILEGES_SIGNAL}
   from "../dev_lib/server/src/signals.js";
 
-import * as dbMod from "../dev_lib/server/server.js";
+import * as serverMod from "../dev_lib/server/server.js";
 
 const staticDevLibs = new Map();
-staticDevLibs.set("db", dbMod);
+staticDevLibs.set("server", serverMod);
 
 
 const [ , curPath] = process.argv;
