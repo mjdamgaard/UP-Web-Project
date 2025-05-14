@@ -6,10 +6,10 @@ import {parseRoute} from './src/parseRoute.js';
 
 import {ServerQueryHandler} from "../../server/ajax_io/ServerQueryHandler.js";
 
-// TODO: Figure out a good way to make that this is mapped to a an empty
-// placeholder class instead for the client side only (or something to a
-// similar effect): 
-import {DBQueryHandler} from "../../server/db_io/DBQueryHandler.js";
+// // TODO: Figure out a good way to make that this is mapped to a an empty
+// // placeholder class instead for the client side only (or something to a
+// // similar effect): 
+// import {DBQueryHandler} from "DBQueryHandler";
 
 import * as directoriesMod from "./src/filetypes/directories.js";
 import * as textFilesMod from "./src/filetypes/text_files.js";
@@ -24,7 +24,8 @@ import {CHECK_ELEVATED_PRIVILEGES_SIGNAL} from "./src/signals.js";
 // declare dbQueryHandler for server-side DB queries, which is instantiated
 // dynamically below, and only if the function is run server-side.
 const serverQueryHandler = new ServerQueryHandler();
-const dbQueryHandler = new DBQueryHandler();;
+let dbQueryHandler;
+let dbQueryHandlerPath = "../../server/db_io/DBQueryHandler.js";
 
 
 
@@ -99,14 +100,12 @@ export const query = new DevFunction(
         throw new LoadError(`Unrecognized file type: ".${fileExt}"`);
     }
 
-    // // If on the server side, and dbQueryHandler has not been imported yet, do
-    // // so.
-    // if (interpreter.isServerSide && !dbQueryHandler) {
-    //   let dbQueryHandlerMod = await import(
-    //     "../../server/db_io/DBQueryHandler.js"
-    //   );
-    //   dbQueryHandler = new dbQueryHandlerMod.DBQueryHandler();
-    // }
+    // If on the server side, and dbQueryHandler has not been imported yet, do
+    // so.
+    if (interpreter.isServerSide && !dbQueryHandler) {
+      let dbQueryHandlerMod = await import(dbQueryHandlerPath);
+      dbQueryHandler = new dbQueryHandlerMod.DBQueryHandler();
+    }
 
     // Query the database via the filetypeModule, and return the output (which
     // will often be [result, wasReady] (on success) server-side, and will
