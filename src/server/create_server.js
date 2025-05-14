@@ -17,7 +17,7 @@ const staticDevLibs = new Map();
 staticDevLibs.set("db", dbMod);
 
 
-const [ , curPath] = [];// process.argv;
+const [ , curPath] = process.argv;
 const mainScriptPath = path.normalize(
   path.dirname(curPath) + "/main_script/main.js"
 );
@@ -27,7 +27,7 @@ const [syntaxTree, lexArr, strPosArr] = scriptParser.parse(mainScript);
 const parsedMainScript = syntaxTree.res;
 
 const scriptInterpreter = new ScriptInterpreter(
-  true, undefined, staticDevLibs, undefined
+  true, staticDevLibs, undefined
 );
 
 const LOCKED_ROUTE_REGEX = /[&/]_/;
@@ -160,6 +160,10 @@ async function requestHandler(req, res) {
     res.end(JSON.stringify([result, log, wasReady]));
   }
 
+  // TODO: Comment this in again, and implement it in both ends. Also add
+  // a(nother) todo about using an 'Accepted' status code to signal the client
+  // to try again but with user credentials added to the request (such that the
+  // user's own gas will be used, thus mitigating DoS attacks). 
   // // Else if wasReady is true, write back a 204 No Content response.
   // else if (wasReady) {
   //   res.writeHead(204);

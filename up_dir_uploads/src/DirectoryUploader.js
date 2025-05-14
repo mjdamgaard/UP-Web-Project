@@ -1,9 +1,11 @@
 
-import {postData} from '../../src/server/ajax_io/ServerQueryHandler.js';
+import {ServerQueryHandler}
+  from '../../src/server/ajax_io/ServerQueryHandler.js';
 
 import fs from 'fs';
 import path from 'path';
 
+const serverQueryHandler = new ServerQueryHandler();
 
 
 export class DirectoryUploader {
@@ -19,9 +21,11 @@ export class DirectoryUploader {
   // will have to conform to a specific format.
   static async uploadDir(dirPath, username, password, deleteStructData) {
 
-    // TODO: Call the server to get a new or an existing session ID here.
+    // TODO: Call the server to get a new or an existing session ID here, and
+    // also get the userID.
     let token = "TODO..." + password;
-    credentials = btoa(`${username}:${token}`);
+    let credentials = btoa(`${username}:${token}`);
+    let userID = "9";
 
     // Read the dirID.
     let idFilePath = path.normalize(dirPath + "/.id");
@@ -33,28 +37,28 @@ export class DirectoryUploader {
     // If no dirID was gotten, request the server to create a new directory and
     // get the new dirID.
     if (!dirID) {
-      dirID = await postData(`/?mkdir?${username}`, {
+      [[dirID]] = await serverQueryHandler.post(`/?mkdir&${userID}`, {
         method: "post",
         credentials: credentials,
       });
-      fs.writeFileSync(idFilePath, `${dirID}`);
+      fs.writeFileSync(idFilePath, `${dirID ?? ""}`);
     }
 
     // Request a list of all the files in the server-side directory, and then
     // go through each one and check that it also exist nested in the client-
     // side directory, and for each one that doesn't, request deletion of that
     // file server-side.
-    let filePaths = await postData(`/${dirID}?_all`, {
+    let [filePaths] = await serverQueryHandler.post(`/${dirID}?_all`, {
       method: "post",
       credentials: credentials,
-    });
+    }) ?? [[]];
     let deletionPromises = [];
-    filePaths.forEach(relPath => {
+    filePaths.forEach(([relPath]) => {
       let clientFilePath = path.normalize(dirPath + "/" + relPath);
-      let serverFilePath = path.normalize(dirID + "/" + relPath);
+      let serverFilePath = path.normalize(`/${dirID}/${relPath}`);
       if (!fs.existsSync(clientFilePath)) {
         deletionPromises.push(
-          postData(serverFilePath, {
+          serverQueryHandler.post(serverFilePath, {
             method: "post",
             credentials: credentials,
           })
@@ -102,7 +106,7 @@ export class DirectoryUploader {
       else if (/\.(js|txt|json|html)$/.test(name)) {
         let contentText = fs.readFileSync(childAbsPath, 'utf8');
         uploadPromises.push(
-          postData("/" + childRelPath, {
+          serverQueryHandler.post("/" + childRelPath, {
             method: "post",
             credentials: credentials,
             postData: contentText,

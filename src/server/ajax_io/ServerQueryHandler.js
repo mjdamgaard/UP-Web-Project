@@ -15,7 +15,7 @@ export class ServerQueryHandler {
 
   #postReqBuffer = new Map();
 
-  #post(route, reqData) {
+  post(route, reqData) {
       let reqKey = JSON.stringify(reqData);
 
       // If there is already an ongoing request with this reqData object,
@@ -86,7 +86,7 @@ export class ServerQueryHandler {
     }
     if (maxAge !== undefined) reqData.maxAge = maxAge;
     if (lastUpToDate) reqData.lastUpToDate = lastUpToDate;
-    [fetchedResult, wasReady] = await this.#post(route, reqData);
+    [fetchedResult, wasReady] = await this.post(route, reqData);
 
     // If the cachedResult was already up-to-date, use the cachedResult going
     // forward, and if not, use the fetched result.
@@ -165,7 +165,7 @@ export async function postData(url, reqData) {
     return;
   }
   else {
-    let result = await response.text()
+    let result = await response.text();debugger;
     return JSON.parse(result);
   }
 }

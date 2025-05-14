@@ -54,7 +54,7 @@ export async function query(
   if (!queryStringArr) {
     if (interpreter.isServerSide) {
       let [fullDescList, wasReady] = await dbQueryHandler.queryDBProcOrCache(
-        "readHomeDirDescendants", [homeDirID],
+        "readHomeDirDescendants", [homeDirID, 1000, 0],
         route, maxAge, noCache, lastUpToDate, callerNode, execEnv,
       );
       let visibleDescList;
@@ -81,7 +81,7 @@ export async function query(
   if (queryType === "_all") {
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProcOrCache(
-        "readHomeDirDescendants", [homeDirID],
+        "readHomeDirDescendants", [homeDirID, 1000, 0],
         route, maxAge, noCache, lastUpToDate, callerNode, execEnv,
       );
     } else {

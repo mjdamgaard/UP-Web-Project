@@ -1918,7 +1918,7 @@ export class FlagEnvironment {
       return [retFlag, retFlagParams, this.modulePath, this.funName, curStep];
     }
     else if (this.parent) {
-      return this.parent.getFirstSignal(flagArr, maxStep, curStep + 1);
+      return this.parent.getFirstFlag(flagArr, maxStep, curStep + 1);
     }
     else {
       return [];

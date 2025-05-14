@@ -3,13 +3,7 @@ import {
   DevFunction, FunctionObject, Signal, RuntimeError, TypeError, LoadError,
 } from '../../interpreting/ScriptInterpreter.js';
 import {parseRoute} from './src/parseRoute.js';
-
 import {ServerQueryHandler} from "../../server/ajax_io/ServerQueryHandler.js";
-
-// // TODO: Figure out a good way to make that this is mapped to a an empty
-// // placeholder class instead for the client side only (or something to a
-// // similar effect): 
-// import {DBQueryHandler} from "DBQueryHandler";
 
 import * as directoriesMod from "./src/filetypes/directories.js";
 import * as textFilesMod from "./src/filetypes/text_files.js";

@@ -11,15 +11,15 @@ export function parseRoute(route) {
   let match, routeRemainder = route;
 
   // Get the home directory ID, if any.
-  [match, homeDirID] = homeDirIDRegEx.exec(routeRemainder) ?? [""];
+  [match, homeDirID] = homeDirIDRegEx.exec(routeRemainder) ?? ["", ""];
   routeRemainder = routeRemainder.substring(match.length);
 
   // Get the file path, if any.
-  [match, filePath] = filePathRegEx.exec(routeRemainder) ?? [""];
+  [match, filePath] = filePathRegEx.exec(routeRemainder) ?? ["", ""];
   routeRemainder = routeRemainder.substring(match.length);
 
   // Get the final query string, if any.
-  [match, queryString] = queryStringRegEx.exec(routeRemainder) ?? [""];
+  [match, queryString] = queryStringRegEx.exec(routeRemainder) ?? ["", ""];
   routeRemainder = routeRemainder.substring(match.length);
 
   // Throw if this did not exhaust the full route.
@@ -37,7 +37,7 @@ export function parseRoute(route) {
   );
 
   // Extract the file extension, if any.
-  let [ , fileExt] = lastFileExtRegEx.exec(filePath);
+  let [ , fileExt] = lastFileExtRegEx.exec(filePath) ?? [];
 
   // If it is defined, split the queryString into an array of key--value
   // entries array for key--value pairs, and string values in case of boolean
