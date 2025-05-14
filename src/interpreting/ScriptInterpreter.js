@@ -214,7 +214,7 @@ export class ScriptInterpreter {
           scriptPath, textModules, callerNode, callerEnv
         );
       } catch (err) {
-        throw new LoadError(err, callerNode, callerEnv);
+        throw new LoadError(err.toString(), callerNode, callerEnv);
       }
       if (typeof script !== "string") throw new LoadError(
         `No script was found at ${scriptPath}`,
@@ -241,7 +241,7 @@ export class ScriptInterpreter {
 
 
   fetch(callerNode, callerEnv, route, maxAge, noCache, onCached) {
-    let fetchFun = this.staticDevLibs.get("server").get("fetch");
+    let fetchFun = this.staticDevLibs.get("server").fetch;
     return new Promise(resolve => {
       this.executeFunction(
         fetchFun, [route, maxAge, noCache, onCached, new DevFunction(
@@ -253,7 +253,7 @@ export class ScriptInterpreter {
   }
 
   post(callerNode, callerEnv, route, postData) {
-    let postFun = this.staticDevLibs.get("server").get("post");
+    let postFun = this.staticDevLibs.get("server").post;
     return new Promise(resolve => {
       this.executeFunction(
         postFun, [route, postData, new DevFunction(
@@ -570,7 +570,7 @@ export class ScriptInterpreter {
     }
     else if (fun instanceof DevFunction) {
       return this.#executeDevFunction(
-        fun, inputArr, callerNode, callerEnv, execEnv, thisVal
+        fun, inputArr, callerNode, execEnv, thisVal
       );
     }
     else throw new RuntimeError(
@@ -582,11 +582,11 @@ export class ScriptInterpreter {
 
 
   #executeDevFunction(
-    devFun, inputArr, callerNode, callerEnv, execEnv, thisVal
+    devFun, inputArr, callerNode, execEnv, thisVal
   ) {
     let {isAsync, minArgNum = 0, liveModule} = devFun;
     let execVars = {
-      callerNode: callerNode, callerEnv: callerEnv, execEnv: execEnv,
+      callerNode: callerNode, execEnv: execEnv,
       thisVal: thisVal, interpreter: this, liveModule: liveModule,
     };
 
@@ -603,7 +603,7 @@ export class ScriptInterpreter {
       ) {
         let callbackFun = lastArg;
         let promise = devFun.fun(execVars, inputArr.slice(0, -1));
-        this.handlePromise(promise, callbackFun, callerNode, callerEnv);
+        this.handlePromise(promise, callbackFun, callerNode, execEnv);
       }
 
       // And if not, simply return the promise wrapped in PromiseObject().
@@ -620,31 +620,31 @@ export class ScriptInterpreter {
   }
 
 
-  handlePromise(promise, callbackFun, callerNode, callerEnv) {
+  handlePromise(promise, callbackFun, callerNode, execEnv) {
     promise.then(res => {
-      this.#executeAsyncFunction(callbackFun, [res], callerNode, callerEnv);
+      this.#executeAsyncFunction(callbackFun, [res], callerNode, execEnv);
     }).catch(err => {
-      this.#throwAsyncException(err, callerNode, callerEnv);
+      this.#throwAsyncException(err, callerNode, execEnv);
     });
   }
 
 
 
-  #executeAsyncFunction(fun, inputArr, callerNode, callerEnv, thisVal) {
-    if (callerEnv.scriptVars.isExiting) {
+  #executeAsyncFunction(fun, inputArr, callerNode, execEnv, thisVal) {
+    if (execEnv.scriptVars.isExiting) {
       throw new ExitException();
     }
     try {
-      this.executeFunction(fun, inputArr, callerNode, callerEnv, thisVal);
+      this.executeFunction(fun, inputArr, callerNode, execEnv, thisVal);
     }
     catch (err) {
       if (
         err instanceof ReturnException || err instanceof CustomException ||
         err instanceof OutOfGasError
       ) {
-        let wasCaught = callerEnv.runNearestCatchStmtAncestor(err, callerNode);
+        let wasCaught = execEnv.runNearestCatchStmtAncestor(err, callerNode);
         if (!wasCaught) {
-          callerEnv.scriptVars.resolveScript(undefined, err);
+          execEnv.scriptVars.resolveScript(undefined, err);
         }
       } else if (!(err instanceof ExitException)) {
         throw err;
@@ -652,10 +652,10 @@ export class ScriptInterpreter {
     }
   }
 
-  #throwAsyncException(err, callerNode, callerEnv) {
-    let wasCaught = callerEnv.runNearestCatchStmtAncestor(err, callerNode);
+  #throwAsyncException(err, callerNode, execEnv) {
+    let wasCaught = execEnv.runNearestCatchStmtAncestor(err, callerNode);
     if (!wasCaught) {
-      callerEnv.scriptVars.resolveScript(undefined, err);
+      execEnv.scriptVars.resolveScript(undefined, err);
     }
   }
 
@@ -1508,13 +1508,14 @@ export class Environment {
     this.variables = new Map();
     if (scopeType === "function") {
       let {
-        isArrowFun, modulePath, funName,
+        isArrowFun, isDevFun, modulePath, funName,
         callerSignals, initSignals, isEnclosed,
       } = fun;
       this.callerNode = callerNode;
       this.callerEnv = callerEnv;
       if (thisVal && !isArrowFun) this.thisVal = thisVal;
       if (isArrowFun) this.isArrowFun = isArrowFun;
+      if (isDevFun) this.isDevFun = isDevFun;
       if (callerSignals) {
         let parentFlagEnv = this.getFlagEnvironment();
         parentFlagEnv.emitSignals(callerSignals, callerNode, callerEnv);
@@ -1745,10 +1746,12 @@ export class Environment {
   getModuleEnv() {
     if (this.scopeType === "module") {
       return this;
+    } else if (this.isDevFun) {
+      return this.callerEnv.getModuleEnv();
     } else if (this.parent) {
       return this.parent.getModuleEnv();
     } else {
-      return this;
+      return null;
     }
   }
 
@@ -2120,6 +2123,9 @@ export class DevFunction extends FunctionObject {
   get isArrowFun() {
     return !!this.decEnv;
   }
+  get isDevFun() {
+    return true;
+  }
   get isEnclosed() {
     return this._isEnclosed ?? !!this.initSignals;
   }
@@ -2145,6 +2151,9 @@ export class ExportedFunction extends FunctionObject {
   }
   get isArrowFun() {
     return this.fun.isArrowFun;
+  }
+  get isDevFun() {
+    return this.fun.isDevFun;
   }
   get callerSignals() {
     return this._callerSignals ?? this.fun.callerSignals;
@@ -2436,33 +2445,36 @@ export function decrGas(node, environment, gasName) {
 const SNIPPET_BEFORE_MAX_LEN = 600;
 const SNIPPET_AFTER_MAX_LEN = 100;
 
-export function getExtendedErrorMsg(error) {
+export function getExtendedErrorMsg(err) {
   // Get the error type.
   let type;
-  if (error instanceof RuntimeError) {
-    type = "RuntimeError";
+  if (err instanceof TypeError) {
+    type = "TypeError";
   }
-  else if (error instanceof LoadError) {
+  else if (err instanceof LoadError) {
     type = "LoadError";
   }
-  else if (error instanceof OutOfGasError) {
+  else if (err instanceof OutOfGasError) {
     type = "OutOfGasError";
   }
-  else if (error instanceof CustomException) {
+  else if (err instanceof CustomException) {
     type = "Uncaught (or re-thrown) custom exception";
   }
-  else {
-    return getExtendedErrorMsgHelper(error);
+  else if (err instanceof SyntaxError) {
+    return getExtendedErrorMsgHelper(err);
+  }
+  else if (err instanceof RuntimeError) {
+    type = "RuntimeError";
   }
 
   // Get the message defined by error.val.
-  let msg = JSON.stringify(error?.val ?? null);
+  let msg = JSON.stringify(err?.val ?? null);
 
   // If error is thrown from the global environment, return an appropriate error
   // message.
   let {
     modulePath, lexArr, strPosArr, script
-  } = error.environment.getModuleEnv();
+  } = err.environment.getModuleEnv() ?? {};
   if (!lexArr) {
     return type + ": " + msg;
   }
@@ -2470,8 +2482,8 @@ export function getExtendedErrorMsg(error) {
   // Else construct an error message containing the line and column number, as
   // well as a code snippet around where the error occurred. 
   else {
-    let pos = error.node.pos;
-    let nextPos = error.node.nextPos;
+    let pos = err.node.pos;
+    let nextPos = err.node.nextPos;
     let strPos = strPosArr[pos];
     let finStrPos = strPosArr[nextPos - 1] + lexArr[nextPos - 1].length;
     let [ln, col] = getLnAndCol(script.substring(0, strPos));

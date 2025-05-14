@@ -1,7 +1,7 @@
 
-import mysql from 'mysql2/promise';
+// import mysql from 'mysql2/promise';
 import {mainDBConnectionOptions, userDBConnectionOptions} from "./db_config.js";
-
+const mysql = {};
 
 
 export class DBConnection {

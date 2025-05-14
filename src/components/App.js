@@ -12,11 +12,11 @@ import {runTests} from "../testing/parsing_interpreting_tests.js";
 
 /* Static developer libraries */
 
-// import * as serverMod from "../dev_lib/server/server.js";
+import * as serverMod from "../dev_lib/server/server.js";
 import * as jsxMod from "../dev_lib/jsx_components.js";
 
 const staticDevLibs = new Map();
-// staticDevLibs.set("server", serverMod);
+staticDevLibs.set("server", serverMod);
 staticDevLibs.set("jsx", jsxMod);
 
 

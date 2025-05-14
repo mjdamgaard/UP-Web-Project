@@ -6,7 +6,7 @@ export const ELEVATED_PRIVILEGES_FLAG = Symbol("elevated_privileges");
 
 export const SET_ELEVATED_PRIVILEGES_SIGNAL = new Signal(
   "set_elevated_privileges",
-  function(flagEnv, _1, _2, homeDirID) {
+  function(flagEnv, _node, _env, homeDirID) {
     flagEnv.setFlag(ELEVATED_PRIVILEGES_FLAG, homeDirID);
   }
 );

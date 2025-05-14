@@ -2,7 +2,7 @@
 import * as http from 'http';
 import fs from 'fs';
 import path from 'path';
-import * as process from 'process';
+// import * as process from 'process';
 
 import {ClientError, endWithError, endWithInternalError} from './err/errors.js';
 import {ScriptInterpreter} from "../interpreting/ScriptInterpreter.js";
@@ -17,7 +17,7 @@ const staticDevLibs = new Map();
 staticDevLibs.set("db", dbMod);
 
 
-const [ , curPath] = process.argv;
+const [ , curPath] = [];// process.argv;
 const mainScriptPath = path.normalize(
   path.dirname(curPath) + "/main_script/main.js"
 );

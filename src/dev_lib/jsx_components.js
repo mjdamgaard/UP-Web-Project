@@ -11,12 +11,12 @@ import {
 export const createJSXApp = new DevFunction(
   {callerSignals: [[WILL_CREATE_APP_SIGNAL]]},
   function(
-    {callerNode, callerEnv, interpreter}, component, props
+    {callerNode, execEnv, interpreter}, component, props
   ) {
     const rootInstance = new JSXInstance(component, "root", undefined);
     let rootParent = document.getElementById("up-app-root");
     let appNode = rootInstance.render(
-      props, false, interpreter, callerNode, callerEnv, false
+      props, false, interpreter, callerNode, execEnv, false
     );
     rootParent.replaceChildren(appNode);
   }
@@ -89,7 +89,7 @@ class JSXInstance {
     // job is to get us the newDOMNode to insert in the DOM.
     let newDOMNode, resolveHasBeenCalled = false;
     let resolve = new DevFunction({decEnv: callerEnv}, (
-      {interpreter, callerNode, callerEnv}, [jsxElement]
+      {interpreter, callerNode, execEnv}, [jsxElement]
     ) => {
       resolveHasBeenCalled = true;
 
@@ -107,7 +107,7 @@ class JSXInstance {
       }
       else {
         newDOMNode = this.getDOMNode(
-          jsxElement, marks, interpreter, callerNode, callerEnv
+          jsxElement, marks, interpreter, callerNode, execEnv
         );
       }
   
@@ -146,7 +146,7 @@ class JSXInstance {
     if (!resolveHasBeenCalled) throw new RuntimeError(
       "A JSX component's render() method did not call its resolve() " +
       "callback before returning",
-      fun.node, fun.decEnv, callerEnv
+      fun.node ?? callerNode, fun.decEnv ?? callerEnv
     );
 
     // Then return the instance's new DOM node.
@@ -489,23 +489,23 @@ class DispatchFunction extends DevFunction {
     super(
       {decEnv: decEnv},
       (
-        {interpreter, callerNode, callerEnv},
+        {interpreter, callerNode, execEnv},
         action, inputArr, componentModule, childKey
       ) => {
         if (!(inputArr instanceof ArrayWrapper)) throw new RuntimeError(
           "Dispatching an action with an invalid input array",
-          callerNode, callerEnv
+          callerNode, execEnv
         );
         if (!(componentModule instanceof LiveModule)) {
           throw new RuntimeError(
             "Dispatching an action with an invalid receiver component",
-            callerNode, callerEnv
+            callerNode, execEnv
           );
         }
         let componentPath = componentModule.modulePath;
         jsxInstance.dispatch(
           action, [...inputArr], componentPath, childKey,
-          interpreter, callerNode, callerEnv
+          interpreter, callerNode, execEnv
         );
       }
     );

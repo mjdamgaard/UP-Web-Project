@@ -5,7 +5,7 @@ import {
 
 
 export async function query(
-  {callerNode, callerEnv, interpreter},
+  {callerNode, execEnv, interpreter},
   isPost, route, homeDirID, filePath, _, queryStringArr,
   postData, maxAge, noCache, lastUpToDate, onCached,
   serverQueryHandler, dbQueryHandler,
@@ -16,12 +16,12 @@ export async function query(
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProcOrCache(
         "readTextFile", [homeDirID, filePath],
-        route, maxAge, noCache, lastUpToDate, callerNode, callerEnv,
+        route, maxAge, noCache, lastUpToDate, callerNode, execEnv,
       );
     } else {
       return serverQueryHandler.queryServerOrCache(
         isPost, route, maxAge, noCache, onCached, interpreter,
-        callerNode, callerEnv,
+        callerNode, execEnv,
       );
     }
   }
@@ -33,21 +33,21 @@ export async function query(
   if (queryType === "_put") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for the "fetch" method: ${route}`,
-      callerNode, callerEnv
+      callerNode, execEnv
     );
     let text = postData;
-    payGas(callerNode, callerEnv, {dbWrite: text.length});
+    payGas(callerNode, execEnv, {dbWrite: text.length});
     let routesToEvict = [[`/${homeDirID}/${filePath}`, true]];
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProcOrCache(
         "putTextFile", [homeDirID, filePath, text],
-        route, maxAge, true, lastUpToDate, callerNode, callerEnv,
+        route, maxAge, true, lastUpToDate, callerNode, execEnv,
         routesToEvict,
       );
     } else {
       return serverQueryHandler.queryServerOrCache(
         isPost, route, maxAge, true, onCached, interpreter,
-        callerNode, callerEnv, routesToEvict,
+        callerNode, execEnv, routesToEvict,
       );
     }
   }
@@ -56,19 +56,19 @@ export async function query(
   if (queryType === "_delete") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for the "fetch" method: ${route}`,
-      callerNode, callerEnv
+      callerNode, execEnv
     );
     let routesToEvict = [[`/${homeDirID}/${filePath}`, true]];
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProcOrCache(
         "deleteTextFile", [homeDirID, filePath],
-        route, maxAge, true, lastUpToDate, callerNode, callerEnv,
+        route, maxAge, true, lastUpToDate, callerNode, execEnv,
         routesToEvict,
       );
     } else {
       return serverQueryHandler.queryServerOrCache(
         isPost, route, maxAge, true, onCached, interpreter,
-        callerNode, callerEnv, routesToEvict,
+        callerNode, execEnv, routesToEvict,
       );
     }
   }
@@ -92,6 +92,6 @@ export async function query(
   // If the route was not matched at this point, throw an error.
   throw new RuntimeError(
     `Unrecognized route for the "fetch" method: ${route}`,
-    callerNode, callerEnv
+    callerNode, execEnv
   );
 }

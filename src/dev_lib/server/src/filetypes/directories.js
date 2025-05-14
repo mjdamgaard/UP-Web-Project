@@ -8,7 +8,7 @@ import {SET_ELEVATED_PRIVILEGES_SIGNAL} from "../signals.js";
 
 
 export async function query(
-  {callerNode, callerEnv, execEnv, interpreter},
+  {callerNode, execEnv, interpreter},
   isPost, route, homeDirID, filePath, _, queryStringArr,
   postData, maxAge, noCache, lastUpToDate, onCached,
   serverQueryHandler, dbQueryHandler,
@@ -20,32 +20,32 @@ export async function query(
     if (queryStringArr[0] === "mkdir") {
       if (!isPost) throw new RuntimeError(
         `Unrecognized route for the "fetch" method: ${route}`,
-        callerNode, callerEnv
+        callerNode, execEnv
       );
       let requestedAdminID = queryStringArr[1];
-      payGas(callerNode, callerEnv, {mkdir: 1});
+      payGas(callerNode, execEnv, {mkdir: 1});
       if (interpreter.isServerSide) {
         return await dbQueryHandler.queryDBProcOrCache(
           "createHomeDir", [requestedAdminID],
-          route, maxAge, noCache, lastUpToDate, callerNode, callerEnv,
+          route, maxAge, noCache, lastUpToDate, callerNode, execEnv,
         );
       } else {
         return serverQueryHandler.queryServerOrCache(
           isPost, route, maxAge, noCache, onCached, interpreter,
-          callerNode, callerEnv,
+          callerNode, execEnv,
         );
       }
     }
     else throw new RuntimeError(
       `Unrecognized route: ${route}`,
-      callerNode, callerEnv
+      callerNode, execEnv
     );
   }
 
   // No requests targeting subdirectories are implemented at this point.
   if (filePath) throw new RuntimeError(
     `Unrecognized route for the "fetch" method: ${route}`,
-    callerNode, callerEnv
+    callerNode, execEnv
   );
 
   // If route equals just "/<homeDirID>", without any query string, return
@@ -55,7 +55,7 @@ export async function query(
     if (interpreter.isServerSide) {
       let [fullDescList, wasReady] = await dbQueryHandler.queryDBProcOrCache(
         "readHomeDirDescendants", [homeDirID],
-        route, maxAge, noCache, lastUpToDate, callerNode, callerEnv,
+        route, maxAge, noCache, lastUpToDate, callerNode, execEnv,
       );
       let visibleDescList;
       if (!wasReady) {
@@ -68,7 +68,7 @@ export async function query(
     else {
       return serverQueryHandler.queryServerOrCache(
         isPost, route, maxAge, noCache, onCached, interpreter,
-        callerNode, callerEnv,
+        callerNode, execEnv,
       );
     }
   }
@@ -82,12 +82,12 @@ export async function query(
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProcOrCache(
         "readHomeDirDescendants", [homeDirID],
-        route, maxAge, noCache, lastUpToDate, callerNode, callerEnv,
+        route, maxAge, noCache, lastUpToDate, callerNode, execEnv,
       );
     } else {
       return serverQueryHandler.queryServerOrCache(
         isPost, route, maxAge, noCache, onCached, interpreter,
-        callerNode, callerEnv,
+        callerNode, execEnv,
       );
     }
   }
@@ -98,12 +98,12 @@ export async function query(
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProcOrCache(
         "readHomeDirAdminID", [homeDirID],
-        route, maxAge, noCache, lastUpToDate, callerNode, callerEnv,
+        route, maxAge, noCache, lastUpToDate, callerNode, execEnv,
       );
     } else {
       return serverQueryHandler.queryServerOrCache(
         isPost, route, maxAge, noCache, onCached, interpreter,
-        callerNode, callerEnv,
+        callerNode, execEnv,
       );
     }
   }
@@ -116,13 +116,13 @@ export async function query(
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProcOrCache(
         "editHomeDir", [homeDirID, requestedAdminID],
-        route, maxAge, true, lastUpToDate, callerNode, callerEnv,
+        route, maxAge, true, lastUpToDate, callerNode, execEnv,
         routesToEvict,
       );
     } else {
       return serverQueryHandler.queryServerOrCache(
         isPost, route, maxAge, true, onCached, interpreter,
-        callerNode, callerEnv, routesToEvict,
+        callerNode, execEnv, routesToEvict,
       );
     }
   }
@@ -133,7 +133,7 @@ export async function query(
   if (queryType === "_delete") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for the "fetch" method: ${route}`,
-      callerNode, callerEnv
+      callerNode, execEnv
     );
     let routesToEvict = [
       [`/${homeDirID}/`, true],
@@ -143,13 +143,13 @@ export async function query(
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProcOrCache(
         "deleteHomeDir", [homeDirID],
-        route, maxAge, true, lastUpToDate, callerNode, callerEnv,
+        route, maxAge, true, lastUpToDate, callerNode, execEnv,
         routesToEvict,
       );
     } else {
       return serverQueryHandler.queryServerOrCache(
         isPost, route, maxAge, true, onCached, interpreter,
-        callerNode, callerEnv, routesToEvict,
+        callerNode, execEnv, routesToEvict,
       );
     }
   }
@@ -175,20 +175,28 @@ export async function query(
       if (!isValidJSONArr) throw new RuntimeError(
         `inputArr query parameter needs to be a JSON array, but received ` +
         `${inputArrStr}`,
-        callerNode, callerEnv
+        callerNode, execEnv
       );
     }
     // TODO: Look in the cache first in case of the "fetch" method.
     let liveServerModule = await interpreter.import(`/${homeDirID}/module.js`);
     execEnv.emitSignal(SET_ELEVATED_PRIVILEGES_SIGNAL, homeDirID);
     liveServerModule.call(funName, inputArr, null, execEnv);
-    return [res];
+    // TODO: let the server module call.. not exit().. but a callback.. ..Hm,
+    // so maybe I should remove exit() from the language, and standardize a
+    // callback passed to the main functions instead.. ..Hm, one idea could be
+    // to say that when main or a SMM has a last argument named 'callback', it
+    // resolves by calling that rather than by returning a value synchronously..
+    // ...Ooh, we could also just make async SMMs return a PromiseObject
+    // instead.. ..And the same for main functions, and then we can remove our
+    // exit.. 
+    return ["TODO..."];
   }
 
 
   // If the route was not matched at this point, throw an error.
   throw new RuntimeError(
     `Unrecognized route for the "fetch" method: ${route}`,
-    callerNode, callerEnv
+    callerNode, execEnv
   );
 }
