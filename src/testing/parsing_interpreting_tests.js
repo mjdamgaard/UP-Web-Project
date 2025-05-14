@@ -3,7 +3,7 @@ import {ScriptParser} from "../interpreting/parsing/ScriptParser.js";
 import {
   ScriptInterpreter, RuntimeError, CustomException, Environment, UNDEFINED,
 } from "../interpreting/ScriptInterpreter.js";
-import {ServerInterface} from "../server/ajax_io/ServerInterface.js";
+import {ServerQueryHandler} from "../server/ajax_io/ServerQueryHandler.js";
 
 const scriptParser = new ScriptParser();
 const scriptInterpreter = new ScriptInterpreter();
@@ -372,8 +372,6 @@ async function script_interpreter_tests_01() {
   let defaultParams = {
     script: "", scriptPath: null, mainInputs: [],
     gas: {comp: 10000}, reqUserID: undefined, permissions: undefined,
-    settings: undefined, // ...
-    fetchScript: (scriptPath) => ServerInterface.fetchScript(scriptPath),
     expectedOutput: undefined, expectedLog: {},
     testMsgPrefix: testMsgPrefix, testKey: "",
     logOutput: true, logLog: true, logErrorMsg: true, logOnlyFailures: true,

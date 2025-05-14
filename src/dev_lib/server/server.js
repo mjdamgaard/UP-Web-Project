@@ -1,6 +1,6 @@
 
 import {
-  DevFunction, FunctionObject, Signal, RuntimeError, TypeError
+  DevFunction, FunctionObject, Signal, RuntimeError, TypeError, LoadError,
 } from '../../interpreting/ScriptInterpreter.js';
 import {parseRoute} from './src/parseRoute.js';
 import {ServerQueryHandler} from "../../server/db_io/DBQueryHandler.js";
@@ -90,7 +90,7 @@ export const query = new DevFunction(
         break;
       // More file types can be added here in the future.
       default:
-        throw new ClientError(`Unrecognized file type: ".${fileExt}"`);
+        throw new LoadError(`Unrecognized file type: ".${fileExt}"`);
     }
 
     // If on the server side, and dbQueryHandler has not been imported yet, do

@@ -20,6 +20,9 @@ export {LexError, SyntaxError};
 const MAX_ARRAY_INDEX = 4294967294;
 const MINIMAL_TIME_GAS = 10;
 
+const TEXT_FILE_ROUTE_REGEX = /[^?]+\.(js|txt|json|html|md|css|scss|)$/;
+const SCRIPT_ROUTE_REGEX = /[^?]+\.js$/;
+
 const GAS_NAMES = {
   comp: "computation",
   import: "import",
@@ -42,20 +45,20 @@ export function getParsingGasCost(str) {
 export class ScriptInterpreter {
 
   constructor(
-    isServerSide = false, fetchScript = async () => {},
-    staticDevLibs = new Map(), devLibURLs = new Map(),
+    isServerSide = false, staticDevLibs = new Map(), devLibURLs = new Map(),
   ) {
     this.isServerSide = isServerSide;
-    this.fetchScript = fetchScript;
     this.staticDevLibs = staticDevLibs;
     this.devLibURLs = devLibURLs;
   }
 
   async interpretScript(
     gas, script = "", scriptPath = null, mainInputs = [], reqUserID = null,
+    // TODO: Turn scriptSignals into 'scriptFlags'/'initFlags', and also make
+    // some initFlags handler class.
     scriptSignals = [], functionModifications = [],
     signalModifications = new Map(), parsedScripts = new Map(),
-    liveModules = new Map(), rest,
+    liveModules = new Map(), textModules = new Map(), rest,
   ) {
     let scriptVars = {
       gas: gas, log: {entries: []}, scriptPath: scriptPath,
@@ -63,7 +66,8 @@ export class ScriptInterpreter {
       functionModifications: functionModifications,
       signalModifications: signalModifications, globalEnv: undefined,
       isExiting: false, resolveScript: undefined, interpreter: this,
-      parsedScripts: parsedScripts, liveModules: liveModules, rest: rest,
+      parsedScripts: parsedScripts, liveModules: liveModules,
+      textModules: textModules, rest: rest,
     };
 
     // First create a global environment, which is used as a parent environment
@@ -204,9 +208,11 @@ export class ScriptInterpreter {
     [parsedScript, lexArr, strPosArr, script] = parsedScripts.get(scriptPath)
       ?? [];
     if (!parsedScript) {
-      let {reqUserID} = callerEnv.scriptVars;
+      let {textModules} = callerEnv.scriptVars;
       try {
-       script = await this.fetchScript(scriptPath, reqUserID);
+        script = await this.fetchTextModule(
+          scriptPath, textModules, callerNode, callerEnv
+        );
       } catch (err) {
         throw new LoadError(err, callerNode, callerEnv);
       }
@@ -225,7 +231,38 @@ export class ScriptInterpreter {
   }
 
 
+  async fetchTextModule(modulePath, textModules, callerNode, callerEnv) {
+    let text = textModules.get(modulePath);
+    if (text !== undefined) {
+      return text
+    }
+    return await this.fetch(callerNode, callerEnv, modulePath);
+  }
 
+
+  fetch(callerNode, callerEnv, route, maxAge, noCache, onCached) {
+    let fetchFun = this.staticDevLibs.get("server").get("fetch");
+    return new Promise(resolve => {
+      this.executeFunction(
+        fetchFun, [route, maxAge, noCache, onCached, new DevFunction(
+          {}, res => resolve(res)
+        )],
+        callerNode, callerEnv
+      );
+    });
+  }
+
+  post(callerNode, callerEnv, route, postData) {
+    let postFun = this.staticDevLibs.get("server").get("post");
+    return new Promise(resolve => {
+      this.executeFunction(
+        postFun, [route, postData, new DevFunction(
+          {}, res => resolve(res)
+        )],
+        callerNode, callerEnv
+      );
+    });
+  }
 
 
 
@@ -284,7 +321,7 @@ export class ScriptInterpreter {
     decrCompGas(callerNode, callerEnv);
     decrGas(callerNode, callerEnv, "import");
 
-    let {liveModules, parsedScripts} = callerEnv.scriptVars;
+    let {liveModules, textModules, parsedScripts} = callerEnv.scriptVars;
     let globalEnv = callerEnv.getGlobalEnv();
 
     // If the module has already been executed, we can return early.
@@ -324,21 +361,40 @@ export class ScriptInterpreter {
       return liveModule;
     }
 
-    // Else if the module is a user module, first try to get it from the
-    // parsedScripts buffer, then try to fetch it from the database.
-    let [
-      submoduleNode, lexArr, strPosArr, script
-    ] = await this.fetchParsedScript(
-      modulePath, parsedScripts, callerNode, callerEnv
-    );
+    // Else if the module is a user module, with a '.js' extension, fetch/get
+    // it and create and return a LiveModule instance rom it.
+    let submoduleNode, lexArr, strPosArr, script, text;
+    if (SCRIPT_ROUTE_REGEX.test(modulePath)) {
+      // First try to get it from the parsedScripts buffer, then try to fetch
+      // it from the database.
+      let [
+        submoduleNode, lexArr, strPosArr, script
+      ] = await this.fetchParsedScript(
+        modulePath, parsedScripts, callerNode, callerEnv
+      );
 
-    // Then execute the module, inside the global environment, and return the
-    // resulting liveModule, after also adding it to liveModules.
-    [liveModule] = await this.executeModule(
-      submoduleNode, lexArr, strPosArr, script, modulePath, globalEnv
+      // Then execute the module, inside the global environment, and return the
+      // resulting liveModule, after also adding it to liveModules.
+      [liveModule] = await this.executeModule(
+        submoduleNode, lexArr, strPosArr, script, modulePath, globalEnv
+      );
+      liveModules.set(modulePath, liveModule);
+      return liveModule;
+    }
+
+    // Else if the module is actually a non-JS text file, fetch/get it and
+    // return a string of its content instead.
+    else if (TEXT_FILE_ROUTE_REGEX.test(modulePath)) {
+      return await this.fetchTextModule(
+        modulePath, textModules, callerNode, callerEnv
+      );
+    }
+
+    // Else throw a load error.
+    else throw new LoadError(
+      `Invalid module path: ${modulePath}`,
+      callerNode, callerEnv
     );
-    liveModules.set(modulePath, liveModule);
-    return liveModule;
   }
 
 
@@ -349,24 +405,38 @@ export class ScriptInterpreter {
 
     // Iterate through all the imports and add each import to the environment.
     impStmt.importArr.forEach(imp => {
-      let impType = imp.importType
-      if (impType === "namespace-import") {
-        let moduleNamespaceObj = turnImmutable(liveSubmodule);
-        curModuleEnv.declare(imp.ident, moduleNamespaceObj, true, imp);
+      // If liveSubmodule is a string, accept only a "namespace import", which
+      // has the effect of assigning the string to the import variable.
+      if (typeof liveSubmodule === "string") {
+        if (imp.importType !== "namespace-import") throw new LoadError(
+          "Only imports of the form '* as <variable>' is allowed for text " +
+          "file imports",
+          imp, curModuleEnv
+        );
+        curModuleEnv.declare(imp.ident, liveSubmodule, true, imp);
       }
-      else if (impType === "named-imports") {
-        imp.namedImportArr.forEach(namedImp => {
-          let ident = namedImp.ident ?? "default";
-          let alias = namedImp.alias ?? ident;
-          let val = liveSubmodule.get(ident);
-          curModuleEnv.declare(alias, val, true, namedImp);
-        });
+
+      // Else import the module regularly, as a JS module.
+      else {
+        let impType = imp.importType
+        if (impType === "namespace-import") {
+          let moduleNamespaceObj = turnImmutable(liveSubmodule);
+          curModuleEnv.declare(imp.ident, moduleNamespaceObj, true, imp);
+        }
+        else if (impType === "named-imports") {
+          imp.namedImportArr.forEach(namedImp => {
+            let ident = namedImp.ident ?? "default";
+            let alias = namedImp.alias ?? ident;
+            let val = liveSubmodule.get(ident);
+            curModuleEnv.declare(alias, val, true, namedImp);
+          });
+        }
+        else if (impType === "default-import") {
+          let val = liveSubmodule.get("default");
+          curModuleEnv.declare(imp.ident, val, true, imp);
+        }
+        else throw "finalizeImportStatement(): Unrecognized import type";
       }
-      else if (impType === "default-import") {
-        let val = liveSubmodule.get("default");
-        curModuleEnv.declare(imp.ident, val, true, imp);
-      }
-      else throw "finalizeImportStatement(): Unrecognized import type";
     });
   }
 
@@ -496,10 +566,10 @@ export class ScriptInterpreter {
 
     // Then execute the function depending on its type.
     if (fun instanceof DefinedFunction) {
-      return this.executeDefinedFunction(fun.node, inputArr, execEnv);
+      return this.#executeDefinedFunction(fun.node, inputArr, execEnv);
     }
     else if (fun instanceof DevFunction) {
-      return this.executeDevFunction(
+      return this.#executeDevFunction(
         fun, inputArr, callerNode, callerEnv, execEnv, thisVal
       );
     }
@@ -511,7 +581,7 @@ export class ScriptInterpreter {
 
 
 
-  executeDevFunction(
+  #executeDevFunction(
     devFun, inputArr, callerNode, callerEnv, execEnv, thisVal
   ) {
     let {isAsync, minArgNum = 0, liveModule} = devFun;
@@ -594,7 +664,7 @@ export class ScriptInterpreter {
 
 
 
-  executeDefinedFunction(funNode, inputValueArr, execEnv) {
+  #executeDefinedFunction(funNode, inputValueArr, execEnv) {
     // Add the input parameters to the environment (and turn all object inputs
     // immutable, unless the passAsMutable property is true, in which case just
     // turn this property false).

@@ -17,14 +17,13 @@ if (dirPath[0] === ".") {
 }
 
 // Prompt for username and password, then request the new directory.
-let credentials;
+let username, token, credentials;
 read({prompt: "Username: "}).then(name => {
-  credentials = name + ":";
+  username = name;
   read({prompt: "Password: ", silent: true}).then(pw => {
-    console.log("\n")
-    credentials += pw;
+    console.log("\n");
 
-    // Create/Update the directory on the server side.
-    DirectoryUploader.uploadDir(dirPath, credentials, deleteStructData);
+    // Create/update the directory on the server side.
+    DirectoryUploader.uploadDir(dirPath, username, pw, deleteStructData);
   });
 });

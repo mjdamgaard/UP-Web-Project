@@ -1,8 +1,6 @@
 
 import {useState, useLayoutEffect, createContext, useCallback} from "react";
 
-import {ServerInterface} from "../server/ajax_io/ServerInterface.js";
-
 import {
   ScriptInterpreter, getExtendedErrorMsg
 } from "../interpreting/ScriptInterpreter.js";
@@ -14,11 +12,11 @@ import {runTests} from "../testing/parsing_interpreting_tests.js";
 
 /* Static developer libraries */
 
-import * as fundamentalsMod from "../dev_lib/fundamentals.js";
+// import * as serverMod from "../dev_lib/server/server.js";
 import * as jsxMod from "../dev_lib/jsx_components.js";
 
 const staticDevLibs = new Map();
-staticDevLibs.set("fundamentals", fundamentalsMod);
+// staticDevLibs.set("server", serverMod);
 staticDevLibs.set("jsx", jsxMod);
 
 
@@ -35,11 +33,11 @@ if (typeof(Storage) === "undefined") {
 
 
 // Initialize script interpreter.
-function fetchScript(filePath) {
-  return ServerInterface.fetchScript(filePath, undefined);
-}
+// function fetchScript(filePath) {
+//   return ServerInterface.fetchScript(filePath, undefined);
+// }
 const scriptInterpreter = new ScriptInterpreter(
-  false, fetchScript, staticDevLibs, undefined
+  false, staticDevLibs, undefined
 );
 
 

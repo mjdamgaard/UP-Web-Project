@@ -1,6 +1,4 @@
 
-import * as querystring from 'querystring';
-
 import {MainDBConnection, getProcCallSQL} from "./DBConnection.js";
 import {payGas} from '../../interpreting/ScriptInterpreter.js';
 
@@ -8,6 +6,7 @@ import {payGas} from '../../interpreting/ScriptInterpreter.js';
 const mainDBCache = {
   get: () => {}, set: () => {}, remove: () => {}, removeExtensions: () => {},
 };
+
 
 
 export class DBQueryHandler {

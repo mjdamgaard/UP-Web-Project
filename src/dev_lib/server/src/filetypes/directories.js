@@ -116,12 +116,12 @@ export async function query(
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProcOrCache(
         "editHomeDir", [homeDirID, requestedAdminID],
-        route, maxAge, noCache, lastUpToDate, callerNode, callerEnv,
+        route, maxAge, true, lastUpToDate, callerNode, callerEnv,
         routesToEvict,
       );
     } else {
       return serverQueryHandler.queryServerOrCache(
-        isPost, route, maxAge, noCache, onCached, interpreter,
+        isPost, route, maxAge, true, onCached, interpreter,
         callerNode, callerEnv, routesToEvict,
       );
     }
@@ -143,12 +143,12 @@ export async function query(
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProcOrCache(
         "deleteHomeDir", [homeDirID],
-        route, maxAge, noCache, lastUpToDate, callerNode, callerEnv,
+        route, maxAge, true, lastUpToDate, callerNode, callerEnv,
         routesToEvict,
       );
     } else {
       return serverQueryHandler.queryServerOrCache(
-        isPost, route, maxAge, noCache, onCached, interpreter,
+        isPost, route, maxAge, true, onCached, interpreter,
         callerNode, callerEnv, routesToEvict,
       );
     }

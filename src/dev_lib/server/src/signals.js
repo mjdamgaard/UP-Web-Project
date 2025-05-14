@@ -1,5 +1,5 @@
 
-import {Signal} from "../../../interpreting/ScriptInterpreter.js";
+import {Signal, RuntimeError} from "../../../interpreting/ScriptInterpreter.js";
 
 
 export const ELEVATED_PRIVILEGES_FLAG = Symbol("elevated_privileges");

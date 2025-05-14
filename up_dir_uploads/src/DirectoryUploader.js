@@ -1,8 +1,9 @@
 
-import {ServerInterface} from '../../src/server/ajax_io/ServerQueryHandler.js';
+import {postData} from '../../src/server/ajax_io/ServerQueryHandler.js';
 
 import fs from 'fs';
 import path from 'path';
+
 
 
 export class DirectoryUploader {
@@ -16,7 +17,12 @@ export class DirectoryUploader {
   // as is, as well as file extensions of abstract files (often implemented via
   // one or several relational DB tables), for which the file content, if any,
   // will have to conform to a specific format.
-  static async uploadDir(dirPath, credentials, deleteStructData) {
+  static async uploadDir(dirPath, username, password, deleteStructData) {
+
+    // TODO: Call the server to get a new or an existing session ID here.
+    let token = "TODO..." + password;
+    credentials = btoa(`${username}:${token}`);
+
     // Read the dirID.
     let idFilePath = path.normalize(dirPath + "/.id");
     let dirID;
@@ -27,7 +33,10 @@ export class DirectoryUploader {
     // If no dirID was gotten, request the server to create a new directory and
     // get the new dirID.
     if (!dirID) {
-      dirID = await ServerInterface.createHomeDir(credentials);
+      dirID = await postData(`/?mkdir?${username}`, {
+        method: "post",
+        credentials: credentials,
+      });
       fs.writeFileSync(idFilePath, `${dirID}`);
     }
 
@@ -35,16 +44,20 @@ export class DirectoryUploader {
     // go through each one and check that it also exist nested in the client-
     // side directory, and for each one that doesn't, request deletion of that
     // file server-side.
-    let filePaths = await ServerInterface.fetchHomeDirDescendants(
-      dirID, credentials
-    );
+    let filePaths = await postData(`/${dirID}?_all`, {
+      method: "post",
+      credentials: credentials,
+    });
     let deletionPromises = [];
     filePaths.forEach(relPath => {
       let clientFilePath = path.normalize(dirPath + "/" + relPath);
       let serverFilePath = path.normalize(dirID + "/" + relPath);
       if (!fs.existsSync(clientFilePath)) {
         deletionPromises.push(
-          ServerInterface.deleteFile(credentials, serverFilePath)
+          postData(serverFilePath, {
+            method: "post",
+            credentials: credentials,
+          })
         );
       }
     });
@@ -89,20 +102,24 @@ export class DirectoryUploader {
       else if (/\.(js|txt|json|html)$/.test(name)) {
         let contentText = fs.readFileSync(childAbsPath, 'utf8');
         uploadPromises.push(
-          ServerInterface.putTextFile(
-            credentials, "/" + childRelPath, contentText
-          )
+          postData("/" + childRelPath, {
+            method: "post",
+            credentials: credentials,
+            postData: contentText,
+          })
         );
       }
       else if (/\.[a-z]+$/.test(name)) {
         if (deleteStructData) {
           uploadPromises.push(
-            ServerInterface.putStructFile(credentials, "/" + childRelPath)
+            // ServerInterface.putStructFile(credentials, "/" + childRelPath)
+            "TODO..."
           );
         }
         else {
           uploadPromises.push(
-            ServerInterface.touchStructFile(credentials, "/" + childRelPath)
+            // ServerInterface.touchStructFile(credentials, "/" + childRelPath)
+            "TODO..."
           );
         }
       }

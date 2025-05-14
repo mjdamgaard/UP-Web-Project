@@ -1,5 +1,6 @@
 
 import {serverDomainURL} from "./config.js";
+import {payGas} from "../../interpreting/ScriptInterpreter.js";
 
 
 // Cache placeholder:
@@ -19,24 +20,24 @@ export class ServerQueryHandler {
 
       // If there is already an ongoing request with this reqData object,
       // simply return the promise of that.
-      let responseTextPromise = this.#postReqBuffer.get(reqKey);
-      if (responseTextPromise) {
-        return responseTextPromise;
+      let responsePromise = this.#postReqBuffer.get(reqKey);
+      if (responsePromise) {
+        return responsePromise;
       }
 
       // Else send the request to the server and create the new response text
       // promise.
       let url = serverDomainURL + route;
       // let credentials = btoa(`${username}:${password}`)
-      responseTextPromise = postData(url, reqData, credentials);
+      responsePromise = postData(url, reqData);
 
       // Then add it to #postReqBuffer, and also give it a then-callback to
       // remove itself from said buffer, before return ing the promise.
-      this.#postReqBuffer.set(reqKey, responseTextPromise);
-      responseTextPromise.then(() => {
+      this.#postReqBuffer.set(reqKey, responsePromise);
+      responsePromise.then(() => {
         this.#postReqBuffer.delete(reqKey);
       });
-      return responseTextPromise;
+      return responsePromise;
   }
 
 
@@ -133,7 +134,9 @@ export class ServerQueryHandler {
   //     'Expected a script file name with the extension ".js", but got ' +
   //     `"${filePath}"`
   //   );
-  //   return this.fetchTextFileContent(filePath, credentials)
+  //   return this.queryServerOrCache(
+  //     false, filePath, credentials, "..."
+  //   )
   // }
 
 }
@@ -148,9 +151,6 @@ export async function postData(url, reqData) {
   let options = {
     method: "POST",
     body: JSON.stringify(reqData),
-    // headers: {
-    //   "Authorization": credentials ? `Basic ${credentials}` : undefined,
-    // }
   };
 
   let response = await fetch(url, options);

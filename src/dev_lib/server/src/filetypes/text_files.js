@@ -5,7 +5,7 @@ import {
 
 
 export async function query(
-  {callerNode, callerEnv},
+  {callerNode, callerEnv, interpreter},
   isPost, route, homeDirID, filePath, _, queryStringArr,
   postData, maxAge, noCache, lastUpToDate, onCached,
   serverQueryHandler, dbQueryHandler,
@@ -41,12 +41,12 @@ export async function query(
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProcOrCache(
         "putTextFile", [homeDirID, filePath, text],
-        route, maxAge, noCache, lastUpToDate, callerNode, callerEnv,
+        route, maxAge, true, lastUpToDate, callerNode, callerEnv,
         routesToEvict,
       );
     } else {
       return serverQueryHandler.queryServerOrCache(
-        isPost, route, maxAge, noCache, onCached, interpreter,
+        isPost, route, maxAge, true, onCached, interpreter,
         callerNode, callerEnv, routesToEvict,
       );
     }
@@ -62,12 +62,12 @@ export async function query(
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProcOrCache(
         "deleteTextFile", [homeDirID, filePath],
-        route, maxAge, noCache, lastUpToDate, callerNode, callerEnv,
+        route, maxAge, true, lastUpToDate, callerNode, callerEnv,
         routesToEvict,
       );
     } else {
       return serverQueryHandler.queryServerOrCache(
-        isPost, route, maxAge, noCache, onCached, interpreter,
+        isPost, route, maxAge, true, onCached, interpreter,
         callerNode, callerEnv, routesToEvict,
       );
     }
