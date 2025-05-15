@@ -110,7 +110,7 @@ export class ScriptInterpreter {
     // resolve() callback on scriptVars (which is contained by globalEnv).
     // This promise is resolved when the user calls the exit() function.
     let outputAndLogPromise = new Promise(resolve => {
-      scriptVars.resolveScript = (output, error) => {
+      scriptVars.resolveScript = (output, error) => {debugger;
         let {log} = scriptVars;
         if (!log.error) log.error = error;
         scriptVars.isExiting = true;
