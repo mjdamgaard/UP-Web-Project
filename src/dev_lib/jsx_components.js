@@ -36,8 +36,8 @@ export const WILL_CREATE_APP_SIGNAL = new Signal(
 export const createJSXApp = new DevFunction(
   {callerSignals: [[WILL_CREATE_APP_SIGNAL]]},
   function(
-    {callerNode, execEnv, interpreter}, component, props
-  ) {debugger;
+    {callerNode, execEnv, interpreter}, [component, props]
+  ) {
     const rootInstance = new JSXInstance(component, "root", undefined);
     let rootParent = document.getElementById("up-app-root");
     let appNode = rootInstance.render(
