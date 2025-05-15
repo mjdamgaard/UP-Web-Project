@@ -8,8 +8,7 @@ import {ClientError, endWithError, endWithInternalError} from './err/errors.js';
 import {ScriptInterpreter} from "../interpreting/ScriptInterpreter.js";
 import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
 
-import {SET_ELEVATED_PRIVILEGES_SIGNAL}
-  from "../dev_lib/server/src/signals.js";
+import {ELEVATED_PRIVILEGES_FLAG} from "../dev_lib/server/src/signals.js";
 
 import * as serverMod from "../dev_lib/server/server.js";
 
@@ -96,11 +95,11 @@ async function requestHandler(req, res) {
     // Get the optional maxAge, noCache, and lastUpToDate parameters used by
     // caches.
     maxAge, noCache, lastUpToDate,
-    // Get the optional gasID and a scriptSignalsID, which points to a gas
-    // and a scriptSignals object, respectively, which can both influence
+    // Get the optional gasID and a initFlagsID, which points to a gas
+    // and a initFlags object, respectively, which can both influence
     // whether the script succeeds or fails (but don't change the result on a
     // success).
-    gasID, scriptSignalsID,
+    gasID, initFlagsID,
     // Get the returnLog boolean, which if not present means that the script's
     // result will be returned on its own, without the log (which might be
     // empty anyway).
@@ -127,10 +126,10 @@ async function requestHandler(req, res) {
   let isLocked = LOCKED_ROUTE_REGEX.test(route);
 
   // TODO: If the route it locked, get the adminID of the homeDir, and verify
-  // that reqUser is the admin, then initialize scriptSignals with a
+  // that reqUser is the admin, then initialize initFlags with a
   // SET_ELEVATED_PRIVILEGES_SIGNAL on homeDirID. And if the route is not
-  // locked, initialize an empty scriptSignals array.
-  let scriptSignals = [[SET_ELEVATED_PRIVILEGES_SIGNAL, route[1]]];
+  // locked, initialize an empty initFlags array.
+  let initFlags = [[ELEVATED_PRIVILEGES_FLAG, route[1]]];
 
 
   // Call the main.js script which redirects to the query() dev function, whose
@@ -141,7 +140,7 @@ async function requestHandler(req, res) {
   let [output, log] = await scriptInterpreter.interpretScript(
     gas, undefined, "main.js",
     [method, route, postData, maxAge, noCache, lastUpToDate],
-    reqUserID, scriptSignals, undefined, undefined, parsedScripts,
+    reqUserID, initFlags, undefined, undefined, parsedScripts,
   );
   let [result, wasReady] = output ?? [];
 

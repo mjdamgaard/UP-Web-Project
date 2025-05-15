@@ -6,6 +6,31 @@ import {
 
 
 
+
+export const CAN_CREATE_APP_FLAG = Symbol("can_create_app");
+
+export const CAN_CREATE_APP_SIGNAL = new Signal(
+  "can_create_app",
+  function(flagEnv) {
+    flagEnv.setFlag(CAN_CREATE_APP_FLAG);
+  }
+);
+
+export const WILL_CREATE_APP_SIGNAL = new Signal(
+  "will_create_app",
+  function(flagEnv, node, env) {
+    let [wasFound] = flagEnv.getFlag(CAN_CREATE_APP_FLAG, 0);
+    if (!wasFound ) throw new RuntimeError(
+      "Cannot create a new the app from here",
+      node, env
+    );
+  }
+);
+
+
+
+
+
 // Create a JSX (React-like) app and mount it in the index HTML page, in the
 // element with an id of "up-app-root".
 export const createJSXApp = new DevFunction(
@@ -573,23 +598,3 @@ export function sanitize(str) {
 
 
 
-
-export var CAN_CREATE_APP_FLAG = Symbol("can_create_app");
-
-export var CAN_CREATE_APP_SIGNAL = new Signal(
-  "can_create_app",
-  function(flagEnv) {
-    flagEnv.setFlag(CAN_CREATE_APP_FLAG);
-  }
-);
-
-export var WILL_CREATE_APP_SIGNAL = new Signal(
-  "will_create_app",
-  function(flagEnv, node, env) {
-    let [wasFound] = flagEnv.getFlag(CAN_CREATE_APP_FLAG, 0);
-    if (!wasFound ) throw new RuntimeError(
-      "Cannot create a new the app from here",
-      node, env
-    );
-  }
-);

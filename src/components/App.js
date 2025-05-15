@@ -1,9 +1,9 @@
 
 import {useState, useLayoutEffect, createContext, useCallback} from "react";
-
 import {
   ScriptInterpreter, getExtendedErrorMsg
 } from "../interpreting/ScriptInterpreter.js";
+import {CAN_CREATE_APP_FLAG} from "../dev_lib/jsx_components.js";
 
 /* Tests */
 
@@ -64,6 +64,7 @@ const appScript = `
 `;
 const renderNumMonad = [0];
 
+const initFlags = [[CAN_CREATE_APP_FLAG]]
 
 
 
@@ -72,7 +73,10 @@ export const App = (props) => {
   useLayoutEffect(() => {
     if (renderNumMonad[0]++ === 0) {
       // runTests();
-      scriptInterpreter.interpretScript(appGas, appScript).then(
+      scriptInterpreter.interpretScript(
+        appGas, appScript, undefined, [], undefined /* TODO: Get reqUserID */,
+        initFlags,
+      ).then(
         ([output, log]) => {
           console.log("UP app script exited with output and log:");
           console.log(output);

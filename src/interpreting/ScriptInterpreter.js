@@ -54,15 +54,14 @@ export class ScriptInterpreter {
 
   async interpretScript(
     gas, script = "", scriptPath = null, mainInputs = [], reqUserID = null,
-    // TODO: Turn scriptSignals into 'scriptFlags'/'initFlags', and also make
-    // some initFlags handler class.
-    scriptSignals = [], functionModifications = [],
-    signalModifications = new Map(), parsedScripts = new Map(),
-    liveModules = new Map(), textModules = new Map(), rest,
+    // TODO: Make a FlagTransmitter class.
+    initFlags = [], functionModifications = [], signalModifications = new Map(),
+    parsedScripts = new Map(), liveModules = new Map(), textModules = new Map(),
+    rest,
   ) {
     let scriptVars = {
       gas: gas, log: {entries: []}, scriptPath: scriptPath,
-      reqUserID: reqUserID, scriptSignals: scriptSignals,
+      reqUserID: reqUserID, initFlags: initFlags,
       functionModifications: functionModifications,
       signalModifications: signalModifications, globalEnv: undefined,
       isExiting: false, resolveScript: undefined, interpreter: this,
@@ -1553,8 +1552,8 @@ export class Environment {
     }
     else if (scopeType === "global") {
       this.flagEnv = new FlagEnvironment(null, "/");
-      let scriptSignals = this.scriptVars.scriptSignals ?? [];
-      this.flagEnv.emitSignals(scriptSignals, null, this);
+      let initFlags = this.scriptVars.initFlags ?? [];
+      this.flagEnv.setFlags(initFlags);
     }
   }
 
@@ -1915,6 +1914,12 @@ export class FlagEnvironment {
 
   setFlag(flag, flagParams) {
     this.flags.set(flag, flagParams ?? null);
+  }
+
+  setFlags(flags) {
+    flags.forEach(([flag, flagParams]) => {
+      this.setFlag(flag, flagParams);
+    });
   }
 
   removeFlag(flag) {
