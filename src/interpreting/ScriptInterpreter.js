@@ -244,7 +244,8 @@ export class ScriptInterpreter {
     if (text !== undefined) {
       return text
     }
-    return await this.fetch(callerNode, callerEnv, modulePath);
+    [text] = await this.fetch(callerNode, callerEnv, modulePath) ?? [];
+    return text;
   }
 
 
@@ -253,7 +254,7 @@ export class ScriptInterpreter {
     return new Promise(resolve => {
       this.executeFunction(
         fetchFun, [route, maxAge, noCache, onCached, new DevFunction(
-          {decEnv: callerEnv}, res => resolve(res)
+          {decEnv: callerEnv}, ({}, [res]) => resolve(res)
         )],
         callerNode, callerEnv
       );
@@ -265,7 +266,7 @@ export class ScriptInterpreter {
     return new Promise(resolve => {
       this.executeFunction(
         postFun, [route, postData, new DevFunction(
-          {}, res => resolve(res)
+          {decEnv: callerEnv}, res => resolve(res)
         )],
         callerNode, callerEnv
       );
