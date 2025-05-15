@@ -122,15 +122,15 @@ export class ScriptInterpreter {
     // Now execute the script as a module, followed by an execution of any
     // function called 'main,' or the default export if no 'main' function is
     // found, and make sure to try-catch any exceptions or errors.
-    try {
+    try {debugger;
       let [liveScriptModule, scriptEnv] = await this.executeModule(
         parsedScript, lexArr, strPosArr, script, scriptPath, globalEnv
-      );
+      );debugger;
       this.executeMainFunction(
         liveScriptModule, mainInputs, parsedScript, scriptEnv
-      );
+      );debugger;
     }
-    catch (err) {
+    catch (err) {debugger;
       // If any non-internal error occurred, log it in log.error and resolve
       // the script with an undefined output.
       if (err instanceof SyntaxError || err instanceof RuntimeError) {
@@ -166,7 +166,7 @@ export class ScriptInterpreter {
       }
       else throw err;
     } 
-
+debugger;
     // If isExiting is true, we can return the resulting output and log.
     if (scriptVars.isExiting) {
       return await outputAndLogPromise;
