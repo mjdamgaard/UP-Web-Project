@@ -502,9 +502,9 @@ export class ScriptInterpreter {
   executeMainFunction(
     liveScriptModule, inputArr, scriptNode, scriptEnv
   ) {
-    let mainFun = liveScriptModule.get("main") ?? [];
+    let mainFun = liveScriptModule.get("main");
     if (mainFun === undefined) {
-      mainFun = liveScriptModule.get("default") ?? [];
+      mainFun = liveScriptModule.get("default");
     }
     if (mainFun !== undefined) {
       return this.executeFunction(
