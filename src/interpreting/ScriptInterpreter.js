@@ -122,15 +122,15 @@ export class ScriptInterpreter {
     // Now execute the script as a module, followed by an execution of any
     // function called 'main,' or the default export if no 'main' function is
     // found, and make sure to try-catch any exceptions or errors.
-    try {debugger;
+    try {
       let [liveScriptModule, scriptEnv] = await this.executeModule(
         parsedScript, lexArr, strPosArr, script, scriptPath, globalEnv
-      );debugger;
+      );
       this.executeMainFunction(
         liveScriptModule, mainInputs, parsedScript, scriptEnv
-      );debugger;
+      );
     }
-    catch (err) {debugger;
+    catch (err) {
       // If any non-internal error occurred, log it in log.error and resolve
       // the script with an undefined output.
       if (err instanceof SyntaxError || err instanceof RuntimeError) {
@@ -166,7 +166,7 @@ export class ScriptInterpreter {
       }
       else throw err;
     } 
-debugger;
+
     // If isExiting is true, we can return the resulting output and log.
     if (scriptVars.isExiting) {
       return await outputAndLogPromise;
@@ -253,7 +253,7 @@ debugger;
     return new Promise(resolve => {
       this.executeFunction(
         fetchFun, [route, maxAge, noCache, onCached, new DevFunction(
-          {}, res => resolve(res)
+          {decEnv: callerEnv}, res => resolve(res)
         )],
         callerNode, callerEnv
       );
@@ -568,9 +568,8 @@ debugger;
     // If fun is an ExportedFunction instance, extract the wrapped function.
     // (The other properties of ExportedFunction is taken care of by
     // Environment().)
-    let exportedFun;
+    let exteriorFun = fun;
     if (fun instanceof ExportedFunction) {
-      exportedFun = fun;
       fun = fun.fun;
     }
 
@@ -580,7 +579,7 @@ debugger;
     }
     else if (fun instanceof DevFunction) {
       return this.#executeDevFunction(
-        fun, exportedFun, inputArr, callerNode, execEnv, thisVal
+        fun, exteriorFun, inputArr, callerNode, execEnv, thisVal
       );
     }
     else throw new RuntimeError(
@@ -592,9 +591,9 @@ debugger;
 
 
   #executeDevFunction(
-    devFun, exportedFun, inputArr, callerNode, execEnv, thisVal
+    devFun, exteriorFun, inputArr, callerNode, execEnv, thisVal
   ) {
-    let {isAsync, minArgNum = 0, liveModule} = exportedFun;
+    let {isAsync, minArgNum = 0, liveModule} = exteriorFun;
     let execVars = {
       callerNode: callerNode, execEnv: execEnv,
       thisVal: thisVal, interpreter: this, liveModule: liveModule,
