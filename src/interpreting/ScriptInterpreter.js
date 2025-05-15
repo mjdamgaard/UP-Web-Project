@@ -568,18 +568,19 @@ export class ScriptInterpreter {
     // If fun is an ExportedFunction instance, extract the wrapped function.
     // (The other properties of ExportedFunction is taken care of by
     // Environment().)
-    let wrappedFun;
+    let exportedFun;
     if (fun instanceof ExportedFunction) {
-      wrappedFun = fun.fun;
+      exportedFun = fun;
+      fun = fun.fun;
     }
 
     // Then execute the function depending on its type.
-    if (wrappedFun instanceof DefinedFunction) {
-      return this.#executeDefinedFunction(wrappedFun.node, inputArr, execEnv);
+    if (fun instanceof DefinedFunction) {
+      return this.#executeDefinedFunction(fun.node, inputArr, execEnv);
     }
-    else if (wrappedFun instanceof DevFunction) {
+    else if (fun instanceof DevFunction) {
       return this.#executeDevFunction(
-        wrappedFun, fun, inputArr, callerNode, execEnv, thisVal
+        fun, exportedFun, inputArr, callerNode, execEnv, thisVal
       );
     }
     else throw new RuntimeError(
@@ -647,15 +648,13 @@ export class ScriptInterpreter {
       this.executeFunction(fun, inputArr, callerNode, execEnv, thisVal);
     }
     catch (err) {
-      if (
-        err instanceof ReturnException || err instanceof CustomException ||
-        err instanceof OutOfGasError
-      ) {
+      if (err instanceof RuntimeError) {
         let wasCaught = execEnv.runNearestCatchStmtAncestor(err, callerNode);
         if (!wasCaught) {
           execEnv.scriptVars.resolveScript(undefined, err);
         }
-      } else if (!(err instanceof ExitException)) {
+      }
+      else if (!(err instanceof ExitException)) {
         throw err;
       }
     }
@@ -1831,18 +1830,19 @@ export class LiveModule {
     return this.members.get(key);
   }
 
-  call(funName, inputArr, callerNode, callerEnv, callback) {
+  call(funName, inputArr, callerNode, callerEnv) {
     let fun = this.get(funName);
     let ret = this.interpreter.executeFunction(
       fun, inputArr, callerNode, callerEnv
     );
     if (ret instanceof PromiseObject) {
-      if (callback instanceof Function) {
-        ret.promise.then(() => callback());
-      }
-      else {
-        return ret.promise;
-      }
+      // if (callback instanceof Function) {
+      //   ret.promise.then(() => callback());
+      // }
+      // else {
+      //   return ret.promise;
+      // }
+      return ret.promise;
     }
     else {
       return ret;
@@ -2177,6 +2177,9 @@ export class ExportedFunction extends FunctionObject {
   get isDevFun() {
     return this.fun.isDevFun;
   }
+  get isAsync() {
+    return this.fun.isAsync;
+  }
   get callerSignals() {
     return this._callerSignals ?? this.fun.callerSignals;
   }
@@ -2488,6 +2491,7 @@ export function getExtendedErrorMsg(err) {
   else if (err instanceof RuntimeError) {
     type = "RuntimeError";
   }
+  else throw err;
 
   // Get the message defined by error.val.
   let msg = JSON.stringify(err?.val ?? null);

@@ -14,12 +14,19 @@ import * as binaryScoredBinaryKeyStructFilesMod from
 
 import {CHECK_ELEVATED_PRIVILEGES_SIGNAL} from "./src/signals.js";
 
-// Instantiate serverQueryHandler for client-side HTTP queries (requests), and
-// declare dbQueryHandler for server-side DB queries, which is instantiated
-// dynamically below, and only if the function is run server-side.
 const serverQueryHandler = new ServerQueryHandler();
+
+// We make sure to import DBQueryHandler only on the server side. (process is
+// only be defined server-side, so that gives us a way to branch.)
 let dbQueryHandler;
-let dbQueryHandlerPath = "../../server/db_io/DBQueryHandler.js";
+if (typeof process !== "undefined") {
+  let dbQueryHandlerPath = "../../server/db_io/DBQueryHandler.js";
+  import(dbQueryHandlerPath).then(mod => {
+    dbQueryHandler = new mod.DBQueryHandler();
+    console.log("ready");
+  });
+}
+
 
 
 
@@ -94,12 +101,12 @@ export const query = new DevFunction(
         throw new LoadError(`Unrecognized file type: ".${fileExt}"`);
     }
 
-    // If on the server side, and dbQueryHandler has not been imported yet, do
-    // so.
-    if (interpreter.isServerSide && !dbQueryHandler) {
-      let dbQueryHandlerMod = await import(dbQueryHandlerPath);
-      dbQueryHandler = new dbQueryHandlerMod.DBQueryHandler();
-    }
+    // // If on the server side, and dbQueryHandler has not been imported yet, do
+    // // so.
+    // if (interpreter.isServerSide && !dbQueryHandler) {
+    //   let dbQueryHandlerMod = await import(dbQueryHandlerPath);
+    //   dbQueryHandler = new dbQueryHandlerMod.DBQueryHandler();
+    // }
 
     // Query the database via the filetypeModule, and return the output (which
     // will often be [result, wasReady] (on success) server-side, and will
@@ -134,7 +141,7 @@ export const fetch = new DevFunction(
     let [result] = await liveModule.call(
       "query", ["fetch", route, undefined, maxAge, noCache],
       callerNode, execEnv
-    );
+    ) ?? [];
     return result;
   }
 );
@@ -149,7 +156,7 @@ export const post = new DevFunction(
     let [result] = await liveModule.call(
       "query", ["post", route, postData],
       callerNode, execEnv
-    );
+    ) ?? [];
     return result;
   }
 );

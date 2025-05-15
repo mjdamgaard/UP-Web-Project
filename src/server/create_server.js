@@ -150,7 +150,7 @@ async function requestHandler(req, res) {
   // stringified log to the client.
   if (log.error) {
     // TODO: Parse and reformat log hee, before handing it to JSON.stringify().
-    throw log.error;
+      endWithError(res, log.error);
   }
 
   // Else if returnLog is true, write back an array containing the result,
@@ -191,9 +191,12 @@ async function getGasAndReqUserID(credentials) {
     comp: 100000,
     import: 100,
     fetch: 100,
-    time: Infinity,
+    time: 3000,
+    // time: Infinity,
     dbRead: 100,
     dbWrite: 10000,
+    cacheRead: 100,
+    cacheWrite: 100,
   }];
 }
 

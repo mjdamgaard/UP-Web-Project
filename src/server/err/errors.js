@@ -1,5 +1,5 @@
 import {
-  LexError, LoadError, OutOfGasError, RuntimeError, SyntaxError,
+  getExtendedErrorMsg, RuntimeError, SyntaxError,
 } from "../../interpreting/ScriptInterpreter.js";
 
 
@@ -14,23 +14,8 @@ export function endWithError(res, err) {
   if (err instanceof ClientError) {
     res.end(`ClientError: "${err.error}"`);
   }
-  else if (err instanceof LoadError) {
-    res.end(`LoadError: "${err.val}"`);
-  }
-  else if (err instanceof OutOfGasError) {
-    res.end(`OutOfGasError: "${err.val}"`);
-  }
-  else if (err instanceof RuntimeError) {
-    res.end(`RuntimeError: "${err.val}"`);
-  }
-  else if (err instanceof LexError) {
-    res.end(`LexError: "${err.val}"`);
-  }
-  else if (err instanceof SyntaxError) {
-    res.end(`SyntaxError: "${err.val}"`);
-  }
-  else if (typeof err === "string") {
-    res.end(JSON.stringify(err));
+  else if (err instanceof RuntimeError || err instanceof SyntaxError) {
+    res.end(getExtendedErrorMsg(err));
   }
   else throw err;
 }
