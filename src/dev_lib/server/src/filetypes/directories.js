@@ -11,8 +11,9 @@ export async function query(
   {callerNode, execEnv, interpreter},
   isPost, route, homeDirID, filePath, _, queryStringArr,
   postData, maxAge, noCache, lastUpToDate, onCached,
-  serverQueryHandler, dbQueryHandler,
 ) {
+  let serverQueryHandler = interpreter.serverQueryHandler;
+  let dbQueryHandler = interpreter.dbQueryHandler;
 
   // If route equals "mkdir?<adminID>", create a new home directory with the
   // requested adminID as the admin. 
@@ -182,14 +183,6 @@ export async function query(
     let liveServerModule = await interpreter.import(`/${homeDirID}/module.js`);
     execEnv.emitSignal(SET_ELEVATED_PRIVILEGES_SIGNAL, homeDirID);
     liveServerModule.call(funName, inputArr, null, execEnv);
-    // TODO: let the server module call.. not exit().. but a callback.. ..Hm,
-    // so maybe I should remove exit() from the language, and standardize a
-    // callback passed to the main functions instead.. ..Hm, one idea could be
-    // to say that when main or a SMM has a last argument named 'callback', it
-    // resolves by calling that rather than by returning a value synchronously..
-    // ...Ooh, we could also just make async SMMs return a PromiseObject
-    // instead.. ..And the same for main functions, and then we can remove our
-    // exit.. 
     return ["TODO..."];
   }
 

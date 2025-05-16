@@ -6,6 +6,7 @@ import path from 'path';
 
 import {ClientError, endWithError, endWithInternalError} from './err/errors.js';
 import {ScriptInterpreter} from "../interpreting/ScriptInterpreter.js";
+import {DBQueryHandler} from "./db_io/DBQueryHandler.js";
 import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
 
 import {ELEVATED_PRIVILEGES_FLAG} from "../dev_lib/server/src/signals.js";
@@ -24,9 +25,10 @@ const mainScript = fs.readFileSync(mainScriptPath, "utf8");
 
 const [syntaxTree, lexArr, strPosArr] = scriptParser.parse(mainScript);
 const parsedMainScript = syntaxTree.res;
+const dbQueryHandler = new DBQueryHandler();
 
 const scriptInterpreter = new ScriptInterpreter(
-  true, staticDevLibs, undefined
+  true, undefined, dbQueryHandler, staticDevLibs, undefined
 );
 
 const LOCKED_ROUTE_REGEX = /[&/]_/;
@@ -155,6 +157,7 @@ async function requestHandler(req, res) {
   // Else if returnLog is true, write back an array containing the result,
   // wasReady, and also the log.
   else if (returnLog) {
+    // TODO: parse result first.
     res.writeHead(200, {'Content-Type': 'text/json'});
     res.end(JSON.stringify([result, log, wasReady]));
   }
@@ -171,6 +174,7 @@ async function requestHandler(req, res) {
 
   // And else simply write back the stringified [result, wasReady].
   else {
+    // TODO: parse result first.
     res.writeHead(200, {'Content-Type': 'text/json'});
     res.end(JSON.stringify([result, wasReady]));
   }

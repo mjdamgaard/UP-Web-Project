@@ -1,7 +1,7 @@
 
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, turnImmutable,
-  ArrayWrapper, Signal
+  ArrayWrapper, ObjectWrapper, Signal
 } from "../interpreting/ScriptInterpreter.js";
 
 
@@ -67,7 +67,7 @@ class JSXInstance {
     this.isDecorated = undefined;
     this.childInstances = new Map(); // : key -> JSXInstance.
     this.props = undefined;
-    this.state = componentModule.get("initState") ?? new Map();
+    this.state = undefined;
     this.refs = undefined;
     this.lastCallerNode = undefined;
     this.lastCallerEnv = undefined;
@@ -81,8 +81,8 @@ class JSXInstance {
 
 
   render(
-    props = new Map(), isDecorated, interpreter, callerNode, callerEnv,
-    replaceSelf = true, force = false
+    props = new ObjectWrapper(new Map()), isDecorated, interpreter,
+    callerNode, callerEnv, replaceSelf = true, force = false
   ) {  
     this.isDecorated = isDecorated;
     this.lastCallerNode = callerNode;
@@ -96,10 +96,18 @@ class JSXInstance {
       return this.domNode;
     }
 
+    // Initialize the instance's state if not done so before.
+    if (this.state === undefined) {
+      this.state = this.componentModule.call(
+        "getInitState", [props], callerNode, callerEnv, true
+      ) ?? new ObjectWrapper(new Map());
+    }
+
     // Record the props, if supplied. And on the first render only, record the
     // refs as well.
     if (props) this.props = props;
-    if (this.refs === undefined) this.refs = props.get("refs") ?? new Map();
+    if (this.refs === undefined) this.refs = props.get("refs") ??
+      new ObjectWrapper(new Map());
 
     // Get the componentModule's render() function.
     let fun = this.componentModule.get("render");
@@ -158,7 +166,7 @@ class JSXInstance {
 
     // Also define a dispatch callback used for dispatching calls to the
     // component's action methods (any method of the component module that is
-    // not called 'render' or 'initState') in order to change the state and
+    // not called 'render' or 'getInitState') in order to change the state and
     // queue a rerender.
     let dispatch = new DispatchFunction(this, callerEnv);
 
@@ -400,11 +408,13 @@ class JSXInstance {
     action, inputArr, interpreter, callerNode, callerEnv
   ) {
     // Throw if the user dispatches a reserved action, such as "render" or
-    // "initState".
-    if (action === "render" || action === "initState") throw new RuntimeError(
-      `Dispatched action cannot be the reserved identifier, ${action}`,
-      callerNode, callerEnv
-    );
+    // "getInitState".
+    if (action === "render" || action === "getInitState") {
+      throw new RuntimeError(
+        `Dispatched action cannot be the reserved identifier, ${action}`,
+        callerNode, callerEnv
+      );
+    }
 
     // Get the action method, and throw if it is not defined in the component's
     // module.

@@ -8,8 +8,10 @@ export async function query(
   {callerNode, execEnv, interpreter},
   isPost, route, homeDirID, filePath, _, queryStringArr,
   postData, maxAge, noCache, lastUpToDate, onCached,
-  serverQueryHandler, dbQueryHandler,
 ) {
+  let serverQueryHandler = interpreter.serverQueryHandler;
+  let dbQueryHandler = interpreter.dbQueryHandler;
+
   // If route equals just "/<homeDirID>/<filePath>", without any query string,
   // return the text stored in the file.
   if (!queryStringArr) {

@@ -3,6 +3,7 @@ import {useState, useLayoutEffect, createContext, useCallback} from "react";
 import {
   ScriptInterpreter, getExtendedErrorMsg
 } from "../interpreting/ScriptInterpreter.js";
+import {ServerQueryHandler} from "../server/ajax_io/ServerQueryHandler.js";
 import {CAN_CREATE_APP_FLAG} from "../dev_lib/jsx_components.js";
 
 /* Tests */
@@ -32,12 +33,10 @@ if (typeof(Storage) === "undefined") {
 
 
 
-// Initialize script interpreter.
-// function fetchScript(filePath) {
-//   return ServerInterface.fetchScript(filePath, undefined);
-// }
+const serverQueryHandler = new ServerQueryHandler();
+
 const scriptInterpreter = new ScriptInterpreter(
-  false, staticDevLibs, undefined
+  false, serverQueryHandler, undefined, staticDevLibs, undefined
 );
 
 

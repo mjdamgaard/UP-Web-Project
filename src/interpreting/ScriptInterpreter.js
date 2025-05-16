@@ -45,9 +45,12 @@ export function getParsingGasCost(str) {
 export class ScriptInterpreter {
 
   constructor(
-    isServerSide = false, staticDevLibs = new Map(), devLibURLs = new Map(),
+    isServerSide = false, serverQueryHandler, dbQueryHandler, 
+    staticDevLibs = new Map(), devLibURLs = new Map(),
   ) {
     this.isServerSide = isServerSide;
+    this.serverQueryHandler = serverQueryHandler;
+    this.dbQueryHandler = dbQueryHandler;
     this.staticDevLibs = staticDevLibs;
     this.devLibURLs = devLibURLs;
   }
@@ -540,6 +543,12 @@ export class ScriptInterpreter {
   executeFunction(fun, inputArr, callerNode, callerEnv, thisVal) {
     decrCompGas(callerNode, callerEnv);
 
+    // Throw if fun is not a FunctionObject.
+    if (!(fun instanceof FunctionObject)) throw new RuntimeError(
+      "Function call to a non-function",
+      callerNode, callerEnv
+    );
+
     // If inputArr is not an array, expect an iterable and turn it into an
     // array.
     if (!(inputArr instanceof Array)) {
@@ -597,10 +606,6 @@ export class ScriptInterpreter {
         fun, exteriorFun, inputArr, callerNode, execEnv, thisVal
       );
     }
-    else throw new RuntimeError(
-      "Function call to a non-function",
-      callerNode, callerEnv
-    );
   }
 
 
@@ -1482,12 +1487,6 @@ export class ScriptInterpreter {
           postfix, environment
         );
 
-        // And throw if val is not a FunctionObject.
-        if (!(val instanceof FunctionObject)) throw new RuntimeError(
-          "Call to non-function",
-          postfix, environment
-        );
-
         // Evaluate the expressions inside the tuple.
         let inputExpArr = postfix.children;
         let inputValArr = inputExpArr.map(exp => (
@@ -1851,24 +1850,19 @@ export class LiveModule {
     return this.members.get(key);
   }
 
-  call(funName, inputArr, callerNode, callerEnv) {
+  call(funName, inputArr, callerNode, callerEnv, ignoreIfUndef = false) {
     let fun = this.get(funName);
-    let ret = this.interpreter.executeFunction(
-      fun, inputArr, callerNode, callerEnv
+    if (fun !== undefined) {
+      let ret = this.interpreter.executeFunction(
+        fun, inputArr, callerNode, callerEnv
+      );
+      return (ret instanceof PromiseObject) ? ret.promise : ret;
+    }
+    else if (!ignoreIfUndef) throw (
+      "LiveModule.call(): Function not found"
     );
-    if (ret instanceof PromiseObject) {
-      // if (callback instanceof Function) {
-      //   ret.promise.then(() => callback());
-      // }
-      // else {
-      //   return ret.promise;
-      // }
-      return ret.promise;
-    }
-    else {
-      return ret;
-    }
   }
+
 }
 
 

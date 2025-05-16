@@ -3,7 +3,6 @@ import {
   DevFunction, FunctionObject, Signal, RuntimeError, TypeError, LoadError,
 } from '../../interpreting/ScriptInterpreter.js';
 import {parseRoute} from './src/parseRoute.js';
-import {ServerQueryHandler} from "../../server/ajax_io/ServerQueryHandler.js";
 
 import * as directoriesMod from "./src/filetypes/directories.js";
 import * as textFilesMod from "./src/filetypes/text_files.js";
@@ -16,18 +15,6 @@ import * as binaryKeyBinaryScoredStructFilesMod from
 
 import {CHECK_ELEVATED_PRIVILEGES_SIGNAL} from "./src/signals.js";
 
-const serverQueryHandler = new ServerQueryHandler();
-
-// We make sure to import DBQueryHandler only on the server side. (process is
-// only be defined server-side, so that gives us a way to branch.)
-let dbQueryHandler;
-if (typeof process !== "undefined") {
-  let dbQueryHandlerPath = "../../server/db_io/DBQueryHandler.js";
-  import(dbQueryHandlerPath).then(mod => {
-    dbQueryHandler = new mod.DBQueryHandler();
-    console.log("ready");
-  });
-}
 
 
 
@@ -120,7 +107,6 @@ export const query = new DevFunction(
       {callerNode, execEnv, interpreter, liveModule},
       isPost, route, homeDirID, filePath, fileExt, queryStringArr,
       postData, maxAge, noCache ?? isPost, lastUpToDate, onCached,
-      serverQueryHandler, dbQueryHandler,
     );
   }
 );
