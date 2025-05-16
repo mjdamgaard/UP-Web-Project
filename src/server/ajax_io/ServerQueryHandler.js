@@ -86,7 +86,7 @@ export class ServerQueryHandler {
     }
     if (maxAge !== undefined) reqData.maxAge = maxAge;
     if (lastUpToDate) reqData.lastUpToDate = lastUpToDate;
-    [fetchedResult, wasReady] = await this.post(route, reqData);
+    [fetchedResult, wasReady] = await this.post(route, reqData) ?? [];
 
     // If the cachedResult was already up-to-date, use the cachedResult going
     // forward, and if not, use the fetched result.

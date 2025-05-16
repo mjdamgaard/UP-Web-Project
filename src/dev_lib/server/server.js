@@ -9,8 +9,10 @@ import * as directoriesMod from "./src/filetypes/directories.js";
 import * as textFilesMod from "./src/filetypes/text_files.js";
 import * as autoKeyTextStructFilesMod
   from "./src/filetypes/auto_key_text_structs.js";
-import * as binaryScoredBinaryKeyStructFilesMod from
-  "./src/filetypes/binary_scored_binary_key_structs.js";
+import * as autoKeyTimestampScoredTextStructFilesMod
+  from "./src/filetypes/auto_key_timestamp_scored_text_structs.js";
+import * as binaryKeyBinaryScoredStructFilesMod from
+  "./src/filetypes/binary_key_binary_scored_structs.js";
 
 import {CHECK_ELEVATED_PRIVILEGES_SIGNAL} from "./src/signals.js";
 
@@ -90,11 +92,14 @@ export const query = new DevFunction(
       case "md":
         filetypeModule = textFilesMod;
         break;
-      case "ats":
+      case "at":
         filetypeModule = autoKeyTextStructFilesMod;
         break;
-      case "bbs":
-        filetypeModule = binaryScoredBinaryKeyStructFilesMod;
+      case "att":
+        filetypeModule = autoKeyTimestampScoredTextStructFilesMod;
+        break;
+      case "bb":
+        filetypeModule = binaryKeyBinaryScoredStructFilesMod;
         break;
       // More file types can be added here in the future.
       default:

@@ -14,7 +14,7 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
   "true|false|null|undefined|Infinity|NaN|try|catch|finally|for|while|do|" +
-  "default|public|debugger|new|exit|passAsMutable|Promise|console|import|Map)$"
+  "default|public|debugger|new|passAsMutable|Promise|console|import|Map)$"
   // TODO: Continue this list.
 );
 
@@ -315,7 +315,6 @@ export const scriptGrammar = {
       ["if-else-statement!1"],
       ["loop-statement!1"],
       ["return-statement!1"],
-      // ["exit-statement!1"],
       ["throw-statement!1"],
       ["try-catch-statement!1"],
       ["instruction-statement!1"],
@@ -697,7 +696,7 @@ export const scriptGrammar = {
       ["array!1"],
       ["object!1"],
       ["jsx-element!1"],
-      ["exit-call!1"],
+      // ["exit-call!1"],
       ["pass-as-mutable-call!1"],
       ["promise-call!1"],
       ["console-call!1"],
@@ -930,16 +929,16 @@ export const scriptGrammar = {
     ],
     process: () => ({type: "this-keyword"}),
   },
-  "exit-call": {
-    rules: [
-      ["/exit/", /\(/, "expression!1", /\)/],
-      ["/exit/", /\(/, /\)/],
-    ],
-    process: (children, ruleInd) => ({
-      type: "exit-call",
-      exp: (ruleInd === 0) ? children[2] : undefined,
-    }),
-  },
+  // "exit-call": {
+  //   rules: [
+  //     ["/exit/", /\(/, "expression!1", /\)/],
+  //     ["/exit/", /\(/, /\)/],
+  //   ],
+  //   process: (children, ruleInd) => ({
+  //     type: "exit-call",
+  //     exp: (ruleInd === 0) ? children[2] : undefined,
+  //   }),
+  // },
   "pass-as-mutable-call": {
     rules: [
       ["/passAsMutable/", /\(/, "expression", /\)/],

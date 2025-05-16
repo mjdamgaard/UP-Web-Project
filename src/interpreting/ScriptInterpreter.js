@@ -107,7 +107,8 @@ export class ScriptInterpreter {
 
     // Create a promise to get the output and log, and store a modified
     // resolve() callback on scriptVars (which is contained by globalEnv).
-    // This promise is resolved when the user calls the exit() function.
+    // This promise is resolved when the resolve() callback of the main
+    // function of the script is called.
     let outputAndLogPromise = new Promise(resolve => {
       scriptVars.resolveScript = (output, error) => {
         let {log} = scriptVars;
@@ -179,7 +180,7 @@ export class ScriptInterpreter {
     else {
       if (gas.time < MINIMAL_TIME_GAS) {
         scriptVars.resolveScript(undefined, new OutOfGasError(
-          "Ran out of " + GAS_NAMES.time + " gas (no exit statement reached)",
+          "Ran out of " + GAS_NAMES.time + " gas",
           parsedScript, globalEnv,
         ));
       }
@@ -189,8 +190,7 @@ export class ScriptInterpreter {
         setTimeout(
           () => {
             scriptVars.resolveScript(undefined, new OutOfGasError(
-              "Ran out of " + GAS_NAMES.time +
-                " gas (no exit statement reached)",
+              "Ran out of " + GAS_NAMES.time + " gas",
               parsedScript, globalEnv,
             ));
           },
@@ -502,22 +502,37 @@ export class ScriptInterpreter {
   executeMainFunction(
     liveScriptModule, inputArr, scriptNode, scriptEnv
   ) {
-    let mainFun = liveScriptModule.get("main");
-    if (mainFun === undefined) {
-      mainFun = liveScriptModule.get("default");
-    }
-    if (mainFun !== undefined) {
-      return this.executeFunction(
-        mainFun, inputArr,
-        mainFun instanceof DefinedFunction ? mainFun.node : scriptNode,
-        scriptEnv
-      );
-    }
-    // If no main function was found, simply do nothing (expecting the script
-    // to eventually exit itself via a callback function (or timing out)).
-    return;
+    // Create a resolve() callback for the main function that exits the script
+    // the input value as the script output.
+    let resolveFun = new DevFunction(
+      {decEnv: scriptEnv}, ({}, [output]) => {
+        scriptEnv.scriptVars.resolveScript(output);
+        throw new ExitException();
+      }
+    );
+    
+    // Then call executeModuleFunction with that resolve, and with funName =
+    // "main".
+    this.executeModuleFunction(
+      liveScriptModule, "main", inputArr, resolveFun, scriptNode, scriptEnv
+    );
   }
 
+  executeModuleFunction(
+    liveModule, funName, inputArr, resolveFun, moduleNode, moduleEnv
+  ) {
+    let fun = liveModule.get(funName);
+    if (fun === undefined) throw new RuntimeError(
+      `No function called "${funName}" was exported from ` +
+      `Module ${liveModule.modulePath}`,
+      moduleNode, moduleEnv
+    );
+    inputArr = inputArr.concat([resolveFun]);
+    return this.executeFunction(
+      fun, inputArr,
+      fun instanceof DefinedFunction ? fun.node : moduleNode, moduleEnv
+    );
+  }
 
 
 
@@ -544,17 +559,17 @@ export class ScriptInterpreter {
     }
 
     // And if the function is not an arrow function, check that the function
-    // hasn't been turned noncallable by being passed to an enclosed function.
-    else if (fun.isNoncallable) throw new RuntimeError(
+    // hasn't been passed to an enclosed function.
+    else if (fun.isPassedToEnclosed) throw new RuntimeError(
       "A non-arrow function was passed to and called by an enclosed function",
       callerNode, callerEnv
     );
 
-    // And if the function is itself enclosed, turn all arguments noncallable,
-    // as well as thisVal.
+    // And if the function is itself enclosed, turn all arguments
+    // isPassedToEnclosed, as well as thisVal.
     if (fun.isEnclosed) {
-      inputArr = inputArr.map(val => turnNoncallable(val));
-      thisVal = turnNoncallable(thisVal);
+      inputArr = inputArr.map(val => turnPassedToEnclosed(val));
+      thisVal = turnPassedToEnclosed(thisVal);
     }
 
     // Initialize a new environment for the execution of the function.
@@ -1242,17 +1257,17 @@ export class ScriptInterpreter {
       case "this-keyword": {
         return environment.getThisVal();
       }
-      case "exit-call": {
-        // Evaluate the argument.
-        let expVal = (!expNode.exp) ? undefined :
-          this.evaluateExpression(expNode.exp, environment);
-        let {resolveScript} = environment.scriptVars;
-        // Check the can-exit signal, before resolving the script.
-        environment.emitSignal(WILL_EXIT_SIGNAL, expNode);
-        resolveScript(expVal);
-        // Throw an exit exception.
-        throw new ExitException();
-      }
+      // case "exit-call": {
+      //   // Evaluate the argument.
+      //   let expVal = (!expNode.exp) ? undefined :
+      //     this.evaluateExpression(expNode.exp, environment);
+      //   let {resolveScript} = environment.scriptVars;
+      //   // Check the can-exit signal, before resolving the script.
+      //   environment.emitSignal(WILL_EXIT_SIGNAL, expNode);
+      //   resolveScript(expVal);
+      //   // Throw an exit exception.
+      //   throw new ExitException();
+      // }
       case "pass-as-mutable-call": {
         let expVal = this.evaluateExpression(expNode.exp, environment);
         return passedAsMutable(expVal);
@@ -1328,6 +1343,7 @@ export class ScriptInterpreter {
           log.entries.push(expVal);
           return undefined;
         }
+        // TODO: Implement a console.trace() call as well.
       }
       default: throw (
         "ScriptInterpreter.evaluateExpression(): Unrecognized type: " +
@@ -1446,13 +1462,13 @@ export class ScriptInterpreter {
         // Then use the get() method to get the value.
         val = objVal.get(index);
 
-        // Lastly, if objVal was immutable or nonCallable, turn the retrieved
-        // value into that as well.
+        // Lastly, if objVal was immutable or passedToEnclosed, turn the
+        // retrieved value into that as well.
         if (!(objVal.set instanceof Function)) {
           val = turnImmutable(val);
         }
-        if (objVal.isNoncallable) {
-          val = turnNoncallable(val);
+        if (objVal.isPassedToEnclosed) {
+          val = turnPassedToEnclosed(val);
         }
       }
 
@@ -1463,6 +1479,12 @@ export class ScriptInterpreter {
         // as functions will always return something immutable anyway.
         if (forAssignment) throw new RuntimeError(
           "Assignment to a member of an immutable object",
+          postfix, environment
+        );
+
+        // And throw if val is not a FunctionObject.
+        if (!(val instanceof FunctionObject)) throw new RuntimeError(
+          "Call to non-function",
           postfix, environment
         );
 
@@ -1965,22 +1987,22 @@ export class FlagEnvironment {
 
 
 
-export const NO_EXIT_FLAG = Symbol("no_exit");
+// export const NO_EXIT_FLAG = Symbol("no_exit");
 
-export const NO_EXIT_SIGNAL = new Signal((flagEnv) => {
-    flagEnv.setFlag(NO_EXIT_FLAG);
-});
+// export const NO_EXIT_SIGNAL = new Signal((flagEnv) => {
+//     flagEnv.setFlag(NO_EXIT_FLAG);
+// });
 
-export const WILL_EXIT_SIGNAL = new Signal(
-  "will_exit",
-  (flagEnv, node, env) => {
-    let [wasFound] = flagEnv.getFlag(NO_EXIT_FLAG);
-    if (wasFound) throw new RuntimeError(
-      "Script is not allowed to exit here",
-      node, env
-    );
-  }
-);
+// export const WILL_EXIT_SIGNAL = new Signal(
+//   "will_exit",
+//   (flagEnv, node, env) => {
+//     let [wasFound] = flagEnv.getFlag(NO_EXIT_FLAG);
+//     if (wasFound) throw new RuntimeError(
+//       "Script is not allowed to exit here",
+//       node, env
+//     );
+//   }
+// );
 
 
 
@@ -2072,6 +2094,10 @@ export class ArrayWrapper extends ValueWrapper {
       )).join(",") +
     "]";
   }
+
+  append(value) {
+    return new ArrayWrapper(this.val.concat([value]))
+  }
 }
 
 
@@ -2125,6 +2151,9 @@ export class DefinedFunction extends FunctionObject {
   get isArrowFun() {
     return this.node.type === "arrow-function";
   }
+  get name() {
+    return this.node.name ?? "<anonymous function>";
+  }
 }
 
 export class DevFunction extends FunctionObject {
@@ -2153,6 +2182,9 @@ export class DevFunction extends FunctionObject {
   }
   get isEnclosed() {
     return this._isEnclosed ?? !!this.initSignals;
+  }
+  get name() {
+    return "<anonymous dev function>";
   }
 }
 
@@ -2193,6 +2225,9 @@ export class ExportedFunction extends FunctionObject {
   }
   get isEnclosed() {
     return this._isEnclosed ?? this.fun.isEnclosed;
+  }
+  get name() {
+    return this.funName;
   }
 }
 
@@ -2368,13 +2403,13 @@ export function notPassedAsMutable(val) {
     return val;
   }
 }
-export function turnNoncallable(val) {
+export function turnPassedToEnclosed(val) {
   if (
     val && (val instanceof FunctionObject || val.get instanceof Function) &&
-    !val.isNoncallable
+    !val.isPassedToEnclosed
   ) {
     val = Object.create(val);
-    val.isNoncallable = true;
+    val.isPassedToEnclosed = true;
     return val;
   } else {
     return val;

@@ -139,7 +139,7 @@ async function requestHandler(req, res) {
   ]);
   let [output, log] = await scriptInterpreter.interpretScript(
     gas, undefined, "main.js",
-    [method, route, postData, maxAge, noCache, lastUpToDate],
+    [method, route, postData, maxAge, noCache, lastUpToDate, undefined],
     reqUserID, initFlags, undefined, undefined, parsedScripts,
   );
   let [result, wasReady] = output ?? [];
