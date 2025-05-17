@@ -1,6 +1,5 @@
 
 import {Parser} from "./Parser.js";
-import {regEntGrammar} from "./RegEntParser.js";
 import {
   straightenListSyntaxTree, copyFromChild, copyLexemeFromChild,
   processPolyadicInfixOperation, processLeftAssocPostfixes,
