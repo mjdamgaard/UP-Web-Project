@@ -22,6 +22,19 @@ const INTEGER_DEFINED_PSEUDO_CLASS_PATTERN =
   "(nth-child)";
 // TODO: Continue this list.
 
+const PROPERTY_PATTERN =
+  "(color|background-color)";
+// TODO: Continue this list.
+
+const FLAG_PATTERN =
+  "([^\\s\\S])";
+// TODO: Continue this list.
+
+const BUILT_IN_COLOR_PATTERN =
+  "(red|green|blue)";
+// TODO: Continue this list.
+
+
 
 
 export const sassGrammar = {
@@ -158,15 +171,98 @@ export const sassGrammar = {
   },
   "member": {
     rules: [
-      ["property", "/:/!", "value", "flag", "/;/!"],
-      ["property", "/:/!", "value", "/;/"],
+      ["property", "/:/!", "value!1+", "flag", "/;/!"],
+      ["property", "/:/!", "value!1+", "/;/"],
     ],
     process: (children) => ({
       type: "member",
       propName: children[0].name,
-      value: children[2],
+      valArr: children[2],
       flagName: children[3]?.name,
     }),
+  },
+  "property": {
+    rules: [
+      ["/" + PROPERTY_PATTERN + "/"],
+    ],
+    process: () => ({
+      type: "property",
+      name: children[0],
+    }),
+  },
+  "flag": {
+    rules: [
+      ["/!" + FLAG_PATTERN + "/"],
+    ],
+    process: () => ({
+      type: "flag",
+      name: children[0].substring(1),
+    }),
+  },
+  "value": {
+    rules: [
+      ["number"],
+      ["color"],
+      ["length"],
+    ],
+    process: copyFromChild,
+  },
+  "number": {
+    rules: [
+      ["integer"],
+      ["float"],
+    ],
+    process: copyFromChild,
+  },
+  "integer": {
+    rules: [
+      ["/0|[1-9][0-9]*/"],
+    ],
+    process: copyLexemeFromChild,
+    params: ["integer"],
+  },
+  "float": {
+    rules: [
+      [/(0|[1-9][0-9]*)(\.[0-9]+)?/],
+    ],
+    process: copyLexemeFromChild,
+    params: ["float"],
+  },
+  "color": {
+    rules: [
+      ["hex-color"],
+      ["built-in-color"],
+    ],
+    process: copyFromChild,
+  },
+  "hex-color": {
+    rules: [
+      ["/#/", "/([0-9a-fA-F]{2}){3,4}/"],
+    ],
+    process: (children) => ({
+      type: "hex-color",
+      hexStr: children[1],
+    }),
+  },
+  "built-in-color": {
+    rules: [
+      ["/" + BUILT_IN_COLOR_PATTERN + "/"],
+    ],
+    process: copyLexemeFromChild,
+    params: ["built-in-color"],
+  },
+  "length": {
+    rules: [
+      [/\-?(0|[1-9][0-9]*)(\.[0-9]+)?(cm|mm|Q|in|pc|pt|px|em|rem|vh|vw)/],
+    ],
+    process: (children) => {
+      let [ , numLexeme, unit] = /([\-0-9.]+)([a-zA-Z]*)/.exec(children[0]);
+      return {
+        type: "length",
+        numLexeme: numLexeme,
+        unit: unit,
+      };
+    },
   },
 };
 
@@ -180,15 +276,12 @@ export class SASSParser extends Parser {
       [
         /"([^"\\]|\\[.\n])*"/,
         /'([^'\\]|\\[.\n])*'/,
-        /(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
-        /\+=|\-=|\*=|\/=|&&=|\|\|=|\?\?=/,
-        /&&|\|\||\?\?|\+\+|\-\-|\*\*/,
-        /\?\.|\.\.\.|=>|\/>|<\//,
-        /===|==|!==|!=|<=|>=/,
-        /[\.,:;\[\]\{\}\(\)<>\?=\+\-\*\|\^&!%\/]/,
-        /[_\$a-zA-Z0-9]+/,
+        /\-?(0|[1-9][0-9]*)(\.[0-9]+)?(%|[a-zA-Z]+)?/,
+        /::|\|\|/,
+        /[.,:;\[\]{}()<>?=+\-*|^&!%/#]/,
+        /[a-zA-Z_][a-zA-Z0-9_\-]*/,
       ],
-      /\s+|\/\/.*\n\s*|\/\*([^\*]|\*(?!\/))*(\*\/\s*|$)/
+      /\s+|\/\/.*\n\s*|\/\*([^*]|\*(?!\/))*(\*\/\s*|$)/
     );
   }
 
