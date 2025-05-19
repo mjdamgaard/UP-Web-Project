@@ -1,7 +1,7 @@
 
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, turnImmutable,
-  ArrayWrapper, ObjectWrapper, Signal, PromiseObject
+  ArrayWrapper, ObjectWrapper, Signal, PromiseObject, StyleObject,  
 } from "../interpreting/ScriptInterpreter.js";
 
 
@@ -47,7 +47,7 @@ export const createJSXApp = new DevFunction(
       props, false, interpreter, callerNode, execEnv, false
     );
     rootParent.replaceChildren(appNode);
-    applyAppStyle(appStyle);
+    applyAppStyle(appStyle, callerNode, execEnv);
   }
 );
 
@@ -141,7 +141,9 @@ class JSXInstance {
             // We also make sure to set the new hasBeenRendered as the promise
             // which can be used by other instances of the same component.
             style.promise.then(style => {
-              applyComponentStyle(this.componentPath, style);
+              applyComponentStyle(
+                this.componentPath, style, callerNode, callerEnv
+              );
               this.styledComponents.set(this.componentPath, true);
               this.queueRerender(interpreter);
             });
@@ -151,7 +153,9 @@ class JSXInstance {
           else {
             // Else we simply apply the style synchronously, and then continue
             // with the rest of this render() method.
-            applyComponentStyle(this.componentPath, style);
+              applyComponentStyle(
+                this.componentPath, style, callerNode, callerEnv
+              );
             this.styledComponents.set(this.componentPath, true);
           }
         }
@@ -653,6 +657,31 @@ export function compareProps(props1, props2, compareRefs = false) {
 
 
 
+
+function applyAppStyle(appStyle, node, env) {
+  if (!(appStyle instanceof StyleObject)) throw new RuntimeError(
+    "createJSXApp(): app style input was not a StyleObject instance",
+    node, env
+  );
+  let styleSheet = appStyle.styleSheet;
+  let appStyleElement = document.getElementById("up-app-style");
+  appStyleElement.replaceChildren(
+    ``
+  );
+}
+
+
+function applyComponentStyle(componentPath, style, node, env) {
+  throw new RuntimeError(
+    "applyComponentStyle() is not implemented yet",
+    node, env
+  );
+}
+
+
+
+
+
 export function sanitize(str) {
   return str
     .replaceAll("&", "&amp;")
@@ -661,6 +690,11 @@ export function sanitize(str) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&apos;");
 }
+
+
+
+
+
 
 
 

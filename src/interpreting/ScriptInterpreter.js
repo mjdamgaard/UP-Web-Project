@@ -1,5 +1,6 @@
 
 import {scriptParser} from "./parsing/ScriptParser.js";
+import {sassParser} from "./parsing/SASSParser.js";
 import {
   LexError, SyntaxError, getExtendedErrorMsg as getExtendedErrorMsgHelper,
   getLnAndCol,
@@ -35,6 +36,22 @@ const GAS_NAMES = {
 
 export function getParsingGasCost(str) {
   return {comp: str.length / 100 + 1};
+}
+
+export function parseScript(script, node, env) {
+  payGas(node, env, {comp: getParsingGasCost(script)});
+  let [scriptSyntaxTree, lexArr, strPosArr] = scriptParser.parse(script);
+  if (scriptSyntaxTree.error) throw scriptSyntaxTree.error;
+  let parsedScript = scriptSyntaxTree.res;
+  return [parsedScript, lexArr, strPosArr];
+}
+
+export function parseStyleSheet(styleSheet, node, env) {
+  payGas(node, env, {comp: getParsingGasCost(styleSheet)});
+  let [syntaxTree, lexArr, strPosArr] = sassParserParser.parse(styleSheet);
+  if (syntaxTree.error) throw syntaxTree.error;
+  let parsedStyleSheet = scriptSyntaxTree.res;
+  return [parsedStyleSheet, lexArr, strPosArr];
 }
 
 // let CAN_EXIT_SIGNAL; // is defined below.
@@ -90,15 +107,14 @@ export class ScriptInterpreter {
     // If script is provided, rather than the scriptPath, first parse it.
     let parsedScript, lexArr, strPosArr;
     if (scriptPath === null) {
-      payGas(null, globalEnv, false, {comp: getParsingGasCost(script)});
-      let scriptSyntaxTree;
-      [scriptSyntaxTree, lexArr, strPosArr] = scriptParser.parse(script);
-      if (scriptSyntaxTree.error) {
-        return [
-          undefined, {error: scriptSyntaxTree.error},
-        ];
+      try {
+        [parsedScript, lexArr, strPosArr] = parseScript(
+          script, null, globalEnv
+        );
       }
-      parsedScript = scriptSyntaxTree.res;
+      catch (err) {
+        return [undefined, {error: err}];
+      }
       parsedScripts.set(scriptPath, [parsedScript, lexArr, strPosArr, script]);
     }
     // Else fetch and parse the script first thing.
@@ -230,11 +246,9 @@ export class ScriptInterpreter {
         `No script was found at ${scriptPath}`,
         callerNode, callerEnv
       );
-      payGas(callerNode, callerEnv, false, {comp: getParsingGasCost(script)});
-      let scriptSyntaxTree;
-      [scriptSyntaxTree, lexArr, strPosArr] = scriptParser.parse(script);
-      parsedScript = scriptSyntaxTree.res;
-      if (scriptSyntaxTree.error) throw scriptSyntaxTree.error;
+      [parsedScript, lexArr, strPosArr] = parseScript(
+        script, callerNode, callerEnv
+      );
       parsedScripts.set(scriptPath, [parsedScript, lexArr, strPosArr, script]);
     }
     return [parsedScript, lexArr, strPosArr, script];
@@ -2229,9 +2243,7 @@ export class ExportedFunction extends FunctionObject {
 
 
 export class JSXElement {
-  constructor(
-    node, decEnv, interpreter
-  ) {
+  constructor(node, decEnv, interpreter) {
     this.node = node;
     this.decEnv = decEnv;
     let {tagName, isComponent, isFragment, propArr, children} = node;
@@ -2270,6 +2282,24 @@ export class JSXElement {
         node, decEnv
       );
     }
+  }
+}
+
+
+export class StyleObject {
+  constructor(styleSheet, node, env) {
+    // Parse the style sheet, which throws if the parsing fails.
+    let [parsedStyleSheet] = parseStyleSheet(styleSheet, node, env);
+
+    // TODO: Evaluate any SASS variable in the root scope of the SASS module
+    // and add them to a variables property;
+    this.variables = new Map();
+    
+    // Set the styleSheet property, which is now validated as being safe to
+    // insert in the document, if the parser is correctly made.
+    // TODO: Generate the style sheet instead at some point, at least once we
+    // start implementing SASS.
+    this.styleSheet = styleSheet;
   }
 }
 
