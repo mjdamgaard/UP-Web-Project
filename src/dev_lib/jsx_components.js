@@ -1,7 +1,7 @@
 
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, turnImmutable,
-  ArrayWrapper, ObjectWrapper, Signal
+  ArrayWrapper, ObjectWrapper, Signal, PromiseObject
 } from "../interpreting/ScriptInterpreter.js";
 
 
@@ -36,14 +36,18 @@ export const WILL_CREATE_APP_SIGNAL = new Signal(
 export const createJSXApp = new DevFunction(
   {callerSignals: [[WILL_CREATE_APP_SIGNAL]]},
   function(
-    {callerNode, execEnv, interpreter}, [component, props]
+    {callerNode, execEnv, interpreter},
+    [appComponent, props, appStyle, getComponentStyle]
   ) {
-    const rootInstance = new JSXInstance(component, "root", undefined);
+    const rootInstance = new JSXInstance(
+      appComponent, "root", undefined, callerNode, execEnv, getComponentStyle
+    );
     let rootParent = document.getElementById("up-app-root");
     let appNode = rootInstance.render(
       props, false, interpreter, callerNode, execEnv, false
     );
     rootParent.replaceChildren(appNode);
+    applyAppStyle(appStyle);
   }
 );
 
@@ -54,7 +58,7 @@ class JSXInstance {
 
   constructor (
     componentModule, key = undefined, parentInstance = undefined,
-    callerNode, callerEnv
+    callerNode, callerEnv, getComponentStyle
   ) {
     if (!(componentModule instanceof LiveModule)) throw new RuntimeError(
       "JSX component needs to be an imported module namespace object",
@@ -63,6 +67,8 @@ class JSXInstance {
     this.componentModule = componentModule;
     this.key = `${key}`;
     this.parentInstance = parentInstance;
+    if (getComponentStyle) this._getComponentStyle = getComponentStyle;
+    this.styledComponents = parentInstance?.styledComponents ?? new Map();
     this.domNode = undefined;
     this.isDecorated = undefined;
     this.childInstances = new Map(); // : key -> JSXInstance.
@@ -77,6 +83,9 @@ class JSXInstance {
 
   get componentPath() {
     return this.componentModule.componentPath;
+  }
+  get getComponentStyle() {
+    return this._getComponentStyle ?? this.parent.getComponentStyle;
   }
 
 
@@ -96,18 +105,68 @@ class JSXInstance {
       return this.domNode;
     }
 
-    // Initialize the instance's state if not done so before.
+    // Record the props. And on the first render only, initialize
+    // the state, and record the refs as well (which cannot be changed by a
+    // subsequent render). Furthermore, if the component's individual style has
+    // not been looked up yet, we also look that up and apply it, 
+    this.props = props;
     if (this.state === undefined) {
+      // Initialize the state.
       this.state = this.componentModule.call(
         "getInitState", [props], callerNode, callerEnv, true
       ) ?? new ObjectWrapper(new Map());
+
+      // Store the refs object.
+      this.refs = props.get("refs") ?? new ObjectWrapper(new Map());
+
+      // Also on the first render, look to see if the component-specific style,
+      // if any, has been applied to the document yet, and if not, apply it.
+      let hasBeenStyled = this.styledComponents.get(this.componentPath);
+      if (!hasBeenStyled) {
+        // Get the style object (promise) from getComponentStyle().
+        let style = interpreter.executeFunction(
+          this.getComponentStyle, [this.componentPath, this.componentModule],
+          callerNode, callerEnv
+        );
+
+        // If the return value is falsy, do apply no style, and else, apply the
+        // style either synchronously or on a subsequent tick if it is a
+        // promise object.
+        if (style) {
+          if (style instanceof PromiseObject) {
+            // If it's a promise, simply render the instance simply as an empty
+            // template element, without no call to the component's render()
+            // method. When the style then finally resolves, we queue a
+            // rerender, which calls the render() method for the first time.
+            // We also make sure to set the new hasBeenRendered as the promise
+            // which can be used by other instances of the same component.
+            style.promise.then(style => {
+              applyComponentStyle(this.componentPath, style);
+              this.styledComponents.set(this.componentPath, true);
+              this.queueRerender(interpreter);
+            });
+            this.styledComponents.set(this.componentPath, style.promise);
+            return document.createElement("template");
+          }
+          else {
+            // Else we simply apply the style synchronously, and then continue
+            // with the rest of this render() method.
+            applyComponentStyle(this.componentPath, style);
+            this.styledComponents.set(this.componentPath, true);
+          }
+        }
+      }
+      // And if the style is currently pending from another instance of the
+      // same component, in which case hasBeenStyle is a promise, also simply
+      // render an empty template element and queue a rerender when said
+      // promise resolves.
+      else if (hasBeenStyled instanceof Promise) {
+        hasBeenStyled.then(() => {
+          this.queueRerender(interpreter);
+        });
+      }
     }
 
-    // Record the props, if supplied. And on the first render only, record the
-    // refs as well.
-    if (props) this.props = props;
-    if (this.refs === undefined) this.refs = props.get("refs") ??
-      new ObjectWrapper(new Map());
 
     // Get the componentModule's render() function.
     let fun = this.componentModule.get("render");

@@ -77,10 +77,16 @@ export const sassGrammar = {
   },
   "complex-selector": {
     rules: [
-      ["compound-selector", "combinator", "complex-selector!"],
+      ["compound-selector", "combinator?", "complex-selector"],
       ["compound-selector"],
     ],
     process: processPolyadicInfixOperation,
+  },
+  "combinator": {
+    rules: [
+      [/>|\+|~/],
+    ],
+    process: copyFromChild,
   },
   "compound-selector": {
     rules: [
@@ -237,11 +243,11 @@ export const sassGrammar = {
   },
   "hex-color": {
     rules: [
-      ["/#/", "/([0-9a-fA-F]{2}){3,4}/"],
+      ["/#([0-9a-fA-F]{2}){3,4}/"],
     ],
     process: (children) => ({
       type: "hex-color",
-      hexStr: children[1],
+      hexStr: children[0].substring(1),
     }),
   },
   "built-in-color": {
@@ -276,12 +282,12 @@ export class SASSParser extends Parser {
       [
         /"([^"\\]|\\[.\n])*"/,
         /'([^'\\]|\\[.\n])*'/,
-        /\-?(0|[1-9][0-9]*)(\.[0-9]+)?(%|[a-zA-Z]+)?/,
-        /::|\|\|/,
+        /(\-|#)?(0|[1-9][0-9]*)(\.[0-9]+)?(%|[a-zA-Z]+)?/,
+        /\|\|/,
+        /(::|[.:!#])?[a-zA-Z_][a-zA-Z0-9_\-]*/,
         /[.,:;\[\]{}()<>?=+\-*|^&!%/#]/,
-        /[a-zA-Z_][a-zA-Z0-9_\-]*/,
       ],
-      /\s+|\/\/.*\n\s*|\/\*([^*]|\*(?!\/))*(\*\/\s*|$)/
+      /\s+|\/\*([^*]|\*(?!\/))*(\*\/\s*|$)/
     );
   }
 
