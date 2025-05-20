@@ -48,7 +48,7 @@ export class DirectoryUploader {
     // go through each one and check that it also exist nested in the client-
     // side directory, and for each one that doesn't, request deletion of that
     // file server-side.
-    let [filePaths] = await serverQueryHandler.post(`/${dirID}?_all`, {
+    let [filePaths] = await serverQueryHandler.post(`/${dirID}?~all`, {
       method: "post",
       credentials: credentials,
     }) ?? [[]];
@@ -58,7 +58,7 @@ export class DirectoryUploader {
       let serverFilePath = path.normalize(`/${dirID}/${relPath}`);
       if (!fs.existsSync(clientFilePath)) {
         deletionPromises.push(
-          serverQueryHandler.post(serverFilePath, {
+          serverQueryHandler.post(serverFilePath + "?~delete", {
             method: "post",
             credentials: credentials,
           })
@@ -106,7 +106,7 @@ export class DirectoryUploader {
       else if (/\.(js|txt|json|html)$/.test(name)) {
         let contentText = fs.readFileSync(childAbsPath, 'utf8');
         uploadPromises.push(
-          serverQueryHandler.post(`/${childRelPath}?_put`, {
+          serverQueryHandler.post(`/${childRelPath}?~put`, {
             method: "post",
             credentials: credentials,
             postData: contentText,

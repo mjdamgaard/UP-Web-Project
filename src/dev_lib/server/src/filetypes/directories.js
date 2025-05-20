@@ -111,7 +111,7 @@ export async function query(
 
   // If route equals "/<homeDirID>?_setAdmin&<adminID>", set a new admin of the
   // home directory.
-  if (queryType === "_setAdmin") {
+  if (queryType === "~setAdmin") {
     let requestedAdminID = queryStringArr[1];
     let routesToEvict = [`/${homeDirID}?admin`];
     if (interpreter.isServerSide) {
@@ -131,7 +131,7 @@ export async function query(
   // If route equals "/<homeDirID>?_delete", request a deletion of the
   // directory, ut note that directories can only be deleted after each nested
   // file in it has been deleted (as this query does not delete the files).
-  if (queryType === "_delete") {
+  if (queryType === "~delete") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for the "fetch" method: ${route}`,
       callerNode, execEnv

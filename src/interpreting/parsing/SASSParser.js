@@ -44,7 +44,8 @@ export const sassGrammar = {
     ],
     process: (children) => ({
       type: "style-sheet",
-      children: children,
+      atUseRuleArr: [],
+      stmtArr: children,
     }),
   },
   "ruleset": {
@@ -289,6 +290,26 @@ export class SASSParser extends Parser {
       ],
       /\s+|\/\*([^*]|\*(?!\/))*(\*\/\s*|$)/
     );
+  }
+
+  parse(str, startSym, isPartial, keepLastLexeme) {
+    let [syntaxTree, lexArr, strPosArr] = super.parse(
+      str, startSym, isPartial, keepLastLexeme
+    );
+    this.addPosAndNextPosToResults(syntaxTree);
+    return [syntaxTree, lexArr, strPosArr];
+  }
+
+  addPosAndNextPosToResults(syntaxTree) {
+    if (syntaxTree.res && syntaxTree.pos !== undefined) {
+      syntaxTree.res.pos = syntaxTree.pos;
+      syntaxTree.res.nextPos = syntaxTree.nextPos;
+    }
+    if (syntaxTree.children) {
+      syntaxTree.children.forEach(child => {
+        this.addPosAndNextPosToResults(child);
+      });
+    }
   }
 
 }

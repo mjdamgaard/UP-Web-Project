@@ -30,9 +30,10 @@ export async function query(
 
   let queryType = queryStringArr[0];
 
-  // If route equals "/<homeDirID>?_put&<contentText>", overwrite the existing
-  // file with contentText, if any, or create a new file with that content.
-  if (queryType === "_put") {
+  // If route equals "/<homeDirID>?~put" with a text stored in the postData,
+  // overwrite the existing file with contentText, if any, or create a new file
+  // with that content.
+  if (queryType === "~put") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for the "fetch" method: ${route}`,
       callerNode, execEnv
@@ -54,8 +55,8 @@ export async function query(
     }
   }
 
-  // If route equals "/<homeDirID>/<filePath>?_delete", ...
-  if (queryType === "_delete") {
+  // If route equals "/<homeDirID>/<filePath>?~delete", ...
+  if (queryType === "~delete") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for the "fetch" method: ${route}`,
       callerNode, execEnv
@@ -75,7 +76,7 @@ export async function query(
     }
   }
 
-  // If route equals "/<homeDirID>/<filePath>?_get&<alias>", verify that
+  // If route equals "/<homeDirID>/<filePath>?get&<alias>", verify that
   // fileExt = "js", and if so, execute the module and return the variables
   // exported as <alias>. 
   if (queryType === "get") {
@@ -83,9 +84,9 @@ export async function query(
     // when executing the module.
   }
 
-  // If route equals "/<homeDirID>/<filePath>?_call&<alias>&<inputArr", verify
-  // that fileExt = "js", and if so, execute the module and get the function
-  // exported as <alias>, then call it and return its output.
+  // If route equals "/<homeDirID>/<filePath>?~call&<alias>&argv=<inputArr>",
+  // verify that fileExt = "js", and if so, execute the module and get the
+  // function exported as <alias>, then call it and return its output.
   if (queryType === "call") {
     // TODO: Implement, and make sure to also remove any elevated privileges
     // when executing the module and calling the function.

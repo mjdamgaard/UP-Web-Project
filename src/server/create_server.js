@@ -31,7 +31,10 @@ const scriptInterpreter = new ScriptInterpreter(
   true, undefined, dbQueryHandler, staticDevLibs, undefined
 );
 
-const LOCKED_ROUTE_REGEX = /[&/]_/;
+// Locked routes are all routes where any file name, directory name, or
+// query string property name starts with a tilde (~), or if a file or
+// directory name contains an occurrence of '&~'. 
+const LOCKED_ROUTE_REGEX = /[&/]~/;
 
 
 
@@ -125,6 +128,7 @@ async function requestHandler(req, res) {
 
   // Parse whether the route is a "locked" route (that can only be accessed by
   // the admin, if any, or by a server module method (SMM) of that directory).
+  // These are all paths where a 
   let isLocked = LOCKED_ROUTE_REGEX.test(route);
 
   // TODO: If the route it locked, get the adminID of the homeDir, and verify

@@ -6,11 +6,6 @@ import {
   getLnAndCol,
 } from "./parsing/Parser.js";
 
-// // Following module paths are substituted by "module mapping webpack plugin."
-// import {
-//   IS_SERVER_SIDE, getDevLibPath, stdProtect, stdSignalDocName
-// } from "interpreter_config";
-
 
 export {LexError, SyntaxError};
 
@@ -38,20 +33,12 @@ export function getParsingGasCost(str) {
   return {comp: str.length / 100 + 1};
 }
 
-export function parseScript(script, node, env) {
-  payGas(node, env, {comp: getParsingGasCost(script)});
-  let [scriptSyntaxTree, lexArr, strPosArr] = scriptParser.parse(script);
-  if (scriptSyntaxTree.error) throw scriptSyntaxTree.error;
-  let parsedScript = scriptSyntaxTree.res;
-  return [parsedScript, lexArr, strPosArr];
-}
-
-export function parseStyleSheet(styleSheet, node, env) {
-  payGas(node, env, {comp: getParsingGasCost(styleSheet)});
-  let [syntaxTree, lexArr, strPosArr] = sassParserParser.parse(styleSheet);
+export function parseString(str, node, env, parser) {
+  payGas(node, env, {comp: getParsingGasCost(str)});
+  let [syntaxTree, lexArr, strPosArr] = parser.parse(str);
   if (syntaxTree.error) throw syntaxTree.error;
-  let parsedStyleSheet = scriptSyntaxTree.res;
-  return [parsedStyleSheet, lexArr, strPosArr];
+  let result = scriptSyntaxTree.res;
+  return [result, lexArr, strPosArr];
 }
 
 // let CAN_EXIT_SIGNAL; // is defined below.
@@ -62,12 +49,13 @@ export function parseStyleSheet(styleSheet, node, env) {
 export class ScriptInterpreter {
 
   constructor(
-    isServerSide = false, serverQueryHandler, dbQueryHandler, 
+    isServerSide = false, serverQueryHandler, dbQueryHandler, SASSPreprocessor,
     staticDevLibs = new Map(), devLibURLs = new Map(),
   ) {
     this.isServerSide = isServerSide;
     this.serverQueryHandler = serverQueryHandler;
     this.dbQueryHandler = dbQueryHandler;
+    this.sassPreprocessor = new SASSPreprocessor(this);
     this.staticDevLibs = staticDevLibs;
     this.devLibURLs = devLibURLs;
   }
@@ -108,8 +96,8 @@ export class ScriptInterpreter {
     let parsedScript, lexArr, strPosArr;
     if (scriptPath === null) {
       try {
-        [parsedScript, lexArr, strPosArr] = parseScript(
-          script, null, globalEnv
+        [parsedScript, lexArr, strPosArr] = parseString(
+          script, null, globalEnv, scriptParser
         );
       }
       catch (err) {
@@ -139,8 +127,7 @@ export class ScriptInterpreter {
 
 
     // Now execute the script as a module, followed by an execution of any
-    // function called 'main,' or the default export if no 'main' function is
-    // found, and make sure to try-catch any exceptions or errors.
+    // function called 'main,' and make sure to try-catch any exceptions.
     try {
       let [liveScriptModule, scriptEnv] = await this.executeModule(
         parsedScript, lexArr, strPosArr, script, scriptPath, globalEnv
@@ -230,9 +217,8 @@ export class ScriptInterpreter {
   async fetchParsedScript(
     scriptPath, parsedScripts, callerNode, callerEnv
   ) {
-    let parsedScript, lexArr, strPosArr, script;
-    [parsedScript, lexArr, strPosArr, script] = parsedScripts.get(scriptPath)
-      ?? [];
+    let [parsedScript, lexArr, strPosArr, script] =
+      parsedScripts.get(scriptPath) ?? [];
     if (!parsedScript) {
       let {textModules} = callerEnv.scriptVars;
       try {
@@ -246,8 +232,8 @@ export class ScriptInterpreter {
         `No script was found at ${scriptPath}`,
         callerNode, callerEnv
       );
-      [parsedScript, lexArr, strPosArr] = parseScript(
-        script, callerNode, callerEnv
+      [parsedScript, lexArr, strPosArr] = parseString(
+        script, callerNode, callerEnv, scriptParser
       );
       parsedScripts.set(scriptPath, [parsedScript, lexArr, strPosArr, script]);
     }
@@ -2288,8 +2274,6 @@ export class JSXElement {
 
 export class StyleObject {
   constructor(styleSheet, node, env) {
-    // Parse the style sheet, which throws if the parsing fails.
-    let [parsedStyleSheet] = parseStyleSheet(styleSheet, node, env);
 
     // TODO: Evaluate any SASS variable in the root scope of the SASS module
     // and add them to a variables property;
@@ -2299,7 +2283,17 @@ export class StyleObject {
     // insert in the document, if the parser is correctly made.
     // TODO: Generate the style sheet instead at some point, at least once we
     // start implementing SASS.
-    this.styleSheet = styleSheet;
+    this.sourceStyleSheet = styleSheet; 
+    this.processedStyleSheet = processStyleSheet(styleSheet, node, env);
+  }
+
+
+  processStyleSheet(styleSheet, node, env) {
+    // Parse the style sheet, which throws if the parsing fails.
+    let [parsedStyleSheet, lexArr, strPosArr] = parseString(
+      styleSheet, node, env, sassParser
+    );
+
   }
 }
 
@@ -2390,6 +2384,11 @@ export class CustomException extends RuntimeError {
   }
 }
 export class TypeError extends RuntimeError {
+  constructor(val, node, environment) {
+    super(val, node, environment);
+  }
+}
+export class StyleError extends RuntimeError {
   constructor(val, node, environment) {
     super(val, node, environment);
   }
@@ -2547,7 +2546,10 @@ export function getExtendedErrorMsg(err) {
     type = "OutOfGasError";
   }
   else if (err instanceof CustomException) {
-    type = "Uncaught (or re-thrown) custom exception";
+    type = "Uncaught or re-thrown custom exception";
+  }
+  else if (err instanceof StyleError) {
+    type = "StyleError";
   }
   else if (err instanceof SyntaxError) {
     return getExtendedErrorMsgHelper(err);
