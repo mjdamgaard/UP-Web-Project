@@ -1,13 +1,14 @@
 
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, turnImmutable,
-  ArrayWrapper, ObjectWrapper, Signal, PromiseObject, StyleObject,  
+  ArrayWrapper, ObjectWrapper, Signal, PromiseObject, StyleObject, parseString,
 } from "../interpreting/ScriptInterpreter.js";
-
+import {sassParser} from "../interpreting/parsing/SASSParser.js";
 
 
 
 export const CAN_CREATE_APP_FLAG = Symbol("can_create_app");
+export const IS_APP_ROOT_FLAG = Symbol("can_create_app");
 
 export const CAN_CREATE_APP_SIGNAL = new Signal(
   "can_create_app",
@@ -19,11 +20,12 @@ export const CAN_CREATE_APP_SIGNAL = new Signal(
 export const WILL_CREATE_APP_SIGNAL = new Signal(
   "will_create_app",
   function(flagEnv, node, env) {
-    let [wasFound] = flagEnv.getFlag(CAN_CREATE_APP_FLAG, 0);
+    let [wasFound] = flagEnv.getFlag(CAN_CREATE_APP_FLAG, 1);
     if (!wasFound ) throw new RuntimeError(
       "Cannot create a new the app from here",
       node, env
     );
+    flagEnv.setFlag(IS_APP_ROOT_FLAG);
   }
 );
 
@@ -34,20 +36,19 @@ export const WILL_CREATE_APP_SIGNAL = new Signal(
 // Create a JSX (React-like) app and mount it in the index HTML page, in the
 // element with an id of "up-app-root".
 export const createJSXApp = new DevFunction(
-  {callerSignals: [[WILL_CREATE_APP_SIGNAL]]},
+  {initSignals: [[WILL_CREATE_APP_SIGNAL]]},
   function(
     {callerNode, execEnv, interpreter},
-    [appComponent, props, appStyle, getComponentStyle]
+    [appComponent, props]
   ) {
-    const rootInstance = new JSXInstance(
-      appComponent, "root", undefined, callerNode, execEnv, getComponentStyle
+    let rootInstance = new JSXInstance(
+      appComponent, "root", undefined, callerNode, execEnv
     );
     let rootParent = document.getElementById("up-app-root");
     let appNode = rootInstance.render(
-      props, false, interpreter, callerNode, execEnv, false
+      props, false, interpreter, callerNode, execEnv, false, true, true
     );
     rootParent.replaceChildren(appNode);
-    applyAppStyle(appStyle, callerNode, execEnv);
   }
 );
 
@@ -58,7 +59,7 @@ class JSXInstance {
 
   constructor (
     componentModule, key = undefined, parentInstance = undefined,
-    callerNode, callerEnv, getComponentStyle
+    callerNode, callerEnv
   ) {
     if (!(componentModule instanceof LiveModule)) throw new RuntimeError(
       "JSX component needs to be an imported module namespace object",
@@ -67,8 +68,6 @@ class JSXInstance {
     this.componentModule = componentModule;
     this.key = `${key}`;
     this.parentInstance = parentInstance;
-    if (getComponentStyle) this._getComponentStyle = getComponentStyle;
-    this.styledComponents = parentInstance?.styledComponents ?? new Map();
     this.domNode = undefined;
     this.isDecorated = undefined;
     this.childInstances = new Map(); // : key -> JSXInstance.
@@ -91,7 +90,7 @@ class JSXInstance {
 
   render(
     props = new ObjectWrapper(new Map()), isDecorated, interpreter,
-    callerNode, callerEnv, replaceSelf = true, force = false
+    callerNode, callerEnv, replaceSelf = true, force = false, isRoot = false,
   ) {  
     this.isDecorated = isDecorated;
     this.lastCallerNode = callerNode;
@@ -678,6 +677,36 @@ function applyComponentStyle(componentPath, style, node, env) {
   );
 }
 
+
+
+
+
+
+
+// A function to parse CSS and wrap it in a ValidCSS class, ready to be passed
+// to applyStyle().
+export const validateCSS = new DevFunction(
+  {},
+  function(
+    {callerNode, execEnv}, [css]
+  ) {
+    // Parse the CSS with the side-effect of throwing on failure.
+    parseString(css, callerNode, execEnv, sassParser);
+    return new ValidCSS(css);
+  }
+);
+
+
+
+export class ValidCSS {
+  constructor(css) {
+    this.css = css;
+  }
+
+  get(key) {
+    if (key === "css") return this.css;
+  }
+}
 
 
 

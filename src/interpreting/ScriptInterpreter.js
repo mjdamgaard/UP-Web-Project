@@ -1,6 +1,6 @@
 
 import {scriptParser} from "./parsing/ScriptParser.js";
-import {sassParser} from "./parsing/SASSParser.js";
+// import {sassParser} from "./parsing/SASSParser.js";
 import {
   LexError, SyntaxError, getExtendedErrorMsg as getExtendedErrorMsgHelper,
   getLnAndCol,
@@ -49,13 +49,12 @@ export function parseString(str, node, env, parser) {
 export class ScriptInterpreter {
 
   constructor(
-    isServerSide = false, serverQueryHandler, dbQueryHandler, SASSPreprocessor,
+    isServerSide = false, serverQueryHandler, dbQueryHandler,
     staticDevLibs = new Map(), devLibURLs = new Map(),
   ) {
     this.isServerSide = isServerSide;
     this.serverQueryHandler = serverQueryHandler;
     this.dbQueryHandler = dbQueryHandler;
-    this.sassPreprocessor = new SASSPreprocessor(this);
     this.staticDevLibs = staticDevLibs;
     this.devLibURLs = devLibURLs;
   }
@@ -338,6 +337,10 @@ export class ScriptInterpreter {
     // If the module has already been executed, we can return early.
     let liveModule = liveModules.get(modulePath);
     if (liveModule) {
+      if (liveModule instanceof Promise) {
+        [liveModule] = await liveModule;
+        liveModules.set(modulePath, liveModule);
+      }
       return liveModule;
     }
 
@@ -354,7 +357,9 @@ export class ScriptInterpreter {
           callerNode, callerEnv
         );
         try {
-          devMod = await import(devLibURL);
+          let devModPromise = import(devLibURL);
+          liveModules.set(modulePath, devModPromise);
+          devMod = await devModPromise;
         } catch (err) {
           throw new LoadError(
             `Developer library "${modulePath}" failed to import ` +
@@ -384,11 +389,24 @@ export class ScriptInterpreter {
         modulePath, parsedScripts, callerNode, callerEnv
       );
 
+      // Before executing the module, first check that the module haven't been
+      // executed while waiting for the script to be fetched.
+      liveModule = liveModules.get(modulePath);
+      if (liveModule) {
+        if (liveModule instanceof Promise) {
+          [liveModule] = await liveModule;
+          liveModules.set(modulePath, liveModule);
+        }
+        return liveModule;
+      }
+
       // Then execute the module, inside the global environment, and return the
       // resulting liveModule, after also adding it to liveModules.
-      [liveModule] = await this.executeModule(
+      let liveModulePromise = this.executeModule(
         submoduleNode, lexArr, strPosArr, script, modulePath, globalEnv
       );
+      liveModules.set(modulePath, liveModulePromise);
+      [liveModule] = await liveModulePromise;
       liveModules.set(modulePath, liveModule);
       return liveModule;
     }
@@ -1242,7 +1260,7 @@ export class ScriptInterpreter {
       }
       case "identifier": {
         let ident = expNode.ident;
-        return environment.get(ident, expNode);
+        return environment.getVar(ident, expNode);
       }
       case "string": {
         return expNode.str;
@@ -1595,13 +1613,13 @@ export class Environment {
     }
   }
 
-  get(ident, node, nodeEnvironment = this) {
+  getVar(ident, node, nodeEnvironment = this) {
     let [val] = this.variables.get(ident) ?? [];
     if (val !== undefined) {
       return (val === UNDEFINED) ? undefined : val;
     }
     else if (this.parent) {
-      let val = this.parent.get(ident, node, nodeEnvironment);
+      let val = this.parent.getVar(ident, node, nodeEnvironment);
       if (this.isNonArrowFunction) {
         return turnImmutable(val);
       } else {
@@ -1632,7 +1650,7 @@ export class Environment {
       if (this.isNonArrowFunction) {
         // Throw an `Undeclared variable "${ident}"` error if the variable is
         // undefined (get() does this).
-        this.get(ident, node, nodeEnvironment);
+        this.getVar(ident, node, nodeEnvironment);
 
         // And else throw an error stating that you cannot assign to a non-
         // local variable. 
@@ -1718,7 +1736,7 @@ export class Environment {
     );
     // We evaluate the exported variable *when* it is exported, as that seems
     // more secure.
-    let val = this.get(ident, node, nodeEnvironment)
+    let val = this.getVar(ident, node, nodeEnvironment)
     if (val === undefined) throw new RuntimeError(
       `Exported variable or function is undefined: "${ident}"`,
       node, nodeEnvironment
@@ -2234,7 +2252,7 @@ export class JSXElement {
     this.decEnv = decEnv;
     let {tagName, isComponent, isFragment, propArr, children} = node;
     this.tagName = tagName;
-    if (isComponent) this.componentModule = decEnv.get(tagName, node);
+    if (isComponent) this.componentModule = decEnv.getVar(tagName, node);
     this.isFragment = isFragment;
     this.props = new Map();
     if (propArr) propArr.forEach(propNode => {
@@ -2271,31 +2289,6 @@ export class JSXElement {
   }
 }
 
-
-export class StyleObject {
-  constructor(styleSheet, node, env) {
-
-    // TODO: Evaluate any SASS variable in the root scope of the SASS module
-    // and add them to a variables property;
-    this.variables = new Map();
-    
-    // Set the styleSheet property, which is now validated as being safe to
-    // insert in the document, if the parser is correctly made.
-    // TODO: Generate the style sheet instead at some point, at least once we
-    // start implementing SASS.
-    this.sourceStyleSheet = styleSheet; 
-    this.processedStyleSheet = processStyleSheet(styleSheet, node, env);
-  }
-
-
-  processStyleSheet(styleSheet, node, env) {
-    // Parse the style sheet, which throws if the parsing fails.
-    let [parsedStyleSheet, lexArr, strPosArr] = parseString(
-      styleSheet, node, env, sassParser
-    );
-
-  }
-}
 
 
 export class PromiseObject {
