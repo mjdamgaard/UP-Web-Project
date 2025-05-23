@@ -52,7 +52,7 @@ export class SASSTranspiler {
 
   transpileStatement(
     stmt, environment, ownClassPrefix, getClassPrefix, isTrusted,
-    overwrittenVars, indentSpace = "",
+    overwrittenVars, indentSpace = "", isNested = false,
   ) {
     decrCompGas(stmt, environment);
 
@@ -64,34 +64,15 @@ export class SASSTranspiler {
       return "";
     }
     else if (type === "ruleset") {
-      let transpiledSelectorList;
-      try {
-        transpiledSelectorList = stmt.selectorArr.map(selector => {
-          this.transpileSelector(
-            selector, environment, ownClassPrefix, getClassPrefix, isTrusted
-          )
-        }).join(", ");
-      }
-      catch (err) {
-        // If an unauthorized selector was detected, simply return an empty
-        // string instead of the ruleset.
-        if (err instanceof UnauthorizedSelectorException) {
-          return indentSpace + "/* Unauthorized ruleset */\n";
-        }
-        else throw err;
-      }
-
-      // If the selector succeeds, returns the rule with the transpiled
-      // selector list and the transpiled nested statements inside the rule.
-      let newEnv = new Environment(environment);
-      return (
-        indentSpace + transpiledSelectorList + " {\n" +
-        stmt.nestedStmtArr.map(nestedStmt => {
-          this.transpileNestedStatement(
-            nestedStmt, newEnv, ownClassPrefix, getClassPrefix, isTrusted,
-            indentSpace + "  "
-          )
-        }).join("")
+      transpileRuleset(
+        stmt, environment, ownClassPrefix, getClassPrefix, isTrusted,
+        indentSpace, isNested,
+      );
+    }
+    else if (type === "member") {
+      if (!isNested) throw new RuntimeError(
+        "Declaration members most not appear outside a ruleset declaration",
+        stmt, environment
       );
     }
     else throw (
@@ -120,9 +101,54 @@ export class SASSTranspiler {
 
 
 
-  transpileNestedStatement(
-    nestedStmt, environment, ownClassPrefix, getClassPrefix, isTrusted,
-    indentSpace
+  transpileRuleset(
+    stmt, environment, ownClassPrefix, getClassPrefix, isTrusted,
+    indentSpace, isNested,
+  ) {
+    if (isNested) throw new RuntimeError(
+      "Nested rules are not yet implemented",
+      stmt, environment
+    );
+
+    // Transpile the selector, throwing an exception whenever an untrusted
+    // style sheet uses a selector the involves element other than those with
+    // classes coming from the style sheet itself. 
+    let transpiledSelectorList;
+    try {
+      transpiledSelectorList = stmt.selectorArr.map(selector => {
+        this.transpileSelector(
+          selector, environment, ownClassPrefix, getClassPrefix, isTrusted
+        )
+      }).join(", ");
+    }
+    catch (err) {
+      // If an unauthorized selector was detected, simply return an empty
+      // string instead of the ruleset.
+      if (err instanceof UnauthorizedSelectorException) {
+        return indentSpace + "/* Unauthorized ruleset */\n";
+      }
+      else throw err;
+    }
+
+    // If the selector succeeds, returns the rule with the transpiled
+    // selector list and the transpiled nested statements inside the rule.
+    let newEnv = new Environment(environment);
+    return (
+      indentSpace + transpiledSelectorList + " {\n" +
+      stmt.nestedStmtArr.map(nestedStmt => {
+        this.transpileStatement(
+          nestedStmt, newEnv, ownClassPrefix, getClassPrefix, isTrusted,
+          indentSpace + "  "
+        )
+      }).join("")
+    );
+  }
+
+
+
+
+  transpileSelector(
+    selector, environment, ownClassPrefix, getClassPrefix, isTrusted
   ) {
 
   }
@@ -133,11 +159,10 @@ export class SASSTranspiler {
 
 
 
+
 class UnauthorizedSelectorException {
   constructor() {}
 }
-
-
 
 
 

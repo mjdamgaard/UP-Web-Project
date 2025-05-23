@@ -2381,11 +2381,6 @@ export class TypeError extends RuntimeError {
     super(val, node, environment);
   }
 }
-export class StyleError extends RuntimeError {
-  constructor(val, node, environment) {
-    super(val, node, environment);
-  }
-}
 
 
 
