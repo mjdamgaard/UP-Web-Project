@@ -40,22 +40,48 @@ const BUILT_IN_COLOR_PATTERN =
 export const sassGrammar = {
   "style-sheet": {
     rules: [
-      ["ruleset*$"], // TODO: Extend.
+      ["statement*$"],
     ],
     process: (children) => ({
       type: "style-sheet",
-      atUseRuleArr: [],
       stmtArr: children,
+    }),
+  },
+  "statement": {
+    rules: [
+      ["variable-declaration"],
+      ["ruleset"],
+    ],
+    process: copyFromChild,
+  },
+  "variable-declaration": {
+    rules: [
+      ["variable", "/:/", "value", "/;/"],
+    ],
+    process: (children) => ({
+      type: "variable-declaration",
+      ident: children[0].ident,
+      value: children[2],
+    }),
+  },
+  "variable": {
+    rules: [
+      [/\$[a-zA-Z][a-zA-Z0-9\-]*/],
+    ],
+    process: (children) => ({
+      type: "ruleset",
+      ident: children[0].substring(1),
+      lexeme: undefined,
     }),
   },
   "ruleset": {
     rules: [
-      ["selector-list", /\{/, "member!1+", /\}/],
+      ["selector-list", /\{/, "nested-statement!1+", /\}/],
     ],
     process: (children) => ({
       type: "ruleset",
       selectorArr: children[0],
-      memberArr: children[2],
+      nestedStmtArr: children[2],
     }),
   },
   "selector-list": {
@@ -82,6 +108,7 @@ export const sassGrammar = {
       ["compound-selector"],
     ],
     process: processPolyadicInfixOperation,
+    params: ["complex-selector"],
   },
   "combinator": {
     rules: [
@@ -129,7 +156,7 @@ export const sassGrammar = {
     ],
     process: (children) => ({
       type: "class-selector",
-      classname: children[0].substring(1),
+      className: children[0].substring(1),
     }),
   },
   "pseudo-class-selector": {
@@ -176,6 +203,13 @@ export const sassGrammar = {
       name: children[0],
     }),
   },
+  "nested-statement": {
+    rules: [
+      ["variable-declaration"],
+      ["member"],
+    ],
+    process: copyFromChild,
+  },
   "member": {
     rules: [
       ["property", "/:/!", "value!1+", "flag", "/;/!"],
@@ -184,7 +218,7 @@ export const sassGrammar = {
     process: (children) => ({
       type: "member",
       propName: children[0].name,
-      valArr: children[2],
+      valueArr: children[2],
       flagName: children[3]?.name,
     }),
   },
@@ -208,11 +242,21 @@ export const sassGrammar = {
   },
   "value": {
     rules: [
+      ["variable"],
+      ["string"],
       ["number"],
       ["color"],
       ["length"],
     ],
     process: copyFromChild,
+  },
+  "string": {
+    rules: [
+      [/"([^"\\]|\\[.\n])*"/],
+      [/'([^'\\]|\\[.\n])*'/],
+    ],
+    process: copyLexemeFromChild,
+    params: ["string"],
   },
   "number": {
     rules: [
@@ -246,10 +290,8 @@ export const sassGrammar = {
     rules: [
       ["/#([0-9a-fA-F]{2}){3,4}/"],
     ],
-    process: (children) => ({
-      type: "hex-color",
-      hexStr: children[0].substring(1),
-    }),
+    process: copyLexemeFromChild,
+    params: ["hex-color"],
   },
   "built-in-color": {
     rules: [
@@ -262,14 +304,16 @@ export const sassGrammar = {
     rules: [
       [/\-?(0|[1-9][0-9]*)(\.[0-9]+)?(cm|mm|Q|in|pc|pt|px|em|rem|vh|vw)/],
     ],
-    process: (children) => {
-      let [ , numLexeme, unit] = /([\-0-9.]+)([a-zA-Z]*)/.exec(children[0]);
-      return {
-        type: "length",
-        numLexeme: numLexeme,
-        unit: unit,
-      };
-    },
+    process: copyLexemeFromChild,
+    params: ["length"],
+    // process: (children) => {
+    //   let [ , numLexeme, unit] = /([\-0-9.]+)([a-zA-Z]*)/.exec(children[0]);
+    //   return {
+    //     type: "length",
+    //     numLexeme: numLexeme,
+    //     unit: unit,
+    //   };
+    // },
   },
 };
 
