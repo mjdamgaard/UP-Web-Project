@@ -10,6 +10,8 @@ const ELEMENT_TYPE_PATTERN =
   "(div|span|h1|h2|h3|h4|h5|h6|button)";
 // TODO: Continue this list.
 
+const COMBINATOR_REGEX = />|\+|~/;
+
 const ATOMIC_PSEUDO_CLASS_PATTERN =
   "(first-child|last-child)";
 // TODO: Continue this list.
@@ -22,9 +24,16 @@ const INTEGER_DEFINED_PSEUDO_CLASS_PATTERN =
   "(nth-child)";
 // TODO: Continue this list.
 
+const PSEUDO_ELEMENT_PATTERN =
+  "(before|after|first-line)";
+// TODO: Continue this list.
+
 const PROPERTY_PATTERN =
   "(color|background-color)";
 // TODO: Continue this list.
+
+// const STRING_ONLY_PROPERTY_PATTERN =
+//   "(content)";
 
 const FLAG_PATTERN =
   "([^\\s\\S])";
@@ -102,6 +111,15 @@ export const sassGrammar = {
       pseudoElement: children[1],
     }),
   },
+  "pseudo-element": {
+    rules: [
+      ["/::" + PSEUDO_ELEMENT_PATTERN + "/"],
+    ],
+    process: (children) => ({
+      type: "pseudo-element",
+      lexeme: children[0],
+    }),
+  },
   "complex-selector": {
     rules: [
       ["compound-selector", "combinator?", "complex-selector"],
@@ -112,7 +130,7 @@ export const sassGrammar = {
   },
   "combinator": {
     rules: [
-      [/>|\+|~/],
+      [COMBINATOR_REGEX],
     ],
     process: copyFromChild,
   },
@@ -173,7 +191,7 @@ export const sassGrammar = {
     ],
     process: (children) => ({
       type: "pseudo-class-selector",
-      classname: children[0].substring(1),
+      lexeme: children[0],
       argument: children[2],
     }),
   },
@@ -183,7 +201,7 @@ export const sassGrammar = {
     ],
     process: (children) => ({
       type: "id-selector",
-      name: children[0].substring(1),
+      lexeme: children[0],
     }),
   },
   "universal-selector": {
@@ -212,23 +230,15 @@ export const sassGrammar = {
   },
   "member": {
     rules: [
-      ["property", "/:/!", "value!1+", "flag", "/;/!"],
-      ["property", "/:/!", "value!1+", "/;/"],
+      ["/" + PROPERTY_PATTERN + "/", "/:/", "value!1+", "flag", "/;/!"],
+      ["/" + PROPERTY_PATTERN + "/", "/:/", "value!1+", "/;/"],
+      // ["/" + STRING_ONLY_PROPERTY_PATTERN + "/", "/:/", "string", "/;/"],
     ],
     process: (children) => ({
       type: "member",
-      propName: children[0].name,
+      propName: children[0],
       valueArr: children[2],
       flagName: children[3]?.name,
-    }),
-  },
-  "property": {
-    rules: [
-      ["/" + PROPERTY_PATTERN + "/"],
-    ],
-    process: () => ({
-      type: "property",
-      name: children[0],
     }),
   },
   "flag": {
@@ -237,7 +247,7 @@ export const sassGrammar = {
     ],
     process: () => ({
       type: "flag",
-      name: children[0].substring(1),
+      lexeme: children[0],
     }),
   },
   "value": {

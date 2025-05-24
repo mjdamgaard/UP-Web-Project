@@ -59,7 +59,16 @@ export class SASSTranspiler {
     let type = stmt.type;
     if (type === "variable-declaration") {
       let valueNode = stmt.value;
-      let val = this.getVariableValue(valueNode, environment, overwrittenVars);
+      let val;
+      if (overwrittenVars && environment.scopeType === "module") {
+        val = overwrittenVars.get(valueNode.ident);
+        if (val === undefined) {
+          val = this.getValue(valueNode, environment);
+        }
+      }
+      else {
+        val = this.getValue(valueNode, environment);
+      }
       environment.declare(stmt.ident, val, true, stmt);
       return "";
     }
@@ -74,24 +83,20 @@ export class SASSTranspiler {
         "Declaration members most not appear outside a ruleset declaration",
         stmt, environment
       );
+      return stmt.propName + ": " + stmt.valueArr.map(valueNode => (
+        this.getValue(valueNode, environment)
+      )).join(" ");
     }
     else throw (
       "Unrecognized SASS statement type: " + type
     );
-
   
   }
 
 
 
-  getVariableValue(valueNode, environment, overwrittenVars) {
+  getValue(valueNode, environment) {
     if (valueNode.type === "variable") {
-      if (overwrittenVars && environment.scopeType === "module") {
-        let overwrittenVal = overwrittenVars.get(valueNode.ident);
-        if (overwrittenVal !== undefined) {
-          return overwrittenVal;
-        }
-      }
       return environment.getVar(valueNode.ident, valueNode);
     }
     else {
@@ -135,12 +140,13 @@ export class SASSTranspiler {
     let newEnv = new Environment(environment);
     return (
       indentSpace + transpiledSelectorList + " {\n" +
-      stmt.nestedStmtArr.map(nestedStmt => {
-        this.transpileStatement(
-          nestedStmt, newEnv, ownClassPrefix, getClassPrefix, isTrusted,
-          indentSpace + "  "
-        )
-      }).join("")
+        stmt.nestedStmtArr.map(nestedStmt => {
+          this.transpileStatement(
+            nestedStmt, newEnv, ownClassPrefix, getClassPrefix, isTrusted,
+            indentSpace + "  "
+          )
+        }).join("") +
+      indentSpace + "\n}"
     );
   }
 
@@ -150,9 +156,48 @@ export class SASSTranspiler {
   transpileSelector(
     selector, environment, ownClassPrefix, getClassPrefix, isTrusted
   ) {
-
+    let complexSelectorChildren = selector.complexSelector.children;
+    let pseudoElement = selector.pseudoElement;
+    return (
+      complexSelectorChildren.map((child, ind) => {
+        // If the child is a (compound) selector, rather than a combinator,
+        // transpile it, passing isTrusted to only the first one when ind === 1,
+        // and passing isTrusted := true for all subsequent selectors.
+        if (ind % 2 === 0) {
+          return transpileCompoundSelector(
+            selector, environment, ownClassPrefix, getClassPrefix,
+            (ind === 0) ? isTrusted : true,
+          );
+        }
+        // Else for a combinator, also make sure to check that it is not a
+        // sibling selector if ind === 1.
+        else {
+          let lexeme = child[0]?.lexeme;
+          if (!isTrusted && ind === 1 && lexeme && lexeme !== ">") {
+            throw new UnauthorizedSelectorException();
+          }
+          return lexeme ? " " + lexeme + " " : " ";
+        } 
+      }).join("") +
+      pseudoElement?.lexeme ?? ""
+    );
   }
 
+  transpileCompoundSelector(
+    selector, environment, ownClassPrefix, getClassPrefix, isTrusted
+  ) {
+    
+  }
+
+  transpileSimpleSelector(
+    selector, environment, ownClassPrefix, getClassPrefix, isConfinedFlagRef
+  ) {
+    let type = selector.type;
+    if (type === "class-selector") {
+
+    }
+    
+  }
 
 }
 
