@@ -199,27 +199,22 @@ export const sassGrammar = {
     rules: [
       [/#[a-zA-Z][a-zA-Z0-9_\-]*/],
     ],
-    process: (children) => ({
-      type: "id-selector",
-      lexeme: children[0],
-    }),
+    process: copyLexemeFromChild,
+    params: ["id-selector"],
   },
   "universal-selector": {
     rules: [
       [/\*/],
     ],
-    process: () => ({
-      type: "universal-selector",
-    }),
+    process: copyLexemeFromChild,
+    params: ["universal-selector"],
   },
   "type-selector": {
     rules: [
       ["/" + ELEMENT_TYPE_PATTERN + "/"],
     ],
-    process: (children) => ({
-      type: "type-selector",
-      name: children[0],
-    }),
+    process: copyLexemeFromChild,
+    params: ["type-selector"],
   },
   "nested-statement": {
     rules: [

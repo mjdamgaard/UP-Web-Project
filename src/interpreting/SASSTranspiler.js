@@ -16,7 +16,7 @@ export class SASSTranspiler {
   // in the document head, and returns it either directly or as a promise for
   // it (once we implement the @use rule).
   transpile(
-    styleSheet, styleSheetPath, getClassPrefix, overwrittenVars = null,
+    styleSheet, styleSheetRoute, transformClassPrefix, overwrittenVars = null,
     isTrusted = false, callerNode, callerEnv
   ) {
     if (typeof styleSheet !== "string") throw (
@@ -32,18 +32,14 @@ export class SASSTranspiler {
     // Environment class as the ScriptInterpreter for the SASS environments.)
     let styleSheetEnv = new Environment(
       undefined, "module", {
-       modulePath: styleSheetPath, lexArr: lexArr, strPosArr: strPosArr,
+       modulePath: styleSheetRoute, lexArr: lexArr, strPosArr: strPosArr,
        script: styleSheet, scriptVars: callerEnv.scriptVars,
       }
     );
 
-    // Get the style sheet's own class prefix.
-    let ownClassPrefix = getClassPrefix(styleSheetPath);
-
     return styleSheetNode.stmtArr.map(stmt => (
       this.transpileStatement(
-        stmt, styleSheetEnv, ownClassPrefix, getClassPrefix, isTrusted,
-        overwrittenVars
+        stmt, styleSheetEnv, transformClassPrefix, isTrusted, overwrittenVars
       )
     )).join("")
   }
@@ -51,8 +47,8 @@ export class SASSTranspiler {
 
 
   transpileStatement(
-    stmt, environment, ownClassPrefix, getClassPrefix, isTrusted,
-    overwrittenVars, indentSpace = "", isNested = false,
+    stmt, environment, transformClassPrefix, isTrusted, overwrittenVars,
+    indentSpace = "", isNested = false,
   ) {
     decrCompGas(stmt, environment);
 
@@ -74,7 +70,7 @@ export class SASSTranspiler {
     }
     else if (type === "ruleset") {
       transpileRuleset(
-        stmt, environment, ownClassPrefix, getClassPrefix, isTrusted,
+        stmt, environment, transformClassPrefix, isTrusted,
         indentSpace, isNested,
       );
     }
@@ -107,8 +103,7 @@ export class SASSTranspiler {
 
 
   transpileRuleset(
-    stmt, environment, ownClassPrefix, getClassPrefix, isTrusted,
-    indentSpace, isNested,
+    stmt, environment, transformClassPrefix, isTrusted, indentSpace, isNested,
   ) {
     if (isNested) throw new RuntimeError(
       "Nested rules are not yet implemented",
@@ -122,7 +117,7 @@ export class SASSTranspiler {
     try {
       transpiledSelectorList = stmt.selectorArr.map(selector => {
         this.transpileSelector(
-          selector, environment, ownClassPrefix, getClassPrefix, isTrusted
+          selector, environment, transformClassPrefix, isTrusted
         )
       }).join(", ");
     }
@@ -142,7 +137,7 @@ export class SASSTranspiler {
       indentSpace + transpiledSelectorList + " {\n" +
         stmt.nestedStmtArr.map(nestedStmt => {
           this.transpileStatement(
-            nestedStmt, newEnv, ownClassPrefix, getClassPrefix, isTrusted,
+            nestedStmt, newEnv, transformClassPrefix, isTrusted,
             indentSpace + "  "
           )
         }).join("") +
@@ -154,7 +149,7 @@ export class SASSTranspiler {
 
 
   transpileSelector(
-    selector, environment, ownClassPrefix, getClassPrefix, isTrusted
+    selector, environment, transformClassPrefix, isTrusted
   ) {
     let complexSelectorChildren = selector.complexSelector.children;
     let pseudoElement = selector.pseudoElement;
@@ -165,7 +160,7 @@ export class SASSTranspiler {
         // and passing isTrusted := true for all subsequent selectors.
         if (ind % 2 === 0) {
           return transpileCompoundSelector(
-            selector, environment, ownClassPrefix, getClassPrefix,
+            child, environment, transformClassPrefix,
             (ind === 0) ? isTrusted : true,
           );
         }
@@ -184,17 +179,62 @@ export class SASSTranspiler {
   }
 
   transpileCompoundSelector(
-    selector, environment, ownClassPrefix, getClassPrefix, isTrusted
+    selector, environment, transformClassPrefix, isTrusted
   ) {
+    // Initialize an "isConfined" flag reference that the following 
+    // transpileSimpleSelector() calls can set to true if one of the simple
+    // selectors was a class introduced by this style sheet, meaning that the
+    // selector won't apply to any elements that doesn't subscribe to this
+    // style sheet.
+    let isConfinedFlagRef = [false];
+    let transpiledCompoundSelector = selector.map(child => (
+      transpileSimpleSelector(
+        child, environment, transformClassPrefix, isConfinedFlagRef
+      )
+    )).join("");
     
+    // Then if the style sheet is not trusted, and the "isConfined" flag wasn't
+    // changed to true, throw an UnauthorizedSelectorException, removing this
+    // rule from the transpiled result.
+    if (!isTrusted && !isConfinedFlagRef[0]) {
+      throw new UnauthorizedSelectorException();
+    }
+    return transpiledCompoundSelector;
   }
 
   transpileSimpleSelector(
-    selector, environment, ownClassPrefix, getClassPrefix, isConfinedFlagRef
+    selector, environment, transformClassPrefix, isConfinedFlagRef
   ) {
     let type = selector.type;
     if (type === "class-selector") {
+      let className = selector.className;
 
+      // If the class name contains no underscore, and thus no prefix,
+      // transform it by prepending the style sheet's own prefix (gotten from
+      // calling transformClassPrefix("")), and also mark isConfined as true.
+      let indOfUnderscore = className.indexOf("_");
+      if (indOfUnderscore === -1) {
+        isConfinedFlagRef[0] = true;
+        return (
+          ":" + transformClassPrefix("", selector, environment) + className
+        );
+      }
+      // Else simply extract the prefix and transform it with
+      // transformClassPrefix().
+      else {
+        let prefix = className.substring(0, indOfUnderscore + 1);
+        return (
+          ":" + transformClassPrefix(prefix, selector, environment) + className
+        );
+      }
+    }
+    else if (type === "pseudo-class-selector") {
+      return selector.lexeme + (
+        selector.argument ? "(" + selector.argument + ")" : ""
+      );
+    }
+    else {
+      return selector.lexeme;
     }
     
   }
