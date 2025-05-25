@@ -2,7 +2,7 @@
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, turnImmutable,
   ArrayWrapper, ObjectWrapper, Signal, PromiseObject, StyleObject, parseString,
-  passedAsMutable,
+  passedAsMutable, getExtendedErrorMsg,
 } from "../interpreting/ScriptInterpreter.js";
 import {sassParser} from "../interpreting/parsing/SASSParser.js";
 
@@ -107,8 +107,7 @@ class JSXInstance {
 
     // Record the props. And on the first render only, initialize
     // the state, and record the refs as well (which cannot be changed by a
-    // subsequent render). Furthermore, if the component's individual style has
-    // not been looked up yet, we also look that up and apply it, 
+    // subsequent render).
     this.props = props;
     if (this.state === undefined) {
       // Initialize the state.
@@ -116,28 +115,12 @@ class JSXInstance {
         "getInitState", [props], callerNode, callerEnv, true
       ) ?? new ObjectWrapper();
 
-      // Store the refs object.
+      // And store the refs object.
       this.refs = props.get("refs") ?? new ObjectWrapper();
-
-      // Also on the first render, look to see if the component-specific style,
-      // if any, has been applied to the document yet, and if not, apply it.
-      let hasBeenStyled = this.styledComponents.get(this.componentPath);
-      if (!hasBeenStyled) {
-
-      }
-      // And if the style is currently pending from another instance of the
-      // same component, in which case hasBeenStyle is a promise, also simply
-      // render an empty template element and queue a rerender when said
-      // promise resolves.
-      else if (hasBeenStyled instanceof Promise) {
-        hasBeenStyled.then(() => {
-          this.queueRerender(interpreter);
-        });
-      }
     }
 
 
-    // Get the componentModule's render() function.
+    // Get the component module's render() method.
     let fun = this.componentModule.get("render");
     if (!fun) throw new RuntimeError(
       "Component module is missing a render function " +
@@ -147,8 +130,9 @@ class JSXInstance {
     
     // And construct the resolve() callback that render() should call (before
     // returning) on the JSXElement to be rendered. This resolve() callback's
-    // job is to get us the newDOMNode to insert in the DOM.
-    let newDOMNode, resolveHasBeenCalled = false;
+    // job is to get us the newDOMNode to insert in the DOM, as well as a
+    // selection of DOM nodes that this instance is allowed to style().
+    let newDOMNode, ownDOMNodes, resolveHasBeenCalled = false;
     let resolve = new DevFunction({decEnv: callerEnv}, (
       {interpreter, callerNode, execEnv}, [jsxElement]
     ) => {
@@ -167,7 +151,7 @@ class JSXInstance {
         newDOMNode = jsxElement.domNode;
       }
       else {
-        newDOMNode = this.getDOMNode(
+        [newDOMNode, ownDOMNodes] = this.getDOMNode(
           jsxElement, marks, interpreter, callerNode, execEnv
         );
       }
@@ -198,21 +182,63 @@ class JSXInstance {
     // queue a rerender.
     let dispatch = new DispatchFunction(this, callerEnv);
 
-    // Now call the render() function, and check that resolve has been called
-    // synchronously by it.
-    let inputArr = [
-      resolve, props, dispatch, this.state, passedAsMutable(this.refs),
-    ];
-    interpreter.executeFunction(
-      fun, inputArr, callerNode, callerEnv, this.componentModule
-    );
-    if (!resolveHasBeenCalled) throw new RuntimeError(
-      "A JSX component's render() method did not call its resolve() " +
-      "callback before returning",
-      fun.node ?? callerNode, fun.decEnv ?? callerEnv
+    // Now call the component module's render() method, and check that resolve
+    // has been called synchronously by it.
+    let error;
+    try {
+      let inputArr = [
+        resolve, props, dispatch, this.state, passedAsMutable(this.refs),
+      ];
+      interpreter.executeFunction(
+        fun, inputArr, callerNode, callerEnv, this.componentModule
+      );
+    }
+    catch (err) {
+      error = err;
+    }
+
+    // If an error occurred, log the error with getExtendedErrorMsg(), which
+    // itself throws the error again if it is unrecognized, and then return
+    // a placeholder element with a "failed" class. 
+    if (error || !resolveHasBeenCalled) {
+      let errorMsg = error ? getExtendedErrorMsg(error) : (
+        "A JSX component's render() method did not call its resolve() " +
+        "callback before returning"
+      );
+      console.error(errorMsg);
+      let ret = document.createElement("span");
+      ret.setAttribute("class", "0_failed");
+      return ret;
+    }
+
+    // Before we return the new DOM node, we also get the component's style
+    // function, which is decided by getStyleFun().
+    let styleFun = interpreter.executeFunction(
+      this.getStyleFun, [this.componentPath, this.componentModule],
+      callerNode, callerEnv
     );
 
-    // Then return the instance's new DOM node.
+    // If the returned styleFun is actually a PromiseObject, we mark newDOMNode
+    // with a "pending-style" class, and then() the promise with a callback to
+    // queue a styling of the DOM node, which will at some point remove the
+    // "pending-style" class when it resolves.
+    if (styleFun instanceof PromiseObject) {
+      // Note that the "0_" prefix here means that the style of this "pending-
+      // style" class is decided by the first style sheet imported by the app.
+      newDOMNode.setAttribute("class", "0_pending-style");
+      styleFun.then(styleFun => {
+        this.queueStyling(styleFun);
+      });
+    }
+    // And else we can queue the styling directly, also adding the "pending-
+    // style" class in case that this styling only resolves on a subsequent
+    // tick.
+    else {
+      newDOMNode.setAttribute("class", "0_pending-style");
+      this.queueStyling(styleFun);
+    } 
+
+    // Then on success, return the instance's new DOM node.
     return newDOMNode;
   }
 
@@ -486,6 +512,11 @@ class JSXInstance {
         }
       });
     }
+  }
+
+
+  queueStyling(styleFun) {
+    
   }
 
 }
