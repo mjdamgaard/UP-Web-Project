@@ -2,6 +2,7 @@
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, turnImmutable,
   ArrayWrapper, ObjectWrapper, Signal, PromiseObject, StyleObject, parseString,
+  passedAsMutable,
 } from "../interpreting/ScriptInterpreter.js";
 import {sassParser} from "../interpreting/parsing/SASSParser.js";
 
@@ -39,10 +40,10 @@ export const createJSXApp = new DevFunction(
   {initSignals: [[WILL_CREATE_APP_SIGNAL]]},
   function(
     {callerNode, execEnv, interpreter},
-    [appComponent, props]
+    [appComponent, props, getStyleFun]
   ) {
     let rootInstance = new JSXInstance(
-      appComponent, "root", undefined, callerNode, execEnv
+      appComponent, "root", undefined, callerNode, execEnv, getStyleFun
     );
     let rootParent = document.getElementById("up-app-root");
     let appNode = rootInstance.render(
@@ -59,7 +60,7 @@ class JSXInstance {
 
   constructor (
     componentModule, key = undefined, parentInstance = undefined,
-    callerNode, callerEnv
+    callerNode, callerEnv, getStyleFun = undefined
   ) {
     if (!(componentModule instanceof LiveModule)) throw new RuntimeError(
       "JSX component needs to be an imported module namespace object",
@@ -68,7 +69,10 @@ class JSXInstance {
     this.componentModule = componentModule;
     this.key = `${key}`;
     this.parentInstance = parentInstance;
+    this.componentStyler = this.parentInstance?.componentStyler ??
+      new ComponentStyler(getStyleFun);
     this.domNode = undefined;
+    this.ownDOMNodes = undefined;
     this.isDecorated = undefined;
     this.childInstances = new Map(); // : key -> JSXInstance.
     this.props = undefined;
@@ -83,13 +87,10 @@ class JSXInstance {
   get componentPath() {
     return this.componentModule.componentPath;
   }
-  get getComponentStyle() {
-    return this._getComponentStyle ?? this.parent.getComponentStyle;
-  }
 
 
   render(
-    props = new ObjectWrapper(new Map()), isDecorated, interpreter,
+    props = new ObjectWrapper(), isDecorated, interpreter,
     callerNode, callerEnv, replaceSelf = true, force = false, isRoot = false,
   ) {  
     this.isDecorated = isDecorated;
@@ -113,51 +114,16 @@ class JSXInstance {
       // Initialize the state.
       this.state = this.componentModule.call(
         "getInitState", [props], callerNode, callerEnv, true
-      ) ?? new ObjectWrapper(new Map());
+      ) ?? new ObjectWrapper();
 
       // Store the refs object.
-      this.refs = props.get("refs") ?? new ObjectWrapper(new Map());
+      this.refs = props.get("refs") ?? new ObjectWrapper();
 
       // Also on the first render, look to see if the component-specific style,
       // if any, has been applied to the document yet, and if not, apply it.
       let hasBeenStyled = this.styledComponents.get(this.componentPath);
       if (!hasBeenStyled) {
-        // Get the style object (promise) from getComponentStyle().
-        let style = interpreter.executeFunction(
-          this.getComponentStyle, [this.componentPath, this.componentModule],
-          callerNode, callerEnv
-        );
 
-        // If the return value is falsy, do apply no style, and else, apply the
-        // style either synchronously or on a subsequent tick if it is a
-        // promise object.
-        if (style) {
-          if (style instanceof PromiseObject) {
-            // If it's a promise, simply render the instance simply as an empty
-            // template element, without no call to the component's render()
-            // method. When the style then finally resolves, we queue a
-            // rerender, which calls the render() method for the first time.
-            // We also make sure to set the new hasBeenRendered as the promise
-            // which can be used by other instances of the same component.
-            style.promise.then(style => {
-              applyComponentStyle(
-                this.componentPath, style, callerNode, callerEnv
-              );
-              this.styledComponents.set(this.componentPath, true);
-              this.queueRerender(interpreter);
-            });
-            this.styledComponents.set(this.componentPath, style.promise);
-            return document.createElement("template");
-          }
-          else {
-            // Else we simply apply the style synchronously, and then continue
-            // with the rest of this render() method.
-              applyComponentStyle(
-                this.componentPath, style, callerNode, callerEnv
-              );
-            this.styledComponents.set(this.componentPath, true);
-          }
-        }
       }
       // And if the style is currently pending from another instance of the
       // same component, in which case hasBeenStyle is a promise, also simply
@@ -234,7 +200,9 @@ class JSXInstance {
 
     // Now call the render() function, and check that resolve has been called
     // synchronously by it.
-    let inputArr = [resolve, props, dispatch, this.state];
+    let inputArr = [
+      resolve, props, dispatch, this.state, passedAsMutable(this.refs),
+    ];
     interpreter.executeFunction(
       fun, inputArr, callerNode, callerEnv, this.componentModule
     );
@@ -314,8 +282,8 @@ class JSXInstance {
       marks.set(key, true);
 
       // Then we call childInstance.render() to render/rerender (if its props
-      // have changed) the child instance and get its DOM node, which we can
-      // return straightaway.
+      // have changed) the child instance and get its DOM node, which can be
+      // returned straightaway.
       return childInstance.render(
         jsxElement.props, isOuterElement, interpreter, callerNode, callerEnv,
         false
@@ -471,7 +439,9 @@ class JSXInstance {
   ) {
     // Throw if the user dispatches a reserved action, such as "render" or
     // "getInitState".
-    if (action === "render" || action === "getInitState") {
+    if (
+      action === "render" || action === "getInitState" || action === "style"
+    ) {
       throw new RuntimeError(
         `Dispatched action cannot be the reserved identifier, ${action}`,
         callerNode, callerEnv
@@ -655,6 +625,67 @@ export function compareProps(props1, props2, compareRefs = false) {
 
 
 
+class ComponentStyler {
+
+  constructor(getStyleFun) {
+    this.getStyleFun = getStyleFun;
+    this.styleSubscribers = new Map();
+    this.componentStyleSheets = new Map();
+    this.nextPrefix = 0;
+  }
+
+
+  prepareAndGetStyleFun(componentPath) {
+    // Get the style object (promise) from getComponentStyle().
+    let styleFun = interpreter.executeFunction(
+      this.getStyleFun, [this.componentPath, this.componentModule],
+      callerNode, callerEnv
+    );
+
+    // If styleFun is a PromiseObject, create and return a Promise that
+    // resolves after getStyle
+
+
+  }
+
+  prepareStyle(styleSheetRouteArr) {
+    let hasBeenStyled = this.styledComponents.get(componentPath);
+    if (!hasBeenStyled) {
+
+      // If the return value is falsy, apply no style, and else, apply the
+      // style either synchronously or on a subsequent tick if it is a
+      // promise object.
+      if (styleFun) {
+        if (styleFun instanceof PromiseObject) {
+          // If it's a promise, simply render the instance simply as an empty
+          // template element, without no call to the component's render()
+          // method. When the style then finally resolves, we queue a
+          // rerender, which calls the render() method for the first time.
+          // We also make sure to set the new hasBeenRendered as the promise
+          // which can be used by other instances of the same component.
+          styleFun.promise.then(style => {
+            applyComponentStyle(
+              componentPath, style, callerNode, callerEnv
+            );
+            this.styledComponents.set(this.componentPath, true);
+            this.queueRerender(interpreter);
+          });
+          this.styledComponents.set(this.componentPath, styleFun.promise);
+          return document.createElement("template");
+        }
+        else {
+          // Else we simply apply the style synchronously, and then continue
+          // with the rest of this render() method.
+            applyComponentStyle(
+              this.componentPath, styleFun, callerNode, callerEnv
+            );
+          this.styledComponents.set(this.componentPath, true);
+        }
+      }
+    }
+  }
+
+}
 
 
 function applyAppStyle(appStyle, node, env) {

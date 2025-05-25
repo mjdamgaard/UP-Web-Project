@@ -216,7 +216,8 @@ export class SASSTranspiler {
       if (indOfUnderscore === -1) {
         isConfinedFlagRef[0] = true;
         return (
-          ":" + transformClassPrefix("", selector, environment) + className
+          ":" + transformClassPrefix("", selector, environment) +
+          "_" + className
         );
       }
       // Else simply extract the prefix and transform it with
@@ -224,14 +225,28 @@ export class SASSTranspiler {
       else {
         let prefix = className.substring(0, indOfUnderscore + 1);
         return (
-          ":" + transformClassPrefix(prefix, selector, environment) + className
+          ":" + transformClassPrefix(prefix, selector, environment) +
+          "_" + className
         );
       }
     }
     else if (type === "pseudo-class-selector") {
-      return selector.lexeme + (
-        selector.argument ? "(" + selector.argument + ")" : ""
-      );
+      let argument = selector.argument; 
+      let argType = argument?.type;
+      let tuple;
+      if (argType === "selector-list") {
+        tuple = "(" +
+          argument.children.map(selector => {
+            this.transpileSelector(
+              selector, environment, transformClassPrefix, true
+            )
+          }).join(", ") +
+        ")";
+      }
+      else if (argType === "integer") {
+        tuple = "(" + argument.lexeme + ")";
+      }
+      return selector.lexeme + tuple ?? "";
     }
     else {
       return selector.lexeme;

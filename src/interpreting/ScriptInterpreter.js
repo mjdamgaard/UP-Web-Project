@@ -757,7 +757,7 @@ export class ScriptInterpreter {
         paramVal = this.evaluateExpression(param.defaultExp, environment);
       }
 
-      // If the paramVal is wrapped in PassAsMutable(), we remove that wrapper,
+      // If the paramVal is "passedAsMutable", we remove that wrapper,
       // and else we turn the paramVal immutable.
       if (paramVal && paramVal.passAsMutable) {
         paramVal = notPassedAsMutable(paramVal);
@@ -1367,6 +1367,10 @@ export class ScriptInterpreter {
           return undefined;
         }
         // TODO: Implement a console.trace() call as well.
+        // TODO: Implement an extended trace() (called whatever seems
+        // appropriate) that returns the whole environment stack in some way,
+        // perhaps with a maxLevel limit argument. And on the server side,
+        // maybe even reroute the debugger statement to call this and then exit.
       }
       default: throw (
         "ScriptInterpreter.evaluateExpression(): Unrecognized type: " +

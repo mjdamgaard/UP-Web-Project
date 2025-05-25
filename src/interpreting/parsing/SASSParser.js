@@ -99,6 +99,7 @@ export const sassGrammar = {
       ["selector"],
     ],
     process: straightenListSyntaxTree,
+    params: ["selector-list"],
   },
   "selector": {
     rules: [
@@ -182,7 +183,7 @@ export const sassGrammar = {
       ["/:" + ATOMIC_PSEUDO_CLASS_PATTERN + "/"],
       [
         "/:" + SELECTOR_DEFINED_PSEUDO_CLASS_PATTERN + "/",
-        /\(/, "selector", /\)/
+        /\(/, "selector-list", /\)/
       ],
       [
         "/:" + INTEGER_DEFINED_PSEUDO_CLASS_PATTERN + "/",
