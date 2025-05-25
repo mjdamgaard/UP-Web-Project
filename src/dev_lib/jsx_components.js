@@ -230,10 +230,10 @@ class JSXInstance {
         this.queueStyling(styleFun);
       });
     }
-    // And else we can queue the styling directly, also adding the "pending-
-    // style" class in case that this styling only resolves on a subsequent
-    // tick.
-    else {
+    // And else, if styleFun is nonetheless still defined, we can queue the
+    // styling directly, also adding the "pending-style" class in case that
+    // this styling only resolves on a subsequent tick.
+    else if (styleFun) {
       newDOMNode.setAttribute("class", "0_pending-style");
       this.queueStyling(styleFun);
     } 
@@ -515,8 +515,20 @@ class JSXInstance {
   }
 
 
-  queueStyling(styleFun) {
-    
+  queueStyling(styleFun, props, styleProps, callerNode, callerEnv) {
+    // First call the style function to first of all get an ObjectWrapper
+    // object containing the routes of all the style sheets that the instance
+    // uses, and where the property keys of these routes represent the
+    // "local prefix" that the user uses to refer to each style sheet. And the
+    // second returned object from styleFun is then supposed to be an
+    // instruction set of how to transform the instance's ownDOMNodes by
+    // setting/transforming their class attributes.
+    let styleFunOutput = interpreter.executeFunction(
+      styleFun, [props, styleProps], callerNode, callerEnv
+    );
+    let styleSheetsObj        = styleFunOutput.get(0);
+    let transformInstructions = styleFunOutput.get(1);
+    let isTrusted             = styleFunOutput.get(2);
   }
 
 }
