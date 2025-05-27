@@ -66,8 +66,8 @@ export const createJSXApp = new DevFunction(
           // of the form [styleSheetPaths?, classTransform?], get the style
           // sheet paths/routes and load each one, and afterwards resolve with
           // the classTransform paired with the modulePath.
-          let styleSheetPaths = styleSpecs.get(1);
-          let classTransform = styleSpecs.get(2);
+          let styleSheetPaths = styleSpecs.get(0);
+          let classTransform = styleSpecs.get(1);
           await loadStyleSheets(
             styleSheetPaths, styleParams, interpreter, callerNode, execEnv
           );
@@ -106,41 +106,6 @@ export const createJSXApp = new DevFunction(
   }
 );
 
-
-// loadStyleSheets() fetches and applies the style sheet, also looking in
-// styleParams for any SASS parameters (i.e. overwritable variable values, for
-// variables using the '!default' flag).
-async function loadStyleSheets(
-  styleSheetPaths, styleParams, interpreter, node, env
-) {
-  // First create a promise array that when resolved in parallel will have
-  // filled out the following styleSheets object with style sheets (texts),
-  // indexed by the ID assigned to them by getStyle().
-  let styleSheets = {};
-  let promiseArr = [];
-  styleSheetPaths.entries().forEach(([id, route]) => {
-    if (typeof id !== "string" || !/[a-zA-Z][a-zA-Z0-9\-]*/.test(id)) {
-      throw new TypeError(
-        `Invalid style sheet ID: "${id}"`,
-        node, env
-      );
-    }
-
-    promiseArr.push(new Promise(async (resolve) => {
-      let styleSheet = await interpreter.import(route, node, env);
-      styleSheets[id] = styleSheet;
-      resolve();
-    }));
-  });
-  await Promise.all(promiseArr);
-
-  // Now that styleSheets has been filled out, go through each entry and
-  // parse and transpile the style sheet to valid CSS, then insert it in the
-  // document head.
-  Object.entries(styleSheets).forEach(([id, styleSheet]) => {
-    sassParser.parse()
-  });
-}
 
 
 
@@ -320,7 +285,9 @@ class JSXInstance {
 
       // If not, restyle it, also using ownDOMNodes to restrict which nodes can
       // be transformed.
-      transformClasses(newDOMNode, ownDOMNodes, classTransform);
+      transformClasses(
+        newDOMNode, ownDOMNodes, classTransform, callerNode, callerEnv
+      );
     });
 
     // Then on success, return the instance's new DOM node.
@@ -554,7 +521,10 @@ class JSXInstance {
   ) {
     // Throw if the user dispatches a reserved action, such as "render" or
     // "getInitState".
-    if (action === "render" || action === "getInitState") {
+    if (
+      action === "render" || action === "getInitState" ||
+      action === "styleSheetPaths"
+    ) {
       throw new RuntimeError(
         `Dispatched action cannot be the reserved identifier, ${action}`,
         callerNode, callerEnv
@@ -741,9 +711,103 @@ export function compareProps(props1, props2, compareRefs = false) {
 
 
 
+// loadStyleSheets() fetches and applies the style sheet, also looking in
+// styleParams for any SASS parameters (i.e. overwritable variable values, for
+// variables using the '!default' flag).
+async function loadStyleSheets(
+  styleSheetPaths, styleParams, interpreter, node, env
+) {
+  // First create a promise array that when resolved in parallel will have
+  // filled out the following styleSheets object with style sheets (texts),
+  // indexed by the ID assigned to them by getStyle().
+  let styleSheets = {};
+  let promiseArr = [];
+  styleSheetPaths.entries().forEach(([id, route]) => {
+    if (typeof id !== "string" || !/[a-zA-Z][a-zA-Z0-9\-]*/.test(id)) {
+      throw new TypeError(
+        `Invalid style sheet ID: "${id}"`,
+        node, env
+      );
+    }
 
-function transformClasses(outerNode, nodeArray, classTransform) {
-  // TODO: Impl.
+    // If route is an ArrayWrapper, treat it as a [route, isTrusted] pair
+    // instead.
+    let isTrusted = false;
+    if (route instanceof ArrayWrapper) {
+      isTrusted = route.get(1);
+      route = route.get(0);
+    }
+
+    promiseArr.push(new Promise(async (resolve) => {
+      let styleSheet = await interpreter.import(route, node, env);
+      styleSheets[id] = [styleSheet, isTrusted];
+      resolve();
+    }));
+  });
+  await Promise.all(promiseArr);
+
+  // Now that styleSheets has been filled out, go through each entry and
+  // parse and transpile the style sheet to valid CSS, then insert it in the
+  // document head.
+  Object.entries(styleSheets).forEach(([id, [styleSheet, isTrusted]]) => {
+    // First get or create the style element with a calls of "up-style <id>".
+    let styleElement = document.querySelector(`head style.up-style.${id}`);
+    if (!styleElement) {
+      styleElement = document.createElement("style");
+      styleElement.setAttribute("class", `up-style ${id}`);
+      let headElement = document.querySelector(`head`);
+      headElement.appendChild(styleElement);
+    }
+
+    // TODO: Transpile styleSheet, with isTrusted and styleParams.get(id) as
+    // some additional inputs, and then replace the contents of styleElement
+    // with the result.
+  });
+}
+
+
+
+
+
+function transformClasses(
+  outerNode, nodeArray, classTransform, callerNode, callerEnv
+) {
+  // If classTransform is falsy or nodeArray is empty, return early.
+  if (!classTransform || nodeArray.length === 0) return;
+
+  // Else we first go through each node and mark them with a special class used
+  // for filtering out all other nodes when constructing our selectors. This
+  // class is then removed again before this function returns.
+  nodeArray.forEach(node => {
+    node.classList.add("transforming");
+  });
+
+  // Then iterate through each an any transform instruction in classTransform
+  // and carry it out.
+  classTransform.values().forEach(inst => {
+    // Each transform instruction (user-defined) is supposed to be of the form
+    // inst : [selector, classStr]. Extract these values.
+    if (!(inst instanceof ArrayWrapper)) throw new RuntimeError(
+      "Invalid class transform instruction",
+      callerNode, callerEnv
+    );
+    let selector = inst.get(0);
+    let classStr = inst.get(1);
+
+    // Then validate the selector.
+    let isValid = false;
+    if (typeof selector === "string") {
+      // TODO: Parse the selector, then turn isValid to true on success.
+    }
+    if (!isValid) throw new RuntimeError(
+      "Invalid class transform instruction",
+      callerNode, callerEnv
+    );
+
+    // TODO: Then parse the class string..
+
+    outerNode.parentElement.querySelectorAll();
+  });
 }
 
 
