@@ -2,7 +2,7 @@
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, turnImmutable,
   ArrayWrapper, ObjectWrapper, Signal, PromiseObject, StyleObject, parseString,
-  passedAsMutable, getExtendedErrorMsg,
+  passedAsMutable, getExtendedErrorMsg, TypeError,
 } from "../interpreting/ScriptInterpreter.js";
 import {sassParser} from "../interpreting/parsing/SASSParser.js";
 
@@ -51,7 +51,7 @@ export const createJSXApp = new DevFunction(
     let promiseArr = [];
     liveModules.entries().forEach(([modulePath, liveModule]) => {
       if (modulePath.slice(-4) === ".jsx") {
-        stylePromiseArr.push(new Promise(async (resolve) => {
+        promiseArr.push(new Promise(async (resolve) => {
           // First we get the "style" output of getStyle(), which is possibly
           // a PromiseObject to a styleSpecs object, in which case wait for it
           // and unwrap it.
@@ -63,12 +63,14 @@ export const createJSXApp = new DevFunction(
           }
 
           // Once the styleSpecs is gotten, which is actually an array (wrapper)
-          // of the form [styleSheets?, classTransform?], get the style sheet
-          // routes and load any one that hasn't been loaded yet, then resolve
-          // with the classTransform, paired with the modulePath.
-          let styleSheets    = styleSpecs.get(1);
+          // of the form [styleSheetPaths?, classTransform?], get the style
+          // sheet paths/routes and load each one, and afterwards resolve with
+          // the classTransform paired with the modulePath.
+          let styleSheetPaths = styleSpecs.get(1);
           let classTransform = styleSpecs.get(2);
-          await loadStyleSheets(styleSheets);
+          await loadStyleSheets(
+            styleSheetPaths, styleParams, interpreter, callerNode, execEnv
+          );
           resolve([modulePath, classTransform]);
         }));
       }
@@ -105,12 +107,38 @@ export const createJSXApp = new DevFunction(
 );
 
 
-async function loadStyleSheets(styleSheets) {
-  styleSheets.entries().forEach(([id, route]) => {
-    // Fetch and apply the style sheet, also looking in styleParams for any
-    // SASS parameters (i.e. overwritable variable values, for variables using
-    // the '!default' flag).
-    // TODO: Do.
+// loadStyleSheets() fetches and applies the style sheet, also looking in
+// styleParams for any SASS parameters (i.e. overwritable variable values, for
+// variables using the '!default' flag).
+async function loadStyleSheets(
+  styleSheetPaths, styleParams, interpreter, node, env
+) {
+  // First create a promise array that when resolved in parallel will have
+  // filled out the following styleSheets object with style sheets (texts),
+  // indexed by the ID assigned to them by getStyle().
+  let styleSheets = {};
+  let promiseArr = [];
+  styleSheetPaths.entries().forEach(([id, route]) => {
+    if (typeof id !== "string" || !/[a-zA-Z][a-zA-Z0-9\-]*/.test(id)) {
+      throw new TypeError(
+        `Invalid style sheet ID: "${id}"`,
+        node, env
+      );
+    }
+
+    promiseArr.push(new Promise(async (resolve) => {
+      let styleSheet = await interpreter.import(route, node, env);
+      styleSheets[id] = styleSheet;
+      resolve();
+    }));
+  });
+  await Promise.all(promiseArr);
+
+  // Now that styleSheets has been filled out, go through each entry and
+  // parse and transpile the style sheet to valid CSS, then insert it in the
+  // document head.
+  Object.entries(styleSheets).forEach(([id, styleSheet]) => {
+    sassParser.parse()
   });
 }
 
