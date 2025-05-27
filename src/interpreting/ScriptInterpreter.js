@@ -16,8 +16,8 @@ export {LexError, SyntaxError};
 const MAX_ARRAY_INDEX = 4294967294;
 const MINIMAL_TIME_GAS = 10;
 
-const TEXT_FILE_ROUTE_REGEX = /[^?]+\.(js|txt|json|html|md|css|scss|)$/;
-const SCRIPT_ROUTE_REGEX = /[^?]+\.js$/;
+const TEXT_FILE_ROUTE_REGEX = /[^?]+\.(jsx?|txt|json|html|md|css|scss|)$/;
+const SCRIPT_ROUTE_REGEX = /[^?]+\.jsx?$/;
 
 const GAS_NAMES = {
   comp: "computation",
@@ -377,9 +377,8 @@ export class ScriptInterpreter {
       return liveModule;
     }
 
-    // Else if the module is a user module, with a '.js' extension, fetch/get
-    // it and create and return a LiveModule instance rom it.
-    let submoduleNode, lexArr, strPosArr, script, text;
+    // Else if the module is a user module, with a '.js' or '.jsx' extension,
+    // fetch/get it and create and return a LiveModule instance rom it.
     if (SCRIPT_ROUTE_REGEX.test(modulePath)) {
       // First try to get it from the parsedScripts buffer, then try to fetch
       // it from the database.

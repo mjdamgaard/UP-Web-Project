@@ -37,21 +37,84 @@ export const WILL_CREATE_APP_SIGNAL = new Signal(
 // Create a JSX (React-like) app and mount it in the index HTML page, in the
 // element with an id of "up-app-root".
 export const createJSXApp = new DevFunction(
-  {initSignals: [[WILL_CREATE_APP_SIGNAL]]},
-  function(
+  {isAsync: true, initSignals: [[WILL_CREATE_APP_SIGNAL]]},
+  async function(
     {callerNode, execEnv, interpreter},
-    [appComponent, props, getStyleFun]
+    [
+      appComponent, props, getStyle, styleParams = new ObjectWrapper()
+    ]
   ) {
+    let {liveModules} = execEnv.scriptVars;
+
+    // Create a promise array to fetch and apply the styles of all current
+    // imported and live modules that has a '.jsx' extension.
+    let promiseArr = [];
+    liveModules.entries().forEach(([modulePath, liveModule]) => {
+      if (modulePath.slice(-4) === ".jsx") {
+        stylePromiseArr.push(new Promise(async (resolve) => {
+          // First we get the "style" output of getStyle(), which is possibly
+          // a PromiseObject to a styleSpecs object, in which case wait for it
+          // and unwrap it.
+          let styleSpecs = interpreter.executeFunction(
+            getStyle, [modulePath, liveModule], callerNode, execEnv
+          );
+          if (styleSpecs instanceof PromiseObject) {
+            styleSpecs = await styleSpecs.promise;
+          }
+
+          // Once the styleSpecs is gotten, which is actually an array (wrapper)
+          // of the form [styleSheets?, classTransform?], get the style sheet
+          // routes and load any one that hasn't been loaded yet, then resolve
+          // with the classTransform, paired with the modulePath.
+          let styleSheets    = styleSpecs.get(1);
+          let classTransform = styleSpecs.get(2);
+          await loadStyleSheets(styleSheets);
+          resolve([modulePath, classTransform]);
+        }));
+      }
+    });
+
+    // Then Promise.all() this promise array and use it to create a new Promise
+    // for a modulePath--classTransform Map, call it classTransformsMap. Once
+    // this promise  resolves, we also remove the "pending-style" class from
+    // the app component instance, which is set below. 
+    let classTransformsMapPromise = new Promise(async (resolve) => {
+      let classTransformsMap = new Map(await Promise.all(promiseArr));
+      let appNode = document.getElementById("up-app-root").firstChild;
+      appNode.classList.remove("pending-style")
+      resolve(classTransformsMap);
+    }); 
+
+    // With this promise used for styling the JSX instances in our hands, we
+    // can then create the app's root component instance, render it, and insert
+    // it into the document.
     let rootInstance = new JSXInstance(
-      appComponent, "root", undefined, callerNode, execEnv, getStyleFun
+      appComponent, "root", undefined, callerNode, execEnv,
+      classTransformsMapPromise
     );
     let rootParent = document.getElementById("up-app-root");
     let appNode = rootInstance.render(
       props, false, interpreter, callerNode, execEnv, false, true, true
     );
     rootParent.replaceChildren(appNode);
+
+    // We also add a "pending-style" class to the app's DOM node, which is
+    // removed once the style-related promise above resolves.
+    appNode.classList.add("pending-style");
   }
 );
+
+
+async function loadStyleSheets(styleSheets) {
+  styleSheets.entries().forEach(([id, route]) => {
+    // Fetch and apply the style sheet, also looking in styleParams for any
+    // SASS parameters (i.e. overwritable variable values, for variables using
+    // the '!default' flag).
+    // TODO: Do.
+  });
+}
+
+
 
 
 
@@ -60,7 +123,7 @@ class JSXInstance {
 
   constructor (
     componentModule, key = undefined, parentInstance = undefined,
-    callerNode, callerEnv, getStyleFun = undefined
+    callerNode, callerEnv, classTransformsMapPromise = undefined
   ) {
     if (!(componentModule instanceof LiveModule)) throw new RuntimeError(
       "JSX component needs to be an imported module namespace object",
@@ -69,8 +132,8 @@ class JSXInstance {
     this.componentModule = componentModule;
     this.key = `${key}`;
     this.parentInstance = parentInstance;
-    this.componentStyler = this.parentInstance?.componentStyler ??
-      new ComponentStyler(getStyleFun);
+    this.classTransformsMapPromise = classTransformsMapPromise ??
+      this.parentInstance?.classTransformsMapPromise;
     this.domNode = undefined;
     this.ownDOMNodes = undefined;
     this.isDecorated = undefined;
@@ -82,6 +145,11 @@ class JSXInstance {
     this.lastCallerEnv = undefined;
     this.isDiscarded = undefined;
     this.rerenderPromise = undefined;
+    this.classTransformPromise = new Promise(async (resolve) => {
+      let classTransformsMap = await this.classTransformsMapPromise;
+      let classTransform = classTransformsMap.get(componentModule.modulePath);
+      resolve(classTransform);
+    });
   }
 
   get componentPath() {
@@ -91,23 +159,23 @@ class JSXInstance {
 
   render(
     props = new ObjectWrapper(), isDecorated, interpreter,
-    callerNode, callerEnv, replaceSelf = true, force = false, isRoot = false,
+    callerNode, callerEnv, replaceSelf = true, force = false,
   ) {  
     this.isDecorated = isDecorated;
     this.lastCallerNode = callerNode;
     this.lastCallerEnv = callerEnv;
 
-    // Return early of the props are the same as on the last render, and if not
-    // forced to rerender the instance or its child instances.
+    // Return early if the props are the same as on the last render, and if the
+    // instance is not forced to rerender.
     if (
       !force && this.props !== undefined && compareProps(props, this.props)
     ) {
       return this.domNode;
     }
 
-    // Record the props. And on the first render only, initialize
-    // the state, and record the refs as well (which cannot be changed by a
-    // subsequent render).
+    // Record the props. And on the first render only, initialize the state,
+    // and record the refs as well (which cannot be changed by a subsequent
+    // render).
     this.props = props;
     if (this.state === undefined) {
       // Initialize the state.
@@ -119,8 +187,7 @@ class JSXInstance {
       this.refs = props.get("refs") ?? new ObjectWrapper();
     }
 
-
-    // Get the component module's render() method.
+    // Then get the component module's render() method.
     let fun = this.componentModule.get("render");
     if (!fun) throw new RuntimeError(
       "Component module is missing a render function " +
@@ -130,9 +197,8 @@ class JSXInstance {
     
     // And construct the resolve() callback that render() should call (before
     // returning) on the JSXElement to be rendered. This resolve() callback's
-    // job is to get us the newDOMNode to insert in the DOM, as well as a
-    // selection of DOM nodes that this instance is allowed to style().
-    let newDOMNode, ownDOMNodes, resolveHasBeenCalled = false;
+    // job is to get us the newDOMNode to insert in the DOM.
+    let newDOMNode, ownDOMNodes = [], resolveHasBeenCalled = false;
     let resolve = new DevFunction({decEnv: callerEnv}, (
       {interpreter, callerNode, execEnv}, [jsxElement]
     ) => {
@@ -147,12 +213,16 @@ class JSXInstance {
       // render() is a dev function that returns a DOM node directly, wrapped
       // in the DOMNodeWrapper class exported below, in which case just use
       // that DOM node.
+      // getDOMNode() also pushes to ownDOMNodes array argument all the non-
+      // instance nodes that this instance renders. This is done solely because
+      // we use this when styling the instance's node (which might change in a
+      // future implementation).
       if (jsxElement instanceof DOMNodeWrapper) {
         newDOMNode = jsxElement.domNode;
       }
       else {
-        [newDOMNode, ownDOMNodes] = this.getDOMNode(
-          jsxElement, marks, interpreter, callerNode, execEnv
+        newDOMNode = this.getDOMNode(
+          jsxElement, marks, interpreter, callerNode, execEnv, ownDOMNodes
         );
       }
   
@@ -196,10 +266,12 @@ class JSXInstance {
     catch (err) {
       error = err;
     }
-
-    // If an error occurred, log the error with getExtendedErrorMsg(), which
-    // itself throws the error again if it is unrecognized, and then return
-    // a placeholder element with a "failed" class. 
+    // If an error occurred, or if the resolve() callback was not called, log
+    // the error with getExtendedErrorMsg(), which itself throws the error
+    // again if it is unrecognized, and then return a placeholder element
+    // with a "s0_failed" class. Note that the "s0_" in front means that this
+    // class can be styled by the users (in particular by the style sheet that
+    // getStyle() assigns the ID of "s0").
     if (error || !resolveHasBeenCalled) {
       let errorMsg = error ? getExtendedErrorMsg(error) : (
         "A JSX component's render() method did not call its resolve() " +
@@ -207,36 +279,21 @@ class JSXInstance {
       );
       console.error(errorMsg);
       let ret = document.createElement("span");
-      ret.setAttribute("class", "0_failed");
+      ret.setAttribute("class", "s0_failed");
       return ret;
     }
 
-    // Before we return the new DOM node, we also get the component's style
-    // function, which is decided by getStyleFun().
-    let styleFun = interpreter.executeFunction(
-      this.getStyleFun, [this.componentPath, this.componentModule],
-      callerNode, callerEnv
-    );
+    // Before returning the new DOM node, we also then() the classTransform
+    // promise with a callback to style the DOM node.
+    this.classTransformPromise.then(classTransform => {
+      // When this promise resolves, first  check that the instance hasn't been
+      // rerendered by checking that this.domNode is still === newDOMNode.
+      if (this.domNode !== newDOMNode) return;
 
-    // If the returned styleFun is actually a PromiseObject, we mark newDOMNode
-    // with a "pending-style" class, and then() the promise with a callback to
-    // queue a styling of the DOM node, which will at some point remove the
-    // "pending-style" class when it resolves.
-    if (styleFun instanceof PromiseObject) {
-      // Note that the "0_" prefix here means that the style of this "pending-
-      // style" class is decided by the first style sheet imported by the app.
-      newDOMNode.setAttribute("class", "0_pending-style");
-      styleFun.then(styleFun => {
-        this.queueStyling(styleFun);
-      });
-    }
-    // And else, if styleFun is nonetheless still defined, we can queue the
-    // styling directly, also adding the "pending-style" class in case that
-    // this styling only resolves on a subsequent tick.
-    else if (styleFun) {
-      newDOMNode.setAttribute("class", "0_pending-style");
-      this.queueStyling(styleFun);
-    } 
+      // If not, restyle it, also using ownDOMNodes to restrict which nodes can
+      // be transformed.
+      transformClasses(newDOMNode, ownDOMNodes, classTransform);
+    });
 
     // Then on success, return the instance's new DOM node.
     return newDOMNode;
@@ -254,7 +311,8 @@ class JSXInstance {
 
 
   getDOMNode(
-    jsxElement, marks, interpreter, callerNode, callerEnv, isOuterElement = true
+    jsxElement, marks, interpreter, callerNode, callerEnv, ownDOMNodes,
+    isOuterElement = true
   ) {
     // If jsxElement is not a JSXElement instance, return a sanitized string
     // derived from JSXElement, but throw if jsxElement is the outer element of
@@ -276,7 +334,7 @@ class JSXInstance {
       let children = jsxElement.props.get("children") ?? new Map();
       return children.values().map(val => (
         this.getDOMNode(
-          val, marks, interpreter, callerNode, callerEnv, false
+          val, marks, interpreter, callerNode, callerEnv, ownDOMNodes, false
         )
       ));
     }
@@ -364,24 +422,27 @@ class JSXInstance {
       // child returns an array, it also calls itself recursively to append
       // any and all nested children inside that array (at any depth).
       this.createAndAppendChildren(
-        newDOMNode, childArr, marks, interpreter, callerNode, callerEnv
+        newDOMNode, childArr, marks, interpreter, callerNode, callerEnv,
+        ownDOMNodes,
       );
 
-      // Finally return the new DOM node.
+      // Then return the DOM node of this new element, and also push the node
+      // to ownDOMNodes, which is used when styling the component instance.
+      ownDOMNodes.push(newDOMNode);
       return newDOMNode;
     }
   }
 
 
   createAndAppendChildren(
-    domNode, childArr, marks, interpreter, callerNode, callerEnv
+    domNode, childArr, marks, interpreter, callerNode, callerEnv, ownDOMNodes
   ) {
     childArr.forEach(val => {
       if (val instanceof Array) {
         this.createAndAppendChildren(domNode, val);
       } else {
         domNode.append(this.getDOMNode(
-          val, marks, interpreter, callerNode, callerEnv, false
+          val, marks, interpreter, callerNode, callerEnv, ownDOMNodes, false
         ));
       }
     });
@@ -465,9 +526,7 @@ class JSXInstance {
   ) {
     // Throw if the user dispatches a reserved action, such as "render" or
     // "getInitState".
-    if (
-      action === "render" || action === "getInitState" || action === "style"
-    ) {
+    if (action === "render" || action === "getInitState") {
       throw new RuntimeError(
         `Dispatched action cannot be the reserved identifier, ${action}`,
         callerNode, callerEnv
@@ -514,22 +573,6 @@ class JSXInstance {
     }
   }
 
-
-  queueStyling(styleFun, props, styleProps, callerNode, callerEnv) {
-    // First call the style function to first of all get an ObjectWrapper
-    // object containing the routes of all the style sheets that the instance
-    // uses, and where the property keys of these routes represent the
-    // "local prefix" that the user uses to refer to each style sheet. And the
-    // second returned object from styleFun is then supposed to be an
-    // instruction set of how to transform the instance's ownDOMNodes by
-    // setting/transforming their class attributes.
-    let styleFunOutput = interpreter.executeFunction(
-      styleFun, [props, styleProps], callerNode, callerEnv
-    );
-    let styleSheetsObj        = styleFunOutput.get(0);
-    let transformInstructions = styleFunOutput.get(1);
-    let isTrusted             = styleFunOutput.get(2);
-  }
 
 }
 
@@ -668,66 +711,11 @@ export function compareProps(props1, props2, compareRefs = false) {
 
 
 
-class ComponentStyler {
-
-  constructor(getStyleFun) {
-    this.getStyleFun = getStyleFun;
-    this.styleSubscribers = new Map();
-    this.componentStyleSheets = new Map();
-    this.nextPrefix = 0;
-  }
 
 
-  prepareAndGetStyleFun(componentPath) {
-    // Get the style object (promise) from getComponentStyle().
-    let styleFun = interpreter.executeFunction(
-      this.getStyleFun, [this.componentPath, this.componentModule],
-      callerNode, callerEnv
-    );
 
-    // If styleFun is a PromiseObject, create and return a Promise that
-    // resolves after getStyle
-
-
-  }
-
-  prepareStyle(styleSheetRouteArr) {
-    let hasBeenStyled = this.styledComponents.get(componentPath);
-    if (!hasBeenStyled) {
-
-      // If the return value is falsy, apply no style, and else, apply the
-      // style either synchronously or on a subsequent tick if it is a
-      // promise object.
-      if (styleFun) {
-        if (styleFun instanceof PromiseObject) {
-          // If it's a promise, simply render the instance simply as an empty
-          // template element, without no call to the component's render()
-          // method. When the style then finally resolves, we queue a
-          // rerender, which calls the render() method for the first time.
-          // We also make sure to set the new hasBeenRendered as the promise
-          // which can be used by other instances of the same component.
-          styleFun.promise.then(style => {
-            applyComponentStyle(
-              componentPath, style, callerNode, callerEnv
-            );
-            this.styledComponents.set(this.componentPath, true);
-            this.queueRerender(interpreter);
-          });
-          this.styledComponents.set(this.componentPath, styleFun.promise);
-          return document.createElement("template");
-        }
-        else {
-          // Else we simply apply the style synchronously, and then continue
-          // with the rest of this render() method.
-            applyComponentStyle(
-              this.componentPath, styleFun, callerNode, callerEnv
-            );
-          this.styledComponents.set(this.componentPath, true);
-        }
-      }
-    }
-  }
-
+function transformClasses(outerNode, nodeArray, classTransform) {
+  // TODO: Impl.
 }
 
 
@@ -754,33 +742,6 @@ function applyComponentStyle(componentPath, style, node, env) {
 
 
 
-
-
-
-// A function to parse CSS and wrap it in a ValidCSS class, ready to be passed
-// to applyStyle().
-export const validateCSS = new DevFunction(
-  {},
-  function(
-    {callerNode, execEnv}, [css]
-  ) {
-    // Parse the CSS with the side-effect of throwing on failure.
-    parseString(css, callerNode, execEnv, sassParser);
-    return new ValidCSS(css);
-  }
-);
-
-
-
-export class ValidCSS {
-  constructor(css) {
-    this.css = css;
-  }
-
-  get(key) {
-    if (key === "css") return this.css;
-  }
-}
 
 
 
