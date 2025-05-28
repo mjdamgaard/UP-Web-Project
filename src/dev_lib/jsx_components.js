@@ -1,4 +1,5 @@
 
+import sassTranspiler from "../interpreting/SASSTranspiler.js";
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, turnImmutable,
   ArrayWrapper, ObjectWrapper, Signal, PromiseObject, StyleObject, parseString,
@@ -42,63 +43,14 @@ export const createJSXApp = new DevFunction(
     {callerNode, execEnv, interpreter},
     [appComponent, props, getStyle, styleParams = new ObjectWrapper()]
   ) {
-    let {liveModules} = execEnv.scriptVars;
+    // First create an JSXAppStyler, which uses the input getStyle() and
+    // styleParams to style each JSX component.
+    let jsxAppStyler = new JSXAppStyler(getStyle, styleParams, interpreter);
 
-    // Initialize a Map over all the routes of the loaded style sheets, which
-    // can be passed as-mutable to and managed by getStyle(), and passed to
-    // the SASS transpiler as well for determining class prefixes. The routes
-    // in this Map is indexed by the style sheet IDs, which is what determines
-    // the class prefixes.
-    let loadedStyleSheets = passedAsMutable(new MapWrapper()); 
-
-    // Create a promise array to fetch and apply the styles of all current
-    // imported and live modules that has a '.jsx' extension.
-    let promiseArr = [];
-    liveModules.entries().forEach(([modulePath, liveModule]) => {
-      if (modulePath.slice(-4) === ".jsx") {
-        promiseArr.push(new Promise(async (resolve) => {
-          // First we get the "style" output of getStyle(), which is possibly
-          // a PromiseObject to a styleSpecs object, in which case wait for it
-          // and unwrap it.
-          let styleSpecs = interpreter.executeFunction(
-            getStyle, [modulePath, loadedStyleSheets, liveModule],
-            callerNode, execEnv
-          );
-          if (styleSpecs instanceof PromiseObject) {
-            styleSpecs = await styleSpecs.promise;
-          }
-
-          // Once the styleSpecs is gotten, which is actually an array (wrapper)
-          // of the form [styleSheetPaths?, classTransform?], get the style
-          // sheet paths/routes and load each one, and afterwards resolve with
-          // the classTransform paired with the modulePath.
-          let styleSheetPaths = styleSpecs.get(0);
-          let classTransform = styleSpecs.get(1);
-          await loadStyleSheets(
-            styleSheetPaths, styleParams, interpreter, callerNode, execEnv
-          );
-          resolve([modulePath, classTransform]);
-        }));
-      }
-    });
-
-    // Then Promise.all() this promise array and use it to create a new Promise
-    // for a modulePath--classTransform Map, call it classTransformsMap. Once
-    // this promise resolves, we also remove the "pending-style" class from
-    // the app component instance, which is set below. 
-    let classTransformsMapPromise = new Promise(async (resolve) => {
-      let classTransformsMap = new Map(await Promise.all(promiseArr));
-      let appNode = document.getElementById("up-app-root").firstChild;
-      appNode.classList.remove("pending-style")
-      resolve(classTransformsMap);
-    }); 
-
-    // With this promise used for styling the JSX instances in our hands, we
-    // can then create the app's root component instance, render it, and insert
-    // it into the document.
+    // Then create the app's root component instance, render it, and insert it
+    // into the document.
     let rootInstance = new JSXInstance(
-      appComponent, "root", undefined, callerNode, execEnv,
-      classTransformsMapPromise, loadedStyleSheets, styleParams,
+      appComponent, "root", undefined, callerNode, execEnv, jsxAppStyler
     );
     let rootParent = document.getElementById("up-app-root");
     let appNode = rootInstance.render(
@@ -106,9 +58,18 @@ export const createJSXApp = new DevFunction(
     );
     rootParent.replaceChildren(appNode);
 
-    // We also add a "pending-style" class to the app's DOM node, which is
-    // removed once the style-related promise above resolves.
+    // Also add a "pending-style" class to the app's DOM node, which is removed
+    // once the style-related promise below resolves.
     appNode.classList.add("pending-style");
+
+    // Now use the jsxAppStyler to fetch and load the styles of all statically
+    // imported JSX modules (with file extensions ending in ".jsx").
+    let {liveModules} = execEnv.scriptVars;
+    await jsxAppStyler.loadStylesOfAllStaticJSXModules(liveModules);
+
+    // And once the styles are ready, we can remove the "pending-style" class
+    // from the app node.
+    appNode.classList.remove("pending-style");
   }
 );
 
@@ -122,8 +83,7 @@ class JSXInstance {
 
   constructor (
     componentModule, key = undefined, parentInstance = undefined,
-    callerNode, callerEnv, classTransformsMapPromise = undefined,
-    loadedStyleSheets = undefined, styleParams = undefined,
+    callerNode, callerEnv, jsxAppStyler = undefined,
   ) {
     if (!(componentModule instanceof LiveModule)) throw new RuntimeError(
       "JSX component needs to be an imported module namespace object",
@@ -132,12 +92,10 @@ class JSXInstance {
     this.componentModule = componentModule;
     this.key = `${key}`;
     this.parentInstance = parentInstance;
-    this.classTransformsMapPromise = classTransformsMapPromise ??
-      this.parentInstance?.classTransformsMapPromise;
-    if (loadedStyleSheets) {
-      this._loadedStyleSheets = loadedStyleSheets;
-      this._styleParams = styleParams;
-    }
+    this.jsxAppStyler = jsxAppStyler ?? this.parentInstance?.jsxAppStyler;
+    this.jsxComponentStyler = new JSXComponentStyler(
+      this.jsxAppStyler, this.componentPath
+    );
     this.domNode = undefined;
     this.ownDOMNodes = undefined;
     this.isDecorated = undefined;
@@ -149,17 +107,6 @@ class JSXInstance {
     this.lastCallerEnv = undefined;
     this.isDiscarded = undefined;
     this.rerenderPromise = undefined;
-    this.classTransformPromise = new Promise(async (resolve) => {
-      let classTransformsMap = await this.classTransformsMapPromise;
-      let classTransform = classTransformsMap.get(componentModule.modulePath);
-      if (classTransform === undefined) throw new RuntimeError(
-        `Style missing for JSX component at ${componentModule.modulePath}, ` +
-        "possibly due to importing a JSX module dynamically using the " +
-        "regular import() function rather than JSXInstanceObject.import()",
-        callerNode, callerEnv
-      );
-      resolve(classTransform);
-    });
   }
 
   get componentPath() {
@@ -299,19 +246,11 @@ class JSXInstance {
       return ret;
     }
 
-    // Before returning the new DOM node, we also then() the classTransform
-    // promise with a callback to style the DOM node.
-    this.classTransformPromise.then(classTransform => {
-      // When this promise resolves, first check that the instance hasn't been
-      // rerendered by checking that this.domNode is still === newDOMNode.
-      if (this.domNode !== newDOMNode) return;
-
-      // If not, restyle it, also using ownDOMNodes to restrict which nodes can
-      // be transformed.
-      transformClasses(
-        newDOMNode, ownDOMNodes, classTransform, callerNode, callerEnv
-      );
-    });
+    // Before returning the new DOM node, we also use this.jsxComponentStyler
+    // to transform the class attributes of the instance in order to style it.
+    this.jsxComponentStyler.transformClasses(
+      newDOMNode, ownDOMNodes, callerNode, callerEnv
+    );
 
     // Then on success, return the instance's new DOM node.
     return newDOMNode;
@@ -663,9 +602,8 @@ class JSXInstanceObject {
     async ({callerNode, execEnv, interpreter}, [route]) => {
       let liveModule = interpreter.import(route, callerNode, execEnv);
       if (route.slice(-4) === ".jsx") {
-        
+
       }
-      this.jsxInstance.queueRerender(interpreter);
     }
   );
 
@@ -750,6 +688,211 @@ export function compareProps(props1, props2, compareRefs = false) {
 
 
 
+class JSXAppStyler {
+
+  constructor(getStyle, styleParams, interpreter) {
+    this.getStyle = getStyle;
+    this.styleParams = styleParams;
+    this.interpreter = interpreter;
+    this.loadedStyleSheets = new Map();
+    this.classTransformPromises = new Map();
+  }
+
+  getClassTransformPromise(componentPath) {
+    this.classTransformPromises.get(componentPath);
+  }
+
+  // loadStylesOfAllStaticJSXModules() fetches and apply the styles of all
+  // current imported and live modules that has a '.jsx' extension.
+  async loadStylesOfAllStaticJSXModules(liveModules) {
+    let promiseArr = [];
+    liveModules.forEach((liveModule) => {
+      if (route.slice(-4) === ".jsx") {
+        promiseArr.push(this.loadStyle(liveModule));
+      }
+    });
+
+    await Promise.all(promiseArr);
+    return;
+  }
+
+  // loadStyle() receives a live module and uses getStyle() to get a list of
+  // routes of all the style sheets that the component is "subscribed to," as
+  // well as the component's "class transform" used for potentially
+  // transforming the class attributes set by the component's render() method.
+  // It also creates a promise to said classTransform in the same process, and
+  // insert this in this.classTransformPromises.
+  async loadStyle(liveModule, callerNode, callerEnv) {
+    let componentPath = liveModule.modulePath;
+    // Fetch and load the style, creating a promise to the component's
+    // classTransform.
+    let classTransformPromise = new Promise(async (resolve) => {
+      // First we get the "styleSpecs" output of getStyle(), which is possibly
+      // a PromiseObject to a styleSpecs object, in which case wait for it and
+      // unwrap it.
+      let styleSpecs = this.interpreter.executeFunction(
+        getStyle, [componentPath, liveModule],
+        callerNode, execEnv
+      );
+      if (styleSpecs instanceof PromiseObject) {
+        styleSpecs = await styleSpecs.promise;
+      }
+
+      // Once the styleSpecs is gotten, which is supposed to be an array
+      // (wrapper) of the form [styleSheetPaths?, classTransform?], get the
+      // style sheet paths/routes and load each one. Then resolve with the
+      // obtained classTransform.
+      let styleSheetPaths = styleSpecs.get(0);
+      let classTransform = styleSpecs.get(1) ?? false;
+      await this.loadStyleSheets(styleSheetPaths, callerNode, callerEnv);
+      resolve(classTransform);
+    });
+
+    // Then add this promise to this.classTransformPromises, and immediately
+    // wait for it to resolve, before finally resolving this function.
+    this.classTransformPromises.set(componentPath, classTransformPromise);
+    await classTransformPromise;
+    return;
+  }
+
+
+  async loadStyleSheets(styleSheetPaths,callerNode, callerEnv) {
+    // First create a promise array that when resolved will have fetched
+    // and and applied all style sheets pointed to by styleSheetPaths that has
+    // not yet been loaded.
+    let promiseArr = [];
+    styleSheetPaths.forEach((route, id) => {
+      if (typeof id !== "string" || !/[a-zA-Z][a-zA-Z0-9\-]*/.test(id)) {
+        throw new TypeError(
+          `Invalid style sheet ID: "${id}"`,
+          callerNode, callerEnv
+        );
+      }
+
+      // If route is an ArrayWrapper, treat it as a [route, isTrusted] pair
+      // instead.
+      let isTrusted = false;
+      if (route instanceof ArrayWrapper) {
+        isTrusted = route.get(1);
+        route = route.get(0);
+      }
+
+      // See if the style sheet is already loaded/loading, and return early if
+      // so, continuing the iteration. And else, set the entry in this.
+      // loadedStyleSheets immediately, and start fetching and loading it.
+      let isLoaded = this.loadedStyleSheets.get(id);
+      if (isLoaded) return;
+      this.loadedStyleSheets.set(id, route);
+
+      // Push a promise to promiseArr for fetching and loading the style.
+      promiseArr.push(new Promise(async (resolve) => {
+        let styleSheet = await interpreter.import(route, node, env);
+        this.transpileAndInsertStyleSheet(
+          styleSheet, route, id, isTrusted, callerNode, callerEnv
+        );
+        resolve();
+      }));
+    });
+    await Promise.all(promiseArr);
+    return;
+  }
+
+
+  transpileAndInsertStyleSheet(
+    styleSheet, route, id, isTrusted, callerNode, callerEnv
+  ) {
+    // First transpile the style sheet.
+    let styleSheetParams = this.styleParams.get(route);
+    let transpiledStyleSheet = sassTranspiler.transpile(
+      styleSheet, route, id, this.loadStyleSheets, styleSheetParams,
+      isTrusted, callerNode, callerEnv
+    );
+
+    // Then get or create the style element with a calls of "up-style <id>".
+    let styleElement = document.querySelector(`head style.up-style.${id}`);
+    if (!styleElement) {
+      styleElement = document.createElement("style");
+      styleElement.setAttribute("class", `up-style ${id}`);
+      let headElement = document.querySelector(`head`);
+      headElement.appendChild(styleElement);
+    }
+
+    // Now replace that style element's contents with the transpiled style
+    // sheet.
+    styleElement.replaceChildren(transpiledStyleSheet);
+  }
+
+
+}
+
+
+class JSXComponentStyler {
+  constructor(jsxAppStyler, componentPath) {
+    this.classTransformPromise =
+      jsxAppStyler.getClassTransformPromise(componentPath);
+  }
+
+  transformClasses(newDOMNode, ownDOMNodes, callerNode, callerEnv) {
+    this.classTransformPromise.then(classTransform => {
+      // If classTransform is undefined, it ought to mean that the style for
+      // this component has not yet been loaded, in which case throw an error.
+      if (classTransform === undefined) throw new RuntimeError(
+        `Style missing for JSX component at ${componentModule.modulePath}, ` +
+        "possibly due to importing a JSX module dynamically using the " +
+        "regular import() function rather than JSXInstanceObject.import()",
+        callerNode, callerEnv
+      );
+
+      // Else check that the instance hasn't been rerendered by verifying that
+      // this.domNode is still === newDOMNode, and otherwise simply return
+      // early.
+      if (this.domNode !== newDOMNode) {
+        return;
+      }
+  
+      // Also return early if classTransform is false or nodeArray is empty.
+      if (!classTransform || nodeArray.length === 0) return;
+
+      // Else we first go through each node and mark them with a special class
+      // used for filtering out all other nodes when constructing our selectors.
+      // This class is then removed again before this function returns.
+      nodeArray.forEach(node => {
+        node.classList.add("transforming");
+      });
+
+      // Then iterate through each an any transform instruction in
+      // classTransform and carry it out.
+      classTransform.values().forEach(inst => {
+        // Each transform instruction (user-defined) is supposed to be of the
+        // form [selector, classStr]. Extract these values.
+        if (!(inst instanceof ArrayWrapper)) throw new RuntimeError(
+          "Invalid class transform instruction",
+          callerNode, callerEnv
+        );
+        let selector = inst.get(0);
+        let classStr = inst.get(1);
+
+        // Then validate the selector.
+        let isValid = false;
+        if (typeof selector === "string") {
+          // TODO: Parse the selector, then turn isValid to true on success.
+        }
+        if (!isValid) throw new RuntimeError(
+          "Invalid class transform instruction",
+          callerNode, callerEnv
+        );
+
+        // TODO: Then parse the class string..
+
+        outerNode.parentElement.querySelectorAll();
+      });
+    });
+  }
+}
+
+
+
+
 // loadStyleSheets() fetches and applies the style sheet, also looking in
 // styleParams for any SASS parameters (i.e. variables using the '!default'
 // flag) to overwrite.
@@ -806,48 +949,6 @@ async function loadStyleSheets(
 
 
 
-
-
-function transformClasses(
-  outerNode, nodeArray, classTransform, callerNode, callerEnv
-) {
-  // If classTransform is falsy or nodeArray is empty, return early.
-  if (!classTransform || nodeArray.length === 0) return;
-
-  // Else we first go through each node and mark them with a special class used
-  // for filtering out all other nodes when constructing our selectors. This
-  // class is then removed again before this function returns.
-  nodeArray.forEach(node => {
-    node.classList.add("transforming");
-  });
-
-  // Then iterate through each an any transform instruction in classTransform
-  // and carry it out.
-  classTransform.values().forEach(inst => {
-    // Each transform instruction (user-defined) is supposed to be of the form
-    // inst : [selector, classStr]. Extract these values.
-    if (!(inst instanceof ArrayWrapper)) throw new RuntimeError(
-      "Invalid class transform instruction",
-      callerNode, callerEnv
-    );
-    let selector = inst.get(0);
-    let classStr = inst.get(1);
-
-    // Then validate the selector.
-    let isValid = false;
-    if (typeof selector === "string") {
-      // TODO: Parse the selector, then turn isValid to true on success.
-    }
-    if (!isValid) throw new RuntimeError(
-      "Invalid class transform instruction",
-      callerNode, callerEnv
-    );
-
-    // TODO: Then parse the class string..
-
-    outerNode.parentElement.querySelectorAll();
-  });
-}
 
 
 function applyAppStyle(appStyle, node, env) {

@@ -9,9 +9,6 @@ import {
 
 export class SASSTranspiler {
 
-  constructor() {}
-
-
   // transpile() transforms the input styleSheet into CSS, ready to be inserted
   // in the document head, and returns it either directly or as a promise for
   // it (once we implement the @use rule).
@@ -259,11 +256,12 @@ export class SASSTranspiler {
 
 
 
-
 class UnauthorizedSelectorException {
   constructor() {}
 }
 
 
+export const sassTranspiler = new SASSTranspiler();
 
-export {SASSTranspiler as default};
+
+export {sassTranspiler as default};
