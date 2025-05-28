@@ -2,7 +2,7 @@
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, turnImmutable,
   ArrayWrapper, ObjectWrapper, Signal, PromiseObject, StyleObject, parseString,
-  passedAsMutable, getExtendedErrorMsg, TypeError,
+  passedAsMutable, getExtendedErrorMsg, TypeError, MapWrapper,
 } from "../interpreting/ScriptInterpreter.js";
 import {sassParser} from "../interpreting/parsing/SASSParser.js";
 
@@ -40,11 +40,16 @@ export const createJSXApp = new DevFunction(
   {isAsync: true, initSignals: [[WILL_CREATE_APP_SIGNAL]]},
   async function(
     {callerNode, execEnv, interpreter},
-    [
-      appComponent, props, getStyle, styleParams = new ObjectWrapper()
-    ]
+    [appComponent, props, getStyle, styleParams = new ObjectWrapper()]
   ) {
     let {liveModules} = execEnv.scriptVars;
+
+    // Initialize a Map over all the routes of the loaded style sheets, which
+    // can be passed as-mutable to and managed by getStyle(), and passed to
+    // the SASS transpiler as well for determining class prefixes. The routes
+    // in this Map is indexed by the style sheet IDs, which is what determines
+    // the class prefixes.
+    let loadedStyleSheets = passedAsMutable(new MapWrapper()); 
 
     // Create a promise array to fetch and apply the styles of all current
     // imported and live modules that has a '.jsx' extension.
@@ -56,7 +61,8 @@ export const createJSXApp = new DevFunction(
           // a PromiseObject to a styleSpecs object, in which case wait for it
           // and unwrap it.
           let styleSpecs = interpreter.executeFunction(
-            getStyle, [modulePath, liveModule], callerNode, execEnv
+            getStyle, [modulePath, loadedStyleSheets, liveModule],
+            callerNode, execEnv
           );
           if (styleSpecs instanceof PromiseObject) {
             styleSpecs = await styleSpecs.promise;
@@ -78,7 +84,7 @@ export const createJSXApp = new DevFunction(
 
     // Then Promise.all() this promise array and use it to create a new Promise
     // for a modulePath--classTransform Map, call it classTransformsMap. Once
-    // this promise  resolves, we also remove the "pending-style" class from
+    // this promise resolves, we also remove the "pending-style" class from
     // the app component instance, which is set below. 
     let classTransformsMapPromise = new Promise(async (resolve) => {
       let classTransformsMap = new Map(await Promise.all(promiseArr));
@@ -92,7 +98,7 @@ export const createJSXApp = new DevFunction(
     // it into the document.
     let rootInstance = new JSXInstance(
       appComponent, "root", undefined, callerNode, execEnv,
-      classTransformsMapPromise
+      classTransformsMapPromise, loadedStyleSheets, styleParams,
     );
     let rootParent = document.getElementById("up-app-root");
     let appNode = rootInstance.render(
@@ -116,7 +122,8 @@ class JSXInstance {
 
   constructor (
     componentModule, key = undefined, parentInstance = undefined,
-    callerNode, callerEnv, classTransformsMapPromise = undefined
+    callerNode, callerEnv, classTransformsMapPromise = undefined,
+    loadedStyleSheets = undefined, styleParams = undefined,
   ) {
     if (!(componentModule instanceof LiveModule)) throw new RuntimeError(
       "JSX component needs to be an imported module namespace object",
@@ -127,6 +134,10 @@ class JSXInstance {
     this.parentInstance = parentInstance;
     this.classTransformsMapPromise = classTransformsMapPromise ??
       this.parentInstance?.classTransformsMapPromise;
+    if (loadedStyleSheets) {
+      this._loadedStyleSheets = loadedStyleSheets;
+      this._styleParams = styleParams;
+    }
     this.domNode = undefined;
     this.ownDOMNodes = undefined;
     this.isDecorated = undefined;
@@ -141,12 +152,24 @@ class JSXInstance {
     this.classTransformPromise = new Promise(async (resolve) => {
       let classTransformsMap = await this.classTransformsMapPromise;
       let classTransform = classTransformsMap.get(componentModule.modulePath);
+      if (classTransform === undefined) throw new RuntimeError(
+        `Style missing for JSX component at ${componentModule.modulePath}, ` +
+        "possibly due to importing a JSX module dynamically using the " +
+        "regular import() function rather than JSXInstanceObject.import()",
+        callerNode, callerEnv
+      );
       resolve(classTransform);
     });
   }
 
   get componentPath() {
     return this.componentModule.componentPath;
+  }
+  get loadedStyleSheets() {
+    return this._loadedStyleSheets ?? this.parent?.loadedStyleSheets;
+  }
+  get styleParams() {
+    return this._styleParams ?? this.parent?.styleParams;
   }
 
 
@@ -279,7 +302,7 @@ class JSXInstance {
     // Before returning the new DOM node, we also then() the classTransform
     // promise with a callback to style the DOM node.
     this.classTransformPromise.then(classTransform => {
-      // When this promise resolves, first  check that the instance hasn't been
+      // When this promise resolves, first check that the instance hasn't been
       // rerendered by checking that this.domNode is still === newDOMNode.
       if (this.domNode !== newDOMNode) return;
 
@@ -605,6 +628,9 @@ class JSXInstanceObject {
     else if (key === "rerender") {
       return this.rerender;
     }
+    else if (key === "import") {
+      return this.import;
+    }
     // TODO: Add more instance methods, such as a method to get bounding box
     // data, or a method to get a PromiseObject that resolves a short time
     // after the bounding box data, and similar data, is ready.
@@ -618,17 +644,30 @@ class JSXInstanceObject {
   // an action, but only be visible on a subsequent render. setState() also
   // always queues a rerender, even if the new state is equivalent to the old
   // one.
-  setState = new DevFunction(({interpreter}, [state]) => {
+  setState = new DevFunction({}, ({interpreter}, [state]) => {
     this.jsxInstance.state = turnImmutable(state);
     this.jsxInstance.queueRerender(interpreter);
   });
 
-  // Rerender is equivalent of calling setState() on the current state; it just
-  // forces a rerender.
-  rerender = new DevFunction(({interpreter}) => {
+  // rerender() is equivalent of calling setState() on the current state; it
+  // just forces a rerender.
+  rerender = new DevFunction({}, ({interpreter}) => {
     this.jsxInstance.queueRerender(interpreter);
   });
 
+  // import() is similar to the regular import function, except it also makes
+  // the app call getStyle() to get and load the style, before the returned
+  // promise resolves.
+  import = new DevFunction(
+    {isAsync: true},
+    async ({callerNode, execEnv, interpreter}, [route]) => {
+      let liveModule = interpreter.import(route, callerNode, execEnv);
+      if (route.slice(-4) === ".jsx") {
+        
+      }
+      this.jsxInstance.queueRerender(interpreter);
+    }
+  );
 
 
 }
@@ -712,8 +751,8 @@ export function compareProps(props1, props2, compareRefs = false) {
 
 
 // loadStyleSheets() fetches and applies the style sheet, also looking in
-// styleParams for any SASS parameters (i.e. overwritable variable values, for
-// variables using the '!default' flag).
+// styleParams for any SASS parameters (i.e. variables using the '!default'
+// flag) to overwrite.
 async function loadStyleSheets(
   styleSheetPaths, styleParams, interpreter, node, env
 ) {
