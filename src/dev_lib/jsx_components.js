@@ -602,8 +602,9 @@ class JSXInstanceObject {
     async ({callerNode, execEnv, interpreter}, [route]) => {
       let liveModule = interpreter.import(route, callerNode, execEnv);
       if (route.slice(-4) === ".jsx") {
-
+        await this.jsxInstance.loadStyle(liveModule);
       }
+      return liveModule;
     }
   );
 
@@ -872,18 +873,21 @@ class JSXComponentStyler {
         let selector = inst.get(0);
         let classStr = inst.get(1);
 
-        // Then validate the selector.
+        // Then validate the selector as a complex selector (with no pseudo-
+        // element).
         let isValid = false;
         if (typeof selector === "string") {
-          // TODO: Parse the selector, then turn isValid to true on success.
+          let [{error}] = sassParser.parse(selector, "complex-selector");
+          if (!error) isValid = true;
         }
         if (!isValid) throw new RuntimeError(
           "Invalid class transform instruction",
           callerNode, callerEnv
         );
 
-        // TODO: Then parse the class string..
-
+        // Then add a ".transforming" class selector to it at the end, and use
+        // is to select a NodeList of all element to transform.
+        let filteredSelector = selector + ".transforming"
         outerNode.parentElement.querySelectorAll();
       });
     });

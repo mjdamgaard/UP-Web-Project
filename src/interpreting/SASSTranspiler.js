@@ -36,7 +36,7 @@ export class SASSTranspiler {
 
     return styleSheetNode.stmtArr.map(stmt => (
       this.transpileStatement(
-        stmt, styleSheetEnv, loadedStyleSheets, isTrusted, overwrittenVars
+        stmt, styleSheetEnv, id, loadedStyleSheets, styleSheetParams, isTrusted
       )
     )).join("")
   }
@@ -44,7 +44,7 @@ export class SASSTranspiler {
 
 
   transpileStatement(
-    stmt, environment, loadedStyleSheets, isTrusted, overwrittenVars,
+    stmt, environment, id, loadedStyleSheets, styleSheetParams, isTrusted,
     indentSpace = "", isNested = false,
   ) {
     decrCompGas(stmt, environment);
@@ -53,9 +53,22 @@ export class SASSTranspiler {
     if (type === "variable-declaration") {
       let valueNode = stmt.value;
       let val;
-      if (overwrittenVars && environment.scopeType === "module") {
-        val = overwrittenVars.get(valueNode.ident);
-        if (val === undefined) {
+      if (
+        stmt.isAdjustable && styleSheetParams &&
+        environment.scopeType === "module"
+      ) {
+        val = styleSheetParams.get(valueNode.ident);
+        if (val !== undefined) {
+          // Parse the value from styleSheetParams to validate that it is a
+          // valid (and implemented) CSS value.
+          let [{error}] = sassParser.parse(val.toString(), "value");
+          if (error) throw new RuntimeError(
+            `Style parameter "${val}" is either not a valid CSS value or is ` +
+            "not implemented yet",
+            stmt, environment
+          );
+        }
+        else {
           val = this.getValue(valueNode, environment);
         }
       }
@@ -67,7 +80,7 @@ export class SASSTranspiler {
     }
     else if (type === "ruleset") {
       transpileRuleset(
-        stmt, environment, loadedStyleSheets, isTrusted,
+        stmt, environment, id, loadedStyleSheets, isTrusted,
         indentSpace, isNested,
       );
     }
@@ -100,7 +113,7 @@ export class SASSTranspiler {
 
 
   transpileRuleset(
-    stmt, environment, loadedStyleSheets, isTrusted, indentSpace, isNested,
+    stmt, environment, id, loadedStyleSheets, isTrusted, indentSpace, isNested
   ) {
     if (isNested) throw new RuntimeError(
       "Nested rules are not yet implemented",
@@ -114,7 +127,7 @@ export class SASSTranspiler {
     try {
       transpiledSelectorList = stmt.selectorArr.map(selector => {
         this.transpileSelector(
-          selector, environment, loadedStyleSheets, isTrusted
+          selector, environment, id, loadedStyleSheets, isTrusted
         )
       }).join(", ");
     }
@@ -134,7 +147,7 @@ export class SASSTranspiler {
       indentSpace + transpiledSelectorList + " {\n" +
         stmt.nestedStmtArr.map(nestedStmt => {
           this.transpileStatement(
-            nestedStmt, newEnv, loadedStyleSheets, isTrusted,
+            nestedStmt, newEnv, id, isTrusted, loadedStyleSheets,
             indentSpace + "  "
           )
         }).join("") +
@@ -146,7 +159,7 @@ export class SASSTranspiler {
 
 
   transpileSelector(
-    selector, environment, loadedStyleSheets, isTrusted
+    selector, environment, id, loadedStyleSheets, isTrusted
   ) {
     let complexSelectorChildren = selector.complexSelector.children;
     let pseudoElement = selector.pseudoElement;
@@ -157,7 +170,7 @@ export class SASSTranspiler {
         // and passing isTrusted := true for all subsequent selectors.
         if (ind % 2 === 0) {
           return transpileCompoundSelector(
-            child, environment, loadedStyleSheets,
+            child, environment, id, loadedStyleSheets,
             (ind === 0) ? isTrusted : true,
           );
         }
@@ -176,7 +189,7 @@ export class SASSTranspiler {
   }
 
   transpileCompoundSelector(
-    selector, environment, loadedStyleSheets, isTrusted
+    selector, environment, id, loadedStyleSheets, isTrusted
   ) {
     // Initialize an "isConfined" flag reference that the following 
     // transpileSimpleSelector() calls can set to true if one of the simple
@@ -186,7 +199,7 @@ export class SASSTranspiler {
     let isConfinedFlagRef = [false];
     let transpiledCompoundSelector = selector.map(child => (
       transpileSimpleSelector(
-        child, environment, loadedStyleSheets, isConfinedFlagRef
+        child, environment, id, loadedStyleSheets, isConfinedFlagRef
       )
     )).join("");
     
@@ -200,7 +213,7 @@ export class SASSTranspiler {
   }
 
   transpileSimpleSelector(
-    selector, environment, loadedStyleSheets, isConfinedFlagRef
+    selector, environment, id, loadedStyleSheets, isConfinedFlagRef
   ) {
     let type = selector.type;
     if (type === "class-selector") {

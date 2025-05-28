@@ -10,14 +10,14 @@ const ELEMENT_TYPE_PATTERN =
   "(div|span|h1|h2|h3|h4|h5|h6|button)";
 // TODO: Continue this list.
 
-const COMBINATOR_REGEX = />|\+|~/;
+const COMBINATOR_REGEX = />|\+|~|(\s+|\/\*([^*]|\*(?!\/))*(\*\/|$))+/;
 
 const ATOMIC_PSEUDO_CLASS_PATTERN =
   "(first-child|last-child)";
 // TODO: Continue this list.
 
 const SELECTOR_DEFINED_PSEUDO_CLASS_PATTERN =
-  "(has|is)";
+  "(is|where|not)";
 // TODO: Continue this list.
 
 const INTEGER_DEFINED_PSEUDO_CLASS_PATTERN =
@@ -32,12 +32,8 @@ const PROPERTY_PATTERN =
   "(color|background-color)";
 // TODO: Continue this list.
 
-// const STRING_ONLY_PROPERTY_PATTERN =
-//   "(content)";
-
 const FLAG_PATTERN =
   "([^\\s\\S])";
-// TODO: Continue this list.
 
 const BUILT_IN_COLOR_PATTERN =
   "(red|green|blue)";
@@ -65,12 +61,14 @@ export const sassGrammar = {
   },
   "variable-declaration": {
     rules: [
+      ["variable", "/:/", "value", "/!default/", "/;/"],
       ["variable", "/:/", "value", "/;/"],
     ],
-    process: (children) => ({
+    process: (children, ruleInd) => ({
       type: "variable-declaration",
       ident: children[0].ident,
       value: children[2],
+      isAdjustable: ruleInd === 0,
     }),
   },
   "variable": {
@@ -133,7 +131,7 @@ export const sassGrammar = {
     rules: [
       [COMBINATOR_REGEX],
     ],
-    process: copyFromChild,
+    process: copyLexemeFromChild,
   },
   "compound-selector": {
     rules: [
@@ -144,10 +142,10 @@ export const sassGrammar = {
     process: (children, ruleInd) => {
       return (ruleInd <= 1) ? {
         type: "compound-selector",
-        children: [children[0], ...children[1]],
+        children: [children[0], ...children[1].children],
       } : {
         type: "compound-selector",
-        children: children[0],
+        children: children[0].children,
       };
     },
   },
@@ -157,7 +155,7 @@ export const sassGrammar = {
     ],
     process: (children) => ({
       type: "compound-selector",
-      children: children[0],
+      children: children[0].children,
     }),
   },
   "simple-selector": {
@@ -168,9 +166,13 @@ export const sassGrammar = {
     ],
     process: copyFromChild,
   },
+  "whitespace": {
+    rules: [
+      [/(\s+|\/\*([^*]|\*(?!\/))*(\*\/|$))+/],
+    ],
+  },
   "class-selector": {
     rules: [
-      // [/\.\-?[a-zA-Z_][a-zA-Z0-9_\-]*/],
       [/\.[a-zA-Z][a-zA-Z0-9_\-]*/],
     ],
     process: (children) => ({
@@ -226,15 +228,17 @@ export const sassGrammar = {
   },
   "member": {
     rules: [
-      ["/" + PROPERTY_PATTERN + "/", "/:/", "value!1+", "flag", "/;/!"],
-      ["/" + PROPERTY_PATTERN + "/", "/:/", "value!1+", "/;/"],
-      // ["/" + STRING_ONLY_PROPERTY_PATTERN + "/", "/:/", "string", "/;/"],
+      [
+        "/" + PROPERTY_PATTERN + "/", "whitespace?", "/:/", "value!1+",
+        "flag", "/;/!"
+      ],
+      ["/" + PROPERTY_PATTERN + "/", "whitespace?", "/:/", "value!1+", "/;/"],
     ],
     process: (children) => ({
       type: "member",
       propName: children[0],
-      valueArr: children[2],
-      flagName: children[3]?.name,
+      valueArr: children[3],
+      flagName: children[4]?.name,
     }),
   },
   "flag": {
@@ -247,6 +251,12 @@ export const sassGrammar = {
     }),
   },
   "value": {
+    rules: [
+      ["whitespace?", "value^(1)"],
+    ],
+    process: (children) => children[1],
+  },
+  "value^(1)": {
     rules: [
       ["variable"],
       ["string"],
@@ -333,12 +343,14 @@ export class SASSParser extends Parser {
       [
         /"([^"\\]|\\[.\n])*"/,
         /'([^'\\]|\\[.\n])*'/,
-        /(\-|#)?(0|[1-9][0-9]*)(\.[0-9]+)?(%|[a-zA-Z]+)?/,
+        /((?<=\s)\-|#)?(0|[1-9][0-9]*)(\.[0-9]+)?(%|[a-zA-Z]+)?/,
         /\|\|/,
-        /(::|[.:!#])?[a-zA-Z_][a-zA-Z0-9_\-]*/,
+        /(::|[.:#])[a-zA-Z_][a-zA-Z0-9_\-]*/,
+        /((?<=\s)!)?[a-zA-Z_][a-zA-Z0-9_\-]*/,
         /[.,:;\[\]{}()<>?=+\-*|^&!%/#]/,
+        /(\s+|\/\*([^*]|\*(?!\/))*(\*\/|$))+(?=[.:#])/
       ],
-      /\s+|\/\*([^*]|\*(?!\/))*(\*\/\s*|$)/
+      /(\s+|\/\*([^*]|\*(?!\/))*(\*\/|$))+/
     );
   }
 
