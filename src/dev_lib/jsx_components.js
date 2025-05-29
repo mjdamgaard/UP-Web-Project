@@ -112,8 +112,8 @@ class JSXInstance {
   get componentPath() {
     return this.componentModule.componentPath;
   }
-  get loadedStyleSheets() {
-    return this._loadedStyleSheets ?? this.parent?.loadedStyleSheets;
+  get loadedStyleSheetIDs() {
+    return this._loadedStyleSheetIDs ?? this.parent?.loadedStyleSheetIDs;
   }
   get styleParams() {
     return this._styleParams ?? this.parent?.styleParams;
@@ -689,13 +689,43 @@ export function compareProps(props1, props2, compareRefs = false) {
 
 
 
+// export class TwoWayMap {
+
+//   constructor(entries = undefined) {
+//     this.map = new Map(entries);
+//     this.reverseMap = new Map(entries);
+//   }
+
+//   set(key, val) {
+//     this.map.set(key, val);
+//     this.reverseMap.set(val, key);
+//   }
+
+//   get(key) {
+//     return this.map.get(key);
+//   }
+
+//   getKey(val) {
+//     return this.reverseMap.get(val);
+//   }
+
+//   remove(key, val) {
+//     this.map.remove(key);
+//     this.reverseMap.remove(val);
+//   }
+// }
+
+
+
+
+
 class JSXAppStyler {
 
   constructor(getStyle, styleParams, interpreter) {
     this.getStyle = getStyle;
     this.styleParams = styleParams;
     this.interpreter = interpreter;
-    this.loadedStyleSheets = new Map();
+    this.loadedStyleSheetIDs = new Map();
     this.classTransformPromises = new Map();
   }
 
@@ -772,7 +802,7 @@ class JSXAppStyler {
 
       // If route is an ArrayWrapper, treat it as a [route, isTrusted] pair
       // instead.
-      let isTrusted = false;
+      let isTrusted;
       if (route instanceof ArrayWrapper) {
         isTrusted = route.get(1);
         route = route.get(0);
@@ -780,12 +810,16 @@ class JSXAppStyler {
 
       // See if the style sheet is already loaded/loading, and return early if
       // so, continuing the iteration. And else, set the entry in this.
-      // loadedStyleSheets immediately, and start fetching and loading it.
-      let isLoaded = this.loadedStyleSheets.get(id);
+      // loadedStyleSheetIDs immediately, and start fetching and loading it.
+      let isLoaded = this.loadedStyleSheetIDs.get(route);
       if (isLoaded) return;
-      this.loadedStyleSheets.set(id, route);
+      this.loadedStyleSheetIDs.set(route, id);
 
-      // Push a promise to promiseArr for fetching and loading the style.
+      // Push a promise to promiseArr for fetching and loading the style. (Note
+      // that since we await styleSheet within this promise, the transpilation
+      // will occur on the next tick soonest, meaning that all the routes and
+      // IDs from styleSheetPaths will have been added to loadedStyleSheetIDs,
+      // which is required.)
       promiseArr.push(new Promise(async (resolve) => {
         let styleSheet = await interpreter.import(route, node, env);
         this.transpileAndInsertStyleSheet(
@@ -805,7 +839,7 @@ class JSXAppStyler {
     // First transpile the style sheet.
     let styleSheetParams = this.styleParams.get(route);
     let transpiledStyleSheet = sassTranspiler.transpile(
-      styleSheet, route, id, this.loadStyleSheets, styleSheetParams,
+      styleSheet, route, id, this.loadedStyleSheetIDs, styleSheetParams,
       isTrusted, callerNode, callerEnv
     );
 
