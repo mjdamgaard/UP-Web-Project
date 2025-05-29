@@ -9,7 +9,9 @@ import {sassParser} from "../interpreting/parsing/SASSParser.js";
 
 
 const CLASS_NAME_REGEX =
-/^ *([a-zA-Z][a-z-A-Z0-9\-]*_[a-zA-Z][a-z-A-Z0-9\-]* *)*$/;
+  /^ *([a-zA-Z][a-z-A-Z0-9\-]*_[a-zA-Z][a-z-A-Z0-9\-]* *)*$/;
+const CLASS_TRANSFORM_OUTPUT_REGEX =
+  /^(rm_)?([a-zA-Z][a-z-A-Z0-9\-]*_[a-zA-Z][a-z-A-Z0-9\-]*)$/;
 
 
 export const CAN_CREATE_APP_FLAG = Symbol("can_create_app");
@@ -905,7 +907,7 @@ class JSXComponentStyler {
       ownDOMNodes.forEach(node => {
         node.classList.add("transforming");
       });
-      newDOMNode.classList.add("transforming-root")
+      newDOMNode.classList.add("transforming-root");
 
       // Then iterate through each an any transform instruction in
       // classTransform and carry it out.
@@ -923,6 +925,7 @@ class JSXComponentStyler {
         // element).
         let isValid = false;
         if (typeof selector === "string") {
+          if (selector.indexOf("/*") !== -1) isValid = false;
           let [{error}] = sassParser.parse(
             selector, "relative-complex-selector"
           );
@@ -939,14 +942,30 @@ class JSXComponentStyler {
         selector = selector.replace(/^\s*&/, ".transforming-root") +
           ".transforming";
         let nodeList = newDOMNode.parentElement.querySelectorAll(selector);
-        let classNames = classStr.split(/(\s+|\/\*([^*]|\*(?!\/))*(\*\/|$))+/);
-        classNames.forEach(name => {
-          if (!name) return;
-          
+        classStr.split(/\s+/).forEach(classTransformInst => {
+          let [match, rmFlag, fullClassName] =
+            CLASS_TRANSFORM_OUTPUT_REGEX.exec(classTransformInst);
+          if (!match) throw new RuntimeError(
+            "Invalid class transform instruction",
+            callerNode, callerEnv
+          );
+          if (rmFlag) {
+            nodeList.forEach(node => node.classList.remove(fullClassName));
+          } else {
+            nodeList.forEach(node => node.classList.add(fullClassName));
+          }
         });
       });
+
+      // And finally remove the ".transforming(-root)" classes again.
+      ownDOMNodes.forEach(node => {
+        node.classList.remove("transforming");
+      });
+      newDOMNode.classList.remove("transforming-root");
     });
   }
+
+
 }
 
 
