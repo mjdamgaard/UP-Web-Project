@@ -1715,7 +1715,12 @@ export class Environment {
 
   emitSignal(signal, node, signalParams) {
     let flagEnv = this.getFlagEnvironment();
-    flagEnv.emitSignal(signal, node, this, signalParams);
+    return flagEnv.emitSignal(signal, node, this, signalParams);
+  }
+
+  getFlag(flag, maxStep) {
+    let flagEnv = this.getFlagEnvironment();
+    return flagEnv.getFlag(flag, maxStep);
   }
 
 
@@ -1936,9 +1941,9 @@ export class FlagEnvironment {
   emitSignal(signal, node, env, signalParams) {
     let modifiedEmit = env.scriptVars.signalModifications.get(signal);
     if (modifiedEmit) {
-      modifiedEmit(this, node, env, signalParams);
+      return modifiedEmit(this, node, env, signalParams);
     } else {
-      signal.emit(this, node, env, signalParams);
+      return signal.emit(this, node, env, signalParams);
     }
   }
 

@@ -14,8 +14,9 @@ const CLASS_TRANSFORM_OUTPUT_REGEX =
   /^(rm_)?([a-zA-Z][a-z-A-Z0-9\-]*_[a-zA-Z][a-z-A-Z0-9\-]*)$/;
 
 
-export const CAN_CREATE_APP_FLAG = Symbol("can_create_app");
-export const IS_APP_ROOT_FLAG = Symbol("can_create_app");
+
+export const CAN_CREATE_APP_FLAG = Symbol("can-create-app");
+export const IS_APP_ROOT_FLAG = Symbol("id-app-root");
 
 export const CAN_CREATE_APP_SIGNAL = new Signal(
   "can_create_app",
@@ -25,7 +26,7 @@ export const CAN_CREATE_APP_SIGNAL = new Signal(
 );
 
 export const WILL_CREATE_APP_SIGNAL = new Signal(
-  "will_create_app",
+  "will-create-app",
   function(flagEnv, node, env) {
     let [wasFound] = flagEnv.getFlag(CAN_CREATE_APP_FLAG, 1);
     if (!wasFound ) throw new RuntimeError(
@@ -36,6 +37,12 @@ export const WILL_CREATE_APP_SIGNAL = new Signal(
   }
 );
 
+export const GET_IS_APP_ROOT_SIGNAL = new Signal(
+  "get-is-app-root",
+  function(flagEnv, node, env) {
+    return flagEnv.getFlag(IS_APP_ROOT_FLAG, 0) ? true : false;
+  }
+);
 
 
 
@@ -697,35 +704,6 @@ export function compareProps(props1, props2, compareRefs = false) {
   return ret;
 }
 
-
-
-
-
-// export class TwoWayMap {
-
-//   constructor(entries = undefined) {
-//     this.map = new Map(entries);
-//     this.reverseMap = new Map(entries);
-//   }
-
-//   set(key, val) {
-//     this.map.set(key, val);
-//     this.reverseMap.set(val, key);
-//   }
-
-//   get(key) {
-//     return this.map.get(key);
-//   }
-
-//   getKey(val) {
-//     return this.reverseMap.get(val);
-//   }
-
-//   remove(key, val) {
-//     this.map.remove(key);
-//     this.reverseMap.remove(val);
-//   }
-// }
 
 
 
