@@ -8,6 +8,9 @@ import {
 import {sassParser} from "../interpreting/parsing/SASSParser.js";
 
 
+const CLASS_NAME_REGEX =
+/^ *([a-zA-Z][a-z-A-Z0-9\-]*_[a-zA-Z][a-z-A-Z0-9\-]* *)*$/;
+
 
 export const CAN_CREATE_APP_FLAG = Symbol("can_create_app");
 export const IS_APP_ROOT_FLAG = Symbol("can_create_app");
@@ -357,7 +360,14 @@ class JSXInstance {
             break;
           }
           case "className" : {
-            newDOMNode.setAttribute("class", val.toString());
+            let className = val.toString();
+            if (!CLASS_NAME_REGEX.test(className)) throw new RuntimeError(
+              `Invalid class name: "${className}" (each class name needs to ` +
+              "be of the form '<id>_<name>' where both id and name are of " +
+              "the form /[a-zA-Z][a-z-A-Z0-9\-]*/)",
+              jsxElement.node, jsxElement.decEnv
+            );
+            newDOMNode.setAttribute("class", className);
             break;
           }
           case "onclick" : {
@@ -879,21 +889,23 @@ class JSXComponentStyler {
       );
 
       // Else check that the instance hasn't been rerendered by verifying that
-      // this.domNode is still === newDOMNode, and otherwise simply return
-      // early.
+      // this.domNode is still === newDOMNode, and otherwise return early.
       if (this.domNode !== newDOMNode) {
         return;
       }
   
       // Also return early if classTransform is false or nodeArray is empty.
-      if (!classTransform || nodeArray.length === 0) return;
+      if (!classTransform || ownDOMNodes.length === 0) return;
 
       // Else we first go through each node and mark them with a special class
       // used for filtering out all other nodes when constructing our selectors.
-      // This class is then removed again before this function returns.
-      nodeArray.forEach(node => {
+      // This class is then removed again before this function returns. We also
+      // mark the outer node with a .transforming-root class, which can be used
+      // as a substitute for '&' in the selector.
+      ownDOMNodes.forEach(node => {
         node.classList.add("transforming");
       });
+      newDOMNode.classList.add("transforming-root")
 
       // Then iterate through each an any transform instruction in
       // classTransform and carry it out.
@@ -905,13 +917,15 @@ class JSXComponentStyler {
           callerNode, callerEnv
         );
         let selector = inst.get(0);
-        let classStr = inst.get(1);
+        let classStr = inst.get(1).toString();
 
         // Then validate the selector as a complex selector (with no pseudo-
         // element).
         let isValid = false;
         if (typeof selector === "string") {
-          let [{error}] = sassParser.parse(selector, "complex-selector");
+          let [{error}] = sassParser.parse(
+            selector, "relative-complex-selector"
+          );
           if (!error) isValid = true;
         }
         if (!isValid) throw new RuntimeError(
@@ -919,10 +933,17 @@ class JSXComponentStyler {
           callerNode, callerEnv
         );
 
-        // Then add a ".transforming" class selector to it at the end, and use
-        // is to select a NodeList of all element to transform.
-        let filteredSelector = selector + ".transforming"
-        outerNode.parentElement.querySelectorAll();
+        // Then replace any leading "&" with ".transforming-root", and add a
+        // ".transforming" class selector to it at the end, and use this to
+        // select a NodeList of all element to transform.
+        selector = selector.replace(/^\s*&/, ".transforming-root") +
+          ".transforming";
+        let nodeList = newDOMNode.parentElement.querySelectorAll(selector);
+        let classNames = classStr.split(/(\s+|\/\*([^*]|\*(?!\/))*(\*\/|$))+/);
+        classNames.forEach(name => {
+          if (!name) return;
+          
+        });
       });
     });
   }

@@ -119,6 +119,18 @@ export const sassGrammar = {
       lexeme: children[0],
     }),
   },
+  "relative-complex-selector": {
+    rules: [
+      ["/&/", "combinator?", "complex-selector"],
+      ["/&/"],
+      ["complex-selector"],
+    ],
+    process: (children, ruleInd) => ({
+      type: "relative-complex-selector",
+      children: (ruleInd === 2) ? children[0].children :
+        [children[0], children[1], ...children[2].children],
+    }),
+  },
   "complex-selector": {
     rules: [
       ["compound-selector", "combinator?", "complex-selector"],
