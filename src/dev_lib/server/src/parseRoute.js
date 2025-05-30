@@ -1,14 +1,20 @@
 
-const homeDirIDRegEx = /^\/([a-zA-Z0-9_\-]+)?/;
+const upNodeIDRegEx = /^\/([a-zA-Z0-9_\-]+)/;
+const homeDirIDRegEx = /^\/([a-zA-Z0-9_\-]+)/;
 const filePathRegEx =
-  /^\/(([a-zA-Z0-9_\-.]+(?<!\.)\/)*[a-zA-Z0-9_\-.]+(?<!\.))(?=($|\?))/;
-const queryStringRegEx = /^\?([^=&]*(=[^=&]*)?(&[^=&]*(=[^=&])*)?)/;
+  /^\/(([a-zA-Z0-9_\-.]+(?<!\.)\/)*[a-zA-Z0-9_\-.]+(?<!\.))(?=($|[?#]))/;
+const queryStringRegEx = /^\?([^=&#]*(=[^=&#]*)?(&[^=&#]*(=[^=&#])*)?)/;
+const tagRegEx = /^#([a-zA-Z0-9_\-.]*)/;
 const lastFileExtRegEx = /\.([^.]+)$/
 
 
 export function parseRoute(route) {
-  let homeDirID, filePath, queryString;
+  let upNodeID, homeDirID, filePath, queryString, tag;
   let match, routeRemainder = route;
+
+  // Get the UP node ID.
+  [match, upNodeID] = homeDirIDRegEx.exec(routeRemainder) ?? ["", ""];
+  routeRemainder = routeRemainder.substring(match.length);
 
   // Get the home directory ID, if any.
   [match, homeDirID] = homeDirIDRegEx.exec(routeRemainder) ?? ["", ""];
@@ -20,6 +26,10 @@ export function parseRoute(route) {
 
   // Get the final query string, if any.
   [match, queryString] = queryStringRegEx.exec(routeRemainder) ?? ["", ""];
+  routeRemainder = routeRemainder.substring(match.length);
+
+  // Get the trailing tag, if any.
+  [match, tag] = queryStringRegEx.exec(routeRemainder) ?? ["", ""];
   routeRemainder = routeRemainder.substring(match.length);
 
   // Throw if this did not exhaust the full route.
@@ -60,6 +70,6 @@ export function parseRoute(route) {
   }
 
   return [
-    homeDirID, filePath, fileExt, queryStringArr, isLocked
+    upNodeID, homeDirID, filePath, fileExt, queryStringArr, tag, isLocked
   ];
 }

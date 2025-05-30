@@ -9,30 +9,34 @@ import {SET_ELEVATED_PRIVILEGES_SIGNAL} from "../signals.js";
 
 export async function query(
   {callerNode, execEnv, interpreter},
-  isPost, route, homeDirID, filePath, _, queryStringArr,
+  isPost, route, upNodeID, homeDirID, filePath, _, queryStringArr,
   postData, maxAge, noCache, lastUpToDate, onCached,
 ) {
   let serverQueryHandler = interpreter.serverQueryHandler;
   let dbQueryHandler = interpreter.dbQueryHandler;
 
-  // If route equals "mkdir?<adminID>", create a new home directory with the
-  // requested adminID as the admin. 
+  // If route equals "...?mkdir&a=<adminID>", create a new home directory with
+  // the requested adminID as the admin. 
   if (!homeDirID) {
     if (queryStringArr[0] === "mkdir") {
       if (!isPost) throw new RuntimeError(
         `Unrecognized route for the "fetch" method: ${route}`,
         callerNode, execEnv
       );
-      let requestedAdminID = queryStringArr[1];
+      let requestedAdminID = (queryStringArr[1] ?? [])[1];
+      if (!requestedAdminID) throw new RuntimeError(
+        "No admin ID was provided",
+        callerNode, execEnv
+      );
       payGas(callerNode, execEnv, {mkdir: 1});
       if (interpreter.isServerSide) {
         return await dbQueryHandler.queryDBProcOrCache(
           "createHomeDir", [requestedAdminID],
-          route, maxAge, noCache, lastUpToDate, callerNode, execEnv,
+          route, upNodeID, maxAge, noCache, lastUpToDate, callerNode, execEnv,
         );
       } else {
         return serverQueryHandler.queryServerOrCache(
-          isPost, route, maxAge, noCache, onCached, interpreter,
+          isPost, route, upNodeID, maxAge, noCache, onCached, interpreter,
           callerNode, execEnv,
         );
       }
@@ -45,18 +49,18 @@ export async function query(
 
   // No requests targeting subdirectories are implemented at this point.
   if (filePath) throw new RuntimeError(
-    `Unrecognized route for the "fetch" method: ${route}`,
+    `Unrecognized route: ${route}`,
     callerNode, execEnv
   );
 
-  // If route equals just "/<homeDirID>", without any query string, return
+  // If route equals just ".../<homeDirID>", without any query string, return
   // a list of all nested file paths of the home directory, except paths of
   // files nested inside locked subdirectories (starting with "_").
   if (!queryStringArr) {
     if (interpreter.isServerSide) {
       let [fullDescList, wasReady] = await dbQueryHandler.queryDBProcOrCache(
         "readHomeDirDescendants", [homeDirID, 1000, 0],
-        route, maxAge, noCache, lastUpToDate, callerNode, execEnv,
+        route, upNodeID, maxAge, noCache, lastUpToDate, callerNode, execEnv,
       );
       let visibleDescList;
       if (!wasReady) {
@@ -68,7 +72,7 @@ export async function query(
     }
     else {
       return serverQueryHandler.queryServerOrCache(
-        isPost, route, maxAge, noCache, onCached, interpreter,
+        isPost, route, upNodeID, maxAge, noCache, onCached, interpreter,
         callerNode, execEnv,
       );
     }
@@ -76,59 +80,59 @@ export async function query(
 
   let queryType = queryStringArr[0];
 
-  // If route equals just "/<homeDirID>?_all", return a list of all nested
+  // If route equals just ".../<homeDirID>?_all", return a list of all nested
   // file paths of the home directory, *including* paths of files nested
   // inside locked subdirectories (starting with "_").
   if (queryType === "_all") {
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProcOrCache(
         "readHomeDirDescendants", [homeDirID, 1000, 0],
-        route, maxAge, noCache, lastUpToDate, callerNode, execEnv,
+        route, upNodeID, maxAge, noCache, lastUpToDate, callerNode, execEnv,
       );
     } else {
       return serverQueryHandler.queryServerOrCache(
-        isPost, route, maxAge, noCache, onCached, interpreter,
+        isPost, route, upNodeID, maxAge, noCache, onCached, interpreter,
         callerNode, execEnv,
       );
     }
   }
 
-  // If route equals just "/<homeDirID>?admin", return the adminID of the home
-  // directory.
+  // If route equals just ".../<homeDirID>?admin", return the adminID of the
+  // home directory.
   if (queryType === "admin") {
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProcOrCache(
         "readHomeDirAdminID", [homeDirID],
-        route, maxAge, noCache, lastUpToDate, callerNode, execEnv,
+        route, upNodeID, maxAge, noCache, lastUpToDate, callerNode, execEnv,
       );
     } else {
       return serverQueryHandler.queryServerOrCache(
-        isPost, route, maxAge, noCache, onCached, interpreter,
+        isPost, route, upNodeID, maxAge, noCache, onCached, interpreter,
         callerNode, execEnv,
       );
     }
   }
 
-  // If route equals "/<homeDirID>?_setAdmin&<adminID>", set a new admin of the
-  // home directory.
+  // If route equals ".../<homeDirID>?_setAdmin&<adminID>", set a new admin of
+  // the home directory.
   if (queryType === "~setAdmin") {
     let requestedAdminID = queryStringArr[1];
     let routesToEvict = [`/${homeDirID}?admin`];
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProcOrCache(
         "editHomeDir", [homeDirID, requestedAdminID],
-        route, maxAge, true, lastUpToDate, callerNode, execEnv,
+        route, upNodeID, maxAge, true, lastUpToDate, callerNode, execEnv,
         routesToEvict,
       );
     } else {
       return serverQueryHandler.queryServerOrCache(
-        isPost, route, maxAge, true, onCached, interpreter,
+        isPost, route, upNodeID, maxAge, true, onCached, interpreter,
         callerNode, execEnv, routesToEvict,
       );
     }
   }
 
-  // If route equals "/<homeDirID>?_delete", request a deletion of the
+  // If route equals ".../<homeDirID>?_delete", request a deletion of the
   // directory, ut note that directories can only be deleted after each nested
   // file in it has been deleted (as this query does not delete the files).
   if (queryType === "~delete") {
@@ -144,19 +148,19 @@ export async function query(
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProcOrCache(
         "deleteHomeDir", [homeDirID],
-        route, maxAge, true, lastUpToDate, callerNode, execEnv,
+        route, upNodeID, maxAge, true, lastUpToDate, callerNode, execEnv,
         routesToEvict,
       );
     } else {
       return serverQueryHandler.queryServerOrCache(
-        isPost, route, maxAge, true, onCached, interpreter,
+        isPost, route, upNodeID, maxAge, true, onCached, interpreter,
         callerNode, execEnv, routesToEvict,
       );
     }
   }
 
   // TODO: Correct:
-  // If route equals just "/<homeDirID>?call&<funName>&<inputArr>", get the
+  // If route equals ".../<homeDirID>?call&<funName>&<inputArr>", get the
   // module.js file at the home level of the directory, then execute that
   // module and run the function named <funName>, with the optional <inputArr>
   // as its input.
@@ -189,7 +193,7 @@ export async function query(
 
   // If the route was not matched at this point, throw an error.
   throw new RuntimeError(
-    `Unrecognized route for the "fetch" method: ${route}`,
+    `Unrecognized route: ${route}`,
     callerNode, execEnv
   );
 }

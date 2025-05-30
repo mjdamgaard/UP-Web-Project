@@ -6,23 +6,23 @@ import {
 
 export async function query(
   {callerNode, execEnv, interpreter},
-  isPost, route, homeDirID, filePath, _, queryStringArr,
+  isPost, route, upNodeID, homeDirID, filePath, _, queryStringArr,
   postData, maxAge, noCache, lastUpToDate, onCached,
 ) {
   let serverQueryHandler = interpreter.serverQueryHandler;
   let dbQueryHandler = interpreter.dbQueryHandler;
 
-  // If route equals just "/<homeDirID>/<filePath>", without any query string,
-  // return the text stored in the file.
+  // If route equals just ".../<homeDirID>/<filePath>", without any query
+  // string, return the text stored in the file.
   if (!queryStringArr) {
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProcOrCache(
         "readTextFile", [homeDirID, filePath],
-        route, maxAge, noCache, lastUpToDate, callerNode, execEnv,
+        route, upNodeID, maxAge, noCache, lastUpToDate, callerNode, execEnv,
       );
     } else {
       return serverQueryHandler.queryServerOrCache(
-        isPost, route, maxAge, noCache, onCached, interpreter,
+        isPost, route, upNodeID, maxAge, noCache, onCached, interpreter,
         callerNode, execEnv,
       );
     }
@@ -30,7 +30,7 @@ export async function query(
 
   let queryType = queryStringArr[0];
 
-  // If route equals "/<homeDirID>?~put" with a text stored in the postData,
+  // If route equals ".../<homeDirID>?~put" with a text stored in the postData,
   // overwrite the existing file with contentText, if any, or create a new file
   // with that content.
   if (queryType === "~put") {
@@ -44,18 +44,18 @@ export async function query(
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProcOrCache(
         "putTextFile", [homeDirID, filePath, text],
-        route, maxAge, true, lastUpToDate, callerNode, execEnv,
+        route, upNodeID, maxAge, true, lastUpToDate, callerNode, execEnv,
         routesToEvict,
       );
     } else {
       return serverQueryHandler.queryServerOrCache(
-        isPost, route, maxAge, true, onCached, interpreter,
+        isPost, route, upNodeID, maxAge, true, onCached, interpreter,
         callerNode, execEnv, routesToEvict,
       );
     }
   }
 
-  // If route equals "/<homeDirID>/<filePath>?~delete", ...
+  // If route equals ".../<homeDirID>/<filePath>?~delete", ...
   if (queryType === "~delete") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for the "fetch" method: ${route}`,
@@ -65,18 +65,18 @@ export async function query(
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProcOrCache(
         "deleteTextFile", [homeDirID, filePath],
-        route, maxAge, true, lastUpToDate, callerNode, execEnv,
+        route, upNodeID, maxAge, true, lastUpToDate, callerNode, execEnv,
         routesToEvict,
       );
     } else {
       return serverQueryHandler.queryServerOrCache(
-        isPost, route, maxAge, true, onCached, interpreter,
+        isPost, route, upNodeID, maxAge, true, onCached, interpreter,
         callerNode, execEnv, routesToEvict,
       );
     }
   }
 
-  // If route equals "/<homeDirID>/<filePath>?get&<alias>", verify that
+  // If route equals ".../<homeDirID>/<filePath>?get&<alias>", verify that
   // fileExt = "js", and if so, execute the module and return the variables
   // exported as <alias>. 
   if (queryType === "get") {
@@ -84,7 +84,7 @@ export async function query(
     // when executing the module.
   }
 
-  // If route equals "/<homeDirID>/<filePath>?~call&<alias>&argv=<inputArr>",
+  // If route equals ".../<homeDirID>/<filePath>?~call&<alias>&argv=<inputArr>",
   // verify that fileExt = "js", and if so, execute the module and get the
   // function exported as <alias>, then call it and return its output.
   if (queryType === "call") {
@@ -94,7 +94,7 @@ export async function query(
 
   // If the route was not matched at this point, throw an error.
   throw new RuntimeError(
-    `Unrecognized route for the "fetch" method: ${route}`,
+    `Unrecognized route: ${route}`,
     callerNode, execEnv
   );
 }

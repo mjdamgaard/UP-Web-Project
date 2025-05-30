@@ -4,12 +4,12 @@ DROP TABLE HomeDirectories;
 DROP TABLE Files;
 DROP TABLE FileIDs;
 
-DROP TABLE TextFileContents;
-DROP TABLE AutoKeyTextStructs;
-DROP TABLE UnscoredBinKeyStructs;
-DROP TABLE UnscoredCharKeyStructs;
-DROP TABLE UnscoredFloatKeyStructs;
-DROP TABLE BinScoredBinKeyStructs;
+DROP TABLE TextFiles;
+DROP TABLE AutoKeyTextTables;
+DROP TABLE BinaryKeyTables;
+DROP TABLE CharKeyTables;
+DROP TABLE FloatKeyTables;
+DROP TABLE BinaryKeyBinaryScoreTables;
 
 DROP TABLE FulltextIndexEntries;
 
@@ -64,7 +64,7 @@ CREATE TABLE FileIDs (
 /* Simple text files */
 
 
-CREATE TABLE TextFileContents (
+CREATE TABLE TextFiles (
 
     file_id BIGINT UNSIGNED PRIMARY KEY,
 
@@ -76,10 +76,10 @@ CREATE TABLE TextFileContents (
 
 
 
-/* More abstract "struct" files */
+/* Table files (abstract files implemented via DB tables) */
 
 
-CREATE TABLE AutoKeyTextStructs (
+CREATE TABLE AutoKeyTextTables (
 
     file_id BIGINT UNSIGNED NOT NULL,
 
@@ -96,7 +96,7 @@ CREATE TABLE AutoKeyTextStructs (
 
 
 
-CREATE TABLE UnscoredBinKeyStructs (
+CREATE TABLE BinaryKeyTables (
 
     file_id BIGINT UNSIGNED NOT NULL,
 
@@ -112,7 +112,7 @@ CREATE TABLE UnscoredBinKeyStructs (
 ) ROW_FORMAT = COMPRESSED;
 
 
-CREATE TABLE UnscoredCharKeyStructs (
+CREATE TABLE CharKeyTables (
 
     file_id BIGINT UNSIGNED NOT NULL,
 
@@ -128,7 +128,7 @@ CREATE TABLE UnscoredCharKeyStructs (
 ) ROW_FORMAT = COMPRESSED;
 
 
-CREATE TABLE UnscoredFloatKeyStructs (
+CREATE TABLE FloatKeyTables (
 
     file_id BIGINT UNSIGNED NOT NULL,
 
@@ -145,7 +145,7 @@ CREATE TABLE UnscoredFloatKeyStructs (
 
 
 
-CREATE TABLE BinScoredBinKeyStructs (
+CREATE TABLE BinaryKeyBinaryScoreTables (
 
     file_id BIGINT UNSIGNED NOT NULL,
 

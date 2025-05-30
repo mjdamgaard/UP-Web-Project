@@ -28,8 +28,8 @@ export class DBQueryHandler {
   // stored directly at the route in the cache, or simply not cached at all,
   // namely when the noCache parameter is truthy.
   async queryDBProcOrCache(
-    procName, paramValArr, route, maxAge, noCache, lastUpToDate, node, env,
-    routesToEvict,
+    procName, paramValArr, route, upNodeID, maxAge, noCache, lastUpToDate,
+    node, env, routesToEvict,
   ) {
     // Get a connection the the main DB.
     let conn = this.#getMainDBConn();

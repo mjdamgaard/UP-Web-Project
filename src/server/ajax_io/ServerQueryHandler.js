@@ -46,7 +46,7 @@ export class ServerQueryHandler {
   // whole result is stored directly at the route in the cache, or simply not
   // cached at all, namely when the noCache parameter is truthy.
   async queryServerOrCache(
-    isPost, route, maxAge, noCache = isPost, onCached, interpreter,
+    isPost, route, upNodeID, maxAge, noCache = isPost, onCached, interpreter,
     node, env, routesToEvict,
   ) {
     // If noCache is falsy, look in the cache first.

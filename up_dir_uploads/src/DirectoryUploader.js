@@ -37,7 +37,7 @@ export class DirectoryUploader {
     // If no dirID was gotten, request the server to create a new directory and
     // get the new dirID.
     if (!dirID) {
-      [[dirID]] = await serverQueryHandler.post(`/?mkdir&${userID}`, {
+      [[dirID]] = await serverQueryHandler.post(`/?mkdir&a=${userID}`, {
         method: "post",
         credentials: credentials,
       });

@@ -6,12 +6,10 @@ import {parseRoute} from './src/parseRoute.js';
 
 import * as directoriesMod from "./src/filetypes/directories.js";
 import * as textFilesMod from "./src/filetypes/text_files.js";
-import * as autoKeyTextStructFilesMod
-  from "./src/filetypes/auto_key_text_structs.js";
-import * as autoKeyTimestampScoredTextStructFilesMod
-  from "./src/filetypes/auto_key_timestamp_scored_text_structs.js";
-import * as binaryKeyBinaryScoredStructFilesMod from
-  "./src/filetypes/binary_key_binary_scored_structs.js";
+import * as autoKeyTextFilesMod
+  from "./src/filetypes/auto_key_text_tables.js";
+import * as binaryKeyBinaryScoreTableFilesMod from
+  "./src/filetypes/bb_tables.js";
 
 import {CHECK_ELEVATED_PRIVILEGES_SIGNAL} from "./src/signals.js";
 
@@ -48,10 +46,10 @@ export const query = new DevFunction(
 
     // Parse the route to get the filetype, among other parameters and
     // qualities.
-    let homeDirID, filePath, fileExt, queryStringArr, isLocked;
+    let upNodeID, homeDirID, filePath, fileExt, queryStringArr, isLocked;
     try {
     [
-      homeDirID, filePath, fileExt, queryStringArr, isLocked
+      upNodeID, homeDirID, filePath, fileExt, queryStringArr, , isLocked
     ] = parseRoute(route);
     }
     catch(errMsg) {
@@ -73,20 +71,19 @@ export const query = new DevFunction(
         filetypeModule = directoriesMod;
         break;
       case "js":
+      case "jsx":
       case "txt":
       case "json":
       case "html":
+      case "scss":
       case "md":
         filetypeModule = textFilesMod;
         break;
       case "at":
-        filetypeModule = autoKeyTextStructFilesMod;
+        filetypeModule = autoKeyTextFilesMod;
         break;
-      case "att":
-        filetypeModule = autoKeyTimestampScoredTextStructFilesMod;
-        break;
-      case "bb":
-        filetypeModule = binaryKeyBinaryScoredStructFilesMod;
+      case "bbt":
+        filetypeModule = binaryKeyBinaryScoreTableFilesMod;
         break;
       // More file types can be added here in the future.
       default:
@@ -105,7 +102,7 @@ export const query = new DevFunction(
     // simply be result client-side).
     return await filetypeModule.query(
       {callerNode, execEnv, interpreter, liveModule},
-      isPost, route, homeDirID, filePath, fileExt, queryStringArr,
+      isPost, route, upNodeID, homeDirID, filePath, fileExt, queryStringArr,
       postData, maxAge, noCache ?? isPost, lastUpToDate, onCached,
     );
   }
