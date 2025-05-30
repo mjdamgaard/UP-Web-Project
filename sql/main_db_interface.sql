@@ -1,4 +1,7 @@
 
+DROP FUNCTION toBase64;
+DROP FUNCTION fromBase64;
+
 DROP PROCEDURE readHomeDirAdminID;
 DROP PROCEDURE readHomeDirDescendants;
 DROP PROCEDURE createHomeDir;
@@ -13,7 +16,6 @@ DROP PROCEDURE deleteTextFile;
 
 DROP PROCEDURE putAutoKeyText;
 DROP PROCEDURE touchAutoKeyText;
-DROP PROCEDURE deleteAutoKeyText;
 DROP PROCEDURE createAutoKeyText;
 DROP PROCEDURE deleteAutoKeyText;
 DROP PROCEDURE readAutoKeyText;
@@ -27,6 +29,18 @@ DROP PROCEDURE deleteBBTEntry;
 DROP PROCEDURE readBBTEntry;
 DROP PROCEDURE readBBTScoreOrderedList;
 DROP PROCEDURE readBBTKeyOrderedList;
+
+
+
+
+
+CREATE FUNCTION toBase64 (rawStr VARBINARY(255))
+RETURNS VARCHAR(340) DETERMINISTIC
+RETURN REPLACE(REPLACE(TO_BASE64(rawStr), "+", "-"), "/", "_");
+
+CREATE FUNCTION fromBase64 (encodedStr VARCHAR(340))
+RETURNS VARBINARY(255) DETERMINISTIC
+RETURN fromBase64(REPLACE(REPLACE(encodedStr, "_", "/"), "-", "+"));
 
 
 
@@ -329,34 +343,6 @@ END proc //
 DELIMITER ;
 
 
-DELIMITER //
-CREATE PROCEDURE deleteAutoKeyText (
-    IN dirID BIGINT UNSIGNED,
-    IN filePath VARCHAR(700)
-)
-proc: BEGIN
-    DECLARE fileID BIGINT UNSIGNED;
-    IF (dirID IS NULL OR filePath IS NULL) THEN
-        SELECT NULL;
-        LEAVE proc;
-    END IF;
-    SELECT file_id INTO fileID
-    FROM Files FORCE INDEX (PRIMARY)
-    WHERE dir_id = dirID AND file_path = filePath;
-
-    DO GET_LOCK(CONCAT("AT.", fileID), 10);
-
-    DELETE FROM AutoKeyTextTables
-    WHERE file_id = fileID;
-    DELETE FROM Files
-    WHERE dir_id = dirID AND file_path = filePath;
-    SELECT ROW_COUNT() AS wasDeleted;
-
-    DO RELEASE_LOCK(CONCAT("AT.", fileID));
-END proc //
-DELIMITER ;
-
-
 
 DELIMITER //
 CREATE PROCEDURE createAutoKeyText (
@@ -560,9 +546,9 @@ CREATE PROCEDURE insertBBTEntry (
 )
 proc: BEGIN
     DECLARE fileID, newTextID BIGINT UNSIGNED;
-    DECLARE elemKey VARBINARY(255) DEFAULT FROM_BASE64(elemKeyBase64);
-    DECLARE elemScore VARBINARY(255) DEFAULT FROM_BASE64(elemScoreBase64);
-    DECLARE elemPayload VARBINARY(255) DEFAULT FROM_BASE64(elemPayloadBase64);
+    DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
+    DECLARE elemScore VARBINARY(255) DEFAULT fromBase64(elemScoreBase64);
+    DECLARE elemPayload VARBINARY(255) DEFAULT fromBase64(elemPayloadBase64);
     IF (
         dirID IS NULL OR filePath IS NULL OR
         elemKey IS NULL OR elemScore IS NULL OR elemPayload IS NULL
@@ -602,7 +588,7 @@ CREATE PROCEDURE deleteBBTEntry (
 )
 proc: BEGIN
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
-    DECLARE elemKey VARBINARY(255) DEFAULT FROM_BASE64(elemKeyBase64);
+    DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
     IF (dirID IS NULL OR filePath IS NULL OR elemKey IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
@@ -633,7 +619,7 @@ CREATE PROCEDURE readBBTEntry (
 )
 proc: BEGIN
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
-    DECLARE elemKey VARBINARY(255) DEFAULT FROM_BASE64(elemKeyBase64);
+    DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
     IF (dirID IS NULL OR filePath IS NULL OR elemKey IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
@@ -648,8 +634,8 @@ proc: BEGIN
     END IF;
 
     SELECT
-        TO_BASE64(elem_score) AS elemScore,
-        TO_BASE64(elem_payload) AS elemPayload
+        toBase64(elem_score) AS elemScore,
+        toBase64(elem_payload) AS elemPayload
     FROM BinaryKeyBinaryScoreTables FORCE INDEX (PRIMARY)
     WHERE file_id = fileID AND elem_key = elemKey;
 END proc //
@@ -668,8 +654,8 @@ CREATE PROCEDURE readBBTScoreOrderedList (
 )
 proc: BEGIN
     DECLARE fileID BIGINT UNSIGNED;
-    DECLARE lo VARBINARY(255) DEFAULT FROM_BASE64(loBase64);
-    DECLARE hi VARBINARY(255) DEFAULT FROM_BASE64(hiBase64);
+    DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
+    DECLARE hi VARBINARY(255) DEFAULT fromBase64(hiBase64);
     IF (
         dirID IS NULL OR filePath IS NULL OR
         maxNum IS NULL OR numOffset IS NULL OR isAscending IS NULL
@@ -681,7 +667,7 @@ proc: BEGIN
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
-    SELECT TO_BASE64(elem_key), TO_BASE64(elem_score), TO_BASE64(elem_payload)
+    SELECT toBase64(elem_key), toBase64(elem_score), toBase64(elem_payload)
     FROM BinaryKeyBinaryScoreTables FORCE INDEX (sec_idx)
     WHERE
         file_id = fileID AND
@@ -707,8 +693,8 @@ CREATE PROCEDURE readBBTKeyOrderedList (
 )
 proc: BEGIN
     DECLARE fileID BIGINT UNSIGNED;
-    DECLARE lo VARBINARY(255) DEFAULT FROM_BASE64(loBase64);
-    DECLARE hi VARBINARY(255) DEFAULT FROM_BASE64(hiBase64);
+    DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
+    DECLARE hi VARBINARY(255) DEFAULT fromBase64(hiBase64);
     IF (
         dirID IS NULL OR filePath IS NULL OR
         maxNum IS NULL OR numOffset IS NULL OR isAscending IS NULL
@@ -720,7 +706,7 @@ proc: BEGIN
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
-    SELECT TO_BASE64(elem_key), TO_BASE64(elem_score), TO_BASE64(elem_payload)
+    SELECT toBase64(elem_key), toBase64(elem_score), toBase64(elem_payload)
     FROM BinaryKeyBinaryScoreTables FORCE INDEX (PRIMARY)
     WHERE
         file_id = fileID AND

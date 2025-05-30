@@ -6,10 +6,10 @@ import {parseRoute} from './src/parseRoute.js';
 
 import * as directoriesMod from "./src/filetypes/directories.js";
 import * as textFilesMod from "./src/filetypes/text_files.js";
-import * as autoKeyTextFilesMod
-  from "./src/filetypes/auto_key_text_tables.js";
-import * as binaryKeyBinaryScoreTableFilesMod from
-  "./src/filetypes/bb_tables.js";
+import * as autoKeyFilesMod from "./src/filetypes/auto_key_tables.js";
+import * as scoreTableFilesMod from "./src/filetypes/scored_tables.js";
+import * as simpleTableFilesMod from "./src/filetypes/simple_tables.js";
+import * as fullTextTableFilesMod from "./src/filetypes/full_text_tables.js";
 
 import {CHECK_ELEVATED_PRIVILEGES_SIGNAL} from "./src/signals.js";
 
@@ -79,13 +79,24 @@ export const query = new DevFunction(
       case "md":
         filetypeModule = textFilesMod;
         break;
-      case "at":
-        filetypeModule = autoKeyTextFilesMod;
+      case "att":
+      case "abt":
+        filetypeModule = autoKeyFilesMod;
         break;
       case "bbt":
-        filetypeModule = binaryKeyBinaryScoreTableFilesMod;
+      case "bct":
+      case "bft":
+      case "bdt":
+        filetypeModule = scoreTableFilesMod;
         break;
-      // More file types can be added here in the future.
+      case "bt":
+      case "ct":
+        filetypeModule = simpleTableFilesMod;
+        break;
+      case "ft":
+        filetypeModule = fullTextTableFilesMod;
+        break;
+      // (More file types can be added here in the future.)
       default:
         throw new LoadError(`Unrecognized file type: ".${fileExt}"`);
     }

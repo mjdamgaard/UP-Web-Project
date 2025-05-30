@@ -7,8 +7,8 @@ import {
 
 export async function query(
   {callerNode, execEnv, interpreter},
-  isPost, route, upNodeID, homeDirID, filePath, _, queryStringArr,
-  postData, maxAge, noCache, lastUpToDate, onCached,
+  isPost, route, upNodeID, homeDirID, filePath, fileExt, queryStringArr, _,
+  maxAge, noCache, lastUpToDate, onCached,
 ) {
   let serverQueryHandler = interpreter.serverQueryHandler;
   let dbQueryHandler = interpreter.dbQueryHandler;

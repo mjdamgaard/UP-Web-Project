@@ -9,8 +9,8 @@ import {SET_ELEVATED_PRIVILEGES_SIGNAL} from "../signals.js";
 
 export async function query(
   {callerNode, execEnv, interpreter},
-  isPost, route, upNodeID, homeDirID, filePath, _, queryStringArr,
-  postData, maxAge, noCache, lastUpToDate, onCached,
+  isPost, route, upNodeID, homeDirID, filePath, _, queryStringArr, _,
+  maxAge, noCache, lastUpToDate, onCached,
 ) {
   let serverQueryHandler = interpreter.serverQueryHandler;
   let dbQueryHandler = interpreter.dbQueryHandler;
@@ -23,8 +23,8 @@ export async function query(
         `Unrecognized route for the "fetch" method: ${route}`,
         callerNode, execEnv
       );
-      let requestedAdminID = (queryStringArr[1] ?? [])[1];
-      if (!requestedAdminID) throw new RuntimeError(
+      let [a, requestedAdminID] = (queryStringArr[1] ?? []);
+      if (a !== "a" || !requestedAdminID) throw new RuntimeError(
         "No admin ID was provided",
         callerNode, execEnv
       );

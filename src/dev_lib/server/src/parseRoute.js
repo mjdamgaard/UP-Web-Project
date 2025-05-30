@@ -55,7 +55,7 @@ export function parseRoute(route) {
   let queryStringArr;
   if (queryString) {
     queryStringArr = queryString.split("&").map(val => (
-      (val.indexOf("=") === -1) ? val : val.split("=")
+      (val.indexOf("=") === -1) ? val : val.split("=", 2)
     ));
   }
 
