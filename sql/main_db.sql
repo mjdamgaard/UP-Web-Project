@@ -128,20 +128,6 @@ CREATE TABLE CharKeyTables (
 ) ROW_FORMAT = COMPRESSED;
 
 
-CREATE TABLE FloatKeyTables (
-
-    file_id BIGINT UNSIGNED NOT NULL,
-
-    elem_key FLOAT NOT NULL,
-
-    elem_payload VARBINARY(255) NOT NULL DEFAULT "",
-
-    PRIMARY KEY (
-        file_id,
-        elem_key
-    )
-
-) ROW_FORMAT = COMPRESSED;
 
 
 

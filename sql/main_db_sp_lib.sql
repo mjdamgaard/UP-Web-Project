@@ -277,7 +277,7 @@ DELIMITER ;
 /* Tables */
 
 
-/* Auto-key text structs (.ats) */
+/* Auto-key text tables (.att) */
 
 DELIMITER //
 CREATE PROCEDURE putAutoKeyText (
@@ -440,7 +440,512 @@ DELIMITER ;
 
 
 
-/* Binary-scored binary-key structs (.bbs) */
+
+
+
+
+
+
+
+
+/* Binary key tables (.bt) */
+
+DELIMITER //
+CREATE PROCEDURE putBT (
+    IN dirID BIGINT UNSIGNED,
+    IN filePath VARCHAR(700)
+)
+proc: BEGIN
+    DECLARE fileID BIGINT UNSIGNED;
+    IF (dirID IS NULL OR filePath IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    IF (fileID IS NOT NULL) THEN
+        DO GET_LOCK(CONCAT("BT.", fileID), 10);
+
+        DELETE FROM BinaryKeyTables
+        WHERE file_id = fileID;
+        SELECT 0 AS wasCreated;
+
+        DO RELEASE_LOCK(CONCAT("BT.", fileID));
+    ELSE
+        INSERT INTO FileIDs () VALUES ();
+        SET fileID = LAST_INSERT_ID();
+        DELETE FROM FileIDs WHERE file_id < fileID;
+        INSERT INTO Files (dir_id, file_path, file_id)
+        VALUES (dirID, filePath, fileID);
+        SELECT 1 AS wasCreated;
+    END IF;
+END proc //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE touchTableFile (
+    IN dirID BIGINT UNSIGNED,
+    IN filePath VARCHAR(700)
+)
+proc: BEGIN
+    DECLARE fileID BIGINT UNSIGNED;
+    IF (dirID IS NULL OR filePath IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    IF (fileID IS NOT NULL) THEN
+        SELECT 0 AS wasCreated;
+    ELSE
+        INSERT INTO FileIDs () VALUES ();
+        SET fileID = LAST_INSERT_ID();
+        DELETE FROM FileIDs WHERE file_id < fileID;
+        INSERT INTO Files (dir_id, file_path, file_id)
+        VALUES (dirID, filePath, fileID);
+        SELECT 1 AS wasCreated;
+    END IF;
+END proc //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE deleteBT (
+    IN dirID BIGINT UNSIGNED,
+    IN filePath VARCHAR(700)
+)
+proc: BEGIN
+    DECLARE fileID BIGINT UNSIGNED;
+    IF (dirID IS NULL OR filePath IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    DO GET_LOCK(CONCAT("BT.", fileID), 10);
+
+    DELETE FROM BinaryKeyTables
+    WHERE file_id = fileID;
+    DELETE FROM Files
+    WHERE dir_id = dirID AND file_path = filePath;
+    SELECT ROW_COUNT() AS wasDeleted;
+
+    DO RELEASE_LOCK(CONCAT("BT.", fileID));
+END proc //
+DELIMITER ;
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertBTEntry (
+    IN dirID BIGINT UNSIGNED,
+    IN filePath VARCHAR(700),
+    IN elemKeyBase64 VARCHAR(340),
+    IN elemPayloadBase64 VARCHAR(340)
+)
+proc: BEGIN
+    DECLARE fileID, newTextID BIGINT UNSIGNED;
+    DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
+    DECLARE elemPayload VARBINARY(255) DEFAULT fromBase64(elemPayloadBase64);
+    IF (
+        dirID IS NULL OR filePath IS NULL OR
+        elemKey IS NULL OR elemPayload IS NULL
+    ) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    IF (fileID IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+
+    INSERT INTO BinaryKeyTables (
+        file_id, elem_key, elem_payload
+    )
+    VALUES (
+        fileID, elemKey, elemPayload
+    )
+    ON DUPLICATE KEY UPDATE
+        elem_payload = elemPayload;
+
+    SELECT ROW_COUNT() AS rowCount;
+END proc //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE deleteBTEntry (
+    IN dirID BIGINT UNSIGNED,
+    IN filePath VARCHAR(700),
+    IN elemKeyBase64 VARCHAR(340)
+)
+proc: BEGIN
+    DECLARE fileID, maxTextID BIGINT UNSIGNED;
+    DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
+    IF (dirID IS NULL OR filePath IS NULL OR elemKey IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    IF (fileID IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+
+    DELETE FROM BinaryKeyTables
+    WHERE file_id = fileID AND elem_key = elemKey;
+
+    SELECT ROW_COUNT() AS wasDeleted;
+END proc //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE readBTEntry (
+    IN dirID BIGINT UNSIGNED,
+    IN filePath VARCHAR(700),
+    IN elemKeyBase64 VARCHAR(340)
+)
+proc: BEGIN
+    DECLARE fileID, maxTextID BIGINT UNSIGNED;
+    DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
+    IF (dirID IS NULL OR filePath IS NULL OR elemKey IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    IF (fileID IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+
+    SELECT
+        toBase64(elem_payload) AS elemPayload
+    FROM BinaryKeyTables FORCE INDEX (PRIMARY)
+    WHERE file_id = fileID AND elem_key = elemKey;
+END proc //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE readBTList (
+    IN dirID BIGINT UNSIGNED,
+    IN filePath VARCHAR(700),
+    IN loBase64 VARCHAR(340),
+    IN hiBase64 VARCHAR(340),
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN isAscending BOOL
+)
+proc: BEGIN
+    DECLARE fileID BIGINT UNSIGNED;
+    DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
+    DECLARE hi VARBINARY(255) DEFAULT fromBase64(hiBase64);
+    IF (
+        dirID IS NULL OR filePath IS NULL OR
+        maxNum IS NULL OR numOffset IS NULL OR isAscending IS NULL
+    ) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    SELECT toBase64(elem_key), toBase64(elem_payload)
+    FROM BinaryKeyTables FORCE INDEX (PRIMARY)
+    WHERE
+        file_id = fileID AND
+        (lo IS NULL OR elem_key >= lo) AND
+        (hi IS NULL OR elem_key <= hi)
+    ORDER BY
+        CASE WHEN isAscending THEN elem_key END ASC,
+        CASE WHEN NOT isAscending THEN elem_key END DESC
+    LIMIT numOffset, maxNum;
+END proc //
+DELIMITER ;
+
+
+
+
+
+
+
+
+
+/* Char key tables (.bt) */
+
+DELIMITER //
+CREATE PROCEDURE putCT (
+    IN dirID BIGINT UNSIGNED,
+    IN filePath VARCHAR(700)
+)
+proc: BEGIN
+    DECLARE fileID BIGINT UNSIGNED;
+    IF (dirID IS NULL OR filePath IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    IF (fileID IS NOT NULL) THEN
+        DO GET_LOCK(CONCAT("CT.", fileID), 10);
+
+        DELETE FROM CharKeyTables
+        WHERE file_id = fileID;
+        SELECT 0 AS wasCreated;
+
+        DO RELEASE_LOCK(CONCAT("CT.", fileID));
+    ELSE
+        INSERT INTO FileIDs () VALUES ();
+        SET fileID = LAST_INSERT_ID();
+        DELETE FROM FileIDs WHERE file_id < fileID;
+        INSERT INTO Files (dir_id, file_path, file_id)
+        VALUES (dirID, filePath, fileID);
+        SELECT 1 AS wasCreated;
+    END IF;
+END proc //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE touchTableFile (
+    IN dirID BIGINT UNSIGNED,
+    IN filePath VARCHAR(700)
+)
+proc: BEGIN
+    DECLARE fileID BIGINT UNSIGNED;
+    IF (dirID IS NULL OR filePath IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    IF (fileID IS NOT NULL) THEN
+        SELECT 0 AS wasCreated;
+    ELSE
+        INSERT INTO FileIDs () VALUES ();
+        SET fileID = LAST_INSERT_ID();
+        DELETE FROM FileIDs WHERE file_id < fileID;
+        INSERT INTO Files (dir_id, file_path, file_id)
+        VALUES (dirID, filePath, fileID);
+        SELECT 1 AS wasCreated;
+    END IF;
+END proc //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE deleteCT (
+    IN dirID BIGINT UNSIGNED,
+    IN filePath VARCHAR(700)
+)
+proc: BEGIN
+    DECLARE fileID BIGINT UNSIGNED;
+    IF (dirID IS NULL OR filePath IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    DO GET_LOCK(CONCAT("CT.", fileID), 10);
+
+    DELETE FROM CharKeyTables
+    WHERE file_id = fileID;
+    DELETE FROM Files
+    WHERE dir_id = dirID AND file_path = filePath;
+    SELECT ROW_COUNT() AS wasDeleted;
+
+    DO RELEASE_LOCK(CONCAT("CT.", fileID));
+END proc //
+DELIMITER ;
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertCTEntry (
+    IN dirID BIGINT UNSIGNED,
+    IN filePath VARCHAR(700),
+    IN elemKeyBase64 VARCHAR(340),
+    IN elemPayloadBase64 VARCHAR(340)
+)
+proc: BEGIN
+    DECLARE fileID, newTextID BIGINT UNSIGNED;
+    DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
+    DECLARE elemPayload VARBINARY(255) DEFAULT fromBase64(elemPayloadBase64);
+    IF (
+        dirID IS NULL OR filePath IS NULL OR
+        elemKey IS NULL OR elemPayload IS NULL
+    ) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    IF (fileID IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+
+    INSERT INTO CharKeyTables (
+        file_id, elem_key, elem_payload
+    )
+    VALUES (
+        fileID, elemKey, elemPayload
+    )
+    ON DUPLICATE KEY UPDATE
+        elem_payload = elemPayload;
+
+    SELECT ROW_COUNT() AS rowCount;
+END proc //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE deleteCTEntry (
+    IN dirID BIGINT UNSIGNED,
+    IN filePath VARCHAR(700),
+    IN elemKeyBase64 VARCHAR(340)
+)
+proc: BEGIN
+    DECLARE fileID, maxTextID BIGINT UNSIGNED;
+    DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
+    IF (dirID IS NULL OR filePath IS NULL OR elemKey IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    IF (fileID IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+
+    DELETE FROM CharKeyTables
+    WHERE file_id = fileID AND elem_key = elemKey;
+
+    SELECT ROW_COUNT() AS wasDeleted;
+END proc //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE readCTEntry (
+    IN dirID BIGINT UNSIGNED,
+    IN filePath VARCHAR(700),
+    IN elemKeyBase64 VARCHAR(340)
+)
+proc: BEGIN
+    DECLARE fileID, maxTextID BIGINT UNSIGNED;
+    DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
+    IF (dirID IS NULL OR filePath IS NULL OR elemKey IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    IF (fileID IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+
+    SELECT
+        toBase64(elem_payload) AS elemPayload
+    FROM CharKeyTables FORCE INDEX (PRIMARY)
+    WHERE file_id = fileID AND elem_key = elemKey;
+END proc //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE readCTList (
+    IN dirID BIGINT UNSIGNED,
+    IN filePath VARCHAR(700),
+    IN loBase64 VARCHAR(340),
+    IN hiBase64 VARCHAR(340),
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED,
+    IN isAscending BOOL
+)
+proc: BEGIN
+    DECLARE fileID BIGINT UNSIGNED;
+    DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
+    DECLARE hi VARBINARY(255) DEFAULT fromBase64(hiBase64);
+    IF (
+        dirID IS NULL OR filePath IS NULL OR
+        maxNum IS NULL OR numOffset IS NULL OR isAscending IS NULL
+    ) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    SELECT toBase64(elem_key), toBase64(elem_payload)
+    FROM CharKeyTables FORCE INDEX (PRIMARY)
+    WHERE
+        file_id = fileID AND
+        (lo IS NULL OR elem_key >= lo) AND
+        (hi IS NULL OR elem_key <= hi)
+    ORDER BY
+        CASE WHEN isAscending THEN elem_key END ASC,
+        CASE WHEN NOT isAscending THEN elem_key END DESC
+    LIMIT numOffset, maxNum;
+END proc //
+DELIMITER ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Binary key, binary score tables (.bbt) */
 
 DELIMITER //
 CREATE PROCEDURE putBBT (
@@ -477,33 +982,33 @@ END proc //
 DELIMITER ;
 
 
-DELIMITER //
-CREATE PROCEDURE touchBBT (
-    IN dirID BIGINT UNSIGNED,
-    IN filePath VARCHAR(700)
-)
-proc: BEGIN
-    DECLARE fileID BIGINT UNSIGNED;
-    IF (dirID IS NULL OR filePath IS NULL) THEN
-        SELECT NULL;
-        LEAVE proc;
-    END IF;
-    SELECT file_id INTO fileID
-    FROM Files FORCE INDEX (PRIMARY)
-    WHERE dir_id = dirID AND file_path = filePath;
+-- DELIMITER //
+-- CREATE PROCEDURE touchBBT (
+--     IN dirID BIGINT UNSIGNED,
+--     IN filePath VARCHAR(700)
+-- )
+-- proc: BEGIN
+--     DECLARE fileID BIGINT UNSIGNED;
+--     IF (dirID IS NULL OR filePath IS NULL) THEN
+--         SELECT NULL;
+--         LEAVE proc;
+--     END IF;
+--     SELECT file_id INTO fileID
+--     FROM Files FORCE INDEX (PRIMARY)
+--     WHERE dir_id = dirID AND file_path = filePath;
 
-    IF (fileID IS NOT NULL) THEN
-        SELECT 0 AS wasCreated;
-    ELSE
-        INSERT INTO FileIDs () VALUES ();
-        SET fileID = LAST_INSERT_ID();
-        DELETE FROM FileIDs WHERE file_id < fileID;
-        INSERT INTO Files (dir_id, file_path, file_id)
-        VALUES (dirID, filePath, fileID);
-        SELECT 1 AS wasCreated;
-    END IF;
-END proc //
-DELIMITER ;
+--     IF (fileID IS NOT NULL) THEN
+--         SELECT 0 AS wasCreated;
+--     ELSE
+--         INSERT INTO FileIDs () VALUES ();
+--         SET fileID = LAST_INSERT_ID();
+--         DELETE FROM FileIDs WHERE file_id < fileID;
+--         INSERT INTO Files (dir_id, file_path, file_id)
+--         VALUES (dirID, filePath, fileID);
+--         SELECT 1 AS wasCreated;
+--     END IF;
+-- END proc //
+-- DELIMITER ;
 
 
 DELIMITER //

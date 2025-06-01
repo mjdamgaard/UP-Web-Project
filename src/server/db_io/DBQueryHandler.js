@@ -1,12 +1,15 @@
 
 import {MainDBConnection, getProcCallSQL} from "./DBConnection.js";
-import {payGas} from '../../interpreting/ScriptInterpreter.js';
+import {payGas, RuntimeError} from '../../interpreting/ScriptInterpreter.js';
 
-// Cache placeholder:
-const mainDBCache = {
-  get: () => {}, set: () => {}, remove: () => {}, removeExtensions: () => {},
-};
+// // Cache placeholder:
+// const jsFileCache = {
+//   get: () => {}, set: () => {}, remove: () => {}, removeExtensions: () => {},
+// };
 
+
+// TODO: The current impl. of DBQueryHandler might need a refactoring at some
+// point.
 
 
 export class DBQueryHandler {
@@ -23,28 +26,39 @@ export class DBQueryHandler {
   }
 
 
-  // queryDBProcOrCache() handles a lot of common queries, namely ones that
-  // is implemented via a single DB procedure, and where the whole result is
-  // stored directly at the route in the cache, or simply not cached at all,
-  // namely when the noCache parameter is truthy.
+  // queryDBProcOrCache() handles queries that is implemented via a single DB
+  // procedure, and where the whole result is stored directly at the route in
+  // the cache, or simply not cached at all, namely when the noCache parameter
+  // is truthy.
   async queryDBProcOrCache(
-    procName, paramValArr, route, upNodeID, maxAge, noCache, lastUpToDate,
-    node, env, routesToEvict,
+    procName, paramValArr, route, upNodeID, cache, routesToEvict,
+    {maxAge, noCache, lastUpToDate, conn},
+    node, env,
   ) {
-    // Get a connection the the main DB.
-    let conn = this.#getMainDBConn();
+    if (upNodeID !== "A") throw new RuntimeError(
+      `Unrecognized UP node ID: "${upNodeID}" (queries to routes of foreign ` +
+     "UP nodes are not implemented yet)",
+      node, env
+    );
+
+    // Get a connection the the main DB, if one is not provided as part of
+    // options.
+    let realizeAfterUse = conn ? true : false; 
+    conn ??= this.#getMainDBConn();
 
     // Generate the SQL (with '?' placeholders in it).
     let sql = getProcCallSQL(procName, paramValArr.length);
   
     // Query the DB or the cache.
     let [result, wasReady] = await this.#queryDBOrCache(
-      conn, sql, paramValArr, route, maxAge, noCache, lastUpToDate, node, env,
-      routesToEvict,
+      conn, sql, paramValArr, route, cache, routesToEvict,
+      maxAge, noCache, lastUpToDate, node, env
     )
 
-    // Release the connection again.
-    this.#releaseMainDBConn(conn);
+    // Release the connection again if it was not provided through options.
+    if (realizeAfterUse) {
+      this.#releaseMainDBConn(conn);
+    }
 
     // Return the result and/or wasReady boolean.
     return [result, wasReady];
@@ -52,8 +66,8 @@ export class DBQueryHandler {
 
 
   async #queryDBOrCache(
-    conn, sql, paramValArr, route, maxAge, noCache, lastUpToDate, node, env,
-    routesToEvict,
+    conn, sql, paramValArr, route, cache, routesToEvict,
+    maxAge, noCache, lastUpToDate, node, env
   ) {
     maxAge = maxAge ? maxAge : 60000;
 
@@ -62,7 +76,7 @@ export class DBQueryHandler {
     if (!noCache) {
       payGas(node, env, {cacheRead: 1});
       now = Date.now();
-      [result, cachedAt, lastUpdated] = mainDBCache.get(route) ?? [];
+      [result, cachedAt, lastUpdated] = cache.get(route) ?? [];
       if (result !== undefined) {
         // If the resource was cached, check if it is still considered fresh
         // by the client, and if so, either return the result, or if the
@@ -93,7 +107,7 @@ export class DBQueryHandler {
       payGas(node, env, {cacheWrite: 1});
       cachedAt ??= now;
       lastUpdated = now;
-      mainDBCache.set(route, [result, cachedAt, lastUpdated]);
+      cache.set(route, [result, cachedAt, lastUpdated]);
     }
 
     // If routesToEvict is defined, it means that the query modifies the
@@ -114,9 +128,9 @@ export class DBQueryHandler {
           [route, removeExtensions] = route;
         }
         if (removeExtensions) {
-          mainDBCache.removeExtensions(route);
+          cache.removeExtensions(route);
         }
-        mainDBCache.remove(route);
+        cache.remove(route);
       });
     }
 
@@ -124,6 +138,44 @@ export class DBQueryHandler {
     return [result];
   }
 
+
+
+
+  // queryDBProc() is the same as queryDBProcOrCache() above, just without the
+  // cache. 
+  async queryDBProc(
+    procName, paramValArr, route, upNodeID,
+    {conn},
+    node, env,
+  ) {
+    if (upNodeID !== "A") throw new RuntimeError(
+      `Unrecognized UP node ID: "${upNodeID}" (queries to routes of foreign ` +
+     "UP nodes are not implemented yet)",
+      node, env
+    );
+
+    // Get a connection the the main DB, if one is not provided as part of
+    // options.
+    let realizeAfterUse = conn ? true : false; 
+    conn ??= this.#getMainDBConn();
+
+    // Generate the SQL (with '?' placeholders in it).
+    let sql = getProcCallSQL(procName, paramValArr.length);
+  
+    // Query the DB or the cache.
+    let [result] = await this.#queryDBOrCache(
+      conn, sql, paramValArr, route, undefined, undefined,
+      undefined, true, undefined, node, env
+    )
+
+    // Release the connection again if it was not provided through options.
+    if (realizeAfterUse) {
+      this.#releaseMainDBConn(conn);
+    }
+
+    // Return the result and/or wasReady boolean.
+    return [result];
+  }
 
 }
 

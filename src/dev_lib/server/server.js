@@ -6,9 +6,7 @@ import {parseRoute} from './src/parseRoute.js';
 
 import * as directoriesMod from "./src/filetypes/directories.js";
 import * as textFilesMod from "./src/filetypes/text_files.js";
-import * as autoKeyFilesMod from "./src/filetypes/auto_key_tables.js";
-import * as scoreTableFilesMod from "./src/filetypes/scored_tables.js";
-import * as simpleTableFilesMod from "./src/filetypes/simple_tables.js";
+import * as relationalTableFilesMod from "./src/filetypes/rel_table.js";
 import * as fullTextTableFilesMod from "./src/filetypes/full_text_tables.js";
 
 import {CHECK_ELEVATED_PRIVILEGES_SIGNAL} from "./src/signals.js";
@@ -80,20 +78,12 @@ export const query = new DevFunction(
         filetypeModule = textFilesMod;
         break;
       case "att":
-      case "abt":
-        filetypeModule = autoKeyFilesMod;
-        break;
       case "bbt":
-      case "bct":
-      case "bft":
-      case "bdt":
-        filetypeModule = scoreTableFilesMod;
-        break;
       case "bt":
       case "ct":
-        filetypeModule = simpleTableFilesMod;
+        filetypeModule = relationalTableFilesMod;
         break;
-      case "ft":
+      case "ftt":
         filetypeModule = fullTextTableFilesMod;
         break;
       // (More file types can be added here in the future.)

@@ -102,7 +102,7 @@ export class SASSTranspiler {
 
   getValue(valueNode, environment) {
     if (valueNode.type === "variable") {
-      return environment.getVar(valueNode.ident, valueNode);
+      return environment.get(valueNode.ident, valueNode);
     }
     else {
       return valueNode.lexeme;
@@ -237,7 +237,7 @@ export class SASSTranspiler {
       // look in styleSheetIDs for the ID to substitute it for.
       else {
         let ident = className.substring(0, indOfUnderscore);
-        let route = environment.getVar(ident, selector);
+        let route = environment.get(ident, selector);
         let styleSheetID = styleSheetIDs.get(route) ?? "";
         // (Note that if route is undefined, the class becomes an inaccessible
         // class with a leading underscore.)

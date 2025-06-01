@@ -7,8 +7,7 @@ import {
 
 export async function query(
   {callerNode, execEnv, interpreter},
-  isPost, route, upNodeID, homeDirID, filePath, fileExt, queryStringArr, _,
-  maxAge, noCache, lastUpToDate, onCached,
+  route, upNodeID, homeDirID, filePath, fileExt, queryStringArr, _, options
 ) {
   let serverQueryHandler = interpreter.serverQueryHandler;
   let dbQueryHandler = interpreter.dbQueryHandler;
@@ -22,14 +21,29 @@ export async function query(
 
   let queryType = queryStringArr[0];
 
-  // If route equals "/<homeDirID>?~put" with a text stored in the postData,
+  // If route equals ".../<homeDirID>/<filepath>?~touch" create a table file
+  // if not already there, but do not delete its content if there.
+  if (queryType === "~touch") {
+    let text = postData;
+    payGas(callerNode, execEnv, {dbWrite: 1});
+    if (interpreter.isServerSide) {
+      return await dbQueryHandler.queryDBProcOrCache(
+        "putTextFile", [homeDirID, filePath, text],
+        route, upNodeID, maxAge, true, lastUpToDate, callerNode, execEnv,
+        routesToEvict,
+      );
+    } else {
+      return serverQueryHandler.queryServerOrCache(
+        isPost, route, upNodeID, maxAge, true, onCached, interpreter,
+        callerNode, execEnv, routesToEvict,
+      );
+    }
+  }
+
+  // If route equals ".../<homeDirID>/<filepath>?~put" with a text stored in the postData,
   // overwrite the existing file with contentText, if any, or create a new file
   // with that content.
   if (queryType === "~put") {
-    if (!isPost) throw new RuntimeError(
-      `Unrecognized route for the "fetch" method: ${route}`,
-      callerNode, execEnv
-    );
     let text = postData;
     payGas(callerNode, execEnv, {dbWrite: text.length});
     let routesToEvict = [[`/${homeDirID}/${filePath}`, true]];

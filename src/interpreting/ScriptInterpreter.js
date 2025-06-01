@@ -1259,7 +1259,7 @@ export class ScriptInterpreter {
       }
       case "identifier": {
         let ident = expNode.ident;
-        return environment.getVar(ident, expNode);
+        return environment.get(ident, expNode);
       }
       case "string": {
         return expNode.str;
@@ -1616,13 +1616,13 @@ export class Environment {
     }
   }
 
-  getVar(ident, node, nodeEnvironment = this) {
+  get(ident, node, nodeEnvironment = this) {
     let [val] = this.variables.get(ident) ?? [];
     if (val !== undefined) {
       return (val === UNDEFINED) ? undefined : val;
     }
     else if (this.parent) {
-      let val = this.parent.getVar(ident, node, nodeEnvironment);
+      let val = this.parent.get(ident, node, nodeEnvironment);
       if (this.isNonArrowFunction) {
         return turnImmutable(val);
       } else {
@@ -1653,7 +1653,7 @@ export class Environment {
       if (this.isNonArrowFunction) {
         // Throw an `Undeclared variable "${ident}"` error if the variable is
         // undefined (get() does this).
-        this.getVar(ident, node, nodeEnvironment);
+        this.get(ident, node, nodeEnvironment);
 
         // And else throw an error stating that you cannot assign to a non-
         // local variable. 
@@ -1744,7 +1744,7 @@ export class Environment {
     );
     // We evaluate the exported variable *when* it is exported, as that seems
     // more secure.
-    let val = this.getVar(ident, node, nodeEnvironment)
+    let val = this.get(ident, node, nodeEnvironment)
     if (val === undefined) throw new RuntimeError(
       `Exported variable or function is undefined: "${ident}"`,
       node, nodeEnvironment
@@ -2029,38 +2029,38 @@ export class FlagEnvironment {
 
 
 
-export class ValueWrapper {
-  constructor(val) {
-    this.val = val;
-  }
-  get(key) {
-    return this.val.get(key);
-  }
-  set(key, val) {
-    return this.val.set(key, val);
-  }
-  entries() {
-    return this.val.entries();
-  }
-  keys() {
-    return this.val.keys();
-  }
-  values() {
-    return this.val.values();
-  }
-  forEach(fun) {
-    return this.val.forEach(fun);
-  }
-  toString() {
-    return this.val.toString();
-  }
-  stringify() {
-    return JSON.stringify(this.val);
-  }
-}
+// export class ValueWrapper {
+//   constructor(val) {
+//     this.val = val;
+//   }
+//   get(key) {
+//     return this.val.get(key);
+//   }
+//   set(key, val) {
+//     return this.val.set(key, val);
+//   }
+//   entries() {
+//     return this.val.entries();
+//   }
+//   keys() {
+//     return this.val.keys();
+//   }
+//   values() {
+//     return this.val.values();
+//   }
+//   forEach(fun) {
+//     return this.val.forEach(fun);
+//   }
+//   toString() {
+//     return this.val.toString();
+//   }
+//   stringify() {
+//     return JSON.stringify(this.val);
+//   }
+// }
 
 
-export class ArrayWrapper extends ValueWrapper {
+export class ArrayWrapper {
   constructor(val) {
     super(val);
   }
@@ -2121,7 +2121,7 @@ export class ArrayWrapper extends ValueWrapper {
 }
 
 
-export class ObjectWrapper extends ValueWrapper {
+export class ObjectWrapper {
   constructor(val) {
     super(val);
   }
@@ -2260,7 +2260,7 @@ export class JSXElement {
     this.decEnv = decEnv;
     let {tagName, isComponent, isFragment, propArr, children} = node;
     this.tagName = tagName;
-    if (isComponent) this.componentModule = decEnv.getVar(tagName, node);
+    if (isComponent) this.componentModule = decEnv.get(tagName, node);
     this.isFragment = isFragment;
     this.props = new Map();
     if (propArr) propArr.forEach(propNode => {
