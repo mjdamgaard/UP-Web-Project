@@ -40,8 +40,8 @@ export class ServerQueryHandler {
   // directly at the route in the cache, or simply not cached at all if the
   // noCache parameter is truthy.
   async queryServerOrCache(
-    route, data, upNodeID, getCredentials, interpreter, cache, routesToEvict,
-    {maxAge, noCache, onCached},
+    route, data, upNodeID, interpreter, cache, routesToEvict,
+    {maxAge, noCache, onCached, getCredentials},
     node, env,
   ) {
     if (upNodeID !== "A") throw new RuntimeError(
@@ -137,11 +137,11 @@ export class ServerQueryHandler {
   // queryServer() is the same as queryServerOrCache() above, just without the
   // cache. 
   queryServer(
-    route, data, upNodeID, interpreter, node, env,
+    route, data, upNodeID, interpreter, options, node, env,
   ) {
     return queryServerOrCache(
       route, data, upNodeID, interpreter, undefined, undefined,
-      {noCache: true},
+      options,
       node, env,
     );
   }

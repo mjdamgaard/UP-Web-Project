@@ -3,28 +3,46 @@ import {
   RuntimeError, payGas,
 } from "../../../../interpreting/ScriptInterpreter.js";
 
+import {SET_ELEVATED_PRIVILEGES_SIGNAL} from "../signals.js";
+
+
 
 export async function query(
   {callerNode, execEnv, interpreter},
-  isPost, route, upNodeID, homeDirID, filePath, _, queryStringArr, postData,
-  maxAge, noCache, lastUpToDate, onCached,
+  route, data, upNodeID, homeDirID, filePath, fileExt, queryStringArr, options,
 ) {
-  let serverQueryHandler = interpreter.serverQueryHandler;
-  let dbQueryHandler = interpreter.dbQueryHandler;
+  let {serverQueryHandler, dbQueryHandler, jsFileCache} = interpreter;
 
   // If route equals just ".../<homeDirID>/<filePath>", without any query
-  // string, return the text stored in the file.
+  // string, return the text stored in the file. Also make sure to use the
+  // jsFileCache if the file extension is ".js" or ".jsx". 
   if (!queryStringArr) {
-    if (interpreter.isServerSide) {
-      return await dbQueryHandler.queryDBProcOrCache(
-        "readTextFile", [homeDirID, filePath],
-        route, upNodeID, maxAge, noCache, lastUpToDate, callerNode, execEnv,
-      );
-    } else {
-      return serverQueryHandler.queryServerOrCache(
-        isPost, route, upNodeID, maxAge, noCache, onCached, interpreter,
-        callerNode, execEnv,
-      );
+    if (fileExt === "js" || fileExt === "jsx") {
+      if (interpreter.isServerSide) {
+        return await dbQueryHandler.queryDBProcOrCache(
+          "readTextFile", [homeDirID, filePath],
+          route, upNodeID, jsFileCache, undefined, options,
+          callerNode, execEnv
+        );
+      } else {
+        return serverQueryHandler.queryServerOrCache(
+          route, undefined, upNodeID, interpreter, jsFileCache, undefined,
+          options, callerNode, execEnv,
+        );
+      }
+    }
+    else {
+      if (interpreter.isServerSide) {
+        return await dbQueryHandler.queryDBProc(
+          "readTextFile", [homeDirID, filePath],
+          route, upNodeID, options, callerNode, execEnv,
+        );
+      } else {
+        return serverQueryHandler.queryServer(
+          route, undefined, upNodeID, interpreter, options,
+          callerNode, execEnv,
+        );
+      }
     }
   }
 
@@ -34,45 +52,65 @@ export async function query(
   // overwrite the existing file with contentText, if any, or create a new file
   // with that content.
   if (queryType === "~put") {
-    if (!isPost) throw new RuntimeError(
-      `Unrecognized route for the "fetch" method: ${route}`,
-      callerNode, execEnv
-    );
-    let text = postData;
+    let text = data;
     payGas(callerNode, execEnv, {dbWrite: text.length});
-    let routesToEvict = [[`/${homeDirID}/${filePath}`, true]];
-    if (interpreter.isServerSide) {
-      return await dbQueryHandler.queryDBProcOrCache(
-        "putTextFile", [homeDirID, filePath, text],
-        route, upNodeID, maxAge, true, lastUpToDate, callerNode, execEnv,
-        routesToEvict,
-      );
-    } else {
-      return serverQueryHandler.queryServerOrCache(
-        isPost, route, upNodeID, maxAge, true, onCached, interpreter,
-        callerNode, execEnv, routesToEvict,
-      );
+    let routesToEvict = [[`/A/${homeDirID}/${filePath}`, true]];
+    if (fileExt === "js" || fileExt === "jsx") {
+      if (interpreter.isServerSide) {
+        return await dbQueryHandler.queryDBProcOrCache(
+          "putTextFile", [homeDirID, filePath, text],
+          route, upNodeID, jsFileCache, routesToEvict, options,
+          callerNode, execEnv
+        );
+      } else {
+        return serverQueryHandler.queryServerOrCache(
+          route, text, upNodeID, interpreter, jsFileCache, routesToEvict,
+          options, callerNode, execEnv,
+        );
+      }
+    }
+    else {
+      if (interpreter.isServerSide) {
+        return await dbQueryHandler.queryDBProc(
+          "putTextFile", [homeDirID, filePath, text],
+          route, upNodeID, options, callerNode, execEnv,
+        );
+      } else {
+        return serverQueryHandler.queryServer(
+          route, text, upNodeID, interpreter, options, callerNode, execEnv
+        );
+      }
     }
   }
 
   // If route equals ".../<homeDirID>/<filePath>?~delete", ...
   if (queryType === "~delete") {
-    if (!isPost) throw new RuntimeError(
-      `Unrecognized route for the "fetch" method: ${route}`,
-      callerNode, execEnv
-    );
-    let routesToEvict = [[`/${homeDirID}/${filePath}`, true]];
-    if (interpreter.isServerSide) {
-      return await dbQueryHandler.queryDBProcOrCache(
-        "deleteTextFile", [homeDirID, filePath],
-        route, upNodeID, maxAge, true, lastUpToDate, callerNode, execEnv,
-        routesToEvict,
-      );
-    } else {
-      return serverQueryHandler.queryServerOrCache(
-        isPost, route, upNodeID, maxAge, true, onCached, interpreter,
-        callerNode, execEnv, routesToEvict,
-      );
+    let routesToEvict = [[`/A/${homeDirID}/${filePath}`, true]];
+    if (fileExt === "js" || fileExt === "jsx") {
+      if (interpreter.isServerSide) {
+        return await dbQueryHandler.queryDBProcOrCache(
+          "deleteTextFile", [homeDirID, filePath],
+          route, upNodeID, jsFileCache, routesToEvict, options,
+          callerNode, execEnv
+        );
+      } else {
+        return serverQueryHandler.queryServerOrCache(
+          route, undefined, upNodeID, interpreter, jsFileCache, routesToEvict,
+          options, callerNode, execEnv,
+        );
+      }
+    }
+    else {
+      if (interpreter.isServerSide) {
+        return await dbQueryHandler.queryDBProc(
+          "deleteTextFile", [homeDirID, filePath],
+          route, upNodeID, options, callerNode, execEnv,
+        );
+      } else {
+        return serverQueryHandler.queryServer(
+          route, undefined, upNodeID, interpreter, options, callerNode, execEnv
+        );
+      }
     }
   }
 

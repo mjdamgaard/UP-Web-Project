@@ -3,15 +3,13 @@ import {
   payGas, RuntimeError,
 } from "../../../../interpreting/ScriptInterpreter.js";
 
-import {SET_ELEVATED_PRIVILEGES_SIGNAL} from "../signals.js";
-
 
 
 export async function query(
   {callerNode, execEnv, interpreter},
   route, _, upNodeID, homeDirID, filePath, _, queryStringArr, options,
 ) {
-  let {serverQueryHandler, dbQueryHandler, jsFileCache} = interpreter;
+  let {serverQueryHandler, dbQueryHandler} = interpreter;
 
   // If route equals "...?mkdir&a=<adminID>", create a new home directory with
   // the requested adminID as the admin. 
@@ -30,7 +28,7 @@ export async function query(
         );
       } else {
         return serverQueryHandler.queryServer(
-          route, undefined, upNodeID, interpreter, callerNode, execEnv,
+          route, undefined, upNodeID, interpreter, options, callerNode, execEnv
         );
       }
     }
@@ -63,7 +61,7 @@ export async function query(
     }
     else {
       return serverQueryHandler.queryServer(
-        route, undefined, upNodeID, interpreter, callerNode, execEnv,
+        route, undefined, upNodeID, interpreter, options, callerNode, execEnv
       );
     }
   }
@@ -81,7 +79,7 @@ export async function query(
       );
     } else {
       return serverQueryHandler.queryServer(
-        route, undefined, upNodeID, interpreter, callerNode, execEnv,
+        route, undefined, upNodeID, interpreter, options, callerNode, execEnv
       );
     }
   }
@@ -96,7 +94,7 @@ export async function query(
       );
     } else {
       return serverQueryHandler.queryServer(
-        route, undefined, upNodeID, interpreter, callerNode, execEnv,
+        route, undefined, upNodeID, interpreter, options, callerNode, execEnv
       );
     }
   }
@@ -113,7 +111,7 @@ export async function query(
       );
     } else {
       return serverQueryHandler.queryServer(
-        route, undefined, upNodeID, interpreter, callerNode, execEnv,
+        route, undefined, upNodeID, interpreter, options, callerNode, execEnv
       );
     }
   }
@@ -138,7 +136,7 @@ export async function query(
       );
     } else {
       return serverQueryHandler.queryServer(
-        route, undefined, upNodeID, interpreter, callerNode, execEnv,
+        route, undefined, upNodeID, interpreter, options, callerNode, execEnv
       );
     }
   }

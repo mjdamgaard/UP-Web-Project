@@ -41,6 +41,7 @@ export class DBQueryHandler {
 
     // Parse the maxAge integer (in ms) and the lastUpToDate UNIX time integer..
     maxAge = parseInt(maxAge);
+    if (maxAge === NaN) maxAge = 20000;
     lastUpToDate = parseInt(lastUpToDate);
 
     // Get a connection the the main DB, if one is not provided as part of

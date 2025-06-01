@@ -21,6 +21,8 @@ export const query = new DevFunction(
     {callerNode, execEnv, interpreter, liveModule},
     [route, data, options]
   ) {
+    options = options?.val ?? options;
+
     // Parse the route to get the filetype, among other parameters and
     // qualities.
     let upNodeID, homeDirID, filePath, fileExt, queryStringArr, isLocked;
