@@ -3,7 +3,7 @@ const upNodeIDRegEx = /^\/([a-zA-Z0-9_\-]+)/;
 const homeDirIDRegEx = /^\/([a-zA-Z0-9_\-]+)/;
 const filePathRegEx =
   /^\/(([a-zA-Z0-9_\-.]+(?<!\.)\/)*[a-zA-Z0-9_\-.]+(?<!\.))(?=($|[?#]))/;
-const queryStringRegEx = /^\?([^=&#]*(=[^=&#]*)?(&[^=&#]*(=[^=&#])*)?)/;
+const queryStringRegEx = /^\?([a-zA-Z0-9_\-.=]*(&[a-zA-Z0-9_\-.=]*))/;
 const tagRegEx = /^#([a-zA-Z0-9_\-.]*)/;
 const lastFileExtRegEx = /\.([^.]+)$/
 
@@ -54,9 +54,11 @@ export function parseRoute(route) {
   // query parameters (with no "=").
   let queryStringArr;
   if (queryString) {
-    queryStringArr = queryString.split("&").map(val => (
-      (val.indexOf("=") === -1) ? val : val.split("=", 2)
-    ));
+    queryStringArr = queryString.split("&").map(val => {
+      let indOfEqualSign = val.indexOf("=");
+      return (indOfEqualSign === -1) ? val :
+        [val.substring(0, indOfEqualSign), val.substring(indOfEqualSign + 1)];
+    });
   }
 
   // Parse whether the given file or directory, or query path, is locked for

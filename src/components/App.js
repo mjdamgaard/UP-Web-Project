@@ -21,6 +21,11 @@ staticDevLibs.set("server", serverMod);
 staticDevLibs.set("jsx", jsxMod);
 
 
+// Client-side JS file cache placeholder:
+const jsFileCache = {
+  get: () => {}, set: () => {}, remove: () => {}, removeExtensions: () => {},
+};
+
 
 
 if (typeof(Storage) === "undefined") {
@@ -36,7 +41,7 @@ if (typeof(Storage) === "undefined") {
 const serverQueryHandler = new ServerQueryHandler();
 
 const scriptInterpreter = new ScriptInterpreter(
-  false, serverQueryHandler, undefined, staticDevLibs, undefined
+  false, serverQueryHandler, undefined, staticDevLibs, jsFileCache, undefined
 );
 
 

@@ -3,12 +3,6 @@ import {serverDomainURL} from "./config.js";
 import {payGas} from "../../interpreting/ScriptInterpreter.js";
 
 
-// Cache placeholder:
-const clientCache = {
-  get: () => {}, set: () => {}, remove: () => {}, removeExtensions: () => {},
-};
-
-
 
 
 export class ServerQueryHandler {
@@ -42,19 +36,30 @@ export class ServerQueryHandler {
 
 
 
-  // queryServerOrCache() handles a lot of common queries, namely where the
-  // whole result is stored directly at the route in the cache, or simply not
-  // cached at all, namely when the noCache parameter is truthy.
+  // queryServerOrCache() handles queries where the whole result is stored
+  // directly at the route in the cache, or simply not cached at all if the
+  // noCache parameter is truthy.
   async queryServerOrCache(
-    isPost, route, upNodeID, maxAge, noCache = isPost, onCached, interpreter,
-    node, env, routesToEvict,
+    route, data, upNodeID, getCredentials, interpreter, cache, routesToEvict,
+    {maxAge, noCache, onCached},
+    node, env,
   ) {
+    if (upNodeID !== "A") throw new RuntimeError(
+      `Unrecognized UP node ID: "${upNodeID}" (queries to routes of foreign ` +
+      "UP nodes are not implemented yet)",
+      node, env
+    );
+
+    // Parse the maxAge integer (in ms) and the lastUpToDate UNIX time integer..
+    maxAge = parseInt(maxAge);
+    lastUpToDate = parseInt(lastUpToDate);
+
     // If noCache is falsy, look in the cache first.
     let cachedResult, fetchedResult, wasReady, lastUpToDate, now;
     if (!noCache) {
       payGas(node, env, {cacheRead: 1});
       now = Date.now();
-      [cachedResult, lastUpToDate] = clientCache.get(route) ?? [];
+      [cachedResult, lastUpToDate] = cache.get(route) ?? [];
       if (cachedResult !== undefined) {
         // If the resource was cached, check if it is still considered fresh
         // according to the maxAge argument, and if so return the result.
@@ -75,12 +80,12 @@ export class ServerQueryHandler {
     // something like that, and then rounded up.)
     payGas(node, env, {fetch: 1});
     let reqData = {};
-    if (isPost) {
-      reqData.method = "post";
+    if (getCredentials) {
       let {reqUserID} = env.scriptVars;
       let token = "TODO: Implement.";
       reqData.credentials = btoa(`${reqUserID}:${token}`);
     }
+    if (data !== undefined) reqData.data = data;
     else if (noCache) {
       reqData.noCache = true;
     }
@@ -96,7 +101,7 @@ export class ServerQueryHandler {
     if (!noCache) {
       payGas(node, env, {cacheWrite: 1});
       lastUpToDate = now;
-      clientCache.set(route, [result, lastUpToDate]);
+      cache.set(route, [result, lastUpToDate]);
     }
 
     // If routesToEvict is defined, it means that the query modifies the
@@ -117,9 +122,9 @@ export class ServerQueryHandler {
           [route, removeExtensions] = route;
         }
         if (removeExtensions) {
-          clientCache.removeExtensions(route);
+          cache.removeExtensions(route);
         }
-        clientCache.remove(route);
+        cache.remove(route);
       });
     }
 
@@ -127,6 +132,19 @@ export class ServerQueryHandler {
     return result;
   }
 
+
+
+  // queryServer() is the same as queryServerOrCache() above, just without the
+  // cache. 
+  queryServer(
+    route, data, upNodeID, interpreter, node, env,
+  ) {
+    return queryServerOrCache(
+      route, data, upNodeID, interpreter, undefined, undefined,
+      {noCache: true},
+      node, env,
+    );
+  }
 
 
   // fetchScript(filePath, credentials) {

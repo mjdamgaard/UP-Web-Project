@@ -2,14 +2,12 @@
 import {MainDBConnection, getProcCallSQL} from "./DBConnection.js";
 import {payGas, RuntimeError} from '../../interpreting/ScriptInterpreter.js';
 
-// // Cache placeholder:
-// const jsFileCache = {
-//   get: () => {}, set: () => {}, remove: () => {}, removeExtensions: () => {},
-// };
 
 
 // TODO: The current impl. of DBQueryHandler might need a refactoring at some
-// point.
+// point. (It was first made when I thought I would cache almost all "fetch"
+// (GET-like, i.e.) queries automatically, and not just the .js and .jsx
+// files.) The same thing also applies for the ServerQueryHandler as well.
 
 
 export class DBQueryHandler {
@@ -40,6 +38,10 @@ export class DBQueryHandler {
      "UP nodes are not implemented yet)",
       node, env
     );
+
+    // Parse the maxAge integer (in ms) and the lastUpToDate UNIX time integer..
+    maxAge = parseInt(maxAge);
+    lastUpToDate = parseInt(lastUpToDate);
 
     // Get a connection the the main DB, if one is not provided as part of
     // options.
@@ -143,38 +145,16 @@ export class DBQueryHandler {
 
   // queryDBProc() is the same as queryDBProcOrCache() above, just without the
   // cache. 
-  async queryDBProc(
+  queryDBProc(
     procName, paramValArr, route, upNodeID,
     {conn},
     node, env,
   ) {
-    if (upNodeID !== "A") throw new RuntimeError(
-      `Unrecognized UP node ID: "${upNodeID}" (queries to routes of foreign ` +
-     "UP nodes are not implemented yet)",
-      node, env
+    return queryDBProcOrCache(
+      procName, paramValArr, route, upNodeID, undefined, undefined,
+      {noCache: true, conn: conn},
+      node, env,
     );
-
-    // Get a connection the the main DB, if one is not provided as part of
-    // options.
-    let realizeAfterUse = conn ? true : false; 
-    conn ??= this.#getMainDBConn();
-
-    // Generate the SQL (with '?' placeholders in it).
-    let sql = getProcCallSQL(procName, paramValArr.length);
-  
-    // Query the DB or the cache.
-    let [result] = await this.#queryDBOrCache(
-      conn, sql, paramValArr, route, undefined, undefined,
-      undefined, true, undefined, node, env
-    )
-
-    // Release the connection again if it was not provided through options.
-    if (realizeAfterUse) {
-      this.#releaseMainDBConn(conn);
-    }
-
-    // Return the result and/or wasReady boolean.
-    return [result];
   }
 
 }

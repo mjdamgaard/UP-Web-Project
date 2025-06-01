@@ -17,6 +17,11 @@ const staticDevLibs = new Map();
 staticDevLibs.set("server", serverMod);
 
 
+// Server-side JS file cache placeholder:
+const jsFileCache = {
+  get: () => {}, set: () => {}, remove: () => {}, removeExtensions: () => {},
+};
+
 const [ , curPath] = process.argv;
 const mainScriptPath = path.normalize(
   path.dirname(curPath) + "/main_script/main.js"
@@ -28,7 +33,7 @@ const parsedMainScript = syntaxTree.res;
 const dbQueryHandler = new DBQueryHandler();
 
 const scriptInterpreter = new ScriptInterpreter(
-  true, undefined, dbQueryHandler, staticDevLibs, undefined
+  true, undefined, dbQueryHandler, staticDevLibs, jsFileCache, undefined
 );
 
 // Locked routes are all routes where any file name, directory name, or
@@ -61,9 +66,9 @@ async function requestHandler(req, res) {
 
   // At this point, the server only implements POST requests where most of the
   // parameters are stored in a JSON object.
-  let data;
+  let reqBody;
   if (req.method === "POST") {
-    data = await getData(req);
+    reqBody = await getData(req);
   }
   else if (req.method !== "GET") {
     throw new ClientError(
@@ -79,7 +84,7 @@ async function requestHandler(req, res) {
   // First get and parse the request params.
   let reqParams, isValidJSON = true;
   try {
-    reqParams = JSON.parse(data);
+    reqParams = JSON.parse(reqBody);
   }
   catch (err) {
     isValidJSON = false;
@@ -92,24 +97,28 @@ async function requestHandler(req, res) {
 
   // Then extract the parameters from it.
   let {
-    // Get the optional user credentials (username and password/token).
-    credentials,
-    // Get the 'method', and the optional postData parameter (used when
-    // method == "post").
-    method = "fetch", postData,
-    // Get the optional maxAge, noCache, and lastUpToDate parameters used by
-    // caches.
-    maxAge, noCache, lastUpToDate,
-    // Get the optional gasID and a initFlagsID, which points to a gas
-    // and a initFlags object, respectively, which can both influence
-    // whether the script succeeds or fails (but don't change the result on a
-    // success).
-    gasID, initFlagsID,
-    // Get the returnLog boolean, which if not present means that the script's
-    // result will be returned on its own, without the log (which might be
-    // empty anyway).
-    returnLog,
+    // Get the optional user credentials (username and password/token), the
+    // optional data parameter (which can be a string of any kind), and the
+    // optional options parameter.
+    credentials, data, options = {},
+    // // Get the optional data parameter.
+    // data,
+    // // Get the optional maxAge, noCache, and lastUpToDate parameters used by
+    // // caches.
+    // maxAge, noCache, lastUpToDate,
+    // // Get the optional gasID and a initFlagsID, which points to a gas
+    // // and a initFlags object, respectively, which can both influence
+    // // whether the script succeeds or fails (but don't change the result on a
+    // // success).
+    // gasID, initFlagsID,
+    // // Get the returnLog boolean, which if not present means that the script's
+    // // result will be returned on its own, without the log (which might be
+    // // empty anyway).
+    // returnLog,
   } = reqParams;
+
+  // Extract some additional optional parameters from options. 
+  let {gas, gasID, returnLog} = options;
 
   if (!method) throw new ClientError(
     "No 'method' parameter was specified in the POST body"
@@ -123,7 +132,8 @@ async function requestHandler(req, res) {
   // Get the userID of the requesting user, if the user has supplied their
   // credentials to the request, failing if those credentials couldn't be
   // authenticated. Also get the gas for the request in the same process.
-  let [gas, reqUserID] = await getGasAndReqUserID(credentials, gasID);
+  let reqUserID;
+  [gas, reqUserID] = await getGasAndReqUserID(credentials, gas, gasID);
 
 
   // Parse whether the route is a "locked" route (that can only be accessed by
@@ -145,7 +155,7 @@ async function requestHandler(req, res) {
   ]);
   let [output, log] = await scriptInterpreter.interpretScript(
     gas, undefined, "main.js",
-    [method, route, postData, maxAge, noCache, lastUpToDate, undefined],
+    [route, data, options],
     reqUserID, initFlags, undefined, undefined, parsedScripts,
   );
   let [result, wasReady] = output ?? [];

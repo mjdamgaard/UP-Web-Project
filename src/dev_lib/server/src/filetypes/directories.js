@@ -9,20 +9,15 @@ import {SET_ELEVATED_PRIVILEGES_SIGNAL} from "../signals.js";
 
 export async function query(
   {callerNode, execEnv, interpreter},
-  isPost, route, upNodeID, homeDirID, filePath, _, queryStringArr, _,
-  maxAge, noCache, lastUpToDate, onCached,
+  route, _, upNodeID, homeDirID, filePath, _, queryStringArr,
+  {maxAge, noCache, lastUpToDate, onCached},
 ) {
-  let serverQueryHandler = interpreter.serverQueryHandler;
-  let dbQueryHandler = interpreter.dbQueryHandler;
+  let {serverQueryHandler, dbQueryHandler, jsFileCache} = interpreter;
 
   // If route equals "...?mkdir&a=<adminID>", create a new home directory with
   // the requested adminID as the admin. 
   if (!homeDirID) {
     if (queryStringArr[0] === "mkdir") {
-      if (!isPost) throw new RuntimeError(
-        `Unrecognized route for the "fetch" method: ${route}`,
-        callerNode, execEnv
-      );
       let [a, requestedAdminID] = (queryStringArr[1] ?? []);
       if (a !== "a" || !requestedAdminID) throw new RuntimeError(
         "No admin ID was provided",
@@ -30,9 +25,9 @@ export async function query(
       );
       payGas(callerNode, execEnv, {mkdir: 1});
       if (interpreter.isServerSide) {
-        return await dbQueryHandler.queryDBProcOrCache(
+        return await dbQueryHandler.queryDBProc(
           "createHomeDir", [requestedAdminID],
-          route, upNodeID, maxAge, noCache, lastUpToDate, callerNode, execEnv,
+          route, upNodeID, jsFileCache, noCache, lastUpToDate, callerNode, execEnv,
         );
       } else {
         return serverQueryHandler.queryServerOrCache(
