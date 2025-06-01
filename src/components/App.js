@@ -13,11 +13,11 @@ import {runTests} from "../testing/parsing_interpreting_tests.js";
 
 /* Static developer libraries */
 
-import * as serverMod from "../dev_lib/server/server.js";
+import * as queryMod from "../dev_lib/query/query.js";
 import * as jsxMod from "../dev_lib/jsx_components.js";
 
 const staticDevLibs = new Map();
-staticDevLibs.set("server", serverMod);
+staticDevLibs.set("query", queryMod);
 staticDevLibs.set("jsx", jsxMod);
 
 

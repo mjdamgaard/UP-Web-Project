@@ -9,8 +9,7 @@ import {SET_ELEVATED_PRIVILEGES_SIGNAL} from "../signals.js";
 
 export async function query(
   {callerNode, execEnv, interpreter},
-  route, _, upNodeID, homeDirID, filePath, _, queryStringArr,
-  {maxAge, noCache, lastUpToDate, onCached},
+  route, _, upNodeID, homeDirID, filePath, _, queryStringArr, options,
 ) {
   let {serverQueryHandler, dbQueryHandler, jsFileCache} = interpreter;
 
@@ -27,12 +26,11 @@ export async function query(
       if (interpreter.isServerSide) {
         return await dbQueryHandler.queryDBProc(
           "createHomeDir", [requestedAdminID],
-          route, upNodeID, jsFileCache, noCache, lastUpToDate, callerNode, execEnv,
+          route, upNodeID, options, callerNode, execEnv,
         );
       } else {
-        return serverQueryHandler.queryServerOrCache(
-          isPost, route, upNodeID, maxAge, noCache, onCached, interpreter,
-          callerNode, execEnv,
+        return serverQueryHandler.queryServer(
+          route, undefined, upNodeID, interpreter, callerNode, execEnv,
         );
       }
     }
@@ -42,7 +40,8 @@ export async function query(
     );
   }
 
-  // No requests targeting subdirectories are implemented at this point.
+  // No requests targeting subdirectories are implemented at this point, if
+  // ever.
   if (filePath) throw new RuntimeError(
     `Unrecognized route: ${route}`,
     callerNode, execEnv
@@ -53,22 +52,18 @@ export async function query(
   // files nested inside locked subdirectories (starting with "_").
   if (!queryStringArr) {
     if (interpreter.isServerSide) {
-      let [fullDescList, wasReady] = await dbQueryHandler.queryDBProcOrCache(
+      let [fullDescList] = await dbQueryHandler.queryDBProc(
         "readHomeDirDescendants", [homeDirID, 1000, 0],
-        route, upNodeID, maxAge, noCache, lastUpToDate, callerNode, execEnv,
+        route, upNodeID, options, callerNode, execEnv,
       );
-      let visibleDescList;
-      if (!wasReady) {
-        visibleDescList = (fullDescList ?? []).filter(([filePath]) => (
-          !/\/_[^/]*\//.test(filePath)
-        ));
-      }
-      return [visibleDescList, wasReady];
+      let visibleDescList = (fullDescList ?? []).filter(([filePath]) => (
+        !/\/_[^/]*\//.test(filePath)
+      ));
+      return [visibleDescList];
     }
     else {
-      return serverQueryHandler.queryServerOrCache(
-        isPost, route, upNodeID, maxAge, noCache, onCached, interpreter,
-        callerNode, execEnv,
+      return serverQueryHandler.queryServer(
+        route, undefined, upNodeID, interpreter, callerNode, execEnv,
       );
     }
   }
@@ -80,14 +75,13 @@ export async function query(
   // inside locked subdirectories (starting with "_").
   if (queryType === "_all") {
     if (interpreter.isServerSide) {
-      return await dbQueryHandler.queryDBProcOrCache(
+      return await dbQueryHandler.queryDBProc(
         "readHomeDirDescendants", [homeDirID, 1000, 0],
-        route, upNodeID, maxAge, noCache, lastUpToDate, callerNode, execEnv,
+        route, upNodeID, options, callerNode, execEnv,
       );
     } else {
-      return serverQueryHandler.queryServerOrCache(
-        isPost, route, upNodeID, maxAge, noCache, onCached, interpreter,
-        callerNode, execEnv,
+      return serverQueryHandler.queryServer(
+        route, undefined, upNodeID, interpreter, callerNode, execEnv,
       );
     }
   }
@@ -96,14 +90,13 @@ export async function query(
   // home directory.
   if (queryType === "admin") {
     if (interpreter.isServerSide) {
-      return await dbQueryHandler.queryDBProcOrCache(
+      return await dbQueryHandler.queryDBProc(
         "readHomeDirAdminID", [homeDirID],
-        route, upNodeID, maxAge, noCache, lastUpToDate, callerNode, execEnv,
+        route, upNodeID, options, callerNode, execEnv,
       );
     } else {
-      return serverQueryHandler.queryServerOrCache(
-        isPost, route, upNodeID, maxAge, noCache, onCached, interpreter,
-        callerNode, execEnv,
+      return serverQueryHandler.queryServer(
+        route, undefined, upNodeID, interpreter, callerNode, execEnv,
       );
     }
   }
@@ -114,15 +107,13 @@ export async function query(
     let requestedAdminID = queryStringArr[1];
     let routesToEvict = [`/${homeDirID}?admin`];
     if (interpreter.isServerSide) {
-      return await dbQueryHandler.queryDBProcOrCache(
+      return await dbQueryHandler.queryDBProc(
         "editHomeDir", [homeDirID, requestedAdminID],
-        route, upNodeID, maxAge, true, lastUpToDate, callerNode, execEnv,
-        routesToEvict,
+        route, upNodeID, options, callerNode, execEnv,
       );
     } else {
-      return serverQueryHandler.queryServerOrCache(
-        isPost, route, upNodeID, maxAge, true, onCached, interpreter,
-        callerNode, execEnv, routesToEvict,
+      return serverQueryHandler.queryServer(
+        route, undefined, upNodeID, interpreter, callerNode, execEnv,
       );
     }
   }
@@ -141,50 +132,16 @@ export async function query(
       [`/${homeDirID}`, false],
     ];
     if (interpreter.isServerSide) {
-      return await dbQueryHandler.queryDBProcOrCache(
+      return await dbQueryHandler.queryDBProc(
         "deleteHomeDir", [homeDirID],
-        route, upNodeID, maxAge, true, lastUpToDate, callerNode, execEnv,
-        routesToEvict,
+        route, upNodeID, options, callerNode, execEnv,
       );
     } else {
-      return serverQueryHandler.queryServerOrCache(
-        isPost, route, upNodeID, maxAge, true, onCached, interpreter,
-        callerNode, execEnv, routesToEvict,
+      return serverQueryHandler.queryServer(
+        route, undefined, upNodeID, interpreter, callerNode, execEnv,
       );
     }
   }
-
-  // TODO: Correct:
-  // If route equals ".../<homeDirID>?call&<funName>&<inputArr>", get the
-  // module.js file at the home level of the directory, then execute that
-  // module and run the function named <funName>, with the optional <inputArr>
-  // as its input.
-  if (queryType === "call") {
-    let [funName, inputArrStr] = queryStringArr;
-    let inputArr = [];
-    if (inputArrStr) {
-      let isValidJSONArr = true;
-      try {
-        inputArr = JSON.parse(inputArrStr);
-        if (!(inputArr instanceof Array)) {
-          isValidJSONArr = false;
-        }
-      } catch (err) {
-        isValidJSONArr = false;
-      }
-      if (!isValidJSONArr) throw new RuntimeError(
-        `inputArr query parameter needs to be a JSON array, but received ` +
-        `${inputArrStr}`,
-        callerNode, execEnv
-      );
-    }
-    // TODO: Look in the cache first in case of the "fetch" method.
-    let liveServerModule = await interpreter.import(`/${homeDirID}/module.js`);
-    execEnv.emitSignal(SET_ELEVATED_PRIVILEGES_SIGNAL, homeDirID);
-    liveServerModule.call(funName, inputArr, null, execEnv);
-    return ["TODO..."];
-  }
-
 
   // If the route was not matched at this point, throw an error.
   throw new RuntimeError(

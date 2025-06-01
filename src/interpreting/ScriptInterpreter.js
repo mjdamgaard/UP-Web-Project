@@ -87,8 +87,8 @@ export class ScriptInterpreter {
     // Add the 'server' dev library (used for fetching scripts and other data)
     // to liveModules from the beginning.
     liveModules.set(
-      "server", new LiveModule(
-        "server", Object.entries(this.staticDevLibs.get("server")), scriptVars
+      "query", new LiveModule(
+        "query", Object.entries(this.staticDevLibs.get("query")), scriptVars
       )
     );
 
@@ -250,9 +250,9 @@ export class ScriptInterpreter {
     return text;
   }
 
-
+// TODO: Correct:
   fetch(callerNode, callerEnv, route, maxAge, noCache, onCached) {
-    let fetchFun = callerEnv.scriptVars.liveModules.get("server").get("fetch");
+    let fetchFun = callerEnv.scriptVars.liveModules.get("query").get("fetch");
     return new Promise(resolve => {
       this.executeFunction(
         fetchFun, [route, maxAge, noCache, onCached, new DevFunction(
@@ -263,17 +263,17 @@ export class ScriptInterpreter {
     });
   }
 
-  post(callerNode, callerEnv, route, postData) {
-    let postFun = callerEnv.scriptVars.liveModules.get("server").get("post");
-    return new Promise(resolve => {
-      this.executeFunction(
-        postFun, [route, postData, new DevFunction(
-          {decEnv: callerEnv}, res => resolve(res)
-        )],
-        callerNode, callerEnv
-      );
-    });
-  }
+  // post(callerNode, callerEnv, route, postData) {
+  //   let postFun = callerEnv.scriptVars.liveModules.get("server").get("post");
+  //   return new Promise(resolve => {
+  //     this.executeFunction(
+  //       postFun, [route, postData, new DevFunction(
+  //         {decEnv: callerEnv}, res => resolve(res)
+  //       )],
+  //       callerNode, callerEnv
+  //     );
+  //   });
+  // }
 
 
 

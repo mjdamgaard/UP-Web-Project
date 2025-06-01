@@ -9,12 +9,12 @@ import {ScriptInterpreter} from "../interpreting/ScriptInterpreter.js";
 import {DBQueryHandler} from "./db_io/DBQueryHandler.js";
 import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
 
-import {ELEVATED_PRIVILEGES_FLAG} from "../dev_lib/server/src/signals.js";
+import {ELEVATED_PRIVILEGES_FLAG} from "../dev_lib/query/src/signals.js";
 
-import * as serverMod from "../dev_lib/server/server.js";
+import * as queryMod from "../dev_lib/query/query.js";
 
 const staticDevLibs = new Map();
-staticDevLibs.set("server", serverMod);
+staticDevLibs.set("query", queryMod);
 
 
 // Server-side JS file cache placeholder:

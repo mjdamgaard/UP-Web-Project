@@ -92,6 +92,38 @@ export async function query(
     // when executing the module and calling the function.
   }
 
+  // TODO: Correct:
+  // If route equals ".../<homeDirID>?call&<funName>&<inputArr>", get the
+  // module.js file at the home level of the directory, then execute that
+  // module and run the function named <funName>, with the optional <inputArr>
+  // as its input.
+  if (queryType === "call") {
+    let [funName, inputArrStr] = queryStringArr;
+    let inputArr = [];
+    if (inputArrStr) {
+      let isValidJSONArr = true;
+      try {
+        inputArr = JSON.parse(inputArrStr);
+        if (!(inputArr instanceof Array)) {
+          isValidJSONArr = false;
+        }
+      } catch (err) {
+        isValidJSONArr = false;
+      }
+      if (!isValidJSONArr) throw new RuntimeError(
+        `inputArr query parameter needs to be a JSON array, but received ` +
+        `${inputArrStr}`,
+        callerNode, execEnv
+      );
+    }
+    // TODO: Look in the cache first in case of the "fetch" method.
+    let liveServerModule = await interpreter.import(`/${homeDirID}/module.js`);
+    execEnv.emitSignal(SET_ELEVATED_PRIVILEGES_SIGNAL, homeDirID);
+    liveServerModule.call(funName, inputArr, null, execEnv);
+    return ["TODO..."];
+  }
+
+
   // If the route was not matched at this point, throw an error.
   throw new RuntimeError(
     `Unrecognized route: ${route}`,
