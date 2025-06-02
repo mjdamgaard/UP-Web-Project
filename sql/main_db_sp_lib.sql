@@ -925,14 +925,16 @@ DELIMITER //
 CREATE PROCEDURE readCTList (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
-    IN lo VARCHAR(255),
-    IN hi VARCHAR(255),
+    IN loBase64 VARCHAR(340),
+    IN hiBase64 VARCHAR(340),
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscending BOOL
 )
 proc: BEGIN
     DECLARE fileID BIGINT UNSIGNED;
+    DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
+    DECLARE hi VARBINARY(255) DEFAULT fromBase64(hiBase64);
     IF (
         dirID IS NULL OR filePath IS NULL OR
         maxNum IS NULL OR numOffset IS NULL OR isAscending IS NULL
@@ -1160,9 +1162,10 @@ proc: BEGIN
     DECLARE fileID BIGINT UNSIGNED;
     DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
     DECLARE hi VARBINARY(255) DEFAULT fromBase64(hiBase64);
+    SET numOffset = IFNULL(numOffset, 0);
     IF (
         dirID IS NULL OR filePath IS NULL OR
-        maxNum IS NULL OR numOffset IS NULL OR isAscending IS NULL
+        maxNum IS NULL OR isAscending IS NULL
     ) THEN
         SELECT NULL;
         LEAVE proc;
