@@ -24,44 +24,103 @@ export async function query(
   // If route equals ".../<homeDirID>/<filepath>?~touch" create a table file
   // if not already there, but do not delete its content if there.
   if (queryType === "~touch") {
-    let text = postData;
+    if (!isPost) throw new RuntimeError(
+      `Unrecognized route for GET-like requests: "${route}"`,
+      callerNode, execEnv
+    );
     payGas(callerNode, execEnv, {dbWrite: 1});
     if (interpreter.isServerSide) {
-      return await dbQueryHandler.queryDBProcOrCache(
-        "putTextFile", [homeDirID, filePath, text],
-        route, upNodeID, maxAge, true, lastUpToDate, callerNode, execEnv,
-        routesToEvict,
+      return await dbQueryHandler.queryDBProc(
+        "touchTableFile", [homeDirID, filePath],
+        route, upNodeID, options, callerNode, execEnv,
       );
     } else {
-      return serverQueryHandler.queryServerOrCache(
-        isPost, route, upNodeID, maxAge, true, onCached, interpreter,
-        callerNode, execEnv, routesToEvict,
+      return serverQueryHandler.queryServer(
+        route, undefined, upNodeID, interpreter, options,
+        callerNode, execEnv,
       );
     }
   }
 
-  // If route equals ".../<homeDirID>/<filepath>?~put" with a text stored in the postData,
-  // overwrite the existing file with contentText, if any, or create a new file
-  // with that content.
+  // If route equals ".../<homeDirID>/<filepath>?~touch" create a table file
+  // if not already there, and delete its content if it does exist already.
   if (queryType === "~put") {
-    let text = postData;
-    payGas(callerNode, execEnv, {dbWrite: text.length});
-    let routesToEvict = [[`/${homeDirID}/${filePath}`, true]];
+    if (!isPost) throw new RuntimeError(
+      `Unrecognized route for GET-like requests: "${route}"`,
+      callerNode, execEnv
+    );
+    payGas(callerNode, execEnv, {dbWrite: 1});
+    let procName =
+      (fileExt === "att") ? "putATT" :
+      (fileExt === "bt") ? "putBT" :
+      (fileExt === "ct") ? "putCT" :
+      (fileExt === "bbt") ? "putBBT" :
+      undefined;
     if (interpreter.isServerSide) {
-      return await dbQueryHandler.queryDBProcOrCache(
-        "putTextFile", [homeDirID, filePath, text],
-        route, upNodeID, maxAge, true, lastUpToDate, callerNode, execEnv,
-        routesToEvict,
+      return await dbQueryHandler.queryDBProc(
+        procName, [homeDirID, filePath],
+        route, upNodeID, options, callerNode, execEnv,
       );
     } else {
-      return serverQueryHandler.queryServerOrCache(
-        isPost, route, upNodeID, maxAge, true, onCached, interpreter,
-        callerNode, execEnv, routesToEvict,
+      return serverQueryHandler.queryServer(
+        route, undefined, upNodeID, interpreter, options,
+        callerNode, execEnv,
       );
     }
   }
 
 
+  // If route equals ".../<homeDirID>/<filepath>?~delete", delete the table
+  // file (and its content) if its there.
+  if (queryType === "~delete") {
+    if (!isPost) throw new RuntimeError(
+      `Unrecognized route for GET-like requests: "${route}"`,
+      callerNode, execEnv
+    );
+    let procName =
+      (fileExt === "att") ? "deleteATT" :
+      (fileExt === "bt") ? "deleteBT" :
+      (fileExt === "ct") ? "deleteCT" :
+      (fileExt === "bbt") ? "deleteBBT" :
+      undefined;
+    if (interpreter.isServerSide) {
+      return await dbQueryHandler.queryDBProc(
+        procName, [homeDirID, filePath],
+        route, upNodeID, options, callerNode, execEnv,
+      );
+    } else {
+      return serverQueryHandler.queryServer(
+        route, undefined, upNodeID, interpreter, options,
+        callerNode, execEnv,
+      );
+    }
+  }
+
+  // If route equals ".../<homeDirID>/<filepath>?entry&<elemKey>", read and
+  // return the table entry with the given element key.
+  if (queryType === "entry") {
+    if (!isPost) throw new RuntimeError(
+      `Unrecognized route for GET-like requests: "${route}"`,
+      callerNode, execEnv
+    );
+    let procName =
+      (fileExt === "att") ? "deleteATT" :
+      (fileExt === "bt") ? "deleteBT" :
+      (fileExt === "ct") ? "deleteCT" :
+      (fileExt === "bbt") ? "deleteBBT" :
+      undefined;
+    if (interpreter.isServerSide) {
+      return await dbQueryHandler.queryDBProc(
+        procName, [homeDirID, filePath],
+        route, upNodeID, options, callerNode, execEnv,
+      );
+    } else {
+      return serverQueryHandler.queryServer(
+        route, undefined, upNodeID, interpreter, options,
+        callerNode, execEnv,
+      );
+    }
+  }
 
   // If the route was not matched at this point, throw an error.
   throw new RuntimeError(
