@@ -7,10 +7,10 @@ import {
 
 export async function query(
   {callerNode, execEnv, interpreter},
-  route, upNodeID, homeDirID, filePath, fileExt, queryStringArr, _, options
+  route, isPost, postData, options,
+  upNodeID, homeDirID, filePath, fileExt, queryStringArr,
 ) {
-  let serverQueryHandler = interpreter.serverQueryHandler;
-  let dbQueryHandler = interpreter.dbQueryHandler;
+  let {serverQueryHandler, dbQueryHandler} = interpreter;
 
   // If route equals just ".../<homeDirID>/<filePath>", without any query
   // string, throw.

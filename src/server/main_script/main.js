@@ -2,10 +2,9 @@
 import {query} from 'server';
 
 export function main(
-  method, route, postData, maxAge, noCache, lastUpToDate, onCached, resolve
+  route, isPost, postData, options, resolve
 ) {
   query(
-    method, route, postData, maxAge, noCache, lastUpToDate, onCached,
-    output => resolve(output),
+    route, isPost, postData, options, output => resolve(output)
   );
 }

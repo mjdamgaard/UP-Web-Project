@@ -162,7 +162,7 @@ class JSXInstance {
       this.refs = props.get("refs") ?? new ObjectWrapper();
     }
 
-    // Then get the component module's render() method.
+    // Then get the component module's render() function.
     let fun = this.componentModule.get("render");
     if (!fun) throw new RuntimeError(
       "Component module is missing a render function " +
@@ -188,10 +188,6 @@ class JSXInstance {
       // render() is a dev function that returns a DOM node directly, wrapped
       // in the DOMNodeWrapper class exported below, in which case just use
       // that DOM node.
-      // getDOMNode() also pushes to ownDOMNodes array argument all the non-
-      // instance nodes that this instance renders. This is done solely because
-      // we use this when styling the instance's node (which might change in a
-      // future implementation).
       if (jsxElement instanceof DOMNodeWrapper) {
         newDOMNode = jsxElement.domNode;
       }
@@ -222,13 +218,12 @@ class JSXInstance {
     });
 
     // Also define a dispatch callback used for dispatching calls to the
-    // component's action methods (any method of the component module that is
-    // not called 'render' or 'getInitState') in order to change the state and
-    // queue a rerender.
+    // component's action methods in order to change the state and queue a
+    // rerender.
     let dispatch = new DispatchFunction(this, callerEnv);
 
-    // Now call the component module's render() method, and check that resolve
-    // has been called synchronously by it.
+    // Now call the component module's render() function, and check that
+    // resolve() has been called synchronously by it.
     let error;
     try {
       let inputArr = [
@@ -249,7 +244,7 @@ class JSXInstance {
     // getStyle() assigns the ID of "s0").
     if (error || !resolveHasBeenCalled) {
       let errorMsg = error ? getExtendedErrorMsg(error) : (
-        "A JSX component's render() method did not call its resolve() " +
+        "A JSX component's render() function did not call its resolve() " +
         "callback before returning"
       );
       console.error(errorMsg);
@@ -596,7 +591,7 @@ class JSXInstanceObject {
 
   // setState() assigns to jsxInstance.state immediately, which means that the
   // state changes will be visible to all subsequently dispatched actions to
-  // this instance. However, since the render() method can only the state via
+  // this instance. However, since the render() function can only the state via
   // its arguments (i.e. the 'state' argument), the state changes will not be
   // visible in the continued execution of a render() after it has dispatched
   // an action, but only be visible on a subsequent render. setState() also
@@ -740,7 +735,7 @@ class JSXAppStyler {
   // loadStyle() receives a live module and uses getStyle() to get a list of
   // routes of all the style sheets that the component is "subscribed to," as
   // well as the component's "class transform" used for potentially
-  // transforming the class attributes set by the component's render() method.
+  // transforming the class attributes set by the component's render() function.
   // It also creates a promise to said classTransform in the same process, and
   // insert this in this.classTransformPromises.
   async loadStyle(liveModule, callerNode, callerEnv) {

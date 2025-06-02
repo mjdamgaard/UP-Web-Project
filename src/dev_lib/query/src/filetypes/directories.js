@@ -7,13 +7,18 @@ import {
 
 export async function query(
   {callerNode, execEnv, interpreter},
-  route, _, upNodeID, homeDirID, filePath, _, queryStringArr, options,
+  route, isPost, _, options,
+  upNodeID, homeDirID, filePath, _, queryStringArr,
 ) {
   let {serverQueryHandler, dbQueryHandler} = interpreter;
 
   // If route equals "...?mkdir&a=<adminID>", create a new home directory with
   // the requested adminID as the admin. 
   if (!homeDirID) {
+    if (!isPost) throw new RuntimeError(
+      `Unrecognized route for GET-like requests: "${route}"`,
+      callerNode, execEnv
+    );
     if (queryStringArr[0] === "mkdir") {
       let [a, requestedAdminID] = (queryStringArr[1] ?? []);
       if (a !== "a" || !requestedAdminID) throw new RuntimeError(
@@ -71,7 +76,7 @@ export async function query(
   // If route equals just ".../<homeDirID>?_all", return a list of all nested
   // file paths of the home directory, *including* paths of files nested
   // inside locked subdirectories (starting with "_").
-  if (queryType === "_all") {
+  if (queryType === "~all") {
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProc(
         "readHomeDirDescendants", [homeDirID, 1000, 0],
@@ -102,8 +107,11 @@ export async function query(
   // If route equals ".../<homeDirID>?_setAdmin&<adminID>", set a new admin of
   // the home directory.
   if (queryType === "~setAdmin") {
+    if (!isPost) throw new RuntimeError(
+      `Unrecognized route for GET-like requests: "${route}"`,
+      callerNode, execEnv
+    );
     let requestedAdminID = queryStringArr[1];
-    let routesToEvict = [`/${homeDirID}?admin`];
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProc(
         "editHomeDir", [homeDirID, requestedAdminID],
@@ -117,18 +125,13 @@ export async function query(
   }
 
   // If route equals ".../<homeDirID>?_delete", request a deletion of the
-  // directory, ut note that directories can only be deleted after each nested
+  // directory, but note that directories can only be deleted after each nested
   // file in it has been deleted (as this query does not delete the files).
   if (queryType === "~delete") {
     if (!isPost) throw new RuntimeError(
-      `Unrecognized route for the "fetch" method: ${route}`,
+      `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
     );
-    let routesToEvict = [
-      [`/${homeDirID}/`, true],
-      [`/${homeDirID}?`, true],
-      [`/${homeDirID}`, false],
-    ];
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProc(
         "deleteHomeDir", [homeDirID],

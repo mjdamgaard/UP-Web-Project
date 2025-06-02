@@ -64,22 +64,12 @@ http.createServer(async function(req, res) {
 async function requestHandler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
 
-  // At this point, the server only implements POST requests where most of the
-  // parameters are stored in a JSON object.
-  let reqBody;
-  if (req.method === "POST") {
-    reqBody = await getData(req);
-  }
-  else if (req.method !== "GET") {
-    throw new ClientError(
-      "Server only accepts the POST or GET methods"
-    );
-  }
-  else {
-    throw new ClientError(
-      "Server does not implement the GET method yet"
-    );
-  }
+  // The server only implements POST requests where most of the parameters are
+  // stored in a JSON object.
+  if (req.method !== "POST") throw new ClientError(
+    "Server only accepts the POST method"
+  );
+  let reqBody = await getData(req);
 
   // First get and parse the request params.
   let reqParams, isValidJSON = true;
@@ -95,37 +85,17 @@ async function requestHandler(req, res) {
     );
   }
 
-  // Then extract the parameters from it.
+  // Get optional isPost and postData, as well as the optional user credentials
+  // (username and password/token), and the options parameter.
   let {
-    // Get the optional user credentials (username and password/token), the
-    // optional data parameter (which can be a string of any kind), and the
-    // optional options parameter.
-    credentials, data, options = {},
-    // // Get the optional data parameter.
-    // data,
-    // // Get the optional maxAge, noCache, and lastUpToDate parameters used by
-    // // caches.
-    // maxAge, noCache, lastUpToDate,
-    // // Get the optional gasID and a initFlagsID, which points to a gas
-    // // and a initFlags object, respectively, which can both influence
-    // // whether the script succeeds or fails (but don't change the result on a
-    // // success).
-    // gasID, initFlagsID,
-    // // Get the returnLog boolean, which if not present means that the script's
-    // // result will be returned on its own, without the log (which might be
-    // // empty anyway).
-    // returnLog,
+    isPost = false, postData, credentials, options = {},
   } = reqParams;
 
-  // Extract some additional optional parameters from options. 
+  // Also extract some additional optional parameters from options. 
   let {gas, gasID, returnLog} = options;
 
-  if (!method) throw new ClientError(
-    "No 'method' parameter was specified in the POST body"
-  );
-
-  // And get the "route" from the URL, which is an extended path that points to
-  // the file or directory that is the target of the request.
+  // And get the so-called route from the URL, which is an extended path that
+  // points to the file or directory that is the target of the request.
   let route = req.url;
 
 
@@ -155,7 +125,7 @@ async function requestHandler(req, res) {
   ]);
   let [output, log] = await scriptInterpreter.interpretScript(
     gas, undefined, "main.js",
-    [route, data, options],
+    [route, isPost, postData, options],
     reqUserID, initFlags, undefined, undefined, parsedScripts,
   );
   let [result, wasReady] = output ?? [];

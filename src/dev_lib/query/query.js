@@ -1,6 +1,7 @@
 
 import {
   DevFunction, FunctionObject, Signal, RuntimeError, TypeError, LoadError,
+  getObject,
 } from '../../interpreting/ScriptInterpreter.js';
 import {parseRoute} from './src/parseRoute.js';
 
@@ -19,9 +20,11 @@ export const query = new DevFunction(
   {isAsync: true, minArgNum: 2, isEnclosed: true},
   async function(
     {callerNode, execEnv, interpreter, liveModule},
-    [route, data, options]
+    [route, isPost, postData, options]
   ) {
-    options = options?.val ?? options;
+    options = getObject(options) ?? {};
+
+    // TODO: Emit a signal here if isPost == true.
 
     // Parse the route to get the filetype, among other parameters and
     // qualities.
@@ -84,49 +87,39 @@ export const query = new DevFunction(
     // simply be result client-side).
     return await filetypeModule.query(
       {callerNode, execEnv, interpreter, liveModule},
-      route, data, upNodeID, homeDirID, filePath, fileExt, queryStringArr,
-      options,
+      route, isPost, postData, options,
+      upNodeID, homeDirID, filePath, fileExt, queryStringArr,
     );
   }
 );
 
 
 
-// export const fetch = new DevFunction(
-//   {isAsync: true, minArgNum: 1, isEnclosed: true},
-//   async function(
-//     {callerNode, execEnv, liveModule},
-//     [route, maxAge, noCache, onCached]
-//   ) {
-//     if (onCached === undefined) {
-//       if (noCache instanceof FunctionObject) {
-//         onCached = noCache;
-//         noCache = undefined;
-//       }
-//       else if (noCache === undefined && maxAge instanceof FunctionObject) {
-//         onCached = maxAge;
-//         maxAge = undefined;
-//       }
-//     }
-//     let [result] = await liveModule.call(
-//       "query", ["fetch", route, undefined, maxAge, noCache],
-//       callerNode, execEnv
-//     ) ?? [];
-//     return result;
-//   }
-// );
+export const fetch = new DevFunction(
+  {isAsync: true, minArgNum: 1, isEnclosed: true},
+  async function(
+    {callerNode, execEnv, liveModule},
+    [route, options]
+  ) {
+    options = getObject(options) ?? {};
+    let {onCached} = options;
+    let [result] = await liveModule.call(
+      "query", [route, false, undefined, options], callerNode, execEnv
+    ) ?? [];
+    return result;
+  }
+);
 
 
-// export const post = new DevFunction(
-//   {isAsync: true, minArgNum: 1, isEnclosed: true},
-//   async function(
-//     {callerNode, execEnv, liveModule},
-//     [route, postData]
-//   ) {
-//     let [result] = await liveModule.call(
-//       "query", ["post", route, postData],
-//       callerNode, execEnv
-//     ) ?? [];
-//     return result;
-//   }
-// );
+export const post = new DevFunction(
+  {isAsync: true, minArgNum: 1, isEnclosed: true},
+  async function(
+    {callerNode, execEnv, liveModule},
+    [route, postData, options]
+  ) {
+    let [result] = await liveModule.call(
+      "query", [route, true, postData, options], callerNode, execEnv
+    ) ?? [];
+    return result;
+  }
+);

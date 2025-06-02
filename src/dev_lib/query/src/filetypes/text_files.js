@@ -9,7 +9,8 @@ import {SET_ELEVATED_PRIVILEGES_SIGNAL} from "../signals.js";
 
 export async function query(
   {callerNode, execEnv, interpreter},
-  route, data, upNodeID, homeDirID, filePath, fileExt, queryStringArr, options,
+  route, isPost, postdata, options,
+  upNodeID, homeDirID, filePath, fileExt, queryStringArr,
 ) {
   let {serverQueryHandler, dbQueryHandler, jsFileCache} = interpreter;
 
@@ -52,7 +53,11 @@ export async function query(
   // overwrite the existing file with contentText, if any, or create a new file
   // with that content.
   if (queryType === "~put") {
-    let text = data;
+    if (!isPost) throw new RuntimeError(
+      `Unrecognized route for GET-like requests: "${route}"`,
+      callerNode, execEnv
+    );
+    let text = postdata;
     payGas(callerNode, execEnv, {dbWrite: text.length});
     let routesToEvict = [[`/A/${homeDirID}/${filePath}`, true]];
     if (fileExt === "js" || fileExt === "jsx") {
@@ -85,6 +90,10 @@ export async function query(
 
   // If route equals ".../<homeDirID>/<filePath>?~delete", ...
   if (queryType === "~delete") {
+    if (!isPost) throw new RuntimeError(
+      `Unrecognized route for GET-like requests: "${route}"`,
+      callerNode, execEnv
+    );
     let routesToEvict = [[`/A/${homeDirID}/${filePath}`, true]];
     if (fileExt === "js" || fileExt === "jsx") {
       if (interpreter.isServerSide) {
@@ -115,16 +124,21 @@ export async function query(
   }
 
   // If route equals ".../<homeDirID>/<filePath>?get&<alias>", verify that
-  // fileExt = "js", and if so, execute the module and return the variables
-  // exported as <alias>. 
+  // fileExt equals "js" or "jsx", and if so, execute the module and return the
+  // variables exported as <alias>. 
   if (queryType === "get") {
     // TODO: Implement, and make sure to also remove any elevated privileges
     // when executing the module.
   }
 
-  // If route equals ".../<homeDirID>/<filePath>?~call&<alias>&argv=<inputArr>",
-  // verify that fileExt = "js", and if so, execute the module and get the
-  // function exported as <alias>, then call it and return its output.
+  // If route equals ".../<homeDirID>/<filePath>?call&<alias>&argv=" +
+  // "<inputArrBase64>", verify that filePath ends in '.sm.js', and if so,
+  // execute the module and get the function exported as <alias>, then call it
+  // with inputArr, base-64-decoded and JSON-decoded from inputArrBase64, and
+  // return its output. And at the same time, make sure to signal that the call
+  // should be treated as a call to a server module method (SMM), giving it
+  // special privileges to write to certain parts of the DB (and removing any
+  // previous privileges of the same kind). 
   if (queryType === "call") {
     // TODO: Implement, and make sure to also remove any elevated privileges
     // when executing the module and calling the function.
