@@ -28,10 +28,10 @@ export const query = new DevFunction(
 
     // Parse the route to get the filetype, among other parameters and
     // qualities.
-    let upNodeID, homeDirID, filePath, fileExt, queryStringArr, isLocked;
+    let isLocked, upNodeID, homeDirID, filePath, fileExt, queryPathArr;
     try {
     [
-      upNodeID, homeDirID, filePath, fileExt, queryStringArr, , isLocked
+      isLocked, upNodeID, homeDirID, filePath, fileExt, queryPathArr
     ] = parseRoute(route);
     }
     catch(errMsg) {
@@ -87,7 +87,7 @@ export const query = new DevFunction(
     return await filetypeModule.query(
       {callerNode, execEnv, interpreter, liveModule},
       route, isPost, postData, options, onCached,
-      upNodeID, homeDirID, filePath, fileExt, queryStringArr,
+      upNodeID, homeDirID, filePath, fileExt, queryPathArr,
     );
   }
 );
@@ -112,10 +112,10 @@ export const post = new DevFunction(
   {isAsync: true, minArgNum: 1, isEnclosed: true},
   async function(
     {callerNode, execEnv, liveModule},
-    [route, postData, options, onCached]
+    [route, postData, options]
   ) {
     let [result] = await liveModule.call(
-      "query", [false, route, true, postData, options, onCached], callerNode, execEnv
+      "query", [false, route, true, postData, options], callerNode, execEnv
     ) ?? [];
     return result;
   }

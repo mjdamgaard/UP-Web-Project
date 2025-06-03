@@ -37,9 +37,8 @@ const scriptInterpreter = new ScriptInterpreter(
 );
 
 // Locked routes are all routes where any file name, directory name, or
-// query string property name starts with a tilde (~), or if a file or
-// directory name contains an occurrence of '&~'. 
-const LOCKED_ROUTE_REGEX = /[&/]~/;
+// query path property name contains a tilde (~).
+const LOCKED_ROUTE_REGEX = /~/;
 
 
 

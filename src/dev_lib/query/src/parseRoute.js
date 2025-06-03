@@ -1,15 +1,19 @@
 
-const upNodeIDRegEx = /^\/([a-zA-Z0-9_\-]+)/;
-const homeDirIDRegEx = /^\/([a-zA-Z0-9_\-]+)/;
+const upNodeIDRegEx = /^\/([1-9][0-9]*)/;
+const homeDirIDRegEx = /^\/([1-9][0-9]*)/;
 const filePathRegEx =
-  /^\/(([a-zA-Z0-9_\-.]+(?<!\.)\/)*[a-zA-Z0-9_\-.]+(?<!\.))(?=($|[?#]))/;
-const queryStringRegEx = /^\?([a-zA-Z0-9_\-.=]*(&[a-zA-Z0-9_\-.=]*))/;
-const tagRegEx = /^#([a-zA-Z0-9_\-.]*)/;
+  /^\/(([a-zA-Z0-9_\-.~!&$*+=]+(?<!\.)\/)*[a-zA-Z0-9_\-.~!&$*+=]+(?<!\.))(?=($|[;?#]))/;
+const queryPathRegEx = /^;([a-zA-Z0-9_\-=.]+(;[a-zA-Z0-9_\-=.]+)*)(?<!\.)/;
+// const queryStringRegEx = /^\?([a-zA-Z0-9_\-.=]*(&[a-zA-Z0-9_\-.=]*))/;
+const tagRegEx = /^#([a-zA-Z0-9_\-.]+)(?<!\.)/;
 const lastFileExtRegEx = /\.([^.]+)$/
+
+const lockedRouteRegex = /~/;
+
 
 
 export function parseRoute(route) {
-  let upNodeID, homeDirID, filePath, queryString, tag;
+  let upNodeID, homeDirID, filePath, queryPath, tag;
   let match, routeRemainder = route;
 
   // Get the UP node ID.
@@ -24,12 +28,12 @@ export function parseRoute(route) {
   [match, filePath] = filePathRegEx.exec(routeRemainder) ?? ["", ""];
   routeRemainder = routeRemainder.substring(match.length);
 
-  // Get the final query string, if any.
-  [match, queryString] = queryStringRegEx.exec(routeRemainder) ?? ["", ""];
+  // Get the query path, if any.
+  [match, queryPath] = queryPathRegEx.exec(routeRemainder) ?? ["", ""];
   routeRemainder = routeRemainder.substring(match.length);
 
   // Get the trailing tag, if any.
-  [match, tag] = queryStringRegEx.exec(routeRemainder) ?? ["", ""];
+  [match, tag] = tagRegEx.exec(routeRemainder) ?? ["", ""];
   routeRemainder = routeRemainder.substring(match.length);
 
   // Throw if this did not exhaust the full route.
@@ -39,7 +43,7 @@ export function parseRoute(route) {
 
   // Throw if a file path is used outside of any directory, or if it is too
   // long.
-  if (filePath && ! homeDirID) throw (
+  if (filePath && !homeDirID) throw (
     `Invalid route: ${route}`
   );
   if (filePath.length > 700) throw (
@@ -49,29 +53,23 @@ export function parseRoute(route) {
   // Extract the file extension, if any.
   let [ , fileExt] = lastFileExtRegEx.exec(filePath) ?? [];
 
-  // If it is defined, split the queryString into an array of key--value
+  // Parse whether the given file or directory, or query path, is locked for
+  // the admin only.
+  let isLocked = lockedRouteRegex.test(route);
+
+  // If it is defined, split the queryPath into an array of key--value
   // entries array for key--value pairs, and string values in case of boolean
   // query parameters (with no "=").
-  let queryStringArr;
-  if (queryString) {
-    queryStringArr = queryString.split("&").map(val => {
+  let queryPathArr;
+  if (queryPath) {
+    queryPathArr = queryPath.split(";").map(val => {
       let indOfEqualSign = val.indexOf("=");
       return (indOfEqualSign === -1) ? val :
         [val.substring(0, indOfEqualSign), val.substring(indOfEqualSign + 1)];
     });
   }
 
-  // Parse whether the given file or directory, or query path, is locked for
-  // the admin only.
-  let isLocked = false;
-  if (filePath) {
-    isLocked = filePath[0] === "_" || filePath.indexOf("/_") >= 0;
-  }
-  if (queryString) {
-    isLocked ||= queryString[0] === "_" || queryString.indexOf("&_") >= 0;
-  }
-
   return [
-    upNodeID, homeDirID, filePath, fileExt, queryStringArr, tag, isLocked
+    isLocked, upNodeID, homeDirID, filePath, fileExt, queryPathArr, tag
   ];
 }
