@@ -9,7 +9,7 @@ import {SET_ELEVATED_PRIVILEGES_SIGNAL} from "../signals.js";
 
 export async function query(
   {callerNode, execEnv, interpreter},
-  route, isPost, postdata, options,
+  route, isPost, postdata, options, onCached,
   upNodeID, homeDirID, filePath, fileExt, queryStringArr,
 ) {
   let {serverQueryHandler, dbQueryHandler, jsFileCache} = interpreter;
@@ -22,7 +22,7 @@ export async function query(
       if (interpreter.isServerSide) {
         return await dbQueryHandler.queryDBProcOrCache(
           "readTextFile", [homeDirID, filePath],
-          route, upNodeID, jsFileCache, undefined, options,
+          route, upNodeID, jsFileCache, undefined, options, onCached,
           callerNode, execEnv
         );
       } else {
@@ -181,4 +181,28 @@ export async function query(
     `Unrecognized route: ${route}`,
     callerNode, execEnv
   );
+}
+
+
+
+
+
+
+export function queryDBProcOrCache(
+  procName, paramValArr, routesToEvict,
+  route, upNodeID, jsFileCache, routesToEvict, options, onCached,
+  callerNode, execEnv
+) {
+  if (interpreter.isServerSide) {
+    return dbQueryHandler.queryDBProcOrCache(
+      procName, paramValArr,
+      route, upNodeID, jsFileCache, routesToEvict, options, onCached,
+      callerNode, execEnv
+    );
+  } else {
+    return serverQueryHandler.queryServerOrCache(
+      route, isPost, postData, upNodeID, interpreter, jsFileCache,
+      routesToEvict, options, onCached, callerNode, execEnv,
+    );
+  }
 }

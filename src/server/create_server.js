@@ -64,39 +64,38 @@ http.createServer(async function(req, res) {
 async function requestHandler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
 
-  // The server only implements POST requests where most of the parameters are
-  // stored in a JSON object.
-  if (req.method !== "POST") throw new ClientError(
-    "Server only accepts the POST method"
+  // The server only implements GET and POST requests, where for the POST 
+  // requests the body is a JSON object.
+  let route = req.url;
+  let reqParams = {};
+  if (req.method === "POST") {
+    // First get and parse the request params.
+    let reqBody = await getData(req);
+    let isValidJSON = true;
+    try {
+      reqParams = JSON.parse(reqBody || "{}");
+    }
+    catch (err) {
+      isValidJSON = false;
+    }
+    if (!isValidJSON || !reqParams || typeof reqParams !== "object") {
+      throw new ClientError(
+        "Post body was not a JSON object"
+      );
+    }
+  }
+  else if (req.method !== "GET") throw new ClientError(
+    "Server only accepts the GET and POST methods"
   );
-  let reqBody = await getData(req);
-
-  // First get and parse the request params.
-  let reqParams, isValidJSON = true;
-  try {
-    reqParams = JSON.parse(reqBody);
-  }
-  catch (err) {
-    isValidJSON = false;
-  }
-  if (!isValidJSON || !reqParams || typeof reqParams !== "object") {
-    throw new ClientError(
-      "Post body was not a JSON object"
-    );
-  }
 
   // Get optional isPost and postData, as well as the optional user credentials
   // (username and password/token), and the options parameter.
   let {
-    isPost = false, postData, credentials, options = {},
+    isPost = false, postData, credentials, flags, options = {},
   } = reqParams;
 
   // Also extract some additional optional parameters from options. 
   let {gas, gasID, returnLog} = options;
-
-  // And get the so-called route from the URL, which is an extended path that
-  // points to the file or directory that is the target of the request.
-  let route = req.url;
 
 
   // Get the userID of the requesting user, if the user has supplied their
@@ -125,7 +124,7 @@ async function requestHandler(req, res) {
   ]);
   let [output, log] = await scriptInterpreter.interpretScript(
     gas, undefined, "main.js",
-    [route, isPost, postData, options],
+    [route, isPost, new ObjectWrapper(postData), new ObjectWrapper(options)],
     reqUserID, initFlags, undefined, undefined, parsedScripts,
   );
   let [result, wasReady] = output ?? [];

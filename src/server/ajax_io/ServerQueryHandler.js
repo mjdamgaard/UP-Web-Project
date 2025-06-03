@@ -40,8 +40,8 @@ export class ServerQueryHandler {
   // directly at the route in the cache, or simply not cached at all if the
   // noCache parameter is truthy.
   async queryServerOrCache(
-    route, data, upNodeID, interpreter, cache, routesToEvict,
-    {maxAge, noCache, onCached, getCredentials},
+    route, isPost, postData, upNodeID, interpreter, cache,
+    routesToEvict, {maxAge, noCache, getCredentials = isPost}, onCached,
     node, env,
   ) {
     if (upNodeID !== "A") throw new RuntimeError(
@@ -50,8 +50,8 @@ export class ServerQueryHandler {
       node, env
     );
 
-    // Parse the maxAge integer (in ms) and the lastUpToDate UNIX time integer..
-    maxAge = parseInt(maxAge);
+    // Parse the maxAge integer (in ms) and the lastUpToDate UNIX time integer.
+    maxAge = parseInt(maxAge ?? 60000);
     lastUpToDate = parseInt(lastUpToDate);
 
     // If noCache is falsy, look in the cache first.
@@ -85,7 +85,7 @@ export class ServerQueryHandler {
       let token = "TODO: Implement.";
       reqData.credentials = btoa(`${reqUserID}:${token}`);
     }
-    if (data !== undefined) reqData.data = data;
+    if (postData !== undefined) reqData.postData = postData;
     else if (noCache) {
       reqData.noCache = true;
     }

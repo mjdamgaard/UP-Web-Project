@@ -20,7 +20,7 @@ export const query = new DevFunction(
   {isAsync: true, minArgNum: 2, isEnclosed: true},
   async function(
     {callerNode, execEnv, interpreter, liveModule},
-    [route, isPost, postData, options]
+    [isPublic, route, isPost = false, postData, options]
   ) {
     options = getObject(options) ?? {};
 
@@ -55,7 +55,6 @@ export const query = new DevFunction(
       case "js":
       case "jsx":
       case "txt":
-      case "json":
       case "html":
       case "scss":
       case "md":
@@ -87,7 +86,7 @@ export const query = new DevFunction(
     // simply be result client-side).
     return await filetypeModule.query(
       {callerNode, execEnv, interpreter, liveModule},
-      route, isPost, postData, options,
+      route, isPost, postData, options, onCached,
       upNodeID, homeDirID, filePath, fileExt, queryStringArr,
     );
   }
@@ -96,15 +95,13 @@ export const query = new DevFunction(
 
 
 export const fetch = new DevFunction(
-  {isAsync: true, minArgNum: 1, isEnclosed: true},
+  {isAsync: true, minArgNum: 2, isEnclosed: true},
   async function(
     {callerNode, execEnv, liveModule},
-    [route, options]
+    [isPublic, route, options]
   ) {
-    options = getObject(options) ?? {};
-    let {onCached} = options;
     let [result] = await liveModule.call(
-      "query", [route, false, undefined, options], callerNode, execEnv
+      "query", [isPublic, route, false, undefined, options], callerNode, execEnv
     ) ?? [];
     return result;
   }
@@ -115,10 +112,10 @@ export const post = new DevFunction(
   {isAsync: true, minArgNum: 1, isEnclosed: true},
   async function(
     {callerNode, execEnv, liveModule},
-    [route, postData, options]
+    [route, postData, options, onCached]
   ) {
     let [result] = await liveModule.call(
-      "query", [route, true, postData, options], callerNode, execEnv
+      "query", [false, route, true, postData, options, onCached], callerNode, execEnv
     ) ?? [];
     return result;
   }

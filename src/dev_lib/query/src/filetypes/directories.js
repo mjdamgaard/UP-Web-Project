@@ -7,7 +7,7 @@ import {
 
 export async function query(
   {callerNode, execEnv, interpreter},
-  route, isPost, _, options,
+  route, isPost, _, options, onCached,
   upNodeID, homeDirID, filePath, _, queryStringArr,
 ) {
   let {serverQueryHandler, dbQueryHandler} = interpreter;
