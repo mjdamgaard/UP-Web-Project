@@ -2439,6 +2439,34 @@ export function turnPassedToEnclosed(val) {
 
 
 
+export function jsonStringify(val) {
+  return val?.jsonVal ?? JSON.stringify(val);
+}
+
+
+export function jsonParse(val) {
+  return getValueWrapper(val);
+}
+
+export function getValueWrapper(val) {
+  if (val && typeof val === "object") {
+    if (val instanceof Array) {
+      return new ArrayWrapper(val);
+    }
+    else if (val instanceof Map) {
+      return new MapWrapper(val.entries());
+    }
+    else {
+      return new ObjectWrapper(val);
+    }
+  }
+  else {
+    return val;
+  }
+}
+
+
+
 
 export function getVerboseString(val) {
   return (val.stringify instanceof Function) ? val.stringify() : val.toString();

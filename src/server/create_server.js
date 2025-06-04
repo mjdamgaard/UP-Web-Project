@@ -166,15 +166,15 @@ async function requestHandler(req, res) {
 // binary file stream.) The corresponding fromMIMEType() is located in
 // ServerQueryHandler.js.
 function toMIMEType(val, mimeType) {
-    if (mimeType === "text/plain") {
-      return val.toString();
-    }
-    else if (mimeType === "text/json") {
-      return jsonStringify(val);
-    }
-    else {
-       throw `toMIMEType(): Unrecognized/un-implemented MIME type: ${mimeType}`;
-    }
+  if (mimeType === "text/plain") {
+    return val.toString();
+  }
+  else if (mimeType === "text/json") {
+    return jsonStringify(val);
+  }
+  else {
+      throw `toMIMEType(): Unrecognized/un-implemented MIME type: ${mimeType}`;
+  }
 }
 
 

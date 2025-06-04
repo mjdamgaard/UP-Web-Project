@@ -69,6 +69,8 @@ export const query = new DevFunction(
       case "jsx":
       case "txt":
       case "html":
+      case "xml":
+      case "svg":
       case "scss":
       case "md":
         filetypeModule = textFilesMod;
