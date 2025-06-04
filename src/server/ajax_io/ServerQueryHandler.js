@@ -35,6 +35,12 @@ export class ServerQueryHandler {
   }
 
 
+  #getReqBuffer = new Map();
+
+  fetch(route, options) {
+    
+  }
+
 
   // queryServerOrCache() handles queries where the whole result is stored
   // directly at the route in the cache, or simply not cached at all if the
@@ -188,3 +194,9 @@ export async function postData(url, reqData) {
   }
 }
 
+
+
+
+function fromMIMEType() {
+  
+}

@@ -44,14 +44,27 @@ export const query = new DevFunction(
       execEnv.emitSignal(
         CHECK_ELEVATED_PRIVILEGES_SIGNAL, callerNode, homeDirID
       );
-    }  
+    }
+
+    // If on the client side, simply forward the request to the server via the
+    // serverQueryHandler.
+    if (interpreter.isServerSide) {
+      return await interpreter.serverQueryHandler.queryServer(
+        isPublic, route, isPost, postData, options,
+        upNodeID, interpreter, callerNode, execEnv
+      );
+    }
     
-    // Branch according to the file type.
+    // Else branch according to the file type and get the right module for
+    // handling that file type.
     let filetypeModule;
+    let mimeType = "text/plain";
     switch (fileExt) {
       case undefined:
         filetypeModule = directoriesMod;
         break;
+      case "json":
+        mimeType = "text/json";
       case "js":
       case "jsx":
       case "txt":
@@ -74,21 +87,15 @@ export const query = new DevFunction(
         throw new LoadError(`Unrecognized file type: ".${fileExt}"`);
     }
 
-    // // If on the server side, and dbQueryHandler has not been imported yet, do
-    // // so.
-    // if (interpreter.isServerSide && !dbQueryHandler) {
-    //   let dbQueryHandlerMod = await import(dbQueryHandlerPath);
-    //   dbQueryHandler = new dbQueryHandlerMod.DBQueryHandler();
-    // }
-
     // Query the database via the filetypeModule, and return the output (which
     // will often be [result, wasReady] (on success) server-side, and will
     // simply be result client-side).
-    return await filetypeModule.query(
+    let result = await filetypeModule.query(
       {callerNode, execEnv, interpreter, liveModule},
-      route, isPost, postData, options, onCached,
+      route, isPost, postData, options,
       upNodeID, homeDirID, filePath, fileExt, queryPathArr,
     );
+    return [result, mimeType];
   }
 );
 

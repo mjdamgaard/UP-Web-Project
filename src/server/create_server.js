@@ -5,7 +5,9 @@ import path from 'path';
 // import * as process from 'process';
 
 import {ClientError, endWithError, endWithInternalError} from './err/errors.js';
-import {ScriptInterpreter} from "../interpreting/ScriptInterpreter.js";
+import {
+  ScriptInterpreter, RuntimeError, jsonStringify,
+} from "../interpreting/ScriptInterpreter.js";
 import {DBQueryHandler} from "./db_io/DBQueryHandler.js";
 import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
 
@@ -17,10 +19,6 @@ const staticDevLibs = new Map();
 staticDevLibs.set("query", queryMod);
 
 
-// Server-side JS file cache placeholder:
-const jsFileCache = {
-  get: () => {}, set: () => {}, remove: () => {}, removeExtensions: () => {},
-};
 
 const [ , curPath] = process.argv;
 const mainScriptPath = path.normalize(
@@ -64,11 +62,13 @@ async function requestHandler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
 
   // The server only implements GET and POST requests, where for the POST 
-  // requests the body is a JSON object.
+  // requests the post request body is a JSON object.
   let route = req.url;
   let reqParams = {};
+  let isPublic = true;
   if (req.method === "POST") {
-    // First get and parse the request params.
+    // Set isPublic as false, and get and parse the request params.
+    isPublic = false;
     let reqBody = await getData(req);
     let isValidJSON = true;
     try {
@@ -79,7 +79,7 @@ async function requestHandler(req, res) {
     }
     if (!isValidJSON || !reqParams || typeof reqParams !== "object") {
       throw new ClientError(
-        "Post body was not a JSON object"
+        "Post request body was not a JSON object"
       );
     }
   }
@@ -105,8 +105,8 @@ async function requestHandler(req, res) {
 
 
   // Parse whether the route is a "locked" route (that can only be accessed by
-  // the admin, if any, or by a server module method (SMM) of that directory).
-  // These are all paths where a 
+  // the admin, if any, or by a server module function (SMF) of that directory).
+  // These are all paths that include a tilde ('~') anywhere in them.
   let isLocked = LOCKED_ROUTE_REGEX.test(route);
 
   // TODO: If the route it locked, get the adminID of the homeDir, and verify
@@ -116,17 +116,18 @@ async function requestHandler(req, res) {
   let initFlags = [[ELEVATED_PRIVILEGES_FLAG, route[1]]];
 
 
-  // Call the main.js script which redirects to the query() dev function, whose
-  // arguments are: method, route, postData, maxAge, noCache, and lastUpToDate.
+  // Call the main.js script which redirects to the query() dev function.
   let parsedScripts = new Map([
     ["main.js", [parsedMainScript, lexArr, strPosArr, mainScript]]
   ]);
   let [output, log] = await scriptInterpreter.interpretScript(
-    gas, undefined, "main.js",
-    [route, isPost, new ObjectWrapper(postData), new ObjectWrapper(options)],
+    gas, undefined, "main.js", [
+      isPublic, route, isPost, new ObjectWrapper(postData),
+      new ObjectWrapper(options)
+    ],
     reqUserID, initFlags, undefined, undefined, parsedScripts,
   );
-  let [result, wasReady] = output ?? [];
+  let [result, mimeType] = output ?? [];
 
 
   // If the script logged an error, set an error status and write back the
@@ -139,31 +140,42 @@ async function requestHandler(req, res) {
   // Else if returnLog is true, write back an array containing the result,
   // wasReady, and also the log.
   else if (returnLog) {
-    // TODO: parse result first.
+    // If the result is not a text, null the result, returning only the log.
+    if (mimeType.substring(0, 5) !== "text/") {
+      result = null;
+    }
     res.writeHead(200, {'Content-Type': 'text/json'});
-    res.end(JSON.stringify([result, log, wasReady]));
+    res.end(JSON.stringify([result, log]));
   }
 
-  // TODO: Comment this in again, and implement it in both ends. Also add
-  // a(nother) todo about using an 'Accepted' status code to signal the client
-  // to try again but with user credentials added to the request (such that the
-  // user's own gas will be used, thus mitigating DoS attacks). 
-  // // Else if wasReady is true, write back a 204 No Content response.
-  // else if (wasReady) {
-  //   res.writeHead(204);
-  //   res.end("");
-  // }
-
-  // And else simply write back the stringified [result, wasReady].
+  // And else simply write back the result with the specified MIME type, after
+  // parsing the result from query() and turning it into that MIME type. (Note
+  // that we should never use the MIME type of text/javascript or text/html.)
   else {
-    // TODO: parse result first.
-    res.writeHead(200, {'Content-Type': 'text/json'});
-    res.end(JSON.stringify([result, wasReady]));
+    result = toMIMEType(result);
+    res.writeHead(200, {'Content-Type': mimeType});
+    res.end(result);
   }
 
 }
 
 
+
+// toMIMEType() converts a user-defined value to a string of a certain MIME
+// type. (This might need a refactoring if we can't use req.end() to send a
+// binary file stream.) The corresponding fromMIMEType() is located in
+// ServerQueryHandler.js.
+function toMIMEType(val, mimeType) {
+    if (mimeType === "text/plain") {
+      return val.toString();
+    }
+    else if (mimeType === "text/json") {
+      return jsonStringify(val);
+    }
+    else {
+       throw `toMIMEType(): Unrecognized/un-implemented MIME type: ${mimeType}`;
+    }
+}
 
 
 
