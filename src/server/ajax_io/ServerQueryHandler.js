@@ -1,78 +1,53 @@
 
 import {serverDomainURL} from "./config.js";
 import {
-  payGas, LoadError, jsonParse,
+  payGas, LoadError, jsonParse, RuntimeError,
 } from "../../interpreting/ScriptInterpreter.js";
 
-
+// TODO: Import FlagTransmitter.
+let flagTransmitter;
 
 
 export class ServerQueryHandler {
 
+  constructor(userToken = undefined) {
+    this.userToken = userToken;
+  }
 
-  async queryServerOrCache(
-    isPublic, route, isPost, postData, options,
-    upNodeID, interpreter, node, env
+  async queryServer(
+    isPublic, route, isPost, postData, options, upNodeID, node, env
   ) {
+    payGas(node, env, {fetch: 1});
     if (upNodeID !== "A") throw new RuntimeError(
       `Unrecognized UP node ID: "${upNodeID}" (queries to routes of foreign ` +
       "UP nodes are not implemented yet)",
       node, env
     );
 
-    // Query the server for [result, wasReady].
-    payGas(node, env, {fetch: 1});
+    // Construct the reqBody.
     let reqData = {};
-    if (getCredentials) {
-      let {reqUserID} = env.scriptVars;
-      let token = "TODO: Implement.";
-      reqData.credentials = btoa(`${reqUserID}:${token}`);
-    }
-    if (postData !== undefined) reqData.postData = postData;
-    else if (noCache) {
-      reqData.noCache = true;
-    }
-    if (maxAge !== undefined) reqData.maxAge = maxAge;
-    if (lastUpToDate) reqData.lastUpToDate = lastUpToDate;
-    [fetchedResult, wasReady] = await this.post(route, reqData) ?? [];
-
-    // If the cachedResult was already up-to-date, use the cachedResult going
-    // forward, and if not, use the fetched result.
-    let result = wasReady ? cachedResult : fetchedResult;
-
-    // If noCache is not truthy, we also update the cache.
-    if (!noCache) {
-      payGas(node, env, {cacheWrite: 1});
-      lastUpToDate = now;
-      cache.set(route, [result, lastUpToDate]);
+    if (isPost) {
+      reqData.isPost = true;
+      if (postData !== undefined) reqData.postData = postData;
+      if (options !== undefined) reqData.options = options;
+      reqData.flags = flagTransmitter.getFlags(node, env);
     }
 
-    // If routesToEvict is defined, it means that the query modifies the
-    // database, and therefore should also evict previously stored results in
-    // the cache (at least when the query is expected to potentially out-date
-    // some cache entries).
-    if (routesToEvict) {
-      if (!noCache) throw (
-        "ServerQueryHandler.queryServerOrCache(): routesToEvict must not be " +
-        "used with a falsy noCache"
-      )
-      routesToEvict.forEach(route => {
-        // If a route entry in the array is not a string, treat it as a route--
-        // removeExtensions pair, where if removeExtensions is true, it means
-        // that all routes that are extensions of route should also be removed.
-        let removeExtensions = false; 
-        if (typeof route !== "string") {
-          [route, removeExtensions] = route;
-        }
-        if (removeExtensions) {
-          cache.removeExtensions(route);
-        }
-        cache.remove(route);
-      });
+    // TODO: Provide the token in the Authorization header.
+    let headers = {};
+    if (!isPublic) {
+      let token = this.userToken ?? "TODO: Look in localStorage.";
+      if (token) {
+        headers["Authorization"] = `Bearer: ${token}`;
+      }
+      else throw new RuntimeError(
+        "A non-login-related POST request was made before the user was " +
+        "logged in",
+        node, env
+      );
     }
 
-    // And finally, return the result (either cached or fetched).
-    return result;
+    return await this.request(route, isPublic, reqData, node, env);
   }
 
 
@@ -82,8 +57,8 @@ export class ServerQueryHandler {
   #requestBuffer = new Map();
 
 
-  request(url, isGET, reqData, node, env) {
-    let reqKey = JSON.stringify([url, isGET, reqData]);
+  request(url, isGET = true, reqData = {}, headers = {}, node, env) {
+    let reqKey = JSON.stringify([url, isGET, reqData, headers]);
 
     // If there is already an ongoing request with this reqData object,
     // simply return the promise of that.
@@ -93,7 +68,9 @@ export class ServerQueryHandler {
     }
 
     // Send the request.
-    responsePromise = this.#requestHelper(url, isGET, reqData, node, env);
+    responsePromise = this.#requestHelper(
+      url, isGET, reqData, headers, node, env
+    );
 
     // Then add it to requestBuffer, and also give it a then-callback to remove
     // itself from said buffer, before return ing the promise.
@@ -105,13 +82,18 @@ export class ServerQueryHandler {
   }
 
 
-  async #requestHelper(url, isGET, reqData, node, env) {
+  async #requestHelper(url, isGET, reqData, headers, node, env) {
     // Send the request.
-    let options = isGET ? {} : {
+    let options = isGET ? {
+      headers: headers,
+    } : {
       method: "POST",
+      headers: headers,
       body: JSON.stringify(reqData),
     };
     let response = await fetch(url, options);
+
+
 
     if (!response.ok) {
       let responseText = await response.text();

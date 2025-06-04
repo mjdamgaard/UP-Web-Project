@@ -90,7 +90,7 @@ async function requestHandler(req, res) {
   // Get optional isPost and postData, as well as the optional user credentials
   // (username and password/token), and the options parameter.
   let {
-    isPost = false, postData, credentials, flags, options = {},
+    isPost = false, postData, flags, options = {},
   } = reqParams;
 
   // Also extract some additional optional parameters from options. 
@@ -101,6 +101,7 @@ async function requestHandler(req, res) {
   // credentials to the request, failing if those credentials couldn't be
   // authenticated. Also get the gas for the request in the same process.
   let reqUserID;
+  let credentials;
   [gas, reqUserID] = await getGasAndReqUserID(credentials, gas, gasID);
 
 

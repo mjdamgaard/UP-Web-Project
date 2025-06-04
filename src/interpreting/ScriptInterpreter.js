@@ -62,13 +62,13 @@ export class ScriptInterpreter {
 
   async interpretScript(
     gas, script = "", scriptPath = null, mainInputs = [], initFlags = [],
-    parsedScripts = new Map(), liveModules = new Map(), ...rest
+    parsedScripts = new Map(), liveModules = new Map(),
   ) {
     let scriptVars = {
       gas: gas, log: {entries: []}, scriptPath: scriptPath,
       initFlags: initFlags, globalEnv: undefined, interpreter: this,
       isExiting: false, resolveScript: undefined,
-      parsedScripts: parsedScripts, liveModules: liveModules, rest: rest,
+      parsedScripts: parsedScripts, liveModules: liveModules,
     };
 
     // First create a global environment, which is used as a parent environment

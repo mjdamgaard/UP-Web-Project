@@ -22,6 +22,7 @@ export const query = new DevFunction(
     {callerNode, execEnv, interpreter, liveModule},
     [isPublic, route, isPost = false, postData, options]
   ) {
+    isPost = isPublic ? false : isPost;
     options = getObject(options) ?? {};
 
     // TODO: Emit a signal here if isPost == true.
@@ -51,7 +52,7 @@ export const query = new DevFunction(
     if (interpreter.isServerSide) {
       return await interpreter.serverQueryHandler.queryServer(
         isPublic, route, isPost, postData, options,
-        upNodeID, interpreter, callerNode, execEnv
+        upNodeID, callerNode, execEnv
       );
     }
     
