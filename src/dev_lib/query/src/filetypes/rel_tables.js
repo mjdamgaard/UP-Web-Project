@@ -21,7 +21,7 @@ export async function query(
 
   let queryType = queryStringArr[0];
 
-  // If route equals ".../<homeDirID>/<filepath>?~touch" create a table file
+  // If route equals ".../<homeDirID>/<filepath>/~touch" create a table file
   // if not already there, but do not delete its content if there.
   if (queryType === "~touch") {
     if (!isPost) throw new RuntimeError(
@@ -42,7 +42,7 @@ export async function query(
     }
   }
 
-  // If route equals ".../<homeDirID>/<filepath>?~touch" create a table file
+  // If route equals ".../<homeDirID>/<filepath>/~put" create a table file
   // if not already there, and delete its content if it does exist already.
   if (queryType === "~put") {
     if (!isPost) throw new RuntimeError(
@@ -70,7 +70,7 @@ export async function query(
   }
 
 
-  // If route equals ".../<homeDirID>/<filepath>?~delete", delete the table
+  // If route equals ".../<homeDirID>/<filepath>/~delete", delete the table
   // file (and its content) if its there.
   if (queryType === "~delete") {
     if (!isPost) throw new RuntimeError(
@@ -96,21 +96,35 @@ export async function query(
     }
   }
 
-  // If route equals ".../<homeDirID>/<filepath>?entry&<elemKey>", read and
-  // return the table entry with the given element key. Note that for binary
-  // and UTF-8 keys, elemKey should be base-64-encoded.
-  if (queryType === "entry") {
-    payGas(callerNode, execEnv, {dbRead: 1});
+
+  // If route equals ".../<homeDirID>/<filepath>/~deleteEntry[/l=<listID>]" +
+  // "/k=<elemKey>" +
+  // "[&s=<elemScore>][&p=<elemPayload>]", insert a single table entry with
+  // those row values, overwriting any existing entry of the same key. Note
+  // that for binary and UTF-8 keys, listID and elemKey should be base-64-
+  // encoded.
+  if (queryType === "~deleteEntry") {
+    payGas(callerNode, execEnv, {dbWrite: 1});
     let procName =
-      (fileExt === "att") ? "readATTEntry" :
-      (fileExt === "bt") ? "readBTEntry" :
-      (fileExt === "ct") ? "readCTEntry" :
-      (fileExt === "bbt") ? "readBBTEntry" :
+      (fileExt === "att") ? "deleteATTEntry" :
+      (fileExt === "bt") ? "deleteBTEntry" :
+      (fileExt === "ct") ? "deleteCTEntry" :
+      (fileExt === "bbt") ? "deleteBBTEntry" :
       undefined;
-    let elemKey =  queryStringArr[1];
+    let paramObj;
+    try {
+      paramObj =  Object.fromEntries(queryStringArr.slice(1));
+    }
+    catch (err) {
+      throw new RuntimeError(
+        "Invalid query string for an insert query",
+        callerNode, execEnv
+      );
+    }
+    let {l: listID = "", k: elemKey} = paramObj;
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProc(
-        procName, [homeDirID, filePath, elemKey],
+        procName, [homeDirID, filePath, listID, elemKey],
         route, upNodeID, options, callerNode, execEnv,
       );
     } else {
@@ -121,11 +135,47 @@ export async function query(
     }
   }
 
-  // If route equals ".../<homeDirID>/<filepath>?list&[lo=<lo>&][hi=<hi>&]" +
-  // "[o=<numOffset>&]n=<maxNum>&a=<isAscending>", read and return the primary-
-  // key-indexed list where the elemKey is limited by lo and hi if any of them
-  // are provided, and limited by a maximum number of naxNum entries, and
-  // offset by numOffset.
+  // If route equals ".../<homeDirID>/<filepath>/entry[/l=<listID>]" +
+  // "/k=<elemKey>", read and return the table entry with the given list ID and
+  // element key. Note that for binary and UTF-8 keys, listID and elemKey
+  // should be base-64-encoded.
+  if (queryType === "entry") {
+    payGas(callerNode, execEnv, {dbRead: 1});
+    let procName =
+      (fileExt === "att") ? "readATTEntry" :
+      (fileExt === "bt") ? "readBTEntry" :
+      (fileExt === "ct") ? "readCTEntry" :
+      (fileExt === "bbt") ? "readBBTEntry" :
+      undefined;
+    let paramObj;
+    try {
+      paramObj =  Object.fromEntries(queryStringArr.slice(1));
+    }
+    catch (err) {
+      throw new RuntimeError(
+        "Invalid query string for an insert query",
+        callerNode, execEnv
+      );
+    }
+    let {l: listID = "", k: elemKey} = paramObj;
+    if (interpreter.isServerSide) {
+      return await dbQueryHandler.queryDBProc(
+        procName, [homeDirID, filePath, listID, elemKey],
+        route, upNodeID, options, callerNode, execEnv,
+      );
+    } else {
+      return serverQueryHandler.queryServer(
+        route, undefined, upNodeID, interpreter, options,
+        callerNode, execEnv,
+      );
+    }
+  }
+
+  // If route equals ".../<homeDirID>/<filepath>/list[/l=<listID][/lo=<lo>]" +
+  // "[/hi=<hi>][/o=<numOffset>]/n=<maxNum>&a=<isAscending>", read and return
+  // the primary-key-indexed list where the elemKey is limited by lo and hi if
+  // any of them are provided, and limited by a maximum number of naxNum
+  // entries, and offset by numOffset.
   if (queryType === "list") {
     let procName =
       (fileExt === "att") ? "readATTList" :
@@ -133,9 +183,9 @@ export async function query(
       (fileExt === "ct") ? "readCTList" :
       (fileExt === "bbt") ? "readBBTKeyOrderedList" :
       undefined;
-    let listOptions;
+    let paramObj;
     try {
-      listOptions =  Object.fromEntries(queryStringArr.slice(1));
+      paramObj =  Object.fromEntries(queryStringArr.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
@@ -143,7 +193,9 @@ export async function query(
         callerNode, execEnv
       );
     }
-    let {lo, hi, maxNum, numOffset, isAscending} = listOptions;
+    let {
+      l: listID = "", lo, hi, n: maxNum, o: numOffset, a: isAscending
+    } = paramObj;
     maxNum = parseInt(maxNum);
     if (maxNum === NaN || isAscending === undefined) throw new RuntimeError(
       "Invalid query string for a list query",
@@ -152,7 +204,8 @@ export async function query(
     payGas(callerNode, execEnv, {dbRead: maxNum / 100});
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProc(
-        procName, [homeDirID, filePath, lo, hi, maxNum, numOffset, isAscending],
+        procName,
+        [homeDirID, filePath, listID, lo, hi, maxNum, numOffset, isAscending],
         route, upNodeID, options, callerNode, execEnv,
       );
     } else {
@@ -173,9 +226,9 @@ export async function query(
       callerNode, execEnv
     );
     let procName = readBBTScoreOrderedList;
-    let listOptions;
+    let paramObj;
     try {
-      listOptions =  Object.fromEntries(queryStringArr.slice(1));
+      paramObj =  Object.fromEntries(queryStringArr.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
@@ -183,7 +236,9 @@ export async function query(
         callerNode, execEnv
       );
     }
-    let {lo, hi, n: maxNum, o: numOffset, a: isAscending} = listOptions;
+    let {
+      l: listID = "", lo, hi, n: maxNum, o: numOffset, a: isAscending
+    } = paramObj;
     maxNum = parseInt(maxNum);
     if (maxNum === NaN || isAscending === undefined) throw new RuntimeError(
       "Invalid query string for a list query",
@@ -192,7 +247,8 @@ export async function query(
     payGas(callerNode, execEnv, {dbRead: maxNum / 100});
     if (interpreter.isServerSide) {
       return await dbQueryHandler.queryDBProc(
-        procName, [homeDirID, filePath, lo, hi, maxNum, numOffset, isAscending],
+        procName,
+        [homeDirID, filePath, listID, lo, hi, maxNum, numOffset, isAscending],
         route, upNodeID, options, callerNode, execEnv,
       );
     } else {
@@ -214,9 +270,9 @@ export async function query(
       (fileExt === "ct") ? "insertCTEntry" :
       (fileExt === "bbt") ? "insertBBTEntry" :
       undefined;
-    let columnValues;
+    let paramObj;
     try {
-      columnValues =  Object.fromEntries(queryStringArr.slice(1));
+      paramObj =  Object.fromEntries(queryStringArr.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
@@ -224,14 +280,11 @@ export async function query(
         callerNode, execEnv
       );
     }
-    let {k: elemKey, s: elemScore, p: elemPayload} = columnValues;
+    let {l: listID = "", k: elemKey, s: elemScore, p: elemPayload} = paramObj;
     if (interpreter.isServerSide) {
-      let paramValArr;
-      if (fileExt === "bbt") {
-        paramValArr = [homeDirID, filePath, elemKey, elemScore, elemPayload];
-      } else {
-        paramValArr = [homeDirID, filePath, elemKey, elemPayload];
-      }
+      let paramValArr = (fileExt === "bbt") ?
+        [homeDirID, filePath, listID, elemKey, elemScore, elemPayload] :
+        [homeDirID, filePath, listID, elemKey, elemPayload];
       return await dbQueryHandler.queryDBProc(
         procName, paramValArr,
         route, upNodeID, options, callerNode, execEnv,

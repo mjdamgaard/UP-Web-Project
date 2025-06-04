@@ -83,12 +83,15 @@ CREATE TABLE AutoKeyTextTables (
 
     file_id BIGINT UNSIGNED NOT NULL,
 
+    list_id VARBINARY(255) NOT NULL,
+
     text_id BIGINT UNSIGNED NOT NULL,
 
     text_data TEXT CHARACTER SET utf8mb4,
 
     PRIMARY KEY (
         file_id,
+        list_id,
         text_id
     )
 
@@ -100,12 +103,15 @@ CREATE TABLE BinaryKeyTables (
 
     file_id BIGINT UNSIGNED NOT NULL,
 
+    list_id VARBINARY(255) NOT NULL,
+
     elem_key VARBINARY(255) NOT NULL,
 
     elem_payload VARBINARY(255) NOT NULL DEFAULT "",
 
     PRIMARY KEY (
         file_id,
+        list_id,
         elem_key
     )
 
@@ -116,12 +122,15 @@ CREATE TABLE CharKeyTables (
 
     file_id BIGINT UNSIGNED NOT NULL,
 
+    list_id VARBINARY(255) NOT NULL,
+
     elem_key VARCHAR(255) CHARACTER SET utf8mb4 NOT NULL,
 
     elem_payload VARBINARY(255) NOT NULL DEFAULT "",
 
     PRIMARY KEY (
         file_id,
+        list_id,
         elem_key
     )
 
@@ -135,6 +144,8 @@ CREATE TABLE BinaryKeyBinaryScoreTables (
 
     file_id BIGINT UNSIGNED NOT NULL,
 
+    list_id VARBINARY(255) NOT NULL,
+
     elem_key VARBINARY(255) NOT NULL,
 
     elem_score VARBINARY(255) NOT NULL,
@@ -143,11 +154,13 @@ CREATE TABLE BinaryKeyBinaryScoreTables (
 
     PRIMARY KEY (
         file_id,
+        list_id,
         elem_key
     ),
 
     UNIQUE INDEX sec_idx (
         file_id,
+        list_id,
         elem_score,
         elem_key
     )

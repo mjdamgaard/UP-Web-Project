@@ -396,10 +396,12 @@ DELIMITER //
 CREATE PROCEDURE insertATTEntry (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
     IN textData TEXT
 )
 proc: BEGIN
     DECLARE fileID, newTextID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     IF (dirID IS NULL OR filePath IS NULL OR textData IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
@@ -417,10 +419,10 @@ proc: BEGIN
 
     SELECT IFNULL(MAX(text_id), 0) + 1 INTO newTextID
     FROM AutoKeyTextTables FORCE INDEX (PRIMARY)
-    WHERE file_id = fileID;
+    WHERE file_id = fileID AND list_id = listID;
 
-    INSERT INTO AutoKeyTextTables (file_id, text_id, text_data)
-    VALUES (fileID, newTextID, textData);
+    INSERT INTO AutoKeyTextTables (file_id, list_id, text_id, text_data)
+    VALUES (fileID, listID, newTextID, textData);
 
     DO RELEASE_LOCK(CONCAT("ATT", fileID));
     SELECT newTextID;
@@ -432,10 +434,12 @@ DELIMITER //
 CREATE PROCEDURE deleteATTEntry (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
     IN textID BIGINT UNSIGNED
 )
 proc: BEGIN
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     IF (dirID IS NULL OR filePath IS NULL OR textID IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
@@ -452,7 +456,7 @@ proc: BEGIN
     DO GET_LOCK(CONCAT("ATT", fileID), 10);
 
     DELETE FROM AutoKeyTextTables
-    WHERE file_id = fileID AND text_id = textID;
+    WHERE file_id = fileID AND list_id = listID AND text_id = textID;
     SELECT ROW_COUNT() AS wasDeleted;
 
     DO RELEASE_LOCK(CONCAT("ATT", fileID));
@@ -465,21 +469,23 @@ DELIMITER //
 CREATE PROCEDURE readATTEntry (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
     IN textID BIGINT UNSIGNED
 )
 proc: BEGIN
     DECLARE fileID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     IF (dirID IS NULL OR filePath IS NULL OR textID IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
     END IF;
     SELECT file_id INTO fileID
     FROM Files FORCE INDEX (PRIMARY)
-    WHERE dir_id = dirID AND file_path = filePath;
+    WHERE dir_id = dirID AND file_path = filePath ;
 
     SELECT text_data AS textData
     FROM AutoKeyTextTables FORCE INDEX (PRIMARY)
-    WHERE file_id = fileID AND text_id = textID;
+    WHERE file_id = fileID AND list_id = listID AND text_id = textID;
 END proc //
 DELIMITER ;
 
@@ -489,6 +495,7 @@ DELIMITER //
 CREATE PROCEDURE readATTList (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
     IN lo BIGINT UNSIGNED,
     IN hi BIGINT UNSIGNED,
     IN maxNum INT UNSIGNED,
@@ -497,6 +504,7 @@ CREATE PROCEDURE readATTList (
 )
 proc: BEGIN
     DECLARE fileID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     IF (
         dirID IS NULL OR filePath IS NULL OR
         maxNum IS NULL OR numOffset IS NULL OR isAscending IS NULL
@@ -512,6 +520,7 @@ proc: BEGIN
     FROM AutoKeyTextTables FORCE INDEX (PRIMARY)
     WHERE
         file_id = fileID AND
+        list_id = listID AND
         (lo IS NULL OR text_id >= lo) AND
         (hi IS NULL OR text_id <= hi)
     ORDER BY
@@ -605,11 +614,13 @@ DELIMITER //
 CREATE PROCEDURE insertBTEntry (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340),
     IN elemPayloadBase64 VARCHAR(340)
 )
 proc: BEGIN
     DECLARE fileID, newTextID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
     DECLARE elemPayload VARBINARY(255) DEFAULT fromBase64(elemPayloadBase64);
     IF (
@@ -629,10 +640,10 @@ proc: BEGIN
     END IF;
 
     INSERT INTO BinaryKeyTables (
-        file_id, elem_key, elem_payload
+        file_id, list_id, elem_key, elem_payload
     )
     VALUES (
-        fileID, elemKey, elemPayload
+        fileID, listID, elemKey, elemPayload
     )
     ON DUPLICATE KEY UPDATE
         elem_payload = elemPayload;
@@ -646,10 +657,12 @@ DELIMITER //
 CREATE PROCEDURE deleteBTEntry (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340)
 )
 proc: BEGIN
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
     IF (dirID IS NULL OR filePath IS NULL OR elemKey IS NULL) THEN
         SELECT NULL;
@@ -665,7 +678,7 @@ proc: BEGIN
     END IF;
 
     DELETE FROM BinaryKeyTables
-    WHERE file_id = fileID AND elem_key = elemKey;
+    WHERE file_id = fileID AND list_id = listID AND elem_key = elemKey;
 
     SELECT ROW_COUNT() AS wasDeleted;
 END proc //
@@ -677,10 +690,12 @@ DELIMITER //
 CREATE PROCEDURE readBTEntry (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340)
 )
 proc: BEGIN
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
     IF (dirID IS NULL OR filePath IS NULL OR elemKey IS NULL) THEN
         SELECT NULL;
@@ -698,7 +713,7 @@ proc: BEGIN
     SELECT
         toBase64(elem_payload) AS elemPayload
     FROM BinaryKeyTables FORCE INDEX (PRIMARY)
-    WHERE file_id = fileID AND elem_key = elemKey;
+    WHERE file_id = fileID AND list_id = listID AND elem_key = elemKey;
 END proc //
 DELIMITER ;
 
@@ -708,6 +723,7 @@ DELIMITER //
 CREATE PROCEDURE readBTList (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
     IN loBase64 VARCHAR(340),
     IN hiBase64 VARCHAR(340),
     IN maxNum INT UNSIGNED,
@@ -716,6 +732,7 @@ CREATE PROCEDURE readBTList (
 )
 proc: BEGIN
     DECLARE fileID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
     DECLARE hi VARBINARY(255) DEFAULT fromBase64(hiBase64);
     IF (
@@ -733,6 +750,7 @@ proc: BEGIN
     FROM BinaryKeyTables FORCE INDEX (PRIMARY)
     WHERE
         file_id = fileID AND
+        list_id = listID AND
         (lo IS NULL OR elem_key >= lo) AND
         (hi IS NULL OR elem_key <= hi)
     ORDER BY
@@ -822,11 +840,13 @@ DELIMITER //
 CREATE PROCEDURE insertCTEntry (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340),
     IN elemPayloadBase64 VARCHAR(340)
 )
 proc: BEGIN
     DECLARE fileID, newTextID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
     DECLARE elemPayload VARBINARY(255) DEFAULT fromBase64(elemPayloadBase64);
     IF (
@@ -846,10 +866,10 @@ proc: BEGIN
     END IF;
 
     INSERT INTO CharKeyTables (
-        file_id, elem_key, elem_payload
+        file_id, list_id, elem_key, elem_payload
     )
     VALUES (
-        fileID, elemKey, elemPayload
+        fileID, listID, elemKey, elemPayload
     )
     ON DUPLICATE KEY UPDATE
         elem_payload = elemPayload;
@@ -863,10 +883,12 @@ DELIMITER //
 CREATE PROCEDURE deleteCTEntry (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340)
 )
 proc: BEGIN
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
     IF (dirID IS NULL OR filePath IS NULL OR elemKey IS NULL) THEN
         SELECT NULL;
@@ -882,7 +904,7 @@ proc: BEGIN
     END IF;
 
     DELETE FROM CharKeyTables
-    WHERE file_id = fileID AND elem_key = elemKey;
+    WHERE file_id = fileID AND list_id = listID AND elem_key = elemKey;
 
     SELECT ROW_COUNT() AS wasDeleted;
 END proc //
@@ -894,10 +916,12 @@ DELIMITER //
 CREATE PROCEDURE readCTEntry (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340)
 )
 proc: BEGIN
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
     IF (dirID IS NULL OR filePath IS NULL OR elemKey IS NULL) THEN
         SELECT NULL;
@@ -915,7 +939,7 @@ proc: BEGIN
     SELECT
         toBase64(elem_payload) AS elemPayload
     FROM CharKeyTables FORCE INDEX (PRIMARY)
-    WHERE file_id = fileID AND elem_key = elemKey;
+    WHERE file_id = fileID AND list_id = listID AND elem_key = elemKey;
 END proc //
 DELIMITER ;
 
@@ -925,6 +949,7 @@ DELIMITER //
 CREATE PROCEDURE readCTList (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
     IN loBase64 VARCHAR(340),
     IN hiBase64 VARCHAR(340),
     IN maxNum INT UNSIGNED,
@@ -933,6 +958,7 @@ CREATE PROCEDURE readCTList (
 )
 proc: BEGIN
     DECLARE fileID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
     DECLARE hi VARBINARY(255) DEFAULT fromBase64(hiBase64);
     IF (
@@ -950,6 +976,7 @@ proc: BEGIN
     FROM CharKeyTables FORCE INDEX (PRIMARY)
     WHERE
         file_id = fileID AND
+        list_id = listID AND
         (lo IS NULL OR elem_key >= lo) AND
         (hi IS NULL OR elem_key <= hi)
     ORDER BY
@@ -1046,12 +1073,14 @@ DELIMITER //
 CREATE PROCEDURE insertBBTEntry (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340),
     IN elemScoreBase64 VARCHAR(340),
     IN elemPayloadBase64 VARCHAR(340)
 )
 proc: BEGIN
     DECLARE fileID, newTextID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
     DECLARE elemScore VARBINARY(255) DEFAULT fromBase64(elemScoreBase64);
     DECLARE elemPayload VARBINARY(255) DEFAULT fromBase64(elemPayloadBase64);
@@ -1072,10 +1101,10 @@ proc: BEGIN
     END IF;
 
     INSERT INTO BinaryKeyBinaryScoreTables (
-        file_id, elem_key, elem_score, elem_payload
+        file_id, list_id, elem_key, elem_score, elem_payload
     )
     VALUES (
-        fileID, elemKey, elemScore, elemPayload
+        fileID, listID, elemKey, elemScore, elemPayload
     )
     ON DUPLICATE KEY UPDATE
         elem_score = elemScore,
@@ -1090,10 +1119,12 @@ DELIMITER //
 CREATE PROCEDURE deleteBBTEntry (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340)
 )
 proc: BEGIN
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
     IF (dirID IS NULL OR filePath IS NULL OR elemKey IS NULL) THEN
         SELECT NULL;
@@ -1109,7 +1140,7 @@ proc: BEGIN
     END IF;
 
     DELETE FROM BinaryKeyBinaryScoreTables
-    WHERE file_id = fileID AND elem_key = elemKey;
+    WHERE file_id = fileID AND list_id = listID AND elem_key = elemKey;
 
     SELECT ROW_COUNT() AS wasDeleted;
 END proc //
@@ -1121,10 +1152,12 @@ DELIMITER //
 CREATE PROCEDURE readBBTEntry (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340)
 )
 proc: BEGIN
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
     IF (dirID IS NULL OR filePath IS NULL OR elemKey IS NULL) THEN
         SELECT NULL;
@@ -1143,7 +1176,7 @@ proc: BEGIN
         toBase64(elem_score) AS elemScore,
         toBase64(elem_payload) AS elemPayload
     FROM BinaryKeyBinaryScoreTables FORCE INDEX (PRIMARY)
-    WHERE file_id = fileID AND elem_key = elemKey;
+    WHERE file_id = fileID AND list_id = listID AND elem_key = elemKey;
 END proc //
 DELIMITER ;
 
@@ -1152,6 +1185,7 @@ DELIMITER //
 CREATE PROCEDURE readBBTScoreOrderedList (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
     IN loBase64 VARCHAR(340),
     IN hiBase64 VARCHAR(340),
     IN maxNum INT UNSIGNED,
@@ -1160,6 +1194,7 @@ CREATE PROCEDURE readBBTScoreOrderedList (
 )
 proc: BEGIN
     DECLARE fileID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
     DECLARE hi VARBINARY(255) DEFAULT fromBase64(hiBase64);
     SET numOffset = IFNULL(numOffset, 0);
@@ -1180,6 +1215,7 @@ proc: BEGIN
     FROM BinaryKeyBinaryScoreTables FORCE INDEX (sec_idx)
     WHERE
         file_id = fileID AND
+        list_id = listID AND
         (lo IS NULL OR elem_score >= lo) AND
         (hi IS NULL OR elem_score <= hi)
     ORDER BY
@@ -1194,6 +1230,7 @@ DELIMITER //
 CREATE PROCEDURE readBBTKeyOrderedList (
     IN dirID BIGINT UNSIGNED,
     IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
     IN loBase64 VARCHAR(340),
     IN hiBase64 VARCHAR(340),
     IN maxNum INT UNSIGNED,
@@ -1202,6 +1239,7 @@ CREATE PROCEDURE readBBTKeyOrderedList (
 )
 proc: BEGIN
     DECLARE fileID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
     DECLARE hi VARBINARY(255) DEFAULT fromBase64(hiBase64);
     IF (
@@ -1221,6 +1259,7 @@ proc: BEGIN
     FROM BinaryKeyBinaryScoreTables FORCE INDEX (PRIMARY)
     WHERE
         file_id = fileID AND
+        list_id = listID AND
         (lo IS NULL OR elem_key >= lo) AND
         (hi IS NULL OR elem_key <= hi)
     ORDER BY

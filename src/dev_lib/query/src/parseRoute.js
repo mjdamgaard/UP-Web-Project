@@ -2,8 +2,8 @@
 const upNodeIDRegEx = /^\/([1-9][0-9]*)/;
 const homeDirIDRegEx = /^\/([1-9][0-9]*)/;
 const filePathRegEx =
-  /^\/(([a-zA-Z0-9_\-.~!&$*+=]+(?<!\.)\/)*[a-zA-Z0-9_\-.~!&$*+=]+(?<!\.))(?=($|[;?#]))/;
-const queryPathRegEx = /^;([a-zA-Z0-9_\-=.]+(;[a-zA-Z0-9_\-=.]+)*)(?<!\.)/;
+  /^\/((\.*[a-zA-Z0-9_\-~!&$*+=]+\/)*\.*[a-zA-Z0-9_\-~!&$*+=]+\.[.a-zA-Z0-9_\-~!&$*+=]+)/;
+const queryPathRegEx = /^\/([a-zA-Z0-9_\-=.]+(\/[a-zA-Z0-9_\-=.]+)*)/;
 // const queryStringRegEx = /^\?([a-zA-Z0-9_\-.=]*(&[a-zA-Z0-9_\-.=]*))/;
 const tagRegEx = /^#([a-zA-Z0-9_\-.]+)(?<!\.)/;
 const lastFileExtRegEx = /\.([^.]+)$/
@@ -41,6 +41,11 @@ export function parseRoute(route) {
     `Invalid route: ${route}`
   );
 
+  // Throw if filePath or queryPath ends with a '.'.
+  if (filePath.at(-1) === "." || queryPath.at(-1) === ".") throw (
+    `Invalid route: ${route}`
+  );
+
   // Throw if a file path is used outside of any directory, or if it is too
   // long.
   if (filePath && !homeDirID) throw (
@@ -62,7 +67,7 @@ export function parseRoute(route) {
   // query parameters (with no "=").
   let queryPathArr;
   if (queryPath) {
-    queryPathArr = queryPath.split(";").map(val => {
+    queryPathArr = queryPath.split("/").map(val => {
       let indOfEqualSign = val.indexOf("=");
       return (indOfEqualSign === -1) ? val :
         [val.substring(0, indOfEqualSign), val.substring(indOfEqualSign + 1)];
