@@ -10,7 +10,7 @@ export async function query(
   route, isPost, postData, options,
   upNodeID, homeDirID, filePath, fileExt, queryStringArr,
 ) {
-  let {serverQueryHandler, dbQueryHandler} = interpreter;
+  let {dbQueryHandler} = interpreter;
 
   // If route equals just ".../<homeDirID>/<filePath>", without any query
   // string, throw.
@@ -29,17 +29,10 @@ export async function query(
       callerNode, execEnv
     );
     payGas(callerNode, execEnv, {dbWrite: 1});
-    if (interpreter.isServerSide) {
-      return await dbQueryHandler.queryDBProc(
-        "touchTableFile", [homeDirID, filePath],
-        route, upNodeID, options, callerNode, execEnv,
-      );
-    } else {
-      return serverQueryHandler.queryServer(
-        route, undefined, upNodeID, interpreter, options,
-        callerNode, execEnv,
-      );
-    }
+    return await dbQueryHandler.queryDBProc(
+      "touchTableFile", [homeDirID, filePath],
+      route, upNodeID, options, callerNode, execEnv,
+    );
   }
 
   // If route equals ".../<homeDirID>/<filepath>/~put" create a table file
@@ -56,17 +49,10 @@ export async function query(
       (fileExt === "ct") ? "putCT" :
       (fileExt === "bbt") ? "putBBT" :
       undefined;
-    if (interpreter.isServerSide) {
-      return await dbQueryHandler.queryDBProc(
-        procName, [homeDirID, filePath],
-        route, upNodeID, options, callerNode, execEnv,
-      );
-    } else {
-      return serverQueryHandler.queryServer(
-        route, undefined, upNodeID, interpreter, options,
-        callerNode, execEnv,
-      );
-    }
+    return await dbQueryHandler.queryDBProc(
+      procName, [homeDirID, filePath],
+      route, upNodeID, options, callerNode, execEnv,
+    );
   }
 
 
@@ -83,17 +69,10 @@ export async function query(
       (fileExt === "ct") ? "deleteCT" :
       (fileExt === "bbt") ? "deleteBBT" :
       undefined;
-    if (interpreter.isServerSide) {
-      return await dbQueryHandler.queryDBProc(
-        procName, [homeDirID, filePath],
-        route, upNodeID, options, callerNode, execEnv,
-      );
-    } else {
-      return serverQueryHandler.queryServer(
-        route, undefined, upNodeID, interpreter, options,
-        callerNode, execEnv,
-      );
-    }
+    return await dbQueryHandler.queryDBProc(
+      procName, [homeDirID, filePath],
+      route, upNodeID, options, callerNode, execEnv,
+    );
   }
 
 
@@ -122,17 +101,10 @@ export async function query(
       );
     }
     let {l: listID = "", k: elemKey} = paramObj;
-    if (interpreter.isServerSide) {
-      return await dbQueryHandler.queryDBProc(
-        procName, [homeDirID, filePath, listID, elemKey],
-        route, upNodeID, options, callerNode, execEnv,
-      );
-    } else {
-      return serverQueryHandler.queryServer(
-        route, undefined, upNodeID, interpreter, options,
-        callerNode, execEnv,
-      );
-    }
+    return await dbQueryHandler.queryDBProc(
+      procName, [homeDirID, filePath, listID, elemKey],
+      route, upNodeID, options, callerNode, execEnv,
+    );
   }
 
   // If route equals ".../<homeDirID>/<filepath>/entry[/l=<listID>]" +
@@ -158,17 +130,10 @@ export async function query(
       );
     }
     let {l: listID = "", k: elemKey} = paramObj;
-    if (interpreter.isServerSide) {
-      return await dbQueryHandler.queryDBProc(
-        procName, [homeDirID, filePath, listID, elemKey],
-        route, upNodeID, options, callerNode, execEnv,
-      );
-    } else {
-      return serverQueryHandler.queryServer(
-        route, undefined, upNodeID, interpreter, options,
-        callerNode, execEnv,
-      );
-    }
+    return await dbQueryHandler.queryDBProc(
+      procName, [homeDirID, filePath, listID, elemKey],
+      route, upNodeID, options, callerNode, execEnv,
+    );
   }
 
   // If route equals ".../<homeDirID>/<filepath>/list[/l=<listID][/lo=<lo>]" +
@@ -202,18 +167,11 @@ export async function query(
       callerNode, execEnv
     );
     payGas(callerNode, execEnv, {dbRead: maxNum / 100});
-    if (interpreter.isServerSide) {
-      return await dbQueryHandler.queryDBProc(
-        procName,
-        [homeDirID, filePath, listID, lo, hi, maxNum, numOffset, isAscending],
-        route, upNodeID, options, callerNode, execEnv,
-      );
-    } else {
-      return serverQueryHandler.queryServer(
-        route, undefined, upNodeID, interpreter, options,
-        callerNode, execEnv,
-      );
-    }
+    return await dbQueryHandler.queryDBProc(
+      procName,
+      [homeDirID, filePath, listID, lo, hi, maxNum, numOffset, isAscending],
+      route, upNodeID, options, callerNode, execEnv,
+    );
   }
 
   // If route equals ".../<homeDirID>/<filepath>?skList&[lo=<lo>&][hi=<hi>&]" +
@@ -245,18 +203,11 @@ export async function query(
       callerNode, execEnv
     );
     payGas(callerNode, execEnv, {dbRead: maxNum / 100});
-    if (interpreter.isServerSide) {
-      return await dbQueryHandler.queryDBProc(
-        procName,
-        [homeDirID, filePath, listID, lo, hi, maxNum, numOffset, isAscending],
-        route, upNodeID, options, callerNode, execEnv,
-      );
-    } else {
-      return serverQueryHandler.queryServer(
-        route, undefined, upNodeID, interpreter, options,
-        callerNode, execEnv,
-      );
-    }
+    return await dbQueryHandler.queryDBProc(
+      procName,
+      [homeDirID, filePath, listID, lo, hi, maxNum, numOffset, isAscending],
+      route, upNodeID, options, callerNode, execEnv,
+    );
   }
 
   // If route equals ".../<homeDirID>/<filepath>?~insert&k=<elemKey>" +
@@ -281,26 +232,20 @@ export async function query(
       );
     }
     let {l: listID = "", k: elemKey, s: elemScore, p: elemPayload} = paramObj;
-    if (interpreter.isServerSide) {
-      let paramValArr = (fileExt === "bbt") ?
-        [homeDirID, filePath, listID, elemKey, elemScore, elemPayload] :
-        [homeDirID, filePath, listID, elemKey, elemPayload];
-      return await dbQueryHandler.queryDBProc(
-        procName, paramValArr,
-        route, upNodeID, options, callerNode, execEnv,
-      );
-    } else {
-      return serverQueryHandler.queryServer(
-        route, undefined, upNodeID, interpreter, options,
-        callerNode, execEnv,
-      );
-    }
+    let paramValArr = (fileExt === "bbt") ?
+      [homeDirID, filePath, listID, elemKey, elemScore, elemPayload] :
+      [homeDirID, filePath, listID, elemKey, elemPayload];
+    return await dbQueryHandler.queryDBProc(
+      procName, paramValArr, route, upNodeID, options, callerNode, execEnv,
+    );
   }
 
   // TODO: At some point implement an ?~insertList query that inserts a whole
   // list of entries into a table at, also overwriting any existing entries
-  // with the same key, possibly by generating the SQL for a single INSERT INTO
-  // statement that does this (and with surrounding checks as well, possibly).
+  // with the same key, namely by generating the SQL for a single INSERT INTO
+  // statement that does this, possibly with '?'s in place of the column
+  // values, and where the values are then parsed from postData.
+  (() => {})(postData);
 
   // If the route was not matched at this point, throw an error.
   throw new RuntimeError(
