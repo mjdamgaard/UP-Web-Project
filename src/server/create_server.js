@@ -31,7 +31,7 @@ const parsedMainScript = syntaxTree.res;
 const dbQueryHandler = new DBQueryHandler();
 
 const scriptInterpreter = new ScriptInterpreter(
-  true, undefined, dbQueryHandler, staticDevLibs, jsFileCache, undefined
+  true, undefined, dbQueryHandler, staticDevLibs, undefined
 );
 
 // Locked routes are all routes where any file name, directory name, or
@@ -125,7 +125,7 @@ async function requestHandler(req, res) {
       isPublic, route, isPost, new ObjectWrapper(postData),
       new ObjectWrapper(options)
     ],
-    reqUserID, initFlags, undefined, undefined, parsedScripts,
+    initFlags, undefined, undefined, parsedScripts,
   );
   let [result, mimeType] = output ?? [];
 

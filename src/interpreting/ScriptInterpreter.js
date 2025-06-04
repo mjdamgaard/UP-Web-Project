@@ -49,7 +49,7 @@ export function parseString(str, node, env, parser) {
 export class ScriptInterpreter {
 
   constructor(
-    isServerSide = false, serverQueryHandler, dbQueryHandler, jsFileCache,
+    isServerSide = false, serverQueryHandler, dbQueryHandler,
     staticDevLibs = new Map(), devLibURLs = new Map(),
   ) {
     this.isServerSide = isServerSide;
@@ -61,20 +61,14 @@ export class ScriptInterpreter {
   }
 
   async interpretScript(
-    gas, script = "", scriptPath = null, mainInputs = [], reqUserID = null,
-    // TODO: Make a FlagTransmitter class.
-    initFlags = [], functionModifications = [], signalModifications = new Map(),
-    parsedScripts = new Map(), liveModules = new Map(), textModules = new Map(),
-    rest,
+    gas, script = "", scriptPath = null, mainInputs = [], initFlags = [],
+    parsedScripts = new Map(), liveModules = new Map(), ...rest
   ) {
     let scriptVars = {
       gas: gas, log: {entries: []}, scriptPath: scriptPath,
-      reqUserID: reqUserID, initFlags: initFlags,
-      functionModifications: functionModifications,
-      signalModifications: signalModifications, globalEnv: undefined,
-      isExiting: false, resolveScript: undefined, interpreter: this,
-      parsedScripts: parsedScripts, liveModules: liveModules,
-      textModules: textModules, rest: rest,
+      initFlags: initFlags, globalEnv: undefined, interpreter: this,
+      isExiting: false, resolveScript: undefined,
+      parsedScripts: parsedScripts, liveModules: liveModules, rest: rest,
     };
 
     // First create a global environment, which is used as a parent environment
@@ -220,10 +214,9 @@ export class ScriptInterpreter {
     let [parsedScript, lexArr, strPosArr, script] =
       parsedScripts.get(scriptPath) ?? [];
     if (!parsedScript) {
-      let {textModules} = callerEnv.scriptVars;
       try {
-        script = await this.fetchTextModule(
-          scriptPath, textModules, callerNode, callerEnv
+        script = await this.fetch(
+          scriptPath, callerNode, callerEnv
         );
       } catch (err) {
         throw new LoadError(err.toString(), callerNode, callerEnv);
@@ -241,39 +234,14 @@ export class ScriptInterpreter {
   }
 
 
-  async fetchTextModule(modulePath, textModules, callerNode, callerEnv) {
-    let text = textModules.get(modulePath);
-    if (text !== undefined) {
-      return text
-    }
-    [text] = await this.fetch(callerNode, callerEnv, modulePath) ?? [];
-    return text;
-  }
-
-// TODO: Correct:
-  fetch(callerNode, callerEnv, route, maxAge, noCache, onCached) {
+  fetch(route, callerNode, callerEnv) {
     let fetchFun = callerEnv.scriptVars.liveModules.get("query").get("fetch");
-    return new Promise(resolve => {
-      this.executeFunction(
-        fetchFun, [route, maxAge, noCache, onCached, new DevFunction(
-          {decEnv: callerEnv}, ({}, [res]) => resolve(res)
-        )],
-        callerNode, callerEnv
-      );
-    });
+    let resultPromise = this.executeFunction(
+      fetchFun, [true, route], callerNode, callerEnv
+    );
+    return resultPromise;
   }
 
-  // post(callerNode, callerEnv, route, postData) {
-  //   let postFun = callerEnv.scriptVars.liveModules.get("server").get("post");
-  //   return new Promise(resolve => {
-  //     this.executeFunction(
-  //       postFun, [route, postData, new DevFunction(
-  //         {decEnv: callerEnv}, res => resolve(res)
-  //       )],
-  //       callerNode, callerEnv
-  //     );
-  //   });
-  // }
 
 
 
@@ -414,7 +382,7 @@ export class ScriptInterpreter {
     // Else if the module is actually a non-JS text file, fetch/get it and
     // return a string of its content instead.
     else if (TEXT_FILE_ROUTE_REGEX.test(modulePath)) {
-      return await this.fetchTextModule(
+      return await this.fetch(
         modulePath, textModules, callerNode, callerEnv
       );
     }
@@ -607,21 +575,13 @@ export class ScriptInterpreter {
       }
     );
 
-    // If fun is an ExportedFunction instance, extract the wrapped function.
-    // (The other properties of ExportedFunction is taken care of by
-    // Environment().)
-    let exteriorFun = fun;
-    if (fun instanceof ExportedFunction) {
-      fun = fun.fun;
-    }
-
     // Then execute the function depending on its type.
     if (fun instanceof DefinedFunction) {
       return this.#executeDefinedFunction(fun.node, inputArr, execEnv);
     }
     else if (fun instanceof DevFunction) {
       return this.#executeDevFunction(
-        fun, exteriorFun, inputArr, callerNode, execEnv, thisVal
+        fun, inputArr, callerNode, execEnv, thisVal
       );
     }
   }
@@ -629,9 +589,9 @@ export class ScriptInterpreter {
 
 
   #executeDevFunction(
-    devFun, exteriorFun, inputArr, callerNode, execEnv, thisVal
+    devFun, inputArr, callerNode, execEnv, thisVal
   ) {
-    let {isAsync, minArgNum = 0, liveModule} = exteriorFun;
+    let {isAsync, minArgNum = 0, liveModule} = devFun;
     let execVars = {
       callerNode: callerNode, execEnv: execEnv,
       thisVal: thisVal, interpreter: this, liveModule: liveModule,
@@ -1832,42 +1792,6 @@ export class LiveModule {
       if (val instanceof Function) {
         return;
       }
-
-      // If val is a FunctionObject, first look in functionModifications to
-      // see if it contains some security modifications/features, and if not,
-      // use the ones that is already defined for the  function (in case of a
-      // dev function).
-      if (val instanceof FunctionObject) {
-        // Make a check that we might omit at some point in the future:
-        if (val instanceof DevFunction) {
-          if (alias === "default") throw (
-            "A dev library must not have a default export, at least not a " +
-            "DevFunction instance"
-          );
-        }
-
-        // Parse the signals, if any, from the functionModifications data
-        // structure, which is an array of regex--getSignals() pairs, where if
-        // regex.exec() succeeds, getSignals() is then called on the output.
-        let {functionModifications} = scriptVars;
-        let funPath = modulePath + ":" + alias;
-        let signals;
-        functionModifications.some(([regex, getSignals]) => {
-          let execOutput = regex.exec(funPath);
-          if (execOutput) {
-            signals = getSignals(execOutput);
-            return true; // breaks the some iteration.
-          }
-        });
-
-        // Then we create a ExportedFunction instance wrapping the exported
-        // function, adding some metadata, and not least the signals. Note
-        // that if signals here is undefined, and the function is a DevFunction,
-        // the functions original signals will be used instead (which will
-        // often be the case, except when functionModifications modifies the
-        // signals of dev functions).
-        val = new ExportedFunction(val, modulePath, alias, this, signals ?? {});
-      }
   
       this.members.set(alias, turnImmutable(val));
     });
@@ -1940,12 +1864,7 @@ export class FlagEnvironment {
   }
 
   emitSignal(signal, node, env, signalParams) {
-    let modifiedEmit = env.scriptVars.signalModifications.get(signal);
-    if (modifiedEmit) {
-      return modifiedEmit(this, node, env, signalParams);
-    } else {
-      return signal.emit(this, node, env, signalParams);
-    }
+    return signal.emit(this, node, env, signalParams);
   }
 
   emitSignals(signals, node, env) {
@@ -2206,49 +2125,6 @@ export class DevFunction extends FunctionObject {
   }
   get name() {
     return "<anonymous dev function>";
-  }
-}
-
-export class ExportedFunction extends FunctionObject {
-  constructor(
-    fun, modulePath, funName, liveModule,
-    {callerSignals, initSignals, isEnclosed}
-  ) {
-    super();
-    this._fun = fun;
-    this.modulePath = modulePath;
-    this.funName = funName;
-    this.liveModule = liveModule;
-    if (callerSignals) this._callerSignals = callerSignals;
-    if (initSignals) this.initSignals = initSignals;
-    if (isEnclosed) this._isEnclosed = isEnclosed;
-  }
-  get fun() {
-    return this._fun ?? this._fun.fun;
-  }
-  get decEnv() {
-    return this._fun?.decEnv;
-  }
-  get isArrowFun() {
-    return this.fun.isArrowFun;
-  }
-  get isDevFun() {
-    return this.fun.isDevFun;
-  }
-  get isAsync() {
-    return this.fun.isAsync;
-  }
-  get callerSignals() {
-    return this._callerSignals ?? this.fun.callerSignals;
-  }
-  get initSignals() {
-    return this._initSignals ?? this.fun.initSignals;
-  }
-  get isEnclosed() {
-    return this._isEnclosed ?? this.fun.isEnclosed;
-  }
-  get name() {
-    return this.funName;
   }
 }
 

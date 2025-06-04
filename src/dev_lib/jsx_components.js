@@ -772,7 +772,7 @@ class JSXAppStyler {
   }
 
 
-  async loadStyleSheets(styleSheetPaths,callerNode, callerEnv) {
+  async loadStyleSheets(styleSheetPaths, callerNode, callerEnv) {
     // First create a promise array that when resolved will have fetched
     // and and applied all style sheets pointed to by styleSheetPaths that has
     // not yet been loaded.

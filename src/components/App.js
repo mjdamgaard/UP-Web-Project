@@ -21,12 +21,6 @@ staticDevLibs.set("query", queryMod);
 staticDevLibs.set("jsx", jsxMod);
 
 
-// Client-side JS file cache placeholder:
-const jsFileCache = {
-  get: () => {}, set: () => {}, remove: () => {}, removeExtensions: () => {},
-};
-
-
 
 if (typeof(Storage) === "undefined") {
   alert(
@@ -41,7 +35,7 @@ if (typeof(Storage) === "undefined") {
 const serverQueryHandler = new ServerQueryHandler();
 
 const scriptInterpreter = new ScriptInterpreter(
-  false, serverQueryHandler, undefined, staticDevLibs, jsFileCache, undefined
+  false, serverQueryHandler, undefined, staticDevLibs, undefined
 );
 
 
@@ -80,8 +74,7 @@ export const App = (props) => {
     if (renderNumMonad[0]++ === 0) {
       // runTests();
       scriptInterpreter.interpretScript(
-        appGas, appScript, undefined, [], undefined /* TODO: Get reqUserID */,
-        initFlags,
+        appGas, appScript, undefined, [], initFlags,
       ).then(
         ([output, log]) => {
           console.log("UP app script exited with output and log:");
