@@ -3,39 +3,34 @@ import {
   payGas, RuntimeError,
 } from "../../../../interpreting/ScriptInterpreter.js";
 
+const LOCKED_ROUTE_REGEX = /~/;
 
 
 export async function query(
   {callerNode, execEnv, interpreter},
-  route, isPost, _, options, onCached,
-  upNodeID, homeDirID, filePath, _, queryStringArr,
+  route, isPost, _, options,
+  upNodeID, homeDirID, filePath, _, queryPathArr
 ) {
-  let {serverQueryHandler, dbQueryHandler} = interpreter;
+  let {dbQueryHandler} = interpreter;
 
-  // If route equals "...?mkdir&a=<adminID>", create a new home directory with
+  // If route equals ".../mkdir/a=<adminID>", create a new home directory with
   // the requested adminID as the admin. 
   if (!homeDirID) {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
     );
-    if (queryStringArr[0] === "mkdir") {
-      let [a, requestedAdminID] = (queryStringArr[1] ?? []);
-      if (a !== "a" || !requestedAdminID) throw new RuntimeError(
+    if (queryPathArr[0] === "mkdir") {
+      let [a, adminID] = (queryPathArr[1] ?? []);
+      if (a !== "a" || !adminID) throw new RuntimeError(
         "No admin ID was provided",
         callerNode, execEnv
       );
       payGas(callerNode, execEnv, {mkdir: 1});
-      if (interpreter.isServerSide) {
-        return await dbQueryHandler.queryDBProc(
-          "createHomeDir", [requestedAdminID],
-          route, upNodeID, options, callerNode, execEnv,
-        );
-      } else {
-        return serverQueryHandler.queryServer(
-          route, undefined, upNodeID, interpreter, options, callerNode, execEnv
-        );
-      }
+      return await dbQueryHandler.queryDBProc(
+        "createHomeDir", [adminID],
+        route, upNodeID, options, callerNode, execEnv,
+      );
     }
     else throw new RuntimeError(
       `Unrecognized route: ${route}`,
@@ -43,88 +38,65 @@ export async function query(
     );
   }
 
-  // No requests targeting subdirectories are implemented at this point, if
-  // ever.
+  // No requests targeting subdirectories are implemented at this point.
   if (filePath) throw new RuntimeError(
     `Unrecognized route: ${route}`,
     callerNode, execEnv
   );
 
-  // If route equals just ".../<homeDirID>", without any query string, return
+  // If route equals just ".../<homeDirID>", without any query path, return
   // a list of all nested file paths of the home directory, except paths of
-  // files nested inside locked subdirectories (starting with "_").
-  if (!queryStringArr) {
-    if (interpreter.isServerSide) {
-      let [fullDescList] = await dbQueryHandler.queryDBProc(
-        "readHomeDirDescendants", [homeDirID, 1000, 0],
-        route, upNodeID, options, callerNode, execEnv,
-      );
-      let visibleDescList = (fullDescList ?? []).filter(([filePath]) => (
-        !/\/_[^/]*\//.test(filePath)
-      ));
-      return [visibleDescList];
-    }
-    else {
-      return serverQueryHandler.queryServer(
-        route, undefined, upNodeID, interpreter, options, callerNode, execEnv
-      );
-    }
+  // files nested inside locked subdirectories (which includes a "~").
+  if (!queryPathArr) {
+    let fullDescList = await dbQueryHandler.queryDBProc(
+      "readHomeDirDescendants", [homeDirID, 4000, 0],
+      route, upNodeID, options, callerNode, execEnv,
+    );
+    let visibleDescList = (fullDescList ?? []).filter(([filePath]) => (
+      !LOCKED_ROUTE_REGEX.test(filePath)
+    ));
+    return visibleDescList;
   }
 
-  let queryType = queryStringArr[0];
+  let queryType = queryPathArr[0];
 
-  // If route equals just ".../<homeDirID>?_all", return a list of all nested
-  // file paths of the home directory, *including* paths of files nested
-  // inside locked subdirectories (starting with "_").
+  // If route equals just ".../<homeDirID>/_all", return a list of all nested
+  // file paths of the home directory.
   if (queryType === "~all") {
-    if (interpreter.isServerSide) {
-      return await dbQueryHandler.queryDBProc(
-        "readHomeDirDescendants", [homeDirID, 1000, 0],
-        route, upNodeID, options, callerNode, execEnv,
-      );
-    } else {
-      return serverQueryHandler.queryServer(
-        route, undefined, upNodeID, interpreter, options, callerNode, execEnv
-      );
-    }
+    return await dbQueryHandler.queryDBProc(
+      "readHomeDirDescendants", [homeDirID, 4000, 0],
+      route, upNodeID, options, callerNode, execEnv,
+    );
   }
 
-  // If route equals just ".../<homeDirID>?admin", return the adminID of the
+  // If route equals just ".../<homeDirID>/admin", return the adminID of the
   // home directory.
   if (queryType === "admin") {
-    if (interpreter.isServerSide) {
-      return await dbQueryHandler.queryDBProc(
-        "readHomeDirAdminID", [homeDirID],
-        route, upNodeID, options, callerNode, execEnv,
-      );
-    } else {
-      return serverQueryHandler.queryServer(
-        route, undefined, upNodeID, interpreter, options, callerNode, execEnv
-      );
-    }
+    return await dbQueryHandler.queryDBProc(
+      "readHomeDirAdminID", [homeDirID],
+      route, upNodeID, options, callerNode, execEnv,
+    );
   }
 
-  // If route equals ".../<homeDirID>?_setAdmin&<adminID>", set a new admin of
-  // the home directory.
+  // If route equals ".../<homeDirID>/_setAdmin/a=<adminID>", set a new admin
+  // of the home directory.
   if (queryType === "~setAdmin") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
     );
-    let requestedAdminID = queryStringArr[1];
-    if (interpreter.isServerSide) {
-      return await dbQueryHandler.queryDBProc(
-        "editHomeDir", [homeDirID, requestedAdminID],
-        route, upNodeID, options, callerNode, execEnv,
-      );
-    } else {
-      return serverQueryHandler.queryServer(
-        route, undefined, upNodeID, interpreter, options, callerNode, execEnv
-      );
-    }
+    let [a, adminID] = (queryPathArr[1] ?? []);
+    if (a !== "a" || !adminID) throw new RuntimeError(
+      "No admin ID was provided",
+      callerNode, execEnv
+    );
+    return await dbQueryHandler.queryDBProc(
+      "editHomeDir", [homeDirID, requestedAdminID],
+      route, upNodeID, options, callerNode, execEnv,
+    );
   }
 
-  // If route equals ".../<homeDirID>?_delete", request a deletion of the
+  // If route equals ".../<homeDirID>/~delete", request a deletion of the
   // directory, but note that directories can only be deleted after each nested
   // file in it has been deleted (as this query does not delete the files).
   if (queryType === "~delete") {
@@ -132,16 +104,10 @@ export async function query(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
     );
-    if (interpreter.isServerSide) {
-      return await dbQueryHandler.queryDBProc(
-        "deleteHomeDir", [homeDirID],
-        route, upNodeID, options, callerNode, execEnv,
-      );
-    } else {
-      return serverQueryHandler.queryServer(
-        route, undefined, upNodeID, interpreter, options, callerNode, execEnv
-      );
-    }
+    return await dbQueryHandler.queryDBProc(
+      "deleteHomeDir", [homeDirID],
+      route, upNodeID, options, callerNode, execEnv,
+    );
   }
 
   // If the route was not matched at this point, throw an error.

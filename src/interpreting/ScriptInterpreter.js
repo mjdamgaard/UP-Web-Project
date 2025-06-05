@@ -1246,7 +1246,7 @@ export class ScriptInterpreter {
       //     this.evaluateExpression(expNode.exp, environment);
       //   let {resolveScript} = environment.scriptVars;
       //   // Check the can-exit signal, before resolving the script.
-      //   environment.emitSignal(WILL_EXIT_SIGNAL, expNode);
+      //   environment.sendSignal(WILL_EXIT_SIGNAL, expNode);
       //   resolveScript(expVal);
       //   // Throw an exit exception.
       //   throw new ExitException();
@@ -1528,7 +1528,7 @@ export class Environment {
       if (isDevFun) this.isDevFun = isDevFun;
       if (callerSignals) {
         let parentFlagEnv = this.getFlagEnvironment();
-        parentFlagEnv.emitSignals(callerSignals, callerNode, callerEnv);
+        parentFlagEnv.sendSignals(callerSignals, callerNode, callerEnv);
       }
       if (isEnclosed) {
         this.flagEnv = new FlagEnvironment(
@@ -1536,7 +1536,7 @@ export class Environment {
         );
       }
       if (initSignals) {
-        this.flagEnv.emitSignals(callerSignals, callerNode, callerEnv);
+        this.flagEnv.sendSignals(callerSignals, callerNode, callerEnv);
       }
     }
     else if (scopeType === "module") {
@@ -1674,9 +1674,9 @@ export class Environment {
     }
   }
 
-  emitSignal(signal, node, signalParams) {
+  sendSignal(signal, node, signalParams) {
     let flagEnv = this.getFlagEnvironment();
-    return flagEnv.emitSignal(signal, node, this, signalParams);
+    return flagEnv.sendSignal(signal, node, this, signalParams);
   }
 
   getFlag(flag, maxStep) {
@@ -1819,7 +1819,7 @@ export class LiveModule {
 
 
 
-// Signals are emitted either to check that that a certain type of action is
+// Signals are sent either to check that that a certain type of action is
 // permitted in the current environment, or to permit or restrict subsequent
 // actions in the environment, or a combination of these things, The latter is
 // generally done by raising or replacing "flags" in the current "flag
@@ -1832,16 +1832,16 @@ export class LiveModule {
 // or replacing a flag, the change will not affect the ancestors outside of the
 // enclosure.
 export class Signal {
-  constructor(name, emit) {
+  constructor(name, send) {
     // Names are only used for clarity and debugging purposes.
     this.name = name;
-    // emit() is the function/method that handles the signal when it is being
-    // emitted. It takes some signal parameters, first of all, and the flag
+    // send() is the function/method that handles the signal when it is being
+    // sent. It takes some signal parameters, first of all, and the flag
     // environment with which to interface with the flags, as well as getting
     // the modulePath and funName of the enclosed function of the current
     // enclosed scope where the flag environment sits. (It also takes node and
     // env as well, which are useful for throwing runtime errors.)
-    this.emit = emit ?? (
+    this.send = send ?? (
       (flagEnv, node, env, signalParams = undefined) => undefined
     );
   }
@@ -1852,9 +1852,9 @@ export class Signal {
 // A flag environment sits on every "enclosed" scope, and on the global one and
 // is the interface for checking and raising flags. Aside from the Environment
 // class above that creates and retrieves the flag environment, the only
-// other functions that should ever interact with FlagEnvironment it the emit()
+// other functions that should ever interact with FlagEnvironment it the send()
 // functions/methods of Signal instances. Thus, as a developer, you should never
-// handle flags directly unless defining a Signal.emit() function.  
+// handle flags directly unless defining a Signal.send() function.  
 export class FlagEnvironment {
   constructor(parent, modulePath, funName) {
     this.parent = parent;
@@ -1863,13 +1863,13 @@ export class FlagEnvironment {
     this.flags = new Map();
   }
 
-  emitSignal(signal, node, env, signalParams) {
-    return signal.emit(this, node, env, signalParams);
+  sendSignal(signal, node, env, signalParams) {
+    return signal.send(this, node, env, signalParams);
   }
 
-  emitSignals(signals, node, env) {
+  sendSignals(signals, node, env) {
     signals.forEach(([signal, signalParams]) => {
-      this.emitSignal(signal, node, env, signalParams);
+      this.sendSignal(signal, node, env, signalParams);
     });
   }
 

@@ -8,18 +8,18 @@ import {
 export async function query(
   {callerNode, execEnv, interpreter},
   route, isPost, postData, options,
-  upNodeID, homeDirID, filePath, fileExt, queryStringArr,
+  upNodeID, homeDirID, filePath, fileExt, queryPathArr,
 ) {
   let {dbQueryHandler} = interpreter;
 
   // If route equals just ".../<homeDirID>/<filePath>", without any query
-  // string, throw.
-  if (!queryStringArr) throw new RuntimeError(
+  // path, throw.
+  if (!queryPathArr) throw new RuntimeError(
     `Unrecognized route: ${route}`,
     callerNode, execEnv
   );
 
-  let queryType = queryStringArr[0];
+  let queryType = queryPathArr[0];
 
   // If route equals ".../<homeDirID>/<filepath>/~touch" create a table file
   // if not already there, but do not delete its content if there.
@@ -83,7 +83,10 @@ export async function query(
   // that for binary and UTF-8 keys, listID and elemKey should be base-64-
   // encoded.
   if (queryType === "~deleteEntry") {
-    payGas(callerNode, execEnv, {dbWrite: 1});
+    if (!isPost) throw new RuntimeError(
+      `Unrecognized route for GET-like requests: "${route}"`,
+      callerNode, execEnv
+    );
     let procName =
       (fileExt === "att") ? "deleteATTEntry" :
       (fileExt === "bt") ? "deleteBTEntry" :
@@ -92,11 +95,11 @@ export async function query(
       undefined;
     let paramObj;
     try {
-      paramObj =  Object.fromEntries(queryStringArr.slice(1));
+      paramObj =  Object.fromEntries(queryPathArr.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
-        "Invalid query string for an insert query",
+        "Invalid query path",
         callerNode, execEnv
       );
     }
@@ -121,11 +124,11 @@ export async function query(
       undefined;
     let paramObj;
     try {
-      paramObj =  Object.fromEntries(queryStringArr.slice(1));
+      paramObj =  Object.fromEntries(queryPathArr.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
-        "Invalid query string for an insert query",
+        "Invalid query path",
         callerNode, execEnv
       );
     }
@@ -150,11 +153,11 @@ export async function query(
       undefined;
     let paramObj;
     try {
-      paramObj =  Object.fromEntries(queryStringArr.slice(1));
+      paramObj =  Object.fromEntries(queryPathArr.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
-        "Invalid query string for a list query",
+        "Invalid query path",
         callerNode, execEnv
       );
     }
@@ -163,7 +166,7 @@ export async function query(
     } = paramObj;
     maxNum = parseInt(maxNum);
     if (maxNum === NaN || isAscending === undefined) throw new RuntimeError(
-      "Invalid query string for a list query",
+      "Invalid query path for a list query",
       callerNode, execEnv
     );
     payGas(callerNode, execEnv, {dbRead: maxNum / 100});
@@ -186,11 +189,11 @@ export async function query(
     let procName = readBBTScoreOrderedList;
     let paramObj;
     try {
-      paramObj =  Object.fromEntries(queryStringArr.slice(1));
+      paramObj =  Object.fromEntries(queryPathArr.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
-        "Invalid query string for a list query",
+        "Invalid query path",
         callerNode, execEnv
       );
     }
@@ -199,7 +202,7 @@ export async function query(
     } = paramObj;
     maxNum = parseInt(maxNum);
     if (maxNum === NaN || isAscending === undefined) throw new RuntimeError(
-      "Invalid query string for a list query",
+      "Invalid query path for a list query",
       callerNode, execEnv
     );
     payGas(callerNode, execEnv, {dbRead: maxNum / 100});
@@ -214,7 +217,10 @@ export async function query(
   // "[&s=<elemScore>][&p=<elemPayload>]", insert a single table entry with
   // those row values, overwriting any existing entry of the same key. 
   if (queryType === "~insert") {
-    payGas(callerNode, execEnv, {dbWrite: 1});
+    if (!isPost) throw new RuntimeError(
+      `Unrecognized route for GET-like requests: "${route}"`,
+      callerNode, execEnv
+    );
     let procName =
       (fileExt === "att") ? "insertATTEntry" :
       (fileExt === "bt") ? "insertBTEntry" :
@@ -223,15 +229,20 @@ export async function query(
       undefined;
     let paramObj;
     try {
-      paramObj =  Object.fromEntries(queryStringArr.slice(1));
+      paramObj =  Object.fromEntries(queryPathArr.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
-        "Invalid query string for an insert query",
+        "Invalid query path",
         callerNode, execEnv
       );
     }
-    let {l: listID = "", k: elemKey, s: elemScore, p: elemPayload} = paramObj;
+    let {
+      l: listID = "", k: elemKey = "", s: elemScore = "", p: elemPayload = ""
+    } = paramObj;
+    let rowLen = listID.length + elemKey.length + elemScore.length +
+      elemPayload.length;
+    payGas(callerNode, execEnv, {dbWrite: rowLen});
     let paramValArr = (fileExt === "bbt") ?
       [homeDirID, filePath, listID, elemKey, elemScore, elemPayload] :
       [homeDirID, filePath, listID, elemKey, elemPayload];

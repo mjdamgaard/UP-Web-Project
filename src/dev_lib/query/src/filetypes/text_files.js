@@ -9,47 +9,23 @@ import {SET_ELEVATED_PRIVILEGES_SIGNAL} from "../signals.js";
 
 export async function query(
   {callerNode, execEnv, interpreter},
-  route, isPost, postdata, options, onCached,
-  upNodeID, homeDirID, filePath, fileExt, queryStringArr,
+  route, isPost, postData, options,
+  upNodeID, homeDirID, filePath, fileExt, queryPathArr
 ) {
-  let {serverQueryHandler, dbQueryHandler, jsFileCache} = interpreter;
+  let {dbQueryHandler} = interpreter;
 
   // If route equals just ".../<homeDirID>/<filePath>", without any query
-  // string, return the text stored in the file. Also make sure to use the
-  // jsFileCache if the file extension is ".js" or ".jsx". 
-  if (!queryStringArr) {
-    if (fileExt === "js" || fileExt === "jsx") {
-      if (interpreter.isServerSide) {
-        return await dbQueryHandler.queryDBProcOrCache(
-          "readTextFile", [homeDirID, filePath],
-          route, upNodeID, jsFileCache, undefined, options, onCached,
-          callerNode, execEnv
-        );
-      } else {
-        return serverQueryHandler.queryServerOrCache(
-          route, undefined, upNodeID, interpreter, jsFileCache, undefined,
-          options, callerNode, execEnv,
-        );
-      }
-    }
-    else {
-      if (interpreter.isServerSide) {
-        return await dbQueryHandler.queryDBProc(
-          "readTextFile", [homeDirID, filePath],
-          route, upNodeID, options, callerNode, execEnv,
-        );
-      } else {
-        return serverQueryHandler.queryServer(
-          route, undefined, upNodeID, interpreter, options,
-          callerNode, execEnv,
-        );
-      }
-    }
+  // path, return the text stored in the file.
+  if (!queryPathArr) {
+    return await dbQueryHandler.queryDBProc(
+      "readTextFile", [homeDirID, filePath],
+      route, upNodeID, options, callerNode, execEnv,
+    );
   }
 
-  let queryType = queryStringArr[0];
+  let queryType = queryPathArr[0];
 
-  // If route equals ".../<homeDirID>?~put" with a text stored in the postData,
+  // If route equals ".../<homeDirID>/~put" with a text stored in the postData,
   // overwrite the existing file with contentText, if any, or create a new file
   // with that content.
   if (queryType === "~put") {
@@ -57,73 +33,27 @@ export async function query(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
     );
-    let text = postdata;
+    let text = postData;
     payGas(callerNode, execEnv, {dbWrite: text.length});
-    let routesToEvict = [[`/A/${homeDirID}/${filePath}`, true]];
-    if (fileExt === "js" || fileExt === "jsx") {
-      if (interpreter.isServerSide) {
-        return await dbQueryHandler.queryDBProcOrCache(
-          "putTextFile", [homeDirID, filePath, text],
-          route, upNodeID, jsFileCache, routesToEvict, options,
-          callerNode, execEnv
-        );
-      } else {
-        return serverQueryHandler.queryServerOrCache(
-          route, text, upNodeID, interpreter, jsFileCache, routesToEvict,
-          options, callerNode, execEnv,
-        );
-      }
-    }
-    else {
-      if (interpreter.isServerSide) {
-        return await dbQueryHandler.queryDBProc(
-          "putTextFile", [homeDirID, filePath, text],
-          route, upNodeID, options, callerNode, execEnv,
-        );
-      } else {
-        return serverQueryHandler.queryServer(
-          route, text, upNodeID, interpreter, options, callerNode, execEnv
-        );
-      }
-    }
+    return await dbQueryHandler.queryDBProc(
+      "putTextFile", [homeDirID, filePath, text],
+      route, upNodeID, options, callerNode, execEnv,
+    );
   }
 
-  // If route equals ".../<homeDirID>/<filePath>?~delete", ...
+  // If route equals ".../<homeDirID>/<filePath>/~delete", delete the text file.
   if (queryType === "~delete") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
     );
-    let routesToEvict = [[`/A/${homeDirID}/${filePath}`, true]];
-    if (fileExt === "js" || fileExt === "jsx") {
-      if (interpreter.isServerSide) {
-        return await dbQueryHandler.queryDBProcOrCache(
-          "deleteTextFile", [homeDirID, filePath],
-          route, upNodeID, jsFileCache, routesToEvict, options,
-          callerNode, execEnv
-        );
-      } else {
-        return serverQueryHandler.queryServerOrCache(
-          route, undefined, upNodeID, interpreter, jsFileCache, routesToEvict,
-          options, callerNode, execEnv,
-        );
-      }
-    }
-    else {
-      if (interpreter.isServerSide) {
-        return await dbQueryHandler.queryDBProc(
-          "deleteTextFile", [homeDirID, filePath],
-          route, upNodeID, options, callerNode, execEnv,
-        );
-      } else {
-        return serverQueryHandler.queryServer(
-          route, undefined, upNodeID, interpreter, options, callerNode, execEnv
-        );
-      }
-    }
+    return await dbQueryHandler.queryDBProc(
+      "deleteTextFile", [homeDirID, filePath],
+      route, upNodeID, options, callerNode, execEnv,
+    );
   }
 
-  // If route equals ".../<homeDirID>/<filePath>?get&<alias>", verify that
+  // If route equals ".../<homeDirID>/<filePath>/get/<alias>", verify that
   // fileExt equals "js" or "jsx", and if so, execute the module and return the
   // variables exported as <alias>. 
   if (queryType === "get") {
@@ -131,7 +61,7 @@ export async function query(
     // when executing the module.
   }
 
-  // If route equals ".../<homeDirID>/<filePath>?call&<alias>&argv=" +
+  // If route equals ".../<homeDirID>/<filePath>/call/<alias>/argv=" +
   // "<inputArrBase64>", verify that filePath ends in '.sm.js', and if so,
   // execute the module and get the function exported as <alias>, then call it
   // with inputArr, base-64-decoded and JSON-decoded from inputArrBase64, and
@@ -145,12 +75,12 @@ export async function query(
   }
 
   // TODO: Correct:
-  // If route equals ".../<homeDirID>?call&<funName>&<inputArr>", get the
+  // If route equals ".../<homeDirID>/call/<funName>/<inputArr>", get the
   // module.js file at the home level of the directory, then execute that
   // module and run the function named <funName>, with the optional <inputArr>
   // as its input.
   if (queryType === "call") {
-    let [funName, inputArrStr] = queryStringArr;
+    let [funName, inputArrStr] = queryPathArr;
     let inputArr = [];
     if (inputArrStr) {
       let isValidJSONArr = true;

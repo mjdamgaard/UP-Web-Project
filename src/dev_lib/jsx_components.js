@@ -2,8 +2,8 @@
 import sassTranspiler from "../interpreting/SASSTranspiler.js";
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, turnImmutable,
-  ArrayWrapper, ObjectWrapper, Signal, PromiseObject, StyleObject, parseString,
-  passedAsMutable, getExtendedErrorMsg, TypeError, MapWrapper,
+  ArrayWrapper, ObjectWrapper, Signal, PromiseObject, StyleObject,
+  passedAsMutable, getExtendedErrorMsg, TypeError,
 } from "../interpreting/ScriptInterpreter.js";
 import {sassParser} from "../interpreting/parsing/SASSParser.js";
 
