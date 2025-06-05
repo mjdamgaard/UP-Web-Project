@@ -1,6 +1,6 @@
 
 import {
-  RuntimeError, payGas,
+  RuntimeError, payGas, DevFunction, CLEAR_FLAG
 } from "../../../../interpreting/ScriptInterpreter.js";
 
 import {SET_ELEVATED_PRIVILEGES_SIGNAL} from "../signals.js";
@@ -57,18 +57,31 @@ export async function query(
   // fileExt equals "js" or "jsx", and if so, execute the module and return the
   // variables exported as <alias>. 
   if (queryType === "get") {
-    // TODO: Implement, and make sure to also remove any elevated privileges
-    // when executing the module.
     let [alias] = queryPathArr;
     if (typeof alias !== "string") throw new RuntimeError(
       "No variable name was provided",
       callerNode, execEnv
     );
-    // TODO: Look in the cache first in case of the "fetch" method.
-    let liveServerModule = await interpreter.import(`/${homeDirID}/module.js`);
-    execEnv.emitSignal(SET_ELEVATED_PRIVILEGES_SIGNAL, homeDirID);
-    liveServerModule.call(funName, inputArr, null, execEnv);
-    return ["TODO..."];
+    if (fileExt !== "js" && fileExt !== "jsx") throw new RuntimeError(
+      `Invalid route: ${route}`,
+      callerNode, execEnv
+    );
+    // Import and execute the given JS module using interpreter.import(), and
+    // do so within a dev function with the "clear" flag, which removes all
+    // permission-granting flags for the module's execution environment.
+    let resultPromiseObj = interpreter.executeFunction(
+      new DevFunction(
+        {isAsync: true, flags: [CLEAR_FLAG]},
+        async ({callerNode, execEnv, interpreter}, []) => {
+          let liveModule = await interpreter.import(
+            `/A/${homeDirID}/${filePath}`
+          );
+          return liveModule.get(alias);
+        }
+      ),
+      [], callerNode, execEnv,
+    );
+    return await resultPromiseObj.promise;
   }
 
   // If route equals ".../<homeDirID>/<filePath>/call/<alias>/argv=" +

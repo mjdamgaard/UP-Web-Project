@@ -245,15 +245,16 @@ export class ScriptInterpreter {
 
 
   async executeModule(
-    moduleNode, lexArr, strPosArr, script, modulePath, globalEnv
+    moduleNode, lexArr, strPosArr, script, modulePath, globalEnv,
+    callerEnv = globalEnv,
   ) {
-    decrCompGas(moduleNode, globalEnv);
+    decrCompGas(moduleNode, callerEnv);
 
     // Create a new environment for the module.
     let moduleEnv = new Environment(
       globalEnv, "module", {
        modulePath: modulePath, lexArr: lexArr, strPosArr: strPosArr,
-       script: script,
+       script: script, callerEnv: callerEnv,
       }
     );
 
@@ -369,7 +370,8 @@ export class ScriptInterpreter {
       // Then execute the module, inside the global environment, and return the
       // resulting liveModule, after also adding it to liveModules.
       let liveModulePromise = this.executeModule(
-        submoduleNode, lexArr, strPosArr, script, modulePath, globalEnv
+        submoduleNode, lexArr, strPosArr, script, modulePath, globalEnv,
+        callerEnv
       );
       liveModules.set(modulePath, liveModulePromise);
       [liveModule] = await liveModulePromise;
@@ -1541,6 +1543,7 @@ export class Environment {
       this.lexArr = lexArr;
       this.strPosArr = strPosArr;
       this.script = script;
+      this.callerEnv = callerEnv ?? parent;
       this.exports = [];
       this.liveModule = undefined;
     }
@@ -1660,7 +1663,7 @@ export class Environment {
     if (flagEnv) {
       return flagEnv;
     }
-    else if (this.isNonArrowFunction) {
+    else if (this.isNonArrowFunction || this.scopeType === "module") {
       return this.callerEnv.getFlagEnvironment();
     }
     else if (this.parent) {
@@ -1741,7 +1744,7 @@ export class Environment {
       }
       return true;
     }
-    else if (this.scopeType === "function") {
+    else if (this.scopeType === "function" || this.scopeType === "module") {
       return this.callerEnv.runNearestCatchStmtAncestor(
         err, node, nodeEnvironment
       );
@@ -2442,20 +2445,6 @@ export function decrGas(node, environment, gasName) {
 
 
 
-
-
-
-// This dev function to clear permission-granting flags is meant for the
-// developers, and not the regular users, which means that we can export it
-// from here rather than in a dev library.
-export const clearPermissionFlags = new DevFunction(
-  {flags: CLEAR_FLAG},
-  async function(
-    {callerNode, execEnv, interpreter}, [callback]
-  ) {
-    return interpreter.executeFunction(callback, [], callerNode, execEnv);
-  }
-);
 
 
 
