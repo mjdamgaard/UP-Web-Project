@@ -59,6 +59,16 @@ export async function query(
   if (queryType === "get") {
     // TODO: Implement, and make sure to also remove any elevated privileges
     // when executing the module.
+    let [alias] = queryPathArr;
+    if (typeof alias !== "string") throw new RuntimeError(
+      "No variable name was provided",
+      callerNode, execEnv
+    );
+    // TODO: Look in the cache first in case of the "fetch" method.
+    let liveServerModule = await interpreter.import(`/${homeDirID}/module.js`);
+    execEnv.emitSignal(SET_ELEVATED_PRIVILEGES_SIGNAL, homeDirID);
+    liveServerModule.call(funName, inputArr, null, execEnv);
+    return ["TODO..."];
   }
 
   // If route equals ".../<homeDirID>/<filePath>/call/<alias>/argv=" +

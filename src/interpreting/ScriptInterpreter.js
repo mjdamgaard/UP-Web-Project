@@ -10,8 +10,6 @@ import {
 export {LexError, SyntaxError};
 
 
-// const INIT_PROTECT_DOC_ID = "10";
-// const INIT_DEV_LIB_DOC_ID = "11";
 
 const MAX_ARRAY_INDEX = 4294967294;
 const MINIMAL_TIME_GAS = 10;
@@ -24,6 +22,7 @@ const GAS_NAMES = {
   import: "import",
   fetch: "fetching",
   dbRead: "DB fetching",
+  dbWrite: "DB writing",
   time: "time",
   conn: "connection",
   mkdir: "directory creation",
@@ -41,7 +40,6 @@ export function parseString(str, node, env, parser) {
   return [result, lexArr, strPosArr];
 }
 
-// let CAN_EXIT_SIGNAL; // is defined below.
 
 
 
@@ -61,12 +59,12 @@ export class ScriptInterpreter {
   }
 
   async interpretScript(
-    gas, script = "", scriptPath = null, mainInputs = [], initFlags = [],
+    gas, script = "", scriptPath = null, mainInputs = [], flags = [],
     parsedScripts = new Map(), liveModules = new Map(),
   ) {
     let scriptVars = {
       gas: gas, log: {entries: []}, scriptPath: scriptPath,
-      initFlags: initFlags, globalEnv: undefined, interpreter: this,
+      flags: flags, globalEnv: undefined, interpreter: this,
       isExiting: false, resolveScript: undefined,
       parsedScripts: parsedScripts, liveModules: liveModules,
     };
@@ -1518,25 +1516,24 @@ export class Environment {
     this.variables = new Map();
     if (scopeType === "function") {
       let {
-        isArrowFun, isDevFun, modulePath, funName,
-        callerSignals, initSignals, isEnclosed,
+        isArrowFun, isDevFun, modulePath,
+        signals, flags, isEnclosed,
       } = fun;
       this.callerNode = callerNode;
       this.callerEnv = callerEnv;
       if (thisVal && !isArrowFun) this.thisVal = thisVal;
       if (isArrowFun) this.isArrowFun = isArrowFun;
       if (isDevFun) this.isDevFun = isDevFun;
-      if (callerSignals) {
+      if (signals) {
         let parentFlagEnv = this.getFlagEnvironment();
-        parentFlagEnv.sendSignals(callerSignals, callerNode, callerEnv);
+        parentFlagEnv.sendSignals(signals, callerNode, callerEnv);
       }
       if (isEnclosed) {
-        this.flagEnv = new FlagEnvironment(
-          this.getFlagEnvironment(), modulePath, funName
-        );
+        let parentFlagEnv = this.getFlagEnvironment();
+        this.flagEnv = new FlagEnvironment(parentFlagEnv);
       }
-      if (initSignals) {
-        this.flagEnv.sendSignals(callerSignals, callerNode, callerEnv);
+      if (flags) {
+        this.flagEnv.setFlags(flags, callerNode, callerEnv);
       }
     }
     else if (scopeType === "module") {
@@ -1555,8 +1552,8 @@ export class Environment {
     }
     else if (scopeType === "global") {
       this.flagEnv = new FlagEnvironment(null, "/");
-      let initFlags = this.scriptVars.initFlags ?? [];
-      this.flagEnv.setFlags(initFlags);
+      let flags = this.scriptVars.flags ?? [];
+      this.flagEnv.setFlags(flags);
     }
   }
 
@@ -1835,18 +1832,21 @@ export class Signal {
   constructor(name, send) {
     // Names are only used for clarity and debugging purposes.
     this.name = name;
+
     // send() is the function/method that handles the signal when it is being
     // sent. It takes some signal parameters, first of all, and the flag
-    // environment with which to interface with the flags, as well as getting
-    // the modulePath and funName of the enclosed function of the current
-    // enclosed scope where the flag environment sits. (It also takes node and
-    // env as well, which are useful for throwing runtime errors.)
+    // environment with which to interface with the flags. (It also takes node
+    // and env as well, which are useful for throwing runtime errors.)
     this.send = send ?? (
       (flagEnv, node, env, signalParams = undefined) => undefined
     );
   }
 }
 
+
+
+
+export const CLEAR_FLAG = Symbol("clear"); 
 
 
 // A flag environment sits on every "enclosed" scope, and on the global one and
@@ -1856,10 +1856,8 @@ export class Signal {
 // functions/methods of Signal instances. Thus, as a developer, you should never
 // handle flags directly unless defining a Signal.send() function.  
 export class FlagEnvironment {
-  constructor(parent, modulePath, funName) {
+  constructor(parent) {
     this.parent = parent;
-    this.modulePath = modulePath;
-    this.funName = funName;
     this.flags = new Map();
   }
 
@@ -1875,7 +1873,7 @@ export class FlagEnvironment {
 
 
   setFlag(flag, flagParams) {
-    this.flags.set(flag, flagParams ?? null);
+    this.flags.set(flag, flagParams ?? true);
   }
 
   setFlags(flags) {
@@ -1884,11 +1882,26 @@ export class FlagEnvironment {
     });
   }
 
-  removeFlag(flag) {
-    this.flags.set(flag, null);
+  // removeFlag(flag) {
+  //   this.flags.set(flag, null);
+  // }
+
+  getFirstFlag(flagArr, maxStep = Infinity, stopAtClear = true, curStep = 0) {
+    // Add the "clear" flag at the end if the flagArr if stopAtClear == true.
+    if (stopAtClear) {
+      flagArr = [...flagArr, CLEAR_FLAG];
+    }
+    let ret = this.#getFirstFlagHelper(flagArr, maxStep, stopAtClear, curStep);
+
+    // And if the first flag found was the "clear" flag, return an empty array
+    // as if no flag was found.
+    if (stopAtClear && ret[0] === CLEAR_FLAG) {
+      ret = [];
+    }
+    return ret;
   }
 
-  getFirstFlag(flagArr, maxStep = Infinity, curStep = 0) {
+  #getFirstFlagHelper(flagArr, maxStep, stopAtClear, curStep) {
     if (curStep > maxStep) {
       return [];
     }
@@ -1902,22 +1915,24 @@ export class FlagEnvironment {
       }
     });
     if (retFlag) {
-      return [retFlag, retFlagParams, this.modulePath, this.funName, curStep];
+      return [retFlag, retFlagParams, curStep];
     }
     else if (this.parent) {
-      return this.parent.getFirstFlag(flagArr, maxStep, curStep + 1);
+      return this.parent.getFirstFlag(
+        flagArr, maxStep, stopAtClear, curStep + 1
+      );
     }
     else {
       return [];
     }
   }
 
-  getFlag(flag, maxStep = Infinity) {
+  getFlag(flag, maxStep = Infinity, stopAtClear = true) {
     let [
-      retFlag, flagParams, modulePath, funName, step
-    ] = this.getFirstFlag([flag], maxStep);
+      retFlag, flagParams, step
+    ] = this.getFirstFlag([flag], maxStep, stopAtClear);
     let wasFound = retFlag ? true : false;
-    return [wasFound, flagParams, modulePath, funName, step];
+    return [wasFound, flagParams, step];
   }
 
   // Potentially add more useful methods here.
@@ -2103,13 +2118,13 @@ export class DevFunction extends FunctionObject {
       options = {};
     }
     let {
-      isAsync, minArgNum, callerSignals, initSignals, isEnclosed, decEnv
+      isAsync, minArgNum, signals, flags, isEnclosed, decEnv
     } = options;
     super();
     if (isAsync) this.isAsync = isAsync;
     if (minArgNum) this.minArgNum = minArgNum;
-    if (callerSignals) this.callerSignals = callerSignals;
-    if (initSignals) this.initSignals = initSignals;
+    if (signals) this.signals = signals;
+    if (flags) this.flags = flags;
     if (isEnclosed) this._isEnclosed = isEnclosed;
     if (decEnv) this.decEnv = decEnv;
     this.fun = fun;
@@ -2121,7 +2136,7 @@ export class DevFunction extends FunctionObject {
     return true;
   }
   get isEnclosed() {
-    return this._isEnclosed ?? !!this.initSignals;
+    return this._isEnclosed ?? this.flags ? true : false;
   }
   get name() {
     return "<anonymous dev function>";
@@ -2424,6 +2439,23 @@ export function decrGas(node, environment, gasName) {
     );
   }
 }
+
+
+
+
+
+
+// This dev function to clear permission-granting flags is meant for the
+// developers, and not the regular users, which means that we can export it
+// from here rather than in a dev library.
+export const clearPermissionFlags = new DevFunction(
+  {flags: CLEAR_FLAG},
+  async function(
+    {callerNode, execEnv, interpreter}, [callback]
+  ) {
+    return interpreter.executeFunction(callback, [], callerNode, execEnv);
+  }
+);
 
 
 
