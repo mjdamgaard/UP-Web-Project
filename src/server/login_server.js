@@ -1,42 +1,7 @@
 
 import * as http from 'http';
-import fs from 'fs';
-import path from 'path';
-// import * as process from 'process';
 
-import {ClientError, endWithError, endWithInternalError} from './err/errors.js';
-import {
-  ScriptInterpreter, RuntimeError, jsonStringify,
-} from "../interpreting/ScriptInterpreter.js";
-import {DBQueryHandler} from "./db_io/DBQueryHandler.js";
-import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
-
-import {ELEVATED_PRIVILEGES_FLAG} from "../dev_lib/query/src/signals.js";
-
-import * as queryMod from "../dev_lib/query/query.js";
-
-const staticDevLibs = new Map();
-staticDevLibs.set("query", queryMod);
-
-
-
-const [ , curPath] = process.argv;
-const mainScriptPath = path.normalize(
-  path.dirname(curPath) + "/main_script/main.js"
-);
-const mainScript = fs.readFileSync(mainScriptPath, "utf8");
-
-const [syntaxTree, lexArr, strPosArr] = scriptParser.parse(mainScript);
-const parsedMainScript = syntaxTree.res;
-const dbQueryHandler = new DBQueryHandler();
-
-const scriptInterpreter = new ScriptInterpreter(
-  true, undefined, dbQueryHandler, staticDevLibs, undefined
-);
-
-// Locked routes are all routes where any file name, directory name, or
-// query path property name contains a tilde (~).
-const LOCKED_ROUTE_REGEX = /~/;
+import {UserDBConnection, getProcCallSQL} from "./DBConnection.js";
 
 
 
@@ -46,14 +11,9 @@ http.createServer(async function(req, res) {
     await requestHandler(req, res);
   }
   catch (err) {
-    if (err instanceof ClientError) {
-      endWithError(res, err);
-    }
-    else {
       endWithInternalError(res, err);
-    }
   }
-}).listen(8080);
+}).listen(8081);
 
 
 

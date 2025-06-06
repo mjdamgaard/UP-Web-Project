@@ -1,4 +1,5 @@
 
+USE mainDB;
 
 DROP TABLE HomeDirectories;
 DROP TABLE Files;

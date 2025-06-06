@@ -245,16 +245,15 @@ export class ScriptInterpreter {
 
 
   async executeModule(
-    moduleNode, lexArr, strPosArr, script, modulePath, globalEnv,
-    callerEnv = globalEnv,
+    moduleNode, lexArr, strPosArr, script, modulePath, globalEnv
   ) {
-    decrCompGas(moduleNode, callerEnv);
+    decrCompGas(moduleNode, globalEnv);
 
     // Create a new environment for the module.
     let moduleEnv = new Environment(
       globalEnv, "module", {
        modulePath: modulePath, lexArr: lexArr, strPosArr: strPosArr,
-       script: script, callerEnv: callerEnv,
+       script: script,
       }
     );
 
@@ -370,8 +369,7 @@ export class ScriptInterpreter {
       // Then execute the module, inside the global environment, and return the
       // resulting liveModule, after also adding it to liveModules.
       let liveModulePromise = this.executeModule(
-        submoduleNode, lexArr, strPosArr, script, modulePath, globalEnv,
-        callerEnv
+        submoduleNode, lexArr, strPosArr, script, modulePath, globalEnv
       );
       liveModules.set(modulePath, liveModulePromise);
       [liveModule] = await liveModulePromise;
@@ -502,13 +500,15 @@ export class ScriptInterpreter {
     
     // Then call executeModuleFunction with that resolve, and with funName =
     // "main".
+    let {flags} = scriptEnv.scriptVars;
     this.executeModuleFunction(
-      liveScriptModule, "main", inputArr, resolveFun, scriptNode, scriptEnv
+      liveScriptModule, "main", inputArr, resolveFun, scriptNode, scriptEnv,
+      flags,
     );
   }
 
   executeModuleFunction(
-    liveModule, funName, inputArr, resolveFun, moduleNode, moduleEnv
+    liveModule, funName, inputArr, resolveFun, moduleNode, moduleEnv, flags
   ) {
     let fun = liveModule.get(funName);
     if (fun === undefined) throw new RuntimeError(
@@ -519,14 +519,15 @@ export class ScriptInterpreter {
     inputArr = inputArr.concat([resolveFun]);
     return this.executeFunction(
       fun, inputArr,
-      fun instanceof DefinedFunction ? fun.node : moduleNode, moduleEnv
+      fun instanceof DefinedFunction ? fun.node : moduleNode, moduleEnv,
+      undefined, flags,
     );
   }
 
 
 
 
-  executeFunction(fun, inputArr, callerNode, callerEnv, thisVal) {
+  executeFunction(fun, inputArr, callerNode, callerEnv, thisVal, flags) {
     decrCompGas(callerNode, callerEnv);
 
     // Throw if fun is not a FunctionObject.
@@ -560,9 +561,10 @@ export class ScriptInterpreter {
       callerNode, callerEnv
     );
 
-    // And if the function is itself enclosed, turn all arguments
-    // isPassedToEnclosed, as well as thisVal.
-    if (fun.isEnclosed) {
+    // And if the function is itself enclosed, or if flags is defined in which 
+    // case it should be treated as such, turn all arguments isPassedToEnclosed,
+    // as well as thisVal.
+    if (fun.isEnclosed || flags !== undefined) {
       inputArr = inputArr.map(val => turnPassedToEnclosed(val));
       thisVal = turnPassedToEnclosed(thisVal);
     }
@@ -571,7 +573,7 @@ export class ScriptInterpreter {
     let execEnv = new Environment(
       fun.decEnv ?? callerEnv.getGlobalEnv(), "function", {
         fun: fun, callerNode: callerNode, callerEnv: callerEnv,
-        thisVal: thisVal
+        thisVal: thisVal, flags: flags,
       }
     );
 
@@ -1504,7 +1506,7 @@ export class ScriptInterpreter {
 export class Environment {
   constructor(
     parent, scopeType = "block", {
-      fun, callerNode, callerEnv, thisVal,
+      fun, callerNode, callerEnv, thisVal, flags: addedFlags,
       modulePath, lexArr, strPosArr, script,
       scriptVars,
       catchStmtArr, errIdent, numIdent,
@@ -1518,8 +1520,7 @@ export class Environment {
     this.variables = new Map();
     if (scopeType === "function") {
       let {
-        isArrowFun, isDevFun, modulePath,
-        signals, flags, isEnclosed,
+        isArrowFun, isDevFun, signals, flags: funFlags, isEnclosed,
       } = fun;
       this.callerNode = callerNode;
       this.callerEnv = callerEnv;
@@ -1530,11 +1531,10 @@ export class Environment {
         let parentFlagEnv = this.getFlagEnvironment();
         parentFlagEnv.sendSignals(signals, callerNode, callerEnv);
       }
-      if (isEnclosed) {
+      if (isEnclosed || addedFlags) {
         let parentFlagEnv = this.getFlagEnvironment();
         this.flagEnv = new FlagEnvironment(parentFlagEnv);
-      }
-      if (flags) {
+        let flags = [...(funFlags ?? []), ...(addedFlags ?? [])];
         this.flagEnv.setFlags(flags, callerNode, callerEnv);
       }
     }
@@ -1543,7 +1543,6 @@ export class Environment {
       this.lexArr = lexArr;
       this.strPosArr = strPosArr;
       this.script = script;
-      this.callerEnv = callerEnv ?? parent;
       this.exports = [];
       this.liveModule = undefined;
     }
@@ -1555,8 +1554,6 @@ export class Environment {
     }
     else if (scopeType === "global") {
       this.flagEnv = new FlagEnvironment(null, "/");
-      let flags = this.scriptVars.flags ?? [];
-      this.flagEnv.setFlags(flags);
     }
   }
 
@@ -1663,7 +1660,7 @@ export class Environment {
     if (flagEnv) {
       return flagEnv;
     }
-    else if (this.isNonArrowFunction || this.scopeType === "module") {
+    else if (this.isNonArrowFunction) {
       return this.callerEnv.getFlagEnvironment();
     }
     else if (this.parent) {
@@ -1744,7 +1741,7 @@ export class Environment {
       }
       return true;
     }
-    else if (this.scopeType === "function" || this.scopeType === "module") {
+    else if (this.scopeType === "function") {
       return this.callerEnv.runNearestCatchStmtAncestor(
         err, node, nodeEnvironment
       );

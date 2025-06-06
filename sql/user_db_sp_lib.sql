@@ -1,4 +1,6 @@
 
+USE userDB;
+
 DROP PROCEDURE createUserAccount;
 DROP PROCEDURE selectPWHashAndUserID;
 DROP PROCEDURE generateAuthToken;

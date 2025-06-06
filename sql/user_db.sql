@@ -1,4 +1,6 @@
 
+USE userDB;
+
 /* Private user data */
 DROP TABLE UserCredentials;
 DROP TABLE EmailAddresses;
@@ -83,3 +85,14 @@ CREATE TABLE UserGas (
     -- mkdir_gas    FLOAT NOT NULL DEFAULT 20 -- number of new home directories.
 );
 
+
+
+
+
+
+-- TODO: Remove this and implement account creation and login/logout.
+INSERT INTO UserCredentials (user_name, password_hash_salted)
+VALUES ("test_user", REPEAT("0", 60));
+
+INSERT INTO AuthenticationTokens (user_id, auth_token, expiration_time)
+VALUES (1, "test_token", 100000000000);

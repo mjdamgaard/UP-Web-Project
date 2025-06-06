@@ -1,4 +1,6 @@
 
+USE mainDB;
+
 DROP FUNCTION toBase64;
 DROP FUNCTION fromBase64;
 
