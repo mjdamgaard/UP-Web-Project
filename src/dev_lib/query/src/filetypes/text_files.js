@@ -4,7 +4,10 @@ import {
   PromiseObject,
 } from "../../../../interpreting/ScriptInterpreter.js";
 
-import {SET_ELEVATED_PRIVILEGES_SIGNAL} from "../signals.js";
+import {
+  ELEVATED_PRIVILEGES_FLAG, SET_ELEVATED_PRIVILEGES_SIGNAL,
+  CURRENT_CORS_ORIGIN_FLAG,
+} from "../signals.js";
 
 
 
@@ -184,13 +187,22 @@ export async function query(
     inputArr = inputArr.map(val => getValueWrapper(val));
 
     // Import and execute the given JS module using interpreter.import(), and
-    // do so within a dev function with the "clear" flag, which removes all
-    // permission-granting flags for the module's execution environment. And
-    // when the liveModule is gotten, get and execute the function, also within
-    // the same enclosed execution environment.
+    // do so within a dev function with an "elevated-privileges" that
+    // elevates the privileges to admin privileges for the execution of the SMF
+    // (server module function). Note that these elevated privileges can only
+    // be used to post to a files within the called SM's home directory, and
+    // that all previous such privileges are removed by the new flag. We also
+    // set a "current-CORS-origin" flag with the full /callSMF route, which
+    // means that if the given SMF calls another server module, the CORS-
+    // like system will treat the calls as originating from that SMF, and not
+    // whatever current module (be it a JSX component module or an SM) queried
+    // this /callSMF route. 
     let resultPromiseObj = interpreter.executeFunction(
       new DevFunction(
-        {isAsync: true, flags: [CLEAR_FLAG]},
+        {isAsync: true, flags: [
+          [ELEVATED_PRIVILEGES_FLAG, homeDirID],
+          [CURRENT_CORS_ORIGIN_FLAG, route],
+        ]},
         async ({callerNode, execEnv, interpreter}, []) => {
           let liveModule = await interpreter.import(
             `/0/${homeDirID}/${filePath}`
@@ -208,37 +220,6 @@ export async function query(
       [], callerNode, execEnv,
     );
     return await resultPromiseObj.promise;
-  }
-
-  // TODO: Correct:
-  // If route equals ".../<homeDirID>/call/<funName>/<inputArr>", get the
-  // module.js file at the home level of the directory, then execute that
-  // module and run the function named <funName>, with the optional <inputArr>
-  // as its input.
-  if (queryType === "call") {
-    let [funName, inputArrStr] = queryPathArr;
-    let inputArr = [];
-    if (inputArrStr) {
-      let isValidJSONArr = true;
-      try {
-        inputArr = JSON.parse(inputArrStr);
-        if (!(inputArr instanceof Array)) {
-          isValidJSONArr = false;
-        }
-      } catch (err) {
-        isValidJSONArr = false;
-      }
-      if (!isValidJSONArr) throw new RuntimeError(
-        `inputArr query parameter needs to be a JSON array, but received ` +
-        `${inputArrStr}`,
-        callerNode, execEnv
-      );
-    }
-    // TODO: Look in the cache first in case of the "fetch" method.
-    let liveServerModule = await interpreter.import(`/${homeDirID}/module.js`);
-    execEnv.emitSignal(SET_ELEVATED_PRIVILEGES_SIGNAL, homeDirID);
-    liveServerModule.call(funName, inputArr, null, execEnv);
-    return ["TODO..."];
   }
 
 

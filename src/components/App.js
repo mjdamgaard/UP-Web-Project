@@ -32,7 +32,8 @@ if (typeof(Storage) === "undefined") {
 
 
 // TODO: Remove this and require a login instead to get a real auth. token.
-localStorage.setItem("auth", '{"userID": 1, "authToken": "test_token"}');
+localStorage.setItem("userID", "1");
+localStorage.setItem("authToken", "test_token");
 
 
 const serverQueryHandler = new ServerQueryHandler();

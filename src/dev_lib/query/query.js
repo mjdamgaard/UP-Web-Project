@@ -25,10 +25,14 @@ export const query = new DevFunction(
     isPost = isPublic ? false : isPost;
     options = getObject(options) ?? {};
 
-    // TODO: Emit a signal here if isPost == true.
+    // If isPost == true, check if the current environment is allowed to post.
+    if (isPost) {
+      execEnv.sendSignal(
+        CHECK_CAN_POST_SIGNAL, callerNode
+      );
+    }
 
-    // Parse the route to get the filetype, among other parameters and
-    // qualities.
+    // Parse the route, extracting parameters and qualities from it.
     let isLocked, upNodeID, homeDirID, filePath, fileExt, queryPathArr;
     try {
     [
@@ -42,7 +46,7 @@ export const query = new DevFunction(
     // If the route is locked, check that you have admin privileges on the
     // directory of homeDirID.
     if (isLocked) {
-      execEnv.emitSignal(
+      execEnv.sendSignal(
         CHECK_ELEVATED_PRIVILEGES_SIGNAL, callerNode, homeDirID
       );
     }
