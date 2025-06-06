@@ -75,7 +75,7 @@ export async function query(
         {isAsync: true, flags: [CLEAR_FLAG]},
         async ({callerNode, execEnv, interpreter}, []) => {
           let liveModule = await interpreter.import(
-            `/A/${homeDirID}/${filePath}`
+            `/0/${homeDirID}/${filePath}`
           );
           return liveModule.get(alias);
         }
@@ -129,7 +129,7 @@ export async function query(
         {isAsync: true, flags: [CLEAR_FLAG]},
         async ({callerNode, execEnv, interpreter}, []) => {
           let liveModule = await interpreter.import(
-            `/A/${homeDirID}/${filePath}`
+            `/0/${homeDirID}/${filePath}`
           );
           let fun = liveModule.get(alias);
           let result = interpreter.executeFunction(
@@ -146,17 +146,68 @@ export async function query(
     return await resultPromiseObj.promise;
   }
 
-  // If route equals ".../<homeDirID>/<filePath>/callSMF/<alias>/argv=" +
+  // If route equals ".../<homeDirID>/<filePath>/callSMF/<alias>/" +
   // "<inputArrBase64>", verify that filePath ends in '.sm.js', and if so,
   // execute the module and get the function exported as <alias>, then call it
   // with inputArr, base-64-decoded and JSON-decoded from inputArrBase64, and
   // return its output. And at the same time, make sure to signal that the call
-  // should be treated as a call to a server module method (SMM), giving it
+  // should be treated as a call to a server module function (SMF), giving it
   // special privileges to write to certain parts of the DB (and removing any
   // previous privileges of the same kind). 
   if (queryType === "callSMF") {
-    // TODO: Implement, and make sure to also remove any elevated privileges
-    // when executing the module and calling the function.
+    if (filePath.slice(-6) !== ".sm.js") throw new RuntimeError(
+      `Invalid route: ${route}`,
+      callerNode, execEnv
+    );
+    let [alias, inputArrBase64 = "[]"] = queryPathArr;
+    if (typeof alias !== "string") throw new RuntimeError(
+      "No function name provided",
+      callerNode, execEnv
+    );
+    if (typeof inputArrBase64 !== "string") throw new RuntimeError(
+      "No input array provided",
+      callerNode, execEnv
+    );
+    let inputArr, isValid = true;
+    try {
+      inputArr = JSON.parse(
+        atob(inputArrBase64.replaceAll("-", "+").replaceAll("_", "/"))
+      );
+    }
+    catch (err) {
+      isValid = false;
+    }
+    if (!isValid || !(inputArr instanceof Array)) throw new RuntimeError(
+      "Input array not a valid base-64-encoded JSON array",
+      callerNode, execEnv
+    );
+    inputArr = inputArr.map(val => getValueWrapper(val));
+
+    // Import and execute the given JS module using interpreter.import(), and
+    // do so within a dev function with the "clear" flag, which removes all
+    // permission-granting flags for the module's execution environment. And
+    // when the liveModule is gotten, get and execute the function, also within
+    // the same enclosed execution environment.
+    let resultPromiseObj = interpreter.executeFunction(
+      new DevFunction(
+        {isAsync: true, flags: [CLEAR_FLAG]},
+        async ({callerNode, execEnv, interpreter}, []) => {
+          let liveModule = await interpreter.import(
+            `/0/${homeDirID}/${filePath}`
+          );
+          let fun = liveModule.get(alias);
+          let result = interpreter.executeFunction(
+            fun, inputArr, callerNode, execEnv
+          );
+          if (result instanceof PromiseObject) {
+            result = await result.promise;
+          }
+          return result;
+        }
+      ),
+      [], callerNode, execEnv,
+    );
+    return await resultPromiseObj.promise;
   }
 
   // TODO: Correct:

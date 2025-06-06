@@ -46,6 +46,9 @@ export const GET_IS_APP_ROOT_SIGNAL = new Signal(
 
 
 
+// TODO: Make createJSXApp() take an argument of a function to get component
+// trust (for the FlagTransmitter to use), and also make the app component get
+// the URL substring after the domain as part of its props. 
 
 // Create a JSX (React-like) app and mount it in the index HTML page, in the
 // element with an id of "up-app-root".

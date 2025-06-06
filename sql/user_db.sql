@@ -1,98 +1,85 @@
 
 /* Private user data */
-DROP TABLE Private_UserData;
-DROP TABLE Private_Sessions;
-DROP TABLE Private_EMails;
-
-/* Debugging */
-DROP TABLE DebugLogEntries;
--- DROP PROCEDURE logMsg;
+DROP TABLE UserCredentials;
+DROP TABLE EmailAddresses;
+DROP TABLE AuthenticationTokens;
+DROP TABLE UserGas;
 
 
 
 
 
+/* User credentials */
 
-/* Private user data */
+CREATE TABLE UserCredentials (
 
-CREATE TABLE Private_UserData (
+    user_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    user_name VARCHAR(50) NOT NULL,
+
+    password_hash_salted CHAR(60) NOT NULL,
+
+    UNIQUE INDEX sec_idx (
+        user_name
+    )
+);
+
+
+
+CREATE TABLE EmailAddresses (
+
+    user_id BIGINT UNSIGNED NOT NULL,
+
+    email_addr VARCHAR(255) NOT NULL,
+    
+    PRIMARY KEY (
+        user_id,
+        email_addr
+    ),
+    
+    UNIQUE INDEX sec_idx (
+        email_addr,
+        user_id
+    )
+);
+
+
+
+
+/* Authentication tokens */
+
+CREATE TABLE AuthenticationTokens (
+
     user_id BIGINT UNSIGNED PRIMARY KEY,
 
-    username VARCHAR(50) NOT NULL UNIQUE,
-    -- TODO: Consider adding more restrictions.
+    auth_token VARCHAR(255) NOT NULL,
 
-    password_salted_hash CHAR(60),
+    expiration_time BIGINT UNSIGNED NOT NULL, -- unix timestamp.
 
-    public_keys_for_authentication TEXT,
-    -- TODO: Update column name, and this description.
-    -- (In order for third parties to be able to copy the database and then
-    -- be able to have users log on, without the need to exchange passwords
-    -- between databases.) (This could also be other data than encryption keys,
-    -- and in principle it could even just be some ID to use for authenticating
-    -- the user via a third party.)
-
-
-    -- download_data_this_week FLOAT NOT NULL DEFAULT 0, -- number pages touched.
-    -- download_data_weekly_limit FLOAT NOT NULL DEFAULT 50000000,
-
-    upload_data_this_week FLOAT NOT NULL DEFAULT 0, -- bytes.
-    upload_data_weekly_limit FLOAT NOT NULL DEFAULT 1000000,
-    computation_usage_this_week FLOAT NOT NULL DEFAULT 0, -- ms.
-    computation_usage_weekly_limit FLOAT NOT NULL DEFAULT 500000,
-
-    last_refreshed_at DATE NOT NULL DEFAULT (CURDATE()),
-
-    private_storage_data_usage FLOAT NOT NULL DEFAULT 0, -- bytes.
-    private_storage_data_limit FLOAT NOT NULL DEFAULT 10000000,
-
-    user_profile_count FLOAT NOT NULL DEFAULT 0, -- number of user profiles.
-    user_profile_limit FLOAT NOT NULL DEFAULT 8
+    UNIQUE INDEX sec_idx (
+        auth_token
+    )
 );
 
 
 
 
-CREATE TABLE Private_Sessions (
+
+/* User gas deposits */
+
+CREATE TABLE UserGas (
+
     user_id BIGINT UNSIGNED PRIMARY KEY,
-    session_id VARBINARY(255) NOT NULL,
-    expiration_time BIGINT UNSIGNED NOT NULL -- unix timestamp.
+
+    gas_json VARCHAR(700) NOT NULL,
+
+    last_auto_refill_at BIGINT UNSIGNED NOT NULL -- unix timestamp.
+
+    -- comp_gas     FLOAT NOT NULL DEFAULT 0,
+    -- db_read_gas  FLOAT NOT NULL DEFAULT 10000000,-- bytes (roughly).
+    -- db_write_gas FLOAT NOT NULL DEFAULT 10000000,-- bytes (roughly).
+    -- time_gas     FLOAT NOT NULL DEFAULT 500000,-- ms.
+    -- conn_gas     FLOAT NOT NULL DEFAULT 500000,-- ms (for open db connections).
+    -- mkdir_gas    FLOAT NOT NULL DEFAULT 20 -- number of new home directories.
 );
 
-CREATE TABLE Private_EMails (
-    e_mail_address VARCHAR(255) PRIMARY KEY,
-    number_of_accounts TINYINT UNSIGNED NOT NULL,
-    -- This field is only temporary, until the e-mail address holder has
-    -- confirmed the new account:
-    account_1_user_id BIGINT UNSIGNED
-);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-CREATE TABLE DebugLogEntries (
-
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
-    msg VARCHAR(1000)
-);
-
-DELIMITER //
-CREATE PROCEDURE logMsg (
-    IN logMessage VARCHAR(1000)
-)
-BEGIN
-    INSERT INTO DebugLogEntries (msg)
-    VALUE (logMessage);
-END //
-DELIMITER ;
