@@ -9,6 +9,7 @@ import {
   ScriptInterpreter, RuntimeError, jsonStringify,
 } from "../interpreting/ScriptInterpreter.js";
 import {DBQueryHandler} from "./db_io/DBQueryHandler.js";
+import {UserDBConnection} from './db_io/DBConnection.js';
 import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
 
 import {ELEVATED_PRIVILEGES_FLAG} from "../dev_lib/query/src/signals.js";
@@ -42,8 +43,10 @@ const LOCKED_ROUTE_REGEX = /~/;
 
 
 http.createServer(async function(req, res) {
+  let userID, initGas, finalGas, lastAutoRefill;
   try {
-    await requestHandler(req, res);
+    [userID, initGas, lastAutoRefill] = await getUserIDAndGas(req);
+    finalGas = await requestHandler(req, res, userID, initGas);
   }
   catch (err) {
     if (err instanceof ClientError) {
@@ -53,12 +56,24 @@ http.createServer(async function(req, res) {
       endWithInternalError(res, err);
     }
   }
+  if (userID) {
+    try {
+      // TODO: If the lastAutoRefill time is long enough ago, add some extra
+      // gas into finalGas, and also set isAutoRefill = true such that the
+      // lastAutoRefill time is updated.
+      let isAutoRefill = false; // TODO: Change.
+      await updateGas(userID, finalGas, isAutoRefill);
+    }
+    catch (err) {
+      console.error(err);
+    }
+  }
 }).listen(8080);
 
 
 
 
-async function requestHandler(req, res) {
+async function requestHandler(req, res, userID, initGas) {
   res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
 
   // The server only implements GET and POST requests, where for the POST 
@@ -182,6 +197,42 @@ function toMIMEType(val, mimeType) {
 
 
 
+
+async function getUserIDAndGas(req) {
+  // Get authentication token if one is provided.
+  let authToken = !req || "test_token"; // TODO: Change.
+
+  // If an auth. token is provided, query the user DB to get the userID, and
+  // a JSON object containing all the user's gas (not withdrawn yet).
+  if (authToken === undefined) {
+    return [];
+  }
+  else {
+    let userDBConnection = new UserDBConnection();
+    let [resultRow = []] = await userDBConnection.queryProcCall(
+      "selectUserIDAndGas", [authToken]
+    ) ?? [];
+    let [userID, gasJSON, lastAutoRefill] = resultRow;
+    userDBConnection.end();
+    let initGas = JSON.parse(gasJSON);
+    return [userID, initGas, lastAutoRefill];
+  }
+}
+
+
+
+async function updateGas(userID, finalGas, isAutoRefill) {
+  let userDBConnection = new UserDBConnection();
+  await userDBConnection.queryProcCall(
+    "updateGas", [userID, JSON.stringify(finalGas)]
+  );
+  userDBConnection.end();
+}
+
+
+
+
+
 async function getGasAndReqUserID(credentials) {
   let username, password;
   // TODO...
@@ -208,7 +259,7 @@ function getDataChunksPromise(req) {
       req.on('data', chunk => {
         chunks.push(chunk);
         size += chunk.length ?? chunk.size;
-        if (size > 10000) reject(
+        if (size > 4294967295) reject(
           new ClientError("Post data maximum size exceeded")
         );
       });

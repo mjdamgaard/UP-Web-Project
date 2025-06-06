@@ -4,10 +4,12 @@ USE userDB;
 DROP PROCEDURE createUserAccount;
 DROP PROCEDURE selectPWHashAndUserID;
 DROP PROCEDURE generateAuthToken;
-DROP PROCEDURE selectAuthenticatedUserID;
+DROP PROCEDURE getAuthenticatedUserID;
 
 DROP PROCEDURE selectGas;
 DROP PROCEDURE updateGas;
+
+DROP PROCEDURE selectUserIDAndGas;
 
 
 
@@ -86,11 +88,11 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE selectAuthenticatedUserID (
-    IN authToken VARCHAR(255)
+CREATE PROCEDURE getAuthenticatedUserID (
+    IN authToken VARCHAR(255),
+    OUT userID BIGINT UNSIGNED
 )
 BEGIN
-    DECLARE userID BIGINT UNSIGNED;
     DECLARE newExpTime BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP() + 604800000;
 
     SELECT user_id INTO userID
@@ -102,8 +104,6 @@ BEGIN
         SET expiration_time = newExpTime
         WHERE user_id = userID;
     END IF;
-    
-    SELECT userID;
 END //
 DELIMITER ;
 
@@ -122,9 +122,10 @@ CREATE PROCEDURE selectGas (
 BEGIN
     SELECT gas_json AS gasJSON, last_auto_refill_at AS lastAutoRefill
     FROM UserGas FORCE INDEX (PRIMARY)
-    WHERE user_name = userName;
+    WHERE user_id = userID;
 END //
 DELIMITER ;
+
 
 
 DELIMITER //
@@ -143,5 +144,23 @@ BEGIN
         SET gas_json = gasJSON
         WHERE user_id = userID;
     END IF;
+END //
+DELIMITER ;
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectUserIDAndGas (
+    IN authToken BIGINT UNSIGNED
+)
+BEGIN
+    DECLARE userID BIGINT UNSIGNED;
+
+    CALL getAuthenticatedUserID (authToken, userID);
+
+    SELECT userID, gas_json AS gasJSON, last_auto_refill_at AS lastAutoRefill
+    FROM UserGas FORCE INDEX (PRIMARY)
+    WHERE user_id = userID;
 END //
 DELIMITER ;

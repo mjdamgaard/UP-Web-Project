@@ -45,17 +45,17 @@ export const CHECK_CAN_POST_SIGNAL = new Signal(
 );
 
 
-export const CURRENT_CORS_ORIGIN_FLAG = Symbol("current-CORS-origin");
+export const CURRENT_CORS_ORIGIN_FLAG = Symbol("current-cors-origin");
 
 export const SET_CURRENT_CORS_ORIGIN_SIGNAL = new Signal(
-  "set-current-CORS-origin",
+  "set-current-cors-origin",
   function(flagEnv, _node, _env, route) {
     flagEnv.setFlag(CURRENT_CORS_ORIGIN_FLAG, route);
   }
 );
 
 export const CHECK_CORS_ORIGIN_SIGNAL = new Signal(
-  "check-CORS-origin",
+  "check-cors-origin",
   function(flagEnv, node, env, routeRegExArr) {
     // TODO: Implement.
   }
