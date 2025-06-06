@@ -94,7 +94,7 @@ async function requestHandler(req, res, userID, initGas) {
     }
     if (!isValidJSON || !reqParams || typeof reqParams !== "object") {
       throw new ClientError(
-        "Post request body was not a JSON object"
+        "Post request body not a JSON object"
       );
     }
   }
@@ -112,12 +112,10 @@ async function requestHandler(req, res, userID, initGas) {
   let {gas, gasID, returnLog} = options;
 
 
-  // Get the userID of the requesting user, if the user has supplied their
-  // credentials to the request, failing if those credentials couldn't be
-  // authenticated. Also get the gas for the request in the same process.
-  let reqUserID;
-  let credentials;
-  [gas, reqUserID] = await getGasAndReqUserID(credentials, gas, gasID);
+  // TODO: Use gas or gasID, if provided, to determine the gas object to pass
+  // to the interpreter, which should generally be a reduced version of
+  // initGas.
+  gas = {...initGas}; // TODO: Change. 
 
 
   // Parse whether the route is a "locked" route (that can only be accessed by
@@ -129,7 +127,7 @@ async function requestHandler(req, res, userID, initGas) {
   // that reqUser is the admin, then initialize initFlags with a
   // SET_ELEVATED_PRIVILEGES_SIGNAL on homeDirID. And if the route is not
   // locked, initialize an empty initFlags array.
-  let initFlags = [[ELEVATED_PRIVILEGES_FLAG, route[1]]];
+  let initFlags = [[ELEVATED_PRIVILEGES_FLAG, route[1]]]; // TODO: Change. 
 
 
   // Call the main.js script which redirects to the query() dev function.
@@ -270,7 +268,7 @@ function getDataChunksPromise(req) {
 }
 
 
-async function getData(req) {
+export async function getData(req) {
   let chunks = await getDataChunksPromise(req);
 
   // TODO: Implement returning a string only if chunks are UFT-8 string parts,

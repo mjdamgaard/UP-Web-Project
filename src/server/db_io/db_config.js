@@ -2,7 +2,7 @@
 
 export const mainDBConnectionOptions = {
   host: "localhost",
-  database: "sdb",
+  database: "mainDB",
   user: "mads",
   password: "lemmein",
 };
