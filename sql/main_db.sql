@@ -9,12 +9,11 @@ DROP TABLE TextFiles;
 DROP TABLE AutoKeyTextTables;
 DROP TABLE BinaryKeyTables;
 DROP TABLE CharKeyTables;
-DROP TABLE FloatKeyTables;
 DROP TABLE BinaryKeyBinaryScoreTables;
 
 DROP TABLE FulltextIndexEntries;
 
-DROP TABLE StorageGasPayments;
+DROP TABLE ServerModuleGas;
 
 
 
@@ -203,25 +202,21 @@ CREATE TABLE FulltextIndexEntries (
 
 
 
-CREATE TABLE StorageGasPayments (
+CREATE TABLE ServerModuleGas (
 
-    dir_id BIGINT UNSIGNED PRIMARY KEY,
+    dir_id BIGINT UNSIGNED NOT NULL,
 
-    payments_today BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    -- The gas account ID is individual server module (SM), so two different
+    -- SMs can use the same account ID. But let's just make it a BIGINT
+    -- UNSIGNED, just in case.
+    account_id BIGINT UNSIGNED NOT NULL,
 
-    payments_this_week BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    gas_json VARCHAR(700) NOT NULL,
 
-    payments_this_month BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    payments_this_quarter BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    payments_this_year BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    payments_last_five_years BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    payments_all_time BIGINT UNSIGNED NOT NULL DEFAULT 0,
-
-    last_updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    PRIMARY KEY (
+        dir_id,
+        account_id
+    )
 
 ) ROW_FORMAT = COMPRESSED;
 

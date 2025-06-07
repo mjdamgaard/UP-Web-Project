@@ -6,12 +6,14 @@ import path from 'path';
 
 import {
   ClientError, endWithError, endWithInternalError, endWithUnauthenticatedError,
+  endWithUnauthorizedError,
 } from './err/errors.js';
 import {
   ScriptInterpreter, RuntimeError, jsonStringify,
 } from "../interpreting/ScriptInterpreter.js";
 import {DBQueryHandler} from "./db_io/DBQueryHandler.js";
-import {UserDBConnection} from './db_io/DBConnection.js';
+import {UserDBConnection, MainDBConnection} from './db_io/DBConnection.js';
+import {FlagTransmitter} from "../interpreting/FlagTransmitter.js";
 import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
 
 import {ELEVATED_PRIVILEGES_FLAG} from "../dev_lib/query/src/signals.js";
@@ -42,6 +44,7 @@ const scriptInterpreter = new ScriptInterpreter(
 const LOCKED_ROUTE_REGEX = /~/;
 
 const AUTH_TOKEN_REGEX = /^Bearer (.+)$/;
+const HOME_DIR_ID_REGEX = /^\/[^/]*\/([^/]+)/;
 
 
 
@@ -112,7 +115,7 @@ async function requestHandler(req, res, returnGasRef) {
   // Get optional isPost and postData, as well as the optional user credentials
   // (username and password/token), and the options parameter.
   let {
-    isPost = false, data: postData, flags, options = {},
+    isPost = false, data: postData, flags: reqFlags, options = {},
   } = reqParams;
 
   // Also extract some additional optional parameters from options. 
@@ -140,17 +143,35 @@ async function requestHandler(req, res, returnGasRef) {
 
   // Parse whether the route is a "locked" route (which can only be accessed by
   // the admin, if any, or by a server module function (SMF) of that directory).
-  // These are all paths that include a tilde ('~') anywhere in them.
+  // These are all paths that include a tilde ('~') anywhere in them. If it is
+  // indeed locked, query for the adminID of the home directory and verify that
+  // userID == adminID.  
   let isLocked = LOCKED_ROUTE_REGEX.test(route);
+  if (isLocked) {
+    if (!userID) {
+      endWithUnauthorizedError(res);
+      return;
+    }
+    let [ , homeDirID] = HOME_DIR_ID_REGEX.exec(route);
+    let mainDBConnection = new MainDBConnection();
+    let [resultRow] = await mainDBConnection.queryProcCall(
+      "readHomeDirAdminID", [homeDirID],
+    ) ?? [];
+    mainDBConnection.end();
+    let [adminID] = resultRow ?? [];
+    if (userID !== adminID) {
+      endWithUnauthorizedError(res);
+      return;
+    }
+  }
 
-  // TODO: If the route it locked, get the adminID of the homeDir, and verify
-  // that reqUser is the admin, then initialize initFlags with a
-  // SET_ELEVATED_PRIVILEGES_SIGNAL on homeDirID. And if the route is not
-  // locked, initialize an empty initFlags array.
-  let initFlags = [[ELEVATED_PRIVILEGES_FLAG, route[1]]]; // TODO: Change. 
+  // Then call FlagTransmitter, with the optional reqFlags array determined by
+  // the client, to get the flags which are raised initially for when the
+  // main() function is executed. 
+  let flags = FlagTransmitter.receiveFlags(reqFlags);
 
 
-  // Call the main.js script which redirects to the query() dev function.
+  // Now call the main.js script which redirects to the query() dev function.
   let parsedScripts = new Map([
     ["main.js", [parsedMainScript, lexArr, strPosArr, mainScript]]
   ]);
@@ -159,7 +180,7 @@ async function requestHandler(req, res, returnGasRef) {
       isPublic, route, isPost, new ObjectWrapper(postData),
       new ObjectWrapper(options)
     ],
-    initFlags, undefined, undefined, parsedScripts,
+    flags, undefined, undefined, parsedScripts,
   );
   let [result, mimeType] = output ?? [];
 
@@ -229,41 +250,31 @@ async function getUserID(authToken) {
 
 
 async function getGas(userID, reqGas, reqGasID) {
-  let userDBConnection = new UserDBConnection();
-  await userDBConnection.queryProcCall(
-    "updateGas", [userID, JSON.stringify(finalGas)]
-  );
-  userDBConnection.end();
-}
-
-
-// async function updateGas(userID, finalGas, isAutoRefill) {
-//   let userDBConnection = new UserDBConnection();
-//   await userDBConnection.queryProcCall(
-//     "updateGas", [userID, JSON.stringify(finalGas), isAutoRefill]
-//   );
-//   userDBConnection.end();
-// }
-
-
-
-
-
-async function getGasAndReqUserID(credentials) {
-  let username, password;
-  // TODO...
+  // TODO: Implement, instead of this placeholder definition:
   return [{
     comp: 100000,
     import: 100,
     fetch: 100,
     time: 3000,
-    // time: Infinity,
     dbRead: 100,
     dbWrite: 10000,
-    cacheRead: 100,
-    cacheWrite: 100,
+    conn: 3000,
+    mkdir: 10,
   }];
 }
+
+
+async function updateGas(userID, finalGas, isAutoRefill) {
+  let userDBConnection = new UserDBConnection();
+  await userDBConnection.queryProcCall(
+    "updateGas", [userID, JSON.stringify(finalGas), isAutoRefill]
+  );
+  userDBConnection.end();
+}
+
+
+
+
 
 
 

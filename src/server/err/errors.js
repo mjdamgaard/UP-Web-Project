@@ -23,15 +23,20 @@ export function endWithError(res, err) {
   }
 }
 
+export function endWithInternalError(res, error) {
+  res.writeHead(500, {'Content-Type': 'text/plain'});
+  res.end("");
+  console.error(error);
+}
+
 export function endWithUnauthenticatedError(res) {
     res.writeHead(401, {'Content-Type': 'text/plain'});
     res.end("Unauthenticated");
 }
 
-export function endWithInternalError(res, error) {
-  res.writeHead(500, {'Content-Type': 'text/plain'});
-  res.end("");
-  console.error(error);
+export function endWithUnauthorizedError(res) {
+    res.writeHead(403, {'Content-Type': 'text/plain'});
+    res.end("Unauthorized");
 }
 
 

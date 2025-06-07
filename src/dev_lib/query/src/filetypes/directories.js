@@ -110,6 +110,16 @@ export async function query(
     );
   }
 
+  // TODO: Implement /readGas, /depositGas, and /withdrawGas routes, the latter
+  // two of which are locked, which reads and writes to a gas JSON object in
+  // the DB, indexed by the homeDirID as well, as an arbitrarily chosen "gas
+  // account ID" (meaning that an SM can choose to store its gas on several
+  // separate accounts (used for different things)). When a SMF (or an admin)
+  // queries these routes, the gas amounts are automatically added or removed
+  // from the live gas object (in scriptVars). This system will then afford a
+  // way for users to be able to pool gas together for costly computations or
+  // other actions. 
+
   // If the route was not matched at this point, throw an error.
   throw new RuntimeError(
     `Unrecognized route: ${route}`,
