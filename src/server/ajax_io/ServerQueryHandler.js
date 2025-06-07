@@ -28,7 +28,7 @@ export class ServerQueryHandler {
     let reqData = {};
     if (isPost) {
       reqData.isPost = true;
-      if (postData !== undefined) reqData.postData = postData;
+      if (postData !== undefined) reqData.data = postData;
       if (options !== undefined) reqData.options = options;
       reqData.flags = flagTransmitter.getFlags(node, env);
     }
@@ -38,7 +38,7 @@ export class ServerQueryHandler {
     if (!isPublic) {
       let token = this.userToken ?? "TODO: Look in localStorage.";
       if (token) {
-        headers["Authorization"] = `Bearer: ${token}`;
+        headers["Authorization"] = `Bearer ${token}`;
       }
       else throw new RuntimeError(
         "A non-login-related POST request was made before the user was " +

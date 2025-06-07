@@ -23,6 +23,10 @@ export function endWithError(res, err) {
   }
 }
 
+export function endWithUnauthenticatedError(res) {
+    res.writeHead(401, {'Content-Type': 'text/plain'});
+    res.end("Unauthenticated");
+}
 
 export function endWithInternalError(res, error) {
   res.writeHead(500, {'Content-Type': 'text/plain'});

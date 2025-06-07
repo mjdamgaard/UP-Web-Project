@@ -4,7 +4,7 @@ USE userDB;
 DROP PROCEDURE createUserAccount;
 DROP PROCEDURE selectPWHashAndUserID;
 DROP PROCEDURE generateAuthToken;
-DROP PROCEDURE getAuthenticatedUserID;
+DROP PROCEDURE selectAuthenticatedUserID;
 
 DROP PROCEDURE selectGas;
 DROP PROCEDURE updateGas;
@@ -88,12 +88,13 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE getAuthenticatedUserID (
+CREATE PROCEDURE selectAuthenticatedUserID (
     IN authToken VARCHAR(255),
-    OUT userID BIGINT UNSIGNED
+    IN expPeriod BIGINT UNSIGNED
 )
 BEGIN
-    DECLARE newExpTime BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP() + 604800000;
+    DECLARE userID BIGINT UNSIGNED;
+    DECLARE newExpTime BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP() + expPeriod;
 
     SELECT user_id INTO userID
     FROM AuthenticationTokens FORCE INDEX (sec_idx)
@@ -104,6 +105,8 @@ BEGIN
         SET expiration_time = newExpTime
         WHERE user_id = userID;
     END IF;
+
+    SELECT userID;
 END //
 DELIMITER ;
 

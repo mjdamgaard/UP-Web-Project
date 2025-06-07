@@ -4,7 +4,9 @@ import fs from 'fs';
 import path from 'path';
 // import * as process from 'process';
 
-import {ClientError, endWithError, endWithInternalError} from './err/errors.js';
+import {
+  ClientError, endWithError, endWithInternalError, endWithUnauthenticatedError,
+} from './err/errors.js';
 import {
   ScriptInterpreter, RuntimeError, jsonStringify,
 } from "../interpreting/ScriptInterpreter.js";
@@ -39,14 +41,14 @@ const scriptInterpreter = new ScriptInterpreter(
 // query path property name contains a tilde (~).
 const LOCKED_ROUTE_REGEX = /~/;
 
+const AUTH_TOKEN_REGEX = /^Bearer (.+)$/;
 
 
 
 http.createServer(async function(req, res) {
-  let userID, initGas, finalGas, lastAutoRefill;
+  let returnGasRef = [];
   try {
-    [userID, initGas, lastAutoRefill] = await getUserIDAndGas(req);
-    finalGas = await requestHandler(req, res, userID, initGas);
+    await requestHandler(req, res, returnGasRef);
   }
   catch (err) {
     if (err instanceof ClientError) {
@@ -56,28 +58,33 @@ http.createServer(async function(req, res) {
       endWithInternalError(res, err);
     }
   }
-  if (userID) {
-    try {
-      // TODO: If the lastAutoRefill time is long enough ago, add some extra
-      // gas into finalGas, and also set isAutoRefill = true such that the
-      // lastAutoRefill time is updated.
-      let isAutoRefill = false; // TODO: Change.
-      await updateGas(userID, finalGas, isAutoRefill);
-    }
-    catch (err) {
-      console.error(err);
-    }
+  let returnGas = returnGasRef[0];
+  if (returnGas) {
+    returnGas();
   }
 }).listen(8080);
 
 
 
 
-async function requestHandler(req, res, userID, initGas) {
+async function requestHandler(req, res, returnGasRef) {
   res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
 
+  // If the header includes an Authorization header, immediately consult the
+  // DB to authenticate the user, creating a userID promise that resolves with
+  // a truthy ID only if the user is correctly authenticated.
+  let userIDPromise;
+  let authHeader = req.getHeader("Authorization");
+  if (authHeader) {
+    let [ , authToken] = AUTH_TOKEN_REGEX.exec(authHeader);
+    if (!authToken) throw new ClientError(
+      "Authentication failed"
+    );
+    userIDPromise = getUserID(authToken); 
+  } 
+
   // The server only implements GET and POST requests, where for the POST 
-  // requests the post request body is a JSON object.
+  // requests the request body is a JSON object.
   let route = req.url;
   let reqParams = {};
   let isPublic = true;
@@ -105,20 +112,33 @@ async function requestHandler(req, res, userID, initGas) {
   // Get optional isPost and postData, as well as the optional user credentials
   // (username and password/token), and the options parameter.
   let {
-    isPost = false, postData, flags, options = {},
+    isPost = false, data: postData, flags, options = {},
   } = reqParams;
 
   // Also extract some additional optional parameters from options. 
-  let {gas, gasID, returnLog} = options;
+  let {returnLog, gas: reqGas, gasID: reqGasID, poolRequest} = options;
 
 
-  // TODO: Use gas or gasID, if provided, to determine the gas object to pass
-  // to the interpreter, which should generally be a reduced version of
-  // initGas.
-  gas = {...initGas}; // TODO: Change. 
+  // Wait for the userID here if the authHeader was defined.
+  let userID;
+  if (authHeader) {
+    userID = await userIDPromise;
+    if (!userID) {
+      endWithUnauthenticatedError(res);
+      return;
+    }
+  }
+
+  // Get the gas for the interpretation, potentially using reqGas or reqGasID,
+  // if provided, to determine the gas object to pass to the interpreter. If
+  // the user is authenticated, gas can be withdrawn from the user DB, and else
+  // some standard gas object is used (which in a future implementation might
+  // be made to vary in time depending on server load).
+  let [gas, returnGas] = await getGas(userID, reqGas, reqGasID);
+  returnGasRef[0] = returnGas;
 
 
-  // Parse whether the route is a "locked" route (that can only be accessed by
+  // Parse whether the route is a "locked" route (which can only be accessed by
   // the admin, if any, or by a server module function (SMF) of that directory).
   // These are all paths that include a tilde ('~') anywhere in them.
   let isLocked = LOCKED_ROUTE_REGEX.test(route);
@@ -196,36 +216,34 @@ function toMIMEType(val, mimeType) {
 
 
 
-async function getUserIDAndGas(req) {
-  // Get authentication token if one is provided.
-  let authToken = !req || "test_token"; // TODO: Change.
-
-  // If an auth. token is provided, query the user DB to get the userID, and
-  // a JSON object containing all the user's gas (not withdrawn yet).
-  if (authToken === undefined) {
-    return [];
-  }
-  else {
-    let userDBConnection = new UserDBConnection();
-    let [resultRow = []] = await userDBConnection.queryProcCall(
-      "selectUserIDAndGas", [authToken]
-    ) ?? [];
-    let [userID, gasJSON, lastAutoRefill] = resultRow;
-    userDBConnection.end();
-    let initGas = JSON.parse(gasJSON);
-    return [userID, initGas, lastAutoRefill];
-  }
+async function getUserID(authToken) {
+  let userDBConnection = new UserDBConnection();
+  let [resultRow = []] = await userDBConnection.queryProcCall(
+    "selectAuthenticatedUserID", [authToken, 604800000],
+  ) ?? [];
+  userDBConnection.end();
+  let [userID] = resultRow;
+  return userID;
 }
 
 
 
-async function updateGas(userID, finalGas, isAutoRefill) {
+async function getGas(userID, reqGas, reqGasID) {
   let userDBConnection = new UserDBConnection();
   await userDBConnection.queryProcCall(
     "updateGas", [userID, JSON.stringify(finalGas)]
   );
   userDBConnection.end();
 }
+
+
+// async function updateGas(userID, finalGas, isAutoRefill) {
+//   let userDBConnection = new UserDBConnection();
+//   await userDBConnection.queryProcCall(
+//     "updateGas", [userID, JSON.stringify(finalGas), isAutoRefill]
+//   );
+//   userDBConnection.end();
+// }
 
 
 
