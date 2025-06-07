@@ -1853,8 +1853,10 @@ export const CLEAR_FLAG = Symbol("clear");
 // is the interface for checking and raising flags. Aside from the Environment
 // class above that creates and retrieves the flag environment, the only
 // other functions that should ever interact with FlagEnvironment it the send()
-// functions/methods of Signal instances. Thus, as a developer, you should never
-// handle flags directly unless defining a Signal.send() function.  
+// functions/methods of Signal instances. However, dev function can use their
+// 'flags' property to define flags that are automatically raised it the
+// beginning of the execution (also automatically turning the function
+// "enclosed" when the 'isEnclosed' property is not specified).
 export class FlagEnvironment {
   constructor(parent) {
     this.parent = parent;

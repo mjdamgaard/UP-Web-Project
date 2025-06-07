@@ -8,6 +8,12 @@ DROP TABLE AuthenticationTokens;
 DROP TABLE UserGas;
 
 
+-- TODO: At some point split this userDB in two, one with the password hashes
+-- and emails and such, and one with the auth. tokens, and use this to make
+-- sure that the main server (which is also currently called "ajax_server")
+-- doesn't even have access to the config file, and thus the password, to the
+-- DB with the password hashes and such.
+
 
 
 

@@ -16,7 +16,7 @@ import {UserDBConnection, MainDBConnection} from './db_io/DBConnection.js';
 import {FlagTransmitter} from "../interpreting/FlagTransmitter.js";
 import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
 
-import {ELEVATED_PRIVILEGES_FLAG} from "../dev_lib/query/src/signals.js";
+import {ADMIN_PRIVILEGES_FLAG} from "../dev_lib/query/src/signals.js";
 
 import * as queryMod from "../dev_lib/query/query.js";
 
@@ -79,7 +79,7 @@ async function requestHandler(req, res, returnGasRef) {
   let userIDPromise;
   let authHeader = req.getHeader("Authorization");
   if (authHeader) {
-    let [ , authToken] = AUTH_TOKEN_REGEX.exec(authHeader);
+    let [ , authToken] = AUTH_TOKEN_REGEX.exec(authHeader) ?? [];
     if (!authToken) throw new ClientError(
       "Authentication failed"
     );
@@ -118,7 +118,10 @@ async function requestHandler(req, res, returnGasRef) {
     isPost = false, data: postData, flags: reqFlags, options = {},
   } = reqParams;
 
-  // Also extract some additional optional parameters from options. 
+  // Also extract some additional optional parameters from options.
+  if (!options || typeof options !== "object") {
+    options = {};
+  }
   let {returnLog, gas: reqGas, gasID: reqGasID, poolRequest} = options;
 
 
@@ -145,14 +148,16 @@ async function requestHandler(req, res, returnGasRef) {
   // the admin, if any, or by a server module function (SMF) of that directory).
   // These are all paths that include a tilde ('~') anywhere in them. If it is
   // indeed locked, query for the adminID of the home directory and verify that
-  // userID == adminID.  
+  // userID == adminID, then add the "admin-privileges" flag to the 'flags,'
+  // array.
   let isLocked = LOCKED_ROUTE_REGEX.test(route);
+  let flags = [];
   if (isLocked) {
     if (!userID) {
       endWithUnauthorizedError(res);
       return;
     }
-    let [ , homeDirID] = HOME_DIR_ID_REGEX.exec(route);
+    let [ , homeDirID] = HOME_DIR_ID_REGEX.exec(route) ?? [];
     let mainDBConnection = new MainDBConnection();
     let [resultRow] = await mainDBConnection.queryProcCall(
       "readHomeDirAdminID", [homeDirID],
@@ -163,15 +168,18 @@ async function requestHandler(req, res, returnGasRef) {
       endWithUnauthorizedError(res);
       return;
     }
+    flags = [ADMIN_PRIVILEGES_FLAG];
   }
 
   // Then call FlagTransmitter, with the optional reqFlags array determined by
   // the client, to get the flags which are raised initially for when the
-  // main() function is executed. 
-  let flags = FlagTransmitter.receiveFlags(reqFlags);
+  // main() function is executed.
+  let transmittedFlags = FlagTransmitter.receiveFlags(reqFlags);
+  flags = flags.concat(transmittedFlags);
 
 
-  // Now call the main.js script which redirects to the query() dev function.
+  // Now run the main.js script, whose main() function redirects to a call to
+  // the query() dev function.
   let parsedScripts = new Map([
     ["main.js", [parsedMainScript, lexArr, strPosArr, mainScript]]
   ]);

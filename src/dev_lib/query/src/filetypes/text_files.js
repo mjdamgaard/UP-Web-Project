@@ -5,8 +5,7 @@ import {
 } from "../../../../interpreting/ScriptInterpreter.js";
 
 import {
-  ELEVATED_PRIVILEGES_FLAG, SET_ELEVATED_PRIVILEGES_SIGNAL,
-  CURRENT_CORS_ORIGIN_FLAG,
+  ADMIN_PRIVILEGES_FLAG, REQUEST_ORIGIN_FLAG,
 } from "../signals.js";
 
 
@@ -200,8 +199,8 @@ export async function query(
     let resultPromiseObj = interpreter.executeFunction(
       new DevFunction(
         {isAsync: true, flags: [
-          [ELEVATED_PRIVILEGES_FLAG, homeDirID],
-          [CURRENT_CORS_ORIGIN_FLAG, route],
+          [ADMIN_PRIVILEGES_FLAG, homeDirID],
+          [REQUEST_ORIGIN_FLAG, route],
         ]},
         async ({callerNode, execEnv, interpreter}, []) => {
           let liveModule = await interpreter.import(
