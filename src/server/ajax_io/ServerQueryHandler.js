@@ -14,6 +14,14 @@ export class ServerQueryHandler {
     this.userToken = userToken;
   }
 
+  getUserToken() {
+    if (this.userToken) {
+      return this.userToken;
+    }
+    return this.userToken = localStorage.getItem("authToken");
+  }
+
+
   async queryServer(
     isPublic, route, isPost, postData, options, upNodeID, node, env
   ) {
@@ -33,10 +41,9 @@ export class ServerQueryHandler {
       reqData.flags = flagTransmitter.getFlags(node, env);
     }
 
-    // TODO: Provide the token in the Authorization header.
     let headers = {};
     if (!isPublic) {
-      let token = this.userToken ?? "TODO: Look in localStorage.";
+      let token = this.getUserToken();
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }

@@ -4,7 +4,7 @@ import {
   ScriptInterpreter, getExtendedErrorMsg
 } from "../interpreting/ScriptInterpreter.js";
 import {ServerQueryHandler} from "../server/ajax_io/ServerQueryHandler.js";
-import {CAN_CREATE_APP_FLAG} from "../dev_lib/jsx_components.js";
+import {CAN_CREATE_APP_FLAG} from "../dev_lib/jsx/jsx_components.js";
 
 /* Tests */
 
@@ -14,7 +14,7 @@ import {runTests} from "../testing/parsing_interpreting_tests.js";
 /* Static developer libraries */
 
 import * as queryMod from "../dev_lib/query/query.js";
-import * as jsxMod from "../dev_lib/jsx_components.js";
+import * as jsxMod from "../dev_lib/jsx/jsx_components.js";
 
 const staticDevLibs = new Map();
 staticDevLibs.set("query", queryMod);
@@ -68,7 +68,7 @@ const appScript = `
 `;
 const renderNumMonad = [0];
 
-const initFlags = [[CAN_CREATE_APP_FLAG]]
+const flags = [CAN_CREATE_APP_FLAG];
 
 
 
@@ -78,7 +78,7 @@ export const App = (props) => {
     if (renderNumMonad[0]++ === 0) {
       // runTests();
       scriptInterpreter.interpretScript(
-        appGas, appScript, undefined, [], initFlags,
+        appGas, appScript, undefined, [], flags,
       ).then(
         ([output, log]) => {
           console.log("UP app script exited with output and log:");

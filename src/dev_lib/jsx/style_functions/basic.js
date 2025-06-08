@@ -1,5 +1,5 @@
-import {DevFunction} from "../interpreting/ScriptInterpreter";
-import {IS_APP_ROOT_FLAG} from "./jsx_components";
+import {DevFunction} from "../../../interpreting/ScriptInterpreter";
+import {IS_APP_ROOT_FLAG} from "../jsx_components";
 
 
 // export const NO_STATE_CHANGE_FLAG = Symbol("no-state-change");

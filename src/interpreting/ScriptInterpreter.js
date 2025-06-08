@@ -233,7 +233,7 @@ export class ScriptInterpreter {
 
 
   fetch(route, callerNode, callerEnv) {
-    let fetchFun = callerEnv.scriptVars.liveModules.get("query").get("fetch");
+    let fetchFun = callerEnv.scriptVars.liveModules.get("query").$get("fetch");
     let resultPromise = this.executeFunction(
       fetchFun, [true, route], callerNode, callerEnv
     );
@@ -422,12 +422,12 @@ export class ScriptInterpreter {
           imp.namedImportArr.forEach(namedImp => {
             let ident = namedImp.ident ?? "default";
             let alias = namedImp.alias ?? ident;
-            let val = liveSubmodule.get(ident);
+            let val = liveSubmodule.$get(ident);
             curModuleEnv.declare(alias, val, true, namedImp);
           });
         }
         else if (impType === "default-import") {
-          let val = liveSubmodule.get("default");
+          let val = liveSubmodule.$get("default");
           curModuleEnv.declare(imp.ident, val, true, imp);
         }
         else throw "finalizeImportStatement(): Unrecognized import type";
@@ -510,7 +510,7 @@ export class ScriptInterpreter {
   executeModuleFunction(
     liveModule, funName, inputArr, resolveFun, moduleNode, moduleEnv, flags
   ) {
-    let fun = liveModule.get(funName);
+    let fun = liveModule.$get(funName);
     if (fun === undefined) throw new RuntimeError(
       `No function called "${funName}" was exported from ` +
       `Module ${liveModule.modulePath}`,
@@ -1207,13 +1207,13 @@ export class ScriptInterpreter {
         );
       }
       case "object": {
-        let ret = ObjectWrapper(new Map());
+        let ret = ObjectWrapper();
         expNode.members.forEach(member => {
           let key = member.ident;
           if (key === undefined) {
             key = this.evaluateExpression(member.keyExp, environment);
           }
-          ret.set(key, this.evaluateExpression(member.valExp, environment));
+          ret.$set(key, this.evaluateExpression(member.valExp, environment));
         });
         return ret;
       }
@@ -1296,27 +1296,31 @@ export class ScriptInterpreter {
         }
       }
       case "map-call": {
-        let expVal;
-        if (expNode.exp) {
-          expVal = this.evaluateExpression(expNode.exp, environment);
-        }
-        let ret;
-        if (expVal === undefined) {
-          ret = new MapWrapper();
-        }
-        else {
-          try {
-            ret = new MapWrapper(expVal);
-          }
-          catch (err) {
-            throw new TypeError(
-              "Map expects a key-value entries array, but got: " +
-              getVerboseString(expVal),
-              expNode.exp, environment
-            );
-          }
-        }
-        return ret;
+        throw new RuntimeError(
+          "Maps are not implemented yet",
+          expNode, environment
+        );
+        // let expVal;
+        // if (expNode.exp) {
+        //   expVal = this.evaluateExpression(expNode.exp, environment);
+        // }
+        // let ret;
+        // if (expVal === undefined) {
+        //   ret = new MapWrapper();
+        // }
+        // else {
+        //   try {
+        //     ret = new MapWrapper(expVal);
+        //   }
+        //   catch (err) {
+        //     throw new ArgTypeError(
+        //       "Map expects a key-value entries array, but got: " +
+        //       getVerboseString(expVal),
+        //       expNode.exp, environment
+        //     );
+        //   }
+        // }
+        // return ret;
       }
       case "console-call": {
         if (expNode.subtype === "log") {
@@ -1381,7 +1385,7 @@ export class ScriptInterpreter {
       // Then assign newVal to the member of objVal and return ret, where
       // newVal and ret are both specified by the assignFun.
       let [newVal, ret] = assignFun(prevVal);
-      objVal.set(index, newVal);
+      objVal.$set(index, newVal);
       return ret;
     }
   }
@@ -1423,13 +1427,13 @@ export class ScriptInterpreter {
           index = this.evaluateExpression(postfix.exp, environment);
         }
 
-        // Then check that the object has a get() method, and a set() method if
-        // accessed for assignment.
-        if (!(objVal.get instanceof Function)) throw new RuntimeError(
+        // Then check that the object has a $get() method, and a $set() method
+        // if accessed for assignment.
+        if (!(objVal.$get instanceof Function)) throw new RuntimeError(
           "Trying to access a member of a non-object",
           postfix, environment
         );
-        if (forAssignment && !(objVal.set instanceof Function)) {
+        if (forAssignment && !(objVal.$set instanceof Function)) {
           throw new RuntimeError(
             "Trying to assign to a member of a non-object, or an object " +
             "that is immutable in the current context",
@@ -1449,11 +1453,11 @@ export class ScriptInterpreter {
         }
 
         // Then use the get() method to get the value.
-        val = objVal.get(index);
+        val = objVal.$get(index);
 
         // Lastly, if objVal was immutable or passedToEnclosed, turn the
         // retrieved value into that as well.
-        if (!(objVal.set instanceof Function)) {
+        if (!(objVal.$set instanceof Function)) {
           val = turnImmutable(val);
         }
         if (objVal.isPassedToEnclosed) {
@@ -1778,8 +1782,9 @@ export const MODULE = Symbol("module");
 
 
 
-export class LiveModule {
+export class LiveModule extends AbstractObject {
   constructor(modulePath, exports, scriptVars) {
+    super("LiveModule");
     this.modulePath = modulePath;
     this.interpreter = scriptVars.interpreter;
     this.members = new Map();
@@ -1794,12 +1799,12 @@ export class LiveModule {
     });
   }
 
-  get(key) {
+  $get(key) {
     return this.members.get(key);
   }
 
   call(funName, inputArr, callerNode, callerEnv, ignoreIfUndef = false) {
-    let fun = this.get(funName);
+    let fun = this.$get(funName);
     if (fun !== undefined) {
       let ret = this.interpreter.executeFunction(
         fun, inputArr, callerNode, callerEnv
@@ -1944,160 +1949,206 @@ export class FlagEnvironment {
 
 
 
-// export const NO_EXIT_FLAG = Symbol("no_exit");
-
-// export const NO_EXIT_SIGNAL = new Signal((flagEnv) => {
-//     flagEnv.setFlag(NO_EXIT_FLAG);
-// });
-
-// export const WILL_EXIT_SIGNAL = new Signal(
-//   "will_exit",
-//   (flagEnv, node, env) => {
-//     let [wasFound] = flagEnv.getFlag(NO_EXIT_FLAG);
-//     if (wasFound) throw new RuntimeError(
-//       "Script is not allowed to exit here",
-//       node, env
-//     );
-//   }
-// );
 
 
 
-
-
-
-// export class ValueWrapper {
-//   constructor(val) {
-//     this.val = val;
-//   }
-//   get(key) {
-//     return this.val.get(key);
-//   }
-//   set(key, val) {
-//     return this.val.set(key, val);
-//   }
-//   entries() {
-//     return this.val.entries();
-//   }
-//   keys() {
-//     return this.val.keys();
-//   }
-//   values() {
-//     return this.val.values();
-//   }
-//   forEach(fun) {
-//     return this.val.forEach(fun);
-//   }
-//   toString() {
-//     return this.val.toString();
-//   }
-//   stringify() {
-//     return JSON.stringify(this.val);
-//   }
-// }
-
-
-export class ArrayWrapper {
-  constructor(val) {
-    super(val);
-  }
-
-  get(key, node, env) {
-    if (key === "length"){
-      return this.val.length;
-    }
-    let ind = parseInt(key);
-    if (ind !== NaN && 0 <= ind && ind < MAX_ARRAY_INDEX) {
-      return this.val[ind];
-    }
-    else throw new TypeError(
-      `Invalid array index: ${key}`,
-      node, env
-    );
-  }
-
-  set(key, val, node, env) {
-    if (key === "length") {
-      let ind = parseInt(val);
-      if (ind !== NaN && 0 <= ind && ind < MAX_ARRAY_INDEX + 1) {
-        this.val.length = ind;
-      }
-      else throw new TypeError(
-        `Invalid array length: ${val}`,
-        node, env
-      );
-    }
-    let ind = parseInt(key);
-    if (ind !== NaN && 0 <= ind && ind < MAX_ARRAY_INDEX) {
-      this.val[ind] = val;
-    }
-    else throw new TypeError(
-      `Invalid array index: ${key}`,
-      node, env
-    );
-  }
-
-  values() {
-    return this.val;
-  }
-
-  toString() {
-    return this.val.map(val => val.toString()).join(",");
-  }
-  stringify() {
-    return "[" +
-      this.val.map(val => (
-        (val instanceof ValueWrapper) ? val.stringify() : JSON.stringify(val)
-      )).join(",") +
-    "]";
-  }
-
-  append(value) {
-    return new ArrayWrapper(this.val.concat([value]))
-  }
-}
 
 
 export class ObjectWrapper {
   constructor(val) {
-    super(val);
+    this.$val = Object.create(null);
+    if (val instanceof Object) {
+      Object.assign(this.$val, val)
+    }
   }
 
-  get(key) {
-    return this.val.get(key.toString());
+  $get(key) {
+    key = toString(key);
+    if (key !== "") {
+      return this.$val[key];
+    }
+  }
+  $set(key, val) {
+    key = toString(key);
+    if (key !== "") {
+      this.$val[key] = val;
+      return true;
+    }
   }
 
-  set(key, val) {
-    return this.val.set(key.toString(), val);
+  $entries() {
+    return Object.entries(this.$val);
+  }
+  $values() {
+    return Object.values(this.$val);
+  }
+  $keys() {
+    return Object.keys(this.$val);
   }
 
-  toString() {
+  $toString() {
     return "[object Object]";
   }
-
-  stringify() {
+  $stringify() {
     return "{" +
-      this.val.entries((key, [val]) => (
-        `"${key.replaceAll('"', '\\"')}":` +
-        (val instanceof ValueWrapper) ? val.stringify() : JSON.stringify(val)
+      this.$val.entries((key, [val]) => (
+        `"${key.replaceAll('"', '\\"')}":` + jsonStringify(val)
       )).join(",") +
     "}";
   }
 }
 
 
-export class MapWrapper extends Map {
-  constructor(entries) {
-    super(entries);
+
+export class ArrayWrapper {
+  constructor(val) {
+    if (val instanceof Array) {
+      this.$val = val;
+    }
+    else if (val === undefined) {
+      this.$val = [];
+    }
+    else throw (
+      "ArrayWrapper(): Invalid argument"
+    );
   }
 
-  stringify() {
-    return this.toString();
+  $get(key, node, env) {
+    if (key === "length"){
+      return this.$val.length;
+    }
+    let ind = parseInt(key);
+    if (ind !== NaN && 0 <= ind && ind < MAX_ARRAY_INDEX) {
+      return this.$val[ind];
+    }
+  }
+  $set(key, val) {
+    if (key === "length") {
+      let ind = parseInt(val);
+      if (ind !== NaN && 0 <= ind && ind < MAX_ARRAY_INDEX + 1) {
+        this.$val.length = ind;
+        return true;
+      }
+      else return;
+    }
+    let ind = parseInt(key);
+    if (ind !== NaN && 0 <= ind && ind < MAX_ARRAY_INDEX) {
+      this.$val[ind] = val;
+      return true;
+    }
+  }
+
+  $entries() {
+    return this.$val.entries();
+  }
+  $values() {
+    return this.$val;
+  }
+  $keys() {
+    return this.$val.keys();
+  }
+
+  $toString() {
+    return this.$val.map(val => toString(val)).join(",");
+  }
+  $stringify() {
+    return "[" + this.$val.map(val => (jsonStringify(val))).join(",") + "]";
   }
 }
 
 
-export class FunctionObject {};
+
+// TODO: Implement.
+export class MapWrapper {
+  constructor(entries) { 
+
+  }
+
+}
+
+
+
+export function toString(val) {
+  if (val.$toString instanceof Function) {
+    return val.$toString();
+  }
+  else if (!(val instanceof Object)) {
+    key.toString();
+  }
+  else throw (
+    "toString(): Invalid argument"
+  );
+}
+
+export function jsonStringify(val) {
+  if (val.$stringify instanceof Function) {
+    return val.$stringify();
+  }
+  else if (typeof val === "symbol") {
+    return JSON.stringify(val.toString());
+  }
+  else if (!(val instanceof Object)) {
+    return JSON.stringify(val ?? null);
+  }
+  else throw (
+    "stringify(): Invalid argument"
+  );
+}
+
+
+
+export function jsonParse(val) {
+  try {
+    return getValue(JSON.parse(val));
+  }
+  catch (err) {
+    if (err instanceof TypeError) {
+      return undefined;
+    }
+    else throw err;
+  }
+}
+
+
+export function getValue(val) {
+  if (val instanceof Object) {
+    if (val instanceof Array) {
+      return new ArrayWrapper(val);
+    }
+    else if (val instanceof Map) {
+      return new MapWrapper(val.entries());
+    }
+    else {
+      return new ObjectWrapper(val);
+    }
+  }
+  else {
+    return val;
+  }
+}
+
+
+
+
+
+export class AbstractObject {
+  constructor(className) {
+    this.className = className;
+  }
+  $stringify() {
+    return  `"${this.className}()"`;
+  }
+  $toString() {
+    return  `[object ${this.className}()]`;
+  }
+}
+
+
+export class FunctionObject extends AbstractObject {
+  constructor() {
+    super("Function");
+  }
+};
 
 export class DefinedFunction extends FunctionObject {
   constructor(node, decEnv) {
@@ -2148,8 +2199,9 @@ export class DevFunction extends FunctionObject {
 
 
 
-export class JSXElement {
+export class JSXElement extends AbstractObject {
   constructor(node, decEnv, interpreter) {
+    super("JSXElement");
     this.node = node;
     this.decEnv = decEnv;
     let {tagName, isComponent, isFragment, propArr, children} = node;
@@ -2167,34 +2219,42 @@ export class JSXElement {
           propNode.exp, decEnv
         );
         expVal.forEach((val, key) => {
-          this.props.set(key, val);
+          this.props.$set(key, val);
         });
       } else {
-        this.props.set(propNode.ident, expVal);
+        this.props.$set(propNode.ident, expVal);
       }
     });
     if (children) {
       let childrenProp = new Map();
       children.forEach((contentNode, ind) => {
         let val = interpreter.evaluateExpression(contentNode, decEnv);
-        childrenProp.set(ind, val);
+        childrenProp.$set(ind, val);
       });
-      this.props.set("children", childrenProp);
+      this.props.$set("children", childrenProp);
     }
     if (isComponent) {
-      this.key = this.props.get("key");
+      this.key = this.props.$get("key");
       if (this.key === undefined) throw new RuntimeError(
         'JSX component element defined without a "key" prop',
         node, decEnv
       );
     }
   }
+
+  $stringify() {
+    return '"JSXElement()"';
+  }
+  $toString() {
+    return '[object JSXElement]';
+  }
 }
 
 
 
-export class PromiseObject {
+export class PromiseObject extends AbstractObject {
   constructor(promiseOrFun, interpreter, node, env) {
+    super("Promise");
     if (promiseOrFun instanceof Promise) {
       this.promise = promiseOrFun;
     }
@@ -2209,7 +2269,7 @@ export class PromiseObject {
     }
   }
 
-  get(key) {
+  $get(key) {
     if (key === "then") {
       return new DevFunction(
         {}, ({callerNode, callerEnv, interpreter}, [callbackFun]) => {
@@ -2278,7 +2338,7 @@ export class CustomException extends RuntimeError {
     super(val, node, environment);
   }
 }
-export class TypeError extends RuntimeError {
+export class ArgTypeError extends RuntimeError {
   constructor(val, node, environment) {
     super(val, node, environment);
   }
@@ -2290,16 +2350,16 @@ export class TypeError extends RuntimeError {
 
 
 export function turnImmutable(val) {
-  if (val && val.set instanceof Function) {
+  if (val && val.$set instanceof Function) {
     val = Object.create(val);
-    val.set = false;
+    val.$set = false;
     return val;
   } else {
     return val;
   }
 }
 export function passedAsMutable(val) {
-  if (val && val.set instanceof Function && !val.passAsMutable) {
+  if (val && val.$set instanceof Function && !val.passAsMutable) {
     val = Object.create(val);
     val.passAsMutable = true;
     return val;
@@ -2308,7 +2368,7 @@ export function passedAsMutable(val) {
   }
 }
 export function notPassedAsMutable(val) {
-  if (val && val.set instanceof Function && val.passAsMutable) {
+  if (val && val.$set instanceof Function && val.passAsMutable) {
     val = Object.create(val);
     val.passAsMutable = false;
     return val;
@@ -2318,7 +2378,7 @@ export function notPassedAsMutable(val) {
 }
 export function turnPassedToEnclosed(val) {
   if (
-    val && (val instanceof FunctionObject || val.get instanceof Function) &&
+    val && (val instanceof FunctionObject || val.$get instanceof Function) &&
     !val.isPassedToEnclosed
   ) {
     val = Object.create(val);
@@ -2329,34 +2389,6 @@ export function turnPassedToEnclosed(val) {
   }
 }
 
-
-
-
-export function jsonStringify(val) {
-  return val?.jsonVal ?? JSON.stringify(val);
-}
-
-
-export function jsonParse(val) {
-  return getValueWrapper(val);
-}
-
-export function getValueWrapper(val) {
-  if (val && typeof val === "object") {
-    if (val instanceof Array) {
-      return new ArrayWrapper(val);
-    }
-    else if (val instanceof Map) {
-      return new MapWrapper(val.entries());
-    }
-    else {
-      return new ObjectWrapper(val);
-    }
-  }
-  else {
-    return val;
-  }
-}
 
 
 
@@ -2457,7 +2489,7 @@ const SNIPPET_AFTER_MAX_LEN = 100;
 export function getExtendedErrorMsg(err) {
   // Get the error type.
   let type;
-  if (err instanceof TypeError) {
+  if (err instanceof ArgTypeError) {
     type = "TypeError";
   }
   else if (err instanceof LoadError) {
@@ -2468,9 +2500,6 @@ export function getExtendedErrorMsg(err) {
   }
   else if (err instanceof CustomException) {
     type = "Uncaught or re-thrown custom exception";
-  }
-  else if (err instanceof StyleError) {
-    type = "StyleError";
   }
   else if (err instanceof SyntaxError) {
     return getExtendedErrorMsgHelper(err);

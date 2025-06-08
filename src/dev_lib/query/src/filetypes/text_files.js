@@ -1,7 +1,6 @@
 
 import {
-  RuntimeError, payGas, DevFunction, CLEAR_FLAG, getValueWrapper,
-  PromiseObject,
+  RuntimeError, payGas, DevFunction, CLEAR_FLAG, getValue, PromiseObject,
 } from "../../../../interpreting/ScriptInterpreter.js";
 
 import {
@@ -119,7 +118,7 @@ export async function query(
       "Input array not a valid base-64-encoded JSON array",
       callerNode, execEnv
     );
-    inputArr = inputArr.map(val => getValueWrapper(val));
+    inputArr = inputArr.map(val => getValue(val));
 
     // Import and execute the given JS module using interpreter.import(), and
     // do so within a dev function with the "clear" flag, which removes all
@@ -183,7 +182,7 @@ export async function query(
       "Input array not a valid base-64-encoded JSON array",
       callerNode, execEnv
     );
-    inputArr = inputArr.map(val => getValueWrapper(val));
+    inputArr = inputArr.map(val => getValue(val));
 
     // Import and execute the given JS module using interpreter.import(), and
     // do so within a dev function with an "elevated-privileges" that

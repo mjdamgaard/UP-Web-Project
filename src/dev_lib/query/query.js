@@ -1,7 +1,6 @@
 
 import {
-  DevFunction, FunctionObject, Signal, RuntimeError, TypeError, LoadError,
-  getObject,
+  DevFunction, RuntimeError, LoadError, getObject,
 } from '../../interpreting/ScriptInterpreter.js';
 import {parseRoute} from './src/parseRoute.js';
 
