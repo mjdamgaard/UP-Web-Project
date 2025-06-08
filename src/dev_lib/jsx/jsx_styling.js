@@ -34,7 +34,7 @@ export class JSXAppStyler {
   async loadStylesOfAllStaticJSXModules(liveModules) {
     let promiseArr = [];
     liveModules.forEach((liveModule) => {
-      if (route.slice(-4) === ".jsx") {
+      if (liveModule.modulePath.slice(-4) === ".jsx") {
         promiseArr.push(this.loadStyle(liveModule));
       }
     });
@@ -58,8 +58,8 @@ export class JSXAppStyler {
       // a PromiseObject to a styleSpecs object, in which case wait for it and
       // unwrap it.
       let styleSpecs = this.interpreter.executeFunction(
-        getStyle, [componentPath, liveModule],
-        callerNode, execEnv
+        this.getStyle, [componentPath, liveModule],
+        callerNode, callerEnv
       );
       if (styleSpecs instanceof PromiseObject) {
         styleSpecs = await styleSpecs.promise;
@@ -117,7 +117,9 @@ export class JSXAppStyler {
       // IDs from styleSheetPaths will have been added to loadedStyleSheetIDs,
       // which is required.)
       promiseArr.push(new Promise(async (resolve) => {
-        let styleSheet = await interpreter.import(route, node, env);
+        let styleSheet = await this.interpreter.import(
+          route, callerNode, callerEnv
+        );
         this.transpileAndInsertStyleSheet(
           styleSheet, route, id, isTrusted, callerNode, callerEnv
         );
@@ -159,6 +161,7 @@ export class JSXAppStyler {
 
 export class JSXComponentStyler {
   constructor(jsxAppStyler, componentPath) {
+    this.componentPath = componentPath;
     this.classTransformPromise =
       jsxAppStyler.getClassTransformPromise(componentPath);
   }
@@ -168,7 +171,7 @@ export class JSXComponentStyler {
       // If classTransform is undefined, it ought to mean that the style for
       // this component has not yet been loaded, in which case throw an error.
       if (classTransform === undefined) throw new RuntimeError(
-        `Style missing for JSX component at ${componentModule.modulePath}, ` +
+        `Style missing for JSX component at ${this.componentPath}, ` +
         "possibly due to importing a JSX module dynamically using the " +
         "regular import() function rather than JSXInstance.import()",
         callerNode, callerEnv

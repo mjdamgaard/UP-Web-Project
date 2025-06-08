@@ -36,7 +36,7 @@ export function parseString(str, node, env, parser) {
   payGas(node, env, {comp: getParsingGasCost(str)});
   let [syntaxTree, lexArr, strPosArr] = parser.parse(str);
   if (syntaxTree.error) throw syntaxTree.error;
-  let result = scriptSyntaxTree.res;
+  let result = syntaxTree.res;
   return [result, lexArr, strPosArr];
 }
 
@@ -53,7 +53,6 @@ export class ScriptInterpreter {
     this.isServerSide = isServerSide;
     this.serverQueryHandler = serverQueryHandler;
     this.dbQueryHandler = dbQueryHandler;
-    this.jsFileCache = jsFileCache;
     this.staticDevLibs = staticDevLibs;
     this.devLibURLs = devLibURLs;
   }
@@ -1782,6 +1781,21 @@ export const MODULE = Symbol("module");
 
 
 
+
+export class AbstractObject {
+  constructor(className) {
+    this.className = className;
+  }
+  $stringify() {
+    return  `"${this.className}()"`;
+  }
+  $toString() {
+    return  `[object ${this.className}()]`;
+  }
+}
+
+
+
 export class LiveModule extends AbstractObject {
   constructor(modulePath, exports, scriptVars) {
     super("LiveModule");
@@ -1963,13 +1977,13 @@ export class ObjectWrapper {
   }
 
   $get(key) {
-    key = toString(key);
+    key = getString(key);
     if (key !== "") {
       return this.$val[key];
     }
   }
   $set(key, val) {
-    key = toString(key);
+    key = getString(key);
     if (key !== "") {
       this.$val[key] = val;
       return true;
@@ -2049,7 +2063,7 @@ export class ArrayWrapper {
   }
 
   $toString() {
-    return this.$val.map(val => toString(val)).join(",");
+    return this.$val.map(val => getString(val)).join(",");
   }
   $stringify() {
     return "[" + this.$val.map(val => (jsonStringify(val))).join(",") + "]";
@@ -2068,12 +2082,12 @@ export class MapWrapper {
 
 
 
-export function toString(val) {
+export function getString(val) {
   if (val.$toString instanceof Function) {
     return val.$toString();
   }
   else if (!(val instanceof Object)) {
-    key.toString();
+    val.toString();
   }
   else throw (
     "toString(): Invalid argument"
@@ -2130,18 +2144,6 @@ export function getWrappedValue(val) {
 
 
 
-
-export class AbstractObject {
-  constructor(className) {
-    this.className = className;
-  }
-  $stringify() {
-    return  `"${this.className}()"`;
-  }
-  $toString() {
-    return  `[object ${this.className}()]`;
-  }
-}
 
 
 export class FunctionObject extends AbstractObject {

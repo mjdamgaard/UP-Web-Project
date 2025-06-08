@@ -8,8 +8,8 @@ const LOCKED_ROUTE_REGEX = /~/;
 
 export async function query(
   {callerNode, execEnv, interpreter},
-  route, isPost, _, options,
-  upNodeID, homeDirID, filePath, _, queryPathArr
+  route, isPost, _postData, options,
+  upNodeID, homeDirID, filePath, _fileExt, queryPathArr
 ) {
   let {dbQueryHandler} = interpreter;
 
@@ -91,7 +91,7 @@ export async function query(
       callerNode, execEnv
     );
     return await dbQueryHandler.queryDBProc(
-      "editHomeDir", [homeDirID, requestedAdminID],
+      "editHomeDir", [homeDirID, adminID],
       route, upNodeID, options, callerNode, execEnv,
     );
   }

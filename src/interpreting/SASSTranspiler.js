@@ -79,7 +79,7 @@ export class SASSTranspiler {
       return "";
     }
     else if (type === "ruleset") {
-      transpileRuleset(
+      this.transpileRuleset(
         stmt, environment, id, styleSheetIDs, isTrusted, indentSpace, isNested
       );
     }
@@ -168,7 +168,7 @@ export class SASSTranspiler {
         // transpile it, passing isTrusted to only the first one when ind === 1,
         // and passing isTrusted := true for all subsequent selectors.
         if (ind % 2 === 0) {
-          return transpileCompoundSelector(
+          return this.transpileCompoundSelector(
             child, environment, id, styleSheetIDs,
             (ind === 0) ? isTrusted : true,
           );
@@ -203,7 +203,7 @@ export class SASSTranspiler {
     // style sheet.
     let isConfinedFlagRef = [false];
     let transpiledCompoundSelector = selector.map(child => (
-      transpileSimpleSelector(
+      this.transpileSimpleSelector(
         child, environment, id, styleSheetIDs, isConfinedFlagRef
       )
     )).join("");

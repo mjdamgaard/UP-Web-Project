@@ -186,7 +186,7 @@ export async function query(
       "Secondary index lists are only implemented for the '.bbt' file type",
       callerNode, execEnv
     );
-    let procName = readBBTScoreOrderedList;
+    let procName = "readBBTScoreOrderedList";
     let paramObj;
     try {
       paramObj =  Object.fromEntries(queryPathArr.slice(1));

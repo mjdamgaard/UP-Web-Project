@@ -257,7 +257,7 @@ export const sassGrammar = {
     rules: [
       ["/!" + FLAG_PATTERN + "/"],
     ],
-    process: () => ({
+    process: (children) => ({
       type: "flag",
       lexeme: children[0],
     }),

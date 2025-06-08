@@ -6,10 +6,12 @@ import {parseRoute} from './src/parseRoute.js';
 
 import * as directoriesMod from "./src/filetypes/directories.js";
 import * as textFilesMod from "./src/filetypes/text_files.js";
-import * as relationalTableFilesMod from "./src/filetypes/rel_table.js";
+import * as relationalTableFilesMod from "./src/filetypes/rel_tables.js";
 import * as fullTextTableFilesMod from "./src/filetypes/full_text_tables.js";
 
-import {CHECK_ELEVATED_PRIVILEGES_SIGNAL} from "./src/signals.js";
+import {
+  CHECK_ADMIN_PRIVILEGES_SIGNAL, CHECK_CAN_POST_SIGNAL
+} from "./src/signals.js";
 
 
 
@@ -46,7 +48,7 @@ export const query = new DevFunction(
     // directory of homeDirID.
     if (isLocked) {
       execEnv.sendSignal(
-        CHECK_ELEVATED_PRIVILEGES_SIGNAL, callerNode, homeDirID
+        CHECK_ADMIN_PRIVILEGES_SIGNAL, callerNode, homeDirID
       );
     }
 

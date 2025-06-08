@@ -228,26 +228,3 @@ export async function query(
   );
 }
 
-
-
-
-
-
-export function queryDBProcOrCache(
-  procName, paramValArr, routesToEvict,
-  route, upNodeID, jsFileCache, routesToEvict, options, onCached,
-  callerNode, execEnv
-) {
-  if (interpreter.isServerSide) {
-    return dbQueryHandler.queryDBProcOrCache(
-      procName, paramValArr,
-      route, upNodeID, jsFileCache, routesToEvict, options, onCached,
-      callerNode, execEnv
-    );
-  } else {
-    return serverQueryHandler.queryServerOrCache(
-      route, isPost, postData, upNodeID, interpreter, jsFileCache,
-      routesToEvict, options, onCached, callerNode, execEnv,
-    );
-  }
-}

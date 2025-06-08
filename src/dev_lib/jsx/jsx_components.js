@@ -223,7 +223,7 @@ class JSXInstance {
     let error;
     try {
       let inputArr = [
-        resolve, new JSXInstanceInterface(this, execEnv),
+        resolve, new JSXInstanceInterface(this, callerEnv),
       ];
       interpreter.executeFunction(
         renderFun, inputArr, callerNode, callerEnv
@@ -455,7 +455,7 @@ class JSXInstance {
     else {
       if (this.parentInstance) {
         this.parentInstance.dispatch(
-          actionKey, inputArr, interpreter, callerNode, callerEnv
+          actionKey, input, interpreter, callerNode, callerEnv
         );
       }
     }
