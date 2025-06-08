@@ -2,7 +2,7 @@
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, turnImmutable,
   ArrayWrapper, ObjectWrapper, Signal, passedAsMutable, getExtendedErrorMsg,
-  getString, AbstractObject,
+  getString, AbstractObject, FunctionObject,
 } from "../../interpreting/ScriptInterpreter.js";
 import {CAN_POST_FLAG} from "../query/src/signals.js";
 
@@ -117,7 +117,6 @@ class JSXInstance {
     this.callerNode = callerNode;
     this.callerEnv = callerEnv;
     this.isDiscarded = undefined;
-    this.onDismount = undefined;
     this.rerenderPromise = undefined;
   }
 
@@ -155,10 +154,10 @@ class JSXInstance {
     }
 
     // Then get the component module's render() function.
-    let fun = this.componentModule.$get("render");
-    if (!fun) throw new RuntimeError(
-      "Component module is missing a render function " +
-      '(absolute instance key = "' + this.getFullKey() + '")',
+    let renderFun = this.componentModule.$get("render");
+    if (!renderFun) throw new RuntimeError(
+      'Component module is missing a render() function at "' +
+      this.componentPath + '"',
       callerNode, callerEnv
     );
     
@@ -193,7 +192,7 @@ class JSXInstance {
       // execution of getDOMNode().
       this.childInstances.forEach((_, key, map) => {
         if (!marks.get(key)) {
-          map.get(key).isDiscarded = true;
+          map.get(key).dismount();
           map.delete(key);
         }
       });
@@ -209,20 +208,15 @@ class JSXInstance {
       }
     });
 
-    // Also define a dispatch callback used for dispatching calls to the
-    // component's action methods in order to change the state and queue a
-    // rerender.
-    let dispatch = new DispatchFunction(this, callerEnv);
-
     // Now call the component module's render() function, and check that
     // resolve() has been called synchronously by it.
     let error;
     try {
       let inputArr = [
-        resolve, props, dispatch, this.state, passedAsMutable(this.refs),
+        resolve, new JSXInstanceInterface(this, execEnv),
       ];
       interpreter.executeFunction(
-        fun, inputArr, callerNode, callerEnv, this.componentModule
+        renderFun, inputArr, callerNode, callerEnv
       );
     }
     catch (err) {
@@ -264,6 +258,14 @@ class JSXInstance {
     }
   }
 
+  dismount() {
+    this.childInstances.forEach(child => {
+      child.dismount();
+    });
+    this.unsubscribeFromContexts();
+    this.isDiscarded = true;
+  }
+
 
 
   getDOMNode(
@@ -287,7 +289,7 @@ class JSXInstance {
     // and return an array of all these values, some of which are DOM nodes and
     // some of which are strings.
     if (jsxElement.isFragment) {
-      let children = jsxElement.props.get("children") ?? new Map();
+      let children = jsxElement.props.$get("children") ?? new Map();
       return children.values().map(val => (
         this.getDOMNode(
           val, marks, interpreter, callerNode, callerEnv, ownDOMNodes, false
@@ -375,10 +377,6 @@ class JSXInstance {
             }
             break;
           }
-          case "onDismount" : {
-            this.onDismount = val;
-            break;
-          }
           default: throw new RuntimeError(
             `Invalid or not-yet-implemented attribute, "${key}" for ` +
             "non-component elements",
@@ -427,94 +425,75 @@ class JSXInstance {
 
 
 
-  // dispatch() dispatches an action, either to self, to an ancestor instance,
-  // or to a child instance. If receiverComponentPath is undefined, dispatch
-  // to self. Else if childKey is undefined, dispatch to parent. Else dispatch
-  // to the child with the key = childKey.
-  dispatch(
-    action, inputArr, receiverComponentPath = undefined, childKey = undefined,
-    interpreter, callerNode, callerEnv
-  ) {
-    childKey = `${childKey}`;
-
-    // If receiverComponentPath is undefined, dispatch to self.
-    if (receiverComponentPath === undefined) {
-      this.receiveDispatch(
-        action, inputArr, interpreter, callerNode, callerEnv
-      );
-    }
-
-    // Else if childKey is defined, dispatch to that child, but only if the
-    // receiverComponentPath is a match.
-    else if (childKey !== undefined) {
-      let childInstance = this.childInstances.get(childKey);
-      if (!childInstance) throw new RuntimeError(
-        `Dispatch to a non-existing child instance of key = ${childKey}`,
-        callerNode, callerEnv
-      );
-      if (childInstance.componentPath !== receiverComponentPath) {
-        throw new RuntimeError(
-          `Dispatch to a child instance with a non-matching component path, ` +
-          `"${childInstance.componentPath}" !== "${receiverComponentPath}", `
-          `with child key = ${childKey}`,
-          callerNode, callerEnv
-        );
-      }
-      childInstance.receiveDispatch(
-        action, inputArr, interpreter, callerNode, callerEnv
-      );
-    }
-
-    // Else if both optional arguments are undefined, dispatch to the nearest
-    // ancestor with the given receiverComponentPath, and do nothing if the
-    // instance has no ancestor of that type.
-    else {
-      let parentInstance = this.parentInstance;
-      if (parentInstance) {
-        if (parentInstance.componentPath === receiverComponentPath) {
-          parentInstance.receiveDispatch(
-            action, inputArr, interpreter, callerNode, callerEnv
-          );
-        }
-        else {
-          parentInstance.dispatch(
-            action, inputArr, receiverComponentPath, undefined,
-            interpreter, callerNode, callerEnv
-          );
-        }
-      }
-    }
-  }
-
-
-  // receiveDispatch() calls the appropriate method, of the same name as held
-  // by the action input, of the instance's componentModule. (A rerender of the
-  // component is only queued if the called action method makes a call to
-  // instance.setState() inside it.)
-  receiveDispatch(
-    actionKey, inputArr, interpreter, callerNode, callerEnv
-  ) {
-    // Get the action method, and throw if it is not a property of an 'actions'
-    // object exported by the component's module.
+  // dispatch(actionKey, input?) dispatches an action to the first among
+  // the instance itself and its ancestors who has an action of that key (which
+  // might be a Symbol). The actions are declared by the 'actions' object
+  // exported by a component module. If no ancestors has an action of a
+  // matching key, dispatch() just fails silently and nothing happens.
+  dispatch(actionKey, input, interpreter, callerNode, callerEnv) {
     let actions = this.componentModule.$get("actions");
     let actionFun;
     if (actions instanceof ObjectWrapper) {
       actionFun = actions.$get(actionKey);
     }
-    if (!actionFun) throw new RuntimeError(
-      `Dispatched action, ${actionKey}, does not exist for component at ` +
-      `${this.componentPath}`,
+    if (actionFun) {
+      interpreter.executeFunction(
+        actionFun, [new JSXInstanceInterface(this, callerEnv), input],
+        callerNode, callerEnv, this.componentModule
+      );
+    }
+    else {
+      if (this.parentInstance) {
+        this.parentInstance.dispatch(
+          actionKey, inputArr, interpreter, callerNode, callerEnv
+        );
+      }
+    }
+
+  }
+
+
+  // call(instanceKey, methodKey, input?) either calls one of the instance's
+  // own methods, if instanceKey is falsy or equal to "self", or otherwise
+  // calls a method of the child instance with the same key. The method called
+  // is the one with the key of methodKey in the 'methods' object exported by
+  // the component module of the target instance.
+  call(
+    instanceKey, methodKey, input, interpreter, callerNode, callerEnv
+  ) {
+    // First get the target instance.
+    let targetInstance;
+    if (!instanceKey || instanceKey === "self") {
+      targetInstance = this;
+    }
+    else {
+      targetInstance = this.childInstances.get(instanceKey);
+    }
+    if (!targetInstance) throw new RuntimeError(
+      `No child instance found with the key of "${instanceKey}"`,
       callerNode, callerEnv
     );
 
-    // Call the dispatch method to get the new state, and assign this to
-    // this.state immediately.
-    this.state = interpreter.executeFunction(
-      actionFun, [new JSXInstanceInterface(this, callerEnv), ...inputArr],
-      callerNode, callerEnv, this.componentModule
+    // Then find and call its targeted method.
+    let methods = targetInstance.componentModule.$get("methods");
+    let methodFun;
+    if (methods instanceof ObjectWrapper) {
+      methodFun = methods.$get(methodKey);
+    }
+    if (methodFun) {
+      interpreter.executeFunction(
+        methodFun, [new JSXInstanceInterface(targetInstance, callerEnv), input],
+        callerNode, callerEnv
+      );
+    }
+    else throw new RuntimeError(
+      `Call to a non-existent method, "${methodKey}", to a component ` +
+      `instance of "${targetInstance.componentPath}"`,
+      callerNode, callerEnv
     );
-
   }
+
+
 
 
   queueRerender(interpreter) {
@@ -539,36 +518,52 @@ class JSXInstance {
   }
 
 
+
+
+  // TODO: Implement unsubscribeFromContexts(), and impl. contexts in general.
+  unsubscribeFromContexts() {
+
+  }
+
 }
+
+
+
 
 
 
 
 class JSXInstanceInterface extends AbstractObject {
   constructor(jsxInstance, decEnv) {
-    super("JSXInstanceInterface");
+    super("JSXInstance");
     this.jsxInstance = jsxInstance;
     this.decEnv = decEnv;
-    // Note that we don't need to pass decEnv to DispatchFunction() here,
-    // since this class extends ProtectedObject, which means that all method
-    // calls can already only happen within the environmental call stack of
-    // decEnv.
-    this.dispatch = new DispatchFunction(jsxInstance);
   }
 
+  // This property makes the class instances "confined" (which is also why we
+  // give the decEnv property).
   get isConfined() {
     return true;
   }
 
+
   $get(key) {
-    if (key === "call") {
-      return this.call;
+    /* Properties */
+    if (key === "props") {
+      return this.jsxInstance.props;
     }
+    if (key === "state") {
+      return this.jsxInstance.state;
+    }
+    if (key === "refs") {
+      return this.jsxInstance.refs;
+    }
+    /* Methods */
     if (key === "dispatch") {
       return this.dispatch;
     }
-    else if (key === "state") {
-      return this.instance.state;
+    if (key === "call") {
+      return this.call;
     }
     else if (key === "setState") {
       return this.setState;
@@ -579,21 +574,44 @@ class JSXInstanceInterface extends AbstractObject {
     else if (key === "import") {
       return this.import;
     }
+    else if (key === "subscribeToContext") {
+      return this.subscribeToContext;
+    }
     // TODO: Add more instance methods, such as a method to get bounding box
     // data, or a method to get a PromiseObject that resolves a short time
     // after the bounding box data, and similar data, is ready.
   }
 
+
+  // See the comments above for what dispatch() and call() does.
+  dispatch = new DevFunction(
+    {},
+    ({callerNode, execEnv, interpreter}, [actionKey, input]) => {
+      this.jsxInstance.dispatch(
+        actionKey, input, interpreter, callerNode, execEnv
+      );
+    }
+  );
+
+  call = new DevFunction(
+    {},
+    ({callerNode, execEnv, interpreter}, [instanceKey, methodKey, input]) => {
+      this.jsxInstance.call(
+        instanceKey, methodKey, input, interpreter, callerNode, execEnv
+      );
+    }
+  );
+
   // setState() assigns to jsxInstance.state immediately, which means that the
   // state changes will be visible to all subsequently dispatched actions to
-  // this instance. However, since the render() function can only the state via
-  // its arguments (i.e. the 'state' argument), the state changes will not be
-  // visible in the continued execution of a render() after it has dispatched
-  // an action, but only be visible on a subsequent render. setState() also
+  // this instance. However, since the render() function can only access the
+  // state via its 'state' argument, the state changes will not be visible in
+  // the continued execution of a render() after it has dispatched an action,
+  // but only be visible on a subsequent rerender. Also note that setState()
   // always queues a rerender, even if the new state is equivalent to the old
   // one.
-  setState = new DevFunction({}, ({interpreter}, [state]) => {
-    this.jsxInstance.state = turnImmutable(state);
+  setState = new DevFunction({}, ({interpreter}, [newState]) => {
+    this.jsxInstance.state = turnImmutable(newState);
     this.jsxInstance.queueRerender(interpreter);
   });
 
@@ -618,37 +636,12 @@ class JSXInstanceInterface extends AbstractObject {
   );
 
 
+  setState = new DevFunction({}, ({interpreter}, []) => {
+    // TODO: Implement.
+  });
+
 }
 
-
-
-class DispatchFunction extends DevFunction {
-  constructor(jsxInstance, decEnv) {
-    super(
-      {decEnv: decEnv},
-      (
-        {interpreter, callerNode, execEnv},
-        action, inputArr, componentModule, childKey
-      ) => {
-        if (!(inputArr instanceof ArrayWrapper)) throw new RuntimeError(
-          "Dispatching an action with an invalid input array",
-          callerNode, execEnv
-        );
-        if (!(componentModule instanceof LiveModule)) {
-          throw new RuntimeError(
-            "Dispatching an action with an invalid receiver component",
-            callerNode, execEnv
-          );
-        }
-        let componentPath = componentModule.modulePath;
-        jsxInstance.dispatch(
-          action, [...inputArr], componentPath, childKey,
-          interpreter, callerNode, execEnv
-        );
-      }
-    );
-  }
-}
 
 
 

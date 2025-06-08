@@ -170,7 +170,7 @@ export class JSXComponentStyler {
       if (classTransform === undefined) throw new RuntimeError(
         `Style missing for JSX component at ${componentModule.modulePath}, ` +
         "possibly due to importing a JSX module dynamically using the " +
-        "regular import() function rather than JSXInstanceInterface.import()",
+        "regular import() function rather than JSXInstance.import()",
         callerNode, callerEnv
       );
 
