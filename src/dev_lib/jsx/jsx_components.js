@@ -144,13 +144,23 @@ class JSXInstance {
     // render).
     this.props = props;
     if (this.state === undefined) {
-      // Initialize the state.
-      this.state = this.componentModule.$call(
-        "getInitState", [props], callerNode, callerEnv, true
-      ) ?? new ObjectWrapper();
+      // Get the initial state if the component module declares one, which is
+      // done either by exporting a 'getInitState()' function, or a constant
+      // object called 'initState'.
+      let state;
+      let getInitState = this.componentModule.$get("getInitState");
+      if (getInitState) {
+        state = interpreter.executeFunction(
+          getInitState, [props], callerNode, callerEnv
+        );
+      } else {
+        state = this.componentModule.$get("getInitState") ||
+          new ObjectWrapper();
+      }
+      this.state = turnImmutable(state);
 
       // And store the refs object.
-      this.refs = props.$get("refs") ?? new ObjectWrapper();
+      this.refs = turnImmutable(props.$get("refs") ?? new ObjectWrapper());
     }
 
     // Then get the component module's render() function.
@@ -541,7 +551,7 @@ class JSXInstanceInterface extends AbstractObject {
   }
 
   // This property makes the class instances "confined" (which is also why we
-  // give the decEnv property).
+  // include the decEnv property above).
   get isConfined() {
     return true;
   }
@@ -625,18 +635,19 @@ class JSXInstanceInterface extends AbstractObject {
   // the app call getStyle() to get and load the style, before the returned
   // promise resolves.
   import = new DevFunction(
-    {isAsync: true},
+    {isAsync: true, minArgNum: 1},
     async ({callerNode, execEnv, interpreter}, [route]) => {
       let liveModule = interpreter.import(route, callerNode, execEnv);
       if (route.slice(-4) === ".jsx") {
-        await this.jsxInstance.loadStyle(liveModule);
+        await this.jsxInstance.jsxAppStyler.loadStyle(
+          liveModule, callerNode, execEnv
+        );
       }
       return liveModule;
     }
   );
 
-
-  setState = new DevFunction({}, ({interpreter}, []) => {
+  subscribeToContext = new DevFunction({}, ({interpreter}, []) => {
     // TODO: Implement.
   });
 
@@ -648,8 +659,9 @@ class JSXInstanceInterface extends AbstractObject {
 
 
 
-class DOMNodeWrapper {
+class DOMNodeWrapper extends AbstractObject {
   constructor(domNode) {
+    super("DOMNode");
     this.domNode = domNode;
   }
 }
