@@ -584,6 +584,9 @@ class JSXInstanceInterface extends AbstractObject {
     else if (key === "import") {
       return this.import;
     }
+    else if (key === "provideContext") {
+      return this.subscribeToContext;
+    }
     else if (key === "subscribeToContext") {
       return this.subscribeToContext;
     }
@@ -647,9 +650,24 @@ class JSXInstanceInterface extends AbstractObject {
     }
   );
 
+  // provideContext(key, val) provides a context identified by key for all its
+  // descendants, meaning that they can subscribe to it an get val in return.
+  // And if this instance ever calls provideContext() with a different value
+  // for that key, all the subscribing instances will rerender.
+  provideContext = new DevFunction({}, ({interpreter}, []) => {
+    // TODO: Implement.
+  });
+
+  // subscribeToContext(contextKey) looks through the instance's ancestors and
+  // finds the first one, if any, that has provided a context of that key. If
+  // one is found, the value is returned, and this current instance is
+  // "subscribed" to the context (if not already), meaning that if the context's
+  // value changes, this instance rerenders. If no context is found of the
+  // given key, no side-effect happens, and undefined is returned.
   subscribeToContext = new DevFunction({}, ({interpreter}, []) => {
     // TODO: Implement.
   });
+
 
 }
 

@@ -22,7 +22,7 @@ export const query = new DevFunction(
     [isPublic, route, isPost = false, postData, options]
   ) {
     isPost = isPublic ? false : isPost;
-    options = getObject(options) ?? {};
+    options = options?.$val ?? {};
 
     // If isPost == true, check if the current environment is allowed to post.
     if (isPost) {

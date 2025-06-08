@@ -2099,7 +2099,7 @@ export function jsonStringify(val) {
 
 export function jsonParse(val) {
   try {
-    return getValue(JSON.parse(val));
+    return getWrappedValue(JSON.parse(val));
   }
   catch (err) {
     if (err instanceof TypeError) {
@@ -2110,7 +2110,7 @@ export function jsonParse(val) {
 }
 
 
-export function getValue(val) {
+export function getWrappedValue(val) {
   if (val instanceof Object) {
     if (val instanceof Array) {
       return new ArrayWrapper(val);
