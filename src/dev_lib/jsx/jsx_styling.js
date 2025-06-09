@@ -2,7 +2,7 @@
 
 import sassTranspiler from "../../interpreting/SASSTranspiler.js";
 import {
-  RuntimeError, ArrayWrapper, PromiseObject, ArgTypeError,
+  RuntimeError, UHArray, PromiseObject, ArgTypeError,
 } from "../../interpreting/ScriptInterpreter.js";
 import {sassParser} from "../../interpreting/parsing/SASSParser.js";
 
@@ -99,7 +99,7 @@ export class JSXAppStyler {
       // If route is an ArrayWrapper, treat it as a [route, isTrusted] pair
       // instead.
       let isTrusted;
-      if (route instanceof ArrayWrapper) {
+      if (route instanceof UHArray) {
         isTrusted = route.get(1);
         route = route.get(0);
       }
@@ -201,7 +201,7 @@ export class JSXComponentStyler {
       classTransform.values().forEach(inst => {
         // Each transform instruction (user-defined) is supposed to be of the
         // form [selector, classStr]. Extract these values.
-        if (!(inst instanceof ArrayWrapper)) throw new RuntimeError(
+        if (!(inst instanceof UHArray)) throw new RuntimeError(
           "Invalid class transform instruction",
           callerNode, callerEnv
         );

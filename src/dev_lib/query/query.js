@@ -112,13 +112,13 @@ export const query = new DevFunction(
 export const fetch = new DevFunction(
   {isAsync: true, minArgNum: 2, isEnclosed: true},
   async function(
-    {callerNode, execEnv, liveModule},
+    {callerNode, execEnv, interpreter},
     [isPublic, route, options]
   ) {
-    let [result] = await liveModule.call(
-      "query", [isPublic, route, false, undefined, options], callerNode, execEnv
+    let [result] = await query.fun(
+      {callerNode, execEnv, interpreter},
+      [isPublic, route, false, undefined, options],
     ) ?? [];
-    return result;
   }
 );
 
@@ -126,11 +126,11 @@ export const fetch = new DevFunction(
 export const post = new DevFunction(
   {isAsync: true, minArgNum: 1, isEnclosed: true},
   async function(
-    {callerNode, execEnv, liveModule},
+    {callerNode, execEnv, interpreter},
     [route, postData, options]
   ) {
-    let [result] = await liveModule.call(
-      "query", [false, route, true, postData, options], callerNode, execEnv
+    let [result] = await interpreter.executeFunction(
+      query, [false, route, true, postData, options], callerNode, execEnv
     ) ?? [];
     return result;
   }

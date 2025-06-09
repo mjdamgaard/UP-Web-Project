@@ -1,8 +1,8 @@
 
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, turnImmutable,
-  ArrayWrapper, ObjectWrapper, Signal, passedAsMutable, getExtendedErrorMsg,
-  getString, AbstractObject, FunctionObject,
+  UHArray, PlainObject, Signal, passedAsMutable, getExtendedErrorMsg,
+  getString, UserHandledObject, FunctionObject,
 } from "../../interpreting/ScriptInterpreter.js";
 import {CAN_POST_FLAG} from "../query/src/signals.js";
 
@@ -52,7 +52,7 @@ export const createJSXApp = new DevFunction(
   {isAsync: true, initSignals: [[WILL_CREATE_APP_SIGNAL]]},
   async function(
     {callerNode, execEnv, interpreter},
-    [appComponent, props, getStyle, styleParams = new ObjectWrapper()]
+    [appComponent, props, getStyle, styleParams = new PlainObject()]
   ) {
     // First create an JSXAppStyler, which uses the input getStyle() and
     // styleParams to style each JSX component.
@@ -126,7 +126,7 @@ class JSXInstance {
 
 
   render(
-    props = new ObjectWrapper(), isDecorated, interpreter,
+    props = new PlainObject(), isDecorated, interpreter,
     callerNode, callerEnv, replaceSelf = true, force = false,
   ) {  
     this.isDecorated = isDecorated;
@@ -155,12 +155,12 @@ class JSXInstance {
         );
       } else {
         state = this.componentModule.$get("getInitState") ||
-          new ObjectWrapper();
+          new PlainObject();
       }
       this.state = turnImmutable(state);
 
       // And store the refs object.
-      this.refs = turnImmutable(props.$get("refs") ?? new ObjectWrapper());
+      this.refs = turnImmutable(props.$get("refs") ?? new PlainObject());
     }
 
     // Then get the component module's render() function.
@@ -443,7 +443,7 @@ class JSXInstance {
   dispatch(actionKey, input, interpreter, callerNode, callerEnv) {
     let actions = this.componentModule.$get("actions");
     let actionFun;
-    if (actions instanceof ObjectWrapper) {
+    if (actions instanceof PlainObject) {
       actionFun = actions.$get(actionKey);
     }
     if (actionFun) {
@@ -487,7 +487,7 @@ class JSXInstance {
     // Then find and call its targeted method.
     let methods = targetInstance.componentModule.$get("methods");
     let methodFun;
-    if (methods instanceof ObjectWrapper) {
+    if (methods instanceof PlainObject) {
       methodFun = methods.$get(methodKey);
     }
     if (methodFun) {
@@ -543,56 +543,31 @@ class JSXInstance {
 
 
 
-class JSXInstanceInterface extends AbstractObject {
+class JSXInstanceInterface extends UserHandledObject {
   constructor(jsxInstance, decEnv) {
     super("JSXInstance");
     this.jsxInstance = jsxInstance;
     this.decEnv = decEnv;
+
+    Object.assign(this.$members, {
+    /* Properties */
+      "props": this.jsxInstance.props,
+      "state": this.jsxInstance.state,
+      "refs": this.jsxInstance.refs,
+      /* Methods */
+      "dispatch": this.dispatch,
+      "call": this.call,
+      "setState": this.setState,
+      "rerender": this.rerender,
+      "provideContext": this.provideContext,
+      "subscribeToContext": this.subscribeToContext,
+    });
   }
 
   // This property makes the class instances "confined" (which is also why we
   // include the decEnv property above).
   get isConfined() {
     return true;
-  }
-
-
-  $get(key) {
-    /* Properties */
-    if (key === "props") {
-      return this.jsxInstance.props;
-    }
-    if (key === "state") {
-      return this.jsxInstance.state;
-    }
-    if (key === "refs") {
-      return this.jsxInstance.refs;
-    }
-    /* Methods */
-    if (key === "dispatch") {
-      return this.dispatch;
-    }
-    if (key === "call") {
-      return this.call;
-    }
-    else if (key === "setState") {
-      return this.setState;
-    }
-    else if (key === "rerender") {
-      return this.rerender;
-    }
-    else if (key === "import") {
-      return this.import;
-    }
-    else if (key === "provideContext") {
-      return this.subscribeToContext;
-    }
-    else if (key === "subscribeToContext") {
-      return this.subscribeToContext;
-    }
-    // TODO: Add more instance methods, such as a method to get bounding box
-    // data, or a method to get a PromiseObject that resolves a short time
-    // after the bounding box data, and similar data, is ready.
   }
 
 
@@ -669,6 +644,10 @@ class JSXInstanceInterface extends AbstractObject {
   });
 
 
+
+  // TODO: Add more instance methods at some point, such as a method to get
+  // bounding box data, or a method to get a PromiseObject that resolves a
+  // short time after the bounding box data, and similar data, is ready.
 }
 
 
@@ -677,7 +656,7 @@ class JSXInstanceInterface extends AbstractObject {
 
 
 
-class DOMNodeWrapper extends AbstractObject {
+class DOMNodeWrapper extends UserHandledObject {
   constructor(domNode) {
     super("DOMNode");
     this.domNode = domNode;
