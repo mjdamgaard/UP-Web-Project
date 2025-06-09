@@ -23,9 +23,9 @@ export class DirectoryUploader {
 
     // TODO: Call the server to get a new or an existing session ID here, and
     // also get the userID.
-    let token = "TODO..." + password;
-    let credentials = btoa(`${username}:${token}`);
-    let userID = "9";
+    let credentials = btoa(`${username}:${password}`);
+    let userID = "1";
+    let token = "test_token";
 
     // Read the dirID.
     let idFilePath = path.normalize(dirPath + "/.id");
@@ -37,10 +37,11 @@ export class DirectoryUploader {
     // If no dirID was gotten, request the server to create a new directory and
     // get the new dirID.
     if (!dirID) {
-      [[dirID]] = await serverQueryHandler.post(`/?mkdir&a=${userID}`, {
-        method: "post",
-        credentials: credentials,
-      });
+      [[dirID]] = await serverQueryHandler.post(
+        `/mkdir/a=${userID}`,
+        undefined,
+        {"Authorization": `Bearer ${token}`},
+      );
       fs.writeFileSync(idFilePath, `${dirID ?? ""}`);
     }
 
@@ -48,17 +49,18 @@ export class DirectoryUploader {
     // go through each one and check that it also exist nested in the client-
     // side directory, and for each one that doesn't, request deletion of that
     // file server-side.
-    let [filePaths] = await serverQueryHandler.post(`/${dirID}?~all`, {
-      method: "post",
-      credentials: credentials,
-    }) ?? [[]];
+    let [filePaths] = await serverQueryHandler.post(
+      `/${dirID}/~all`,
+      undefined,
+      {"Authorization": `Bearer ${token}`},
+    ) ?? [[]];
     let deletionPromises = [];
     filePaths.forEach(([relPath]) => {
       let clientFilePath = path.normalize(dirPath + "/" + relPath);
-      let serverFilePath = path.normalize(`/${dirID}/${relPath}`);
+      let serverFilePath = path.normalize(`/1/${dirID}/${relPath}`);
       if (!fs.existsSync(clientFilePath)) {
         deletionPromises.push(
-          serverQueryHandler.post(serverFilePath + "?~delete", {
+          serverQueryHandler.post(serverFilePath + "/~delete", {
             method: "post",
             credentials: credentials,
           })
@@ -106,11 +108,11 @@ export class DirectoryUploader {
       else if (/\.(js|txt|json|html)$/.test(name)) {
         let contentText = fs.readFileSync(childAbsPath, 'utf8');
         uploadPromises.push(
-          serverQueryHandler.post(`/${childRelPath}?~put`, {
-            method: "post",
-            credentials: credentials,
-            postData: contentText,
-          })
+          serverQueryHandler.post(
+            `/1/${childRelPath}/~put`, 
+            contentText,
+            {"Authorization": `Bearer ${token}`},
+          )
         );
       }
       else if (/\.[a-z]+$/.test(name)) {

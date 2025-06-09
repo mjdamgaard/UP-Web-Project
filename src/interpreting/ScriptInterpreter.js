@@ -216,7 +216,11 @@ export class ScriptInterpreter {
           scriptPath, callerNode, callerEnv
         );
       } catch (err) {
-        throw new LoadError(err.toString(), callerNode, callerEnv);
+        if (err instanceof RuntimeError) {
+          throw err;
+        } else {
+          throw new LoadError(err.toString(), callerNode, callerEnv);
+        }
       }
       if (typeof script !== "string") throw new LoadError(
         `No script was found at ${scriptPath}`,
@@ -235,7 +239,7 @@ export class ScriptInterpreter {
     let fetchFun = callerEnv.scriptVars.liveModules.get("query").$get("fetch");
     let resultPromise = this.executeFunction(
       fetchFun, [true, route], callerNode, callerEnv
-    );
+    ).promise;
     return resultPromise;
   }
 
@@ -288,7 +292,6 @@ export class ScriptInterpreter {
 
   executeSubmoduleOfImportStatement(impStmt, curModulePath, callerModuleEnv) {
     let submodulePath = getFullPath(curModulePath, impStmt.str);
-    
     return this.import(submodulePath, impStmt, callerModuleEnv);
   }
 
@@ -1923,7 +1926,7 @@ export class FlagEnvironment {
 export class UserHandledObject {
   constructor(className, members) {
     this.className = className;
-    this.$members = members;
+    this.$members = members ?? Object.create(null);
   }
 
   $get(key) {
@@ -1958,7 +1961,7 @@ export class UserHandledObject {
 
 export class PlainObject extends UserHandledObject {
   constructor(val) {
-    super("Object", Object.create(null));
+    super("Object");
     if (val instanceof Object) {
       Object.assign(this.$members, val)
     }
@@ -2073,7 +2076,7 @@ export function getString(val) {
     return val.$toString();
   }
   else if (!(val instanceof Object)) {
-    val.toString();
+    return val.toString();
   }
   else throw (
     "toString(): Invalid argument"

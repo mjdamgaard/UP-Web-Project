@@ -69,8 +69,8 @@ export class JSXAppStyler {
       // (wrapper) of the form [styleSheetPaths?, classTransform?], get the
       // style sheet paths/routes and load each one. Then resolve with the
       // obtained classTransform.
-      let styleSheetPaths = styleSpecs.get(0);
-      let classTransform = styleSpecs.get(1) ?? false;
+      let styleSheetPaths = styleSpecs.$get(0);
+      let classTransform = styleSpecs.$get(1) ?? false;
       await this.loadStyleSheets(styleSheetPaths, callerNode, callerEnv);
       resolve(classTransform);
     });

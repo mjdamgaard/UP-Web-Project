@@ -20,10 +20,10 @@ export const getStyle = new DevFunction(
   ({callerNode, execEnv, interpreter}, [componentPath, liveModule]) => {
     let isAppRoot = execEnv.getFlag(IS_APP_ROOT_FLAG, 0);
     let isTrusted = isAppRoot;
-    let styleSheetPaths = liveModule.get("styleSheetPaths");
+    let styleSheetPaths = liveModule.$get("styleSheetPaths");
     styleSheetPaths = "...";
     let classTransform = false;
-    let styleSpecs = "...";
+    let styleSpecs = [styleSheetPaths, classTransform];
     return styleSpecs;
   },
 );

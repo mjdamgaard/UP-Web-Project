@@ -3,7 +3,7 @@
 
 export class FlagTransmitter {
   
-  static receiveFlag() {
+  static receiveFlags() {
     
   }
 }

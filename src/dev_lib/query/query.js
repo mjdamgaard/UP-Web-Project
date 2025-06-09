@@ -1,6 +1,6 @@
 
 import {
-  DevFunction, RuntimeError, LoadError, getObject,
+  DevFunction, RuntimeError, LoadError,
 } from '../../interpreting/ScriptInterpreter.js';
 import {parseRoute} from './src/parseRoute.js';
 
@@ -21,10 +21,9 @@ export const query = new DevFunction(
   {isAsync: true, minArgNum: 2, isEnclosed: true},
   async function(
     {callerNode, execEnv, interpreter, liveModule},
-    [isPublic, route, isPost = false, postData, options]
+    [isPublic, route, isPost = false, postData, options = {}]
   ) {
     isPost = isPublic ? false : isPost;
-    options = options?.$val ?? {};
 
     // If isPost == true, check if the current environment is allowed to post.
     if (isPost) {

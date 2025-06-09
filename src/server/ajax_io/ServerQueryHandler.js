@@ -120,6 +120,14 @@ export class ServerQueryHandler {
   }
 
 
+  fetch(url, headers = {}, node, env) {
+    return this.request(url, true, undefined, headers, node, env);
+  }
+
+  post(url, reqData, headers = {}, node, env) {
+    return this.request(url, false, reqData, headers, node, env);
+  }
+
 
 }
 
