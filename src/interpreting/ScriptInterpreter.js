@@ -2131,7 +2131,9 @@ export function wrapValue(val) {
 }
 
 export function unwrapValue(val) {
-  if (val instanceof UserHandledObject) {
+  if (
+    val instanceof PlainObject || val instanceof UHArray || val instanceof UHMap
+  ) {
     return val.$members;
   }
   else {
