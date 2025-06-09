@@ -582,7 +582,8 @@ export class ScriptInterpreter {
     }
     else if (fun instanceof DevFunction) {
       return this.#executeDevFunction(
-        fun, inputArr, callerNode, execEnv, thisVal
+        fun, inputArr.map(val => unwrapValue(val)), callerNode, execEnv,
+        thisVal
       );
     }
   }
@@ -597,7 +598,6 @@ export class ScriptInterpreter {
       callerNode: callerNode, execEnv: execEnv, interpreter: this,
       thisVal: thisVal,
     };
-
     // If the dev function an async function, call it and then either return a
     // PromiseObject to the user or call a user-provided callbackFun depending
     // on the inputArr and on minArgNum.
@@ -621,9 +621,11 @@ export class ScriptInterpreter {
       }
     }
 
-    // Else call the dev function synchronously and return what it returns.
+    // Else call the dev function synchronously and return what it returns,
+    // only "wrapped" (i.e. in a UserHandledObject extension) and turned
+    // Immutable.
     else {
-      return devFun.fun(execVars, inputArr);
+      return turnImmutable(wrapValue(devFun.fun(execVars, inputArr)));
     }
   }
 
@@ -684,7 +686,7 @@ export class ScriptInterpreter {
       stmtArr.forEach(stmt => this.executeStatement(stmt, execEnv));
     } catch (err) {
       if (err instanceof ReturnException) {
-        return err.val;
+        return turnImmutable(err.val);
       }
       else if (err instanceof BreakException) {
         throw new RuntimeError(
@@ -1480,10 +1482,9 @@ export class ScriptInterpreter {
           this.evaluateExpression(exp, environment)
         ));
 
-        // Then execute the function and assign its return value, turned
-        // immutable, to val.
-        val = turnImmutable(
-          this.executeFunction(val, inputValArr, postfix, environment, objVal)
+        // Then execute the function and assign its return value to val.
+        val = this.executeFunction(
+          val, inputValArr, postfix, environment, objVal
         );
       }
       else throw "evaluateChainedExpression(); Unrecognized postfix type";
@@ -2035,7 +2036,6 @@ export class UHArray extends UserHandledObject {
 
 
 
-// TODO: Implement.
 export class UHMap extends UserHandledObject {
   constructor(val) {
     super(
@@ -2099,7 +2099,7 @@ export function jsonStringify(val) {
 
 export function jsonParse(val) {
   try {
-    return getWrappedValue(JSON.parse(val));
+    return wrapValue(JSON.parse(val));
   }
   catch (err) {
     if (err instanceof TypeError) {
@@ -2110,8 +2110,11 @@ export function jsonParse(val) {
 }
 
 
-export function getWrappedValue(val) {
-  if (val instanceof Object) {
+export function wrapValue(val) {
+  if (val instanceof UserHandledObject) {
+    return val;
+  }
+  else if (val instanceof Object) {
     if (val instanceof Array) {
       return new UHArray(val);
     }
@@ -2127,6 +2130,14 @@ export function getWrappedValue(val) {
   }
 }
 
+export function unwrapValue(val) {
+  if (val instanceof UserHandledObject) {
+    return val.$members;
+  }
+  else {
+    return val;
+  }
+}
 
 
 

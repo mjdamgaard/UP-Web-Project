@@ -119,6 +119,7 @@ export const fetch = new DevFunction(
       {callerNode, execEnv, interpreter},
       [isPublic, route, false, undefined, options],
     ) ?? [];
+    return result;
   }
 );
 
@@ -129,8 +130,9 @@ export const post = new DevFunction(
     {callerNode, execEnv, interpreter},
     [route, postData, options]
   ) {
-    let [result] = await interpreter.executeFunction(
-      query, [false, route, true, postData, options], callerNode, execEnv
+    let [result] = await query.fun(
+      {callerNode, execEnv, interpreter},
+      [false, route, true, postData, options],
     ) ?? [];
     return result;
   }
