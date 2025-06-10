@@ -1942,7 +1942,7 @@ export class UserHandledObject {
     return Object.keys(this.$members);
   }
   $forEach(callback) {
-    Object.entries(this.$members).forEach((key, val) => callback(val, key));
+    Object.entries(this.$members).forEach(([key, val]) => callback(val, key));
   }
 
   $stringify() {
@@ -2236,7 +2236,7 @@ export class JSXElement extends UserHandledObject {
     this.tagName = tagName;
     if (isComponent) this.componentModule = decEnv.get(tagName, node);
     this.isFragment = isFragment;
-    this.props = new Map();
+    this.props = new PlainObject();
     if (propArr) propArr.forEach(propNode => {
       let expVal = propNode.exp ?
         interpreter.evaluateExpression(propNode.exp, decEnv) :
@@ -2254,7 +2254,7 @@ export class JSXElement extends UserHandledObject {
       }
     });
     if (children) {
-      let childrenProp = new Map();
+      let childrenProp = new PlainObject();
       children.forEach((contentNode, ind) => {
         let val = interpreter.evaluateExpression(contentNode, decEnv);
         childrenProp.$set(ind, val);

@@ -353,7 +353,7 @@ class JSXInstance {
       // implemented attribute is set. Also record the children prop for the
       // next step afterwards.
       let childArr = [];
-      jsxElement.props.forEach((val, key) => {
+      jsxElement.props.$forEach((val, key) => {
         switch (key) {
           case "children" : {
             if (tagName === "br" || tagName === "hr") throw new RuntimeError(
@@ -364,7 +364,7 @@ class JSXInstance {
               `A non-iterable 'children' prop was used`,
              jsxElement.node, jsxElement.decEnv
            );
-            childArr = val.values();
+            childArr = val.$values();
             break;
           }
           case "className" : {
