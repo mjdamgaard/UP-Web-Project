@@ -5,8 +5,6 @@ import {ServerQueryHandler}
 import fs from 'fs';
 import path from 'path';
 
-const serverQueryHandler = new ServerQueryHandler();
-
 
 export class DirectoryUploader {
 
@@ -27,6 +25,8 @@ export class DirectoryUploader {
     let userID = "1";
     let token = "test_token";
 
+    let serverQueryHandler = new ServerQueryHandler(token);
+
     // Read the dirID.
     let idFilePath = path.normalize(dirPath + "/.id");
     let dirID;
@@ -37,11 +37,10 @@ export class DirectoryUploader {
     // If no dirID was gotten, request the server to create a new directory and
     // get the new dirID.
     if (!dirID) {
-      [[dirID]] = await serverQueryHandler.post(
-        `/1/mkdir/a=${userID}`,
-        undefined,
-        {"Authorization": `Bearer ${token}`},
-      );
+      let [resultRow = []] = await serverQueryHandler.post(
+        `/1/mkdir/a=${userID}`
+      ) ?? [];
+      [dirID] = resultRow;
       fs.writeFileSync(idFilePath, `${dirID ?? ""}`);
     }
 

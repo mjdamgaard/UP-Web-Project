@@ -1457,7 +1457,7 @@ export class ScriptInterpreter {
         }
 
         // Then use the get() method to get the value.
-        val = objVal.$get(index);
+        val = wrapValue(objVal.$get(index));
 
         // Lastly, if objVal was immutable or passedToEnclosed, turn the
         // retrieved value into that as well.
@@ -2353,6 +2353,11 @@ export class LoadError extends RuntimeError {
     super(val, node, environment);
   }
 }
+export class NetworkError extends RuntimeError {
+  constructor(val, node, environment) {
+    super(val, node, environment);
+  }
+}
 export class OutOfGasError extends RuntimeError {
   constructor(val, node, environment) {
     super(val, node, environment);
@@ -2519,6 +2524,9 @@ export function getExtendedErrorMsg(err) {
   }
   else if (err instanceof LoadError) {
     type = "LoadError";
+  }
+  else if (err instanceof NetworkError) {
+    type = "NetworkError";
   }
   else if (err instanceof OutOfGasError) {
     type = "OutOfGasError";

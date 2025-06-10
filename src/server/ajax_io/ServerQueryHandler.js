@@ -1,11 +1,13 @@
 
 import {serverDomainURL} from "./config.js";
 import {
-  payGas, LoadError, jsonParse, RuntimeError,
+  payGas, NetworkError, jsonParse,
 } from "../../interpreting/ScriptInterpreter.js";
 
 // TODO: Import FlagTransmitter.
 let flagTransmitter;
+
+const OWN_UP_NODE_ID = "1";
 
 
 export class ServerQueryHandler {
@@ -22,14 +24,31 @@ export class ServerQueryHandler {
   }
 
 
-  async queryServer(
+  queryServerFromScript(
     isPublic, route, isPost, postData, options, upNodeID, node, env
   ) {
     payGas(node, env, {fetch: 1});
-    if (upNodeID !== "1") throw new RuntimeError(
+    let flags = flagTransmitter.getFlags(node, env);
+    try {
+      return queryServer(
+        isPublic, route, isPost, postData, options, upNodeID, flags
+      );
+    }
+    catch(err) {
+      if (err instanceof NetworkError) {
+        throw new NetworkError(err.val, node, env);
+      }
+      else throw err;
+    }
+  }
+
+
+  queryServer(
+    isPublic, route, isPost, postData, options, upNodeID, flags
+  ) {
+    if (upNodeID !== OWN_UP_NODE_ID) throw new NetworkError(
       `Unrecognized UP node ID: "${upNodeID}" (queries to routes of foreign ` +
-      "UP nodes are not implemented yet)",
-      node, env
+      "UP nodes are not implemented yet)"
     );
 
     // Construct the reqBody.
@@ -38,7 +57,7 @@ export class ServerQueryHandler {
       reqData.isPost = true;
       if (postData !== undefined) reqData.data = postData;
       if (options !== undefined) reqData.options = options;
-      reqData.flags = flagTransmitter.getFlags(node, env);
+      if (flags !== undefined) reqData.flags = flags;
     }
 
     let headers = {};
@@ -47,25 +66,22 @@ export class ServerQueryHandler {
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
-      else throw new RuntimeError(
+      else throw new NetworkError(
         "A non-login-related POST request was made before the user was " +
-        "logged in",
-        node, env
+        "logged in"
       );
     }
 
-    return await this.request(route, isPublic, reqData, node, env);
+    return this.request(route, isPublic, reqData);
   }
-
-
 
 
 
   #requestBuffer = new Map();
 
 
-  request(url, isGET = true, reqData = {}, headers = {}, node, env) {
-    let reqKey = JSON.stringify([url, isGET, reqData, headers]);
+  request(route, isGET = true, reqData = {}, headers = {}) {
+    let reqKey = JSON.stringify([route, isGET, reqData, headers]);
 
     // If there is already an ongoing request with this reqData object,
     // simply return the promise of that.
@@ -75,9 +91,7 @@ export class ServerQueryHandler {
     }
 
     // Send the request.
-    responsePromise = this.#requestHelper(
-      url, isGET, reqData, headers, node, env
-    );
+    responsePromise = this.#requestHelper(route, isGET, reqData, headers);
 
     // Then add it to requestBuffer, and also give it a then-callback to remove
     // itself from said buffer, before return ing the promise.
@@ -89,7 +103,7 @@ export class ServerQueryHandler {
   }
 
 
-  async #requestHelper(url, isGET, reqData, headers, node, env) {
+  async #requestHelper(route, isGET, reqData, headers) {
     // Send the request.
     let options = isGET ? {
       headers: headers,
@@ -97,41 +111,43 @@ export class ServerQueryHandler {
       method: "POST",
       headers: headers,
       body: JSON.stringify(reqData),
-    };
-    let response = await fetch(serverDomainURL + url, options);
-
+    };debugger;
+    let response = await fetch(serverDomainURL + route, options);
+    let responseText = await response.text();
 
 
     if (!response.ok) {
-      // TODO: Get the response again (and make it work in Node.js as well).
-      let responseText = await response.text();
       // TODO: Consider changing the name of LoadError, and/or making a new
       // error type for server request errors.
-      throw new LoadError(
+      throw new NetworkError(
         "HTTP error " + response.status +
-        (responseText ? ": " + responseText : ""),
-        node, env
+        (responseText ? ": " + responseText : "")
       );
     }
     else {
       let mimeType = response.headers.get("Content-Type");
-      let result = await response.text();
-      return fromMIMEType(result, mimeType);
+      return fromMIMEType(responseText, mimeType);
     }
   }
 
 
-  fetch(url, headers = {}, node, env) {
-    return this.request(url, true, undefined, headers, node, env);
+
+
+  fetch(route, options) {
+    return this.queryServer(
+      true, route, false, undefined, options, OWN_UP_NODE_ID
+    );
   }
 
-  fetchPrivate(url, headers = {}, node, env) {
-    return this.request(url, true, {isPost: true}, headers, node, env);
+  fetchPrivate(route, options) {
+    return this.queryServer(
+      false, route, false, undefined, options, OWN_UP_NODE_ID
+    );
   }
 
-  async post(url, postData, headers = {}, node, env) {
-    return await this.request(
-      url, false,  {isPost: true, data: postData}, headers, node, env
+  post(route, postData, options) {
+    return this.queryServer(
+      false, route, true, postData, options, OWN_UP_NODE_ID
     );
   }
 
@@ -148,7 +164,7 @@ function fromMIMEType(val, mimeType) {
   if (mimeType === "text/plain") {
     return val;
   }
-  else if (mimeType === "text/json") {
+  else if (mimeType === "application/json") {
     return jsonParse(val);
   }
   else throw (

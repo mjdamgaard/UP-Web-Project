@@ -54,7 +54,7 @@ export const query = new DevFunction(
     // If on the client side, simply forward the request to the server via the
     // serverQueryHandler.
     if (!interpreter.isServerSide) {
-      return await interpreter.serverQueryHandler.queryServer(
+      return await interpreter.serverQueryHandler.queryServerFromScript(
         isPublic, route, isPost, postData, options,
         upNodeID, callerNode, execEnv
       );
@@ -63,7 +63,7 @@ export const query = new DevFunction(
     // Else branch according to the file type and get the right module for
     // handling that file type.
     let filetypeModule;
-    let mimeType = "text/json";
+    let mimeType = "application/json";
     switch (fileExt) {
       case undefined:
         filetypeModule = directoriesMod;

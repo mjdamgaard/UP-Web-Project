@@ -204,10 +204,10 @@ async function requestHandler(req, res, returnGasRef) {
   // wasReady, and also the log.
   else if (returnLog) {
     // If the result is not a text, null the result, returning only the log.
-    if (mimeType.substring(0, 5) !== "text/") {
+    if (mimeType !== "text/plain" && mimeType !== "application/json") {
       result = null;
     }
-    res.writeHead(200, {'Content-Type': 'text/json'});
+    res.writeHead(200, {'Content-Type': 'application/json'});
     res.end(JSON.stringify([result, log]));
   }
 
@@ -232,7 +232,7 @@ function toMIMEType(val, mimeType) {
   if (mimeType === "text/plain") {
     return val.toString();
   }
-  else if (mimeType === "text/json") {
+  else if (mimeType === "application/json") {
     return jsonStringify(val);
   }
   else {
