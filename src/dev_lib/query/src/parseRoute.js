@@ -3,7 +3,7 @@ const upNodeIDRegEx = /^\/([1-9][0-9]*)/;
 const homeDirIDRegEx = /^\/(0|[1-9][0-9]*)/;
 const filePathRegEx =
   /^\/((\.*[a-zA-Z0-9_\-~!&$+=]+\/)*\.*[a-zA-Z0-9_\-~!&$+=]+\.[.a-zA-Z0-9_\-~!&$+=]+)/;
-const queryPathRegEx = /^\/([a-zA-Z0-9_\-=.]+(\/[a-zA-Z0-9_\-=.]+)*)/;
+const queryPathRegEx = /^\/([a-zA-Z0-9_\-~=.]+(\/[a-zA-Z0-9_\-~=.]+)*)/;
 // const queryStringRegEx = /^\?([a-zA-Z0-9_\-.=]*(&[a-zA-Z0-9_\-.=]*))/;
 const tagRegEx = /^#([a-zA-Z0-9_\-.]+)(?<!\.)/;
 const lastFileExtRegEx = /\.([^.]+)$/

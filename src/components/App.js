@@ -60,7 +60,7 @@ setInterval(
 const TEST_APP_ID = 1;
 const appScript = `
   import {createJSXApp} from 'jsx';
-  import * as testApp from "/${TEST_APP_ID}/main.js";
+  import * as testApp from "/1/${TEST_APP_ID}/main.js";
 
   export function main() {
     createJSXApp(testApp);

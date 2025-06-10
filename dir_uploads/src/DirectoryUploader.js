@@ -49,10 +49,8 @@ export class DirectoryUploader {
     // go through each one and check that it also exist nested in the client-
     // side directory, and for each one that doesn't, request deletion of that
     // file server-side.
-    let [filePaths] = await serverQueryHandler.post(
-      `/1/${dirID}/~all`,
-      undefined,
-      {"Authorization": `Bearer ${token}`},
+    let [filePaths = []] = await serverQueryHandler.post(
+      `/1/${dirID}/~all`
     ) ?? [[]];
     let deletionPromises = [];
     filePaths.forEach(([relPath]) => {
@@ -74,14 +72,16 @@ export class DirectoryUploader {
     // pushing a promise for the response of each one to uploadPromises.
     let uploadPromises = [];
     this.#uploadDirHelper(
-      dirPath, credentials, dirID, deleteStructData, uploadPromises
+      dirPath, credentials, dirID, deleteStructData, uploadPromises,
+      serverQueryHandler
     );
     await Promise.all(uploadPromises);
   }
 
 
   static async #uploadDirHelper(
-    dirPath, credentials, relPath, deleteStructData, uploadPromises
+    dirPath, credentials, relPath, deleteStructData, uploadPromises,
+    serverQueryHandler
   ) {
     // Get each file in the directory at path, and loop through and handle each
     // one according to its extension (or lack thereof).
@@ -100,7 +100,7 @@ export class DirectoryUploader {
       if (name.indexOf(".") <= 0) {
         this.#uploadDirHelper(
           childAbsPath, credentials, childRelPath, deleteStructData,
-          uploadPromises
+          uploadPromises, serverQueryHandler
         );
       }
 
@@ -111,7 +111,6 @@ export class DirectoryUploader {
           serverQueryHandler.post(
             `/1/${childRelPath}/~put`, 
             contentText,
-            {"Authorization": `Bearer ${token}`},
           )
         );
       }

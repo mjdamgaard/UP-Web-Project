@@ -166,11 +166,11 @@ async function requestHandler(req, res, returnGasRef) {
     ) ?? [];
     mainDBConnection.end();
     let [adminID] = resultRow ?? [];
-    if (userID !== adminID) {
+    if (userID != adminID) {
       endWithUnauthorizedError(res);
       return;
     }
-    flags.push(ADMIN_PRIVILEGES_FLAG);
+    flags.push([ADMIN_PRIVILEGES_FLAG, homeDirID]);
   }
 
   // Then call FlagTransmitter, with the optional reqFlags array determined by

@@ -211,17 +211,9 @@ export class ScriptInterpreter {
     let [parsedScript, lexArr, strPosArr, script] =
       parsedScripts.get(scriptPath) ?? [];
     if (!parsedScript) {
-      try {
-        script = await this.fetch(
-          scriptPath, callerNode, callerEnv
-        );
-      } catch (err) {
-        if (err instanceof RuntimeError) {
-          throw err;
-        } else {
-          throw new LoadError(err.toString(), callerNode, callerEnv);
-        }
-      }
+      script = await this.fetch(
+        scriptPath, callerNode, callerEnv
+      );
       if (typeof script !== "string") throw new LoadError(
         `No script was found at ${scriptPath}`,
         callerNode, callerEnv

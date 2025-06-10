@@ -3,11 +3,12 @@ import {serverDomainURL} from "./config.js";
 import {
   payGas, NetworkError,
 } from "../../interpreting/ScriptInterpreter.js";
+import {FlagTransmitter} from "../../interpreting/FlagTransmitter.js";
 
-// TODO: Import FlagTransmitter.
-let flagTransmitter;
+// const flagTransmitter = new FlagTransmitter;
 
 const OWN_UP_NODE_ID = "1";
+
 
 
 export class ServerQueryHandler {
@@ -29,9 +30,9 @@ export class ServerQueryHandler {
     isPublic, route, isPost, postData, options, upNodeID, node, env
   ) {
     payGas(node, env, {fetch: 1});
-    let flags = flagTransmitter.getFlags(node, env);
+    let flags = FlagTransmitter.getFlags(node, env);
     try {
-      return queryServer(
+      return this.queryServer(
         isPublic, route, isPost, postData, options, upNodeID, flags
       );
     }
@@ -113,7 +114,8 @@ export class ServerQueryHandler {
       headers: headers,
       body: JSON.stringify(reqData),
     };
-    let response = await this.fetch(serverDomainURL + route, options);
+    let fetch = this.fetch;
+    let response = await fetch(serverDomainURL + route, options);
     let responseText = await response.text();
 
 
