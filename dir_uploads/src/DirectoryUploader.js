@@ -4,6 +4,7 @@ import {ServerQueryHandler}
 
 import fs from 'fs';
 import path from 'path';
+import fetch from 'node-fetch';
 
 
 export class DirectoryUploader {
@@ -25,7 +26,7 @@ export class DirectoryUploader {
     let userID = "1";
     let token = "test_token";
 
-    let serverQueryHandler = new ServerQueryHandler(token);
+    let serverQueryHandler = new ServerQueryHandler(token, fetch);
 
     // Read the dirID.
     let idFilePath = path.normalize(dirPath + "/.id");

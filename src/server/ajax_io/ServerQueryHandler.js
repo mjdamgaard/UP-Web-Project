@@ -1,7 +1,7 @@
 
 import {serverDomainURL} from "./config.js";
 import {
-  payGas, NetworkError, jsonParse,
+  payGas, NetworkError,
 } from "../../interpreting/ScriptInterpreter.js";
 
 // TODO: Import FlagTransmitter.
@@ -12,8 +12,9 @@ const OWN_UP_NODE_ID = "1";
 
 export class ServerQueryHandler {
 
-  constructor(userToken = undefined) {
+  constructor(userToken = undefined, fetchFun = undefined) {
     this.userToken = userToken;
+    this.fetch = fetchFun ?? fetch;
   }
 
   getUserToken() {
@@ -111,8 +112,8 @@ export class ServerQueryHandler {
       method: "POST",
       headers: headers,
       body: JSON.stringify(reqData),
-    };debugger;
-    let response = await fetch(serverDomainURL + route, options);
+    };
+    let response = await this.fetch(serverDomainURL + route, options);
     let responseText = await response.text();
 
 
@@ -165,7 +166,7 @@ function fromMIMEType(val, mimeType) {
     return val;
   }
   else if (mimeType === "application/json") {
-    return jsonParse(val);
+    return JSON.parse(val);
   }
   else throw (
     `fromMIMEType(): Unrecognized/un-implemented MIME type: ${mimeType}`
