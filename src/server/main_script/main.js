@@ -1,10 +1,10 @@
 
-import {query} from 'server';
+import {query} from 'query';
 
 export function main(
-  route, isPost, postData, options, resolve
+  isPublic, route, isPost, postData, options, resolve
 ) {
   query(
-    route, isPost, postData, options, output => resolve(output)
+    isPublic, route, isPost, postData, options, output => resolve(output)
   );
 }

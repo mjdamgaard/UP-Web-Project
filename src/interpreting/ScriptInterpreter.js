@@ -1851,7 +1851,11 @@ export class FlagEnvironment {
   }
 
   setFlags(flags) {
-    flags.forEach(([flag, flagParams]) => {
+    flags.forEach((flag) => {
+      let flagParams;
+      if (flag instanceof Array) {
+        [flag, flagParams] = flag;
+      }
       this.setFlag(flag, flagParams);
     });
   }
@@ -1976,11 +1980,11 @@ export class PlainObject extends UserHandledObject {
   }
 
   $stringify() {
-    return "{" +
-      this.$members.entries((key, [val]) => (
-        `"${key.replaceAll('"', '\\"')}":` + jsonStringify(val)
-      )).join(",") +
-    "}";
+    let ret = "{";
+    Object.entries(this.$members).map(([key, val]) => (
+      `${JSON.stringify(key.toString())}:${jsonStringify(val)}`
+    )).join(",");
+    return ret + "}";
   }
 }
 
@@ -2090,12 +2094,19 @@ export function jsonStringify(val) {
   else if (typeof val === "symbol") {
     return JSON.stringify(val.toString());
   }
-  else if (!(val instanceof Object)) {
-    return JSON.stringify(val ?? null);
+  else if (val instanceof Array) {
+    return "[" + val.map(val => (jsonStringify(val))).join(",") + "]";
   }
-  else throw (
-    "stringify(): Invalid argument"
-  );
+  else if (val instanceof Object) {
+    let ret = "{";
+    Object.entries(val).map(([key, val]) => (
+      `${JSON.stringify(key.toString())}:${jsonStringify(val)}`
+    )).join(",");
+    return ret + "}";
+  }
+  else {
+    return JSON.stringify(val)
+  }
 }
 
 

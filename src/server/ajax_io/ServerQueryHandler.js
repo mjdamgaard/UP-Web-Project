@@ -26,7 +26,7 @@ export class ServerQueryHandler {
     isPublic, route, isPost, postData, options, upNodeID, node, env
   ) {
     payGas(node, env, {fetch: 1});
-    if (upNodeID !== "A") throw new RuntimeError(
+    if (upNodeID !== "1") throw new RuntimeError(
       `Unrecognized UP node ID: "${upNodeID}" (queries to routes of foreign ` +
       "UP nodes are not implemented yet)",
       node, env
@@ -98,11 +98,12 @@ export class ServerQueryHandler {
       headers: headers,
       body: JSON.stringify(reqData),
     };
-    let response = await fetch(url, options);
+    let response = await fetch(serverDomainURL + url, options);
 
 
 
     if (!response.ok) {
+      // TODO: Get the response again (and make it work in Node.js as well).
       let responseText = await response.text();
       // TODO: Consider changing the name of LoadError, and/or making a new
       // error type for server request errors.
@@ -124,8 +125,14 @@ export class ServerQueryHandler {
     return this.request(url, true, undefined, headers, node, env);
   }
 
-  post(url, reqData, headers = {}, node, env) {
-    return this.request(url, false, reqData, headers, node, env);
+  fetchPrivate(url, headers = {}, node, env) {
+    return this.request(url, true, {isPost: true}, headers, node, env);
+  }
+
+  async post(url, postData, headers = {}, node, env) {
+    return await this.request(
+      url, false,  {isPost: true, data: postData}, headers, node, env
+    );
   }
 
 

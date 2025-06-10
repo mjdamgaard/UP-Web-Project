@@ -29,7 +29,7 @@ export class DBQueryHandler {
   async queryDBProc(
     procName, paramValArr, route, upNodeID, {conn}, node, env,
   ) {
-    if (upNodeID !== "A") throw new RuntimeError(
+    if (upNodeID !== "1") throw new RuntimeError(
       `Unrecognized UP node ID, "${upNodeID}", in "${route}" (queries to ` +
       "routes of foreign UP nodes are not implemented yet)",
       node, env

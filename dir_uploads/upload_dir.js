@@ -16,14 +16,20 @@ if (dirPath[0] === ".") {
   dirPath = path.normalize(path.dirname(curPath) + "/" + dirPath);
 }
 
-// Prompt for username and password, then request the new directory.
-let username, token, credentials;
-read({prompt: "Username: "}).then(name => {
-  username = name;
-  read({prompt: "Password: ", silent: true}).then(pw => {
-    console.log("\n");
+async function main() {
+  // Prompt for username and password, then request the new directory.
+  let token, credentials;
+  let username = await read({prompt: "Username: "});
+  let pw = await read({prompt: "Password: ", silent: true});
+  console.log("\n");
 
-    // Create/update the directory on the server side.
-    DirectoryUploader.uploadDir(dirPath, username, pw, deleteStructData);
-  });
+  // Create/update the directory on the server side.
+  await DirectoryUploader.uploadDir(dirPath, username, pw, deleteStructData);
+};
+
+
+main().then(() => {
+  console.log("OK\n");
+}).catch(err => {
+  console.error(err);
 });

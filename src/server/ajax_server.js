@@ -16,7 +16,9 @@ import {UserDBConnection, MainDBConnection} from './db_io/DBConnection.js';
 import {FlagTransmitter} from "../interpreting/FlagTransmitter.js";
 import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
 
-import {ADMIN_PRIVILEGES_FLAG} from "../dev_lib/query/src/signals.js";
+import {
+  ADMIN_PRIVILEGES_FLAG, CAN_POST_FLAG,
+} from "../dev_lib/query/src/signals.js";
 
 import * as queryMod from "../dev_lib/query/query.js";
 
@@ -77,9 +79,9 @@ async function requestHandler(req, res, returnGasRef) {
   // DB to authenticate the user, creating a userID promise that resolves with
   // a truthy ID only if the user is correctly authenticated.
   let userIDPromise;
-  let authHeader = req.getHeader("Authorization");
+  let authHeader = req.headers["authorization"];
   if (authHeader) {
-    let [ , authToken] = AUTH_TOKEN_REGEX.exec(authHeader) ?? [];
+    let [ , authToken] = authHeader.match(AUTH_TOKEN_REGEX) ?? [];
     if (!authToken) throw new ClientError(
       "Authentication failed"
     );
@@ -126,14 +128,14 @@ async function requestHandler(req, res, returnGasRef) {
 
 
   // Wait for the userID here if the authHeader was defined.
-  let userID;
-  if (authHeader) {
-    userID = await userIDPromise;
-    if (!userID) {
-      endWithUnauthenticatedError(res);
-      return;
-    }
-  }
+  let userID = "1"; // TODO: Change an comment in this:
+  // if (authHeader) {
+  //   userID = await userIDPromise;
+  //   if (!userID) {
+  //     endWithUnauthenticatedError(res);
+  //     return;
+  //   }
+  // }
 
   // Get the gas for the interpretation, potentially using reqGas or reqGasID,
   // if provided, to determine the gas object to pass to the interpreter. If
@@ -151,13 +153,13 @@ async function requestHandler(req, res, returnGasRef) {
   // userID == adminID, then add the "admin-privileges" flag to the 'flags,'
   // array.
   let isLocked = LOCKED_ROUTE_REGEX.test(route);
-  let flags = [];
+  let flags = isPost ? [CAN_POST_FLAG] : [];
   if (isLocked) {
     if (!userID) {
       endWithUnauthorizedError(res);
       return;
     }
-    let [ , homeDirID] = HOME_DIR_ID_REGEX.exec(route) ?? [];
+    let [ , homeDirID] = route.match(HOME_DIR_ID_REGEX) ?? [];
     let mainDBConnection = new MainDBConnection();
     let [resultRow] = await mainDBConnection.queryProcCall(
       "readHomeDirAdminID", [homeDirID],
@@ -168,7 +170,7 @@ async function requestHandler(req, res, returnGasRef) {
       endWithUnauthorizedError(res);
       return;
     }
-    flags = [ADMIN_PRIVILEGES_FLAG];
+    flags.push(ADMIN_PRIVILEGES_FLAG);
   }
 
   // Then call FlagTransmitter, with the optional reqFlags array determined by
@@ -180,15 +182,13 @@ async function requestHandler(req, res, returnGasRef) {
 
   // Now run the main.js script, whose main() function redirects to a call to
   // the query() dev function.
+  let virMainPath = "/1/0/main.js";
   let parsedScripts = new Map([
-    ["main.js", [parsedMainScript, lexArr, strPosArr, mainScript]]
+    [virMainPath, [parsedMainScript, lexArr, strPosArr, mainScript]]
   ]);
   let [output, log] = await scriptInterpreter.interpretScript(
-    gas, undefined, "main.js", [
-      isPublic, route, isPost, new ObjectWrapper(postData),
-      new ObjectWrapper(options)
-    ],
-    flags, undefined, undefined, parsedScripts,
+    gas, undefined, virMainPath, [isPublic, route, isPost, postData, options],
+    flags, parsedScripts,
   );
   let [result, mimeType] = output ?? [];
 
@@ -215,7 +215,7 @@ async function requestHandler(req, res, returnGasRef) {
   // parsing the result from query() and turning it into that MIME type. (Note
   // that we should never use the MIME type of text/javascript or text/html.)
   else {
-    result = toMIMEType(result);
+    result = toMIMEType(result, mimeType);
     res.writeHead(200, {'Content-Type': mimeType});
     res.end(result);
   }

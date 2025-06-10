@@ -38,7 +38,7 @@ export class DirectoryUploader {
     // get the new dirID.
     if (!dirID) {
       [[dirID]] = await serverQueryHandler.post(
-        `/mkdir/a=${userID}`,
+        `/1/mkdir/a=${userID}`,
         undefined,
         {"Authorization": `Bearer ${token}`},
       );
@@ -50,7 +50,7 @@ export class DirectoryUploader {
     // side directory, and for each one that doesn't, request deletion of that
     // file server-side.
     let [filePaths] = await serverQueryHandler.post(
-      `/${dirID}/~all`,
+      `/1/${dirID}/~all`,
       undefined,
       {"Authorization": `Bearer ${token}`},
     ) ?? [[]];
@@ -66,7 +66,7 @@ export class DirectoryUploader {
           })
         );
       }
-    });
+    });debugger;
     await Promise.all(deletionPromises);
 
     // Then call a helper method to recursively loop through all files in the
