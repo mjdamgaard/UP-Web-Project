@@ -2556,7 +2556,7 @@ export function getExtendedErrorMsg(err) {
     let [ln, col] = getLnAndCol(script.substring(0, strPos));
     let codeSnippet =
       script.substring(strPos - SNIPPET_BEFORE_MAX_LEN, strPos) +
-      "⏵⏵⏵" + script.substring(strPos, finStrPos) + "⏴⏴⏴" +
+      " ▶▶▶" + script.substring(strPos, finStrPos) + "◀◀◀ " +
       script.substring(finStrPos, SNIPPET_AFTER_MAX_LEN);
     return (
       type + ` in ${modulePath ?? "root script"} at Ln ${ln}, Col ${col}: ` +

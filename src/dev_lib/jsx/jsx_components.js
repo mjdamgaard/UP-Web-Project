@@ -57,6 +57,9 @@ export const createJSXApp = new DevFunction(
     // First create an JSXAppStyler, which uses the input getStyle() and
     // styleParams to style each JSX component.
     let jsxAppStyler = new JSXAppStyler(getStyle, styleParams, interpreter);
+    let staticStylesPromise = jsxAppStyler.loadStylesOfAllStaticJSXModules(
+      execEnv.scriptVars.liveModules, callerNode, execEnv
+    );
 
     // Then create the app's root component instance, render it, and insert it
     // into the document.
@@ -75,8 +78,7 @@ export const createJSXApp = new DevFunction(
 
     // Now use the jsxAppStyler to fetch and load the styles of all statically
     // imported JSX modules (with file extensions ending in ".jsx").
-    let {liveModules} = execEnv.scriptVars;
-    await jsxAppStyler.loadStylesOfAllStaticJSXModules(liveModules);
+    await staticStylesPromise;
 
     // And once the styles are ready, we can remove the "pending-style" class
     // from the app node.
@@ -121,7 +123,7 @@ class JSXInstance {
   }
 
   get componentPath() {
-    return this.componentModule.componentPath;
+    return this.componentModule.modulePath;
   }
 
 

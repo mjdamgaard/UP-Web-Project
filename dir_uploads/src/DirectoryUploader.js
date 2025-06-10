@@ -53,7 +53,7 @@ export class DirectoryUploader {
       `/1/${dirID}/~all`
     ) ?? [[]];
     let deletionPromises = [];
-    filePaths.forEach(([relPath]) => {
+    filePaths.forEach((relPath) => {
       let clientFilePath = path.normalize(dirPath + "/" + relPath);
       let serverFilePath = path.normalize(`/1/${dirID}/${relPath}`);
       if (!fs.existsSync(clientFilePath)) {
@@ -64,7 +64,7 @@ export class DirectoryUploader {
           })
         );
       }
-    });debugger;
+    });
     await Promise.all(deletionPromises);
 
     // Then call a helper method to recursively loop through all files in the

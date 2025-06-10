@@ -1,5 +1,5 @@
 
-import * as Foo from "./test_nested/foo.js";
+import * as Foo from "./test_nested/foo.jsx";
 
 export function render(resolve) {
   resolve(
