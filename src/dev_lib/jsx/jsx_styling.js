@@ -26,7 +26,7 @@ export class JSXAppStyler {
   }
 
   getClassTransformPromise(componentPath) {
-    this.classTransformPromises.get(componentPath);
+    return this.classTransformPromises.get(componentPath);
   }
 
   // loadStylesOfAllStaticJSXModules() fetches and apply the styles of all

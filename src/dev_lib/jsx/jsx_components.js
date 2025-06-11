@@ -1,8 +1,8 @@
 
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, turnImmutable,
-  UHArray, PlainObject, Signal, passedAsMutable, getExtendedErrorMsg,
-  getString, UserHandledObject, FunctionObject, forEach, getValues,
+  PlainObject, Signal, getExtendedErrorMsg, getString, UserHandledObject,
+  forEach, getValues, unwrapValue,
 } from "../../interpreting/ScriptInterpreter.js";
 import {CAN_POST_FLAG} from "../query/src/signals.js";
 
