@@ -15,10 +15,12 @@ import {runTests} from "../testing/parsing_interpreting_tests.js";
 
 import * as queryMod from "../dev_lib/query/query.js";
 import * as jsxMod from "../dev_lib/jsx/jsx_components.js";
+import * as basicGetStyleMod from "../dev_lib/jsx/style_functions/basic.js";
 
 const staticDevLibs = new Map();
 staticDevLibs.set("query", queryMod);
 staticDevLibs.set("jsx", jsxMod);
+staticDevLibs.set("jsx/styling/basic", basicGetStyleMod);
 
 
 
@@ -60,10 +62,11 @@ setInterval(
 const TEST_APP_ID = 1;
 const appScript = `
   import {createJSXApp} from 'jsx';
-  import * as testApp from "/1/${TEST_APP_ID}/main.js";
+  import {getStyle} from 'jsx/styling/basic';
+  import * as testApp from "/1/${TEST_APP_ID}/main.jsx";
 
   export function main() {
-    createJSXApp(testApp);
+    createJSXApp(testApp, {}, getStyle);
   }
 `;
 const renderNumMonad = [0];

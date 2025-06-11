@@ -78,7 +78,7 @@ export const query = new DevFunction(
       case "svg":
       case "scss":
       case "md":
-        mimeType = "text/plain";
+        // mimeType = "text/plain";
       case "json":
         filetypeModule = textFilesMod;
         break;

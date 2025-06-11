@@ -49,7 +49,7 @@ export const GET_IS_APP_ROOT_SIGNAL = new Signal(
 // Create a JSX (React-like) app and mount it in the index HTML page, in the
 // element with an id of "up-app-root".
 export const createJSXApp = new DevFunction(
-  {isAsync: true, initSignals: [[WILL_CREATE_APP_SIGNAL]]},
+  {isAsync: true, minArgNum: 3, initSignals: [[WILL_CREATE_APP_SIGNAL]]},
   async function(
     {callerNode, execEnv, interpreter},
     [appComponent, props, getStyle, styleParams = new PlainObject()]

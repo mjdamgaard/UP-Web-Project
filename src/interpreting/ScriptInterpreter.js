@@ -211,9 +211,10 @@ export class ScriptInterpreter {
     let [parsedScript, lexArr, strPosArr, script] =
       parsedScripts.get(scriptPath) ?? [];
     if (!parsedScript) {
-      script = await this.fetch(
+      let [resultRow = []] = await this.fetch(
         scriptPath, callerNode, callerEnv
-      );
+      ) ?? [];
+      [script] = resultRow;
       if (typeof script !== "string") throw new LoadError(
         `No script was found at ${scriptPath}`,
         callerNode, callerEnv
@@ -602,7 +603,7 @@ export class ScriptInterpreter {
       // the promise is ready.
       let lastArg = inputArr.at(-1);
       if (
-        minArgNum <= inputArr.length && lastArg instanceof FunctionObject
+        minArgNum < inputArr.length && lastArg instanceof FunctionObject
       ) {
         let callbackFun = lastArg;
         let promise = devFun.fun(execVars, inputArr.slice(0, -1));
@@ -1206,7 +1207,7 @@ export class ScriptInterpreter {
         );
       }
       case "object": {
-        let ret = PlainObject();
+        let ret = new PlainObject();
         expNode.members.forEach(member => {
           let key = member.ident;
           if (key === undefined) {

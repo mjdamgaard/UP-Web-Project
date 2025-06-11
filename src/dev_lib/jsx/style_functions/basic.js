@@ -1,5 +1,7 @@
-import {DevFunction} from "../../../interpreting/ScriptInterpreter";
-import {IS_APP_ROOT_FLAG} from "../jsx_components";
+import {
+  DevFunction, unwrapValue
+} from "../../../interpreting/ScriptInterpreter.js";
+import {IS_APP_ROOT_FLAG} from "../jsx_components.js";
 
 
 // export const NO_STATE_CHANGE_FLAG = Symbol("no-state-change");
@@ -20,8 +22,7 @@ export const getStyle = new DevFunction(
   ({callerNode, execEnv, interpreter}, [componentPath, liveModule]) => {
     let isAppRoot = execEnv.getFlag(IS_APP_ROOT_FLAG, 0);
     let isTrusted = isAppRoot;
-    let styleSheetPaths = liveModule.$get("styleSheetPaths");
-    styleSheetPaths = "...";
+    let styleSheetPaths = unwrapValue(liveModule.$get("styleSheetPaths")) ?? [];
     let classTransform = false;
     let styleSpecs = [styleSheetPaths, classTransform];
     return styleSpecs;
