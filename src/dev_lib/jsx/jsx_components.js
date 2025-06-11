@@ -2,7 +2,7 @@
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, turnImmutable,
   UHArray, PlainObject, Signal, passedAsMutable, getExtendedErrorMsg,
-  getString, UserHandledObject, FunctionObject,
+  getString, UserHandledObject, FunctionObject, forEach, getValues,
 } from "../../interpreting/ScriptInterpreter.js";
 import {CAN_POST_FLAG} from "../query/src/signals.js";
 
@@ -159,10 +159,10 @@ class JSXInstance {
         state = this.componentModule.$get("getInitState") ||
           new PlainObject();
       }
-      this.state = turnImmutable(state);
+      this.state = state;
 
       // And store the refs object.
-      this.refs = turnImmutable(props.$get("refs") ?? new PlainObject());
+      this.refs = props["refs"] ?? {};
     }
 
     // Then get the component module's render() function.
@@ -301,8 +301,8 @@ class JSXInstance {
     // and return an array of all these values, some of which are DOM nodes and
     // some of which are strings.
     if (jsxElement.isFragment) {
-      let children = jsxElement.props.$get("children") ?? new Map();
-      return children.values().map(val => (
+      let children = unwrapValue(jsxElement.props["children"]) ?? {};
+      return getValues(children).map(val => (
         this.getDOMNode(
           val, marks, interpreter, callerNode, callerEnv, ownDOMNodes, false
         )
@@ -355,7 +355,7 @@ class JSXInstance {
       // implemented attribute is set. Also record the children prop for the
       // next step afterwards.
       let childArr = [];
-      jsxElement.props.$forEach((val, key) => {
+      forEach(jsxElement.props, (val, key) => {
         switch (key) {
           case "children" : {
             if (tagName === "br" || tagName === "hr") throw new RuntimeError(
@@ -366,7 +366,7 @@ class JSXInstance {
               `A non-iterable 'children' prop was used`,
              jsxElement.node, jsxElement.decEnv
            );
-            childArr = val.$values();
+            childArr = getValues(val);
             break;
           }
           case "className" : {
@@ -666,7 +666,7 @@ class DOMNodeWrapper extends UserHandledObject {
 }
 
 
-
+// TODO: Correct and debug.
 export function compareProps(props1, props2, compareRefs = false) {
   // Get the keys, and return false immediately if the two props Maps have
   // different keys.

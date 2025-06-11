@@ -2152,6 +2152,25 @@ export function unwrapValue(val) {
 }
 
 
+export function getEntries(val) {
+  return (val.$entries) ? val.$entries() : Object.entries(val);
+}
+
+export function getValues(val) {
+  return (val.$values) ? val.$values() : Object.values(val);
+}
+
+export function getKeys(val) {
+  return (val.$keys) ? val.$keys() : Object.keys(val);
+}
+
+export function forEach(val, callback) {
+  return (val.$forEach) ? val.$forEach(callback) :
+    Object.entries(val).forEach(([key, val]) => callback(val, key));
+}
+
+
+
 
 
 
