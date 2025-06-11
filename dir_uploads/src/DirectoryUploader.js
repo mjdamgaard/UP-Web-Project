@@ -105,7 +105,7 @@ export class DirectoryUploader {
       }
 
       // Else if the file is a text file, upload it as is to the server.
-      else if (/\.(js|txt|json|html)$/.test(name)) {
+      else if (/\.(jsx?|txt|json|html|xml|svg|scss|md)$/.test(name)) {
         let contentText = fs.readFileSync(childAbsPath, 'utf8');
         uploadPromises.push(
           serverQueryHandler.post(

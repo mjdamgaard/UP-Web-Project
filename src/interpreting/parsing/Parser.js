@@ -247,9 +247,9 @@ export class Parser {
       let subStr = str.substring(0, strPos);
       let [ln, col] = getLnAndCol(subStr);
       syntaxTree.error = new SyntaxError(
-        'Incomplete parsing after `\n' +
+        'Incomplete parsing after \n`' +
         subStr.substring(strPos - ERROR_ECHO_STR_LEN) +
-        "\n`.\nExpected an empty string, but got: `" +
+        "` \nExpected an empty string, but got: `" +
         str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4)) + "`",
         ln, col
       );
@@ -274,9 +274,9 @@ export class Parser {
         let subStr = str.substring(0, strPos);
         let [ln, col] = getLnAndCol(subStr);
         syntaxTree.error = new SyntaxError(
-          `Failed symbol '${failedNodeSymbol}' after \`\n` +
+          `Failed symbol '${failedNodeSymbol}' after \n\`` +
           subStr.substring(strPos - ERROR_ECHO_STR_LEN) +
-          `\n\`.\nExpected symbol(s) ${expectedSymbols}, but got \`` +
+          `\` \nExpected symbol(s) ${expectedSymbols}, but got \`` +
           str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4)) +
           "`",
           ln, col

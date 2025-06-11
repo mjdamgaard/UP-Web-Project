@@ -1016,19 +1016,22 @@ export class ScriptInterpreter {
             case "&":
               acc = parseInt(acc) & parseInt(nextVal);
               break;
-            // Don't expect comparison of objects always to work.
             case "===":
-              acc = acc === nextVal;
+              acc = (acc?.$members && nextVal) ?
+                acc.$members === nextVal.$members : acc === nextVal;
               break;
             case "==": {
-              acc = acc == nextVal;
+              acc = (acc?.$members && nextVal) ?
+                acc.$members == nextVal.$members : acc == nextVal;
               break;
             }
             case "!==":
-              acc = acc !== nextVal;
+              acc = (acc?.$members && nextVal) ?
+                acc.$members !== nextVal.$members : acc !== nextVal;
               break;
             case "!=":
-              acc = acc != nextVal;
+              acc = (acc?.$members && nextVal) ?
+                acc.$members != nextVal.$members : acc != nextVal;
               break;
             case ">":
               acc = parseFloat(acc) > parseFloat(nextVal);
