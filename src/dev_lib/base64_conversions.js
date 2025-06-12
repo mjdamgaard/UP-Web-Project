@@ -187,6 +187,7 @@ export const arrayFromBase64 = new DevFunction(
     {callerNode, execEnv},
     [base64Str, typeArr]
   ) {
+    let valArr = [];
     let combBinArr;
     let accLen = 0;
     try {
@@ -201,7 +202,6 @@ export const arrayFromBase64 = new DevFunction(
       }
     }
     let combLen = combBinArr.length;
-    let valArr = [];
     forEach(typeArr, type => {
       type = toString(type, ind);
       let match, isUnsigned, lenExp, loExp, hiExp;
@@ -303,6 +303,8 @@ export const arrayFromBase64 = new DevFunction(
         callerNode, execEnv
       );
     });
+
+    return valArr;
   }
 );
 

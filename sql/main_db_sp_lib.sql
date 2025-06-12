@@ -23,6 +23,7 @@ DROP PROCEDURE putATT;
 DROP PROCEDURE deleteATT;
 DROP PROCEDURE insertATTEntry;
 DROP PROCEDURE deleteATTEntry;
+DROP PROCEDURE deleteATTList;
 DROP PROCEDURE readATTEntry;
 DROP PROCEDURE readATTList;
 
@@ -30,6 +31,7 @@ DROP PROCEDURE putBT;
 DROP PROCEDURE deleteBT;
 DROP PROCEDURE insertBTEntry;
 DROP PROCEDURE deleteBTEntry;
+DROP PROCEDURE deleteBTList;
 DROP PROCEDURE readBTEntry;
 DROP PROCEDURE readBTList;
 
@@ -37,6 +39,7 @@ DROP PROCEDURE putCT;
 DROP PROCEDURE deleteCT;
 DROP PROCEDURE insertCTEntry;
 DROP PROCEDURE deleteCTEntry;
+DROP PROCEDURE deleteCTList;
 DROP PROCEDURE readCTEntry;
 DROP PROCEDURE readCTList;
 
@@ -44,6 +47,7 @@ DROP PROCEDURE putBBT;
 DROP PROCEDURE deleteBBT;
 DROP PROCEDURE insertBBTEntry;
 DROP PROCEDURE deleteBBTEntry;
+DROP PROCEDURE deleteBBTList;
 DROP PROCEDURE readBBTEntry;
 DROP PROCEDURE readBBTScoreOrderedList;
 DROP PROCEDURE readBBTKeyOrderedList;
@@ -65,14 +69,15 @@ RETURN fromBase64(REPLACE(REPLACE(encodedStr, "_", "/"), "-", "+"));
 
 DELIMITER //
 CREATE PROCEDURE readHomeDirAdminID (
-    IN dirID BIGINT UNSIGNED
+    IN dirIDHex VARCHAR(16)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     IF (dirID IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
     END IF;
-    SELECT admin_id AS adminID
+    SELECT CONV(admin_id, 10, 16) AS adminID
     FROM HomeDirectories FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID;
 END proc //
@@ -81,11 +86,12 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE readHomeDirDescendants (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     IF (dirID IS NULL OR maxNum IS NULL OR numOffset IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
@@ -102,26 +108,29 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE createHomeDir (
-    IN adminID BIGINT UNSIGNED
+    IN adminIDHex VARCHAR(16)
 )
 proc: BEGIN
+    DECLARE adminID BIGINT UNSIGNED DEFAULT CONV((adminIDHex), 16, 10);
     IF (adminID IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
     END IF;
     INSERT INTO HomeDirectories (admin_id)
     VALUES (adminID);
-    SELECT LAST_INSERT_ID() AS dirID;
+    SELECT CONV(LAST_INSERT_ID(), 10, 16) AS dirID;
 END proc //
 DELIMITER ;
 
 
 DELIMITER //
 CREATE PROCEDURE editHomeDir (
-    IN dirID BIGINT UNSIGNED,
-    IN adminID BIGINT UNSIGNED
+    IN dirIDHex VARCHAR(16),
+    IN adminIDHex VARCHAR(16)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE adminID BIGINT UNSIGNED DEFAULT CONV((adminIDHex), 16, 10);
     IF (dirID IS NULL OR adminID IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
@@ -137,9 +146,10 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE deleteHomeDir (
-    IN dirID BIGINT UNSIGNED
+    IN dirIDHex VARCHAR(16)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE firstFileID BIGINT UNSIGNED;
     IF (dirID IS NULL) THEN
         SELECT NULL;
@@ -168,10 +178,11 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE readFileMetaData (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE firstFileID BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL) THEN
         SELECT NULL;
@@ -186,11 +197,12 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE moveFile (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN newFilePath VARCHAR(700)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE firstFileID BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL OR newFilePath IS NULL) THEN
         SELECT NULL;
@@ -209,10 +221,11 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE readTextFile (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL) THEN
         SELECT NULL;
@@ -231,11 +244,12 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE putTextFile (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN contentText TEXT
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL OR contentText IS NULL) THEN
         SELECT NULL;
@@ -266,10 +280,11 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE deleteTextFile (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL) THEN
         SELECT NULL;
@@ -297,10 +312,11 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE touchTableFile (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL) THEN
         SELECT NULL;
@@ -331,10 +347,11 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE putATT (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL) THEN
         SELECT NULL;
@@ -367,10 +384,11 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE deleteATT (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL) THEN
         SELECT NULL;
@@ -396,12 +414,13 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE insertATTEntry (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
     IN textData TEXT
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID, newTextID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     IF (dirID IS NULL OR filePath IS NULL OR textData IS NULL) THEN
@@ -427,19 +446,21 @@ proc: BEGIN
     VALUES (fileID, listID, newTextID, textData);
 
     DO RELEASE_LOCK(CONCAT("ATT", fileID));
-    SELECT newTextID;
+    SELECT CONV(newTextID, 10, 16);
 END proc //
 DELIMITER ;
 
 
 DELIMITER //
 CREATE PROCEDURE deleteATTEntry (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
-    IN textID BIGINT UNSIGNED
+    IN textIDHex VARCHAR(16)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE textID BIGINT UNSIGNED DEFAULT CONV((textIDHex), 16, 10);
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     IF (dirID IS NULL OR filePath IS NULL OR textID IS NULL) THEN
@@ -466,15 +487,58 @@ END proc //
 DELIMITER ;
 
 
+DELIMITER //
+CREATE PROCEDURE deleteATTList (
+    IN dirIDHex VARCHAR(16),
+    IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
+    IN loIDHex VARCHAR(16),
+    IN hiIDHex VARCHAR(16)
+)
+proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE lo BIGINT UNSIGNED DEFAULT CONV((loIDHex), 16, 10);
+    DECLARE hi BIGINT UNSIGNED DEFAULT CONV((hiIDHex), 16, 10);
+    DECLARE fileID, maxTextID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
+    IF (dirID IS NULL OR filePath IS NULL OR loIDHex IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    IF (fileID IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+
+    DO GET_LOCK(CONCAT("ATT", fileID), 10);
+
+    DELETE FROM AutoKeyTextTables
+    WHERE (
+        file_id = fileID AND list_id = listID AND
+        text_id >= lo AND (hi IS NULL OR text_id <= hi)
+    );
+
+    DO RELEASE_LOCK(CONCAT("ATT", fileID));
+
+    SELECT ROW_COUNT() AS wasDeleted;
+END proc //
+DELIMITER ;
+
 
 DELIMITER //
 CREATE PROCEDURE readATTEntry (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
-    IN textID BIGINT UNSIGNED
+    IN textIDHex VARCHAR(16)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE textID BIGINT UNSIGNED DEFAULT CONV((textIDHex), 16, 10);
     DECLARE fileID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     IF (dirID IS NULL OR filePath IS NULL OR textID IS NULL) THEN
@@ -495,16 +559,19 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE readATTList (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
-    IN lo BIGINT UNSIGNED,
-    IN hi BIGINT UNSIGNED,
+    IN loHex VARCHAR(16),
+    IN hiHex VARCHAR(16),
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscending BOOL
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE lo BIGINT UNSIGNED DEFAULT CONV((loHex), 16, 10);
+    DECLARE hi BIGINT UNSIGNED DEFAULT CONV((hiHex), 16, 10);
     DECLARE fileID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     IF (
@@ -518,7 +585,7 @@ proc: BEGIN
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
-    SELECT text_id AS textID, text_data AS textData
+    SELECT CONV(text_id, 10, 16) AS textID, text_data AS textData
     FROM AutoKeyTextTables FORCE INDEX (PRIMARY)
     WHERE
         file_id = fileID AND
@@ -548,10 +615,11 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE putBT (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL) THEN
         SELECT NULL;
@@ -584,10 +652,11 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE deleteBT (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL) THEN
         SELECT NULL;
@@ -614,13 +683,14 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE insertBTEntry (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340),
     IN elemPayloadBase64 VARCHAR(340)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID, newTextID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
@@ -657,12 +727,13 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE deleteBTEntry (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
@@ -687,15 +758,54 @@ END proc //
 DELIMITER ;
 
 
+DELIMITER //
+CREATE PROCEDURE deleteBTList (
+    IN dirIDHex VARCHAR(16),
+    IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
+    IN loBase64 VARCHAR(340),
+    IN hiBase64 VARCHAR(340)
+)
+proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE fileID, maxTextID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
+    DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
+    DECLARE hi VARBINARY(255) DEFAULT fromBase64(hiBase64);
+    IF (dirID IS NULL OR filePath IS NULL OR lo IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    IF (fileID IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+
+    DELETE FROM BinaryKeyTables
+    WHERE (
+        file_id = fileID AND list_id = listID AND
+        elem_key >= lo AND (hi IS NULL OR elem_key <= hi)
+    );
+
+    SELECT ROW_COUNT() AS wasDeleted;
+END proc //
+DELIMITER ;
+
+
 
 DELIMITER //
 CREATE PROCEDURE readBTEntry (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
@@ -723,7 +833,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE readBTList (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
     IN loBase64 VARCHAR(340),
@@ -733,6 +843,7 @@ CREATE PROCEDURE readBTList (
     IN isAscending BOOL
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
@@ -774,10 +885,11 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE putCT (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL) THEN
         SELECT NULL;
@@ -810,10 +922,11 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE deleteCT (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL) THEN
         SELECT NULL;
@@ -840,13 +953,14 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE insertCTEntry (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340),
     IN elemPayloadBase64 VARCHAR(340)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID, newTextID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
@@ -883,12 +997,13 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE deleteCTEntry (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
@@ -913,15 +1028,54 @@ END proc //
 DELIMITER ;
 
 
+DELIMITER //
+CREATE PROCEDURE deleteCTList (
+    IN dirIDHex VARCHAR(16),
+    IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
+    IN loBase64 VARCHAR(340),
+    IN hiBase64 VARCHAR(340)
+)
+proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE fileID, maxTextID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
+    DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
+    DECLARE hi VARBINARY(255) DEFAULT fromBase64(hiBase64);
+    IF (dirID IS NULL OR filePath IS NULL OR lo IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    IF (fileID IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+
+    DELETE FROM CharKeyTables
+    WHERE (
+        file_id = fileID AND list_id = listID AND
+        elem_key >= lo AND (hi IS NULL OR elem_key <= hi)
+    );
+
+    SELECT ROW_COUNT() AS wasDeleted;
+END proc //
+DELIMITER ;
+
+
 
 DELIMITER //
 CREATE PROCEDURE readCTEntry (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
@@ -949,7 +1103,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE readCTList (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
     IN loBase64 VARCHAR(340),
@@ -959,6 +1113,7 @@ CREATE PROCEDURE readCTList (
     IN isAscending BOOL
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
@@ -1007,10 +1162,11 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE putBBT (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL) THEN
         SELECT NULL;
@@ -1043,10 +1199,11 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE deleteBBT (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL) THEN
         SELECT NULL;
@@ -1073,7 +1230,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE insertBBTEntry (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340),
@@ -1081,6 +1238,7 @@ CREATE PROCEDURE insertBBTEntry (
     IN elemPayloadBase64 VARCHAR(340)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID, newTextID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
@@ -1119,12 +1277,13 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE deleteBBTEntry (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
@@ -1149,15 +1308,53 @@ END proc //
 DELIMITER ;
 
 
+DELIMITER //
+CREATE PROCEDURE deleteBBTList (
+    IN dirIDHex VARCHAR(16),
+    IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
+    IN loBase64 VARCHAR(340),
+    IN hiBase64 VARCHAR(340)
+)
+proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE fileID, maxTextID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
+    DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
+    DECLARE hi VARBINARY(255) DEFAULT fromBase64(hiBase64);
+    IF (dirID IS NULL OR filePath IS NULL OR lo IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    IF (fileID IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+
+    DELETE FROM BinaryKeyBinaryScoreTables
+    WHERE (
+        file_id = fileID AND list_id = listID AND
+        elem_key >= lo AND (hi IS NULL OR elem_key <= hi)
+    );
+
+    SELECT ROW_COUNT() AS wasDeleted;
+END proc //
+DELIMITER ;
+
 
 DELIMITER //
 CREATE PROCEDURE readBBTEntry (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340)
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
@@ -1185,7 +1382,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE readBBTScoreOrderedList (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
     IN loBase64 VARCHAR(340),
@@ -1195,6 +1392,7 @@ CREATE PROCEDURE readBBTScoreOrderedList (
     IN isAscending BOOL
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
@@ -1230,7 +1428,7 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE readBBTKeyOrderedList (
-    IN dirID BIGINT UNSIGNED,
+    IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
     IN loBase64 VARCHAR(340),
@@ -1240,6 +1438,7 @@ CREATE PROCEDURE readBBTKeyOrderedList (
     IN isAscending BOOL
 )
 proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
     DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);

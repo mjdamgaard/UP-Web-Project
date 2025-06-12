@@ -77,11 +77,8 @@ export async function query(
 
 
   // If route equals ".../<homeDirID>/<filepath>/~deleteEntry[/l=<listID>]" +
-  // "/k=<elemKey>" +
-  // "[&s=<elemScore>][&p=<elemPayload>]", insert a single table entry with
-  // those row values, overwriting any existing entry of the same key. Note
-  // that for binary and UTF-8 keys, listID and elemKey should be base-64-
-  // encoded.
+  // "/k=<elemKey>", delete a single table entry with that primary key, where
+  // the default value for listID is "".
   if (queryType === "~deleteEntry") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
@@ -106,6 +103,40 @@ export async function query(
     let {l: listID = "", k: elemKey} = paramObj;
     return await dbQueryHandler.queryDBProc(
       procName, [homeDirID, filePath, listID, elemKey],
+      route, upNodeID, options, callerNode, execEnv,
+    );
+  }
+
+  // If route equals ".../<homeDirID>/<filepath>/~deleteList[/l=<listID>]" +
+  // "[/lo=<loElemKey>]"[/hi=<hiElemKey>]", delete all entries with elemKeys
+  // between lo and hi. The default value for lo is "", and if hi is missing,
+  // all entries are deleted with an elemKey >= lo.
+  if (queryType === "~deleteList") {
+    if (!isPost) throw new RuntimeError(
+      `Unrecognized route for GET-like requests: "${route}"`,
+      callerNode, execEnv
+    );
+    let procName =
+      (fileExt === "att") ? "deleteATTList" :
+      (fileExt === "bt") ? "deleteBTList" :
+      (fileExt === "ct") ? "deleteCTList" :
+      (fileExt === "bbt") ? "deleteBBTList" :
+      undefined;
+    let paramObj;
+    try {
+      paramObj =  Object.fromEntries(queryPathArr.slice(1));
+    }
+    catch (err) {
+      throw new RuntimeError(
+        "Invalid query path",
+        callerNode, execEnv
+      );
+    }
+    // TODO: Verify that hi === undefined makes it NULL when inserted in the
+    // SQL (and otherwise perhaps use a hack of using a non-base-64 string).
+    let {l: listID = "", lo: lo = "", hi: hi} = paramObj;
+    return await dbQueryHandler.queryDBProc(
+      procName, [homeDirID, filePath, listID, lo, hi],
       route, upNodeID, options, callerNode, execEnv,
     );
   }

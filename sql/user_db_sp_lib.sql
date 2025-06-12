@@ -47,7 +47,7 @@ proc: BEGIN
         VALUES (userID, emailAddr);
     END IF;
 
-    SELECT userID;
+    SELECT CONV(userID, 10, 16) AS userID;
 END proc //
 DELIMITER ;
 
@@ -69,9 +69,10 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE generateAuthToken (
-    IN userID BIGINT UNSIGNED
+    IN userIDHex VARCHAR(16)
 )
 BEGIN
+    DECLARE userID BIGINT UNSIGNED DEFAULT CONV((userIDHex), 16, 10);
     DECLARE authToken VARCHAR(255) DEFAULT TO_BASE64(RANDOM_BYTES(40));
     DECLARE expTime BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP() + 604800000;
 
@@ -120,9 +121,10 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectGas (
-    IN userID BIGINT UNSIGNED
+    IN userIDHex VARCHAR(16)
 )
 BEGIN
+    DECLARE userID BIGINT UNSIGNED DEFAULT CONV((userIDHex), 16, 10);
     SELECT gas_json AS gasJSON, last_auto_refill_at AS lastAutoRefill
     FROM UserGas FORCE INDEX (PRIMARY)
     WHERE user_id = userID;
@@ -133,11 +135,12 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE updateGas (
-    IN userID BIGINT UNSIGNED,
+    IN userIDHex VARCHAR(16),
     IN gasJSON VARCHAR(700),
     IN isAutoRefill BOOL
 )
 BEGIN
+    DECLARE userID BIGINT UNSIGNED DEFAULT CONV((userIDHex), 16, 10);
     IF (isAutoRefill) THEN
         UPDATE UserGas
         SET gas_json = gasJSON, last_auto_refill_at = UNIX_TIMESTAMP()
@@ -162,7 +165,10 @@ BEGIN
 
     CALL getAuthenticatedUserID (authToken, userID);
 
-    SELECT userID, gas_json AS gasJSON, last_auto_refill_at AS lastAutoRefill
+    SELECT
+        CONV(userID, 10, 16) AS userID,
+        gas_json AS gasJSON,
+        last_auto_refill_at AS lastAutoRefill
     FROM UserGas FORCE INDEX (PRIMARY)
     WHERE user_id = userID;
 END //
