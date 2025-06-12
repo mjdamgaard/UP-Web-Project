@@ -109,9 +109,9 @@ export const arrayToBase64 = new DevFunction(
           lenExp.slice(1, -1),
           callerNode, execEnv
         );
-        // If the integer is unsigned, add |minInt| to translate the minInt-
+        // If the integer is signed, add |minInt| to translate the minInt-
         // maxInt range into the 0-maxUInt range.
-        if (isUnsigned) {
+        if (!isUnsigned) {
           val = val - minInts[len - 1];
         } 
         let binArr = new Uint8Array(getBytes(val, len, callerNode, execEnv));
@@ -200,11 +200,13 @@ export const arrayFromBase64 = new DevFunction(
         );
       }
     }
+    let combLen = combBinArr.length;
     let valArr = [];
     forEach(typeArr, type => {
       type = toString(type, ind);
+      let match, isUnsigned, lenExp, loExp, hiExp;
 
-      // If type = 'string', treat val as a string of variable length.
+      // Reverse conversion for the 'string' type.
       if (type === "string") {
         let indOfNullChar = combBinArr.indexOf(0, accLen);
         if (indOfNullChar === -1) {
@@ -231,48 +233,38 @@ export const arrayFromBase64 = new DevFunction(
         return;
       }
 
-      // If type = 'hex', treat val as a hexadecimal string of variable length.
+      // Reverse conversion for the 'hex[(len)]' type.
       if (type === "hex") {
-        let val = toString(getEntry(valArr, ind));
-        let binArr;
-        try {
-          binArr = Uint8Array.fromHex(val);
-        }
-        catch (err) {
-          if (err instanceof TypeError || err instanceof SyntaxError) {
-            throw new ArgTypeError(
-              `Invalid hexadecimal string: ${val}`,
-              callerNode, execEnv
-            );
-          }
-        }
-        binArrArr.push(binArr);
+        let len = combBinArr[accLen];
+        let newLen = accLen + 1 + len;
+        if (len < 1 || newLen > combLen) throw new ArgTypeError(
+          `Invalid hexadecimal string encoding: ${base64Str} at index ${ind}`,
+          callerNode, execEnv
+        );
+        let binArr = combBinArr.slice(accLen + 1, newLen);
+        valArr.push(binArr.toHex());
+        accLen = newLen;
         return;
       }
 
-      // If type = '[u]int[(len)]', treat val as an integer of len bytes.
+      // Reverse conversion for the '[u]int[(len)]' type.
       [match, isUnsigned, lenExp] = type.match(INTEGER_TYPE_REGEX);
       if (match) {
-        let valExp = getEntry(valArr, ind);
-        let val = parseInt(valExp);
-        if (val === NaN) throw new ArgTypeError(
-          `Cannot convert a non-integer to a uint type: ${valExp}`,
-          callerNode, execEnv
-        );
         let len = parseInt(lenExp ? lenExp.slice(1, -1) : 4);
         if (len === NaN || len < 1 || len > 6) throw new ArgTypeError(
           "Integer byte length needs to be between 1 and 6, but got: " +
           lenExp.slice(1, -1),
           callerNode, execEnv
         );
-        // If the integer is unsigned, add |minInt| to translate the minInt-
-        // maxInt range into the 0-maxUInt range.
-        if (isUnsigned) {
-          val = val - minInts[len - 1];
-        } 
-        let binArr = new Uint8Array(getBytes(val, len, callerNode, execEnv));
-        binArrArr.push(binArr);
-        return;
+        let binArr = combBinArr.slice(accLen, accLen + len);
+        let n = getNum(binArr);
+
+        // If the int is signed, subtract the |minInt| again.
+        if (!isUnsigned) {
+          n = n + minInts[len - 1];
+        }
+        valArr.push(n);
+        accLen = accLen + len;
       }
 
       // If type = 'float(lo, hi[, len])', treat val as an floating-point number
@@ -280,33 +272,29 @@ export const arrayFromBase64 = new DevFunction(
       // hi.
       [match, loExp, hiExp, lenExp] = type.match(FLOAT_TYPE_REGEX);
       if (match) {
-        let valExp = getEntry(valArr, ind);
-        let val = parseInt(valExp);
-        if (val === NaN) throw new ArgTypeError(
-          `Cannot convert a non-float to a float type: ${valExp}`,
-          callerNode, execEnv
-        );
-        let len = parseInt(lenExp ? lenExp.substring(1) : 4);
+        let len = parseInt(lenExp ? lenExp.slice(1, -1) : 4);
         if (len === NaN || len < 1 || len > 6) throw new ArgTypeError(
-          "Float byte length needs to be between 1 and 6, but got: " +
-          lenExp.substring(1),
+          "Integer byte length needs to be between 1 and 6, but got: " +
+          lenExp.slice(1, -1),
           callerNode, execEnv
         );
+        let binArr = combBinArr.slice(accLen, accLen + len);
+        let n = getNum(binArr);
+
         let lo = parseFloat(loExp);
         let hi = parseFloat(hiExp);
         if (lo === NaN || hi === NaN) throw new ArgTypeError(
           "Invalid float limit: " + (lo === NaN ? loExp : hiExp),
           callerNode, execEnv
         );
-        if (val < lo || val >= hi) throw new ArgTypeError(
-          `Float value needs to be inside limits: ${loExp} <= ${valExp} < ` +
-          hiExp,
+        if (lo >= hi) throw new ArgTypeError(
+          `Invalid float limits: ${loExp} < ${hiExp}`,
           callerNode, execEnv
         );
-        let n = (val - lo) * maxUInts[len - 1] / (hi - lo);
-        let binArr = new Uint8Array(getBytes(n, len, callerNode, execEnv));
-        binArrArr.push(binArr);
-        return;
+        let x = lo + (hi - lo) * n / maxUInts[len - 1];
+        
+        valArr.push(x);
+        accLen = accLen + len;
       }
 
       // If code reaches here, throw an 'unrecognized type' error.
@@ -348,4 +336,13 @@ function getBytesHelper(n, len, reverseByteArr) {
   let byte = n - nextN << 8;
   reverseByteArr.push(byte);
   getBytesHelper(nextN, len, reverseByteArr);
+}
+
+
+
+function getNum(bytes) {
+  let reverseByteArr = bytes.toReverse();
+  return reverseByteArr.reduce(
+    (acc, val, ind) => acc + val * maxUInts[ind - 1]
+  );
 }
