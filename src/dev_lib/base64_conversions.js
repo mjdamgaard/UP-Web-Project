@@ -4,8 +4,10 @@ import {
 } from '../interpreting/ScriptInterpreter.js';
 
 const textEncoder = new TextEncoder();
+const textDecoder = new TextDecoder();
 
 const NULL_CHAR_REGEX = /\0/;
+const LEADING_ZERO_PAIRS_REGEX = /^(00)+/;
 const INTEGER_TYPE_REGEX = /^(u)?int(\([1-9][0-9]*\))?$/;
 const FLOAT_TYPE_REGEX =
   /^float\(([0-9.E+\-]+),([0-9.E+\-]+)(,([1-9][0-9]*))?\)$/;
@@ -44,7 +46,7 @@ export const arrayToBase64 = new DevFunction(
     let binArrArr = [];
     forEach(typeArr, type => {
       type = toString(type, ind);
-      let match, isUnsigned, lenExp, lo, hi;
+      let match, isUnsigned, lenExp, loExp, hiExp;
 
       // If type = 'string', treat val as a string of variable length.
       if (type === "string") {
@@ -59,11 +61,26 @@ export const arrayToBase64 = new DevFunction(
       }
 
       // If type = 'hex', treat val as a hexadecimal string of variable length.
+      // We remove any leading pairs of zeros automatically, and instead
+      // prepend the length of the hex string divided by 2 so that hex strings
+      // are thus collated w.r.t. their numerical values.
       if (type === "hex") {
         let val = toString(getEntry(valArr, ind));
+        val = val.replace(LEADING_ZERO_PAIRS_REGEX, "");
+        if (val === "") val = "00";
+        let len = val.length / 2;
+        if (!Number.isInteger(len)) {
+          val = "0" + val;
+          len = Math.ceil(len);
+        }
+        if (len > 255) throw new ArgTypeError(
+          `Too long hexadecimal string: ${val}`,
+          callerNode, execEnv
+        );
         let binArr;
+        let transformedHexStr = len.toString(16).padStart(2, "0") + val;
         try {
-          binArr = Uint8Array.fromHex(val);
+          binArr = Uint8Array.fromHex(transformedHexStr);
         }
         catch (err) {
           if (err instanceof TypeError || err instanceof SyntaxError) {
@@ -130,7 +147,7 @@ export const arrayToBase64 = new DevFunction(
           hiExp,
           callerNode, execEnv
         );
-        let n = (val - lo) * maxUInts[len - 1] / (hi - lo);
+        let n = parseInt((val - lo) * maxUInts[len - 1] / (hi - lo));
         let binArr = new Uint8Array(getBytes(n, len, callerNode, execEnv));
         binArrArr.push(binArr);
         return;
@@ -171,6 +188,7 @@ export const arrayFromBase64 = new DevFunction(
     [base64Str, typeArr]
   ) {
     let combBinArr;
+    let accLen = 0;
     try {
       combBinArr = Uint8Array.fromBase64(base64Str, "base64url");
     }
@@ -182,18 +200,34 @@ export const arrayFromBase64 = new DevFunction(
         );
       }
     }
+    let valArr = [];
     forEach(typeArr, type => {
       type = toString(type, ind);
 
       // If type = 'string', treat val as a string of variable length.
       if (type === "string") {
-        let val = toString(getEntry(valArr, ind));
-        if (NULL_CHAR_REGEX.test(val)) throw new ArgTypeError(
-          `Cannot convert a string containing a null character: ${val}`,
-          callerNode, execEnv
-        );
-        let binArr = textEncoder.encode(val + "\0");
-        binArrArr.push(binArr);
+        let indOfNullChar = combBinArr.indexOf(0, accLen);
+        if (indOfNullChar === -1) {
+          throw new ArgTypeError(
+            "Invalid string encoding that does not end in a null character: " +
+            `${base64Str} at index ${ind}`,
+            callerNode, execEnv
+          );
+        }
+        let val;
+        try {
+          val = textDecoder.decode(combBinArr.slice(accLen, indOfNullChar))
+        }
+        catch (err) {
+          if (err instanceof TypeError) {
+            throw new ArgTypeError(
+              `Invalid UFT-8 string encoding: ${base64Str} at index ${ind}`,
+              callerNode, execEnv
+            );
+          }
+        }
+        valArr.push(val);
+        accLen = indOfNullChar + 1;
         return;
       }
 
