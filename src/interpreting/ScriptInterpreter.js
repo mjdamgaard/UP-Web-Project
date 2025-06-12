@@ -2152,21 +2152,33 @@ export function unwrapValue(val) {
 }
 
 
-export function getEntries(val) {
-  return (val.$entries) ? val.$entries() : Object.entries(val);
+export function getEntry(obj, key) {
+  return (obj.$get) ? obj.$get() :
+    (obj instanceof Map) ? obj.get(key) :
+    (obj instanceof Object) ? obj[key] : undefined;
 }
 
-export function getValues(val) {
-  return (val.$values) ? val.$values() : Object.values(val);
+export function getEntries(obj) {
+  return (obj.$entries) ? obj.$entries() :
+    (obj instanceof Object) ? Object.entries(obj) : [];
 }
 
-export function getKeys(val) {
-  return (val.$keys) ? val.$keys() : Object.keys(val);
+export function getValues(obj) {
+  return (obj.$values) ? obj.$values() :
+    (obj instanceof Object) ? Object.values(obj) : [];
 }
 
-export function forEach(val, callback) {
-  return (val.$forEach) ? val.$forEach(callback) :
-    Object.entries(val).forEach(([key, val]) => callback(val, key));
+export function getKeys(obj) {
+  return (obj.$keys) ? obj.$keys() :
+    (obj instanceof Object) ? Object.keys(obj) : [];
+}
+
+export function forEach(obj, callback) {
+  return (obj.$forEach) ? obj.$forEach(callback) :
+    (obj instanceof Array || obj instanceof Map) ? obj.forEach(callback) :
+    (obj instanceof Object) ?
+      Object.entries(obj).forEach(([key, obj]) => callback(obj, key)) :
+      undefined;
 }
 
 
