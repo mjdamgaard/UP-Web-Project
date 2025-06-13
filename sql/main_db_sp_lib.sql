@@ -687,7 +687,8 @@ CREATE PROCEDURE insertBTEntry (
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340),
-    IN elemPayloadBase64 VARCHAR(340)
+    IN elemPayloadBase64 VARCHAR(340),
+    IN doIgnore BOOL
 )
 proc: BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
@@ -711,14 +712,18 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    INSERT INTO BinaryKeyTables (
-        file_id, list_id, elem_key, elem_payload
-    )
-    VALUES (
-        fileID, listID, elemKey, elemPayload
-    )
-    ON DUPLICATE KEY UPDATE
-        elem_payload = elemPayload;
+    IF (doIgnore) THEN
+        INSERT IGNORE INTO BinaryKeyTables (
+            file_id, list_id, elem_key, elem_payload
+        )
+        VALUES (fileID, listID, elemKey, elemPayload);
+    ELSE
+        INSERT INTO BinaryKeyTables (
+            file_id, list_id, elem_key, elem_payload
+        )
+        VALUES (fileID, listID, elemKey, elemPayload)
+        ON DUPLICATE KEY UPDATE elem_payload = elemPayload;
+    END IF;
 
     SELECT ROW_COUNT() AS rowCount;
 END proc //
@@ -957,7 +962,8 @@ CREATE PROCEDURE insertCTEntry (
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340),
-    IN elemPayloadBase64 VARCHAR(340)
+    IN elemPayloadBase64 VARCHAR(340),
+    IN doIgnore BOOL
 )
 proc: BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
@@ -981,14 +987,20 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    INSERT INTO CharKeyTables (
-        file_id, list_id, elem_key, elem_payload
-    )
-    VALUES (
-        fileID, listID, elemKey, elemPayload
-    )
-    ON DUPLICATE KEY UPDATE
-        elem_payload = elemPayload;
+    IF (doIgnore) THEN
+        INSERT IGNORE INTO CharKeyTables (
+            file_id, list_id, elem_key, elem_payload
+        )
+        VALUES (fileID, listID, elemKey, elemPayload);
+    ELSE
+        INSERT INTO CharKeyTables (
+            file_id, list_id, elem_key, elem_payload
+        )
+        VALUES (
+            fileID, listID, elemKey, elemPayload
+        )
+        ON DUPLICATE KEY UPDATE elem_payload = elemPayload;
+    END IF;
 
     SELECT ROW_COUNT() AS rowCount;
 END proc //
@@ -1235,7 +1247,8 @@ CREATE PROCEDURE insertBBTEntry (
     IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340),
     IN elemScoreBase64 VARCHAR(340),
-    IN elemPayloadBase64 VARCHAR(340)
+    IN elemPayloadBase64 VARCHAR(340),
+    IN doIgnore BOOL
 )
 proc: BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
@@ -1260,15 +1273,23 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    INSERT INTO BinaryKeyBinaryScoreTables (
-        file_id, list_id, elem_key, elem_score, elem_payload
-    )
-    VALUES (
-        fileID, listID, elemKey, elemScore, elemPayload
-    )
-    ON DUPLICATE KEY UPDATE
-        elem_score = elemScore,
-        elem_payload = elemPayload;
+    IF (doIgnore) THEN
+        INSERT IGNORE INTO BinaryKeyBinaryScoreTables (
+            file_id, list_id, elem_key, elem_score, elem_payload
+        )
+        VALUES (fileID, listID, elemKey, elemScore, elemPayload);
+    ELSE
+        INSERT INTO BinaryKeyBinaryScoreTables (
+            file_id, list_id, elem_key, elem_score, elem_payload
+        )
+        VALUES (
+            fileID, listID, elemKey, elemScore, elemPayload
+        )
+        ON DUPLICATE KEY UPDATE
+            elem_score = elemScore,
+            elem_payload = elemPayload;
+    END IF;
+
 
     SELECT ROW_COUNT() AS rowCount;
 END proc //

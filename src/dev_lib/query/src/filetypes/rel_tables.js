@@ -171,7 +171,7 @@ export async function query(
   }
 
   // If route equals ".../<homeDirID>/<filepath>/list[/l=<listID][/lo=<lo>]" +
-  // "[/hi=<hi>][/o=<numOffset>]/n=<maxNum>&a=<isAscending>", read and return
+  // "[/hi=<hi>][/o=<numOffset>]/n=<maxNum>/a=<isAscending>", read and return
   // the primary-key-indexed list where the elemKey is limited by lo and hi if
   // any of them are provided, and limited by a maximum number of naxNum
   // entries, and offset by numOffset.
@@ -208,10 +208,10 @@ export async function query(
     );
   }
 
-  // If route equals ".../<homeDirID>/<filepath>?skList&[lo=<lo>&][hi=<hi>&]" +
-  // "[o=<numOffset>&]n=<maxNum>&a=<isAscending>", verify the the file type is
-  // a '.bbt' file, and then read and return a list where entries are ordered
-  // by their elemScore instead, i.e. by their secondary key (SK).
+  // If route equals ".../<homeDirID>/<filepath>/skList[/lo=<lo>][/hi=<hi>]" +
+  // "[/o=<numOffset>]n=<maxNum>[/a=<isAscending>]", verify the the file type
+  // is a '.bbt' file, and then read and return a list where entries are
+  // ordered by their elemScore instead, i.e. by their secondary key (SK).
   if (queryType === "skList") {
     if (fileExt !== "bbt") throw new RuntimeError(
       "Secondary index lists are only implemented for the '.bbt' file type",
@@ -229,10 +229,10 @@ export async function query(
       );
     }
     let {
-      l: listID = "", lo, hi, n: maxNum, o: numOffset, a: isAscending
+      l: listID = "", lo, hi, n: maxNum, o: numOffset, a: isAscending = false
     } = paramObj;
     maxNum = parseInt(maxNum);
-    if (maxNum === NaN || isAscending === undefined) throw new RuntimeError(
+    if (maxNum === NaN) throw new RuntimeError(
       "Invalid query path for a list query",
       callerNode, execEnv
     );
@@ -244,9 +244,11 @@ export async function query(
     );
   }
 
-  // If route equals ".../<homeDirID>/<filepath>?~insert&k=<elemKey>" +
-  // "[&s=<elemScore>][&p=<elemPayload>]", insert a single table entry with
-  // those row values, overwriting any existing entry of the same key. 
+  // If route equals ".../<homeDirID>/<filepath>/~insert/[/l=<listID>]" +
+  // "k=<elemKey>[/s=<elemScore>][/p=<elemPayload>][/i=<ignore]", insert a
+  // single table entry with those row values, overwriting any existing entry
+  // of the same key, unless ignore (i) is defined and truthy (does not apply
+  // .att files).
   if (queryType === "~insert") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
@@ -269,25 +271,52 @@ export async function query(
       );
     }
     let {
-      l: listID = "", k: elemKey = "", s: elemScore = "", p: elemPayload = ""
+      l: listID = "", k: elemKey = "", s: elemScore = "", p: elemPayload = "",
+      i: ignore = false,
     } = paramObj;
     let rowLen = listID.length + elemKey.length + elemScore.length +
       elemPayload.length;
     payGas(callerNode, execEnv, {dbWrite: rowLen});
     let paramValArr = (fileExt === "bbt") ?
-      [homeDirID, filePath, listID, elemKey, elemScore, elemPayload] :
-      [homeDirID, filePath, listID, elemKey, elemPayload];
+      [homeDirID, filePath, listID, elemKey, elemScore, elemPayload, ignore] :
+      (fileExt === "att") ?
+        [homeDirID, filePath, listID, elemKey, elemPayload] :
+        [homeDirID, filePath, listID, elemKey, elemPayload, ignore];
     return await dbQueryHandler.queryDBProc(
       procName, paramValArr, route, upNodeID, options, callerNode, execEnv,
     );
   }
 
-  // TODO: At some point implement an ?~insertList query that inserts a whole
-  // list of entries into a table at, also overwriting any existing entries
-  // with the same key, namely by generating the SQL for a single INSERT INTO
-  // statement that does this, possibly with '?'s in place of the column
-  // values, and where the values are then parsed from postData.
-  (() => {})(postData);
+
+  // If route equals ".../<homeDirID>/<filepath>/~insertList[/l=<listID>]" +
+  // "[/i=<ignore>]", treat postData as an array of rows to insert into the
+  // table. The ignore parameter also determines whether to ignore on duplicate
+  // keys or to overwrite.
+  if (queryType === "~insertList") {
+    if (!isPost) throw new RuntimeError(
+      `Unrecognized route for GET-like requests: "${route}"`,
+      callerNode, execEnv
+    );
+    if (!(postData instanceof Array)) throw new RuntimeError(
+      "postData is not an array",
+      callerNode, execEnv
+    );
+    let paramObj;
+    try {
+      paramObj =  Object.fromEntries(queryPathArr.slice(1));
+    }
+    catch (err) {
+      throw new RuntimeError(
+        "Invalid query path",
+        callerNode, execEnv
+      );
+    }
+    let {l: listID = "", i: ignore = false} = paramObj;
+    // TODO: Continue.
+  }
+
+  // TODO: Implement ~updateEntry paths as well, which will especially be
+  // useful for the ATT tables.
 
   // If the route was not matched at this point, throw an error.
   throw new RuntimeError(

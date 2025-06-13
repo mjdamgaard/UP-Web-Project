@@ -1338,7 +1338,7 @@ export class ScriptInterpreter {
         "Destructuring an object with a non-object value",
         expNode, environment
       );
-      expNode.children.forEach((paramMemExp, ind) => {
+      expNode.children.forEach(paramMemExp => {
         let propVal = val.$get(paramMemExp.ident);
         this.assignToParameter(
           paramMemExp, propVal, environment, isDeclaration, isConst
