@@ -903,73 +903,85 @@ export class ScriptInterpreter {
         return new DefinedFunction(funNode, environment);
       }
       case "assignment": {
-        return this.assignToExpression(expNode, environment);
-        // TODO: Remove:
-        let val = this.evaluateExpression(expNode.exp2, environment);
         let op = expNode.op;
         switch (op) {
           case "=":
             return this.assignToVariableOrMember(
               expNode.exp1, environment, () => {
-                let newVal = val;
+                let newVal =
+                  this.evaluateExpression(expNode.exp2, environment);
                 return [newVal, newVal];
               }
             );
           case "+=":
             return this.assignToVariableOrMember(
               expNode.exp1, environment, prevVal => {
-                let newVal = parseFloat(prevVal) + parseFloat(val);
+                let newVal = parseFloat(prevVal) + parseFloat(
+                  this.evaluateExpression(expNode.exp2, environment)
+                );
                 return [newVal, newVal];
               }
             );
           case "-=":
             return this.assignToVariableOrMember(
               expNode.exp1, environment, prevVal => {
-                let newVal = parseFloat(prevVal) - parseFloat(val);
+                let newVal = parseFloat(prevVal) - parseFloat(
+                  this.evaluateExpression(expNode.exp2, environment)
+                );
                 return [newVal, newVal];
               }
             );
           case "*=":
             return this.assignToVariableOrMember(
               expNode.exp1, environment, prevVal => {
-                let newVal = parseFloat(prevVal) * parseFloat(val);
+                let newVal = parseFloat(prevVal) * parseFloat(
+                  this.evaluateExpression(expNode.exp2, environment)
+                );
                 return [newVal, newVal];
               }
             );
           case "/=":
             return this.assignToVariableOrMember(
               expNode.exp1, environment, prevVal => {
-                let newVal = parseFloat(prevVal) / parseFloat(val);
+                let newVal = parseFloat(prevVal) / parseFloat(
+                  this.evaluateExpression(expNode.exp2, environment)
+                );
                 return [newVal, newVal];
               }
             );
-          // TODO: Reimplement these to be short-circuiting.
-          // case "&&=":
-          //   return this.assignToVariableOrMember(
-          //     expNode.exp1, environment, prevVal => {
-          //       let newVal = prevVal && val;
-          //       return [newVal, newVal];
-          //     }
-          //   );
-          // case "||=":
-          //   return this.assignToVariableOrMember(
-          //     expNode.exp1, environment, prevVal => {
-          //       let newVal = prevVal || val;
-          //       return [newVal, newVal];
-          //     }
-          //   );
-          // case "??=":
-          //   return this.assignToVariableOrMember(
-          //     expNode.exp1, environment, prevVal => {
-          //       let newVal = prevVal ?? val;
-          //       return [newVal, newVal];
-          //     }
-          //   );
+          case "&&=":
+            return this.assignToVariableOrMember(
+              expNode.exp1, environment, prevVal => {
+                let newVal = prevVal &&
+                  this.evaluateExpression(expNode.exp2, environment);
+                return [newVal, newVal];
+              }
+            );
+          case "||=":
+            return this.assignToVariableOrMember(
+              expNode.exp1, environment, prevVal => {
+                let newVal = prevVal ||
+                  this.evaluateExpression(expNode.exp2, environment);
+                return [newVal, newVal];
+              }
+            );
+          case "??=":
+            return this.assignToVariableOrMember(
+              expNode.exp1, environment, prevVal => {
+                let newVal = prevVal ??
+                  this.evaluateExpression(expNode.exp2, environment);
+                return [newVal, newVal];
+              }
+            );
           default: throw (
             "ScriptInterpreter.evaluateExpression(): Unrecognized " +
             `operator: "${op}"`
           );
         }
+      }
+      case "destructuring-assignment" : {
+        let val = this.evaluateExpression(expNode.valExp, environment);
+        return this.executeDestructuring(destExp, val, environment);
       }
       case "conditional-expression": {
         let cond = this.evaluateExpression(expNode.cond, environment);
@@ -1348,7 +1360,7 @@ export class ScriptInterpreter {
   }
 
 
-  assignToExpression(assignExp, environment, isDeclaration, isConst) {
+  executeDestructuring(destExp, val, environment, isDeclaration, isConst) {
 
   }
 

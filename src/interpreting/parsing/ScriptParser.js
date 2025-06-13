@@ -173,16 +173,6 @@ export const scriptGrammar = {
       return ret;
     },
   },
-  "variable-declaration": {
-    rules: [
-      ["/let|const/", "expression-list", "/;/!"],
-    ],
-    process: (children) => ({
-      type: "variable-declaration",
-      isConst: children[0] === "const",
-      children: children[1],
-    }),
-  },
   "identifier": {
     rules: [
       [/[_\$a-zA-Z][_\$a-zA-Z0-9]*/],
@@ -196,31 +186,72 @@ export const scriptGrammar = {
       }
     },
   },
+  "variable-declaration": {
+    rules: [
+      ["/let|const/", "parameter-list", "/;/!"],
+    ],
+    process: (children) => ({
+      type: "variable-declaration",
+      isConst: children[0] === "const",
+      children: children[1],
+    }),
+  },
   "parameter-list": {
     rules: [
       ["parameter", "/,/", "parameter-list!1"],
-      ["parameter", "/,/?"],
+      ["parameter"],
     ],
     process: straightenListSyntaxTree,
   },
-  // TODO: Implement types (as a subset of TS).
   "parameter": {
     rules: [
-      // ["identifier", "/:/", "type", "/=/", "expression!"],
-      // ["identifier", "/:/", "type", /\?/],
-      // ["identifier", "/:/", "type!"],
       ["identifier", "/=/", "expression!"],
+      ["identifier"],
+      ["destructuring", "/=/", "expression!"],
+      ["destructuring"],
+    ],
+    process: (children, ruleInd) => (
+      (ruleInd < 2) ? {
+        type: "parameter",
+        ident: children[0].ident,
+        defaultExp: children[2],
+      } : {
+        type: "parameter",
+        destExp: children[0],
+        defaultExp: children[2],
+      }
+    ),
+  },
+  "destructuring": {
+    rules: [
+      [/\[/, "parameter-list", "/,/?", /\]/],
+      [/\{/, "parameter-member-list", "/,/?", /\}/],
+    ],
+    process: (children) => ({
+      type: "destructuring",
+    }),
+  },
+  "parameter-member-list": {
+    rules: [
+      ["parameter", "/,/", "parameter-member-list!1"],
+      ["parameter-member"],
+    ],
+    process: straightenListSyntaxTree,
+  },
+  "parameter-member": {
+    rules: [
+      ["identifier", "/:/", "parameter!"],
       ["identifier"],
     ],
     process: (children) => ({
-      type: "parameter",
+      type: "parameter-member",
       ident: children[0].ident,
-      defaultExp: children[2],
+      param: children[2],
     }),
   },
   "function-declaration": {
     rules: [
-      ["/function/", "identifier", "expression-tuple", "block-statement"],
+      ["/function/", "identifier", "parameter-tuple", "block-statement"],
     ],
     process: (children) => ({
       type: "function-declaration",
@@ -387,9 +418,10 @@ export const scriptGrammar = {
   },
   "expression": {
     rules: [
-      ["expression-tuple", "/=>/", "function-body"],
+      ["parameter-tuple", "/=>/", "function-body"],
       ["identifier", "/=>/", "function-body"],
-      ["/function/", "expression-tuple", "function-body!"],
+      ["/function/", "parameter-tuple", "function-body!"],
+      ["destructuring", "/=/", "expression!"],
       ["expression^(1)", /=|\+=|\-=|\*=|\/=|&&=|\|\|=|\?\?=/, "expression!"],
       ["expression^(1)", /\?/, "expression!", /:/, "expression"],
       ["expression^(1)"],
@@ -408,11 +440,15 @@ export const scriptGrammar = {
         params: children[1].children,
         body: children[2],
       } : (ruleInd === 3) ? {
+        type: "destructuring-assignment",
+        destExp: children[0],
+        valExp: children[2],
+      } : (ruleInd === 4) ? {
         type: "assignment",
         exp1: children[0],
         exp2: children[2],
         op: children[1],
-      } : (ruleInd === 4) ? {
+      } : (ruleInd === 5) ? {
         type: "conditional-expression",
         cond: children[0],
         exp1: children[2],
@@ -597,6 +633,21 @@ export const scriptGrammar = {
         children: children[1].children,
       } : {
         type: "expression-tuple",
+        children: [],
+      }
+    },
+  },
+  "parameter-tuple": {
+    rules: [
+      [/\(/, "parameter-list", "/,/?", "/\\)/!"],
+      [/\(/, /\)/],
+    ],
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
+        type: "parameter-tuple",
+        children: children[1].children,
+      } : {
+        type: "parameter-tuple",
         children: [],
       }
     },
