@@ -205,31 +205,31 @@ export const scriptGrammar = {
   },
   "parameter": {
     rules: [
-      ["identifier", "/=/", "expression!"],
-      ["identifier"],
       ["destructuring", "/=/", "expression!"],
       ["destructuring"],
+      ["expression^(14)", "/=/", "expression!"],
+      ["expression^(14)"],
     ],
-    process: (children, ruleInd) => (
-      (ruleInd < 2) ? {
-        type: "parameter",
-        ident: children[0].ident,
-        defaultExp: children[2],
-      } : {
-        type: "parameter",
-        destExp: children[0],
-        defaultExp: children[2],
-      }
-    ),
+    process: (children) => ({
+      type: "parameter",
+      targetExp: children[0],
+      defaultExp: children[2],
+    }),
   },
   "destructuring": {
     rules: [
       [/\[/, "parameter-list", "/,/?", /\]/],
       [/\{/, "parameter-member-list", "/,/?", /\}/],
     ],
-    process: (children) => ({
-      type: "destructuring",
-    }),
+    process: (children, ruleInd) => (
+      (ruleInd === 0) ? {
+        type: "array-destructuring",
+        children: children[1].children,
+      } : {
+        type: "object-destructuring",
+        children: children[1].children,
+      }
+    ),
   },
   "parameter-member-list": {
     rules: [
@@ -240,14 +240,24 @@ export const scriptGrammar = {
   },
   "parameter-member": {
     rules: [
+      ["identifier", "/:/", "parameter", "/=/", "expression!"],
       ["identifier", "/:/", "parameter!"],
+      ["identifier", "/=/", "expression!"],
       ["identifier"],
     ],
-    process: (children) => ({
-      type: "parameter-member",
-      ident: children[0].ident,
-      param: children[2],
-    }),
+    process: (children, ruleInd) => (
+      (ruleInd <= 1) ? {
+        type: "parameter-member",
+        ident: children[0].ident,
+        targetExp: children[2],
+        defaultExp: children[4],
+      } : {
+        type: "parameter-member",
+        ident: children[0].ident,
+        targetExp: children[0],
+        defaultExp: children[2],
+      }
+    ),
   },
   "function-declaration": {
     rules: [

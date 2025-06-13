@@ -668,11 +668,16 @@ export class ScriptInterpreter {
 
 
 
-  #executeDefinedFunction(funNode, inputValueArr, execEnv) {
+  #executeDefinedFunction(funNode, inputArr, execEnv) {
     // Add the input parameters to the environment (and turn all object inputs
     // immutable, unless the passAsMutable property is true, in which case just
     // turn this property false).
-    this.declareInputParameters(execEnv, funNode.params, inputValueArr);
+    inputArr = inputArr.map(val => (
+      val.passAsMutable ? notPassedAsMutable(val) : turnImmutable(val)
+    ));
+    funNode.params.forEach((paramExp, ind) => {
+      this.assignToParameter(paramExp, inputArr[ind], execEnv, true, false);
+    });
 
     // Now execute the statements inside a try-catch statement to catch any
     // return exception, or any uncaught break or continue exceptions. On a
@@ -703,31 +708,6 @@ export class ScriptInterpreter {
   }
 
 
-  declareInputParameters(environment, params, inputArr) {
-    params.forEach((param, ind) => {
-      let paramName = param.ident;
-      let paramVal = inputArr[ind];
-
-      // If the input value is undefined, and the parameter has a default
-      // value, use that value, evaluated at the time (each time) the function
-      // is called. We use the same environment each time such that a parameter
-      // can depend on a previous one.
-      if (param.defaultExp && paramVal === undefined) {
-        paramVal = this.evaluateExpression(param.defaultExp, environment);
-      }
-
-      // If the paramVal is "passedAsMutable", we remove that wrapper,
-      // and else we turn the paramVal immutable.
-      if (paramVal && paramVal.passAsMutable) {
-        paramVal = notPassedAsMutable(paramVal);
-      } else {
-        paramVal = turnImmutable(paramVal);
-      }
-
-      // Then declare the parameter in the environment.
-      environment.declare(paramName, paramVal, false, param);
-    });
-  }
 
 
 
@@ -837,34 +817,12 @@ export class ScriptInterpreter {
         return;
       }
       case "variable-declaration": {
-        let decType = stmtNode.decType;
-        if (decType === "definition-list") {
-          stmtNode.defArr.forEach(varDef => {
-            let ident = varDef.ident;
-            let val = (!varDef.exp) ? undefined :
-              this.evaluateExpression(varDef.exp, environment);
-            environment.declare(
-              ident, val, stmtNode.isConst, stmtNode
-            );
-          });
-        }
-        else if (decType === "destructuring") {
-          let val = this.evaluateExpression(stmtNode.exp, environment);
-          if (!Array.isArray(val)) throw new RuntimeError(
-            "Destructuring of a non-array expression",
-            stmtNode, environment
+        let isConst = stmtNode.isConst;
+        stmtNode.children.forEach(paramExp => {
+          this.assignToParameter(
+            paramExp, undefined, environment, true, isConst
           );
-          stmtNode.identArr.forEach((ident, ind) => {
-            let nestedVal = val[ind];
-            environment.declare(
-              ident, nestedVal, stmtNode.isConst, stmtNode
-            );
-          });
-        }
-        else throw (
-          "ScriptInterpreter.executeStatement(): Unrecognized " +
-          `variable declaration type: "${decType}"`
-        );
+        });
         break;
       }
       case "function-declaration": {
@@ -901,6 +859,10 @@ export class ScriptInterpreter {
           ...expNode,
         };
         return new DefinedFunction(funNode, environment);
+      }
+      case "destructuring-assignment" : {
+        let val = this.evaluateExpression(expNode.valExp, environment);
+        return this.executeDestructuring(expNode.destExp, val, environment);
       }
       case "assignment": {
         let op = expNode.op;
@@ -978,10 +940,6 @@ export class ScriptInterpreter {
             `operator: "${op}"`
           );
         }
-      }
-      case "destructuring-assignment" : {
-        let val = this.evaluateExpression(expNode.valExp, environment);
-        return this.executeDestructuring(destExp, val, environment);
       }
       case "conditional-expression": {
         let cond = this.evaluateExpression(expNode.cond, environment);
@@ -1360,8 +1318,73 @@ export class ScriptInterpreter {
   }
 
 
-  executeDestructuring(destExp, val, environment, isDeclaration, isConst) {
+  executeDestructuring(expNode, val, environment, isDeclaration, isConst) {
+    let type = expNode.type
+    if (type === "array-destructuring") {
+      if (!(val instanceof UHArray)) throw new RuntimeError(
+        "Destructuring an array with a non-array value",
+        expNode, environment
+      );
+      let values = val.$values();
+      expNode.children.forEach((paramExp, ind) => {
+        this.assignToParameter(
+          paramExp, values[ind], environment, isDeclaration, isConst
+        );
+      });
+      return val;
+    }
+    else if (type === "object-destructuring") {
+      if (!(val instanceof PlainObject)) throw new RuntimeError(
+        "Destructuring an object with a non-object value",
+        expNode, environment
+      );
+      expNode.children.forEach((paramMemExp, ind) => {
+        let propVal = val.$get(paramMemExp.ident);
+        this.assignToParameter(
+          paramMemExp, propVal, environment, isDeclaration, isConst
+        );
+      });
+      return val;
+    }
+    else throw new RuntimeError(
+      "Cannot assign to this type of expression",
+      expNode, environment
+    );
+  }
 
+
+  assignToParameter(paramExp, val, environment, isDeclaration, isConst) {
+    let targetExp = paramExp.targetExp;
+    if (val === undefined) {
+      val = this.evaluateExpression(paramExp.defaultExp, environment);
+    }
+    let type = targetExp.type
+    if (type === "identifier") {
+      if (isDeclaration) {
+        environment.declare(targetExp.ident, val, isConst, targetExp);
+        return val;
+      } else {
+        return environment.assign(targetExp.ident, () => [val, val], targetExp);
+      }
+    }
+    else if (type === "chained-expression") {
+      if (isDeclaration) {
+        throw new RuntimeError(
+          "Only variables or destructuring expressions can be used in " +
+          "declarations",
+          targetExp, environment
+        );
+      } else {
+        return this.assignToVariableOrMember(
+          targetExp, environment, () => [val, val]
+        );
+      }
+    }
+    else {
+      return this.executeDestructuring(
+        targetExp, val, environment, isDeclaration, isConst
+      );
+    }
   }
 
 
