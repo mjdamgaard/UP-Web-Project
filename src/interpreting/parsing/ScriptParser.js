@@ -175,54 +175,13 @@ export const scriptGrammar = {
   },
   "variable-declaration": {
     rules: [
-      ["/let|const/", "variable-definition-list", "/;/!"],
-      [
-        "/let|const/", /\[/, "identifier-list"," /\\]/!", "/=/", "expression",
-        "/;/"
-      ],
+      ["/let|const/", "expression-list", "/;/!"],
     ],
-    process: (children, ruleInd) => {
-      return (ruleInd === 0) ? {
-        type: "variable-declaration",
-        decType: "definition-list",
-        isConst: (children[0] === "const"),
-        defArr: children[1].children,
-        identArr: children[1].children.map(val => val.ident),
-      } : {
-        type: "variable-declaration",
-        decType: "destructuring",
-        isConst: (children[0] === "const"),
-        identArr: children[2].children.map(val => val.ident),
-        exp: children[5],
-      }
-    },
-  },
-  "variable-definition-list": {
-    rules: [
-      ["variable-definition", "/,/", "variable-definition-list!"],
-      ["variable-definition"],
-    ],
-    process: straightenListSyntaxTree,
-  },
-  "variable-definition": {
-    rules: [
-      ["identifier", "/=/", "expression"],
-      ["identifier"],
-    ],
-    process: (children) => {
-      return {
-        type: "variable-definition",
-        ident: children[0].ident,
-        exp: children[2] || undefined,
-      };
-    },
-  },
-  "identifier-list": {
-    rules: [
-      ["identifier", "/,/", "identifier-list!1"],
-      ["identifier", "/,/?"],
-    ],
-    process: straightenListSyntaxTree,
+    process: (children) => ({
+      type: "variable-declaration",
+      isConst: children[0] === "const",
+      children: children[1],
+    }),
   },
   "identifier": {
     rules: [
@@ -236,20 +195,6 @@ export const scriptGrammar = {
         return {type: "identifier", ident: lexeme};
       }
     },
-  },
-  "function-declaration": {
-    rules: [
-      [
-        "/function/", "identifier", /\(/, "parameter-list!1?", /\)/,
-        "function-body"
-      ],
-    ],
-    process: (children) => ({
-      type: "function-declaration",
-      name: children[1].ident,
-      params: children[3][0]?.children || [],
-      body: children[5],
-    }),
   },
   "parameter-list": {
     rules: [
@@ -273,23 +218,21 @@ export const scriptGrammar = {
       defaultExp: children[2],
     }),
   },
+  "function-declaration": {
+    rules: [
+      ["/function/", "identifier", "expression-tuple", "block-statement"],
+    ],
+    process: (children) => ({
+      type: "function-declaration",
+      name: children[1].ident,
+      params: children[2].children,
+      body: children[3],
+    }),
+  },
   "function-body": {
     rules: [
-      [/\{/, "statement-list!1", /\}/],
-      [/\{/, /\}/],
-    ],
-    process: (children, ruleInd) => {
-      return (ruleInd === 0) ? {
-        stmtArr: children[1].children,
-      } : {
-        stmtArr: [],
-      }
-    },
-  },
-  "function-body-or-expression": {
-    rules: [
-      ["function-body!1"], // '!1' here means that that object expressions have
-      // to be wrapped in '()'.
+      ["block-statement!1"], // '!1' here means that that object expressions
+      // have to be wrapped in '()'.
       ["expression"],
     ],
     process: (children, ruleInd) => {
@@ -300,13 +243,6 @@ export const scriptGrammar = {
         }],
       }
     },
-  },
-  "statement-list": {
-    rules: [
-      ["statement", "statement-list"],
-      ["statement"],
-    ],
-    process: straightenListSyntaxTree,
   },
   "statement": {
     rules: [
@@ -337,18 +273,12 @@ export const scriptGrammar = {
   },
   "block-statement": {
     rules: [
-      [/\{/, "statement-list", "/\\}/!"],
-      [/\{/, /\}/],
+      [/\{/, "statement!1*", "/\\}/!"],
     ],
-    process: (children, ruleInd) => {
-      return (ruleInd === 0) ? {
-        type: "block-statement",
-        stmtArr: children[1].children,
-      } : {
-        type: "block-statement",
-        stmtArr: [],
-      }
-    },
+    process: (children) => ({
+      type: "block-statement",
+      stmtArr: children[1].children,
+    }),
   },
   "if-else-statement": {
     rules: [
@@ -451,17 +381,15 @@ export const scriptGrammar = {
   "expression-list": {
     rules: [
       ["expression", "/,/", "expression-list!1"],
-      ["expression", "/,/?"],
+      ["expression"],
     ],
     process: straightenListSyntaxTree,
   },
   "expression": {
     rules: [
-      [/\(/, "parameter-list", /\)/, "/=>/", "function-body-or-expression!"],
-      [/\(/, /\)/, "/=>/", "function-body-or-expression!"],
-      ["identifier", "/=>/", "function-body-or-expression!"],
-      ["/function/", /\(/, "parameter-list", /\)/, "function-body!"],
-      ["/function/", /\(/, /\)/, "function-body!"],
+      ["expression-tuple", "/=>/", "function-body"],
+      ["identifier", "/=>/", "function-body"],
+      ["/function/", "expression-tuple", "function-body!"],
       ["expression^(1)", /=|\+=|\-=|\*=|\/=|&&=|\|\|=|\?\?=/, "expression!"],
       ["expression^(1)", /\?/, "expression!", /:/, "expression"],
       ["expression^(1)"],
@@ -469,30 +397,22 @@ export const scriptGrammar = {
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
         type: "arrow-function",
-        params: children[1].children,
-        body: children[4],
+        params: children[0].children,
+        body: children[2],
       } : (ruleInd === 1) ? {
-        type: "arrow-function",
-        params: [],
-        body: children[3],
-      } : (ruleInd === 2) ? {
         type: "arrow-function",
         params: [children[0]],
         body: children[2],
+      } : (ruleInd === 2) ? {
+        type: "function-expression",
+        params: children[1].children,
+        body: children[2],
       } : (ruleInd === 3) ? {
-        type: "function-expression",
-        params: children[2].children,
-        body: children[4],
-      } : (ruleInd === 4) ? {
-        type: "function-expression",
-        params: [],
-        body: children[3],
-      } : (ruleInd === 5) ? {
         type: "assignment",
-        op: children[1],
         exp1: children[0],
         exp2: children[2],
-      } : (ruleInd === 6) ? {
+        op: children[1],
+      } : (ruleInd === 4) ? {
         type: "conditional-expression",
         cond: children[0],
         exp1: children[2],
@@ -668,7 +588,7 @@ export const scriptGrammar = {
   },
   "expression-tuple": {
     rules: [
-      [/\(/, "expression-list", "/\\)/!"],
+      [/\(/, "expression-list", "/,/?", "/\\)/!"],
       [/\(/, /\)/],
     ],
     process: (children, ruleInd) => {
@@ -704,7 +624,7 @@ export const scriptGrammar = {
 // TODO: Implement spread operator for for both arrays and objects.
   "array": {
     rules: [
-      [/\[/, "expression-list!1", /\]/],
+      [/\[/, "expression-list!1", "/,/?", /\]/],
       [/\[/, /\]/],
     ],
     process: (children, ruleInd) => {

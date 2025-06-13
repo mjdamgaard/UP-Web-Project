@@ -676,7 +676,7 @@ export class ScriptInterpreter {
 
     // Now execute the statements inside a try-catch statement to catch any
     // return exception, or any uncaught break or continue exceptions. On a
-    // return exception, return the held value. 
+    // return exception, return the held value.
     let stmtArr = funNode.body.stmtArr;
     try {
       stmtArr.forEach(stmt => this.executeStatement(stmt, execEnv));
@@ -903,6 +903,8 @@ export class ScriptInterpreter {
         return new DefinedFunction(funNode, environment);
       }
       case "assignment": {
+        return this.assignToExpression(expNode, environment);
+        // TODO: Remove:
         let val = this.evaluateExpression(expNode.exp2, environment);
         let op = expNode.op;
         switch (op) {
@@ -1345,6 +1347,10 @@ export class ScriptInterpreter {
     }
   }
 
+
+  assignToExpression(assignExp, environment, isDeclaration, isConst) {
+
+  }
 
 
 
