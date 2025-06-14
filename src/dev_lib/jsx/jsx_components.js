@@ -34,7 +34,7 @@ export const WILL_CREATE_APP_SIGNAL = new Signal(
 
 export const GET_IS_APP_ROOT_SIGNAL = new Signal(
   "get-is-app-root",
-  function(flagEnv, node, env) {
+  function(flagEnv) {
     return flagEnv.getFlag(IS_APP_ROOT_FLAG, 0) ? true : false;
   }
 );
@@ -52,11 +52,24 @@ export const createJSXApp = new DevFunction(
   {isAsync: true, minArgNum: 3, initSignals: [[WILL_CREATE_APP_SIGNAL]]},
   async function(
     {callerNode, execEnv, interpreter},
-    [appComponent, props, getStyle, styleParams = new PlainObject()]
+    [appComponent, props, getAuxData]
   ) {
-    // First create an JSXAppStyler, which uses the input getStyle() and
-    // styleParams to style each JSX component.
-    let jsxAppStyler = new JSXAppStyler(getStyle, styleParams, interpreter);
+    // Create an AuxDataStore which uses getAuxData() to fetch auxiliary data
+    // for each individual component. This auxiliary data is used for styling
+    // the components, and for assigning them trust for making post request,
+    // among other things, all of which are cases where the resulting data used
+    // might be made to depend on user preferences.
+    let auxDataStore = new AuxDataStore(getAuxData, interpreter);
+
+    // Then create an JSXAppStyler, which uses the auxDataStore to generate the
+    // styles of each component by fetching, transpiling and inserting relevant
+    // style sheets in the document head. We then immediately call its
+    // loadStylesOfAllStaticJSXModules() method to prepare the styles of all
+    // '.jsx' modules that have been "statically" imported (i.e. imported from
+    // import statements).  
+    let jsxAppStyler = new JSXAppStyler(
+      auxDataStore, appComponent, interpreter
+    );
     let staticStylesPromise = jsxAppStyler.loadStylesOfAllStaticJSXModules(
       execEnv.scriptVars.liveModules, callerNode, execEnv
     );
@@ -64,7 +77,8 @@ export const createJSXApp = new DevFunction(
     // Then create the app's root component instance, render it, and insert it
     // into the document.
     let rootInstance = new JSXInstance(
-      appComponent, "root", undefined, callerNode, execEnv, jsxAppStyler
+      appComponent, "root", undefined, callerNode, execEnv, jsxAppStyler,
+      auxDataStore      
     );
     let rootParent = document.getElementById("up-app-root");
     let appNode = rootInstance.render(
@@ -72,17 +86,17 @@ export const createJSXApp = new DevFunction(
     );
     rootParent.replaceChildren(appNode);
 
-    // Also add a "pending-style" class to the app's DOM node, which is removed
+    // Also add a "loading-style" class to the app's DOM node, which is removed
     // once the style-related promise below resolves.
-    appNode.classList.add("pending-style");
+    appNode.classList.add("loading-style");
 
     // Now use the jsxAppStyler to fetch and load the styles of all statically
     // imported JSX modules (with file extensions ending in ".jsx").
     await staticStylesPromise;
 
-    // And once the styles are ready, we can remove the "pending-style" class
+    // And once the styles are ready, we can remove the "loading-style" class
     // from the app node.
-    appNode.classList.remove("pending-style");
+    appNode.classList.remove("loading-style");
   }
 );
 
@@ -96,7 +110,7 @@ class JSXInstance {
 
   constructor (
     componentModule, key = undefined, parentInstance = undefined,
-    callerNode, callerEnv, jsxAppStyler = undefined,
+    callerNode, callerEnv, jsxAppStyler = undefined, auxDataStore = undefined,
   ) {
     if (!(componentModule instanceof LiveModule)) throw new RuntimeError(
       "JSX component needs to be an imported module namespace object",
@@ -106,9 +120,8 @@ class JSXInstance {
     this.key = getString(key);
     this.parentInstance = parentInstance;
     this.jsxAppStyler = jsxAppStyler ?? this.parentInstance?.jsxAppStyler;
-    this.jsxComponentStyler = new JSXComponentStyler(
-      this.jsxAppStyler, this.componentPath
-    );
+    this.auxDataStore = auxDataStore ?? this.parentInstance?.auxDataStore;
+    this.auxData = auxDataStore.get(componentModule);
     this.domNode = undefined;
     this.ownDOMNodes = undefined;
     this.isDecorated = undefined;
@@ -128,7 +141,7 @@ class JSXInstance {
 
 
   render(
-    props = new PlainObject(), isDecorated, interpreter,
+    props = Object.create(null), isDecorated, interpreter,
     callerNode, callerEnv, replaceSelf = true, force = false,
   ) {  
     this.isDecorated = isDecorated;
@@ -251,10 +264,10 @@ class JSXInstance {
       return ret;
     }
 
-    // Before returning the new DOM node, we also use this.jsxComponentStyler
-    // to transform the class attributes of the instance in order to style it.
-    this.jsxComponentStyler.transformClasses(
-      newDOMNode, ownDOMNodes, callerNode, callerEnv
+    // Before returning the new DOM node, we also use jsxAppStyler to transform
+    // the class attributes of the instance in order to style it.
+    this.jsxAppStyler.transformClasses(
+      newDOMNode, ownDOMNodes, this.componentModule, callerNode, callerEnv
     );
 
     // Then on success, return the instance's new DOM node.
@@ -650,6 +663,33 @@ class JSXInstanceInterface extends UserHandledObject {
   // TODO: Add more instance methods at some point, such as a method to get
   // bounding box data, or a method to get a PromiseObject that resolves a
   // short time after the bounding box data, and similar data, is ready.
+}
+
+
+
+
+
+
+class AuxDataStore {
+  constructor(getAuxData, interpreter) {
+    this.getAuxData = getAuxData;
+    this.interpreter = interpreter;
+    this.auxDataMap = new Map();
+  }
+
+  get(componentModule, callerNode, execEnv) {
+    let componentPath = componentModule.modulePath;
+    let auxData = this.auxDataMap.get(componentPath);
+    if (auxData === undefined) {
+      auxData = unwrapValue(
+          this.interpreter.executeFunction(
+          this.getAuxData, [componentModule], callerNode, execEnv
+        )
+      );
+      this.auxDataMap.set(componentPath, auxData);
+    }
+    return auxData;
+  }
 }
 
 

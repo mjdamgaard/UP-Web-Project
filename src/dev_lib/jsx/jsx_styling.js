@@ -17,16 +17,11 @@ const CLASS_TRANSFORM_OUTPUT_REGEX =
 
 export class JSXAppStyler {
 
-  constructor(getStyle, styleParams, interpreter) {
-    this.getStyle = getStyle;
-    this.styleParams = styleParams;
+  constructor(auxDataStore, appComponent, interpreter) {
+    this.auxDataStore = auxDataStore;
+    this.appAuxData = auxDataStore.get(appComponent);
     this.interpreter = interpreter;
     this.loadedStyleSheetIDs = new Map();
-    this.classTransformPromises = new Map();
-  }
-
-  getClassTransformPromise(componentPath) {
-    return this.classTransformPromises.get(componentPath);
   }
 
   // loadStylesOfAllStaticJSXModules() fetches and apply the styles of all
@@ -36,11 +31,10 @@ export class JSXAppStyler {
     liveModules.forEach((liveModule) => {
       if (liveModule.modulePath.slice(-4) === ".jsx") {
         let componentPath = liveModule.modulePath;
-        let classTransformPromise = this.loadStyle(
+        let stylePromise = this.loadStyle(
           liveModule, componentPath, callerNode, callerEnv
         );
-        this.classTransformPromises.set(componentPath, classTransformPromise);
-        promiseArr.push(classTransformPromise);
+        promiseArr.push(stylePromise);
       }
     });
 
@@ -48,39 +42,21 @@ export class JSXAppStyler {
     return;
   }
 
-  // loadStyle() receives a live module and uses getStyle() to get a list of
-  // routes of all the style sheets that the component is "subscribed to," as
-  // well as the component's "class transform" used for potentially
-  // transforming the class attributes set by the component's render() function.
-  // It also creates a promise to said classTransform in the same process, and
-  // insert this in this.classTransformPromises.
-  async loadStyle(liveModule, componentPath, callerNode, callerEnv) {
-    // First we get the "styleSpecs" output of getStyle(), which is possibly
-    // a PromiseObject to a styleSpecs object, in which case wait for it and
-    // unwrap it.
-    let styleSpecs = this.interpreter.executeFunction(
-      this.getStyle, [componentPath, liveModule],
-      callerNode, callerEnv
+  // loadStyle() receives a component module and uses the given module's
+  // auxData.styleSheetPaths property to get a list of routes of all the style
+  // sheets that the component "subscribes to," then load anyone of these that
+  // hasn't been so already, namely by fetching them, transpiling them to CSS,
+  // and inserting this in a style element in the document head.
+  async loadStyle(componentModule, callerNode, callerEnv) {
+    // First wait for the get the styleSheetPaths of the component.
+    let styleSheetPaths = await this.auxDataStore.get(
+      componentModule, callerNode, callerEnv
     );
-    if (styleSpecs instanceof PromiseObject) {
-      styleSpecs = await styleSpecs.promise;
-    }
 
-    // Once the styleSpecs is gotten, which is supposed to be an array
-    // (wrapper) of the form [styleSheetPaths?, classTransform?], get the
-    // style sheet paths/routes and load each one. Then return the obtained
-    // classTransform.
-    styleSpecs = unwrapValue(styleSpecs);
-    let [styleSheetPaths, classTransform] = styleSpecs;
-    await this.loadStyleSheets(styleSheetPaths, callerNode, callerEnv);
-    return classTransform;
-  }
-
-
-  async loadStyleSheets(styleSheetPaths, callerNode, callerEnv) {
-    // First create a promise array that when resolved will have fetched
-    // and and applied all style sheets pointed to by styleSheetPaths that has
-    // not yet been loaded.
+// TODO: Continue re-implementation from here.
+    // Then create a promise array that when resolved will have fetched and
+    // applied all style sheets pointed to by styleSheetPaths that has not yet
+    // been loaded.
     let promiseArr = [];
     styleSheetPaths.forEach((route, id) => {
       if (typeof id !== "string" || !/[a-zA-Z][a-zA-Z0-9\-]*/.test(id)) {
@@ -150,9 +126,17 @@ export class JSXAppStyler {
   }
 
 
+  // TODO: Copy from below and correct.
+  transformClasses(
+    newDOMNode, ownDOMNodes, componentModule, callerNode, callerEnv
+  ) {
+
+  }
+
 }
 
 
+// TODO: Merge into JSXAppStyler instead:
 export class JSXComponentStyler {
   constructor(jsxAppStyler, componentPath) {
     this.componentPath = componentPath;
