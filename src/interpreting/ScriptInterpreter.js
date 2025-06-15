@@ -14,7 +14,7 @@ export {LexError, SyntaxError};
 const MAX_ARRAY_INDEX = 4294967294;
 const MINIMAL_TIME_GAS = 10;
 
-const TEXT_FILE_ROUTE_REGEX = /[^?]+\.(jsx?|txt|json|html|md|css|scss|)$/;
+const TEXT_FILE_ROUTE_REGEX = /[^?]+\.(jsx?|txt|json|html|xml|md|scss|)$/;
 const SCRIPT_ROUTE_REGEX = /[^?]+\.jsx?$/;
 
 const GAS_NAMES = {
@@ -300,8 +300,7 @@ export class ScriptInterpreter {
     let liveModule = liveModules.get(modulePath);
     if (liveModule) {
       if (liveModule instanceof Promise) {
-        [liveModule] = await liveModule;
-        liveModules.set(modulePath, liveModule);
+        liveModule = await liveModule;
       }
       return liveModule;
     }
@@ -319,9 +318,16 @@ export class ScriptInterpreter {
           callerNode, callerEnv
         );
         try {
-          let devModPromise = import(devLibURL);
-          liveModules.set(modulePath, devModPromise);
-          devMod = await devModPromise;
+          let liveModulePromise = new Promise(async (resolve) => {
+            let devMod = await import(devLibURL);
+            let liveModule = new LiveModule(
+              modulePath, Object.entries(devMod), globalEnv.scriptVars
+            );
+            resolve(liveModule);
+          });
+          liveModules.set(modulePath, liveModulePromise);
+          liveModule = await devModPromise;
+          liveModules.set(modulePath, liveModule);
         } catch (err) {
           throw new LoadError(
             `Developer library "${modulePath}" failed to import ` +
@@ -332,7 +338,7 @@ export class ScriptInterpreter {
       }
 
       // If the dev library module was found, create a "liveModule" object from
-      // it, store it in the liveModules buffer, and return it. 
+      // it and return that.
       let liveModule = new LiveModule(
         modulePath, Object.entries(devMod), globalEnv.scriptVars
       );
@@ -355,19 +361,21 @@ export class ScriptInterpreter {
       liveModule = liveModules.get(modulePath);
       if (liveModule) {
         if (liveModule instanceof Promise) {
-          [liveModule] = await liveModule;
-          liveModules.set(modulePath, liveModule);
+          liveModule = await liveModule;
         }
         return liveModule;
       }
 
       // Then execute the module, inside the global environment, and return the
       // resulting liveModule, after also adding it to liveModules.
-      let liveModulePromise = this.executeModule(
-        submoduleNode, lexArr, strPosArr, script, modulePath, globalEnv
-      );
+      let liveModulePromise = new Promise(async (resolve) => {
+        let [liveModule] = await this.executeModule(
+          submoduleNode, lexArr, strPosArr, script, modulePath, globalEnv
+        );
+        resolve(liveModule);
+      });
       liveModules.set(modulePath, liveModulePromise);
-      [liveModule] = await liveModulePromise;
+      liveModule = await liveModulePromise;
       liveModules.set(modulePath, liveModule);
       return liveModule;
     }
@@ -375,9 +383,15 @@ export class ScriptInterpreter {
     // Else if the module is actually a non-JS text file, fetch/get it and
     // return a string of its content instead.
     else if (TEXT_FILE_ROUTE_REGEX.test(modulePath)) {
-      return await this.fetch(
-        modulePath, textModules, callerNode, callerEnv
+      let [resultRow = []] = await this.fetch(
+        modulePath, callerNode, callerEnv
       );
+      let [text] = resultRow;
+      if (modulePath.slice(-5) === ".scss") {
+        return new SASSModule(modulePath, text);
+      } else {
+        return text;
+      }
     }
 
     // Else throw a load error.
@@ -2296,6 +2310,14 @@ export class LiveModule extends UserHandledObject {
         this.$members[alias] = turnImmutable(val);
       }
     });
+  }
+}
+
+export class SASSModule extends UserHandledObject {
+  constructor(modulePath, styleSheet) {
+    super("SASSModule");
+    this.modulePath = modulePath;
+    this.$members["styleSheet"] = styleSheet;
   }
 }
 

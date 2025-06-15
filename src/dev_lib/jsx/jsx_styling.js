@@ -17,9 +17,9 @@ const CLASS_TRANSFORM_OUTPUT_REGEX =
 
 export class JSXAppStyler {
 
-  constructor(auxDataStore, appComponent, interpreter) {
-    this.auxDataStore = auxDataStore;
-    this.appAuxData = auxDataStore.get(appComponent);
+  constructor(settingsStore, appComponent, interpreter) {
+    this.settingsStore = settingsStore;
+    this.appSettings = settingsStore.get(appComponent);
     this.interpreter = interpreter;
     this.loadedStyleSheetIDs = new Map();
   }
@@ -43,17 +43,16 @@ export class JSXAppStyler {
   }
 
   // loadStyle() receives a component module and uses the given module's
-  // auxData.styleSheetPaths property to get a list of routes of all the style
+  // settings.styleSheetPaths property to get a list of routes of all the style
   // sheets that the component "subscribes to," then load anyone of these that
   // hasn't been so already, namely by fetching them, transpiling them to CSS,
   // and inserting this in a style element in the document head.
   async loadStyle(componentModule, callerNode, callerEnv) {
     // First wait for the get the styleSheetPaths of the component.
-    let styleSheetPaths = await this.auxDataStore.get(
+    let styleSheetPaths = await this.settingsStore.get(
       componentModule, callerNode, callerEnv
     );
 
-// TODO: Continue re-implementation from here.
     // Then create a promise array that when resolved will have fetched and
     // applied all style sheets pointed to by styleSheetPaths that has not yet
     // been loaded.
@@ -64,14 +63,6 @@ export class JSXAppStyler {
           `Invalid style sheet ID: "${id}"`,
           callerNode, callerEnv
         );
-      }
-
-      // If route is an ArrayWrapper, treat it as a [route, isTrusted] pair
-      // instead.
-      let isTrusted;
-      if (route instanceof UHArray) {
-        isTrusted = route.get(1);
-        route = route.get(0);
       }
 
       // See if the style sheet is already loaded/loading, and return early if
@@ -87,9 +78,25 @@ export class JSXAppStyler {
       // IDs from styleSheetPaths will have been added to loadedStyleSheetIDs,
       // which is required.)
       promiseArr.push(new Promise(async (resolve) => {
-        let styleSheet = await this.interpreter.import(
-          route, callerNode, callerEnv
-        );
+        // Fetch the style sheet module and its settings in parallel.
+        let settings = this.settingsStore.get(route);
+        let [styleSheetModule, styleSheetSettings] = await Promise.all([
+          this.interpreter.import(
+            route, callerNode, callerEnv
+          ),
+          settings.styleSheetSettings
+        ]);
+
+        // Then extract the style sheet itself, and an "isTrusted" parameter,
+        // which, if true, allows the style sheet to affect CSS classes
+        // introduced by other style sheets, as well as element types in
+        // general. 
+        let styleSheet = styleSheetModule.$get("styleSheet");
+        let {isTrusted} = styleSheetSettings;
+
+        // Then transpile the SASS style sheet into CSS (with some additional
+        // restrictions and added transformations on top of the regular SASS
+        // semantics) and insert it into the document head. 
         this.transpileAndInsertStyleSheet(
           styleSheet, route, id, isTrusted, callerNode, callerEnv
         );
@@ -111,7 +118,7 @@ export class JSXAppStyler {
       isTrusted, callerNode, callerEnv
     );
 
-    // Then get or create the style element with a calls of "up-style <id>".
+    // Then get or create the style element with a class of "up-style <id>".
     let styleElement = document.querySelector(`head style.up-style.${id}`);
     if (!styleElement) {
       styleElement = document.createElement("style");
@@ -126,10 +133,97 @@ export class JSXAppStyler {
   }
 
 
-  // TODO: Copy from below and correct.
-  transformClasses(
+
+  // transformClasses() is used to transform the classes of a component from
+  // the original ones determined by the component to other ones, or to add
+  // classes to elements, at will. This transformation is defined by by a
+  // 'classTransform' setting, which is a list of transform rules consisting
+  // of a CSS selector on the LHS of all the elements to target, and a string
+  // on the RHS of all the classes to add or remove from those elements.
+  async transformClasses(
     newDOMNode, ownDOMNodes, componentModule, callerNode, callerEnv
   ) {
+    // Return early if ownDOMNodes is empty.
+    if (ownDOMNodes.length === 0) return;
+
+    // Add a "pending-style" class to the outer DOM node, then wait for the
+    // 'classTransform' setting (which might be ready immediately).
+    newDOMNode.classList.add("transforming-root");
+    let settings = this.settingsStore.get(componentModule);
+    let classTransform = await settings.classTransform;
+    
+    // Check that the instance hasn't been rerendered by verifying that
+    // this.domNode is still === newDOMNode, and otherwise return early. And
+    // also return early if classTransform is falsy.
+    if (this.domNode !== newDOMNode || !classTransform) {
+      newDOMNode.classList.remove("transforming-root");
+      return;
+    }
+
+    // Else we first go through each node and mark them with a special class
+    // used for filtering out all other nodes when constructing our selectors.
+    // This class is then removed again before this function returns. We also
+    // mark the outer node with a .transforming-root class, which can be used
+    // as a substitute for '&' in the selector.
+    ownDOMNodes.forEach(node => {
+      node.classList.add("transforming");
+    });
+    newDOMNode.classList.add("transforming-root");
+
+// TODO: Continue re-impl. from here.
+    // Then iterate through each an any transform instruction in
+    // classTransform and carry it out.
+    classTransform.values().forEach(inst => {
+      // Each transform instruction (user-defined) is supposed to be of the
+      // form [selector, classStr]. Extract these values.
+      if (!(inst instanceof UHArray)) throw new RuntimeError(
+        "Invalid class transform instruction",
+        callerNode, callerEnv
+      );
+      let selector = inst.get(0);
+      let classStr = inst.get(1).toString();
+
+      // Then validate the selector as a complex selector (with no pseudo-
+      // element).
+      let isValid = false;
+      if (typeof selector === "string") {
+        if (selector.indexOf("/*") !== -1) isValid = false;
+        let [{error}] = sassParser.parse(
+          selector, "relative-complex-selector"
+        );
+        if (!error) isValid = true;
+      }
+      if (!isValid) throw new RuntimeError(
+        "Invalid class transform instruction",
+        callerNode, callerEnv
+      );
+
+      // Then replace any leading "&" with ".transforming-root", and add a
+      // ".transforming" class selector to it at the end, and use this to
+      // select a NodeList of all element to transform.
+      selector = selector.replace(/^\s*&/, ".transforming-root") +
+        ".transforming";
+      let nodeList = newDOMNode.parentElement.querySelectorAll(selector);
+      classStr.split(/\s+/).forEach(classTransformInst => {
+        let [match, rmFlag, fullClassName] =
+          CLASS_TRANSFORM_OUTPUT_REGEX.exec(classTransformInst);
+        if (!match) throw new RuntimeError(
+          "Invalid class transform instruction",
+          callerNode, callerEnv
+        );
+        if (rmFlag) {
+          nodeList.forEach(node => node.classList.remove(fullClassName));
+        } else {
+          nodeList.forEach(node => node.classList.add(fullClassName));
+        }
+      });
+    });
+
+    // And finally remove the ".transforming(-root)" classes again.
+    ownDOMNodes.forEach(node => {
+      node.classList.remove("transforming");
+    });
+    newDOMNode.classList.remove("transforming-root");
 
   }
 

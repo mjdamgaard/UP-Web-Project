@@ -52,23 +52,22 @@ export const createJSXApp = new DevFunction(
   {isAsync: true, minArgNum: 3, initSignals: [[WILL_CREATE_APP_SIGNAL]]},
   async function(
     {callerNode, execEnv, interpreter},
-    [appComponent, props, getAuxData]
+    [appComponent, props, getSettings]
   ) {
-    // Create an AuxDataStore which uses getAuxData() to fetch auxiliary data
-    // for each individual component. This auxiliary data is used for styling
-    // the components, and for assigning them trust for making post request,
-    // among other things, all of which are cases where the resulting data used
-    // might be made to depend on user preferences.
-    let auxDataStore = new AuxDataStore(getAuxData, interpreter);
+    // Create a SettingsStore which uses getSettings() to fetch settings for
+    // each individual component. These settings are used for styling the
+    // components, and for assigning them trust for making post requests, among
+    // other things, all of which might be made to depend on user preferences.
+    let settingsStore = new SettingsStore(getSettings, interpreter);
 
-    // Then create an JSXAppStyler, which uses the auxDataStore to generate the
+    // Then create an JSXAppStyler, which uses the settingsStore to generate the
     // styles of each component by fetching, transpiling and inserting relevant
     // style sheets in the document head. We then immediately call its
     // loadStylesOfAllStaticJSXModules() method to prepare the styles of all
     // '.jsx' modules that have been "statically" imported (i.e. imported from
     // import statements).  
     let jsxAppStyler = new JSXAppStyler(
-      auxDataStore, appComponent, interpreter
+      settingsStore, appComponent, interpreter
     );
     let staticStylesPromise = jsxAppStyler.loadStylesOfAllStaticJSXModules(
       execEnv.scriptVars.liveModules, callerNode, execEnv
@@ -78,7 +77,7 @@ export const createJSXApp = new DevFunction(
     // into the document.
     let rootInstance = new JSXInstance(
       appComponent, "root", undefined, callerNode, execEnv, jsxAppStyler,
-      auxDataStore      
+      settingsStore      
     );
     let rootParent = document.getElementById("up-app-root");
     let appNode = rootInstance.render(
@@ -110,7 +109,7 @@ class JSXInstance {
 
   constructor (
     componentModule, key = undefined, parentInstance = undefined,
-    callerNode, callerEnv, jsxAppStyler = undefined, auxDataStore = undefined,
+    callerNode, callerEnv, jsxAppStyler = undefined, settingsStore = undefined,
   ) {
     if (!(componentModule instanceof LiveModule)) throw new RuntimeError(
       "JSX component needs to be an imported module namespace object",
@@ -120,8 +119,8 @@ class JSXInstance {
     this.key = getString(key);
     this.parentInstance = parentInstance;
     this.jsxAppStyler = jsxAppStyler ?? this.parentInstance?.jsxAppStyler;
-    this.auxDataStore = auxDataStore ?? this.parentInstance?.auxDataStore;
-    this.auxData = auxDataStore.get(componentModule);
+    this.settingsStore = settingsStore ?? this.parentInstance?.settingsStore;
+    this.settings = settingsStore.get(componentModule);
     this.domNode = undefined;
     this.ownDOMNodes = undefined;
     this.isDecorated = undefined;
@@ -670,25 +669,25 @@ class JSXInstanceInterface extends UserHandledObject {
 
 
 
-class AuxDataStore {
-  constructor(getAuxData, interpreter) {
-    this.getAuxData = getAuxData;
+class SettingsStore {
+  constructor(getSettings, interpreter) {
+    this.getSettings = getSettings;
     this.interpreter = interpreter;
-    this.auxDataMap = new Map();
+    this.settingsMap = new Map();
   }
 
-  get(componentModule, callerNode, execEnv) {
-    let componentPath = componentModule.modulePath;
-    let auxData = this.auxDataMap.get(componentPath);
-    if (auxData === undefined) {
-      auxData = unwrapValue(
-          this.interpreter.executeFunction(
-          this.getAuxData, [componentModule], callerNode, execEnv
+  get(liveModuleOrPath, callerNode, execEnv) {
+    let modulePath = liveModuleOrPath.modulePath ?? liveModuleOrPath;
+    let settings = this.settingsMap.get(modulePath);
+    if (settings === undefined) {
+      settings = unwrapValue(
+        this.interpreter.executeFunction(
+          this.getSettings, [liveModuleOrPath], callerNode, execEnv
         )
       );
-      this.auxDataMap.set(componentPath, auxData);
+      this.settingsMap.set(componentPath, settings);
     }
-    return auxData;
+    return settings;
   }
 }
 
