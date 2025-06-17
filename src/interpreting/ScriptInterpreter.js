@@ -304,7 +304,7 @@ export class ScriptInterpreter {
       if (liveModule instanceof Promise) {
         liveModule = await liveModule;
       }
-      return liveModule;
+      return deepCopy(liveModule);
     }
 
     // If the module reference is a dev library reference, which always comes
@@ -365,7 +365,7 @@ export class ScriptInterpreter {
         if (liveModule instanceof Promise) {
           liveModule = await liveModule;
         }
-        return liveModule;
+        return deepCopy(liveModule);
       }
 
       // Then execute the module, inside the global environment, and return the
@@ -379,7 +379,7 @@ export class ScriptInterpreter {
       liveModules.set(modulePath, liveModulePromise);
       liveModule = await liveModulePromise;
       liveModules.set(modulePath, liveModule);
-      return liveModule;
+      return deepCopy(liveModule);
     }
 
     // Else if the module is actually a non-JS text file, fetch/get it and
@@ -547,38 +547,6 @@ export class ScriptInterpreter {
       callerNode, callerEnv
     );
 
-    // // If the function is an arrow function, check that it isn't called outside
-    // // of the "environmental call stack" that has its fun.decEnv as an ancestor
-    // // in the stack.
-    // if (fun.isArrowFun) {
-    //   let isValid = callerEnv.isCallStackDescendentOf(fun.decEnv);
-    //   if (!isValid) throw new RuntimeError(
-    //     "An arrow function was called outside of the " +
-    //     "environmental call stack in which it was declared",
-    //     callerNode, callerEnv
-    //   );
-    // }
-
-    // // And if the function is itself enclosed, or if flags is defined in which 
-    // // case it should be treated as such, check that no argument is a non-arrow
-    // // function. This is done to prevent users from accidentally giving
-    // // callbacks elevated privileges by calling them as a way to return/resolve
-    // // some result. But this is not fool proof, since users can still pass non-
-    // // arrow functions if they are nested in an object. So the users need to be
-    // // warned not to use callbacks from within objects for enclosed functions,
-    // // at least without checking that they are arrow functions. 
-    // if (fun.isEnclosed || flags !== undefined) {
-    //   inputArr = inputArr.forEach(val => {
-    //     if (val instanceof FunctionObject && !val.isArrowFun) {
-    //       throw new ArgTypeError(
-    //         "A non-arrow function was passed to an enclosed function. Never " +
-    //         "use non-arrow function callbacks for enclosed functions.",
-    //         callerNode, callerEnv
-    //       );
-    //     }
-    //   });
-    // }
-
     // Initialize a new environment for the execution of the function.
     let execEnv = new Environment(
       fun.decEnv ?? callerEnv.getGlobalEnv(), "function", {
@@ -601,44 +569,24 @@ export class ScriptInterpreter {
 
 
 
-  #executeDevFunction(
-    devFun, inputArr, callerNode, execEnv, thisVal
-  ) {
-    let {isAsync, minArgNum = 0} = devFun;
+  #executeDevFunction(devFun, inputArr, callerNode, execEnv, thisVal) {
+    let {isAsync} = devFun;
     let execVars = {
       callerNode: callerNode, execEnv: execEnv, interpreter: this,
       thisVal: thisVal,
     };
-    // If the dev function an async function, call it and then either return a
-    // PromiseObject to the user or call a user-provided callbackFun depending
-    // on the inputArr and on minArgNum.
+    // If the dev function is asynchronous, call it and return a PromiseObject.
     if (isAsync) {
-      // If the argument number exceeds minArgNum and the last argument is a
-      // function, then treat this last argument as the callback to call when
-      // the promise is ready.
-      let lastArg = inputArr.at(-1);
-      if (
-        minArgNum < inputArr.length && lastArg instanceof FunctionObject
-      ) {
-        let callbackFun = lastArg;
-        let promise = devFun.fun(execVars, inputArr.slice(0, -1));
-        this.handlePromise(promise, callbackFun, callerNode, execEnv);
-      }
-
-      // And if not, simply return the promise wrapped in PromiseObject().
-      else {
-        let promise = devFun.fun(execVars, inputArr);
-        return new PromiseObject(promise);
-      }
+      let promise = devFun.fun(execVars, inputArr);
+      return new PromiseObject(promise);
     }
 
-    // Else call the dev function synchronously and return what it returns,
-    // only "wrapped" (i.e. in a UserHandledObject extension) and turned
-    // Immutable.
+    // Else call the dev function synchronously and return what it returns.
     else {
-      return wrapValue(devFun.fun(execVars, inputArr));
+      return devFun.fun(execVars, inputArr);
     }
   }
+
 
 
   handlePromise(promise, callbackFun, callerNode, execEnv) {
@@ -795,9 +743,6 @@ export class ScriptInterpreter {
           if (err instanceof RuntimeError || err instanceof CustomException) {
             let catchEnv = new Environment(environment);
             catchEnv.declare(stmtNode.errIdent, err.val, false, stmtNode);
-            if (stmtNode.numIdent) {
-              catchEnv.declare(stmtNode.numIdent, 0, false, stmtNode);
-            }
             try {
               stmtNode.catchStmt.forEach(stmt => {
                 this.executeStatement(stmt, catchEnv);
@@ -1000,21 +945,17 @@ export class ScriptInterpreter {
               acc = parseInt(acc) & parseInt(nextVal);
               break;
             case "===":
-              acc = (acc?.members && nextVal) ?
-                acc.members === nextVal.members : acc === nextVal;
+              acc = acc === nextVal;
               break;
             case "==": {
-              acc = (acc?.members && nextVal) ?
-                acc.members == nextVal.members : acc == nextVal;
+              acc = acc == nextVal;
               break;
             }
             case "!==":
-              acc = (acc?.members && nextVal) ?
-                acc.members !== nextVal.members : acc !== nextVal;
+              acc = acc !== nextVal;
               break;
             case "!=":
-              acc = (acc?.members && nextVal) ?
-                acc.members != nextVal.members : acc != nextVal;
+              acc = acc != nextVal;
               break;
             case ">":
               acc = parseFloat(acc) > parseFloat(nextVal);
@@ -1227,16 +1168,6 @@ export class ScriptInterpreter {
       }
       case "this-keyword": {
         return environment.getThisVal();
-      }
-      case "immutable-call": {
-        let ret = Object.create(
-          this.evaluateExpression(expNode.arg, environment)
-        );
-        ret.mutabilityDepth = 0;
-        return ret;
-      }
-      case "mutable-call": {
-        return createObjectFromNode(expNode.exp, true, this, environment);
       }
       case "promise-call": {
         let expVal = this.evaluateExpression(expNode.exp, environment);
@@ -1453,11 +1384,8 @@ export class ScriptInterpreter {
             }
           }
         }
-        else if (objVal instanceof AbstractUHObject) {
-          objVal = objVal.members;
-        }
         else throw new RuntimeError(
-          "Trying to assign to a member of a non-object",
+          "Trying to assign a member of an object whose members are constant",
           postfix, environment
         );
       }
@@ -1572,7 +1500,7 @@ export class Environment {
       fun, callerNode, callerEnv, thisVal, flags: addedFlags,
       modulePath, lexArr, strPosArr, script,
       scriptVars,
-      catchStmtArr, errIdent, numIdent,
+      catchStmtArr, errIdent,
     },
   ) {
     this.scriptVars = scriptVars ?? parent?.scriptVars ?? (() => {
@@ -1581,24 +1509,17 @@ export class Environment {
     this.parent = parent;
     this.scopeType = scopeType;
     this.variables = new Map();
+    this.flags = new Map();
     if (scopeType === "function") {
-      let {
-        isArrowFun, isDevFun, signals, flags: funFlags, isEnclosed,
-      } = fun;
+      let {isArrowFun, isDevFun, flags: funFlags} = fun;
       this.callerNode = callerNode;
       this.callerEnv = callerEnv;
       if (thisVal && !isArrowFun) this.thisVal = thisVal;
       if (isArrowFun) this.isArrowFun = isArrowFun;
       if (isDevFun) this.isDevFun = isDevFun;
-      if (signals) {
-        let parentFlagEnv = this.getFlagEnvironment();
-        parentFlagEnv.sendSignals(signals, callerNode, callerEnv);
-      }
-      if (isEnclosed || addedFlags) {
-        let parentFlagEnv = this.getFlagEnvironment();
-        this.flagEnv = new FlagEnvironment(parentFlagEnv);
-        let flags = [...(funFlags ?? []), ...(addedFlags ?? [])];
-        this.flagEnv.setFlags(flags, callerNode, callerEnv);
+      if (funFlags || addedFlags) {
+        this.setFlags(funFlags ?? []);
+        this.setFlags(addedFlags ?? []);
       }
     }
     else if (scopeType === "module") {
@@ -1612,11 +1533,6 @@ export class Environment {
     else if (scopeType === "try-catch") {
       this.catchStmtArr = catchStmtArr;
       this.errIdent = errIdent;
-      this.numIdent = numIdent;
-      this.numOfAsyncExceptions = 0;
-    }
-    else if (scopeType === "global") {
-      this.flagEnv = new FlagEnvironment(null, "/");
     }
   }
 
@@ -1672,22 +1588,7 @@ export class Environment {
       return ret;
     }
     else if (this.parent) {
-      if (this.isNonArrowFunction) {
-        // Throw an `Undeclared variable "${ident}"` error if the variable is
-        // undefined (get() does this).
-        this.get(ident, node, nodeEnvironment);
-
-        // And else throw an error stating that you cannot assign to a non-
-        // local variable. 
-        throw new RuntimeError(
-          `Assignment to a variable, "${ident}", from outside the local ` +
-          "function scope",
-          node, nodeEnvironment
-        );
-      }
-      else {
-        return this.parent.assign(ident, assignFun, node, nodeEnvironment);
-      }
+      return this.parent.assign(ident, assignFun, node, nodeEnvironment);
     }
     else {
       throw new RuntimeError(
@@ -1719,43 +1620,36 @@ export class Environment {
     }
   }
 
-  getFlagEnvironment() {
-    let flagEnv = this.flagEnv;
-    if (flagEnv) {
-      return flagEnv;
+  getFlag(flag, stopAtClear = true) {
+    let flagParams = this.flags.get(flag);
+    if (flagParams !== undefined) {
+      return flagParams;
     }
-    else if (this.isNonArrowFunction) {
-      return this.callerEnv.getFlagEnvironment();
+    else if (stopAtClear && this.flags.get(CLEAR_FLAG)) {
+      return undefined;
     }
     else if (this.parent) {
-      return this.parent.getFlagEnvironment();
+      return this.parent.getFlag(flag, stopAtClear);
     }
     else {
       return undefined;
     }
   }
 
-  sendSignal(signal, node, signalParams) {
-    let flagEnv = this.getFlagEnvironment();
-    return flagEnv.sendSignal(signal, node, this, signalParams);
+  setFlag(flag, flagParams = true) {
+    this.flags.set(flag, flagParams);
   }
 
-  getFlag(flag, maxStep) {
-    let flagEnv = this.getFlagEnvironment();
-    return flagEnv.getFlag(flag, maxStep);
+  setFlags(flags) {
+    flags.forEach((flag) => {
+      let flagParams = true;
+      if (flag instanceof Array) {
+        [flag, flagParams] = flag;
+      }
+      this.setFlag(flag, flagParams);
+    });
   }
 
-
-  isCallStackDescendentOf(decEnv) {
-    let curCallerEnv = this;
-    let isDescendent = (curCallerEnv === decEnv);
-    while (!isDescendent) {
-      curCallerEnv = curCallerEnv.callerEnv ?? curCallerEnv.parent;
-      if (!curCallerEnv) break;
-      isDescendent = (curCallerEnv === decEnv);
-    }
-    return isDescendent;
-  }
 
 
   export(ident, alias = ident, node, nodeEnvironment = this) {
@@ -1789,9 +1683,6 @@ export class Environment {
       let {interpreter} = this.scriptVars;
       let catchEnv = new Environment(this.parent);
       catchEnv.declare(this.errIdent, err.val, false);
-      if (this.numIdent) {
-        catchEnv.declare(this.numIdent, ++this.numOfAsyncExceptions, false);
-      }
       try {
         this.catchStmtArr.forEach(stmt => {
           interpreter.executeStatement(stmt, catchEnv);
@@ -1838,141 +1729,8 @@ export const UNDEFINED = Symbol("undefined");
 export const GLOBAL = Symbol("global");
 export const MODULE = Symbol("module");
 
-
-
-
-
-
-
-
-// Signals are sent either to check that that a certain type of action is
-// permitted in the current environment, or to permit or restrict subsequent
-// actions in the environment, or a combination of these things, The latter is
-// generally done by raising or replacing "flags" in the current "flag
-// environment." A flag environment works similar to the regular variable
-// environments, except the only scopes for flags are the global scope, as well
-// as all function execution scopes of "enclosed functions." A function is
-// "enclosed" either if exported as such by a dev library, or if the
-// 'enclosedFunctions' Map contained in scriptVars points to it. An enclosed
-// scope will still see all the flags raised by any ancestor, but when raising
-// or replacing a flag, the change will not affect the ancestors outside of the
-// enclosure.
-export class Signal {
-  constructor(name, send) {
-    // Names are only used for clarity and debugging purposes.
-    this.name = name;
-
-    // send() is the function/method that handles the signal when it is being
-    // sent. It takes some signal parameters, first of all, and the flag
-    // environment with which to interface with the flags. (It also takes node
-    // and env as well, which are useful for throwing runtime errors.)
-    this.send = send ?? (
-      (flagEnv, node, env, signalParams = undefined) => undefined
-    );
-  }
-}
-
-
-
-
 export const CLEAR_FLAG = Symbol("clear"); 
 
-
-// A flag environment sits on every "enclosed" scope, and on the global one and
-// is the interface for checking and raising flags. Aside from the Environment
-// class above that creates and retrieves the flag environment, the only
-// other functions that should ever interact with FlagEnvironment it the send()
-// functions/methods of Signal instances. However, dev function can use their
-// 'flags' property to define flags that are automatically raised it the
-// beginning of the execution (also automatically turning the function
-// "enclosed" when the 'isEnclosed' property is not specified).
-export class FlagEnvironment {
-  constructor(parent) {
-    this.parent = parent;
-    this.flags = new Map();
-  }
-
-  sendSignal(signal, node, env, signalParams) {
-    return signal.send(this, node, env, signalParams);
-  }
-
-  sendSignals(signals, node, env) {
-    signals.forEach(([signal, signalParams]) => {
-      this.sendSignal(signal, node, env, signalParams);
-    });
-  }
-
-
-  setFlag(flag, flagParams) {
-    this.flags.set(flag, flagParams ?? true);
-  }
-
-  setFlags(flags) {
-    flags.forEach((flag) => {
-      let flagParams;
-      if (flag instanceof Array) {
-        [flag, flagParams] = flag;
-      }
-      this.setFlag(flag, flagParams);
-    });
-  }
-
-  // removeFlag(flag) {
-  //   this.flags.set(flag, null);
-  // }
-
-  getFirstFlag(flagArr, maxStep = Infinity, stopAtClear = true, curStep = 0) {
-    // Add the "clear" flag at the end if the flagArr if stopAtClear == true.
-    if (stopAtClear) {
-      flagArr = [...flagArr, CLEAR_FLAG];
-    }
-    let ret = this.#getFirstFlagHelper(flagArr, maxStep, stopAtClear, curStep);
-
-    // And if the first flag found was the "clear" flag, return an empty array
-    // as if no flag was found.
-    if (stopAtClear && ret[0] === CLEAR_FLAG) {
-      ret = [];
-    }
-    return ret;
-  }
-
-  #getFirstFlagHelper(flagArr, maxStep, stopAtClear, curStep) {
-    if (curStep > maxStep) {
-      return [];
-    }
-    let retFlag, retFlagParams;
-    flagArr.some(flag => {
-      let flagParams = this.flags.get(flag);
-      if (flagParams !== undefined) {
-        retFlag = flag;
-        retFlagParams = flagParams;
-        return true; // breaks the some iteration.
-      }
-    });
-    if (retFlag) {
-      return [retFlag, retFlagParams, curStep];
-    }
-    else if (this.parent) {
-      return this.parent.getFirstFlag(
-        flagArr, maxStep, stopAtClear, curStep + 1
-      );
-    }
-    else {
-      return [];
-    }
-  }
-
-  getFlag(flag, maxStep = Infinity, stopAtClear = true) {
-    let [
-      retFlag, flagParams, step
-    ] = this.getFirstFlag([flag], maxStep, stopAtClear);
-    let wasFound = retFlag ? true : false;
-    return [wasFound, flagParams, step];
-  }
-
-  // Potentially add more useful methods here.
-
-}
 
 
 
@@ -2084,36 +1842,6 @@ export function deepCopy(value) {
 
 
 
-// export function getEntry(obj, key) {
-//   return (obj.$get) ? obj.$get() :
-//     (obj instanceof Map) ? obj.get(key) :
-//     (obj instanceof Object) ? obj[key] : undefined;
-// }
-
-// export function getEntries(obj) {
-//   return (obj.$entries) ? obj.$entries() :
-//     (obj instanceof Object) ? Object.entries(obj) : [];
-// }
-
-// export function getValues(obj) {
-//   return (obj.$values) ? obj.$values() :
-//     (obj instanceof Object) ? Object.values(obj) : [];
-// }
-
-// export function getKeys(obj) {
-//   return (obj.$keys) ? obj.$keys() :
-//     (obj instanceof Object) ? Object.keys(obj) : [];
-// }
-
-// export function forEach(obj, callback) {
-//   return (obj.$forEach) ? obj.$forEach(callback) :
-//     (obj instanceof Array || obj instanceof Map) ? obj.forEach(callback) :
-//     (obj instanceof Object) ?
-//       Object.entries(obj).forEach(([key, obj]) => callback(obj, key)) :
-//       undefined;
-// }
-
-
 
 
 
@@ -2134,6 +1862,8 @@ export class DefinedFunction extends FunctionObject {
     return this.node.type === "arrow-function";
   }
   get name() {
+    // TODO: Implement capturing function names for the sake of e.g. console.
+    // trace() once implemented, and debugging in general. 
     return this.node.name ?? "<anonymous function>";
   }
 }
@@ -2144,26 +1874,17 @@ export class DevFunction extends FunctionObject {
       fun = options;
       options = {};
     }
-    let {
-      isAsync, minArgNum, signals, flags, isEnclosed, decEnv
-    } = options;
+    let {isAsync, flags} = options;
     super();
     if (isAsync) this.isAsync = isAsync;
-    if (minArgNum) this.minArgNum = minArgNum;
-    if (signals) this.signals = signals;
     if (flags) this.flags = flags;
-    if (isEnclosed) this._isEnclosed = isEnclosed;
-    if (decEnv) this.decEnv = decEnv;
     this.fun = fun;
   }
   get isArrowFun() {
-    return !!this.decEnv;
+    return false;
   }
   get isDevFun() {
     return true;
-  }
-  get isEnclosed() {
-    return this._isEnclosed ?? this.flags ? true : false;
   }
   get name() {
     return "<anonymous dev function>";
@@ -2194,6 +1915,7 @@ export class SASSModule extends AbstractUHObject {
   constructor(modulePath, styleSheet) {
     super("SASSModule");
     this.modulePath = modulePath;
+    this.styleSheet = styleSheet;
     this.members["styleSheet"] = styleSheet;
   }
 }
@@ -2338,51 +2060,6 @@ export class ArgTypeError extends RuntimeError {
 }
 
 
-
-
-
-
-// export function turnImmutable(val) {
-//   if (val instanceof UserHandledObject && val.isMutable) {
-//     val = Object.create(val);
-//     val.isMutable = false;
-//     return val;
-//   } else {
-//     return val;
-//   }
-// }
-
-
-// export function passedAsMutable(val) {
-//   if (val && val.$set instanceof Function && !val.passAsMutable) {
-//     val = Object.create(val);
-//     val.passAsMutable = true;
-//     return val;
-//   } else {
-//     return val;
-//   }
-// }
-// export function notPassedAsMutable(val) {
-//   if (val && val.$set instanceof Function && val.passAsMutable) {
-//     val = Object.create(val);
-//     val.passAsMutable = false;
-//     return val;
-//   } else {
-//     return val;
-//   }
-// }
-// export function turnPassedToEnclosed(val) {
-//   if (
-//     val && (val instanceof FunctionObject || val.$get instanceof Function) &&
-//     !val.isPassedToEnclosed
-//   ) {
-//     val = Object.create(val);
-//     val.isPassedToEnclosed = true;
-//     return val;
-//   } else {
-//     return val;
-//   }
-// }
 
 
 
