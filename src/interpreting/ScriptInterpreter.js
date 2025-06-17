@@ -561,7 +561,7 @@ export class ScriptInterpreter {
     }
     else if (fun instanceof DevFunction) {
       return this.#executeDevFunction(
-        fun, inputArr.map(val => unwrapValue(val)), callerNode, execEnv,
+        fun, inputArr, callerNode, execEnv,
         thisVal
       );
     }

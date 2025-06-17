@@ -1,43 +1,40 @@
 
 import {
-  DevFunction, JSXElement, LiveModule, RuntimeError, turnImmutable,
-  PlainObject, Signal, getExtendedErrorMsg, getString, UserHandledObject,
-  forEach, getValues, unwrapValue,
+  DevFunction, JSXElement, LiveModule, RuntimeError, getExtendedErrorMsg,
+  getString, AbstractUHObject, forEachValue, CLEAR_FLAG,
 } from "../../interpreting/ScriptInterpreter.js";
 import {CAN_POST_FLAG} from "../query/src/signals.js";
 
-import {JSXAppStyler, JSXComponentStyler} from "./jsx_styling.js";
-
+import {JSXAppStyler} from "./jsx_styling.js";
 
 
 const CLASS_NAME_REGEX =
   /^ *([a-zA-Z][a-z-A-Z0-9\-]*_[a-zA-Z][a-z-A-Z0-9\-]* *)*$/;
 
 
-
 export const CAN_CREATE_APP_FLAG = Symbol("can-create-app");
 
-export const IS_APP_ROOT_FLAG = Symbol("id-app-root");
+export const IS_APP_ROOT_FLAG = Symbol("is-app-root");
 
 
-export const WILL_CREATE_APP_SIGNAL = new Signal(
-  "will-create-app",
-  function(flagEnv, node, env) {
-    let [wasFound] = flagEnv.getFlag(CAN_CREATE_APP_FLAG, 1);
-    if (!wasFound ) throw new RuntimeError(
-      "Cannot create a new the app from here",
-      node, env
-    );
-    flagEnv.setFlag(IS_APP_ROOT_FLAG);
-  }
-);
+// export const WILL_CREATE_APP_SIGNAL = new Signal(
+//   "will-create-app",
+//   function(flagEnv, node, env) {
+//     let [wasFound] = flagEnv.getFlag(CAN_CREATE_APP_FLAG, 1);
+//     if (!wasFound ) throw new RuntimeError(
+//       "Cannot create a new the app from here",
+//       node, env
+//     );
+//     flagEnv.setFlag(IS_APP_ROOT_FLAG);
+//   }
+// );
 
-export const GET_IS_APP_ROOT_SIGNAL = new Signal(
-  "get-is-app-root",
-  function(flagEnv) {
-    return flagEnv.getFlag(IS_APP_ROOT_FLAG, 0) ? true : false;
-  }
-);
+// export const GET_IS_APP_ROOT_SIGNAL = new Signal(
+//   "get-is-app-root",
+//   function(flagEnv) {
+//     return flagEnv.getFlag(IS_APP_ROOT_FLAG, 0) ? true : false;
+//   }
+// );
 
 
 
@@ -168,8 +165,7 @@ class JSXInstance {
           getInitState, [props], callerNode, callerEnv
         );
       } else {
-        state = this.componentModule.$get("getInitState") ||
-          new PlainObject();
+        state = this.componentModule.$get("getInitState") || {};
       }
       this.state = state;
 
@@ -313,8 +309,8 @@ class JSXInstance {
     // and return an array of all these values, some of which are DOM nodes and
     // some of which are strings.
     if (jsxElement.isFragment) {
-      let children = unwrapValue(jsxElement.props["children"]) ?? {};
-      return getValues(children).map(val => (
+      let children = jsxElement.props["children"] ?? [];
+      return children.map(val => (
         this.getDOMNode(
           val, marks, interpreter, callerNode, callerEnv, ownDOMNodes, false
         )
@@ -367,18 +363,19 @@ class JSXInstance {
       // implemented attribute is set. Also record the children prop for the
       // next step afterwards.
       let childArr = [];
-      forEach(jsxElement.props, (val, key) => {
+      let {node: jsxNode, decEnv: jsxDecEnv} = jsxElement;
+      forEachValue(jsxElement.props, jsxNode, jsxDecEnv, (val, key) => {
         switch (key) {
           case "children" : {
             if (tagName === "br" || tagName === "hr") throw new RuntimeError(
                `Elements of type "${tagName}" cannot have children`,
-              jsxElement.node, jsxElement.decEnv
+              jsxNode, jsxDecEnv
             );
             if (!(childArr.values instanceof Function)) throw new RuntimeError(
               `A non-iterable 'children' prop was used`,
-             jsxElement.node, jsxElement.decEnv
+             jsxNode, jsxDecEnv
            );
-            childArr = getValues(val);
+            childArr = val ?? [];
             break;
           }
           case "className" : {
@@ -387,7 +384,7 @@ class JSXInstance {
               `Invalid class name: "${className}" (each class name needs to ` +
               "be of the form '<id>_<name>' where both id and name are of " +
               "the form /[a-zA-Z][a-z-A-Z0-9\-]*/)",
-              jsxElement.node, jsxElement.decEnv
+              jsxNode, jsxDecEnv
             );
             newDOMNode.setAttribute("class", className);
             break;
@@ -404,7 +401,7 @@ class JSXInstance {
           default: throw new RuntimeError(
             `Invalid or not-yet-implemented attribute, "${key}" for ` +
             "non-component elements",
-            jsxElement.node, jsxElement.decEnv
+            jsxNode, jsxDecEnv
           );
         }
       });
@@ -557,7 +554,7 @@ class JSXInstance {
 
 
 
-class JSXInstanceInterface extends UserHandledObject {
+class JSXInstanceInterface extends AbstractUHObject {
   constructor(jsxInstance, decEnv) {
     super("JSXInstance");
     this.jsxInstance = jsxInstance;
@@ -613,7 +610,7 @@ class JSXInstanceInterface extends UserHandledObject {
   // always queues a rerender, even if the new state is equivalent to the old
   // one.
   setState = new DevFunction({}, ({interpreter}, [newState]) => {
-    this.jsxInstance.state = turnImmutable(newState);
+    this.jsxInstance.state = newState;
     this.jsxInstance.queueRerender(interpreter);
   });
 
@@ -680,10 +677,8 @@ class SettingsStore {
     let modulePath = liveModuleOrPath.modulePath ?? liveModuleOrPath;
     let settings = this.settingsMap.get(modulePath);
     if (settings === undefined) {
-      settings = unwrapValue(
-        this.interpreter.executeFunction(
-          this.getSettings, [liveModuleOrPath], callerNode, execEnv
-        )
+      settings = this.interpreter.executeFunction(
+        this.getSettings, [liveModuleOrPath], callerNode, execEnv
       );
       this.settingsMap.set(componentPath, settings);
     }
@@ -697,7 +692,7 @@ class SettingsStore {
 
 
 
-class DOMNodeWrapper extends UserHandledObject {
+class DOMNodeWrapper extends AbstractUHObject {
   constructor(domNode) {
     super("DOMNode");
     this.domNode = domNode;

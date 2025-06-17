@@ -18,7 +18,7 @@ import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
 
 import {
   ADMIN_PRIVILEGES_FLAG, CAN_POST_FLAG,
-} from "../dev_lib/query/src/signals.js";
+} from "../dev_lib/query/src/flags.js";
 
 import * as queryMod from "../dev_lib/query/query.js";
 

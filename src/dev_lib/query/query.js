@@ -9,9 +9,7 @@ import * as textFilesMod from "./src/filetypes/text_files.js";
 import * as relationalTableFilesMod from "./src/filetypes/rel_tables.js";
 import * as fullTextTableFilesMod from "./src/filetypes/full_text_tables.js";
 
-import {
-  CHECK_ADMIN_PRIVILEGES_SIGNAL, CHECK_CAN_POST_SIGNAL
-} from "./src/signals.js";
+import {checkAdminPrivileges, checkIfCanPost} from "./src/flags.js";
 
 
 
@@ -27,9 +25,7 @@ export const query = new DevFunction(
 
     // If isPost == true, check if the current environment is allowed to post.
     if (isPost) {
-      execEnv.sendSignal(
-        CHECK_CAN_POST_SIGNAL, callerNode
-      );
+      checkIfCanPost(callerNode, execEnv);
     }
 
     // Parse the route, extracting parameters and qualities from it.
@@ -46,9 +42,7 @@ export const query = new DevFunction(
     // If the route is locked, check that you have admin privileges on the
     // directory of homeDirID.
     if (isLocked) {
-      execEnv.sendSignal(
-        CHECK_ADMIN_PRIVILEGES_SIGNAL, callerNode, homeDirID
-      );
+      checkAdminPrivileges(homeDirID, callerNode, execEnv);
     }
 
     // If on the client side, simply forward the request to the server via the
