@@ -10,6 +10,8 @@ import {
 export {LexError, SyntaxError};
 
 
+const ARRAY_PROTOTYPE = Object.getPrototypeOf([]);
+const OBJECT_PROTOTYPE = Object.getPrototypeOf({});
 
 const MAX_ARRAY_INDEX = 4294967294;
 const MINIMAL_TIME_GAS = 10;
@@ -424,7 +426,7 @@ export class ScriptInterpreter {
       else {
         let impType = imp.importType
         if (impType === "namespace-import") {
-          let moduleNamespaceObj = turnImmutable(liveSubmodule);
+          let moduleNamespaceObj = liveSubmodule;
           curModuleEnv.declare(imp.ident, moduleNamespaceObj, true, imp);
         }
         else if (impType === "named-imports") {
@@ -545,38 +547,37 @@ export class ScriptInterpreter {
       callerNode, callerEnv
     );
 
-    // If inputArr is not an array, expect an iterable and turn it into an
-    // array.
-    if (!(inputArr instanceof Array)) {
-      inputArr = inputArr.values();
-    }
+    // // If the function is an arrow function, check that it isn't called outside
+    // // of the "environmental call stack" that has its fun.decEnv as an ancestor
+    // // in the stack.
+    // if (fun.isArrowFun) {
+    //   let isValid = callerEnv.isCallStackDescendentOf(fun.decEnv);
+    //   if (!isValid) throw new RuntimeError(
+    //     "An arrow function was called outside of the " +
+    //     "environmental call stack in which it was declared",
+    //     callerNode, callerEnv
+    //   );
+    // }
 
-    // If the function is an arrow function, check that it isn't called outside
-    // of the "environmental call stack" that has its fun.decEnv as an ancestor
-    // in the stack.
-    if (fun.isArrowFun) {
-      let isValid = callerEnv.isCallStackDescendentOf(fun.decEnv);
-      if (!isValid) throw new RuntimeError(
-        "An arrow function was called outside of the " +
-        "environmental call stack in which it was declared",
-        callerNode, callerEnv
-      );
-    }
-
-    // And if the function is not an arrow function, check that the function
-    // hasn't been passed to an enclosed function.
-    else if (fun.isPassedToEnclosed) throw new RuntimeError(
-      "A non-arrow function was passed to and called by an enclosed function",
-      callerNode, callerEnv
-    );
-
-    // And if the function is itself enclosed, or if flags is defined in which 
-    // case it should be treated as such, turn all arguments isPassedToEnclosed,
-    // as well as thisVal.
-    if (fun.isEnclosed || flags !== undefined) {
-      inputArr = inputArr.map(val => turnPassedToEnclosed(val));
-      thisVal = turnPassedToEnclosed(thisVal);
-    }
+    // // And if the function is itself enclosed, or if flags is defined in which 
+    // // case it should be treated as such, check that no argument is a non-arrow
+    // // function. This is done to prevent users from accidentally giving
+    // // callbacks elevated privileges by calling them as a way to return/resolve
+    // // some result. But this is not fool proof, since users can still pass non-
+    // // arrow functions if they are nested in an object. So the users need to be
+    // // warned not to use callbacks from within objects for enclosed functions,
+    // // at least without checking that they are arrow functions. 
+    // if (fun.isEnclosed || flags !== undefined) {
+    //   inputArr = inputArr.forEach(val => {
+    //     if (val instanceof FunctionObject && !val.isArrowFun) {
+    //       throw new ArgTypeError(
+    //         "A non-arrow function was passed to an enclosed function. Never " +
+    //         "use non-arrow function callbacks for enclosed functions.",
+    //         callerNode, callerEnv
+    //       );
+    //     }
+    //   });
+    // }
 
     // Initialize a new environment for the execution of the function.
     let execEnv = new Environment(
@@ -635,7 +636,7 @@ export class ScriptInterpreter {
     // only "wrapped" (i.e. in a UserHandledObject extension) and turned
     // Immutable.
     else {
-      return turnImmutable(wrapValue(devFun.fun(execVars, inputArr)));
+      return wrapValue(devFun.fun(execVars, inputArr));
     }
   }
 
@@ -683,12 +684,7 @@ export class ScriptInterpreter {
 
 
   #executeDefinedFunction(funNode, inputArr, execEnv) {
-    // Add the input parameters to the environment (and turn all object inputs
-    // immutable, unless the passAsMutable property is true, in which case just
-    // turn this property false).
-    inputArr = inputArr.map(val => (
-      val.passAsMutable ? notPassedAsMutable(val) : turnImmutable(val)
-    ));
+    // Add the input parameters to the environment.
     funNode.params.forEach((paramExp, ind) => {
       this.assignToParameter(paramExp, inputArr[ind], execEnv, true, false);
     });
@@ -701,7 +697,7 @@ export class ScriptInterpreter {
       stmtArr.forEach(stmt => this.executeStatement(stmt, execEnv));
     } catch (err) {
       if (err instanceof ReturnException) {
-        return turnImmutable(err.val);
+        return err.val;
       }
       else if (err instanceof BreakException) {
         throw new RuntimeError(
@@ -1004,21 +1000,21 @@ export class ScriptInterpreter {
               acc = parseInt(acc) & parseInt(nextVal);
               break;
             case "===":
-              acc = (acc?.$members && nextVal) ?
-                acc.$members === nextVal.$members : acc === nextVal;
+              acc = (acc?.members && nextVal) ?
+                acc.members === nextVal.members : acc === nextVal;
               break;
             case "==": {
-              acc = (acc?.$members && nextVal) ?
-                acc.$members == nextVal.$members : acc == nextVal;
+              acc = (acc?.members && nextVal) ?
+                acc.members == nextVal.members : acc == nextVal;
               break;
             }
             case "!==":
-              acc = (acc?.$members && nextVal) ?
-                acc.$members !== nextVal.$members : acc !== nextVal;
+              acc = (acc?.members && nextVal) ?
+                acc.members !== nextVal.members : acc !== nextVal;
               break;
             case "!=":
-              acc = (acc?.$members && nextVal) ?
-                acc.$members != nextVal.$members : acc != nextVal;
+              acc = (acc?.members && nextVal) ?
+                acc.members != nextVal.members : acc != nextVal;
               break;
             case ">":
               acc = parseFloat(acc) > parseFloat(nextVal);
@@ -1186,22 +1182,26 @@ export class ScriptInterpreter {
         return this.evaluateExpression(expNode.exp, environment);
       }
       case "array": {
-        return new UHArray(
-          expNode.children.map(exp => (
-            this.evaluateExpression(exp, environment)
-          ))
-        );
+        return expNode.children.map(exp => (
+          this.evaluateExpression(exp, environment)
+        ));
       }
       case "object": {
-        let ret = new PlainObject();
+        let obj = {};
         expNode.members.forEach(member => {
           let key = member.ident;
           if (key === undefined) {
-            key = this.evaluateExpression(member.keyExp, environment);
+            key = getString(
+              this.evaluateExpression(member.keyExp, environment)
+            );
           }
-          ret.$set(key, this.evaluateExpression(member.valExp, environment));
+          if (!key) throw new RuntimeError(
+            "Invalid, falsy object key",
+            expNode, environment
+          );
+          obj[key] = this.evaluateExpression(member.valExp, environment);;
         });
-        return ret;
+        return obj;
       }
       case "jsx-element": {
         return new JSXElement(expNode, environment, this);
@@ -1228,20 +1228,15 @@ export class ScriptInterpreter {
       case "this-keyword": {
         return environment.getThisVal();
       }
-      // case "exit-call": {
-      //   // Evaluate the argument.
-      //   let expVal = (!expNode.exp) ? undefined :
-      //     this.evaluateExpression(expNode.exp, environment);
-      //   let {resolveScript} = environment.scriptVars;
-      //   // Check the can-exit signal, before resolving the script.
-      //   environment.sendSignal(WILL_EXIT_SIGNAL, expNode);
-      //   resolveScript(expVal);
-      //   // Throw an exit exception.
-      //   throw new ExitException();
-      // }
-      case "pass-as-mutable-call": {
-        let expVal = this.evaluateExpression(expNode.exp, environment);
-        return passedAsMutable(expVal);
+      case "immutable-call": {
+        let ret = Object.create(
+          this.evaluateExpression(expNode.arg, environment)
+        );
+        ret.mutabilityDepth = 0;
+        return ret;
+      }
+      case "mutable-call": {
+        return createObjectFromNode(expNode.exp, true, this, environment);
       }
       case "promise-call": {
         let expVal = this.evaluateExpression(expNode.exp, environment);
@@ -1334,26 +1329,31 @@ export class ScriptInterpreter {
 
   executeDestructuring(expNode, val, environment, isDeclaration, isConst) {
     let type = expNode.type
+    let valProto = Object.getPrototypeOf(val);
     if (type === "array-destructuring") {
-      if (!(val instanceof UHArray)) throw new RuntimeError(
+      if (valProto !== ARRAY_PROTOTYPE) throw new RuntimeError(
         "Destructuring an array with a non-array value",
         expNode, environment
       );
-      let values = val.$values();
       expNode.children.forEach((paramExp, ind) => {
         this.assignToParameter(
-          paramExp, values[ind], environment, isDeclaration, isConst
+          paramExp, val[ind], environment, isDeclaration, isConst
         );
       });
       return val;
     }
     else if (type === "object-destructuring") {
-      if (!(val instanceof PlainObject)) throw new RuntimeError(
+      let members = val;
+      if (val instanceof AbstractUHObject) {
+        members = val.members;
+      }
+      else if (valProto !== OBJECT_PROTOTYPE) throw new RuntimeError(
         "Destructuring an object with a non-object value",
         expNode, environment
       );
       expNode.children.forEach(paramMemExp => {
-        let propVal = val.$get(paramMemExp.ident);
+        let ident = paramMemExp.ident;
+        let propVal = (Object.hasOwn(ident)) ? members[ident] : undefined;
         this.assignToParameter(
           paramMemExp, propVal, environment, isDeclaration, isConst
         );
@@ -1420,10 +1420,10 @@ export class ScriptInterpreter {
         "an assignment",
         expNode, environment
       );
-      let prevVal, objVal, index;
+      let prevVal, objVal, key;
       try {
-        [prevVal, objVal, index] = this.evaluateChainedExpression(
-          expNode.rootExp, expNode.postfixArr, environment, true
+        [prevVal, objVal, key] = this.evaluateChainedExpression(
+          expNode.rootExp, expNode.postfixArr, environment
         );
       }
       catch (err) {
@@ -1437,22 +1437,49 @@ export class ScriptInterpreter {
         }
       }
 
+      // If the object is an AbstractUHObject, instead of assigning one of the
+      // object's own properties directly, assign to the objects 'members'
+      // property instead. Also check against setting members of a non-object.
+      let objProto = Object.getPrototypeOf(objVal);
+      if (objProto !== OBJECT_PROTOTYPE) {
+        if (objProto === ARRAY_PROTOTYPE) {
+          if (key !== "length"){
+            key = parseInt(key);
+            if (key !== NaN && 0 <= key && key < MAX_ARRAY_INDEX) {
+              throw new RuntimeError(
+                "Invalid key for array entry assignment",
+                postfix, environment
+              );
+            }
+          }
+        }
+        else if (objVal instanceof AbstractUHObject) {
+          objVal = objVal.members;
+        }
+        else throw new RuntimeError(
+          "Trying to assign to a member of a non-object",
+          postfix, environment
+        );
+      }
+
       // Then assign newVal to the member of objVal and return ret, where
       // newVal and ret are both specified by the assignFun.
       let [newVal, ret] = assignFun(prevVal);
-      objVal.$set(index, newVal);
+      if (!key) throw new RuntimeError(
+        "Invalid, falsy object key",
+        postfix, environment
+      );
+      objVal[key] = newVal;
       return ret;
     }
   }
 
 
-  // evaluateChainedExpression() => [val, objVal, index], or throws
+  // evaluateChainedExpression() => [val, objVal, key], or throws
   // a BrokenOptionalChainException. Here, val is the value of the whole
   // expression, and objVal, is the value of the object before the last member
   // accessor (if the last postfix is a member accessor and not a tuple).
-  evaluateChainedExpression(
-    rootExp, postfixArr, environment, forAssignment
-  ) {
+  evaluateChainedExpression(rootExp, postfixArr, environment) {
     let val = this.evaluateExpression(rootExp, environment);
     let len = postfixArr.length;
     if (len === 0) {
@@ -1461,7 +1488,7 @@ export class ScriptInterpreter {
     decrCompGas(rootExp, environment);
 
     // Evaluate the chained expression accumulatively, one postfix at a time. 
-    let postfix, objVal, index;
+    let postfix, objVal, key;
     for (let i = 0; i < len; i++) {
       postfix = postfixArr[i];
 
@@ -1472,63 +1499,40 @@ export class ScriptInterpreter {
 
         // Throw a BrokenOptionalChainException if an optional chaining is
         // broken.
-        if (postfix.isOpt && (val === undefined || val === null)) {
+        if (postfix.isOpt && (objVal === undefined || objVal === null)) {
           throw new BrokenOptionalChainException();
         }
 
-        // Else, first get the index.
-        index = postfix.ident;
-        if (index === undefined) {
-          index = this.evaluateExpression(postfix.exp, environment);
+        // Else, first get the key.
+        key = postfix.ident;
+        if (key === undefined) {
+          key = getString(this.evaluateExpression(postfix.exp, environment));
         }
 
-        // Then check that the object has a $get() method, and a $set() method
-        // if accessed for assignment.
-        if (!(objVal.$get instanceof Function)) throw new RuntimeError(
-          "Trying to access a member of a non-object",
-          postfix, environment
-        );
-        if (forAssignment && !(objVal.$set instanceof Function)) {
-          throw new RuntimeError(
-            "Trying to assign to a member of a non-object, or an object " +
-            "that is immutable in the current context",
+        // If the object is an AbstractUHObject, instead of getting from the
+        // object's properties directly, get from the objects 'members'
+        // property. Also check against accessing members of a non-object.
+        let objProto = Object.getPrototypeOf(objVal);
+        if (objProto !== OBJECT_PROTOTYPE) {
+          if (objProto === ARRAY_PROTOTYPE) {
+            if (key !== "length"){
+              key = parseInt(key);
+            }
+          }
+          else if (objVal instanceof AbstractUHObject) {
+            objVal = objVal.members;
+          }
+          else throw new RuntimeError(
+            "Trying to access a member of a non-object",
             postfix, environment
           );
         }
-
-        // If objVal is "confined", also check that it isn't called outside
-        // of an environmental call stack in which it is declared.
-        if (objVal.isConfined) {
-          let isValid = environment.isCallStackDescendentOf(objVal.decEnv);
-          if (!isValid) throw new RuntimeError(
-            "A member of a confined object was accessed outside of the " +
-            "environmental call stack in which the object was was declared",
-            postfix, environment
-          );
-        }
-
-        // Then use the get() method to get the value.
-        val = wrapValue(objVal.$get(index));
-
-        // Lastly, if objVal was immutable or passedToEnclosed, turn the
-        // retrieved value into that as well.
-        if (!(objVal.$set instanceof Function)) {
-          val = turnImmutable(val);
-        }
-        if (objVal.isPassedToEnclosed) {
-          val = turnPassedToEnclosed(val);
-        }
+        val = Object.hasOwn(objVal, key) ? objVal[key] : undefined;
       }
 
       // Else if postfix is an expression tuple, execute the current val as a
       // function, and reassign it to the return value.
       else if (postfix.type === "expression-tuple") {
-        // Throw if assigning to a chained expression including a function call,
-        // as functions will always return something immutable anyway.
-        if (forAssignment) throw new RuntimeError(
-          "Assignment to a member of an immutable object",
-          postfix, environment
-        );
 
         // Evaluate the expressions inside the tuple.
         let inputExpArr = postfix.children;
@@ -1540,6 +1544,7 @@ export class ScriptInterpreter {
         val = this.executeFunction(
           val, inputValArr, postfix, environment, objVal
         );
+        objVal = undefined;
       }
       else throw "evaluateChainedExpression(); Unrecognized postfix type";
     }
@@ -1547,8 +1552,8 @@ export class ScriptInterpreter {
     // Finally return val and objVal, which should now respectively hold the
     // value of the full expression and the value of the object before the
     // last member access, or undefined if the last postfix was an expression
-    // tuple. Also return the index.
-    return [val, objVal, index];
+    // tuple. Also return the key.
+    return [val, objVal, key];
   }
 
 }
@@ -1638,12 +1643,13 @@ export class Environment {
       return (val === UNDEFINED) ? undefined : val;
     }
     else if (this.parent) {
-      let val = this.parent.get(ident, node, nodeEnvironment);
-      if (this.isNonArrowFunction) {
-        return turnImmutable(val);
-      } else {
-        return val;
-      }
+      return this.parent.get(ident, node, nodeEnvironment);
+      // let val = this.parent.get(ident, node, nodeEnvironment);
+      // if (this.isNonArrowFunction) {
+      //   return turnImmutable(val);
+      // } else {
+      //   return val;
+      // }
     }
     else {
       throw new RuntimeError(
@@ -1978,157 +1984,26 @@ export class FlagEnvironment {
 
 
 
-export class UserHandledObject {
-  constructor(className, members) {
+export class AbstractUHObject {
+  constructor(className, members = undefined) {
     this.className = className;
-    this.$members = members ?? Object.create(null);
+    this.members = members ?? {};
   }
 
-  $get(key) {
-    key = getString(key);
-    if (key !== "") {
-      return this.$members[key];
-    }
-  }
-
-  $entries() {
-    return Object.entries(this.$members);
-  }
-  $values() {
-    return Object.values(this.$members);
-  }
-  $keys() {
-    return Object.keys(this.$members);
-  }
-  $forEach(callback) {
-    Object.entries(this.$members).forEach(([key, val]) => callback(val, key));
-  }
-
-  $stringify() {
+ stringify() {
     return  `"${this.className}()"`;
   }
-  $toString() {
+ toString() {
     return  `[object ${this.className}()]`;
   }
 }
 
 
 
-export class PlainObject extends UserHandledObject {
-  constructor(val) {
-    super("Object");
-    if (val instanceof Object) {
-      Object.assign(this.$members, val)
-    }
-  }
-
-  $set(key, val) {
-    key = getString(key);
-    if (key !== "") {
-      this.$members[key] = val;
-      return true;
-    }
-  }
-
-  $stringify() {
-    let ret = "{";
-    Object.entries(this.$members).map(([key, val]) => (
-      `${JSON.stringify(key.toString())}:${jsonStringify(val)}`
-    )).join(",");
-    return ret + "}";
-  }
-}
-
-
-
-export class UHArray extends UserHandledObject {
-  constructor(val) {
-    super("Array", (val instanceof Array) ? val : []);
-  }
-
-  $get(key) {
-    if (key === "length"){
-      return this.$members.length;
-    }
-    let ind = parseInt(key);
-    if (ind !== NaN && 0 <= ind && ind < MAX_ARRAY_INDEX) {
-      return this.$members[ind];
-    }
-  }
-  $set(key, val) {
-    if (key === "length") {
-      let ind = parseInt(val);
-      if (ind !== NaN && 0 <= ind && ind < MAX_ARRAY_INDEX + 1) {
-        this.$members.length = ind;
-        return true;
-      }
-      else return;
-    }
-    let ind = parseInt(key);
-    if (ind !== NaN && 0 <= ind && ind < MAX_ARRAY_INDEX) {
-      this.$members[ind] = val;
-      return true;
-    }
-  }
-
-  $entries() {
-    return this.$members.entries();
-  }
-  $values() {
-    return this.$members.values();
-  }
-  $keys() {
-    return this.$members.keys();
-  }
-  $forEach(callback) {
-    this.$members.forEach(callback);
-  }
-
-  $toString() {
-    return this.$members.map(val => getString(val)).join(",");
-  }
-  $stringify() {
-    return "[" + this.$members.map(val => (jsonStringify(val))).join(",") + "]";
-  }
-}
-
-
-
-export class UHMap extends UserHandledObject {
-  constructor(val) {
-    super(
-      "Array",
-      (val instanceof Map) ? val :
-        (val instanceof Array) ? new Map(val) : new Map()
-    );
-  }
-
-  $get(key) {
-    return this.$members.get(key);
-  }
-  $set(key, val) {
-    return this.$members.set(key, val);
-  }
-
-  $entries() {
-    return this.$members.entries();
-  }
-  $values() {
-    return this.$members;
-  }
-  $keys() {
-    return this.$members.keys();
-  }
-  $forEach(callback) {
-    this.$members.forEach(callback);
-  }
-}
-
-
 
 export function getString(val) {
-  if (val.$toString instanceof Function) {
-    return val.$toString();
+  if (val.toString instanceof Function) {
+    return val.toString();
   }
   else if (!(val instanceof Object)) {
     return val.toString();
@@ -2138,110 +2013,112 @@ export function getString(val) {
   );
 }
 
+
 export function jsonStringify(val) {
-  if (val.$stringify instanceof Function) {
-    return val.$stringify();
+  if (val instanceof AbstractUHObject) {
+    return val.stringify();
   }
   else if (typeof val === "symbol") {
     return JSON.stringify(val.toString());
   }
-  else if (val instanceof Array) {
+  let valProto = Object.getPrototypeOf(val);
+  if (valProto === ARRAY_PROTOTYPE) {
     return "[" + val.map(val => (jsonStringify(val))).join(",") + "]";
   }
-  else if (val instanceof Object) {
+  else if (valProto === OBJECT_PROTOTYPE) {
     let ret = "{";
     Object.entries(val).map(([key, val]) => (
       `${JSON.stringify(key.toString())}:${jsonStringify(val)}`
     )).join(",");
     return ret + "}";
   }
-  else {
-    return JSON.stringify(val)
-  }
-}
-
-
-
-export function jsonParse(val) {
-  try {
-    return wrapValue(JSON.parse(val));
-  }
-  catch (err) {
-    if (err instanceof TypeError) {
-      return undefined;
-    }
-    else throw err;
-  }
-}
-
-
-export function wrapValue(val) {
-  if (val instanceof UserHandledObject) {
-    return val;
-  }
   else if (val instanceof Object) {
-    if (val instanceof Array) {
-      return new UHArray(val);
+    throw "User has access to an object that they shouldn't have";
+  }
+  else {
+    return JSON.stringify(val);
+  }
+}
+
+
+
+
+export function forEachValue(val, node, env, callback) {
+    if (val instanceof AbstractUHObject) {
+      val = val.members;
     }
-    else if (val instanceof Map) {
-      return new UHMap(val.entries());
+    let valProto = Object.getPrototypeOf(val);
+    if (valProto === ARRAY_PROTOTYPE) {
+      val.forEach(callback);
+    }
+    else if (valProto === OBJECT_PROTOTYPE) {
+      Object.entries().forEach(([key, val]) => callback(val, key));
+    }
+    else throw new RuntimeError(
+      "Iterating over a non-iterable value",
+      node, env
+    );
+}
+
+
+export function deepCopy(value) {
+    if (value instanceof AbstractUHObject) {
+      let ret = Object.create(value);
+      ret.members = deepCopy(ret.members);
+      return ret;
+    }
+    let valProto = Object.getPrototypeOf(value);
+    if (valProto === ARRAY_PROTOTYPE) {
+      return value.map(val => deepCopy(val));
+    }
+    else if (valProto === OBJECT_PROTOTYPE) {
+      let ret = {};
+      Object.entries().forEach(([key, val]) => {
+        ret[key] = deepCopy(val);
+      });
     }
     else {
-      return new PlainObject(val);
+      return val;
     }
-  }
-  else {
-    return val;
-  }
-}
-
-export function unwrapValue(val) {
-  if (
-    val instanceof PlainObject || val instanceof UHArray || val instanceof UHMap
-  ) {
-    return val.$members;
-  }
-  else {
-    return val;
-  }
-}
-
-
-export function getEntry(obj, key) {
-  return (obj.$get) ? obj.$get() :
-    (obj instanceof Map) ? obj.get(key) :
-    (obj instanceof Object) ? obj[key] : undefined;
-}
-
-export function getEntries(obj) {
-  return (obj.$entries) ? obj.$entries() :
-    (obj instanceof Object) ? Object.entries(obj) : [];
-}
-
-export function getValues(obj) {
-  return (obj.$values) ? obj.$values() :
-    (obj instanceof Object) ? Object.values(obj) : [];
-}
-
-export function getKeys(obj) {
-  return (obj.$keys) ? obj.$keys() :
-    (obj instanceof Object) ? Object.keys(obj) : [];
-}
-
-export function forEach(obj, callback) {
-  return (obj.$forEach) ? obj.$forEach(callback) :
-    (obj instanceof Array || obj instanceof Map) ? obj.forEach(callback) :
-    (obj instanceof Object) ?
-      Object.entries(obj).forEach(([key, obj]) => callback(obj, key)) :
-      undefined;
 }
 
 
 
+// export function getEntry(obj, key) {
+//   return (obj.$get) ? obj.$get() :
+//     (obj instanceof Map) ? obj.get(key) :
+//     (obj instanceof Object) ? obj[key] : undefined;
+// }
+
+// export function getEntries(obj) {
+//   return (obj.$entries) ? obj.$entries() :
+//     (obj instanceof Object) ? Object.entries(obj) : [];
+// }
+
+// export function getValues(obj) {
+//   return (obj.$values) ? obj.$values() :
+//     (obj instanceof Object) ? Object.values(obj) : [];
+// }
+
+// export function getKeys(obj) {
+//   return (obj.$keys) ? obj.$keys() :
+//     (obj instanceof Object) ? Object.keys(obj) : [];
+// }
+
+// export function forEach(obj, callback) {
+//   return (obj.$forEach) ? obj.$forEach(callback) :
+//     (obj instanceof Array || obj instanceof Map) ? obj.forEach(callback) :
+//     (obj instanceof Object) ?
+//       Object.entries(obj).forEach(([key, obj]) => callback(obj, key)) :
+//       undefined;
+// }
 
 
 
-export class FunctionObject extends UserHandledObject {
+
+
+
+export class FunctionObject extends AbstractUHObject {
   constructor() {
     super("Function");
   }
@@ -2298,7 +2175,7 @@ export class DevFunction extends FunctionObject {
 
 
 
-export class LiveModule extends UserHandledObject {
+export class LiveModule extends AbstractUHObject {
   constructor(modulePath, exports, scriptVars) {
     super("LiveModule");
     this.modulePath = modulePath;
@@ -2307,17 +2184,17 @@ export class LiveModule extends UserHandledObject {
       // Filter out any Function instance, which might be exported from a dev
       // library, in which case it is meant only for other dev libraries.
       if (!(val instanceof Function)) {
-        this.$members[alias] = turnImmutable(val);
+        this.members[alias] = val;
       }
     });
   }
 }
 
-export class SASSModule extends UserHandledObject {
+export class SASSModule extends AbstractUHObject {
   constructor(modulePath, styleSheet) {
     super("SASSModule");
     this.modulePath = modulePath;
-    this.$members["styleSheet"] = styleSheet;
+    this.members["styleSheet"] = styleSheet;
   }
 }
 
@@ -2325,7 +2202,7 @@ export class SASSModule extends UserHandledObject {
 
 
 
-export class JSXElement extends UserHandledObject {
+export class JSXElement extends AbstractUHObject {
   constructor(node, decEnv, interpreter) {
     super("JSXElement");
     this.node = node;
@@ -2334,33 +2211,29 @@ export class JSXElement extends UserHandledObject {
     this.tagName = tagName;
     if (isComponent) this.componentModule = decEnv.get(tagName, node);
     this.isFragment = isFragment;
-    this.props = new PlainObject();
+    this.props = {};
     if (propArr) propArr.forEach(propNode => {
       let expVal = propNode.exp ?
         interpreter.evaluateExpression(propNode.exp, decEnv) :
         true;
       if (propNode.isSpread) {
-        if (!(expVal.forEach instanceof Function)) throw new RuntimeError(
-          "Trying to iterate over a non-iterable",
-          propNode.exp, decEnv
-        );
-        expVal.forEach((val, key) => {
-          this.props.$set(key, val);
+        forEachValue(expVal, propNode.exp, decEnv, (val, key) => {
+          this.props[key] = val;
         });
       } else {
-        this.props.$set(propNode.ident, expVal);
+        this.props[propNode.ident] = expVal;
       }
     });
     if (children) {
-      let childrenProp = new PlainObject();
+      let childrenProp = [];
       children.forEach((contentNode, ind) => {
         let val = interpreter.evaluateExpression(contentNode, decEnv);
-        childrenProp.$set(ind, val);
+        childrenProp[ind] = val;
       });
-      this.props.$set("children", childrenProp);
+      this.props["children"] = childrenProp;
     }
     if (isComponent) {
-      this.key = this.props.$get("key");
+      this.key = this.props["key"];
       if (this.key === undefined) throw new RuntimeError(
         'JSX component element defined without a "key" prop',
         node, decEnv
@@ -2371,7 +2244,7 @@ export class JSXElement extends UserHandledObject {
 
 
 
-export class PromiseObject extends UserHandledObject {
+export class PromiseObject extends AbstractUHObject {
   constructor(promiseOrFun, interpreter, node, env) {
     super("Promise");
     if (promiseOrFun instanceof Promise) {
@@ -2387,7 +2260,7 @@ export class PromiseObject extends UserHandledObject {
       });
     }
 
-    this.$members["then"] = new DevFunction(
+    this.members["then"] = new DevFunction(
       {}, ({callerNode, callerEnv, interpreter}, [callbackFun]) => {
         interpreter.handlePromise(
           this.promise, callbackFun, callerNode, callerEnv
@@ -2455,7 +2328,7 @@ export class OutOfGasError extends RuntimeError {
 }
 export class CustomException extends RuntimeError {
   constructor(val, node, environment) {
-    super(turnImmutable(val), node, environment);
+    super(val, node, environment);
   }
 }
 export class ArgTypeError extends RuntimeError {
@@ -2469,45 +2342,47 @@ export class ArgTypeError extends RuntimeError {
 
 
 
-export function turnImmutable(val) {
-  if (val && val.$set instanceof Function) {
-    val = Object.create(val);
-    val.$set = false;
-    return val;
-  } else {
-    return val;
-  }
-}
-export function passedAsMutable(val) {
-  if (val && val.$set instanceof Function && !val.passAsMutable) {
-    val = Object.create(val);
-    val.passAsMutable = true;
-    return val;
-  } else {
-    return val;
-  }
-}
-export function notPassedAsMutable(val) {
-  if (val && val.$set instanceof Function && val.passAsMutable) {
-    val = Object.create(val);
-    val.passAsMutable = false;
-    return val;
-  } else {
-    return val;
-  }
-}
-export function turnPassedToEnclosed(val) {
-  if (
-    val && (val instanceof FunctionObject || val.$get instanceof Function) &&
-    !val.isPassedToEnclosed
-  ) {
-    val = Object.create(val);
-    val.isPassedToEnclosed = true;
-    return val;
-  } else {
-    return val;
-  }
-}
+// export function turnImmutable(val) {
+//   if (val instanceof UserHandledObject && val.isMutable) {
+//     val = Object.create(val);
+//     val.isMutable = false;
+//     return val;
+//   } else {
+//     return val;
+//   }
+// }
+
+
+// export function passedAsMutable(val) {
+//   if (val && val.$set instanceof Function && !val.passAsMutable) {
+//     val = Object.create(val);
+//     val.passAsMutable = true;
+//     return val;
+//   } else {
+//     return val;
+//   }
+// }
+// export function notPassedAsMutable(val) {
+//   if (val && val.$set instanceof Function && val.passAsMutable) {
+//     val = Object.create(val);
+//     val.passAsMutable = false;
+//     return val;
+//   } else {
+//     return val;
+//   }
+// }
+// export function turnPassedToEnclosed(val) {
+//   if (
+//     val && (val instanceof FunctionObject || val.$get instanceof Function) &&
+//     !val.isPassedToEnclosed
+//   ) {
+//     val = Object.create(val);
+//     val.isPassedToEnclosed = true;
+//     return val;
+//   } else {
+//     return val;
+//   }
+// }
 
 
 

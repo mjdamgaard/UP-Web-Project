@@ -148,7 +148,7 @@ export class JSXAppStyler {
 
     // Add a "pending-style" class to the outer DOM node, then wait for the
     // 'classTransform' setting (which might be ready immediately).
-    newDOMNode.classList.add("transforming-root");
+    newDOMNode.classList.add("pending-style");
     let settings = this.settingsStore.get(componentModule);
     let classTransform = await settings.classTransform;
     
@@ -156,7 +156,7 @@ export class JSXAppStyler {
     // this.domNode is still === newDOMNode, and otherwise return early. And
     // also return early if classTransform is falsy.
     if (this.domNode !== newDOMNode || !classTransform) {
-      newDOMNode.classList.remove("transforming-root");
+      newDOMNode.classList.remove("pending-style");
       return;
     }
 
@@ -225,6 +225,10 @@ export class JSXAppStyler {
     });
     newDOMNode.classList.remove("transforming-root");
 
+    // TODO: Maybe move this outside of transformClasses() and try-catch, or
+    // wrap this whole function body in a try-catch statement..
+    newDOMNode.classList.remove("pending-style");
+    return;
   }
 
 }
