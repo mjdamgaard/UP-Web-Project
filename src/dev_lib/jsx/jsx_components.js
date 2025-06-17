@@ -2,6 +2,7 @@
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, getExtendedErrorMsg,
   getString, AbstractUHObject, forEachValue, CLEAR_FLAG, deepCopy,
+  OBJECT_PROTOTYPE, ArgTypeError,
 } from "../../interpreting/ScriptInterpreter.js";
 import {CAN_POST_FLAG, REQUEST_ORIGIN_FLAG} from "../query/src/flags.js";
 
@@ -112,6 +113,7 @@ class JSXInstance {
     this.props = undefined;
     this.state = undefined;
     this.refs = undefined;
+    this.isRequestOrigin = undefined;
     this.callerNode = callerNode;
     this.callerEnv = callerEnv;
     this.isDiscarded = undefined;
@@ -122,6 +124,13 @@ class JSXInstance {
     return this.componentModule.modulePath;
   }
 
+  get requestOrigin() {
+    if (this.isRequestOrigin)
+      return this.componentModule.modulePath;
+    else {
+      return this.parentInstance?.requestOrigin;
+    }
+  }
 
   render(
     props = Object.create(null), isDecorated, interpreter,
@@ -152,12 +161,16 @@ class JSXInstance {
           getInitState, [props], callerNode, callerEnv
         );
       } else {
-        state = this.componentModule.members["getInitState"] || {};
+        state = this.componentModule.members["initState"] || {};
       }
       this.state = state;
 
       // And store the refs object.
       this.refs = props["refs"] ?? {};
+
+      // And also store a boolean for whether this component is a "request
+      // origin."
+      this.isRequestOrigin = this.componentModule.members["isRequestOrigin"];
     }
 
     // Then get the component module's render() function.
@@ -180,7 +193,7 @@ class JSXInstance {
     try {
       jsxElement = interpreter.executeFunction(
         renderFun, [deepCopyWithoutRefs(props, callerNode, callerEnv)],
-        callerNode, callerEnv, new JSXInstanceInterface(this, callerEnv),
+        callerNode, callerEnv, new JSXInstanceInterface(this),
         [CLEAR_FLAG]
       );
     }
@@ -368,11 +381,9 @@ class JSXInstance {
           case "onclick" : {
             newDOMNode.onclick = () => {
               interpreter.executeFunction(
-                val, [new JSXInstanceInterface(this, callerEnv)],
+                val, [new JSXInstanceInterface(this)],
                 callerNode, callerEnv, undefined, [
-                  CAN_POST_FLAG, [REQUEST_ORIGIN_FLAG, this.componentPath]
-                  // TODO: Make some components transparent w.r.t. request
-                  // origin..
+                  CAN_POST_FLAG, [REQUEST_ORIGIN_FLAG, this.requestOrigin]
                 ]
               );
             }
@@ -432,15 +443,17 @@ class JSXInstance {
   // exported by a component module. If no ancestors has an action of a
   // matching key, dispatch() just fails silently and nothing happens.
   dispatch(actionKey, input, interpreter, callerNode, callerEnv) {
-    let actions = this.componentModule.$get("actions");
+    let actions = this.componentModule.members["actions"];
+    actionKey = getString(actionKey);
+    if (!actionKey) return;
     let actionFun;
-    if (actions instanceof PlainObject) {
-      actionFun = actions.$get(actionKey);
+    if (Object.getPrototypeOf(actions) === OBJECT_PROTOTYPE) {
+      actionFun = actions[actionKey];
     }
     if (actionFun) {
       interpreter.executeFunction(
         actionFun, [input], callerNode, callerEnv,
-        new JSXInstanceInterface(this, callerEnv), [CLEAR_FLAG]
+        new JSXInstanceInterface(this), [CLEAR_FLAG]
       );
     }
     else {
@@ -476,15 +489,20 @@ class JSXInstance {
     );
 
     // Then find and call its targeted method.
-    let methods = targetInstance.componentModule.$get("methods");
+    let methods = targetInstance.componentModule.members["methods"];
+    methodKey = getString(methodKey);
+    if (!methodKey) throw new ArgTypeError(
+      "Invalid, falsy method key",
+      callerNode, callerEnv
+    );
     let methodFun;
-    if (methods instanceof PlainObject) {
-      methodFun = methods.$get(methodKey);
+    if (Object.getPrototypeOf(methods) === OBJECT_PROTOTYPE) {
+      methodFun = methods[actionKey];
     }
     if (methodFun) {
       interpreter.executeFunction(
         methodFun, [input], callerNode, callerEnv,
-        new JSXInstanceInterface(targetInstance, callerEnv), [CLEAR_FLAG]
+        new JSXInstanceInterface(targetInstance), [CLEAR_FLAG]
       );
     }
     else throw new RuntimeError(
@@ -535,15 +553,14 @@ class JSXInstance {
 
 
 class JSXInstanceInterface extends AbstractUHObject {
-  constructor(jsxInstance, decEnv) {
+  constructor(jsxInstance) {
     super("JSXInstance");
     this.jsxInstance = jsxInstance;
-    this.decEnv = decEnv;
 
-    Object.assign(this.$members, {
+    Object.assign(this.members, {
     /* Properties */
-      "props": this.jsxInstance.props,
-      "state": this.jsxInstance.state,
+      "props": deepCopy(this.jsxInstance.props),
+      "state": deepCopy(this.jsxInstance.state),
       "refs": this.jsxInstance.refs,
       /* Methods */
       "dispatch": this.dispatch,
@@ -553,12 +570,6 @@ class JSXInstanceInterface extends AbstractUHObject {
       "provideContext": this.provideContext,
       "subscribeToContext": this.subscribeToContext,
     });
-  }
-
-  // This property makes the class instances "confined" (which is also why we
-  // include the decEnv property above).
-  get isConfined() {
-    return true;
   }
 
 

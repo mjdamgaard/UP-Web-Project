@@ -10,8 +10,8 @@ import {
 export {LexError, SyntaxError};
 
 
-const ARRAY_PROTOTYPE = Object.getPrototypeOf([]);
-const OBJECT_PROTOTYPE = Object.getPrototypeOf({});
+export const ARRAY_PROTOTYPE = Object.getPrototypeOf([]);
+export const OBJECT_PROTOTYPE = Object.getPrototypeOf({});
 
 const MAX_ARRAY_INDEX = 4294967294;
 const MINIMAL_TIME_GAS = 10;

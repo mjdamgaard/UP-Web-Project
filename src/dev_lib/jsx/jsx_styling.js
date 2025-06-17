@@ -2,7 +2,7 @@
 
 import sassTranspiler from "../../interpreting/SASSTranspiler.js";
 import {
-  RuntimeError, UHArray, PromiseObject, ArgTypeError, unwrapValue,
+  RuntimeError, ArgTypeError, forEachValue,
 } from "../../interpreting/ScriptInterpreter.js";
 import {sassParser} from "../../interpreting/parsing/SASSParser.js";
 
@@ -24,7 +24,7 @@ export class JSXAppStyler {
     this.loadedStyleSheetIDs = new Map();
   }
 
-  // loadStylesOfAllStaticJSXModules() fetches and apply the styles of all
+  // loadStylesOfAllStaticJSXModules() fetches and applies the styles of all
   // current imported and live modules that has a '.jsx' extension.
   async loadStylesOfAllStaticJSXModules(liveModules, callerNode, callerEnv) {
     let promiseArr = [];
@@ -72,11 +72,7 @@ export class JSXAppStyler {
       if (isLoaded) return;
       this.loadedStyleSheetIDs.set(route, id);
 
-      // Push a promise to promiseArr for fetching and loading the style. (Note
-      // that since we await styleSheet within this promise, the transpilation
-      // will occur on the next tick soonest, meaning that all the routes and
-      // IDs from styleSheetPaths will have been added to loadedStyleSheetIDs,
-      // which is required.)
+      // Push a promise to promiseArr for fetching and loading the style.
       promiseArr.push(new Promise(async (resolve) => {
         // Fetch the style sheet module and its settings in parallel.
         let settings = this.settingsStore.get(route);
@@ -91,7 +87,7 @@ export class JSXAppStyler {
         // which, if true, allows the style sheet to affect CSS classes
         // introduced by other style sheets, as well as element types in
         // general. 
-        let styleSheet = styleSheetModule.$get("styleSheet");
+        let styleSheet = styleSheetModule.styleSheet;
         let {isTrusted} = styleSheetSettings;
 
         // Then transpile the SASS style sheet into CSS (with some additional
@@ -152,10 +148,10 @@ export class JSXAppStyler {
     let settings = this.settingsStore.get(componentModule);
     let classTransform = await settings.classTransform;
     
-    // Check that the instance hasn't been rerendered by verifying that
-    // this.domNode is still === newDOMNode, and otherwise return early. And
-    // also return early if classTransform is falsy.
-    if (this.domNode !== newDOMNode || !classTransform) {
+    // Check that classTransform is truthy and that the instance hasn't been
+    // rerendered, which is done by verifying that this.domNode is still ===
+    // newDOMNode. And otherwise return early.
+    if (!classTransform || this.domNode !== newDOMNode) {
       newDOMNode.classList.remove("pending-style");
       return;
     }
@@ -170,18 +166,16 @@ export class JSXAppStyler {
     });
     newDOMNode.classList.add("transforming-root");
 
-// TODO: Continue re-impl. from here.
     // Then iterate through each an any transform instruction in
     // classTransform and carry it out.
-    classTransform.values().forEach(inst => {
+    forEachValue(classTransform, callerNode, callerEnv, inst => {
       // Each transform instruction (user-defined) is supposed to be of the
       // form [selector, classStr]. Extract these values.
-      if (!(inst instanceof UHArray)) throw new RuntimeError(
+      if (!(inst instanceof Array)) throw new RuntimeError(
         "Invalid class transform instruction",
         callerNode, callerEnv
       );
-      let selector = inst.get(0);
-      let classStr = inst.get(1).toString();
+      let [selector, classStr] = inst;
 
       // Then validate the selector as a complex selector (with no pseudo-
       // element).
@@ -194,14 +188,19 @@ export class JSXAppStyler {
         if (!error) isValid = true;
       }
       if (!isValid) throw new RuntimeError(
-        "Invalid class transform instruction",
+        `Invalid selector in class transform instruction: ${selector}`,
+        callerNode, callerEnv
+      );
+      // And verify that classStr is a string.
+      if (typeof classStr !== "string") throw new RuntimeError(
+        `Invalid class string in class transform instruction: ${classStr}`,
         callerNode, callerEnv
       );
 
       // Then replace any leading "&" with ".transforming-root", and add a
       // ".transforming" class selector to it at the end, and use this to
       // select a NodeList of all element to transform.
-      selector = selector.replace(/^\s*&/, ".transforming-root") +
+      selector = selector.trim().replace(/^&/, ".transforming-root") +
         ".transforming";
       let nodeList = newDOMNode.parentElement.querySelectorAll(selector);
       classStr.split(/\s+/).forEach(classTransformInst => {
@@ -211,6 +210,7 @@ export class JSXAppStyler {
           "Invalid class transform instruction",
           callerNode, callerEnv
         );
+// TODO: Shouldn't I also transform the class ID/prefix here..?
         if (rmFlag) {
           nodeList.forEach(node => node.classList.remove(fullClassName));
         } else {
@@ -232,103 +232,3 @@ export class JSXAppStyler {
   }
 
 }
-
-
-// TODO: Merge into JSXAppStyler instead:
-export class JSXComponentStyler {
-  constructor(jsxAppStyler, componentPath) {
-    this.componentPath = componentPath;
-    this.classTransformPromise =
-      jsxAppStyler.getClassTransformPromise(componentPath);
-  }
-
-  transformClasses(newDOMNode, ownDOMNodes, callerNode, callerEnv) {
-    // If classTransform is undefined, it ought to mean that the style for
-    // this component has not yet been loaded, in which case throw an error.
-    if (this.classTransformPromise === undefined) throw new RuntimeError(
-      `Style missing for JSX component at ${this.componentPath}, ` +
-      "possibly due to importing a JSX module with a '.js' extension rather" +
-      "than '.jsx', or due to importing it dynamically using the regular" +
-      "import() function rather than JSXInstance.import()",
-      callerNode, callerEnv
-    );
-
-    this.classTransformPromise.then(classTransform => {
-      // Check that the instance hasn't been rerendered by verifying that
-      // this.domNode is still === newDOMNode, and otherwise return early.
-      if (this.domNode !== newDOMNode) {
-        return;
-      }
-  
-      // Also return early if classTransform is false or nodeArray is empty.
-      if (!classTransform || ownDOMNodes.length === 0) return;
-
-      // Else we first go through each node and mark them with a special class
-      // used for filtering out all other nodes when constructing our selectors.
-      // This class is then removed again before this function returns. We also
-      // mark the outer node with a .transforming-root class, which can be used
-      // as a substitute for '&' in the selector.
-      ownDOMNodes.forEach(node => {
-        node.classList.add("transforming");
-      });
-      newDOMNode.classList.add("transforming-root");
-
-      // Then iterate through each an any transform instruction in
-      // classTransform and carry it out.
-      classTransform.values().forEach(inst => {
-        // Each transform instruction (user-defined) is supposed to be of the
-        // form [selector, classStr]. Extract these values.
-        if (!(inst instanceof UHArray)) throw new RuntimeError(
-          "Invalid class transform instruction",
-          callerNode, callerEnv
-        );
-        let selector = inst.get(0);
-        let classStr = inst.get(1).toString();
-
-        // Then validate the selector as a complex selector (with no pseudo-
-        // element).
-        let isValid = false;
-        if (typeof selector === "string") {
-          if (selector.indexOf("/*") !== -1) isValid = false;
-          let [{error}] = sassParser.parse(
-            selector, "relative-complex-selector"
-          );
-          if (!error) isValid = true;
-        }
-        if (!isValid) throw new RuntimeError(
-          "Invalid class transform instruction",
-          callerNode, callerEnv
-        );
-
-        // Then replace any leading "&" with ".transforming-root", and add a
-        // ".transforming" class selector to it at the end, and use this to
-        // select a NodeList of all element to transform.
-        selector = selector.replace(/^\s*&/, ".transforming-root") +
-          ".transforming";
-        let nodeList = newDOMNode.parentElement.querySelectorAll(selector);
-        classStr.split(/\s+/).forEach(classTransformInst => {
-          let [match, rmFlag, fullClassName] =
-            CLASS_TRANSFORM_OUTPUT_REGEX.exec(classTransformInst);
-          if (!match) throw new RuntimeError(
-            "Invalid class transform instruction",
-            callerNode, callerEnv
-          );
-          if (rmFlag) {
-            nodeList.forEach(node => node.classList.remove(fullClassName));
-          } else {
-            nodeList.forEach(node => node.classList.add(fullClassName));
-          }
-        });
-      });
-
-      // And finally remove the ".transforming(-root)" classes again.
-      ownDOMNodes.forEach(node => {
-        node.classList.remove("transforming");
-      });
-      newDOMNode.classList.remove("transforming-root");
-    });
-  }
-
-
-}
-
