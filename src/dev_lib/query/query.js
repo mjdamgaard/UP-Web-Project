@@ -16,7 +16,7 @@ import {checkAdminPrivileges, checkIfCanPost} from "./src/flags.js";
 
 
 export const query = new DevFunction(
-  {isAsync: true, minArgNum: 2, isEnclosed: true},
+  {isAsync: true},
   async function(
     {callerNode, execEnv, interpreter, liveModule},
     [isPublic, route, isPost = false, postData, options = {}]
@@ -105,7 +105,7 @@ export const query = new DevFunction(
 
 
 export const fetch = new DevFunction(
-  {isAsync: true, minArgNum: 2, isEnclosed: true},
+  {isAsync: true},
   async function(
     {callerNode, execEnv, interpreter},
     [isPublic, route, options]
@@ -120,7 +120,7 @@ export const fetch = new DevFunction(
 
 
 export const post = new DevFunction(
-  {isAsync: true, minArgNum: 1, isEnclosed: true},
+  {isAsync: true},
   async function(
     {callerNode, execEnv, interpreter},
     [route, postData, options]

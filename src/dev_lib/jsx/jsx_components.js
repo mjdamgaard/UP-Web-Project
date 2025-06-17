@@ -1,9 +1,9 @@
 
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, getExtendedErrorMsg,
-  getString, AbstractUHObject, forEachValue, CLEAR_FLAG,
+  getString, AbstractUHObject, forEachValue, CLEAR_FLAG, deepCopy,
 } from "../../interpreting/ScriptInterpreter.js";
-import {CAN_POST_FLAG} from "../query/src/signals.js";
+import {CAN_POST_FLAG, REQUEST_ORIGIN_FLAG} from "../query/src/flags.js";
 
 import {JSXAppStyler} from "./jsx_styling.js";
 
@@ -17,26 +17,6 @@ export const CAN_CREATE_APP_FLAG = Symbol("can-create-app");
 export const IS_APP_ROOT_FLAG = Symbol("is-app-root");
 
 
-// export const WILL_CREATE_APP_SIGNAL = new Signal(
-//   "will-create-app",
-//   function(flagEnv, node, env) {
-//     let [wasFound] = flagEnv.getFlag(CAN_CREATE_APP_FLAG, 1);
-//     if (!wasFound ) throw new RuntimeError(
-//       "Cannot create a new the app from here",
-//       node, env
-//     );
-//     flagEnv.setFlag(IS_APP_ROOT_FLAG);
-//   }
-// );
-
-// export const GET_IS_APP_ROOT_SIGNAL = new Signal(
-//   "get-is-app-root",
-//   function(flagEnv) {
-//     return flagEnv.getFlag(IS_APP_ROOT_FLAG, 0) ? true : false;
-//   }
-// );
-
-
 
 
 // TODO: Make createJSXApp() take an argument of a function to get component
@@ -46,20 +26,27 @@ export const IS_APP_ROOT_FLAG = Symbol("is-app-root");
 // Create a JSX (React-like) app and mount it in the index HTML page, in the
 // element with an id of "up-app-root".
 export const createJSXApp = new DevFunction(
-  {isAsync: true, minArgNum: 3, initSignals: [[WILL_CREATE_APP_SIGNAL]]},
+  {isAsync: true, flags: [IS_APP_ROOT_FLAG]},
   async function(
     {callerNode, execEnv, interpreter},
     [appComponent, props, getSettings]
   ) {
+    // Check if the caller is allowed to create an app from in the current
+    // environment.
+    if (!execEnv.getFlag(CAN_CREATE_APP_FLAG)) throw new RuntimeError(
+      "Cannot create a new the app from here",
+      callerNode, execEnv
+    );
+
     // Create a SettingsStore which uses getSettings() to fetch settings for
     // each individual component. These settings are used for styling the
     // components, and for assigning them trust for making post requests, among
     // other things, all of which might be made to depend on user preferences.
     let settingsStore = new SettingsStore(getSettings, interpreter);
 
-    // Then create an JSXAppStyler, which uses the settingsStore to generate the
-    // styles of each component by fetching, transpiling and inserting relevant
-    // style sheets in the document head. We then immediately call its
+    // Then create an JSXAppStyler, which uses the settingsStore to generate
+    // the styles of each component by fetching, transpiling and inserting
+    // relevant style sheets in the document head. We then immediately call its
     // loadStylesOfAllStaticJSXModules() method to prepare the styles of all
     // '.jsx' modules that have been "statically" imported (i.e. imported from
     // import statements).  
@@ -105,7 +92,7 @@ export const createJSXApp = new DevFunction(
 class JSXInstance {
 
   constructor (
-    componentModule, key = undefined, parentInstance = undefined,
+    componentModule, key, parentInstance = undefined,
     callerNode, callerEnv, jsxAppStyler = undefined, settingsStore = undefined,
   ) {
     if (!(componentModule instanceof LiveModule)) throw new RuntimeError(
@@ -159,13 +146,13 @@ class JSXInstance {
       // done either by exporting a 'getInitState()' function, or a constant
       // object called 'initState'.
       let state;
-      let getInitState = this.componentModule.$get("getInitState");
+      let getInitState = this.componentModule.members["getInitState"];
       if (getInitState) {
         state = interpreter.executeFunction(
           getInitState, [props], callerNode, callerEnv
         );
       } else {
-        state = this.componentModule.$get("getInitState") || {};
+        state = this.componentModule.members["getInitState"] || {};
       }
       this.state = state;
 
@@ -174,98 +161,82 @@ class JSXInstance {
     }
 
     // Then get the component module's render() function.
-    let renderFun = this.componentModule.$get("render");
+    let renderFun = this.componentModule.members["render"];
     if (!renderFun) throw new RuntimeError(
       'Component module is missing a render() function at "' +
       this.componentPath + '"',
       callerNode, callerEnv
     );
-    
-    // And construct the resolve() callback that render() should call (before
-    // returning) on the JSXElement to be rendered. This resolve() callback's
-    // job is to get us the newDOMNode to insert in the DOM.
-    let newDOMNode, ownDOMNodes = [], resolveHasBeenCalled = false;
-    let resolve = new DevFunction({decEnv: callerEnv}, (
-      {interpreter, callerNode, execEnv}, [jsxElement]
-    ) => {
-      resolveHasBeenCalled = true;
 
-      // Initialize a marks Map to keep track of which existing child instances
-      // was used or created in the render, such that instances that are no
-      // longer used can be removed afterwards.
-      let marks = new Map(); 
-  
-      // Call getDOMNode() to generate the instance's new DOM node, unless
-      // render() is a dev function that returns a DOM node directly, wrapped
-      // in the DOMNodeWrapper class exported below, in which case just use
-      // that DOM node.
-      if (jsxElement instanceof DOMNodeWrapper) {
-        newDOMNode = jsxElement.domNode;
-      }
-      else {
-        newDOMNode = this.getDOMNode(
-          jsxElement, marks, interpreter, callerNode, execEnv, ownDOMNodes
-        );
-      }
-  
-      // Then remove any existing child instances that wasn't marked during the
-      // execution of getDOMNode().
-      this.childInstances.forEach((_, key, map) => {
-        if (!marks.get(key)) {
-          map.get(key).dismount();
-          map.delete(key);
-        }
-      });
-  
-      // If replaceSelf is true, replace the previous DOM node with the new one
-      // in the DOM tree. Also call updateDecoratingAncestors() to update the
-      // this.domNode property of any potential decorating ancestor (i.e. one
-      // that shares the same DOM node as this one).
-      if (replaceSelf) {
-        this.domNode.replaceWith(newDOMNode);
-        this.domNode = newDOMNode;
-        this.updateDecoratingAncestors(newDOMNode);
-      }
-    });
 
-    // Now call the component module's render() function, and check that
-    // resolve() has been called synchronously by it.
-    let error;
+    // Initialize a marks Map to keep track of which existing child instances
+    // was used or created in the render, such that instances that are no
+    // longer used can be removed afterwards.
+    let marks = new Map();
+
+    // Now call the component module's render() function, but catch and instead
+    // log any error, rather than letting the whole app fail.
+    let error, jsxElement;
     try {
-      let inputArr = [
-        resolve, new JSXInstanceInterface(this, callerEnv),
-      ];
-      interpreter.executeFunction(
-        renderFun, inputArr, callerNode, callerEnv
+      jsxElement = interpreter.executeFunction(
+        renderFun, [deepCopyWithoutRefs(props, callerNode, callerEnv)],
+        callerNode, callerEnv, new JSXInstanceInterface(this, callerEnv),
+        [CLEAR_FLAG]
       );
     }
     catch (err) {
       error = err;
     }
-    // If an error occurred, or if the resolve() callback was not called, log
-    // the error with getExtendedErrorMsg(), which itself throws the error
-    // again if it is unrecognized, and then return a placeholder element
-    // with a "s0_failed" class. Note that the "s0_" in front means that this
-    // class can be styled by the users (in particular by the style sheet that
-    // getStyle() assigns the ID of "s0").
-    if (error || !resolveHasBeenCalled) {
-      let errorMsg = error ? getExtendedErrorMsg(error) : (
-        "A JSX component's render() function did not call its resolve() " +
-        "callback before returning"
-      );
-      console.error(errorMsg);
+    // If an error occurred, return a placeholder element with a "s0_failed"
+    // class. Note that the "s0_" in front means that this class can be styled
+    // by the style sheet that assigned the ID (prefix) of "s0".
+    if (error) {
+      console.error(getExtendedErrorMsg(error));
       let ret = document.createElement("span");
       ret.setAttribute("class", "s0_failed");
       return ret;
     }
 
-    // Before returning the new DOM node, we also use jsxAppStyler to transform
-    // the class attributes of the instance in order to style it.
+    // If a JSXElement was successfully returned, call getDOMNode() to generate
+    // the instance's new DOM node, unless render() is a dev function that
+    // returns a DOM node directly, wrapped in the DOMNodeWrapper class
+    // defined below, in which case just use that DOM node.
+    let newDOMNode, ownDOMNodes = [];
+    if (jsxElement instanceof DOMNodeWrapper) {
+      newDOMNode = jsxElement.domNode;
+    }
+    else {
+      newDOMNode = this.getDOMNode(
+        jsxElement, marks, interpreter, callerNode, execEnv, ownDOMNodes
+      );
+    }
+
+    // Then remove any existing child instances that wasn't marked during the
+    // execution of getDOMNode().
+    this.childInstances.forEach((_, key, map) => {
+      if (!marks.get(key)) {
+        map.get(key).dismount();
+        map.delete(key);
+      }
+    });
+
+    // If replaceSelf is true, replace the previous DOM node with the new one
+    // in the DOM tree. Also call updateDecoratingAncestors() to update the
+    // this.domNode property of any potential decorating ancestor (i.e. one
+    // that shares the same DOM node as this one).
+    if (replaceSelf) {
+      this.domNode.replaceWith(newDOMNode);
+      this.domNode = newDOMNode;
+      this.updateDecoratingAncestors(newDOMNode);
+    }
+
+    // Then, before returning the new DOM node, we also use jsxAppStyler to
+    // transform the class attributes of the instance in order to style it.
     this.jsxAppStyler.transformClasses(
       newDOMNode, ownDOMNodes, this.componentModule, callerNode, callerEnv
     );
 
-    // Then on success, return the instance's new DOM node.
+    // Finally, return the instance's new DOM node.
     return newDOMNode;
   }
 
@@ -389,11 +360,20 @@ class JSXInstance {
             newDOMNode.setAttribute("class", className);
             break;
           }
+          // WARNING: In all documentations of this 'onClick prop, it should be
+          // warned that one should not call a callback from the parent
+          // instance (e.g. handed down through refs), unless one is okay with
+          // bleeding the CAN_POST and REQUEST_ORIGIN privileges granted to
+          // this onClick handler function into the parent instance. 
           case "onclick" : {
             newDOMNode.onclick = () => {
               interpreter.executeFunction(
-                val, [new JSXInstanceInterface(this, callerEnv, "?..")],
-                callerNode, callerEnv, undefined, CAN_POST_FLAG
+                val, [new JSXInstanceInterface(this, callerEnv)],
+                callerNode, callerEnv, undefined, [
+                  CAN_POST_FLAG, [REQUEST_ORIGIN_FLAG, this.componentPath]
+                  // TODO: Make some components transparent w.r.t. request
+                  // origin..
+                ]
               );
             }
             break;
@@ -459,8 +439,8 @@ class JSXInstance {
     }
     if (actionFun) {
       interpreter.executeFunction(
-        actionFun, [new JSXInstanceInterface(this, callerEnv), input],
-        callerNode, callerEnv, this.componentModule
+        actionFun, [input], callerNode, callerEnv,
+        new JSXInstanceInterface(this, callerEnv), [CLEAR_FLAG]
       );
     }
     else {
@@ -503,8 +483,8 @@ class JSXInstance {
     }
     if (methodFun) {
       interpreter.executeFunction(
-        methodFun, [new JSXInstanceInterface(targetInstance, callerEnv), input],
-        callerNode, callerEnv
+        methodFun, [input], callerNode, callerEnv,
+        new JSXInstanceInterface(targetInstance, callerEnv), [CLEAR_FLAG]
       );
     }
     else throw new RuntimeError(
@@ -701,7 +681,7 @@ class DOMNodeWrapper extends AbstractUHObject {
 
 
 // TODO: Correct and debug.
-export function compareProps(props1, props2, compareRefs = false) {
+function compareProps(props1, props2, compareRefs = false) {
   // Get the keys, and return false immediately if the two props Maps have
   // different keys.
   let keys = props1.keys;
@@ -733,6 +713,15 @@ export function compareProps(props1, props2, compareRefs = false) {
 }
 
 
+function deepCopyWithoutRefs(props, node, env) {
+  let ret = {};
+  forEachValue(props, node, env, (val, key) => {
+    if (key !== "refs") {
+      ret[key] = deepCopy(val);
+    }
+  });
+  return ret;
+}
 
 
 
