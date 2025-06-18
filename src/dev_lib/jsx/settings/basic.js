@@ -1,5 +1,6 @@
 import {
-  DevFunction, forEachValue, LiveModule, PromiseObject, SASSModule,
+  DevFunction, forEachValue, LiveModule, PromiseObject, RuntimeError,
+  SASSModule,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {APP_COMPONENT_PATH_FLAG} from "../jsx_components.js";
 
@@ -31,7 +32,7 @@ export const getSettings = new DevFunction(
       // classTransform, such that their are no unwanted clashes globally.
       [styleSheets, classTransform] = recordOrTransformStyleSheetIDs(
         styleSheets, classTransform, styleSheetIDs, styleSheetRoutes,
-        isAppRoot, callerNode, execEnv
+        isAppRoot, modulePath, callerNode, execEnv
       );
 
       let styleSheetsPromObj = new PromiseObject(new Promise(
@@ -64,7 +65,7 @@ export const getSettings = new DevFunction(
 
 export function recordOrTransformStyleSheetIDs(
   styleSheets, classTransform, styleSheetIDs, styleSheetRoutes, isAppRoot,
-  node, env
+  modulePath, node, env
 ) {
   // First go through each style sheet declared by the component and store the
   // ID--route pair in the two styleSheets Maps. But if the route has already
@@ -92,7 +93,7 @@ export function recordOrTransformStyleSheetIDs(
     let existingRoute = (id === "base" && !isAppRoot) ?
       styleSheetRoutes.get(id) : true;
     if (existingRoute) {
-      newID = `${id}-${getNonce()}`;
+      newID = `${id}_${getNonce()}`;
       idTransform[id] = newID;
     }
     styleSheetRoutes.set(newID, route);
@@ -102,12 +103,23 @@ export function recordOrTransformStyleSheetIDs(
 
   // Now go through each class transform rule and transform necessary the IDs
   // in the RHSs.
-  if (!(classTransform instanceof Array)) {
-    return [[], retStyleSheets];
-  }
+  if (!(classTransform instanceof Array)) throw new RuntimeError(
+    `Invalid classTransform exported by ${modulePath}`,
+    node, env
+  );
   let retClassTransform = classTransform.map(rule => {
-    if (!(rule instanceof Array)) return;
+  if (!(rule instanceof Array)) throw new RuntimeError(
+    `Invalid classTransform exported by ${modulePath}`,
+    node, env
+  );
     let [selector, classStr] = rule;
-    if (typeof classStr !== "string") return;
+    if (typeof classStr !== "string") throw new RuntimeError(
+      `Invalid classTransform exported by ${modulePath}`,
+      node, env
+    );
+    let newClassStr = classStr.replaceAll(); // TODO...
+    return [selector, newClassStr];
   });
+
+  return [retStyleSheets, retClassTransform];
 }
