@@ -417,12 +417,14 @@ CREATE PROCEDURE insertATTEntry (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
+    IN elemKeyBase64 VARCHAR(340),
     IN textData TEXT
 )
 proc: BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID, newTextID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
+    DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
     IF (dirID IS NULL OR filePath IS NULL OR textData IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
@@ -436,17 +438,25 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    DO GET_LOCK(CONCAT("ATT", fileID), 10);
+    IF (NOT elemKey) THEN
+        DO GET_LOCK(CONCAT("ATT", fileID), 10);
 
-    SELECT IFNULL(MAX(text_id), 0) + 1 INTO newTextID
-    FROM AutoKeyTextTables FORCE INDEX (PRIMARY)
-    WHERE file_id = fileID AND list_id = listID;
+        SELECT IFNULL(MAX(text_id), 0) + 1 INTO newTextID
+        FROM AutoKeyTextTables FORCE INDEX (PRIMARY)
+        WHERE file_id = fileID AND list_id = listID;
 
-    INSERT INTO AutoKeyTextTables (file_id, list_id, text_id, text_data)
-    VALUES (fileID, listID, newTextID, textData);
+        INSERT INTO AutoKeyTextTables (file_id, list_id, text_id, text_data)
+        VALUES (fileID, listID, newTextID, textData);
 
-    DO RELEASE_LOCK(CONCAT("ATT", fileID));
-    SELECT CONV(newTextID, 10, 16);
+        DO RELEASE_LOCK(CONCAT("ATT", fileID));
+        SELECT CONV(newTextID, 10, 16) AS newTextID;
+    ELSE
+        UPDATE AutoKeyTextTables
+        SET text_data = textData
+        WHERE file_id = fileID AND list_id = listID AND elem_key = elemKey;
+
+        SELECT ROW_COUNT() AS wasUpdated;
+    END IF;
 END proc //
 DELIMITER ;
 

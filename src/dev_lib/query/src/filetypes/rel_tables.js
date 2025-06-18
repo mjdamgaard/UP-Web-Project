@@ -287,7 +287,6 @@ export async function query(
     );
   }
 
-
   // If route equals ".../<homeDirID>/<filepath>/~insertList[/l=<listID>]" +
   // "[/i=<ignore>]", treat postData as an array of rows to insert into the
   // table. The ignore parameter also determines whether to ignore on duplicate
@@ -314,9 +313,6 @@ export async function query(
     let {l: listID = "", i: ignore = false} = paramObj;
     // TODO: Continue.
   }
-
-  // TODO: Implement ~updateEntry paths as well, which will especially be
-  // useful for the ATT tables.
 
   // If the route was not matched at this point, throw an error.
   throw new RuntimeError(
