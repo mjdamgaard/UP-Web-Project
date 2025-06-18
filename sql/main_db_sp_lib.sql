@@ -417,14 +417,14 @@ CREATE PROCEDURE insertATTEntry (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
-    IN elemKeyBase64 VARCHAR(340),
+    IN textIDHex  VARCHAR(16),
     IN textData TEXT
 )
 proc: BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
     DECLARE fileID, newTextID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
-    DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
+    DECLARE textID BIGINT UNSIGNED DEFAULT CONV((textIDHex), 16, 10);
     IF (dirID IS NULL OR filePath IS NULL OR textData IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
@@ -438,7 +438,7 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (NOT elemKey) THEN
+    IF (NOT textID) THEN
         DO GET_LOCK(CONCAT("ATT", fileID), 10);
 
         SELECT IFNULL(MAX(text_id), 0) + 1 INTO newTextID
@@ -453,7 +453,7 @@ proc: BEGIN
     ELSE
         UPDATE AutoKeyTextTables
         SET text_data = textData
-        WHERE file_id = fileID AND list_id = listID AND elem_key = elemKey;
+        WHERE file_id = fileID AND list_id = listID AND text_id = textID;
 
         SELECT ROW_COUNT() AS wasUpdated;
     END IF;
