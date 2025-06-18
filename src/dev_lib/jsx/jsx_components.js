@@ -15,7 +15,7 @@ const CLASS_NAME_REGEX =
 
 export const CAN_CREATE_APP_FLAG = Symbol("can-create-app");
 
-export const IS_APP_ROOT_FLAG = Symbol("is-app-root");
+export const APP_COMPONENT_PATH_FLAG = Symbol("app-component-path");
 
 
 
@@ -27,11 +27,14 @@ export const IS_APP_ROOT_FLAG = Symbol("is-app-root");
 // Create a JSX (React-like) app and mount it in the index HTML page, in the
 // element with an id of "up-app-root".
 export const createJSXApp = new DevFunction(
-  {isAsync: true, flags: [IS_APP_ROOT_FLAG]},
+  {isAsync: true},
   async function(
     {callerNode, execEnv, interpreter},
     [appComponent, props, getSettings]
   ) {
+    // Set a flag containing the app component path for the app.
+    execEnv.setFlag(APP_COMPONENT_PATH_FLAG, appComponent.componentPath);
+
     // Check if the caller is allowed to create an app from in the current
     // environment.
     if (!execEnv.getFlag(CAN_CREATE_APP_FLAG)) throw new RuntimeError(
@@ -175,11 +178,13 @@ class JSXInstance {
 
     // Then get the component module's render() function.
     let renderFun = this.componentModule.members["render"];
-    if (!renderFun) throw new RuntimeError(
-      'Component module is missing a render() function at "' +
-      this.componentPath + '"',
-      callerNode, callerEnv
-    );
+    if (!renderFun) {
+      return getFailedComponentDOMNode(new RuntimeError(
+        'Component module is missing a render() function at "' +
+        this.componentPath + '"',
+        callerNode, callerEnv
+      ));
+    }
 
 
     // Initialize a marks Map to keep track of which existing child instances
@@ -200,14 +205,12 @@ class JSXInstance {
     catch (err) {
       error = err;
     }
-    // If an error occurred, return a placeholder element with a "s0_failed"
-    // class. Note that the "s0_" in front means that this class can be styled
-    // by the style sheet that assigned the ID (prefix) of "s0".
+    // If an error occurred, return a placeholder element with a "base_failed"
+    // class. Note that the "base_" in front means that this class can be
+    // styled by the style sheet that assigned the ID (prefix) of "base" by
+    // getSettings().
     if (error) {
-      console.error(getExtendedErrorMsg(error));
-      let ret = document.createElement("span");
-      ret.setAttribute("class", "s0_failed");
-      return ret;
+      return getFailedComponentDOMNode(error);
     }
 
     // If a JSXElement was successfully returned, call getDOMNode() to generate
@@ -219,9 +222,17 @@ class JSXInstance {
       newDOMNode = jsxElement.domNode;
     }
     else {
-      newDOMNode = this.getDOMNode(
-        jsxElement, marks, interpreter, callerNode, execEnv, ownDOMNodes
-      );
+      try {
+        newDOMNode = this.getDOMNode(
+          jsxElement, marks, interpreter, callerNode, execEnv, ownDOMNodes
+        );
+      }
+      catch (err) {
+        if (err instanceof RuntimeError) {
+          this.childInstances = new Map();
+          return getFailedComponentDOMNode(err);
+        }
+      }
     }
 
     // Then remove any existing child instances that wasn't marked during the
@@ -736,6 +747,13 @@ function deepCopyWithoutRefs(props, node, env) {
 
 
 
+
+function getFailedComponentDOMNode(error) {
+    console.error(getExtendedErrorMsg(error));
+    let ret = document.createElement("span");
+    ret.setAttribute("class", "base_failed");
+    return ret;
+}
 
 
 

@@ -2,13 +2,13 @@
 
 import sassTranspiler from "../../interpreting/SASSTranspiler.js";
 import {
-  RuntimeError, ArgTypeError, forEachValue,
+  RuntimeError, ArgTypeError, forEachValue, getExtendedErrorMsg,
 } from "../../interpreting/ScriptInterpreter.js";
 import {sassParser} from "../../interpreting/parsing/SASSParser.js";
 
 
 const CLASS_TRANSFORM_OUTPUT_REGEX =
-  /^(rm_)?([a-zA-Z][a-z-A-Z0-9\-]*_[a-zA-Z][a-z-A-Z0-9\-]*)$/;
+  /^(rm_)?([a-zA-Z][a-z-A-Z0-9]*-[a-zA-Z][a-z-A-Z0-9\-]*)$/;
 
 
 
@@ -43,21 +43,21 @@ export class JSXAppStyler {
   }
 
   // loadStyle() receives a component module and uses the given module's
-  // settings.styleSheetPaths property to get a list of routes of all the style
+  // settings.styleSheets property to get a list of routes of all the style
   // sheets that the component "subscribes to," then load anyone of these that
   // hasn't been so already, namely by fetching them, transpiling them to CSS,
   // and inserting this in a style element in the document head.
   async loadStyle(componentModule, callerNode, callerEnv) {
-    // First wait for the get the styleSheetPaths of the component.
-    let styleSheetPaths = await this.settingsStore.get(
+    // First wait for the get the styleSheets of the component.
+    let styleSheets = await this.settingsStore.get(
       componentModule, callerNode, callerEnv
-    );
+    ).promise;
 
     // Then create a promise array that when resolved will have fetched and
-    // applied all style sheets pointed to by styleSheetPaths that has not yet
-    // been loaded.
+    // applied all style sheets pointed to by styleSheets that has not yet been
+    // loaded.
     let promiseArr = [];
-    styleSheetPaths.forEach((route, id) => {
+    styleSheets.forEach((route, id) => {
       if (typeof id !== "string" || !/[a-zA-Z][a-zA-Z0-9\-]*/.test(id)) {
         throw new ArgTypeError(
           `Invalid style sheet ID: "${id}"`,
@@ -80,7 +80,7 @@ export class JSXAppStyler {
           this.interpreter.import(
             route, callerNode, callerEnv
           ),
-          settings.styleSheetSettings
+          settings.styleSheetSettings.promise
         ]);
 
         // Then extract the style sheet itself, and an "isTrusted" parameter,
@@ -139,6 +139,21 @@ export class JSXAppStyler {
   async transformClasses(
     newDOMNode, ownDOMNodes, componentModule, callerNode, callerEnv
   ) {
+    try {
+      return this.#transformClasses(
+        newDOMNode, ownDOMNodes, componentModule, callerNode, callerEnv
+      );
+    } catch(err) {
+      if (err instanceof RuntimeError) {
+        console.error(getExtendedErrorMsg(err));
+      }
+      else throw err;
+    };
+  }
+
+  async #transformClasses(
+    newDOMNode, ownDOMNodes, componentModule, callerNode, callerEnv
+  ) {
     // Return early if ownDOMNodes is empty.
     if (ownDOMNodes.length === 0) return;
 
@@ -146,7 +161,7 @@ export class JSXAppStyler {
     // 'classTransform' setting (which might be ready immediately).
     newDOMNode.classList.add("pending-style");
     let settings = this.settingsStore.get(componentModule);
-    let classTransform = await settings.classTransform;
+    let classTransform = await settings.classTransform.promise;
     
     // Check that classTransform is truthy and that the instance hasn't been
     // rerendered, which is done by verifying that this.domNode is still ===
@@ -168,14 +183,14 @@ export class JSXAppStyler {
 
     // Then iterate through each an any transform instruction in
     // classTransform and carry it out.
-    forEachValue(classTransform, callerNode, callerEnv, inst => {
+    forEachValue(classTransform, callerNode, callerEnv, rule => {
       // Each transform instruction (user-defined) is supposed to be of the
       // form [selector, classStr]. Extract these values.
-      if (!(inst instanceof Array)) throw new RuntimeError(
+      if (!(rule instanceof Array)) throw new RuntimeError(
         "Invalid class transform instruction",
         callerNode, callerEnv
       );
-      let [selector, classStr] = inst;
+      let [selector, classStr] = rule;
 
       // Then validate the selector as a complex selector (with no pseudo-
       // element).
@@ -204,13 +219,13 @@ export class JSXAppStyler {
         ".transforming";
       let nodeList = newDOMNode.parentElement.querySelectorAll(selector);
       classStr.split(/\s+/).forEach(classTransformInst => {
+        if (!classTransformInst) return;
         let [match, rmFlag, fullClassName] =
-          CLASS_TRANSFORM_OUTPUT_REGEX.exec(classTransformInst);
+          CLASS_TRANSFORM_OUTPUT_REGEX.exec(classTransformInst) ?? [];
         if (!match) throw new RuntimeError(
           "Invalid class transform instruction",
           callerNode, callerEnv
         );
-// TODO: Shouldn't I also transform the class ID/prefix here..?
         if (rmFlag) {
           nodeList.forEach(node => node.classList.remove(fullClassName));
         } else {
@@ -219,14 +234,12 @@ export class JSXAppStyler {
       });
     });
 
-    // And finally remove the ".transforming(-root)" classes again.
+    // And finally remove the ".transforming(-root)" classes again, as well as
+    // the "pending-style" class.
     ownDOMNodes.forEach(node => {
       node.classList.remove("transforming");
     });
     newDOMNode.classList.remove("transforming-root");
-
-    // TODO: Maybe move this outside of transformClasses() and try-catch, or
-    // wrap this whole function body in a try-catch statement..
     newDOMNode.classList.remove("pending-style");
     return;
   }
