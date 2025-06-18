@@ -7,8 +7,6 @@ import {
 import {sassParser} from "../../interpreting/parsing/SASSParser.js";
 
 
-const CLASS_REGEX =
-  /^[a-zA-Z][a-z-A-Z0-9]*(_[0-9]+)?_[a-zA-Z][a-z-A-Z0-9\-]*$/;
 const RM_SEPARATOR_REGEX = /(^|\s+)RM(\s+|$)/;
 
 
@@ -222,18 +220,10 @@ export class JSXAppStyler {
       let [addClassStr, rmClassStr] = classStr.split(RM_SEPARATOR_REGEX);
       addClassStr.split(/\s+/).forEach(addedClass => {
         if (!addedClass) return;
-        if (!CLASS_REGEX.test(addedClass)) throw new RuntimeError(
-          `Invalid class: "${addedClass}"`,
-          callerNode, callerEnv
-        );
         nodeList.forEach(node => node.classList.add(addedClass));
       });
       rmClassStr.split(/\s+/).forEach(removedClass => {
         if (!removedClass) return;
-        if (!CLASS_REGEX.test(removedClass)) throw new RuntimeError(
-          `Invalid class: "${removedClass}"`,
-          callerNode, callerEnv
-        );
         nodeList.forEach(node => node.classList.remove(removedClass));
       });
     });

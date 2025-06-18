@@ -4,6 +4,8 @@ import {
 } from "../../../interpreting/ScriptInterpreter.js";
 import {APP_COMPONENT_PATH_FLAG} from "../jsx_components.js";
 
+const CLASS_REGEX = /^([a-zA-Z][a-z-A-Z0-9\-]*)_([a-zA-Z][a-z-A-Z0-9\-]*)$/;
+const STYLE_SHEET_ID_REGEX = /^[a-zA-Z][a-z-A-Z0-9\-]$/;
 
 let nonce = 1;
 function getNonce() {
@@ -21,9 +23,9 @@ export const getSettings = new DevFunction(
       let modulePath = liveModule.modulePath;
       let appComponentPath = execEnv.getFlag(APP_COMPONENT_PATH_FLAG);
       let isAppRoot = modulePath === appComponentPath;
-      let styleSheetSettings = {isTrusted: isAppRoot};
-      let styleSheetSettingsPromObj = new PromiseObject(new Promise(
-        resolve => resolve(styleSheetSettings)
+      let isTrusted = isAppRoot;
+      let isTrustedPromObj = new PromiseObject(new Promise(
+        resolve => resolve(isTrusted)
       ));
       let styleSheets = liveModule.members["styleSheets"] ?? [];
       let classTransform = liveModule.members["classTransform"];
@@ -42,7 +44,7 @@ export const getSettings = new DevFunction(
         resolve => resolve(classTransform)
       ));
       return {
-        styleSheetSettings: styleSheetSettingsPromObj,
+        isTrusted: isTrustedPromObj,
         styleSheets: styleSheetsPromObj,
         classTransform: classTransformPromObj,
       };
@@ -76,6 +78,9 @@ export function recordOrTransformStyleSheetIDs(
   let idTransform = {};
   let retStyleSheets = {}; 
   forEachValue(styleSheets, node, env, (route, id) => {
+    if (!STYLE_SHEET_ID_REGEX.test(id)) throw new RuntimeError(
+      `Invalid style sheet ID: "${id}"`
+    );
     // If the route has already been assigned an ID, use that instead of the
     // current one, at this point by adding the ID pair to idTransform and
     // continuing the iteration,
@@ -117,7 +122,10 @@ export function recordOrTransformStyleSheetIDs(
       `Invalid classTransform exported by ${modulePath}`,
       node, env
     );
-    let newClassStr = classStr.replaceAll(); // TODO...
+    let newClassStr = classStr.replaceAll(CLASS_REGEX, (_, id, name) => {
+      let newID = idTransform[id] ?? id;
+      return `${newID}_${name}`;
+    });
     return [selector, newClassStr];
   });
 
