@@ -231,7 +231,8 @@ export class ScriptInterpreter {
 
 
   fetch(route, callerNode, callerEnv) {
-    let fetchFun = callerEnv.scriptVars.liveModules.get("query").$get("fetch");
+    let fetchFun = callerEnv.scriptVars.liveModules.get("query")
+      .members["fetch"];
     let resultPromise = this.executeFunction(
       fetchFun, [true, route], callerNode, callerEnv
     ).promise;
@@ -295,7 +296,7 @@ export class ScriptInterpreter {
     decrCompGas(callerNode, callerEnv);
     decrGas(callerNode, callerEnv, "import");
 
-    let {liveModules, textModules, parsedScripts} = callerEnv.scriptVars;
+    let {liveModules, parsedScripts} = callerEnv.scriptVars;
     let globalEnv = callerEnv.getGlobalEnv();
 
     // If the module has already been executed, we can return early.
@@ -433,12 +434,12 @@ export class ScriptInterpreter {
           imp.namedImportArr.forEach(namedImp => {
             let ident = namedImp.ident ?? "default";
             let alias = namedImp.alias ?? ident;
-            let val = liveSubmodule.$get(ident);
+            let val = liveSubmodule.members[ident];
             curModuleEnv.declare(alias, val, true, namedImp);
           });
         }
         else if (impType === "default-import") {
-          let val = liveSubmodule.$get("default");
+          let val = liveSubmodule.members["default"];
           curModuleEnv.declare(imp.ident, val, true, imp);
         }
         else throw "finalizeImportStatement(): Unrecognized import type";
@@ -521,7 +522,7 @@ export class ScriptInterpreter {
   executeModuleFunction(
     liveModule, funName, inputArr, resolveFun, moduleNode, moduleEnv, flags
   ) {
-    let fun = liveModule.$get(funName);
+    let fun = liveModule.members[funName];
     if (fun === undefined) throw new RuntimeError(
       `No function called "${funName}" was exported from ` +
       `Module ${liveModule.modulePath}`,
@@ -1300,7 +1301,7 @@ export class ScriptInterpreter {
 
   assignToParameter(paramExp, val, environment, isDeclaration, isConst) {
     let targetExp = paramExp.targetExp;
-    if (val === undefined) {
+    if (val === undefined && paramExp.defaultExp) {
       val = this.evaluateExpression(paramExp.defaultExp, environment);
     }
     let type = targetExp.type
@@ -1743,9 +1744,9 @@ export const CLEAR_FLAG = Symbol("clear");
 
 
 export class AbstractUHObject {
-  constructor(className, members = undefined) {
+  constructor(className, members = {}) {
     this.className = className;
-    this.members = members ?? {};
+    this.members = members;
   }
 
  stringify() {
@@ -1831,9 +1832,10 @@ export function deepCopy(value) {
     }
     else if (valProto === OBJECT_PROTOTYPE) {
       let ret = {};
-      Object.entries().forEach(([key, val]) => {
+      Object.entries(value).forEach(([key, val]) => {
         ret[key] = deepCopy(val);
       });
+      return ret;
     }
     else {
       return val;
@@ -1983,9 +1985,9 @@ export class PromiseObject extends AbstractUHObject {
     }
 
     this.members["then"] = new DevFunction(
-      {}, ({callerNode, callerEnv, interpreter}, [callbackFun]) => {
+      {}, ({callerNode, execEnv, interpreter}, [callbackFun]) => {
         interpreter.handlePromise(
-          this.promise, callbackFun, callerNode, callerEnv
+          this.promise, callbackFun, callerNode, execEnv
         );
       }
     );

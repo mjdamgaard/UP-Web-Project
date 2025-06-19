@@ -236,7 +236,7 @@ class JSXInstance {
     else {
       try {
         newDOMNode = this.getDOMNode(
-          jsxElement, marks, interpreter, callerNode, execEnv, ownDOMNodes
+          jsxElement, marks, interpreter, callerNode, callerEnv, ownDOMNodes
         );
       }
       catch (err) {
@@ -545,7 +545,7 @@ class JSXInstance {
     );
     let methodFun;
     if (Object.getPrototypeOf(methods) === OBJECT_PROTOTYPE) {
-      methodFun = methods[actionKey];
+      methodFun = methods[methodKey];
     }
     if (methodFun) {
       interpreter.executeFunction(
@@ -720,7 +720,7 @@ class SettingsStore {
       settings = this.interpreter.executeFunction(
         this.getSettings, [liveModuleOrPath], callerNode, execEnv
       );
-      this.settingsMap.set(componentPath, settings);
+      this.settingsMap.set(modulePath, settings);
     }
     return settings;
   }

@@ -278,6 +278,7 @@ export const scriptGrammar = {
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? children[0] : {
+        type: "block-statement",
         stmtArr: [{
           type: "return-statement",
           exp: children[0],
@@ -318,7 +319,7 @@ export const scriptGrammar = {
     ],
     process: (children) => ({
       type: "block-statement",
-      stmtArr: children[1].children,
+      stmtArr: children[1],
     }),
   },
   "if-else-statement": {

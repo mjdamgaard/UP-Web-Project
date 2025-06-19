@@ -76,7 +76,7 @@ export async function query(
           let liveModule = await interpreter.import(
             `/0/${homeDirID}/${filePath}`
           );
-          return liveModule.get(alias);
+          return liveModule.members[alias];
         }
       ),
       [], callerNode, execEnv,
@@ -129,7 +129,7 @@ export async function query(
           let liveModule = await interpreter.import(
             `/0/${homeDirID}/${filePath}`
           );
-          let fun = liveModule.get(alias);
+          let fun = liveModule.members[alias];
           let result = interpreter.executeFunction(
             fun, inputArr, callerNode, execEnv
           );
@@ -201,7 +201,7 @@ export async function query(
           let liveModule = await interpreter.import(
             `/0/${homeDirID}/${filePath}`
           );
-          let fun = liveModule.get(alias);
+          let fun = liveModule.members[alias];
           let result = interpreter.executeFunction(
             fun, inputArr, callerNode, execEnv
           );
