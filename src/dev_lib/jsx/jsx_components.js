@@ -110,6 +110,7 @@ class JSXInstance {
     this.jsxAppStyler = jsxAppStyler ?? this.parentInstance?.jsxAppStyler;
     this.settingsStore = settingsStore ?? this.parentInstance?.settingsStore;
     this.settings = settingsStore.get(componentModule);
+    this.isRequestOrigin = componentModule.members["isRequestOrigin"];
     this.domNode = undefined;
     this.ownDOMNodes = undefined;
     this.isDecorated = undefined;
@@ -129,7 +130,7 @@ class JSXInstance {
 
   get requestOrigin() {
     if (this.isRequestOrigin)
-      return this.componentModule.modulePath;
+      return this.componentPath;
     else {
       return this.parentInstance?.requestOrigin;
     }
@@ -280,6 +281,7 @@ class JSXInstance {
       console.error(getExtendedErrorMsg(error));
       let newDOMNode = document.createElement("span");
       newDOMNode.setAttribute("class", "base_failed");
+      this.childInstances.forEach(child => child.dismount());
       this.childInstances = new Map();
       if (replaceSelf) {
         this.domNode.replaceWith(newDOMNode);
@@ -423,18 +425,12 @@ class JSXInstance {
           // this onClick handler function into the parent instance. 
           case "onclick" : {
             newDOMNode.onclick = async () => {
-              let getRequestOrigin =
-                await this.settingsStore.get(this.componentModule);
-              let requestOrigin = interpreter.executeFunction(
-                getRequestOrigin, [this.componentModule], callerNode, callerEnv,
-                undefined, [[COMPONENT_INSTANCE_FLAG, this]]
-              );
               interpreter.executeFunction(
                 val, [], callerNode, callerEnv,
                 new JSXInstanceInterface(this), [
                   CAN_POST_FLAG,
                   [COMPONENT_INSTANCE_FLAG, this],
-                  [REQUEST_ORIGIN_FLAG, requestOrigin],
+                  [REQUEST_ORIGIN_FLAG, this.requestOrigin],
                 ]
               );
             }
