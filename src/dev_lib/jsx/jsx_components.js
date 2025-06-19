@@ -2,7 +2,7 @@
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, getExtendedErrorMsg,
   getString, AbstractUHObject, forEachValue, CLEAR_FLAG, deepCopy,
-  OBJECT_PROTOTYPE, ArgTypeError,
+  OBJECT_PROTOTYPE, ArgTypeError, Environment,
 } from "../../interpreting/ScriptInterpreter.js";
 import {CAN_POST_FLAG, REQUEST_ORIGIN_FLAG} from "../query/src/flags.js";
 
@@ -16,6 +16,7 @@ const CLASS_NAME_REGEX =
 export const CAN_CREATE_APP_FLAG = Symbol("can-create-app");
 
 export const APP_COMPONENT_PATH_FLAG = Symbol("app-component-path");
+export const COMPONENT_INSTANCE_FLAG = Symbol("component-instance");
 
 
 
@@ -64,8 +65,8 @@ export const createJSXApp = new DevFunction(
     // Then create the app's root component instance, render it, and insert it
     // into the document.
     let rootInstance = new JSXInstance(
-      appComponent, "root", undefined, callerNode, execEnv, jsxAppStyler,
-      settingsStore      
+      appComponent, "root", undefined, callerNode, execEnv,
+      jsxAppStyler, settingsStore      
     );
     let rootParent = document.getElementById("up-app-root");
     let appNode = rootInstance.render(
@@ -96,8 +97,8 @@ export const createJSXApp = new DevFunction(
 class JSXInstance {
 
   constructor (
-    componentModule, key, parentInstance = undefined,
-    callerNode, callerEnv, jsxAppStyler = undefined, settingsStore = undefined,
+    componentModule, key, parentInstance = undefined, callerNode, callerEnv,
+    jsxAppStyler = undefined, settingsStore = undefined,
   ) {
     if (!(componentModule instanceof LiveModule)) throw new RuntimeError(
       "JSX component needs to be an imported module namespace object",
@@ -112,11 +113,10 @@ class JSXInstance {
     this.domNode = undefined;
     this.ownDOMNodes = undefined;
     this.isDecorated = undefined;
-    this.childInstances = new Map(); // : key -> JSXInstance.
+    this.childInstances = new Map();
     this.props = undefined;
     this.state = undefined;
     this.refs = undefined;
-    this.isRequestOrigin = undefined;
     this.callerNode = callerNode;
     this.callerEnv = callerEnv;
     this.isDiscarded = undefined;
@@ -140,6 +140,8 @@ class JSXInstance {
     callerNode, callerEnv, replaceSelf = true, force = false,
   ) {  
     this.isDecorated = isDecorated;
+    this.callerNode = callerNode;
+    this.callerEnv = callerEnv;
 
     // Return early if the props are the same as on the last render, and if the
     // instance is not forced to rerender.
@@ -160,9 +162,20 @@ class JSXInstance {
       let state;
       let getInitState = this.componentModule.members["getInitState"];
       if (getInitState) {
-        state = interpreter.executeFunction(
-          getInitState, [props], callerNode, callerEnv
-        );
+        try {
+          state = interpreter.executeFunction(
+            getInitState, [props], callerNode, callerEnv
+          );
+        }
+        // If an error occurred, return a placeholder element with a
+        // "base_failed" class. Note that the "base_" in front means that this
+        // class can be styled by the style sheet that assigned the ID (prefix)
+        // of "base" by getSettings().
+        catch (err) {
+          if (err instanceof RuntimeError) {
+            return this.getFailedComponentDOMNode(err, replaceSelf);
+          }
+        }
       } else {
         state = this.componentModule.members["initState"] || {};
       }
@@ -179,11 +192,14 @@ class JSXInstance {
     // Then get the component module's render() function.
     let renderFun = this.componentModule.members["render"];
     if (!renderFun) {
-      return getFailedComponentDOMNode(new RuntimeError(
-        'Component module is missing a render() function at "' +
-        this.componentPath + '"',
-        callerNode, callerEnv
-      ));
+      return this.getFailedComponentDOMNode(
+        new RuntimeError(
+          'Component module is missing a render() function at "' +
+          this.componentPath + '"',
+          callerNode, callerEnv
+        ),
+        replaceSelf
+      );
     }
 
 
@@ -194,23 +210,18 @@ class JSXInstance {
 
     // Now call the component module's render() function, but catch and instead
     // log any error, rather than letting the whole app fail.
-    let error, jsxElement;
+    let jsxElement;
     try {
       jsxElement = interpreter.executeFunction(
         renderFun, [deepCopyWithoutRefs(props, callerNode, callerEnv)],
         callerNode, callerEnv, new JSXInstanceInterface(this),
-        [CLEAR_FLAG]
+        [CLEAR_FLAG, [COMPONENT_INSTANCE_FLAG, this]]
       );
     }
     catch (err) {
-      error = err;
-    }
-    // If an error occurred, return a placeholder element with a "base_failed"
-    // class. Note that the "base_" in front means that this class can be
-    // styled by the style sheet that assigned the ID (prefix) of "base" by
-    // getSettings().
-    if (error) {
-      return getFailedComponentDOMNode(error);
+      if (err instanceof RuntimeError) {
+        return this.getFailedComponentDOMNode(err, replaceSelf);
+      }
     }
 
     // If a JSXElement was successfully returned, call getDOMNode() to generate
@@ -229,8 +240,7 @@ class JSXInstance {
       }
       catch (err) {
         if (err instanceof RuntimeError) {
-          this.childInstances = new Map();
-          return getFailedComponentDOMNode(err);
+          return this.getFailedComponentDOMNode(err, replaceSelf);
         }
       }
     }
@@ -266,6 +276,19 @@ class JSXInstance {
 
 
 
+  getFailedComponentDOMNode(error, replaceSelf) {
+      console.error(getExtendedErrorMsg(error));
+      let newDOMNode = document.createElement("span");
+      newDOMNode.setAttribute("class", "base_failed");
+      this.childInstances = new Map();
+      if (replaceSelf) {
+        this.domNode.replaceWith(newDOMNode);
+        this.domNode = newDOMNode;
+        this.updateDecoratingAncestors(newDOMNode);
+      }
+      return newDOMNode;
+  }
+
   updateDecoratingAncestors(newDOMNode) {
     if (this.isDecorated) {
       this.parentInstance.domNode = newDOMNode;
@@ -280,6 +303,7 @@ class JSXInstance {
     this.unsubscribeFromContexts();
     this.isDiscarded = true;
   }
+
 
 
 
@@ -340,10 +364,18 @@ class JSXInstance {
 
       // Then we call childInstance.render() to render/rerender (if its props
       // have changed) the child instance and get its DOM node, which can be
-      // returned straightaway.
+      // returned straightaway. In order to get better error reporting, we also
+      // create an intermediate environment such that it will appear as if the
+      // render() function is called from the JSXElement itself, as if it were
+      // a callback function.
+      let childEnv = new Environment(
+        jsxElement.decEnv, "function", {
+          fun: {}, callerNode: callerNode, callerEnv: callerEnv,
+        }
+      );
       return childInstance.render(
-        jsxElement.props, isOuterElement, interpreter, callerNode, callerEnv,
-        false
+        jsxElement.props, isOuterElement, interpreter,
+        jsxElement.node, childEnv, false
       );
     }
 
@@ -390,11 +422,19 @@ class JSXInstance {
           // bleeding the CAN_POST and REQUEST_ORIGIN privileges granted to
           // this onClick handler function into the parent instance. 
           case "onclick" : {
-            newDOMNode.onclick = () => {
+            newDOMNode.onclick = async () => {
+              let getRequestOrigin =
+                await this.settingsStore.get(this.componentModule);
+              let requestOrigin = interpreter.executeFunction(
+                getRequestOrigin, [this.componentModule], callerNode, callerEnv,
+                undefined, [[COMPONENT_INSTANCE_FLAG, this]]
+              );
               interpreter.executeFunction(
-                val, [new JSXInstanceInterface(this)],
-                callerNode, callerEnv, undefined, [
-                  CAN_POST_FLAG, [REQUEST_ORIGIN_FLAG, this.requestOrigin]
+                val, [], callerNode, callerEnv,
+                new JSXInstanceInterface(this), [
+                  CAN_POST_FLAG,
+                  [COMPONENT_INSTANCE_FLAG, this],
+                  [REQUEST_ORIGIN_FLAG, requestOrigin],
                 ]
               );
             }
@@ -464,7 +504,8 @@ class JSXInstance {
     if (actionFun) {
       interpreter.executeFunction(
         actionFun, [input], callerNode, callerEnv,
-        new JSXInstanceInterface(this), [CLEAR_FLAG]
+        new JSXInstanceInterface(this),
+        [CLEAR_FLAG, [COMPONENT_INSTANCE_FLAG, this]]
       );
     }
     else {
@@ -513,7 +554,8 @@ class JSXInstance {
     if (methodFun) {
       interpreter.executeFunction(
         methodFun, [input], callerNode, callerEnv,
-        new JSXInstanceInterface(targetInstance), [CLEAR_FLAG]
+        new JSXInstanceInterface(targetInstance),
+        [CLEAR_FLAG, [COMPONENT_INSTANCE_FLAG, targetInstance]]
       );
     }
     else throw new RuntimeError(
@@ -743,16 +785,6 @@ function deepCopyWithoutRefs(props, node, env) {
     }
   });
   return ret;
-}
-
-
-
-
-function getFailedComponentDOMNode(error) {
-    console.error(getExtendedErrorMsg(error));
-    let ret = document.createElement("span");
-    ret.setAttribute("class", "base_failed");
-    return ret;
 }
 
 
