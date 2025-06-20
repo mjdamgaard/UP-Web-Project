@@ -183,6 +183,16 @@ class JSXInstance {
       } else {
         state = this.componentModule.members["initState"] || {};
       }
+      let stateProto = Object.getPrototypeOf(state);
+      if (stateProto !== OBJECT_PROTOTYPE) {
+        return this.getFailedComponentDOMNode(
+          new RuntimeError(
+            `State needs to be a plain object, but got: ${getString(state)}`,
+            callerNode, callerEnv
+          ),
+          replaceSelf
+        );
+      }
       this.state = state;
 
       // And store the refs object.

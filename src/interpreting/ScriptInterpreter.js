@@ -1287,7 +1287,7 @@ export class ScriptInterpreter {
       );
       expNode.children.forEach(paramMemExp => {
         let ident = paramMemExp.ident;
-        let propVal = (Object.hasOwn(ident)) ? members[ident] : undefined;
+        let propVal = (Object.hasOwn(val, ident)) ? members[ident] : undefined;
         this.assignToParameter(
           paramMemExp, propVal, environment, isDeclaration, isConst
         );

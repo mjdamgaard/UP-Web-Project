@@ -290,7 +290,7 @@ export class Parser {
 
 
 
-  #getErrorAndFailedSymbols(syntaxTree, pos = 0) {
+  #getErrorAndFailedSymbols(syntaxTree) {
     let children = syntaxTree.children;
 
     // If the node has an error set, simply return that.
@@ -310,7 +310,7 @@ export class Parser {
     // greater than the previous sibling, and greater than the parent's
     // position, pos), then call this function recursively to get the error and
     // failed node from that.
-    let prevPos = (children.at(-2) || {nextPos: pos}).nextPos;
+    let prevPos = children.at(-2)?.nextPos ?? syntaxTree.pos;
     if (failedChild.nextPos > prevPos) {
       return this.#getErrorAndFailedSymbols(failedChild);
     }
