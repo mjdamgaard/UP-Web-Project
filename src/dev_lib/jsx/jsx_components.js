@@ -130,11 +130,11 @@ class JSXInstance {
   get componentPath() {
     return this.componentModule.modulePath;
   }
-  get requestOriginModule() {
+  get requestOrigin() {
     if (this.isRequestOrigin)
-      return this.componentModule;
+      return this.componentPath;
     else {
-      return this.parentInstance?.requestOriginModule;
+      return this.parentInstance?.requestOrigin;
     }
   }
 
@@ -436,14 +436,17 @@ class JSXInstance {
           // instance (e.g. handed down through refs), unless one is okay with
           // bleeding the CAN_POST and REQUEST_ORIGIN privileges granted to
           // this onClick handler function into the parent instance. 
-          case "onclick" : {
+          case "onClick": {
             newDOMNode.onclick = async () => {
               // Get the request origin, and whether the client trusts that
               // origin (which is a JSX component).
-              let reqOriginModule = this.requestOriginModule;
-              let isTrusted = await this.settingsStore.get(
-                reqOriginModule, callerNode, callerEnv
-              ).isTrusted;
+              let requestOrigin = this.requestOrigin;
+              let isTrusted
+              if (requestOrigin) {
+                isTrusted = await this.settingsStore.get(
+                  requestOrigin, callerNode, callerEnv
+                ).isTrusted
+              }
 
               // Then execute the function object held in val, with elevated
               // privileges that allows the function to make POST-like requests. 
@@ -452,7 +455,7 @@ class JSXInstance {
                 new JSXInstanceInterface(this), [
                   CAN_POST_FLAG,
                   [COMPONENT_INSTANCE_FLAG, this],
-                  [REQUEST_ORIGIN_FLAG, reqOriginModule.modulePath],
+                  [REQUEST_ORIGIN_FLAG, requestOrigin],
                   [CLIENT_TRUST_FLAG, isTrusted],
                 ]
               );

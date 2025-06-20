@@ -815,7 +815,7 @@ export const scriptGrammar = {
   },
   "tag-name": {
     rules: [
-      [/[A-Z][a-zA-z0-9_$]*|div|span|i|b|br|hr|template/],
+      [/[A-Z][a-zA-z0-9_$]*|div|span|i|b|br|hr|template|button/],
     ],
     process: copyLexemeFromChild,
   },

@@ -5,10 +5,28 @@ import * as Foo from "./foo/foo.jsx";
 export function render({}) {
   let {name} =  this.state;
   return (
-    <div>{"Hello, "}<Foo key={0} name={name} />{"!"}</div>
+    <div>
+      <span>{"Hello, "}<Foo key={0} name={name} />{"!"}</span>
+      <button onClick={() => {
+        this.setState(prev => {
+          prev.name = "Changed Name";
+        });
+      }}>
+        {"Click me!"}
+      </button>
+    </div>
   );
 }
 
 
 
-export const initState = "World"; // {name: "World"} 
+export const initState = {name: "World"};
+
+
+export const actions = {
+  changeName: function(name) {
+    this.setState(prev => {
+      prev.name = name;
+    });
+  },
+};
