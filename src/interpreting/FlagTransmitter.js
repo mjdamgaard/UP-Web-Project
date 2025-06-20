@@ -1,7 +1,7 @@
 
 import {
   REQUEST_ORIGIN_FLAG, CURRENT_MODULE_FLAG, CLIENT_TRUST_FLAG
-} from "../dev_lib/query/src/flags";
+} from "../dev_lib/query/src/flags.js";
 
 
 export class FlagTransmitter {

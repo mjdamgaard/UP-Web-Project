@@ -444,7 +444,10 @@ export const scriptGrammar = {
         body: children[2],
       } : (ruleInd === 1) ? {
         type: "arrow-function",
-        params: [children[0]],
+        params: [{
+          type: "parameter",
+          targetExp: children[0],
+        }],
         body: children[2],
       } : (ruleInd === 2) ? {
         type: "function-expression",

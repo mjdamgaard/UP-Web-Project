@@ -1,6 +1,6 @@
 
-export function render(resolve) {
-  resolve(
+export function render() {
+  return (
     <span>{"Foo"}</span>
   );
 }

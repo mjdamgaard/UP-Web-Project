@@ -117,7 +117,7 @@ async function requestHandler(req, res, returnGasRef) {
   // Get optional isPost and postData, as well as the optional user credentials
   // (username and password/token), and the options parameter.
   let {
-    isPost = false, data: postData, flags: reqFlags, options = {},
+    isPost = false, data: postData, flags: reqFlags = {}, options = {},
   } = reqParams;
 
   // Also extract some additional optional parameters from options.

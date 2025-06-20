@@ -23,9 +23,8 @@ export const getSettings = new DevFunction(
       let modulePath = liveModule.modulePath;
       let appComponentPath = execEnv.getFlag(APP_COMPONENT_PATH_FLAG);
       let isAppRoot = modulePath === appComponentPath;
-      let isTrusted = isAppRoot;
       let isTrustedPromObj = new PromiseObject(new Promise(
-        resolve => resolve(isTrusted)
+        resolve => resolve(false)
       ));
       let styleSheets = liveModule.members["styleSheets"] ?? {};
       let classTransform = liveModule.members["classTransform"] ?? [];

@@ -4,7 +4,9 @@ import {
   getString, AbstractUHObject, forEachValue, CLEAR_FLAG, deepCopy,
   OBJECT_PROTOTYPE, ArgTypeError, Environment,
 } from "../../interpreting/ScriptInterpreter.js";
-import {CAN_POST_FLAG, REQUEST_ORIGIN_FLAG} from "../query/src/flags.js";
+import {
+  CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUEST_ORIGIN_FLAG
+} from "../query/src/flags.js";
 
 import {JSXAppStyler} from "./jsx_styling.js";
 
@@ -56,7 +58,7 @@ export const createJSXApp = new DevFunction(
     // '.jsx' modules that have been "statically" imported (i.e. imported from
     // import statements).  
     let jsxAppStyler = new JSXAppStyler(
-      settingsStore, appComponent, interpreter
+      settingsStore, appComponent, interpreter, callerNode, execEnv
     );
     let staticStylesPromise = jsxAppStyler.loadStylesOfAllStaticJSXModules(
       execEnv.scriptVars.liveModules, callerNode, execEnv
@@ -109,7 +111,7 @@ class JSXInstance {
     this.parentInstance = parentInstance;
     this.jsxAppStyler = jsxAppStyler ?? this.parentInstance?.jsxAppStyler;
     this.settingsStore = settingsStore ?? this.parentInstance?.settingsStore;
-    this.settings = settingsStore.get(componentModule);
+    this.settings = settingsStore.get(componentModule, callerNode, callerEnv);
     this.isRequestOrigin = componentModule.members["isRequestOrigin"];
     this.domNode = undefined;
     this.ownDOMNodes = undefined;
@@ -127,14 +129,14 @@ class JSXInstance {
   get componentPath() {
     return this.componentModule.modulePath;
   }
-
-  get requestOrigin() {
+  get requestOriginModule() {
     if (this.isRequestOrigin)
-      return this.componentPath;
+      return this.componentModule;
     else {
-      return this.parentInstance?.requestOrigin;
+      return this.parentInstance?.requestOriginModule;
     }
   }
+
 
   render(
     props = Object.create(null), isDecorated, interpreter,
@@ -425,12 +427,22 @@ class JSXInstance {
           // this onClick handler function into the parent instance. 
           case "onclick" : {
             newDOMNode.onclick = async () => {
+              // Get the request origin, and whether the client trusts that
+              // origin (which is a JSX component).
+              let reqOriginModule = this.requestOriginModule;
+              let isTrusted = await this.settingsStore.get(
+                reqOriginModule, callerNode, callerEnv
+              ).isTrusted;
+
+              // Then execute the function object held in val, with elevated
+              // privileges that allows the function to make POST-like requests. 
               interpreter.executeFunction(
                 val, [], callerNode, callerEnv,
                 new JSXInstanceInterface(this), [
                   CAN_POST_FLAG,
                   [COMPONENT_INSTANCE_FLAG, this],
-                  [REQUEST_ORIGIN_FLAG, this.requestOrigin],
+                  [REQUEST_ORIGIN_FLAG, reqOriginModule.modulePath],
+                  [CLIENT_TRUST_FLAG, isTrusted],
                 ]
               );
             }

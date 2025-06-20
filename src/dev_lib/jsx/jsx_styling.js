@@ -16,9 +16,9 @@ const RM_SEPARATOR_REGEX = /(^|\s+)RM(\s+|$)/;
 
 export class JSXAppStyler {
 
-  constructor(settingsStore, appComponent, interpreter) {
+  constructor(settingsStore, appComponent, interpreter, node, env) {
     this.settingsStore = settingsStore;
-    this.appSettings = settingsStore.get(appComponent);
+    this.appSettings = settingsStore.get(appComponent, node, env);
     this.interpreter = interpreter;
     this.loadedStyleSheetIDs = new Map();
   }
@@ -29,10 +29,7 @@ export class JSXAppStyler {
     let promiseArr = [];
     liveModules.forEach((liveModule) => {
       if (liveModule.modulePath.slice(-4) === ".jsx") {
-        let componentPath = liveModule.modulePath;
-        let stylePromise = this.loadStyle(
-          liveModule, componentPath, callerNode, callerEnv
-        );
+        let stylePromise = this.loadStyle(liveModule, callerNode, callerEnv);
         promiseArr.push(stylePromise);
       }
     });
@@ -74,7 +71,7 @@ export class JSXAppStyler {
       // Push a promise to promiseArr for fetching and loading the style.
       promiseArr.push(new Promise(async (resolve) => {
         // Fetch the style sheet module and its settings in parallel.
-        let settings = this.settingsStore.get(route);
+        let settings = this.settingsStore.get(route, callerNode, callerEnv);
         let [styleSheetModule, styleSheetSettings] = await Promise.all([
           this.interpreter.import(
             route, callerNode, callerEnv
@@ -159,7 +156,9 @@ export class JSXAppStyler {
     // Add a "pending-style" class to the outer DOM node, then wait for the
     // 'classTransform' setting (which might be ready immediately).
     newDOMNode.classList.add("pending-style");
-    let settings = this.settingsStore.get(componentModule);
+    let settings = this.settingsStore.get(
+      componentModule, callerNode, callerEnv
+    );
     let classTransform = await settings.classTransform.promise;
     
     // Check that classTransform is truthy and that the instance hasn't been

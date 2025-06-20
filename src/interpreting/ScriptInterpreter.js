@@ -329,7 +329,7 @@ export class ScriptInterpreter {
             resolve(liveModule);
           });
           liveModules.set(modulePath, liveModulePromise);
-          liveModule = await devModPromise;
+          liveModule = await liveModulePromise;
           liveModules.set(modulePath, liveModule);
         } catch (err) {
           throw new LoadError(
@@ -1380,14 +1380,14 @@ export class ScriptInterpreter {
             if (key !== NaN && 0 <= key && key < MAX_ARRAY_INDEX) {
               throw new RuntimeError(
                 "Invalid key for array entry assignment",
-                postfix, environment
+                expNode, environment
               );
             }
           }
         }
         else throw new RuntimeError(
           "Trying to assign a member of an object whose members are constant",
-          postfix, environment
+          expNode, environment
         );
       }
 
@@ -1396,7 +1396,7 @@ export class ScriptInterpreter {
       let [newVal, ret] = assignFun(prevVal);
       if (!key) throw new RuntimeError(
         "Invalid, falsy object key",
-        postfix, environment
+        expNode, environment
       );
       objVal[key] = newVal;
       return ret;
@@ -1629,6 +1629,9 @@ export class Environment {
     else if (stopAtClear && this.flags.get(CLEAR_FLAG)) {
       return undefined;
     }
+    else if (this.scopeType === "function") {
+      return this.callerEnv.getFlag(flag, stopAtClear);
+    }
     else if (this.parent) {
       return this.parent.getFlag(flag, stopAtClear);
     }
@@ -1637,7 +1640,7 @@ export class Environment {
     }
   }
 
-  setFlag(flag, flagParams = true) {
+  setFlag(flag, flagParams = null) {
     this.flags.set(flag, flagParams);
   }
 
@@ -1802,16 +1805,16 @@ export function jsonStringify(val) {
 
 
 
-export function forEachValue(val, node, env, callback) {
-    if (val instanceof AbstractUHObject) {
-      val = val.members;
+export function forEachValue(value, node, env, callback) {
+    if (value instanceof AbstractUHObject) {
+      value = value.members;
     }
-    let valProto = Object.getPrototypeOf(val);
+    let valProto = Object.getPrototypeOf(value);
     if (valProto === ARRAY_PROTOTYPE) {
-      val.forEach(callback);
+      value.forEach(callback);
     }
     else if (valProto === OBJECT_PROTOTYPE) {
-      Object.entries().forEach(([key, val]) => callback(val, key));
+      Object.entries(value).forEach(([key, val]) => callback(val, key));
     }
     else throw new RuntimeError(
       "Iterating over a non-iterable value",
@@ -1838,7 +1841,7 @@ export function deepCopy(value) {
       return ret;
     }
     else {
-      return val;
+      return value;
     }
 }
 

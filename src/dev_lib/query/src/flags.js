@@ -1,8 +1,9 @@
 
+import {RuntimeError} from "../../../interpreting/ScriptInterpreter.js";
 
 export const ADMIN_PRIVILEGES_FLAG = Symbol("admin-privileges");
 
-export function checkAdminPrivileges(node, env, homeDirID) {
+export function checkAdminPrivileges(homeDirID, node, env) {
   let curHomeDirID = env.getFlag(ADMIN_PRIVILEGES_FLAG);
   if (!curHomeDirID || curHomeDirID !== homeDirID) throw new RuntimeError(
     `Requested admin privileges on Directory ${homeDirID} not granted`,
