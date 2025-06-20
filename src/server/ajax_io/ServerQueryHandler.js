@@ -30,7 +30,8 @@ export class ServerQueryHandler {
     isPublic, route, isPost, postData, options, upNodeID, node, env
   ) {
     payGas(node, env, {fetch: 1});
-    let flags = FlagTransmitter.getFlags(node, env);
+    let flags = isPublic ? undefined :
+      FlagTransmitter.getTransmittedFlags(env);
     try {
       return this.queryServer(
         isPublic, route, isPost, postData, options, upNodeID, flags
@@ -55,11 +56,13 @@ export class ServerQueryHandler {
 
     // Construct the reqBody.
     let reqData = {};
+    if (!isPublic) {
+      if (options !== undefined) reqData.options = options;
+      if (flags !== undefined) reqData.flags = flags;
+    }
     if (isPost) {
       reqData.isPost = true;
       if (postData !== undefined) reqData.data = postData;
-      if (options !== undefined) reqData.options = options;
-      if (flags !== undefined) reqData.flags = flags;
     }
 
     let headers = {};

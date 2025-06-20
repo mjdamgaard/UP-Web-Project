@@ -3,7 +3,9 @@ import {
   RuntimeError, payGas, DevFunction, CLEAR_FLAG, PromiseObject,
 } from "../../../../interpreting/ScriptInterpreter.js";
 
-import {ADMIN_PRIVILEGES_FLAG, REQUEST_ORIGIN_FLAG} from "../flags.js";
+import {
+  ADMIN_PRIVILEGES_FLAG, REQUEST_ORIGIN_FLAG, CURRENT_MODULE_FLAG
+} from "../flags.js";
 
 
 
@@ -72,7 +74,7 @@ export async function query(
     let resultPromiseObj = interpreter.executeFunction(
       new DevFunction(
         {isAsync: true, flags: [CLEAR_FLAG]},
-        async ({callerNode, execEnv, interpreter}, []) => {
+        async ({interpreter}, []) => {
           let liveModule = await interpreter.import(
             `/0/${homeDirID}/${filePath}`
           );
@@ -90,6 +92,10 @@ export async function query(
   // return its returned value. Note the inputArrBase64 should be a base-64-
   // encoded JSON array.
   if (queryType === "call") {
+    if (isPost) throw new RuntimeError(
+      `Unrecognized route for POST-like requests: "${route}"`,
+      callerNode, execEnv
+    );
     if (fileExt !== "js" && fileExt !== "jsx") throw new RuntimeError(
       `Invalid route: ${route}`,
       callerNode, execEnv
@@ -122,26 +128,20 @@ export async function query(
     // permission-granting flags for the module's execution environment. And
     // when the liveModule is gotten, get and execute the function, also within
     // the same enclosed execution environment.
-    let resultPromiseObj = interpreter.executeFunction(
-      new DevFunction(
-        {isAsync: true, flags: [CLEAR_FLAG]},
-        async ({callerNode, execEnv, interpreter}, []) => {
-          let liveModule = await interpreter.import(
-            `/0/${homeDirID}/${filePath}`
-          );
-          let fun = liveModule.members[alias];
-          let result = interpreter.executeFunction(
-            fun, inputArr, callerNode, execEnv
-          );
-          if (result instanceof PromiseObject) {
-            result = await result.promise;
-          }
-          return result;
-        }
-      ),
-      [], callerNode, execEnv,
-    );
-    return await resultPromiseObj.promise;
+    let resultPromise = new Promise(async (resolve) => {
+      let liveModule = await interpreter.import(
+        `/0/${homeDirID}/${filePath}`
+      );
+      let fun = liveModule.members[alias];
+      let result = interpreter.executeFunction(
+        fun, inputArr, callerNode, execEnv, undefined, [CLEAR_FLAG]
+      );
+      if (result instanceof PromiseObject) {
+        result = await result.promise;
+      }
+      resolve(result);
+    })
+    return await resultPromise;
   }
 
   // If route equals ".../<homeDirID>/<filePath>/callSMF/<alias>/" +
@@ -190,30 +190,26 @@ export async function query(
     // means that if the given SMF calls another server module, the CORS-
     // like system will treat the calls as originating from that SMF, and not
     // whatever current module (be it a JSX component module or an SM) queried
-    // this /callSMF route. 
-    let resultPromiseObj = interpreter.executeFunction(
-      new DevFunction(
-        {isAsync: true, flags: [
+    // this /callSMF route.
+    let resultPromise = new Promise(async (resolve) => {
+      let liveModule = await interpreter.import(
+        `/0/${homeDirID}/${filePath}`
+      );
+      let fun = liveModule.members[alias];
+      let newReqOrigin = execEnv.getFlag(CURRENT_MODULE_FLAG);
+      let result = interpreter.executeFunction(
+        fun, inputArr, callerNode, execEnv, undefined, [
+          [CURRENT_MODULE_FLAG, route],
+          [REQUEST_ORIGIN_FLAG, newReqOrigin],
           [ADMIN_PRIVILEGES_FLAG, homeDirID],
-          [REQUEST_ORIGIN_FLAG, route],
-        ]},
-        async ({callerNode, execEnv, interpreter}, []) => {
-          let liveModule = await interpreter.import(
-            `/0/${homeDirID}/${filePath}`
-          );
-          let fun = liveModule.members[alias];
-          let result = interpreter.executeFunction(
-            fun, inputArr, callerNode, execEnv
-          );
-          if (result instanceof PromiseObject) {
-            result = await result.promise;
-          }
-          return result;
-        }
-      ),
-      [], callerNode, execEnv,
-    );
-    return await resultPromiseObj.promise;
+        ]
+      );
+      if (result instanceof PromiseObject) {
+        result = await result.promise;
+      }
+      resolve(result);
+    })
+    return await resultPromise;
   }
 
 

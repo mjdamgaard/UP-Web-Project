@@ -23,6 +23,9 @@ export function checkIfCanPost(node, env) {
 
 
 export const REQUEST_ORIGIN_FLAG = Symbol("request-origin");
+export const CURRENT_MODULE_FLAG = Symbol("current-module");
+export const CLIENT_TRUST_FLAG = Symbol("client-trust");
+
 
 export function checkRequestOrigin(routeRegExArr, node, env) {
   // TODO: Implement.

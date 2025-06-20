@@ -9,7 +9,7 @@ import {
   endWithUnauthorizedError,
 } from './err/errors.js';
 import {
-  ScriptInterpreter, RuntimeError, jsonStringify,
+  ScriptInterpreter, jsonStringify,
 } from "../interpreting/ScriptInterpreter.js";
 import {DBQueryHandler} from "./db_io/DBQueryHandler.js";
 import {UserDBConnection, MainDBConnection} from './db_io/DBConnection.js';

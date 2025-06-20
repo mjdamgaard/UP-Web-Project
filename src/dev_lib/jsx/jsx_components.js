@@ -759,14 +759,10 @@ function compareProps(props1, props2, compareRefs = false) {
     if (!compareRefs && key === "refs") {
       return;
     }
-    let val2 = props2[key];
+    let val2 = Object.hasOwn(props2, key) ? props2[key] : undefined;
     if (val1 !== val2) {
-      if (val1 instanceof Map && val2 instanceof Map) {
-        ret &&= compareProps(val1, val2, true);
-      }
-      else {
-        ret &&= val1 === val2;
-      }
+      // if (... OBJECT_PROTOTYPE) ...
+      ret &&= val1 === val2;
     }
   });
   return ret;
