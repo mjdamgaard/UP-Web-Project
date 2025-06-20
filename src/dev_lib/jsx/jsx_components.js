@@ -2,7 +2,7 @@
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, getExtendedErrorMsg,
   getString, AbstractUHObject, forEachValue, CLEAR_FLAG, deepCopy,
-  OBJECT_PROTOTYPE, ArgTypeError, Environment,
+  OBJECT_PROTOTYPE, ArgTypeError, Environment, FunctionObject,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUEST_ORIGIN_FLAG
@@ -274,9 +274,9 @@ class JSXInstance {
     // that shares the same DOM node as this one).
     if (replaceSelf) {
       this.domNode.replaceWith(newDOMNode);
-      this.domNode = newDOMNode;
       this.updateDecoratingAncestors(newDOMNode);
     }
+    this.domNode = newDOMNode;
 
     // Then, before returning the new DOM node, we also use jsxAppStyler to
     // transform the class attributes of the instance in order to style it.
@@ -298,9 +298,9 @@ class JSXInstance {
       this.childInstances = new Map();
       if (replaceSelf) {
         this.domNode.replaceWith(newDOMNode);
-        this.domNode = newDOMNode;
         this.updateDecoratingAncestors(newDOMNode);
       }
+      this.domNode = newDOMNode;
       return newDOMNode;
   }
 
@@ -675,7 +675,11 @@ class JSXInstanceInterface extends AbstractUHObject {
   // but only be visible on a subsequent rerender. Also note that setState()
   // always queues a rerender, even if the new state is equivalent to the old
   // one.
-  setState = new DevFunction({}, ({interpreter}, [newState]) => {
+  setState = new DevFunction({}, ({interpreter}, [newStateFun]) => {
+    let newState = newStateFun;
+    if (newStateFun instanceof FunctionObject) {
+      // TODO: Implement.
+    }
     this.jsxInstance.state = newState;
     this.jsxInstance.queueRerender(interpreter);
   });

@@ -8,9 +8,7 @@ export function render({}) {
     <div>
       <span>{"Hello, "}<Foo key={0} name={name} />{"!"}</span>
       <button onClick={() => {
-        this.setState(prev => {
-          prev.name = "Changed Name";
-        });
+        this.setState({name: "Changed Name"});
       }}>
         {"Click me!"}
       </button>
