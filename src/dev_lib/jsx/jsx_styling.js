@@ -47,13 +47,13 @@ export class JSXAppStyler {
     // First wait for the get the styleSheets of the component.
     let styleSheets = await this.settingsStore.get(
       componentModule, callerNode, callerEnv
-    ).promise;
+    ).promise ?? {};
 
     // Then create a promise array that when resolved will have fetched and
     // applied all style sheets pointed to by styleSheets that has not yet been
     // loaded.
     let promiseArr = [];
-    styleSheets.forEach((route, id) => {
+    forEachValue(styleSheets, callerNode, callerEnv, (route, id) => {
       if (typeof id !== "string" || !/[a-zA-Z][a-zA-Z0-9\-]*/.test(id)) {
         throw new ArgTypeError(
           `Invalid style sheet ID: "${id}"`,

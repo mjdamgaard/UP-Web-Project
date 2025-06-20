@@ -111,7 +111,8 @@ class JSXInstance {
     this.parentInstance = parentInstance;
     this.jsxAppStyler = jsxAppStyler ?? this.parentInstance?.jsxAppStyler;
     this.settingsStore = settingsStore ?? this.parentInstance?.settingsStore;
-    this.settings = settingsStore.get(componentModule, callerNode, callerEnv);
+    this.settings =
+      this.settingsStore.get(componentModule, callerNode, callerEnv);
     this.isRequestOrigin = componentModule.members["isRequestOrigin"];
     this.domNode = undefined;
     this.ownDOMNodes = undefined;
@@ -141,7 +142,7 @@ class JSXInstance {
   render(
     props = Object.create(null), isDecorated, interpreter,
     callerNode, callerEnv, replaceSelf = true, force = false,
-  ) {  
+  ) {
     this.isDecorated = isDecorated;
     this.callerNode = callerNode;
     this.callerEnv = callerEnv;
