@@ -124,7 +124,7 @@ async function requestHandler(req, res, returnGasRef) {
   if (!options || typeof options !== "object") {
     options = {};
   }
-  let {returnLog, gas: reqGas, gasID: reqGasID, poolRequest} = options;
+  let {returnLog, gas: reqGas, gasID: reqGasID} = options;
 
 
   // Wait for the userID here if the authHeader was defined.

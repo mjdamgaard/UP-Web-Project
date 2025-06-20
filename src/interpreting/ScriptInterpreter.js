@@ -1268,9 +1268,11 @@ export class ScriptInterpreter {
         expNode, environment
       );
       expNode.children.forEach((paramExp, ind) => {
-        this.assignToParameter(
-          paramExp, val[ind], environment, isDeclaration, isConst
-        );
+        if (paramExp !== ",") {
+          this.assignToParameter(
+            paramExp, val[ind], environment, isDeclaration, isConst
+          );
+        }
       });
       return val;
     }

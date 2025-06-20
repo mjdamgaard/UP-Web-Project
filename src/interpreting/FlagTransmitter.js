@@ -37,5 +37,7 @@ export class FlagTransmitter {
     // And set the CLIENT_TRUST flag if transmitted.
     let clientTrust = flags["client-trust"];
     if (clientTrust) ret.push([CLIENT_TRUST_FLAG, clientTrust]);
+
+    return ret;
   }
 }

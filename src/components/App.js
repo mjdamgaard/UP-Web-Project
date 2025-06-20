@@ -59,7 +59,7 @@ setInterval(
 );
 
 // The script the initializes the UP app.
-const TEST_APP_ID = 1;
+const TEST_APP_ID = 2;
 const appScript = `
   import {createJSXApp} from 'jsx';
   import {getSettings} from 'jsx/settings/basic';

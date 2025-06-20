@@ -15,7 +15,7 @@ export function checkAdminPrivileges(homeDirID, node, env) {
 export const CAN_POST_FLAG = Symbol("can-post-privileges");
 
 export function checkIfCanPost(node, env) {
-  let canPost = env.getFlag(ADMIN_PRIVILEGES_FLAG);
+  let canPost = env.getFlag(CAN_POST_FLAG);
   if (!canPost) throw new RuntimeError(
     "Cannot post from here",
     node, env

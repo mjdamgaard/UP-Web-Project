@@ -193,7 +193,7 @@ export const scriptGrammar = {
     process: (children) => ({
       type: "variable-declaration",
       isConst: children[0] === "const",
-      children: children[1],
+      children: children[1].children,
     }),
   },
   "parameter-list": {
@@ -202,6 +202,16 @@ export const scriptGrammar = {
       ["parameter"],
     ],
     process: straightenListSyntaxTree,
+  },
+  "optional-parameter-list": {
+    rules: [
+      ["/,/", "optional-parameter-list!1"],
+      ["parameter", "/,/", "optional-parameter-list!1"],
+      ["parameter"],
+    ],
+    process: (children, ruleInd) => straightenListSyntaxTree(
+      children, ruleInd, undefined, false, 2,
+    ),
   },
   "parameter": {
     rules: [
@@ -218,16 +228,20 @@ export const scriptGrammar = {
   },
   "destructuring": {
     rules: [
-      [/\[/, "parameter-list", "/,/?", /\]/],
+      [/\[/, "optional-parameter-list", "/,/?", /\]/],
       [/\{/, "parameter-member-list", "/,/?", /\}/],
+      [/\{/, /\}/],
     ],
     process: (children, ruleInd) => (
       (ruleInd === 0) ? {
         type: "array-destructuring",
         children: children[1].children,
-      } : {
+      } : (ruleInd === 1) ? {
         type: "object-destructuring",
         children: children[1].children,
+      } : {
+        type: "object-destructuring",
+        children: [],
       }
     ),
   },
