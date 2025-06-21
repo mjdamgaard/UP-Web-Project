@@ -8,7 +8,7 @@ const queryPathRegEx = /^\/([a-zA-Z0-9_\-~=.]+(\/[a-zA-Z0-9_\-~=.]+)*)/;
 const tagRegEx = /^#([a-zA-Z0-9_\-.]+)(?<!\.)/;
 const lastFileExtRegEx = /\.([^.]+)$/
 
-const lockedRouteRegex = /~/;
+const lockedRouteRegex = /\/_/;
 
 
 

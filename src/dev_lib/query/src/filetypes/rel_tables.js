@@ -21,9 +21,9 @@ export async function query(
 
   let queryType = queryPathArr[0];
 
-  // If route equals ".../<homeDirID>/<filepath>/~touch" create a table file
+  // If route equals ".../<homeDirID>/<filepath>/_touch" create a table file
   // if not already there, but do not delete its content if there.
-  if (queryType === "~touch") {
+  if (queryType === "_touch") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -35,9 +35,9 @@ export async function query(
     );
   }
 
-  // If route equals ".../<homeDirID>/<filepath>/~put" create a table file
+  // If route equals ".../<homeDirID>/<filepath>/_put" create a table file
   // if not already there, and delete its content if it does exist already.
-  if (queryType === "~put") {
+  if (queryType === "_put") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -56,9 +56,9 @@ export async function query(
   }
 
 
-  // If route equals ".../<homeDirID>/<filepath>/~delete", delete the table
+  // If route equals ".../<homeDirID>/<filepath>/_delete", delete the table
   // file (and its content) if its there.
-  if (queryType === "~delete") {
+  if (queryType === "_delete") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -76,10 +76,10 @@ export async function query(
   }
 
 
-  // If route equals ".../<homeDirID>/<filepath>/~deleteEntry[/l=<listID>]" +
+  // If route equals ".../<homeDirID>/<filepath>/_deleteEntry[/l=<listID>]" +
   // "/k=<elemKey>", delete a single table entry with that primary key, where
   // the default value for listID is "".
-  if (queryType === "~deleteEntry") {
+  if (queryType === "_deleteEntry") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -107,11 +107,11 @@ export async function query(
     );
   }
 
-  // If route equals ".../<homeDirID>/<filepath>/~deleteList[/l=<listID>]" +
+  // If route equals ".../<homeDirID>/<filepath>/_deleteList[/l=<listID>]" +
   // "[/lo=<loElemKey>]"[/hi=<hiElemKey>]", delete all entries with elemKeys
   // between lo and hi. The default value for lo is "", and if hi is missing,
   // all entries are deleted with an elemKey >= lo.
-  if (queryType === "~deleteList") {
+  if (queryType === "_deleteList") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -244,12 +244,12 @@ export async function query(
     );
   }
 
-  // If route equals ".../<homeDirID>/<filepath>/~insert/[/l=<listID>]" +
+  // If route equals ".../<homeDirID>/<filepath>/_insert/[/l=<listID>]" +
   // "k=<elemKey>[/s=<elemScore>][/p=<elemPayload>][/i=<ignore]", insert a
   // single table entry with those row values, overwriting any existing entry
   // of the same key, unless ignore (i) is defined and truthy (does not apply
   // .att files).
-  if (queryType === "~insert") {
+  if (queryType === "_insert") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -274,6 +274,9 @@ export async function query(
       l: listID = "", k: elemKey = "", s: elemScore = "", p: elemPayload = "",
       i: ignore = false,
     } = paramObj;
+    if (postData) {
+      elemPayload = postData;
+    }
     let rowLen = listID.length + elemKey.length + elemScore.length +
       elemPayload.length;
     payGas(callerNode, execEnv, {dbWrite: rowLen});
@@ -287,11 +290,11 @@ export async function query(
     );
   }
 
-  // If route equals ".../<homeDirID>/<filepath>/~insertList[/l=<listID>]" +
+  // If route equals ".../<homeDirID>/<filepath>/_insertList[/l=<listID>]" +
   // "[/i=<ignore>]", treat postData as an array of rows to insert into the
   // table. The ignore parameter also determines whether to ignore on duplicate
   // keys or to overwrite.
-  if (queryType === "~insertList") {
+  if (queryType === "_insertList") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv

@@ -3,7 +3,7 @@ import {
   payGas, RuntimeError,
 } from "../../../../interpreting/ScriptInterpreter.js";
 
-const LOCKED_ROUTE_REGEX = /~/;
+const LOCKED_ROUTE_REGEX = /\/_/;
 
 
 export async function query(
@@ -46,7 +46,7 @@ export async function query(
 
   // If route equals just ".../<homeDirID>", without any query path, return
   // a list of all nested file paths of the home directory, except paths of
-  // files nested inside locked subdirectories (which includes a "~").
+  // files nested inside locked subdirectories (which starts with a "_").
   if (!queryPathArr) {
     let fullDescList = await dbQueryHandler.queryDBProc(
       "readHomeDirDescendants", [homeDirID, 4000, 0],
@@ -62,7 +62,7 @@ export async function query(
 
   // If route equals just ".../<homeDirID>/_all", return a list of all nested
   // file paths of the home directory.
-  if (queryType === "~all") {
+  if (queryType === "_all") {
     return await dbQueryHandler.queryDBProc(
       "readHomeDirDescendants", [homeDirID, 4000, 0],
       route, upNodeID, options, callerNode, execEnv,
@@ -80,7 +80,7 @@ export async function query(
 
   // If route equals ".../<homeDirID>/_setAdmin/a=<adminID>", set a new admin
   // of the home directory.
-  if (queryType === "~setAdmin") {
+  if (queryType === "_setAdmin") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -96,10 +96,10 @@ export async function query(
     );
   }
 
-  // If route equals ".../<homeDirID>/~delete", request a deletion of the
+  // If route equals ".../<homeDirID>/_delete", request a deletion of the
   // directory, but note that directories can only be deleted after each nested
   // file in it has been deleted (as this query does not delete the files).
-  if (queryType === "~delete") {
+  if (queryType === "_delete") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv

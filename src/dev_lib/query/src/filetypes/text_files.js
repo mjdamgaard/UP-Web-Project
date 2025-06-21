@@ -27,10 +27,10 @@ export async function query(
 
   let queryType = queryPathArr[0];
 
-  // If route equals ".../<homeDirID>/~put" with a text stored in the postData,
+  // If route equals ".../<homeDirID>/_put" with a text stored in the postData,
   // overwrite the existing file with contentText, if any, or create a new file
   // with that content.
-  if (queryType === "~put") {
+  if (queryType === "_put") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -43,8 +43,8 @@ export async function query(
     );
   }
 
-  // If route equals ".../<homeDirID>/<filePath>/~delete", delete the text file.
-  if (queryType === "~delete") {
+  // If route equals ".../<homeDirID>/<filePath>/_delete", delete the text file.
+  if (queryType === "_delete") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv

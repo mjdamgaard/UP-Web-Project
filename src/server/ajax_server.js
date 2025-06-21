@@ -42,8 +42,8 @@ const scriptInterpreter = new ScriptInterpreter(
 );
 
 // Locked routes are all routes where any file name, directory name, or
-// query path property name contains a tilde (~).
-const LOCKED_ROUTE_REGEX = /~/;
+// query path segment that starts with an underscore.
+const LOCKED_ROUTE_REGEX = /\/_/;
 
 const AUTH_TOKEN_REGEX = /^Bearer (.+)$/;
 const HOME_DIR_ID_REGEX = /^\/[^/]*\/([^/]+)/;
@@ -148,7 +148,7 @@ async function requestHandler(req, res, returnGasRef) {
 
   // Parse whether the route is a "locked" route (which can only be accessed by
   // the admin, if any, or by a server module function (SMF) of that directory).
-  // These are all paths that include a tilde ('~') anywhere in them. If it is
+  // These are all paths that includes '/_' anywhere within them. If it is
   // indeed locked, query for the adminID of the home directory and verify that
   // userID == adminID, then add the "admin-privileges" flag to the 'flags,'
   // array.

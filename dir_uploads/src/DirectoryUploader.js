@@ -50,7 +50,7 @@ export class DirectoryUploader {
     // side directory, and for each one that doesn't, request deletion of that
     // file server-side.
     let [filePaths = []] = await serverQueryHandler.post(
-      `/1/${dirID}/~all`
+      `/1/${dirID}/_all`
     ) ?? [[]];
     let deletionPromises = [];
     filePaths.forEach((relPath) => {
@@ -58,7 +58,7 @@ export class DirectoryUploader {
       let serverFilePath = path.normalize(`/1/${dirID}/${relPath}`);
       if (!fs.existsSync(clientFilePath)) {
         deletionPromises.push(
-          serverQueryHandler.post(serverFilePath + "/~delete", {
+          serverQueryHandler.post(serverFilePath + "/_delete", {
             method: "post",
             credentials: credentials,
           })
@@ -109,7 +109,7 @@ export class DirectoryUploader {
         let contentText = fs.readFileSync(childAbsPath, 'utf8');
         uploadPromises.push(
           serverQueryHandler.post(
-            `/1/${childRelPath}/~put`, 
+            `/1/${childRelPath}/_put`, 
             contentText,
           )
         );
