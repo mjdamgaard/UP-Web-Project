@@ -6,10 +6,17 @@ export function render({name}) {
     <span>
       {name}{"  "}
       <i onClick={() => {
-        this.dispatch("changeName", );
+        this.dispatch("changeName", "Another Name");
       }}>
         {"or click here!"}
       </i>
     </span>
   );
 }
+
+
+export const methods = {
+  "myMethod": function(name) {
+    this.dispatch("changeName", name);
+  },
+};

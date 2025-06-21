@@ -357,7 +357,7 @@ class JSXInstance {
       // First we check if the childInstances to see if the child component
       // instance already exists, and if not, create a new one. In both cases,
       // we also make sure to mark the childInstance as being used.
-      let key = jsxElement.key;
+      let key = getString(jsxElement.key);
       let childInstance = this.childInstances.get(key);
       if (
         !childInstance ||
@@ -555,7 +555,7 @@ class JSXInstance {
       targetInstance = this;
     }
     else {
-      targetInstance = this.childInstances.get(instanceKey);
+      targetInstance = this.childInstances.get(getString(instanceKey));
     }
     if (!targetInstance) throw new RuntimeError(
       `No child instance found with the key of "${instanceKey}"`,
