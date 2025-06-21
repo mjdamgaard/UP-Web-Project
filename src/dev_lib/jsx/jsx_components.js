@@ -675,14 +675,18 @@ class JSXInstanceInterface extends AbstractUHObject {
   // but only be visible on a subsequent rerender. Also note that setState()
   // always queues a rerender, even if the new state is equivalent to the old
   // one.
-  setState = new DevFunction({}, ({interpreter}, [newStateFun]) => {
-    let newState = newStateFun;
-    if (newStateFun instanceof FunctionObject) {
-      // TODO: Implement.
+  setState = new DevFunction(
+    {}, ({callerNode, execEnv, interpreter}, [newState]) => {
+      if (Object.getPrototypeOf(newState) !== OBJECT_PROTOTYPE) {
+        throw new RuntimeError(
+          "State assignment to a value other than a plain object",
+          callerNode, execEnv
+        )
+      }
+      this.jsxInstance.state = newState;
+      this.jsxInstance.queueRerender(interpreter);
     }
-    this.jsxInstance.state = newState;
-    this.jsxInstance.queueRerender(interpreter);
-  });
+  );
 
   // rerender() is equivalent of calling setState() on the current state; it
   // just forces a rerender.

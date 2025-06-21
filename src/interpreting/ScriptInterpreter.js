@@ -1124,24 +1124,43 @@ export class ScriptInterpreter {
         return this.evaluateExpression(expNode.exp, environment);
       }
       case "array": {
-        return expNode.children.map(exp => (
-          this.evaluateExpression(exp, environment)
-        ));
+        let ret = [];
+        expNode.children.forEach(exp => {
+          if (exp.type === "spread") {
+            let spreadExpVal = this.evaluateExpression(exp.exp, environment);
+            if (!(spreadExpVal instanceof Array)) throw new RuntimeError(
+              "Invalid spread of a non-array inside an array literal",
+              exp, environment
+            );
+            ret = ret.concat(spreadExpVal);
+          }
+          else {
+            ret.push(this.evaluateExpression(exp, environment));
+          }
+        });
       }
       case "object": {
         let obj = {};
         expNode.members.forEach(member => {
-          let key = member.ident;
-          if (key === undefined) {
-            key = getString(
-              this.evaluateExpression(member.keyExp, environment)
-            );
+          if (member.type === "spread") {
+            let spreadExpVal = this.evaluateExpression(member.exp, environment);
+            forEachValue(spreadExpVal, member, environment, (val, key) => {
+              obj[key] = val;
+            });
           }
-          if (!key) throw new RuntimeError(
-            "Invalid, falsy object key",
-            expNode, environment
-          );
-          obj[key] = this.evaluateExpression(member.valExp, environment);;
+          else {
+            let key = member.ident;
+            if (key === undefined) {
+              key = getString(
+                this.evaluateExpression(member.keyExp, environment)
+              );
+            }
+            if (!key) throw new RuntimeError(
+              "Invalid, falsy object key",
+              expNode, environment
+            );
+            obj[key] = this.evaluateExpression(member.valExp, environment);
+          }
         });
         return obj;
       }
@@ -1446,19 +1465,24 @@ export class ScriptInterpreter {
         let objProto = Object.getPrototypeOf(objVal);
         if (objProto !== OBJECT_PROTOTYPE) {
           if (objProto === ARRAY_PROTOTYPE) {
-            if (key !== "length"){
-              key = parseInt(key);
+            if (key === "length"){
+              val = objVal.length;
+            } else {
+              val = Object.hasOwn(objVal, key) ? objVal[key] : undefined;
             }
           }
           else if (objVal instanceof AbstractUHObject) {
-            objVal = objVal.members;
+            let members = objVal.members;
+            val = Object.hasOwn(members, key) ? members[key] : undefined;
+          }
+          else if (typeof objVal === "string" && key === "length") {
+            val = objVal.length;
           }
           else throw new RuntimeError(
             "Trying to access a member of a non-object",
             postfix, environment
           );
         }
-        val = Object.hasOwn(objVal, key) ? objVal[key] : undefined;
       }
 
       // Else if postfix is an expression tuple, execute the current val as a

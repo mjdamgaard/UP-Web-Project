@@ -441,6 +441,25 @@ export const scriptGrammar = {
     ],
     process: straightenListSyntaxTree,
   },
+  "expression-or-spread-list": {
+    rules: [
+      ["spread", "/,/", "expression-or-spread-list!1"],
+      ["expression", "/,/", "expression-or-spread-list!1"],
+      ["expression"],
+    ],
+    process: (children, ruleInd) => straightenListSyntaxTree(
+      children, ruleInd, undefined, false, 2,
+    ),
+  },
+  "spread": {
+    rules: [
+      [/\.\.\./, "expression"],
+    ],
+    process: (children) => ({
+      type: "spread",
+      exp: children[1],
+    }),
+  },
   "expression": {
     rules: [
       ["parameter-tuple", "/=>/", "function-body"],
@@ -702,7 +721,7 @@ export const scriptGrammar = {
 // TODO: Implement spread operator for for both arrays and objects.
   "array": {
     rules: [
-      [/\[/, "expression-list!1", "/,/?", /\]/],
+      [/\[/, "expression-or-spread-list!1", "/,/?", /\]/],
       [/\[/, /\]/],
     ],
     process: (children, ruleInd) => {
@@ -742,21 +761,24 @@ export const scriptGrammar = {
       ["identifier", "/:/!", "expression"],
       ["string", "/:/!", "expression"],
       [/\[/, "expression", /\]/, "/:/", "expression"],
+      ["spread"],
     ],
-    process: (children, ruleInd) => {
-      let ret = (ruleInd === 0) ? {
+    process: (children, ruleInd) => (
+      (ruleInd === 0) ? {
+        type: "member",
         ident: children[0].ident,
         valExp: children[2],
       } : (ruleInd === 1) ? {
+        type: "member",
         keyExp: children[0],
         valExp: children[2],
-      } : {
+      } : (ruleInd === 2) ? {
+        type: "member",
         keyExp: children[1],
         valExp: children[4],
-      };
-      ret.type = "member";
-      return ret;
-    },
+      } :
+        children[1]
+    ),
   },
   "jsx-element": {
     rules: [
