@@ -1,19 +1,13 @@
 
 import {fetch, getCurHomeDirPath} from 'query';
-import * as PostField from "./PostField.js";
-import * as PostList from "./PostField.js";
+import * as PostField from "./PostField.jsx";
+import * as PostList from "./PostField.jsx";
 
 export function render() {
-  let {postList} = this.state;
-
-  if (!postList) {
-
-  }
-
   return (
     <div>
       <PostField key={0}/>
-      <PostList key={0} list={postList} />
+      <PostList key={0} />
     </div>
   );
 }
