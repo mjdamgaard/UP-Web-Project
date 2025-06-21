@@ -1280,7 +1280,7 @@ export class ScriptInterpreter {
 
   executeDestructuring(expNode, val, environment, isDeclaration, isConst) {
     let type = expNode.type
-    let valProto = Object.getPrototypeOf(val);
+    let valProto = getPrototypeOf(val);
     if (type === "array-destructuring") {
       if (valProto !== ARRAY_PROTOTYPE) throw new RuntimeError(
         "Destructuring an array with a non-array value",
@@ -1393,7 +1393,7 @@ export class ScriptInterpreter {
       // If the object is an AbstractUHObject, instead of assigning one of the
       // object's own properties directly, assign to the objects 'members'
       // property instead. Also check against setting members of a non-object.
-      let objProto = Object.getPrototypeOf(objVal);
+      let objProto = getPrototypeOf(objVal);
       if (objProto !== OBJECT_PROTOTYPE) {
         if (objProto === ARRAY_PROTOTYPE) {
           if (key !== "length"){
@@ -1462,7 +1462,7 @@ export class ScriptInterpreter {
         // If the object is an AbstractUHObject, instead of getting from the
         // object's properties directly, get from the objects 'members'
         // property. Also check against accessing members of a non-object.
-        let objProto = Object.getPrototypeOf(objVal);
+        let objProto = getPrototypeOf(objVal);
         if (objProto !== OBJECT_PROTOTYPE) {
           if (objProto === ARRAY_PROTOTYPE) {
             if (key === "length"){
@@ -1809,7 +1809,7 @@ export function jsonStringify(val) {
   else if (typeof val === "symbol") {
     return JSON.stringify(val.toString());
   }
-  let valProto = Object.getPrototypeOf(val);
+  let valProto = getPrototypeOf(val);
   if (valProto === ARRAY_PROTOTYPE) {
     return "[" + val.map(val => (jsonStringify(val))).join(",") + "]";
   }
@@ -1832,20 +1832,30 @@ export function jsonStringify(val) {
 
 
 export function forEachValue(value, node, env, callback) {
-    if (value instanceof AbstractUHObject) {
-      value = value.members;
-    }
-    let valProto = Object.getPrototypeOf(value);
-    if (valProto === ARRAY_PROTOTYPE) {
-      value.forEach(callback);
-    }
-    else if (valProto === OBJECT_PROTOTYPE) {
-      Object.entries(value).forEach(([key, val]) => callback(val, key));
-    }
-    else throw new RuntimeError(
-      "Iterating over a non-iterable value",
-      node, env
-    );
+  if (value instanceof AbstractUHObject) {
+    value = value.members;
+  }
+  let valProto = getPrototypeOf(value);
+  if (valProto === ARRAY_PROTOTYPE) {
+    value.forEach(callback);
+  }
+  else if (valProto === OBJECT_PROTOTYPE) {
+    Object.entries(value).forEach(([key, val]) => callback(val, key));
+  }
+  else throw new RuntimeError(
+    "Iterating over a non-iterable value",
+    node, env
+  );
+}
+
+
+export function getPrototypeOf(value) {
+  if (value && value instanceof Object) {
+    return Object.getPrototypeOf(value);
+  }
+  else {
+    return undefined;
+  }
 }
 
 
@@ -1855,7 +1865,7 @@ export function deepCopy(value) {
       ret.members = deepCopy(ret.members);
       return ret;
     }
-    let valProto = Object.getPrototypeOf(value);
+    let valProto = getPrototypeOf(value);
     if (valProto === ARRAY_PROTOTYPE) {
       return value.map(val => deepCopy(val));
     }

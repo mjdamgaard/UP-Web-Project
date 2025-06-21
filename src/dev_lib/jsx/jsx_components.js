@@ -2,7 +2,7 @@
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, getExtendedErrorMsg,
   getString, AbstractUHObject, forEachValue, CLEAR_FLAG, deepCopy,
-  OBJECT_PROTOTYPE, ArgTypeError, Environment, FunctionObject,
+  OBJECT_PROTOTYPE, ArgTypeError, Environment, getPrototypeOf,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUEST_ORIGIN_FLAG
@@ -183,7 +183,7 @@ class JSXInstance {
       } else {
         state = this.componentModule.members["initState"] || {};
       }
-      let stateProto = Object.getPrototypeOf(state);
+      let stateProto = getPrototypeOf(state);
       if (stateProto !== OBJECT_PROTOTYPE) {
         return this.getFailedComponentDOMNode(
           new RuntimeError(
@@ -334,7 +334,7 @@ class JSXInstance {
         "Components rendering as non-JSX values is not implemented",
         callerNode, callerEnv
       );
-      return sanitize(jsxElement.toString());
+      return sanitize(getString(jsxElement));
     }
 
     // If jsxElement is a fragment, we also check against it being an outer
@@ -413,7 +413,7 @@ class JSXInstance {
                `Elements of type "${tagName}" cannot have children`,
               jsxNode, jsxDecEnv
             );
-            if (!(childArr.values instanceof Function)) throw new RuntimeError(
+            if (!(childArr instanceof Array)) throw new RuntimeError(
               `A non-iterable 'children' prop was used`,
              jsxNode, jsxDecEnv
            );
@@ -520,7 +520,7 @@ class JSXInstance {
     actionKey = getString(actionKey);
     if (!actionKey) return;
     let actionFun;
-    if (Object.getPrototypeOf(actions) === OBJECT_PROTOTYPE) {
+    if (getPrototypeOf(actions) === OBJECT_PROTOTYPE) {
       actionFun = actions[actionKey];
     }
     if (actionFun) {
@@ -570,7 +570,7 @@ class JSXInstance {
       callerNode, callerEnv
     );
     let methodFun;
-    if (Object.getPrototypeOf(methods) === OBJECT_PROTOTYPE) {
+    if (getPrototypeOf(methods) === OBJECT_PROTOTYPE) {
       methodFun = methods[methodKey];
     }
     if (methodFun) {
@@ -677,7 +677,7 @@ class JSXInstanceInterface extends AbstractUHObject {
   // one.
   setState = new DevFunction(
     {}, ({callerNode, execEnv, interpreter}, [newState]) => {
-      if (Object.getPrototypeOf(newState) !== OBJECT_PROTOTYPE) {
+      if (getPrototypeOf(newState) !== OBJECT_PROTOTYPE) {
         throw new RuntimeError(
           "State assignment to a value other than a plain object",
           callerNode, execEnv

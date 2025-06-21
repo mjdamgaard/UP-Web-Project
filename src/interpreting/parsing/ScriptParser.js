@@ -6,14 +6,16 @@ import {
 } from "./processing.js";
 
 
-
-
-
 const RESERVED_KEYWORD_REGEXP = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
   "true|false|null|undefined|Infinity|NaN|try|catch|finally|for|while|do|" +
   "default|public|debugger|new|Promise|console|import|Map)$"
+  // TODO: Continue this list.
+);
+
+const HTML_ELEMENT_TYPE_REGEX = new RegExp(
+  "^(div|span|i|b|br|hr|template|button)$"
   // TODO: Continue this list.
 );
 
@@ -501,7 +503,7 @@ export const scriptGrammar = {
         exp1: children[2],
         exp2: children[4],
       } :
-        copyFromChild(children, ruleInd);
+        copyFromChild(children);
     },
   },
   "expression^(1)": {
@@ -777,7 +779,7 @@ export const scriptGrammar = {
         keyExp: children[1],
         valExp: children[4],
       } :
-        children[1]
+        children[0]
     ),
   },
   "jsx-element": {
@@ -837,7 +839,8 @@ export const scriptGrammar = {
   },
   "tag-name": {
     rules: [
-      [/[A-Z][a-zA-z0-9_$]*|div|span|i|b|br|hr|template|button/],
+      [/[A-Z][a-zA-z0-9_$]*/],
+      [HTML_ELEMENT_TYPE_REGEX],
     ],
     process: copyLexemeFromChild,
   },
