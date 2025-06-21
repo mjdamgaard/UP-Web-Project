@@ -786,10 +786,8 @@ function compareProps(props1, props2) {
     return false;
   }
 
-  // Loop through each pair of values, val1 and val2, and if both are Map
-  // instances, call compareProps recursively, and if not, check that they are
-  // equal to each other. Also, when compareProps() is called non-recursively,
-  // with a falsy compareProps, refrain from comparing the 'refs' prop.
+  // Loop through each pair of properties that are not the 'refs' property and
+  // deep-compare them.
   let ret = true;
   Object.entries(props1).some(([key, val1]) => {
     if (key === "refs") {
