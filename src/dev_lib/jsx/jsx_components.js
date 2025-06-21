@@ -3,6 +3,7 @@ import {
   DevFunction, JSXElement, LiveModule, RuntimeError, getExtendedErrorMsg,
   getString, AbstractUHObject, forEachValue, CLEAR_FLAG, deepCopy,
   OBJECT_PROTOTYPE, ArgTypeError, Environment, getPrototypeOf,
+  ARRAY_PROTOTYPE,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUEST_ORIGIN_FLAG
@@ -140,7 +141,7 @@ class JSXInstance {
 
 
   render(
-    props = Object.create(null), isDecorated, interpreter,
+    props = {}, isDecorated, interpreter,
     callerNode, callerEnv, replaceSelf = true, force = false,
   ) {
     this.isDecorated = isDecorated;
@@ -765,7 +766,6 @@ class SettingsStore {
 
 
 
-
 class DOMNodeWrapper extends AbstractUHObject {
   constructor(domNode) {
     super("DOMNode");
@@ -774,13 +774,15 @@ class DOMNodeWrapper extends AbstractUHObject {
 }
 
 
-// TODO: Correct and debug.
-function compareProps(props1, props2, compareRefs = false) {
+
+
+function compareProps(props1, props2) {
   // Get the keys, and return false immediately if the two props Maps have
   // different keys.
-  let keys = props1.keys;
-  let unionedKeys = [...new Set(keys.concat(props2.keys))];
-  if (unionedKeys.length > keys.length) {
+  let keys1 = Object.keys(props1);
+  let keys2 = Object.keys(props2);
+  let unionedKeys = [...new Set(keys1.concat(keys2))];
+  if (unionedKeys.length > keys1.length) {
     return false;
   }
 
@@ -788,19 +790,70 @@ function compareProps(props1, props2, compareRefs = false) {
   // instances, call compareProps recursively, and if not, check that they are
   // equal to each other. Also, when compareProps() is called non-recursively,
   // with a falsy compareProps, refrain from comparing the 'refs' prop.
-  let ret;
-  props1.forEach((val1, key) => {
-    if (!compareRefs && key === "refs") {
-      return;
+  let ret = true;
+  Object.entries(props1).some(([key, val1]) => {
+    if (key === "refs") {
+      return false; // continue some() iteration.
     }
     let val2 = Object.hasOwn(props2, key) ? props2[key] : undefined;
-    if (val1 !== val2) {
-      // if (... OBJECT_PROTOTYPE) ...
-      ret &&= val1 === val2;
+    if (!deepCompare(val1, val2)) {
+      ret = false;
+      return true; // break some() iteration.
     }
   });
   return ret;
 }
+
+
+function deepCompare(val1, val2) {
+  if (val1 === null || !(val1 instanceof Object)) {
+    return val1 === val2;
+  }
+
+  let proto1 = Object.getPrototypeOf(val1);
+  let proto2 = Object.getPrototypeOf(val2);
+  if (proto1 === OBJECT_PROTOTYPE) {
+    if (proto2 !== OBJECT_PROTOTYPE) {
+      return false;
+    }
+    let keys1 = Object.keys(val1);
+    let keys2 = Object.keys(val2);
+    let unionedKeys = [...new Set(keys1.concat(keys2))];
+    if (unionedKeys.length > keys1.length) {
+      return false;
+    }
+    let ret = true;
+    Object.entries(val1).some(([key, prop1]) => {
+      let prop2 = Object.hasOwn(val2, key) ? val2[key] : undefined;
+      if (!deepCompare(prop1, prop2)) {
+        ret = false;
+        return true; // break some() iteration.
+      }
+    });
+    return ret;
+  }
+  else if (proto1 === ARRAY_PROTOTYPE) {
+    if (proto2 !== ARRAY_PROTOTYPE) {
+      return false;
+    }
+    if (val1.length !== val2.length) {
+      return false;
+    }
+    let ret = true;
+    val1.some((entry1, ind) => {
+      let entry2 = val2[ind];
+      if (!deepCompare(entry1, entry2)) {
+        ret = false;
+        return true; // break some() iteration.
+      }
+    });
+    return ret;
+  }
+  else {
+    return val1 === val2;
+  }
+}
+
 
 
 function deepCopyWithoutRefs(props, node, env) {
