@@ -607,7 +607,7 @@ export const scriptGrammar = {
       ["expression^(13)"],
     ],
     process: (children, ruleInd) => {
-      return (ruleInd === 0) ? {
+      return (ruleInd <= 1) ? {
         type: "prefix-expression",
         op: children[0],
         exp: children[1],

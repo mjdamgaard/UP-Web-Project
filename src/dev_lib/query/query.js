@@ -107,10 +107,10 @@ export const query = new DevFunction(
 
 
 export const fetch = new DevFunction(
-  {isAsync: true, typeArr: ["boolean", "string", "any?"]},
+  {isAsync: true, typeArr: ["string", "boolean?", "any?"]},
   async function(
     {callerNode, execEnv, interpreter},
-    [isPublic, route, options]
+    [route, isPublic = true, options]
   ) {
     let [result] = await query.fun(
       {callerNode, execEnv, interpreter},

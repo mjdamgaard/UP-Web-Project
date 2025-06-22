@@ -359,6 +359,11 @@ class JSXInstance {
       // instance already exists, and if not, create a new one. In both cases,
       // we also make sure to mark the childInstance as being used.
       let key = getString(jsxElement.key);
+      if (marks.get(key)) throw new RuntimeError(
+        `Key "${key}" is already being used by another child component ` +
+        "instance",
+        jsxElement.node, jsxElement.decEnv
+      );
       let childInstance = this.childInstances.get(key);
       if (
         !childInstance ||
@@ -368,13 +373,6 @@ class JSXInstance {
           componentModule, key, this, jsxElement.node, jsxElement.decEnv
         );
         this.childInstances.set(key, childInstance);
-      }
-      else {
-        if (marks.get(key)) throw new RuntimeError(
-          `Key "${key}" is already being used by another child component ` +
-          "instance",
-          jsxElement.node, jsxElement.decEnv
-        );
       }
       marks.set(key, true);
 

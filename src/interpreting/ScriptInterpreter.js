@@ -234,7 +234,7 @@ export class ScriptInterpreter {
     let fetchFun = callerEnv.scriptVars.liveModules.get("query")
       .members["fetch"];
     let resultPromise = this.executeFunction(
-      fetchFun, [true, route], callerNode, callerEnv
+      fetchFun, [route], callerNode, callerEnv
     ).promise;
     return resultPromise;
   }
@@ -1541,7 +1541,7 @@ export class Environment {
       modulePath, lexArr, strPosArr, script,
       scriptVars,
       catchStmtArr, errIdent,
-    },
+    } = {},
   ) {
     this.scriptVars = scriptVars ?? parent?.scriptVars ?? (() => {
       throw "Environment: No scriptVars object provided";
@@ -1931,9 +1931,10 @@ export class DevFunction extends FunctionObject {
       fun = options;
       options = {};
     }
-    let {isAsync, flags} = options;
+    let {isAsync, typeArr, flags} = options;
     super();
     if (isAsync) this.isAsync = isAsync;
+    if (typeArr) this.typeArr = typeArr;
     if (flags) this.flags = flags;
     this.fun = fun;
   }

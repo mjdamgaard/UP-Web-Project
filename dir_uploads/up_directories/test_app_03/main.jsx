@@ -1,7 +1,7 @@
 
 import {fetch, getCurHomeDirPath} from 'query';
 import * as PostField from "./PostField.jsx";
-import * as PostList from "./PostField.jsx";
+import * as PostList from "./PostList.jsx";
 
 export function render() {
   return (
