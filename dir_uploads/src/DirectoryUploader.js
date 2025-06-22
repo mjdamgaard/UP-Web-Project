@@ -18,7 +18,7 @@ export class DirectoryUploader {
   // as is, as well as file extensions of abstract files (often implemented via
   // one or several relational DB tables), for which the file content, if any,
   // will have to conform to a specific format.
-  static async uploadDir(dirPath, username, password, deleteStructData) {
+  static async uploadDir(dirPath, username, password, deleteTableData) {
 
     // TODO: Call the server to get a new or an existing session ID here, and
     // also get the userID.
@@ -72,7 +72,7 @@ export class DirectoryUploader {
     // pushing a promise for the response of each one to uploadPromises.
     let uploadPromises = [];
     this.#uploadDirHelper(
-      dirPath, credentials, dirID, deleteStructData, uploadPromises,
+      dirPath, credentials, dirID, deleteTableData, uploadPromises,
       serverQueryHandler
     );
     await Promise.all(uploadPromises);
@@ -80,7 +80,7 @@ export class DirectoryUploader {
 
 
   static async #uploadDirHelper(
-    dirPath, credentials, relPath, deleteStructData, uploadPromises,
+    dirPath, credentials, relPath, deleteTableData, uploadPromises,
     serverQueryHandler
   ) {
     // Get each file in the directory at path, and loop through and handle each
@@ -99,7 +99,7 @@ export class DirectoryUploader {
       // helper method recursively.
       if (name.indexOf(".") <= 0) {
         this.#uploadDirHelper(
-          childAbsPath, credentials, childRelPath, deleteStructData,
+          childAbsPath, credentials, childRelPath, deleteTableData,
           uploadPromises, serverQueryHandler
         );
       }
@@ -109,22 +109,15 @@ export class DirectoryUploader {
         let contentText = fs.readFileSync(childAbsPath, 'utf8');
         uploadPromises.push(
           serverQueryHandler.post(
-            `/1/${childRelPath}/_put`, 
+            `/1/${childRelPath}/_put`,
             contentText,
           )
         );
       }
-      else if (/\.[a-z]+$/.test(name)) {
-        if (deleteStructData) {
+      else if (/\.(att|bt|ct|bbt|ftt)$/.test(name)) {
+        if (deleteTableData) {
           uploadPromises.push(
-            // ServerInterface.putStructFile(credentials, "/" + childRelPath)
-            "TODO..."
-          );
-        }
-        else {
-          uploadPromises.push(
-            // ServerInterface.touchStructFile(credentials, "/" + childRelPath)
-            "TODO..."
+            serverQueryHandler.post(`/1/${childRelPath}/_put`)
           );
         }
       }

@@ -18,7 +18,7 @@ import {
 
 
 export const query = new DevFunction(
-  {isAsync: true},
+  {isAsync: true, typeArr: ["boolean", "string", "boolean?", "any?", "any?"]},
   async function(
     {callerNode, execEnv, interpreter, liveModule},
     [isPublic, route, isPost = false, postData, options = {}]
@@ -107,7 +107,7 @@ export const query = new DevFunction(
 
 
 export const fetch = new DevFunction(
-  {isAsync: true},
+  {isAsync: true, typeArr: ["boolean", "string", "any?"]},
   async function(
     {callerNode, execEnv, interpreter},
     [isPublic, route, options]
@@ -122,7 +122,7 @@ export const fetch = new DevFunction(
 
 
 export const post = new DevFunction(
-  {isAsync: true},
+  {isAsync: true, typeArr: ["string", "any?", "any?"]},
   async function(
     {callerNode, execEnv, interpreter},
     [route, postData, options]

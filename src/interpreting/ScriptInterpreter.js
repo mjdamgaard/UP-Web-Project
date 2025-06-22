@@ -571,7 +571,10 @@ export class ScriptInterpreter {
 
 
   #executeDevFunction(devFun, inputArr, callerNode, execEnv, thisVal) {
-    let {isAsync} = devFun;
+    let {isAsync, typeArr} = devFun;
+    if (typeArr) {
+      verifyTypes(inputArr, typeArr, callerNode, execEnv);
+    }
     let execVars = {
       callerNode: callerNode, execEnv: execEnv, interpreter: this,
       thisVal: thisVal,
@@ -1930,6 +1933,107 @@ export class DevFunction extends FunctionObject {
   get name() {
     return "<anonymous dev function>";
   }
+}
+
+
+
+
+
+
+export function verifyType(val, type, isOptional, node, env) {
+  if (val === undefined) {
+    if (isOptional) {
+      return;
+    }
+    else throw new ArgTypeError(
+      "Value is undefined", node, env
+    );
+  }
+  let typeOfVal = typeof val;
+  switch (type) {
+    case "string":
+      if (typeOfVal !== "string") throw new ArgTypeError(
+        `Value is not a string: ${getString(val)}`,
+        node, env
+      );
+      break;
+    case "number":
+      if (typeOfVal !== "number") throw new ArgTypeError(
+        `Value is not a number: ${getString(val)}`,
+        node, env
+      );
+      break;
+    case "integer":
+      if (typeOfVal !== "number" || parseInt(val) !== val) {
+        throw new ArgTypeError(
+          `Value is not an integer: ${getString(val)}`,
+          node, env
+        );
+      }
+      break;
+    case "integer unsigned":
+      if (typeOfVal !== "number" || parseInt(val) !== val || val < 0) {
+        throw new ArgTypeError(
+          `Value is not a positive integer: ${getString(val)}`,
+          node, env
+        );
+      }
+      break;
+    case "boolean":
+      if (typeOfVal !== "boolean") throw new ArgTypeError(
+        `Value is not a boolean: ${getString(val)}`,
+        node, env
+      );
+      break;
+    case "object":
+      if (getPrototypeOf(val) !== OBJECT_PROTOTYPE) {
+        throw new ArgTypeError(
+          `Value is not a plain object: ${getString(val)}`,
+          node, env
+        );
+      }
+      break;
+    case "object":
+      if (getPrototypeOf(val) !== ARRAY_PROTOTYPE) {
+        throw new ArgTypeError(
+          `Value is not an array: ${getString(val)}`,
+          node, env
+        );
+      }
+      break;
+    case "function":
+      if (!(val instanceof FunctionObject)) {
+        throw new ArgTypeError(
+          `Value is not a function: ${getString(val)}`,
+          node, env
+        );
+      }
+      break;
+    case "module":
+      if (!(val instanceof LiveModule)) {
+        throw new ArgTypeError(
+          `Value is not a live module object: ${getString(val)}`,
+          node, env
+        );
+      }
+      break;
+    case "any":
+      return;
+    default:
+      throw new RuntimeError(
+        "Unrecognized type", node, env
+      );
+  }
+}
+
+
+const TYPE_AND_QM_REGEX = /([^?]*)(\??)/
+
+export function verifyTypes(valArr, typeArr, node, env) {
+  typeArr.forEach((typeStr, ind) => {
+    let [ , type, isOptional] = TYPE_AND_QM_REGEX.exec(typeStr);
+    verifyType(valArr[ind], type, isOptional, node, env);
+  });
 }
 
 
