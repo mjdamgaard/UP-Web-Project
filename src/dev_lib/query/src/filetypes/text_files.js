@@ -101,25 +101,37 @@ export async function query(
       callerNode, execEnv
     );
     let [alias, inputArrBase64] = queryPathArr;
-    if (typeof alias !== "string") throw new RuntimeError(
+    if (!alias) throw new RuntimeError(
       "No function name provided",
       callerNode, execEnv
     );
-    if (typeof inputArrBase64 !== "string") throw new RuntimeError(
-      "No input array provided",
-      callerNode, execEnv
-    );
     let inputArr, isValid = true;
-    try {
-      inputArr = JSON.parse(
-        atob(inputArrBase64.replaceAll("-", "+").replaceAll("_", "/"))
+    if (postData) {
+      try {
+        inputArr = JSON.parse(postData);
+      } catch (err) {
+        isValid = false;
+      }
+      if (!isValid || !(inputArr instanceof Array)) throw new RuntimeError(
+        "Input array not a valid JSON array",
+        callerNode, execEnv
       );
     }
-    catch (err) {
-      isValid = false;
+    else if (typeof inputArrBase64 === "string") {
+      try {
+        inputArr = JSON.parse(
+          atob(inputArrBase64.replaceAll("-", "+").replaceAll("_", "/"))
+        );
+      } catch (err) {
+        isValid = false;
+      }
+      if (!isValid || !(inputArr instanceof Array)) throw new RuntimeError(
+        "Input array not a valid base-64-encoded JSON array",
+        callerNode, execEnv
+      );
     }
-    if (!isValid || !(inputArr instanceof Array)) throw new RuntimeError(
-      "Input array not a valid base-64-encoded JSON array",
+    else throw new RuntimeError(
+      "No input array provided",
       callerNode, execEnv
     );
 
@@ -158,7 +170,7 @@ export async function query(
       callerNode, execEnv
     );
     let [alias, inputArrBase64] = queryPathArr;
-    if (typeof alias !== "string") throw new RuntimeError(
+    if (!alias) throw new RuntimeError(
       "No function name provided",
       callerNode, execEnv
     );
@@ -169,8 +181,12 @@ export async function query(
       } catch (err) {
         isValid = false;
       }
+      if (!isValid || !(inputArr instanceof Array)) throw new RuntimeError(
+        "Input array not a valid JSON array",
+        callerNode, execEnv
+      );
     }
-    if (typeof inputArrBase64 === "string") {
+    else if (typeof inputArrBase64 === "string") {
       try {
         inputArr = JSON.parse(
           atob(inputArrBase64.replaceAll("-", "+").replaceAll("_", "/"))
@@ -178,13 +194,13 @@ export async function query(
       } catch (err) {
         isValid = false;
       }
+      if (!isValid || !(inputArr instanceof Array)) throw new RuntimeError(
+        "Input array not a valid base-64-encoded JSON array",
+        callerNode, execEnv
+      );
     }
     else throw new RuntimeError(
       "No input array provided",
-      callerNode, execEnv
-    );
-    if (!isValid || !(inputArr instanceof Array)) throw new RuntimeError(
-      "Input array not a valid base-64-encoded JSON array",
       callerNode, execEnv
     );
 

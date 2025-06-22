@@ -5,7 +5,7 @@ export function render() {
   return (
     <div>
       <button onClick={() => {
-        post("/1/3/posts.sm.js/postText", "<Something>");
+        post("/1/3/posts.sm.js/callSMF/postText", '["<Something>"]');
       }}>
         {"Post something"}
       </button>
