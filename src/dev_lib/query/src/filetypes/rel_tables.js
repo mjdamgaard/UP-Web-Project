@@ -196,7 +196,7 @@ export async function query(
       l: listID = "", lo = "", hi, n: maxNum, o: numOffset = 0,
       a: isAscending
     } = paramObj;
-    maxNum = parseInt(maxNum);
+    maxNum = parseInt(maxNum);debugger;
     isAscending = parseInt(isAscending);
     if (Number.isNaN(maxNum) || Number.isNaN(isAscending)) {
       throw new RuntimeError(

@@ -116,7 +116,7 @@ export class ScriptInterpreter {
         scriptVars.isExiting = true;
         resolve([output, log]);
       };
-    });
+    }).catch(err => console.error(err));
 
 
     // Now execute the script as a module, followed by an execution of any
@@ -138,12 +138,6 @@ export class ScriptInterpreter {
       else if (err instanceof ReturnException) {
         scriptVars.resolveScript(undefined, new RuntimeError(
           "Cannot return from outside of a function",
-          err.node, err.environment
-        ));
-      }
-      else if (err instanceof CustomException) {
-        scriptVars.resolveScript(undefined, new RuntimeError(
-          `Uncaught exception: "${err.val.toString()}"`,
           err.node, err.environment
         ));
       }
@@ -583,7 +577,9 @@ export class ScriptInterpreter {
     };
     // If the dev function is asynchronous, call it and return a PromiseObject.
     if (isAsync) {
-      let promise = devFun.fun(execVars, inputArr);
+      let promise = devFun.fun(execVars, inputArr).catch(err => {
+        this.throwAsyncException(err, callerNode, execEnv);
+      });;
       return new PromiseObject(promise, this, callerNode, execEnv);
     }
 
@@ -1223,13 +1219,19 @@ export class ScriptInterpreter {
                 expNode, environment
               );
             })
-          ),
+          ).catch(err => {
+            this.throwAsyncException(err, expNode, environment);
+          }),
           this, expNode, environment
         );
       }
       case "import-call": {
         let path = this.evaluateExpression(expNode.pathExp, environment);
-        let namespaceObjPromise = this.import(path, expNode, environment);
+        let namespaceObjPromise = this.import(
+          path, expNode, environment
+        ).catch(err => {
+          this.throwAsyncException(err, expNode, environment);
+        });
         if (expNode.callback) {
           let callback = this.evaluateExpression(expNode.callback, environment);
           this.thenPromise(
@@ -2132,9 +2134,6 @@ export class PromiseObject extends AbstractUHObject {
     super("Promise");
     if (promiseOrFun instanceof Promise) {
       this.promise = promiseOrFun;
-      this.promise.catch(err => {
-        interpreter.throwAsyncException(err, node, env);
-      });
     }
     else {
       let fun = promiseOrFun;

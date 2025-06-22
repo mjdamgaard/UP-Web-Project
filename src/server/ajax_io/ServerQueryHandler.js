@@ -118,7 +118,15 @@ export class ServerQueryHandler {
       body: JSON.stringify(reqData),
     };
     let fetch = this.fetch;
-    let response = await fetch(serverDomainURL + route, options);
+    let response;
+    try {
+      response = await fetch(serverDomainURL + route, options);
+    } catch (err) {
+      if (err instanceof TypeError) {
+        throw new NetworkError(err.message);
+      }
+      else throw err;
+    }
     let responseText = await response.text();
 
 

@@ -331,10 +331,11 @@ class JSXInstance {
     // derived from JSXElement, but throw if jsxElement is the outer element of
     // a component instance.
     if (!(jsxElement instanceof JSXElement)) {
-      if (isOuterElement) throw new RuntimeError(
-        "Components rendering as non-JSX values is not implemented",
-        callerNode, callerEnv
-      );
+      if (isOuterElement) {
+        let newDOMNode = document.createElement("span");
+        newDOMNode.appendChild(sanitize(getString(jsxElement)));
+        return newDOMNode;
+      };
       return sanitize(getString(jsxElement));
     }
 

@@ -91,7 +91,7 @@ export const App = (props) => {
             console.error(getExtendedErrorMsg(log.error));
           }
         }
-      );
+      ).catch(err => console.error(err));
     }
   }, [])
 
