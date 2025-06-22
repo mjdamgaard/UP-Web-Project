@@ -99,12 +99,12 @@ export const arrayToBase64 = new DevFunction(
       if (match) {
         let valExp = getEntry(valArr, ind);
         let val = parseInt(valExp);
-        if (val === NaN) throw new ArgTypeError(
+        if (Number.isNaN(val)) throw new ArgTypeError(
           `Cannot convert a non-integer to a uint type: ${valExp}`,
           callerNode, execEnv
         );
         let len = parseInt(lenExp ? lenExp.slice(1, -1) : 4);
-        if (len === NaN || len < 1 || len > 6) throw new ArgTypeError(
+        if (Number.isNaN(len) || len < 1 || len > 6) throw new ArgTypeError(
           "Integer byte length needs to be between 1 and 6, but got: " +
           lenExp.slice(1, -1),
           callerNode, execEnv
@@ -126,20 +126,20 @@ export const arrayToBase64 = new DevFunction(
       if (match) {
         let valExp = getEntry(valArr, ind);
         let val = parseInt(valExp);
-        if (val === NaN) throw new ArgTypeError(
+        if (Number.isNaN(val)) throw new ArgTypeError(
           `Cannot convert a non-float to a float type: ${valExp}`,
           callerNode, execEnv
         );
         let len = parseInt(lenExp ? lenExp.substring(1) : 4);
-        if (len === NaN || len < 1 || len > 6) throw new ArgTypeError(
+        if (Number.isNaN(len) || len < 1 || len > 6) throw new ArgTypeError(
           "Float byte length needs to be between 1 and 6, but got: " +
           lenExp.substring(1),
           callerNode, execEnv
         );
         let lo = parseFloat(loExp);
         let hi = parseFloat(hiExp);
-        if (lo === NaN || hi === NaN) throw new ArgTypeError(
-          "Invalid float limit: " + (lo === NaN ? loExp : hiExp),
+        if (Number.isNaN(lo) || Number.isNaN(hi)) throw new ArgTypeError(
+          "Invalid float limit: " + (Number.isNaN(lo) ? loExp : hiExp),
           callerNode, execEnv
         );
         if (val < lo || val >= hi) throw new ArgTypeError(
@@ -251,7 +251,7 @@ export const arrayFromBase64 = new DevFunction(
       [match, isUnsigned, lenExp] = type.match(INTEGER_TYPE_REGEX);
       if (match) {
         let len = parseInt(lenExp ? lenExp.slice(1, -1) : 4);
-        if (len === NaN || len < 1 || len > 6) throw new ArgTypeError(
+        if (Number.isNaN(len) || len < 1 || len > 6) throw new ArgTypeError(
           "Integer byte length needs to be between 1 and 6, but got: " +
           lenExp.slice(1, -1),
           callerNode, execEnv
@@ -273,7 +273,7 @@ export const arrayFromBase64 = new DevFunction(
       [match, loExp, hiExp, lenExp] = type.match(FLOAT_TYPE_REGEX);
       if (match) {
         let len = parseInt(lenExp ? lenExp.slice(1, -1) : 4);
-        if (len === NaN || len < 1 || len > 6) throw new ArgTypeError(
+        if (Number.isNaN(len) || len < 1 || len > 6) throw new ArgTypeError(
           "Integer byte length needs to be between 1 and 6, but got: " +
           lenExp.slice(1, -1),
           callerNode, execEnv
@@ -283,8 +283,8 @@ export const arrayFromBase64 = new DevFunction(
 
         let lo = parseFloat(loExp);
         let hi = parseFloat(hiExp);
-        if (lo === NaN || hi === NaN) throw new ArgTypeError(
-          "Invalid float limit: " + (lo === NaN ? loExp : hiExp),
+        if (Number.isNaN(lo) || Number.isNaN(hi)) throw new ArgTypeError(
+          "Invalid float limit: " + (Number.isNaN(lo) ? loExp : hiExp),
           callerNode, execEnv
         );
         if (lo >= hi) throw new ArgTypeError(

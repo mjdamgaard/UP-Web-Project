@@ -23,10 +23,6 @@ CREATE PROCEDURE createUserAccount (
 proc: BEGIN
     DECLARE userID BIGINT UNSIGNED;
     DECLARE profileNum INT UNSIGNED;
-    IF (userName IS NULL OR pwHashSalted IS NULL) THEN
-        SELECT NULL;
-        LEAVE proc;
-    END IF;
 
     IF (emailAddr IS NOT NULL AND emailAddr != "") THEN
         SELECT COUNT(user_id) INTO profileNum

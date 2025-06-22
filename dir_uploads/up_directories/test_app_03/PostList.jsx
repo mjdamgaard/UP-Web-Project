@@ -6,7 +6,7 @@ export function render() {
 
   if (!postList) {
     fetch(
-      "/1/3/posts.att/list/n=50/a=" + (isAscending ? true : false)
+      "/1/3/posts.att/list/n=50/a=" + (isAscending ? 1 : 0)
     ).then(res => {
       if (res) {
         this.setState({...this.state, postList: res});

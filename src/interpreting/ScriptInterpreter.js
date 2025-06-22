@@ -230,13 +230,13 @@ export class ScriptInterpreter {
   }
 
 
-  fetch(route, callerNode, callerEnv) {
+  async fetch(route, callerNode, callerEnv) {
     let fetchFun = callerEnv.scriptVars.liveModules.get("query")
       .members["fetch"];
     let resultPromise = this.executeFunction(
       fetchFun, [route], callerNode, callerEnv
     ).promise;
-    return resultPromise;
+    return await resultPromise;
   }
 
 
@@ -286,9 +286,11 @@ export class ScriptInterpreter {
 
 
 
-  executeSubmoduleOfImportStatement(impStmt, curModulePath, callerModuleEnv) {
+  async executeSubmoduleOfImportStatement(
+    impStmt, curModulePath, callerModuleEnv
+  ) {
     let submodulePath = getFullPath(curModulePath, impStmt.str);
-    return this.import(submodulePath, impStmt, callerModuleEnv);
+    return await this.import(submodulePath, impStmt, callerModuleEnv);
   }
 
 

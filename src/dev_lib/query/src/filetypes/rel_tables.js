@@ -96,11 +96,11 @@ export async function query(
     }
     catch (err) {
       throw new RuntimeError(
-        "Invalid query path",
+        `Invalid query path: ${route}`,
         callerNode, execEnv
       );
     }
-    let {l: listID = "", k: elemKey} = paramObj;
+    let {l: listID = "", k: elemKey = ""} = paramObj;
     return await dbQueryHandler.queryDBProc(
       procName, [homeDirID, filePath, listID, elemKey],
       route, upNodeID, options, callerNode, execEnv,
@@ -128,7 +128,7 @@ export async function query(
     }
     catch (err) {
       throw new RuntimeError(
-        "Invalid query path",
+        `Invalid query path: ${route}`,
         callerNode, execEnv
       );
     }
@@ -159,11 +159,11 @@ export async function query(
     }
     catch (err) {
       throw new RuntimeError(
-        "Invalid query path",
+        `Invalid query path: ${route}`,
         callerNode, execEnv
       );
     }
-    let {l: listID = "", k: elemKey} = paramObj;
+    let {l: listID = "", k: elemKey = ""} = paramObj;
     return await dbQueryHandler.queryDBProc(
       procName, [homeDirID, filePath, listID, elemKey],
       route, upNodeID, options, callerNode, execEnv,
@@ -188,18 +188,22 @@ export async function query(
     }
     catch (err) {
       throw new RuntimeError(
-        "Invalid query path",
+        `Invalid query path: ${route}`,
         callerNode, execEnv
       );
     }
     let {
-      l: listID = "", lo, hi, n: maxNum, o: numOffset, a: isAscending
+      l: listID = "", lo = "", hi, n: maxNum, o: numOffset = 0,
+      a: isAscending
     } = paramObj;
     maxNum = parseInt(maxNum);
-    if (maxNum === NaN || isAscending === undefined) throw new RuntimeError(
-      "Invalid query path for a list query",
-      callerNode, execEnv
-    );
+    isAscending = parseInt(isAscending);
+    if (Number.isNaN(maxNum) || Number.isNaN(isAscending)) {
+      throw new RuntimeError(
+        `Invalid query path for a list query: ${route}`,
+        callerNode, execEnv
+      );
+    }
     payGas(callerNode, execEnv, {dbRead: maxNum / 100});
     return await dbQueryHandler.queryDBProc(
       procName,
@@ -224,18 +228,22 @@ export async function query(
     }
     catch (err) {
       throw new RuntimeError(
-        "Invalid query path",
+        `Invalid query path: ${route}`,
         callerNode, execEnv
       );
     }
     let {
-      l: listID = "", lo, hi, n: maxNum, o: numOffset, a: isAscending = false
+      l: listID = "", lo = "", hi, n: maxNum, o: numOffset = 0,
+      a: isAscending = 0
     } = paramObj;
     maxNum = parseInt(maxNum);
-    if (maxNum === NaN) throw new RuntimeError(
-      "Invalid query path for a list query",
-      callerNode, execEnv
-    );
+    isAscending = parseInt(isAscending);
+    if (Number.isNaN(maxNum) || Number.isNaN(isAscending)) {
+      throw new RuntimeError(
+        `Invalid query path for a list query: ${route}`,
+        callerNode, execEnv
+      );
+    }
     payGas(callerNode, execEnv, {dbRead: maxNum / 100});
     return await dbQueryHandler.queryDBProc(
       procName,
@@ -266,14 +274,19 @@ export async function query(
     }
     catch (err) {
       throw new RuntimeError(
-        "Invalid query path",
+        `Invalid query path: ${route}`,
         callerNode, execEnv
       );
     }
     let {
       l: listID = "", k: elemKey = "", s: elemScore = "", p: elemPayload = "",
-      i: ignore = false,
+      i: ignore = 0,
     } = paramObj;
+    ignore = parseInt(ignore);
+    if (Number.isNaN(ignore)) throw new RuntimeError(
+      `Invalid query path for am insert query: ${route}`,
+      callerNode, execEnv
+    );
     if (postData) {
       elemPayload = postData;
     }
@@ -309,7 +322,7 @@ export async function query(
     }
     catch (err) {
       throw new RuntimeError(
-        "Invalid query path",
+        `Invalid query path: ${route}`,
         callerNode, execEnv
       );
     }

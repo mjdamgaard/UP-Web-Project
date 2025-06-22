@@ -26,14 +26,14 @@ export class ServerQueryHandler {
   }
 
 
-  queryServerFromScript(
+  async queryServerFromScript(
     isPublic, route, isPost, postData, options, upNodeID, node, env
   ) {
     payGas(node, env, {fetch: 1});
     let flags = isPublic ? undefined :
       FlagTransmitter.getTransmittedFlags(env);
     try {
-      return this.queryServer(
+      return await this.queryServer(
         isPublic, route, isPost, postData, options, upNodeID, flags
       );
     }
@@ -46,7 +46,7 @@ export class ServerQueryHandler {
   }
 
 
-  queryServer(
+  async queryServer(
     isPublic, route, isPost, postData, options, upNodeID, flags
   ) {
     if (upNodeID !== OWN_UP_NODE_ID) throw new NetworkError(
@@ -77,7 +77,7 @@ export class ServerQueryHandler {
       );
     }
 
-    return this.request(route, isPublic, reqData);
+    return await this.request(route, isPublic, reqData);
   }
 
 
@@ -85,14 +85,14 @@ export class ServerQueryHandler {
   #requestBuffer = new Map();
 
 
-  request(route, isGET = true, reqData = {}, headers = {}) {
+  async request(route, isGET = true, reqData = {}, headers = {}) {
     let reqKey = JSON.stringify([route, isGET, reqData, headers]);
 
     // If there is already an ongoing request with this reqData object,
     // simply return the promise of that.
     let responsePromise = this.#requestBuffer.get(reqKey);
     if (responsePromise) {
-      return responsePromise;
+      return await responsePromise;
     }
 
     // Send the request.
@@ -104,7 +104,7 @@ export class ServerQueryHandler {
     responsePromise.then(() => {
       this.#requestBuffer.delete(reqKey);
     });
-    return responsePromise;
+    return await responsePromise;
   }
 
 
@@ -127,7 +127,7 @@ export class ServerQueryHandler {
       // error type for server request errors.
       throw new NetworkError(
         "HTTP error " + response.status +
-        (responseText ? ": " + responseText : "")
+        (responseText ? ": " + responseText : ""),
       );
     }
     else {
