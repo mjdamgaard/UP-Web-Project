@@ -582,7 +582,7 @@ export class ScriptInterpreter {
     // If the dev function is asynchronous, call it and return a PromiseObject.
     if (isAsync) {
       let promise = devFun.fun(execVars, inputArr);
-      return new PromiseObject(promise);
+      return new PromiseObject(promise, this, callerNode, execEnv);
     }
 
     // Else call the dev function synchronously and return what it returns.
@@ -593,11 +593,9 @@ export class ScriptInterpreter {
 
 
 
-  handlePromise(promise, callbackFun, callerNode, execEnv) {
+  thenPromise(promise, callbackFun, callerNode, execEnv) {
     promise.then(res => {
       this.#executeAsyncFunction(callbackFun, [res], callerNode, execEnv);
-    }).catch(err => {
-      this.#throwAsyncException(err, callerNode, execEnv);
     });
   }
 
@@ -623,7 +621,7 @@ export class ScriptInterpreter {
     }
   }
 
-  #throwAsyncException(err, callerNode, execEnv) {
+  throwAsyncException(err, callerNode, execEnv) {
     let wasCaught = execEnv.runNearestCatchStmtAncestor(err, callerNode);
     if (!wasCaught) {
       execEnv.scriptVars.resolveScript(undefined, err);
@@ -1211,25 +1209,28 @@ export class ScriptInterpreter {
           "Expression is not iterable",
           expNode.exp, environment
         );
-        return new PromiseObject(Promise.all(
-          expVal.values().map((promiseObject, key) => {
-            if (promiseObject instanceof PromiseObject) {
-              return promiseObject.promise;
-            }
-            else throw new RuntimeError(
-              "Promise.all() received a non-promise-valued element, at " +
-              `index/key = ${key}`,
-              expNode, environment
-            );
-          })
-        ));
+        return new PromiseObject(
+          Promise.all(
+            expVal.values().map((promiseObject, key) => {
+              if (promiseObject instanceof PromiseObject) {
+                return promiseObject.promise;
+              }
+              else throw new RuntimeError(
+                "Promise.all() received a non-promise-valued element, at " +
+                `index/key = ${key}`,
+                expNode, environment
+              );
+            })
+          ),
+          this, expNode, environment
+        );
       }
       case "import-call": {
         let path = this.evaluateExpression(expNode.pathExp, environment);
         let namespaceObjPromise = this.import(path, expNode, environment);
         if (expNode.callback) {
           let callback = this.evaluateExpression(expNode.callback, environment);
-          this.handlePromise(
+          this.thenPromise(
             namespaceObjPromise, callback, expNode, environment
           );
         }
@@ -2128,20 +2129,25 @@ export class PromiseObject extends AbstractUHObject {
     super("Promise");
     if (promiseOrFun instanceof Promise) {
       this.promise = promiseOrFun;
+      this.promise.catch(err => {
+        interpreter.throwAsyncException(err, node, env);
+      });
     }
     else {
       let fun = promiseOrFun;
       this.promise = new Promise((resolve) => {
-        let userResolve = new DevFunction({decEnv: env}, ({}, [res]) => {
+        let userResolve = new DevFunction({}, ({}, [res]) => {
           resolve(res);
         });
         interpreter.executeFunction(fun, [userResolve], node, env);
+      }).catch(err => {
+        interpreter.throwAsyncException(err, node, env);
       });
     }
 
     this.members["then"] = new DevFunction(
       {}, ({callerNode, execEnv, interpreter}, [callbackFun]) => {
-        interpreter.handlePromise(
+        interpreter.thenPromise(
           this.promise, callbackFun, callerNode, execEnv
         );
       }
