@@ -62,7 +62,7 @@ RETURN REPLACE(REPLACE(TO_BASE64(rawStr), "+", "-"), "/", "_");
 
 CREATE FUNCTION fromBase64 (encodedStr VARCHAR(340))
 RETURNS VARBINARY(255) DETERMINISTIC
-RETURN fromBase64(REPLACE(REPLACE(encodedStr, "_", "/"), "-", "+"));
+RETURN FROM_BASE64(REPLACE(REPLACE(encodedStr, "_", "/"), "-", "+"));
 
 
 

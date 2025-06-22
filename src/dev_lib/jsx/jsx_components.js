@@ -297,7 +297,7 @@ class JSXInstance {
       newDOMNode.setAttribute("class", "base_failed");
       this.childInstances.forEach(child => child.dismount());
       this.childInstances = new Map();
-      if (replaceSelf) {
+      if (replaceSelf && this.domNode) {
         this.domNode.replaceWith(newDOMNode);
         this.updateDecoratingAncestors(newDOMNode);
       }
@@ -333,7 +333,7 @@ class JSXInstance {
     if (!(jsxElement instanceof JSXElement)) {
       if (isOuterElement) {
         let newDOMNode = document.createElement("span");
-        newDOMNode.appendChild(sanitize(getString(jsxElement)));
+        newDOMNode.append(sanitize(getString(jsxElement)));
         return newDOMNode;
       };
       return sanitize(getString(jsxElement));
