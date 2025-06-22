@@ -837,8 +837,16 @@ export class ScriptInterpreter {
           case "+=":
             return this.assignToVariableOrMember(
               expNode.exp1, environment, prevVal => {
-                let newVal = parseFloat(prevVal) + parseFloat(
-                  this.evaluateExpression(expNode.exp2, environment)
+                let val = this.evaluateExpression(expNode.exp2, environment);
+                let newVal;
+                if (typeof prevVal === "string" || typeof val === "string") {
+                  newVal = getString(prevVal) + getString(val);
+                }
+                else if (
+                  typeof prevVal !== "number" || typeof val !== "number"
+                ) throw new ArgTypeError(
+                  "Addition of two non-string, non-numerical values",
+                  expNode, environment
                 );
                 return [newVal, newVal];
               }
@@ -983,7 +991,8 @@ export class ScriptInterpreter {
               acc = parseInt(acc) >>> parseInt(nextVal);
               break;
             case "+":
-              acc = (typeof acc === "string") ? acc + nextVal :
+              acc = (typeof acc === "string" || typeof nextVal === "string") ?
+                getString(acc) + getString(nextVal) :
                 parseFloat(acc) + parseFloat(nextVal);
               break;
             case "-":
@@ -1793,10 +1802,13 @@ export class AbstractUHObject {
 
 
 export function getString(val) {
-  if (val.toString instanceof Function) {
-    return val.toString();
+  if (val === undefined) {
+    return "undefined";
   }
-  else if (!(val instanceof Object)) {
+  else if (val === null) {
+    return "null";
+  }
+  else if (val.toString instanceof Function) {
     return val.toString();
   }
   else throw (
