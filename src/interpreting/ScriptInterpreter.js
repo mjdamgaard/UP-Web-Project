@@ -577,7 +577,9 @@ export class ScriptInterpreter {
     };
     // If the dev function is asynchronous, call it and return a PromiseObject.
     if (isAsync) {
-      let promise = devFun.fun(execVars, inputArr);
+      let promise = devFun.fun(execVars, inputArr).catch(err => {
+        this.throwAsyncException(err, callerNode, execEnv);
+      });
       return new PromiseObject(promise, this, callerNode, execEnv);
     }
 
@@ -1217,13 +1219,19 @@ export class ScriptInterpreter {
                 expNode, environment
               );
             })
-          ),
+          ).catch(err => {
+            this.throwAsyncException(err, expNode, environment);
+          }),
           this, expNode, environment
         );
       }
       case "import-call": {
         let path = this.evaluateExpression(expNode.pathExp, environment);
-        let namespaceObjPromise = this.import(path, expNode, environment);
+        let namespaceObjPromise = this.import(
+          path, expNode, environment
+        ).catch(err => {
+          this.throwAsyncException(err, expNode, environment);
+        });
         if (expNode.callback) {
           let callback = this.evaluateExpression(expNode.callback, environment);
           this.thenPromise(
@@ -2126,9 +2134,6 @@ export class PromiseObject extends AbstractUHObject {
     super("Promise");
     if (promiseOrFun instanceof Promise) {
       this.promise = promiseOrFun;
-      this.promise.catch(err => {
-        interpreter.throwAsyncException(err, node, env);
-      });
     }
     else {
       let fun = promiseOrFun;

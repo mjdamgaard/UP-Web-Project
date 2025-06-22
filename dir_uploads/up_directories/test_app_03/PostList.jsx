@@ -21,7 +21,7 @@ export function render() {
 
   return (
     <div>
-      {postList.map(row => <div>{row}</div>)}
+      {postList}
     </div>
   );
 }
