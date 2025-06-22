@@ -317,12 +317,13 @@ export class ScriptInterpreter {
           callerNode, callerEnv
         );
         try {
-          let liveModulePromise = new Promise(async (resolve) => {
-            let devMod = await import(devLibURL);
-            let liveModule = new LiveModule(
-              modulePath, Object.entries(devMod), globalEnv.scriptVars
-            );
-            resolve(liveModule);
+          let liveModulePromise = new Promise((resolve, reject) => {
+            import(devLibURL).then(devMod => {
+              let liveModule = new LiveModule(
+                modulePath, Object.entries(devMod), globalEnv.scriptVars
+              );
+              resolve(liveModule);
+            }).catch(err => reject(err));
           });
           liveModules.set(modulePath, liveModulePromise);
           liveModule = await liveModulePromise;
@@ -367,11 +368,14 @@ export class ScriptInterpreter {
 
       // Then execute the module, inside the global environment, and return the
       // resulting liveModule, after also adding it to liveModules.
-      let liveModulePromise = new Promise(async (resolve) => {
-        let [liveModule] = await this.executeModule(
+      let liveModulePromise = new Promise((resolve, reject) => {
+        this.executeModule(
           submoduleNode, lexArr, strPosArr, script, modulePath, globalEnv
+        ).then(
+          ([liveModule]) => resolve(liveModule)
+        ).catch(
+          err => reject(err)
         );
-        resolve(liveModule);
       });
       liveModules.set(modulePath, liveModulePromise);
       liveModule = await liveModulePromise;
@@ -2137,7 +2141,7 @@ export class PromiseObject extends AbstractUHObject {
     }
     else {
       let fun = promiseOrFun;
-      this.promise = new Promise((resolve) => {
+      this.promise = new Promise(resolve => {
         let userResolve = new DevFunction({}, ({}, [res]) => {
           resolve(res);
         });
