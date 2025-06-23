@@ -18,6 +18,12 @@ export function render() {
   );
 }
 
+export const actions = {
+  "increaseCount": function() {
+    this.setState({...this.state, count: (this.state.count ?? 0) + 1});
+  }
+};
+
 function increaseCount() {
-  this.setState({...this.state, count: (this.state.count ?? 0) + 1});
+  this.dispatch("increaseCount");
 }

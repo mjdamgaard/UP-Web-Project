@@ -310,7 +310,13 @@ export class ScriptInterpreter {
     if (modulePath[0] !== "/") {
       let devMod;
       devMod = this.staticDevLibs.get(modulePath);
-      if (!devMod) {
+      if (devMod) {
+        liveModule = new LiveModule(
+          modulePath, Object.entries(devMod), globalEnv.scriptVars
+        );
+        liveModules.set(modulePath, liveModule);
+      }
+      else {
         let devLibURL = this.devLibURLs.get(modulePath);
         if (!devLibURL) throw new LoadError(
           `Developer library "${modulePath}" not found`,
@@ -336,12 +342,6 @@ export class ScriptInterpreter {
           );
         }
       }
-
-      // If the dev library module was found, create a "liveModule" object from
-      // it and return that.
-      let liveModule = new LiveModule(
-        modulePath, Object.entries(devMod), globalEnv.scriptVars
-      );
       return liveModule;
     }
 

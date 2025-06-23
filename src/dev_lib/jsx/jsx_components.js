@@ -375,7 +375,7 @@ class JSXInstance {
       let childInstance = this.childInstances.get(key);
       if (
         !childInstance ||
-        childInstance.componentPath !== componentModule.componentPath
+        childInstance.componentPath !== componentModule.modulePath
       ) {
         childInstance = new JSXInstance(
           componentModule, key, this, jsxElement.node, jsxElement.decEnv
