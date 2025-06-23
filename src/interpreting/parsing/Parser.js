@@ -497,6 +497,9 @@ export class Parser {
                 ruleSuccess = true;
                 break;
               } else {
+                if (nextPos - ruleSymPos >= doOrDieLevel) {
+                  doOrDie = true;
+                }
                 continue;
               }
             }

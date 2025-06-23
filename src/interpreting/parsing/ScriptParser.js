@@ -785,9 +785,9 @@ export const scriptGrammar = {
   "jsx-element": {
     rules: [
       ["/</", "/>/", "jsx-content!1*", "/</", /\/>/],
-      ["/</", "tag-name", "jsx-property*", /\/>/],
+      ["/</", "tag-name", "jsx-property!1*", /\/>/],
       [
-        "/</", "tag-name", "jsx-property*", "/>/", "jsx-content!1*",
+        "/</", "tag-name", "jsx-property!1*", "/>/", "jsx-content!1*",
         /<\//, "tag-name", />/
       ],
     ],
