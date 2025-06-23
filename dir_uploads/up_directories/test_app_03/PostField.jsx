@@ -6,9 +6,7 @@ export function render() {
   return (
     <div>
       <div>
-        <Textarea key={0} onChange={(val) => {
-          this.setState({...this.state, count: this.state.count ?? 0 + 1})
-        }}/>
+        <Textarea key={0} onChange={increaseCount}/>
       </div>
       <button onClick={() => {
         post("/1/3/posts.sm.js/callSMF/postText", '["<Something>"]');
@@ -18,4 +16,8 @@ export function render() {
       <div>{"Number of times changed: "}{this.state.count ?? 0}</div>
     </div>
   );
+}
+
+function increaseCount() {
+  this.setState({...this.state, count: this.state.count ?? 0 + 1});
 }

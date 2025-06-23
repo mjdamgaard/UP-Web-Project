@@ -464,8 +464,8 @@ export const scriptGrammar = {
   },
   "expression": {
     rules: [
-      ["parameter-tuple", "/=>/", "function-body"],
-      ["identifier", "/=>/", "function-body"],
+      ["parameter-tuple", "/=>/", "function-body!"],
+      ["identifier", "/=>/", "function-body!"],
       ["/function/", "parameter-tuple", "function-body!"],
       ["destructuring", "/=/", "expression!"],
       ["expression^(1)", /=|\+=|\-=|\*=|\/=|&&=|\|\|=|\?\?=/, "expression!"],
