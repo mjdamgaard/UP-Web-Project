@@ -4,6 +4,7 @@ import {
   getString, AbstractUHObject, forEachValue, CLEAR_FLAG, deepCopy,
   OBJECT_PROTOTYPE, ArgTypeError, Environment, getPrototypeOf,
   ARRAY_PROTOTYPE,
+  FunctionObject,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUEST_ORIGIN_FLAG
@@ -244,7 +245,7 @@ class JSXInstance {
     // returns a DOM node directly, wrapped in the DOMNodeWrapper class
     // defined below, in which case just use that DOM node.
     let newDOMNode, ownDOMNodes = [];
-    if (jsxElement instanceof DOMNodeWrapper) {
+    if (jsxElement instanceof DOMNodeObject) {
       newDOMNode = jsxElement.domNode;
     }
     else {
@@ -443,29 +444,34 @@ class JSXInstance {
           // bleeding the CAN_POST and REQUEST_ORIGIN privileges granted to
           // this onClick handler function into the parent instance. 
           case "onClick": {
-            newDOMNode.onclick = async () => {
+            if (!(val instanceof FunctionObject)) {
+              break;
+            }
+            newDOMNode.onclick = () => {
               // Get the request origin, and whether the client trusts that
               // origin (which is a JSX component).
               let requestOrigin = this.requestOrigin;
-              let isTrusted
               if (requestOrigin) {
-                isTrusted = await this.settingsStore.get(
+                this.settingsStore.get(
                   requestOrigin, callerNode, callerEnv
-                ).isTrusted
-              }
-
-              // Then execute the function object held in val, with elevated
-              // privileges that allows the function to make POST-like requests. 
-              interpreter.executeFunction(
-                val, [], callerNode, callerEnv,
-                new JSXInstanceInterface(this), [
-                  CAN_POST_FLAG,
-                  [COMPONENT_INSTANCE_FLAG, this],
-                  [REQUEST_ORIGIN_FLAG, requestOrigin],
-                  [CLIENT_TRUST_FLAG, isTrusted],
-                ]
-              );
-            }
+                ).catch(
+                  err => console.error(err)
+                ).then(({isTrusted}) => {
+                  // Then execute the function object held in val, with
+                  // elevated privileges that allows the function to make POST-
+                  // like requests. 
+                  interpreter.executeFunction(
+                    val, [], callerNode, callerEnv,
+                    new JSXInstanceInterface(this), [
+                      CAN_POST_FLAG,
+                      [COMPONENT_INSTANCE_FLAG, this],
+                      [REQUEST_ORIGIN_FLAG, requestOrigin],
+                      [CLIENT_TRUST_FLAG, isTrusted],
+                    ]
+                  );
+                });
+                }
+            };
             break;
           }
           default: throw new RuntimeError(
@@ -771,7 +777,7 @@ class SettingsStore {
 
 
 
-class DOMNodeWrapper extends AbstractUHObject {
+export class DOMNodeObject extends AbstractUHObject {
   constructor(domNode) {
     super("DOMNode");
     this.domNode = domNode;

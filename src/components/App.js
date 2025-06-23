@@ -14,13 +14,15 @@ import {runTests} from "../testing/parsing_interpreting_tests.js";
 /* Static developer libraries */
 
 import * as queryMod from "../dev_lib/query/query.js";
-import * as jsxMod from "../dev_lib/jsx/jsx_components.js";
 import * as basicGetSettingsMod from "../dev_lib/jsx/settings/basic.js";
+import * as jsxMod from "../dev_lib/jsx/jsx_components.js";
+import * as textareaCompMod from "../dev_lib/jsx/dev_components/Textarea.js";
 
 const staticDevLibs = new Map();
 staticDevLibs.set("query", queryMod);
+staticDevLibs.set("settings1", basicGetSettingsMod);
 staticDevLibs.set("jsx", jsxMod);
-staticDevLibs.set("jsx/settings/basic", basicGetSettingsMod);
+staticDevLibs.set("Textarea.jsx", textareaCompMod);
 
 
 
@@ -62,7 +64,7 @@ setInterval(
 const TEST_APP_ID = 3;
 const appScript = `
   import {createJSXApp} from 'jsx';
-  import {getSettings} from 'jsx/settings/basic';
+  import {getSettings} from 'settings1';
   import * as testApp from "/1/${TEST_APP_ID}/main.jsx";
 
   export function main() {
