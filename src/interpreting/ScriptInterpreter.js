@@ -1280,7 +1280,7 @@ export class ScriptInterpreter {
           let {isExiting, log} = environment.scriptVars;
           let expVal = this.evaluateExpression(expNode.exp, environment);
           if (!this.isServerSide && !isExiting) {
-            console.log(getVerboseString(expVal));
+            console.log(expVal);
           }
           log.entries.push(expVal);
           return undefined;
@@ -1484,7 +1484,10 @@ export class ScriptInterpreter {
         // object's properties directly, get from the objects 'members'
         // property. Also check against accessing members of a non-object.
         let objProto = getPrototypeOf(objVal);
-        if (objProto !== OBJECT_PROTOTYPE) {
+        if (objProto === OBJECT_PROTOTYPE) {
+          val = Object.hasOwn(objVal, key) ? objVal[key] : undefined;
+        }
+        else {
           if (objProto === ARRAY_PROTOTYPE) {
             if (key === "length"){
               val = objVal.length;
@@ -2234,9 +2237,6 @@ export class ArgTypeError extends RuntimeError {
 
 
 
-export function getVerboseString(val) {
-  return (val.stringify instanceof Function) ? val.stringify() : val.toString();
-}
 
 
 

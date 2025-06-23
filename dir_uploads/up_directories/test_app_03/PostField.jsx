@@ -19,5 +19,7 @@ export function render() {
 }
 
 function increaseCount() {
-  this.setState({...this.state, count: this.state.count ?? 0 + 1});
+  console.log(this.state);
+  console.log(this.state.count);
+  // this.setState({...this.state, count: (this.state.count ?? 0) + 1});
 }
