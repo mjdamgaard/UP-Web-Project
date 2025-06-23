@@ -1,5 +1,7 @@
 
-import {FunctionObject, DevFunction} from "../../../interpreting/ScriptInterpreter.js";
+import {
+  FunctionObject, DevFunction
+} from "../../../interpreting/ScriptInterpreter.js";
 import {DOMNodeObject} from "../jsx_components.js";
 
 
@@ -43,8 +45,8 @@ export const render = new DevFunction(
 export const methods = {
   "getValue": new DevFunction(
     {},
-    function({thisVal: jsxInstance}, []) {
-      return jsxInstance.domNode.value;
+    function({thisVal}, []) {
+      return thisVal.jsxInstance.domNode.value;
     }
   ),
 };

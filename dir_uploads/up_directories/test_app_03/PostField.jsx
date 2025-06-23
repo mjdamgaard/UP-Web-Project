@@ -10,9 +10,14 @@ export function render() {
         <Textarea key={0} onChange={increaseCount}/>
       </div>
       <button onClick={() => {
-        post(homePath + "/posts.sm.js/callSMF/postText", '["<Something>"]');
+        let textVal = this.call(0, "getValue#?=$@#!");
+        // TODO: Make a 'strings' dev library with a stringify() function in
+        // particular, and use it here:
+        if (textVal) {
+          post(homePath + "/posts.sm.js/callSMF/postText", '"' + textVal + '"');
+        }
       }}>
-        {"Post something"}
+        {"Post"}
       </button>
       <div>{"Number of times changed: "}{this.state.count ?? 0}</div>
     </div>
@@ -21,7 +26,7 @@ export function render() {
 
 export const actions = {
   "increaseCount": function() {
-    this.setState({...this.state, count: (this.state.count ?? 0) + 1});
+    // this.setState({...this.state, count: (this.state.count ?? 0) + 1});
   }
 };
 

@@ -570,13 +570,15 @@ class JSXInstance {
   call(
     instanceKey, methodKey, input, interpreter, callerNode, callerEnv
   ) {
+    instanceKey = getString(instanceKey);
+
     // First get the target instance.
     let targetInstance;
     if (!instanceKey || instanceKey === "self") {
       targetInstance = this;
     }
     else {
-      targetInstance = this.childInstances.get(getString(instanceKey));
+      targetInstance = this.childInstances.get(instanceKey);
     }
     if (!targetInstance) throw new RuntimeError(
       `No child instance found with the key of "${instanceKey}"`,
