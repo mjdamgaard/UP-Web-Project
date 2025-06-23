@@ -120,6 +120,11 @@ export class DirectoryUploader {
             serverQueryHandler.post(`/1/${childRelPath}/_put`)
           );
         }
+        else {
+          uploadPromises.push(
+            serverQueryHandler.post(`/1/${childRelPath}/_touch`)
+          );
+        }
       }
 
       // TODO: Implement some abstract DB table files as well.

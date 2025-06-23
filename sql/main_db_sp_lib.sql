@@ -411,7 +411,7 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (NOT textID) THEN
+    IF (textID IS NULL) THEN
         DO GET_LOCK(CONCAT("ATT", fileID), 10);
 
         SELECT IFNULL(MAX(text_id), 0) + 1 INTO newTextID
@@ -1343,3 +1343,41 @@ BEGIN
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE TABLE IF NOT EXISTS DebugLogEntries (
+
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    msg VARCHAR(1000)
+);
+
+DELIMITER //
+CREATE PROCEDURE IF NOT EXISTS logMsg (
+    IN logMessage VARCHAR(1000)
+)
+BEGIN
+    INSERT INTO DebugLogEntries (msg)
+    VALUE (logMessage);
+END //
+DELIMITER ;
+
+DELETE FROM DebugLogEntries;
+
+-- DROP TABLE DebugLogEntries;
+-- DROP PROCEDURE logMsg;

@@ -220,28 +220,3 @@ CREATE TABLE ServerModuleGas (
 
 ) ROW_FORMAT = COMPRESSED;
 
-
-
-
-
-
-
-
-
-
--- CREATE TABLE DebugLogEntries (
-
---     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
---     msg VARCHAR(1000)
--- );
-
--- DELIMITER //
--- CREATE PROCEDURE logMsg (
---     IN logMessage VARCHAR(1000)
--- )
--- BEGIN
---     INSERT INTO DebugLogEntries (msg)
---     VALUE (logMessage);
--- END //
--- DELIMITER ;
