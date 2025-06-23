@@ -327,30 +327,36 @@ class JSXInstance {
     jsxElement, marks, interpreter, callerNode, callerEnv, ownDOMNodes,
     isOuterElement = true
   ) {
-    // If jsxElement is not a JSXElement instance, return a sanitized string
-    // derived from JSXElement, but throw if jsxElement is the outer element of
-    // a component instance.
-    if (!(jsxElement instanceof JSXElement)) {
+    // If jsxElement is not a JSXElement instance, return a string derived from
+    // JSXElement, except if it is an outer element, in which case wrap it in
+    // a span element.
+    let isArray = jsxElement instanceof Array;
+    if (!(jsxElement instanceof JSXElement) && !isArray) {
       if (isOuterElement) {
         let newDOMNode = document.createElement("span");
-        newDOMNode.append(sanitize(getString(jsxElement)));
+        if (jsxElement !== undefined) newDOMNode.append(getString(jsxElement));
         return newDOMNode;
-      };
-      return sanitize(getString(jsxElement));
+      }
+      else return getString(jsxElement);
     }
 
-    // If jsxElement is a fragment, we also check against it being an outer
-    // element, as fragment components are also not implemented (at least yet).
-    // And if not, we render each contained JSX element/content individually,
+    // If jsxElement is a fragment, we render each of its children individually,
     // and return an array of all these values, some of which are DOM nodes and
-    // some of which are strings.
-    if (jsxElement.isFragment) {
-      let children = jsxElement.props["children"] ?? [];
-      return children.map(val => (
+    // some of which are strings. This is unless the element is an outer one,
+    // in which case we wrap it in a div element.
+    if (jsxElement.isFragment || isArray) {
+      let children = isArray ? jsxElement : jsxElement.props["children"] ?? [];
+      let ret = children.map(val => (
         this.getDOMNode(
           val, marks, interpreter, callerNode, callerEnv, ownDOMNodes, false
         )
       ));
+      if (isOuterElement) {
+        let newDOMNode = document.createElement("div");
+        if (jsxElement !== undefined) newDOMNode.append(...children);
+        return newDOMNode;
+      }
+      else return ret;
     }
 
     // If componentModule is defined, render the component instance.
