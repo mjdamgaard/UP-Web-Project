@@ -13,30 +13,31 @@ export const render = new DevFunction(
     let domNode = jsxInstance.domNode ?? document.createElement("textarea");
     let onChangeFun = props.onChange;
     if (onChangeFun instanceof FunctionObject) {
+      // Set an input event, but do it in a way that it is delayed for some
+      // milliseconds, and where a new oninput event fired in the meantime will
+      // basically overwrite the existing one. 
+      let ref = [];
       domNode.oninput = () => {
-        interpreter.executeFunction(
-          onChangeFun, [], callerNode, execEnv, thisVal,
-        );
-        domNode.focus();
-        domNode.setAttribute("autofocus", "");
+        let eventID = ref[0] = {};
         setTimeout(() => {
-          domNode.focus();
-          domNode.removeAttribute("autofocus");
-        }, 0);
+          if (ref[0] !== eventID) return;
+          // TODO: Make sure that this will not cause uncaught async errors,
+          // which it probably will at this point..
+          interpreter.executeFunction(
+            onChangeFun, [], callerNode, execEnv, thisVal,
+          );
+          // This prevents the loss of focus for but a brief moment if an
+          // ancestor component rerenders as a consequence of the input event.
+          setTimeout(() => {
+            domNode.focus();
+          }, 0);
+        }, 50);
       };
     }
     return new DOMNodeObject(domNode);
   }
 );
 
-
-// export const getInitState = new DevFunction(
-//   {typeArr: ["object?"]}, function(
-//     {}, [props = {}]
-//   ) {
-//     return {focus: props.autoFocus ? true : false}
-//   }
-// );
 
 
 export const methods = {

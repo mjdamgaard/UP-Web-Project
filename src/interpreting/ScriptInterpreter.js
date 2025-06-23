@@ -611,6 +611,8 @@ export class ScriptInterpreter {
       this.executeFunction(fun, inputArr, callerNode, execEnv, thisVal);
     }
     catch (err) {
+      // TODO: Change: I shouldn't resolveScript() on all async
+      // errors.
       if (err instanceof RuntimeError) {
         let wasCaught = execEnv.runNearestCatchStmtAncestor(err, callerNode);
         if (!wasCaught) {
