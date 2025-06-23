@@ -470,7 +470,16 @@ class JSXInstance {
                     ]
                   );
                 });
-                }
+              }
+              else {
+                interpreter.executeFunction(
+                  val, [], callerNode, callerEnv,
+                  new JSXInstanceInterface(this), [
+                    CAN_POST_FLAG,
+                    [COMPONENT_INSTANCE_FLAG, this],
+                  ]
+                );
+              }
             };
             break;
           }

@@ -37,7 +37,7 @@ export class DBQueryHandler {
 
     // Get a connection the the main DB, if one is not provided as part of
     // options.
-    let releaseAfter = conn ? true : false; 
+    let releaseAfter = !conn; 
     conn ??= this.#getMainDBConn();
 
     // Generate the SQL (with '?' placeholders in it).

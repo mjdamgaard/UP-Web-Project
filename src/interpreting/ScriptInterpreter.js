@@ -468,9 +468,6 @@ export class ScriptInterpreter {
       let val = this.evaluateExpression(stmtNode.exp, environment);
       environment.declare(stmtNode.ident, val, true, stmtNode);
       environment.export(stmtNode.ident, undefined, stmtNode);
-      if (stmtNode.isDefault) {
-        environment.export(stmtNode.ident, "default", stmtNode);
-      }
     }
     else if (stmtNode.subtype === "function-export") {
       this.executeStatement(stmtNode.stmt, environment);

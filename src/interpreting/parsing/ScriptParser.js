@@ -103,10 +103,7 @@ export const scriptGrammar = {
   },
   "export-statement": {
     rules: [
-      [
-        "/export/", "/default/?", "/const/", "identifier!", "/=/",
-        "expression", "/;/"
-      ],
+      ["/export/", "/const/", "identifier!", "/=/", "expression", "/;/"],
       ["/export/", "/default/?", "function-declaration!1"],
       ["/export/", "/default/", "expression-statement"],
       ["/export/", /\{/, "named-export-list!1?", /\}/, "/;/"],
@@ -116,10 +113,8 @@ export const scriptGrammar = {
         return {
           type: "export-statement",
           subtype: "variable-export",
-          isDefault: children[1][0] ? true : false,
-          // isConst: children[2] === "const",
-          ident: children[3].ident,
-          exp: children[5],
+          ident: children[2].ident,
+          exp: children[4],
         };
       }
       else if (ruleInd === 1) {
@@ -136,7 +131,7 @@ export const scriptGrammar = {
           type: "export-statement",
           subtype: "anonymous-export",
           isDefault: true,
-          exp: children[2],
+          exp: children[2].exp,
         };
       }
       else {

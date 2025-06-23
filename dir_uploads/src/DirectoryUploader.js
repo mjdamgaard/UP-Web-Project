@@ -29,10 +29,11 @@ export class DirectoryUploader {
     let serverQueryHandler = new ServerQueryHandler(token, fetch);
 
     // Read the dirID.
-    let idFilePath = path.normalize(dirPath + "/.id");
+    let idFilePath = path.normalize(dirPath + "/.id.js");
     let dirID;
     try {
-      dirID = fs.readFileSync(idFilePath, 'utf8');
+      let contents = fs.readFileSync(idFilePath, 'utf8');
+      [ , dirID] = /\/[0-9A-F]+\/([0-9A-F]+)/.exec(contents) ?? [];
     } catch (_) {}
 
     // If no dirID was gotten, request the server to create a new directory and
@@ -42,7 +43,9 @@ export class DirectoryUploader {
         `/1/mkdir/a=${userID}`
       ) ?? [];
       [dirID] = resultRow;
-      fs.writeFileSync(idFilePath, `${dirID ?? ""}`);
+      fs.writeFileSync(
+        idFilePath, dirID ? `export default "/1/${dirID}";` : ""
+      );
     }
 
     // Request a list of all the files in the server-side directory, and then
@@ -97,7 +100,7 @@ export class DirectoryUploader {
 
       // If the file has no extensions, treat it as a folder, and call this
       // helper method recursively.
-      if (name.indexOf(".") <= 0) {
+      if (/^\.*[^.]+$/.test(name)) {
         this.#uploadDirHelper(
           childAbsPath, credentials, childRelPath, deleteTableData,
           uploadPromises, serverQueryHandler

@@ -1,5 +1,6 @@
 
 import {post} from 'query';
+import homePath from "./.id.js";
 import * as Textarea from 'Textarea.jsx';
 
 export function render() {
@@ -9,7 +10,7 @@ export function render() {
         <Textarea key={0} onChange={increaseCount}/>
       </div>
       <button onClick={() => {
-        post("/1/3/posts.sm.js/callSMF/postText", '["<Something>"]');
+        post(homePath + "/posts.sm.js/callSMF/postText", '["<Something>"]');
       }}>
         {"Post something"}
       </button>
