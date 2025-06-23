@@ -1848,7 +1848,7 @@ export function jsonStringify(val) {
     throw "User has access to an object that they shouldn't have";
   }
   else {
-    return JSON.stringify(val);
+    return JSON.stringify(val ?? null);
   }
 }
 
@@ -2351,13 +2351,17 @@ export function getExtendedErrorMsg(err) {
   else if (err instanceof RuntimeError) {
     type = "RuntimeError";
   }
-  else throw err;
+  else {
+    console.error(err);
+    return err.toString();
+  }
 
   // Get the message defined by error.val.
   let msg = JSON.stringify(err?.val ?? null);
 
   // If error is thrown from the global environment, return an appropriate error
   // message.
+  if (!err.environment) console.error("Missing environment for thrown error!");
   let {
     modulePath, lexArr, strPosArr, script
   } = err.environment.getModuleEnv() ?? {};
@@ -2376,7 +2380,7 @@ export function getExtendedErrorMsg(err) {
     let codeSnippet =
       script.substring(strPos - SNIPPET_BEFORE_MAX_LEN, strPos) +
       " ▶▶▶" + script.substring(strPos, finStrPos) + "◀◀◀ " +
-      script.substring(finStrPos, SNIPPET_AFTER_MAX_LEN);
+      script.substring(finStrPos, finStrPos + SNIPPET_AFTER_MAX_LEN);
     return (
       type + ` in ${modulePath ?? "root script"} at Ln ${ln}, Col ${col}: ` +
       `${msg}. Error occurred at \`\n${codeSnippet}\n\`.`

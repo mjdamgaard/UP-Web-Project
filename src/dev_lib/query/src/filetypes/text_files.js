@@ -1,6 +1,6 @@
 
 import {
-  RuntimeError, payGas, DevFunction, CLEAR_FLAG, PromiseObject,
+  RuntimeError, payGas, DevFunction, CLEAR_FLAG, PromiseObject, FunctionObject,
 } from "../../../../interpreting/ScriptInterpreter.js";
 
 import {
@@ -63,7 +63,7 @@ export async function query(
       `Invalid route: ${route}`,
       callerNode, execEnv
     );
-    let [alias] = queryPathArr;
+    let [ , alias] = queryPathArr;
     if (typeof alias !== "string") throw new RuntimeError(
       "No variable name provided",
       callerNode, execEnv
@@ -76,7 +76,7 @@ export async function query(
         {isAsync: true, flags: [CLEAR_FLAG]},
         async ({interpreter}, []) => {
           let liveModule = await interpreter.import(
-            `/1/${homeDirID}/${filePath}`
+            `/1/${homeDirID}/${filePath}`, callerNode, execEnv
           );
           return liveModule.members[alias];
         }
@@ -100,7 +100,7 @@ export async function query(
       `Invalid route: ${route}`,
       callerNode, execEnv
     );
-    let [alias, inputArrBase64] = queryPathArr;
+    let [ , alias, inputArrBase64] = queryPathArr;
     if (!alias) throw new RuntimeError(
       "No function name provided",
       callerNode, execEnv
@@ -140,26 +140,22 @@ export async function query(
     // permission-granting flags for the module's execution environment. And
     // when the liveModule is gotten, get and execute the function, also within
     // the same enclosed execution environment.
-    let resultPromise = new Promise((resolve, reject) => {
-      interpreter.import(
-        `/1/${homeDirID}/${filePath}`, undefined, undefined
-      ).then(liveModule => {
-        let fun = liveModule.members[alias];
-        let result = interpreter.executeFunction(
-          fun, inputArr, callerNode, execEnv, undefined, [CLEAR_FLAG]
-        );
-        if (result instanceof PromiseObject) {
-          result = result.promise.then(
-            (res) => resolve(res)
-          ).catch(
-            err => reject(err)
-          );
-        }
-      }).catch(
-        err => reject(err)
+    return await (async() => {
+      let liveModule = await interpreter.import(
+        `/1/${homeDirID}/${filePath}`, callerNode, execEnv
       );
-    })
-    return await resultPromise;
+      let fun = liveModule.members[alias];
+      if (!(fun instanceof FunctionObject)) throw new RuntimeError(
+        `No function of name '${alias}' is exported from ${route}`
+      );
+      let result = interpreter.executeFunction(
+        fun, inputArr, callerNode, execEnv, undefined, [CLEAR_FLAG]
+      );
+      if (result instanceof PromiseObject) {
+        result = await result.promise;
+      }
+      return result;
+    })();
   }
 
   // If route equals ".../<homeDirID>/<filePath>/callSMF/<alias>/" +
@@ -175,7 +171,7 @@ export async function query(
       `Invalid route: ${route}`,
       callerNode, execEnv
     );
-    let [alias, inputArrBase64] = queryPathArr;
+    let [ , alias, inputArrBase64] = queryPathArr;
     if (!alias) throw new RuntimeError(
       "No function name provided",
       callerNode, execEnv
@@ -221,31 +217,28 @@ export async function query(
     // like system will treat the calls as originating from that SMF, and not
     // whatever current module (be it a JSX component module or an SM) queried
     // this /callSMF route.
-    let resultPromise = new Promise((resolve, reject) => {
-      interpreter.import(
-        `/1/${homeDirID}/${filePath}`, undefined, undefined
-      ).then(liveModule => {
-        let fun = liveModule.members[alias];
-        let newReqOrigin = execEnv.getFlag(CURRENT_MODULE_FLAG);
-        let result = interpreter.executeFunction(
-          fun, inputArr, callerNode, execEnv, undefined, [
-            [CURRENT_MODULE_FLAG, route],
-            [REQUEST_ORIGIN_FLAG, newReqOrigin],
-            [ADMIN_PRIVILEGES_FLAG, homeDirID],
-          ]
-        );
-        if (result instanceof PromiseObject) {
-          result = result.promise.then(
-            (res) => resolve(res)
-          ).catch(
-            err => reject(err)
-          );
-        }
-      }).catch(
-        err => reject(err)
+    return await (async() => {
+      let liveModule = await interpreter.import(
+        `/1/${homeDirID}/${filePath}`, callerNode, execEnv
       );
-    })
-    return await resultPromise;
+      let fun = liveModule.members[alias];
+      if (!(fun instanceof FunctionObject)) throw new RuntimeError(
+        `No function of name '${alias}' is exported from ${route}`,
+        callerNode, execEnv
+      );
+      let newReqOrigin = execEnv.getFlag(CURRENT_MODULE_FLAG);
+      let result = interpreter.executeFunction(
+        fun, inputArr, callerNode, execEnv, undefined, [
+          [CURRENT_MODULE_FLAG, route],
+          [REQUEST_ORIGIN_FLAG, newReqOrigin],
+          [ADMIN_PRIVILEGES_FLAG, homeDirID],
+        ]
+      );
+      if (result instanceof PromiseObject) {
+        result = await result.promise;
+      }
+      return result;
+    })();
   }
 
 

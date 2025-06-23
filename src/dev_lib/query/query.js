@@ -140,6 +140,8 @@ export const post = new DevFunction(
 export const getCurHomeDirPath = new DevFunction(
   {},
   function({execEnv}, []) {
-    return execEnv.getFlag(CURRENT_MODULE_FLAG);
+    let curRoute = execEnv.getFlag(CURRENT_MODULE_FLAG) ?? "";
+    let [ret] = curRoute.match(/^\/[^/]+\/[^/]+/g) ?? [];
+    return ret; 
   }
 );

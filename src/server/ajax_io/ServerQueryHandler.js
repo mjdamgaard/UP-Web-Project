@@ -179,7 +179,11 @@ function fromMIMEType(val, mimeType) {
     return val;
   }
   else if (mimeType === "application/json") {
-    return JSON.parse(val);
+    try {
+      return JSON.parse(val);
+    } catch(err) {
+      throw "Invalid application/json data received from server";
+    }
   }
   else throw (
     `fromMIMEType(): Unrecognized/un-implemented MIME type: ${mimeType}`
