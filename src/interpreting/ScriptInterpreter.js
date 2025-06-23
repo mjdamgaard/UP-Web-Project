@@ -1886,11 +1886,13 @@ export function getPrototypeOf(value) {
 }
 
 
+
+// deepCopy() deep-copies the object and all ist nested properties except for
+// any AbstractUHObject extensions (but so far, none of those are mutable
+// anyway by the user).
 export function deepCopy(value) {
     if (value instanceof AbstractUHObject) {
-      let ret = Object.create(value);
-      ret.members = deepCopy(ret.members);
-      return ret;
+      return value;
     }
     let valProto = getPrototypeOf(value);
     if (valProto === ARRAY_PROTOTYPE) {
