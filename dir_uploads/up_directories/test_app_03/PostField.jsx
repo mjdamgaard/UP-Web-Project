@@ -18,7 +18,7 @@ export function render() {
         if (textVal) {
           post(
             homePath + "/posts.sm.js/callSMF/postText", '["' + textVal + '"]'
-          ).then(([wasCreated]) => {
+          ).then(wasCreated => {this.call(0, "clear");
             if (wasCreated) {
               this.call(0, "clear");
             }

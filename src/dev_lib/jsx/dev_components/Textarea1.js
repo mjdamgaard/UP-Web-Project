@@ -17,7 +17,8 @@ export const render = new DevFunction(
     if (onChangeFun instanceof FunctionObject) {
       // Set an input event, but do it in a way that it is delayed for some
       // milliseconds, and where a new oninput event fired in the meantime will
-      // basically overwrite the existing one. 
+      // essentially overwrite the existing one. Thus the input event will fire
+      // less frequently when the user types something.
       let ref = [];
       domNode.oninput = () => {
         let eventID = ref[0] = {};
@@ -47,17 +48,21 @@ export const methods = {
     return thisVal.jsxInstance.domNode.value;
   }),
   "setValue": new DevFunction({}, function({thisVal}, [val]) {
-    thisVal.jsxInstance.domNode.value = getString(val);
-    // val = getString(val);
-    // let domNode = thisVal.jsxInstance.domNode;
-    // let prevVal = domNode.value;
-    // thisVal.value = getString(val);
-    // if (prevVal !== val) {
-    //   domNode
-    // }
+    val = getString(val);
+    let domNode = thisVal.jsxInstance.domNode;
+    let prevVal = domNode.value;
+    domNode.value = val;
+    if (prevVal !== val) {
+      domNode.dispatchEvent(new InputEvent("input"));
+    }
   }),
   "clear": new DevFunction({}, function({thisVal}, []) {
-    thisVal.jsxInstance.domNode.value = "";
+    let domNode = thisVal.jsxInstance.domNode;
+    let prevVal = domNode.value;
+    domNode.value = "";
+    if (prevVal !== "") {
+      domNode.dispatchEvent(new InputEvent("input"));
+    }
   }),
   "focus": new DevFunction({}, function({thisVal}, []) {
     thisVal.jsxInstance.domNode.focus();
