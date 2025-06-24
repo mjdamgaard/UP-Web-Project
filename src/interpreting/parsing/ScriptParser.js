@@ -414,7 +414,7 @@ export const scriptGrammar = {
     process: (children) => ({
       type: "try-catch-statement",
       tryStmtArr: children[2],
-      errIdent: children[7].ident,
+      ident: children[7].ident,
       catchStmtArr: children[12],
     }),
   },

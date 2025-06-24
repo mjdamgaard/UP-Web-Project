@@ -578,7 +578,7 @@ export class ScriptInterpreter {
     // If the dev function is asynchronous, call it and return a PromiseObject.
     if (isAsync) {
       let promise = devFun.fun(execVars, inputArr).catch(err => {
-        this.throwAsyncException(err, callerNode, execEnv);
+        this.handleUncaughtException(err, execEnv);
       });
       return new PromiseObject(promise, this, callerNode, execEnv);
     }
@@ -591,12 +591,21 @@ export class ScriptInterpreter {
 
 
 
-  thenPromise(promise, callbackFun, callerNode, execEnv) {
+  thenPromise(promise, callbackFun, node, env) {
     promise.then(res => {
-      this.executeAsyncFunction(callbackFun, [res], callerNode, execEnv);
+      this.executeAsyncFunction(callbackFun, [res], node, env);
     });
   }
 
+  catchPromise(promise, callbackFun, node, env) {
+    promise.catch(err => {
+    if (err instanceof RuntimeError || err instanceof SyntaxError) {
+      this.executeAsyncFunction(callbackFun, [err.val], node, env);
+    } else {
+      this.handleUncaughtException(err, env);
+    }
+    });
+  }
 
 
   executeAsyncFunction(fun, inputArr, callerNode, execEnv, thisVal, flags) {
@@ -605,22 +614,18 @@ export class ScriptInterpreter {
     }
     try {
       this.executeFunction(fun, inputArr, callerNode, execEnv, thisVal, flags);
-    }
-    catch (err) {
-      this.throwAsyncException(err, callerNode, execEnv);
+    } catch (err) {
+      this.handleUncaughtException(err, execEnv);
     }
   }
 
 
-  throwAsyncException(err, node, env) {
-    if (err instanceof RuntimeError) {
-      let wasCaught = env.runNearestCatchStmtAncestor(err, node);
-      if (!wasCaught) {
-        if (env.scriptVars.isServerSide) {
-          env.scriptVars.resolveScript(undefined, err);
-        } else {
-          console.error(getExtendedErrorMsg(err));
-        }
+  handleUncaughtException(err, env) {
+    if (err instanceof RuntimeError || err instanceof SyntaxError) {
+      if (env.scriptVars.isServerSide) {
+        env.scriptVars.resolveScript(undefined, err);
+      } else {
+        console.error(getExtendedErrorMsg(err));
       }
     }
     else if (!(err instanceof ExitException)) {
@@ -731,20 +736,15 @@ export class ScriptInterpreter {
         throw new CustomException(expVal, stmtNode, environment);
       }
       case "try-catch-statement": {
-        let {catchStmtArr, errIdent} = stmtNode;
-        let tryCatchEnv = new Environment(
-          environment, "try-catch", {
-            catchStmtArr: catchStmtArr, errIdent: errIdent
-          }
-        );
         try {
+          let newEnv = new Environment(environment);
           stmtNode.tryStmtArr.forEach(stmt => {
-            this.executeStatement(stmt, tryCatchEnv);
+            this.executeStatement(stmt, newEnv);
           });
         } catch (err) {
-          if (err instanceof RuntimeError || err instanceof CustomException) {
+          if (err instanceof RuntimeError || err instanceof SyntaxError) {
             let catchEnv = new Environment(environment);
-            catchEnv.declare(stmtNode.errIdent, err.val, false, stmtNode);
+            catchEnv.declare(stmtNode.ident, err.val, false, stmtNode);
             try {
               stmtNode.catchStmt.forEach(stmt => {
                 this.executeStatement(stmt, catchEnv);
@@ -1206,13 +1206,14 @@ export class ScriptInterpreter {
       }
       case "promise-all-call": {
         let expVal = this.evaluateExpression(expNode.exp, environment);
-        if (!(expVal.values instanceof Function)) throw new RuntimeError(
+        if (!(expVal instanceof Array)) throw new RuntimeError(
           "Expression is not iterable",
           expNode.exp, environment
         );
-        return new PromiseObject(
+        let ret;
+        ret = new PromiseObject(
           Promise.all(
-            expVal.values().map((promiseObject, key) => {
+            expVal.map((promiseObject, key) => {
               if (promiseObject instanceof PromiseObject) {
                 return promiseObject.promise;
               }
@@ -1223,29 +1224,34 @@ export class ScriptInterpreter {
               );
             })
           ).catch(err => {
-            this.throwAsyncException(err, expNode, environment);
+            if (!ret.hasCatch) {
+              this.handleUncaughtException(err, environment);
+            }
           }),
           this, expNode, environment
         );
+        return ret;
       }
       case "import-call": {
         let path = this.evaluateExpression(expNode.pathExp, environment);
-        let namespaceObjPromise = this.import(
+        let ret;
+        let liveModulePromise = this.import(
           path, expNode, environment
         ).catch(err => {
-          this.throwAsyncException(err, expNode, environment);
+          if (!ret.hasCatch) {
+            this.handleUncaughtException(err, environment);
+          }
         });
         if (expNode.callback) {
           let callback = this.evaluateExpression(expNode.callback, environment);
           this.thenPromise(
-            namespaceObjPromise, callback, expNode, environment
+            liveModulePromise, callback, expNode, environment
           );
         }
-        else {
-          return new PromiseObject(
-            namespaceObjPromise, this, expNode, environment
-          );
-        }
+        ret = new PromiseObject(
+          liveModulePromise, this, expNode, environment
+        );
+        return ret;
       }
       case "map-call": {
         throw new RuntimeError(
@@ -1551,7 +1557,6 @@ export class Environment {
       fun, callerNode, callerEnv, thisVal, flags: addedFlags,
       modulePath, lexArr, strPosArr, script,
       scriptVars,
-      catchStmtArr, errIdent,
     } = {},
   ) {
     this.scriptVars = scriptVars ?? parent?.scriptVars ?? (() => {
@@ -1580,10 +1585,6 @@ export class Environment {
       this.script = script;
       this.exports = [];
       this.liveModule = undefined;
-    }
-    else if (scopeType === "try-catch") {
-      this.catchStmtArr = catchStmtArr;
-      this.errIdent = errIdent;
     }
   }
 
@@ -1729,38 +1730,6 @@ export class Environment {
       );
     }
     return this.liveModule;
-  }
-
-
-  runNearestCatchStmtAncestor(err, node, nodeEnvironment = this) {
-    if (this.scopeType === "try-catch") {
-      let {interpreter} = this.scriptVars;
-      let catchEnv = new Environment(this.parent);
-      catchEnv.declare(this.errIdent, err.val, false);
-      try {
-        this.catchStmtArr.forEach(stmt => {
-          interpreter.executeStatement(stmt, catchEnv);
-        });
-      } catch (err2) {
-        if (err2 instanceof CustomException && err2.val === err.val) {
-          throw err;
-        } else {
-          throw err2
-        }
-      }
-      return true;
-    }
-    else if (this.scopeType === "function") {
-      return this.callerEnv.runNearestCatchStmtAncestor(
-        err, node, nodeEnvironment
-      );
-    }
-    else if (this.parent) {
-      return this.parent.runNearestCatchStmtAncestor(
-        err, node, nodeEnvironment
-      );
-    }
-    else return false;
   }
 
 
@@ -2141,16 +2110,18 @@ export class JSXElement extends AbstractUHObject {
 export class PromiseObject extends AbstractUHObject {
   constructor(promiseOrFun, interpreter, node, env) {
     super("Promise");
+    this.hasCatch = false;
     if (promiseOrFun instanceof Promise) {
       this.promise = promiseOrFun;
     }
     else {
       let fun = promiseOrFun;
-      this.promise = new Promise(resolve => {
-        let userResolve = new DevFunction({}, ({}, [res]) => {
-          resolve(res);
-        });
-        interpreter.executeAsyncFunction(fun, [userResolve], node, env);
+      this.promise = new Promise((resolve, reject) => {
+        let userResolve = new DevFunction({}, ({}, [res]) => resolve(res));
+        let userReject = new DevFunction({}, ({}, [err]) => reject(err));
+        interpreter.executeAsyncFunction(
+          fun, [userResolve, userReject], node, env
+        );
       }).catch(err => console.error(err));
     }
 
@@ -2159,6 +2130,16 @@ export class PromiseObject extends AbstractUHObject {
         interpreter.thenPromise(
           this.promise, callbackFun, callerNode, execEnv
         );
+        return this;
+      }
+    );
+    this.members["catch"] = new DevFunction(
+      {}, ({callerNode, execEnv, interpreter}, [callbackFun]) => {
+        interpreter.catchPromise(
+          this.promise, callbackFun, callerNode, execEnv
+        );
+        this.hasCatch = true;
+        return this;
       }
     );
   }
