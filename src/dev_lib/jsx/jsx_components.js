@@ -574,7 +574,7 @@ class JSXInstance {
 
     // First get the target instance.
     let targetInstance;
-    if (!instanceKey || instanceKey === "self") {
+    if (instanceKey === "") {
       targetInstance = this;
     }
     else {
@@ -597,7 +597,7 @@ class JSXInstance {
       methodFun = methods[methodKey];
     }
     if (methodFun) {
-      interpreter.executeFunction(
+      return interpreter.executeFunction(
         methodFun, [input], callerNode, callerEnv,
         new JSXInstanceInterface(targetInstance),
         [CLEAR_FLAG, [COMPONENT_INSTANCE_FLAG, targetInstance]]
@@ -684,7 +684,7 @@ class JSXInstanceInterface extends AbstractUHObject {
   call = new DevFunction(
     {},
     ({callerNode, execEnv, interpreter}, [instanceKey, methodKey, input]) => {
-      this.jsxInstance.call(
+      return this.jsxInstance.call(
         instanceKey, methodKey, input, interpreter, callerNode, execEnv
       );
     }

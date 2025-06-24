@@ -2,15 +2,17 @@
 import {post} from 'query';
 import homePath from "./.id.js";
 import * as Textarea from 'Textarea1.jsx';
+import * as CharCount from './CharCount.jsx';
 
 export function render() {
   return (
     <div>
+      <CharCount key={1} />
       <div>
-        <Textarea key={0} onChange={increaseCount}/>
+        <Textarea key={0} onChange={dispatchCharCount}/>
       </div>
       <button onClick={() => {
-        let textVal = this.call(0, "getValue###");
+        let textVal = this.call(0, "getValue");
         // TODO: Make a 'strings' dev library with a stringify() function in
         // particular, and use it here:
         if (textVal) {
@@ -19,17 +21,18 @@ export function render() {
       }}>
         {"Post"}
       </button>
-      <div>{"Number of times changed: "}{this.state.count ?? 0}</div>
     </div>
   );
 }
 
 export const actions = {
-  "increaseCount": function() {
-    this.setState({...this.state, count: (this.state.count ?? 0) + 1});
+  "setCharCount": function(count) {
+    this.call(1, "setCharCount", count);
   }
 };
 
-function increaseCount() {
-  this.dispatch("increaseCount");
+function dispatchCharCount() {
+  let text = this.call("", "getValue");
+  let count = text.length;
+  this.dispatch("setCharCount", count);
 }
