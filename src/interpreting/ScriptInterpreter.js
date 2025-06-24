@@ -1148,14 +1148,15 @@ export class ScriptInterpreter {
             ret.push(this.evaluateExpression(exp, environment));
           }
         });
+        return ret;
       }
       case "object": {
-        let obj = {};
+        let ret = {};
         expNode.members.forEach(member => {
           if (member.type === "spread") {
             let spreadExpVal = this.evaluateExpression(member.exp, environment);
             forEachValue(spreadExpVal, member, environment, (val, key) => {
-              obj[key] = val;
+              ret[key] = val;
             });
           }
           else {
@@ -1169,10 +1170,10 @@ export class ScriptInterpreter {
               "Invalid, falsy object key",
               expNode, environment
             );
-            obj[key] = this.evaluateExpression(member.valExp, environment);
+            ret[key] = this.evaluateExpression(member.valExp, environment);
           }
         });
-        return obj;
+        return ret;
       }
       case "jsx-element": {
         return new JSXElement(expNode, environment, this);
@@ -1413,31 +1414,32 @@ export class ScriptInterpreter {
       // object's own properties directly, assign to the objects 'members'
       // property instead. Also check against setting members of a non-object.
       let objProto = getPrototypeOf(objVal);
-      if (objProto !== OBJECT_PROTOTYPE) {
-        if (objProto === ARRAY_PROTOTYPE) {
-          if (key !== "length"){
-            key = parseInt(key);
-            if (key !== NaN && 0 <= key && key < MAX_ARRAY_INDEX) {
-              throw new RuntimeError(
-                "Invalid key for array entry assignment",
-                expNode, environment
-              );
-            }
-          }
-        }
-        else throw new RuntimeError(
-          "Trying to assign a member of an object whose members are constant",
+      if (objProto === OBJECT_PROTOTYPE) {
+        key = getString(key);
+        if (!key) throw new RuntimeError(
+          "Empty object key",
           expNode, environment
         );
       }
+      else if (objProto === ARRAY_PROTOTYPE) {
+        if (key !== "length") {
+          key = parseInt(key);
+          if (Number.isNaN(key) || key < 0 || key > MAX_ARRAY_INDEX) {
+            throw new RuntimeError(
+              "Invalid key for array entry assignment",
+              expNode, environment
+            );
+          }
+        }
+      }
+      else throw new RuntimeError(
+        "Trying to assign a member of an object whose members are constant",
+        expNode, environment
+      );
 
       // Then assign newVal to the member of objVal and return ret, where
       // newVal and ret are both specified by the assignFun.
       let [newVal, ret] = assignFun(prevVal);
-      if (!key) throw new RuntimeError(
-        "Invalid, falsy object key",
-        expNode, environment
-      );
       objVal[key] = newVal;
       return ret;
     }

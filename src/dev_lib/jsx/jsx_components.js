@@ -511,7 +511,9 @@ class JSXInstance {
   ) {
     childArr.forEach(val => {
       if (val instanceof Array) {
-        this.createAndAppendChildren(domNode, val);
+        this.createAndAppendChildren(
+          domNode, val,  marks, interpreter, callerNode, callerEnv, ownDOMNodes
+        );
       } else {
         domNode.append(this.getDOMNode(
           val, marks, interpreter, callerNode, callerEnv, ownDOMNodes, false

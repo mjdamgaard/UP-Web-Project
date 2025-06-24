@@ -15,16 +15,16 @@ export function render({isAscending = true}) {
     });
     return <div></div>;
   }
-console.log("If I am reached...");debugger;
-  // let len = 2;//postList.length;
+
+  let len = postList.length;
   let retChildren = [];
-  // for (let i = 0; i < len; i++) {
-  //   retChildren[i] = <div>{postList[i]}</div>;
-  // }
-console.log("...then so should I!");
+  for (let i = 0; i < len; i++) {
+    retChildren[i] = <div>{postList[i]}</div>;
+  }
+
   return (
     <div>
-      {postList}
+      {retChildren}
     </div>
   );
 }
