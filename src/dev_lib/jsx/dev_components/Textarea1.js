@@ -1,6 +1,6 @@
 
 import {
-  FunctionObject, DevFunction
+  FunctionObject, DevFunction, getString,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {DOMNodeObject} from "../jsx_components.js";
 
@@ -43,10 +43,26 @@ export const render = new DevFunction(
 
 
 export const methods = {
-  "getValue": new DevFunction(
-    {},
-    function({thisVal}, []) {
-      return thisVal.jsxInstance.domNode.value;
-    }
-  ),
+  "getValue": new DevFunction({}, function({thisVal}, []) {
+    return thisVal.jsxInstance.domNode.value;
+  }),
+  "setValue": new DevFunction({}, function({thisVal}, [val]) {
+    thisVal.jsxInstance.domNode.value = getString(val);
+    // val = getString(val);
+    // let domNode = thisVal.jsxInstance.domNode;
+    // let prevVal = domNode.value;
+    // thisVal.value = getString(val);
+    // if (prevVal !== val) {
+    //   domNode
+    // }
+  }),
+  "clear": new DevFunction({}, function({thisVal}, []) {
+    thisVal.jsxInstance.domNode.value = "";
+  }),
+  "focus": new DevFunction({}, function({thisVal}, []) {
+    thisVal.jsxInstance.domNode.focus();
+  }),
+  "blur": new DevFunction({}, function({thisVal}, []) {
+    thisVal.jsxInstance.domNode.blur();
+  }),
 };

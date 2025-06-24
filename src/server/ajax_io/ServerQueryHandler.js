@@ -101,10 +101,9 @@ export class ServerQueryHandler {
     // Then add it to requestBuffer, and also give it a then-callback to remove
     // itself from said buffer, before return ing the promise.
     this.#requestBuffer.set(reqKey, responsePromise);
-    responsePromise.then(() => {
-      this.#requestBuffer.delete(reqKey);
-    });
-    return await responsePromise;
+    let ret = await responsePromise;
+    this.#requestBuffer.delete(reqKey);
+    return ret;
   }
 
 

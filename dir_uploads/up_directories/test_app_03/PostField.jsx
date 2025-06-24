@@ -16,7 +16,14 @@ export function render() {
         // TODO: Make a 'strings' dev library with a stringify() function in
         // particular, and use it here:
         if (textVal) {
-          post(homePath + "/posts.sm.js/callSMF/postText", '"' + textVal + '"');
+          post(
+            homePath + "/posts.sm.js/callSMF/postText", '"' + textVal + '"'
+          ).then(([[wasCreated]]) => {
+            if (wasCreated) {
+              this.call(0, "clear");
+            }
+            else throw "Post was not received properly";
+          });
         }
       }}>
         {"Post"}

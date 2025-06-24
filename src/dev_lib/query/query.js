@@ -50,7 +50,6 @@ export const query = new DevFunction(
     // If on the client side, simply forward the request to the server via the
     // serverQueryHandler.
     if (!interpreter.isServerSide) {
-      
       let result = await interpreter.serverQueryHandler.queryServerFromScript(
         isPublic, route, isPost, postData, options,
         upNodeID, callerNode, execEnv
