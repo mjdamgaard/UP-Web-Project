@@ -2,9 +2,8 @@
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, getExtendedErrorMsg,
   getString, AbstractUHObject, forEachValue, CLEAR_FLAG, deepCopy,
-  OBJECT_PROTOTYPE, ArgTypeError, Environment, getPrototypeOf,
-  ARRAY_PROTOTYPE,
-  FunctionObject,
+  OBJECT_PROTOTYPE, ArgTypeError, Environment, getPrototypeOf, ARRAY_PROTOTYPE,
+  FunctionObject, SyntaxError,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUEST_ORIGIN_FLAG
@@ -178,9 +177,7 @@ class JSXInstance {
         // class can be styled by the style sheet that assigned the ID (prefix)
         // of "base" by getSettings().
         catch (err) {
-          if (err instanceof RuntimeError) {
-            return this.getFailedComponentDOMNode(err, replaceSelf);
-          }
+          return this.getFailedComponentDOMNode(err, replaceSelf);
         }
       } else {
         state = this.componentModule.members["initState"] || {};
@@ -235,9 +232,7 @@ class JSXInstance {
       );
     }
     catch (err) {
-      if (err instanceof RuntimeError) {
-        return this.getFailedComponentDOMNode(err, replaceSelf);
-      }
+      return this.getFailedComponentDOMNode(err, replaceSelf);
     }
 
     // If a JSXElement was successfully returned, call getDOMNode() to generate
@@ -255,9 +250,7 @@ class JSXInstance {
         );
       }
       catch (err) {
-        if (err instanceof RuntimeError) {
-          return this.getFailedComponentDOMNode(err, replaceSelf);
-        }
+        return this.getFailedComponentDOMNode(err, replaceSelf);
       }
     }
 
@@ -293,6 +286,7 @@ class JSXInstance {
 
 
   getFailedComponentDOMNode(error, replaceSelf) {
+    if (error instanceof RuntimeError || error instanceof SyntaxError) {
       console.error(getExtendedErrorMsg(error));
       let newDOMNode = document.createElement("span");
       newDOMNode.setAttribute("class", "base_failed");
@@ -304,6 +298,10 @@ class JSXInstance {
       }
       this.domNode = newDOMNode;
       return newDOMNode;
+    }
+    else {
+      console.error(error);
+    }
   }
 
   updateDecoratingAncestors(newDOMNode) {
