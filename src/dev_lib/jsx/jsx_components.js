@@ -31,7 +31,7 @@ export const COMPONENT_INSTANCE_FLAG = Symbol("component-instance");
 // Create a JSX (React-like) app and mount it in the index HTML page, in the
 // element with an id of "up-app-root".
 export const createJSXApp = new DevFunction(
-  {isAsync: true},
+  {isAsync: true, typeArr:["module", "object", "function"]},
   async function(
     {callerNode, execEnv, interpreter},
     [appComponent, props, getSettings]
@@ -635,6 +635,15 @@ class JSXInstance {
   }
 
 
+  // changePropsAndRerender(newProps, interpreter, deletePrevious = false) {
+  //   if (deletePrevious) {
+  //     this.props = newProps;
+  //   } else {
+  //     this.props = {...this.props, ...newProps};
+  //   }
+  //   this.queueRerender(interpreter);
+  // }
+
 
 
   // TODO: Implement unsubscribeFromContexts(), and impl. contexts in general.
@@ -892,22 +901,13 @@ function deepCopyWithoutRefs(props, node, env) {
 
 
 
-export function sanitize(str) {
-  return str
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&apos;");
-}
-
-
-
-
-
-
-
-
-
+// export function sanitize(str) {
+//   return str
+//     .replaceAll("&", "&amp;")
+//     .replaceAll("<", "&lt;")
+//     .replaceAll(">", "&gt;")
+//     .replaceAll('"', "&quot;")
+//     .replaceAll("'", "&apos;");
+// }
 
 

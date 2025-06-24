@@ -14,7 +14,7 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   // TODO: Continue this list.
 );
 
-const HTML_ELEMENT_TYPE_REGEX = new RegExp(
+export const HTML_ELEMENT_TYPE_REGEX = new RegExp(
   "^(div|span|i|b|br|hr|template|button|h1|h2|h3|h4|h5|h6)$"
   // TODO: Continue this list.
 );
@@ -185,7 +185,7 @@ export const scriptGrammar = {
   },
   "variable-declaration": {
     rules: [
-      ["/let|const/", "parameter-list", "/;/!"],
+      ["/let|const/", "parameter-list", "/;/"],
     ],
     process: (children) => ({
       type: "variable-declaration",

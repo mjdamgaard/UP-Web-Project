@@ -4,11 +4,10 @@ import {
   straightenListSyntaxTree, copyFromChild, copyLexemeFromChild,
   processPolyadicInfixOperation, processLeftAssocPostfixes,
 } from "./processing.js";
+import {HTML_ELEMENT_TYPE_REGEX} from "./ScriptParser.js";
 
 
-const ELEMENT_TYPE_PATTERN =
-  "(div|span|h1|h2|h3|h4|h5|h6|button)";
-// TODO: Continue this list.
+const ELEMENT_TYPE_PATTERN = HTML_ELEMENT_TYPE_REGEX.source.slice(1, -1);
 
 const COMBINATOR_REGEX = />|\+|~|(\s+|\/\*([^*]|\*(?!\/))*(\*\/|$))+/;
 
