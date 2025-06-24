@@ -21,6 +21,7 @@ export function render() {
           ).then(wasCreated => {this.call(0, "clear");
             if (wasCreated) {
               this.call(0, "clear");
+              this.dispatch("refresh");
             }
             else throw "Post was not received properly";
           });

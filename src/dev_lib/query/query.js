@@ -136,7 +136,7 @@ export const post = new DevFunction(
 
 
 
-export const getCurHomeDirPath = new DevFunction(
+export const getCurrentHomePath = new DevFunction(
   {},
   function({execEnv}, []) {
     let curRoute = execEnv.getFlag(CURRENT_MODULE_FLAG) ?? "";

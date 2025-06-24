@@ -1,5 +1,4 @@
 
-import {fetch, getCurHomeDirPath} from 'query';
 import * as PostField from "./PostField.jsx";
 import * as PostList from "./PostList.jsx";
 
@@ -11,3 +10,10 @@ export function render() {
     </div>
   );
 }
+
+
+export const actions = {
+  "refresh": function() {
+    this.call(1, "refresh");
+  }
+};

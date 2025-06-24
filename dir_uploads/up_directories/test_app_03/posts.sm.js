@@ -1,8 +1,12 @@
 
-import {post, getCurHomeDirPath} from 'query';
+import {post} from 'query';
+import homePath from "./.id.js";
 
 
 export function postText(text) {
-  let homeDirPath = getCurHomeDirPath();
-  post(homeDirPath + "/posts.att/_insert", text);
+  return Promise(resolve => {
+    post(homePath + "/posts.att/_insert", text).then(
+      ([[wasCreated]]) => resolve(wasCreated)
+    );
+  });
 }
