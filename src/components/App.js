@@ -16,13 +16,13 @@ import {runTests} from "../testing/parsing_interpreting_tests.js";
 import * as queryMod from "../dev_lib/query/query.js";
 import * as basicGetSettingsMod from "../dev_lib/jsx/settings/basic.js";
 import * as jsxMod from "../dev_lib/jsx/jsx_components.js";
-import * as textareaCompMod from "../dev_lib/jsx/dev_components/Textarea.js";
+import * as textareaCompMod from "../dev_lib/jsx/dev_components/Textarea1.js";
 
 const staticDevLibs = new Map();
 staticDevLibs.set("query", queryMod);
 staticDevLibs.set("settings1", basicGetSettingsMod);
 staticDevLibs.set("jsx", jsxMod);
-staticDevLibs.set("Textarea.jsx", textareaCompMod);
+staticDevLibs.set("Textarea1.jsx", textareaCompMod);
 
 
 

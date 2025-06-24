@@ -1,7 +1,7 @@
 
 import {post} from 'query';
 import homePath from "./.id.js";
-import * as Textarea from 'Textarea.jsx';
+import * as Textarea from 'Textarea1.jsx';
 
 export function render() {
   return (
@@ -10,7 +10,7 @@ export function render() {
         <Textarea key={0} onChange={increaseCount}/>
       </div>
       <button onClick={() => {
-        let textVal = this.call(0, "getValue#?=$@#!");
+        let textVal = this.call(0, "getValue###");
         // TODO: Make a 'strings' dev library with a stringify() function in
         // particular, and use it here:
         if (textVal) {
@@ -26,7 +26,7 @@ export function render() {
 
 export const actions = {
   "increaseCount": function() {
-    // this.setState({...this.state, count: (this.state.count ?? 0) + 1});
+    this.setState({...this.state, count: (this.state.count ?? 0) + 1});
   }
 };
 

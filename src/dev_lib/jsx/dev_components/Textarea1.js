@@ -25,7 +25,7 @@ export const render = new DevFunction(
           if (ref[0] !== eventID) return;
           // TODO: Make sure that this will not cause uncaught async errors,
           // which it probably will at this point..
-          interpreter.executeFunction(
+          interpreter.executeAsyncFunction(
             onChangeFun, [], callerNode, execEnv, thisVal,
           );
           // This prevents the loss of focus for but a brief moment if an

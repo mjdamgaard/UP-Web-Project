@@ -227,10 +227,9 @@ export class ScriptInterpreter {
   async fetch(route, callerNode, callerEnv) {
     let fetchFun = callerEnv.scriptVars.liveModules.get("query")
       .members["fetch"];
-    let resultPromise = this.executeFunction(
+    return await this.executeFunction(
       fetchFun, [route], callerNode, callerEnv
     ).promise;
-    return await resultPromise;
   }
 
 
@@ -594,38 +593,38 @@ export class ScriptInterpreter {
 
   thenPromise(promise, callbackFun, callerNode, execEnv) {
     promise.then(res => {
-      this.#executeAsyncFunction(callbackFun, [res], callerNode, execEnv);
+      this.executeAsyncFunction(callbackFun, [res], callerNode, execEnv);
     });
   }
 
 
 
-  #executeAsyncFunction(fun, inputArr, callerNode, execEnv, thisVal) {
+  executeAsyncFunction(fun, inputArr, callerNode, execEnv, thisVal, flags) {
     if (execEnv.scriptVars.isExiting) {
       return;
     }
     try {
-      this.executeFunction(fun, inputArr, callerNode, execEnv, thisVal);
+      this.executeFunction(fun, inputArr, callerNode, execEnv, thisVal, flags);
     }
     catch (err) {
-      // TODO: Change: I shouldn't resolveScript() on all async
-      // errors.
-      if (err instanceof RuntimeError) {
-        let wasCaught = execEnv.runNearestCatchStmtAncestor(err, callerNode);
-        if (!wasCaught) {
-          execEnv.scriptVars.resolveScript(undefined, err);
-        }
-      }
-      else if (!(err instanceof ExitException)) {
-        console.error(err);
-      }
+      this.throwAsyncException(err, callerNode, execEnv);
     }
   }
 
-  throwAsyncException(err, callerNode, execEnv) {
-    let wasCaught = execEnv.runNearestCatchStmtAncestor(err, callerNode);
-    if (!wasCaught) {
-      execEnv.scriptVars.resolveScript(undefined, err);
+
+  throwAsyncException(err, node, env) {
+    if (err instanceof RuntimeError) {
+      let wasCaught = env.runNearestCatchStmtAncestor(err, node);
+      if (!wasCaught) {
+        if (env.scriptVars.isServerSide) {
+          env.scriptVars.resolveScript(undefined, err);
+        } else {
+          console.error(getExtendedErrorMsg(err));
+        }
+      }
+    }
+    else if (!(err instanceof ExitException)) {
+      console.error(getExtendedErrorMsg(err));
     }
   }
 
@@ -2149,10 +2148,8 @@ export class PromiseObject extends AbstractUHObject {
         let userResolve = new DevFunction({}, ({}, [res]) => {
           resolve(res);
         });
-        interpreter.executeFunction(fun, [userResolve], node, env);
-      }).catch(err => {
-        interpreter.throwAsyncException(err, node, env);
-      });
+        interpreter.executeAsyncFunction(fun, [userResolve], node, env);
+      }).catch(err => console.error(err));
     }
 
     this.members["then"] = new DevFunction(
@@ -2353,8 +2350,7 @@ export function getExtendedErrorMsg(err) {
     type = "RuntimeError";
   }
   else {
-    console.error(err);
-    return err.toString();
+    return getString(err);
   }
 
   // Get the message defined by error.val.
