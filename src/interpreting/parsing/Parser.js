@@ -4,11 +4,11 @@ const ERROR_ECHO_STR_LEN = 400;
 
 
 const NONTERMINAL_SYM_REGEXP =
-  /^[^\/\?\*\+\{\}\$!]+$/;
+  /^[^/?*+{}$!]+$/;
 const NONTERMINAL_SYM_SUBSTR_REGEXP =
-   /[^\/\?\*\+\{\}\$!]+/;
+   /[^/?*+{}$!]+/;
 const TRAILING_QUANTIFIER_SUBSTR_REGEXP =
-  /(![1-9][0-9]*)?([\?\*\+]\$?|\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\}\$?)$/;
+  /(![1-9][0-9]*)?([?*+]\$?|\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*))?\}\$?)$/;
 const TRAILING_DOD_OP_SUBSTR_REGEXP =
   /!(0|[1-9][0-9]*)?$/;
 const LEADING_POS_DOD_OP_SUBSTR_REGEXP =
