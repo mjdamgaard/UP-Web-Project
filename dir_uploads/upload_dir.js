@@ -21,7 +21,7 @@ async function main() {
   let token, credentials;
   let username = await read({prompt: "Username: "});
   let pw = await read({prompt: "Password: ", silent: true});
-  console.log("\n");
+  console.log("");
 
   // Create/update the directory on the server side.
   await DirectoryUploader.uploadDir(dirPath, username, pw, deleteStructData);
@@ -29,7 +29,7 @@ async function main() {
 
 
 main().then(() => {
-  console.log("OK\n");
+  console.log("OK");
 }).catch(err => {
   console.error(err);
 });

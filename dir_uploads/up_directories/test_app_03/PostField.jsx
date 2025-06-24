@@ -1,6 +1,7 @@
 
 import {post} from 'query';
 import homePath from "./.id.js";
+import * as JSON from 'json';
 import * as Textarea from 'Textarea1.jsx';
 import * as CharCount from './CharCount.jsx';
 
@@ -17,7 +18,8 @@ export function render() {
         // particular, and use it here:
         if (textVal) {
           post(
-            homePath + "/posts.sm.js/callSMF/postText", '["' + textVal + '"]'
+            homePath + "/posts.sm.js/callSMF/postText",
+            JSON.stringify([textVal]),
           ).then(wasCreated => {this.call(0, "clear");
             if (wasCreated) {
               this.call(0, "clear");

@@ -17,12 +17,18 @@ import * as queryMod from "../dev_lib/query/query.js";
 import * as basicGetSettingsMod from "../dev_lib/jsx/settings/basic.js";
 import * as jsxMod from "../dev_lib/jsx/jsx_components.js";
 import * as textareaCompMod from "../dev_lib/jsx/dev_components/Textarea1.js";
+import * as jsonMod from "../dev_lib/fundamentals/json.js";
+import * as stringMod from "../dev_lib/fundamentals/string.js";
+import * as arrayMod from "../dev_lib/fundamentals/array.js";
 
 const staticDevLibs = new Map();
 staticDevLibs.set("query", queryMod);
 staticDevLibs.set("settings1", basicGetSettingsMod);
 staticDevLibs.set("jsx", jsxMod);
 staticDevLibs.set("Textarea1.jsx", textareaCompMod);
+staticDevLibs.set("json", jsonMod);
+staticDevLibs.set("string", stringMod);
+staticDevLibs.set("array", arrayMod);
 
 
 

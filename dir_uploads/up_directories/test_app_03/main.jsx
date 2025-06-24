@@ -5,6 +5,7 @@ import * as PostList from "./PostList.jsx";
 export function render() {
   return (
     <div>
+      <h2>{"Post a message!"}</h2>
       <PostField key={0}/>
       <PostList key={1} />
     </div>

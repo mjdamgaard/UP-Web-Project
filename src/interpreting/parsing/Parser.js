@@ -763,7 +763,7 @@ export class Lexer {
     // Whitespace RegEx.
     this.wsRegEx = (wsPattern instanceof RegExp) ? wsPattern :
       wsPattern ? new RegExp(wsPattern) :
-      /[^\s\S]/;
+      /(?!a)a/;
     this.onlyWSRegEx = new RegExp("^(" + this.wsRegEx.source + ")$");
     this.hasWhitespace = wsPattern ? true : false;
     // RegEx of all lexemes and whitespace. 

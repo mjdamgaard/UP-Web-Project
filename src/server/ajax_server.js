@@ -21,9 +21,15 @@ import {
 } from "../dev_lib/query/src/flags.js";
 
 import * as queryMod from "../dev_lib/query/query.js";
+import * as jsonMod from "../dev_lib/fundamentals/json.js";
+import * as stringMod from "../dev_lib/fundamentals/string.js";
+import * as arrayMod from "../dev_lib/fundamentals/array.js";
 
 const staticDevLibs = new Map();
 staticDevLibs.set("query", queryMod);
+staticDevLibs.set("json", jsonMod);
+staticDevLibs.set("string", stringMod);
+staticDevLibs.set("array", arrayMod);
 
 
 

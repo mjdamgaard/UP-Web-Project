@@ -15,7 +15,7 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
 );
 
 const HTML_ELEMENT_TYPE_REGEX = new RegExp(
-  "^(div|span|i|b|br|hr|template|button)$"
+  "^(div|span|i|b|br|hr|template|button|h1|h2|h3|h4|h5|h6)$"
   // TODO: Continue this list.
 );
 
@@ -899,8 +899,8 @@ export const scriptGrammar = {
   },
   "string": {
     rules: [
-      [/"([^"\\]|\\[.\n])*"/],
-      [/'([^'\\]|\\[.\n])*'/],
+      [/"([^"\\]|\\(\S|\s))*"/],
+      [/'([^'\\]|\\(\S|\s))*'/],
     ],
     process: (children, ruleInd) => {
       let stringLiteral = children[0];
@@ -912,7 +912,7 @@ export const scriptGrammar = {
       try {
         str = JSON.parse(stringLiteral);
       } catch (error) {
-        return [false, `Invalid JSON string: ${stringLiteral}`];
+        return [false, `Invalid string: ${stringLiteral}`];
       }
       return {type: "string", str: str};
     },
@@ -998,8 +998,8 @@ export class ScriptParser extends Parser {
       scriptGrammar,
       "script",
       [
-        /"([^"\\]|\\[.\n])*"/,
-        /'([^'\\]|\\[.\n])*'/,
+        /"([^"\\]|\\(\S|\s))*"/,
+        /'([^'\\]|\\(\S|\s))*'/,
         /(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
         /\+=|\-=|\*=|\/=|&&=|\|\|=|\?\?=/,
         /&&|\|\||\?\?|\+\+|\-\-|\*\*/,

@@ -18,7 +18,12 @@ export function render() {
   let len = postList.length;
   let retChildren = [];
   for (let i = 0; i < len; i++) {
-    retChildren[i] = <div>{postList[i]}</div>;
+    retChildren[i] = (
+      <div>
+        <span>{i + 1}{"\t"}</span>
+        <span>{postList[i][1]}</span>
+      </div>
+    );
   }
   return (
     <div>
