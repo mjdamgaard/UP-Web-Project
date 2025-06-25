@@ -3,7 +3,7 @@ import {
   DevFunction, JSXElement, LiveModule, RuntimeError, getExtendedErrorMsg,
   getString, AbstractUHObject, forEachValue, CLEAR_FLAG, deepCopy,
   OBJECT_PROTOTYPE, ArgTypeError, Environment, getPrototypeOf, ARRAY_PROTOTYPE,
-  FunctionObject, SyntaxError, getStringOrSymbol,
+  FunctionObject, SyntaxError, getStringOrSymbol, getFullPath,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUEST_ORIGIN_FLAG
@@ -641,14 +641,15 @@ class JSXInstance {
   }
 
 
-  // changePropsAndRerender(newProps, interpreter, deletePrevious = false) {
-  //   if (deletePrevious) {
-  //     this.props = newProps;
-  //   } else {
-  //     this.props = {...this.props, ...newProps};
-  //   }
-  //   this.queueRerender(interpreter);
-  // }
+  changePropsAndRerender(newProps, interpreter, deletePrevious = false) {
+    if (deletePrevious) {
+      this.props = newProps;
+    } else {
+      this.props = {...this.props, ...newProps};
+    }
+    this.queueRerender(interpreter);
+  }
+
 
 
 
@@ -989,7 +990,7 @@ function addURLRelatedProps(props, jsxInstance) {
   props = {
     location: {
       hostname: hostname, pathname: pathname, search: search, hash: hash,
-      state: history.state,
+      state: window.history.state,
     },
     ...props
   };
@@ -1000,8 +1001,8 @@ function addURLRelatedProps(props, jsxInstance) {
       let newPath = getFullPath(pathname, path, callerNode, execEnv);
       // TODO: Validate newPath!
       let newFullURL = protocol + '//' + host + newPath;
-      history.pushState(state, undefined, newFullURL);
-      rootInstance.changePropsAndRerender()
+      window.history.pushState(state, undefined, newFullURL);
+      jsxInstance.changePropsAndRerender()
     }
   );
   let refs = props.refs;

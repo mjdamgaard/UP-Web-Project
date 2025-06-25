@@ -83,6 +83,22 @@ END //
 DELIMITER ;
 
 
+DELIMITER //
+CREATE PROCEDURE deleteAuthToken (
+    IN userIDHex VARCHAR(16)
+)
+BEGIN
+    DECLARE userID BIGINT UNSIGNED DEFAULT CONV((userIDHex), 16, 10);
+
+    DELETE FROM AuthenticationTokens
+    WHERE user_id = userID;
+    
+    SELECT ROW_COUNT() AS wasDeleted;
+END //
+DELIMITER ;
+
+
+
 
 DELIMITER //
 CREATE PROCEDURE selectAuthenticatedUserID (
