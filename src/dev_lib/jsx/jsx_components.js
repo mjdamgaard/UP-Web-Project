@@ -65,12 +65,16 @@ export const createJSXApp = new DevFunction(
       execEnv.scriptVars.liveModules, callerNode, execEnv
     );
 
-    // Then create the app's root component instance, render it, and insert it
-    // into the document.
+    // Then create the app's root component instance, and before rendering it,
+    // add some props for getting URL data, and pushing a new browser session
+    // history state it it, if these props keys are not already occupied.  
     let rootInstance = new JSXInstance(
       appComponent, "root", undefined, callerNode, execEnv,
       jsxAppStyler, settingsStore      
     );
+    props = addURLRelatedProps(props, rootInstance);
+
+    // Then render the root instance and insert it into the document.
     let rootParent = document.getElementById("up-app-root");
     let appNode = rootInstance.render(
       props, false, interpreter, callerNode, execEnv, false, true, true
@@ -696,6 +700,13 @@ class JSXInstance {
     }
   }
 
+  getOwnContext(key) {
+    let contextProvisions = this.contextProvisions;
+    if (contextProvisions) {
+      return contextProvisions.get(key)?.context;
+    }
+  }
+
 }
 
 
@@ -721,6 +732,8 @@ class JSXInstanceInterface extends AbstractUHObject {
       "rerender": this.rerender,
       "provideContext": this.provideContext,
       "subscribeToContext": this.subscribeToContext,
+      "unsubscribeFromContext": this.unsubscribeFromContext,
+      "getOwnContext": this.getOwnContext,
     });
   }
 
@@ -754,7 +767,7 @@ class JSXInstanceInterface extends AbstractUHObject {
   // one.
   setState = new DevFunction(
     {typeArr: ["object"]},
-    ({callerNode, execEnv, interpreter}, [newState]) => {
+    ({interpreter}, [newState]) => {
       this.jsxInstance.state = newState;
       this.jsxInstance.queueRerender(interpreter);
     }
@@ -789,8 +802,9 @@ class JSXInstanceInterface extends AbstractUHObject {
   provideContext = new DevFunction(
     {typeArr: ["object key", "object"]},
     ({interpreter}, [key, context]) => {
-    return this.jsxInstance.provideContext(key, context, interpreter);
-  });
+      this.jsxInstance.provideContext(key, context, interpreter);
+    },
+  );
 
   // subscribeToContext(key) looks through the instance's ancestors and finds
   // the first one, if any, that has provided a context of that key. If one is
@@ -800,9 +814,30 @@ class JSXInstanceInterface extends AbstractUHObject {
   // effect happens, and undefined is returned.
   subscribeToContext = new DevFunction(
     {typeArr: ["object key"]}, ({}, [key]) => {
-    return this.jsxInstance.subscribeToContext(key);
-  });
+      return deepCopyExceptRefs(
+        this.jsxInstance.subscribeToContext(key)
+      );
+    }
+  );
 
+  // unsubscribeFromContext(key) unsubscribes the instance from a context,
+  // meaning that it will no longer rerender if the context updates. 
+  unsubscribeFromContext = new DevFunction(
+    {typeArr: ["object key"]}, ({}, [key]) => {
+      return deepCopyExceptRefs(
+        this.jsxInstance.unsubscribeFromContext(key)
+      );
+    }
+  );
+
+  // getOwnContext(key) the instance's own context of the given key.
+  getOwnContext = new DevFunction(
+    {typeArr: ["object key"]}, ({}, [key]) => {
+      return deepCopyExceptRefs(
+        this.jsxInstance.getOwnContext(key)
+      );
+    }
+  );
 
 
   // TODO: Add more instance methods at some point, such as a method to get
@@ -942,3 +977,35 @@ function deepCopyExceptRefs(props, node, env) {
 
 
 
+
+
+
+
+// TODO: Implement:
+function addURLRelatedProps(props, jsxInstance) {
+  return props;
+
+  let {hostname, pathname, search, hash} = window.location;
+  props = {
+    location: {
+      hostname: hostname, pathname: pathname, search: search, hash: hash,
+      state: history.state,
+    },
+    ...props
+  };
+  let pushState = new DevFunction(
+    {typeArr:["string", "object?"]},
+    ({callerNode, execEnv}, [path, state]) => {
+      let {protocol, host, pathname} = window.location;
+      let newPath = getFullPath(pathname, path, callerNode, execEnv);
+      // TODO: Validate newPath!
+      let newFullURL = protocol + '//' + host + newPath;
+      history.pushState(state, undefined, newFullURL);
+      rootInstance.changePropsAndRerender()
+    }
+  );
+  let refs = props.refs;
+  refs = getPrototypeOf(refs) === OBJECT_PROTOTYPE ? refs : {};
+  props.refs = {pushState, ...refs};
+
+}
