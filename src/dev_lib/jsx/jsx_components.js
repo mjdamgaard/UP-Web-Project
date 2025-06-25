@@ -3,7 +3,7 @@ import {
   DevFunction, JSXElement, LiveModule, RuntimeError, getExtendedErrorMsg,
   getString, AbstractUHObject, forEachValue, CLEAR_FLAG, deepCopy,
   OBJECT_PROTOTYPE, ArgTypeError, Environment, getPrototypeOf, ARRAY_PROTOTYPE,
-  FunctionObject, SyntaxError,
+  FunctionObject, SyntaxError, getStringOrSymbol,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUEST_ORIGIN_FLAG
@@ -122,6 +122,8 @@ class JSXInstance {
     this.props = undefined;
     this.state = undefined;
     this.refs = undefined;
+    this.contextProvisions = undefined;
+    this.contextSubscriptions = undefined;
     this.callerNode = callerNode;
     this.callerEnv = callerEnv;
     this.isDiscarded = undefined;
@@ -151,7 +153,7 @@ class JSXInstance {
     // Return early if the props are the same as on the last render, and if the
     // instance is not forced to rerender.
     if (
-      !force && this.props !== undefined && compareProps(props, this.props)
+      !force && this.props !== undefined && compareExceptRefs(props, this.props)
     ) {
       return this.domNode;
     }
@@ -226,7 +228,7 @@ class JSXInstance {
     let jsxElement;
     try {
       jsxElement = interpreter.executeFunction(
-        renderFun, [deepCopyWithoutRefs(props, callerNode, callerEnv)],
+        renderFun, [deepCopyExceptRefs(props, callerNode, callerEnv)],
         callerNode, callerEnv, new JSXInstanceInterface(this),
         [CLEAR_FLAG, [COMPONENT_INSTANCE_FLAG, this]]
       );
@@ -315,7 +317,7 @@ class JSXInstance {
     this.childInstances.forEach(child => {
       child.dismount();
     });
-    this.unsubscribeFromContexts();
+    this.unsubscribeFromAllContexts();
     this.isDiscarded = true;
   }
 
@@ -538,8 +540,8 @@ class JSXInstance {
   // matching key, dispatch() just fails silently and nothing happens.
   dispatch(actionKey, input, interpreter, callerNode, callerEnv) {
     let actions = this.componentModule.members["actions"];
-    actionKey = getString(actionKey);
-    if (!actionKey) return;
+    actionKey = getStringOrSymbol(actionKey);
+    if (actionKey === "") return;
     let actionFun;
     if (getPrototypeOf(actions) === OBJECT_PROTOTYPE) {
       actionFun = actions[actionKey];
@@ -587,7 +589,7 @@ class JSXInstance {
 
     // Then find and call its targeted method.
     let methods = targetInstance.componentModule.members["methods"];
-    methodKey = getString(methodKey);
+    methodKey = getStringOrSymbol(methodKey);
     if (!methodKey) throw new ArgTypeError(
       "Invalid, falsy method key",
       callerNode, callerEnv
@@ -646,9 +648,52 @@ class JSXInstance {
 
 
 
-  // TODO: Implement unsubscribeFromContexts(), and impl. contexts in general.
-  unsubscribeFromContexts() {
+  provideContext(key, context, interpreter) {
+    this.contextProvisions ??= {};
+    let {subscribers, prevContext} = this.contextProvisions[key] ?? {};
+      this.contextProvisions[key] = {subscribers: new Map(), context: context};
+    if (subscribers && !compareExceptRefs(context, prevContext)) {
+      subscribers.forEach((_, jsxInstance) => {
+        jsxInstance.queueRerender(interpreter);
+      });
+    }
+  }
 
+  subscribeToContext(key) {
+    this.contextSubscriptions ??= new Map();
+    this.contextSubscriptions.set(key, true);
+    let parentInstance = this.parentInstance;
+    while (parentInstance) {
+      let contextProvisions = parentInstance.contextProvisions;
+      if (contextProvisions && contextProvisions[key]) {
+        contextProvisions[key].subscribers.set(this, true);
+        return contextProvisions[key].context;
+      }
+      parentInstance = parentInstance.parentInstance;
+    }
+  }
+
+  unsubscribeFromContext(key) {
+    this.contextSubscriptions ??= new Map();
+    this.contextSubscriptions.delete(key);
+    let parentInstance = this.parentInstance;
+    while (parentInstance) {
+      let contextProvisions = parentInstance.contextProvisions;
+      if (contextProvisions && contextProvisions[key]) {
+        contextProvisions[key].subscribers.delete(this);
+        return contextProvisions[key].context;
+      }
+      parentInstance = parentInstance.parentInstance;
+    }
+  }
+
+  unsubscribeFromAllContexts() {
+    let contextSubscriptions = this.contextSubscriptions;
+    if (contextSubscriptions) {
+      contextSubscriptions.forEach((_, key) => {
+        this.unsubscribeFromContext(key);
+      });
+    }
   }
 
 }
@@ -682,7 +727,7 @@ class JSXInstanceInterface extends AbstractUHObject {
 
   // See the comments above for what dispatch() and call() does.
   dispatch = new DevFunction(
-    {},
+    {typeArr: ["object key", "any?"]},
     ({callerNode, execEnv, interpreter}, [actionKey, input]) => {
       this.jsxInstance.dispatch(
         actionKey, input, interpreter, callerNode, execEnv
@@ -691,7 +736,7 @@ class JSXInstanceInterface extends AbstractUHObject {
   );
 
   call = new DevFunction(
-    {},
+    {typeArr: ["string", "object key", "any?"]},
     ({callerNode, execEnv, interpreter}, [instanceKey, methodKey, input]) => {
       return this.jsxInstance.call(
         instanceKey, methodKey, input, interpreter, callerNode, execEnv
@@ -708,13 +753,8 @@ class JSXInstanceInterface extends AbstractUHObject {
   // always queues a rerender, even if the new state is equivalent to the old
   // one.
   setState = new DevFunction(
-    {}, ({callerNode, execEnv, interpreter}, [newState]) => {
-      if (getPrototypeOf(newState) !== OBJECT_PROTOTYPE) {
-        throw new RuntimeError(
-          "State assignment to a value other than a plain object",
-          callerNode, execEnv
-        )
-      }
+    {typeArr: ["object"]},
+    ({callerNode, execEnv, interpreter}, [newState]) => {
       this.jsxInstance.state = newState;
       this.jsxInstance.queueRerender(interpreter);
     }
@@ -730,7 +770,7 @@ class JSXInstanceInterface extends AbstractUHObject {
   // the app call getStyle() to get and load the style, before the returned
   // promise resolves.
   import = new DevFunction(
-    {isAsync: true, minArgNum: 1},
+    {isAsync: true, typeArr: ["string"]},
     async ({callerNode, execEnv, interpreter}, [route]) => {
       let liveModule = interpreter.import(route, callerNode, execEnv);
       if (route.slice(-4) === ".jsx") {
@@ -742,22 +782,25 @@ class JSXInstanceInterface extends AbstractUHObject {
     }
   );
 
-  // provideContext(key, val) provides a context identified by key for all its
-  // descendants, meaning that they can subscribe to it an get val in return.
-  // And if this instance ever calls provideContext() with a different value
-  // for that key, all the subscribing instances will rerender.
-  provideContext = new DevFunction({}, ({interpreter}, []) => {
-    // TODO: Implement.
+  // provideContext(key, context) provides a context identified by key for all
+  // its descendants, meaning that they can subscribe to it an get the context
+  // value in return. And if this instance ever calls provideContext() with a
+  // different value for that key, all the subscribing instances will rerender.
+  provideContext = new DevFunction(
+    {typeArr: ["object key", "object"]},
+    ({interpreter}, [key, context]) => {
+    return this.jsxInstance.provideContext(key, context, interpreter);
   });
 
-  // subscribeToContext(contextKey) looks through the instance's ancestors and
-  // finds the first one, if any, that has provided a context of that key. If
-  // one is found, the value is returned, and this current instance is
-  // "subscribed" to the context (if not already), meaning that if the context's
-  // value changes, this instance rerenders. If no context is found of the
-  // given key, no side-effect happens, and undefined is returned.
-  subscribeToContext = new DevFunction({}, ({interpreter}, []) => {
-    // TODO: Implement.
+  // subscribeToContext(key) looks through the instance's ancestors and finds
+  // the first one, if any, that has provided a context of that key. If one is
+  // found, the value is returned, and this current instance is "subscribed" to
+  // the context (if not already), meaning that if the context's value changes,
+  // this instance rerenders. If no context is found of the given key, no side-
+  // effect happens, and undefined is returned.
+  subscribeToContext = new DevFunction(
+    {typeArr: ["object key"]}, ({}, [key]) => {
+    return this.jsxInstance.subscribeToContext(key);
   });
 
 
@@ -807,7 +850,7 @@ export class DOMNodeObject extends AbstractUHObject {
 
 
 
-function compareProps(props1, props2) {
+function compareExceptRefs(props1, props2) {
   // Get the keys, and return false immediately if the two props Maps have
   // different keys.
   let keys1 = Object.keys(props1);
@@ -834,7 +877,7 @@ function compareProps(props1, props2) {
 }
 
 
-function deepCompare(val1, val2) {
+export function deepCompare(val1, val2) {
   if (val1 === null || !(val1 instanceof Object)) {
     return val1 === val2;
   }
@@ -885,29 +928,17 @@ function deepCompare(val1, val2) {
 
 
 
-function deepCopyWithoutRefs(props, node, env) {
+function deepCopyExceptRefs(props, node, env) {
   let ret = {};
   forEachValue(props, node, env, (val, key) => {
-    if (key !== "refs") {
+    if (key === "refs") {
+      ret[key] = val;
+    } else {
       ret[key] = deepCopy(val);
     }
   });
   return ret;
 }
 
-
-
-
-
-
-
-// export function sanitize(str) {
-//   return str
-//     .replaceAll("&", "&amp;")
-//     .replaceAll("<", "&lt;")
-//     .replaceAll(">", "&gt;")
-//     .replaceAll('"', "&quot;")
-//     .replaceAll("'", "&apos;");
-// }
 
 

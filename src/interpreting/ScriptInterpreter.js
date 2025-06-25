@@ -1162,7 +1162,7 @@ export class ScriptInterpreter {
           else {
             let key = member.ident;
             if (key === undefined) {
-              key = getString(
+              key = getStringOrSymbol(
                 this.evaluateExpression(member.keyExp, environment)
               );
             }
@@ -1421,7 +1421,7 @@ export class ScriptInterpreter {
       // property instead. Also check against setting members of a non-object.
       let objProto = getPrototypeOf(objVal);
       if (objProto === OBJECT_PROTOTYPE) {
-        key = getString(key);
+        key = getStringOrSymbol(key);
         if (!key) throw new RuntimeError(
           "Empty object key",
           expNode, environment
@@ -1483,7 +1483,9 @@ export class ScriptInterpreter {
         // Else, first get the key.
         key = postfix.ident;
         if (key === undefined) {
-          key = getString(this.evaluateExpression(postfix.exp, environment));
+          key = getStringOrSymbol(
+            this.evaluateExpression(postfix.exp, environment)
+          );
         }
 
         // If the object is an AbstractUHObject, instead of getting from the
@@ -1797,6 +1799,10 @@ export function getString(val) {
   );
 }
 
+export function getStringOrSymbol(val) {
+  return (typeof val === "symbol") ? val : getString(val);
+}
+
 
 export function jsonStringify(val) {
   if (val instanceof AbstractUHObject) {
@@ -1981,6 +1987,20 @@ export function verifyType(val, type, isOptional, node, env) {
         node, env
       );
       break;
+    case "symbol":
+      if (typeOfVal !== "symbol") throw new ArgTypeError(
+        `Value is not a Symbol: ${getString(val)}`,
+        node, env
+      );
+      break;
+    case "object key":
+      if (!val || (typeOfVal !== "string" && typeOfVal !== "symbol")) {
+        throw new ArgTypeError(
+          `Value is not a valid object key: ${getString(val)}`,
+          node, env
+        );
+      }
+      break;
     case "object":
       if (getPrototypeOf(val) !== OBJECT_PROTOTYPE) {
         throw new ArgTypeError(
@@ -1989,7 +2009,7 @@ export function verifyType(val, type, isOptional, node, env) {
         );
       }
       break;
-    case "object":
+    case "array":
       if (getPrototypeOf(val) !== ARRAY_PROTOTYPE) {
         throw new ArgTypeError(
           `Value is not an array: ${getString(val)}`,
@@ -2009,6 +2029,14 @@ export function verifyType(val, type, isOptional, node, env) {
       if (!(val instanceof LiveModule)) {
         throw new ArgTypeError(
           `Value is not a live module object: ${getString(val)}`,
+          node, env
+        );
+      }
+      break;
+    case "map":
+      if (!(val instanceof Map)) {
+        throw new ArgTypeError(
+          `Value is not a Map: ${getString(val)}`,
           node, env
         );
       }
