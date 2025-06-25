@@ -1,6 +1,6 @@
 import {useState, useMemo, useCallback} from "react";
 
-import {basicEntIDs} from "../../../entity_ids/basic_entity_ids.js";
+import {basicEntIDs} from "../../../../entity_ids/basic_entity_ids.js";
 import {DataFetcher} from "../../../classes/DataFetcher.js";
 import {
   EntityReference, ScaleReference

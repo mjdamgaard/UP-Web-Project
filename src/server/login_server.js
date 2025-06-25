@@ -87,7 +87,7 @@ async function createAccount(username, password, emailAddr) {
 
   // Then generate (and store) a new authentication token for the user.
   [resultRow = []] = await userDBConnection.queryProcCall(
-    "generateAuthToken", [userID],
+    "generateOrGetAuthToken", [userID],
   ) ?? [];
   let [authToken] = resultRow;
 
@@ -119,7 +119,7 @@ async function login(username, password) {
 
   // Then generate (and store) a new authentication token for the user.
   [resultRow = []] = await userDBConnection.queryProcCall(
-    "generateAuthToken", [userID],
+    "generateOrGetAuthToken", [userID],
   ) ?? [];
   let [authToken] = resultRow;
 
@@ -181,7 +181,7 @@ function validateUsernamePWAndEmailFormat(username, password, emailAddr = "") {
   // TODO: Implement validation.
   if (emailAddr && !/^.$/.test(emailAddr)) {
     throw new ClientError(
-      "Invalid e-mail address ()"
+      "Invalid e-mail address"
     );
   }
 }

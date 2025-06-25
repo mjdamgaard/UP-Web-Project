@@ -1,8 +1,7 @@
 import {useState, useMemo, useContext} from "react";
 
-import {basicEntIDs} from "../../../entity_ids/basic_entity_ids.js";
+import {basicEntIDs} from "../../../../entity_ids/basic_entity_ids.js";
 import {DataFetcher} from "../../../classes/DataFetcher.js";
-import {useDispatch} from "../../../hooks/useDispatch.js";
 import {EntityReference} from "../../entity_refs/EntityReference.js";
 
 /* Placeholders */
@@ -17,7 +16,7 @@ const RELATIONS_REL_ID = basicEntIDs["relations/relations"];
 const RELEVANT_QUAL_ID = basicEntIDs["qualities/relevant"];
 
 
-export const TabEntityElement = ({entID, score}) => {
+export const GeneralEntityElement = ({entID, score}) => {
   const [results, setState] = useState({});
 
   useMemo(() => {
@@ -38,27 +37,25 @@ export const TabEntityElement = ({entID, score}) => {
     );
   }, []);
 
-  const [dispatch] = useDispatch();
+
 
   // Before the data is fetched, render this.
   if (!results.isFetched) {
     return (
-      <div className="tab-entity-element fetching">
-        <EntityReference entID={entID} />
+      <div className="general-entity-element">
+        <EntityReference entID={entID} isLink />
         {"@" + entID + ", " + score}
       </div>
     );
   }
 
-  if (results.datatype !== "j") {
+  if (results.datatype === "j") {
     // TODO...
   }
 
   return (
-    <div className="tab-entity-element" onClick={(event) => {
-      dispatch(event.target, "ELEMENT_SELECTED", entID);
-    }}>
-      <EntityReference entID={entID} />
+    <div className="general-entity-element">
+      <EntityReference entID={entID} isLink />
       {"@" + entID + ", " + score}
     </div>
   );

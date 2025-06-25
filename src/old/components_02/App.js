@@ -2,24 +2,24 @@
 import {useState, useLayoutEffect, createContext, useCallback} from "react";
 import {
   ScriptInterpreter, getExtendedErrorMsg
-} from "../interpreting/ScriptInterpreter.js";
-import {ServerQueryHandler} from "../server/ajax_io/ServerQueryHandler.js";
-import {CAN_CREATE_APP_FLAG} from "../dev_lib/jsx/jsx_components.js";
+} from "../../interpreting/ScriptInterpreter.js";
+import {ServerQueryHandler} from "../../server/ajax_io/ServerQueryHandler.js";
+import {CAN_CREATE_APP_FLAG} from "../../dev_lib/jsx/jsx_components.js";
 
 /* Tests */
 
-import {runTests} from "../testing/parsing_interpreting_tests.js";
+import {runTests} from "../../testing/parsing_interpreting_tests.js";
 
 
 /* Static developer libraries */
 
-import * as queryMod from "../dev_lib/query/query.js";
-import * as basicGetSettingsMod from "../dev_lib/jsx/settings/basic.js";
-import * as jsxMod from "../dev_lib/jsx/jsx_components.js";
-import * as textareaCompMod from "../dev_lib/jsx/dev_components/Textarea1.js";
-import * as jsonMod from "../dev_lib/fundamentals/json.js";
-import * as stringMod from "../dev_lib/fundamentals/string.js";
-import * as arrayMod from "../dev_lib/fundamentals/array.js";
+import * as queryMod from "../../dev_lib/query/query.js";
+import * as basicGetSettingsMod from "../../dev_lib/jsx/settings/basic.js";
+import * as jsxMod from "../../dev_lib/jsx/jsx_components.js";
+import * as textareaCompMod from "../../dev_lib/jsx/dev_components/Textarea1.js";
+import * as jsonMod from "../../dev_lib/fundamentals/json.js";
+import * as stringMod from "../../dev_lib/fundamentals/string.js";
+import * as arrayMod from "../../dev_lib/fundamentals/array.js";
 
 const staticDevLibs = new Map();
 staticDevLibs.set("query", queryMod);

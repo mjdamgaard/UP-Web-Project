@@ -5,7 +5,7 @@ import {
 import React from 'react';
 
 import {EntityPage} from "./entity_pages/EntityPage.js";
-import {InitialInsertsPage} from "../../inserts/InitialInsertsPage.js";
+import {InitialInsertsPage} from "../../../inserts/InitialInsertsPage.js";
 
 const PageContext = createContext();
 

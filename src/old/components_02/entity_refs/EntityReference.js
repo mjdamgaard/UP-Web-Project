@@ -3,7 +3,7 @@ import {useDispatch} from "../../hooks/useDispatch.js"
 // import {Link} from "react-router-dom";
 
 import {DataFetcher} from "../../classes/DataFetcher.js";
-import { basicEntIDs } from "../../entity_ids/basic_entity_ids.js";
+import { basicEntIDs } from "../../../entity_ids/basic_entity_ids.js";
 // const EntityReferencePlaceholder = () => <template></template>;
 // const EntityBackRefLink = () => <template></template>;
 // const InvalidEntityTitle = () => <template></template>;

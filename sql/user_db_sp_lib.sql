@@ -3,7 +3,8 @@ USE userDB;
 
 DROP PROCEDURE createUserAccount;
 DROP PROCEDURE selectPWHashAndUserID;
-DROP PROCEDURE generateAuthToken;
+DROP PROCEDURE generateOrGetAuthToken;
+DROP PROCEDURE deleteAuthToken;
 DROP PROCEDURE selectAuthenticatedUserID;
 
 DROP PROCEDURE selectGas;
@@ -64,13 +65,17 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE generateAuthToken (
+CREATE PROCEDURE generateOrGetAuthToken (
     IN userIDHex VARCHAR(16)
 )
 BEGIN
     DECLARE userID BIGINT UNSIGNED DEFAULT CONV((userIDHex), 16, 10);
     DECLARE authToken VARCHAR(255) DEFAULT TO_BASE64(RANDOM_BYTES(40));
     DECLARE expTime BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP() + 604800000;
+
+    -- TODO...
+    -- SELECT auth_token, expiration_time INTO authToken, expTime
+    -- FROM
 
     INSERT INTO AuthenticationTokens (user_id, auth_token, expiration_time)
     VALUES (userID, authToken, expTime)
