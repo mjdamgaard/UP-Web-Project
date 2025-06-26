@@ -750,7 +750,7 @@ class JSXInstanceInterface extends AbstractUHObject {
   );
 
   call = new DevFunction(
-    {typeArr: ["string", "object key", "any?"]},
+    {typeArr: ["any", "object key", "any?"]},
     ({callerNode, execEnv, interpreter}, [instanceKey, methodKey, input]) => {
       return this.jsxInstance.call(
         instanceKey, methodKey, input, interpreter, callerNode, execEnv
@@ -986,27 +986,27 @@ function deepCopyExceptRefs(props, node, env) {
 function addURLRelatedProps(props, jsxInstance) {
   return props;
 
-  let {hostname, pathname, search, hash} = window.location;
-  props = {
-    location: {
-      hostname: hostname, pathname: pathname, search: search, hash: hash,
-      state: window.history.state,
-    },
-    ...props
-  };
-  let pushState = new DevFunction(
-    {typeArr:["string", "object?"]},
-    ({callerNode, execEnv}, [path, state]) => {
-      let {protocol, host, pathname} = window.location;
-      let newPath = getFullPath(pathname, path, callerNode, execEnv);
-      // TODO: Validate newPath!
-      let newFullURL = protocol + '//' + host + newPath;
-      window.history.pushState(state, undefined, newFullURL);
-      jsxInstance.changePropsAndRerender()
-    }
-  );
-  let refs = props.refs;
-  refs = getPrototypeOf(refs) === OBJECT_PROTOTYPE ? refs : {};
-  props.refs = {pushState, ...refs};
+  // let {hostname, pathname, search, hash} = window.location;
+  // props = {
+  //   location: {
+  //     hostname: hostname, pathname: pathname, search: search, hash: hash,
+  //     state: window.history.state,
+  //   },
+  //   ...props
+  // };
+  // let pushState = new DevFunction(
+  //   {typeArr:["string", "object?"]},
+  //   ({callerNode, execEnv}, [path, state]) => {
+  //     let {protocol, host, pathname} = window.location;
+  //     let newPath = getFullPath(pathname, path, callerNode, execEnv);
+  //     // TODO: Validate newPath!
+  //     let newFullURL = protocol + '//' + host + newPath;
+  //     window.history.pushState(state, undefined, newFullURL);
+  //     jsxInstance.changePropsAndRerender()
+  //   }
+  // );
+  // let refs = props.refs;
+  // refs = getPrototypeOf(refs) === OBJECT_PROTOTYPE ? refs : {};
+  // props.refs = {pushState, ...refs};
 
 }

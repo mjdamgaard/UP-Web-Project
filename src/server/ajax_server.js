@@ -32,6 +32,8 @@ staticDevLibs.set("string", stringMod);
 staticDevLibs.set("array", arrayMod);
 
 
+export const TOKEN_EXP_PERIOD = 2678400000;
+
 
 const [ , curPath] = process.argv;
 const mainScriptPath = path.normalize(
@@ -89,9 +91,9 @@ async function requestHandler(req, res, returnGasRef) {
   if (authHeader) {
     let [ , authToken] = AUTH_TOKEN_REGEX.exec(authHeader) ?? [];
     if (!authToken) throw new ClientError(
-      "Authentication failed"
+      "Invalid or unrecognized authorization header"
     );
-    userIDPromise = getUserID(authToken); 
+    userIDPromise = getUserID(authToken).catch(() => {}); 
   } 
 
   // The server only implements GET and POST requests, where for the POST 
@@ -254,7 +256,7 @@ function toMIMEType(val, mimeType) {
 async function getUserID(authToken) {
   let userDBConnection = new UserDBConnection();
   let [resultRow = []] = await userDBConnection.queryProcCall(
-    "selectAuthenticatedUserID", [authToken, 604800000],
+    "selectAuthenticatedUserID", [authToken],
   ) ?? [];
   userDBConnection.end();
   let [userID] = resultRow;

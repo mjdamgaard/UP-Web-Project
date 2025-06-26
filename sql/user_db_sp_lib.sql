@@ -79,7 +79,7 @@ BEGIN
         auth_token = authToken,
         modified_at = curTime;
     
-    SELECT authToken;
+    SELECT authToken, curTime AS modifiedAt;
 END //
 DELIMITER ;
 

@@ -25,8 +25,9 @@ export class DirectoryUploader {
     let credentials = btoa(`${username}:${password}`);
     let userID = "1";
     let token = "test_token";
+    let expTime = Infinity;
 
-    let serverQueryHandler = new ServerQueryHandler(token, fetch);
+    let serverQueryHandler = new ServerQueryHandler(token, expTime, fetch);
 
     // Read the dirID.
     let idFilePath = path.normalize(dirPath + "/.id.js");

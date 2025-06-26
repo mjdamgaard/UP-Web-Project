@@ -13,16 +13,20 @@ const OWN_UP_NODE_ID = "1";
 
 export class ServerQueryHandler {
 
-  constructor(userToken = undefined, fetchFun = undefined) {
-    this.userToken = userToken;
+  constructor(
+    authToken = undefined, expTime = undefined, fetchFun = undefined
+  ) {
+    this.tokenData = {authToken: authToken, expTime: expTime};
     this.fetch = fetchFun ?? fetch;
   }
 
-  getUserToken() {
-    if (this.userToken) {
-      return this.userToken;
+  getTokenData() {
+    if (this.tokenData.authToken) {
+      return this.tokenData;
     }
-    return this.userToken = localStorage.getItem("authToken");
+    return this.tokenData = JSON.parse(
+      localStorage.getItem("tokenData") ?? "{}"
+    );
   }
 
 
@@ -56,26 +60,30 @@ export class ServerQueryHandler {
 
     // Construct the reqBody.
     let reqData = {};
+    let headers = {};
     if (!isPublic) {
       if (options !== undefined) reqData.options = options;
       if (flags !== undefined) reqData.flags = flags;
-    }
-    if (isPost) {
-      reqData.isPost = true;
-      if (postData !== undefined) reqData.data = postData;
-    }
 
-    let headers = {};
-    if (!isPublic) {
-      let token = this.getUserToken();
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
+      let {authToken, expTime} = this.getTokenData();
+      if (expTime && expTime < Date.now() + 20000) {
+        throw new NetworkError(
+          "User login session is expired"
+        );
+      }
+      if (authToken) {
+        headers["Authorization"] = `Bearer ${authToken}`;
       }
       else throw new NetworkError(
         "A non-login-related POST request was made before the user was " +
         "logged in"
       );
     }
+    if (isPost) {
+      reqData.isPost = true;
+      if (postData !== undefined) reqData.data = postData;
+    }
+
 
     return await this.request(route, isPublic, reqData);
   }

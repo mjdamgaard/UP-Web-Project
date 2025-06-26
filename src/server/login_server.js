@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 import {
   ClientError, endWithError, endWithInternalError,
 } from './err/errors.js';
-import {getData} from './ajax_server.js';
+import {getData, TOKEN_EXP_PERIOD} from './ajax_server.js';
 import {UserDBConnection} from './db_io/DBConnection.js';
 
 const SALT_ROUNDS = 13; // (Number of rounds = 2^SALT_ROUNDS.)
@@ -71,17 +71,17 @@ async function requestHandler(req, res) {
   switch (reqType) {
     case "createAccount": {
       let emailAddr = reqBody;
-      let [userID, authToken] = await createAccount(
+      let [userID, authToken, expTime] = await createAccount(
         username, password, emailAddr
       );
       res.writeHead(201, {'Content-Type': "application/json"});
-      res.end(JSON.stringify([userID, authToken]));
+      res.end(JSON.stringify([userID, authToken, expTime]));
       break;
     }
     case "login": {
-      let [userID, authToken] = await login(username, password);
+      let [userID, authToken, expTime] = await login(username, password);
       res.writeHead(200, {'Content-Type': "application/json"});
-      res.end(JSON.stringify([userID, authToken]));
+      res.end(JSON.stringify([userID, authToken, expTime]));
       break;
     }
     case "logout": {
@@ -127,10 +127,11 @@ async function createAccount(username, password, emailAddr) {
   [resultRow = []] = await userDBConnection.queryProcCall(
     "generateAuthToken", [userID],
   ) ?? [];
-  let [authToken] = resultRow;
+  let [authToken, modifiedAt] = resultRow;
 
   userDBConnection.end();
-  return [userID, authToken];
+  let expTime = parseInt(modifiedAt) + TOKEN_EXP_PERIOD;
+  return [userID, authToken, expTime];
 }
 
 
@@ -159,11 +160,11 @@ async function login(username, password) {
   [resultRow = []] = await userDBConnection.queryProcCall(
     "generateAuthToken", [userID],
   ) ?? [];
-  let [authToken] = resultRow;
+  let [authToken, modifiedAt] = resultRow;
 
   userDBConnection.end();
-
-  return [userID, authToken];
+  let expTime = parseInt(modifiedAt) + TOKEN_EXP_PERIOD;
+  return [userID, authToken, expTime];
 }
 
 

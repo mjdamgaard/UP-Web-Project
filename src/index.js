@@ -5,9 +5,11 @@ import {
 import {ServerQueryHandler} from "./server/ajax_io/ServerQueryHandler.js";
 import {CAN_CREATE_APP_FLAG} from "./dev_lib/jsx/jsx_components.js";
 
+import {main as constructAboveAppMenu} from "./above_app_menu/main.js"
+
 /* Tests */
 
-import {runTests} from "./testing/parsing_interpreting_tests.js";
+// import {runTests} from "./testing/parsing_interpreting_tests.js";
 
 
 /* Static developer libraries */
@@ -38,6 +40,10 @@ if (typeof(Storage) === "undefined") {
     "or use a different browser."
   );
 }
+
+// Set up the above-app menu, used for account-related settings and actions,
+// and for other preference settings, potentially.
+constructAboveAppMenu();
 
 
 // TODO: Remove this and require a login instead to get a real auth. token.
