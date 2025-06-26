@@ -22,6 +22,7 @@ export function main() {
   document.getElementById("create-account-item").onclick =
     openCreateAccountPage;
 
+  // Add 
 }
 
 
@@ -51,11 +52,166 @@ function logout() {
 
 
 function openLoginPage() {
-
+  let overlayPageContainer = document.getElementById("overlay-page-container");
+  overlayPageContainer.classList.add("open");
+  overlayPageContainer.innerHTML = `
+    <div class="go-back-button">&#10094;</div>
+    <h3>Log in</h3>
+    <form>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" className="form-control username"></input>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" className="form-control password"></input>
+      </div>
+      <span>
+        <button className="btn btn-default">
+          Log in
+        </button>
+      </span>
+    </form>
+    <div class="response-display text-warning"></div>
+  `;
+  let goBackButton = overlayPageContainer.querySelector(".go-back-button");
+  goBackButton.onclick = () => {
+    overlayPageContainer.classList.remove("open");
+    overlayPageContainer.innerHTML = "";
+  };
+  let postButton = overlayPageContainer.querySelector("form button");
+  postButton.onclick = () => {
+    let responseDisplay =
+      overlayPageContainer.querySelector(".response-display");
+    let usernameInput = overlayPageContainer.querySelector("input.username");
+    let passwordInput = overlayPageContainer.querySelector("input.password");
+    let username = usernameInput.value;
+    let password = passwordInput.value;
+    let errMsg = validateUsernamePWAndEmailFormats(username, password);
+    if (errMsg) {
+      responseDisplay.append(errMsg);
+      return;
+    }
+    let credentials = btoa(`${username}:${password}`);
+    let options = {
+      method: "POST",
+      headers: {Authorization: `Basic ${credentials}`},
+    };
+    fetch(
+      loginServerDomainURL + "/login", options
+    ).catch(err => {
+      responseDisplay.append(err.toString());
+    }).then(res => {
+      let [userID, authToken, expTime] = JSON.parse(res);
+      localStorage.setItem("userData", JSON.stringify({
+        userID: userID, authToken: authToken, expTime: expTime
+      }));
+      overlayPageContainer.classList.remove("open");
+      overlayPageContainer.innerHTML = "";
+      // TODO: Also make the app component rerender with an updated userID prop.
+    });
+  };
 }
 
 
 
 function openCreateAccountPage() {
+  let overlayPageContainer = document.getElementById("overlay-page-container");
+  overlayPageContainer.classList.add("open");
+  overlayPageContainer.innerHTML = `
+    <div class="go-back-button">&#10094;</div>
+    <h3>Create a new account</h3>
+    <form>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" className="form-control username"></input>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" className="form-control password"></input>
+      </div>
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" className="form-control email"></input>
+      </div>
+      <span>
+        <button className="btn btn-default">
+          Log in
+        </button>
+      </span>
+    </form>
+    <div class="response-display text-warning"></div>
+  `;
+  let goBackButton = overlayPageContainer.querySelector(".go-back-button");
+  goBackButton.onclick = () => {
+    overlayPageContainer.classList.remove("open");
+    overlayPageContainer.innerHTML = "";
+  };
+  let postButton = overlayPageContainer.querySelector("form button");
+  postButton.onclick = () => {
+    let responseDisplay =
+      overlayPageContainer.querySelector(".response-display");
+    let usernameInput = overlayPageContainer.querySelector("input.username");
+    let passwordInput = overlayPageContainer.querySelector("input.password");
+    let emailInput = overlayPageContainer.querySelector("input.email");
+    let username = usernameInput.value;
+    let password = passwordInput.value;
+    let email = emailInput.value ?? "";
+    let errMsg = validateUsernamePWAndEmailFormats(username, password, email);
+    if (errMsg) {
+      responseDisplay.append(errMsg);
+      return;
+    }
+    let credentials = btoa(`${username}:${password}`);
+    let options = {
+      method: "POST",
+      headers: {Authorization: `Basic ${credentials}`},
+      body: email,
+    };
+    fetch(
+      loginServerDomainURL + "/createAccount", options
+    ).catch(err => {
+      responseDisplay.append(err.toString());
+    }).then(res => {
+      let [userID, authToken, expTime] = JSON.parse(res);
+      localStorage.setItem("userData", JSON.stringify({
+        userID: userID, authToken: authToken, expTime: expTime
+      }));
+      overlayPageContainer.classList.remove("open");
+      overlayPageContainer.innerHTML = "";
+      // TODO: Also make the app component rerender with an updated userID prop.
+    });
+  };
 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+// TODO: This is repeated from login_server.js, so combine and move both these
+// declarations into their own module. ..Well, except that I'm implementing
+// them slightly but I guess the server-side one could just use this one as a
+// helper function. ..Oh, but they also differ in other ways, never mind..
+
+export function validateUsernamePWAndEmailFormats(
+  username, password, emailAddr = ""
+) {
+  if (!username || !/^[a-zA-Z_-]{4, 40}$/.test(username)) {
+    return "Invalid username";
+  }
+  if (!password || password.length < 8 || password.length > 120) {
+    return "Password not long enough";
+  }
+  // TODO: Implement validation.
+  if (emailAddr && !/^.$/.test(emailAddr)) {
+    return "Invalid e-mail address";
+  }
 }

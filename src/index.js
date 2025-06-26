@@ -48,9 +48,9 @@ constructAboveAppMenu();
 
 // TODO: Remove this and require a login instead to get a real auth. token.
 let expTime = Number.MAX_SAFE_INTEGER;
-localStorage.setItem(
-  "userData", `{"userID":"1","authToken":"test_token","expTime":${expTime}}`
-);
+localStorage.setItem("userData", JSON.stringify({
+  userID: "1", authToken: "test_token", expTime: expTime
+}));
 
 
 const serverQueryHandler = new ServerQueryHandler();

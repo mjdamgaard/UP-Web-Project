@@ -1,11 +1,11 @@
 
 import * as http from 'http';
-const bcrypt = require('bcrypt');
+import * as bcrypt from 'bcrypt';
 
 import {
   ClientError, endWithError, endWithInternalError,
 } from './err/errors.js';
-import {getData, TOKEN_EXP_PERIOD} from './ajax_server.js';
+import {getData} from './user_input/getData.js';
 import {UserDBConnection} from './db_io/DBConnection.js';
 
 const SALT_ROUNDS = 13; // (Number of rounds = 2^SALT_ROUNDS.)
@@ -16,6 +16,7 @@ const AUTH_TOKEN_REGEX = /^Bearer (.+)$/;
 const USER_CREDENTIALS_REGEX = /^Basic (.+)$/;
 const USERNAME_AND_PW_REGEX = /^([^:]+):([^:])+$/;
 
+const TOKEN_EXP_PERIOD = 2764800000;
 
 
 http.createServer(async function(req, res) {
@@ -190,7 +191,9 @@ async function logout(userID, authToken) {
 
 
 
-function validateUsernamePWAndEmailFormats(username, password, emailAddr = "") {
+export function validateUsernamePWAndEmailFormats(
+  username, password, emailAddr = ""
+) {
   if (!username || !/^[a-zA-Z_-]{4, 40}$/.test(username)) {
     throw new ClientError(
       "Invalid username"
