@@ -9,6 +9,13 @@ import {getData} from './ajax_server.js';
 import {UserDBConnection} from './db_io/DBConnection.js';
 
 const SALT_ROUNDS = 13; // (Number of rounds = 2^SALT_ROUNDS.)
+const MAX_ACCOUNT_NUM = 10; // Number of user accounts per e-mail address.
+
+
+const AUTH_TOKEN_REGEX = /^Bearer (.+)$/;
+const USER_CREDENTIALS_REGEX = /^Basic (.+)$/;
+const USERNAME_AND_PW_REGEX = /^([^:]+):([^:])+$/;
+
 
 
 http.createServer(async function(req, res) {
@@ -32,19 +39,38 @@ async function requestHandler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
 
   // The server only implements POST requests where the request type is
-  // specified by the URL pathname, and where the optional request body, if
-  // there, is a plain text e-mail address.
+  // specified by the URL pathname, and where the request body, if there, is
+  // either an optional plain-text e-mail address, in case of a createAccount
+  // request, or a plain-text userID in case of a logout request.
   let reqType = req.url;
   if (req.method !== "POST") throw new ClientError(
     "Login server only accepts the POST methods"
   );
-  let emailAddr = await getData(req);
+  let reqBody = await getData(req);
 
-  // Get user name and the password from the Authorization header.
+  // Get from the Authorization header either the username and the password, in
+  // case of a createAccount or login request, or the authToken in case of a
+  // logout request.
+  let username, password, authToken;
+    let authHeader = req.headers["authorization"];
+    if (authHeader) {
+      let [ , credentials] = AUTH_TOKEN_REGEX.exec(authHeader) ?? [];
+      if (credentials) {
+        credentials = atob(
+          credentials.replaceAll("_", "/").replaceAll("-", "+")
+        );
+        [ , username = "", password = ""] =
+          USERNAME_AND_PW_REGEX.exec(credentials) ?? [];
+      }
+      else {
+        [ , authToken = ""] = authHeader.match(AUTH_TOKEN_REGEX) ?? [];
+      }
+    } 
 
   // Then branch according to the request type
   switch (reqType) {
     case "createAccount": {
+      let emailAddr = reqBody;
       let [userID, authToken] = await createAccount(
         username, password, emailAddr
       );
@@ -59,7 +85,8 @@ async function requestHandler(req, res) {
       break;
     }
     case "logout": {
-      let wasLoggedOut = await logout(username, password, res);
+      let userID = reqBody;
+      let wasLoggedOut = await logout(userID, authToken);
       res.writeHead(200, {'Content-Type': "application/json"});
       res.end(wasLoggedOut ? "true" : "false");
       break;
@@ -72,22 +99,33 @@ async function requestHandler(req, res) {
 }
 
 
+// TODO: Implement sending an e-mail automatically to the address if one is
+// provided, and if the e-mail is responded to by clicking some link, the
+// account will get ticked off as having this e-mail address confirmed for it.
+// And also implement using these for password resetting and account recovery.
+
 
 
 async function createAccount(username, password, emailAddr) {
-  validateUsernamePWAndEmailFormat(username, password, emailAddr);
-  let pwHash = await generateSaltedPWHash(password);
+  validateUsernamePWAndEmailFormats(username, password, emailAddr);
+  let pwHash = await bcrypt.hash(password, SALT_ROUNDS);
   let userDBConnection = new UserDBConnection();
 
   // Create the new account and get the new user ID.
   let [resultRow = []] = await userDBConnection.queryProcCall(
-    "createUserAccount", [username, pwHash, emailAddr ?? ""],
+    "createUserAccount", [username, pwHash, emailAddr ?? "", MAX_ACCOUNT_NUM],
   ) ?? [];
   let [userID] = resultRow;
 
+  // If the creation failed, due to too many account per (confirmed) e-mail,
+  // return an empty array.
+  if (!userID) {
+    return [];
+  }
+
   // Then generate (and store) a new authentication token for the user.
   [resultRow = []] = await userDBConnection.queryProcCall(
-    "generateOrGetAuthToken", [userID],
+    "generateAuthToken", [userID],
   ) ?? [];
   let [authToken] = resultRow;
 
@@ -98,7 +136,7 @@ async function createAccount(username, password, emailAddr) {
 
 
 async function login(username, password) {
-  validateUsernamePWAndEmailFormat(username, password);
+  validateUsernamePWAndEmailFormats(username, password);
   let userDBConnection = new UserDBConnection();
 
   // Get the actual pwHash, and the userID, from the database.
@@ -119,7 +157,7 @@ async function login(username, password) {
 
   // Then generate (and store) a new authentication token for the user.
   [resultRow = []] = await userDBConnection.queryProcCall(
-    "generateOrGetAuthToken", [userID],
+    "generateAuthToken", [userID],
   ) ?? [];
   let [authToken] = resultRow;
 
@@ -130,34 +168,18 @@ async function login(username, password) {
 
 
 
-async function logout(username, password) {
-  validateUsernamePWAndEmailFormat(username, password);
+async function logout(userID, authToken) {
   let userDBConnection = new UserDBConnection();
-
-  // Get the actual pwHash, and the userID, from the database.
-  let [resultRow = []] = await userDBConnection.queryProcCall(
-    "selectPWHashAndUserID", [username],
-  ) ?? [];
-  let [pwHash = "", userID = ""] = resultRow;
-
-  userDBConnection.end();
-
-  // Compare the two passwords, and return false if the comparison failed.
-  if (!(await bcrypt.compare(password, pwHash))) {
-    return false;
-  }
-
-  userDBConnection = new UserDBConnection();
 
   // Then delete the stored authToken, if any, for the given userID.
   [resultRow = []] = await userDBConnection.queryProcCall(
-    "deleteAuthToken", [userID],
+    "deleteAuthToken", [userID, authToken],
   ) ?? [];
-  let [wasLoggedOut] = resultRow;
+  let [wasDeleted] = resultRow;
 
   userDBConnection.end();
 
-  return wasLoggedOut;
+  return wasDeleted;
 }
 
 
@@ -167,7 +189,7 @@ async function logout(username, password) {
 
 
 
-function validateUsernamePWAndEmailFormat(username, password, emailAddr = "") {
+function validateUsernamePWAndEmailFormats(username, password, emailAddr = "") {
   if (!username || !/^[a-zA-Z_-]{4, 40}$/.test(username)) {
     throw new ClientError(
       "Invalid username"
@@ -184,10 +206,4 @@ function validateUsernamePWAndEmailFormat(username, password, emailAddr = "") {
       "Invalid e-mail address"
     );
   }
-}
-
-async function generateSaltedPWHash(password) {
-  let salt = await bcrypt.genSalt(SALT_ROUNDS);
-  let pwHashSalted = await bcrypt.hash(password, salt);
-  return pwHashSalted;
 }

@@ -3,7 +3,7 @@ USE userDB;
 
 DROP PROCEDURE createUserAccount;
 DROP PROCEDURE selectPWHashAndUserID;
-DROP PROCEDURE generateOrGetAuthToken;
+DROP PROCEDURE generateAuthToken;
 DROP PROCEDURE deleteAuthToken;
 DROP PROCEDURE selectAuthenticatedUserID;
 
@@ -19,17 +19,18 @@ DELIMITER //
 CREATE PROCEDURE createUserAccount (
     IN userName VARCHAR(50),
     IN pwHashSalted CHAR(60),
-    IN emailAddr VARCHAR(255)
+    IN emailAddr VARCHAR(255),
+    IN maxAccountNum INT UNSIGNED
 )
 proc: BEGIN
     DECLARE userID BIGINT UNSIGNED;
     DECLARE profileNum INT UNSIGNED;
 
     IF (emailAddr IS NOT NULL AND emailAddr != "") THEN
-        SELECT COUNT(user_id) INTO profileNum
-        FROM EmailAddresses FORCE INDEX (email_addr)
-        WHERE email_addr = emailAddr;
-        IF (profileNum > 10) THEN
+        SELECT COUNT(user_name) INTO profileNum
+        FROM EmailAddresses FORCE INDEX (sec_idx)
+        WHERE email_addr = emailAddr AND is_confirmed;
+        IF (profileNum > maxAccountNum) THEN
             SELECT NULL;
             LEAVE proc;
         END IF;
@@ -40,8 +41,8 @@ proc: BEGIN
     SET userID = LAST_INSERT_ID();
 
     IF (emailAddr IS NOT NULL AND emailAddr != "") THEN
-        INSERT INTO EmailAddresses (user_id, email_addr)
-        VALUES (userID, emailAddr);
+        INSERT INTO EmailAddresses (user_name, email_addr)
+        VALUES (userName, emailAddr);
     END IF;
 
     SELECT CONV(userID, 10, 16) AS userID;
@@ -63,25 +64,20 @@ DELIMITER ;
 
 
 
-
 DELIMITER //
-CREATE PROCEDURE generateOrGetAuthToken (
+CREATE PROCEDURE generateAuthToken (
     IN userIDHex VARCHAR(16)
 )
 BEGIN
     DECLARE userID BIGINT UNSIGNED DEFAULT CONV((userIDHex), 16, 10);
     DECLARE authToken VARCHAR(255) DEFAULT TO_BASE64(RANDOM_BYTES(40));
-    DECLARE expTime BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP() + 604800000;
+    DECLARE curTime BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP();
 
-    -- TODO...
-    -- SELECT auth_token, expiration_time INTO authToken, expTime
-    -- FROM
-
-    INSERT INTO AuthenticationTokens (user_id, auth_token, expiration_time)
-    VALUES (userID, authToken, expTime)
+    INSERT INTO AuthenticationTokens (user_id, auth_token, modified_at)
+    VALUES (userID, authToken, curTime)
     ON DUPLICATE KEY UPDATE
         auth_token = authToken,
-        expiration_time = expTime;
+        modified_at = curTime;
     
     SELECT authToken;
 END //
@@ -90,17 +86,19 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE deleteAuthToken (
-    IN userIDHex VARCHAR(16)
+    IN userIDHex VARCHAR(16),
+    IN authToken VARCHAR(255)
 )
 BEGIN
     DECLARE userID BIGINT UNSIGNED DEFAULT CONV((userIDHex), 16, 10);
 
     DELETE FROM AuthenticationTokens
-    WHERE user_id = userID;
+    WHERE user_id = userID AND auth_token = authToken;
     
     SELECT ROW_COUNT() AS wasDeleted;
 END //
 DELIMITER ;
+
 
 
 
@@ -112,16 +110,16 @@ CREATE PROCEDURE selectAuthenticatedUserID (
 )
 BEGIN
     DECLARE userID BIGINT UNSIGNED;
-    DECLARE newExpTime BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP() + expPeriod;
+    DECLARE curTime BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP();
 
     SELECT user_id INTO userID
     FROM AuthenticationTokens FORCE INDEX (sec_idx)
-    WHERE auth_token = authToken;
+    WHERE auth_token = authToken AND modified_at + expPeriod > curTime;
 
     IF (userID IS NOT NULL) THEN
         UPDATE AuthenticationTokens
-        SET expiration_time = newExpTime
-        WHERE user_id = userID;
+        SET modified_at = curTime
+        WHERE user_id = userID AND auth_token = authToken;
     END IF;
 
     SELECT userID;
@@ -129,9 +127,6 @@ END //
 DELIMITER ;
 
 
-
--- TODO: Implement procedures to get user IDs from an e-mail address, and vice
--- versa.
 
 
 

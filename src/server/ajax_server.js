@@ -87,7 +87,7 @@ async function requestHandler(req, res, returnGasRef) {
   let userIDPromise;
   let authHeader = req.headers["authorization"];
   if (authHeader) {
-    let [ , authToken] = authHeader.match(AUTH_TOKEN_REGEX) ?? [];
+    let [ , authToken] = AUTH_TOKEN_REGEX.exec(authHeader) ?? [];
     if (!authToken) throw new ClientError(
       "Authentication failed"
     );

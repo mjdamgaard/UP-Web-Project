@@ -36,18 +36,20 @@ CREATE TABLE UserCredentials (
 
 CREATE TABLE EmailAddresses (
 
-    user_id BIGINT UNSIGNED NOT NULL,
+    user_name VARCHAR(50) NOT NULL,
 
     email_addr VARCHAR(255) NOT NULL,
+
+    is_confirmed BOOL NOT NULL DEFAULT 0,
     
     PRIMARY KEY (
-        user_id,
+        user_name,
         email_addr
     ),
     
     UNIQUE INDEX sec_idx (
         email_addr,
-        user_id
+        user_name
     )
 );
 
@@ -58,14 +60,20 @@ CREATE TABLE EmailAddresses (
 
 CREATE TABLE AuthenticationTokens (
 
-    user_id BIGINT UNSIGNED PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
 
     auth_token VARCHAR(255) NOT NULL,
 
-    expiration_time BIGINT UNSIGNED NOT NULL, -- unix timestamp.
+    modified_at BIGINT UNSIGNED NOT NULL DEFAULT (UNIX_TIMESTAMP()),
+
+    PRIMARY KEY (
+        user_id,
+        auth_token
+    ),
 
     UNIQUE INDEX sec_idx (
-        auth_token
+        auth_token,
+        user_id
     )
 );
 
@@ -100,5 +108,5 @@ CREATE TABLE UserGas (
 INSERT INTO UserCredentials (user_name, password_hash_salted)
 VALUES ("test_user", REPEAT("0", 60));
 
-INSERT INTO AuthenticationTokens (user_id, auth_token, expiration_time)
-VALUES (1, "test_token", 100000000000);
+INSERT INTO AuthenticationTokens (user_id, auth_token)
+VALUES (1, "test_token");
