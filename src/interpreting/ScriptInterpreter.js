@@ -13,7 +13,7 @@ export {LexError, SyntaxError};
 export const ARRAY_PROTOTYPE = Object.getPrototypeOf([]);
 export const OBJECT_PROTOTYPE = Object.getPrototypeOf({});
 
-const MAX_ARRAY_INDEX = 4294967294;
+const MAX_ARRAY_INDEX = Number.MAX_SAFE_INTEGER;
 const MINIMAL_TIME_GAS = 10;
 
 const TEXT_FILE_ROUTE_REGEX = /[^?]+\.(jsx?|txt|json|html|xml|md|scss|)$/;

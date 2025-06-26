@@ -32,7 +32,7 @@ staticDevLibs.set("string", stringMod);
 staticDevLibs.set("array", arrayMod);
 
 
-export const TOKEN_EXP_PERIOD = 2678400000;
+export const TOKEN_EXP_PERIOD = 2764800000;
 
 
 const [ , curPath] = process.argv;

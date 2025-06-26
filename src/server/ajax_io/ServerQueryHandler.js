@@ -1,5 +1,5 @@
 
-import {serverDomainURL} from "./config.js";
+import {ajaxServerDomainURL} from "../config.js";
 import {
   payGas, NetworkError,
 } from "../../interpreting/ScriptInterpreter.js";
@@ -25,7 +25,7 @@ export class ServerQueryHandler {
       return this.tokenData;
     }
     return this.tokenData = JSON.parse(
-      localStorage.getItem("tokenData") ?? "{}"
+      localStorage.getItem("userData") ?? "{}"
     );
   }
 
@@ -127,7 +127,7 @@ export class ServerQueryHandler {
     let fetch = this.fetch;
     let response;
     try {
-      response = await fetch(serverDomainURL + route, options);
+      response = await fetch(ajaxServerDomainURL + route, options);
     } catch (err) {
       if (err instanceof TypeError) {
         throw new NetworkError(err.message);
