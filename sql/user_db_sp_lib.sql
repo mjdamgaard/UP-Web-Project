@@ -5,6 +5,8 @@ DROP PROCEDURE createUserAccount;
 DROP PROCEDURE selectPWHashAndUserID;
 DROP PROCEDURE generateAuthToken;
 DROP PROCEDURE deleteAuthToken;
+DROP PROCEDURE deleteAllAuthTokensIfAuthenticated;
+DROP PROCEDURE replaceAuthToken;
 DROP PROCEDURE selectAuthenticatedUserID;
 
 DROP PROCEDURE selectGas;
@@ -66,47 +68,97 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE generateAuthToken (
-    IN userIDHex VARCHAR(16)
+    IN userIDHex VARCHAR(16),
+    IN expPeriod BIGINT UNSIGNED,
+    IN timeGrain TINYINT UNSIGNED
 )
 BEGIN
     DECLARE userID BIGINT UNSIGNED DEFAULT CONV((userIDHex), 16, 10);
     DECLARE authToken VARCHAR(255) DEFAULT TO_BASE64(RANDOM_BYTES(40));
-    DECLARE curTime BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP();
+    DECLARE expTime BIGINT UNSIGNED DEFAULT (
+        (UNIX_TIMESTAMP() >> timeGrain << timeGrain) + expPeriod
+    );
 
-    INSERT INTO AuthenticationTokens (user_id, auth_token, modified_at)
-    VALUES (userID, authToken, curTime)
+    INSERT INTO AuthenticationTokens (user_id, auth_token, expiration_time)
+    VALUES (userID, authToken, expTime)
     ON DUPLICATE KEY UPDATE
         auth_token = authToken,
-        modified_at = curTime;
+        expiration_time = expTime;
     
-    SELECT authToken, curTime AS modifiedAt;
+    SELECT authToken, expTime;
 END //
 DELIMITER ;
 
 
 DELIMITER //
 CREATE PROCEDURE deleteAuthToken (
-    IN userIDHex VARCHAR(16),
     IN authToken VARCHAR(255)
 )
 BEGIN
     DECLARE userID BIGINT UNSIGNED DEFAULT CONV((userIDHex), 16, 10);
 
     DELETE FROM AuthenticationTokens
-    WHERE user_id = userID AND auth_token = authToken;
+    WHERE auth_token = authToken;
     
     SELECT ROW_COUNT() AS wasDeleted;
 END //
 DELIMITER ;
 
 
+DELIMITER //
+CREATE PROCEDURE deleteAllAuthTokensIfAuthenticated (
+    IN userIDHex VARCHAR(16),
+    IN authToken VARCHAR(255)
+)
+BEGIN
+    DECLARE userID BIGINT UNSIGNED DEFAULT CONV((userIDHex), 16, 10);
+    DECLARE tokenOwnerID BIGINT UNSIGNED;
+
+    SELECT user_id INTO tokenOwnerID
+    FROM AuthenticationTokens FORCE INDEX (sec_idx)
+    WHERE auth_token = authToken;
+
+    IF (tokenOwnerID IS NOT NULL AND tokenOwnerID = userID) THEN
+        DELETE FROM AuthenticationTokens
+        WHERE user_id = userID;
+        SELECT ROW_COUNT() AS deletionNum;
+    ELSE
+        SELECT 0 AS deletionNum;
+    END IF;
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE replaceAuthToken (
+    IN authToken VARCHAR(255),
+    IN expPeriod BIGINT UNSIGNED,
+    IN timeGrain TINYINT UNSIGNED
+)
+BEGIN
+    DECLARE newAuthToken VARCHAR(255) DEFAULT TO_BASE64(RANDOM_BYTES(40));
+    DECLARE expTime BIGINT UNSIGNED DEFAULT (
+        (UNIX_TIMESTAMP() >> timeGrain << timeGrain) + expPeriod
+    );
+
+    UPDATE AuthenticationTokens
+    SET auth_token = newAuthToken, expiration_time = expTime
+    WHERE auth_token = authToken;
+
+    IF (ROW_COUNT()) THEN
+        SELECT newAuthToken, expTime;
+    ELSE
+        SELECT NULL;
+    END IF;
+END //
+DELIMITER ;
+
 
 
 
 DELIMITER //
 CREATE PROCEDURE selectAuthenticatedUserID (
-    IN authToken VARCHAR(255),
-    IN expPeriod BIGINT UNSIGNED
+    IN authToken VARCHAR(255)
 )
 BEGIN
     DECLARE userID BIGINT UNSIGNED;
@@ -114,17 +166,13 @@ BEGIN
 
     SELECT user_id INTO userID
     FROM AuthenticationTokens FORCE INDEX (sec_idx)
-    WHERE auth_token = authToken AND modified_at + expPeriod > curTime;
-
-    IF (userID IS NOT NULL) THEN
-        UPDATE AuthenticationTokens
-        SET modified_at = curTime
-        WHERE user_id = userID AND auth_token = authToken;
-    END IF;
+    WHERE auth_token = authToken AND expiration_time > curTime;
 
     SELECT userID;
 END //
 DELIMITER ;
+
+
 
 
 

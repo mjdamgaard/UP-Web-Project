@@ -64,7 +64,7 @@ CREATE TABLE AuthenticationTokens (
 
     auth_token VARCHAR(255) NOT NULL,
 
-    modified_at BIGINT UNSIGNED NOT NULL DEFAULT (UNIX_TIMESTAMP()),
+    expiration_time BIGINT UNSIGNED NOT NULL, -- unix time
 
     PRIMARY KEY (
         user_id,
@@ -72,8 +72,7 @@ CREATE TABLE AuthenticationTokens (
     ),
 
     UNIQUE INDEX sec_idx (
-        auth_token,
-        user_id
+        auth_token
     )
 );
 
@@ -108,5 +107,5 @@ CREATE TABLE UserGas (
 INSERT INTO UserCredentials (user_name, password_hash_salted)
 VALUES ("test_user", REPEAT("0", 60));
 
-INSERT INTO AuthenticationTokens (user_id, auth_token)
-VALUES (1, "test_token");
+INSERT INTO AuthenticationTokens (user_id, auth_token, expiration_time)
+VALUES (1, "test_token", 4294967295);

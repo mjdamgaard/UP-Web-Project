@@ -16,7 +16,9 @@ const AUTH_TOKEN_REGEX = /^Bearer (.+)$/;
 const USER_CREDENTIALS_REGEX = /^Basic (.+)$/;
 const USERNAME_AND_PW_REGEX = /^([^:]+):([^:])+$/;
 
-const TOKEN_EXP_PERIOD = 2764800000;
+const TOKEN_EXP_PERIOD = 7948800000; // ~= 3 months.
+const TIME_GRAIN = 27; // Means round down the current token timestamp by 2^27
+// ~= 1.5 days. 
 
 
 http.createServer(async function(req, res) {
@@ -41,8 +43,8 @@ async function requestHandler(req, res) {
 
   // The server only implements POST requests where the request type is
   // specified by the URL pathname, and where the request body, if there, is
-  // either an optional plain-text e-mail address, in case of a createAccount
-  // request, or a plain-text userID in case of a logout request.
+  // an optional plain-text e-mail address, in case of a createAccount
+  // request, or a plain-text userID in case of a logoutAll request.
   let reqType = req.url;
   if (req.method !== "POST") throw new ClientError(
     "Login server only accepts the POST methods"
@@ -55,7 +57,7 @@ async function requestHandler(req, res) {
   let username, password, authToken;
     let authHeader = req.headers["authorization"];
     if (authHeader) {
-      let [ , credentials] = AUTH_TOKEN_REGEX.exec(authHeader) ?? [];
+      let [ , credentials] = USER_CREDENTIALS_REGEX.exec(authHeader) ?? [];
       if (credentials) {
         credentials = atob(
           credentials.replaceAll("_", "/").replaceAll("-", "+")
@@ -64,11 +66,11 @@ async function requestHandler(req, res) {
           USERNAME_AND_PW_REGEX.exec(credentials) ?? [];
       }
       else {
-        [ , authToken = ""] = authHeader.match(AUTH_TOKEN_REGEX) ?? [];
+        [ , authToken = ""] = AUTH_TOKEN_REGEX.exec(authHeader) ?? [];
       }
     } 
 
-  // Then branch according to the request type
+  // Then branch according to the request type.
   switch (reqType) {
     case "createAccount": {
       let emailAddr = reqBody;
@@ -86,10 +88,22 @@ async function requestHandler(req, res) {
       break;
     }
     case "logout": {
-      let userID = reqBody;
-      let wasLoggedOut = await logout(userID, authToken);
+      let wasLoggedOut = await logout(authToken);
       res.writeHead(200, {'Content-Type': "application/json"});
-      res.end(wasLoggedOut ? "true" : "false");
+      res.end(wasLoggedOut ? 'true' : 'false');
+      break;
+    }
+    case "logoutAll": {
+      let userID = reqBody;
+      let logoutNum = await logoutAll(authToken, userID);
+      res.writeHead(200, {'Content-Type': "application/json"});
+      res.end(parseInt(logoutNum) || 0);
+      break;
+    }
+    case "replaceToken": {
+      let [newAuthToken, expTime] = await replaceToken(authToken);
+      res.writeHead(200, {'Content-Type': "application/json"});
+      res.end(JSON.stringify([newAuthToken, expTime]));
       break;
     }
     default: throw new ClientError(
@@ -126,12 +140,11 @@ async function createAccount(username, password, emailAddr) {
 
   // Then generate (and store) a new authentication token for the user.
   [resultRow = []] = await userDBConnection.queryProcCall(
-    "generateAuthToken", [userID],
+    "generateAuthToken", [userID, TOKEN_EXP_PERIOD, TIME_GRAIN],
   ) ?? [];
-  let [authToken, modifiedAt] = resultRow;
+  let [authToken, expTime] = resultRow;
 
   userDBConnection.end();
-  let expTime = parseInt(modifiedAt) + TOKEN_EXP_PERIOD;
   return [userID, authToken, expTime];
 }
 
@@ -159,31 +172,57 @@ async function login(username, password) {
 
   // Then generate (and store) a new authentication token for the user.
   [resultRow = []] = await userDBConnection.queryProcCall(
-    "generateAuthToken", [userID],
+    "generateAuthToken", [userID, TOKEN_EXP_PERIOD, TIME_GRAIN],
   ) ?? [];
-  let [authToken, modifiedAt] = resultRow;
+  let [authToken, expTime] = resultRow;
 
   userDBConnection.end();
-  let expTime = parseInt(modifiedAt) + TOKEN_EXP_PERIOD;
   return [userID, authToken, expTime];
 }
 
 
 
-async function logout(userID, authToken) {
+async function logout(authToken) {
   let userDBConnection = new UserDBConnection();
 
-  // Then delete the stored authToken, if any, for the given userID.
+  // Delete the stored authToken if it exists.
   [resultRow = []] = await userDBConnection.queryProcCall(
-    "deleteAuthToken", [userID, authToken],
+    "deleteAuthToken", [authToken],
   ) ?? [];
   let [wasDeleted] = resultRow;
 
   userDBConnection.end();
-
   return wasDeleted;
 }
 
+async function logoutAll(userID, authToken) {
+  let userDBConnection = new UserDBConnection();
+
+  // Delete all the user's authentication tokens, iff the provided authToken
+  // is owned by the user.
+  [resultRow = []] = await userDBConnection.queryProcCall(
+    "deleteAllAuthTokensIfAuthenticated", [userID, authToken],
+  ) ?? [];
+  let [deletionNum] = resultRow;
+
+  userDBConnection.end();
+  return deletionNum;
+}
+
+
+async function replaceToken(authToken) {
+  let userDBConnection = new UserDBConnection();
+
+  // Delete all the user's authentication tokens, iff the provided authToken
+  // is owned by the user.
+  [resultRow = []] = await userDBConnection.queryProcCall(
+    "replaceAuthToken", [authToken, TOKEN_EXP_PERIOD, TIME_GRAIN],
+  ) ?? [];
+  let [newAuthToken, expTime] = resultRow;
+
+  userDBConnection.end();
+  return [newAuthToken, expTime];
+}
 
 
 
