@@ -537,18 +537,18 @@ class JSXInstance {
 
 
 
-  // dispatch(actionKey, input?) dispatches an action to the first among
-  // the instance itself and its ancestors who has an action of that key (which
-  // might be a Symbol). The actions are declared by the 'actions' object
-  // exported by a component module. If no ancestors has an action of a
-  // matching key, dispatch() just fails silently and nothing happens.
-  dispatch(actionKey, input, interpreter, callerNode, callerEnv) {
+  // dispatch(event, input?) dispatches an event to the first among its ancestor
+  // instances who has an action with that event key (which might be a Symbol).
+  // The actions are declared by the 'actions' object exported by a component
+  // module. If no ancestors has an action of a matching key, dispatch() just
+  // fails silently and nothing happens.
+  dispatch(eventKey, input, interpreter, callerNode, callerEnv) {
     let actions = this.componentModule.members["actions"];
-    actionKey = getStringOrSymbol(actionKey);
-    if (actionKey === "") return;
+    eventKey = getStringOrSymbol(eventKey);
+    if (eventKey === "") return;
     let actionFun;
     if (getPrototypeOf(actions) === OBJECT_PROTOTYPE) {
-      actionFun = actions[actionKey];
+      actionFun = actions[eventKey];
     }
     if (actionFun) {
       interpreter.executeFunction(
@@ -560,7 +560,7 @@ class JSXInstance {
     else {
       if (this.parentInstance) {
         this.parentInstance.dispatch(
-          actionKey, input, interpreter, callerNode, callerEnv
+          eventKey, input, interpreter, callerNode, callerEnv
         );
       }
     }
@@ -629,8 +629,7 @@ class JSXInstance {
         if (!this.isDiscarded) {
           // Make sure to use the same callerNode and callerEnv as on the
           // previous render, which is done in order to not increase the memory
-          // for every single action (storing the function execution
-          // environment of each, action as well as that of each single render).
+          // for every single triggered action or call.
           this.render(
             this.props, this.isDecorated, interpreter,
             this.callerNode, this.callerEnv, true, true
@@ -742,9 +741,9 @@ class JSXInstanceInterface extends AbstractUHObject {
   // See the comments above for what dispatch() and call() does.
   dispatch = new DevFunction(
     {typeArr: ["object key", "any?"]},
-    ({callerNode, execEnv, interpreter}, [actionKey, input]) => {
+    ({callerNode, execEnv, interpreter}, [eventKey, input]) => {
       this.jsxInstance.dispatch(
-        actionKey, input, interpreter, callerNode, execEnv
+        eventKey, input, interpreter, callerNode, execEnv
       );
     }
   );
@@ -759,13 +758,11 @@ class JSXInstanceInterface extends AbstractUHObject {
   );
 
   // setState() assigns to jsxInstance.state immediately, which means that the
-  // state changes will be visible to all subsequently dispatched actions to
-  // this instance. However, since the render() function can only access the
-  // state via its 'state' argument, the state changes will not be visible in
-  // the continued execution of a render() after it has dispatched an action,
-  // but only be visible on a subsequent rerender. Also note that setState()
-  // always queues a rerender, even if the new state is equivalent to the old
-  // one.
+  // state changes will be visible to all subsequently triggered actions and
+  // calls to this instance. However, since the render() function can only
+  // access the state via its 'state' argument, the state changes will not be
+  // visible in the continued execution of a render() after it has set the new
+  // state, but only be visible on a subsequent rerender.
   setState = new DevFunction(
     {typeArr: ["object"]},
     ({interpreter}, [newState]) => {

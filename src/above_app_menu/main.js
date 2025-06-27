@@ -5,15 +5,15 @@ import {loginServerDomainURL} from "../server/config.js";
 export function main() {
   // Determine whether the user is logged in or not (automatically treating the
   // user as logged out if the user session expires within a day). and set a
-  // CSS class on #above-app-menu depending on this.
+  // CSS class on #account-menu depending on this.
   let {expTime} = JSON.parse(localStorage.getItem("userData") ?? "{}");
 
   if (!expTime || expTime < Date.now() + 86400000) {
     localStorage.removeItem("userData");
-    document.getElementById("above-app-menu").classList.add(".logged-out");
+    document.getElementById("account-menu").classList.add(".logged-out");
   }
   else {
-    document.getElementById("above-app-menu").classList.add(".logged-in");
+    document.getElementById("account-menu").classList.add(".logged-in");
   }
 
   // Add onclick events to the account settings menu items.
@@ -21,8 +21,6 @@ export function main() {
   document.getElementById("login-item").onclick = openLoginPage;
   document.getElementById("create-account-item").onclick =
     openCreateAccountPage;
-
-  // Add 
 }
 
 
@@ -44,9 +42,9 @@ function logout() {
       );
     });
   }
-  let aboveAppMenu = document.getElementById("above-app-menu");
-  aboveAppMenu.classList.remove(".logged-in");
-  aboveAppMenu.classList.add(".logged-out");
+  let accountMenu = document.getElementById("account-menu");
+  accountMenu.classList.remove(".logged-in");
+  accountMenu.classList.add(".logged-out");
 }
 
 

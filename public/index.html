@@ -15,26 +15,23 @@
 </head>
 <body>
 
-<div id="above-app-menu">
-  <div id="account-settings">
-    <div id="account-item" class="when-logged-in"></div>
+<div id="account-menu">
+  <!--
+    TODO: I imagine an account icon floating in the top right corner, with the
+    user's own icon if logged in, where if you press it, a menu will come down,
+    with all the items.
+  -->
+  <div id="account-menu-header"></div>
+  <div id="items">
     <div id="logout-item" class="when-logged-in">
-      <span class="glyphicon glyphicon-log-out"></span>
       <span>Log out</span>
     </div>
     <div id="login-item" class="when-logged-out">
-      <a href="#">
-        <span class="bi-box-arrow-in-right"></span>
         <span>Log in</span>
-      </a>
     </div>
     <div id="create-account-item" class="when-logged-out">
-      <span class="glyphicon glyphicon-user"></span>
       <span>Sign up</span>
     </div>
-  </div>
-  <div id="preference-settings">
-
   </div>
 </div>
 

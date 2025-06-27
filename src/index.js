@@ -5,7 +5,7 @@ import {
 import {ServerQueryHandler} from "./server/ajax_io/ServerQueryHandler.js";
 import {CAN_CREATE_APP_FLAG} from "./dev_lib/jsx/jsx_components.js";
 
-import {main as constructAboveAppMenu} from "./above_app_menu/main.js"
+import {main as constructAccountMenu} from "./above_app_menu/main.js"
 
 /* Tests */
 
@@ -41,12 +41,15 @@ if (typeof(Storage) === "undefined") {
   );
 }
 
-// Set up the above-app menu, used for account-related settings and actions,
-// and for other preference settings, potentially.
-constructAboveAppMenu();
+// Set up the account menu, used for account-related settings and user
+// preferences.
+constructAccountMenu();
 
 
 // TODO: Remove this and require a login instead to get a real auth. token.
+// TODO: And instead here, if the user is logged in and the expTime is close
+// enough, send a request to replace the token, which can run in the background
+// and replace the token in the background upon success.
 let expTime = Number.MAX_SAFE_INTEGER;
 localStorage.setItem("userData", JSON.stringify({
   userID: "1", authToken: "test_token", expTime: expTime
