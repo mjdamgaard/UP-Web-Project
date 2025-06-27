@@ -41,9 +41,6 @@ html, body, #up-app-root {
 } */
 
 #account-menu-header img.general-user-icon {
-  position: relative;
-  top: 0px;
-  left: 0px;
   height: 40px;
   width: 40px;
 }
@@ -51,7 +48,7 @@ html, body, #up-app-root {
   background-color: darkgray;
   height: 40px;
   width: 40px;
-  margin: 4px;
+  margin: 4px 4px 4px auto;
   border-radius: 20px;
   box-shadow: 2px 2px 4px rgb(133, 133, 133),
     -1px -1px 2px rgb(165, 165, 165);
@@ -68,15 +65,28 @@ html, body, #up-app-root {
 }
 #account-menu.open .items {
   display: block;
+  min-width: 300px;
   border: 2px solid lightblue;
+  border-radius: 3px;
 }
-#account-menu #account-menu-header {
-  display: block;
-}
-#account-menu.open #account-menu-header {
+/* #account-menu.open #account-menu-header {
   display: none;
-}
+} */
 
+#account-menu.open .items > * {
+  width: 100%;
+  font-size: 14pt;
+  border-bottom: 1px solid lightblue;
+}
+#account-menu.open .items > *:last-of-type {
+  border-bottom: 0px solid blue;
+}
+#account-menu.open .items > *:hover {
+  background-color: lightgray;
+}
+#account-menu.open .items > * > * {
+  margin: 2px;
+}
 
 
 #account-menu.open ~ #up-app-root * {
