@@ -1,0 +1,123 @@
+
+html, body, #up-app-root {
+  height: 100%;
+  width: 100%;
+}
+
+#account-menu {
+  position: absolute;
+  right: 0px;
+  top: 0px;
+  z-index: 1;
+}
+
+/* #account-menu-header::after {
+  content: "👤";
+}
+#account-menu-header {
+  font-size: 30px;
+  margin: 2px;
+  padding: 0px 2px;
+  border: 2px ridge lightblue;
+  border-radius: 5px;
+  background-color: rgb(240, 241, 245);
+  box-shadow: 2px 2px 3px rgb(191, 191, 191);
+} */
+
+/* #account-menu-header::after {
+  content: "≡";
+  position: relative;
+  top: -4px;
+}
+#account-menu-header {
+  font-size: 30px;
+  height: 45px;
+  margin: 3px;
+  padding: 0px 7px;
+  border: 2px ridge lightblue;
+  border-radius: 5px;
+  background-color: rgb(240, 241, 245);
+  box-shadow: 2px 2px 3px rgb(191, 191, 191);
+} */
+
+#account-menu-header img.general-user-icon {
+  position: relative;
+  top: 0px;
+  left: 0px;
+  height: 40px;
+  width: 40px;
+}
+#account-menu-header {
+  background-color: darkgray;
+  height: 40px;
+  width: 40px;
+  margin: 4px;
+  border-radius: 20px;
+  box-shadow: 2px 2px 4px rgb(133, 133, 133),
+    -1px -1px 2px rgb(165, 165, 165);
+}
+#account-menu-header:hover {
+  box-shadow: 2px 2px 4px rgb(133, 133, 133),
+    -1px -1px 2px rgb(165, 165, 165),
+    0px 0px 10px rgb(27, 38, 27);
+  cursor: pointer;
+}
+
+#account-menu .items {
+  display: none;
+}
+#account-menu.open .items {
+  display: block;
+  border: 2px solid lightblue;
+}
+#account-menu #account-menu-header {
+  display: block;
+}
+#account-menu.open #account-menu-header {
+  display: none;
+}
+
+
+
+#account-menu.open ~ #up-app-root * {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+
+#overlay-page-container.open ~ * {
+  display: none;
+}
+
+
+#overlay-page-container {
+  display: none;
+}
+
+#overlay-page-container.open {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr minmax(500px, 800px) 1fr;
+  grid-template-rows: 1fr;
+}
+
+#overlay-page-container.open > .page-content {
+  padding: 40px;
+}
+
+#overlay-page-container.open > .page-content button {
+  margin: 6px;
+}
+
+
+#overlay-page-container.open .go-back-button {
+  font-size: 20px;
+  padding: 10px;
+  margin: 2px 7px;
+  
+}
+#overlay-page-container.open .go-back-button:hover {
+  cursor: pointer;
+}
+

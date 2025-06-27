@@ -545,7 +545,6 @@ class JSXInstance {
   dispatch(eventKey, input, interpreter, callerNode, callerEnv) {
     let actions = this.componentModule.members["actions"];
     eventKey = getStringOrSymbol(eventKey);
-    if (eventKey === "") return;
     let actionFun;
     if (getPrototypeOf(actions) === OBJECT_PROTOTYPE) {
       actionFun = actions[eventKey];

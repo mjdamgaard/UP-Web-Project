@@ -16,11 +16,26 @@ export function main() {
     document.getElementById("account-menu").classList.add(".logged-in");
   }
 
-  // Add onclick events to the account settings menu items.
+  // Add onclick events open and close the account menu.
+  document.getElementById("account-menu-header").onclick = () => {
+    document.getElementById("account-menu").classList.add("open");
+    document.getElementById("up-app-root").onclick = () => {
+      document.getElementById("account-menu").classList.remove("open");
+      document.getElementById("up-app-root").onclick = undefined;
+    };
+
+  }; 
+
+  // Add onclick events to the account menu items.
   document.getElementById("logout-item").onclick = logout;
-  document.getElementById("login-item").onclick = openLoginPage;
-  document.getElementById("create-account-item").onclick =
-    openCreateAccountPage;
+  document.getElementById("login-item").onclick = () => {
+      document.getElementById("account-menu").classList.remove("open");
+      openLoginPage();
+  };
+  document.getElementById("create-account-item").onclick = () => {
+      document.getElementById("account-menu").classList.remove("open");
+      openCreateAccountPage();
+  };
 }
 
 
@@ -36,15 +51,17 @@ function logout() {
       headers: {Authorization: `Bearer ${authToken}`},
       body: userID,
     };
-    fetch(loginServerDomainURL + "/logout", options).catch(err => {
-      console.error(
-        `An error occurred when logging out: "${err.toString()}"`
-      );
+    fetch(
+      loginServerDomainURL + "/logout", options
+    ).catch(err => {
+      console.error(`An error occurred when logging out: "${err.toString()}"`);
+    }).then(() => {
+      let accountMenu = document.getElementById("account-menu");
+      accountMenu.classList.remove("open");
+      accountMenu.classList.remove("logged-in");
+      accountMenu.classList.add("logged-out");
     });
   }
-  let accountMenu = document.getElementById("account-menu");
-  accountMenu.classList.remove(".logged-in");
-  accountMenu.classList.add(".logged-out");
 }
 
 
@@ -54,23 +71,23 @@ function openLoginPage() {
   overlayPageContainer.classList.add("open");
   overlayPageContainer.innerHTML = `
     <div class="go-back-button">&#10094;</div>
-    <h3>Log in</h3>
-    <form>
-      <div class="form-group">
-        <label>Username</label>
-        <input type="text" className="form-control username"></input>
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" className="form-control password"></input>
-      </div>
-      <span>
-        <button className="btn btn-default">
+    <div class="page-content">
+      <h3>Log in</h3>
+      <form>
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" class="form-control username"></input>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" class="form-control password"></input>
+        </div>
+        <button type="submit" class="btn btn-primary">
           Log in
         </button>
-      </span>
-    </form>
-    <div class="response-display text-warning"></div>
+      </form>
+      <div class="response-display text-warning"></div>
+    </div>
   `;
   let goBackButton = overlayPageContainer.querySelector(".go-back-button");
   goBackButton.onclick = () => {
@@ -118,27 +135,27 @@ function openCreateAccountPage() {
   overlayPageContainer.classList.add("open");
   overlayPageContainer.innerHTML = `
     <div class="go-back-button">&#10094;</div>
-    <h3>Create a new account</h3>
-    <form>
-      <div class="form-group">
-        <label>Username</label>
-        <input type="text" className="form-control username"></input>
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" className="form-control password"></input>
-      </div>
-      <div class="form-group">
-        <label>E-mail</label>
-        <input type="email" className="form-control email"></input>
-      </div>
-      <span>
-        <button className="btn btn-default">
-          Log in
+    <div class="page-content">
+      <h3>Create a new account</h3>
+      <form>
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" class="form-control username"></input>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" class="form-control password"></input>
+        </div>
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" class="form-control email"></input>
+        </div>
+        <button type="submit" class="btn btn-primary">
+          Create account
         </button>
-      </span>
-    </form>
-    <div class="response-display text-warning"></div>
+      </form>
+      <div class="response-display text-warning"></div>
+    </div>
   `;
   let goBackButton = overlayPageContainer.querySelector(".go-back-button");
   goBackButton.onclick = () => {
