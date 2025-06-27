@@ -48,7 +48,7 @@ html, body, #up-app-root {
   background-color: darkgray;
   height: 40px;
   width: 40px;
-  margin: 4px 4px 4px auto;
+  margin: 6px 6px 2px auto;
   border-radius: 20px;
   box-shadow: 2px 2px 4px rgb(133, 133, 133),
     -1px -1px 2px rgb(165, 165, 165);
@@ -107,13 +107,15 @@ html, body, #up-app-root {
 #overlay-page-container.open {
   width: 100%;
   height: 100%;
-  display: grid;
-  grid-template-columns: 1fr minmax(500px, 800px) 1fr;
-  grid-template-rows: 1fr;
+  display: inline-block;
+  /* grid-template-columns: 1fr minmax(500px, 800px) 1fr;
+  grid-template-rows: 1fr; */
 }
 
 #overlay-page-container.open > .page-content {
-  padding: 40px;
+  position: relative;
+  left: 30%;
+  width: 40%;
 }
 
 #overlay-page-container.open > .page-content button {

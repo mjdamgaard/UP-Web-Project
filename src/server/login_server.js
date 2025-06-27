@@ -38,16 +38,21 @@ http.createServer(async function(req, res) {
 
 
 
-async function requestHandler(req, res) {
+async function requestHandler(req, res) {debugger;
   res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+  if (req.method === "OPTIONS") {
+    res.writeHead(200, {'Content-Type': "application/json"});
+    res.end("[]");
+    return;
+  }
 
   // The server only implements POST requests where the request type is
   // specified by the URL pathname, and where the request body, if there, is
   // an optional plain-text e-mail address, in case of a createAccount
   // request, or a plain-text userID in case of a logoutAll request.
-  let reqType = req.url;
+  let reqType = req.url;debugger;
   if (req.method !== "POST") throw new ClientError(
-    "Login server only accepts the POST methods"
+    "Login server only accepts POST methods"
   );
   let reqBody = await getData(req);
 

@@ -73,7 +73,7 @@ function openLoginPage() {
     <div class="go-back-button">&#10094;</div>
     <div class="page-content">
       <h3>Log in</h3>
-      <form>
+      <form action="javascript:void(0);">
         <div class="form-group">
           <label>Username</label>
           <input type="text" class="form-control username"></input>
@@ -104,7 +104,7 @@ function openLoginPage() {
     let password = passwordInput.value;
     let errMsg = validateUsernamePWAndEmailFormats(username, password);
     if (errMsg) {
-      responseDisplay.append(errMsg);
+      responseDisplay.replaceChildren(errMsg);
       return;
     }
     let credentials = btoa(`${username}:${password}`);
@@ -115,7 +115,7 @@ function openLoginPage() {
     fetch(
       loginServerDomainURL + "/login", options
     ).catch(err => {
-      responseDisplay.append(err.toString());
+      responseDisplay.replaceChildren(err.toString());
     }).then(res => {
       let [userID, authToken, expTime] = JSON.parse(res);
       localStorage.setItem("userData", JSON.stringify({
@@ -137,7 +137,7 @@ function openCreateAccountPage() {
     <div class="go-back-button">&#10094;</div>
     <div class="page-content">
       <h3>Create a new account</h3>
-      <form>
+      <form action="javascript:void(0);">
         <div class="form-group">
           <label>Username</label>
           <input type="text" class="form-control username"></input>
@@ -174,7 +174,7 @@ function openCreateAccountPage() {
     let email = emailInput.value ?? "";
     let errMsg = validateUsernamePWAndEmailFormats(username, password, email);
     if (errMsg) {
-      responseDisplay.append(errMsg);
+      responseDisplay.replaceChildren(errMsg);
       return;
     }
     let credentials = btoa(`${username}:${password}`);
@@ -186,7 +186,7 @@ function openCreateAccountPage() {
     fetch(
       loginServerDomainURL + "/createAccount", options
     ).catch(err => {
-      responseDisplay.append(err.toString());
+      responseDisplay.replaceChildren(err.toString());
     }).then(res => {
       let [userID, authToken, expTime] = JSON.parse(res);
       localStorage.setItem("userData", JSON.stringify({
@@ -219,7 +219,7 @@ function openCreateAccountPage() {
 export function validateUsernamePWAndEmailFormats(
   username, password, emailAddr = ""
 ) {
-  if (!username || !/^[a-zA-Z_-]{4, 40}$/.test(username)) {
+  if (!username || !/^[a-zA-Z][a-zA-Z0-9_-]{3,39}$/.test(username)) {
     return "Invalid username";
   }
   if (!password || password.length < 8 || password.length > 120) {
