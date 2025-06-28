@@ -21,26 +21,26 @@ DELIMITER //
 CREATE PROCEDURE createUserAccount (
     IN userName VARCHAR(50),
     IN pwHashSalted CHAR(60),
-    IN emailAddr VARCHAR(255),
-    IN maxAccountNum INT UNSIGNED
+    IN emailAddr VARCHAR(255)
 )
 proc: BEGIN
     DECLARE userID BIGINT UNSIGNED;
     DECLARE profileNum INT UNSIGNED;
 
-    IF (emailAddr IS NOT NULL AND emailAddr != "") THEN
-        SELECT COUNT(user_name) INTO profileNum
-        FROM EmailAddresses FORCE INDEX (sec_idx)
-        WHERE email_addr = emailAddr AND is_confirmed;
-        IF (profileNum > maxAccountNum) THEN
-            SELECT NULL;
-            LEAVE proc;
-        END IF;
-    END IF;
+    -- IF (emailAddr IS NOT NULL AND emailAddr != "") THEN
+    --     SELECT COUNT(user_name) INTO profileNum
+    --     FROM EmailAddresses FORCE INDEX (sec_idx)
+    --     WHERE email_addr = emailAddr AND is_confirmed;
+    --     IF (profileNum > maxAccountNum) THEN
+    --         SELECT NULL;
+    --         LEAVE proc;
+    --     END IF;
+    -- END IF;
 
-    INSERT INTO UserCredentials (user_name, password_hash_salted)
+    INSERT IGNORE INTO UserCredentials (user_name, password_hash_salted)
     VALUES (userName, pwHashSalted);
     SET userID = LAST_INSERT_ID();
+    SET userID = IF(userID, userID, NULL);
 
     IF (emailAddr IS NOT NULL AND emailAddr != "") THEN
         INSERT INTO EmailAddresses (user_name, email_addr)

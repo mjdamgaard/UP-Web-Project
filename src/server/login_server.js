@@ -9,6 +9,8 @@ import {getData} from './user_input/getData.js';
 import {UserDBConnection} from './db_io/DBConnection.js';
 
 const SALT_ROUNDS = 13; // (Number of rounds = 2^SALT_ROUNDS.)
+// TODO: MAX_ACCOUNT_NUM should be used when confirming an e-mail instead, if
+// at all.  
 const MAX_ACCOUNT_NUM = 10; // Number of user accounts per e-mail address.
 
 
@@ -60,7 +62,7 @@ async function requestHandler(req, res) {
   // Get from the Authorization header either the username and the password, in
   // case of a createAccount or login request, or the authToken in case of a
   // logout request.
-  let username, password, authToken;debugger;
+  let username, password, authToken;
     let authHeader = req.headers["authorization"];
     if (authHeader) {
       let [ , credentials] = USER_CREDENTIALS_REGEX.exec(authHeader) ?? [];
@@ -134,12 +136,12 @@ async function createAccount(username, password, emailAddr) {
 
   // Create the new account and get the new user ID.
   let [resultRow = []] = await userDBConnection.queryProcCall(
-    "createUserAccount", [username, pwHash, emailAddr ?? "", MAX_ACCOUNT_NUM],
+    "createUserAccount", [username, pwHash, emailAddr ?? ""],
   ) ?? [];
   let [userID] = resultRow;
 
-  // If the creation failed, due to too many account per (confirmed) e-mail,
-  // return an empty array.
+  // If the creation failed, due to the username already existing, return an
+  // empty array.
   if (!userID) {
     return [];
   }

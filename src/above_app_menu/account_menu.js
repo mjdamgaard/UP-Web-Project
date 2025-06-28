@@ -171,6 +171,10 @@ function openCreateAccountPage() {
       "createAccount", email, {username: username, password: password}
     ).then(res => {
       let [userID, authToken, expTime] = res;
+      if (!userID) {
+        responseDisplay.replaceChildren("Username already exists");
+        return;
+      }
       localStorage.setItem("userData", JSON.stringify({
         userID: userID, authToken: authToken, expTime: expTime
       }));
@@ -242,9 +246,8 @@ export async function request(url, isPost, reqBody, headers) {
     constructor(msg) {
       this.msg = msg;
     }
-
     toString() {
-      return `Network error: "${this.msg}"`; 
+      return this.msg; 
     }
   }
 
