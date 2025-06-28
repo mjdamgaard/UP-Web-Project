@@ -194,7 +194,7 @@ async function logout(authToken) {
   let userDBConnection = new UserDBConnection();
 
   // Delete the stored authToken if it exists.
-  [resultRow = []] = await userDBConnection.queryProcCall(
+  let [resultRow = []] = await userDBConnection.queryProcCall(
     "deleteAuthToken", [authToken],
   ) ?? [];
   let [wasDeleted] = resultRow;

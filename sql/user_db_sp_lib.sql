@@ -95,8 +95,6 @@ CREATE PROCEDURE deleteAuthToken (
     IN authToken VARCHAR(255)
 )
 BEGIN
-    DECLARE userID BIGINT UNSIGNED DEFAULT CONV((userIDHex), 16, 10);
-
     DELETE FROM AuthenticationTokens
     WHERE auth_token = authToken;
     

@@ -12,10 +12,9 @@ export function main() {
   if (!expTime || expTime * 1000 < Date.now() + 86400000) {
     localStorage.removeItem("userData");
     username = "";
-    document.getElementById("account-menu").classList.add(".logged-out");
   }
   else {
-    document.getElementById("account-menu").classList.add(".logged-in");
+    document.getElementById("account-menu").classList.add("logged-in");
     document.getElementById("user-name-display").replaceChildren(username);
     // Also send a request to place the token if the expTime is close enough to
     // the present.
@@ -61,22 +60,20 @@ export function main() {
 
 
 function logout() {
-  let {userID, authToken, expTime} = JSON.parse(
+  let {userID, authToken} = JSON.parse(
     localStorage.getItem("userData") ?? "{}"
   );
-  localStorage.removeItem("userData");
-  if (expTime < Date.now() + 5000) {
-    requestLoginServer(
-      "logout", userID, {authToken: authToken}
-    ).then(() => {
-      let accountMenu = document.getElementById("account-menu");
-      accountMenu.classList.remove("open");
-      accountMenu.classList.remove("logged-in");
-      accountMenu.classList.add("logged-out");
-    }).catch(err => {
-      console.error(`An error occurred when logging out: "${err.toString()}"`);
-    });
-  }
+  requestLoginServer(
+    "logout", userID, {authToken: authToken}
+  ).then(() => {
+    localStorage.removeItem("userData");
+    document.getElementById("user-name-display").replaceChildren("");
+    let accountMenu = document.getElementById("account-menu");
+    accountMenu.classList.remove("open");
+    accountMenu.classList.remove("logged-in");
+  }).catch(err => {
+    console.error(`An error occurred when logging out: "${err.toString()}"`);
+  });
 }
 
 
@@ -126,10 +123,15 @@ function openLoginPage() {
       "login", undefined, {username: username, password: password}
     ).then(res => {
       let [userID, authToken, expTime] = res;
+      if (!userID) {
+        responseDisplay.replaceChildren("Incorrect password");
+        return;
+      }
       localStorage.setItem("userData", JSON.stringify({
         userID: userID, username: username,
         authToken: authToken, expTime: expTime,
       }));
+      document.getElementById("account-menu").classList.add("logged-in");
       document.getElementById("user-name-display").replaceChildren(username);
       overlayPageContainer.classList.remove("open");
       overlayPageContainer.innerHTML = "";
@@ -201,6 +203,7 @@ function openCreateAccountPage() {
         userID: userID, username: username,
         authToken: authToken, expTime: expTime,
       }));
+      document.getElementById("account-menu").classList.add("logged-in");
       document.getElementById("user-name-display").replaceChildren(username);
       overlayPageContainer.classList.remove("open");
       overlayPageContainer.innerHTML = "";

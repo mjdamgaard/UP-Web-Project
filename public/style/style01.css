@@ -76,15 +76,28 @@ html, body, #up-app-root {
 #account-menu .items {
   display: none;
 }
+#account-menu .items > :hover {
+  cursor: pointer;
+}
 #account-menu.open .items {
   display: block;
   min-width: 300px;
   border: 2px solid lightblue;
   border-radius: 3px;
 }
-/* #account-menu.open #account-menu-header {
-  display: none;
-} */
+
+
+#account-menu.open:not(.logged-in) .items > .when-logged-in {
+  /* display: none; */
+  pointer-events: none;
+  opacity: 0.4;
+}
+#account-menu.open.logged-in .items > .when-logged-out {
+  /* display: none; */
+  pointer-events: none;
+  opacity: 0.4;
+}
+
 
 #account-menu.open .items > * {
   width: 100%;
