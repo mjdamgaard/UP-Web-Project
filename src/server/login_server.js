@@ -18,8 +18,8 @@ const AUTH_TOKEN_REGEX = /^Bearer (.+)$/;
 const USER_CREDENTIALS_REGEX = /^Basic (.+)$/;
 const USERNAME_AND_PW_REGEX = /^([^:]+):(.*)$/;
 
-const TOKEN_EXP_PERIOD = 7948800000; // ~= 3 months.
-const TIME_GRAIN = 27; // Means round down the current token timestamp by 2^27
+const TOKEN_EXP_PERIOD = 7948800; // ~= 3 months in seconds.
+const TIME_GRAIN = 17; // Means round down the current token timestamp by 2^27
 // ~= 1.5 days. 
 
 

@@ -6,14 +6,34 @@ export function main() {
   // Determine whether the user is logged in or not (automatically treating the
   // user as logged out if the user session expires within a day). and set a
   // CSS class on #account-menu depending on this.
-  let {expTime} = JSON.parse(localStorage.getItem("userData") ?? "{}");
+  let {username, expTime} =
+    JSON.parse(localStorage.getItem("userData") ?? "{}");
 
-  if (!expTime || expTime < Date.now() + 86400000) {
+  if (!expTime || expTime * 1000 < Date.now() + 86400000) {
     localStorage.removeItem("userData");
+    username = "";
     document.getElementById("account-menu").classList.add(".logged-out");
   }
   else {
     document.getElementById("account-menu").classList.add(".logged-in");
+    document.getElementById("user-name-display").replaceChildren(username);
+    // Also send a request to place the token if the expTime is close enough to
+    // the present.
+    if (expTime * 1000 < Date.now() + 2678400000) {
+      let {authToken, userID} =
+        JSON.parse(localStorage.getItem("userData") ?? "{}");
+      requestLoginServer(
+        "replaceToken", undefined, {authToken: authToken}
+      ).then(res => {
+        let [newAuthToken, expTime] = res;
+        localStorage.setItem("userData", JSON.stringify({
+          userID: userID, username: username,
+          authToken: newAuthToken, expTime: expTime,
+        }));
+      }).catch(err => {
+        console.error(err);
+      });
+    }
   }
 
   // Add onclick events open and close the account menu.
@@ -65,7 +85,7 @@ function openLoginPage() {
   let overlayPageContainer = document.getElementById("overlay-page-container");
   overlayPageContainer.classList.add("open");
   overlayPageContainer.innerHTML = `
-    <div class="go-back-button">&#10094;</div>
+    <div class="go-back-button"></div>
     <div class="page-content">
       <h3>Log in</h3>
       <form action="javascript:void(0);">
@@ -107,8 +127,10 @@ function openLoginPage() {
     ).then(res => {
       let [userID, authToken, expTime] = res;
       localStorage.setItem("userData", JSON.stringify({
-        userID: userID, authToken: authToken, expTime: expTime
+        userID: userID, username: username,
+        authToken: authToken, expTime: expTime,
       }));
+      document.getElementById("user-name-display").replaceChildren(username);
       overlayPageContainer.classList.remove("open");
       overlayPageContainer.innerHTML = "";
       // TODO: Also make the app component rerender with an updated userID prop.
@@ -124,7 +146,7 @@ function openCreateAccountPage() {
   let overlayPageContainer = document.getElementById("overlay-page-container");
   overlayPageContainer.classList.add("open");
   overlayPageContainer.innerHTML = `
-    <div class="go-back-button">&#10094;</div>
+    <div class="go-back-button"></div>
     <div class="page-content">
       <h3>Create a new account</h3>
       <form action="javascript:void(0);">
@@ -176,8 +198,10 @@ function openCreateAccountPage() {
         return;
       }
       localStorage.setItem("userData", JSON.stringify({
-        userID: userID, authToken: authToken, expTime: expTime
+        userID: userID, username: username,
+        authToken: authToken, expTime: expTime,
       }));
+      document.getElementById("user-name-display").replaceChildren(username);
       overlayPageContainer.classList.remove("open");
       overlayPageContainer.innerHTML = "";
       // TODO: Also make the app component rerender with an updated userID prop.

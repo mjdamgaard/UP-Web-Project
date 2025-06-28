@@ -40,24 +40,37 @@ html, body, #up-app-root {
   box-shadow: 2px 2px 3px rgb(191, 191, 191);
 } */
 
+
+#account-menu-header {
+  text-align: right;
+}
+#account-menu:not(.open) #account-menu-header:hover {
+  cursor: pointer;
+}
 #account-menu-header img.general-user-icon {
   height: 40px;
   width: 40px;
 }
-#account-menu-header {
+#account-menu-header #user-icon {
+  display: inline-block;
   background-color: darkgray;
   height: 40px;
   width: 40px;
-  margin: 6px 6px 2px auto;
+  margin: 6px 6px 2px 6px;
   border-radius: 20px;
   box-shadow: 2px 2px 4px rgb(133, 133, 133),
     -1px -1px 2px rgb(165, 165, 165);
 }
-#account-menu-header:hover {
+#account-menu:not(.open) #account-menu-header #user-icon:hover {
   box-shadow: 2px 2px 4px rgb(133, 133, 133),
     -1px -1px 2px rgb(165, 165, 165),
     0px 0px 10px rgb(27, 38, 27);
   cursor: pointer;
+}
+#account-menu-header #user-name-display {
+  display: inline-block;
+  margin: 6px 2px 2px 6px;
+  color:rgb(67, 67, 255);
 }
 
 #account-menu .items {
@@ -124,10 +137,18 @@ html, body, #up-app-root {
 
 
 #overlay-page-container.open .go-back-button {
-  font-size: 20px;
+  font-size: 40px;
   padding: 10px;
   margin: 2px 7px;
-  
+}
+#overlay-page-container.open .go-back-button::after {
+  content: "➜";
+  display: inline-block;
+  -moz-transform: scale(-1, 1);
+  -webkit-transform: scale(-1, 1);
+  -o-transform: scale(-1, 1);
+  -ms-transform: scale(-1, 1);
+  transform: scale(-1, 1);
 }
 #overlay-page-container.open .go-back-button:hover {
   cursor: pointer;

@@ -50,10 +50,10 @@ constructAccountMenu();
 // TODO: And instead here, if the user is logged in and the expTime is close
 // enough, send a request to replace the token, which can run in the background
 // and replace the token in the background upon success.
-let expTime = Number.MAX_SAFE_INTEGER;
-localStorage.setItem("userData", JSON.stringify({
-  userID: "1", authToken: "test_token", expTime: expTime
-}));
+// let expTime = Number.MAX_SAFE_INTEGER;
+// localStorage.setItem("userData", JSON.stringify({
+//   userID: "1", authToken: "test_token", expTime: expTime
+// }));
 
 
 const serverQueryHandler = new ServerQueryHandler();
