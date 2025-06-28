@@ -46,20 +46,15 @@ function logout() {
   );
   localStorage.removeItem("userData");
   if (expTime < Date.now() + 5000) {
-    let options = {
-      method: "POST",
-      headers: {Authorization: `Bearer ${authToken}`},
-      body: userID,
-    };
-    fetch(
-      loginServerDomainURL + "/logout", options
-    ).catch(err => {
-      console.error(`An error occurred when logging out: "${err.toString()}"`);
-    }).then(() => {
+    requestLoginServer(
+      "logout", userID, {authToken: authToken}
+    ).then(() => {
       let accountMenu = document.getElementById("account-menu");
       accountMenu.classList.remove("open");
       accountMenu.classList.remove("logged-in");
       accountMenu.classList.add("logged-out");
+    }).catch(err => {
+      console.error(`An error occurred when logging out: "${err.toString()}"`);
     });
   }
 }
@@ -107,23 +102,18 @@ function openLoginPage() {
       responseDisplay.replaceChildren(errMsg);
       return;
     }
-    let credentials = btoa(`${username}:${password}`);
-    let options = {
-      method: "POST",
-      headers: {Authorization: `Basic ${credentials}`},
-    };
-    fetch(
-      loginServerDomainURL + "/login", options
-    ).catch(err => {
-      responseDisplay.replaceChildren(err.toString());
-    }).then(res => {
-      let [userID, authToken, expTime] = JSON.parse(res);
+    requestLoginServer(
+      "login", undefined, {username: username, password: password}
+    ).then(res => {
+      let [userID, authToken, expTime] = res;
       localStorage.setItem("userData", JSON.stringify({
         userID: userID, authToken: authToken, expTime: expTime
       }));
       overlayPageContainer.classList.remove("open");
       overlayPageContainer.innerHTML = "";
       // TODO: Also make the app component rerender with an updated userID prop.
+    }).catch(err => {
+      responseDisplay.replaceChildren(err.toString());
     });
   };
 }
@@ -177,24 +167,18 @@ function openCreateAccountPage() {
       responseDisplay.replaceChildren(errMsg);
       return;
     }
-    let credentials = btoa(`${username}:${password}`);
-    let options = {
-      method: "POST",
-      headers: {Authorization: `Basic ${credentials}`},
-      body: email,
-    };
-    fetch(
-      loginServerDomainURL + "/createAccount", options
-    ).catch(err => {
-      responseDisplay.replaceChildren(err.toString());
-    }).then(res => {
-      let [userID, authToken, expTime] = JSON.parse(res);
+    requestLoginServer(
+      "createAccount", email, {username: username, password: password}
+    ).then(res => {
+      let [userID, authToken, expTime] = res;
       localStorage.setItem("userData", JSON.stringify({
         userID: userID, authToken: authToken, expTime: expTime
       }));
       overlayPageContainer.classList.remove("open");
       overlayPageContainer.innerHTML = "";
       // TODO: Also make the app component rerender with an updated userID prop.
+    }).catch(err => {
+      responseDisplay.replaceChildren(err.toString());
     });
   };
 
@@ -204,6 +188,82 @@ function openCreateAccountPage() {
 
 
 
+
+async function requestLoginServer(reqType, reqBody, authOptions) {
+  let url = loginServerDomainURL + "/" + reqType;
+  let headers = authOptions?.authToken ? {
+    Authorization: `Bearer ${authOptions.authToken}`
+  } : authOptions?.username ? {
+    Authorization:
+      `Basic ${btoa(`${authOptions.username}:${authOptions.password}`)}`
+  } : {};
+  return await request(url, true, reqBody, headers);
+}
+
+
+
+export async function request(url, isPost, reqBody, headers) {
+    // Send the request.
+    let options = isPost ? {
+      method: "POST",
+      headers: headers,
+      body: reqBody,
+    } : {
+      headers: headers,
+    };
+    let response;
+    try {
+      response = await fetch(url, options);
+    } catch (err) {
+      if (err instanceof TypeError) {
+        throw new err.message;
+      }
+      else throw err;
+    }
+    let responseText = await response.text();
+
+
+    if (!response.ok) {
+      // TODO: Consider changing the name of LoadError, and/or making a new
+      // error type for server request errors.
+      throw new NetworkError(
+        "HTTP error " + response.status +
+        (responseText ? ": " + responseText : ""),
+      );
+    }
+    else {
+      let mimeType = response.headers.get("Content-Type");
+      return fromMIMEType(responseText, mimeType);
+    }
+  }
+
+
+  export class NetworkError {
+    constructor(msg) {
+      this.msg = msg;
+    }
+
+    toString() {
+      return `Network error: "${this.msg}"`; 
+    }
+  }
+
+
+  function fromMIMEType(val, mimeType) {
+    if (mimeType === "text/plain") {
+      return val;
+    }
+    else if (mimeType === "application/json") {
+      try {
+        return JSON.parse(val);
+      } catch(err) {
+        throw "Invalid application/json data received from server";
+      }
+    }
+    else throw (
+      `fromMIMEType(): Unrecognized/un-implemented MIME type: ${mimeType}`
+    );
+  }
 
 
 

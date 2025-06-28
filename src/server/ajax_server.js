@@ -83,6 +83,12 @@ http.createServer(async function(req, res) {
 
 async function requestHandler(req, res, returnGasRef) {
   res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.setHeader("Access-Control-Allow-Headers", "Authorization");
+  if (req.method === "OPTIONS") {
+    res.setHeader("Cache-Control", "max-age=604800");
+    res.end("");
+    return;
+  }
 
   // If the header includes an Authorization header, immediately consult the
   // DB to authenticate the user, creating a userID promise that resolves with

@@ -14,7 +14,7 @@ const MAX_ACCOUNT_NUM = 10; // Number of user accounts per e-mail address.
 
 const AUTH_TOKEN_REGEX = /^Bearer (.+)$/;
 const USER_CREDENTIALS_REGEX = /^Basic (.+)$/;
-const USERNAME_AND_PW_REGEX = /^([^:]+):([^:])+$/;
+const USERNAME_AND_PW_REGEX = /^([^:]+):(.*)$/;
 
 const TOKEN_EXP_PERIOD = 7948800000; // ~= 3 months.
 const TIME_GRAIN = 27; // Means round down the current token timestamp by 2^27
@@ -38,11 +38,12 @@ http.createServer(async function(req, res) {
 
 
 
-async function requestHandler(req, res) {debugger;
+async function requestHandler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.setHeader("Access-Control-Allow-Headers", "Authorization");
   if (req.method === "OPTIONS") {
-    res.writeHead(200, {'Content-Type': "application/json"});
-    res.end("[]");
+    res.setHeader("Cache-Control", "max-age=604800");
+    res.end("");
     return;
   }
 
@@ -50,7 +51,7 @@ async function requestHandler(req, res) {debugger;
   // specified by the URL pathname, and where the request body, if there, is
   // an optional plain-text e-mail address, in case of a createAccount
   // request, or a plain-text userID in case of a logoutAll request.
-  let reqType = req.url;debugger;
+  let reqType = req.url.substring(1);
   if (req.method !== "POST") throw new ClientError(
     "Login server only accepts POST methods"
   );
@@ -59,7 +60,7 @@ async function requestHandler(req, res) {debugger;
   // Get from the Authorization header either the username and the password, in
   // case of a createAccount or login request, or the authToken in case of a
   // logout request.
-  let username, password, authToken;
+  let username, password, authToken;debugger;
     let authHeader = req.headers["authorization"];
     if (authHeader) {
       let [ , credentials] = USER_CREDENTIALS_REGEX.exec(authHeader) ?? [];
@@ -238,15 +239,11 @@ async function replaceToken(authToken) {
 export function validateUsernamePWAndEmailFormats(
   username, password, emailAddr = ""
 ) {
-  if (!username || !/^[a-zA-Z_-]{4, 40}$/.test(username)) {
-    throw new ClientError(
-      "Invalid username"
-    );
+  if (!username || !/^[a-zA-Z][a-zA-Z0-9_-]{3,39}$/.test(username)) {
+    throw new ClientError("Invalid username");
   }
-  if (!password || !/^[a-zA-Z_-]{4}{3, 40}$/.test(password)) {
-    throw new ClientError(
-      "Invalid base-64-encoded password"
-    );
+  if (!password || password.length < 8 || password.length > 120) {
+    throw new ClientError("Invalid password");
   }
   // TODO: Implement validation.
   if (emailAddr && !/^.$/.test(emailAddr)) {
