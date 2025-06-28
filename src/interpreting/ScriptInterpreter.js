@@ -50,13 +50,14 @@ export class ScriptInterpreter {
 
   constructor(
     isServerSide = false, serverQueryHandler, dbQueryHandler,
-    staticDevLibs = new Map(), devLibURLs = new Map(),
+    staticDevLibs = new Map(), devLibURLs = new Map(), contexts = {},
   ) {
     this.isServerSide = isServerSide;
     this.serverQueryHandler = serverQueryHandler;
     this.dbQueryHandler = dbQueryHandler;
     this.staticDevLibs = staticDevLibs;
     this.devLibURLs = devLibURLs;
+    this.contexts = contexts;
   }
 
   async interpretScript(

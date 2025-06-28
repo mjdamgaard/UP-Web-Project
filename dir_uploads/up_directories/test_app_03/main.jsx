@@ -2,7 +2,8 @@
 import * as PostField from "./PostField.jsx";
 import * as PostList from "./PostList.jsx";
 
-export function render() {
+export function render({userID}) {
+  console.log("Rendering app with userID=" + userID);
   return (
     <div>
       <h2>{"Post a message!"}</h2>

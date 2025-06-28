@@ -66,13 +66,14 @@ export const createJSXApp = new DevFunction(
     );
 
     // Then create the app's root component instance, and before rendering it,
-    // add some props for getting URL data, and pushing a new browser session
-    // history state it it, if these props keys are not already occupied.  
+    // add some props for getting user data and URL data, and pushing a new
+    // browser session history state it it.  
     let rootInstance = new JSXInstance(
       appComponent, "root", undefined, callerNode, execEnv,
       jsxAppStyler, settingsStore      
     );
-    props = addURLRelatedProps(props, rootInstance);
+    props = addUserRelatedProps(props, rootInstance, interpreter);
+    props = addURLRelatedProps(props, rootInstance, interpreter);
 
     // Then render the root instance and insert it into the document.
     let rootParent = document.getElementById("up-app-root");
@@ -978,8 +979,19 @@ function deepCopyExceptRefs(props, node, env) {
 
 
 
+function addUserRelatedProps(props, jsxInstance, interpreter) {
+  let {contexts: {userIDContext}} = interpreter;
+  let userID = userIDContext.get();
+  userIDContext.addSubscriberCallback((userID) => {
+    jsxInstance.changePropsAndRerender({userID: userID}, interpreter);
+  })
+  return {...props, userID: userID};
+}
+
+
+
 // TODO: Implement:
-function addURLRelatedProps(props, jsxInstance) {
+function addURLRelatedProps(props, jsxInstance, interpreter) {
   return props;
 
   // let {hostname, pathname, search, hash} = window.location;

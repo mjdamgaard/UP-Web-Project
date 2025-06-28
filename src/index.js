@@ -41,9 +41,33 @@ if (typeof(Storage) === "undefined") {
   );
 }
 
+
+// Create some global contexts which defines some reserved props of the app
+// component (and which will make the app rerender when they change). 
+class Context {
+  constructor(val) {
+    this.val = val;
+    this.subscriberCallbacks = [];
+  }
+  get() {
+    return this.val;
+  }
+  set(val) {
+    this.val = val;
+    this.subscriberCallbacks.forEach(callback => callback(val));
+  }
+  addSubscriberCallback(callback) {
+    this.subscriberCallbacks.push(callback);
+  }
+}
+
+const userIDContext = new Context();
+const urlContext = new Context();
+
+
 // Set up the account menu, used for account-related settings and user
 // preferences.
-constructAccountMenu();
+constructAccountMenu(userIDContext);
 
 
 // TODO: Remove this and require a login instead to get a real auth. token.
@@ -59,7 +83,8 @@ constructAccountMenu();
 const serverQueryHandler = new ServerQueryHandler();
 
 const scriptInterpreter = new ScriptInterpreter(
-  false, serverQueryHandler, undefined, staticDevLibs, undefined
+  false, serverQueryHandler, undefined, staticDevLibs, undefined,
+  {userIDContext: userIDContext, urlContext: urlContext}
 );
 
 
@@ -105,6 +130,11 @@ scriptInterpreter.interpretScript(
     }
   }
 ).catch(err => console.error(err));
+
+
+
+
+
 
 
 
