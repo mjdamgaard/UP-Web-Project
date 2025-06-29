@@ -166,7 +166,7 @@ BEGIN
     FROM AuthenticationTokens FORCE INDEX (sec_idx)
     WHERE auth_token = authToken AND expiration_time > curTime;
 
-    SELECT userID;
+    SELECT CONV(userID, 10, 16) AS userID;
 END //
 DELIMITER ;
 

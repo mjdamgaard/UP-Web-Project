@@ -50,23 +50,22 @@ export class ScriptInterpreter {
 
   constructor(
     isServerSide = false, serverQueryHandler, dbQueryHandler,
-    staticDevLibs = new Map(), devLibURLs = new Map(), contexts = {},
+    staticDevLibs = new Map(), devLibURLs = new Map(),
   ) {
     this.isServerSide = isServerSide;
     this.serverQueryHandler = serverQueryHandler;
     this.dbQueryHandler = dbQueryHandler;
     this.staticDevLibs = staticDevLibs;
     this.devLibURLs = devLibURLs;
-    this.contexts = contexts;
   }
 
   async interpretScript(
     gas, script = "", scriptPath = null, mainInputs = [], flags = [],
-    parsedScripts = new Map(), liveModules = new Map(),
+    contexts = {}, parsedScripts = new Map(), liveModules = new Map(),
   ) {
     let scriptVars = {
       gas: gas, log: {entries: []}, scriptPath: scriptPath,
-      flags: flags, globalEnv: undefined, interpreter: this,
+      flags: flags, contexts: contexts, globalEnv: undefined, interpreter: this,
       isExiting: false, resolveScript: undefined,
       parsedScripts: parsedScripts, liveModules: liveModules,
     };
@@ -2353,7 +2352,7 @@ export function getExtendedErrorMsg(err) {
     type = "OutOfGasError";
   }
   else if (err instanceof CustomException) {
-    type = "Uncaught or re-thrown custom exception";
+    type = "Uncaught custom exception";
   }
   else if (err instanceof SyntaxError) {
     return getExtendedErrorMsgHelper(err);

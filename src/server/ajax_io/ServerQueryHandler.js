@@ -66,7 +66,7 @@ export class ServerQueryHandler {
       if (flags !== undefined) reqData.flags = flags;
 
       let {authToken, expTime} = this.getTokenData();
-      if (expTime && expTime < Date.now() + 20000) {
+      if (expTime && expTime * 1000 < Date.now() + 20) {
         throw new NetworkError(
           "User login session is expired"
         );
@@ -85,7 +85,7 @@ export class ServerQueryHandler {
     }
 
 
-    return await this.request(route, isPublic, reqData);
+    return await this.request(route, isPublic, reqData, headers);
   }
 
 

@@ -5,7 +5,8 @@ import * as JSON from 'json';
 import * as Textarea from 'Textarea1.jsx';
 import * as CharCount from './CharCount.jsx';
 
-export function render() {
+export function render({userID}) {
+  let {response = ""} = this.state;
   return (
     <div>
       <CharCount key={1} />
@@ -13,6 +14,11 @@ export function render() {
         <Textarea key={0} onChange={dispatchCharCount}/>
       </div>
       <button onClick={() => {
+        if (!userID) {
+          this.setState({
+            ...this.state, response: "You must be logged in before posting."
+          });
+        }
         let textVal = this.call(0, "getValue");
         // TODO: Make a 'strings' dev library with a stringify() function in
         // particular, and use it here:
@@ -23,14 +29,22 @@ export function render() {
           ).then(wasCreated => {this.call(0, "clear");
             if (wasCreated) {
               this.call(0, "clear");
+              this.setState({
+                ...this.state, response: "Success."
+              });
               this.dispatch("refresh");
             }
-            else throw "Post was not received properly";
+            else {
+              this.setState({
+                ...this.state, response: "Something went wrong."
+              });
+            }
           });
         }
       }}>
         {"Post"}
       </button>
+      <div>{response}</div>
     </div>
   );
 }

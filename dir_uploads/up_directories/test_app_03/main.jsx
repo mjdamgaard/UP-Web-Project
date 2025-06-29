@@ -7,7 +7,7 @@ export function render({userID}) {
   return (
     <div>
       <h2>{"Post a message!"}</h2>
-      <PostField key={0}/>
+      <PostField key={0} userID={userID} />
       <PostList key={1} />
     </div>
   );

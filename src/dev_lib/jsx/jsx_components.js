@@ -72,8 +72,8 @@ export const createJSXApp = new DevFunction(
       appComponent, "root", undefined, callerNode, execEnv,
       jsxAppStyler, settingsStore      
     );
-    props = addUserRelatedProps(props, rootInstance, interpreter);
-    props = addURLRelatedProps(props, rootInstance, interpreter);
+    props = addUserRelatedProps(props, rootInstance, interpreter, execEnv);
+    props = addURLRelatedProps(props, rootInstance, interpreter, execEnv);
 
     // Then render the root instance and insert it into the document.
     let rootParent = document.getElementById("up-app-root");
@@ -979,8 +979,8 @@ function deepCopyExceptRefs(props, node, env) {
 
 
 
-function addUserRelatedProps(props, jsxInstance, interpreter) {
-  let {contexts: {userIDContext}} = interpreter;
+function addUserRelatedProps(props, jsxInstance, interpreter, env) {
+  let {contexts: {userIDContext}} = env.scriptVars;
   let userID = userIDContext.get();
   userIDContext.addSubscriberCallback((userID) => {
     jsxInstance.changePropsAndRerender({userID: userID}, interpreter);

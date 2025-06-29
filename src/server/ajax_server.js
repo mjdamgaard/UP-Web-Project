@@ -33,8 +33,7 @@ staticDevLibs.set("string", stringMod);
 staticDevLibs.set("array", arrayMod);
 
 
-const TOKEN_EXP_PERIOD = 2764800000;
-
+// const TOKEN_EXP_PERIOD = 7948800; // ~= 3 months in seconds.
 
 const [ , curPath] = process.argv;
 const mainScriptPath = path.normalize(
@@ -100,8 +99,9 @@ async function requestHandler(req, res, returnGasRef) {
     if (!authToken) throw new ClientError(
       "Invalid or unrecognized authorization header"
     );
-    userIDPromise = getUserID(authToken).catch(() => {}); 
-  } 
+    userIDPromise = getUserID(authToken);
+    userIDPromise.catch(() => {});
+  }
 
   // The server only implements GET and POST requests, where for the POST 
   // requests the request body is a JSON object.
@@ -142,15 +142,27 @@ async function requestHandler(req, res, returnGasRef) {
   let {returnLog, gas: reqGas, gasID: reqGasID} = options;
 
 
-  // Wait for the userID here if the authHeader was defined.
-  let userID = "1"; // TODO: Change an comment in this:
-  // if (authHeader) {
-  //   userID = await userIDPromise;
-  //   if (!userID) {
-  //     endWithUnauthenticatedError(res);
-  //     return;
-  //   }
-  // }
+  // Wait for the userID here if the authHeader was defined, and use it to set
+  // the "user ID context" (which has this form due to compatibility with the
+  // front-end interpreter).
+  let userID;
+  if (authHeader) {
+    userID = await userIDPromise;
+    if (!userID) {
+      endWithUnauthenticatedError(res);
+      return;
+    }
+  }
+  if (!isPublic && !userID) {
+      endWithUnauthenticatedError(res);
+      return;
+  }
+  let userIDContext = {
+    val: undefined,
+    get: function() {
+      return this.val;
+    },
+  }
 
   // Get the gas for the interpretation, potentially using reqGas or reqGasID,
   // if provided, to determine the gas object to pass to the interpreter. If
@@ -203,7 +215,7 @@ async function requestHandler(req, res, returnGasRef) {
   ]);
   let [output, log] = await scriptInterpreter.interpretScript(
     gas, undefined, virMainPath, [isPublic, route, isPost, postData, options],
-    flags, parsedScripts,
+    flags, {userIDContext: userIDContext}, parsedScripts,
   );
   let [result, mimeType] = output ?? [];
 

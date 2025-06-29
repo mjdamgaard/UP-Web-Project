@@ -83,8 +83,7 @@ constructAccountMenu(userIDContext);
 const serverQueryHandler = new ServerQueryHandler();
 
 const scriptInterpreter = new ScriptInterpreter(
-  false, serverQueryHandler, undefined, staticDevLibs, undefined,
-  {userIDContext: userIDContext, urlContext: urlContext}
+  false, serverQueryHandler, undefined, staticDevLibs, undefined
 );
 
 
@@ -120,6 +119,7 @@ const flags = [CAN_CREATE_APP_FLAG];
 // Run the main script to create the app.
 scriptInterpreter.interpretScript(
   appGas, mainScript, undefined, [], flags,
+  {userIDContext: userIDContext, urlContext: urlContext},
 ).then(
   ([output, log]) => {
     console.log("UP app script exited with output and log:");
