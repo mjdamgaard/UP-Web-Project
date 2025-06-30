@@ -2,9 +2,9 @@
 USE userDB;
 
 /* Private user data */
-DROP TABLE UserCredentials;
-DROP TABLE EmailAddresses;
-DROP TABLE AuthenticationTokens;
+-- DROP TABLE UserCredentials;
+-- DROP TABLE EmailAddresses;
+-- DROP TABLE AuthenticationTokens;
 DROP TABLE UserGas;
 
 
@@ -88,7 +88,7 @@ CREATE TABLE UserGas (
 
     gas_json VARCHAR(700) NOT NULL,
 
-    last_auto_refill_at BIGINT UNSIGNED NOT NULL -- unix timestamp.
+    auto_refilled_at BIGINT UNSIGNED NOT NULL -- unix timestamp.
 
     -- comp_gas     FLOAT NOT NULL DEFAULT 0,
     -- db_read_gas  FLOAT NOT NULL DEFAULT 10000000,-- bytes (roughly).

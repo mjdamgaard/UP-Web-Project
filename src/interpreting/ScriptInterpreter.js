@@ -2296,6 +2296,7 @@ export function payGas(node, environment, gasCost) {
       gas[key] -= gasCost[key];
     }
     if (gas[key] < 0) {
+      gas[key] += gasCost[key]
       throw new OutOfGasError(
         "Ran out of " + GAS_NAMES[key] + "gas",
         node, environment,
@@ -2307,6 +2308,7 @@ export function payGas(node, environment, gasCost) {
 export function decrCompGas(node, environment) {
   let {gas} = environment.scriptVars;
   if (0 > --gas.comp) {
+    gas.comp++;
     throw new OutOfGasError(
       "Ran out of " + GAS_NAMES.comp + " gas",
       node, environment,
@@ -2317,6 +2319,7 @@ export function decrCompGas(node, environment) {
 export function decrGas(node, environment, gasName) {
   let {gas} = environment.scriptVars;
   if (0 > --gas[gasName]) {
+    gas[gasName]++;
     throw new OutOfGasError(
       "Ran out of " + GAS_NAMES[gasName] + " gas",
       node, environment,

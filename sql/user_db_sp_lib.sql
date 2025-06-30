@@ -179,11 +179,17 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE selectGas (
-    IN userIDHex VARCHAR(16)
+    IN userIDHex VARCHAR(16),
+    IN doLock BOOL
 )
 BEGIN
     DECLARE userID BIGINT UNSIGNED DEFAULT CONV((userIDHex), 16, 10);
-    SELECT gas_json AS gasJSON, last_auto_refill_at AS lastAutoRefill
+
+    IF (doLock) THEN
+        DO GET_LOCK(CONCAT("Gas.", userID), 60);
+    END IF;
+
+    SELECT gas_json AS gasJSON, auto_refilled_at AS autoRefilledAt
     FROM UserGas FORCE INDEX (PRIMARY)
     WHERE user_id = userID;
 END //
@@ -195,39 +201,24 @@ DELIMITER //
 CREATE PROCEDURE updateGas (
     IN userIDHex VARCHAR(16),
     IN gasJSON VARCHAR(700),
-    IN isAutoRefill BOOL
+    IN isAutoRefill BOOL,
+    IN doUnlock BOOL
 )
 BEGIN
     DECLARE userID BIGINT UNSIGNED DEFAULT CONV((userIDHex), 16, 10);
     IF (isAutoRefill) THEN
         UPDATE UserGas
-        SET gas_json = gasJSON, last_auto_refill_at = UNIX_TIMESTAMP()
+        SET gas_json = gasJSON, auto_refilled_at = UNIX_TIMESTAMP()
         WHERE user_id = userID;
     ELSE
         UPDATE UserGas
         SET gas_json = gasJSON
         WHERE user_id = userID;
     END IF;
+
+    IF (doUnlock) THEN
+        DO RELEASE_LOCK(CONCAT("Gas.", userID));
+    END IF;
 END //
 DELIMITER ;
 
-
-
-
-DELIMITER //
-CREATE PROCEDURE selectUserIDAndGas (
-    IN authToken BIGINT UNSIGNED
-)
-BEGIN
-    DECLARE userID BIGINT UNSIGNED;
-
-    CALL getAuthenticatedUserID (authToken, userID);
-
-    SELECT
-        CONV(userID, 10, 16) AS userID,
-        gas_json AS gasJSON,
-        last_auto_refill_at AS lastAutoRefill
-    FROM UserGas FORCE INDEX (PRIMARY)
-    WHERE user_id = userID;
-END //
-DELIMITER ;

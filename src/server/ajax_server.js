@@ -33,7 +33,40 @@ staticDevLibs.set("string", stringMod);
 staticDevLibs.set("array", arrayMod);
 
 
+// The following gas objects and constants can be adjusted over time. 
+const stdGetReqGas = {
+  comp: 10000,
+  import: 100,
+  fetch: 100,
+  time: 2000,
+  dbRead: 100,
+}
+const stdPostReqGas = {
+  comp: 100000,
+  import: 500,
+  fetch: 500,
+  time: 10000,
+  dbRead: 1000,
+  dbWrite: 10000,
+  conn: 3000,
+  mkdir: 1,
+  mkTable: 0,
+}
+const AUTO_REFILL_PERIOD = 604800; // ~= 1 week in seconds.
+const autoRefillGas = {
+  comp: 10000000,
+  import: 50000,
+  fetch: 50000,
+  time: 1000000,
+  dbRead: 100000,
+  dbWrite: 1000000,
+  conn: 300000,
+  mkdir: 100,
+  mkTable: 0,
+}
+
 // const TOKEN_EXP_PERIOD = 7948800; // ~= 3 months in seconds.
+
 
 const [ , curPath] = process.argv;
 const mainScriptPath = path.normalize(
@@ -58,6 +91,8 @@ const HOME_DIR_ID_REGEX = /^\/[^/]*\/([^/]+)/;
 
 
 
+
+
 http.createServer(async function(req, res) {
   let returnGasRef = [];
   try {
@@ -73,7 +108,7 @@ http.createServer(async function(req, res) {
   }
   let returnGas = returnGasRef[0];
   if (returnGas) {
-    returnGas();
+    returnGas().catch(err => console.error(err));
   }
 }).listen(8080);
 
@@ -139,7 +174,7 @@ async function requestHandler(req, res, returnGasRef) {
   if (!options || typeof options !== "object") {
     options = {};
   }
-  let {returnLog, gas: reqGas, gasID: reqGasID} = options;
+  let {returnLog, gas: reqGas = {}} = options;
 
 
   // Wait for the userID here if the authHeader was defined, and use it to set
@@ -164,12 +199,13 @@ async function requestHandler(req, res, returnGasRef) {
     },
   }
 
-  // Get the gas for the interpretation, potentially using reqGas or reqGasID,
-  // if provided, to determine the gas object to pass to the interpreter. If
-  // the user is authenticated, gas can be withdrawn from the user DB, and else
-  // some standard gas object is used (which in a future implementation might
-  // be made to vary in time depending on server load).
-  let [gas, returnGas] = await getGas(userID, reqGas, reqGasID);
+  // Get the gas for the interpretation, using a standard gas object by default,
+  // and potentially with properties overwritten from the reqGas object, if
+  // provided. If the user is authenticated, the gas will be withdrawn from the
+  // user's own gas reserve, and else some standard gas object is used (which
+  // in a future implementation might be made to vary in time depending on
+  // server load).
+  let [gas, returnGas] = await getGas(userID, reqGas);
   returnGasRef[0] = returnGas;
 
 
@@ -284,27 +320,83 @@ async function getUserID(authToken) {
 
 
 
-async function getGas(userID, reqGas, reqGasID) {
-  // TODO: Implement, instead of this placeholder definition:
-  return [{
-    comp: 100000,
-    import: 100,
-    fetch: 100,
-    time: 3000,
-    dbRead: 100,
-    dbWrite: 10000,
-    conn: 3000,
-    mkdir: 10,
-  }];
+async function getGas(userID, reqGas) {
+  let gas, returnGas;
+  if (!userID) {
+    gas = Object.assign({}, stdGetReqGas);
+  }
+  else {
+    // Get the user's gas reserve.
+    let userDBConnection = new UserDBConnection();
+    let [resultRow = []] = await userDBConnection.queryProcCall(
+      "selectGas", [userID, 1],
+    ) ?? [];
+    let [gasJSON, autoRefilledAt] = resultRow;
+    let gasReserve = JSON.parse(gasJSON ?? '{}');
+
+    // If long enough time has passed since last auto-refill, refill the user's
+    // reserve before continuing.
+    if ((autoRefilledAt + AUTO_REFILL_PERIOD) * 1000 < Date.now()) {
+      assignGreatest(gasReserve, autoRefillGas);
+      await userDBConnection.queryProcCall(
+        "updateGas", [userID, JSON.stringify(gasReserve), 1, 0],
+      );
+    }
+
+    // Now construct the request the requested gas object from the standard
+    // post request gas object and the optional reqGas object, and limit the
+    // result by the gas available in the user's reserve as well. Also
+    // decrement the DB read gas by 1 o pay for looking up the gas reserve.
+    let initGas = assignLeastOrUndefined(
+      Object.assign({}, stdPostReqGas, reqGas), gasReserve
+    );
+    gas = Object.assign({}, initGas);
+    gas.dbRead = (gas.dbRead ?? 0) - 1;
+
+    // Now construct the returnGas() function to be executed at the end of the
+    // request (even if the request fails.)
+    returnGas = async () => {
+      let newGasReserve = subtract(gasReserve, subtract(initGas, gas));
+      await userDBConnection.queryProcCall(
+        "updateGas", [userID, JSON.stringify(newGasReserve), 0, 1],
+      );
+      userDBConnection.end();
+    };
+  }
+
+  return [gas, returnGas]
 }
 
 
-async function updateGas(userID, finalGas, isAutoRefill) {
-  let userDBConnection = new UserDBConnection();
-  await userDBConnection.queryProcCall(
-    "updateGas", [userID, JSON.stringify(finalGas), isAutoRefill]
-  );
-  userDBConnection.end();
+
+function assignGreatest(target, ...sourceArr) {
+  sourceArr.forEach(source => {
+    Object.entries(source).forEach(([key, sourceVal]) => {
+      let targetVal = target[key];
+      target[key] = (targetVal === undefined) ? sourceVal :
+        (targetVal < sourceVal) ? sourceVal : targetVal;
+    });
+  });
+  return target;
+}
+
+function assignLeastOrUndefined(target, ...sourceArr) {
+  Object.entries(target).forEach(([key, targetVal]) => {
+    sourceArr.forEach(source => {
+      let sourceVal = source[key];
+      target[key] = (sourceVal === undefined) ? sourceVal :
+        (targetVal <= sourceVal) ? targetVal : sourceVal;
+    });
+  });
+  return target;
+}
+
+function subtract(minuendObj, subtrahendObj) {
+  let ret = {};
+  Object.entries(minuendObj).forEach(([key, val]) => {
+    ret[key] = val - subtrahendObj[key];
+  });
+  return ret;
 }
 
 
