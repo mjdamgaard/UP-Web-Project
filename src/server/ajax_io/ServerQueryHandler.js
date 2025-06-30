@@ -24,7 +24,7 @@ export class ServerQueryHandler {
     if (this.tokenData.authToken) {
       return this.tokenData;
     }
-    return this.tokenData = JSON.parse(
+    return JSON.parse(
       localStorage.getItem("userData") ?? "{}"
     );
   }
