@@ -33,14 +33,14 @@ staticDevLibs.set("string", stringMod);
 staticDevLibs.set("array", arrayMod);
 
 
-// The following gas objects and constants can be adjusted over time. 
+// The following gas objects and constants can be adjusted over time.
 const stdGetReqGas = {
   comp: 10000,
   import: 100,
   fetch: 100,
   time: 2000,
   dbRead: 100,
-}
+};
 const stdPostReqGas = {
   comp: 100000,
   import: 500,
@@ -51,7 +51,7 @@ const stdPostReqGas = {
   conn: 3000,
   mkdir: 1,
   mkTable: 0,
-}
+};
 const AUTO_REFILL_PERIOD = 604800; // ~= 1 week in seconds.
 const autoRefillGas = {
   comp: 10000000,
@@ -63,7 +63,7 @@ const autoRefillGas = {
   conn: 300000,
   mkdir: 100,
   mkTable: 0,
-}
+};
 
 // const TOKEN_EXP_PERIOD = 7948800; // ~= 3 months in seconds.
 

@@ -18,9 +18,22 @@ const AUTH_TOKEN_REGEX = /^Bearer (.+)$/;
 const USER_CREDENTIALS_REGEX = /^Basic (.+)$/;
 const USERNAME_AND_PW_REGEX = /^([^:]+):(.*)$/;
 
+
+// The following gas objects and constants can be adjusted over time.
+const initGasJSON = JSON.stringify({
+  comp: 10000000,
+  import: 50000,
+  fetch: 50000,
+  time: 1000000,
+  dbRead: 100000,
+  dbWrite: 1000000,
+  conn: 300000,
+  mkdir: 100,
+  mkTable: 0,
+});
 const TOKEN_EXP_PERIOD = 7948800; // ~= 3 months in seconds.
 const TIME_GRAIN = 17; // Means round down the current token timestamp by 2^27
-// ~= 1.5 days. 
+// ~= 1.5 days.
 
 
 http.createServer(async function(req, res) {
@@ -136,7 +149,7 @@ async function createAccount(username, password, emailAddr) {
 
   // Create the new account and get the new user ID.
   let [resultRow = []] = await userDBConnection.queryProcCall(
-    "createUserAccount", [username, pwHash, emailAddr ?? ""],
+    "createUserAccount", [username, pwHash, emailAddr ?? "", initGasJSON],
   ) ?? [];
   let [userID] = resultRow;
 

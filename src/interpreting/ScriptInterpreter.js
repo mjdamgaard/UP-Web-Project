@@ -2298,7 +2298,7 @@ export function payGas(node, environment, gasCost) {
     if (gas[key] < 0) {
       gas[key] += gasCost[key]
       throw new OutOfGasError(
-        "Ran out of " + GAS_NAMES[key] + "gas",
+        "Ran out of " + GAS_NAMES[key] + " gas",
         node, environment,
       );
     }

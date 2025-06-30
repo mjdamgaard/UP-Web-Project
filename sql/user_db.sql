@@ -2,9 +2,9 @@
 USE userDB;
 
 /* Private user data */
--- DROP TABLE UserCredentials;
--- DROP TABLE EmailAddresses;
--- DROP TABLE AuthenticationTokens;
+DROP TABLE UserCredentials;
+DROP TABLE EmailAddresses;
+DROP TABLE AuthenticationTokens;
 DROP TABLE UserGas;
 
 
@@ -88,7 +88,7 @@ CREATE TABLE UserGas (
 
     gas_json VARCHAR(700) NOT NULL,
 
-    auto_refilled_at BIGINT UNSIGNED NOT NULL -- unix timestamp.
+    auto_refilled_at BIGINT UNSIGNED NOT NULL DEFAULT (UNIX_TIMESTAMP())
 
     -- comp_gas     FLOAT NOT NULL DEFAULT 0,
     -- db_read_gas  FLOAT NOT NULL DEFAULT 10000000,-- bytes (roughly).
@@ -109,3 +109,17 @@ VALUES ("test_user", REPEAT("0", 60));
 
 INSERT INTO AuthenticationTokens (user_id, auth_token, expiration_time)
 VALUES (1, "test_token", 4294967295);
+
+
+INSERT INTO UserGas (user_id, gas_json)
+VALUES (1, CONCAT('{',
+    '"comp":100000000,',
+    '"import":500000,',
+    '"fetch":500000,',
+    '"time":10000000,',
+    '"dbRead":10000000,',
+    '"dbWrite":100000000,',
+    '"conn":3000000,',
+    '"mkdir":1000,',
+    '"mkTable":10',
+'}'));

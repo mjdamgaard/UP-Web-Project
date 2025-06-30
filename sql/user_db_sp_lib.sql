@@ -12,7 +12,6 @@ DROP PROCEDURE selectAuthenticatedUserID;
 DROP PROCEDURE selectGas;
 DROP PROCEDURE updateGas;
 
-DROP PROCEDURE selectUserIDAndGas;
 
 
 
@@ -21,7 +20,8 @@ DELIMITER //
 CREATE PROCEDURE createUserAccount (
     IN userName VARCHAR(50),
     IN pwHashSalted CHAR(60),
-    IN emailAddr VARCHAR(255)
+    IN emailAddr VARCHAR(255),
+    IN initGasJSON VARCHAR(700)
 )
 proc: BEGIN
     DECLARE userID BIGINT UNSIGNED;
@@ -40,12 +40,19 @@ proc: BEGIN
     INSERT IGNORE INTO UserCredentials (user_name, password_hash_salted)
     VALUES (userName, pwHashSalted);
     SET userID = LAST_INSERT_ID();
-    SET userID = IF(userID, userID, NULL);
+
+    IF (NOT userID OR userID IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
 
     IF (emailAddr IS NOT NULL AND emailAddr != "") THEN
         INSERT INTO EmailAddresses (user_name, email_addr)
         VALUES (userName, emailAddr);
     END IF;
+
+    INSERT INTO UserGas (user_id, gas_json)
+    VALUES (userID, initGasJSON);
 
     SELECT CONV(userID, 10, 16) AS userID;
 END proc //
@@ -210,10 +217,12 @@ BEGIN
         UPDATE UserGas
         SET gas_json = gasJSON, auto_refilled_at = UNIX_TIMESTAMP()
         WHERE user_id = userID;
+        SELECT ROW_COUNT() AS wasUpdated;
     ELSE
         UPDATE UserGas
         SET gas_json = gasJSON
         WHERE user_id = userID;
+        SELECT ROW_COUNT() AS wasUpdated;
     END IF;
 
     IF (doUnlock) THEN
