@@ -124,20 +124,6 @@ async function requestHandler(req, res, returnGasRef) {
     return;
   }
 
-  // If the header includes an Authorization header, immediately consult the
-  // DB to authenticate the user, creating a userID promise that resolves with
-  // a truthy ID only if the user is correctly authenticated.
-  let userIDPromise;
-  let authHeader = req.headers["authorization"];
-  if (authHeader) {
-    let [ , authToken] = AUTH_TOKEN_REGEX.exec(authHeader) ?? [];
-    if (!authToken) throw new ClientError(
-      "Invalid or unrecognized authorization header"
-    );
-    userIDPromise = getUserID(authToken);
-    userIDPromise.catch(() => {});
-  }
-
   // The server only implements GET and POST requests, where for the POST 
   // requests the request body is a JSON object.
   let route = req.url;
@@ -177,36 +163,39 @@ async function requestHandler(req, res, returnGasRef) {
   let {returnLog, gas: reqGas = {}} = options;
 
 
-  // Wait for the userID here if the authHeader was defined, and use it to set
-  // the "user ID context" (which has this form due to compatibility with the
-  // front-end interpreter).
-  let userID;
+  // If the header includes an Authorization header, query the DB in order to
+  // authenticate the user. We obtain the userID in this process as well, which
+  // we use it to set the "user ID context" (which has this form due to
+  // compatibility with the front-end interpreter). We also get the gas for the
+  // interpretation in the same process.
+  let userID, gas, returnGas;
+  let authHeader = req.headers["authorization"];
   if (authHeader) {
-    userID = await userIDPromise;
+    let [ , authToken] = AUTH_TOKEN_REGEX.exec(authHeader) ?? [];
+    if (!authToken) throw new ClientError(
+      "Invalid or unrecognized authorization header"
+    );
+    [userID, gas, returnGas] = await getUserIDAndGas(authToken, reqGas);
     if (!userID) {
       endWithUnauthenticatedError(res);
       return;
     }
   }
-  if (!isPublic && !userID) {
+  if (userID) {
+    returnGasRef[0] = returnGas;
+  } else {
+    if (!isPublic) {
       endWithUnauthenticatedError(res);
       return;
+    }
+    gas = Object.assign({}, stdGetReqGas);
   }
   let userIDContext = {
-    val: undefined,
+    val: userID,
     get: function() {
       return this.val;
     },
   }
-
-  // Get the gas for the interpretation, using a standard gas object by default,
-  // and potentially with properties overwritten from the reqGas object, if
-  // provided. If the user is authenticated, the gas will be withdrawn from the
-  // user's own gas reserve, and else some standard gas object is used (which
-  // in a future implementation might be made to vary in time depending on
-  // server load).
-  let [gas, returnGas] = await getGas(userID, reqGas);
-  returnGasRef[0] = returnGas;
 
 
   // Parse whether the route is a "locked" route (which can only be accessed by
@@ -308,63 +297,51 @@ function toMIMEType(val, mimeType) {
 
 
 
-async function getUserID(authToken) {
+// getUserIDAndGas() reads the userID and the user's gas reserve from the DB,
+// then uses a standard gas object (which in a future implementation might be
+// made to vary in time depending on server load)) and the reqGas input, if
+// provided, to construct and return the gas object used for the interpreter as
+// well. Note that the reqGas's properties will overwrite those of the std. gas
+// object. The function also returns a callback function, returnGas().
+async function getUserIDAndGas(authToken, reqGas) {
+  // Get the userID and the user's gas reserve.
   let userDBConnection = new UserDBConnection();
   let [resultRow = []] = await userDBConnection.queryProcCall(
-    "selectAuthenticatedUserID", [authToken],
+    "selectAuthenticatedUserIDAndGas", [authToken, 1],
   ) ?? [];
-  userDBConnection.end();
-  let [userID] = resultRow;
-  return userID;
-}
+  let [userID, gasJSON = '{}', autoRefilledAt = 0] = resultRow;
+  let gasReserve = JSON.parse(gasJSON ?? '{}');
 
-
-
-async function getGas(userID, reqGas) {
-  let gas, returnGas;
-  if (!userID) {
-    gas = Object.assign({}, stdGetReqGas);
-  }
-  else {
-    // Get the user's gas reserve.
-    let userDBConnection = new UserDBConnection();
-    let [resultRow = []] = await userDBConnection.queryProcCall(
-      "selectGas", [userID, 1],
-    ) ?? [];
-    let [gasJSON = '{}', autoRefilledAt = 0] = resultRow;
-    let gasReserve = JSON.parse(gasJSON ?? '{}');
-
-    // If long enough time has passed since last auto-refill, refill the user's
-    // reserve before continuing.
-    if ((autoRefilledAt + AUTO_REFILL_PERIOD) * 1000 < Date.now()) {
-      assignGreatest(gasReserve, autoRefillGas);
-      await userDBConnection.queryProcCall(
-        "updateGas", [userID, JSON.stringify(gasReserve), 1, 0],
-      );
-    }
-
-    // Now construct the request the requested gas object from the standard
-    // post request gas object and the optional reqGas object, and limit the
-    // result by the gas available in the user's reserve as well. Also
-    // decrement the DB read gas by 1 o pay for looking up the gas reserve.
-    let initGas = assignLeastOrUndefined(
-      Object.assign({}, stdPostReqGas, reqGas), gasReserve
+  // If long enough time has passed since last auto-refill, refill the user's
+  // reserve before continuing.
+  if ((autoRefilledAt + AUTO_REFILL_PERIOD) * 1000 < Date.now()) {
+    assignGreatest(gasReserve, autoRefillGas);
+    await userDBConnection.queryProcCall(
+      "updateGas", [userID, JSON.stringify(gasReserve), 1, 0],
     );
-    gas = Object.assign({}, initGas);
-    gas.dbRead = (gas.dbRead ?? 0) - 1;
-
-    // Now construct the returnGas() function to be executed at the end of the
-    // request (even if the request fails.)
-    returnGas = async () => {
-      let newGasReserve = subtract(gasReserve, subtract(initGas, gas));
-      await userDBConnection.queryProcCall(
-        "updateGas", [userID, JSON.stringify(newGasReserve), 0, 1],
-      );
-      userDBConnection.end();
-    };
   }
 
-  return [gas, returnGas]
+  // Now construct the request the requested gas object from the standard
+  // post request gas object and the optional reqGas object, and limit the
+  // result by the gas available in the user's reserve as well. Also
+  // decrement the DB read gas by 1 o pay for looking up the gas reserve.
+  let initGas = assignLeastOrUndefined(
+    Object.assign({}, stdPostReqGas, reqGas), gasReserve
+  );
+  let gas = Object.assign({}, initGas);
+  gas.dbRead = (gas.dbRead ?? 0) - 1;
+
+  // Now construct the returnGas() function to be executed at the end of the
+  // request (even if the request fails.)
+  let returnGas = async () => {
+    let newGasReserve = subtract(gasReserve, subtract(initGas, gas));
+    await userDBConnection.queryProcCall(
+      "updateGas", [userID, JSON.stringify(newGasReserve), 0, 1],
+    );
+    userDBConnection.end();
+  };
+
+  return [userID, gas, returnGas]
 }
 
 

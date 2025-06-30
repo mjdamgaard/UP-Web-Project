@@ -9,6 +9,8 @@ DROP PROCEDURE deleteAllAuthTokensIfAuthenticated;
 DROP PROCEDURE replaceAuthToken;
 DROP PROCEDURE selectAuthenticatedUserID;
 
+DROP PROCEDURE selectAuthenticatedUserIDAndGas;
+
 DROP PROCEDURE selectGas;
 DROP PROCEDURE updateGas;
 
@@ -178,6 +180,39 @@ END //
 DELIMITER ;
 
 
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectAuthenticatedUserIDAndGas (
+    IN authToken VARCHAR(255),
+    IN doLock BOOL
+)
+proc: BEGIN
+    DECLARE userID BIGINT UNSIGNED;
+    DECLARE curTime BIGINT UNSIGNED DEFAULT UNIX_TIMESTAMP();
+
+    SELECT user_id INTO userID
+    FROM AuthenticationTokens FORCE INDEX (sec_idx)
+    WHERE auth_token = authToken AND expiration_time > curTime;
+
+    IF (userID IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+
+    IF (doLock) THEN
+        DO GET_LOCK(CONCAT("Gas.", userID), 60);
+    END IF;
+
+    SELECT
+        CONV(userID, 10, 16) AS userID,
+        gas_json AS gasJSON,
+        auto_refilled_at AS autoRefilledAt
+    FROM UserGas FORCE INDEX (PRIMARY)
+    WHERE user_id = userID;
+END proc //
+DELIMITER ;
 
 
 
