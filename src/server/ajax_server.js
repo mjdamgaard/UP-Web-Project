@@ -331,7 +331,7 @@ async function getGas(userID, reqGas) {
     let [resultRow = []] = await userDBConnection.queryProcCall(
       "selectGas", [userID, 1],
     ) ?? [];
-    let [gasJSON, autoRefilledAt] = resultRow;
+    let [gasJSON = '{}', autoRefilledAt = 0] = resultRow;
     let gasReserve = JSON.parse(gasJSON ?? '{}');
 
     // If long enough time has passed since last auto-refill, refill the user's

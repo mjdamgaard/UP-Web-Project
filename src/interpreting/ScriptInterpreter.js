@@ -35,7 +35,7 @@ export function getParsingGasCost(str) {
 }
 
 export function parseString(str, node, env, parser) {
-  payGas(node, env, {comp: getParsingGasCost(str)});
+  payGas(node, env, getParsingGasCost(str));
   let [syntaxTree, lexArr, strPosArr] = parser.parse(str);
   if (syntaxTree.error) throw syntaxTree.error;
   let result = syntaxTree.res;
