@@ -5,6 +5,8 @@ DROP TABLE HomeDirectories;
 DROP TABLE Files;
 DROP TABLE FileIDs;
 
+DROP TABLE ServerModuleGas;
+
 DROP TABLE TextFiles;
 DROP TABLE AutoKeyTextTables;
 DROP TABLE BinaryKeyTables;
@@ -12,8 +14,6 @@ DROP TABLE CharKeyTables;
 DROP TABLE BinaryKeyBinaryScoreTables;
 
 DROP TABLE FulltextIndexEntries;
-
-DROP TABLE ServerModuleGas;
 
 
 
@@ -56,6 +56,20 @@ CREATE TABLE FileIDs (
     file_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY
 
 ); -- ROW_FORMAT = COMPRESSED;
+
+
+
+
+
+CREATE TABLE ServerModuleGas (
+
+    file_id BIGINT UNSIGNED PRIMARY KEY,
+
+    gas_json VARCHAR(700) NOT NULL
+
+) ROW_FORMAT = COMPRESSED;
+
+
 
 
 
@@ -190,33 +204,4 @@ CREATE TABLE FulltextIndexEntries (
 
 ) ENGINE = InnoDB;
 
-
-
-
-
-
-
-
-
-
-
-
-
-CREATE TABLE ServerModuleGas (
-
-    dir_id BIGINT UNSIGNED NOT NULL,
-
-    -- The gas account ID is individual server module (SM), so two different
-    -- SMs can use the same account ID. But let's just make it a BIGINT
-    -- UNSIGNED, just in case.
-    account_id BIGINT UNSIGNED NOT NULL,
-
-    gas_json VARCHAR(700) NOT NULL,
-
-    PRIMARY KEY (
-        dir_id,
-        account_id
-    )
-
-) ROW_FORMAT = COMPRESSED;
 

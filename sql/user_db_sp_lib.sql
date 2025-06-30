@@ -202,7 +202,7 @@ proc: BEGIN
     END IF;
 
     IF (doLock) THEN
-        DO GET_LOCK(CONCAT("Gas.", userID), 60);
+        DO GET_LOCK(CONCAT("UserGas.", userID), 60);
     END IF;
 
     SELECT
@@ -228,7 +228,7 @@ BEGIN
     DECLARE userID BIGINT UNSIGNED DEFAULT CONV((userIDHex), 16, 10);
 
     IF (doLock) THEN
-        DO GET_LOCK(CONCAT("Gas.", userID), 60);
+        DO GET_LOCK(CONCAT("UserGas.", userID), 60);
     END IF;
 
     SELECT gas_json AS gasJSON, auto_refilled_at AS autoRefilledAt

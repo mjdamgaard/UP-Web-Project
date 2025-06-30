@@ -15,10 +15,12 @@ DROP PROCEDURE deleteHomeDir;
 DROP PROCEDURE readFileMetaData;
 DROP PROCEDURE moveFile;
 
+DROP PROCEDURE selectSMGas;
+DROP PROCEDURE updateSMGas;
+
 DROP PROCEDURE readTextFile;
 DROP PROCEDURE putTextFile;
 DROP PROCEDURE deleteTextFile;
-
 
 DROP PROCEDURE touchTableFile;
 
@@ -160,6 +162,71 @@ proc: BEGIN
     SELECT ROW_COUNT() AS wasDeleted;
 END proc //
 DELIMITER ;
+
+
+
+
+
+
+
+
+
+DELIMITER //
+CREATE PROCEDURE selectSMGas (
+    IN dirIDHex VARCHAR(16),
+    IN filePath VARCHAR(700),
+    IN doLock BOOL
+)
+BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE fileID BIGINT UNSIGNED;
+
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    IF (doLock) THEN
+        DO GET_LOCK(CONCAT("SMGas.", fileID), 600);
+    END IF;
+
+    SELECT gas_json AS gasJSON
+    FROM ServerModuleGas FORCE INDEX (PRIMARY)
+    WHERE file_id = fileID;
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE updateSMGas (
+    IN dirIDHex VARCHAR(16),
+    IN filePath VARCHAR(700),
+    IN gasJSON VARCHAR(700),
+    IN doUnlock BOOL
+)
+BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE fileID BIGINT UNSIGNED;
+
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    UPDATE ServerModuleGas
+    SET gas_json = gasJSON
+    WHERE file_id = fileID;
+    SELECT ROW_COUNT() AS wasUpdated;
+
+    IF (doUnlock) THEN
+        DO RELEASE_LOCK(CONCAT("SMGas.", userID));
+    END IF;
+END //
+DELIMITER ;
+
+
+
+
+
 
 
 
@@ -1362,8 +1429,10 @@ DELIMITER ;
 
 
 
+DROP TABLE DebugLogEntries;
+DROP PROCEDURE logMsg;
 
-CREATE TABLE IF NOT EXISTS DebugLogEntries (
+CREATE TABLE DebugLogEntries (
 
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
@@ -1371,7 +1440,7 @@ CREATE TABLE IF NOT EXISTS DebugLogEntries (
 );
 
 DELIMITER //
-CREATE PROCEDURE IF NOT EXISTS logMsg (
+CREATE PROCEDURE logMsg (
     IN logMessage VARCHAR(1000)
 )
 BEGIN
@@ -1380,7 +1449,3 @@ BEGIN
 END //
 DELIMITER ;
 
-DELETE FROM DebugLogEntries;
-
--- DROP TABLE DebugLogEntries;
--- DROP PROCEDURE logMsg;

@@ -158,14 +158,12 @@ export async function query(
     })();
   }
 
-  // If route equals ".../<homeDirID>/<filePath>/callSMF/<alias>/" +
-  // "<inputArrBase64>", verify that filePath ends in '.sm.js', and if so,
+  // If route equals ".../<homeDirID>/<filePath>/callSMF/<alias>" +
+  // "[/<inputArrBase64>]", verify that filePath ends in '.sm.js', and if so,
   // execute the module and get the function exported as <alias>, then call it
-  // with inputArr, base-64-decoded and JSON-decoded from inputArrBase64, and
-  // return its output. And at the same time, make sure to signal that the call
-  // should be treated as a call to a server module function (SMF), giving it
-  // special privileges to write to certain parts of the DB (and removing any
-  // previous privileges of the same kind). 
+  // on the inputArr and return its output. inputArr can either come from the
+  // optional last segment of the route (JSON-then-base-64-encoded) or from the
+  // postData (only JSON-encoded).
   if (queryType === "callSMF") {
     if (filePath.slice(-6) !== ".sm.js") throw new RuntimeError(
       `Invalid route: ${route}`,
@@ -241,6 +239,54 @@ export async function query(
     })();
   }
 
+
+  // If route equals ".../<homeDirID>/<filePath>/depositGas" with postData = 
+  // "<gasJSON>" verify that filePath ends in '.sm.js', and if so, deposit the
+  // requested amount of gas (from the current execution environment) there,
+  // which can be unlocked by the locked "/_withdrawGas" route type below.
+  if (queryType === "depositGas") {
+    if (!isPost) throw new RuntimeError(
+      `Unrecognized route for GET-like requests: "${route}"`,
+      callerNode, execEnv
+    );
+    if (filePath.slice(-6) !== ".sm.js") throw new RuntimeError(
+      `Invalid route: ${route}`,
+      callerNode, execEnv
+    );
+    let reqGas;
+    if (postData) {
+      try {
+        reqGas = JSON.parse(postData);
+      } catch (err) {
+        throw new RuntimeError(
+          "Invalid gas JSON object",
+          callerNode, execEnv
+        );
+      }
+    }
+    else throw new RuntimeError(
+      "No gas JSON object provided",
+      callerNode, execEnv
+    );
+
+    // Get the server module's gas reserve.
+    // ...
+    // let userDBConnection = new UserDBConnection();
+    // let [resultRow = []] = await userDBConnection.queryProcCall(
+    //   "selectAuthenticatedUserIDAndGas", [authToken, 1],
+    // ) ?? [];
+    // let [userID, gasJSON = '{}', autoRefilledAt = 0] = resultRow;
+    // let gasReserve = JSON.parse(gasJSON ?? '{}');
+
+    // // If long enough time has passed since last auto-refill, refill the user's
+    // // reserve before continuing.
+    // if ((autoRefilledAt + AUTO_REFILL_PERIOD) * 1000 < Date.now()) {
+    //   assignGreatest(gasReserve, autoRefillGas);
+    //   await userDBConnection.queryProcCall(
+    //     "updateGas", [userID, JSON.stringify(gasReserve), 1, 0],
+    //   );
+    // }
+  }
 
   // If the route was not matched at this point, throw an error.
   throw new RuntimeError(
