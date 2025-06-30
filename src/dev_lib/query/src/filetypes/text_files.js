@@ -2,7 +2,7 @@
 import {
   RuntimeError, payGas, DevFunction, CLEAR_FLAG, PromiseObject, FunctionObject,
 } from "../../../../interpreting/ScriptInterpreter.js";
-
+import {MainDBConnection} from "../../../../server/db_io/DBConnection.js";
 import {
   ADMIN_PRIVILEGES_FLAG, REQUEST_ORIGIN_FLAG, CURRENT_MODULE_FLAG
 } from "../flags.js";
@@ -11,7 +11,7 @@ import {
 
 export async function query(
   {callerNode, execEnv, interpreter},
-  route, isPost, postData, options,
+  route, isPost, postData, options = {},
   upNodeID, homeDirID, filePath, fileExt, queryPathArr
 ) {
   let {dbQueryHandler} = interpreter;
@@ -265,27 +265,114 @@ export async function query(
       }
     }
     else throw new RuntimeError(
-      "No gas JSON object provided",
+      "No requested gas JSON object provided",
       callerNode, execEnv
     );
 
     // Get the server module's gas reserve.
-    // ...
-    // let userDBConnection = new UserDBConnection();
-    // let [resultRow = []] = await userDBConnection.queryProcCall(
-    //   "selectAuthenticatedUserIDAndGas", [authToken, 1],
-    // ) ?? [];
-    // let [userID, gasJSON = '{}', autoRefilledAt = 0] = resultRow;
-    // let gasReserve = JSON.parse(gasJSON ?? '{}');
+    let releaseAfter;
+    if (!options.conn) {
+      options.conn = new MainDBConnection();
+      releaseAfter = true;
+    }
+    let [resultRow = []] = await dbQueryHandler.queryDBProc(
+      "selectSMGas", [homeDirID, filePath, 1],
+      route, upNodeID, options, callerNode, execEnv,
+    ) ?? [];
+    let [gasJSON = '{}'] = resultRow;
+    let gasReserve = JSON.parse(gasJSON);
 
-    // // If long enough time has passed since last auto-refill, refill the user's
-    // // reserve before continuing.
-    // if ((autoRefilledAt + AUTO_REFILL_PERIOD) * 1000 < Date.now()) {
-    //   assignGreatest(gasReserve, autoRefillGas);
-    //   await userDBConnection.queryProcCall(
-    //     "updateGas", [userID, JSON.stringify(gasReserve), 1, 0],
-    //   );
-    // }
+    // Take subtract as much of the reqGas as possible from the current gas
+    // object, then add it to the SM's gas reserve and update the DB with the
+    // result.
+    payGas(callerNode, execEnv, {dbWrite: gasJSON.length});
+    let {gas} = execEnv.scriptVars;
+    assignLeastPositiveOrUndefined(reqGas, gas);
+    payGas(callerNode, execEnv, reqGas);
+    addTo(gasReserve, reqGas);
+    await dbQueryHandler.queryDBProc(
+      "updateSMGas", [homeDirID, filePath, JSON.stringify(gasReserve), 1],
+      route, upNodeID, options, callerNode, execEnv,
+    );
+    if (releaseAfter) {
+      options.conn.end();
+    }
+
+    // Return the gas that was deposited as well as the new gas reserve.
+    return [[reqGas, gasReserve]];
+  }
+
+  // If route equals ".../<homeDirID>/<filePath>/_withdrawGas" with postData = 
+  // "<gasJSON>" verify that filePath ends in '.sm.js', and if so, withdraw the
+  // requested amount of gas (adding it to the gas object of the current
+  // execution environment).
+  if (queryType === "_withdrawGas") {
+    if (!isPost) throw new RuntimeError(
+      `Unrecognized route for GET-like requests: "${route}"`,
+      callerNode, execEnv
+    );
+    if (filePath.slice(-6) !== ".sm.js") throw new RuntimeError(
+      `Invalid route: ${route}`,
+      callerNode, execEnv
+    );
+    let reqGas;
+    if (postData) {
+      try {
+        reqGas = JSON.parse(postData);
+      } catch (err) {
+        throw new RuntimeError(
+          "Invalid gas JSON object",
+          callerNode, execEnv
+        );
+      }
+    }
+    else throw new RuntimeError(
+      "No requested gas JSON object provided",
+      callerNode, execEnv
+    );
+
+    // Get the server module's gas reserve.
+    let releaseAfter;
+    if (!options.conn) {
+      options.conn = new MainDBConnection();
+      releaseAfter = true;
+    }
+    let [resultRow = []] = await dbQueryHandler.queryDBProc(
+      "selectSMGas", [homeDirID, filePath, 1],
+      route, upNodeID, options, callerNode, execEnv,
+    ) ?? [];
+    let [gasJSON = '{}'] = resultRow;
+    let gasReserve = JSON.parse(gasJSON);
+
+    // Take subtract as much of the reqGas as possible from deposited gas
+    // reserve, then add it to the gas object.
+    let {gas} = execEnv.scriptVars;
+    assignLeastPositiveOrUndefined(reqGas, gasReserve);
+    addTo(gas, reqGas);
+    subtractFrom(gasReserve, reqGas);
+    await dbQueryHandler.queryDBProc(
+      "updateSMGas", [homeDirID, filePath, JSON.stringify(gasReserve), 1],
+      route, upNodeID, options, callerNode, execEnv,
+    );
+    if (releaseAfter) {
+      options.conn.end();
+    }
+
+    // Return the gas that was withdrawn and the new gasReserve.
+    return [[reqGas, gasReserve]];
+  }
+
+  // If route equals ".../<homeDirID>/<filePath>/gas", read how much gas is
+  // stored on the server module (assuming that it is one).
+  if (queryType === "gas") {
+    if (filePath.slice(-6) !== ".sm.js") throw new RuntimeError(
+      `Invalid route: ${route}`,
+      callerNode, execEnv
+    );
+    return await dbQueryHandler.queryDBProc(
+      "selectSMGas", [homeDirID, filePath, 0],
+      route, upNodeID, options, callerNode, execEnv,
+    );
   }
 
   // If the route was not matched at this point, throw an error.
@@ -295,3 +382,39 @@ export async function query(
   );
 }
 
+
+
+
+
+
+
+
+function assignLeastPositiveOrUndefined(target, ...sourceArr) {
+  Object.entries(target).forEach(([key, targetVal]) => {
+    targetVal = Math.abs(targetVal);
+    sourceArr.forEach(source => {
+      let sourceVal = Math.abs(source[key]);
+      target[key] = (sourceVal === undefined) ? sourceVal :
+        (targetVal <= sourceVal) ? targetVal : sourceVal;
+    });
+  });
+  return target;
+}
+
+function addTo(target, source) {
+  Object.keys(source).forEach((key) => {
+    let targetVal = target[key];
+    target[key] = (targetVal === undefined) ? source[key] :
+      targetVal + source[key];
+  });
+  return target;
+}
+
+function subtractFrom(target, source) {
+  Object.keys(source).forEach((key) => {
+    let targetVal = target[key];
+    target[key] = (targetVal === undefined) ? source[key] :
+      targetVal - source[key];
+  });
+  return target;
+}

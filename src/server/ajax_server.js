@@ -310,7 +310,7 @@ async function getUserIDAndGas(authToken, reqGas) {
     "selectAuthenticatedUserIDAndGas", [authToken, 1],
   ) ?? [];
   let [userID, gasJSON = '{}', autoRefilledAt = 0] = resultRow;
-  let gasReserve = JSON.parse(gasJSON ?? '{}');
+  let gasReserve = JSON.parse(gasJSON);
 
   // If long enough time has passed since last auto-refill, refill the user's
   // reserve before continuing.
@@ -325,7 +325,7 @@ async function getUserIDAndGas(authToken, reqGas) {
   // post request gas object and the optional reqGas object, and limit the
   // result by the gas available in the user's reserve as well. Also
   // decrement the DB read gas by 1 o pay for looking up the gas reserve.
-  let initGas = assignLeastOrUndefined(
+  let initGas = assignLeastPositiveOrUndefined(
     Object.assign({}, stdPostReqGas, reqGas), gasReserve
   );
   let gas = Object.assign({}, initGas);
@@ -334,7 +334,7 @@ async function getUserIDAndGas(authToken, reqGas) {
   // Now construct the returnGas() function to be executed at the end of the
   // request (even if the request fails.)
   let returnGas = async () => {
-    let newGasReserve = subtract(gasReserve, subtract(initGas, gas));
+    let newGasReserve = subtractAbs(gasReserve, subtractAbs(initGas, gas));
     await userDBConnection.queryProcCall(
       "updateGas", [userID, JSON.stringify(newGasReserve), 0, 1],
     );
@@ -357,10 +357,11 @@ function assignGreatest(target, ...sourceArr) {
   return target;
 }
 
-function assignLeastOrUndefined(target, ...sourceArr) {
+function assignLeastPositiveOrUndefined(target, ...sourceArr) {
   Object.entries(target).forEach(([key, targetVal]) => {
+    targetVal = Math.abs(targetVal);
     sourceArr.forEach(source => {
-      let sourceVal = source[key];
+      let sourceVal = Math.abs(source[key]);
       target[key] = (sourceVal === undefined) ? sourceVal :
         (targetVal <= sourceVal) ? targetVal : sourceVal;
     });
@@ -368,10 +369,10 @@ function assignLeastOrUndefined(target, ...sourceArr) {
   return target;
 }
 
-function subtract(minuendObj, subtrahendObj) {
+function subtractAbs(minuendObj, subtrahendObj) {
   let ret = {};
   Object.entries(minuendObj).forEach(([key, val]) => {
-    ret[key] = val - subtrahendObj[key];
+    ret[key] = val - Math.abs(subtrahendObj[key]);
   });
   return ret;
 }
