@@ -577,10 +577,14 @@ export class ScriptInterpreter {
     };
     // If the dev function is asynchronous, call it and return a PromiseObject.
     if (isAsync) {
+      let ret;
       let promise = devFun.fun(execVars, inputArr).catch(err => {
-        this.handleUncaughtException(err, execEnv);
+        if (!ret.hasCatch) {
+          this.handleUncaughtException(err, execEnv);
+        }
       });
-      return new PromiseObject(promise, this, callerNode, execEnv);
+      ret = new PromiseObject(promise, this, callerNode, execEnv);
+      return ret;
     }
 
     // Else call the dev function synchronously and return what it returns.
@@ -593,14 +597,14 @@ export class ScriptInterpreter {
 
   thenPromise(promise, callbackFun, node, env) {
     promise.then(res => {
-      this.executeAsyncFunction(callbackFun, [res], node, env);
+      this.executeFunctionOffSync(callbackFun, [res], node, env);
     });
   }
 
   catchPromise(promise, callbackFun, node, env) {
     promise.catch(err => {
     if (err instanceof RuntimeError || err instanceof SyntaxError) {
-      this.executeAsyncFunction(callbackFun, [err.val], node, env);
+      this.executeFunctionOffSync(callbackFun, [err.val], node, env);
     } else {
       this.handleUncaughtException(err, env);
     }
@@ -608,7 +612,7 @@ export class ScriptInterpreter {
   }
 
 
-  executeAsyncFunction(fun, inputArr, callerNode, execEnv, thisVal, flags) {
+  executeFunctionOffSync(fun, inputArr, callerNode, execEnv, thisVal, flags) {
     if (execEnv.scriptVars.isExiting) {
       return;
     }
@@ -622,7 +626,7 @@ export class ScriptInterpreter {
 
   handleUncaughtException(err, env) {
     if (err instanceof RuntimeError || err instanceof SyntaxError) {
-      if (env.scriptVars.isServerSide) {
+      if (this.isServerSide) {
         env.scriptVars.resolveScript(undefined, err);
       } else {
         console.error(getExtendedErrorMsg(err));
@@ -2147,7 +2151,7 @@ export class PromiseObject extends AbstractUHObject {
       this.promise = new Promise((resolve, reject) => {
         let userResolve = new DevFunction({}, ({}, [res]) => resolve(res));
         let userReject = new DevFunction({}, ({}, [err]) => reject(err));
-        interpreter.executeAsyncFunction(
+        interpreter.executeFunctionOffSync(
           fun, [userResolve, userReject], node, env
         );
       }).catch(err => console.error(err));

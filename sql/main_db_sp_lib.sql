@@ -1,6 +1,9 @@
 
 USE mainDB;
 
+SET GLOBAL connect_timeout = 600;
+SET GLOBAL innodb_lock_wait_timeout = 600;
+
 DROP FUNCTION toBase64;
 DROP FUNCTION fromBase64;
 

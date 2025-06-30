@@ -465,7 +465,7 @@ class JSXInstance {
                   // Then execute the function object held in val, with
                   // elevated privileges that allows the function to make POST-
                   // like requests. 
-                  interpreter.executeAsyncFunction(
+                  interpreter.executeFunctionOffSync(
                     val, [], callerNode, callerEnv,
                     new JSXInstanceInterface(this), [
                       CAN_POST_FLAG,
@@ -477,7 +477,7 @@ class JSXInstance {
                 });
               }
               else {
-                interpreter.executeAsyncFunction(
+                interpreter.executeFunctionOffSync(
                   val, [], callerNode, callerEnv,
                   new JSXInstanceInterface(this), [
                     CAN_POST_FLAG,
