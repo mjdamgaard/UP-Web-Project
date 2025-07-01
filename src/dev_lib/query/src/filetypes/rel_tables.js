@@ -253,10 +253,11 @@ export async function query(
   }
 
   // If route equals ".../<homeDirID>/<filepath>/_insert/[/l=<listID>]" +
-  // "k=<elemKey>[/s=<elemScore>][/p=<elemPayload>][/i=<ignore]", insert a
-  // single table entry with those row values, overwriting any existing entry
-  // of the same key, unless ignore (i) is defined and truthy (does not apply
-  // .att files).
+  // "k=<elemKey>[/s=<elemScore>][/p=<elemPayload>][/o=<overwrite>]", insert a
+  // single table entry with those row values, ignoring any existing entry
+  // of the same key, unless the overwrite parameter (o) is defined and truthy.
+  // This does not apply .att files, but for these, if elemKey is defined and
+  // not the empty string, the entry will be overwritten if one already exist.
   if (queryType === "_insert") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
@@ -280,13 +281,9 @@ export async function query(
     }
     let {
       l: listID = "", k: elemKey = "", s: elemScore = "", p: elemPayload = "",
-      i: ignore = 0,
+      o: overwrite = 0,
     } = paramObj;
-    ignore = parseInt(ignore);
-    if (Number.isNaN(ignore)) throw new RuntimeError(
-      `Invalid query path for am insert query: ${route}`,
-      callerNode, execEnv
-    );
+    overwrite = overwrite ? 1 : 0;
     if (postData) {
       elemPayload = postData;
     }
@@ -294,39 +291,53 @@ export async function query(
       elemPayload.length;
     payGas(callerNode, execEnv, {dbWrite: rowLen});
     let paramValArr = (fileExt === "bbt") ?
-      [homeDirID, filePath, listID, elemKey, elemScore, elemPayload, ignore] :
-      (fileExt === "att") ?
+      [homeDirID, filePath, listID, elemKey, elemScore, elemPayload, overwrite]
+      : (fileExt === "att") ?
         [homeDirID, filePath, listID, elemKey, elemPayload] :
-        [homeDirID, filePath, listID, elemKey, elemPayload, ignore];
+        [homeDirID, filePath, listID, elemKey, elemPayload, overwrite];
     return await dbQueryHandler.queryDBProc(
       procName, paramValArr, route, upNodeID, options, callerNode, execEnv,
     );
   }
 
   // If route equals ".../<homeDirID>/<filepath>/_insertList[/l=<listID>]" +
-  // "[/i=<ignore>]", treat postData as an array of rows to insert into the
-  // table. The ignore parameter also determines whether to ignore on duplicate
-  // keys or to overwrite.
+  // "[/o=<overwrite>]", treat postData as an array of rows to insert into the
+  // table. The overwrite parameter also determines whether to ignore on
+  // duplicate keys or to overwrite. For .att files, if overwrite is true, the
+  // the rows of rowArr should have the form '\[<textID>,<textJSONStr>\]'. And
+  // for the .bt, .ct, and .bbt files, the form should be '\[<elemKeyBase64>,' +
+  // '[<elemScoreBase64>,][<elemPayloadBase64>]\]', but where elemScoreBase64
+  // should of course only be present in the case of a .bbt file. 
   if (queryType === "_insertList") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
     );
-    let rowArr;
+    let rowArr, isValid = true;
     if (postData) {
       try {
         rowArr = JSON.parse(postData);
       } catch (err) {
-        throw new RuntimeError(
-          "Invalid gas JSON object",
-          callerNode, execEnv
-        );
+        isValid = false;
+      }
+      if (!(rowArr instanceof Array)) {
+        isValid = false;
       }
     }
     else throw new RuntimeError(
-      "No requested gas JSON object provided",
+      "No JSON array provided",
       callerNode, execEnv
     );
+    if (!isValid) throw new RuntimeError(
+        "Invalid JSON array",
+        callerNode, execEnv
+      );
+    let procName =
+      (fileExt === "att") ? "insertATTList" :
+      (fileExt === "bt") ? "insertBTList" :
+      (fileExt === "ct") ? "insertCTList" :
+      (fileExt === "bbt") ? "insertBBTList" :
+      undefined;
     let paramObj;
     try {
       paramObj = Object.fromEntries(queryPathArr.slice(1));
@@ -337,9 +348,13 @@ export async function query(
         callerNode, execEnv
       );
     }
-    let {l: listID = "", i: ignore = false} = paramObj;
-    // TODO: Continue. (The plan is to generate one big INSERT statement from
-    // the )
+    let {l: listID = "", o: overwrite = 0,} = paramObj;
+    overwrite = overwrite ? 1 : 0;
+    payGas(callerNode, execEnv, {dbWrite: postData.length});
+    let paramValArr = [homeDirID, filePath, listID, postData, overwrite];
+    return await dbQueryHandler.queryDBProc(
+      procName, paramValArr, route, upNodeID, options, callerNode, execEnv,
+    );
   }
 
   // If the route was not matched at this point, throw an error.

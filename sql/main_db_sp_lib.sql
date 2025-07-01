@@ -31,6 +31,7 @@ DROP PROCEDURE deleteATTEntry;
 DROP PROCEDURE deleteATTList;
 DROP PROCEDURE readATTEntry;
 DROP PROCEDURE readATTList;
+DROP PROCEDURE insertATTList;
 
 DROP PROCEDURE putBT;
 DROP PROCEDURE deleteBT;
@@ -39,6 +40,7 @@ DROP PROCEDURE deleteBTEntry;
 DROP PROCEDURE deleteBTList;
 DROP PROCEDURE readBTEntry;
 DROP PROCEDURE readBTList;
+DROP PROCEDURE insertBTList;
 
 DROP PROCEDURE putCT;
 DROP PROCEDURE deleteCT;
@@ -47,6 +49,7 @@ DROP PROCEDURE deleteCTEntry;
 DROP PROCEDURE deleteCTList;
 DROP PROCEDURE readCTEntry;
 DROP PROCEDURE readCTList;
+DROP PROCEDURE insertCTList;
 
 DROP PROCEDURE putBBT;
 DROP PROCEDURE deleteBBT;
@@ -56,6 +59,7 @@ DROP PROCEDURE deleteBBTList;
 DROP PROCEDURE readBBTEntry;
 DROP PROCEDURE readBBTScoreOrderedList;
 DROP PROCEDURE readBBTKeyOrderedList;
+DROP PROCEDURE insertBBTList;
 
 
 
@@ -460,7 +464,7 @@ CREATE PROCEDURE insertATTEntry (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
     IN listIDBase64 VARCHAR(340),
-    IN textIDHex  VARCHAR(16),
+    IN textIDHex VARCHAR(16),
     IN textData TEXT
 )
 proc: BEGIN
@@ -481,7 +485,7 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (textID IS NULL) THEN
+    IF (NOT textID OR textID IS NULL) THEN
         DO GET_LOCK(CONCAT("ATT", fileID), 10);
 
         SELECT IFNULL(MAX(text_id), 0) + 1 INTO newTextID
@@ -630,6 +634,65 @@ DELIMITER ;
 
 
 
+DELIMITER //
+CREATE PROCEDURE insertATTList (
+    IN dirIDHex VARCHAR(16),
+    IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
+    IN listArrJSON JSON,
+    IN doOverwrite BOOL
+)
+proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE fileID, newTextID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
+    IF (dirID IS NULL OR filePath IS NULL OR listID) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    IF (doOverwrite) THEN
+        INSERT INTO AutoKeyTextTables (
+            file_id, list_id, text_id, text_data
+        )
+        SELECT
+            fileID, listID,
+            UNHEX(t1.textIDHex), fromBase64(t1.textData)
+        FROM JSON_TABLE(
+            listArrJSON, '$[*]' COLUMNS (
+                textIDHex VARCHAR(16) PATH '$[0]'
+                    DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR,
+                textData TEXT PATH '$[1]'
+                    DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR
+            )
+        ) AS t1
+        ON DUPLICATE KEY UPDATE
+            elem_payload = fromBase64(t1.elemPayloadBase64);
+    ELSE
+        INSERT INTO AutoKeyTextTables (
+            file_id, list_id, text_data
+        )
+        SELECT
+            fileID, listID, fromBase64(t1.textData)
+        FROM JSON_TABLE(
+            listArrJSON, '$[*]' COLUMNS (
+                textData TEXT PATH '$[0]'
+                    DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR
+            )
+        ) AS t1;
+    END IF;
+
+    SELECT ROW_COUNT() AS rowCount;
+END proc //
+DELIMITER ;
+
+
+
+
 
 
 
@@ -713,7 +776,7 @@ CREATE PROCEDURE insertBTEntry (
     IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340),
     IN elemPayloadBase64 VARCHAR(340),
-    IN doIgnore BOOL
+    IN doOverwrite BOOL
 )
 proc: BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
@@ -723,7 +786,7 @@ proc: BEGIN
     DECLARE elemPayload VARBINARY(255) DEFAULT fromBase64(elemPayloadBase64);
     IF (
         dirID IS NULL OR filePath IS NULL OR
-        elemKey IS NULL OR elemPayload IS NULL
+        listID IS NULL OR elemKey IS NULL OR elemPayload IS NULL
     ) THEN
         SELECT NULL;
         LEAVE proc;
@@ -737,17 +800,17 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (doIgnore) THEN
-        INSERT IGNORE INTO BinaryKeyTables (
-            file_id, list_id, elem_key, elem_payload
-        )
-        VALUES (fileID, listID, elemKey, elemPayload);
-    ELSE
+    IF (doOverwrite) THEN
         INSERT INTO BinaryKeyTables (
             file_id, list_id, elem_key, elem_payload
         )
         VALUES (fileID, listID, elemKey, elemPayload)
         ON DUPLICATE KEY UPDATE elem_payload = elemPayload;
+    ELSE
+        INSERT IGNORE INTO BinaryKeyTables (
+            file_id, list_id, elem_key, elem_payload
+        )
+        VALUES (fileID, listID, elemKey, elemPayload);
     END IF;
 
     SELECT ROW_COUNT() AS rowCount;
@@ -876,6 +939,74 @@ DELIMITER ;
 
 
 
+DELIMITER //
+CREATE PROCEDURE insertBTList (
+    IN dirIDHex VARCHAR(16),
+    IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
+    IN listArrJSON JSON,
+    IN doOverwrite BOOL
+)
+proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE fileID, newTextID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
+    IF (
+        dirID IS NULL OR filePath IS NULL OR
+        listID IS NULL OR elemKey IS NULL OR elemPayload IS NULL
+    ) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    IF (fileID IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+
+    IF (doOverwrite) THEN
+        INSERT INTO BinaryKeyTables (
+            file_id, list_id, elem_key, elem_payload
+        )
+        SELECT
+            fileID, listID,
+            fromBase64(t1.elemKeyBase64), fromBase64(t1.elemPayloadBase64)
+        FROM JSON_TABLE(
+            listArrJSON, '$[*]' COLUMNS (
+                elemKeyBase64 VARCHAR(340) PATH '$[0]'
+                    DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR,
+                elemPayloadBase64 VARCHAR(340) PATH '$[1]'
+                    DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR
+            )
+        ) AS t1
+        ON DUPLICATE KEY UPDATE
+            elem_payload = fromBase64(t1.elemPayloadBase64);
+    ELSE
+        INSERT IGNORE INTO BinaryKeyTables (
+            file_id, list_id, elem_key, elem_payload
+        )
+        SELECT
+            fileID, listID,
+            fromBase64(t1.elemKeyBase64), fromBase64(t1.elemPayloadBase64)
+        FROM JSON_TABLE(
+            listArrJSON, '$[*]' COLUMNS (
+                elemKeyBase64 VARCHAR(340) PATH '$[0]'
+                    DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR,
+                elemPayloadBase64 VARCHAR(340) PATH '$[1]'
+                    DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR
+            )
+        ) AS t1;
+    END IF;
+
+    SELECT ROW_COUNT() AS rowCount;
+END proc //
+DELIMITER ;
+
+
+
 
 
 
@@ -955,7 +1086,7 @@ CREATE PROCEDURE insertCTEntry (
     IN listIDBase64 VARCHAR(340),
     IN elemKeyBase64 VARCHAR(340),
     IN elemPayloadBase64 VARCHAR(340),
-    IN doIgnore BOOL
+    IN doOverwrite BOOL
 )
 proc: BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
@@ -979,12 +1110,7 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (doIgnore) THEN
-        INSERT IGNORE INTO CharKeyTables (
-            file_id, list_id, elem_key, elem_payload
-        )
-        VALUES (fileID, listID, elemKey, elemPayload);
-    ELSE
+    IF (doOverwrite) THEN
         INSERT INTO CharKeyTables (
             file_id, list_id, elem_key, elem_payload
         )
@@ -992,6 +1118,11 @@ proc: BEGIN
             fileID, listID, elemKey, elemPayload
         )
         ON DUPLICATE KEY UPDATE elem_payload = elemPayload;
+    ELSE
+        INSERT IGNORE INTO CharKeyTables (
+            file_id, list_id, elem_key, elem_payload
+        )
+        VALUES (fileID, listID, elemKey, elemPayload);
     END IF;
 
     SELECT ROW_COUNT() AS rowCount;
@@ -1119,6 +1250,73 @@ DELIMITER ;
 
 
 
+DELIMITER //
+CREATE PROCEDURE insertCTList (
+    IN dirIDHex VARCHAR(16),
+    IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
+    IN listArrJSON JSON,
+    IN doOverwrite BOOL
+)
+proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE fileID, newTextID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
+    IF (
+        dirID IS NULL OR filePath IS NULL OR
+        listID IS NULL OR elemKey IS NULL OR elemPayload IS NULL
+    ) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    IF (fileID IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+
+    IF (doOverwrite) THEN
+        INSERT INTO CharKeyTables (
+            file_id, list_id, elem_key, elem_payload
+        )
+        SELECT
+            fileID, listID,
+            fromBase64(t1.elemKeyBase64), fromBase64(t1.elemPayloadBase64)
+        FROM JSON_TABLE(
+            listArrJSON, '$[*]' COLUMNS (
+                elemKeyBase64 VARCHAR(340) PATH '$[0]'
+                    DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR,
+                elemPayloadBase64 VARCHAR(340) PATH '$[1]'
+                    DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR
+            )
+        ) AS t1
+        ON DUPLICATE KEY UPDATE
+            elem_payload = fromBase64(t1.elemPayloadBase64);
+    ELSE
+        INSERT IGNORE INTO CharKeyTables (
+            file_id, list_id, elem_key, elem_payload
+        )
+        SELECT
+            fileID, listID,
+            fromBase64(t1.elemKeyBase64), fromBase64(t1.elemPayloadBase64)
+        FROM JSON_TABLE(
+            listArrJSON, '$[*]' COLUMNS (
+                elemKeyBase64 VARCHAR(340) PATH '$[0]'
+                    DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR,
+                elemPayloadBase64 VARCHAR(340) PATH '$[1]'
+                    DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR
+            )
+        ) AS t1;
+    END IF;
+
+    SELECT ROW_COUNT() AS rowCount;
+END proc //
+DELIMITER ;
+
+
 
 
 
@@ -1207,7 +1405,7 @@ CREATE PROCEDURE insertBBTEntry (
     IN elemKeyBase64 VARCHAR(340),
     IN elemScoreBase64 VARCHAR(340),
     IN elemPayloadBase64 VARCHAR(340),
-    IN doIgnore BOOL
+    IN doOverwrite BOOL
 )
 proc: BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
@@ -1232,12 +1430,7 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (doIgnore) THEN
-        INSERT IGNORE INTO BinaryKeyBinaryScoreTables (
-            file_id, list_id, elem_key, elem_score, elem_payload
-        )
-        VALUES (fileID, listID, elemKey, elemScore, elemPayload);
-    ELSE
+    IF (doOverwrite) THEN
         INSERT INTO BinaryKeyBinaryScoreTables (
             file_id, list_id, elem_key, elem_score, elem_payload
         )
@@ -1247,6 +1440,11 @@ proc: BEGIN
         ON DUPLICATE KEY UPDATE
             elem_score = elemScore,
             elem_payload = elemPayload;
+    ELSE
+        INSERT IGNORE INTO BinaryKeyBinaryScoreTables (
+            file_id, list_id, elem_key, elem_score, elem_payload
+        )
+        VALUES (fileID, listID, elemKey, elemScore, elemPayload);
     END IF;
 
 
@@ -1413,6 +1611,79 @@ BEGIN
     LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE insertBBTList (
+    IN dirIDHex VARCHAR(16),
+    IN filePath VARCHAR(700),
+    IN listIDBase64 VARCHAR(340),
+    IN listArrJSON JSON,
+    IN doOverwrite BOOL
+)
+proc: BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE fileID, newTextID BIGINT UNSIGNED;
+    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
+    IF (
+        dirID IS NULL OR filePath IS NULL OR
+        listID IS NULL OR elemKey IS NULL OR elemPayload IS NULL
+    ) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+    SELECT file_id INTO fileID
+    FROM Files FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID AND file_path = filePath;
+
+    IF (fileID IS NULL) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
+
+    IF (doOverwrite) THEN
+        INSERT INTO BinaryKeyBinaryScoreTables (
+            file_id, list_id, elem_key, elem_score, elem_payload
+        )
+        SELECT
+            fileID, listID, fromBase64(t1.elemKeyBase64),
+            fromBase64(t1.elemScoreBase64), fromBase64(t1.elemPayloadBase64)
+        FROM JSON_TABLE(
+            listArrJSON, '$[*]' COLUMNS (
+                elemKeyBase64 VARCHAR(340) PATH '$[0]'
+                    DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR,
+                elemScoreBase64 VARCHAR(340) PATH '$[1]'
+                    DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR,
+                elemPayloadBase64 VARCHAR(340) PATH '$[2]'
+                    DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR
+            )
+        ) AS t1
+        ON DUPLICATE KEY UPDATE
+            elem_payload = fromBase64(t1.elemPayloadBase64);
+    ELSE
+        INSERT IGNORE INTO BinaryKeyBinaryScoreTables (
+            file_id, list_id, elem_key, elem_score, elem_payload
+        )
+        SELECT
+            fileID, listID, fromBase64(t1.elemKeyBase64),
+            fromBase64(t1.elemScoreBase64), fromBase64(t1.elemPayloadBase64)
+        FROM JSON_TABLE(
+            listArrJSON, '$[*]' COLUMNS (
+                elemKeyBase64 VARCHAR(340) PATH '$[0]'
+                    DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR,
+                elemScoreBase64 VARCHAR(340) PATH '$[1]'
+                    DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR,
+                elemPayloadBase64 VARCHAR(340) PATH '$[2]'
+                    DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR
+            )
+        ) AS t1;
+    END IF;
+
+    SELECT ROW_COUNT() AS rowCount;
+END proc //
+DELIMITER ;
+
 
 
 
