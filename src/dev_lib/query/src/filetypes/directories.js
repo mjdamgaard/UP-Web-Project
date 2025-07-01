@@ -13,8 +13,9 @@ export async function query(
 ) {
   let {dbQueryHandler} = interpreter;
 
-  // If route equals ".../mkdir/a=<adminID>", create a new home directory with
-  // the requested adminID as the admin. 
+  // If route equals ".../mkdir/[a=<adminID>]", create a new home directory
+  // with the requested adminID as the admin, or with the requesting user as
+  // the admin if n adminID is provided. 
   if (!homeDirID) {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
@@ -22,10 +23,14 @@ export async function query(
     );
     if (queryPathArr[0] === "mkdir") {
       let [a, adminID] = (queryPathArr[1] ?? []);
-      if (a !== "a" || !adminID) throw new RuntimeError(
-        "No admin ID was provided",
-        callerNode, execEnv
-      );
+      if (a === "") {
+        if (!adminID) throw new RuntimeError(
+          "No admin ID was provided",
+          callerNode, execEnv
+        );
+      } else {
+        adminID = execEnv.scriptVars.contexts.userIDContext.get();
+      }
       payGas(callerNode, execEnv, {mkdir: 1});
       return await dbQueryHandler.queryDBProc(
         "createHomeDir", [adminID],

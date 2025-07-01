@@ -18,14 +18,12 @@ if (dirPath[0] === ".") {
 let deleteTableData = options[0] === "DELETE_DATA";
 
 async function main() {
-  // Prompt for username and password, then request the new directory.
-  let token, credentials;
-  let username = await read({prompt: "Username: "});
-  let pw = await read({prompt: "Password: ", silent: true});
+  // Prompt for the user's authentication token, then request the new directory.
+  let authToken = await read({prompt: "Token: ", silent: true});
   console.log("");
 
   // Create/update the directory on the server side.
-  await DirectoryUploader.uploadDir(dirPath, username, pw, deleteTableData);
+  await DirectoryUploader.uploadDir(dirPath, authToken, deleteTableData);
 };
 
 

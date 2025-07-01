@@ -18,16 +18,11 @@ export class DirectoryUploader {
   // as is, as well as file extensions of abstract files (often implemented via
   // one or several relational DB tables), for which the file content, if any,
   // will have to conform to a specific format.
-  static async uploadDir(dirPath, username, password, deleteTableData) {
+  static async uploadDir(dirPath, authToken, deleteTableData) {
+    if (!authToken) throw "No authentication token provided";
 
-    // TODO: Call the server to get a new or an existing session ID here, and
-    // also get the userID.
-    let credentials = btoa(`${username}:${password}`);
-    let userID = "1";
-    let token = "test_token";
-    let expTime = Infinity;
-
-    let serverQueryHandler = new ServerQueryHandler(token, expTime, fetch);
+    // Initialize the serverQueryHandler with the provided authToken.
+    let serverQueryHandler = new ServerQueryHandler(authToken, Infinity, fetch);
 
     // Read the dirID.
     let idFilePath = path.normalize(dirPath + "/.id.js");
@@ -40,9 +35,7 @@ export class DirectoryUploader {
     // If no dirID was gotten, request the server to create a new directory and
     // get the new dirID.
     if (!dirID) {
-      let [resultRow = []] = await serverQueryHandler.post(
-        `/1/mkdir/a=${userID}`
-      ) ?? [];
+      let [resultRow = []] = await serverQueryHandler.post("/1/mkdir") ?? [];
       [dirID] = resultRow;
       fs.writeFileSync(
         idFilePath, dirID ? `export default "/1/${dirID}";` : ""
@@ -62,10 +55,7 @@ export class DirectoryUploader {
       let serverFilePath = path.normalize(`/1/${dirID}/${relPath}`);
       if (!fs.existsSync(clientFilePath)) {
         deletionPromises.push(
-          serverQueryHandler.post(serverFilePath + "/_delete", {
-            method: "post",
-            credentials: credentials,
-          })
+          serverQueryHandler.post(serverFilePath + "/_delete")
         );
       }
     });
@@ -76,16 +66,14 @@ export class DirectoryUploader {
     // pushing a promise for the response of each one to uploadPromises.
     let uploadPromises = [];
     this.#uploadDirHelper(
-      dirPath, credentials, dirID, deleteTableData, uploadPromises,
-      serverQueryHandler
+      dirPath, dirID, deleteTableData, uploadPromises, serverQueryHandler
     );
     await Promise.all(uploadPromises);
   }
 
 
   static async #uploadDirHelper(
-    dirPath, credentials, relPath, deleteTableData, uploadPromises,
-    serverQueryHandler
+    dirPath, relPath, deleteTableData, uploadPromises, serverQueryHandler
   ) {
     // Get each file in the directory at path, and loop through and handle each
     // one according to its extension (or lack thereof).
@@ -103,8 +91,8 @@ export class DirectoryUploader {
       // helper method recursively.
       if (/^\.*[^.]+$/.test(name)) {
         this.#uploadDirHelper(
-          childAbsPath, credentials, childRelPath, deleteTableData,
-          uploadPromises, serverQueryHandler
+          childAbsPath, childRelPath, deleteTableData, uploadPromises,
+          serverQueryHandler
         );
       }
 

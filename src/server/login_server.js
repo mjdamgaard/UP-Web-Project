@@ -54,7 +54,7 @@ http.createServer(async function(req, res) {
 
 
 async function requestHandler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Authorization");
   if (req.method === "OPTIONS") {
     res.setHeader("Cache-Control", "max-age=604800");
