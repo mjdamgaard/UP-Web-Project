@@ -65,7 +65,7 @@ CREATE TABLE ServerModuleGas (
 
     file_id BIGINT UNSIGNED PRIMARY KEY,
 
-    gas_json VARCHAR(700) NOT NULL
+    gas_json JSON NOT NULL
 
 ) ROW_FORMAT = COMPRESSED;
 

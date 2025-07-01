@@ -201,7 +201,7 @@ DELIMITER //
 CREATE PROCEDURE updateSMGas (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN gasJSON VARCHAR(700),
+    IN gasJSON JSON,
     IN doUnlock BOOL
 )
 BEGIN

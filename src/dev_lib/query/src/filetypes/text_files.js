@@ -2,7 +2,7 @@
 import {
   RuntimeError, payGas, DevFunction, CLEAR_FLAG, PromiseObject, FunctionObject,
 } from "../../../../interpreting/ScriptInterpreter.js";
-import {MainDBConnection} from "../../../../server/db_io/DBConnection.js";
+
 import {
   ADMIN_PRIVILEGES_FLAG, REQUEST_ORIGIN_FLAG, CURRENT_MODULE_FLAG
 } from "../flags.js";
@@ -272,20 +272,19 @@ export async function query(
     // Get the server module's gas reserve.
     let releaseAfter;
     if (!options.conn) {
-      options.conn = new MainDBConnection();
+      options.conn = dbQueryHandler.getConnection();
       releaseAfter = true;
     }
     let [resultRow = []] = await dbQueryHandler.queryDBProc(
       "selectSMGas", [homeDirID, filePath, 1],
       route, upNodeID, options, callerNode, execEnv,
     ) ?? [];
-    let [gasJSON = '{}'] = resultRow;
-    let gasReserve = JSON.parse(gasJSON);
+    let [gasReserve = {}] = resultRow;
 
     // Take subtract as much of the reqGas as possible from the current gas
     // object, then add it to the SM's gas reserve and update the DB with the
     // result.
-    payGas(callerNode, execEnv, {dbWrite: gasJSON.length});
+    payGas(callerNode, execEnv, {dbWrite: JSON.stringify(gasReserve).length});
     let {gas} = execEnv.scriptVars;
     assignLeastPositiveOrUndefined(reqGas, gas);
     payGas(callerNode, execEnv, reqGas);
@@ -295,7 +294,7 @@ export async function query(
       route, upNodeID, options, callerNode, execEnv,
     );
     if (releaseAfter) {
-      options.conn.end();
+      dbQueryHandler.releaseConnection(options.conn);
     }
 
     // Return the gas that was deposited as well as the new gas reserve.
@@ -334,7 +333,7 @@ export async function query(
     // Get the server module's gas reserve.
     let releaseAfter;
     if (!options.conn) {
-      options.conn = new MainDBConnection();
+      options.conn = dbQueryHandler.getConnection();
       releaseAfter = true;
     }
     let [resultRow = []] = await dbQueryHandler.queryDBProc(
@@ -355,7 +354,7 @@ export async function query(
       route, upNodeID, options, callerNode, execEnv,
     );
     if (releaseAfter) {
-      options.conn.end();
+      dbQueryHandler.releaseConnection(options.conn);
     }
 
     // Return the gas that was withdrawn and the new gasReserve.

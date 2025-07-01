@@ -4,6 +4,10 @@ import {
 } from '../../interpreting/ScriptInterpreter.js';
 import {parseRoute} from './src/parseRoute.js';
 
+// TODO: Since all these modules are now only used in the backend, refactor
+// such that these are attached to the interpreter instead, somehow, similarly
+// to interpreter.dbQueryHandler (if not just attaching them to that), such
+// they are not bundled with the front-end script.
 import * as directoriesMod from "./src/filetypes/directories.js";
 import * as textFilesMod from "./src/filetypes/text_files.js";
 import * as relationalTableFilesMod from "./src/filetypes/rel_tables.js";

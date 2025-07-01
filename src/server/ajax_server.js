@@ -309,8 +309,7 @@ async function getUserIDAndGas(authToken, reqGas) {
   let [resultRow = []] = await userDBConnection.queryProcCall(
     "selectAuthenticatedUserIDAndGas", [authToken, 1],
   ) ?? [];
-  let [userID, gasJSON = '{}', autoRefilledAt = 0] = resultRow;
-  let gasReserve = JSON.parse(gasJSON);
+  let [userID, gasReserve = {}, autoRefilledAt = 0] = resultRow;
 
   // If long enough time has passed since last auto-refill, refill the user's
   // reserve before continuing.

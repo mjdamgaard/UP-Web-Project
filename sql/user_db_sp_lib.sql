@@ -23,7 +23,7 @@ CREATE PROCEDURE createUserAccount (
     IN userName VARCHAR(50),
     IN pwHashSalted CHAR(60),
     IN emailAddr VARCHAR(255),
-    IN initGasJSON VARCHAR(700)
+    IN initGasJSON JSON
 )
 proc: BEGIN
     DECLARE userID BIGINT UNSIGNED;
@@ -242,7 +242,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE updateGas (
     IN userIDHex VARCHAR(16),
-    IN gasJSON VARCHAR(700),
+    IN gasJSON JSON,
     IN isAutoRefill BOOL,
     IN doUnlock BOOL
 )

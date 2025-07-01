@@ -86,7 +86,7 @@ CREATE TABLE UserGas (
 
     user_id BIGINT UNSIGNED PRIMARY KEY,
 
-    gas_json VARCHAR(700) NOT NULL,
+    gas_json JSON NOT NULL,
 
     auto_refilled_at BIGINT UNSIGNED NOT NULL DEFAULT (UNIX_TIMESTAMP())
 

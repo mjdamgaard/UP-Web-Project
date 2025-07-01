@@ -15,11 +15,11 @@ export class DBQueryHandler {
   // #getMainDBConn() and #releaseMainDBConn() can be modified if we want to
   // implement/use a connection pool.
  
-  #getMainDBConn() {
+  getConnection() {
     return new MainDBConnection();
   }
 
-  #releaseMainDBConn(conn) {
+  releaseConnection(conn) {
     conn.end();
   }
 
@@ -38,7 +38,7 @@ export class DBQueryHandler {
     // Get a connection the the main DB, if one is not provided as part of
     // options.
     let releaseAfter = !conn; 
-    conn ??= this.#getMainDBConn();
+    conn ??= this.getConnection();
 
     // Generate the SQL (with '?' placeholders in it).
     let sql = getProcCallSQL(procName, paramValArr.length);
@@ -48,7 +48,7 @@ export class DBQueryHandler {
 
     // Release the connection again if it was not provided through options.
     if (releaseAfter) {
-      this.#releaseMainDBConn(conn);
+      this.releaseConnection(conn);
     }
 
     // Return the result.

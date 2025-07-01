@@ -92,7 +92,7 @@ export async function query(
       undefined;
     let paramObj;
     try {
-      paramObj =  Object.fromEntries(queryPathArr.slice(1));
+      paramObj = Object.fromEntries(queryPathArr.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
@@ -124,7 +124,7 @@ export async function query(
       undefined;
     let paramObj;
     try {
-      paramObj =  Object.fromEntries(queryPathArr.slice(1));
+      paramObj = Object.fromEntries(queryPathArr.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
@@ -155,7 +155,7 @@ export async function query(
       undefined;
     let paramObj;
     try {
-      paramObj =  Object.fromEntries(queryPathArr.slice(1));
+      paramObj = Object.fromEntries(queryPathArr.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
@@ -184,7 +184,7 @@ export async function query(
       undefined;
     let paramObj;
     try {
-      paramObj =  Object.fromEntries(queryPathArr.slice(1));
+      paramObj = Object.fromEntries(queryPathArr.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
@@ -224,7 +224,7 @@ export async function query(
     let procName = "readBBTScoreOrderedList";
     let paramObj;
     try {
-      paramObj =  Object.fromEntries(queryPathArr.slice(1));
+      paramObj = Object.fromEntries(queryPathArr.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
@@ -270,7 +270,7 @@ export async function query(
       undefined;
     let paramObj;
     try {
-      paramObj =  Object.fromEntries(queryPathArr.slice(1));
+      paramObj = Object.fromEntries(queryPathArr.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
@@ -312,13 +312,24 @@ export async function query(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
     );
-    if (!(postData instanceof Array)) throw new RuntimeError(
-      "postData is not an array",
+    let rowArr;
+    if (postData) {
+      try {
+        rowArr = JSON.parse(postData);
+      } catch (err) {
+        throw new RuntimeError(
+          "Invalid gas JSON object",
+          callerNode, execEnv
+        );
+      }
+    }
+    else throw new RuntimeError(
+      "No requested gas JSON object provided",
       callerNode, execEnv
     );
     let paramObj;
     try {
-      paramObj =  Object.fromEntries(queryPathArr.slice(1));
+      paramObj = Object.fromEntries(queryPathArr.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
@@ -327,7 +338,8 @@ export async function query(
       );
     }
     let {l: listID = "", i: ignore = false} = paramObj;
-    // TODO: Continue.
+    // TODO: Continue. (The plan is to generate one big INSERT statement from
+    // the )
   }
 
   // If the route was not matched at this point, throw an error.
