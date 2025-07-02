@@ -1,6 +1,6 @@
 
 import {
-  DevFunction, TypeError, forEach, toString, getEntry, ArgTypeError
+  DevFunction, getString, ArgTypeError
 } from '../interpreting/ScriptInterpreter.js';
 
 const textEncoder = new TextEncoder();
@@ -31,7 +31,7 @@ const minInts = [
 
 
 export const arrayToBase64 = new DevFunction(
-  {},
+  {typeArr: ["array", "array"]},
   function(
     {callerNode, execEnv},
     [valArr, typeArr]
@@ -44,13 +44,13 @@ export const arrayToBase64 = new DevFunction(
     // an signed integer of -5 is less than one of 5, -5 should get a binary
     // representation with a lower numeric value of the two.   
     let binArrArr = [];
-    forEach(typeArr, type => {
-      type = toString(type, ind);
+    typeArr.forEach((type, ind) => {
+      type = getString(type);
       let match, isUnsigned, lenExp, loExp, hiExp;
 
       // If type = 'string', treat val as a string of variable length.
       if (type === "string") {
-        let val = toString(getEntry(valArr, ind));
+        let val = getString(valArr[ind]);
         if (NULL_CHAR_REGEX.test(val)) throw new ArgTypeError(
           `Cannot convert a string containing a null character: ${val}`,
           callerNode, execEnv
@@ -65,7 +65,7 @@ export const arrayToBase64 = new DevFunction(
       // prepend the length of the hex string divided by 2 so that hex strings
       // are thus collated w.r.t. their numerical values.
       if (type === "hex") {
-        let val = toString(getEntry(valArr, ind));
+        let val = getString(valArr[ind]);
         val = val.replace(LEADING_ZERO_PAIRS_REGEX, "");
         if (val === "") val = "00";
         let len = val.length / 2;
@@ -97,7 +97,7 @@ export const arrayToBase64 = new DevFunction(
       // If type = '[u]int[(len)]', treat val as an integer of len bytes.
       [match, isUnsigned, lenExp] = type.match(INTEGER_TYPE_REGEX);
       if (match) {
-        let valExp = getEntry(valArr, ind);
+        let valExp = valArr[ind];
         let val = parseInt(valExp);
         if (Number.isNaN(val)) throw new ArgTypeError(
           `Cannot convert a non-integer to a uint type: ${valExp}`,
@@ -124,7 +124,7 @@ export const arrayToBase64 = new DevFunction(
       // hi.
       [match, loExp, hiExp, lenExp] = type.match(FLOAT_TYPE_REGEX);
       if (match) {
-        let valExp = getEntry(valArr, ind);
+        let valExp = valArr[ind];
         let val = parseInt(valExp);
         if (Number.isNaN(val)) throw new ArgTypeError(
           `Cannot convert a non-float to a float type: ${valExp}`,
@@ -182,7 +182,7 @@ export const arrayToBase64 = new DevFunction(
 
 
 export const arrayFromBase64 = new DevFunction(
-  {},
+  {typeArr: ["string", "array"]},
   function(
     {callerNode, execEnv},
     [base64Str, typeArr]
@@ -202,8 +202,8 @@ export const arrayFromBase64 = new DevFunction(
       }
     }
     let combLen = combBinArr.length;
-    forEach(typeArr, type => {
-      type = toString(type, ind);
+    typeArr.forEach((type, ind) => {
+      type = getString(type);
       let match, isUnsigned, lenExp, loExp, hiExp;
 
       // Reverse conversion for the 'string' type.

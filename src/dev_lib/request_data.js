@@ -1,0 +1,60 @@
+
+import {
+  CustomException, DevFunction,
+} from '../interpreting/ScriptInterpreter.js';
+import {CLIENT_TRUST_FLAG, REQUEST_ORIGIN_FLAG} from './query/src/flags.js';
+
+
+
+export const checkRequestOrigin = new DevFunction(
+  {typeArr: ["boolean", "array"]},
+  function(
+    {callerNode, execEnv},
+    [canForce, whitelist]
+  ) {
+    // If canForce is true, check if the client trusts the request to be forced
+    // through this CORS-like check.
+    if (canForce) {
+      let clientTrust = execEnv.getFlag(CLIENT_TRUST_FLAG);
+      if (clientTrust) {
+        return;
+      }
+    }
+
+    // Else see if the request origin matches any one in the whitelist, where a
+    // trailing '*' in a whitelisted request origin string is a wildcard that
+    // means that all extensions of that string is allowed as well.
+    let requestOrigin = execEnv.getFlag(REQUEST_ORIGIN_FLAG);
+    let isAllowed = whitelist.some(str => {
+      if (str.at(-1) === "*") {
+        let requiredSubstring = str.slice(0, -1);
+        return requestOrigin.substring(0, requiredSubstring.length) ===
+          requiredSubstring;
+      } else {
+        return requestOrigin === str;
+      }
+    });
+    
+    // Throw if the request origin was not accepted.
+    if (!isAllowed) throw new CustomException(
+      "Request origin not allowed",
+      callerNode, execEnv
+    );
+  }
+);
+
+
+
+export const getRequestOrigin = new DevFunction(
+  {}, function({execEnv}, []) {
+    return execEnv.getFlag(REQUEST_ORIGIN_FLAG);
+  }
+);
+
+
+export const getUserID = new DevFunction(
+  {}, function({execEnv}, []) {
+    return execEnv.scriptVars.contexts.userIDContext.get();
+  }
+);
+

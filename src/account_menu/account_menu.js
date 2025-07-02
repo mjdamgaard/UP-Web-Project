@@ -92,7 +92,7 @@ function openLoginPage(userIDContext) {
   overlayPageContainer.innerHTML = `
     <div class="go-back-button"></div>
     <div class="page-content">
-      <h3>Log in</h3>
+      <h2>Log in</h2>
       <form action="javascript:void(0);">
         <div class="form-group">
           <label>Username</label>
@@ -113,6 +113,7 @@ function openLoginPage(userIDContext) {
   goBackButton.onclick = () => {
     overlayPageContainer.classList.remove("open");
     overlayPageContainer.innerHTML = "";
+    document.getElementById("up-app-root").click();
   };
   let postButton = overlayPageContainer.querySelector("form button");
   postButton.onclick = () => {
@@ -158,7 +159,7 @@ function openCreateAccountPage(userIDContext) {
   overlayPageContainer.innerHTML = `
     <div class="go-back-button"></div>
     <div class="page-content">
-      <h3>Create a new account</h3>
+      <h2>Create a new account</h2>
       <form action="javascript:void(0);">
         <div class="form-group">
           <label>Username</label>
@@ -183,6 +184,7 @@ function openCreateAccountPage(userIDContext) {
   goBackButton.onclick = () => {
     overlayPageContainer.classList.remove("open");
     overlayPageContainer.innerHTML = "";
+    document.getElementById("up-app-root").click();
   };
   let postButton = overlayPageContainer.querySelector("form button");
   postButton.onclick = () => {
@@ -231,7 +233,7 @@ function goToAccountPage(userIDContext) {
   overlayPageContainer.innerHTML = `
     <div class="go-back-button"></div>
     <div class="page-content">
-      <h3>My account</h3>
+      <h2>My account</h2>
       <h4>User info</h4>
       <dl class="user-info-list">
           <dt>Username</dt><dd></dd>
@@ -254,6 +256,7 @@ function goToAccountPage(userIDContext) {
   goBackButton.onclick = () => {
     overlayPageContainer.classList.remove("open");
     overlayPageContainer.innerHTML = "";
+    document.getElementById("up-app-root").click();
   };
   let {username, userID, authToken} = JSON.parse(
     localStorage.getItem("userData") ?? "{}"

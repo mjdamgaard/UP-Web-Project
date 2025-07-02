@@ -173,8 +173,8 @@ dt:before {
   display: block;
 }
 dt:after {
-  content: ": ";
-  margin-right: 0.2em;
+  content: ":";
+  margin-right: 0.4em;
 }
 dt, dd {
   display: inline;
