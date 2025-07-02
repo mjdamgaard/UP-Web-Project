@@ -6,7 +6,7 @@ import {
   FunctionObject, SyntaxError, getStringOrSymbol, getFullPath,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
-  CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUEST_ORIGIN_FLAG
+  CAN_POST_FLAG, CLIENT_TRUST_FLAG, NEXT_REQUEST_ORIGIN_FLAG
 } from "../query/src/flags.js";
 
 import {JSXAppStyler} from "./jsx_styling.js";
@@ -470,7 +470,7 @@ class JSXInstance {
                     new JSXInstanceInterface(this), [
                       CAN_POST_FLAG,
                       [COMPONENT_INSTANCE_FLAG, this],
-                      [REQUEST_ORIGIN_FLAG, requestOrigin],
+                      [NEXT_REQUEST_ORIGIN_FLAG, requestOrigin],
                       [CLIENT_TRUST_FLAG, isTrusted],
                     ]
                   );

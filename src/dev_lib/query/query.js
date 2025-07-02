@@ -13,9 +13,7 @@ import * as textFilesMod from "./src/filetypes/text_files.js";
 import * as relationalTableFilesMod from "./src/filetypes/rel_tables.js";
 import * as fullTextTableFilesMod from "./src/filetypes/full_text_tables.js";
 
-import {
-  checkAdminPrivileges, checkIfCanPost, CURRENT_MODULE_FLAG
-} from "./src/flags.js";
+import {checkAdminPrivileges, checkIfCanPost} from "./src/flags.js";
 
 
 
@@ -143,7 +141,7 @@ export const post = new DevFunction(
 export const getCurrentHomePath = new DevFunction(
   {},
   function({execEnv}, []) {
-    let curRoute = execEnv.getFlag(CURRENT_MODULE_FLAG) ?? "";
+    let curRoute = execEnv.getModuleEnv().modulePath ?? "";
     let [ret] = curRoute.match(/^\/[^/]+\/[^/]+/g) ?? [];
     return ret; 
   }

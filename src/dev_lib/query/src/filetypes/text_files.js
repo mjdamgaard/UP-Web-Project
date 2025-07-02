@@ -4,7 +4,7 @@ import {
 } from "../../../../interpreting/ScriptInterpreter.js";
 
 import {
-  ADMIN_PRIVILEGES_FLAG, REQUEST_ORIGIN_FLAG, CURRENT_MODULE_FLAG
+  ADMIN_PRIVILEGES_FLAG, REQUEST_ORIGIN_FLAG, NEXT_REQUEST_ORIGIN_FLAG
 } from "../flags.js";
 
 
@@ -205,16 +205,15 @@ export async function query(
     );
 
     // Import and execute the given JS module using interpreter.import(), and
-    // do so within a dev function with an "elevated-privileges" that
-    // elevates the privileges to admin privileges for the execution of the SMF
-    // (server module function). Note that these elevated privileges can only
-    // be used to post to a files within the called SM's home directory, and
+    // do so within a dev function with "admin privileges" the execution of the
+    // SMF (server module function). Note that these elevated privileges can
+    // only be used to post to files within the called SM's home directory, and
     // that all previous such privileges are removed by the new flag. We also
-    // set a "current-CORS-origin" flag with the full /callSMF route, which
+    // set a "next-request-origin" flag with the current /callSMF route, which
     // means that if the given SMF calls another server module, the CORS-
     // like system will treat the calls as originating from that SMF, and not
-    // whatever current module (be it a JSX component module or an SM) queried
-    // this /callSMF route.
+    // whatever current module (be it a JSX component module or another SMF)
+    // made this /callSMF query.
     return await (async() => {
       let liveModule = await interpreter.import(
         `/1/${homeDirID}/${filePath}`, callerNode, execEnv
@@ -224,10 +223,17 @@ export async function query(
         `No function of name '${alias}' is exported from ${route}`,
         callerNode, execEnv
       );
-      let newReqOrigin = execEnv.getFlag(CURRENT_MODULE_FLAG);
+      // The new "request-origin" flag is copied as is from the former "next-
+      // request-origin" flag, but the new "next-request-origin" flag is
+      // constructed to be the current route, except that inputArr is appended/
+      // replaced after '/callSMF/' as a plain-text JSON array, not base-64-
+      // encoded.
+      let newReqOrigin = execEnv.getFlag(NEXT_REQUEST_ORIGIN_FLAG);
+      let newNextReqOrigin = `${upNodeID}/${homeDirID}/${filePath}/callSMF/` +
+        JSON.stringify(inputArr);
       let result = interpreter.executeFunction(
         fun, inputArr, callerNode, execEnv, undefined, [
-          [CURRENT_MODULE_FLAG, route],
+          [NEXT_REQUEST_ORIGIN_FLAG, newNextReqOrigin],
           [REQUEST_ORIGIN_FLAG, newReqOrigin],
           [ADMIN_PRIVILEGES_FLAG, homeDirID],
         ]
