@@ -167,3 +167,15 @@ html, body, #up-app-root {
   cursor: pointer;
 }
 
+
+dt:before {
+  content: "";
+  display: block;
+}
+dt:after {
+  content: ": ";
+  margin-right: 0.2em;
+}
+dt, dd {
+  display: inline;
+}

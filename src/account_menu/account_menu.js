@@ -50,7 +50,7 @@ export function main(userIDContext) {
   // Add onclick events to the account menu items.
   document.getElementById("logout-item").onclick = () => {
       logout(userIDContext);
-  };;
+  };
   document.getElementById("login-item").onclick = () => {
       document.getElementById("account-menu").classList.remove("open");
       openLoginPage(userIDContext);
@@ -58,6 +58,9 @@ export function main(userIDContext) {
   document.getElementById("create-account-item").onclick = () => {
       document.getElementById("account-menu").classList.remove("open");
       openCreateAccountPage(userIDContext);
+  };
+  document.getElementById("account-page-item").onclick = () => {
+      goToAccountPage(userIDContext);
   };
 }
 
@@ -141,7 +144,6 @@ function openLoginPage(userIDContext) {
       document.getElementById("user-name-display").replaceChildren(username);
       overlayPageContainer.classList.remove("open");
       overlayPageContainer.innerHTML = "";
-      // TODO: Also make the app component rerender with an updated userID prop.
     }).catch(err => {
       responseDisplay.replaceChildren(err.toString());
     });
@@ -214,7 +216,6 @@ function openCreateAccountPage(userIDContext) {
       document.getElementById("user-name-display").replaceChildren(username);
       overlayPageContainer.classList.remove("open");
       overlayPageContainer.innerHTML = "";
-      // TODO: Also make the app component rerender with an updated userID prop.
     }).catch(err => {
       responseDisplay.replaceChildren(err.toString());
     });
@@ -222,6 +223,67 @@ function openCreateAccountPage(userIDContext) {
 
 }
 
+
+
+function goToAccountPage(userIDContext) {
+  let overlayPageContainer = document.getElementById("overlay-page-container");
+  overlayPageContainer.classList.add("open");
+  overlayPageContainer.innerHTML = `
+    <div class="go-back-button"></div>
+    <div class="page-content">
+      <h3>My account</h3>
+      <h4>User info</h4>
+      <dl class="user-info-list">
+          <dt>Username</dt><dd></dd>
+          <dt>User ID</dt><dd></dd>
+      </dl>
+      <h4>User gas reserve</h4>
+      <dl class="user-gas-list">
+          <dt>Computation gas</dt><dd></dd>
+          <dt>DB reading gas</dt><dd></dd>
+          <dt>DB writing gas</dt><dd></dd>
+          <dt>Directory creation gas</dt><dd></dd>
+          <dt>DB table creation gas</dt><dd></dd>
+          <dt>Time gas</dt><dd></dd>
+          <dt>Connection gas</dt><dd></dd>
+          <dt>Fetching gas</dt><dd></dd>
+      </dl>
+    </div>
+  `;
+  let goBackButton = overlayPageContainer.querySelector(".go-back-button");
+  goBackButton.onclick = () => {
+    overlayPageContainer.classList.remove("open");
+    overlayPageContainer.innerHTML = "";
+  };
+  let {username, userID, authToken} = JSON.parse(
+    localStorage.getItem("userData") ?? "{}"
+  );
+  let userInfoList = overlayPageContainer.querySelector(".user-info-list");
+  userInfoList.querySelector("dd:nth-of-type(1)").replaceChildren(username);
+  userInfoList.querySelector("dd:nth-of-type(2)").replaceChildren(userID);
+  requestLoginServer(
+    "userIDAndGas", undefined, {authToken: authToken}
+  ).then(res => {
+    let [ , gas] = res;
+    if (!gas) {
+      console.error("userIDAndGas request failed");
+      return;
+    }
+    let userGasList = overlayPageContainer.querySelector(".user-gas-list");
+    userGasList.querySelector("dd:nth-of-type(1)").replaceChildren(gas.comp);
+    userGasList.querySelector("dd:nth-of-type(2)").replaceChildren(gas.dbRead);
+    userGasList.querySelector("dd:nth-of-type(3)").replaceChildren(gas.dbWrite);
+    userGasList.querySelector("dd:nth-of-type(4)").replaceChildren(gas.mkdir);
+    userGasList.querySelector("dd:nth-of-type(5)").replaceChildren(gas.mkTable);
+    userGasList.querySelector("dd:nth-of-type(6)").replaceChildren(gas.time);
+    userGasList.querySelector("dd:nth-of-type(7)").replaceChildren(gas.conn);
+    userGasList.querySelector("dd:nth-of-type(8)").replaceChildren(gas.fetch);
+  }).catch(err => {
+    console.error("userIDAndGas request failed with error:");
+    console.error(err);
+    return;
+  });
+}
 
 
 

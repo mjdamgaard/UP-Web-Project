@@ -17,11 +17,11 @@ export async function query(
   // with the requested adminID as the admin, or with the requesting user as
   // the admin if n adminID is provided. 
   if (!homeDirID) {
-    if (!isPost) throw new RuntimeError(
-      `Unrecognized route for GET-like requests: "${route}"`,
-      callerNode, execEnv
-    );
     if (queryPathArr[0] === "mkdir") {
+      if (!isPost) throw new RuntimeError(
+        `Unrecognized route for GET-like requests: "${route}"`,
+        callerNode, execEnv
+      );
       let [a, adminID] = (queryPathArr[1] ?? []);
       if (a === "") {
         if (!adminID) throw new RuntimeError(

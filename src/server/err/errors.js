@@ -24,9 +24,9 @@ export function endWithError(res, err) {
 }
 
 export function endWithInternalError(res, error) {
+  console.error(error);
   res.writeHead(500, {'Content-Type': 'text/plain'});
   res.end("");
-  console.error(error);
 }
 
 export function endWithUnauthenticatedError(res) {

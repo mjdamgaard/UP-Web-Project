@@ -5,7 +5,7 @@ import {
 import {ServerQueryHandler} from "./server/ajax_io/ServerQueryHandler.js";
 import {CAN_CREATE_APP_FLAG} from "./dev_lib/jsx/jsx_components.js";
 
-import {main as constructAccountMenu} from "./above_app_menu/account_menu.js"
+import {main as constructAccountMenu} from "./account_menu/account_menu.js"
 
 /* Tests */
 

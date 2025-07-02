@@ -23,11 +23,12 @@ const GAS_NAMES = {
   comp: "computation",
   import: "import",
   fetch: "fetching",
-  dbRead: "DB fetching",
+  dbRead: "DB reading",
   dbWrite: "DB writing",
   time: "time",
   conn: "connection",
   mkdir: "directory creation",
+  mkTable: "DB table creation",
 };
 
 export function getParsingGasCost(str) {

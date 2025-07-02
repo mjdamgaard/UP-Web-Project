@@ -127,6 +127,12 @@ async function requestHandler(req, res) {
       res.end(JSON.stringify([newAuthToken, expTime]));
       break;
     }
+    case "userIDAndGas": {
+      let [userID, gas] = await readUserIDGas(authToken);
+      res.writeHead(200, {'Content-Type': "application/json"});
+      res.end(JSON.stringify([userID, gas]));
+      break;
+    }
     default: throw new ClientError(
       "Unrecognized reqType"
     );
@@ -221,7 +227,7 @@ async function logoutAll(userID, authToken) {
 
   // Delete all the user's authentication tokens, iff the provided authToken
   // is owned by the user.
-  [resultRow = []] = await userDBConnection.queryProcCall(
+  let [resultRow = []] = await userDBConnection.queryProcCall(
     "deleteAllAuthTokensIfAuthenticated", [userID, authToken],
   ) ?? [];
   let [deletionNum] = resultRow;
@@ -236,7 +242,7 @@ async function replaceToken(authToken) {
 
   // Delete all the user's authentication tokens, iff the provided authToken
   // is owned by the user.
-  [resultRow = []] = await userDBConnection.queryProcCall(
+  let [resultRow = []] = await userDBConnection.queryProcCall(
     "replaceAuthToken", [authToken, TOKEN_EXP_PERIOD, TIME_GRAIN],
   ) ?? [];
   let [newAuthToken, expTime] = resultRow;
@@ -245,6 +251,19 @@ async function replaceToken(authToken) {
   return [newAuthToken, expTime];
 }
 
+async function readUserIDGas(authToken) {
+  let userDBConnection = new UserDBConnection();
+
+  // Select the and userID and gas of the user if they are successfully
+  // authenticated.
+  let [resultRow = []] = await userDBConnection.queryProcCall(
+    "selectAuthenticatedUserIDAndGas", [authToken, 0],
+  ) ?? [];
+  let [userID, gas] = resultRow;
+
+  userDBConnection.end();
+  return [userID, gas];
+}
 
 
 
