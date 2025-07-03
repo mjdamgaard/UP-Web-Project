@@ -1326,17 +1326,15 @@ export class ScriptInterpreter {
       return val;
     }
     else if (type === "object-destructuring") {
-      let members = val;
-      if (val instanceof AbstractUHObject) {
-        members = val.members;
+      if (valProto !== OBJECT_PROTOTYPE && !(val instanceof AbstractObject)) {
+        throw new RuntimeError(
+          "Destructuring an object with a non-object value",
+          expNode, environment
+        );
       }
-      else if (valProto !== OBJECT_PROTOTYPE) throw new RuntimeError(
-        "Destructuring an object with a non-object value",
-        expNode, environment
-      );
       expNode.children.forEach(paramMemExp => {
         let ident = paramMemExp.ident;
-        let propVal = (Object.hasOwn(val, ident)) ? members[ident] : undefined;
+        let propVal = getPropertyFromObject(val, ident);
         this.assignToParameter(
           paramMemExp, propVal, environment, isDeclaration, isConst
         );
@@ -1507,9 +1505,8 @@ export class ScriptInterpreter {
               val = Object.hasOwn(objVal, key) ? objVal[key] : undefined;
             }
           }
-          else if (objVal instanceof AbstractUHObject) {
-            let members = objVal.members;
-            val = Object.hasOwn(members, key) ? members[key] : undefined;
+          else if (objVal instanceof AbstractObject) {
+            val = objVal.get(key);
           }
           else if (typeof objVal === "string" && key === "length") {
             val = objVal.length;
@@ -1755,9 +1752,6 @@ export class Environment {
 
 export const UNDEFINED = Symbol("undefined");
 
-export const GLOBAL = Symbol("global");
-export const MODULE = Symbol("module");
-
 export const CLEAR_FLAG = Symbol("clear"); 
 
 
@@ -1771,19 +1765,50 @@ export const CLEAR_FLAG = Symbol("clear");
 
 
 
-export class AbstractUHObject {
-  constructor(className, members = {}) {
+export class AbstractObject {
+  constructor(className, members = {}, prototype = {}, constructor) {
     this.className = className;
     this.members = members;
+    this.proto = prototype;
+    this.classConstructor = constructor;
   }
 
- stringify() {
+  get(key) {
+    return getPropertyFromPlainObject(this.members, key) ?? (
+      (this.proto instanceof AbstractObject) ? this.proto.get(key) :
+        getPropertyFromPlainObject(this.proto, key)
+    );
+  }
+  set(key, val) {
+    this.members[key] = val;
+  }
+
+  stringify() {
     return  `"${this.className}()"`;
   }
- toString() {
+  toString() {
     return  `[object ${this.className}()]`;
   }
 }
+
+
+
+
+
+
+export function getPropertyFromObject(obj, key) {
+  if (obj instanceof AbstractObject) {
+    return obj.get(key);
+  }
+  else return getPropertyFromPlainObject(obj, key);
+}
+
+export function getPropertyFromPlainObject(obj, key) {
+  if (Object.getPrototypeOf(obj) === OBJECT_PROTOTYPE) {
+    return Object.hasOwn(obj, key) ? obj[key] : undefined;
+  }
+}
+
 
 
 
@@ -1809,7 +1834,7 @@ export function getStringOrSymbol(val) {
 
 
 export function jsonStringify(val) {
-  if (val instanceof AbstractUHObject) {
+  if (val instanceof AbstractObject) {
     return val.stringify();
   }
   else if (typeof val === "symbol") {
@@ -1838,8 +1863,8 @@ export function jsonStringify(val) {
 
 
 export function forEachValue(value, node, env, callback) {
-  if (value instanceof AbstractUHObject) {
-    value = value.members;
+  if (value instanceof AbstractObject) {
+    Object.entries(value.members).forEach(([key, val]) => callback(val, key));
   }
   let valProto = getPrototypeOf(value);
   if (valProto === ARRAY_PROTOTYPE) {
@@ -1866,27 +1891,28 @@ export function getPrototypeOf(value) {
 
 
 
-// deepCopy() deep-copies the object and all ist nested properties except for
-// any AbstractUHObject extensions (but so far, none of those are mutable
-// anyway by the user).
+// deepCopy() deep-copies the object and all ist nested properties.
 export function deepCopy(value) {
-    if (value instanceof AbstractUHObject) {
-      return value;
-    }
-    let valProto = getPrototypeOf(value);
-    if (valProto === ARRAY_PROTOTYPE) {
-      return value.map(val => deepCopy(val));
-    }
-    else if (valProto === OBJECT_PROTOTYPE) {
-      let ret = {};
-      Object.entries(value).forEach(([key, val]) => {
-        ret[key] = deepCopy(val);
-      });
-      return ret;
-    }
-    else {
-      return value;
-    }
+  if (value instanceof AbstractObject) {
+    let ret = Object.create(value);
+    ret.members = deepCopy(value.members);
+    ret.proto = deepCopy(value.proto);
+    return ret;
+  }
+  let valProto = getPrototypeOf(value);
+  if (valProto === ARRAY_PROTOTYPE) {
+    return value.map(val => deepCopy(val));
+  }
+  else if (valProto === OBJECT_PROTOTYPE) {
+    let ret = {};
+    Object.entries(value).forEach(([key, val]) => {
+      ret[key] = deepCopy(val);
+    });
+    return ret;
+  }
+  else {
+    return value;
+  }
 }
 
 
@@ -1895,7 +1921,7 @@ export function deepCopy(value) {
 
 
 
-export class FunctionObject extends AbstractUHObject {
+export class FunctionObject extends AbstractObject {
   constructor() {
     super("Function");
   }
@@ -2005,10 +2031,29 @@ export function verifyType(val, type, isOptional, node, env) {
         );
       }
       break;
-    case "object":
+    case "plain object":
       if (getPrototypeOf(val) !== OBJECT_PROTOTYPE) {
         throw new ArgTypeError(
           `Value is not a plain object: ${getString(val)}`,
+          node, env
+        );
+      }
+      break;
+    case "abstract object":
+      if (!(val instanceof AbstractObject)) {
+        throw new ArgTypeError(
+          `Value is not an abstract object: ${getString(val)}`,
+          node, env
+        );
+      }
+      break;
+    case "object":
+      if (
+        getPrototypeOf(val) !== OBJECT_PROTOTYPE &&
+        !(val instanceof AbstractObject)
+      ) {
+        throw new ArgTypeError(
+          `Value is not an object: ${getString(val)}`,
           node, env
         );
       }
@@ -2045,6 +2090,14 @@ export function verifyType(val, type, isOptional, node, env) {
         );
       }
       break;
+    case "class":
+      if (!(val instanceof ClassObject)) {
+        throw new ArgTypeError(
+          `Value is not a class: ${getString(val)}`,
+          node, env
+        );
+      }
+      break;
     case "any":
       return;
     default:
@@ -2067,9 +2120,37 @@ export function verifyTypes(valArr, typeArr, node, env) {
 
 
 
+export class ClassObject extends AbstractObject {
+  constructor(constructor = () => {}, prototype = {}, superclass) {
+    super("Class");
+    this.instanceConstructor = constructor;
+    this.instanceProto = prototype;
+    this.superclass = superclass;
+  }
+// TODO: Correct.
+  isInstanceOf(val) {
+    return (val instanceof AbstractObject) ?
+      this.isInstanceOfHelper(val) : false;
+  }
+
+  isInstanceOfHelper(obj) {
+    if (obj.classConstructor === this.instanceConstructor) {
+      return true;
+    }
+    else if (this.superclass) {
+      return this.superclass.isInstanceOfHelper(obj)
+    }
+    else {
+      return false;
+    }
+  }
+}
 
 
-export class LiveModule extends AbstractUHObject {
+
+
+
+export class LiveModule extends AbstractObject {
   constructor(modulePath, exports, scriptVars) {
     super("LiveModule");
     this.modulePath = modulePath;
@@ -2084,7 +2165,7 @@ export class LiveModule extends AbstractUHObject {
   }
 }
 
-export class SASSModule extends AbstractUHObject {
+export class SASSModule extends AbstractObject {
   constructor(modulePath, styleSheet) {
     super("SASSModule");
     this.modulePath = modulePath;
@@ -2097,7 +2178,7 @@ export class SASSModule extends AbstractUHObject {
 
 
 
-export class JSXElement extends AbstractUHObject {
+export class JSXElement extends AbstractObject {
   constructor(node, decEnv, interpreter) {
     super("JSXElement");
     this.node = node;
@@ -2139,7 +2220,7 @@ export class JSXElement extends AbstractUHObject {
 
 
 
-export class PromiseObject extends AbstractUHObject {
+export class PromiseObject extends AbstractObject {
   constructor(promiseOrFun, interpreter, node, env) {
     super("Promise");
     this.hasCatch = false;
@@ -2176,6 +2257,10 @@ export class PromiseObject extends AbstractUHObject {
     );
   }
 }
+
+
+
+
 
 
 

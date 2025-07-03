@@ -551,7 +551,7 @@ export const scriptGrammar = {
   },
   "expression^(7)": {
     rules: [
-      ["expression^(8)", "/<|>|<=|>=/", "expression^(7)!"],
+      ["expression^(8)", "/<|>|<=|>=|instanceof/", "expression^(7)!"],
       ["expression^(8)"],
     ],
     process: processPolyadicInfixOperation,
@@ -626,16 +626,18 @@ export const scriptGrammar = {
   },
   "expression^(14)": {
     rules: [
-      ["expression^(15)", "member-accessor-or-expression-tuple!1*"],
+      ["/new/?", "expression^(15)", "member-accessor-or-expression-tuple!1*"],
     ],
     process: (children) => {
-      let postfixArr = children[1];
-      if (!postfixArr[0]) {
-        return children[0];
+      let hasNew = children[0][0] ? true : false;
+      let postfixArr = children[2];
+      if (!postfixArr[0] && !hasNew) {
+        return children[1];
       }
       else return {
         type: "chained-expression",
-        rootExp: children[0],
+        hasNew: hasNew,
+        rootExp: children[1],
         postfixArr: postfixArr,
       };
     },

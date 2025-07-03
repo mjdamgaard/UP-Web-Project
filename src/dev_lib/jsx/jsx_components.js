@@ -1,7 +1,7 @@
 
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, getExtendedErrorMsg,
-  getString, AbstractUHObject, forEachValue, CLEAR_FLAG, deepCopy,
+  getString, AbstractObject, forEachValue, CLEAR_FLAG, deepCopy,
   OBJECT_PROTOTYPE, ArgTypeError, Environment, getPrototypeOf, ARRAY_PROTOTYPE,
   FunctionObject, SyntaxError, getStringOrSymbol, getFullPath,
 } from "../../interpreting/ScriptInterpreter.js";
@@ -715,7 +715,7 @@ class JSXInstance {
 
 
 
-class JSXInstanceInterface extends AbstractUHObject {
+class JSXInstanceInterface extends AbstractObject {
   constructor(jsxInstance) {
     super("JSXInstance");
     this.jsxInstance = jsxInstance;
@@ -873,7 +873,7 @@ class SettingsStore {
 
 
 
-export class DOMNodeObject extends AbstractUHObject {
+export class DOMNodeObject extends AbstractObject {
   constructor(domNode) {
     super("DOMNode");
     this.domNode = domNode;
