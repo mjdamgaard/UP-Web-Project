@@ -1,6 +1,8 @@
 
 USE userDB;
 
+DROP FUNCTION toBase64;
+
 DROP PROCEDURE createUserAccount;
 DROP PROCEDURE selectPWHashAndUserID;
 DROP PROCEDURE generateAuthToken;
@@ -15,6 +17,11 @@ DROP PROCEDURE selectGas;
 DROP PROCEDURE updateGas;
 
 
+
+
+CREATE FUNCTION toBase64 (rawStr VARBINARY(255))
+RETURNS VARCHAR(340) DETERMINISTIC
+RETURN REPLACE(REPLACE(TO_BASE64(rawStr), "+", "-"), "/", "_");
 
 
 
@@ -83,7 +90,7 @@ CREATE PROCEDURE generateAuthToken (
 )
 BEGIN
     DECLARE userID BIGINT UNSIGNED DEFAULT CONV((userIDHex), 16, 10);
-    DECLARE authToken VARCHAR(255) DEFAULT TO_BASE64(RANDOM_BYTES(40));
+    DECLARE authToken VARCHAR(255) DEFAULT toBase64(RANDOM_BYTES(40));
     DECLARE expTime BIGINT UNSIGNED DEFAULT (
         (UNIX_TIMESTAMP() >> timeGrain << timeGrain) + expPeriod
     );
@@ -143,7 +150,7 @@ CREATE PROCEDURE replaceAuthToken (
     IN timeGrain TINYINT UNSIGNED
 )
 BEGIN
-    DECLARE newAuthToken VARCHAR(255) DEFAULT TO_BASE64(RANDOM_BYTES(40));
+    DECLARE newAuthToken VARCHAR(255) DEFAULT toBase64(RANDOM_BYTES(40));
     DECLARE expTime BIGINT UNSIGNED DEFAULT (
         (UNIX_TIMESTAMP() >> timeGrain << timeGrain) + expPeriod
     );

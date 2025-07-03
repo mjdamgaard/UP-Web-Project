@@ -1,6 +1,7 @@
 
 import {ServerQueryHandler}
   from '../../src/server/ajax_io/ServerQueryHandler.js';
+import {requestLoginServer} from '../../src/account_menu/account_menu.js';
 
 import fs from 'fs';
 import path from 'path';
@@ -8,7 +9,34 @@ import fetch from 'node-fetch';
 
 
 export class DirectoryUploader {
+  constructor(authToken) {
+    this.authToken = authToken;
+  }
 
+
+
+  // TODO: Document:
+  async login(username, password) {
+    let [userID, authToken] = await requestLoginServer(
+      "login", undefined, {username: username, password: password}
+    );
+    this.authToken = authToken;
+    return userID;
+  }
+
+
+  getReadDirID(dirPath) {
+    // Read the dirID.
+    let idFilePath = path.normalize(dirPath + "/.id.js");
+    let dirID;
+    try {
+      let contents = fs.readFileSync(idFilePath, 'utf8');
+      [ , dirID] = /\/[0-9A-F]+\/([0-9A-F]+)/.exec(contents) ?? [];
+    } catch (_) {}
+    return dirID;
+  }
+
+  // TODO: Correct:
   // uploadDir() first looks in a '.id' file to get the dirID of the home
   // directory, and if noe is found, it requests the server to create a new home
   // directory. Then it loops through all files of the directory at path and
@@ -18,22 +46,15 @@ export class DirectoryUploader {
   // as is, as well as file extensions of abstract files (often implemented via
   // one or several relational DB tables), for which the file content, if any,
   // will have to conform to a specific format.
-  static async uploadDir(dirPath, authToken, deleteTableData) {
-    if (!authToken) throw "No authentication token provided";
-
+  async uploadDir(dirPath, dirID, deleteTableData) {
     // Initialize the serverQueryHandler with the provided authToken.
-    let serverQueryHandler = new ServerQueryHandler(authToken, Infinity, fetch);
+    let serverQueryHandler = new ServerQueryHandler(
+      this.authToken, Infinity, fetch
+    );
 
-    // Read the dirID.
+    // If no dirID was provided, request the server to create a new directory
+    // and get the new dirID.
     let idFilePath = path.normalize(dirPath + "/.id.js");
-    let dirID;
-    try {
-      let contents = fs.readFileSync(idFilePath, 'utf8');
-      [ , dirID] = /\/[0-9A-F]+\/([0-9A-F]+)/.exec(contents) ?? [];
-    } catch (_) {}
-
-    // If no dirID was gotten, request the server to create a new directory and
-    // get the new dirID.
     if (!dirID) {
       dirID = await serverQueryHandler.post("/1/mkdir");
       fs.writeFileSync(
@@ -68,10 +89,12 @@ export class DirectoryUploader {
       dirPath, dirID, deleteTableData, uploadPromises, serverQueryHandler
     );
     await Promise.all(uploadPromises);
+
+    return dirID;
   }
 
 
-  static async #uploadDirHelper(
+  async #uploadDirHelper(
     dirPath, relPath, deleteTableData, uploadPromises, serverQueryHandler
   ) {
     // Get each file in the directory at path, and loop through and handle each
@@ -117,8 +140,18 @@ export class DirectoryUploader {
           );
         }
       }
-
-      // TODO: Implement some abstract DB table files as well.
     });
   }
+
+
+
+  // TODO: Implement a bundler method, and an associated command in the command
+  // line, which can then either be called automatically for before each
+  // upload, or manually so, perhaps depending on whether a bundle flag is
+  // present or not (similar to the current DELETE_DATA flag, but perhaps where
+  // we want to use a less loud flag (so using lower case instead)).
+  bundle() {
+
+  }
+
 }

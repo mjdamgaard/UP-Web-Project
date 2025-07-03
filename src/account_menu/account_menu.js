@@ -292,7 +292,7 @@ function goToAccountPage(userIDContext) {
 
 
 
-async function requestLoginServer(reqType, reqBody, authOptions) {
+export async function requestLoginServer(reqType, reqBody, authOptions) {
   let url = loginServerDomainURL + "/" + reqType;
   let headers = authOptions?.authToken ? {
     Authorization: `Bearer ${authOptions.authToken}`

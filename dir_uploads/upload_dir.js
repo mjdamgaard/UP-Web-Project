@@ -5,6 +5,9 @@ import {read} from 'read';
 
 import {DirectoryUploader} from './src/DirectoryUploader.js';
 
+let directoryUploader = new DirectoryUploader();
+
+let hasExited = false;
 
 // Get the directory path from the arguments, and combine it with __dirname if
 // it is a relative path.
@@ -18,17 +21,54 @@ if (dirPath[0] === ".") {
 let deleteTableData = options[0] === "DELETE_DATA";
 
 async function main() {
-  // Prompt for the user's authentication token, then request the new directory.
-  let authToken = await read({prompt: "Token: ", silent: true});
+  // Prompt for the user's username and password, then try to log in and on
+  // success prompt the user if they want to (re-)upload directory.
+  let username = await read({prompt: "Username: "});
+  let password = await read({prompt: "Password: ", silent: true});
   console.log("");
 
   // Create/update the directory on the server side.
-  await DirectoryUploader.uploadDir(dirPath, authToken, deleteTableData);
+  let userID = await directoryUploader.login(username, password);
+  let dirID = await directoryUploader.getReadDirID(dirPath) ?? "";
+  if (!userID) {
+    console.log("Login failed.");
+    return;
+  }
+  console.log(`Logged in with user #${userID}, and directory #${dirID}.`);
+  console.log(
+    "Type 'u' for upload, or 'e' for exit."
+  );
+  if (deleteTableData) {
+    console.log(
+      "CAUTION: The DELETE_DATA option was chosen, meaning that all table " +
+      "data will be deleted at every upload. If this is not desired, exit " +
+      "program and remove the DELETE_DATA option from the command."
+    );
+  }
+  let hasExited = false;
+  while(!hasExited) {
+    let inst = await read({prompt: `dir #${dirID}> `});
+    if (/^([uU]|upload)$/.test(inst)) {
+      console.log("Uploading...");
+      dirID = await directoryUploader.uploadDir(
+        dirPath, dirID, deleteTableData
+      );
+      console.log("OK");
+    }
+    else if (/^([eE]|exit)$/.test(inst)) {
+      hasExited = true;
+    }
+    else {
+      console.log("Unrecognized command.");
+    }
+  }
 };
 
 
 main().then(() => {
-  console.log("OK");
+  console.log("Bye");
 }).catch(err => {
-  console.error(err);
+  if (!hasExited) {
+    console.error(err);
+  }
 });
