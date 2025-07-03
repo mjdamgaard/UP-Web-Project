@@ -36,6 +36,7 @@ export const checkRequestOrigin = new DevFunction(
     });
     
     // Throw if the request origin was not accepted.
+// TODO: Change to another kind of exception:
     if (!isAllowed) throw new CustomException(
       "Request origin not allowed",
       callerNode, execEnv

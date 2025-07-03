@@ -35,8 +35,7 @@ export class DirectoryUploader {
     // If no dirID was gotten, request the server to create a new directory and
     // get the new dirID.
     if (!dirID) {
-      let [resultRow = []] = await serverQueryHandler.post("/1/mkdir") ?? [];
-      [dirID] = resultRow;
+      dirID = await serverQueryHandler.post("/1/mkdir");
       fs.writeFileSync(
         idFilePath, dirID ? `export default "/1/${dirID}";` : ""
       );
@@ -46,9 +45,9 @@ export class DirectoryUploader {
     // go through each one and check that it also exist nested in the client-
     // side directory, and for each one that doesn't, request deletion of that
     // file server-side.
-    let [filePaths = []] = await serverQueryHandler.post(
+    let filePaths = await serverQueryHandler.post(
       `/1/${dirID}/_all`
-    ) ?? [[]];
+    );
     let deletionPromises = [];
     filePaths.forEach((relPath) => {
       let clientFilePath = path.normalize(dirPath + "/" + relPath);

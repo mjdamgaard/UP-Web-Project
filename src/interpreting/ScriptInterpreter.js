@@ -208,10 +208,9 @@ export class ScriptInterpreter {
     let [parsedScript, lexArr, strPosArr, script] =
       parsedScripts.get(scriptPath) ?? [];
     if (!parsedScript) {
-      let [resultRow = []] = await this.fetch(
+      script = await this.fetch(
         scriptPath, callerNode, callerEnv
-      ) ?? [];
-      [script] = resultRow;
+      );
       if (typeof script !== "string") throw new LoadError(
         `No script was found at ${scriptPath}`,
         callerNode, callerEnv
@@ -2181,7 +2180,9 @@ export class PromiseObject extends AbstractUHObject {
 
 
 
-
+// TODO: Consider refactoring to not use these exceptions, and do something
+// else, if wanting to make it easier to use "pause on caught exceptions" for
+// debugging. 
 
 class ReturnException {
   constructor(val, node, environment) {

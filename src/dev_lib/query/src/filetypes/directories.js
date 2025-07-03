@@ -32,10 +32,11 @@ export async function query(
         adminID = execEnv.scriptVars.contexts.userIDContext.get();
       }
       payGas(callerNode, execEnv, {mkdir: 1});
-      return await dbQueryHandler.queryDBProc(
+      let [[dirID] = []] = await dbQueryHandler.queryDBProc(
         "createHomeDir", [adminID],
         route, upNodeID, options, callerNode, execEnv,
-      );
+      ) ?? [];
+      return dirID;
     }
     else throw new RuntimeError(
       `Unrecognized route: ${route}`,
@@ -51,16 +52,14 @@ export async function query(
 
   // If route equals just ".../<homeDirID>", without any query path, return
   // a list of all nested file paths of the home directory, except paths of
-  // files nested inside locked subdirectories (which starts with a "_").
+  // files nested inside locked subdirectories (with any leading underscores).
   if (!queryPathArr) {
-    let fullDescList = await dbQueryHandler.queryDBProc(
+    let filePathTable = await dbQueryHandler.queryDBProc(
       "readHomeDirDescendants", [homeDirID, 4000, 0],
       route, upNodeID, options, callerNode, execEnv,
-    );
-    let visibleDescList = (fullDescList ?? []).filter(([filePath]) => (
-      !LOCKED_ROUTE_REGEX.test(filePath)
-    ));
-    return visibleDescList;
+    ) ?? [];
+    return filePathTable.map(([filePath]) => filePath)
+      .filter((filePath) => (!LOCKED_ROUTE_REGEX.test(filePath)));
   }
 
   let queryType = queryPathArr[0];
@@ -68,19 +67,21 @@ export async function query(
   // If route equals just ".../<homeDirID>/_all", return a list of all nested
   // file paths of the home directory.
   if (queryType === "_all") {
-    return await dbQueryHandler.queryDBProc(
+    let filePathTable = await dbQueryHandler.queryDBProc(
       "readHomeDirDescendants", [homeDirID, 4000, 0],
       route, upNodeID, options, callerNode, execEnv,
-    );
+    ) ?? [];
+    return filePathTable.map(([filePath]) => filePath);
   }
 
   // If route equals just ".../<homeDirID>/admin", return the adminID of the
   // home directory.
   if (queryType === "admin") {
-    return await dbQueryHandler.queryDBProc(
+    let [[adminID] = []] = await dbQueryHandler.queryDBProc(
       "readHomeDirAdminID", [homeDirID],
       route, upNodeID, options, callerNode, execEnv,
-    );
+    ) ?? [];
+    return adminID;
   }
 
   // If route equals ".../<homeDirID>/_setAdmin/a=<adminID>", set a new admin
@@ -95,10 +96,11 @@ export async function query(
       "No admin ID was provided",
       callerNode, execEnv
     );
-    return await dbQueryHandler.queryDBProc(
+    let [[wasEdited] = []] = await dbQueryHandler.queryDBProc(
       "editHomeDir", [homeDirID, adminID],
       route, upNodeID, options, callerNode, execEnv,
-    );
+    ) ?? [];
+    return wasEdited;
   }
 
   // If route equals ".../<homeDirID>/_delete", request a deletion of the
@@ -109,10 +111,11 @@ export async function query(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
     );
-    return await dbQueryHandler.queryDBProc(
+    let [[wasDeleted] = []] = await dbQueryHandler.queryDBProc(
       "deleteHomeDir", [homeDirID],
       route, upNodeID, options, callerNode, execEnv,
-    );
+    ) ?? [];
+    return wasDeleted;
   }
 
   // TODO: Implement /readGas, /depositGas, and /withdrawGas routes, the latter

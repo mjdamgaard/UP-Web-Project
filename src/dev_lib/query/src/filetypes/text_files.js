@@ -19,10 +19,11 @@ export async function query(
   // If route equals just ".../<homeDirID>/<filePath>", without any query
   // path, return the text stored in the file.
   if (!queryPathArr) {
-    return await dbQueryHandler.queryDBProc(
+    let [[text] = []] = await dbQueryHandler.queryDBProc(
       "readTextFile", [homeDirID, filePath],
       route, upNodeID, options, callerNode, execEnv,
-    );
+    ) ?? [];
+    return text;
   }
 
   let queryType = queryPathArr[0];
@@ -37,10 +38,11 @@ export async function query(
     );
     let text = postData;
     payGas(callerNode, execEnv, {dbWrite: text.length});
-    return await dbQueryHandler.queryDBProc(
+    let [[wasCreated] = []] = await dbQueryHandler.queryDBProc(
       "putTextFile", [homeDirID, filePath, text],
       route, upNodeID, options, callerNode, execEnv,
-    );
+    ) ?? [];
+    return wasCreated;
   }
 
   // If route equals ".../<homeDirID>/<filePath>/_delete", delete the text file.
@@ -49,10 +51,11 @@ export async function query(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
     );
-    return await dbQueryHandler.queryDBProc(
+    let [[wasDeleted] = []] = await dbQueryHandler.queryDBProc(
       "deleteTextFile", [homeDirID, filePath],
       route, upNodeID, options, callerNode, execEnv,
-    );
+    ) ?? [];
+    return wasDeleted;
   }
 
   // If route equals ".../<homeDirID>/<filePath>/get/<alias>", verify that

@@ -315,6 +315,10 @@ async function getUserIDAndGas(authToken, reqGas) {
   ) ?? [];
   let [userID, gasReserve = {}, autoRefilledAt = 0] = resultRow;
 
+  if (!userID) {
+    return [];
+  }
+
   // If long enough time has passed since last auto-refill, refill the user's
   // reserve before continuing.
   if ((autoRefilledAt + AUTO_REFILL_PERIOD) * 1000 < Date.now()) {
