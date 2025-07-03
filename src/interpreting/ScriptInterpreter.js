@@ -983,6 +983,14 @@ export class ScriptInterpreter {
             case ">=":
               acc = parseFloat(acc) >= parseFloat(nextVal);
               break;
+            case "instanceof":
+              acc = (
+                acc instanceof AbstractObject && (
+                  nextVal instanceof ClassObject ||
+                  nextVal instanceof FunctionObject
+                )
+              ) ? acc = nextVal.isInstanceOfThis(acc) : false;
+              break;
             case "<<":
               acc = parseInt(acc) << parseInt(nextVal);
               break;
@@ -1793,6 +1801,29 @@ export class AbstractObject {
 
 
 
+export class ClassObject extends AbstractObject {
+  constructor(constructor = () => {}, prototype = {}, superclass) {
+    super("Class");
+    this.instanceConstructor = constructor;
+    this.instanceProto = prototype;
+    this.superclass = superclass;
+  }
+
+  isInstanceOfThis(val) {
+    if (val.classConstructor === this.instanceConstructor) {
+      return true;
+    }
+    else if (val.proto instanceof AbstractObject) {
+      return this.isInstanceOfThis(val.proto);
+    }
+    else {
+      return false;
+    }
+  }
+}
+
+
+
 
 
 
@@ -1924,6 +1955,18 @@ export function deepCopy(value) {
 export class FunctionObject extends AbstractObject {
   constructor() {
     super("Function");
+  }
+
+  isInstanceOfThis(val) {
+    if (val.classConstructor === this) {
+      return true;
+    }
+    else if (val.proto instanceof AbstractObject) {
+      return this.isInstanceOfThis(val.proto);
+    }
+    else {
+      return false;
+    }
   }
 };
 
@@ -2119,32 +2162,6 @@ export function verifyTypes(valArr, typeArr, node, env) {
 
 
 
-
-export class ClassObject extends AbstractObject {
-  constructor(constructor = () => {}, prototype = {}, superclass) {
-    super("Class");
-    this.instanceConstructor = constructor;
-    this.instanceProto = prototype;
-    this.superclass = superclass;
-  }
-// TODO: Correct.
-  isInstanceOf(val) {
-    return (val instanceof AbstractObject) ?
-      this.isInstanceOfHelper(val) : false;
-  }
-
-  isInstanceOfHelper(obj) {
-    if (obj.classConstructor === this.instanceConstructor) {
-      return true;
-    }
-    else if (this.superclass) {
-      return this.superclass.isInstanceOfHelper(obj)
-    }
-    else {
-      return false;
-    }
-  }
-}
 
 
 
