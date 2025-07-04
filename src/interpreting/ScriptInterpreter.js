@@ -73,7 +73,7 @@ export class ScriptInterpreter {
 
     // First create a global environment, which is used as a parent environment
     // for all modules.
-    let globalEnv = new Environment( 
+    let globalEnv = new Environment(
       undefined, "global", {scriptVars: scriptVars},
     );
     scriptVars.globalEnv = globalEnv;
@@ -159,7 +159,7 @@ export class ScriptInterpreter {
         // before the exception was thrown.
       }
       else throw err;
-    } 
+    }
 
     // If isExiting is true, we can return the resulting output and log.
     if (scriptVars.isExiting) {
@@ -180,7 +180,7 @@ export class ScriptInterpreter {
       }
       else if (gas.time !== Infinity) {
         // Set an expiration time after which the script resolves with an
-        // error. 
+        // error.
         setTimeout(
           () => {
             scriptVars.resolveScript(undefined, new OutOfGasError(
@@ -505,7 +505,7 @@ export class ScriptInterpreter {
         throw new ExitException();
       }
     );
-    
+
     // Then call executeModuleFunction with that resolve, and with funName =
     // "main".
     let {flags} = scriptEnv.scriptVars;
@@ -775,7 +775,7 @@ export class ScriptInterpreter {
         }
       }
       case "empty-statement": {
-        return;
+        break;
       }
       case "variable-declaration": {
         let isConst = stmtNode.isConst;
@@ -795,11 +795,11 @@ export class ScriptInterpreter {
       }
       case "class-declaration": {
         // Get the superclass, if any.
-        let superclass;
+        let superVal;
         let superclassIdent = stmtNode.superclass;
         if (superclassIdent !== undefined) {
-          superclass = environment.get(superclassIdent, stmtNode);
-          if (!(superclass instanceof ClassObject)) throw new RuntimeError(
+          superVal = environment.get(superclassIdent, stmtNode);
+          if (!(superVal instanceof ClassObject)) throw new RuntimeError(
             "Superclass needs to be a class declared with the 'class' keyword"
           );
         }
@@ -811,10 +811,21 @@ export class ScriptInterpreter {
             "Invalid, falsy object key",
             expNode, environment
           );
-          prototype[key] = this.evaluateExpression(member.valExp, environment);
+          let val = this.evaluateExpression(member.valExp, environment);
+          if (val instanceof FunctionObject) {
+            val = Object.create(val);
+            val.superVal = superVal;
+          }
+          prototype[key] = val;
         });
 
-        // TODO: Continue...
+        // Get the constructor.
+        let constructor = prototype.constructor;
+
+        let classObj = new ClassObject(
+          stmtNode.name, constructor, prototype, superVal
+        );
+        environment.assign(stmtNode.name, () => [classObj, classObj], stmtNode);
         break;
       }
       case "expression-statement": {
@@ -837,7 +848,7 @@ export class ScriptInterpreter {
 
     let type = expNode.type;
     switch (type) {
-      case "arrow-function": 
+      case "arrow-function":
       case "function-expression": {
         let funNode = {
           type: "function-declaration",
@@ -1154,7 +1165,7 @@ export class ScriptInterpreter {
         let val;
         try {
           [val] = this.evaluateChainedExpression(
-            expNode.rootExp, expNode.postfixArr, environment
+            expNode.rootExp, expNode.postfixArr, expNode.isNew, environment
           );
         }
         catch (err) {
@@ -1435,7 +1446,7 @@ export class ScriptInterpreter {
       let prevVal, objVal, key;
       try {
         [prevVal, objVal, key] = this.evaluateChainedExpression(
-          expNode.rootExp, expNode.postfixArr, environment
+          expNode.rootExp, expNode.postfixArr, expNode.isNew, environment
         );
       }
       catch (err) {
@@ -1502,7 +1513,8 @@ export class ScriptInterpreter {
   // a BrokenOptionalChainException. Here, val is the value of the whole
   // expression, and objVal, is the value of the object before the last member
   // accessor (if the last postfix is a member accessor and not a tuple).
-  evaluateChainedExpression(rootExp, postfixArr, environment) {
+  evaluateChainedExpression(rootExp, postfixArr, isNew, environment) {
+    let postfix, objVal, key;
     let val = this.evaluateExpression(rootExp, environment);
     let len = postfixArr.length;
     if (len === 0) {
@@ -1510,23 +1522,46 @@ export class ScriptInterpreter {
     }
     decrCompGas(rootExp, environment);
 
-    // Evaluate the chained expression accumulatively, one postfix at a time. 
-    let postfix, objVal, key;
-    for (let i = 0; i < len; i++) {
+    // In case of a 'new' expression, we handle the initial first part of the
+    // chain in a special way, and then continue to the subsequent for loop,
+    // but with i starting at 1 instead of 0.
+
+    if (isNew) {
+      // (Note that the parser has failed if not the postfixArr[1] is an
+      // expression tuple.)
+      let expTuple = postfixArr[1];
+      let inputArr = expTuple.children.map(param => {
+        this.evaluateExpression(param, environment);
+      });
+      if (val instanceof ClassObject) {
+        val = val.getNewInstance(inputArr);
+      }
+      if (val instanceof FunctionObject) {
+        let newInst = new AbstractObject(val.name, {}, undefined, val);
+        interpreter.executeFunction(
+          val, inputArr, expTuple, environment, newInst
+        );
+        val = newInst;
+      }
+      else throw new RuntimeError(
+        "Invalid 'new' expression with a non-class, non-function argument"
+      );
+    }
+
+    // Evaluate the chained expression accumulatively, one postfix at a time.
+    for (let i = isNew ? 1 : 0; i < len; i++) {
       postfix = postfixArr[i];
 
       // If postfix is a member accessor, get the member value, and assign the
       // current val to objVal.
       if (postfix.type === "member-accessor") {
         objVal = val;
-
         [val, key] = this.getProperty(objVal, postfix, environment);
       }
 
       // Else if postfix is an expression tuple, execute the current val as a
       // function, and reassign it to the return value.
       else if (postfix.type === "expression-tuple") {
-
         // Evaluate the expressions inside the tuple.
         let inputExpArr = postfix.children;
         let inputValArr = inputExpArr.map(exp => (
@@ -1818,7 +1853,7 @@ export class Environment {
 
 export const UNDEFINED = Symbol("undefined");
 
-export const CLEAR_FLAG = Symbol("clear"); 
+export const CLEAR_FLAG = Symbol("clear");
 
 
 
@@ -1860,8 +1895,10 @@ export class AbstractObject {
 
 
 export class ClassObject extends AbstractObject {
-  constructor(constructor = () => {}, prototype = {}, superclass) {
+  constructor(className, constructor = undefined, prototype = {},
+    superclass = undefined) {
     super("Class");
+    this.className = className;
     this.instanceConstructor = constructor;
     this.instanceProto = prototype;
     this.superclass = superclass;
@@ -1877,6 +1914,16 @@ export class ClassObject extends AbstractObject {
     else {
       return false;
     }
+  }
+
+  getNewInstance(inputArr, interpreter, callerNode, callerEnv) {
+    let newInst = (this.superclass) ? undefined : new AbstractObject(
+      this.className, {}, this.instanceProto, this.instanceConstructor
+    );
+    interpreter.executeFunction(
+      this.constructorFun, inputArr, callerNode, callerEnv, newInst
+    );
+    return newInst;
   }
 }
 
@@ -2041,7 +2088,7 @@ export class DefinedFunction extends FunctionObject {
   }
   get name() {
     // TODO: Implement capturing function names for the sake of e.g. console.
-    // trace() once implemented, and debugging in general. 
+    // trace() once implemented, and debugging in general. *(and class names)
     return this.node.name ?? "<anonymous function>";
   }
 }
@@ -2336,7 +2383,7 @@ export class PromiseObject extends AbstractObject {
 
 // TODO: Consider refactoring to not use these exceptions, and do something
 // else, if wanting to make it easier to use "pause on caught exceptions" for
-// debugging. 
+// debugging.
 
 class ReturnException {
   constructor(val, node, environment) {
@@ -2441,7 +2488,7 @@ export function getFullPath(curPath, path, callerNode, callerEnv) {
   if (fullPath.substring(0, 4) === "/../") throw new LoadError(
     `Ill-formed path: "${path}"`, callerNode, callerEnv
   );
-  
+
   return fullPath;
 }
 
@@ -2541,7 +2588,7 @@ export function getExtendedErrorMsg(err) {
   }
 
   // Else construct an error message containing the line and column number, as
-  // well as a code snippet around where the error occurred. 
+  // well as a code snippet around where the error occurred.
   else {
     let pos = err.node.pos;
     let nextPos = err.node.nextPos;

@@ -47,7 +47,7 @@ if (typeof(Storage) === "undefined") {
 
 
 // Create some global contexts which defines some reserved props of the app
-// component (and which will make the app rerender when they change). 
+// component (and which will make the app rerender when they change).
 class Context {
   constructor(val) {
     this.val = val;

@@ -26,7 +26,7 @@ export const COMPONENT_INSTANCE_FLAG = Symbol("component-instance");
 
 // TODO: Make createJSXApp() take an argument of a function to get component
 // trust (for the FlagTransmitter to use), and also make the app component get
-// the URL substring after the domain as part of its props. 
+// the URL substring after the domain as part of its props.
 
 // Create a JSX (React-like) app and mount it in the index HTML page, in the
 // element with an id of "up-app-root".
@@ -57,7 +57,7 @@ export const createJSXApp = new DevFunction(
     // relevant style sheets in the document head. We then immediately call its
     // loadStylesOfAllStaticJSXModules() method to prepare the styles of all
     // '.jsx' modules that have been "statically" imported (i.e. imported from
-    // import statements).  
+    // import statements).
     let jsxAppStyler = new JSXAppStyler(
       settingsStore, appComponent, interpreter, callerNode, execEnv
     );
@@ -67,10 +67,10 @@ export const createJSXApp = new DevFunction(
 
     // Then create the app's root component instance, and before rendering it,
     // add some props for getting user data and URL data, and pushing a new
-    // browser session history state it it.  
+    // browser session history state it it.
     let rootInstance = new JSXInstance(
       appComponent, "root", undefined, callerNode, execEnv,
-      jsxAppStyler, settingsStore      
+      jsxAppStyler, settingsStore
     );
     props = addUserRelatedProps(props, rootInstance, interpreter, execEnv);
     props = addURLRelatedProps(props, rootInstance, interpreter, execEnv);
@@ -447,7 +447,7 @@ class JSXInstance {
           // warned that one should not call a callback from the parent
           // instance (e.g. handed down through refs), unless one is okay with
           // bleeding the CAN_POST and REQUEST_ORIGIN privileges granted to
-          // this onClick handler function into the parent instance. 
+          // this onClick handler function into the parent instance.
           case "onClick": {
             if (!(val instanceof FunctionObject)) {
               break;
@@ -464,7 +464,7 @@ class JSXInstance {
                 ).then(({isTrusted}) => {
                   // Then execute the function object held in val, with
                   // elevated privileges that allows the function to make POST-
-                  // like requests. 
+                  // like requests.
                   interpreter.executeFunctionOffSync(
                     val, [], callerNode, callerEnv,
                     new JSXInstanceInterface(this), [
@@ -819,7 +819,7 @@ class JSXInstanceInterface extends AbstractObject {
   );
 
   // unsubscribeFromContext(key) unsubscribes the instance from a context,
-  // meaning that it will no longer rerender if the context updates. 
+  // meaning that it will no longer rerender if the context updates.
   unsubscribeFromContext = new DevFunction(
     {typeArr: ["object key"]}, ({}, [key]) => {
       return deepCopyExceptRefs(

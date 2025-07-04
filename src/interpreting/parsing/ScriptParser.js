@@ -29,7 +29,7 @@ export const HTML_ELEMENT_TYPE_REGEX = new RegExp(
 export const scriptGrammar = {
   "script": {
     rules: [
-      [ 
+      [
         "import-statement!1*",
         "outer-statement+$"
       ],
@@ -675,14 +675,17 @@ export const scriptGrammar = {
       ["/new/?", "expression^(15)", "member-accessor-or-expression-tuple!1*"],
     ],
     process: (children) => {
-      let hasNew = children[0][0] ? true : false;
+      let isNew = children[0][0] ? true : false;
       let postfixArr = children[2];
-      if (!postfixArr[0] && !hasNew) {
+      if (!postfixArr[0] && !isNew) {
         return children[1];
+      }
+      else if (isNew && postfixArr[1]?.type !== "expression-tuple") {
+        return "'new' expression expects a (possibly empty) argument tuple"
       }
       else return {
         type: "chained-expression",
-        hasNew: hasNew,
+        isNew: isNew,
         rootExp: children[1],
         postfixArr: postfixArr,
       };
