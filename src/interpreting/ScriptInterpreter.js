@@ -793,6 +793,30 @@ export class ScriptInterpreter {
         );
         break;
       }
+      case "class-declaration": {
+        // Get the superclass, if any.
+        let superclass;
+        let superclassIdent = stmtNode.superclass;
+        if (superclassIdent !== undefined) {
+          superclass = environment.get(superclassIdent, stmtNode);
+          if (!(superclass instanceof ClassObject)) throw new RuntimeError(
+            "Superclass needs to be a class declared with the 'class' keyword"
+          );
+        }
+        // Construct the shared prototype for the class.
+        let prototype = {};
+        stmtNode.members.forEach(member => {
+          let key = member.ident;
+          if (!key) throw new RuntimeError(
+            "Invalid, falsy object key",
+            expNode, environment
+          );
+          prototype[key] = this.evaluateExpression(member.valExp, environment);
+        });
+
+        // TODO: Continue...
+        break;
+      }
       case "expression-statement": {
         this.evaluateExpression(stmtNode.exp, environment);
         break;
@@ -1265,33 +1289,6 @@ export class ScriptInterpreter {
         );
         return ret;
       }
-      case "map-call": {
-        throw new RuntimeError(
-          "Maps are not implemented yet",
-          expNode, environment
-        );
-        // let expVal;
-        // if (expNode.exp) {
-        //   expVal = this.evaluateExpression(expNode.exp, environment);
-        // }
-        // let ret;
-        // if (expVal === undefined) {
-        //   ret = new MapWrapper();
-        // }
-        // else {
-        //   try {
-        //     ret = new MapWrapper(expVal);
-        //   }
-        //   catch (err) {
-        //     throw new ArgTypeError(
-        //       "Map expects a key-value entries array, but got: " +
-        //       getVerboseString(expVal),
-        //       expNode.exp, environment
-        //     );
-        //   }
-        // }
-        // return ret;
-      }
       case "console-call": {
         if (expNode.subtype === "log") {
           let {isExiting, log} = environment.scriptVars;
@@ -1307,6 +1304,32 @@ export class ScriptInterpreter {
         // appropriate) that returns the whole environment stack in some way,
         // perhaps with a maxLevel limit argument. And on the server side,
         // maybe even reroute the debugger statement to call this and then exit.
+      }
+      case "super-call": {
+        let superVal = environment.getSuperVal();
+        if (superVal === undefined) throw new RuntimeError(
+          "'super' is not defined in this context",
+          expNode, environment
+        );
+        let thisVal = superVal.getNewInstance(expNode.params.map(param => {
+          this.evaluateExpression(param, environment);
+        }));
+        environment.assignThisVal(thisVal);
+      }
+      case "super-access": {
+        let superVal = environment.getSuperVal();
+        if (superVal === undefined) throw new RuntimeError(
+          "'super' is not defined in this context",
+          expNode, environment
+        );
+        let superPropVal = this.getProperty(
+          superVal.instanceProto, expNode.accessor, environment
+        );
+        if (superPropVal instanceof FunctionObject) {
+          superPropVal = Object.create(superPropVal);
+          superPropVal.thisVal = environment.getThisVal();
+        }
+        return superPropVal;
       }
       default: throw (
         "ScriptInterpreter.evaluateExpression(): Unrecognized type: " +
@@ -1426,9 +1449,22 @@ export class ScriptInterpreter {
         }
       }
 
-      // If the object is an AbstractUHObject, instead of assigning one of the
+      // If the object is an AbstractObject, instead of assigning one of the
       // object's own properties directly, assign to the objects 'members'
-      // property instead. Also check against setting members of a non-object.
+      // property instead.
+      if (objVal instanceof AbstractObject) {
+        key = getStringOrSymbol(key);
+        if (!key) throw new RuntimeError(
+          "Empty object key",
+          expNode, environment
+        );
+        let [newVal, ret] = assignFun(prevVal);
+        objVal.set(key, newVal);
+        return ret;
+      }
+
+      // Else check that objVal is a plain object or array, and assign to the
+      // member/entry if so.
       let objProto = getPrototypeOf(objVal);
       if (objProto === OBJECT_PROTOTYPE) {
         key = getStringOrSymbol(key);
@@ -1449,7 +1485,7 @@ export class ScriptInterpreter {
         }
       }
       else throw new RuntimeError(
-        "Trying to assign a member of an object whose members are constant",
+        "Assignment to a member of a non-object",
         expNode, environment
       );
 
@@ -1484,46 +1520,7 @@ export class ScriptInterpreter {
       if (postfix.type === "member-accessor") {
         objVal = val;
 
-        // Throw a BrokenOptionalChainException if an optional chaining is
-        // broken.
-        if (postfix.isOpt && (objVal === undefined || objVal === null)) {
-          throw new BrokenOptionalChainException();
-        }
-
-        // Else, first get the key.
-        key = postfix.ident;
-        if (key === undefined) {
-          key = getStringOrSymbol(
-            this.evaluateExpression(postfix.exp, environment)
-          );
-        }
-
-        // If the object is an AbstractUHObject, instead of getting from the
-        // object's properties directly, get from the objects 'members'
-        // property. Also check against accessing members of a non-object.
-        let objProto = getPrototypeOf(objVal);
-        if (objProto === OBJECT_PROTOTYPE) {
-          val = Object.hasOwn(objVal, key) ? objVal[key] : undefined;
-        }
-        else {
-          if (objProto === ARRAY_PROTOTYPE) {
-            if (key === "length"){
-              val = objVal.length;
-            } else {
-              val = Object.hasOwn(objVal, key) ? objVal[key] : undefined;
-            }
-          }
-          else if (objVal instanceof AbstractObject) {
-            val = objVal.get(key);
-          }
-          else if (typeof objVal === "string" && key === "length") {
-            val = objVal.length;
-          }
-          else throw new RuntimeError(
-            "Trying to access a member of a non-object",
-            postfix, environment
-          );
-        }
+        [val, key] = this.getProperty(objVal, postfix, environment);
       }
 
       // Else if postfix is an expression tuple, execute the current val as a
@@ -1552,6 +1549,53 @@ export class ScriptInterpreter {
     return [val, objVal, key];
   }
 
+
+  getProperty(objVal, accessor, environment) {
+    let val, key;
+    // Throw a BrokenOptionalChainException if an optional chaining is
+    // broken.
+    if (accessor.isOpt && (objVal === undefined || objVal === null)) {
+      throw new BrokenOptionalChainException();
+    }
+
+    // Else, first get the key.
+    key = accessor.ident;
+    if (key === undefined) {
+      key = getStringOrSymbol(
+        this.evaluateExpression(accessor.exp, environment)
+      );
+    }
+
+    // If the object is an AbstractUHObject, instead of getting from the
+    // object's properties directly, get from the objects 'members'
+    // property. Also check against accessing members of a non-object.
+    let objProto = getPrototypeOf(objVal);
+    if (objProto === OBJECT_PROTOTYPE) {
+      val = Object.hasOwn(objVal, key) ? objVal[key] : undefined;
+    }
+    else {
+      if (objProto === ARRAY_PROTOTYPE) {
+        if (key === "length"){
+          val = objVal.length;
+        } else {
+          val = Object.hasOwn(objVal, key) ? objVal[key] : undefined;
+        }
+      }
+      else if (objVal instanceof AbstractObject) {
+        val = objVal.get(key);
+      }
+      else if (typeof objVal === "string" && key === "length") {
+        val = objVal.length;
+      }
+      else throw new RuntimeError(
+        "Trying to access a member of a non-object",
+        accessor, environment
+      );
+    }
+
+    return [val, key];
+  }
+
 }
 
 
@@ -1578,10 +1622,14 @@ export class Environment {
     this.variables = new Map();
     this.flags = new Map();
     if (scopeType === "function") {
-      let {isArrowFun, isDevFun, flags: funFlags} = fun;
+      let {
+        isArrowFun, isDevFun, flags: funFlags, thisVal: boundThisVal, superVal
+      } = fun;
+      thisVal = boundThisVal ?? thisVal;
       this.callerNode = callerNode;
       this.callerEnv = callerEnv;
-      if (thisVal && !isArrowFun) this.thisVal = thisVal;
+      if (!isArrowFun && thisVal) this.thisVal = thisVal;
+      if (!isArrowFun && superVal) this.superVal = superVal;
       if (isArrowFun) this.isArrowFun = isArrowFun;
       if (isDevFun) this.isDevFun = isDevFun;
       if (funFlags || addedFlags) {
@@ -1623,12 +1671,6 @@ export class Environment {
     }
     else if (this.parent) {
       return this.parent.get(ident, node, nodeEnvironment);
-      // let val = this.parent.get(ident, node, nodeEnvironment);
-      // if (this.isNonArrowFunction) {
-      //   return turnImmutable(val);
-      // } else {
-      //   return val;
-      // }
     }
     else {
       throw new RuntimeError(
@@ -1678,8 +1720,27 @@ export class Environment {
     else if (this.parent) {
       return this.parent.getThisVal();
     }
-    else {
+  }
+
+  assignThisVal(thisVal) {
+    if (this.isNonArrowFunction) {
+      this.thisVal = thisVal;
+    }
+    else if (this.parent) {
+      this.parent.assignThisVal(thisVal);
+    }
+  }
+
+  getSuperVal() {
+    let superVal = this.superVal;
+    if (superVal !== undefined) {
+      return (superVal === UNDEFINED) ? undefined : superVal;
+    }
+    else if (this.isNonArrowFunction) {
       return undefined;
+    }
+    else if (this.parent) {
+      return this.parent.getSuperVal();
     }
   }
 
@@ -1696,9 +1757,6 @@ export class Environment {
     }
     else if (this.parent) {
       return this.parent.getFlag(flag, stopAtClear);
-    }
-    else {
-      return undefined;
     }
   }
 
@@ -1971,10 +2029,12 @@ export class FunctionObject extends AbstractObject {
 };
 
 export class DefinedFunction extends FunctionObject {
-  constructor(node, decEnv) {
+  constructor(node, decEnv, thisVal = undefined, superVal = undefined) {
     super();
     this.node = node;
     this.decEnv = decEnv;
+    this.thisVal = thisVal;
+    this.superVal = superVal;
   }
   get isArrowFun() {
     return this.node.type === "arrow-function";
@@ -2121,14 +2181,6 @@ export function verifyType(val, type, isOptional, node, env) {
       if (!(val instanceof LiveModule)) {
         throw new ArgTypeError(
           `Value is not a live module object: ${getString(val)}`,
-          node, env
-        );
-      }
-      break;
-    case "map":
-      if (!(val instanceof Map)) {
-        throw new ArgTypeError(
-          `Value is not a Map: ${getString(val)}`,
           node, env
         );
       }

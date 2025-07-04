@@ -2,7 +2,7 @@
 import {Parser} from "./Parser.js";
 import {
   straightenListSyntaxTree, copyFromChild, copyLexemeFromChild,
-  processPolyadicInfixOperation, processLeftAssocPostfixes,
+  processPolyadicInfixOperation,
 } from "./processing.js";
 
 
@@ -10,9 +10,13 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
   "true|false|null|undefined|Infinity|NaN|try|catch|finally|for|while|do|" +
-  "default|public|debugger|new|console|import)$"
-  // TODO: Continue this list.
+  "default|public|debugger|new|console|abstract|arguments|boolean|byte|char|" +
+  "double|enum|eval|extends|final|float|goto|implements|in|int|interface|" +
+  "long|native|package|private|protected|short|super|synchronized|throws|" +
+  "transient|volatile|with|yield)$"
 );
+
+
 
 export const HTML_ELEMENT_TYPE_REGEX = new RegExp(
   "^(div|span|i|b|br|hr|template|button|h1|h2|h3|h4|h5|h6)$"
@@ -105,6 +109,7 @@ export const scriptGrammar = {
     rules: [
       ["/export/", "/const/", "identifier!", "/=/", "expression", "/;/"],
       ["/export/", "/default/?", "function-declaration!1"],
+      ["/export/", "/default/?", "class-declaration!1"],
       ["/export/", "/default/", "expression-statement"],
       ["/export/", /\{/, "named-export-list!1?", /\}/, "/;/"],
     ],
@@ -127,6 +132,16 @@ export const scriptGrammar = {
         };
       }
       else if (ruleInd === 2) {
+        return {
+          type: "export-statement",
+          subtype: "class-export",
+          isDefault: children[1][0] ? true : false,
+          ident: children[2].name,
+          superclass: children[2].superclass,
+          members: children[2].members,
+        };
+      }
+      else if (ruleInd === 3) {
         return {
           type: "export-statement",
           subtype: "anonymous-export",
@@ -296,6 +311,37 @@ export const scriptGrammar = {
         }],
       }
     },
+  },
+  "class-declaration": {
+    rules: [
+      [
+        "/class/", "identifier", "/extends/", "identifier", /\{/,
+        "class-member!1*", /\}/
+      ],
+      ["/class/", "identifier", /\{/, "class-member!1*", /\}/],
+    ],
+    process: (children) => ({
+      type: "function-declaration",
+      name: children[1].ident,
+      superclass: (ruleInd === 0) ? children[3].ident : undefined,
+      members: (ruleInd === 0) ? children[5] : children[3],
+    }),
+  },
+  "class-member": {
+    rules: [
+      ["identifier", "expression-tuple", "block-statement!"],
+      // TODO: Potentially add more kinds of class members at some point (or
+      // don't).
+    ],
+    process: (children) => ({
+      type: "member",
+      ident: children[0].ident,
+      valExp: {
+        type: "function-expression",
+        params: children[1].children,
+        body: children[2],
+      },
+    }),
   },
   "statement": {
     rules: [
@@ -706,6 +752,7 @@ export const scriptGrammar = {
       ["jsx-element!1"],
       ["promise-call!1"],
       ["console-call!1"],
+      ["super-call-or-access!1"],
       ["map-call!1"],
       ["this-keyword"],
       ["identifier"],
@@ -757,7 +804,8 @@ export const scriptGrammar = {
   },
   "member": {
     rules: [
-      ["identifier", "/:/!", "expression"],
+      ["identifier", "/:/", "expression!"],
+      ["identifier", "expression-tuple", "block-statement!"],
       ["string", "/:/!", "expression"],
       [/\[/, "expression", /\]/, "/:/", "expression"],
       ["spread"],
@@ -769,9 +817,17 @@ export const scriptGrammar = {
         valExp: children[2],
       } : (ruleInd === 1) ? {
         type: "member",
+        ident: children[0].ident,
+        valExp: {
+          type: "function-expression",
+          params: children[1].children,
+          body: children[2],
+        },
+      } : (ruleInd === 2) ? {
+        type: "member",
         keyExp: children[0],
         valExp: children[2],
-      } : (ruleInd === 2) ? {
+      } : (ruleInd === 3) ? {
         type: "member",
         keyExp: children[1],
         valExp: children[4],
@@ -980,15 +1036,20 @@ export const scriptGrammar = {
       exp: children[4],
     }),
   },
-  "map-call": {
+  "super-call-or-access": {
     rules: [
-      ["/Map/", /\(/, /\)/],
-      ["/Map/", /\(/, "expression", /\)/],
+      ["/super/", "expression-tuple!1"],
+      ["/super/", /\./, "member-accessor"],
     ],
-    process: (children, ruleInd) => ({
-      type: "map-call",
-      exp: (ruleInd === 0) ? undefined : children[2],
-    }),
+    process: (children, ruleInd) => (
+      (ruleInd === 0) ? {
+        type: "super-call",
+        params: children[1].children,
+      } : {
+        type: "super-access",
+        accessor: children[2],
+      }
+    ),
   },
 };
 
