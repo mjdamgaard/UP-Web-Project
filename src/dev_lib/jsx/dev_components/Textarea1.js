@@ -47,15 +47,17 @@ export const methods = {
   "getValue": new DevFunction("getValue", {}, function({thisVal}, []) {
     return thisVal.jsxInstance.domNode.value;
   }),
-  "setValue": new DevFunction("setValue", {}, function({thisVal}, [val]) {
-    val = getString(val);
-    let domNode = thisVal.jsxInstance.domNode;
-    let prevVal = domNode.value;
-    domNode.value = val;
-    if (prevVal !== val) {
-      domNode.dispatchEvent(new InputEvent("input"));
+  "setValue": new DevFunction(
+    "setValue", {}, function({thisVal, callerNode, execEnv}, [val]) {
+      val = getString(val, callerNode, execEnv);
+      let domNode = thisVal.jsxInstance.domNode;
+      let prevVal = domNode.value;
+      domNode.value = val;
+      if (prevVal !== val) {
+        domNode.dispatchEvent(new InputEvent("input"));
+      }
     }
-  }),
+  ),
   "clear": new DevFunction("clear", {}, function({thisVal}, []) {
     let domNode = thisVal.jsxInstance.domNode;
     let prevVal = domNode.value;

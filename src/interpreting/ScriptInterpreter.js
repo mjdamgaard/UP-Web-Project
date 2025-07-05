@@ -112,7 +112,7 @@ export class ScriptInterpreter {
     let outputAndLogPromise = new Promise(resolve => {
       scriptVars.resolveScript = (output, error) => {
         let {log} = scriptVars;
-        if (!log.error) log.error = error?.val;
+        if (!log.error) log.error = getExtendedErrorMsg(error);
         scriptVars.isExiting = true;
         resolve([output, log]);
       };
@@ -224,8 +224,7 @@ export class ScriptInterpreter {
 
 
   async fetch(route, callerNode, callerEnv) {
-    let fetchFun = callerEnv.scriptVars.liveModules.get("query")
-      .members["fetch"];
+    let fetchFun = callerEnv.scriptVars.liveModules.get("query").get("fetch");
     return await this.executeFunction(
       fetchFun, [route], callerNode, callerEnv
     ).promise;
@@ -432,12 +431,12 @@ export class ScriptInterpreter {
           imp.namedImportArr.forEach(namedImp => {
             let ident = namedImp.ident ?? "default";
             let alias = namedImp.alias ?? ident;
-            let val = liveSubmodule.members[ident];
+            let val = liveSubmodule.get(ident);
             curModuleEnv.declare(alias, val, true, namedImp);
           });
         }
         else if (impType === "default-import") {
-          let val = liveSubmodule.members["default"];
+          let val = liveSubmodule.get("default");
           curModuleEnv.declare(imp.ident, val, true, imp);
         }
         else throw "finalizeImportStatement(): Unrecognized import type";
@@ -517,7 +516,7 @@ export class ScriptInterpreter {
   executeModuleFunction(
     liveModule, funName, inputArr, resolveFun, moduleNode, moduleEnv, flags
   ) {
-    let fun = liveModule.members[funName];
+    let fun = liveModule.get(funName);
     if (fun === undefined) throw new RuntimeError(
       `No function called "${funName}" was exported from ` +
       `Module ${liveModule.modulePath}`,
@@ -889,7 +888,8 @@ export class ScriptInterpreter {
                 let val = this.evaluateExpression(expNode.exp2, environment);
                 let newVal;
                 if (typeof prevVal === "string" || typeof val === "string") {
-                  newVal = getString(prevVal) + getString(val);
+                  newVal = getString(prevVal, expNode, environment) +
+                    getString(val, expNode, environment);
                 }
                 else if (
                   typeof prevVal !== "number" || typeof val !== "number"
@@ -1049,7 +1049,8 @@ export class ScriptInterpreter {
               break;
             case "+":
               acc = (typeof acc === "string" || typeof nextVal === "string") ?
-                getString(acc) + getString(nextVal) :
+                getString(acc, expNode, environment) +
+                  getString(nextVal, expNode, environment) :
                 parseFloat(acc) + parseFloat(nextVal);
               break;
             case "-":
@@ -1222,7 +1223,8 @@ export class ScriptInterpreter {
             let key = member.ident;
             if (key === undefined) {
               key = getStringOrSymbol(
-                this.evaluateExpression(member.keyExp, environment)
+                this.evaluateExpression(member.keyExp, environment),
+                expNode, environment
               );
             }
             if (!key) throw new RuntimeError(
@@ -1479,7 +1481,7 @@ export class ScriptInterpreter {
       // object's own properties directly, assign to the objects 'members'
       // property instead.
       if (objVal instanceof AbstractObject) {
-        key = getStringOrSymbol(key);
+        key = getStringOrSymbol(key, expNode, environment);
         if (!key) throw new RuntimeError(
           "Empty object key",
           expNode, environment
@@ -1493,7 +1495,7 @@ export class ScriptInterpreter {
       // member/entry if so.
       let objProto = getPrototypeOf(objVal);
       if (objProto === OBJECT_PROTOTYPE) {
-        key = getStringOrSymbol(key);
+        key = getStringOrSymbol(key, expNode, environment);
         if (!key) throw new RuntimeError(
           "Empty object key",
           expNode, environment
@@ -1613,7 +1615,8 @@ export class ScriptInterpreter {
     key = accessor.ident;
     if (key === undefined) {
       key = getStringOrSymbol(
-        this.evaluateExpression(accessor.exp, environment)
+        this.evaluateExpression(accessor.exp, environment),
+        accessor, environment
       );
     }
 
@@ -1903,10 +1906,14 @@ export class AbstractObject {
   stringify() {
     return `"${this.className}()"`;
   }
-  toString() {
-    // if (this.members.toString !== undefined) {
-    //   // TODO: Implement at some point in the future.
-    // }
+  toString(node, env) {
+    let {interpreter} = env.scriptVars;
+    let toStringMethod = this.get("toString");
+    if (toStringMethod instanceof FunctionObject) {
+      return interpreter.executeFunction(
+        toStringMethod, [], node, env, this, [CLEAR_FLAG]
+      );
+    }
     return `[object ${this.className}()]`;
   }
 }
@@ -1982,12 +1989,15 @@ export function getPropertyFromPlainObject(obj, key) {
 
 
 
-export function getString(val) {
+export function getString(val, node, env) {
   if (val === undefined) {
     return "undefined";
   }
   else if (val === null) {
     return "null";
+  }
+  else if (val instanceof AbstractObject) {
+    return val.toString(node, env);
   }
   else if (val.toString instanceof Function) {
     return val.toString();
@@ -1997,8 +2007,8 @@ export function getString(val) {
   );
 }
 
-export function getStringOrSymbol(val) {
-  return (typeof val === "symbol") ? val : getString(val);
+export function getStringOrSymbol(val, node, env) {
+  return (typeof val === "symbol") ? val : getString(val, node, env);
 }
 
 
@@ -2174,20 +2184,20 @@ export function verifyType(val, type, isOptional, node, env) {
   switch (type) {
     case "string":
       if (typeOfVal !== "string") throw new ArgTypeError(
-        `Value is not a string: ${getString(val)}`,
+        `Value is not a string: ${getString(val, node, env)}`,
         node, env
       );
       break;
     case "number":
       if (typeOfVal !== "number") throw new ArgTypeError(
-        `Value is not a number: ${getString(val)}`,
+        `Value is not a number: ${getString(val, node, env)}`,
         node, env
       );
       break;
     case "integer":
       if (typeOfVal !== "number" || parseInt(val) !== val) {
         throw new ArgTypeError(
-          `Value is not an integer: ${getString(val)}`,
+          `Value is not an integer: ${getString(val, node, env)}`,
           node, env
         );
       }
@@ -2195,27 +2205,27 @@ export function verifyType(val, type, isOptional, node, env) {
     case "integer unsigned":
       if (typeOfVal !== "number" || parseInt(val) !== val || val < 0) {
         throw new ArgTypeError(
-          `Value is not a positive integer: ${getString(val)}`,
+          `Value is not a positive integer: ${getString(val, node, env)}`,
           node, env
         );
       }
       break;
     case "boolean":
       if (typeOfVal !== "boolean") throw new ArgTypeError(
-        `Value is not a boolean: ${getString(val)}`,
+        `Value is not a boolean: ${getString(val, node, env)}`,
         node, env
       );
       break;
     case "symbol":
       if (typeOfVal !== "symbol") throw new ArgTypeError(
-        `Value is not a Symbol: ${getString(val)}`,
+        `Value is not a Symbol: ${getString(val, node, env)}`,
         node, env
       );
       break;
     case "object key":
       if (!val || (typeOfVal !== "string" && typeOfVal !== "symbol")) {
         throw new ArgTypeError(
-          `Value is not a valid object key: ${getString(val)}`,
+          `Value is not a valid object key: ${getString(val, node, env)}`,
           node, env
         );
       }
@@ -2223,7 +2233,7 @@ export function verifyType(val, type, isOptional, node, env) {
     case "plain object":
       if (getPrototypeOf(val) !== OBJECT_PROTOTYPE) {
         throw new ArgTypeError(
-          `Value is not a plain object: ${getString(val)}`,
+          `Value is not a plain object: ${getString(val, node, env)}`,
           node, env
         );
       }
@@ -2231,7 +2241,7 @@ export function verifyType(val, type, isOptional, node, env) {
     case "abstract object":
       if (!(val instanceof AbstractObject)) {
         throw new ArgTypeError(
-          `Value is not an abstract object: ${getString(val)}`,
+          `Value is not an abstract object: ${getString(val, node, env)}`,
           node, env
         );
       }
@@ -2242,7 +2252,7 @@ export function verifyType(val, type, isOptional, node, env) {
         !(val instanceof AbstractObject)
       ) {
         throw new ArgTypeError(
-          `Value is not an object: ${getString(val)}`,
+          `Value is not an object: ${getString(val, node, env)}`,
           node, env
         );
       }
@@ -2250,7 +2260,7 @@ export function verifyType(val, type, isOptional, node, env) {
     case "array":
       if (getPrototypeOf(val) !== ARRAY_PROTOTYPE) {
         throw new ArgTypeError(
-          `Value is not an array: ${getString(val)}`,
+          `Value is not an array: ${getString(val, node, env)}`,
           node, env
         );
       }
@@ -2258,7 +2268,7 @@ export function verifyType(val, type, isOptional, node, env) {
     case "function":
       if (!(val instanceof FunctionObject)) {
         throw new ArgTypeError(
-          `Value is not a function: ${getString(val)}`,
+          `Value is not a function: ${getString(val, node, env)}`,
           node, env
         );
       }
@@ -2266,7 +2276,7 @@ export function verifyType(val, type, isOptional, node, env) {
     case "module":
       if (!(val instanceof LiveModule)) {
         throw new ArgTypeError(
-          `Value is not a live module object: ${getString(val)}`,
+          `Value is not a live module object: ${getString(val, node, env)}`,
           node, env
         );
       }
@@ -2274,7 +2284,7 @@ export function verifyType(val, type, isOptional, node, env) {
     case "class":
       if (!(val instanceof ClassObject)) {
         throw new ArgTypeError(
-          `Value is not a class: ${getString(val)}`,
+          `Value is not a class: ${getString(val, node, env)}`,
           node, env
         );
       }
@@ -2467,6 +2477,15 @@ export const exceptionClass = new ClassObject(
       }
     }
   ),
+  {
+    toString: new DevFunction(
+      "toString", {}, ({thisVal}) => {
+        if (thisVal instanceof AbstractObject) {
+          return thisVal.get("message");
+        }
+      }
+    )
+  }
 );
 export const syntaxErrorClass = new ClassObject(
   "SyntaxError", undefined, undefined, exceptionClass
@@ -2499,7 +2518,7 @@ export class Exception {
     this.environment = environment;
   }
   toString() {
-    return getString(this.val);
+    return getString(this.val, this.node, this.environment);
   }
 }
 
@@ -2558,11 +2577,11 @@ export function getExtendedErrorMsg(err) {
   // If the error is internal, return it as a string (using its toString()
   // method if it has one).
   if (!(err instanceof Exception)) {
-    return getString(err);
+    return (err ?? "undefined").toString();
   }
 
   // Get the error message.
-  let msg = getString(err);
+  let msg = getString(err, err.node, err.environment);
 
   // If error is thrown from the global environment, also return the
   // toString()'ed error as is.

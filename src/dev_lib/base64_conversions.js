@@ -45,12 +45,12 @@ export const arrayToBase64 = new DevFunction(
     // representation with a lower numeric value of the two.   
     let binArrArr = [];
     typeArr.forEach((type, ind) => {
-      type = getString(type);
+      type = getString(type, callerNode, execEnv);
       let match, isUnsigned, lenExp, loExp, hiExp;
 
       // If type = 'string', treat val as a string of variable length.
       if (type === "string") {
-        let val = getString(valArr[ind]);
+        let val = getString(valArr[ind], callerNode, execEnv);
         if (NULL_CHAR_REGEX.test(val)) throw new ArgTypeError(
           `Cannot convert a string containing a null character: ${val}`,
           callerNode, execEnv
@@ -65,7 +65,7 @@ export const arrayToBase64 = new DevFunction(
       // prepend the length of the hex string divided by 2 so that hex strings
       // are thus collated w.r.t. their numerical values.
       if (type === "hex") {
-        let val = getString(valArr[ind]);
+        let val = getString(valArr[ind], callerNode, execEnv);
         val = val.replace(LEADING_ZERO_PAIRS_REGEX, "");
         if (val === "") val = "00";
         let len = val.length / 2;
@@ -203,7 +203,7 @@ export const arrayFromBase64 = new DevFunction(
     }
     let combLen = combBinArr.length;
     typeArr.forEach((type, ind) => {
-      type = getString(type);
+      type = getString(type, callerNode, execEnv);
       let match, isUnsigned, lenExp, loExp, hiExp;
 
       // Reverse conversion for the 'string' type.

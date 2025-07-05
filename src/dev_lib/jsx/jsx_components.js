@@ -113,7 +113,7 @@ class JSXInstance {
       callerNode, callerEnv
     );
     this.componentModule = componentModule;
-    this.key = getString(key);
+    this.key = getString(key, callerNode, callerEnv);
     this.parentInstance = parentInstance;
     this.jsxAppStyler = jsxAppStyler ?? this.parentInstance?.jsxAppStyler;
     this.settingsStore = settingsStore ?? this.parentInstance?.settingsStore;
@@ -193,7 +193,8 @@ class JSXInstance {
       if (stateProto !== OBJECT_PROTOTYPE) {
         return this.getFailedComponentDOMNode(
           new RuntimeError(
-            `State needs to be a plain object, but got: ${getString(state)}`,
+            "State needs to be a plain object, but got: " +
+            getString(state, callerNode, callerEnv),
             callerNode, callerEnv
           ),
           replaceSelf
@@ -340,10 +341,12 @@ class JSXInstance {
     if (!(jsxElement instanceof JSXElement) && !isArray) {
       if (isOuterElement) {
         let newDOMNode = document.createElement("span");
-        if (jsxElement !== undefined) newDOMNode.append(getString(jsxElement));
+        if (jsxElement !== undefined) newDOMNode.append(
+          getString(jsxElement, callerNode, callerEnv)
+        );
         return newDOMNode;
       }
-      else return getString(jsxElement);
+      else return getString(jsxElement, callerNode, callerEnv);
     }
 
     // If jsxElement is a fragment, we render each of its children individually,
@@ -371,7 +374,7 @@ class JSXInstance {
       // First we check if the childInstances to see if the child component
       // instance already exists, and if not, create a new one. In both cases,
       // we also make sure to mark the childInstance as being used.
-      let key = getString(jsxElement.key);
+      let key = getString(jsxElement.key, callerNode, callerEnv);
       if (marks.get(key)) throw new RuntimeError(
         `Key "${key}" is already being used by another child component ` +
         "instance",
@@ -545,7 +548,7 @@ class JSXInstance {
   // fails silently and nothing happens.
   dispatch(eventKey, input, interpreter, callerNode, callerEnv) {
     let actions = this.componentModule.members["actions"];
-    eventKey = getStringOrSymbol(eventKey);
+    eventKey = getStringOrSymbol(eventKey, callerNode, callerEnv);
     let actionFun;
     if (getPrototypeOf(actions) === OBJECT_PROTOTYPE) {
       actionFun = actions[eventKey];
@@ -576,7 +579,7 @@ class JSXInstance {
   call(
     instanceKey, methodKey, input, interpreter, callerNode, callerEnv
   ) {
-    instanceKey = getString(instanceKey);
+    instanceKey = getString(instanceKey, callerNode, callerEnv);
 
     // First get the target instance.
     let targetInstance;
@@ -593,7 +596,7 @@ class JSXInstance {
 
     // Then find and call its targeted method.
     let methods = targetInstance.componentModule.members["methods"];
-    methodKey = getStringOrSymbol(methodKey);
+    methodKey = getStringOrSymbol(methodKey, callerNode, callerEnv);
     if (!methodKey) throw new ArgTypeError(
       "Invalid, falsy method key",
       callerNode, callerEnv

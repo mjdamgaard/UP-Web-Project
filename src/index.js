@@ -132,7 +132,7 @@ scriptInterpreter.interpretScript(
     console.log(output);
     console.log(log);
     if (log?.error) {
-      console.error(getExtendedErrorMsg(log.error));
+      console.error(log.error);
     }
   }
 ).catch(err => console.error(err));

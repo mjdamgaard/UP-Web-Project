@@ -2,7 +2,7 @@
 
 import sassTranspiler from "../../interpreting/SASSTranspiler.js";
 import {
-  RuntimeError, ArgTypeError, forEachValue, getExtendedErrorMsg,
+  RuntimeError, ArgTypeError, forEachValue, getExtendedErrorMsg, Exception,
 } from "../../interpreting/ScriptInterpreter.js";
 import {sassParser} from "../../interpreting/parsing/SASSParser.js";
 
@@ -140,7 +140,7 @@ export class JSXAppStyler {
         newDOMNode, ownDOMNodes, componentModule, callerNode, callerEnv
       );
     } catch(err) {
-      if (err instanceof RuntimeError) {
+      if (err instanceof Exception) {
         console.error(getExtendedErrorMsg(err));
       }
       else throw err;
