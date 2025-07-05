@@ -1,6 +1,6 @@
 
 import {
-  CustomException, DevFunction,
+  DevFunction, Exception, ClassObject, exceptionClass,
 } from '../interpreting/ScriptInterpreter.js';
 import {CLIENT_TRUST_FLAG, REQUEST_ORIGIN_FLAG} from './query/src/flags.js';
 
@@ -36,9 +36,10 @@ export const checkRequestOrigin = new DevFunction(
     });
     
     // Throw if the request origin was not accepted.
-// TODO: Change to another kind of exception:
-    if (!isAllowed) throw new CustomException(
-      "Request origin not allowed",
+    if (!isAllowed) throw new Exception(
+      RequestOriginError.getNewInstance(
+        ["Request origin not allowed"], callerNode, execEnv
+      ),
       callerNode, execEnv
     );
   }
@@ -57,5 +58,11 @@ export const getUserID = new DevFunction(
   "getUserID", {}, function({execEnv}, []) {
     return execEnv.scriptVars.contexts.userIDContext.get();
   }
+);
+
+
+
+export const RequestOriginError = new ClassObject(
+  "RequestOriginError", undefined, undefined, exceptionClass
 );
 

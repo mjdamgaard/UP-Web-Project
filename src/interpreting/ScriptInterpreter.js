@@ -552,15 +552,23 @@ export class ScriptInterpreter {
     );
 
     // Then execute the function depending on its type.
+    let ret;
     if (fun instanceof DefinedFunction) {
-      return this.#executeDefinedFunction(fun.node, inputArr, execEnv);
+      ret = this.#executeDefinedFunction(fun.node, inputArr, execEnv);
     }
     else if (fun instanceof DevFunction) {
-      return this.#executeDevFunction(
+      ret = this.#executeDevFunction(
         fun, inputArr, callerNode, execEnv,
         thisVal
       );
     }
+
+    // If the function is a constructor, return the thisVal in its final state
+    // from execEnv, and else return ret.
+    if (fun.isConstructor) {
+      return execEnv.getThisVal();
+    }
+    return ret;
   }
 
 
@@ -818,8 +826,13 @@ export class ScriptInterpreter {
           prototype[key] = val;
         });
 
-        // Get the constructor.
+        // Extract the constructor method and transform it by setting
+        // isConstructor = true.
         let constructor = prototype.constructor;
+        if (constructor instanceof FunctionObject) {
+          constructor = Object.create(constructor);
+          constructor.isConstructor = true;
+        }
 
         let classObj = new ClassObject(
           stmtNode.name, constructor, prototype, superVal
@@ -1321,9 +1334,12 @@ export class ScriptInterpreter {
           "'super' is not defined in this context",
           expNode, environment
         );
-        let thisVal = superVal.getNewInstance(expNode.params.map(param => {
-          this.evaluateExpression(param, environment);
-        }));
+        let thisVal = superVal.getNewInstance(
+          expNode.params.map(
+            param => this.evaluateExpression(param, environment)
+          ),
+          expNode, environment
+        );
         environment.assignThisVal(thisVal);
       }
       case "super-access": {
@@ -1529,11 +1545,11 @@ export class ScriptInterpreter {
       // (Note that the parser has failed if not the postfixArr[1] is an
       // expression tuple.)
       let expTuple = postfixArr[1];
-      let inputArr = expTuple.children.map(param => {
-        this.evaluateExpression(param, environment);
-      });
+      let inputArr = expTuple.children.map(
+        param => this.evaluateExpression(param, environment)
+      );
       if (val instanceof ClassObject) {
-        val = val.getNewInstance(inputArr);
+        val = val.getNewInstance(inputArr, expTuple, environment);
       }
       if (val instanceof FunctionObject) {
         let newInst = new AbstractObject(val.name, {}, undefined, val);
@@ -1543,7 +1559,8 @@ export class ScriptInterpreter {
         val = newInst;
       }
       else throw new RuntimeError(
-        "Invalid 'new' expression with a non-class, non-function argument"
+        "Invalid 'new' expression with a non-class, non-function argument",
+        rootExp, environment
       );
     }
 
@@ -1884,21 +1901,38 @@ export class AbstractObject {
   }
 
   stringify() {
-    return  `"${this.className}()"`;
+    return `"${this.className}()"`;
   }
   toString() {
-    return  `[object ${this.className}()]`;
+    // if (this.members.toString !== undefined) {
+    //   // TODO: Implement at some point in the future.
+    // }
+    return `[object ${this.className}()]`;
   }
 }
 
 
 
 export class ClassObject extends AbstractObject {
-  constructor(className, constructor = undefined, prototype = {},
-    superclass = undefined) {
+  constructor(
+    className, constructor = undefined, prototype = {}, superclass = undefined
+  ) {
     super("Class");
     this.className = className;
-    this.instanceConstructor = constructor;
+    this.instanceConstructor = constructor ?? (
+      (superclass === undefined) ?
+        new DevFunction(className, {isConstructor: true}, () => {}) :
+        new DevFunction(
+          className, {isConstructor: true, superVal: superclass},
+          ({callerNode, execEnv}, inputArr) => {
+            let superVal = execEnv.getSuperVal();
+            let thisVal = superVal.getNewInstance(
+              inputArr, callerNode, execEnv
+            );
+            execEnv.assignThisVal(thisVal);
+          }
+        )
+    );
     this.instanceProto = prototype;
     this.superclass = superclass;
   }
@@ -1915,14 +1949,14 @@ export class ClassObject extends AbstractObject {
     }
   }
 
-  getNewInstance(inputArr, interpreter, callerNode, callerEnv) {
+  getNewInstance(inputArr, callerNode, callerEnv) {
+    let {interpreter} = callerEnv.scriptVars;
     let newInst = (this.superclass) ? undefined : new AbstractObject(
       this.className, {}, this.instanceProto, this.instanceConstructor
     );
-    interpreter.executeFunction(
-      this.constructorFun, inputArr, callerNode, callerEnv, newInst
+    return interpreter.executeFunction(
+      this.instanceConstructor, inputArr, callerNode, callerEnv, newInst
     );
-    return newInst;
   }
 }
 
@@ -1982,7 +2016,7 @@ export function jsonStringify(val) {
   else if (valProto === OBJECT_PROTOTYPE) {
     let ret = "{";
     Object.entries(val).map(([key, val]) => (
-      `${JSON.stringify(key.toString())}:${jsonStringify(val)}`
+      `${JSON.stringify(key)}:${jsonStringify(val)}`
     )).join(",");
     return ret + "}";
   }
@@ -2076,12 +2110,14 @@ export class FunctionObject extends AbstractObject {
 
 export class DefinedFunction extends FunctionObject {
   constructor(
-    node, decEnv, thisVal = undefined, superVal = undefined
+    node, decEnv, thisVal = undefined, isConstructor = undefined,
+    superVal = undefined
   ) {
     super();
     this.node = node;
     this.decEnv = decEnv;
     this.thisVal = thisVal;
+    this.isConstructor = isConstructor;
     this.superVal = superVal;
   }
   get isArrowFun() {
@@ -2098,12 +2134,15 @@ export class DevFunction extends FunctionObject {
       fun = options;
       options = {};
     }
-    let {isAsync, typeArr, flags} = options;
+    let {isAsync, typeArr, flags, thisVal, isConstructor, superVal} = options;
     super();
     this._name = name;
     if (isAsync) this.isAsync = isAsync;
     if (typeArr) this.typeArr = typeArr;
     if (flags) this.flags = flags;
+    if (thisVal) this.thisVal = thisVal;
+    if (isConstructor) this.isConstructor = isConstructor;
+    if (superVal) this.superVal = superVal;
     this.fun = fun;
   }
   get isArrowFun() {
@@ -2419,54 +2458,38 @@ class BrokenOptionalChainException {
 
 
 
+export const exceptionClass = new ClassObject(
+  "Exception",
+  new DevFunction(
+    "Exception", {isConstructor: true}, ({thisVal}, [message]) => {
+      if (thisVal instanceof AbstractObject) {
+        thisVal.set("message", message);
+      }
+    }
+  ),
+);
+export const syntaxErrorClass = new ClassObject(
+  "SyntaxError", undefined, undefined, exceptionClass
+);
+export const runtimeErrorClass = new ClassObject(
+  "RuntimeError", undefined, undefined, exceptionClass
+);
+export const loadErrorClass = new ClassObject(
+  "LoadError", undefined, undefined, exceptionClass
+);
+export const networkErrorClass = new ClassObject(
+  "NetworkError", undefined, undefined, exceptionClass
+);
+export const outOfGasErrorClass = new ClassObject(
+  "OutOfGasError", undefined, undefined, exceptionClass
+);
+export const typeErrorClass = new ClassObject(
+  "TypeError", undefined, undefined, exceptionClass
+);
 
-export class ExceptionObject extends AbstractObject {
-  constructor(name, message) {
-    super(name ?? "Exception");
-    this.set("message", message);
-  }
-  get message() {
-    return this.get("message");
-  }
-  toString() {
-    return this.className + ": " + getString(this.message);
-  }
-}
-export class SyntaxErrorObject extends ExceptionObject {
-  constructor(message) {
-    super("SyntaxError", message);
-  }
-}
-export class RuntimeErrorObject extends ExceptionObject {
-  constructor(message) {
-    super("RuntimeError", message);
-  }
-}
-export class LoadErrorObject extends ExceptionObject {
-  constructor(message) {
-    super("LoadError", message);
-  }
-}
-export class NetworkErrorObject extends ExceptionObject {
-  constructor(message) {
-    super("NetworkError", message);
-  }
-}
-export class OutOfGasErrorObject extends ExceptionObject {
-  constructor(message) {
-    super("OutOfGasError", message);
-  }
-}
-export class CustomExceptionObject extends ExceptionObject {
-  constructor(message) {
-    super("CustomException", message);
-  }
-}
-export class TypeErrorObject extends ExceptionObject {
-  constructor(message) {
-    super("TypeError", message);
-  }
-}
+
+
+
 
 
 export class Exception {
@@ -2482,37 +2505,44 @@ export class Exception {
 
 export class ParserError extends Exception {
   constructor(message, node, environment) {
-    super(new SyntaxErrorObject(message), node, environment);
+    super(syntaxErrorClass.getNewInstance(
+      [message], node, environment), node, environment
+    );
   }
 }
 export class RuntimeError extends Exception {
   constructor(message, node, environment) {
-    super(new RuntimeErrorObject(message), node, environment);
+    super(runtimeErrorClass.getNewInstance(
+      [message], node, environment), node, environment
+    );
   }
 }
 export class LoadError extends Exception {
   constructor(message, node, environment) {
-    super(new LoadErrorObject(message), node, environment);
+    super(loadErrorClass.getNewInstance(
+      [message], node, environment), node, environment
+    );
   }
 }
 export class NetworkError extends Exception {
   constructor(message, node, environment) {
-    super(new NetworkErrorObject(message), node, environment);
+    super(networkErrorClass.getNewInstance(
+      [message], node, environment), node, environment
+    );
   }
 }
 export class OutOfGasError extends Exception {
   constructor(message, node, environment) {
-    super(new OutOfGasErrorObject(message), node, environment);
-  }
-}
-export class CustomException extends Exception {
-  constructor(message, node, environment) {
-    super(new CustomExceptionObject(message), node, environment);
+    super(outOfGasErrorClass.getNewInstance(
+      [message], node, environment), node, environment
+    );
   }
 }
 export class ArgTypeError extends Exception {
   constructor(message, node, environment) {
-    super(new TypeErrorObject(message), node, environment);
+    super(typeErrorClass.getNewInstance(
+      [message], node, environment), node, environment
+    );
   }
 }
 

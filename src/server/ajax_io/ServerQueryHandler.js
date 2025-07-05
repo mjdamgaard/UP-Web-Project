@@ -1,7 +1,7 @@
 
 import {ajaxServerDomainURL} from "../config.js";
 import {
-  payGas, NetworkError,
+  payGas, NetworkError as InterpreterNetworkError,
 } from "../../interpreting/ScriptInterpreter.js";
 import {FlagTransmitter} from "../../interpreting/FlagTransmitter.js";
 
@@ -43,8 +43,7 @@ export class ServerQueryHandler {
     }
     catch(err) {
       if (err instanceof NetworkError) {
-        err.node = node;
-        err.environment = env;
+        throw new InterpreterNetworkError(err.msg, node, env);
       }
       throw err;
     }
@@ -200,6 +199,13 @@ function fromMIMEType(val, mimeType) {
 
 
 
+
+
+export class NetworkError {
+  constructor(msg) {
+    this.msg = msg;
+  }
+}
 
 
 
