@@ -3,19 +3,19 @@ import {DevFunction} from "../../interpreting/ScriptInterpreter.js";
 
 
 export const at = new DevFunction(
-  {typeArr: ["string", "integer"]}, ({}, [str, ind]) => {
+  "at", {typeArr: ["string", "integer"]}, ({}, [str, ind]) => {
     return str.at(ind);
   }
 );
 
 export const slice = new DevFunction(
-  {typeArr: ["string", "integer", "integer?"]}, ({}, [str, start, end]) => {
+  "slice", {typeArr: ["string", "integer", "integer?"]}, ({}, [str, start, end]) => {
     return str.slice(start, end);
   }
 );
 
 export const indexOf = new DevFunction(
-  {typeArr: ["string", "string"]}, ({}, [str, needle]) => {
+  "indexOf", {typeArr: ["string", "string"]}, ({}, [str, needle]) => {
     return str.indexOf(needle);
   }
 );

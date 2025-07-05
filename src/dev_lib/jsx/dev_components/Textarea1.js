@@ -6,7 +6,7 @@ import {DOMNodeObject} from "../jsx_components.js";
 
 
 export const render = new DevFunction(
-  {typeArr: ["object?"]},
+  "Textarea.render", {typeArr: ["object?"]},
   function(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
@@ -44,10 +44,10 @@ export const render = new DevFunction(
 
 
 export const methods = {
-  "getValue": new DevFunction({}, function({thisVal}, []) {
+  "getValue": new DevFunction("getValue", {}, function({thisVal}, []) {
     return thisVal.jsxInstance.domNode.value;
   }),
-  "setValue": new DevFunction({}, function({thisVal}, [val]) {
+  "setValue": new DevFunction("setValue", {}, function({thisVal}, [val]) {
     val = getString(val);
     let domNode = thisVal.jsxInstance.domNode;
     let prevVal = domNode.value;
@@ -56,7 +56,7 @@ export const methods = {
       domNode.dispatchEvent(new InputEvent("input"));
     }
   }),
-  "clear": new DevFunction({}, function({thisVal}, []) {
+  "clear": new DevFunction("clear", {}, function({thisVal}, []) {
     let domNode = thisVal.jsxInstance.domNode;
     let prevVal = domNode.value;
     domNode.value = "";
@@ -64,10 +64,10 @@ export const methods = {
       domNode.dispatchEvent(new InputEvent("input"));
     }
   }),
-  "focus": new DevFunction({}, function({thisVal}, []) {
+  "focus": new DevFunction("focus", {}, function({thisVal}, []) {
     thisVal.jsxInstance.domNode.focus();
   }),
-  "blur": new DevFunction({}, function({thisVal}, []) {
+  "blur": new DevFunction("blur", {}, function({thisVal}, []) {
     thisVal.jsxInstance.domNode.blur();
   }),
 };

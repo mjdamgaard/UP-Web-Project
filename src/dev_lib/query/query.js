@@ -20,6 +20,7 @@ import {checkAdminPrivileges, checkIfCanPost} from "./src/flags.js";
 
 
 export const query = new DevFunction(
+  "query",
   {isAsync: true, typeArr: ["boolean", "string", "boolean?", "any?", "any?"]},
   async function(
     {callerNode, execEnv, interpreter, liveModule},
@@ -108,7 +109,7 @@ export const query = new DevFunction(
 
 
 export const fetch = new DevFunction(
-  {isAsync: true, typeArr: ["string", "boolean?", "any?"]},
+  "fetch", {isAsync: true, typeArr: ["string", "boolean?", "any?"]},
   async function(
     {callerNode, execEnv, interpreter},
     [route, isPublic = true, options]
@@ -123,7 +124,7 @@ export const fetch = new DevFunction(
 
 
 export const post = new DevFunction(
-  {isAsync: true, typeArr: ["string", "any?", "any?"]},
+  "post", {isAsync: true, typeArr: ["string", "any?", "any?"]},
   async function(
     {callerNode, execEnv, interpreter},
     [route, postData, options]
@@ -139,7 +140,7 @@ export const post = new DevFunction(
 
 
 export const getCurrentHomePath = new DevFunction(
-  {},
+  "getCurrentHomePath", {},
   function({execEnv}, []) {
     let curRoute = execEnv.getModuleEnv().modulePath ?? "";
     let [ret] = curRoute.match(/^\/[^/]+\/[^/]+/g) ?? [];

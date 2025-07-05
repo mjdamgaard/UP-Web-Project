@@ -320,7 +320,7 @@ export const scriptGrammar = {
       ],
       ["/class/", "identifier", /\{/, "class-member!1*", /\}/],
     ],
-    process: (children) => ({
+    process: (children, ruleInd) => ({
       type: "function-declaration",
       name: children[1].ident,
       superclass: (ruleInd === 0) ? children[3].ident : undefined,
@@ -756,7 +756,6 @@ export const scriptGrammar = {
       ["promise-call!1"],
       ["console-call!1"],
       ["super-call-or-access!1"],
-      ["map-call!1"],
       ["this-keyword"],
       ["identifier"],
       ["literal"],

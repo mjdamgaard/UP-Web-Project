@@ -43,9 +43,10 @@ export class ServerQueryHandler {
     }
     catch(err) {
       if (err instanceof NetworkError) {
-        throw new NetworkError(err.val, node, env);
+        err.node = node;
+        err.environment = env;
       }
-      else throw err;
+      throw err;
     }
   }
 

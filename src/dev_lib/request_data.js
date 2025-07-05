@@ -7,7 +7,7 @@ import {CLIENT_TRUST_FLAG, REQUEST_ORIGIN_FLAG} from './query/src/flags.js';
 
 
 export const checkRequestOrigin = new DevFunction(
-  {typeArr: ["boolean", "array"]},
+  "checkRequestOrigin", {typeArr: ["boolean", "array"]},
   function(
     {callerNode, execEnv},
     [canForce, whitelist]
@@ -47,14 +47,14 @@ export const checkRequestOrigin = new DevFunction(
 
 
 export const getRequestOrigin = new DevFunction(
-  {}, function({execEnv}, []) {
+  "getRequestOrigin", {}, function({execEnv}, []) {
     return execEnv.getFlag(REQUEST_ORIGIN_FLAG);
   }
 );
 
 
 export const getUserID = new DevFunction(
-  {}, function({execEnv}, []) {
+  "getUserID", {}, function({execEnv}, []) {
     return execEnv.scriptVars.contexts.userIDContext.get();
   }
 );

@@ -76,7 +76,7 @@ export async function query(
     // permission-granting flags for the module's execution environment.
     let resultPromiseObj = interpreter.executeFunction(
       new DevFunction(
-        {isAsync: true, flags: [CLEAR_FLAG]},
+        undefined, {isAsync: true, flags: [CLEAR_FLAG]},
         async ({interpreter}, []) => {
           let liveModule = await interpreter.import(
             `/1/${homeDirID}/${filePath}`, callerNode, execEnv

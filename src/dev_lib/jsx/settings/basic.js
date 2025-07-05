@@ -17,8 +17,7 @@ const styleSheetRoutes = new Map();
 
 
 export const getSettings = new DevFunction(
-  {},
-  ({callerNode, execEnv}, [liveModule]) => {
+  "getSettings", {}, ({callerNode, execEnv}, [liveModule]) => {
     if (liveModule instanceof LiveModule) {
       let modulePath = liveModule.modulePath;
       let appComponentPath = execEnv.getFlag(APP_COMPONENT_PATH_FLAG);

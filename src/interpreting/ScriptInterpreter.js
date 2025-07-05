@@ -2,12 +2,9 @@
 import {scriptParser} from "./parsing/ScriptParser.js";
 // import {sassParser} from "./parsing/SASSParser.js";
 import {
-  LexError, SyntaxError, getExtendedErrorMsg as getExtendedErrorMsgHelper,
-  getLnAndCol,
+  getExtendedErrorMsg as getExtendedSyntaxErrorMsg, getLnAndCol,
 } from "./parsing/Parser.js";
 
-
-export {LexError, SyntaxError};
 
 
 export const ARRAY_PROTOTYPE = Object.getPrototypeOf([]);
@@ -38,7 +35,9 @@ export function getParsingGasCost(str) {
 export function parseString(str, node, env, parser) {
   payGas(node, env, getParsingGasCost(str));
   let [syntaxTree, lexArr, strPosArr] = parser.parse(str);
-  if (syntaxTree.error) throw syntaxTree.error;
+  if (syntaxTree.error) throw new ParserError(
+    getExtendedSyntaxErrorMsg(syntaxTree.error), node, env
+  );
   let result = syntaxTree.res;
   return [result, lexArr, strPosArr];
 }
@@ -113,7 +112,7 @@ export class ScriptInterpreter {
     let outputAndLogPromise = new Promise(resolve => {
       scriptVars.resolveScript = (output, error) => {
         let {log} = scriptVars;
-        if (!log.error) log.error = error;
+        if (!log.error) log.error = error?.val;
         scriptVars.isExiting = true;
         resolve([output, log]);
       };
@@ -133,7 +132,7 @@ export class ScriptInterpreter {
     catch (err) {
       // If any non-internal error occurred, log it in log.error and resolve
       // the script with an undefined output.
-      if (err instanceof SyntaxError || err instanceof RuntimeError) {
+      if (err instanceof Exception) {
         scriptVars.resolveScript(undefined, err);
       }
       else if (err instanceof ReturnException) {
@@ -341,7 +340,7 @@ export class ScriptInterpreter {
           );
         }
       }
-      return liveModule;
+      return deepCopy(liveModule);
     }
 
     // Else if the module is a user module, with a '.js' or '.jsx' extension,
@@ -500,7 +499,7 @@ export class ScriptInterpreter {
     // Create a resolve() callback for the main function that exits the script
     // the input value as the script output.
     let resolveFun = new DevFunction(
-      {decEnv: scriptEnv}, ({}, [output]) => {
+      "resolve", {decEnv: scriptEnv}, ({}, [output]) => {
         scriptEnv.scriptVars.resolveScript(output);
         throw new ExitException();
       }
@@ -603,7 +602,7 @@ export class ScriptInterpreter {
 
   catchPromise(promise, callbackFun, node, env) {
     promise.catch(err => {
-    if (err instanceof RuntimeError || err instanceof SyntaxError) {
+    if (err instanceof Exception) {
       this.executeFunctionOffSync(callbackFun, [err.val], node, env);
     } else {
       this.handleUncaughtException(err, env);
@@ -625,7 +624,7 @@ export class ScriptInterpreter {
 
 
   handleUncaughtException(err, env) {
-    if (err instanceof RuntimeError || err instanceof SyntaxError) {
+    if (err instanceof Exception) {
       if (this.isServerSide) {
         env.scriptVars.resolveScript(undefined, err);
       } else {
@@ -737,7 +736,7 @@ export class ScriptInterpreter {
       case "throw-statement": {
         let expVal = (!stmtNode.exp) ? undefined :
           this.evaluateExpression(stmtNode.exp, environment);
-        throw new CustomException(expVal, stmtNode, environment);
+        throw new Exception(expVal, stmtNode, environment);
       }
       case "try-catch-statement": {
         try {
@@ -746,7 +745,7 @@ export class ScriptInterpreter {
             this.executeStatement(stmt, newEnv);
           });
         } catch (err) {
-          if (err instanceof RuntimeError || err instanceof SyntaxError) {
+          if (err instanceof Exception) {
             let catchEnv = new Environment(environment);
             catchEnv.declare(stmtNode.ident, err.val, false, stmtNode);
             try {
@@ -754,7 +753,7 @@ export class ScriptInterpreter {
                 this.executeStatement(stmt, catchEnv);
               });
             } catch (err2) {
-              if (err2 instanceof CustomException && err2.val === err.val) {
+              if (err2 instanceof Exception && err2.val === err.val) {
                 throw err;
               } else {
                 throw err2
@@ -809,7 +808,7 @@ export class ScriptInterpreter {
           let key = member.ident;
           if (!key) throw new RuntimeError(
             "Invalid, falsy object key",
-            expNode, environment
+            member, environment
           );
           let val = this.evaluateExpression(member.valExp, environment);
           if (val instanceof FunctionObject) {
@@ -1538,7 +1537,7 @@ export class ScriptInterpreter {
       }
       if (val instanceof FunctionObject) {
         let newInst = new AbstractObject(val.name, {}, undefined, val);
-        interpreter.executeFunction(
+        this.executeFunction(
           val, inputArr, expTuple, environment, newInst
         );
         val = newInst;
@@ -2076,7 +2075,9 @@ export class FunctionObject extends AbstractObject {
 };
 
 export class DefinedFunction extends FunctionObject {
-  constructor(node, decEnv, thisVal = undefined, superVal = undefined) {
+  constructor(
+    node, decEnv, thisVal = undefined, superVal = undefined
+  ) {
     super();
     this.node = node;
     this.decEnv = decEnv;
@@ -2087,20 +2088,19 @@ export class DefinedFunction extends FunctionObject {
     return this.node.type === "arrow-function";
   }
   get name() {
-    // TODO: Implement capturing function names for the sake of e.g. console.
-    // trace() once implemented, and debugging in general. *(and class names)
     return this.node.name ?? "<anonymous function>";
   }
 }
 
 export class DevFunction extends FunctionObject {
-  constructor(options, fun) {
+  constructor(name, options, fun) {
     if (!fun) {
       fun = options;
       options = {};
     }
     let {isAsync, typeArr, flags} = options;
     super();
+    this._name = name;
     if (isAsync) this.isAsync = isAsync;
     if (typeArr) this.typeArr = typeArr;
     if (flags) this.flags = flags;
@@ -2113,7 +2113,7 @@ export class DevFunction extends FunctionObject {
     return true;
   }
   get name() {
-    return "<anonymous dev function>";
+    return this._name ?? "<anonymous dev function>";
   }
 }
 
@@ -2346,8 +2346,12 @@ export class PromiseObject extends AbstractObject {
     else {
       let fun = promiseOrFun;
       this.promise = new Promise((resolve, reject) => {
-        let userResolve = new DevFunction({}, ({}, [res]) => resolve(res));
-        let userReject = new DevFunction({}, ({}, [err]) => reject(err));
+        let userResolve = new DevFunction(
+          "resolve", {}, ({}, [res]) => resolve(res)
+        );
+        let userReject = new DevFunction(
+          "reject", {}, ({}, [err]) => reject(err)
+        );
         interpreter.executeFunctionOffSync(
           fun, [userResolve, userReject], node, env
         );
@@ -2355,7 +2359,7 @@ export class PromiseObject extends AbstractObject {
     }
 
     this.members["then"] = new DevFunction(
-      {}, ({callerNode, execEnv, interpreter}, [callbackFun]) => {
+      "then", {}, ({callerNode, execEnv, interpreter}, [callbackFun]) => {
         interpreter.thenPromise(
           this.promise, callbackFun, callerNode, execEnv
         );
@@ -2363,7 +2367,7 @@ export class PromiseObject extends AbstractObject {
       }
     );
     this.members["catch"] = new DevFunction(
-      {}, ({callerNode, execEnv, interpreter}, [callbackFun]) => {
+      "catch", {}, ({callerNode, execEnv, interpreter}, [callbackFun]) => {
         interpreter.catchPromise(
           this.promise, callbackFun, callerNode, execEnv
         );
@@ -2414,40 +2418,148 @@ class BrokenOptionalChainException {
 
 
 
-export class RuntimeError {
+
+
+export class ExceptionObject extends AbstractObject {
+  constructor(name, message) {
+    super(name ?? "Exception");
+    this.set("message", message);
+  }
+  get message() {
+    return this.get("message");
+  }
+  toString() {
+    return this.className + ": " + getString(this.message);
+  }
+}
+export class SyntaxErrorObject extends ExceptionObject {
+  constructor(message) {
+    super("SyntaxError", message);
+  }
+}
+export class RuntimeErrorObject extends ExceptionObject {
+  constructor(message) {
+    super("RuntimeError", message);
+  }
+}
+export class LoadErrorObject extends ExceptionObject {
+  constructor(message) {
+    super("LoadError", message);
+  }
+}
+export class NetworkErrorObject extends ExceptionObject {
+  constructor(message) {
+    super("NetworkError", message);
+  }
+}
+export class OutOfGasErrorObject extends ExceptionObject {
+  constructor(message) {
+    super("OutOfGasError", message);
+  }
+}
+export class CustomExceptionObject extends ExceptionObject {
+  constructor(message) {
+    super("CustomException", message);
+  }
+}
+export class TypeErrorObject extends ExceptionObject {
+  constructor(message) {
+    super("TypeError", message);
+  }
+}
+
+
+export class Exception {
   constructor(val, node, environment) {
     this.val = val;
     this.node = node;
     this.environment = environment;
   }
-}
-export class LoadError extends RuntimeError {
-  constructor(val, node, environment) {
-    super(val, node, environment);
+  toString() {
+    return getString(this.val);
   }
 }
-export class NetworkError extends RuntimeError {
-  constructor(val, node, environment) {
-    super(val, node, environment);
+
+export class ParserError extends Exception {
+  constructor(message, node, environment) {
+    super(new SyntaxErrorObject(message), node, environment);
   }
 }
-export class OutOfGasError extends RuntimeError {
-  constructor(val, node, environment) {
-    super(val, node, environment);
+export class RuntimeError extends Exception {
+  constructor(message, node, environment) {
+    super(new RuntimeErrorObject(message), node, environment);
   }
 }
-export class CustomException extends RuntimeError {
-  constructor(val, node, environment) {
-    super(val, node, environment);
+export class LoadError extends Exception {
+  constructor(message, node, environment) {
+    super(new LoadErrorObject(message), node, environment);
   }
 }
-export class ArgTypeError extends RuntimeError {
-  constructor(val, node, environment) {
-    super(val, node, environment);
+export class NetworkError extends Exception {
+  constructor(message, node, environment) {
+    super(new NetworkErrorObject(message), node, environment);
+  }
+}
+export class OutOfGasError extends Exception {
+  constructor(message, node, environment) {
+    super(new OutOfGasErrorObject(message), node, environment);
+  }
+}
+export class CustomException extends Exception {
+  constructor(message, node, environment) {
+    super(new CustomExceptionObject(message), node, environment);
+  }
+}
+export class ArgTypeError extends Exception {
+  constructor(message, node, environment) {
+    super(new TypeErrorObject(message), node, environment);
   }
 }
 
 
+
+
+
+
+const SNIPPET_BEFORE_MAX_LEN = 600;
+const SNIPPET_AFTER_MAX_LEN = 100;
+
+export function getExtendedErrorMsg(err) {
+  // If the error is internal, return it as a string (using its toString()
+  // method if it has one).
+  if (!(err instanceof Exception)) {
+    return getString(err);
+  }
+
+  // Get the error message.
+  let msg = getString(err);
+
+  // If error is thrown from the global environment, also return the
+  // toString()'ed error as is.
+  if (!err.environment) console.error("Missing environment for thrown error!");
+  let {
+    modulePath, lexArr, strPosArr, script
+  } = err.environment.getModuleEnv() ?? {};
+  if (!lexArr) {
+    return msg;
+  }
+
+  // Else construct an error message containing the line and column number, as
+  // well as a code snippet around where the error occurred.
+  let pos = err.node.pos;
+  let nextPos = err.node.nextPos;
+  let strPos = strPosArr[pos];
+  let finStrPos = strPosArr[nextPos - 1] + lexArr[nextPos - 1].length;
+  let [ln, col] = getLnAndCol(script.substring(0, strPos));
+  let codeSnippet =
+    script.substring(strPos - SNIPPET_BEFORE_MAX_LEN, strPos) +
+    " ▶▶▶" + script.substring(strPos, finStrPos) + "◀◀◀ " +
+    script.substring(finStrPos, finStrPos + SNIPPET_AFTER_MAX_LEN);
+  return (
+    msg + ` \nError occurred in ${modulePath ?? "root script"} at ` +
+    `Ln ${ln}, Col ${col}: \`\n${codeSnippet}\n\``
+  );
+}
 
 
 
@@ -2536,75 +2648,6 @@ export function decrGas(node, environment, gasName) {
 
 
 
-
-
-
-
-
-
-
-const SNIPPET_BEFORE_MAX_LEN = 600;
-const SNIPPET_AFTER_MAX_LEN = 100;
-
-export function getExtendedErrorMsg(err) {
-  // Get the error type.
-  let type;
-  if (err instanceof ArgTypeError) {
-    type = "TypeError";
-  }
-  else if (err instanceof LoadError) {
-    type = "LoadError";
-  }
-  else if (err instanceof NetworkError) {
-    type = "NetworkError";
-  }
-  else if (err instanceof OutOfGasError) {
-    type = "OutOfGasError";
-  }
-  else if (err instanceof CustomException) {
-    type = "Uncaught custom exception";
-  }
-  else if (err instanceof SyntaxError) {
-    return getExtendedErrorMsgHelper(err);
-  }
-  else if (err instanceof RuntimeError) {
-    type = "RuntimeError";
-  }
-  else {
-    return getString(err);
-  }
-
-  // Get the message defined by error.val.
-  let msg = JSON.stringify(err?.val ?? null);
-
-  // If error is thrown from the global environment, return an appropriate error
-  // message.
-  if (!err.environment) console.error("Missing environment for thrown error!");
-  let {
-    modulePath, lexArr, strPosArr, script
-  } = err.environment.getModuleEnv() ?? {};
-  if (!lexArr) {
-    return type + ": " + msg;
-  }
-
-  // Else construct an error message containing the line and column number, as
-  // well as a code snippet around where the error occurred.
-  else {
-    let pos = err.node.pos;
-    let nextPos = err.node.nextPos;
-    let strPos = strPosArr[pos];
-    let finStrPos = strPosArr[nextPos - 1] + lexArr[nextPos - 1].length;
-    let [ln, col] = getLnAndCol(script.substring(0, strPos));
-    let codeSnippet =
-      script.substring(strPos - SNIPPET_BEFORE_MAX_LEN, strPos) +
-      " ▶▶▶" + script.substring(strPos, finStrPos) + "◀◀◀ " +
-      script.substring(finStrPos, finStrPos + SNIPPET_AFTER_MAX_LEN);
-    return (
-      type + ` in ${modulePath ?? "root script"} at Ln ${ln}, Col ${col}: ` +
-      `${msg}. Error occurred at \`\n${codeSnippet}\n\`.`
-    );
-  }
-}
 
 
 

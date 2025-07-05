@@ -1,5 +1,5 @@
 import {
-  getExtendedErrorMsg, RuntimeError, SyntaxError,
+  getExtendedErrorMsg, Exception,
 } from "../../interpreting/ScriptInterpreter.js";
 
 
@@ -14,7 +14,7 @@ export function endWithError(res, err) {
     res.writeHead(400, {'Content-Type': 'text/plain'});
     res.end(`ClientError: "${err.error}"`);
   }
-  else if (err instanceof RuntimeError || err instanceof SyntaxError) {
+  else if (err instanceof Exception) {
     res.writeHead(400, {'Content-Type': 'text/plain'});
     res.end(getExtendedErrorMsg(err));
   }

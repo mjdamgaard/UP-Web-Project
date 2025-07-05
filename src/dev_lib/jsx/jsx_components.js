@@ -3,7 +3,7 @@ import {
   DevFunction, JSXElement, LiveModule, RuntimeError, getExtendedErrorMsg,
   getString, AbstractObject, forEachValue, CLEAR_FLAG, deepCopy,
   OBJECT_PROTOTYPE, ArgTypeError, Environment, getPrototypeOf, ARRAY_PROTOTYPE,
-  FunctionObject, SyntaxError, getStringOrSymbol, getFullPath,
+  FunctionObject, Exception, getStringOrSymbol,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, NEXT_REQUEST_ORIGIN_FLAG
@@ -31,7 +31,7 @@ export const COMPONENT_INSTANCE_FLAG = Symbol("component-instance");
 // Create a JSX (React-like) app and mount it in the index HTML page, in the
 // element with an id of "up-app-root".
 export const createJSXApp = new DevFunction(
-  {isAsync: true, typeArr:["module", "object", "function"]},
+  "createJSXApp", {isAsync: true, typeArr:["module", "object", "function"]},
   async function(
     {callerNode, execEnv, interpreter},
     [appComponent, props, getSettings]
@@ -293,7 +293,7 @@ class JSXInstance {
 
 
   getFailedComponentDOMNode(error, replaceSelf) {
-    if (error instanceof RuntimeError || error instanceof SyntaxError) {
+    if (error instanceof Exception) {
       console.error(getExtendedErrorMsg(error));
       let newDOMNode = document.createElement("span");
       newDOMNode.setAttribute("class", "base_failed");
@@ -740,7 +740,7 @@ class JSXInstanceInterface extends AbstractObject {
 
   // See the comments above for what dispatch() and call() does.
   dispatch = new DevFunction(
-    {typeArr: ["object key", "any?"]},
+    "dispatch", {typeArr: ["object key", "any?"]},
     ({callerNode, execEnv, interpreter}, [eventKey, input]) => {
       this.jsxInstance.dispatch(
         eventKey, input, interpreter, callerNode, execEnv
@@ -749,7 +749,7 @@ class JSXInstanceInterface extends AbstractObject {
   );
 
   call = new DevFunction(
-    {typeArr: ["any", "object key", "any?"]},
+    "call", {typeArr: ["any", "object key", "any?"]},
     ({callerNode, execEnv, interpreter}, [instanceKey, methodKey, input]) => {
       return this.jsxInstance.call(
         instanceKey, methodKey, input, interpreter, callerNode, execEnv
@@ -764,7 +764,7 @@ class JSXInstanceInterface extends AbstractObject {
   // visible in the continued execution of a render() after it has set the new
   // state, but only be visible on a subsequent rerender.
   setState = new DevFunction(
-    {typeArr: ["object"]},
+    "setState", {typeArr: ["object"]},
     ({interpreter}, [newState]) => {
       this.jsxInstance.state = newState;
       this.jsxInstance.queueRerender(interpreter);
@@ -773,7 +773,7 @@ class JSXInstanceInterface extends AbstractObject {
 
   // rerender() is equivalent of calling setState() on the current state; it
   // just forces a rerender.
-  rerender = new DevFunction({}, ({interpreter}) => {
+  rerender = new DevFunction("rerender", {}, ({interpreter}) => {
     this.jsxInstance.queueRerender(interpreter);
   });
 
@@ -781,7 +781,7 @@ class JSXInstanceInterface extends AbstractObject {
   // the app call getStyle() to get and load the style, before the returned
   // promise resolves.
   import = new DevFunction(
-    {isAsync: true, typeArr: ["string"]},
+    "import", {isAsync: true, typeArr: ["string"]},
     async ({callerNode, execEnv, interpreter}, [route]) => {
       let liveModule = interpreter.import(route, callerNode, execEnv);
       if (route.slice(-4) === ".jsx") {
@@ -798,7 +798,7 @@ class JSXInstanceInterface extends AbstractObject {
   // value in return. And if this instance ever calls provideContext() with a
   // different value for that key, all the subscribing instances will rerender.
   provideContext = new DevFunction(
-    {typeArr: ["object key", "object"]},
+    "provideContext", {typeArr: ["object key", "object"]},
     ({interpreter}, [key, context]) => {
       this.jsxInstance.provideContext(key, context, interpreter);
     },
@@ -811,7 +811,7 @@ class JSXInstanceInterface extends AbstractObject {
   // this instance rerenders. If no context is found of the given key, no side-
   // effect happens, and undefined is returned.
   subscribeToContext = new DevFunction(
-    {typeArr: ["object key"]}, ({}, [key]) => {
+    "subscribeToContext", {typeArr: ["object key"]}, ({}, [key]) => {
       return deepCopyExceptRefs(
         this.jsxInstance.subscribeToContext(key)
       );
@@ -821,7 +821,7 @@ class JSXInstanceInterface extends AbstractObject {
   // unsubscribeFromContext(key) unsubscribes the instance from a context,
   // meaning that it will no longer rerender if the context updates.
   unsubscribeFromContext = new DevFunction(
-    {typeArr: ["object key"]}, ({}, [key]) => {
+    "unsubscribeFromContext", {typeArr: ["object key"]}, ({}, [key]) => {
       return deepCopyExceptRefs(
         this.jsxInstance.unsubscribeFromContext(key)
       );
@@ -830,7 +830,7 @@ class JSXInstanceInterface extends AbstractObject {
 
   // getOwnContext(key) the instance's own context of the given key.
   getOwnContext = new DevFunction(
-    {typeArr: ["object key"]}, ({}, [key]) => {
+    "getOwnContext", {typeArr: ["object key"]}, ({}, [key]) => {
       return deepCopyExceptRefs(
         this.jsxInstance.getOwnContext(key)
       );

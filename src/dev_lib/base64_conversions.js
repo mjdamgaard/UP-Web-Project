@@ -31,7 +31,7 @@ const minInts = [
 
 
 export const arrayToBase64 = new DevFunction(
-  {typeArr: ["array", "array"]},
+  "arrayToBase64", {typeArr: ["array", "array"]},
   function(
     {callerNode, execEnv},
     [valArr, typeArr]
@@ -182,7 +182,7 @@ export const arrayToBase64 = new DevFunction(
 
 
 export const arrayFromBase64 = new DevFunction(
-  {typeArr: ["string", "array"]},
+  "arrayFromBase64", {typeArr: ["string", "array"]},
   function(
     {callerNode, execEnv},
     [base64Str, typeArr]
