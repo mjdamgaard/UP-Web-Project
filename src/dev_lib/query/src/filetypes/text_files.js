@@ -81,7 +81,7 @@ export async function query(
           let liveModule = await interpreter.import(
             `/1/${homeDirID}/${filePath}`, callerNode, execEnv
           );
-          return liveModule.members[alias];
+          return liveModule.get(alias);
         }
       ),
       [], callerNode, execEnv,
@@ -147,7 +147,7 @@ export async function query(
       let liveModule = await interpreter.import(
         `/1/${homeDirID}/${filePath}`, callerNode, execEnv
       );
-      let fun = liveModule.members[alias];
+      let fun = liveModule.get(alias);
       if (!(fun instanceof FunctionObject)) throw new RuntimeError(
         `No function of name '${alias}' is exported from ${route}`
       );
@@ -221,7 +221,7 @@ export async function query(
       let liveModule = await interpreter.import(
         `/1/${homeDirID}/${filePath}`, callerNode, execEnv
       );
-      let fun = liveModule.members[alias];
+      let fun = liveModule.get(alias);
       if (!(fun instanceof FunctionObject)) throw new RuntimeError(
         `No function of name '${alias}' is exported from ${route}`,
         callerNode, execEnv

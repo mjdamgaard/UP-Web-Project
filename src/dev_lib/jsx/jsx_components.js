@@ -119,7 +119,7 @@ class JSXInstance {
     this.settingsStore = settingsStore ?? this.parentInstance?.settingsStore;
     this.settings =
       this.settingsStore.get(componentModule, callerNode, callerEnv);
-    this.isRequestOrigin = componentModule.members["isRequestOrigin"];
+    this.isRequestOrigin = componentModule.get("isRequestOrigin");
     this.domNode = undefined;
     this.ownDOMNodes = undefined;
     this.isDecorated = undefined;
@@ -172,7 +172,7 @@ class JSXInstance {
       // done either by exporting a 'getInitState()' function, or a constant
       // object called 'initState'.
       let state;
-      let getInitState = this.componentModule.members["getInitState"];
+      let getInitState = this.componentModule.get("getInitState");
       if (getInitState) {
         try {
           state = interpreter.executeFunction(
@@ -187,7 +187,7 @@ class JSXInstance {
           return this.getFailedComponentDOMNode(err, replaceSelf);
         }
       } else {
-        state = this.componentModule.members["initState"] || {};
+        state = this.componentModule.get("initState") || {};
       }
       let stateProto = getPrototypeOf(state);
       if (stateProto !== OBJECT_PROTOTYPE) {
@@ -207,11 +207,12 @@ class JSXInstance {
 
       // And also store a boolean for whether this component is a "request
       // origin."
-      this.isRequestOrigin = this.componentModule.members["isRequestOrigin"];
+      this.isRequestOrigin = this.componentModule.get("isRequestOrigin");
     }
 
     // Then get the component module's render() function.
-    let renderFun = this.componentModule.members["render"];
+    let renderFun = this.componentModule.get("render") ??
+      this.componentModule.get("default");
     if (!renderFun) {
       return this.getFailedComponentDOMNode(
         new RuntimeError(
@@ -547,7 +548,7 @@ class JSXInstance {
   // module. If no ancestors has an action of a matching key, dispatch() just
   // fails silently and nothing happens.
   dispatch(eventKey, input, interpreter, callerNode, callerEnv) {
-    let actions = this.componentModule.members["actions"];
+    let actions = this.componentModule.get("actions");
     eventKey = getStringOrSymbol(eventKey, callerNode, callerEnv);
     let actionFun;
     if (getPrototypeOf(actions) === OBJECT_PROTOTYPE) {
@@ -595,7 +596,7 @@ class JSXInstance {
     );
 
     // Then find and call its targeted method.
-    let methods = targetInstance.componentModule.members["methods"];
+    let methods = targetInstance.componentModule.get("methods");
     methodKey = getStringOrSymbol(methodKey, callerNode, callerEnv);
     if (!methodKey) throw new ArgTypeError(
       "Invalid, falsy method key",
@@ -987,15 +988,35 @@ function addUserRelatedProps(props, jsxInstance, interpreter, env) {
   let userID = userIDContext.get();
   userIDContext.addSubscriberCallback((userID) => {
     jsxInstance.changePropsAndRerender({userID: userID}, interpreter);
-  })
+  });
   return {...props, userID: userID};
 }
 
-
-
-// TODO: Implement:
-function addURLRelatedProps(props, jsxInstance, interpreter) {
-  return props;
+function addURLRelatedProps(props, jsxInstance, interpreter, env) {
+  let {contexts: {urlContext}} = env.scriptVars;
+  let urlData = urlContext.get();
+  urlContext.addSubscriberCallback((urlData) => {
+    jsxInstance.changePropsAndRerender({urlData: urlData}, interpreter);
+  });
+  const replaceState = new DevFunction(
+    "replaceState", {typeArr: ["string", "plain object?"]},
+    ({callerNode, callerEnv}, [url, state = {}]) => {
+      // TODO: Parse url for pathname, search, and hash, then call
+      // replaceState() and .set() the urlContext.
+    }
+  );
+  const pushState = new DevFunction(
+    "pushState", {typeArr: ["string", "plain object?"]},
+    ({callerNode, callerEnv}, [url, state = {}]) => {
+      // TODO: Parse url for pathname, search, and hash, then call pushState()
+      // and .set() the urlContext.
+    }
+  );
+  return {
+    ...props, urlData: urlData, replaceState: replaceState,
+    pushState: pushState
+  };
+}
 
   // let {hostname, pathname, search, hash} = window.location;
   // props = {
@@ -1020,4 +1041,4 @@ function addURLRelatedProps(props, jsxInstance, interpreter) {
   // refs = getPrototypeOf(refs) === OBJECT_PROTOTYPE ? refs : {};
   // props.refs = {pushState, ...refs};
 
-}
+// }

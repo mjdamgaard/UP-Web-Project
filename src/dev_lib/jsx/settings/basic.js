@@ -25,8 +25,8 @@ export const getSettings = new DevFunction(
       let isTrustedPromObj = new PromiseObject(new Promise(
         resolve => resolve(false)
       ));
-      let styleSheets = liveModule.members["styleSheets"] ?? {};
-      let classTransform = liveModule.members["classTransform"] ?? [];
+      let styleSheets = liveModule.get("styleSheets") ?? {};
+      let classTransform = liveModule.get("classTransform") ?? [];
 
       // Record or transform all the style sheet IDs in both styleSheets and
       // classTransform, such that their are no unwanted clashes globally.

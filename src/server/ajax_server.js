@@ -27,7 +27,7 @@ import * as stringMod from "../dev_lib/fundamentals/string.js";
 import * as arrayMod from "../dev_lib/fundamentals/array.js";
 import * as reqDataMod from "../dev_lib/request_data.js";
 import * as base64Mod from "../dev_lib/base64_conversions.js";
-import * as errorMod from "./dev_lib/error.js";
+import * as errorMod from "../dev_lib/error.js";
 
 const staticDevLibs = new Map();
 staticDevLibs.set("query", queryMod);
