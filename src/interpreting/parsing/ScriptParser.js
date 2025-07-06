@@ -19,7 +19,7 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
 
 
 export const HTML_ELEMENT_TYPE_REGEX = new RegExp(
-  "^(div|span|i|b|br|hr|template|button|h1|h2|h3|h4|h5|h6)$"
+  "^(div|span|i|b|br|hr|template|button|h1|h2|h3|h4|h5|h6|p)$"
   // TODO: Continue this list.
 );
 

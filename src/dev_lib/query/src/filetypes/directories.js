@@ -13,10 +13,10 @@ export async function query(
 ) {
   let {dbQueryHandler} = interpreter;
 
-  // If route equals ".../mkdir/[a=<adminID>]", create a new home directory
-  // with the requested adminID as the admin, or with the requesting user as
-  // the admin if n adminID is provided. 
   if (!homeDirID) {
+    // If route equals ".../mkdir/a=<adminID>", create a new home directory
+    // with the requested adminID as the admin, or with the requesting user as
+    // the admin if n adminID is provided.
     if (queryPathArr[0] === "mkdir") {
       if (!isPost) throw new RuntimeError(
         `Unrecognized route for GET-like requests: "${route}"`,
@@ -37,6 +37,11 @@ export async function query(
         route, upNodeID, options, callerNode, execEnv,
       ) ?? [];
       return dirID;
+    }
+
+    // If route equals ".../directories/a=<adminID>[/...]...", ...
+    else if (queryPathArr[0] === "directories") {
+      // TODO: Implement.
     }
     else throw new RuntimeError(
       `Unrecognized route: ${route}`,

@@ -9,6 +9,7 @@ DROP FUNCTION toBase64;
 DROP FUNCTION fromBase64;
 
 DROP PROCEDURE readHomeDirAdminID;
+DROP PROCEDURE readDirectoriesOfAdmin;
 DROP PROCEDURE readHomeDirDescendants;
 DROP PROCEDURE createHomeDir;
 DROP PROCEDURE editHomeDir;
@@ -87,6 +88,24 @@ BEGIN
     SELECT CONV(admin_id, 10, 16) AS adminID
     FROM HomeDirectories FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID;
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE readDirectoriesOfAdmin (
+    IN adminIDHex VARCHAR(16),
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED
+)
+BEGIN
+    DECLARE admin BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+
+    SELECT CONV(dir_id, 10, 16) AS dirID
+    FROM HomeDirectories FORCE INDEX (sec_idx)
+    WHERE admin_id <=> adminIDHex
+    ORDER BY dir_id ASC
+    LIMIT numOffset, maxNum;
 END //
 DELIMITER ;
 

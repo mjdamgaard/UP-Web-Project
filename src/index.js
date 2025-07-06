@@ -21,7 +21,7 @@ import * as textareaCompMod from "./dev_lib/jsx/dev_components/Textarea1.js";
 import * as jsonMod from "./dev_lib/fundamentals/json.js";
 import * as stringMod from "./dev_lib/fundamentals/string.js";
 import * as arrayMod from "./dev_lib/fundamentals/array.js";
-import * as reqDataMod from "./dev_lib/request_data.js";
+import * as reqOrigMod from "./dev_lib/request_origin.js";
 import * as base64Mod from "./dev_lib/base64_conversions.js";
 import * as errorMod from "./dev_lib/error.js";
 
@@ -33,7 +33,7 @@ staticDevLibs.set("Textarea1.jsx", textareaCompMod);
 staticDevLibs.set("json", jsonMod);
 staticDevLibs.set("string", stringMod);
 staticDevLibs.set("array", arrayMod);
-staticDevLibs.set("request_data", reqDataMod);
+staticDevLibs.set("request_origin", reqOrigMod);
 staticDevLibs.set("base64", base64Mod);
 staticDevLibs.set("error", errorMod);
 

@@ -113,7 +113,7 @@ export class ScriptInterpreter {
       scriptVars.resolveScript = (output, error) => {
         let {log} = scriptVars;
         if (!log.error && error !== undefined) {
-          log.error = getExtendedErrorMsg(error);
+          log.error = error;
         }
         scriptVars.isExiting = true;
         resolve([output, log]);
