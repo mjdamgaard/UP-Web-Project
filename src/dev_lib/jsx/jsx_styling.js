@@ -1,10 +1,10 @@
 
 
-import sassTranspiler from "../../interpreting/SASSTranspiler.js";
+import scssTranspiler from "../../interpreting/SCSSTranspiler.js";
 import {
   RuntimeError, ArgTypeError, forEachValue, getExtendedErrorMsg, Exception,
 } from "../../interpreting/ScriptInterpreter.js";
-import {sassParser} from "../../interpreting/parsing/SASSParser.js";
+import {scssParser} from "../../interpreting/parsing/SCSSParser.js";
 
 
 const RM_SEPARATOR_REGEX = /(^|\s+)RM(\s+|$)/;
@@ -44,10 +44,10 @@ export class JSXAppStyler {
   // hasn't been so already, namely by fetching them, transpiling them to CSS,
   // and inserting this in a style element in the document head.
   async loadStyle(componentModule, callerNode, callerEnv) {
-    // First wait for the get the styleSheets of the component.
+    // First get/wait for the styleSheets of the component.
     let styleSheets = await this.settingsStore.get(
       componentModule, callerNode, callerEnv
-    ).promise ?? {};
+    ).styleSheets.promise ?? {};
 
     // Then create a promise array that when resolved will have fetched and
     // applied all style sheets pointed to by styleSheets that has not yet been
@@ -72,22 +72,15 @@ export class JSXAppStyler {
       promiseArr.push(new Promise(async (resolve) => {
         // Fetch the style sheet module and its settings in parallel.
         let settings = this.settingsStore.get(route, callerNode, callerEnv);
-        let [styleSheetModule, styleSheetSettings] = await Promise.all([
-          this.interpreter.import(
-            route, callerNode, callerEnv
-          ),
-          settings.styleSheetSettings.promise
+        let [styleSheetModule, isTrusted] = await Promise.all([
+          this.interpreter.import(route, callerNode, callerEnv),
+          settings.isTrusted?.promise ??
+            new Promise(resolve => resolve(false))
         ]);
-
-        // Then extract the style sheet itself, and an "isTrusted" parameter,
-        // which, if true, allows the style sheet to affect CSS classes
-        // introduced by other style sheets, as well as element types in
-        // general. 
         let styleSheet = styleSheetModule.styleSheet;
-        let {isTrusted} = styleSheetSettings;
 
-        // Then transpile the SASS style sheet into CSS (with some additional
-        // restrictions and added transformations on top of the regular SASS
+        // Then transpile the SCSS style sheet into CSS (with some additional
+        // restrictions and added transformations on top of the regular SCSS
         // semantics) and insert it into the document head. 
         this.transpileAndInsertStyleSheet(
           styleSheet, route, id, isTrusted, callerNode, callerEnv
@@ -105,7 +98,7 @@ export class JSXAppStyler {
   ) {
     // First transpile the style sheet.
     let styleSheetParams = this.styleParams.get(route);
-    let transpiledStyleSheet = sassTranspiler.transpile(
+    let transpiledStyleSheet = scssTranspiler.transpile(
       styleSheet, route, id, this.loadedStyleSheetIDs, styleSheetParams,
       isTrusted, callerNode, callerEnv
     );
@@ -128,10 +121,10 @@ export class JSXAppStyler {
 
   // transformClasses() is used to transform the classes of a component from
   // the original ones determined by the component to other ones, or to add
-  // classes to elements, at will. This transformation is defined by by a
+  // classes to elements, at will. This transformation is defined by a
   // 'classTransform' setting, which is a list of transform rules consisting
-  // of a CSS selector on the LHS of all the elements to target, and a string
-  // on the RHS of all the classes to add or remove from those elements.
+  // of a CSS selector on the LHS defining which elements to target, and a
+  // string on the RHS of all the classes to add or remove from those elements.
   async transformClasses(
     newDOMNode, ownDOMNodes, componentModule, callerNode, callerEnv
   ) {
@@ -195,7 +188,7 @@ export class JSXAppStyler {
       let isValid = false;
       if (typeof selector === "string") {
         if (selector.indexOf("/*") !== -1) isValid = false;
-        let [{error}] = sassParser.parse(
+        let [{error}] = scssParser.parse(
           selector, "relative-complex-selector"
         );
         if (!error) isValid = true;

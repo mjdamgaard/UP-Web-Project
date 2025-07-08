@@ -168,14 +168,19 @@ html, body, #up-app-root {
 }
 
 
-dt:before {
+#overlay-page-container.open dt:before {
   content: "";
   display: block;
 }
-dt:after {
+#overlay-page-container.open dt:after {
   content: ":";
   margin-right: 0.4em;
 }
-dt, dd {
+#overlay-page-container.open dt, dd {
   display: inline;
+}
+
+
+* {
+  overflow: hidden;
 }

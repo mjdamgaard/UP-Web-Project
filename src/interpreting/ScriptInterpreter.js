@@ -1,6 +1,5 @@
 
 import {scriptParser} from "./parsing/ScriptParser.js";
-// import {sassParser} from "./parsing/SASSParser.js";
 import {
   getExtendedErrorMsg as getExtendedSyntaxErrorMsg, getLnAndCol,
 } from "./parsing/Parser.js";
@@ -390,7 +389,7 @@ export class ScriptInterpreter {
       );
       let [text] = resultRow;
       if (modulePath.slice(-5) === ".scss") {
-        return new SASSModule(modulePath, text);
+        return new SCSSModule(modulePath, text);
       } else {
         return text;
       }
@@ -2332,9 +2331,9 @@ export class LiveModule extends AbstractObject {
   }
 }
 
-export class SASSModule extends AbstractObject {
+export class SCSSModule extends AbstractObject {
   constructor(modulePath, styleSheet) {
-    super("SASSModule");
+    super("SCSSModule");
     this.modulePath = modulePath;
     this.styleSheet = styleSheet;
     this.members["styleSheet"] = styleSheet;

@@ -1,6 +1,6 @@
 import {
   DevFunction, forEachValue, LiveModule, PromiseObject, RuntimeError,
-  SASSModule,
+  SCSSModule,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {APP_COMPONENT_PATH_FLAG} from "../jsx_components.js";
 
@@ -47,7 +47,7 @@ export const getSettings = new DevFunction(
         classTransform: classTransformPromObj,
       };
     }
-    else if (liveModule instanceof SASSModule) {
+    else if (liveModule instanceof SCSSModule) {
       let isTrustedPromObj = new PromiseObject(new Promise(
         resolve => resolve(false)
       ));

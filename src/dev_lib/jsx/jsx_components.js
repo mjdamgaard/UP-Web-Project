@@ -13,7 +13,7 @@ import {JSXAppStyler} from "./jsx_styling.js";
 
 
 const CLASS_NAME_REGEX =
-  /^ *([a-zA-Z][a-z-A-Z0-9\-]*_[a-zA-Z][a-z-A-Z0-9\-]* *)*$/;
+  /^ *((([a-z]|-_)[a-z0-9\-]*_)?[a-z][a-z0-9\-]* *)*$/;
 
 
 export const CAN_CREATE_APP_FLAG = Symbol("can-create-app");
@@ -440,10 +440,16 @@ class JSXInstance {
             let className = val.toString();
             if (!CLASS_NAME_REGEX.test(className)) throw new RuntimeError(
               `Invalid class name: "${className}" (each class name needs to ` +
-              "be of the form '<id>_<name>' where both id and name are of " +
-              "the form /[a-zA-Z][a-z-A-Z0-9\-]*/)",
+              "be of the form '[<id>_]<name>' where both id is of the form " +
+              "/([a-z]|-_)[a-z-A0-9\-]*/ and name is of the form " +
+              "/[a-z][a-z0-9\-]*/)",
               jsxNode, jsxDecEnv
             );
+            // Add automatic '-_' prefixes for any class name that hasn't got a
+            // prefix.
+        // className = className.split(/\s+/).replaceAll(
+        //   /()/g, str => "-_" + str
+        // );
             newDOMNode.setAttribute("class", className);
             break;
           }

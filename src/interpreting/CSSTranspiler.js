@@ -1,13 +1,12 @@
 
-import {sassParser} from "./parsing/SASSParser.js";
+import {cssParser} from "./parsing/CSSParser.js";
 import {
-  parseString, ScriptInterpreter, Environment, LoadError, StyleError,
-  RuntimeError, decrCompGas,
+  parseString, Environment, RuntimeError, decrCompGas,
 } from "./ScriptInterpreter.js";
 
 
 
-export class SASSTranspiler {
+export class CSSTranspiler {
 
   // transpile() transforms the input styleSheet into CSS, ready to be inserted
   // in the document head, and returns it either directly or as a promise for
@@ -22,11 +21,11 @@ export class SASSTranspiler {
 
     // Parse the style sheet, throwing a SyntaxError on failure.
     let [styleSheetNode, lexArr, strPosArr] = parseString(
-      styleSheet, callerNode, callerEnv, sassParser
+      styleSheet, callerNode, callerEnv, cssParser
     );
 
     // Create a new environment for the style sheet. (We can just use the same
-    // Environment class as the ScriptInterpreter for the SASS environments.)
+    // Environment class as the ScriptInterpreter for the CSS environments.)
     let styleSheetEnv = new Environment(
       undefined, "module", {
        modulePath: route, lexArr: lexArr, strPosArr: strPosArr,
@@ -61,7 +60,7 @@ export class SASSTranspiler {
         if (val !== undefined) {
           // Parse the value from styleSheetParams to validate that it is a
           // valid (and implemented) CSS value.
-          let [{error}] = sassParser.parse(val.toString(), "value");
+          let [{error}] = cssParser.parse(val.toString(), "value");
           if (error) throw new RuntimeError(
             `Style parameter "${val}" is either not a valid CSS value or is ` +
             "not implemented yet",
@@ -83,9 +82,9 @@ export class SASSTranspiler {
         stmt, environment, id, styleSheetIDs, isTrusted, indentSpace, isNested
       );
     }
-    else if (type === "member") {
+    else if (type === "declaration") {
       if (!isNested) throw new RuntimeError(
-        "Declaration members most not appear outside a ruleset declaration",
+        "Declarations most not appear outside a ruleset",
         stmt, environment
       );
       return stmt.propName + ": " + stmt.valueArr.map(valueNode => (
@@ -93,7 +92,7 @@ export class SASSTranspiler {
       )).join(" ");
     }
     else throw (
-      "Unrecognized SASS statement type: " + type
+      "Unrecognized CSS statement type: " + type
     );
   
   }
@@ -233,7 +232,7 @@ export class SASSTranspiler {
         return ":" + id + "_" + className;
       }
       // Else extract the existing prefix, which ought to be an identifier of
-      // an existing SASS variable containing a route, then get that route, and
+      // an existing CSS variable containing a route, then get that route, and
       // look in styleSheetIDs for the ID to substitute it for.
       else {
         let ident = className.substring(0, indOfUnderscore);
@@ -278,7 +277,7 @@ class UnauthorizedSelectorException {
 }
 
 
-export const sassTranspiler = new SASSTranspiler();
+export const cssTranspiler = new CSSTranspiler();
 
 
-export {sassTranspiler as default};
+export {cssTranspiler as default};
