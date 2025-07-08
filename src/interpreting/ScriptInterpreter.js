@@ -723,7 +723,8 @@ export class ScriptInterpreter {
           postponeCond = false;
           try {
             this.executeStatement(innerStmt, newEnv);
-          } catch (err) {
+          }
+          catch (err) {
             if (err instanceof BreakException) {
               return;
             } else if (!(err instanceof ContinueException)) {
@@ -732,6 +733,34 @@ export class ScriptInterpreter {
           }
           if (updateExp) {
             this.evaluateExpression(updateExp, newEnv);
+          }
+        }
+        break;
+      }
+      case "switch-statement": {
+        let switchExpVal = this.evaluateExpression(stmtNode.exp, environment);
+        let startInd = stmtNode.defaultCase;
+        stmtNode.caseArr.some(([caseExp, ind]) => {
+          if (switchExpVal === this.evaluateExpression(caseExp, environment)) {
+            startInd = ind;
+            return true; // breaks the some() iteration.
+          }
+        });
+        if (startInd !== undefined) {
+          let newEnv = new Environment(environment);
+          let stmtArr = stmtNode.stmtArr;
+          let len = stmtArr.length;
+          try {
+            for (let i = startInd; i < len; i++) {
+              this.executeStatement(stmtArr[i], newEnv);
+            }
+          }
+          catch (err) {
+            if (err instanceof BreakException) {
+              return;
+            } else {
+              throw err;
+            }
           }
         }
         break;

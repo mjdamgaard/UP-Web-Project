@@ -348,6 +348,7 @@ export const scriptGrammar = {
       ["block-statement!1"],
       ["if-else-statement!1"],
       ["loop-statement!1"],
+      ["switch-statement!1"],
       ["return-statement!1"],
       ["throw-statement!1"],
       ["try-catch-statement!1"],
@@ -423,6 +424,53 @@ export const scriptGrammar = {
       ret.type = "loop-statement";
       return ret;
     },
+  },
+  "switch-statement": {
+    rules: [
+      [
+        "/switch/", /\(/, "expression", /\)/, /\{/, "case-or-statement!1*", /\}/
+      ],
+    ],
+    process: (children) => {
+      let stmtArr = [...children[5]];
+      let caseArr = [];
+      let defaultCase;
+      stmtArr.forEach((node, ind, stmtArr) => {
+        if (node.type === "case") {
+          stmtArr[ind] = {type: "empty-statement"};
+          caseArr.push([node.exp, ind]);
+        }
+        else if (node.type === "default-case") {
+          if (defaultCase !== undefined) {
+            return "Switch statement can only have at most one default clause"
+          }
+          stmtArr[ind] = {type: "empty-statement"};
+          defaultCase = ind;
+        }
+      })
+      return {
+        type: "switch-statement",
+        exp: children[2],
+        caseArr: caseArr,
+        stmtArr: stmtArr,
+        defaultCase: defaultCase,
+      };
+    },
+  },
+  "case-or-statement": {
+    rules: [
+      ["statement"],
+      ["/case/", "expression", "/:/"],
+      ["/default/", "expression", "/:/"],
+    ],
+    process: (children, ruleInd) => (
+      (ruleInd === 0) ? children[0] : (ruleInd === 1) ? {
+        type: "case",
+        exp: children[1],
+      } : {
+        type: "default-case",
+      }
+  ),
   },
   "return-statement": {
     rules: [
