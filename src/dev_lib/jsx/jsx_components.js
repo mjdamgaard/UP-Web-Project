@@ -44,7 +44,7 @@ export const createJSXApp = new DevFunction(
 
     // Get the settings object, whose properties are often self-replacing
     // Promises, from the settingsRoute. (If the route is a /call route to a
-    // dev function, then that function can look in local storage for user
+    // dev function, then that function can look in localStorage for user
     // preferences if the user is logged in.)
     let settings = await interpreter.fetch(settingsRoute);
 
@@ -65,36 +65,21 @@ export const createJSXApp = new DevFunction(
     }
 
     // Then create the app's root component instance, and before rendering it,
-    // add some props for getting user data and URL data, and pushing a new
-    // browser session history state it it.
+    // add some props for getting user data and URL data, and pushing/replacing
+    // a new browser session history state, to it.
     let rootInstance = new JSXInstance(
       appComponent, "root", undefined, callerNode, execEnv, settings
     );
     props = addUserRelatedProps(props, rootInstance, interpreter, execEnv);
     props = addURLRelatedProps(props, rootInstance, interpreter, execEnv);
 
-    // Also overwrite any existing 'styleProps' prop with the styleProps gotten
-    // above.
-    props = {...props, styleProps: styleProps};
-
     // Then render the root instance and insert it into the document.
     let rootParent = document.getElementById("up-app-root");
     let appNode = rootInstance.render(
-      props, false, interpreter, callerNode, execEnv, false, true, true
+      props, styleProps, false, interpreter, callerNode, execEnv,
+      false, true, true
     );
     rootParent.replaceChildren(appNode);
-
-    // Also add a "loading-style" class to the app's DOM node, which is removed
-    // once the style-related promise below resolves.
-    appNode.classList.add("loading-style");
-
-    // Now use the jsxAppStyler to fetch and load the styles of all statically
-    // imported JSX modules (with file extensions ending in ".jsx").
-    await staticStylesPromise;
-
-    // And once the styles are ready, we can remove the "loading-style" class
-    // from the app node.
-    appNode.classList.remove("loading-style");
   }
 );
 
@@ -108,7 +93,7 @@ class JSXInstance {
 
   constructor (
     componentModule, key, parentInstance = undefined, callerNode, callerEnv,
-    jsxAppStyler = undefined, settingsStore = undefined,
+    settings = undefined,
   ) {
     if (!(componentModule instanceof LiveModule)) throw new RuntimeError(
       "JSX component needs to be an imported module namespace object",
@@ -117,18 +102,15 @@ class JSXInstance {
     this.componentModule = componentModule;
     this.key = getString(key, callerNode, callerEnv);
     this.parentInstance = parentInstance;
-    this.jsxAppStyler = jsxAppStyler ?? this.parentInstance?.jsxAppStyler;
-    this.settingsStore = settingsStore ?? this.parentInstance?.settingsStore;
-    this.settings =
-      this.settingsStore.get(componentModule, callerNode, callerEnv);
+    this.settings = settings ?? this.parentInstance?.settings;
     this.isRequestOrigin = componentModule.get("isRequestOrigin");
     this.domNode = undefined;
-    this.ownDOMNodes = undefined;
     this.isDecorated = undefined;
     this.childInstances = new Map();
     this.props = undefined;
     this.state = undefined;
     this.refs = undefined;
+    this.styleProps = undefined;
     this.contextProvisions = undefined;
     this.contextSubscriptions = undefined;
     this.callerNode = callerNode;
@@ -149,9 +131,9 @@ class JSXInstance {
   }
 
 
-  render(
-    props = {}, isDecorated, interpreter,
-    callerNode, callerEnv, replaceSelf = true, force = false,
+  async render(
+    props = {}, styleProps, isDecorated, interpreter, callerNode, callerEnv,
+    replaceSelf = true, force = false,
   ) {
     this.isDecorated = isDecorated;
     this.callerNode = callerNode;
@@ -160,20 +142,22 @@ class JSXInstance {
     // Return early if the props are the same as on the last render, and if the
     // instance is not forced to rerender.
     if (
-      !force && this.props !== undefined && compareExceptRefs(props, this.props)
+      !force && this.props !== undefined &&
+      deepCompareExceptRefs(props, this.props)
     ) {
       return this.domNode;
     }
 
-    // Record the props. And on the first render only, initialize the state,
-    // and record the refs as well (which cannot be changed by a subsequent
-    // render).
+    // Record the props and styleProps. And on the first render only,
+    // initialize the state, and record the refs as well (which cannot be
+    // changed by a subsequent render).
     this.props = props;
+    this.styleProps = styleProps;
+    let state;
     if (this.state === undefined) {
       // Get the initial state if the component module declares one, which is
       // done either by exporting a 'getInitState()' function, or a constant
       // object called 'initState'.
-      let state;
       let getInitState = this.componentModule.get("getInitState");
       if (getInitState) {
         try {
@@ -206,11 +190,20 @@ class JSXInstance {
 
       // And store the refs object.
       this.refs = props["refs"] ?? {};
-
-      // And also store a boolean for whether this component is a "request
-      // origin."
-      this.isRequestOrigin = this.componentModule.get("isRequestOrigin");
     }
+
+    // And before moving on, wait for settings.style() to return a function
+    // with which to/ style the resulting DOM node at the end of the method,
+    // as well as a new styleProps object to hand down to the child instances.
+    let transformStyle;
+    let styleRes = this.settings.style(
+      this.componentModule, props, state, styleProps
+    );
+    if (styleRes instanceof PromiseObject) {
+      styleRes = await styleRes.promise;
+    }
+    [transformStyle, styleProps] = styleRes;
+
 
     // Then get the component module's render() function.
     let renderFun = this.componentModule.get("render") ??
@@ -257,7 +250,8 @@ class JSXInstance {
     else {
       try {
         newDOMNode = this.getDOMNode(
-          jsxElement, marks, interpreter, callerNode, callerEnv, ownDOMNodes
+          jsxElement, marks, interpreter, callerNode, callerEnv,
+          ownDOMNodes, styleProps
         );
       }
       catch (err) {
@@ -284,11 +278,9 @@ class JSXInstance {
     }
     this.domNode = newDOMNode;
 
-    // Then, before returning the new DOM node, we also use jsxAppStyler to
-    // transform the class attributes of the instance in order to style it.
-    this.jsxAppStyler.transformClasses(
-      newDOMNode, ownDOMNodes, this.componentModule, callerNode, callerEnv
-    );
+    // And before returning the new DOM node, we use transformStyle() to style
+    // the DOM node (by giving it classes and/or inline styles).
+    transformStyle(newDOMNode);
 
     // Finally, return the instance's new DOM node.
     return newDOMNode;
@@ -334,8 +326,8 @@ class JSXInstance {
 
 
   getDOMNode(
-    jsxElement, marks, interpreter, callerNode, callerEnv, ownDOMNodes,
-    isOuterElement = true
+    jsxElement, marks, interpreter, callerNode, callerEnv,
+    ownDOMNodes, styleProps, isOuterElement = true
   ) {
     // If jsxElement is not a JSXElement instance, return a string derived from
     // JSXElement, except if it is an outer element, in which case wrap it in
@@ -360,7 +352,8 @@ class JSXInstance {
       let children = isArray ? jsxElement : jsxElement.props["children"] ?? [];
       let ret = children.map(val => (
         this.getDOMNode(
-          val, marks, interpreter, callerNode, callerEnv, ownDOMNodes, false
+          val, marks, interpreter, callerNode, callerEnv,
+          ownDOMNodes, styleProps, false
         )
       ));
       if (isOuterElement) {
@@ -407,7 +400,7 @@ class JSXInstance {
         }
       );
       return childInstance.render(
-        jsxElement.props, isOuterElement, interpreter,
+        jsxElement.props, styleProps, isOuterElement, interpreter,
         jsxElement.node, childEnv, false
       );
     }
@@ -514,7 +507,7 @@ class JSXInstance {
       // any and all nested children inside that array (at any depth).
       this.createAndAppendChildren(
         newDOMNode, childArr, marks, interpreter, callerNode, callerEnv,
-        ownDOMNodes,
+        ownDOMNodes, styleProps
       );
 
       // Then return the DOM node of this new element, and also push the node
@@ -526,16 +519,19 @@ class JSXInstance {
 
 
   createAndAppendChildren(
-    domNode, childArr, marks, interpreter, callerNode, callerEnv, ownDOMNodes
+    domNode, childArr, marks, interpreter, callerNode, callerEnv,
+    ownDOMNodes, styleProps
   ) {
     childArr.forEach(val => {
       if (val instanceof Array) {
         this.createAndAppendChildren(
-          domNode, val,  marks, interpreter, callerNode, callerEnv, ownDOMNodes
+          domNode, val, marks, interpreter, callerNode, callerEnv,
+          ownDOMNodes, styleProps
         );
       } else {
         domNode.append(this.getDOMNode(
-          val, marks, interpreter, callerNode, callerEnv, ownDOMNodes, false
+          val, marks, interpreter, callerNode, callerEnv,
+          ownDOMNodes, styleProps, false
         ));
       }
     });
@@ -643,7 +639,7 @@ class JSXInstance {
           // previous render, which is done in order to not increase the memory
           // for every single triggered action or call.
           this.render(
-            this.props, this.isDecorated, interpreter,
+            this.props, this.styleProps, this.isDecorated, interpreter,
             this.callerNode, this.callerEnv, true, true
           );
         }
@@ -668,7 +664,7 @@ class JSXInstance {
     this.contextProvisions ??= {};
     let {subscribers, prevContext} = this.contextProvisions[key] ?? {};
       this.contextProvisions[key] = {subscribers: new Map(), context: context};
-    if (subscribers && !compareExceptRefs(context, prevContext)) {
+    if (subscribers && !deepCompareExceptRefs(context, prevContext)) {
       subscribers.forEach((_, jsxInstance) => {
         jsxInstance.queueRerender(interpreter);
       });
@@ -860,7 +856,6 @@ class JSXInstanceInterface extends AbstractObject {
 
 
 
-
 export class DOMNodeObject extends AbstractObject {
   constructor(domNode) {
     super("DOMNode");
@@ -871,9 +866,10 @@ export class DOMNodeObject extends AbstractObject {
 
 
 
-function compareExceptRefs(props1, props2) {
-  // Get the keys, and return false immediately if the two props Maps have
-  // different keys.
+
+function deepCompareExceptRefs(props1, props2) {
+  // Get the keys, and return false immediately if the two props have different
+  // sets of keys.
   let keys1 = Object.keys(props1);
   let keys2 = Object.keys(props2);
   let unionedKeys = [...new Set(keys1.concat(keys2))];
@@ -899,7 +895,7 @@ function compareExceptRefs(props1, props2) {
 
 
 export function deepCompare(val1, val2) {
-  if (val1 === null || !(val1 instanceof Object)) {
+  if (!val1 || !val2 || !(val1 instanceof Object && val2 instanceof Object)) {
     return val1 === val2;
   }
 
