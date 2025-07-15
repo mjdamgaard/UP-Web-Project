@@ -57,9 +57,10 @@ export const createJSXApp = new DevFunction(
       style = await style.promise;
     }
 
-    // Call style() with no arguments to initiate the styling system, and if
-    // the call returns a promise, wait for it before continuing.
-    let styleProps = style();
+    // Call style() with callerNode and execEnv as the only two arguments in
+    // order to initiate the styling system, and if the call returns a promise,
+    // wait for it to resolve before continuing.
+    let styleProps = style(callerNode, callerEnv);
     if (styleProps instanceof PromiseObject) {
       styleProps = await styleProps.promise;
     }
@@ -131,7 +132,7 @@ class JSXInstance {
   }
 
 
-  async render(
+  render(
     props = {}, styleProps, isDecorated, interpreter, callerNode, callerEnv,
     replaceSelf = true, force = false,
   ) {
@@ -165,10 +166,6 @@ class JSXInstance {
             getInitState, [props], callerNode, callerEnv
           );
         }
-        // If an error occurred, return a placeholder element with a
-        // "base_failed" class. Note that the "base_" in front means that this
-        // class can be styled by the style sheet that assigned the ID (prefix)
-        // of "base" by getSettings().
         catch (err) {
           return this.getFailedComponentDOMNode(err, replaceSelf);
         }
@@ -192,15 +189,28 @@ class JSXInstance {
       this.refs = props["refs"] ?? {};
     }
 
-    // And before moving on, wait for settings.style() to return a function
-    // with which to/ style the resulting DOM node at the end of the method,
-    // as well as a new styleProps object to hand down to the child instances.
+    // Call settings.style() to get a function with which to style the DOM node
+    // at the end of the method, as well as a new styleProps object to hand
+    // down to the child instances. But if style() is not ready yet for this
+    // component, which will mean that a PromiseObject is returned, render an
+    // empty template element with s "pending-style" class, and wait for the
+    // promise to resolve before queuing a rerender of this instance.
     let transformStyle;
     let styleRes = this.settings.style(
-      this.componentModule, props, state, styleProps
+      callerNode, callerEnv, this.componentModule, props, state, styleProps
     );
     if (styleRes instanceof PromiseObject) {
-      styleRes = await styleRes.promise;
+      let newDOMNode = document.createElement("template");
+      newDOMNode.setAttribute("class", "pending-style");
+      if (replaceSelf && this.domNode) {
+        this.domNode.replaceWith(newDOMNode);
+        this.updateDecoratingAncestors(newDOMNode);
+      }
+      this.domNode = newDOMNode;
+      styleRes.promise.then(() => {
+        this.queueRerender(interpreter);
+      });
+      return newDOMNode;
     }
     [transformStyle, styleProps] = styleRes;
 
@@ -292,7 +302,7 @@ class JSXInstance {
     if (error instanceof Exception) {
       console.error(getExtendedErrorMsg(error));
       let newDOMNode = document.createElement("span");
-      newDOMNode.setAttribute("class", "base_failed");
+      newDOMNode.setAttribute("class", "failed");
       this.childInstances.forEach(child => child.dismount());
       this.childInstances = new Map();
       if (replaceSelf && this.domNode) {
