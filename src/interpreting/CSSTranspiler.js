@@ -1,8 +1,6 @@
 
 import {cssParser} from "./parsing/CSSParser.js";
-import {
-  parseString, Environment, RuntimeError, decrCompGas,
-} from "./ScriptInterpreter.js";
+import {parseString} from "./ScriptInterpreter.js";
 
 
 
@@ -11,185 +9,121 @@ export class CSSTranspiler {
   // transpile() transforms the input styleSheet into CSS, ready to be inserted
   // in the document head, and returns it either directly or as a promise for
   // it (once we implement the @use rule).
-  transpile(
-    styleSheet, route, id, styleSheetIDs, styleSheetParams = undefined,
-    isTrusted = false, callerNode, callerEnv
-  ) {
+  transpile(styleSheet, id, isTrusted = false, callerNode, callerEnv) {
     if (typeof styleSheet !== "string") throw (
-      `transpile(): Style sheet is not a string`
+      `CSSTranspiler.transpile(): Style sheet is not a string`
     );
 
     // Parse the style sheet, throwing a SyntaxError on failure.
-    let [styleSheetNode, lexArr, strPosArr] = parseString(
+    let [styleSheetNode] = parseString(
       styleSheet, callerNode, callerEnv, cssParser
     );
 
-    // Create a new environment for the style sheet. (We can just use the same
-    // Environment class as the ScriptInterpreter for the CSS environments.)
-    let styleSheetEnv = new Environment(
-      undefined, "module", {
-       modulePath: route, lexArr: lexArr, strPosArr: strPosArr,
-       script: styleSheet, scriptVars: callerEnv.scriptVars,
-      }
-    );
-
+    let addConfinement = !isTrusted;
     return styleSheetNode.stmtArr.map(stmt => (
-      this.transpileStatement(
-        stmt, styleSheetEnv, id, styleSheetIDs, styleSheetParams, isTrusted
-      )
-    )).join("")
+      this.transpileStatement(stmt, id, addConfinement)
+    )).join("\n")
   }
 
 
 
   transpileStatement(
-    stmt, environment, id, styleSheetIDs, styleSheetParams, isTrusted,
-    indentSpace = "", isNested = false,
+    stmt, id, addConfinement, indentSpace = "", isNested = false
   ) {
-    decrCompGas(stmt, environment);
-
     let type = stmt.type;
-    if (type === "variable-declaration") {
-      let valueNode = stmt.value;
-      let val;
-      if (
-        stmt.isAdjustable && styleSheetParams &&
-        environment.scopeType === "module"
-      ) {
-        val = styleSheetParams.get(valueNode.ident);
-        if (val !== undefined) {
-          // Parse the value from styleSheetParams to validate that it is a
-          // valid (and implemented) CSS value.
-          let [{error}] = cssParser.parse(val.toString(), "value");
-          if (error) throw new RuntimeError(
-            `Style parameter "${val}" is either not a valid CSS value or is ` +
-            "not implemented yet",
-            stmt, environment
-          );
-        }
-        else {
-          val = this.getValue(valueNode, environment);
-        }
+    if (type === "declaration") {
+      if (!isNested) {
+        return indentSpace +
+          "/* Error: Invalid declaration outside of a ruleset */\n";
       }
-      else {
-        val = this.getValue(valueNode, environment);
-      }
-      environment.declare(stmt.ident, val, true, stmt);
-      return "";
+      return indentSpace + stmt.propName + ": " + stmt.valueArr.map(
+        valueNode => valueNode.lexeme
+      ).join(" ") + ";\n";
     }
     else if (type === "ruleset") {
-      this.transpileRuleset(
-        stmt, environment, id, styleSheetIDs, isTrusted, indentSpace, isNested
+      return this.transpileRuleset(
+        stmt, id, addConfinement, indentSpace, isNested
       );
     }
-    else if (type === "declaration") {
-      if (!isNested) throw new RuntimeError(
-        "Declarations most not appear outside a ruleset",
-        stmt, environment
-      );
-      return stmt.propName + ": " + stmt.valueArr.map(valueNode => (
-        this.getValue(valueNode, environment)
-      )).join(" ");
+    else if (type === "at-rule") {
+      return indentSpace +
+        "/* Error: At-rules are not implemented just yet */\n"
     }
     else throw (
       "Unrecognized CSS statement type: " + type
     );
-  
   }
 
 
-
-  getValue(valueNode, environment) {
-    if (valueNode.type === "variable") {
-      return environment.get(valueNode.ident, valueNode);
-    }
-    else {
-      return valueNode.lexeme;
-    }
-  }
-
-
-
-  transpileRuleset(
-    stmt, environment, id, styleSheetIDs, isTrusted, indentSpace, isNested
-  ) {
-    if (isNested) throw new RuntimeError(
-      "Nested rules are not yet implemented",
-      stmt, environment
-    );
-
-    // Transpile the selector, throwing an exception whenever an untrusted
-    // style sheet uses a selector the involves element other than those with
-    // classes coming from the style sheet itself. 
-    let transpiledSelectorList;
-    try {
-      transpiledSelectorList = stmt.selectorArr.map(selector => {
-        this.transpileSelector(
-          selector, environment, id, styleSheetIDs, isTrusted
-        )
-      }).join(", ");
-    }
-    catch (err) {
-      // If an unauthorized selector was detected, simply return an empty
-      // string instead of the ruleset.
-      if (err instanceof UnauthorizedSelectorException) {
-        return indentSpace + "/* Unauthorized ruleset */\n";
-      }
-      else throw err;
-    }
+  transpileRuleset(stmt, id, addConfinement, indentSpace, isNested) {
+    // Transpile the selector. If addConfinement is true, the transpiled
+    // selector will be modified such that the style only targets the elements
+    // inside instances of components that "subscribes" to this style sheet
+    // (which means that their style transform sheet (.sts) imports it). 
+    let transpiledSelectorList = stmt.selectorArr.map(selector => (
+      this.transpileSelector(selector, id, addConfinement, isNested)
+    )).join(", ");
 
     // If the selector succeeds, returns the rule with the transpiled
-    // selector list and the transpiled nested statements inside the rule.
-    let newEnv = new Environment(environment);
+    // selector list and the transpiled nested statements inside the rule. Set
+    // addConfinement = false for the nested statements, as the current ruleset
+    // has already been confined.
     return (
       indentSpace + transpiledSelectorList + " {\n" +
-        stmt.nestedStmtArr.map(nestedStmt => {
-          this.transpileStatement(
-            nestedStmt, newEnv, id, styleSheetIDs, undefined, isTrusted,
-            indentSpace + "  "
-          )
-        }).join("") +
-      indentSpace + "\n}"
+        stmt.stmtArr.map(stmt => (
+          this.transpileStatement(stmt, id, false, indentSpace + "  ", true)
+      )).join("") +
+      indentSpace + "\n}\n"
     );
   }
 
 
 
 
-  transpileSelector(
-    selector, environment, id, styleSheetIDs, isTrusted
-  ) {
-    let complexSelectorChildren = selector.complexSelector.children;
-    let pseudoElement = selector.pseudoElement;
-    return (
-      complexSelectorChildren.map((child, ind) => {
-        // If the child is a (compound) selector, rather than a combinator,
-        // transpile it, passing isTrusted to only the first one when ind === 1,
-        // and passing isTrusted := true for all subsequent selectors.
-        if (ind % 2 === 0) {
-          return this.transpileCompoundSelector(
-            child, environment, id, styleSheetIDs,
-            (ind === 0) ? isTrusted : true,
-          );
+  transpileSelector(selector, id, isTrusted, isNested) {
+    // The children of a complex selector are the compound selectors at every
+    // even index, starting with (and possibly ending in) 0, and then the
+    // combinators at every odd index.
+    let complexSelectorChildren = selector.children.map((child, ind) => {
+      // If ind is 0, allow for a child of "&", but only is isNested is true.
+      if (ind === 1 && child === "&") {
+        if (isNested) {
+          return "&";
+        } else {
+          return ":not(*)";
         }
-        // Else for a combinator, also make sure to check that it is not a
-        // sibling selector if ind === 1. And if the combinator is whitespace,
-        // including comments, transform it to just a space. 
-        else {
-          let lexeme = child[0]?.lexeme ?? " ";
-          if (!isTrusted && ind === 1 && (lexeme === "+" || lexeme === "~")) {
-            throw new UnauthorizedSelectorException();
-          }
-          if (/^[>+~]$/.test(lexeme)) {
-            return " " + lexeme + " ";
-          } else {
-            return " ";
-          }
-        } 
-      }).join("") +
+      }
+
+      // Transpile the compound selectors, i.e. when ind is even. The
+      // addConfinement parameter should only affect to the first compound selector.
+      if (ind % 2 === 0) {
+        return this.transpileCompoundSelector(
+          child, environment, id, styleSheetIDs,
+          (ind === 0) ? isTrusted : true,
+        );
+      }
+      // Else for a combinator, also make sure to check that it is not a
+      // sibling selector if ind === 1. And if the combinator is whitespace,
+      // including comments, transform it to just a space. 
+      else {
+        let lexeme = child[0]?.lexeme ?? " ";
+        if (!isTrusted && ind === 1 && (lexeme === "+" || lexeme === "~")) {
+          throw new UnauthorizedSelectorException();
+        }
+        if (/^[>+~]$/.test(lexeme)) {
+          return " " + lexeme + " ";
+        } else {
+          return " ";
+        }
+      }
+    });
+
+    // If the fist combinator is a sibling combinator, prepend ".this.id-<id> "
+    // to the whole thing if isTrusted == false, thus preventing untrusted
+    // style sheets from affecting styles outside of its own classes.
+    return complexSelectorChildren.join("") +
       isTrusted ? "" : `:not(.protected:not(.by-${id}) *)` +
       pseudoElement?.lexeme ?? ""
-    );
   }
 
   transpileCompoundSelector(

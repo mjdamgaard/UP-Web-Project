@@ -3,7 +3,7 @@ import {
   DevFunction, JSXElement, LiveModule, RuntimeError, getExtendedErrorMsg,
   getString, AbstractObject, forEachValue, CLEAR_FLAG, deepCopy,
   OBJECT_PROTOTYPE, ArgTypeError, Environment, getPrototypeOf, ARRAY_PROTOTYPE,
-  FunctionObject, Exception, getStringOrSymbol,
+  FunctionObject, Exception, getStringOrSymbol, PromiseObject,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, NEXT_REQUEST_ORIGIN_FLAG
@@ -24,17 +24,13 @@ export const COMPONENT_INSTANCE_FLAG = Symbol("component-instance");
 
 
 
-// TODO: Make createJSXApp() take an argument of a function to get component
-// trust (for the FlagTransmitter to use), and also make the app component get
-// the URL substring after the domain as part of its props.
 
-// Create a JSX (React-like) app and mount it in the index HTML page, in the
-// element with an id of "up-app-root".
+// createJSXApp() creates a JSX (React-like) app and mounts it in the index
+// HTML page, in the element with the id of "up-app-root".
 export const createJSXApp = new DevFunction(
-  "createJSXApp", {isAsync: true, typeArr:["module", "object", "function"]},
+  "createJSXApp", {isAsync: true, typeArr:["module", "object", "string"]},
   async function(
-    {callerNode, execEnv, interpreter},
-    [appComponent, props, getSettings]
+    {callerNode, execEnv, interpreter}, [appComponent, props, settingsRoute]
   ) {
     // Set a flag containing the app component path for the app.
     execEnv.setFlag(APP_COMPONENT_PATH_FLAG, appComponent.componentPath);
@@ -46,34 +42,40 @@ export const createJSXApp = new DevFunction(
       callerNode, execEnv
     );
 
-    // Create a SettingsStore which uses getSettings() to fetch settings for
-    // each individual component. These settings are used for styling the
-    // components, and for assigning them trust for making post requests, among
-    // other things, all of which might be made to depend on user preferences.
-    let settingsStore = new SettingsStore(getSettings, interpreter);
+    // Get the settings object, whose properties are often self-replacing
+    // Promises, from the settingsRoute. (If the route is a /call route to a
+    // dev function, then that function can look in local storage for user
+    // preferences if the user is logged in.)
+    let settings = await interpreter.fetch(settingsRoute);
 
-    // Then create an JSXAppStyler, which uses the settingsStore to generate
-    // the styles of each component by fetching, transpiling and inserting
-    // relevant style sheets in the document head. We then immediately call its
-    // loadStylesOfAllStaticJSXModules() method to prepare the styles of all
-    // '.jsx' modules that have been "statically" imported (i.e. imported from
-    // import statements).
-    let jsxAppStyler = new JSXAppStyler(
-      settingsStore, appComponent, interpreter, callerNode, execEnv
-    );
-    let staticStylesPromise = jsxAppStyler.loadStylesOfAllStaticJSXModules(
-      execEnv.scriptVars.liveModules, callerNode, execEnv
-    );
+    // If settings.style is a promise, it has to be a "self-replacing promise"
+    // (which is true for all properties of settings), meaning that
+    // settings.style will be changed into the promise's result after it
+    // resolves:
+    let style = settings.style;
+    if (style instanceof PromiseObject) {
+      style = await style.promise;
+    }
+
+    // Call style() with no arguments to initiate the styling system, and if
+    // the call returns a promise, wait for it before continuing.
+    let styleProps = style();
+    if (styleProps instanceof PromiseObject) {
+      styleProps = await styleProps.promise;
+    }
 
     // Then create the app's root component instance, and before rendering it,
     // add some props for getting user data and URL data, and pushing a new
     // browser session history state it it.
     let rootInstance = new JSXInstance(
-      appComponent, "root", undefined, callerNode, execEnv,
-      jsxAppStyler, settingsStore
+      appComponent, "root", undefined, callerNode, execEnv, settings
     );
     props = addUserRelatedProps(props, rootInstance, interpreter, execEnv);
     props = addURLRelatedProps(props, rootInstance, interpreter, execEnv);
+
+    // Also overwrite any existing 'styleProps' prop with the styleProps gotten
+    // above.
+    props = {...props, styleProps: styleProps};
 
     // Then render the root instance and insert it into the document.
     let rootParent = document.getElementById("up-app-root");
@@ -853,30 +855,6 @@ class JSXInstanceInterface extends AbstractObject {
   // short time after the bounding box data, and similar data, is ready.
 }
 
-
-
-
-
-
-class SettingsStore {
-  constructor(getSettings, interpreter) {
-    this.getSettings = getSettings;
-    this.interpreter = interpreter;
-    this.settingsMap = new Map();
-  }
-
-  get(liveModuleOrPath, callerNode, execEnv) {
-    let modulePath = liveModuleOrPath.modulePath ?? liveModuleOrPath;
-    let settings = this.settingsMap.get(modulePath);
-    if (settings === undefined) {
-      settings = this.interpreter.executeFunction(
-        this.getSettings, [liveModuleOrPath], callerNode, execEnv
-      );
-      this.settingsMap.set(modulePath, settings);
-    }
-    return settings;
-  }
-}
 
 
 

@@ -53,6 +53,7 @@ export const cssGrammar = {
   },
   "statement": {
     rules: [
+      ["declaration"],
       ["ruleset"],
       ["at-rule"],
     ],
@@ -60,12 +61,12 @@ export const cssGrammar = {
   },
   "ruleset": {
     rules: [
-      ["selector-list", /\{/, "nested-statement!1+", /\}/],
+      ["selector-list", /\{/, "statement!1+", /\}/],
     ],
     process: (children) => ({
       type: "ruleset",
       selectorArr: children[0],
-      nestedStmtArr: children[2],
+      stmtArr: children[2],
     }),
   },
   "selector-list": {
@@ -78,34 +79,16 @@ export const cssGrammar = {
   },
   "selector": {
     rules: [
-      ["/&/", "combinator!1?", "selector^(1)"],
+      ["/&/", "combinator!1?", "complex-selector"],
       ["/&/"],
-      ["selector^(1)"],
+      ["complex-selector"],
     ],
     process: (children, ruleInd) => ({
       type: "selector",
-      children: (ruleInd === 2) ? children[0].children :
-        [children[0], children[1], ...children[2].children],
-    }),
-  },
-  "selector^(1)": {
-    rules: [
-      ["complex-selector", "pseudo-element"],
-      ["complex-selector"],
-    ],
-    process: (children) => ({
-      type: "selector",
-      complexSelector: children[0],
-      pseudoElement: children[1],
-    }),
-  },
-  "pseudo-element": {
-    rules: [
-      ["/::" + PSEUDO_ELEMENT_PATTERN + "/"],
-    ],
-    process: (children) => ({
-      type: "pseudo-element",
-      lexeme: children[0],
+      children: (ruleInd === 0) ?
+        [children[0], children[1], ...children[2].children] :
+        (ruleInd === 1) ? children :
+          children[0].children,
     }),
   },
   "complex-selector": {
@@ -151,7 +134,8 @@ export const cssGrammar = {
     rules: [
       ["class-selector"],
       ["pseudo-class-selector"],
-      ["id-selector"],
+      ["pseudo-element"],
+      // ["id-selector"],
     ],
     process: copyFromChild,
   },
@@ -187,6 +171,15 @@ export const cssGrammar = {
       argument: children[2],
     }),
   },
+  "pseudo-element": {
+    rules: [
+      ["/::" + PSEUDO_ELEMENT_PATTERN + "/"],
+    ],
+    process: (children) => ({
+      type: "pseudo-element",
+      lexeme: children[0],
+    }),
+  },
   "id-selector": {
     rules: [
       [/#[a-z][a-z0-9_\-]*/],
@@ -207,13 +200,6 @@ export const cssGrammar = {
     ],
     process: copyLexemeFromChild,
     params: ["type-selector"],
-  },
-  "nested-statement": {
-    rules: [
-      ["declaration"],
-      ["ruleset"],
-    ],
-    process: copyFromChild,
   },
   "declaration": {
     rules: [
