@@ -26,7 +26,7 @@ export const query = new DevFunction(
     {callerNode, execEnv, interpreter, liveModule},
     [isPublic, route, isPost = false, postData, options = {}]
   ) {
-    isPost = isPublic ? false : isPost;
+    isPost = (options.isPublic ?? isPublic) ? false : isPost;
 
     // If isPost == true, check if the current environment is allowed to post.
     if (isPost) {
@@ -34,20 +34,16 @@ export const query = new DevFunction(
     }
 
     // Parse the route, extracting parameters and qualities from it.
-    let isLocked, upNodeID, homeDirID, filePath, fileExt, queryPathArr;
+    let isLocked, upNodeID, homeDirID, filePath, fileExt, queryPathArr,
+      queryOptions, castingPathArr;
     try {
     [
-      isLocked, upNodeID, homeDirID, filePath, fileExt, queryPathArr
+      isLocked, upNodeID, homeDirID, filePath, fileExt, queryPathArr,
+      queryOptions, castingPathArr,
     ] = parseRoute(route);
     }
     catch(errMsg) {
       throw new RuntimeError(errMsg, callerNode, execEnv);
-    }
-  
-    // If the route is locked, check that you have admin privileges on the
-    // directory of homeDirID.
-    if (isLocked) {
-      checkAdminPrivileges(homeDirID, callerNode, execEnv);
     }
 
     // If on the client side, simply forward the request to the server via the
@@ -58,6 +54,12 @@ export const query = new DevFunction(
         upNodeID, callerNode, execEnv
       );
       return [result];
+    }
+
+    // If the route is locked, check that you have admin privileges on the
+    // directory of homeDirID.
+    if (isLocked) {
+      checkAdminPrivileges(homeDirID, callerNode, execEnv);
     }
     
     // Else branch according to the file type and get the right module for
