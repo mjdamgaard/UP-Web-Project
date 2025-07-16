@@ -4,7 +4,7 @@ import {
 } from "../../../../interpreting/ScriptInterpreter.js";
 
 import {
-  ADMIN_PRIVILEGES_FLAG, REQUEST_ORIGIN_FLAG, NEXT_REQUEST_ORIGIN_FLAG
+  ADMIN_PRIVILEGES_FLAG, REQUESTING_SMF_ROUTE_FLAG, CURRENT_SMF_ROUTE_FLAG
 } from "../flags.js";
 
 
@@ -212,7 +212,8 @@ export async function query(
     // SMF (server module function). Note that these elevated privileges can
     // only be used to post to files within the called SM's home directory, and
     // that all previous such privileges are removed by the new flag. We also
-    // set a "next-request-origin" flag with the current /callSMF route, which
+    // set a "current-SMF-route" flag with the current /callSMF route ...
+  // , which
     // means that if the given SMF calls another server module, the CORS-
     // like system will treat the calls as originating from that SMF, and not
     // whatever current module (be it a JSX component module or another SMF)
@@ -226,18 +227,20 @@ export async function query(
         `No function of name '${alias}' is exported from ${route}`,
         callerNode, execEnv
       );
-      // The new "request-origin" flag is copied as is from the former "next-
-      // request-origin" flag, but the new "next-request-origin" flag is
-      // constructed to be the current route, except that inputArr is appended/
-      // replaced after '/callSMF/' as a plain-text JSON array, not base-64-
-      // encoded.
-      let newReqOrigin = execEnv.getFlag(NEXT_REQUEST_ORIGIN_FLAG);
-      let newNextReqOrigin = `${upNodeID}/${homeDirID}/${filePath}/callSMF/` +
+      // The new "current-SMF-route" flag is copied as is from the former
+      // "current-SMF-route" flag, and the old "current-SMF-route" flag becomes
+      // the "requesting-SMF-route" flag instead. Calling it "routes" is
+      // actually not entirely right as these "SMF routes" are actually equal
+      // to the given route only up until the '/callSMF' part, and then the
+      // inputArr is always appended as a plain-text JSON array (not base-64-
+      // encoded) after that.
+      let currentSMFRoute = `${upNodeID}/${homeDirID}/${filePath}/callSMF/` +
         JSON.stringify(inputArr);
+      let requestingSMFRoute = execEnv.getFlag(CURRENT_SMF_ROUTE_FLAG);
       let result = interpreter.executeFunction(
         fun, inputArr, callerNode, execEnv, undefined, [
-          [NEXT_REQUEST_ORIGIN_FLAG, newNextReqOrigin],
-          [REQUEST_ORIGIN_FLAG, newReqOrigin],
+          [CURRENT_SMF_ROUTE_FLAG, currentSMFRoute],
+          [REQUESTING_SMF_ROUTE_FLAG, requestingSMFRoute],
           [ADMIN_PRIVILEGES_FLAG, homeDirID],
         ]
       );

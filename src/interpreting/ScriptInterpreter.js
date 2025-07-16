@@ -369,10 +369,10 @@ export class ScriptInterpreter {
       let liveModulePromise = new Promise((resolve, reject) => {
         this.executeModule(
           submoduleNode, lexArr, strPosArr, script, modulePath, globalEnv
-        ).then(
-          ([liveModule]) => resolve(liveModule)
         ).catch(
           err => reject(err)
+        ).then(
+          ([liveModule]) => resolve(liveModule)
         );
       });
       liveModules.set(modulePath, liveModulePromise);
@@ -2436,7 +2436,7 @@ export class PromiseObject extends AbstractObject {
         );
       }).catch(err => console.error(err));
     }
-
+// TODO: Add onRejected callback argument to then().
     this.members["then"] = new DevFunction(
       "then", {}, ({callerNode, execEnv, interpreter}, [callbackFun]) => {
         interpreter.thenPromise(

@@ -23,8 +23,9 @@ export function checkIfCanPost(node, env) {
 }
 
 
-export const REQUEST_ORIGIN_FLAG = Symbol("request-origin");
-export const NEXT_REQUEST_ORIGIN_FLAG = Symbol("next-request-origin");
+export const REQUESTING_SMF_ROUTE_FLAG = Symbol("requesting-SMF-route");
+export const CURRENT_SMF_ROUTE_FLAG = Symbol("current-SMF-route");
+export const REQUESTING_COMPONENT_FLAG = Symbol("requesting-component");
 export const CLIENT_TRUST_FLAG = Symbol("client-trust");
 
 

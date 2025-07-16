@@ -2,9 +2,12 @@
 import {
   DevFunction, Exception, ClassObject, exceptionClass,
 } from '../interpreting/ScriptInterpreter.js';
-import {CLIENT_TRUST_FLAG, REQUEST_ORIGIN_FLAG} from './query/src/flags.js';
+import {
+  CLIENT_TRUST_FLAG, REQUESTING_SMF_ROUTE_FLAG, CURRENT_SMF_ROUTE_FLAG, 
+} from './query/src/flags.js';
 
 
+// TODO: Correct and extend this library to use the new flags correctly.  
 
 export const checkRequestOrigin = new DevFunction(
   "checkRequestOrigin", {typeArr: ["boolean", "array"]},
@@ -24,7 +27,7 @@ export const checkRequestOrigin = new DevFunction(
     // Else see if the request origin matches any one in the whitelist, where a
     // trailing '*' in a whitelisted request origin string is a wildcard that
     // means that all extensions of that string is allowed as well.
-    let requestOrigin = execEnv.getFlag(REQUEST_ORIGIN_FLAG);
+    let requestOrigin = undefined//execEnv.getFlag(REQUEST_ORIGIN_FLAG);
     let isAllowed = whitelist.some(str => {
       if (str.at(-1) === "*") {
         let requiredSubstring = str.slice(0, -1);

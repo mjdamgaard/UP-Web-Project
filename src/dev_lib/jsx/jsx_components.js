@@ -6,7 +6,7 @@ import {
   FunctionObject, Exception, getStringOrSymbol, PromiseObject,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
-  CAN_POST_FLAG, CLIENT_TRUST_FLAG, NEXT_REQUEST_ORIGIN_FLAG
+  CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
 } from "../query/src/flags.js";
 
 import {JSXAppStyler} from "./jsx_styling.js";
@@ -104,7 +104,8 @@ class JSXInstance {
     this.key = getString(key, callerNode, callerEnv);
     this.parentInstance = parentInstance;
     this.settings = settings ?? this.parentInstance?.settings;
-    this.isRequestOrigin = componentModule.get("isRequestOrigin");
+    this._isRequestOrigin = componentModule.get("isRequestOrigin");
+    this.isIsolated = undefined;
     this.domNode = undefined;
     this.isDecorated = undefined;
     this.childInstances = new Map();
@@ -123,12 +124,12 @@ class JSXInstance {
   get componentPath() {
     return this.componentModule.modulePath;
   }
+  get isRequestOrigin() {
+    return this.isIsolated ? true : this._isRequestOrigin;
+  }
   get requestOrigin() {
-    if (this.isRequestOrigin)
-      return this.componentPath;
-    else {
-      return this.parentInstance?.requestOrigin;
-    }
+    return this.isRequestOrigin ? this.componentPath :
+      this.parentInstance?.requestOrigin;
   }
 
 
@@ -187,14 +188,17 @@ class JSXInstance {
 
       // And store the refs object.
       this.refs = props["refs"] ?? {};
+
+      // Also set this.isIsolated to true if 'isolated' is a truthy prop.
+      this.isIsolated = props["isolated"] ? true : false;
     }
 
     // Call settings.style() to get a function with which to style the DOM node
-    // at the end of the method, as well as a new styleProps object to hand
-    // down to the child instances. But if style() is not ready yet for this
-    // component, which will mean that a PromiseObject is returned, render an
-    // empty template element with s "pending-style" class, and wait for the
-    // promise to resolve before queuing a rerender of this instance.
+    // in the end, as well as a new styleProps object to hand down to the child
+    // instances. But if style() is not ready yet for this component, which
+    // will mean that a PromiseObject is returned, render an empty template
+    // element with a "pending-style" class, and wait for the promise to
+    // resolve before queuing a rerender of this instance.
     let transformStyle;
     let styleRes = this.settings.style(
       callerNode, callerEnv, this.componentModule, props, state, styleProps
@@ -212,7 +216,7 @@ class JSXInstance {
       });
       return newDOMNode;
     }
-    [transformStyle, styleProps] = styleRes;
+    [transformStyle, styleProps] = styleRes ?? [];
 
 
     // Then get the component module's render() function.
@@ -467,16 +471,17 @@ class JSXInstance {
             if (!(val instanceof FunctionObject)) {
               break;
             }
-            newDOMNode.onclick = () => {
-              // Get the request origin, and whether the client trusts that
-              // origin (which is a JSX component).
-              let requestOrigin = this.requestOrigin;
-              if (requestOrigin) {
-                this.settingsStore.get(
-                  requestOrigin, callerNode, callerEnv
-                ).catch(
-                  err => console.error(err)
-                ).then(({isTrusted}) => {
+            newDOMNode.onclick = async () => {
+              try {
+                // Get the request origin, and whether the client trusts that
+                // origin (which is a JSX component).
+                let requestOrigin = this.requestOrigin;
+                if (requestOrigin) {
+                  let isTrusted = await getSetting(
+                    this.settings, "isTrusted", [requestOrigin],
+                    interpreter, callerNode, callerEnv
+                  );
+
                   // Then execute the function object held in val, with
                   // elevated privileges that allows the function to make POST-
                   // like requests.
@@ -485,20 +490,22 @@ class JSXInstance {
                     new JSXInstanceInterface(this), [
                       CAN_POST_FLAG,
                       [COMPONENT_INSTANCE_FLAG, this],
-                      [NEXT_REQUEST_ORIGIN_FLAG, requestOrigin],
+                      [REQUESTING_COMPONENT_FLAG, requestOrigin],
                       [CLIENT_TRUST_FLAG, isTrusted],
                     ]
                   );
-                });
-              }
-              else {
-                interpreter.executeFunctionOffSync(
-                  val, [], callerNode, callerEnv,
-                  new JSXInstanceInterface(this), [
-                    CAN_POST_FLAG,
-                    [COMPONENT_INSTANCE_FLAG, this],
-                  ]
-                );
+                }
+                else {
+                  interpreter.executeFunctionOffSync(
+                    val, [], callerNode, callerEnv,
+                    new JSXInstanceInterface(this), [
+                      CAN_POST_FLAG,
+                      [COMPONENT_INSTANCE_FLAG, this],
+                    ]
+                  );
+                }
+              } catch (err) {
+                console.error(err);
               }
             };
             break;
@@ -967,6 +974,26 @@ function deepCopyExceptRefs(props, node, env) {
   return ret;
 }
 
+
+
+
+export async function getSetting(
+  settings, name, inputArr = undefined, interpreter, node, env
+) {
+  let val = settings[name];
+  if (val instanceof PromiseObject) {
+    val = await val.promise;
+  }
+  if (val instanceof FunctionObject) {
+    val = interpreter.executeFunctionOffSync(
+      val, inputArr ?? [], node, env, settings
+    );
+    if (val instanceof PromiseObject) {
+      val = await val.promise;
+    }
+  }
+  return val;
+}
 
 
 
