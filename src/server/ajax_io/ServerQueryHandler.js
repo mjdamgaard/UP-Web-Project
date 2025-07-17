@@ -31,14 +31,14 @@ export class ServerQueryHandler {
 
 
   async queryServerFromScript(
-    isPublic, route, isPost, postData, options, upNodeID, node, env
+    isPrivate, route, isPost, postData, options, upNodeID, node, env
   ) {
     payGas(node, env, {fetch: 1});
-    let flags = isPublic ? undefined :
-      FlagTransmitter.getTransmittedFlags(env);
+    let flags = isPrivate ? FlagTransmitter.getTransmittedFlags(env) :
+      undefined;
     try {
       return await this.queryServer(
-        isPublic, route, isPost, postData, options, upNodeID, flags
+        isPrivate, route, isPost, postData, options, upNodeID, flags
       );
     }
     catch(err) {
@@ -51,7 +51,7 @@ export class ServerQueryHandler {
 
 
   async queryServer(
-    isPublic, route, isPost, postData, options, upNodeID, flags
+    isPrivate, route, isPost, postData, options, upNodeID, flags
   ) {
     if (upNodeID !== OWN_UP_NODE_ID) throw new NetworkError(
       `Unrecognized UP node ID: "${upNodeID}" (queries to routes of foreign ` +
@@ -61,7 +61,7 @@ export class ServerQueryHandler {
     // Construct the reqBody.
     let reqData = {};
     let headers = {};
-    if (!isPublic) {
+    if (isPrivate) {
       if (options !== undefined) reqData.options = options;
       if (flags !== undefined) reqData.flags = flags;
 
@@ -85,7 +85,7 @@ export class ServerQueryHandler {
     }
 
 
-    return await this.request(route, isPublic, reqData, headers);
+    return await this.request(route, !isPrivate, reqData, headers);
   }
 
 

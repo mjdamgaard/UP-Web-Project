@@ -156,6 +156,11 @@ async function requestHandler(req, res, returnGasRef) {
     "Server only accepts the GET and POST methods"
   );
 
+  // TODO: Check that route doesn't contain '/>'. ... No, not after all, but
+  // instead just make sure to serialize the result afterwards if/in case it
+  // does contain a '/>', or what I will end up using.. ..I will use the
+  // semicolon..
+
   // Get optional isPost and postData, as well as the optional user credentials
   // (username and password/token), and the options parameter.
   let {

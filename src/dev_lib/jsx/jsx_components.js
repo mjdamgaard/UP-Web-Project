@@ -193,17 +193,22 @@ class JSXInstance {
       this.isIsolated = props["isolated"] ? true : false;
     }
 
-    // Call settings.style() to get a function with which to style the DOM node
-    // in the end, as well as a new styleProps object to hand down to the child
-    // instances. But if style() is not ready yet for this component, which
-    // will mean that a PromiseObject is returned, render an empty template
-    // element with a "pending-style" class, and wait for the promise to
-    // resolve before queuing a rerender of this instance.
-    let transformStyle;
-    let styleRes = this.settings.style(
+    // Call settings.style() to get a styleProps object with a transform
+    // property that can be used to style the DOM nodes of the component
+    // instance. This styleProps is also passed down to the children instances,
+    // as it might contain data used for determining the styles, and this data
+    // might change between parent and child. Note this settings.style() is
+    // free to alter the document in other ways, and in particular by adding
+    // required <style> elements to the head of the document.
+    styleProps = this.settings.style(
       callerNode, callerEnv, this.componentModule, props, state, styleProps
     );
-    if (styleRes instanceof PromiseObject) {
+
+    // If style() is not ready yet for this component, which will mean that a
+    // PromiseObject is returned, render an empty template element with a
+    // "pending-style" class, and wait for the promise to  resolve before
+    // queuing a rerender of this instance.
+    if (styleProps instanceof PromiseObject) {
       let newDOMNode = document.createElement("template");
       newDOMNode.setAttribute("class", "pending-style");
       if (replaceSelf && this.domNode) {
@@ -216,7 +221,6 @@ class JSXInstance {
       });
       return newDOMNode;
     }
-    [transformStyle, styleProps] = styleRes ?? [];
 
 
     // Then get the component module's render() function.
@@ -292,9 +296,14 @@ class JSXInstance {
     }
     this.domNode = newDOMNode;
 
-    // And before returning the new DOM node, we use transformStyle() to style
-    // the DOM node (by giving it classes and/or inline styles).
-    transformStyle(newDOMNode);
+    // And before returning the new DOM node, we use styleProps.transform to
+    // style the DOM node (by giving it classes and/or inline styles).
+    let styleTransform = styleProps.styleTransform;
+    if (styleTransform instanceof StyleTransform) {
+      styleTransform.transformDOMNode(
+        newDOMNode, ownDOMNodes, props, state, callerNode, callerEnv
+      );
+    }
 
     // Finally, return the instance's new DOM node.
     return newDOMNode;
@@ -872,13 +881,26 @@ class JSXInstanceInterface extends AbstractObject {
 
 
 
-
+// DOMNodeObjects can be returned by the render() functions of dev components.
 export class DOMNodeObject extends AbstractObject {
   constructor(domNode) {
     super("DOMNode");
     this.domNode = domNode;
   }
 }
+
+
+
+// StyleTransform is an abstract class that is meant to be extended by styling
+// systems in order to define the transformations that the DOM nodes of
+// component instances might undergo in order to style them. 
+export class StyleTransform extends AbstractObject {
+  constructor() {
+    super("StyleTransform");
+    this.transformDOMNode = undefined;
+  }
+}
+
 
 
 

@@ -1,13 +1,15 @@
 
 import {MainDBConnection, getProcCallSQL} from "./DBConnection.js";
-import {payGas, RuntimeError} from '../../interpreting/ScriptInterpreter.js';
+import {
+  payGas, NetworkError, ArgTypeError
+} from '../../interpreting/ScriptInterpreter.js';
 
 
+import * as directoriesMod from "./src/filetypes/directories.js";
+import * as textFilesMod from "./src/filetypes/text_files.js";
+import * as relationalTableFilesMod from "./src/filetypes/rel_tables.js";
+import * as fullTextTableFilesMod from "./src/filetypes/full_text_tables.js";
 
-// TODO: The current impl. of DBQueryHandler might need a refactoring at some
-// point. (It was first made when I thought I would cache almost all "fetch"
-// (GET-like, i.e.) queries automatically, and not just the .js and .jsx
-// files.) The same thing also applies for the ServerQueryHandler as well.
 
 
 export class DBQueryHandler {
@@ -24,12 +26,61 @@ export class DBQueryHandler {
   }
 
 
+  async queryDBFromScript(
+    route, isPost, postData, options, fileExt, node, env
+  ) {
+    let filetypeModule;
+    let mimeType = "application/json";
+    switch (fileExt) {
+      case undefined:
+        filetypeModule = directoriesMod;
+        break;
+      case "js":
+      case "jsx":
+      case "txt":
+      case "html":
+      case "xml":
+      case "svg":
+      case "scss":
+      case "md":
+        // mimeType = "text/plain";
+      case "json":
+        filetypeModule = textFilesMod;
+        break;
+      case "att":
+      case "bbt":
+      case "bt":
+      case "ct":
+        filetypeModule = relationalTableFilesMod;
+        break;
+      case "ftt":
+        filetypeModule = fullTextTableFilesMod;
+        break;
+      // (More file types can be added here in the future.)
+      default:
+        throw new ArgTypeError(
+          `Unrecognized file type: ".${fileExt}"`,
+          callerNode, execEnv
+        );
+    }
+
+    // Query the database via the filetypeModule, and return the output (which
+    // will often be [result, wasReady] (on success) server-side, and will
+    // simply be result client-side).
+    result = await filetypeModule.query(
+      {callerNode, execEnv, interpreter, liveModule},
+      route, isPost, postData, options,
+      upNodeID, homeDirID, filePath, fileExt, queryPathArr,
+    );
+    return [result, mimeType];
+  }
+
   // queryDBProc() handles queries that is implemented via a single stored DB
   // procedure.
   async queryDBProc(
     procName, paramValArr, route, upNodeID, {conn}, node, env,
   ) {
-    if (upNodeID !== "1") throw new RuntimeError(
+    if (upNodeID !== "1") throw new NetworkError(
       `Unrecognized UP node ID, "${upNodeID}", in "${route}" (queries to ` +
       "routes of foreign UP nodes are not implemented yet)",
       node, env
@@ -69,6 +120,7 @@ export class DBQueryHandler {
 
 
 
+
 // // queryDBProcOrCache() handles queries that is implemented via a single DB
 // // procedure, and where the whole result is stored directly at the route in
 // // the cache, or simply not cached at all, namely when the noCache parameter
@@ -78,7 +130,7 @@ export class DBQueryHandler {
 //   {maxAge, noCache, lastUpToDate, conn},
 //   node, env,
 // ) {
-//   if (upNodeID !== "A") throw new RuntimeError(
+//   if (upNodeID !== "A") throw new NetworkError(
 //     `Unrecognized UP node ID: "${upNodeID}" (queries to routes of foreign ` +
 //     "UP nodes are not implemented yet)",
 //     node, env
