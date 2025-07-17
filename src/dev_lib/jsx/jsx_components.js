@@ -46,7 +46,10 @@ export const createJSXApp = new DevFunction(
     // Promises, from the settingsRoute. (If the route is a /call route to a
     // dev function, then that function can look in localStorage for user
     // preferences if the user is logged in.)
-    let settings = await interpreter.fetch(settingsRoute);
+    let settingsMod = await interpreter.import(settingsRoute);
+    let settingsClass = settingsMod.get("default");
+    let settings; // TODO: Implement the 'new' operator, and make instantiate
+    // settings from settingsClass here.
 
     // If settings.style is a promise, it has to be a "self-replacing promise"
     // (which is true for all properties of settings), meaning that
@@ -57,10 +60,12 @@ export const createJSXApp = new DevFunction(
       style = await style.promise;
     }
 
-    // Call style() with callerNode and execEnv as the only two arguments in
-    // order to initiate the styling system, and if the call returns a promise,
-    // wait for it to resolve before continuing.
-    let styleProps = style(callerNode, callerEnv);
+    // Call style() with no arguments in order to initiate the styling system,
+    // and if the call returns a promise, wait for it to resolve before
+    // continuing.
+    let styleProps = interpreter.executeFunction(
+      style, [], callerNode, callerEnv, settings
+    );
     if (styleProps instanceof PromiseObject) {
       styleProps = await styleProps.promise;
     }
@@ -200,8 +205,9 @@ class JSXInstance {
     // might change between parent and child. Note this settings.style() is
     // free to alter the document in other ways, and in particular by adding
     // required <style> elements to the head of the document.
-    styleProps = this.settings.style(
-      callerNode, callerEnv, this.componentModule, props, state, styleProps
+    styleProps = interpreter.executeFunction(
+      this.settings.style, [this.componentModule, props, state, styleProps],
+      callerNode, callerEnv, this.settings
     );
 
     // If style() is not ready yet for this component, which will mean that a
@@ -209,13 +215,16 @@ class JSXInstance {
     // "pending-style" class, and wait for the promise to  resolve before
     // queuing a rerender of this instance.
     if (styleProps instanceof PromiseObject) {
-      let newDOMNode = document.createElement("template");
-      newDOMNode.setAttribute("class", "_pending-style");
-      if (replaceSelf && this.domNode) {
-        this.domNode.replaceWith(newDOMNode);
-        this.updateDecoratingAncestors(newDOMNode);
+      let newDOMNode;
+      if (this.domNode) {
+        this.domNode.classList.add("_pending-style");
+        return this.domNode;
       }
-      this.domNode = newDOMNode;
+      else {
+        newDOMNode = document.createElement("template");
+        newDOMNode.setAttribute("class", "_pending-style");
+        this.domNode = newDOMNode;
+      }
       styleRes.promise.then(() => {
         this.queueRerender(interpreter);
       });
