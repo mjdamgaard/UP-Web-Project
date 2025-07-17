@@ -30,26 +30,6 @@ export class ServerQueryHandler {
   }
 
 
-  async queryServerFromScript(
-    isPrivate, route, isPost, postData, options, upNodeID, node, env
-  ) {
-    payGas(node, env, {fetch: 1});
-    let flags = isPrivate ? FlagTransmitter.getTransmittedFlags(env) :
-      undefined;
-    try {
-      return await this.queryServer(
-        isPrivate, route, isPost, postData, options, upNodeID, flags
-      );
-    }
-    catch(err) {
-      if (err instanceof NetworkError) {
-        throw new InterpreterNetworkError(err.msg, node, env);
-      }
-      throw err;
-    }
-  }
-
-
   async queryServer(
     isPrivate, route, isPost, postData, options, upNodeID, flags
   ) {
@@ -147,7 +127,7 @@ export class ServerQueryHandler {
     }
     else {
       let mimeType = response.headers.get("Content-Type");
-      return fromMIMEType(responseText, mimeType);
+      return unSerialize(responseText, mimeType);
     }
   }
 
@@ -181,7 +161,7 @@ export class ServerQueryHandler {
 
 
 
-function fromMIMEType(val, mimeType) {
+function unSerialize(val, mimeType) {
   if (mimeType === "text/plain") {
     return val;
   }
@@ -193,7 +173,7 @@ function fromMIMEType(val, mimeType) {
     }
   }
   else throw (
-    `fromMIMEType(): Unrecognized/un-implemented MIME type: ${mimeType}`
+    `unSerialize(): Unrecognized/un-implemented MIME type: ${mimeType}`
   );
 }
 

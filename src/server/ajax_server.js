@@ -12,7 +12,7 @@ import {getData} from './user_input/getData.js';
 import {
   ScriptInterpreter, jsonStringify,
 } from "../interpreting/ScriptInterpreter.js";
-import {DBQueryHandler} from "./db_io/DBQueryHandler.js";
+import {queryDB} from '../dev_lib/query/src/queryDB.js';
 import {UserDBConnection, MainDBConnection} from './db_io/DBConnection.js';
 import {FlagTransmitter} from "../interpreting/FlagTransmitter.js";
 import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
@@ -82,10 +82,9 @@ const mainScript = fs.readFileSync(mainScriptPath, "utf8");
 
 const [syntaxTree, lexArr, strPosArr] = scriptParser.parse(mainScript);
 const parsedMainScript = syntaxTree.res;
-const dbQueryHandler = new DBQueryHandler();
 
 const scriptInterpreter = new ScriptInterpreter(
-  true, undefined, dbQueryHandler, staticDevLibs, undefined
+  true, undefined, queryDB, staticDevLibs, undefined
 );
 
 // Locked routes are all routes where any file name, directory name, or
@@ -249,36 +248,31 @@ async function requestHandler(req, res, returnGasRef) {
   let parsedScripts = new Map([
     [virMainPath, [parsedMainScript, lexArr, strPosArr, mainScript]]
   ]);
-  let [output, log] = await scriptInterpreter.interpretScript(
+  let [result, log] = await scriptInterpreter.interpretScript(
     gas, undefined, virMainPath, [isPublic, route, isPost, postData, options],
     flags, {userIDContext: userIDContext}, parsedScripts,
   );
-  let [result, mimeType] = output ?? [];
 
 
   // If the script logged an error, set an error status and write back the
   // stringified log to the client.
   if (log.error) {
-    // TODO: Parse and reformat log hee, before handing it to JSON.stringify().
       endWithError(res, log.error);
   }
 
   // Else if returnLog is true, write back an array containing the result,
   // wasReady, and also the log.
   else if (returnLog) {
-    // If the result is not a text, null the result, returning only the log.
-    if (mimeType !== "text/plain" && mimeType !== "application/json") {
-      result = null;
-    }
     res.writeHead(200, {'Content-Type': 'application/json'});
-    res.end(JSON.stringify([result, log]));
+    res.end(jsonStringify([result, log]));
   }
 
   // And else simply write back the result with the specified MIME type, after
   // parsing the result from query() and turning it into that MIME type. (Note
   // that we should never use the MIME type of text/javascript or text/html.)
   else {
-    result = toMIMEType(result, mimeType);
+    let mimeType;
+    [result, mimeType] = serialize(result);
     res.writeHead(200, {'Content-Type': mimeType});
     res.end(result);
   }
@@ -287,22 +281,31 @@ async function requestHandler(req, res, returnGasRef) {
 
 
 
-// toMIMEType() converts a user-defined value to a string of a certain MIME
-// type. (This might need a refactoring if we can't use req.end() to send a
-// binary file stream.) The corresponding fromMIMEType() is located in
-// ServerQueryHandler.js.
-function toMIMEType(val, mimeType) {
-  if (mimeType === "text/plain") {
-    return val.toString();
-  }
-  else if (mimeType === "application/json") {
-    return jsonStringify(val);
+// serialize() converts a user-defined value to a string or a binary buffer
+// (once this is implemented, and assuming that res.end() can handle a binary
+// buffer) and returns along with that the MIME type to pair with it.
+function serialize(val) {
+  if (typeof val == "string") {
+    return [val, "text/plain"];
   }
   else {
-      throw `toMIMEType(): Unrecognized/un-implemented MIME type: ${mimeType}`;
+    return [jsonStringify(val), "application/json"];
   }
+  // TODO: Implement other MIME types if and when needed. 
 }
 
+
+// function toMIMEType(val) {
+//   if (mimeType === "text/plain") {
+//     return val.toString();
+//   }
+//   else if (mimeType === "application/json") {
+//     return jsonStringify(val);
+//   }
+//   else {
+//       throw `toMIMEType(): Unrecognized/un-implemented MIME type: ${mimeType}`;
+//   }
+// }
 
 
 

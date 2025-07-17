@@ -3,14 +3,16 @@
 import {
   RuntimeError, payGas,
 } from "../../../../interpreting/ScriptInterpreter.js";
+import {DBQueryHandler} from "../../../server/db_io/DBQueryHandler.js";
+
+const dbQueryHandler = new DBQueryHandler();
 
 
 export async function query(
-  {callerNode, execEnv, interpreter},
+  {callerNode, execEnv},
   route, isPost, postData, options,
   upNodeID, homeDirID, filePath, fileExt, queryPathArr,
 ) {
-  let {dbQueryHandler} = interpreter;
 
   // If route equals just ".../<homeDirID>/<filePath>", without any query
   // path, throw.

@@ -38,7 +38,7 @@ export const query = new DevFunction(
     // and all of the subsequent parts are what we can call "casting paths",
     // which reinterprets/casts the queried result into something else.
     let route, castingPathArr;
-    [route, ...castingPathArr] = extendedRoute.split('/>');
+    [route, ...castingPathArr] = extendedRoute.split(';');
 
     // Parse the route, extracting parameters and qualities from it.
     let isLocked, upNodeID, homeDirID, filePath, fileExt, queryPathArr;
@@ -60,13 +60,15 @@ export const query = new DevFunction(
         checkAdminPrivileges(homeDirID, callerNode, execEnv);
       }
       result = await interpreter.dbQueryHandler.queryDBFromScript(
-        route, isPost, postData, options, fileExt, callerNode, execEnv
+        route, isPost, postData, options,
+        homeDirID, filePath, fileExt, queryPathArr,
+        callerNode, execEnv
       );
     }
 
     // Else query a server at the given UP node.
     else {
-      result = await interpreter.serverQueryHandler.queryServerFromScript(
+      result = await interpreter.queryServer(
         isPrivate, route, isPost, postData, options, upNodeID,
         callerNode, execEnv
       );
@@ -75,54 +77,6 @@ export const query = new DevFunction(
     // TODO: transform/cast the result if there are casting segments. 
 
     return result;
-
-
-    // Else branch according to the file type and get the right module for
-    // handling that file type.
-    let filetypeModule;
-    let mimeType = "application/json";
-    switch (fileExt) {
-      case undefined:
-        filetypeModule = directoriesMod;
-        break;
-      case "js":
-      case "jsx":
-      case "txt":
-      case "html":
-      case "xml":
-      case "svg":
-      case "scss":
-      case "md":
-        // mimeType = "text/plain";
-      case "json":
-        filetypeModule = textFilesMod;
-        break;
-      case "att":
-      case "bbt":
-      case "bt":
-      case "ct":
-        filetypeModule = relationalTableFilesMod;
-        break;
-      case "ftt":
-        filetypeModule = fullTextTableFilesMod;
-        break;
-      // (More file types can be added here in the future.)
-      default:
-        throw new LoadError(
-          `Unrecognized file type: ".${fileExt}"`,
-          callerNode, execEnv
-        );
-    }
-
-    // Query the database via the filetypeModule, and return the output (which
-    // will often be [result, wasReady] (on success) server-side, and will
-    // simply be result client-side).
-    result = await filetypeModule.query(
-      {callerNode, execEnv, interpreter, liveModule},
-      route, isPost, postData, options,
-      upNodeID, homeDirID, filePath, fileExt, queryPathArr,
-    );
-    return [result, mimeType];
   }
 );
 

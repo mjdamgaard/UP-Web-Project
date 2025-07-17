@@ -210,7 +210,7 @@ class JSXInstance {
     // queuing a rerender of this instance.
     if (styleProps instanceof PromiseObject) {
       let newDOMNode = document.createElement("template");
-      newDOMNode.setAttribute("class", "pending-style");
+      newDOMNode.setAttribute("class", "_pending-style");
       if (replaceSelf && this.domNode) {
         this.domNode.replaceWith(newDOMNode);
         this.updateDecoratingAncestors(newDOMNode);
@@ -315,7 +315,7 @@ class JSXInstance {
     if (error instanceof Exception) {
       console.error(getExtendedErrorMsg(error));
       let newDOMNode = document.createElement("span");
-      newDOMNode.setAttribute("class", "failed");
+      newDOMNode.setAttribute("class", "_failed");
       this.childInstances.forEach(child => child.dismount());
       this.childInstances = new Map();
       if (replaceSelf && this.domNode) {

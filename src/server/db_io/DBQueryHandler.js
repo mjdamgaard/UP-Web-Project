@@ -1,7 +1,7 @@
 
 import {MainDBConnection, getProcCallSQL} from "./DBConnection.js";
 import {
-  payGas, NetworkError, ArgTypeError
+  payGas, NetworkError
 } from '../../interpreting/ScriptInterpreter.js';
 
 
@@ -26,65 +26,9 @@ export class DBQueryHandler {
   }
 
 
-  async queryDBFromScript(
-    route, isPost, postData, options, fileExt, node, env
-  ) {
-    let filetypeModule;
-    let mimeType = "application/json";
-    switch (fileExt) {
-      case undefined:
-        filetypeModule = directoriesMod;
-        break;
-      case "js":
-      case "jsx":
-      case "txt":
-      case "html":
-      case "xml":
-      case "svg":
-      case "scss":
-      case "md":
-        // mimeType = "text/plain";
-      case "json":
-        filetypeModule = textFilesMod;
-        break;
-      case "att":
-      case "bbt":
-      case "bt":
-      case "ct":
-        filetypeModule = relationalTableFilesMod;
-        break;
-      case "ftt":
-        filetypeModule = fullTextTableFilesMod;
-        break;
-      // (More file types can be added here in the future.)
-      default:
-        throw new ArgTypeError(
-          `Unrecognized file type: ".${fileExt}"`,
-          callerNode, execEnv
-        );
-    }
-
-    // Query the database via the filetypeModule, and return the output (which
-    // will often be [result, wasReady] (on success) server-side, and will
-    // simply be result client-side).
-    result = await filetypeModule.query(
-      {callerNode, execEnv, interpreter, liveModule},
-      route, isPost, postData, options,
-      upNodeID, homeDirID, filePath, fileExt, queryPathArr,
-    );
-    return [result, mimeType];
-  }
-
   // queryDBProc() handles queries that is implemented via a single stored DB
   // procedure.
-  async queryDBProc(
-    procName, paramValArr, route, upNodeID, {conn}, node, env,
-  ) {
-    if (upNodeID !== "1") throw new NetworkError(
-      `Unrecognized UP node ID, "${upNodeID}", in "${route}" (queries to ` +
-      "routes of foreign UP nodes are not implemented yet)",
-      node, env
-    );
+  async queryDBProc(procName, paramValArr, route, {conn}) {
 
     // Get a connection the the main DB, if one is not provided as part of
     // options.
@@ -94,7 +38,6 @@ export class DBQueryHandler {
     // Generate the SQL (with '?' placeholders in it).
     let sql = getProcCallSQL(procName, paramValArr.length);
   
-    payGas(node, env, {dbRead: 1});
     let result = await conn.queryRowsAsArray(sql, paramValArr);
 
     // Release the connection again if it was not provided through options.

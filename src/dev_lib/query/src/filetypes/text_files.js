@@ -7,6 +7,10 @@ import {
   ADMIN_PRIVILEGES_FLAG, REQUESTING_SMF_ROUTE_FLAG, CURRENT_SMF_ROUTE_FLAG
 } from "../flags.js";
 
+import {DBQueryHandler} from "../../../server/db_io/DBQueryHandler.js";
+
+const dbQueryHandler = new DBQueryHandler();
+
 
 
 export async function query(
@@ -14,7 +18,6 @@ export async function query(
   route, isPost, postData, options = {},
   upNodeID, homeDirID, filePath, fileExt, queryPathArr
 ) {
-  let {dbQueryHandler} = interpreter;
 
   // If route equals just ".../<homeDirID>/<filePath>", without any query
   // path, return the text stored in the file.

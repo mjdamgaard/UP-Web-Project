@@ -48,12 +48,12 @@ export function parseString(str, node, env, parser) {
 export class ScriptInterpreter {
 
   constructor(
-    isServerSide = false, serverQueryHandler, dbQueryHandler,
+    isServerSide = false, queryServer, queryDB,
     staticDevLibs = new Map(), devLibURLs = new Map(),
   ) {
     this.isServerSide = isServerSide;
-    this.serverQueryHandler = serverQueryHandler;
-    this.dbQueryHandler = dbQueryHandler;
+    this.queryServer = queryServer;
+    this.queryDB = queryDB;
     this.staticDevLibs = staticDevLibs;
     this.devLibURLs = devLibURLs;
   }

@@ -2,17 +2,18 @@
 import {
   payGas, RuntimeError,
 } from "../../../../interpreting/ScriptInterpreter.js";
+import {DBQueryHandler} from "../../../server/db_io/DBQueryHandler.js";
+
+const dbQueryHandler = new DBQueryHandler();
 
 const LOCKED_ROUTE_REGEX = /\/_/;
 
 
 export async function query(
-  {callerNode, execEnv, interpreter},
+  {callerNode, execEnv},
   route, isPost, _postData, options,
   upNodeID, homeDirID, filePath, _fileExt, queryPathArr
 ) {
-  let {dbQueryHandler} = interpreter;
-
   if (!homeDirID) {
     // If route equals ".../mkdir/a=<adminID>", create a new home directory
     // with the requested adminID as the admin, or with the requesting user as

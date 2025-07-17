@@ -2,7 +2,7 @@
 import {
   ScriptInterpreter, deepCopy,
 } from "./interpreting/ScriptInterpreter.js";
-import {ServerQueryHandler} from "./server/ajax_io/ServerQueryHandler.js";
+import {queryServer} from "./dev_lib/query/src/queryServer.js";
 import {CAN_CREATE_APP_FLAG} from "./dev_lib/jsx/jsx_components.js";
 
 import {main as constructAccountMenu} from "./account_menu/account_menu.js"
@@ -81,10 +81,8 @@ urlContext.set({pathname: pathname, search: search, hash: hash, state: {}});
 
 
 
-const serverQueryHandler = new ServerQueryHandler();
-
 const scriptInterpreter = new ScriptInterpreter(
-  false, serverQueryHandler, undefined, staticDevLibs, undefined
+  false, queryServer, undefined, staticDevLibs, undefined
 );
 
 
