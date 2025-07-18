@@ -18,7 +18,7 @@ import {FlagTransmitter} from "../interpreting/FlagTransmitter.js";
 import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
 
 import {
-  ADMIN_PRIVILEGES_FLAG, CAN_POST_FLAG,
+  ADMIN_PRIVILEGES_FLAG, CAN_POST_FLAG, USER_ID_FLAG,
 } from "../dev_lib/query/src/flags.js";
 
 import * as queryMod from "../dev_lib/query/query.js";
@@ -133,10 +133,10 @@ async function requestHandler(req, res, returnGasRef) {
   // requests the request body is a JSON object.
   let route = req.url;
   let reqParams = {};
-  let isPublic = true;
+  let isPrivate = false;
   if (req.method === "POST") {
-    // Set isPublic as false, and get and parse the request params.
-    isPublic = false;
+    // Set isPrivate as true, and get and parse the request params.
+    isPrivate = true;
     let reqBody = await getData(req);
     let isValidJSON = true;
     try {
@@ -154,11 +154,6 @@ async function requestHandler(req, res, returnGasRef) {
   else if (req.method !== "GET") throw new ClientError(
     "Server only accepts the GET and POST methods"
   );
-
-  // TODO: Check that route doesn't contain '/>'. ... No, not after all, but
-  // instead just make sure to serialize the result afterwards if/in case it
-  // does contain a '/>', or what I will end up using.. ..I will use the
-  // semicolon..
 
   // Get optional isPost and postData, as well as the optional user credentials
   // (username and password/token), and the options parameter.
@@ -194,17 +189,11 @@ async function requestHandler(req, res, returnGasRef) {
   if (userID) {
     returnGasRef[0] = returnGas;
   } else {
-    if (!isPublic) {
+    if (isPrivate) {
       endWithUnauthenticatedError(res);
       return;
     }
     gas = Object.assign({}, stdGetReqGas);
-  }
-  let userIDContext = {
-    val: userID,
-    get: function() {
-      return this.val;
-    },
   }
 
 
@@ -234,6 +223,9 @@ async function requestHandler(req, res, returnGasRef) {
     }
     flags.push([ADMIN_PRIVILEGES_FLAG, homeDirID]);
   }
+  if (userID) {
+    flags.push([USER_ID_FLAG, userID]);
+  }
 
   // Then call FlagTransmitter, with the optional reqFlags array determined by
   // the client, to get the flags which are raised initially for when the
@@ -249,8 +241,8 @@ async function requestHandler(req, res, returnGasRef) {
     [virMainPath, [parsedMainScript, lexArr, strPosArr, mainScript]]
   ]);
   let [result, log] = await scriptInterpreter.interpretScript(
-    gas, undefined, virMainPath, [isPublic, route, isPost, postData, options],
-    flags, {userIDContext: userIDContext}, parsedScripts,
+    gas, undefined, virMainPath, [route, isPost, postData, isPrivate, options],
+    flags, {}, parsedScripts,
   );
 
 

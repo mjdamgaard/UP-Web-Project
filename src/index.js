@@ -1,7 +1,5 @@
 
-import {
-  ScriptInterpreter, deepCopy,
-} from "./interpreting/ScriptInterpreter.js";
+import {ScriptInterpreter} from "./interpreting/ScriptInterpreter.js";
 import {queryServer} from "./dev_lib/query/src/queryServer.js";
 import {CAN_CREATE_APP_FLAG} from "./dev_lib/jsx/jsx_components.js";
 
@@ -55,25 +53,29 @@ class Context {
     this.val = val;
     this.subscriberCallbacks = [];
   }
-  get() {
-    return deepCopy(this.val);
+  getVal() {
+    return this.val;
   }
-  set(val) {
+  setVal(val) {
     this.val = val;
     this.subscriberCallbacks.forEach(callback => callback(val));
+  }
+  setMember(key, val) {
+    this.val[key] = val;
+    this.subscriberCallbacks.forEach(callback => callback(this.val));
   }
   addSubscriberCallback(callback) {
     this.subscriberCallbacks.push(callback);
   }
 }
 
-const userIDContext = new Context();
+const settingsContext = new Context();
 const urlContext = new Context();
 
 
 // Set up the account menu, used for account-related settings and user
 // preferences.
-constructAccountMenu(userIDContext);
+constructAccountMenu(settingsContext);
 
 // Set the url data for urlContext.
 let {pathname, search, hash} = window.location;
@@ -118,7 +120,7 @@ const flags = [CAN_CREATE_APP_FLAG];
 // Run the main script to create the app.
 scriptInterpreter.interpretScript(
   appGas, mainScript, undefined, [], flags,
-  {userIDContext: userIDContext, urlContext: urlContext},
+  {settingsContext: settingsContext, urlContext: urlContext},
 ).then(
   ([output, log]) => {
     console.log("UP app script exited with output and log:");

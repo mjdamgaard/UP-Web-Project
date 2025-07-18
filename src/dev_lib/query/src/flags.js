@@ -22,6 +22,8 @@ export function checkIfCanPost(node, env) {
   );
 }
 
+export const USER_ID_FLAG = Symbol("user-ID");
+
 
 export const REQUESTING_SMF_ROUTE_FLAG = Symbol("requesting-SMF-route");
 export const CURRENT_SMF_ROUTE_FLAG = Symbol("current-SMF-route");

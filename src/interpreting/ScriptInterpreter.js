@@ -12,7 +12,7 @@ export const OBJECT_PROTOTYPE = Object.getPrototypeOf({});
 const MAX_ARRAY_INDEX = Number.MAX_SAFE_INTEGER;
 const MINIMAL_TIME_GAS = 10;
 
-const TEXT_FILE_ROUTE_REGEX = /.+\.(jsx?|txt|json|html|xml|md|scss|)$/;
+const TEXT_FILE_ROUTE_REGEX = /.+\.(jsx?|txt|json|html|xml|svg|md|css|)$/;
 const SCRIPT_ROUTE_REGEX = /.+\.jsx?$/;
 
 const GAS_NAMES = {
@@ -388,8 +388,8 @@ export class ScriptInterpreter {
         modulePath, callerNode, callerEnv
       );
       let [text] = resultRow;
-      if (modulePath.slice(-5) === ".scss") {
-        return new SCSSModule(modulePath, text);
+      if (modulePath.slice(-5) === ".css") {
+        return new CSSModule(modulePath, text);
       } else {
         return text;
       }
@@ -602,14 +602,20 @@ export class ScriptInterpreter {
 
 
 
-  thenPromise(promise, callbackFun, node, env) {
+  thenPromise(promise, shouldCopy, callbackFun, node, env) {
     promise.then(res => {
+      if (shouldCopy) {
+        res = deepCopy(res);
+      }
       this.executeFunctionOffSync(callbackFun, [res], node, env);
     });
   }
 
-  catchPromise(promise, callbackFun, node, env) {
+  catchPromise(promise, shouldCopy, callbackFun, node, env) {
     promise.catch(err => {
+      if (shouldCopy) {
+        err = deepCopy(err);
+      }
     if (err instanceof Exception) {
       this.executeFunctionOffSync(callbackFun, [err.val], node, env);
     } else {
@@ -1160,11 +1166,6 @@ export class ScriptInterpreter {
                 }
               }
             );
-          case "new":
-            throw new RuntimeError(
-              "'new' operator not implemented yet",
-              expNode, environment
-            );
           default: throw (
             "ScriptInterpreter.evaluateExpression(): Unrecognized " +
             `operator: "${op}"`
@@ -1336,7 +1337,7 @@ export class ScriptInterpreter {
         if (expNode.callback) {
           let callback = this.evaluateExpression(expNode.callback, environment);
           this.thenPromise(
-            liveModulePromise, callback, expNode, environment
+            liveModulePromise, false, callback, expNode, environment
           );
         }
         ret = new PromiseObject(
@@ -2117,6 +2118,9 @@ export function deepCopy(value) {
     let ret = Object.create(value);
     ret.members = deepCopy(value.members);
     ret.proto = deepCopy(value.proto);
+    if (value instanceof PromiseObject) {
+      ret.isCopied = true;
+    }
     return ret;
   }
   let valProto = getPrototypeOf(value);
@@ -2371,9 +2375,9 @@ export class LiveModule extends AbstractObject {
   }
 }
 
-export class SCSSModule extends AbstractObject {
+export class CSSModule extends AbstractObject {
   constructor(modulePath, styleSheet) {
-    super("SCSSModule");
+    super("CSSModule");
     this.modulePath = modulePath;
     this.styleSheet = styleSheet;
     this.members["styleSheet"] = styleSheet;
@@ -2430,6 +2434,7 @@ export class PromiseObject extends AbstractObject {
   constructor(promiseOrFun, interpreter, node, env) {
     super("Promise");
     this.hasCatch = false;
+    this.isCopied = false;
     if (promiseOrFun instanceof Promise) {
       this.promise = promiseOrFun;
     }
@@ -2451,7 +2456,7 @@ export class PromiseObject extends AbstractObject {
     this.members["then"] = new DevFunction(
       "then", {}, ({callerNode, execEnv, interpreter}, [callbackFun]) => {
         interpreter.thenPromise(
-          this.promise, callbackFun, callerNode, execEnv
+          this.promise, this.isCopied, callbackFun, callerNode, execEnv
         );
         return this;
       }
@@ -2459,7 +2464,7 @@ export class PromiseObject extends AbstractObject {
     this.members["catch"] = new DevFunction(
       "catch", {}, ({callerNode, execEnv, interpreter}, [callbackFun]) => {
         interpreter.catchPromise(
-          this.promise, callbackFun, callerNode, execEnv
+          this.promise, this.isCopied, callbackFun, callerNode, execEnv
         );
         this.hasCatch = true;
         return this;

@@ -9,9 +9,6 @@ import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
 } from "../query/src/flags.js";
 
-import {JSXAppStyler} from "./jsx_styling.js";
-
-
 const CLASS_NAME_REGEX =
   /^ *((([a-z]|-_)[a-z0-9\-]*_)?[a-z][a-z0-9\-]* *)*$/;
 
@@ -20,7 +17,6 @@ export const CAN_CREATE_APP_FLAG = Symbol("can-create-app");
 
 export const APP_COMPONENT_PATH_FLAG = Symbol("app-component-path");
 export const COMPONENT_INSTANCE_FLAG = Symbol("component-instance");
-
 
 
 
@@ -50,23 +46,29 @@ export const createJSXApp = new DevFunction(
       settingsRoute, callerNode, execEnv
     );
     let settingsClass = settingsMod.get("default");
-    let settings; // TODO: Implement the 'new' operator, and make instantiate
-    // settings from settingsClass here.
+    if (!(settingsClass instanceof ClassObject)) throw new RuntimeError(
+      `The default export of ${settingsRoute} is not a class`,
+      callerNode, execEnv
+    );
+    let settings = settingsClass.getNewInstance([], callerNode, execEnv);
 
-    // If settings.style is a promise, it has to be a "self-replacing promise"
+    // If settings.styler is a promise, it has to be a "self-replacing promise"
     // (which is true for all properties of settings), meaning that
-    // settings.style will be changed into the promise's result after it
+    // settings.styler will be changed into the promise's result after it
     // resolves:
-    let style = settings.style;
-    if (style instanceof PromiseObject) {
-      style = await style.promise;
+    let styler = settings.styler;
+    if (styler instanceof PromiseObject) {
+      styler = await styler.promise;
     }
+    if (!(styler instanceof AppStyler)) throw new RuntimeError(
+      "The 'styler' setting was not an instance of the AppStyler class",
+      callerNode, execEnv
+    );
 
-    // Call style() with no arguments in order to initiate the styling system,
-    // and if the call returns a promise, wait for it to resolve before
-    // continuing.
-    let styleProps = interpreter.executeFunction(
-      style, [], callerNode, callerEnv, settings
+    // Call styler.initiate() in order to initiate the styling system, and if
+    // the call returns a promise, wait for it to resolve before continuing.
+    let styleProps = styler.initiate(
+      appComponent, props, callerNode, callerEnv
     );
     if (styleProps instanceof PromiseObject) {
       styleProps = await styleProps.promise;
@@ -901,6 +903,15 @@ export class DOMNodeObject extends AbstractObject {
 }
 
 
+// AppStyler is an abstract class that is meant to be extended by styling
+// systems.
+export class AppStyler extends AbstractObject {
+  constructor() {
+    super("AppStyler");
+    this.initiate = undefined;
+    this.getStyleProps = undefined;
+  }
+}
 
 // StyleTransform is an abstract class that is meant to be extended by styling
 // systems in order to define the transformations that the DOM nodes of
@@ -1034,9 +1045,10 @@ export async function getSetting(
 
 
 function addUserRelatedProps(props, jsxInstance, interpreter, env) {
-  let {contexts: {userIDContext}} = env.scriptVars;
-  let userID = userIDContext.get();
-  userIDContext.addSubscriberCallback((userID) => {
+  let {contexts: {settingsContext}} = env.scriptVars;
+  let userID = settingsContext.getVal();
+  settingsContext.addSubscriberCallback(() => {
+    let userID = settingsContext.getVal("userID");
     jsxInstance.changePropsAndRerender({userID: userID}, interpreter);
   });
   return {...props, userID: userID};
@@ -1044,7 +1056,7 @@ function addUserRelatedProps(props, jsxInstance, interpreter, env) {
 
 function addURLRelatedProps(props, jsxInstance, interpreter, env) {
   let {contexts: {urlContext}} = env.scriptVars;
-  let urlData = urlContext.get();
+  let urlData = urlContext.getVal();
   urlContext.addSubscriberCallback((urlData) => {
     jsxInstance.changePropsAndRerender({urlData: urlData}, interpreter);
   });

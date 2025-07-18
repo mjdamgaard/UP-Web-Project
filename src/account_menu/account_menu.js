@@ -2,13 +2,13 @@
 import {loginServerDomainURL} from "../server/config.js";
 
 
-export function main(userIDContext) {
+export function main(settingsContext) {
   // Determine whether the user is logged in or not (automatically treating the
   // user as logged out if the user session expires within a day). and set a
   // CSS class on #account-menu depending on this.
   let {userID, username, expTime} =
     JSON.parse(localStorage.getItem("userData") ?? "{}");
-  userIDContext.set(userID);
+  settingsContext.setMember("userID", userID);
 
   if (!expTime || expTime * 1000 < Date.now() + 86400000) {
     localStorage.removeItem("userData");
@@ -49,24 +49,24 @@ export function main(userIDContext) {
 
   // Add onclick events to the account menu items.
   document.getElementById("logout-item").onclick = () => {
-      logout(userIDContext);
+      logout(settingsContext);
   };
   document.getElementById("login-item").onclick = () => {
       document.getElementById("account-menu").classList.remove("open");
-      openLoginPage(userIDContext);
+      openLoginPage(settingsContext);
   };
   document.getElementById("create-account-item").onclick = () => {
       document.getElementById("account-menu").classList.remove("open");
-      openCreateAccountPage(userIDContext);
+      openCreateAccountPage(settingsContext);
   };
   document.getElementById("account-page-item").onclick = () => {
-      goToAccountPage(userIDContext);
+      goToAccountPage(settingsContext);
   };
 }
 
 
 
-function logout(userIDContext) {
+function logout(settingsContext) {
   let {userID, authToken} = JSON.parse(
     localStorage.getItem("userData") ?? "{}"
   );
@@ -74,7 +74,7 @@ function logout(userIDContext) {
     "logout", userID, {authToken: authToken}
   ).then(() => {
     localStorage.removeItem("userData");
-    userIDContext.set(undefined);
+    settingsContext.setMember("userID", undefined);
     document.getElementById("user-name-display").replaceChildren("");
     let accountMenu = document.getElementById("account-menu");
     accountMenu.classList.remove("open");
@@ -86,7 +86,7 @@ function logout(userIDContext) {
 
 
 
-function openLoginPage(userIDContext) {
+function openLoginPage(settingsContext) {
   let overlayPageContainer = document.getElementById("overlay-page-container");
   overlayPageContainer.classList.add("open");
   overlayPageContainer.innerHTML = `
@@ -136,7 +136,7 @@ function openLoginPage(userIDContext) {
         responseDisplay.replaceChildren("Incorrect password");
         return;
       }
-      userIDContext.set(userID);
+      settingsContext.setMember("userID", userID);
       localStorage.setItem("userData", JSON.stringify({
         userID: userID, username: username,
         authToken: authToken, expTime: expTime,
@@ -153,7 +153,7 @@ function openLoginPage(userIDContext) {
 
 
 
-function openCreateAccountPage(userIDContext) {
+function openCreateAccountPage(settingsContext) {
   let overlayPageContainer = document.getElementById("overlay-page-container");
   overlayPageContainer.classList.add("open");
   overlayPageContainer.innerHTML = `
@@ -209,7 +209,7 @@ function openCreateAccountPage(userIDContext) {
         responseDisplay.replaceChildren("Username already exists");
         return;
       }
-      userIDContext.set(userID);
+      settingsContext.setMember("userID", userID);
       localStorage.setItem("userData", JSON.stringify({
         userID: userID, username: username,
         authToken: authToken, expTime: expTime,
@@ -227,7 +227,7 @@ function openCreateAccountPage(userIDContext) {
 
 
 
-function goToAccountPage(userIDContext) {
+function goToAccountPage(settingsContext) {
   let overlayPageContainer = document.getElementById("overlay-page-container");
   overlayPageContainer.classList.add("open");
   overlayPageContainer.innerHTML = `

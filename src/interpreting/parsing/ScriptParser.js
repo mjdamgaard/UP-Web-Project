@@ -692,7 +692,7 @@ export const scriptGrammar = {
   "expression^(12)": {
     rules: [
       ["/\\+\\+|\\-\\-|delete/", "expression^(14)!"],
-      ["/!|~|\\+|\\-|typeof|void|new/", "expression^(13)!"],
+      ["/!|~|\\+|\\-|typeof|void/", "expression^(13)!"],
       ["expression^(13)"],
     ],
     process: (children, ruleInd) => {
