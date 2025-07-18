@@ -28,7 +28,10 @@ export class DBQueryHandler {
 
   // queryDBProc() handles queries that is implemented via a single stored DB
   // procedure.
-  async queryDBProc(procName, paramValArr, route, {conn}) {
+  async queryDBProc(procName, paramValArr, route, {conn}, node, env) {
+    // TODO: route is unused as of yet, but will be used if/when we implement
+    // a server-side cache, which we probably will at some point.
+    route = route; 
 
     // Get a connection the the main DB, if one is not provided as part of
     // options.
@@ -38,7 +41,16 @@ export class DBQueryHandler {
     // Generate the SQL (with '?' placeholders in it).
     let sql = getProcCallSQL(procName, paramValArr.length);
   
-    let result = await conn.queryRowsAsArray(sql, paramValArr);
+    let result;
+    try {
+      result = await conn.queryRowsAsArray(sql, paramValArr);
+    } catch (err) {
+      console.error(err);
+      throw new NetworkError(
+        "Database query failed internally",
+        node, env
+      );
+    }
 
     // Release the connection again if it was not provided through options.
     if (releaseAfter) {

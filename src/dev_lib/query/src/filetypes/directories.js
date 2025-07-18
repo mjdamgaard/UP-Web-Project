@@ -12,7 +12,7 @@ const LOCKED_ROUTE_REGEX = /\/_/;
 export async function query(
   {callerNode, execEnv},
   route, isPost, _postData, options,
-  upNodeID, homeDirID, filePath, _fileExt, queryPathArr
+  homeDirID, filePath, _fileExt, queryPathArr
 ) {
   if (!homeDirID) {
     // If route equals ".../mkdir/a=<adminID>", create a new home directory
@@ -35,7 +35,7 @@ export async function query(
       payGas(callerNode, execEnv, {mkdir: 1});
       let [[dirID] = []] = await dbQueryHandler.queryDBProc(
         "createHomeDir", [adminID],
-        route, upNodeID, options, callerNode, execEnv,
+        route, options, callerNode, execEnv,
       ) ?? [];
       return dirID;
     }
@@ -62,7 +62,7 @@ export async function query(
   if (!queryPathArr) {
     let filePathTable = await dbQueryHandler.queryDBProc(
       "readHomeDirDescendants", [homeDirID, 4000, 0],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     ) ?? [];
     return filePathTable.map(([filePath]) => filePath)
       .filter((filePath) => (!LOCKED_ROUTE_REGEX.test(filePath)));
@@ -75,7 +75,7 @@ export async function query(
   if (queryType === "_all") {
     let filePathTable = await dbQueryHandler.queryDBProc(
       "readHomeDirDescendants", [homeDirID, 4000, 0],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     ) ?? [];
     return filePathTable.map(([filePath]) => filePath);
   }
@@ -85,7 +85,7 @@ export async function query(
   if (queryType === "admin") {
     let [[adminID] = []] = await dbQueryHandler.queryDBProc(
       "readHomeDirAdminID", [homeDirID],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     ) ?? [];
     return adminID;
   }
@@ -104,7 +104,7 @@ export async function query(
     );
     let [[wasEdited] = []] = await dbQueryHandler.queryDBProc(
       "editHomeDir", [homeDirID, adminID],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     ) ?? [];
     return wasEdited;
   }
@@ -119,7 +119,7 @@ export async function query(
     );
     let [[wasDeleted] = []] = await dbQueryHandler.queryDBProc(
       "deleteHomeDir", [homeDirID],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     ) ?? [];
     return wasDeleted;
   }

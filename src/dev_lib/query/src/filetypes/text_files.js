@@ -11,12 +11,13 @@ import {DBQueryHandler} from "../../../server/db_io/DBQueryHandler.js";
 
 const dbQueryHandler = new DBQueryHandler();
 
+const ownUPNodeID = "1";
 
 
 export async function query(
   {callerNode, execEnv, interpreter},
   route, isPost, postData, options = {},
-  upNodeID, homeDirID, filePath, fileExt, queryPathArr
+  homeDirID, filePath, fileExt, queryPathArr
 ) {
 
   // If route equals just ".../<homeDirID>/<filePath>", without any query
@@ -24,7 +25,7 @@ export async function query(
   if (!queryPathArr) {
     let [[text] = []] = await dbQueryHandler.queryDBProc(
       "readTextFile", [homeDirID, filePath],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     ) ?? [];
     return text;
   }
@@ -43,7 +44,7 @@ export async function query(
     payGas(callerNode, execEnv, {dbWrite: text.length});
     let [[wasCreated] = []] = await dbQueryHandler.queryDBProc(
       "putTextFile", [homeDirID, filePath, text],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     ) ?? [];
     return wasCreated;
   }
@@ -56,7 +57,7 @@ export async function query(
     );
     let [[wasDeleted] = []] = await dbQueryHandler.queryDBProc(
       "deleteTextFile", [homeDirID, filePath],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     ) ?? [];
     return wasDeleted;
   }
@@ -74,22 +75,13 @@ export async function query(
       "No variable name provided",
       callerNode, execEnv
     );
-    // Import and execute the given JS module using interpreter.import(), and
-    // do so within a dev function with the "clear" flag, which removes all
-    // permission-granting flags for the module's execution environment.
-    let resultPromiseObj = interpreter.executeFunction(
-      new DevFunction(
-        undefined, {isAsync: true, flags: [CLEAR_FLAG]},
-        async ({interpreter}, []) => {
-          let liveModule = await interpreter.import(
-            `/1/${homeDirID}/${filePath}`, callerNode, execEnv
-          );
-          return liveModule.get(alias);
-        }
-      ),
-      [], callerNode, execEnv,
+
+    // Import and execute the given JS module using interpreter.import(),
+    // then return the export of the given alias.
+    let liveModule = await interpreter.import(
+      `/${ownUPNodeID}/${homeDirID}/${filePath}`, callerNode, execEnv
     );
-    return await resultPromiseObj.promise;
+    return liveModule.get(alias);
   }
 
   // If route equals ".../<homeDirID>/<filePath>/call/<alias>/" +
@@ -146,22 +138,20 @@ export async function query(
     // permission-granting flags for the module's execution environment. And
     // when the liveModule is gotten, get and execute the function, also within
     // the same enclosed execution environment.
-    return await (async() => {
-      let liveModule = await interpreter.import(
-        `/1/${homeDirID}/${filePath}`, callerNode, execEnv
-      );
-      let fun = liveModule.get(alias);
-      if (!(fun instanceof FunctionObject)) throw new RuntimeError(
-        `No function of name '${alias}' is exported from ${route}`
-      );
-      let result = interpreter.executeFunction(
-        fun, inputArr, callerNode, execEnv, undefined, [CLEAR_FLAG]
-      );
-      if (result instanceof PromiseObject) {
-        result = await result.promise;
-      }
-      return result;
-    })();
+    let liveModule = await interpreter.import(
+      `/${ownUPNodeID}/${homeDirID}/${filePath}`, callerNode, execEnv
+    );
+    let fun = liveModule.get(alias);
+    if (!(fun instanceof FunctionObject)) throw new RuntimeError(
+      `No function of name '${alias}' is exported from ${route}`
+    );
+    let result = interpreter.executeFunction(
+      fun, inputArr, callerNode, execEnv, undefined, [CLEAR_FLAG]
+    );
+    if (result instanceof PromiseObject) {
+      result = await result.promise;
+    }
+    return result;
   }
 
   // If route equals ".../<homeDirID>/<filePath>/callSMF/<alias>" +
@@ -223,7 +213,7 @@ export async function query(
     // made this /callSMF query.
     return await (async() => {
       let liveModule = await interpreter.import(
-        `/1/${homeDirID}/${filePath}`, callerNode, execEnv
+        `/${ownUPNodeID}/${homeDirID}/${filePath}`, callerNode, execEnv
       );
       let fun = liveModule.get(alias);
       if (!(fun instanceof FunctionObject)) throw new RuntimeError(
@@ -237,8 +227,8 @@ export async function query(
       // to the given route only up until the '/callSMF' part, and then the
       // inputArr is always appended as a plain-text JSON array (not base-64-
       // encoded) after that.
-      let currentSMFRoute = `${upNodeID}/${homeDirID}/${filePath}/callSMF/` +
-        JSON.stringify(inputArr);
+      let currentSMFRoute = `/${ownUPNodeID}/${homeDirID}/${filePath}/` +
+        "callSMF/" + JSON.stringify(inputArr);
       let requestingSMFRoute = execEnv.getFlag(CURRENT_SMF_ROUTE_FLAG);
       let result = interpreter.executeFunction(
         fun, inputArr, callerNode, execEnv, undefined, [
@@ -292,7 +282,7 @@ export async function query(
     }
     let [resultRow = []] = await dbQueryHandler.queryDBProc(
       "selectSMGas", [homeDirID, filePath, 1],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     ) ?? [];
     let [gasReserve = {}] = resultRow;
 
@@ -306,7 +296,7 @@ export async function query(
     addTo(gasReserve, reqGas);
     await dbQueryHandler.queryDBProc(
       "updateSMGas", [homeDirID, filePath, JSON.stringify(gasReserve), 1],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     );
     if (releaseAfter) {
       dbQueryHandler.releaseConnection(options.conn);
@@ -353,7 +343,7 @@ export async function query(
     }
     let [resultRow = []] = await dbQueryHandler.queryDBProc(
       "selectSMGas", [homeDirID, filePath, 1],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     ) ?? [];
     let [gasJSON = '{}'] = resultRow;
     let gasReserve = JSON.parse(gasJSON);
@@ -366,7 +356,7 @@ export async function query(
     subtractFrom(gasReserve, reqGas);
     await dbQueryHandler.queryDBProc(
       "updateSMGas", [homeDirID, filePath, JSON.stringify(gasReserve), 1],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     );
     if (releaseAfter) {
       dbQueryHandler.releaseConnection(options.conn);
@@ -385,7 +375,7 @@ export async function query(
     );
     return await dbQueryHandler.queryDBProc(
       "selectSMGas", [homeDirID, filePath, 0],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     );
   }
 

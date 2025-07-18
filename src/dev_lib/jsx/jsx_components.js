@@ -46,7 +46,9 @@ export const createJSXApp = new DevFunction(
     // Promises, from the settingsRoute. (If the route is a /call route to a
     // dev function, then that function can look in localStorage for user
     // preferences if the user is logged in.)
-    let settingsMod = await interpreter.import(settingsRoute);
+    let settingsMod = await interpreter.import(
+      settingsRoute, callerNode, execEnv
+    );
     let settingsClass = settingsMod.get("default");
     let settings; // TODO: Implement the 'new' operator, and make instantiate
     // settings from settingsClass here.

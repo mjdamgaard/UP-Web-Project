@@ -11,7 +11,7 @@ const dbQueryHandler = new DBQueryHandler();
 export async function query(
   {callerNode, execEnv},
   route, isPost, postData, options,
-  upNodeID, homeDirID, filePath, fileExt, queryPathArr,
+  homeDirID, filePath, fileExt, queryPathArr,
 ) {
 
   // If route equals just ".../<homeDirID>/<filePath>", without any query
@@ -33,7 +33,7 @@ export async function query(
     payGas(callerNode, execEnv, {dbWrite: 1});
     return await dbQueryHandler.queryDBProc(
       "touchTableFile", [homeDirID, filePath],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     );
   }
 
@@ -53,7 +53,7 @@ export async function query(
       undefined;
     return await dbQueryHandler.queryDBProc(
       procName, [homeDirID, filePath],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     );
   }
 
@@ -73,7 +73,7 @@ export async function query(
       undefined;
     return await dbQueryHandler.queryDBProc(
       procName, [homeDirID, filePath],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     );
   }
 
@@ -105,7 +105,7 @@ export async function query(
     let {l: listID = "", k: elemKey = ""} = paramObj;
     return await dbQueryHandler.queryDBProc(
       procName, [homeDirID, filePath, listID, elemKey],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     );
   }
 
@@ -139,7 +139,7 @@ export async function query(
     let {l: listID = "", lo: lo = "", hi: hi} = paramObj;
     return await dbQueryHandler.queryDBProc(
       procName, [homeDirID, filePath, listID, lo, hi],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     );
   }
 
@@ -168,7 +168,7 @@ export async function query(
     let {l: listID = "", k: elemKey = ""} = paramObj;
     return await dbQueryHandler.queryDBProc(
       procName, [homeDirID, filePath, listID, elemKey],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     );
   }
 
@@ -210,7 +210,7 @@ export async function query(
     return await dbQueryHandler.queryDBProc(
       procName,
       [homeDirID, filePath, listID, lo, hi, maxNum, numOffset, isAscending],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     );
   }
 
@@ -250,7 +250,7 @@ export async function query(
     return await dbQueryHandler.queryDBProc(
       procName,
       [homeDirID, filePath, listID, lo, hi, maxNum, numOffset, isAscending],
-      route, upNodeID, options, callerNode, execEnv,
+      route, options, callerNode, execEnv,
     );
   }
 
@@ -298,7 +298,7 @@ export async function query(
         [homeDirID, filePath, listID, elemKey, elemPayload] :
         [homeDirID, filePath, listID, elemKey, elemPayload, overwrite];
     return await dbQueryHandler.queryDBProc(
-      procName, paramValArr, route, upNodeID, options, callerNode, execEnv,
+      procName, paramValArr, route, options, callerNode, execEnv,
     );
   }
 
@@ -355,7 +355,7 @@ export async function query(
     payGas(callerNode, execEnv, {dbWrite: postData.length});
     let paramValArr = [homeDirID, filePath, listID, postData, overwrite];
     return await dbQueryHandler.queryDBProc(
-      procName, paramValArr, route, upNodeID, options, callerNode, execEnv,
+      procName, paramValArr, route, options, callerNode, execEnv,
     );
   }
 

@@ -12,8 +12,8 @@ export const OBJECT_PROTOTYPE = Object.getPrototypeOf({});
 const MAX_ARRAY_INDEX = Number.MAX_SAFE_INTEGER;
 const MINIMAL_TIME_GAS = 10;
 
-const TEXT_FILE_ROUTE_REGEX = /[^?]+\.(jsx?|txt|json|html|xml|md|scss|)$/;
-const SCRIPT_ROUTE_REGEX = /[^?]+\.jsx?$/;
+const TEXT_FILE_ROUTE_REGEX = /.+\.(jsx?|txt|json|html|xml|md|scss|)$/;
+const SCRIPT_ROUTE_REGEX = /.+\.jsx?$/;
 
 const GAS_NAMES = {
   comp: "computation",
@@ -2068,6 +2068,17 @@ export function jsonStringify(val) {
   }
 }
 
+export function jsonParse(val, node, env) {
+  if (val === undefined) return undefined;
+  try {
+    return JSON.parse(val);
+  } catch (_) {
+    throw new ArgTypeError(
+      "Parsing invalid JSON",
+      node, env
+    );
+  }
+}
 
 
 
