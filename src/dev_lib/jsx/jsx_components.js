@@ -24,13 +24,13 @@ export const COMPONENT_INSTANCE_FLAG = Symbol("component-instance");
 // createJSXApp() creates a JSX (React-like) app and mounts it in the index
 // HTML page, in the element with the id of "up-app-root".
 export const createJSXApp = new DevFunction(
-  "createJSXApp", {isAsync: true, typeArr:["module", "object?", "function"]},
+  "createJSXApp",
+  {isAsync: true, typeArr:["module", "object?", "abstract object"]},
   async function(
-    {callerNode, execEnv, interpreter},
-    [appComponent, props = {}, getSettings]
+    {callerNode, execEnv, interpreter}, [appComponent, props = {}, settings]
   ) {
     // Set a flag containing the app component path for the app.
-    execEnv.setFlag(APP_COMPONENT_PATH_FLAG, appComponent.componentPath);
+    execEnv.setFlag(APP_COMPONENT_PATH_FLAG, appComponent.modulePath);
 
     // Check if the caller is allowed to create an app from in the current
     // environment.
@@ -39,16 +39,13 @@ export const createJSXApp = new DevFunction(
       callerNode, execEnv
     );
 
-    // Get the settings object from getSettings(). Note that this function can
-    // look in localStorage for user preferences if the user is logged in.) The
-    // settings object is an AbstractObject conforming (at least) to the API
-    // described below at the declaration of the SettingsObject class. 
-    let settings = interpreter.executeFunction(
-      getSettings, [appComponent], callerNode, execEnv
-    );
-    if (settings instanceof PromiseObject) {
-      settings = await settings.promise;
-    }
+    // Get the userID if the user is logged in and call settings.initiate() in
+    // order to make any initial user-dependent preparations fro the settings
+    // object from getSettings(). Note that the settings object should be an
+    // AbstractObject conforming (at least) to the API described below at the
+    // declaration of the SettingsObject class.
+    let userID = getUserID();
+    await settings.initiate(userID, appComponent, callerNode, execEnv);
 
     // Then create the app's root component instance, and before rendering it,
     // add some props for getting user data and URL data, and pushing/replacing
@@ -56,8 +53,12 @@ export const createJSXApp = new DevFunction(
     let rootInstance = new JSXInstance(
       appComponent, "root", undefined, callerNode, execEnv
     );
-    props = addUserRelatedProps(props, rootInstance, interpreter, execEnv);
-    props = addURLRelatedProps(props, rootInstance, interpreter, execEnv);
+    props = addUserRelatedProps(
+      props, rootInstance, interpreter, callerNode, execEnv
+    );
+    props = addURLRelatedProps(
+      props, rootInstance, interpreter, callerNode, execEnv
+    );
 
     // Then render the root instance and insert it into the document.
     let rootParent = document.getElementById("up-app-root");
@@ -120,6 +121,7 @@ class JSXInstance {
     props = {}, settings, isDecorated, interpreter, callerNode, callerEnv,
     replaceSelf = true, force = false,
   ) {
+    this.settings = settings;
     this.isDecorated = isDecorated;
     this.callerNode = callerNode;
     this.callerEnv = callerEnv;
@@ -133,11 +135,10 @@ class JSXInstance {
       return this.domNode;
     }
 
-    // Record the props and settings. And on the first render only,
-    // initialize the state, and record the refs as well (which cannot be
-    // changed by a subsequent render).
+    // Record the props. And on the first render only, initialize the state,
+    // and record the refs as well (which cannot be changed by a subsequent
+    // render).
     this.props = props;
-    this.settings = settings;
     let state;
     if (this.state === undefined) {
       // Get the initial state if the component module declares one, which is
@@ -192,7 +193,9 @@ class JSXInstance {
     // "_pending-settings" class, and wait for the promise to  resolve before
     // queuing a rerender of this instance. Or in case the instance has rendered
     // before, which might happen the user is logged in/out, simply paint the
-    // "_pending-settings" class onto the existing DOM node.
+    // "_pending-settings" class onto the existing DOM node. (Note that the
+    // underscore here is meant to make it possible for "trusted" style sheets
+    // to style the class.)
     if (childSettings instanceof Promise) {
       let newDOMNode;
       if (this.domNode) {
@@ -659,8 +662,15 @@ class JSXInstance {
     }
   }
 
+  queueFullRerender(interpreter) {
+    this.queueRerender(interpreter);
+    this.childInstances.forEach(jsxInstance => {
+      jsxInstance.queueFullRerender(interpreter);
+    });
+  }
 
-  changePropsAndRerender(newProps, interpreter, deletePrevious = false) {
+
+  changePropsAndQueueRerender(newProps, interpreter, deletePrevious = false) {
     if (deletePrevious) {
       this.props = newProps;
     } else {
@@ -886,6 +896,15 @@ export class SettingsObject extends AbstractObject {
     super("SettingsObject");
     // TODO: Complete the following comments.
 
+    // initiate(userID, appComponent, node, env) ...
+    this.initiate = undefined;
+
+    // getUserID(node, env) ...
+    this.getUserID = undefined;
+
+    // changeUser(userID?, node, env) ...
+    this.changeUser = undefined;
+
     // prepareInstance(componentModule, props, state, settings, node, env) has
     // to prepare transformInstance() such that it can be called synchronously.
     // It should also return a childSettings object, which can be used in
@@ -1028,21 +1047,31 @@ export async function getSetting(
 
 
 
-function addUserRelatedProps(props, jsxInstance, interpreter, env) {
+export function getUserID() {
+  let {userID} = JSON.parse(
+    localStorage.getItem("userData") ?? "{}"
+  );
+  return userID;
+}
+
+
+function addUserRelatedProps(props, jsxInstance, interpreter, node, env) {
   let {contexts: {settingsContext}} = env.scriptVars;
-  let userID = settingsContext.getVal();
-  settingsContext.addSubscriberCallback(() => {
-    let userID = settingsContext.getVal("userID");
-    jsxInstance.changePropsAndRerender({userID: userID}, interpreter);
+  let userID = settingsContext.getVal().getUserID(node, env);
+  settingsContext.addSubscriberCallback(settings => {
+    let userID = settings.getUserID(node, env);
+    jsxInstance.changePropsAndQueueRerender({userID: userID}, interpreter);
+    jsxInstance.queueFullRerender(interpreter);
   });
   return {...props, userID: userID};
 }
 
-function addURLRelatedProps(props, jsxInstance, interpreter, env) {
+
+function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
   let {contexts: {urlContext}} = env.scriptVars;
   let urlData = urlContext.getVal();
   urlContext.addSubscriberCallback((urlData) => {
-    jsxInstance.changePropsAndRerender({urlData: urlData}, interpreter);
+    jsxInstance.changePropsAndQueueRerender({urlData: urlData}, interpreter);
   });
   const replaceState = new DevFunction(
     "replaceState", {typeArr: ["string", "plain object?"]},
@@ -1080,7 +1109,7 @@ function addURLRelatedProps(props, jsxInstance, interpreter, env) {
   //     // TODO: Validate newPath!
   //     let newFullURL = protocol + '//' + host + newPath;
   //     window.history.pushState(state, undefined, newFullURL);
-  //     jsxInstance.changePropsAndRerender()
+  //     jsxInstance.changePropsAndQueueRerender()
   //   }
   // );
   // let refs = props.refs;

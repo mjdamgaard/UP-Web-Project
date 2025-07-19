@@ -1,6 +1,6 @@
 import {
   DevFunction, forEachValue, LiveModule, PromiseObject, RuntimeError,
-  SCSSModule,
+  SCSSModule, AbstractObject,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {APP_COMPONENT_PATH_FLAG} from "../jsx_components.js";
 
@@ -15,6 +15,7 @@ function getNonce() {
 const styleSheetIDs = new Map();
 const styleSheetRoutes = new Map();
 
+export const settings = new AbstractObject(); // TODO: Implement.
 
 export const getSettings = new DevFunction(
   "getSettings", {}, ({callerNode, execEnv}, [liveModule]) => {

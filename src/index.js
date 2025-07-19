@@ -13,7 +13,7 @@ import {main as constructAccountMenu} from "./account_menu/account_menu.js"
 /* Static developer libraries */
 
 import * as queryMod from "./dev_lib/query/query.js";
-import * as basicGetSettingsMod from "./dev_lib/jsx/settings/basic.js";
+import * as basicSettingsMod from "./dev_lib/jsx/settings/basic.js";
 import * as jsxMod from "./dev_lib/jsx/jsx_components.js";
 import * as textareaCompMod from "./dev_lib/jsx/dev_components/Textarea1.js";
 import * as jsonMod from "./dev_lib/fundamentals/json.js";
@@ -25,7 +25,7 @@ import * as errorMod from "./dev_lib/error.js";
 
 const staticDevLibs = new Map();
 staticDevLibs.set("query", queryMod);
-staticDevLibs.set("settings1", basicGetSettingsMod);
+staticDevLibs.set("settings1", basicSettingsMod);
 staticDevLibs.set("jsx", jsxMod);
 staticDevLibs.set("Textarea1.jsx", textareaCompMod);
 staticDevLibs.set("json", jsonMod);
@@ -48,21 +48,13 @@ if (typeof(Storage) === "undefined") {
 
 // Create some global contexts which defines some reserved props of the app
 // component (and which will make the app rerender when they change).
-class Context {
+class AppContext {
   constructor(val) {
     this.val = val;
     this.subscriberCallbacks = [];
   }
   getVal() {
     return this.val;
-  }
-  setVal(val) {
-    this.val = val;
-    this.subscriberCallbacks.forEach(callback => callback(val));
-  }
-  setMember(key, val) {
-    this.val[key] = val;
-    this.subscriberCallbacks.forEach(callback => callback(this.val));
   }
   update(updateCallback) {
     updateCallback(this.val);
@@ -73,8 +65,8 @@ class Context {
   }
 }
 
-const settingsContext = new Context();
-const urlContext = new Context();
+const settingsContext = new AppContext();
+const urlContext = new AppContext();
 
 
 // Set up the account menu, used for account-related settings and user
@@ -109,11 +101,11 @@ setInterval(
 const TEST_APP_ID = 3;
 const mainScript = `
   import {createJSXApp} from 'jsx';
-  import {getSettings} from 'settings1';
+  import {settings} from 'settings1';
   import * as testApp from "/1/${TEST_APP_ID}/main.jsx";
 
   export function main() {
-    createJSXApp(testApp, {}, getSettings);
+    createJSXApp(testApp, {}, settings);
   }
 `;
 

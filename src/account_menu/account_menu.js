@@ -8,7 +8,7 @@ export function main(settingsContext) {
   // CSS class on #account-menu depending on this.
   let {userID, username, expTime} =
     JSON.parse(localStorage.getItem("userData") ?? "{}");
-  settingsContext.setMember("userID", userID);
+  settingsContext.update(settings => settings.changeUser(userID));
 
   if (!expTime || expTime * 1000 < Date.now() + 86400000) {
     localStorage.removeItem("userData");
@@ -74,7 +74,7 @@ function logout(settingsContext) {
     "logout", userID, {authToken: authToken}
   ).then(() => {
     localStorage.removeItem("userData");
-    settingsContext.setMember("userID", undefined);
+    settingsContext.update(settings => settings.changeUser(undefined));
     document.getElementById("user-name-display").replaceChildren("");
     let accountMenu = document.getElementById("account-menu");
     accountMenu.classList.remove("open");
@@ -136,7 +136,7 @@ function openLoginPage(settingsContext) {
         responseDisplay.replaceChildren("Incorrect password");
         return;
       }
-      settingsContext.setMember("userID", userID);
+      settingsContext.update(settings => settings.changeUser(userID));
       localStorage.setItem("userData", JSON.stringify({
         userID: userID, username: username,
         authToken: authToken, expTime: expTime,
@@ -209,7 +209,7 @@ function openCreateAccountPage(settingsContext) {
         responseDisplay.replaceChildren("Username already exists");
         return;
       }
-      settingsContext.setMember("userID", userID);
+      settingsContext.update(settings => settings.changeUser(userID));
       localStorage.setItem("userData", JSON.stringify({
         userID: userID, username: username,
         authToken: authToken, expTime: expTime,
