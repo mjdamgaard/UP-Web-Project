@@ -24,9 +24,10 @@ export const COMPONENT_INSTANCE_FLAG = Symbol("component-instance");
 // createJSXApp() creates a JSX (React-like) app and mounts it in the index
 // HTML page, in the element with the id of "up-app-root".
 export const createJSXApp = new DevFunction(
-  "createJSXApp", {isAsync: true, typeArr:["module", "object", "string"]},
+  "createJSXApp", {isAsync: true, typeArr:["module", "object?", "function"]},
   async function(
-    {callerNode, execEnv, interpreter}, [appComponent, props, settingsRoute]
+    {callerNode, execEnv, interpreter},
+    [appComponent, props = {}, getSettings]
   ) {
     // Set a flag containing the app component path for the app.
     execEnv.setFlag(APP_COMPONENT_PATH_FLAG, appComponent.componentPath);
@@ -38,47 +39,22 @@ export const createJSXApp = new DevFunction(
       callerNode, execEnv
     );
 
-    // Get the settings object, whose properties are often self-replacing
-    // Promises, from the settingsRoute. (If the route is a /call route to a
-    // dev function, then that function can look in localStorage for user
-    // preferences if the user is logged in.)
-    let settingsMod = await interpreter.import(
-      settingsRoute, callerNode, execEnv
+    // Get the settings object from getSettings(). Note that this function can
+    // look in localStorage for user preferences if the user is logged in.) The
+    // settings object is an AbstractObject conforming (at least) to the API
+    // described below at the declaration of the SettingsObject class. 
+    let settings = interpreter.executeFunction(
+      getSettings, [appComponent], callerNode, execEnv
     );
-    let settingsClass = settingsMod.get("default");
-    if (!(settingsClass instanceof ClassObject)) throw new RuntimeError(
-      `The default export of ${settingsRoute} is not a class`,
-      callerNode, execEnv
-    );
-    let settings = settingsClass.getNewInstance([], callerNode, execEnv);
-
-    // If settings.styler is a promise, it has to be a "self-replacing promise"
-    // (which is true for all properties of settings), meaning that
-    // settings.styler will be changed into the promise's result after it
-    // resolves:
-    let styler = settings.styler;
-    if (styler instanceof PromiseObject) {
-      styler = await styler.promise;
-    }
-    if (!(styler instanceof AppStyler)) throw new RuntimeError(
-      "The 'styler' setting was not an instance of the AppStyler class",
-      callerNode, execEnv
-    );
-
-    // Call styler.initiate() in order to initiate the styling system, and if
-    // the call returns a promise, wait for it to resolve before continuing.
-    let styleProps = styler.initiate(
-      appComponent, props, callerNode, callerEnv
-    );
-    if (styleProps instanceof PromiseObject) {
-      styleProps = await styleProps.promise;
+    if (settings instanceof PromiseObject) {
+      settings = await settings.promise;
     }
 
     // Then create the app's root component instance, and before rendering it,
     // add some props for getting user data and URL data, and pushing/replacing
     // a new browser session history state, to it.
     let rootInstance = new JSXInstance(
-      appComponent, "root", undefined, callerNode, execEnv, settings
+      appComponent, "root", undefined, callerNode, execEnv
     );
     props = addUserRelatedProps(props, rootInstance, interpreter, execEnv);
     props = addURLRelatedProps(props, rootInstance, interpreter, execEnv);
@@ -86,7 +62,7 @@ export const createJSXApp = new DevFunction(
     // Then render the root instance and insert it into the document.
     let rootParent = document.getElementById("up-app-root");
     let appNode = rootInstance.render(
-      props, styleProps, false, interpreter, callerNode, execEnv,
+      props, settings, false, interpreter, callerNode, execEnv,
       false, true, true
     );
     rootParent.replaceChildren(appNode);
@@ -102,8 +78,7 @@ export const createJSXApp = new DevFunction(
 class JSXInstance {
 
   constructor (
-    componentModule, key, parentInstance = undefined, callerNode, callerEnv,
-    settings = undefined,
+    componentModule, key, parentInstance = undefined, callerNode, callerEnv
   ) {
     if (!(componentModule instanceof LiveModule)) throw new RuntimeError(
       "JSX component needs to be an imported module namespace object",
@@ -112,7 +87,6 @@ class JSXInstance {
     this.componentModule = componentModule;
     this.key = getString(key, callerNode, callerEnv);
     this.parentInstance = parentInstance;
-    this.settings = settings ?? this.parentInstance?.settings;
     this._isRequestOrigin = componentModule.get("isRequestOrigin");
     this.isIsolated = undefined;
     this.domNode = undefined;
@@ -121,7 +95,7 @@ class JSXInstance {
     this.props = undefined;
     this.state = undefined;
     this.refs = undefined;
-    this.styleProps = undefined;
+    this.settings = undefined;
     this.contextProvisions = undefined;
     this.contextSubscriptions = undefined;
     this.callerNode = callerNode;
@@ -143,7 +117,7 @@ class JSXInstance {
 
 
   render(
-    props = {}, styleProps, isDecorated, interpreter, callerNode, callerEnv,
+    props = {}, settings, isDecorated, interpreter, callerNode, callerEnv,
     replaceSelf = true, force = false,
   ) {
     this.isDecorated = isDecorated;
@@ -159,11 +133,11 @@ class JSXInstance {
       return this.domNode;
     }
 
-    // Record the props and styleProps. And on the first render only,
+    // Record the props and settings. And on the first render only,
     // initialize the state, and record the refs as well (which cannot be
     // changed by a subsequent render).
     this.props = props;
-    this.styleProps = styleProps;
+    this.settings = settings;
     let state;
     if (this.state === undefined) {
       // Get the initial state if the component module declares one, which is
@@ -202,34 +176,35 @@ class JSXInstance {
       this.isIsolated = props["isolated"] ? true : false;
     }
 
-    // Call settings.style() to get a styleProps object with a transform
-    // property that can be used to style the DOM nodes of the component
-    // instance. This styleProps is also passed down to the children instances,
-    // as it might contain data used for determining the styles, and this data
-    // might change between parent and child. Note this settings.style() is
-    // free to alter the document in other ways, and in particular by adding
-    // required <style> elements to the head of the document.
-    styleProps = interpreter.executeFunction(
-      this.settings.style, [this.componentModule, props, state, styleProps],
-      callerNode, callerEnv, this.settings
+
+    // Call settings.prepareInstance() to prepare the other settings' methods
+    // for this instance, in particular transformInstance() used below, such
+    // that this can be called synchronously. prepareInstance() also gets the
+    // childSettings to pass to the child instances. This allows settings to
+    // add extra props to the components, and in particular props used for
+    // styling the component instances.
+    let childSettings = settings.prepareInstance(
+      this.componentModule, props, state, settings, callerNode, callerEnv
     );
 
-    // If style() is not ready yet for this component, which will mean that a
-    // PromiseObject is returned, render an empty template element with a
-    // "pending-style" class, and wait for the promise to  resolve before
-    // queuing a rerender of this instance.
-    if (styleProps instanceof PromiseObject) {
+    // If childSettings is not ready yet for this component, which will mean
+    // that a Promise is returned, render an empty template element with a
+    // "_pending-settings" class, and wait for the promise to  resolve before
+    // queuing a rerender of this instance. Or in case the instance has rendered
+    // before, which might happen the user is logged in/out, simply paint the
+    // "_pending-settings" class onto the existing DOM node.
+    if (childSettings instanceof Promise) {
       let newDOMNode;
       if (this.domNode) {
-        this.domNode.classList.add("_pending-style");
-        return this.domNode;
+        this.domNode.classList.add("_pending-settings");
+        newDOMNode = this.domNode;
       }
       else {
         newDOMNode = document.createElement("template");
-        newDOMNode.setAttribute("class", "_pending-style");
+        newDOMNode.setAttribute("class", "_pending-settings");
         this.domNode = newDOMNode;
       }
-      styleRes.promise.then(() => {
+      childSettings.then(() => {
         this.queueRerender(interpreter);
       });
       return newDOMNode;
@@ -249,7 +224,6 @@ class JSXInstance {
         replaceSelf
       );
     }
-
 
     // Initialize a marks Map to keep track of which existing child instances
     // was used or created in the render, such that instances that are no
@@ -282,7 +256,7 @@ class JSXInstance {
       try {
         newDOMNode = this.getDOMNode(
           jsxElement, marks, interpreter, callerNode, callerEnv,
-          ownDOMNodes, styleProps
+          ownDOMNodes, childSettings
         );
       }
       catch (err) {
@@ -309,14 +283,13 @@ class JSXInstance {
     }
     this.domNode = newDOMNode;
 
-    // And before returning the new DOM node, we use styleProps.transform to
-    // style the DOM node (by giving it classes and/or inline styles).
-    let styleTransform = styleProps.styleTransform;
-    if (styleTransform instanceof StyleTransform) {
-      styleTransform.transformDOMNode(
-        newDOMNode, ownDOMNodes, props, state, callerNode, callerEnv
-      );
-    }
+    // And before returning the new DOM node, call settings.transformInstance()
+    // in order to transform the DOM node, in particular for applying style to
+    // it (by giving it classes and/or inline styles). Note that this method
+    // will have been prepared by settings.prepareInstance()
+    settings.transformInstance(
+      newDOMNode, ownDOMNodes, props, state, callerNode, callerEnv
+    );
 
     // Finally, return the instance's new DOM node.
     return newDOMNode;
@@ -363,7 +336,7 @@ class JSXInstance {
 
   getDOMNode(
     jsxElement, marks, interpreter, callerNode, callerEnv,
-    ownDOMNodes, styleProps, isOuterElement = true
+    ownDOMNodes, settings, isOuterElement = true
   ) {
     // If jsxElement is not a JSXElement instance, return a string derived from
     // JSXElement, except if it is an outer element, in which case wrap it in
@@ -389,7 +362,7 @@ class JSXInstance {
       let ret = children.map(val => (
         this.getDOMNode(
           val, marks, interpreter, callerNode, callerEnv,
-          ownDOMNodes, styleProps, false
+          ownDOMNodes, settings, false
         )
       ));
       if (isOuterElement) {
@@ -436,7 +409,7 @@ class JSXInstance {
         }
       );
       return childInstance.render(
-        jsxElement.props, styleProps, isOuterElement, interpreter,
+        jsxElement.props, settings, isOuterElement, interpreter,
         jsxElement.node, childEnv, false
       );
     }
@@ -546,7 +519,7 @@ class JSXInstance {
       // any and all nested children inside that array (at any depth).
       this.createAndAppendChildren(
         newDOMNode, childArr, marks, interpreter, callerNode, callerEnv,
-        ownDOMNodes, styleProps
+        ownDOMNodes, settings
       );
 
       // Then return the DOM node of this new element, and also push the node
@@ -559,18 +532,18 @@ class JSXInstance {
 
   createAndAppendChildren(
     domNode, childArr, marks, interpreter, callerNode, callerEnv,
-    ownDOMNodes, styleProps
+    ownDOMNodes, settings
   ) {
     childArr.forEach(val => {
       if (val instanceof Array) {
         this.createAndAppendChildren(
           domNode, val, marks, interpreter, callerNode, callerEnv,
-          ownDOMNodes, styleProps
+          ownDOMNodes, settings
         );
       } else {
         domNode.append(this.getDOMNode(
           val, marks, interpreter, callerNode, callerEnv,
-          ownDOMNodes, styleProps, false
+          ownDOMNodes, settings, false
         ));
       }
     });
@@ -678,7 +651,7 @@ class JSXInstance {
           // previous render, which is done in order to not increase the memory
           // for every single triggered action or call.
           this.render(
-            this.props, this.styleProps, this.isDecorated, interpreter,
+            this.props, this.settings, this.isDecorated, interpreter,
             this.callerNode, this.callerEnv, true, true
           );
         }
@@ -772,6 +745,7 @@ class JSXInstanceInterface extends AbstractObject {
       "props": deepCopy(this.jsxInstance.props),
       "state": deepCopy(this.jsxInstance.state),
       "refs": this.jsxInstance.refs,
+      "settings": deepCopy(this.jsxInstance.settings),
       /* Methods */
       "dispatch": this.dispatch,
       "call": this.call,
@@ -825,16 +799,17 @@ class JSXInstanceInterface extends AbstractObject {
   });
 
   // import() is similar to the regular import function, except it also makes
-  // the app call getStyle() to get and load the style, before the returned
-  // promise resolves.
+  // the app call settings.prepareComponent(), if that (optional) method
+  // exists, in order to prepare e.g. the style of the component before it is
+  // used (which might be helpful in order to prevent UI flickering in some
+  // instances).
   import = new DevFunction(
     "import", {isAsync: true, typeArr: ["string"]},
     async ({callerNode, execEnv, interpreter}, [route]) => {
       let liveModule = interpreter.import(route, callerNode, execEnv);
-      if (route.slice(-4) === ".jsx") {
-        await this.jsxInstance.jsxAppStyler.loadStyle(
-          liveModule, callerNode, execEnv
-        );
+      let settings = this.jsxInstance.settings;
+      if (route.slice(-4) === ".jsx" && settings.prepareComponent) {
+        await settings.prepareComponent(liveModule, callerNode, execEnv);
       }
       return liveModule;
     }
@@ -903,25 +878,34 @@ export class DOMNodeObject extends AbstractObject {
 }
 
 
-// AppStyler is an abstract class that is meant to be extended by styling
-// systems.
-export class AppStyler extends AbstractObject {
+// SettingsObject is an abstract class that is meant to be extended by settings
+// systems, i.e. the modules that define a getSettings() function to be passed
+// to createJSXApp().
+export class SettingsObject extends AbstractObject {
   constructor() {
-    super("AppStyler");
-    this.initiate = undefined;
-    this.getStyleProps = undefined;
+    super("SettingsObject");
+    // TODO: Complete the following comments.
+
+    // prepareInstance(componentModule, props, state, settings, node, env) has
+    // to prepare transformInstance() such that it can be called synchronously.
+    // It should also return a childSettings object, which can be used in
+    // particular to extend the existing props of the components with extra
+    // ones used for styling them. prepareInstance() can also return a promise,
+    // in which case the component renders as empty and/or with a "_pending-
+    // settings" class on and queues a rerender when the promise resolves.
+    this.prepareInstance = undefined;
+
+    // transformInstance(domNode, ownDOMNodes, ...) ...
+    this.transformInstance = undefined;
+
+    // getComponentTrust(componentModule, ...) ...
+    this.getComponentTrust = undefined;
+
+    // (optional) prepareComponent(componentModule, node, env) ...
+    this.prepareComponent = undefined;
   }
 }
 
-// StyleTransform is an abstract class that is meant to be extended by styling
-// systems in order to define the transformations that the DOM nodes of
-// component instances might undergo in order to style them. 
-export class StyleTransform extends AbstractObject {
-  constructor() {
-    super("StyleTransform");
-    this.transformDOMNode = undefined;
-  }
-}
 
 
 

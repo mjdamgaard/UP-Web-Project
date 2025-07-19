@@ -64,6 +64,10 @@ class Context {
     this.val[key] = val;
     this.subscriberCallbacks.forEach(callback => callback(this.val));
   }
+  update(updateCallback) {
+    updateCallback(this.val);
+    this.subscriberCallbacks.forEach(callback => callback(this.val));
+  }
   addSubscriberCallback(callback) {
     this.subscriberCallbacks.push(callback);
   }
