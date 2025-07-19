@@ -15,8 +15,8 @@ const CLASS_NAME_REGEX =
 
 export const CAN_CREATE_APP_FLAG = Symbol("can-create-app");
 
-export const APP_COMPONENT_PATH_FLAG = Symbol("app-component-path");
-export const COMPONENT_INSTANCE_FLAG = Symbol("component-instance");
+// export const APP_COMPONENT_PATH_FLAG = Symbol("app-component-path");
+// export const COMPONENT_INSTANCE_FLAG = Symbol("component-instance");
 
 
 
@@ -29,9 +29,6 @@ export const createJSXApp = new DevFunction(
   async function(
     {callerNode, execEnv, interpreter}, [appComponent, props = {}, settings]
   ) {
-    // Set a flag containing the app component path for the app.
-    execEnv.setFlag(APP_COMPONENT_PATH_FLAG, appComponent.modulePath);
-
     // Check if the caller is allowed to create an app from in the current
     // environment.
     if (!execEnv.getFlag(CAN_CREATE_APP_FLAG)) throw new RuntimeError(
@@ -39,31 +36,35 @@ export const createJSXApp = new DevFunction(
       callerNode, execEnv
     );
 
+    // Create a new environment clearing the CAN_CREATE_APP_FLAG (as well as
+    // other flags.)
+    let appEnv = new Environment(execEnv, undefined, {flags: [CLEAR_FLAG]});
+
     // Get the userID if the user is logged in and call settings.initiate() in
     // order to make any initial user-dependent preparations fro the settings
     // object from getSettings(). Note that the settings object should be an
     // AbstractObject conforming (at least) to the API described below at the
     // declaration of the SettingsObject class.
     let userID = getUserID();
-    await settings.initiate(userID, appComponent, callerNode, execEnv);
+    await settings.initiate(userID, appComponent, callerNode, appEnv);
 
     // Then create the app's root component instance, and before rendering it,
     // add some props for getting user data and URL data, and pushing/replacing
     // a new browser session history state, to it.
     let rootInstance = new JSXInstance(
-      appComponent, "root", undefined, callerNode, execEnv
+      appComponent, "root", undefined, callerNode, appEnv
     );
     props = addUserRelatedProps(
-      props, rootInstance, interpreter, callerNode, execEnv
+      props, rootInstance, interpreter, callerNode, appEnv
     );
     props = addURLRelatedProps(
-      props, rootInstance, interpreter, callerNode, execEnv
+      props, rootInstance, interpreter, callerNode, appEnv
     );
 
     // Then render the root instance and insert it into the document.
     let rootParent = document.getElementById("up-app-root");
     let appNode = rootInstance.render(
-      props, settings, false, interpreter, callerNode, execEnv,
+      props, settings, false, interpreter, callerNode, appEnv,
       false, true, true
     );
     rootParent.replaceChildren(appNode);
@@ -148,7 +149,8 @@ class JSXInstance {
       if (getInitState) {
         try {
           state = interpreter.executeFunction(
-            getInitState, [props], callerNode, callerEnv
+            getInitState, [props], callerNode, callerEnv, undefined,
+            [CLEAR_FLAG],
           );
         }
         catch (err) {
@@ -162,7 +164,8 @@ class JSXInstance {
         return this.getFailedComponentDOMNode(
           new RuntimeError(
             "State needs to be a plain object, but got: " +
-            getString(state, callerNode, callerEnv),
+            getString(state, callerNode, callerEnv), // (Note that getString()
+            // will also clear any flags if calling a user-defined function.)
             callerNode, callerEnv
           ),
           replaceSelf
@@ -179,11 +182,11 @@ class JSXInstance {
 
 
     // Call settings.prepareInstance() to prepare the other settings' methods
-    // for this instance, in particular transformInstance() used below, such
-    // that this can be called synchronously. prepareInstance() also gets the
-    // childSettings to pass to the child instances. This allows settings to
-    // add extra props to the components, and in particular props used for
-    // styling the component instances.
+    // for this instance, in particular getComponentTrust() and
+    // transformInstance(), used below, such that these can be called
+    // synchronously. prepareInstance() also gets the childSettings to pass to
+    // the child instances. This allows settings to add extra props to the
+    // components, and in particular props used for styling them.
     let childSettings = settings.prepareInstance(
       this.componentModule, props, state, settings, callerNode, callerEnv
     );
@@ -213,6 +216,17 @@ class JSXInstance {
       return newDOMNode;
     }
 
+    // Now that getComponentTrust() is ready, use it to get a new environment
+    // for the component with a new "client-trust" flag.
+    let isTrusted = settings.getComponentTrust(
+      this.requestOrigin, callerNode, callerEnv
+    );
+    let compEnv = new Environment(callerEnv, undefined, {flags: [
+      CLEAR_FLAG,
+      [REQUESTING_COMPONENT_FLAG, this.requestOrigin],
+      [CLIENT_TRUST_FLAG, isTrusted],
+    ]});
+
 
     // Then get the component module's render() function.
     let renderFun = this.componentModule.get("render") ??
@@ -222,7 +236,7 @@ class JSXInstance {
         new RuntimeError(
           'Component module is missing a render() function at "' +
           this.componentPath + '"',
-          callerNode, callerEnv
+          callerNode, compEnv
         ),
         replaceSelf
       );
@@ -238,9 +252,8 @@ class JSXInstance {
     let jsxElement;
     try {
       jsxElement = interpreter.executeFunction(
-        renderFun, [deepCopyExceptRefs(props, callerNode, callerEnv)],
-        callerNode, callerEnv, new JSXInstanceInterface(this),
-        [CLEAR_FLAG, [COMPONENT_INSTANCE_FLAG, this]]
+        renderFun, [deepCopyExceptRefs(props, callerNode, compEnv)],
+        callerNode, compEnv, new JSXInstanceInterface(this),
       );
     }
     catch (err) {
@@ -258,7 +271,7 @@ class JSXInstance {
     else {
       try {
         newDOMNode = this.getDOMNode(
-          jsxElement, marks, interpreter, callerNode, callerEnv,
+          jsxElement, marks, interpreter, callerNode, compEnv,
           ownDOMNodes, childSettings
         );
       }
@@ -291,7 +304,7 @@ class JSXInstance {
     // it (by giving it classes and/or inline styles). Note that this method
     // will have been prepared by settings.prepareInstance()
     settings.transformInstance(
-      newDOMNode, ownDOMNodes, props, state, callerNode, callerEnv
+      newDOMNode, ownDOMNodes, props, state, callerNode, compEnv
     );
 
     // Finally, return the instance's new DOM node.
@@ -471,37 +484,13 @@ class JSXInstance {
             }
             newDOMNode.onclick = async () => {
               try {
-                // Get the request origin, and whether the client trusts that
-                // origin (which is a JSX component).
-                let requestOrigin = this.requestOrigin;
-                if (requestOrigin) {
-                  let isTrusted = await getSetting(
-                    this.settings, "isTrusted", [requestOrigin],
-                    interpreter, callerNode, callerEnv
-                  );
-
-                  // Then execute the function object held in val, with
-                  // elevated privileges that allows the function to make POST-
-                  // like requests.
-                  interpreter.executeFunctionOffSync(
-                    val, [], callerNode, callerEnv,
-                    new JSXInstanceInterface(this), [
-                      CAN_POST_FLAG,
-                      [COMPONENT_INSTANCE_FLAG, this],
-                      [REQUESTING_COMPONENT_FLAG, requestOrigin],
-                      [CLIENT_TRUST_FLAG, isTrusted],
-                    ]
-                  );
-                }
-                else {
-                  interpreter.executeFunctionOffSync(
-                    val, [], callerNode, callerEnv,
-                    new JSXInstanceInterface(this), [
-                      CAN_POST_FLAG,
-                      [COMPONENT_INSTANCE_FLAG, this],
-                    ]
-                  );
-                }
+                // Execute the function object held in val, with elevated
+                // privileges that allows the function to make POST-like
+                // requests.
+                interpreter.executeFunctionOffSync(
+                  val, [], callerNode, callerEnv,
+                  new JSXInstanceInterface(this), [CAN_POST_FLAG]
+                );
               } catch (err) {
                 console.error(err);
               }
@@ -576,8 +565,7 @@ class JSXInstance {
     if (actionFun) {
       interpreter.executeFunction(
         actionFun, [input], callerNode, callerEnv,
-        new JSXInstanceInterface(this),
-        [CLEAR_FLAG, [COMPONENT_INSTANCE_FLAG, this]]
+        new JSXInstanceInterface(this), [CLEAR_FLAG],
       );
     }
     else {
@@ -628,8 +616,7 @@ class JSXInstance {
     if (methodFun) {
       return interpreter.executeFunction(
         methodFun, [input], callerNode, callerEnv,
-        new JSXInstanceInterface(targetInstance),
-        [CLEAR_FLAG, [COMPONENT_INSTANCE_FLAG, targetInstance]]
+        new JSXInstanceInterface(targetInstance), [CLEAR_FLAG],
       );
     }
     else throw new RuntimeError(
@@ -914,11 +901,15 @@ export class SettingsObject extends AbstractObject {
     // settings" class on and queues a rerender when the promise resolves.
     this.prepareInstance = undefined;
 
+    // getComponentTrust(componentPath, node, env) takes a component path,
+    // which will often be the so-called "request origin", and returns boolean
+    // of whether client trust the component to make post requests, and to
+    // fetch private data.
+    this.getComponentTrust = undefined;
+
     // transformInstance(domNode, ownDOMNodes, ...) ...
     this.transformInstance = undefined;
 
-    // getComponentTrust(componentModule, ...) ...
-    this.getComponentTrust = undefined;
 
     // (optional) prepareComponent(componentModule, node, env) ...
     this.prepareComponent = undefined;

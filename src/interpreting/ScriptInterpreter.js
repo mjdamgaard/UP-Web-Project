@@ -1694,7 +1694,7 @@ export class ScriptInterpreter {
 export class Environment {
   constructor(
     parent, scopeType = "block", {
-      fun, callerNode, callerEnv, thisVal, flags: addedFlags,
+      fun, callerNode, callerEnv, thisVal, flags,
       modulePath, lexArr, strPosArr, script,
       scriptVars,
     } = {},
@@ -1717,10 +1717,7 @@ export class Environment {
       if (!isArrowFun && superVal) this.superVal = superVal;
       if (isArrowFun) this.isArrowFun = isArrowFun;
       if (isDevFun) this.isDevFun = isDevFun;
-      if (funFlags || addedFlags) {
-        this.setFlags(funFlags ?? []);
-        this.setFlags(addedFlags ?? []);
-      }
+      if (funFlags) this.setFlags(funFlags);
     }
     else if (scopeType === "module") {
       this.modulePath = modulePath;
@@ -1730,6 +1727,7 @@ export class Environment {
       this.exports = [];
       this.liveModule = undefined;
     }
+    if (flags) this.setFlags(flags);
   }
 
   get isNonArrowFunction() {
