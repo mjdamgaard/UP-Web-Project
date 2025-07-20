@@ -2,7 +2,7 @@ import {
   DevFunction, forEachValue, LiveModule, PromiseObject, RuntimeError,
   SCSSModule, AbstractObject,
 } from "../../../interpreting/ScriptInterpreter.js";
-import {APP_COMPONENT_PATH_FLAG} from "../jsx_components.js";
+import {SettingsObject} from "../jsx_components.js";
 
 const CLASS_REGEX = /^([a-zA-Z][a-z-A-Z0-9\-]*)_([a-zA-Z][a-z-A-Z0-9\-]*)$/;
 const STYLE_SHEET_ID_REGEX = /^[a-zA-Z][a-z-A-Z0-9\-]$/;

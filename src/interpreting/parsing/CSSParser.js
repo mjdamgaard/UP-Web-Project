@@ -9,8 +9,6 @@ import {HTML_ELEMENT_TYPE_REGEX} from "./ScriptParser.js";
 
 const ELEMENT_TYPE_PATTERN = HTML_ELEMENT_TYPE_REGEX.source.slice(1, -1);
 
-const COMBINATOR_REGEX = />|\+|~|(\s+|\/\*([^*]|\*(?!\/))*(\*\/|$))+/;
-
 const ATOMIC_PSEUDO_CLASS_PATTERN =
   "(first-child|last-child)";
 // TODO: Continue this list.
@@ -44,7 +42,7 @@ const BUILT_IN_VALUE_PATTERN =
 export const cssGrammar = {
   "style-sheet": {
     rules: [
-      ["statement*$"],
+      ["S*", "statement*$"],
     ],
     process: (children) => ({
       type: "style-sheet",
@@ -53,7 +51,6 @@ export const cssGrammar = {
   },
   "statement": {
     rules: [
-      ["declaration"],
       ["ruleset"],
       ["at-rule"],
     ],
@@ -61,7 +58,7 @@ export const cssGrammar = {
   },
   "ruleset": {
     rules: [
-      ["selector-list", /\{/, "statement!1+", /\}/],
+      ["selector-list", /\{/, "S*", "declaration!1+", /\}/, "S*"],
     ],
     process: (children) => ({
       type: "ruleset",
@@ -71,7 +68,7 @@ export const cssGrammar = {
   },
   "selector-list": {
     rules: [
-      ["selector", "/,/", "selector-list!1"],
+      ["selector", "/,/", "S*", "selector-list!1"],
       ["selector"],
     ],
     process: straightenListSyntaxTree,
@@ -79,29 +76,17 @@ export const cssGrammar = {
   },
   "selector": {
     rules: [
-      ["/&/", "combinator!1?", "complex-selector"],
-      ["/&/"],
-      ["complex-selector"],
-    ],
-    process: (children, ruleInd) => ({
-      type: "selector",
-      children: (ruleInd === 0) ?
-        [children[0], children[1], ...children[2].children] :
-        (ruleInd === 1) ? children :
-          children[0].children,
-    }),
-  },
-  "complex-selector": {
-    rules: [
-      ["compound-selector", "combinator?", "complex-selector"],
+      ["compound-selector", "combinator", "selector!"],
+      ["compound-selector", "S+", "selector!1"],
+      ["compound-selector", "S+"],
       ["compound-selector"],
     ],
     process: processPolyadicInfixOperation,
-    params: ["complex-selector"],
+    params: ["complex-selector", 2]
   },
   "combinator": {
     rules: [
-      [COMBINATOR_REGEX],
+      [/>|\+|~/, "S*"],
     ],
     process: copyLexemeFromChild,
   },
@@ -139,50 +124,50 @@ export const cssGrammar = {
     ],
     process: copyFromChild,
   },
-  "whitespace": {
+  "S": {
     rules: [
-      [/(\s+|\/\*([^*]|\*(?!\/))*(\*\/|$))+/],
+      [/[ \t\r\n\f]+/],
     ],
   },
   "class-selector": {
     rules: [
-      [/\.([a-z_]|-(?![0-9\-]))[a-z0-9_\-]*/],
+      [/\./, /[a-z][a-z0-9\-]*/],
     ],
     process: (children) => ({
       type: "class-selector",
-      className: children[0].substring(1),
+      className: children[1],
     }),
   },
   "pseudo-class-selector": {
     rules: [
-      ["/:" + ATOMIC_PSEUDO_CLASS_PATTERN + "/"],
+      ["/:/", "/" + ATOMIC_PSEUDO_CLASS_PATTERN + "/"],
       [
-        "/:" + SELECTOR_DEFINED_PSEUDO_CLASS_PATTERN + "/",
-        /\(/, "selector-list", /\)/
+        "/:/", "/" + SELECTOR_DEFINED_PSEUDO_CLASS_PATTERN + "/",
+        /\(/, "S*", "selector-list", /\)/
       ],
       [
-        "/:" + INTEGER_DEFINED_PSEUDO_CLASS_PATTERN + "/",
-        /\(/, "integer", /\)/
+        "/:/", "/" + INTEGER_DEFINED_PSEUDO_CLASS_PATTERN + "/",
+        /\(/, "S*", "integer", /\)/
       ],
     ],
     process: (children) => ({
       type: "pseudo-class-selector",
-      lexeme: children[0],
-      argument: children[2],
+      lexeme: children[1],
+      argument: children[4],
     }),
   },
   "pseudo-element": {
     rules: [
-      ["/::" + PSEUDO_ELEMENT_PATTERN + "/"],
+      ["/::/", "/" + PSEUDO_ELEMENT_PATTERN + "/"],
     ],
     process: (children) => ({
       type: "pseudo-element",
-      lexeme: children[0],
+      lexeme: children[1],
     }),
   },
   "id-selector": {
     rules: [
-      [/#[a-z][a-z0-9_\-]*/],
+      [/#[a-z][a-z0-9\-]*/],
     ],
     process: copyLexemeFromChild,
     params: ["id-selector"],
@@ -204,16 +189,16 @@ export const cssGrammar = {
   "declaration": {
     rules: [
       [
-        "/" + PROPERTY_PATTERN + "/", "whitespace?", "/:/", "value!1+",
-        "flag", "/;/!"
+        "/" + PROPERTY_PATTERN + "/", "S*", "/:/", "S*", "value!1+", "flag!1",
+        "/;/"
       ],
-      ["/" + PROPERTY_PATTERN + "/", "whitespace?", "/:/", "value!1+", "/;/"],
+      ["/" + PROPERTY_PATTERN + "/", "S*", "/:/", "S*", "value!1+", "/;/"],
     ],
     process: (children) => ({
       type: "declaration",
       propName: children[0],
-      valueArr: children[3],
-      flagName: children[4]?.name,
+      valueArr: children[4],
+      flagName: children[5]?.name,
     }),
   },
   "flag": {
@@ -227,12 +212,6 @@ export const cssGrammar = {
   },
   "value": {
     rules: [
-      ["whitespace?", "value^(1)"],
-    ],
-    process: (children) => children[1],
-  },
-  "value^(1)": {
-    rules: [
       ["string"],
       ["number"],
       ["color"],
@@ -243,8 +222,8 @@ export const cssGrammar = {
   },
   "string": {
     rules: [
-      [/"([^"\\]|\\[.\n])*"/],
-      [/'([^'\\]|\\[.\n])*'/],
+      [/"([^"\\]|\\[.\n])*"/, "S*"],
+      [/'([^'\\]|\\[.\n])*'/, "S*"],
     ],
     process: copyLexemeFromChild,
     params: ["string"],
@@ -258,14 +237,14 @@ export const cssGrammar = {
   },
   "integer": {
     rules: [
-      ["/0|[1-9][0-9]*/"],
+      ["/0|[1-9][0-9]*/", "S*"],
     ],
     process: copyLexemeFromChild,
     params: ["integer"],
   },
   "float": {
     rules: [
-      [/(0|[1-9][0-9]*)(\.[0-9]+)?/],
+      [/(0|[1-9][0-9]*)(\.[0-9]+)?/, "S*"],
     ],
     process: copyLexemeFromChild,
     params: ["float"],
@@ -278,16 +257,24 @@ export const cssGrammar = {
   },
   "hex-color": {
     rules: [
-      ["/#([0-9a-fA-F]{2}){3,4}/"],
+      ["/#/", "/([0-9a-fA-F]{2}){3,4}/", "S*"],
     ],
-    process: copyLexemeFromChild,
-    params: ["hex-color"],
+    process: (children) => ({
+      type: "hex-color",
+      value: children[0] + children[1],
+    }),
   },
   "length": {
     rules: [
-      [/\-?(0|[1-9][0-9]*)(\.[0-9]+)?(cm|mm|Q|in|pc|pt|px|em|rem|vh|vw)/],
+      [
+        /\-?(0|[1-9][0-9]*)(\.[0-9]+)?/, /(cm|mm|Q|in|pc|pt|px|em|rem|vh|vw)/,
+        "S*"
+      ],
     ],
-    process: copyLexemeFromChild,
+    process: (children) => ({
+      type: "length",
+      value: children[0] + children[1],
+    }),
     params: ["length"],
   },
   "built-in-value": {
@@ -317,14 +304,13 @@ export class CSSParser extends Parser {
       [
         /"([^"\\]|\\[.\n])*"/,
         /'([^'\\]|\\[.\n])*'/,
+        /-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
         /((?<=\s)\-|#)?(0|[1-9][0-9]*)(\.[0-9]+)?(%|[a-zA-Z]+)?/,
-        /\|\|/,
-        /(::|[.:#])[a-zA-Z_][a-zA-Z0-9_\-]*/,
-        /((?<=\s)!)?[a-zA-Z_][a-zA-Z0-9_\-]*/,
-        /[.,:;\[\]{}()<>?=+\-*|^&!%/#]/,
-        /(\s+|\/\*([^*]|\*(?!\/))*(\*\/|$))+(?=[.:#])/
+        /\|\||::|[.,:;\[\]{}()<>?=+\-*|^&!%/#]/,
+        /[a-zA-Z0-9_\-]+/,
+        /[ \t\r\n\f]+/
       ],
-      /(\s+|\/\*([^*]|\*(?!\/))*(\*\/|$))+/
+      /\/\*([^*]|\*(?!\/))*(\*\/|$)/
     );
   }
 

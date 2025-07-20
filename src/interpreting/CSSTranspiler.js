@@ -9,7 +9,7 @@ export class CSSTranspiler {
   // transpile() transforms the input styleSheet into CSS, ready to be inserted
   // in the document head, and returns it either directly or as a promise for
   // it (once we implement the @use rule).
-  transpile(styleSheet, id, isTrusted = false, callerNode, callerEnv) {
+  transpile(styleSheet, id, isTrusted, callerNode, callerEnv) {
     if (typeof styleSheet !== "string") throw (
       `CSSTranspiler.transpile(): Style sheet is not a string`
     );
@@ -19,16 +19,14 @@ export class CSSTranspiler {
       styleSheet, callerNode, callerEnv, cssParser
     );
 
-    let addConfinement = !isTrusted;
     return styleSheetNode.stmtArr.map(stmt => (
       this.transpileStatement(stmt, id, addConfinement)
     )).join("\n")
   }
 
 
-
   transpileStatement(
-    stmt, id, addConfinement, indentSpace = "", isNested = false
+    stmt, id, isTrusted, indentSpace = "", isNested = false
   ) {
     let type = stmt.type;
     if (type === "declaration") {
@@ -42,7 +40,7 @@ export class CSSTranspiler {
     }
     else if (type === "ruleset") {
       return this.transpileRuleset(
-        stmt, id, addConfinement, indentSpace, isNested
+        stmt, id, isTrusted, indentSpace, isNested
       );
     }
     else if (type === "at-rule") {
@@ -55,23 +53,21 @@ export class CSSTranspiler {
   }
 
 
-  transpileRuleset(stmt, id, addConfinement, indentSpace, isNested) {
-    // Transpile the selector. If addConfinement is true, the transpiled
-    // selector will be modified such that the style only targets the elements
-    // inside instances of components that "subscribes" to this style sheet
-    // (which means that their style transform sheet (.sts) imports it). 
+  transpileRuleset(stmt, id, isTrusted, indentSpace, isNested) {
+    // Transpile the selector. If isTrusted is falsy, only selectors consisting
+    // of no combinators and no element types or universal selectors are
+    // allowed, and each compound selector has to include at least one regular
+    // class (besides pseudo-classes and pseudo-elements).
     let transpiledSelectorList = stmt.selectorArr.map(selector => (
-      this.transpileSelector(selector, id, addConfinement, isNested)
+      this.transpileComplexSelector(selector, id, isTrusted, isNested)
     )).join(", ");
 
     // If the selector succeeds, returns the rule with the transpiled
-    // selector list and the transpiled nested statements inside the rule. Set
-    // addConfinement = false for the nested statements, as the current ruleset
-    // has already been confined.
+    // selector list and the transpiled nested statements inside the rule.
     return (
       indentSpace + transpiledSelectorList + " {\n" +
         stmt.stmtArr.map(stmt => (
-          this.transpileStatement(stmt, id, false, indentSpace + "  ", true)
+          this.transpileStatement(stmt, id, isTrusted, indentSpace + "  ", true)
       )).join("") +
       indentSpace + "\n}\n"
     );
@@ -80,7 +76,7 @@ export class CSSTranspiler {
 
 
 
-  transpileSelector(selector, id, isTrusted, isNested) {
+  transpileComplexSelector(selector, id, isTrusted, isNested) {
     // The children of a complex selector are the compound selectors at every
     // even index, starting with (and possibly ending in) 0, and then the
     // combinators at every odd index.
@@ -184,7 +180,7 @@ export class CSSTranspiler {
       if (argType === "selector-list") {
         tuple = "(" +
           argument.children.map(selector => {
-            this.transpileSelector(
+            this.transpileComplexSelector(
               selector, environment, id, styleSheetIDs, true
             )
           }).join(", ") +

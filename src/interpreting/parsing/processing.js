@@ -51,7 +51,7 @@ export function copyFromChild(children, _, type, childInd = 0) {
     children[childInd];
 }
 
-export function copyLexemeFromChild(children, _, type, childInd = 0,) {
+export function copyLexemeFromChild(children, _, type, childInd = 0) {
   return type ?
     {lexeme: children[childInd], type: type} :
     {lexeme: children[childInd]};
@@ -63,7 +63,7 @@ export function copyLexemeFromChild(children, _, type, childInd = 0,) {
 export function processPolyadicInfixOperation(
   children, ruleInd, type, maxRuleInd = 1
 ) {
-  if (ruleInd === maxRuleInd) {
+  if (ruleInd >= maxRuleInd) {
     return copyFromChild(children);
   } else {
     return straightenListSyntaxTree(children, ruleInd, type, true, maxRuleInd);
