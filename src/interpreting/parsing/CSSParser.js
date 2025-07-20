@@ -63,7 +63,7 @@ export const cssGrammar = {
     process: (children) => ({
       type: "ruleset",
       selectorArr: children[0],
-      stmtArr: children[2],
+      decArr: children[2],
     }),
   },
   "selector-list": {
@@ -76,7 +76,7 @@ export const cssGrammar = {
   },
   "selector": {
     rules: [
-      ["compound-selector", "combinator", "selector!"],
+      ["compound-selector", "non-space-combinator", "selector!"],
       ["compound-selector", "S+", "selector!1"],
       ["compound-selector", "S+"],
       ["compound-selector"],
@@ -84,11 +84,12 @@ export const cssGrammar = {
     process: processPolyadicInfixOperation,
     params: ["complex-selector", 2]
   },
-  "combinator": {
+  "non-space-combinator": {
     rules: [
       [/>|\+|~/, "S*"],
     ],
     process: copyLexemeFromChild,
+    params: ["non-space-combinator"],
   },
   "compound-selector": {
     rules: [
@@ -131,7 +132,7 @@ export const cssGrammar = {
   },
   "class-selector": {
     rules: [
-      [/\./, /[a-z][a-z0-9\-]*/],
+      [/\./, /[a-z][a-z0-9_\-]*/],
     ],
     process: (children) => ({
       type: "class-selector",

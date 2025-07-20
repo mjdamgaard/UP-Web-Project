@@ -6,42 +6,21 @@ import {parseString} from "./ScriptInterpreter.js";
 
 export class CSSTranspiler {
 
-  // transpile() transforms the input styleSheet into CSS, ready to be inserted
-  // in the document head, and returns it either directly or as a promise for
-  // it (once we implement the @use rule).
-  transpile(styleSheet, id, isTrusted, callerNode, callerEnv) {
-    if (typeof styleSheet !== "string") throw (
-      `CSSTranspiler.transpile(): Style sheet is not a string`
-    );
-
-    // Parse the style sheet, throwing a SyntaxError on failure.
-    let [styleSheetNode] = parseString(
-      styleSheet, callerNode, callerEnv, cssParser
-    );
-
+  // transpileStyleSheet() validates and transforms the input styleSheet that
+  // has already been parsed into CSS that is ready to be inserted in the
+  // document head. transpileStyleSheet() ignores @import statements, so these
+  // has to be handled by another method/function.
+  transpileStyleSheet(styleSheetNode, id, isTrusted) {
     return styleSheetNode.stmtArr.map(stmt => (
-      this.transpileStatement(stmt, id, addConfinement)
+      this.transpileStatement(stmt, id, isTrusted)
     )).join("\n")
   }
 
 
-  transpileStatement(
-    stmt, id, isTrusted, indentSpace = "", isNested = false
-  ) {
+  transpileStatement(stmt, id, isTrusted, indentSpace = "") {
     let type = stmt.type;
-    if (type === "declaration") {
-      if (!isNested) {
-        return indentSpace +
-          "/* Error: Invalid declaration outside of a ruleset */\n";
-      }
-      return indentSpace + stmt.propName + ": " + stmt.valueArr.map(
-        valueNode => valueNode.lexeme
-      ).join(" ") + ";\n";
-    }
-    else if (type === "ruleset") {
-      return this.transpileRuleset(
-        stmt, id, isTrusted, indentSpace, isNested
-      );
+    if (type === "ruleset") {
+      return this.transpileRuleset(stmt, id, isTrusted, indentSpace);
     }
     else if (type === "at-rule") {
       return indentSpace +
@@ -53,125 +32,95 @@ export class CSSTranspiler {
   }
 
 
-  transpileRuleset(stmt, id, isTrusted, indentSpace, isNested) {
-    // Transpile the selector. If isTrusted is falsy, only selectors consisting
-    // of no combinators and no element types or universal selectors are
-    // allowed, and each compound selector has to include at least one regular
-    // class (besides pseudo-classes and pseudo-elements).
+  transpileRuleset(stmt, id, isTrusted, indentSpace) {
+    // Transpile the selector. If isTrusted is falsy, only compound selectors
+    // consisting of nothing but classes, pseudo-classes, and pseudo-elements
+    // are allowed, or lists of these. So no complex selectors (i.e. with
+    // combinators such as " " or ">"). Furthermore, each compound selector has
+    // to include at least one regular class. But if isTrusted is true, on the
+    // other hand, all kinds of selectors are allowed.
     let transpiledSelectorList = stmt.selectorArr.map(selector => (
-      this.transpileComplexSelector(selector, id, isTrusted, isNested)
+      this.transpileComplexSelector(selector, id, isTrusted)
     )).join(", ");
 
-    // If the selector succeeds, returns the rule with the transpiled
-    // selector list and the transpiled nested statements inside the rule.
+    // Return the rule with the transpiled selector list and the transpiled
+    // declarations inside the rule.
     return (
       indentSpace + transpiledSelectorList + " {\n" +
-        stmt.stmtArr.map(stmt => (
-          this.transpileStatement(stmt, id, isTrusted, indentSpace + "  ", true)
+        stmt.decArr.map(dec => (
+          this.transpileDeclaration(dec, indentSpace + "  ")
       )).join("") +
       indentSpace + "\n}\n"
     );
   }
 
 
-
-
-  transpileComplexSelector(selector, id, isTrusted, isNested) {
-    // The children of a complex selector are the compound selectors at every
-    // even index, starting with (and possibly ending in) 0, and then the
-    // combinators at every odd index.
-    let complexSelectorChildren = selector.children.map((child, ind) => {
-      // If ind is 0, allow for a child of "&", but only is isNested is true.
-      if (ind === 1 && child === "&") {
-        if (isNested) {
-          return "&";
-        } else {
-          return ":not(*)";
-        }
-      }
-
-      // Transpile the compound selectors, i.e. when ind is even. The
-      // addConfinement parameter should only affect to the first compound selector.
-      if (ind % 2 === 0) {
-        return this.transpileCompoundSelector(
-          child, environment, id, styleSheetIDs,
-          (ind === 0) ? isTrusted : true,
-        );
-      }
-      // Else for a combinator, also make sure to check that it is not a
-      // sibling selector if ind === 1. And if the combinator is whitespace,
-      // including comments, transform it to just a space. 
-      else {
-        let lexeme = child[0]?.lexeme ?? " ";
-        if (!isTrusted && ind === 1 && (lexeme === "+" || lexeme === "~")) {
-          throw new UnauthorizedSelectorException();
-        }
-        if (/^[>+~]$/.test(lexeme)) {
-          return " " + lexeme + " ";
-        } else {
-          return " ";
-        }
-      }
-    });
-
-    // If the fist combinator is a sibling combinator, prepend ".this.id-<id> "
-    // to the whole thing if isTrusted == false, thus preventing untrusted
-    // style sheets from affecting styles outside of its own classes.
-    return complexSelectorChildren.join("") +
-      isTrusted ? "" : `:not(.protected:not(.by-${id}) *)` +
-      pseudoElement?.lexeme ?? ""
+  transpileDeclaration(dec, indentSpace) {
+    return indentSpace + dec.propName + ": " + dec.valueArr.map(
+      valueNode => valueNode.value ?? valueNode.lexeme
+    ).join(" ") + ";\n";
   }
 
-  transpileCompoundSelector(
-    selector, environment, id, styleSheetIDs, isTrusted
-  ) {
-    // Initialize an "isConfined" flag reference that the following 
-    // transpileSimpleSelector() calls can set to true if one of the simple
-    // selectors was a class introduced by this style sheet, meaning that the
-    // selector won't apply to any elements that doesn't subscribe to this
-    // style sheet.
-    let isConfinedFlagRef = [false];
-    let transpiledCompoundSelector = selector.map(child => (
-      this.transpileSimpleSelector(
-        child, environment, id, styleSheetIDs, isConfinedFlagRef
-      )
-    )).join("");
+
+
+  transpileComplexSelector(selector, id, isTrusted) {
+    // The children of a complex selector node are the compound selectors at
+    // every even index, starting with (and possibly ending in) 0, and then the
+    // combinators at every odd index.
+    let complexSelectorChildren = selector.children;
+
+    // If the style sheet is not trusted, no combinators, including the
+    // descendant combinator (" "), are allowed.
+    if (!isTrusted && complexSelectorChildren.length > 1) {
+      return "._/* Style sheet trust required */._";
+    }
     
-    // Then if the style sheet is not trusted, and the "isConfined" flag wasn't
-    // changed to true, throw an UnauthorizedSelectorException, removing this
-    // rule from the transpiled result.
-    if (!isTrusted && !isConfinedFlagRef[0]) {
-      throw new UnauthorizedSelectorException();
+    return complexSelectorChildren.map((child, ind) => {
+      // For even indices, transpile the given compound selector.
+      if (ind % 2 === 0) {
+        return this.transpileCompoundSelector(child, id, isTrusted);
+      }
+      // For odd indices, transpile the given combinator.
+      else {
+        return (child.type === "non-space-combinator") ?
+          " " + child.lexeme + " " :
+          " ";
+      }
+    }).join("");
+  }
+
+  transpileCompoundSelector(selector, id, isTrusted) {
+    // Initialize a "hasClass" flag reference that is raised by
+    // transpileSimpleSelector() if the selector is a regular class selector.
+    // When the simple selectors has been transpiled, we then check that if
+    // isTrusted is falsy, then the hasClass flag must have been raised.
+    let hasClassRef = [false];
+    let transpiledCompoundSelector = selector.map(child => (
+      this.transpileSimpleSelector(child, id, isTrusted, hasClassRef)
+    )).join("");
+
+    if (!isTrusted && !hasClassRef[0]) {
+      return "._/* Style sheet trust required */._";
     }
     return transpiledCompoundSelector;
   }
 
   transpileSimpleSelector(
-    selector, environment, id, styleSheetIDs, isConfinedFlagRef
+    selector, id, isTrusted, hasClassRef
   ) {
     let type = selector.type;
     if (type === "class-selector") {
-      let className = selector.className;
+      // Raise the hasClass flag.
+      hasClassRef[0] = true;
 
-      // If the class name contains no underscore, and thus no prefix,
-      // transform it by prepending the style sheet's own ID, and also mark
-      // isConfined as true.
-      let indOfUnderscore = className.indexOf("_");
-      if (indOfUnderscore === -1) {
-        isConfinedFlagRef[0] = true;
-        return ":" + id + "_" + className;
+      // Check that the class name does not contain any underscores to begin
+      // with (such selectors are only used in class transforms), and then
+      // append id to hte class, after an underscore, before returning it.
+      let className = selector.className;
+      if (className.indexOf("_") !== -1) {
+        return "._/* No underscores allowed in classes */._";
       }
-      // Else extract the existing prefix, which ought to be an identifier of
-      // an existing CSS variable containing a route, then get that route, and
-      // look in styleSheetIDs for the ID to substitute it for.
-      else {
-        let ident = className.substring(0, indOfUnderscore);
-        let route = environment.get(ident, selector);
-        let styleSheetID = styleSheetIDs.get(route) ?? "";
-        // (Note that if route is undefined, the class becomes an inaccessible
-        // class with a leading underscore.)
-        return ":" + styleSheetID + "_" + className;
-      }
+      return "." + className + "_" + id;
     }
     else if (type === "pseudo-class-selector") {
       let argument = selector.argument; 
@@ -189,22 +138,31 @@ export class CSSTranspiler {
       else if (argType === "integer") {
         tuple = "(" + argument.lexeme + ")";
       }
-      return selector.lexeme + tuple ?? "";
+      return ":" + selector.lexeme + tuple ?? "";
     }
-    else {
+    else if (type === "pseudo-element") {
+      return "::" + selector.lexeme;
+    }
+    else if (type === "universal-selector") {
+      if (!isTrusted) {
+        return "._/* Style sheet trust required */._";
+      }
+      return "*";
+    }
+    else if (type === "type-selector") {
+      if (!isTrusted) {
+        return "._/* Style sheet trust required */._";
+      }
       return selector.lexeme;
     }
-    
+    else throw "CSSTranspiler.transpileSimpleSelector(): Unrecognized type";
   }
 
+
 }
 
 
 
-
-class UnauthorizedSelectorException {
-  constructor() {}
-}
 
 
 export const cssTranspiler = new CSSTranspiler();
