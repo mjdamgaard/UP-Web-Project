@@ -4,23 +4,23 @@ import {parseString} from "./ScriptInterpreter.js";
 
 
 
-export class CSSTranspiler {
+export class CSSTransformer {
 
-  // transpileStyleSheet() validates and transforms the input styleSheet that
+  // transformStyleSheet() validates and transforms the input styleSheet that
   // has already been parsed into CSS that is ready to be inserted in the
-  // document head. transpileStyleSheet() ignores @import statements, so these
+  // document head. transformStyleSheet() ignores @import statements, so these
   // has to be handled by another method/function.
-  transpileStyleSheet(styleSheetNode, id, isTrusted) {
+  transformStyleSheet(styleSheetNode, id, isTrusted) {
     return styleSheetNode.stmtArr.map(stmt => (
-      this.transpileStatement(stmt, id, isTrusted)
+      this.transformStatement(stmt, id, isTrusted)
     )).join("\n")
   }
 
 
-  transpileStatement(stmt, id, isTrusted, indentSpace = "") {
+  transformStatement(stmt, id, isTrusted, indentSpace = "") {
     let type = stmt.type;
     if (type === "ruleset") {
-      return this.transpileRuleset(stmt, id, isTrusted, indentSpace);
+      return this.transformRuleset(stmt, id, isTrusted, indentSpace);
     }
     else if (type === "at-rule") {
       return indentSpace +
@@ -32,30 +32,30 @@ export class CSSTranspiler {
   }
 
 
-  transpileRuleset(stmt, id, isTrusted, indentSpace) {
-    // Transpile the selector. If isTrusted is falsy, only compound selectors
+  transformRuleset(stmt, id, isTrusted, indentSpace) {
+    // Transform the selector. If isTrusted is falsy, only compound selectors
     // consisting of nothing but classes, pseudo-classes, and pseudo-elements
     // are allowed, or lists of these. So no complex selectors (i.e. with
     // combinators such as " " or ">"). Furthermore, each compound selector has
     // to include at least one regular class. But if isTrusted is true, on the
     // other hand, all kinds of selectors are allowed.
-    let transpiledSelectorList = stmt.selectorArr.map(selector => (
-      this.transpileComplexSelector(selector, id, isTrusted)
+    let transformedSelectorList = stmt.selectorArr.map(selector => (
+      this.transformComplexSelector(selector, id, isTrusted)
     )).join(", ");
 
-    // Return the rule with the transpiled selector list and the transpiled
+    // Return the rule with the transformed selector list and the transformed
     // declarations inside the rule.
     return (
-      indentSpace + transpiledSelectorList + " {\n" +
+      indentSpace + transformedSelectorList + " {\n" +
         stmt.decArr.map(dec => (
-          this.transpileDeclaration(dec, indentSpace + "  ")
+          this.transformDeclaration(dec, indentSpace + "  ")
       )).join("") +
       indentSpace + "\n}\n"
     );
   }
 
 
-  transpileDeclaration(dec, indentSpace) {
+  transformDeclaration(dec, indentSpace) {
     return indentSpace + dec.propName + ": " + dec.valueArr.map(
       valueNode => valueNode.value ?? valueNode.lexeme
     ).join(" ") + ";\n";
@@ -63,7 +63,7 @@ export class CSSTranspiler {
 
 
 
-  transpileComplexSelector(selector, id, isTrusted) {
+  transformComplexSelector(selector, id, isTrusted) {
     // The children of a complex selector node are the compound selectors at
     // every even index, starting with (and possibly ending in) 0, and then the
     // combinators at every odd index.
@@ -76,11 +76,11 @@ export class CSSTranspiler {
     }
     
     return complexSelectorChildren.map((child, ind) => {
-      // For even indices, transpile the given compound selector.
+      // For even indices, transform the given compound selector.
       if (ind % 2 === 0) {
-        return this.transpileCompoundSelector(child, id, isTrusted);
+        return this.transformCompoundSelector(child, id, isTrusted);
       }
-      // For odd indices, transpile the given combinator.
+      // For odd indices, transform the given combinator.
       else {
         return (child.type === "non-space-combinator") ?
           " " + child.lexeme + " " :
@@ -89,24 +89,24 @@ export class CSSTranspiler {
     }).join("");
   }
 
-  transpileCompoundSelector(selector, id, isTrusted) {
+  transformCompoundSelector(selector, id, isTrusted) {
     // Initialize a "hasClass" flag reference that is raised by
-    // transpileSimpleSelector() if the selector is a regular class selector.
-    // When the simple selectors has been transpiled, we then check that if
+    // transformSimpleSelector() if the selector is a regular class selector.
+    // When the simple selectors has been transformed, we then check that if
     // isTrusted is falsy, then the hasClass flag must have been raised.
     let hasClassRef = [false];
-    let transpiledCompoundSelector = selector.map(child => (
-      this.transpileSimpleSelector(child, id, isTrusted, hasClassRef)
+    let transformedCompoundSelector = selector.map(child => (
+      this.transformSimpleSelector(child, id, hasClassRef)
     )).join("");
 
     if (!isTrusted && !hasClassRef[0]) {
       return "._/* Style sheet trust required */._";
     }
-    return transpiledCompoundSelector;
+    return transformedCompoundSelector;
   }
 
-  transpileSimpleSelector(
-    selector, id, isTrusted, hasClassRef
+  transformSimpleSelector(
+    selector, id, hasClassRef
   ) {
     let type = selector.type;
     if (type === "class-selector") {
@@ -129,7 +129,7 @@ export class CSSTranspiler {
       if (argType === "selector-list") {
         tuple = "(" +
           argument.children.map(selector => {
-            this.transpileComplexSelector(
+            this.transformComplexSelector(
               selector, environment, id, styleSheetIDs, true
             )
           }).join(", ") +
@@ -144,18 +144,12 @@ export class CSSTranspiler {
       return "::" + selector.lexeme;
     }
     else if (type === "universal-selector") {
-      if (!isTrusted) {
-        return "._/* Style sheet trust required */._";
-      }
       return "*";
     }
     else if (type === "type-selector") {
-      if (!isTrusted) {
-        return "._/* Style sheet trust required */._";
-      }
       return selector.lexeme;
     }
-    else throw "CSSTranspiler.transpileSimpleSelector(): Unrecognized type";
+    else throw "CSSTransformer.transformSimpleSelector(): Unrecognized type";
   }
 
 
@@ -165,7 +159,7 @@ export class CSSTranspiler {
 
 
 
-export const cssTranspiler = new CSSTranspiler();
+export const cssTransformer = new CSSTransformer();
 
 
-export {cssTranspiler as default};
+export {cssTransformer as default};
