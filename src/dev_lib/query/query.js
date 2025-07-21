@@ -55,10 +55,10 @@ export const query = new DevFunction(
       if (isLocked) {
         checkAdminPrivileges(homeDirID, callerNode, execEnv);
       }
-      result = await interpreter.dbQueryHandler.queryDBFromScript(
+      result = await interpreter.queryDB(
         route, isPost, postData, options,
         homeDirID, filePath, fileExt, queryPathArr,
-        callerNode, execEnv
+        callerNode, execEnv, interpreter
       );
     }
 
