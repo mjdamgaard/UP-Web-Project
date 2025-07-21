@@ -1,9 +1,13 @@
 
-import {ScriptInterpreter} from "./interpreting/ScriptInterpreter.js";
+import {
+  ScriptInterpreter, getExtendedErrorMsg
+} from "./interpreting/ScriptInterpreter.js";
 import {queryServer} from "./dev_lib/query/src/queryServer.js";
 import {CAN_CREATE_APP_FLAG} from "./dev_lib/jsx/jsx_components.js";
 
 import {main as constructAccountMenu} from "./account_menu/account_menu.js"
+
+import {settings} from "./dev_lib/jsx/settings/basic.js";
 
 /* Tests */
 
@@ -56,6 +60,10 @@ class AppContext {
   getVal() {
     return this.val;
   }
+  setVal(val) {
+    this.val = val;
+    this.subscriberCallbacks.forEach(callback => callback(val));
+  }
   update(updateCallback) {
     updateCallback(this.val);
     this.subscriberCallbacks.forEach(callback => callback(this.val));
@@ -65,7 +73,7 @@ class AppContext {
   }
 }
 
-const settingsContext = new AppContext();
+const settingsContext = new AppContext(settings);
 const urlContext = new AppContext();
 
 
@@ -75,7 +83,7 @@ constructAccountMenu(settingsContext);
 
 // Set the url data for urlContext.
 let {pathname, search, hash} = window.location;
-urlContext.set({pathname: pathname, search: search, hash: hash, state: {}});
+urlContext.setVal({pathname: pathname, search: search, hash: hash, state: {}});
 
 
 
@@ -119,12 +127,12 @@ scriptInterpreter.interpretScript(
   {settingsContext: settingsContext, urlContext: urlContext},
 ).then(
   ([output, log]) => {
+    if (log?.error) {
+      console.error(getExtendedErrorMsg(log.error));
+    }
     console.log("UP app script exited with output and log:");
     console.log(output);
     console.log(log);
-    if (log?.error) {
-      console.error(log.error);
-    }
   }
 ).catch(err => console.error(err));
 

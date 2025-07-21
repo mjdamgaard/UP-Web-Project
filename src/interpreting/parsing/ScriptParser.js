@@ -13,7 +13,7 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   "default|public|debugger|new|console|abstract|arguments|boolean|byte|char|" +
   "double|enum|eval|extends|final|float|goto|implements|in|int|interface|" +
   "long|native|package|private|protected|short|super|synchronized|throws|" +
-  "transient|volatile|with|yield)$"
+  "transient|volatile|with|yield|Promise)$"
 );
 
 
@@ -801,7 +801,7 @@ export const scriptGrammar = {
       ["array!1"],
       ["object!1"],
       ["jsx-element!1"],
-      ["promise-call!1"],
+      ["promise-call"],
       ["console-call!1"],
       ["super-call-or-access!1"],
       ["this-keyword"],
@@ -1048,7 +1048,7 @@ export const scriptGrammar = {
   "promise-call": {
     rules: [
       ["/Promise/", /\./, "/all/", /\(/, "expression", /\)/],
-      ["/Promise/", /\(/, "expression", /\)/],
+      ["/new/", "/Promise/", /\(/, "expression", /\)/],
     ],
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
@@ -1056,7 +1056,7 @@ export const scriptGrammar = {
         exp: children[4],
       } : {
         type: "promise-call",
-        exp: children[2],
+        exp: children[3],
       };
     },
   },

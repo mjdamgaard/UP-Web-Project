@@ -5,7 +5,7 @@ import {
 import {
   ServerQueryHandler, NetworkError
 } from "../../../server/ajax_io/ServerQueryHandler.js";
-import {FlagTransmitter} from "../../interpreting/FlagTransmitter.js";
+import {FlagTransmitter} from "../../../interpreting/FlagTransmitter.js";
 
 const serverQueryHandler = new ServerQueryHandler();
 

@@ -7,7 +7,7 @@ import {
   ADMIN_PRIVILEGES_FLAG, REQUESTING_SMF_ROUTE_FLAG, CURRENT_SMF_ROUTE_FLAG
 } from "../flags.js";
 
-import {DBQueryHandler} from "../../../server/db_io/DBQueryHandler.js";
+import {DBQueryHandler} from "../../../../server/db_io/DBQueryHandler.js";
 
 const dbQueryHandler = new DBQueryHandler();
 

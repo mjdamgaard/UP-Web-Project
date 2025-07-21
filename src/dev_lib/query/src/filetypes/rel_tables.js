@@ -3,7 +3,7 @@
 import {
   RuntimeError, payGas,
 } from "../../../../interpreting/ScriptInterpreter.js";
-import {DBQueryHandler} from "../../../server/db_io/DBQueryHandler.js";
+import {DBQueryHandler} from "../../../../server/db_io/DBQueryHandler.js";
 
 const dbQueryHandler = new DBQueryHandler();
 

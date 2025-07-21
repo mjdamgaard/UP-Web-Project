@@ -1,7 +1,8 @@
 
 import {
   DevFunction, RuntimeError, LoadError, jsonParse, jsonStringify,
-  getPrototypeOf, OBJECT_PROTOTYPE, ARRAY_PROTOTYPE
+  getPrototypeOf, OBJECT_PROTOTYPE, ARRAY_PROTOTYPE, FunctionObject,
+  CLEAR_FLAG, PromiseObject,
 } from '../../interpreting/ScriptInterpreter.js';
 import {parseRoute} from './src/parseRoute.js';
 

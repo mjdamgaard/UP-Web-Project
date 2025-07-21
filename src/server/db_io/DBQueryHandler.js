@@ -1,14 +1,6 @@
 
 import {MainDBConnection, getProcCallSQL} from "./DBConnection.js";
-import {
-  payGas, NetworkError
-} from '../../interpreting/ScriptInterpreter.js';
-
-
-import * as directoriesMod from "./src/filetypes/directories.js";
-import * as textFilesMod from "./src/filetypes/text_files.js";
-import * as relationalTableFilesMod from "./src/filetypes/rel_tables.js";
-import * as fullTextTableFilesMod from "./src/filetypes/full_text_tables.js";
+import {NetworkError} from '../../interpreting/ScriptInterpreter.js';
 
 
 

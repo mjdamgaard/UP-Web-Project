@@ -3,7 +3,7 @@ import {
   DevFunction, Exception, ClassObject, exceptionClass,
 } from '../interpreting/ScriptInterpreter.js';
 import {
-  CLIENT_TRUST_FLAG, REQUESTING_SMF_ROUTE_FLAG, CURRENT_SMF_ROUTE_FLAG, 
+  CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG, 
 } from './query/src/flags.js';
 
 
@@ -27,7 +27,7 @@ export const checkRequestOrigin = new DevFunction(
     // Else see if the request origin matches any one in the whitelist, where a
     // trailing '*' in a whitelisted request origin string is a wildcard that
     // means that all extensions of that string is allowed as well.
-    let requestOrigin = undefined//execEnv.getFlag(REQUEST_ORIGIN_FLAG);
+    let requestOrigin = undefined//execEnv.getFlag(REQUESTING_COMPONENT_FLAG);
     let isAllowed = whitelist.some(str => {
       if (str.at(-1) === "*") {
         let requiredSubstring = str.slice(0, -1);
@@ -52,7 +52,7 @@ export const checkRequestOrigin = new DevFunction(
 
 export const getRequestOrigin = new DevFunction(
   "getRequestOrigin", {}, function({execEnv}, []) {
-    return execEnv.getFlag(REQUEST_ORIGIN_FLAG);
+    return execEnv.getFlag(REQUESTING_COMPONENT_FLAG);
   }
 );
 

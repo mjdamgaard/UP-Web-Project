@@ -1,6 +1,6 @@
 import {
   DevFunction, forEachValue, LiveModule, PromiseObject, RuntimeError,
-  SCSSModule, AbstractObject,
+  CSSModule as SCSSModule, AbstractObject,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {SettingsObject} from "../jsx_components.js";
 
@@ -37,7 +37,7 @@ export class BasicSettingsObject extends SettingsObject {
 
   // TODO: Implement.
   changeUser(userID, node, env) {
-
+    console.log("changeUser() is called from BasicSettingsObject");
   }
 
 
@@ -82,7 +82,7 @@ export const getSettings = new DevFunction(
   "getSettings", {}, ({callerNode, execEnv}, [liveModule]) => {
     if (liveModule instanceof LiveModule) {
       let modulePath = liveModule.modulePath;
-      let appComponentPath = execEnv.getFlag(APP_COMPONENT_PATH_FLAG);
+      let appComponentPath = undefined; // execEnv.getFlag(APP_COMPONENT_PATH_FLAG);
       let isAppRoot = modulePath === appComponentPath;
       let isTrustedPromObj = new PromiseObject(new Promise(
         resolve => resolve(false)

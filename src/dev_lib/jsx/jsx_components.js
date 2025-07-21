@@ -802,16 +802,15 @@ class JSXInstanceInterface extends AbstractObject {
   });
 
   // import() is similar to the regular import function, except it also makes
-  // the app call settings.prepareComponent(), if that (optional) method
-  // exists, in order to prepare e.g. the style of the component before it is
-  // used (which might be helpful in order to prevent UI flickering in some
-  // instances).
+  // the app call settings.prepareComponent() in order to prepare e.g. the
+  // style of the component before it is used (which might be helpful in order
+  // to prevent UI flickering in some instances).
   import = new DevFunction(
     "import", {isAsync: true, typeArr: ["string"]},
     async ({callerNode, execEnv, interpreter}, [route]) => {
       let liveModule = interpreter.import(route, callerNode, execEnv);
       let settings = this.jsxInstance.settings;
-      if (route.slice(-4) === ".jsx" && settings.prepareComponent) {
+      if (route.slice(-4) === ".jsx") {
         await settings.prepareComponent(liveModule, callerNode, execEnv);
       }
       return liveModule;
@@ -903,40 +902,50 @@ export class DOMNodeObject extends AbstractObject {
 export class SettingsObject extends AbstractObject {
   constructor() {
     super("Settings");
-    // TODO: Complete the following comments.
+  }
 
-    // initiate(userID, appComponent, node, env) ...
-    this.initiate = undefined;
+  // TODO: Complete the following comments.
 
-    // getUserID(node, env) ...
-    this.getUserID = undefined;
+  // initiate(userID, appComponent, node, env) ...
+  initiate(userID, appComponent, node, env) {}
 
-    // changeUser(userID?, node, env) ...
-    this.changeUser = undefined;
+  // getUserID(node, env) ...
+  getUserID(node, env) {}
 
-    // (optional) prepareComponent(componentModule, node, env) ...
-    this.prepareComponent = undefined;
+  // changeUser(userID?, node, env) ...
+  changeUser(userID, node, env) {
 
-    // prepareInstance(componentModule, props, state, settings, node, env) has
-    // to prepare transformInstance() such that it can be called synchronously.
-    // It should also return a childSettings object, which can be used in
-    // particular to extend the existing props of the components with extra
-    // ones used for styling them. prepareInstance() can also return a promise,
-    // in which case the component renders as empty and/or with a "_pending-
-    // settings" class on and queues a rerender when the promise resolves.
-    this.prepareInstance = undefined;
+  }
 
+  // prepareComponent(componentModule, node, env) (optional) ...
+  prepareComponent(componentModule, node, env) {
+
+  }
+
+  // prepareInstance(componentModule, props, state, settings, node, env) has
+  // to prepare transformInstance() such that it can be called synchronously.
+  // It should also return a childSettings object, which can be used in
+  // particular to extend the existing props of the components with extra
+  // ones used for styling them. prepareInstance() can also return a promise,
+  // in which case the component renders as empty and/or with a "_pending-
+  // settings" class on and queues a rerender when the promise resolves.
+  prepareInstance(_, node, env) {
+
+  }
     // getComponentTrust(componentPath, node, env) takes a component path,
     // which will often be the so-called "request origin", and returns boolean
     // of whether client trust the component to make post requests, and to
     // fetch private data. If getComponentTrust() has not yet been prepared by
     // prepareInstance(), it might just return false temporarily.
-    this.getComponentTrust = undefined;
-
-    // transformInstance(domNode, ownDOMNodes, props, state, node, env) ...
-    this.transformInstance = undefined;
+  getComponentTrust(_, node, env) {
 
   }
+
+  // transformInstance(domNode, ownDOMNodes, props, state, node, env) ...
+  transformInstance(domNode, ownDOMNodes, props, state, node, env) {
+
+  }
+
 }
 
 
