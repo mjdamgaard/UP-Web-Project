@@ -2334,6 +2334,14 @@ export function verifyType(val, type, isOptional, node, env) {
       break;
     case "any":
       return;
+    case (type instanceof ClassObject):
+      if (!type.isInstanceOfThis(val)) {
+        throw new ArgTypeError(
+          `Value is not an instance of the ${type.className} class`,
+          node, env
+        );
+      }
+      return;
     case (typeof type === "symbol"):
       if (!(val instanceof AbstractObject) || val.className !== type) {
         throw new ArgTypeError(
