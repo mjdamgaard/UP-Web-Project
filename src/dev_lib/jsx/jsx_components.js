@@ -181,43 +181,33 @@ class JSXInstance {
     }
 
 
-    // Call settings.prepareInstance() to prepare the other settings' methods
-    // for this instance, in particular getComponentTrust() and
-    // transformInstance(), used below, such that these can be called
-    // synchronously. prepareInstance() also gets the childSettings to pass to
-    // the child instances. This allows settings to add extra props to the
-    // components, and in particular props used for styling them.
+    // Call settings.prepareInstance() to prepare the other methods of settings
+    // for this instance, in particular transformInstance(), used below, such
+    // that it can be called synchronously. prepareInstance() also gets the
+    // childSettings to pass to the child instances. This allows settings to
+    // add extra props to the components, and in particular props used for
+    // styling them.
     let childSettings = settings.prepareInstance(
       this.componentModule, props, state, settings, callerNode, callerEnv
     );
 
-    // If childSettings is not ready yet for this component, which will mean
-    // that a Promise is returned, render an empty template element with a
-    // "_pending-settings" class, and wait for the promise to  resolve before
-    // queuing a rerender of this instance. Or in case the instance has rendered
-    // before, which might happen the user is logged in/out, simply paint the
-    // "_pending-settings" class onto the existing DOM node. (Note that the
-    // underscore here is meant to make it possible for "trusted" style sheets
-    // to style the class.)
-    if (childSettings instanceof Promise) {
-      let newDOMNode;
-      if (this.domNode) {
-        this.domNode.classList.add("_pending-settings");
-        newDOMNode = this.domNode;
-      }
-      else {
-        newDOMNode = document.createElement("template");
-        newDOMNode.setAttribute("class", "_pending-settings");
-        this.domNode = newDOMNode;
-      }
+    // If prepareInstance() returns a promise it means that the instance is not
+    // yet prepared. In that case we queue a rerender for when the promise
+    // resolves, meaning that the instance is prepared. And in the meantime we
+    // will simply paint a "_pending-settings" class onto the DOM node below
+    // when we have obtained it, which can hide the instance from the user
+    // while it waits for its right style.
+    let isPrepared = !(childSettings instanceof Promise);
+    if (!isPrepared) {
       childSettings.then(() => {
         this.queueRerender(interpreter);
       });
-      return newDOMNode;
     }
 
-    // Now that getComponentTrust() is ready, use it to get a new environment
-    // for the component with a new "client-trust" flag.
+    // Call settings.getComponentTrust() and use it to get a new environment
+    // for the component with a new "client-trust" flag. Note that if the
+    // instance is not yet prepared, getComponentTrust() might just return
+    // false temporarily, and wait for the rerender.
     let isTrusted = settings.getComponentTrust(
       this.requestOrigin, callerNode, callerEnv
     );
@@ -299,10 +289,20 @@ class JSXInstance {
     }
     this.domNode = newDOMNode;
 
+
+    // If the instance is not prepared yet, meaning that the style might not be
+    // ready, add a "_pending-settings" class to the DOM node while waiting for
+    // the rerender when the instance has been prepared. (Note that the
+    // underscore here is meant to make it possible for "trusted" style sheets
+    // to style the class.)
+    if (!isPrepared) {
+      newDOMNode.classList.add("_pending-settings");
+    }
+
     // And before returning the new DOM node, call settings.transformInstance()
     // in order to transform the DOM node, in particular for applying style to
-    // it (by giving it classes and/or inline styles). Note that this method
-    // will have been prepared by settings.prepareInstance()
+    // it (by giving it classes and/or inline styles). Note if this method has
+    // not yet been prepared, it will just do nothing.
     settings.transformInstance(
       newDOMNode, ownDOMNodes, props, state, callerNode, compEnv
     );
@@ -742,7 +742,6 @@ class JSXInstanceInterface extends AbstractObject {
       "props": deepCopy(this.jsxInstance.props),
       "state": deepCopy(this.jsxInstance.state),
       "refs": this.jsxInstance.refs,
-      "settings": deepCopy(this.jsxInstance.settings),
       /* Methods */
       "dispatch": this.dispatch,
       "call": this.call,
@@ -752,6 +751,7 @@ class JSXInstanceInterface extends AbstractObject {
       "subscribeToContext": this.subscribeToContext,
       "unsubscribeFromContext": this.unsubscribeFromContext,
       "getOwnContext": this.getOwnContext,
+      "getSettings": this.getSettings,
     });
   }
 
@@ -830,7 +830,7 @@ class JSXInstanceInterface extends AbstractObject {
   // this instance rerenders. If no context is found of the given key, no side-
   // effect happens, and undefined is returned.
   subscribeToContext = new DevFunction(
-    "subscribeToContext", {typeArr: ["object key"]}, ({}, [key]) => {
+    "subscribeToContext", {typeArr: ["object key"]}, (_, [key]) => {
       return deepCopyExceptRefs(
         this.jsxInstance.subscribeToContext(key)
       );
@@ -840,7 +840,7 @@ class JSXInstanceInterface extends AbstractObject {
   // unsubscribeFromContext(key) unsubscribes the instance from a context,
   // meaning that it will no longer rerender if the context updates.
   unsubscribeFromContext = new DevFunction(
-    "unsubscribeFromContext", {typeArr: ["object key"]}, ({}, [key]) => {
+    "unsubscribeFromContext", {typeArr: ["object key"]}, (_, [key]) => {
       return deepCopyExceptRefs(
         this.jsxInstance.unsubscribeFromContext(key)
       );
@@ -849,10 +849,26 @@ class JSXInstanceInterface extends AbstractObject {
 
   // getOwnContext(key) the instance's own context of the given key.
   getOwnContext = new DevFunction(
-    "getOwnContext", {typeArr: ["object key"]}, ({}, [key]) => {
+    "getOwnContext", {typeArr: ["object key"]}, (_, [key]) => {
       return deepCopyExceptRefs(
         this.jsxInstance.getOwnContext(key)
       );
+    }
+  );
+
+
+  // getSettings() returns a promise to the settings. Note that it might be a
+  // good idea to check the CLIENT_TRUST_FLAG before allowing a component
+  // instance to get settings that the user might consider private. So don't
+  // just let private settings be properties of settings; make them methods
+  // that check said flag.
+  getSettings = new DevFunction(
+    "getSettings", {isAsync: true}, async () => {
+      let settings = this.jsxInstance.settings;
+      if (settings instanceof Promise) {
+        settings = await settings;
+      }
+      return deepCopy(settings);
     }
   );
 
@@ -904,7 +920,8 @@ export class SettingsObject extends AbstractObject {
     // getComponentTrust(componentPath, node, env) takes a component path,
     // which will often be the so-called "request origin", and returns boolean
     // of whether client trust the component to make post requests, and to
-    // fetch private data.
+    // fetch private data. If getComponentTrust() has not yet been prepared by
+    // prepareInstance(), it might just return false temporarily.
     this.getComponentTrust = undefined;
 
     // transformInstance(domNode, ownDOMNodes, ...) ...
