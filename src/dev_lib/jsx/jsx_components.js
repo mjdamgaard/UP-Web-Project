@@ -902,7 +902,7 @@ export class DOMNodeObject extends AbstractObject {
 // to createJSXApp().
 export class SettingsObject extends AbstractObject {
   constructor() {
-    super("SettingsObject");
+    super("Settings");
     // TODO: Complete the following comments.
 
     // initiate(userID, appComponent, node, env) ...
@@ -913,6 +913,9 @@ export class SettingsObject extends AbstractObject {
 
     // changeUser(userID?, node, env) ...
     this.changeUser = undefined;
+
+    // (optional) prepareComponent(componentModule, node, env) ...
+    this.prepareComponent = undefined;
 
     // prepareInstance(componentModule, props, state, settings, node, env) has
     // to prepare transformInstance() such that it can be called synchronously.
@@ -930,12 +933,9 @@ export class SettingsObject extends AbstractObject {
     // prepareInstance(), it might just return false temporarily.
     this.getComponentTrust = undefined;
 
-    // transformInstance(domNode, ownDOMNodes, ...) ...
+    // transformInstance(domNode, ownDOMNodes, props, state, node, env) ...
     this.transformInstance = undefined;
 
-
-    // (optional) prepareComponent(componentModule, node, env) ...
-    this.prepareComponent = undefined;
   }
 }
 

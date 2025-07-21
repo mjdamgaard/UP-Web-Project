@@ -15,7 +15,68 @@ function getNonce() {
 const styleSheetIDs = new Map();
 const styleSheetRoutes = new Map();
 
-export const settings = new AbstractObject(); // TODO: Implement.
+
+
+export class BasicSettingsObject extends SettingsObject {
+  constructor() {
+    super();
+    this.userID = undefined;
+  }
+
+  // TODO: Implement.
+  initiate(userID, appComponent, node, env) {
+
+  }
+
+
+  // TODO: Implement.
+  getUserID(node, env) {
+
+  }
+
+
+  // TODO: Implement.
+  changeUser(userID, node, env) {
+
+  }
+
+
+  // TODO: Implement.
+  prepareComponent(componentModule, node, env) {
+
+  }
+
+
+  // TODO: Implement.
+  prepareInstance(_, node, env) {
+
+  }
+
+
+  // TODO: Implement.
+  getComponentTrust(_, node, env) {
+
+  }
+
+
+  // TODO: Implement.
+  transformInstance(domNode, ownDOMNodes, props, state, node, env) {
+
+  }
+}
+
+
+export const settings = new BasicSettingsObject();
+
+export {settings as default};
+
+
+
+
+
+
+
+// TODO: Remove this old code:
 
 export const getSettings = new DevFunction(
   "getSettings", {}, ({callerNode, execEnv}, [liveModule]) => {
