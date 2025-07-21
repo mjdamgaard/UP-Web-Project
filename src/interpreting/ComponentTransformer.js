@@ -4,6 +4,8 @@ import {
   getPrototypeOf, OBJECT_PROTOTYPE, verifyTypes,
 } from "./ScriptInterpreter.js";
 
+// TODO: Correct, and move the description of what users should export
+// elsewhere:
 
 // The "transform" objects used by the ComponentTransformer are of the form:
 //
@@ -41,13 +43,10 @@ import {
 
 export class ComponentTransformer {
 
-  transformInstance(domNode, ownDOMNodes, transform, node, env) {
+  transformInstance(domNode, ownDOMNodes, preparedRules) {
     if (ownDOMNodes.length === 0) {
       return;
     }
-    let mainStyleSheetID = transform.styleSheet;
-    let styleSheetIDs = transform.styleSheets;
-    let rules = transform.rules ?? {};
 
     // Add an "own-leaf" class to all of the ownDOMNodes who haven't got
     // children themselves that are part of the ownDOMNodes. Since this array
@@ -63,7 +62,7 @@ export class ComponentTransformer {
 
     // Now go through each rule and add the inline styles and classes to the
     // element that the rule selects.
-    Object.entries(rules).forEach(([selector, ruleOutput]) => {
+    Object.entries(preparedRules).forEach(([selector, ruleOutput]) => {
       // Get the elements that the selector selects. Note that the selectors
       // have to be validated for each rule (by parsing them successfully)
       // before this method is called. And they also have to have all classes
@@ -72,9 +71,26 @@ export class ComponentTransformer {
         ':scope :not(:scope .own-leaf *):where(' + selector + ')';
       let targetNodes = domNode.querySelectorAll(transformedSelector);
       
-      // Then apply the inline styles and classes from the ruleOutput.
+      // Then apply the inline styles and classes from the ruleOutput. We also
+      // here assume that all styles has already been validated, and that all
+      // classes have been transformed, giving them the right style sheet ID
+      // suffix.
+      let styleEntries = ruleOutput.styleEntries ?? [];
+      let classes = ruleOutput.classes ?? [];
+      targetNodes.forEach(node => {
+        styleEntries.forEach(([property, valueStr]) => {
+          node.style.setProperty(property, valueStr);
+        });
+        classes.forEach(className => {
+          node.classList.add(className);
+        });
+      });
     });
 
+    // Finally, remove the "own-leaf" classes again.
+    ownDOMNodes.forEach(node => {
+      node.classList.remove("own-leaf");
+    });
   }
 
 }
