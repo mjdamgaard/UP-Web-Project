@@ -113,14 +113,25 @@ export class CSSTransformer {
       // Raise the hasClass flag.
       hasClassRef[0] = true;
 
-      // Check that the class name does not contain any underscores to begin
-      // with (such selectors are only used in class transforms), and then
-      // append id to hte class, after an underscore, before returning it.
+      // If the class name does not contain any underscores to begin with,
+      // append the id to the class, after an underscore. And if it does, check
+      // that it is a leading one and that isTrusted is true, as trusted style
+      // sheets are allowed to style classes that are set by dev functions,
+      // such as e.g. "_failed" or "_pending-style".
       let className = selector.className;
-      if (className.indexOf("_") !== -1) {
-        return "._/* No underscores allowed in classes */._";
+      let indOfUnderscore = className.indexOf("_");
+      if (indOfUnderscore === -1) {
+        return "." + className + "_" + id;
       }
-      return "." + className + "_" + id;
+      else if (indOfUnderscore === 1) {
+        if (!isTrusted) {
+          return "._/* Style sheet trust required */._";
+        }
+        return "." + className;
+      }
+      else {
+        return "._/* No non-leading underscores are allowed in a class */._";
+      }
     }
     else if (type === "pseudo-class-selector") {
       let argument = selector.argument; 

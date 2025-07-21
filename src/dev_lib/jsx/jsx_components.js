@@ -9,8 +9,7 @@ import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
 } from "../query/src/flags.js";
 
-const CLASS_NAME_REGEX =
-  /^ *((([a-z]|-_)[a-z0-9\-]*_)?[a-z][a-z0-9\-]* *)*$/;
+const CLASS_NAME_REGEX = /^ *([a-z][a-z0-9\-]* *)*$/;
 
 
 export const CAN_CREATE_APP_FLAG = Symbol("can-create-app");
@@ -253,7 +252,9 @@ class JSXInstance {
     // If a JSXElement was successfully returned, call getDOMNode() to generate
     // the instance's new DOM node, unless render() is a dev function that
     // returns a DOM node directly, wrapped in the DOMNodeWrapper class
-    // defined below, in which case just use that DOM node.
+    // defined below, in which case just use that DOM node. getDOMNode() will
+    // also fill out the ownDOMNodes array, which will include all the DOM
+    // elements of the component instance that is not part of a child instance. 
     let newDOMNode, ownDOMNodes = [];
     if (jsxElement instanceof DOMNodeObject) {
       newDOMNode = jsxElement.domNode;
@@ -292,12 +293,16 @@ class JSXInstance {
 
     // If the instance is not prepared yet, meaning that the style might not be
     // ready, add a "_pending-settings" class to the DOM node while waiting for
-    // the rerender when the instance has been prepared. (Note that the
-    // underscore here is meant to make it possible for "trusted" style sheets
-    // to style the class.)
+    // the rerender. (Note that the underscore here is meant to make it possible
+    // for "trusted" style sheets to style the class.)
     if (!isPrepared) {
       newDOMNode.classList.add("_pending-settings");
     }
+
+    // Also add a "this_" class to the node, which is equivalent of
+    // automatically adding a "this" class to the the className property to the
+    // outer node of all JSXElements returned by render (except for decorators).
+    newDOMNode.classList.add("this_");
 
     // And before returning the new DOM node, call settings.transformInstance()
     // in order to transform the DOM node, in particular for applying style to
@@ -465,11 +470,10 @@ class JSXInstance {
               "/[a-z][a-z0-9\-]*/)",
               jsxNode, jsxDecEnv
             );
-            // Add automatic '-_' prefixes for any class name that hasn't got a
-            // prefix.
-        // className = className.split(/\s+/).replaceAll(
-        //   /()/g, str => "-_" + str
-        // );
+            // Add automatic '_' suffixes to all initial classes.
+            className = className.replaceAll(
+              /[a-z][a-z0-9\-]*/g, str => str + "_"
+            );
             newDOMNode.setAttribute("class", className);
             break;
           }
@@ -508,15 +512,17 @@ class JSXInstance {
       // Then call a recursive helper method which calls getDOMNode() on any
       // and all children, and append each one to the new DOM node. And if a
       // child returns an array, it also calls itself recursively to append
-      // any and all nested children inside that array (at any depth).
+      // any and all nested children inside that array (at any depth). We also
+      // push the new DOM node to ownDOMNodes, and do this before hand, such
+      // that ownDOMNodes will be ordered from ancestors to descendants at the
+      // end.
+      ownDOMNodes.push(newDOMNode);
       this.createAndAppendChildren(
         newDOMNode, childArr, marks, interpreter, callerNode, callerEnv,
         ownDOMNodes, settings
       );
 
-      // Then return the DOM node of this new element, and also push the node
-      // to ownDOMNodes, which is used when styling the component instance.
-      ownDOMNodes.push(newDOMNode);
+      // Then return the DOM node of this new element.
       return newDOMNode;
     }
   }

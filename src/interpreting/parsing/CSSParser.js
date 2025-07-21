@@ -132,7 +132,7 @@ export const cssGrammar = {
   },
   "class-selector": {
     rules: [
-      [/\./, /[a-z][a-z0-9_\-]*/],
+      [/\./, /[a-z_][a-z0-9_\-]*/],
     ],
     process: (children) => ({
       type: "class-selector",
