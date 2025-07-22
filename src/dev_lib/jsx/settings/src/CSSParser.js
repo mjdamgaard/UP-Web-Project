@@ -62,7 +62,7 @@ export const cssGrammar = {
     ],
     process: (children) => ({
       type: "ruleset",
-      selectorArr: children[0],
+      selectorList: children[0],
       decArr: children[2],
     }),
   },

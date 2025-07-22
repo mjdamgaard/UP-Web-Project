@@ -1,36 +1,26 @@
 
-import {cssParser} from "./parsing/CSSParser.js";
+import {cssParser} from "./CSSParser.js";
+import {cssTransformer} from "./CSSTransformer.js";
 import {
-  getPrototypeOf, OBJECT_PROTOTYPE, verifyTypes,
-} from "./ScriptInterpreter.js";
+  parseString, verifyTypes, verifyType,
+} from "../../../../interpreting/ScriptInterpreter.js";
 
 // TODO: Correct, and move the description of what users should export
 // elsewhere:
 
 // The "transform" objects used by the ComponentTransformer are of the form:
 //
-// transform := {(styleSheet?, styleSheets?, rules?, childProps?},
-// styleSheet := <route string>,
-// styleSheets := {(<[a-z][a-z0-9\-]* key>: <route string>,)*},
-// rules :=  {(<selector>: ruleOutput},
-// ruleOutput := {styles, classes}, 
+// transform := {(styleSheets?, rules?, childProps?},
+// styleSheets := [({route?, sheet?, id?},)*],
+// rules :=   [({selector, styles?, classes?, check?},)*],
 // styles := {(<CSS property>: <CSS value string>,)*},
 // classes := [(<class>,)*],
+// check := <function of props and state>,
 //
 // where <class> is ether a [a-z][a-z0-9\-]* string if styleSheet is defined
 // rather than style*Sheets*, or a [a-z][a-z0-9\-]*_[a-z][a-z0-9\-]* string if
 // styleSheets is defined, where the last part is the [a-z][a-z0-9\-]* key of
 // the style sheet that the class references.
-//
-// Well, this is the object format that the users should define and export from
-// the component modules, but let's assume that the route strings have all been
-// converted to style sheets IDs before transformInstance() is called on the
-// transform. And also all user-defined selectors should be validated before
-// transformInstance() is called. So for the method below, we instead have:
-//
-// styleSheet := <id>,
-// styleSheets := {(<[a-z][a-z0-9\-]* key>: <id>,)*},
-// rules :=  {(<pre-validated selector>: ruleOutput}.
 //
 // And although it is not relevant here, childProps := an object where the key
 // is either a route, the reserved "all" string, or an child instance key, and
@@ -41,7 +31,53 @@ import {
 
 
 
-export class ComponentTransformer {
+export class AppStyler {
+  constructor() {
+    this.styleSheetIDs = undefined;
+  }
+
+  reset() {
+    [...document.querySelectorAll(`head style.up-style`)].forEach(node => {
+      node.remove();
+    });
+    this.styleSheetIDs = new Map();
+  }
+
+
+
+  async prepareTransform(rules, styleSheets = [], node, env) {
+    verifyTypes([rules, styleSheets], ["array", "array"], node, env);
+
+    let preparedRules = [];
+    rules.forEach(({selector, classes = [], styles = [], check}) => {
+      verifyTypes(
+        [selector, classes, styles, check],
+        ["string", "array", "array", "function?"],
+        node, env
+      );
+      let preparedRule = {};
+
+      // Validate and transform the selector such that all classes gets a
+      // trailing underscore, which is similar of appending a style sheet ID of
+      // "" to them.
+      let [parsedSelectorList] = parseString(
+        selector, node, env, cssParser, "selector-list"
+      );
+      let id = "";
+      preparedRule.selector = cssTransformer.transformSelectorList(
+        parsedSelectorList, id, true
+      );
+
+      // We also need to transform the classes by appending the right style
+      // sheet ID suffix to them.
+      // TODO: Do.
+
+      // And we need to check the inline styles..
+
+    });
+
+  }
+
 
   transformInstance(domNode, ownDOMNodes, preparedRules) {
     if (ownDOMNodes.length === 0) {
@@ -62,7 +98,7 @@ export class ComponentTransformer {
 
     // Now go through each rule and add the inline styles and classes to the
     // element that the rule selects.
-    Object.entries(preparedRules).forEach(([selector, ruleOutput]) => {
+    preparedRules.forEach(({selector, classes = [], styleEntries = []}) => {
       // Get the elements that the selector selects. Note that the selectors
       // have to be validated for each rule (by parsing them successfully)
       // before this method is called. And they also have to have all classes
@@ -75,8 +111,6 @@ export class ComponentTransformer {
       // here assume that all styles has already been validated, and that all
       // classes have been transformed, giving them the right style sheet ID
       // suffix.
-      let styleEntries = ruleOutput.styleEntries ?? [];
-      let classes = ruleOutput.classes ?? [];
       targetNodes.forEach(node => {
         styleEntries.forEach(([property, valueStr]) => {
           node.style.setProperty(property, valueStr);
@@ -96,15 +130,15 @@ export class ComponentTransformer {
 }
 
 
-export class TransformError {
-  constructor(msg) {
-    this.msg = msg;
-  }
-}
+// export class TransformError {
+//   constructor(msg) {
+//     this.msg = msg;
+//   }
+// }
 
 
 
-export const componentTransformer = new ComponentTransformer();
+export const appStyler = new AppStyler();
 
 
-export {componentTransformer as default};
+export {appStyler as default};

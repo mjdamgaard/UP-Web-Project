@@ -31,9 +31,9 @@ export function getParsingGasCost(str) {
   return {comp: str.length / 100 + 1};
 }
 
-export function parseString(str, node, env, parser) {
+export function parseString(str, node, env, parser, startSym = undefined) {
   payGas(node, env, getParsingGasCost(str));
-  let [syntaxTree, lexArr, strPosArr] = parser.parse(str);
+  let [syntaxTree, lexArr, strPosArr] = parser.parse(str, startSym);
   if (syntaxTree.error) throw new ParserError(
     getExtendedSyntaxErrorMsg(syntaxTree.error), node, env
   );

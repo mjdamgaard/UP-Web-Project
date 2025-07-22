@@ -1,6 +1,6 @@
 
-import {cssParser} from "./parsing/CSSParser.js";
-import {parseString} from "./ScriptInterpreter.js";
+import {cssParser} from "../../../../interpreting/parsing/CSSParser.js";
+import {parseString} from "../../../../interpreting/ScriptInterpreter.js";
 
 
 
@@ -39,9 +39,9 @@ export class CSSTransformer {
     // combinators such as " " or ">"). Furthermore, each compound selector has
     // to include at least one regular class. But if isTrusted is true, on the
     // other hand, all kinds of selectors are allowed.
-    let transformedSelectorList = stmt.selectorArr.map(selector => (
-      this.transformComplexSelector(selector, id, isTrusted)
-    )).join(", ");
+    let transformedSelectorList = this.transformSelectorList(
+      stmt.selectorList, id, isTrusted
+    );
 
     // Return the rule with the transformed selector list and the transformed
     // declarations inside the rule.
@@ -61,6 +61,12 @@ export class CSSTransformer {
     ).join(" ") + ";\n";
   }
 
+
+  transformSelectorList(selectorList, id, isTrusted) {
+    return selectorList.children.map(selector => (
+      this.transformComplexSelector(selector, id, isTrusted)
+    )).join(", ");
+  }
 
 
   transformComplexSelector(selector, id, isTrusted) {
