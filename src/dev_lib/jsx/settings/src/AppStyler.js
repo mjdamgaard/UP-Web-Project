@@ -3,7 +3,7 @@ import {cssParser} from "./CSSParser.js";
 import {cssTransformer} from "./CSSTransformer.js";
 import {
   ArgTypeError, parseString, verifyTypes, verifyType, getString,
-  getPropertyFromPlainObject,
+  getPropertyFromPlainObject, jsonStringify,
 } from "../../../../interpreting/ScriptInterpreter.js";
 
 const CLASS_REGEX = /^ *([a-z][a-z0-9\-]*)((_[a-z0-9\-]*)?) *$/;
@@ -56,10 +56,10 @@ export class AppStyler {
     verifyType(rules, "array", node, env);
 
     let preparedRules = [];
-    rules.forEach(({selector, classes = [], styles = [], check}) => {
+    rules.forEach(({selector, classes = [], style, check}) => {
       verifyTypes(
-        [selector, classes, styles, check],
-        ["string", "array", "array", "function?"],
+        [selector, classes, check],
+        ["string", "array", "function?"],
         node, env
       );
       let preparedRule = {};
@@ -95,10 +95,26 @@ export class AppStyler {
         return classNameRoot + "_" + styleSheetID;
       });
 
-      // And we need to check the inline styles..
+      // And we need to validate (and possibly stringify) the inline styles.
+      if (style) {
+        if (typeof style === "object") {
+          verifyType(style, "plain object", node, env);
+          style = jsonStringify(style).slice(1, -1);
+        }
+        if (typeof style !== "string") throw new ArgTypeError(
+          `Invalid inline style: ${getString(style, node, env)}`,
+          node, env
+        );
+        // Parse the style string, throwing a syntax error if the inline style
+        // is invalid or illegal (or not implemented yet).
+        style = style.trim();
+        parseString(style, node, env, cssParser, "declaration!1*$");
 
+        preparedRules.style = style;
+      }
     });
 
+    return preparedRules;
   }
 
   // transformInstance() takes the outer DOM node of a component instance, an
@@ -125,7 +141,7 @@ export class AppStyler {
 
     // Now go through each rule and add the inline styles and classes to the
     // element that the rule selects.
-    preparedRules.forEach(({selector, classes = [], styleEntries = []}) => {
+    preparedRules.forEach(({selector, classes, style}) => {
       // Get the elements that the selector selects. Note that the selectors
       // have to be validated for each rule (by parsing them successfully)
       // before this method is called. And they also have to have all classes
@@ -134,17 +150,18 @@ export class AppStyler {
         ':scope :not(:scope .own-leaf *):where(' + selector + ')';
       let targetNodes = domNode.querySelectorAll(transformedSelector);
       
-      // Then apply the inline styles and classes from the ruleOutput. We also
-      // here assume that all styles has already been validated, and that all
-      // classes have been transformed, giving them the right style sheet ID
-      // suffix.
+      // Then apply the inline styles and classes. We also here assume that all
+      // styles has already been validated, and that all classes have been
+      // transformed, giving them the right style sheet ID suffix.
       targetNodes.forEach(node => {
-        styleEntries.forEach(([property, valueStr]) => {
-          node.style.setProperty(property, valueStr);
-        });
-        classes.forEach(className => {
-          node.classList.add(className);
-        });
+        if (classes) {
+          classes.forEach(className => {
+            node.classList.add(className);
+          });
+        }
+        if (style) {
+          node.setAttribute("style", style);
+        }
       });
     });
 
