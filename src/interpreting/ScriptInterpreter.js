@@ -384,15 +384,15 @@ export class ScriptInterpreter {
     // Else if the module is actually a non-JS text file, fetch/get it and
     // return a string of its content instead.
     else if (TEXT_FILE_ROUTE_REGEX.test(modulePath)) {
-      let [resultRow = []] = await this.fetch(
+      let text = await this.fetch(
         modulePath, callerNode, callerEnv
       );
-      let [text] = resultRow;
-      if (modulePath.slice(-5) === ".css") {
-        return new CSSModule(modulePath, text);
-      } else {
-        return text;
-      }
+      // if (modulePath.slice(-5) === ".css") {
+      //   return new CSSModule(modulePath, text);
+      // } else {
+      //   return text;
+      // }
+      return text;
     }
 
     // Else throw a load error.
@@ -2411,14 +2411,14 @@ export class LiveModule extends AbstractObject {
   }
 }
 
-export class CSSModule extends AbstractObject {
-  constructor(modulePath, styleSheet) {
-    super("CSSModule");
-    this.modulePath = modulePath;
-    this.styleSheet = styleSheet;
-    this.members["styleSheet"] = styleSheet;
-  }
-}
+// export class CSSModule extends AbstractObject {
+//   constructor(modulePath, styleSheet) {
+//     super("CSSModule");
+//     this.modulePath = modulePath;
+//     this.styleSheet = styleSheet;
+//     this.members["styleSheet"] = styleSheet;
+//   }
+// }
 
 
 

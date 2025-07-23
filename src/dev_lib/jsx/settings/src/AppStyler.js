@@ -39,20 +39,31 @@ const RELATIVE_ROUTE_START_REGEX = /^\.\.?\//;
 
 export class AppStyler {
   constructor() {
-    this.styleSheetIDs = undefined;
+    this.styleSheetIDPromises = undefined;
+    this.nextID = 1;
   }
+
+  getNextID() {
+    return this.nextID++;
+  }
+
 
   reset() {
     [...document.querySelectorAll(`head style.up-style`)].forEach(node => {
       node.remove();
     });
-    this.styleSheetIDs = new Map();
+    this.styleSheetIDPromises = new Map();
   }
 
-  async importAndPrepareStyleSheets(styleSheets, node, env) {
+
+  async importAndPrepareStyleSheets(styleSheets, node, env, interpreter) {
     verifyType(rules, "plain object", node, env);
     let preparedStyleSheets = {};
 
+    // Go through each style sheet and push a promise to the following array
+    // to import and apply the style sheet, returning an ID in each case, which
+    // we can subsequently substitute the values in styleSheets for.
+    let idPromiseArr = [];
     let styleSheetEntries = Object.entries(styleSheets);
     let len = styleSheetEntries.length;
     for (let i = 0; i < len; i++) {
@@ -78,15 +89,68 @@ export class AppStyler {
         val = getFullPath(curPath, val, node, env);
       } 
 
-      // If val is now an absolute route, import the style sheet, give it an
-      // ID, and then add the transformed property to preparedStyleSheets.
-      if (val[0] === "/") {
-        // Hm, push to a promiseArr instead..
+      // Then if the style sheet is already loaded, or is loading, just push
+      // the promise directly from this.styleSheetIDPromises.
+      let idPromise = this.styleSheetIDPromises.get(val);
+      if (idPromise) {
+        idPromiseArr.push(idPromise);
+      }
+
+      // Else if val is now an absolute route, push a promise that imports the
+      // style sheet and resolves with a unique ID for that style sheet.
+      else if (val[0] === "/") {
+        idPromise = this.importAndLoadStyleSheet(val, node, env, interpreter);
+        idPromiseArr.push(idPromise);
+        this.styleSheetIDPromises.set(val, idPromise);
+      }
+
+      // Else treat val as a style sheet string and load it directly, if an
+      // identical style sheet has not already been done so.
+      else {
+        idPromise = this.loadStyleSheet(val, false, node, env);
+        idPromiseArr.push(idPromise);
+        this.styleSheetIDPromises.set(val, idPromise);
       }
     }
 
+    // Now wait for all the style sheet IDs, and use them to transform the
+    // values of styleSheets to the IDs instead for the return value.
+    let styleSheetIDArr = await Promise.all(idPromiseArr);
+    styleSheetEntries.forEach(([key], ind) => {
+      preparedStyleSheets[key] = styleSheetIDArr[ind];
+    });
     return preparedStyleSheets;
   }
+
+
+  async importAndLoadStyleSheet(route, node, env, interpreter) {
+    let styleSheet = await interpreter.import(route, node, env);
+    let isTrusted; // TODO: Get isTrusted.
+    return await loadStyleSheet(styleSheet, isTrusted, node, env);
+  }
+
+  async loadStyleSheet(styleSheet, isTrusted, node, env) {
+    // First get a new, unique ID for the style sheet.
+    let id = this.getNextID();
+
+    // Then parse and transform the style sheet.
+    let [styleSheetNode] = parseString(styleSheet, node, env, cssParser);
+    let transformedStyleSheet = cssTransformer.transformStyleSheet(
+      styleSheetNode, id, isTrusted, node, env
+    );
+
+    // Then we create and insert the new style element, with a class of
+    // "up-style <id>".
+    styleElement = document.createElement("style");
+    styleElement.append(transformedStyleSheet);
+    styleElement.setAttribute("class", `up-style id-${id}`);
+    document.querySelector("head").appendChild(styleElement);
+
+    // And finally return the ID of the loaded style sheet.
+    return id;
+  }
+
+
 
   // prepareTransformRules() prepares a rules array such that it is ready to be
   // used by transformInstance() below. It also takes a prepared styleSheets
