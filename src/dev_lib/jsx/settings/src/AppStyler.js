@@ -3,10 +3,12 @@ import {cssParser} from "./CSSParser.js";
 import {cssTransformer} from "./CSSTransformer.js";
 import {
   ArgTypeError, parseString, verifyTypes, verifyType, getString,
-  getPropertyFromPlainObject, jsonStringify,
+  getPropertyFromPlainObject, jsonStringify, getFullPath,
 } from "../../../../interpreting/ScriptInterpreter.js";
 
 const CLASS_REGEX = /^ *([a-z][a-z0-9\-]*)((_[a-z0-9\-]*)?) *$/;
+const STYLE_SHEET_KEY_REGEX = /^[a-z0-9\-]+$/;
+const RELATIVE_ROUTE_START_REGEX = /^\.\.?\//;
 
 
 // TODO: Correct, and move the description of what users should export
@@ -47,12 +49,50 @@ export class AppStyler {
     this.styleSheetIDs = new Map();
   }
 
+  async importAndPrepareStyleSheets(styleSheets, node, env) {
+    verifyType(rules, "plain object", node, env);
+    let preparedStyleSheets = {};
+
+    let styleSheetEntries = Object.entries(styleSheets);
+    let len = styleSheetEntries.length;
+    for (let i = 0; i < len; i++) {
+      let [key, val] = styleSheetEntries[i];
+      if (!STYLE_SHEET_KEY_REGEX.test(key)) throw new ArgTypeError(
+        `Invalid transform.styleSheets key: "${key}"`,
+        node, env
+      );
+      if (typeof val !== "string") throw new ArgTypeError(
+        `Invalid transform.styleSheets value: "${getString(val, node, env)}"`,
+        node, env
+      );
+      // If val is a relative route, convert it to an absolute one, but log a
+      // warning that one ought to use absolute routes instead, making it
+      // easier to extend and modify JSX components.
+      if (RELATIVE_ROUTE_START_REGEX.test(val)) {
+        console.warn(
+          "A relative path was used for transform.styleSheets. " +
+          "It is better to wrap them in an abs() call to turn them absolute, " +
+          "most of all because this makes bundling easier."
+        );
+        let curPath = env.getModuleEnv().modulePath;
+        val = getFullPath(curPath, val, node, env);
+      } 
+
+      // If val is now an absolute route, import the style sheet, give it an
+      // ID, and then add the transformed property to preparedStyleSheets.
+      if (val[0] === "/") {
+        // Hm, push to a promiseArr instead..
+      }
+    }
+
+    return preparedStyleSheets;
+  }
 
   // prepareTransformRules() prepares a rules array such that it is ready to be
   // used by transformInstance() below. It also takes a prepared styleSheets
   // object, whose keys are still the keys used in the classes of the rules,
   // but where the value has been exchanged for a valid style sheet ID. 
-  async prepareTransformRules(rules, preparedStyleSheetsObj, node, env) {
+  prepareTransformRules(rules, preparedStyleSheets, node, env) {
     verifyType(rules, "array", node, env);
 
     let preparedRules = [];
@@ -90,7 +130,7 @@ export class AppStyler {
           styleSheetKey = "main";
         }
         let styleSheetID = getPropertyFromPlainObject(
-          preparedStyleSheetsObj, styleSheetKey
+          preparedStyleSheets, styleSheetKey
         );
         return classNameRoot + "_" + styleSheetID;
       });
