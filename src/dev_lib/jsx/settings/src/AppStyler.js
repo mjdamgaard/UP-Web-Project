@@ -3,7 +3,7 @@ import {cssParser} from "./CSSParser.js";
 import {cssTransformer} from "./CSSTransformer.js";
 import {
   ArgTypeError, parseString, verifyTypes, verifyType, getString,
-  getPropertyFromPlainObject, jsonStringify, getFullPath,
+  getPropertyFromPlainObject, jsonStringify, getFullPath, CLEAR_FLAG,
 } from "../../../../interpreting/ScriptInterpreter.js";
 
 const CLASS_REGEX = /^ *([a-z][a-z0-9\-]*)((_[a-z0-9\-]*)?) *$/;
@@ -53,10 +53,62 @@ export class AppStyler {
       node.remove();
     });
     this.styleSheetIDPromises = new Map();
+    this.nextID = 1;
   }
 
 
-  async importAndPrepareStyleSheets(styleSheets, node, env, interpreter) {
+  // getTransform() takes a componentModule and the instanceKey (from its
+  // parent) of a given component instance, as well as the childProps object
+  // gotten from the parent instances transform object, and uses it to get the
+  // transform object (not validated) from the instance.
+  getTransform(
+    componentModule, instanceKey, childPropsEntries = [],
+    node, env, interpreter
+  ) {
+    // If the module exports a 'transform' variable, simply get and return that.
+    let transform = componentModule.get("transform");
+    if (transform) {
+      return transform;
+    }
+
+    // Else get 'getTransform()' function, if the module exports one, and if
+    // so, get a transformProps argument from childPropsEntries and call the
+    // function with that as its argument.
+    let getTransform = componentModule.get("getTransform");
+    if (getTransform) {
+      // Extract the transformProps from childPropsEntries, where the
+      // first entry is found going in the reverse direction, starting with the
+      // last entry in the array, where instanceKey matches key (format) of the
+      // childProps object.
+      let transformProps;
+      let len = childPropsEntries.length;
+      for (let i = len - 1; i >= 0; i--) {
+        let [key, val] = childPropsEntries[i];
+        if (testKey(instanceKey, key)) {
+          transformProps = val;
+          break;
+        }
+      }
+
+      // Then call getTransform() with transformProps as its argument. 
+      return interpreter.executeFunction(
+        getTransform, [transformProps ?? {}], node, env, undefined,
+        [CLEAR_FLAG]
+      );
+    }
+
+    // And else return undefined.
+  }
+
+
+  // importAndPrepareStyleSheets() prepares the styleSheets object such that
+  // it is ready to be passed to prepareTransformRules() below, and it also
+  // imports and loads any style sheet that hasn't been done so yet (or aren't
+  // already being loaded currently) by validating and transforming it, and
+  // then inserting it into the document head.
+  async importAndPrepareStyleSheets(
+    styleSheets, settings, node, env, interpreter
+  ) {
     verifyType(rules, "plain object", node, env);
     let preparedStyleSheets = {};
 
@@ -99,7 +151,9 @@ export class AppStyler {
       // Else if val is now an absolute route, push a promise that imports the
       // style sheet and resolves with a unique ID for that style sheet.
       else if (val[0] === "/") {
-        idPromise = this.importAndLoadStyleSheet(val, node, env, interpreter);
+        idPromise = this.importAndLoadStyleSheet(
+          val, settings, node, env, interpreter
+        );
         idPromiseArr.push(idPromise);
         this.styleSheetIDPromises.set(val, idPromise);
       }
@@ -123,9 +177,11 @@ export class AppStyler {
   }
 
 
-  async importAndLoadStyleSheet(route, node, env, interpreter) {
-    let styleSheet = await interpreter.import(route, node, env);
-    let isTrusted; // TODO: Get isTrusted.
+  async importAndLoadStyleSheet(route, settings, node, env, interpreter) {
+    let [styleSheet, isTrusted] = await Promise.all([
+      interpreter.import(route, node, env),
+      settings.getStyleSheetTrust(route),
+    ]);
     return await loadStyleSheet(styleSheet, isTrusted, node, env);
   }
 
@@ -140,7 +196,7 @@ export class AppStyler {
     );
 
     // Then we create and insert the new style element, with a class of
-    // "up-style <id>".
+    // "up-style id-<id>".
     styleElement = document.createElement("style");
     styleElement.append(transformedStyleSheet);
     styleElement.setAttribute("class", `up-style id-${id}`);
@@ -283,6 +339,31 @@ export class AppStyler {
 //     this.msg = msg;
 //   }
 // }
+
+
+
+export function testKey(key, keyFormat) {
+  if (keyFormat[0] === "!") {
+    keyFormat = keyFormat.substring(1);
+    return !testKeyHelper(key, keyFormat);
+  }
+  else {
+    return testKeyHelper(key, keyFormat);
+  }
+}
+
+function testKeyHelper(key, keyFormat) {
+  if (keyFormat.at(-1) === "*") {
+    keyFormat = keyFormat.slice(0, -1);
+    key = key.substring(0, keyFormat.length);
+    return key === keyFormat;
+  }
+  else {
+    return key === keyFormat;
+  }
+}
+
+
 
 
 

@@ -913,14 +913,10 @@ export class SettingsObject extends AbstractObject {
   getUserID(node, env) {}
 
   // changeUser(userID?, node, env) ...
-  changeUser(userID, node, env) {
-
-  }
+  changeUser(userID, node, env) {}
 
   // prepareComponent(componentModule, node, env) (optional) ...
-  prepareComponent(componentModule, node, env) {
-
-  }
+  prepareComponent(componentModule, node, env) {}
 
   // prepareInstance(componentModule, props, state, settings, node, env) has
   // to prepare transformInstance() such that it can be called synchronously.
@@ -929,22 +925,21 @@ export class SettingsObject extends AbstractObject {
   // ones used for styling them. prepareInstance() can also return a promise,
   // in which case the component renders as empty and/or with a "_pending-
   // settings" class on and queues a rerender when the promise resolves.
-  prepareInstance(_, node, env) {
+  prepareInstance(_, node, env) {}
 
-  }
     // getComponentTrust(componentPath, node, env) takes a component path,
     // which will often be the so-called "request origin", and returns boolean
     // of whether client trust the component to make post requests, and to
     // fetch private data. If getComponentTrust() has not yet been prepared by
     // prepareInstance(), it might just return false temporarily.
-  getComponentTrust(_, node, env) {
-
-  }
+  getComponentTrust(_, node, env) {}
 
   // transformInstance(domNode, ownDOMNodes, props, state, node, env) ...
-  transformInstance(domNode, ownDOMNodes, props, state, node, env) {
+  transformInstance(domNode, ownDOMNodes, props, state, node, env) {}
 
-  }
+  // Note that these are just the minimal API needed for this module to
+  // function. In practice the settings class will likely be extended with
+  // other methods.
 
 }
 
