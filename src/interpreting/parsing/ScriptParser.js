@@ -13,7 +13,7 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   "default|public|debugger|new|console|abstract|arguments|boolean|byte|char|" +
   "double|enum|eval|extends|final|float|goto|implements|in|int|interface|" +
   "long|native|package|private|protected|short|super|synchronized|throws|" +
-  "transient|volatile|with|yield|Promise)$"
+  "transient|volatile|with|yield|Promise|abs)$"
 );
 
 
@@ -801,9 +801,11 @@ export const scriptGrammar = {
       ["array!1"],
       ["object!1"],
       ["jsx-element!1"],
-      ["promise-call"],
+      ["import-call!1"],
       ["console-call!1"],
       ["super-call-or-access!1"],
+      ["promise-call"],
+      ["abs-call!1"],
       ["this-keyword"],
       ["identifier"],
       ["literal"],
@@ -814,7 +816,6 @@ export const scriptGrammar = {
         copyFromChild(children, ruleInd);
     },
   },
-// TODO: Implement spread operator for for both arrays and objects.
   "array": {
     rules: [
       [/\[/, "expression-or-spread-list!1", "/,/?", /\]/],
@@ -1045,21 +1046,6 @@ export const scriptGrammar = {
     ],
     process: () => ({type: "this-keyword"}),
   },
-  "promise-call": {
-    rules: [
-      ["/Promise/", /\./, "/all/", /\(/, "expression", /\)/],
-      ["/new/", "/Promise/", /\(/, "expression", /\)/],
-    ],
-    process: (children, ruleInd) => {
-      return (ruleInd === 0) ? {
-        type: "promise-all-call",
-        exp: children[4],
-      } : {
-        type: "promise-call",
-        exp: children[3],
-      };
-    },
-  },
   "import-call": {
     rules: [
       ["/import/", /\(/, "expression", "/,/", "expression", /\)/],
@@ -1100,6 +1086,30 @@ export const scriptGrammar = {
         accessor: children[2],
       }
     ),
+  },
+  "promise-call": {
+    rules: [
+      ["/Promise/", /\./, "/all/", /\(/, "expression", /\)/],
+      ["/new/", "/Promise/", /\(/, "expression", /\)/],
+    ],
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? {
+        type: "promise-all-call",
+        exp: children[4],
+      } : {
+        type: "promise-call",
+        exp: children[3],
+      };
+    },
+  },
+  "abs-call": {
+    rules: [
+      ["/abs/", /\(/, "expression", /\)/],
+    ],
+    process: (children) => ({
+      type: "abs-call",
+      exp: children[2],
+    }),
   },
 };
 

@@ -2,8 +2,12 @@
 import {cssParser} from "./CSSParser.js";
 import {cssTransformer} from "./CSSTransformer.js";
 import {
-  parseString, verifyTypes, verifyType,
+  ArgTypeError, parseString, verifyTypes, verifyType, getString,
+  getPropertyFromPlainObject,
 } from "../../../../interpreting/ScriptInterpreter.js";
+
+const CLASS_REGEX = /^ *([a-z][a-z0-9\-]*)((_[a-z0-9\-]*)?) *$/;
+
 
 // TODO: Correct, and move the description of what users should export
 // elsewhere:
@@ -11,7 +15,7 @@ import {
 // The "transform" objects used by the ComponentTransformer are of the form:
 //
 // transform := {(styleSheets?, rules?, childProps?},
-// styleSheets := [({route?, sheet?, id?},)*],
+// styleSheets := {(<[a-z0-9\-]+ key>: <route>|<sheet>,)*},
 // rules :=   [({selector, styles?, classes?, check?},)*],
 // styles := {(<CSS property>: <CSS value string>,)*},
 // classes := [(<class>,)*],
@@ -23,10 +27,10 @@ import {
 // the style sheet that the class references.
 //
 // And although it is not relevant here, childProps := an object where the key
-// is either a route, the reserved "all" string, or an child instance key, and
-// where the values are the a props object that is merged with the actual props
-// object for the instance, overwriting existing properties of the same key,
-// when the child's getTransform() function is called.
+// is a child instance key, possibly with a '*' wildcard at the end, and also
+// possibly with a '!' not operator in front, and where the values are then a
+// an object that is given as input to the getTransform() function of the
+// targeted child instances.
 
 
 
@@ -44,9 +48,12 @@ export class AppStyler {
   }
 
 
-
-  async prepareTransform(rules, styleSheets = [], node, env) {
-    verifyTypes([rules, styleSheets], ["array", "array"], node, env);
+  // prepareTransformRules() prepares a rules array such that it is ready to be
+  // used by transformInstance() below. It also takes a prepared styleSheets
+  // object, whose keys are still the keys used in the classes of the rules,
+  // but where the value has been exchanged for a valid style sheet ID. 
+  async prepareTransformRules(rules, preparedStyleSheetsObj, node, env) {
+    verifyType(rules, "array", node, env);
 
     let preparedRules = [];
     rules.forEach(({selector, classes = [], styles = [], check}) => {
@@ -70,7 +77,23 @@ export class AppStyler {
 
       // We also need to transform the classes by appending the right style
       // sheet ID suffix to them.
-      // TODO: Do.
+      preparedRules.classes = classes.map(className => {
+        className = getString(className, node, env);
+        if (typeof className !== "string") return;
+        let [match, classNameRoot, styleSheetKey] = CLASS_REGEX.exec(className);
+        if (!match) throw new ArgTypeError(
+          `Invalid class: "${className}"`,
+          node, env
+        );
+        styleSheetKey = styleSheetKey.substring(1);
+        if (!styleSheetKey) {
+          styleSheetKey = "main";
+        }
+        let styleSheetID = getPropertyFromPlainObject(
+          preparedStyleSheetsObj, styleSheetKey
+        );
+        return classNameRoot + "_" + styleSheetID;
+      });
 
       // And we need to check the inline styles..
 
@@ -78,7 +101,11 @@ export class AppStyler {
 
   }
 
-
+  // transformInstance() takes the outer DOM node of a component instance, an
+  // array if its "own" DOM nodes, and a rules array that has already been
+  // validated and prepared by inserting the right style sheet IDs in classes,
+  // and then transforms the nodes of that instance, giving it inline styles
+  // and/or classes. 
   transformInstance(domNode, ownDOMNodes, preparedRules) {
     if (ownDOMNodes.length === 0) {
       return;

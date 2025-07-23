@@ -1390,6 +1390,20 @@ export class ScriptInterpreter {
         }
         return superPropVal;
       }
+      case "abs-call": {
+        let expVal = this.evaluateExpression(expNode.exp, environment);
+        let expType = typeof expVal;
+        if (expType === "string") {
+          let curPath = environment.getModuleEnv().modulePath;
+          return getFullPath(curPath, expVal, expNode.exp, environment);
+        }
+        else if (expType === "number") {
+          return Math.abs(expVal);
+        }
+        else {
+          return NaN
+        };
+      }
       default: throw (
         "ScriptInterpreter.evaluateExpression(): Unrecognized type: " +
         `"${type}"`
@@ -2683,12 +2697,15 @@ export function getExtendedErrorMsg(err) {
 
 
 
+const PATH_REGEX = /^([^/]+)?(\/[^/]+)*$/;
+const FILENAME_REGEX = /\/[^./]+\.[^/]+$/;
+const SEGMENT_TO_REMOVE_REGEX = /(\/\.\/|[^/]+\/\.\.\/)/g;
 
 
 export function getFullPath(curPath, path, callerNode, callerEnv) {
   if (!curPath) curPath = "/";
 
-  if (!path || !/^([^/]+)?(\/[^/]+)*$/.test(path)) throw new LoadError(
+  if (!path || !PATH_REGEX.test(path)) throw new LoadError(
     `Ill-formed path: "${path}"`, callerNode, callerEnv
   );
 
@@ -2698,7 +2715,7 @@ export function getFullPath(curPath, path, callerNode, callerEnv) {
 
   // Remove the last file name from the current path, if any.
   let moddedCurPath;
-  let [filenamePart] = curPath.match(/\/[^./]+\.[^/]+$/) ?? [""];
+  let [filenamePart] = curPath.match(FILENAME_REGEX) ?? [""];
   if (filenamePart) {
     moddedCurPath = curPath.slice(0, -filenamePart.length);
   }
@@ -2712,7 +2729,7 @@ export function getFullPath(curPath, path, callerNode, callerEnv) {
   }
 
   // Then replace any occurrences of "/./" and "<dirName>/../" with "/".
-  fullPath = fullPath.replaceAll(/(\/\.\/|[^/]+\/\.\.\/)/g, "/");
+  fullPath = fullPath.replaceAll(SEGMENT_TO_REMOVE_REGEX, "/");
 
   if (fullPath.substring(0, 4) === "/../") throw new LoadError(
     `Ill-formed path: "${path}"`, callerNode, callerEnv
