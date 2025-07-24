@@ -46,21 +46,19 @@ export class SettingsObject01 extends SettingsObject {
 
 
   // TODO: Implement.
-  prepareInstance(componentModule, props, state, auxProps, node, env) {
+  prepareInstance(jsxInstance, node, env) {
 
   }
 
 
   // TODO: Implement.
-  getComponentTrust(_, node, env) {
+  getComponentTrust(requestOrigin, node, env) {
 
   }
 
 
   // TODO: Implement.
-  transformInstance(
-    componentModule, domNode, ownDOMNodes, props, state, auxProps, node, env
-  ) {
+  transformInstance(jsxInstance, domNode, ownDOMNodes, node, env) {
 
   }
 

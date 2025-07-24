@@ -41,11 +41,14 @@ export const createJSXApp = new DevFunction(
 
     // Get the userID if the user is logged in and call settings.initiate() in
     // order to make any initial user-dependent preparations fro the settings
-    // object from getSettings(). Note that the settings object should be an
-    // AbstractObject conforming (at least) to the API described below at the
-    // declaration of the SettingsObject class.
+    // object from getSettings(). Note that the settings object extend the
+    // (abstract) SettingsObject class declared below. settings.initiate() also
+    // returns an initial 'auxProps' object to hand to the app component's
+    // render() function.
     let userID = getUserID();
-    await settings.initiate(userID, appComponent, callerNode, appEnv);
+    let appAuxProps = await settings.initiate(
+      userID, appComponent, callerNode, appEnv
+    );
 
     // Then create the app's root component instance, and before rendering it,
     // add some props for getting user data and URL data, and pushing/replacing
@@ -63,7 +66,8 @@ export const createJSXApp = new DevFunction(
     // Then render the root instance and insert it into the document.
     let rootParent = document.getElementById("up-app-root");
     let appNode = rootInstance.render(
-      props, false, interpreter, callerNode, appEnv, false, true, true
+      props, appAuxProps, false, interpreter, callerNode, appEnv,
+      false, true, true
     );
     rootParent.replaceChildren(appNode);
   }
@@ -187,9 +191,7 @@ class JSXInstance {
     // childAuxProps to pass to the child instances. This allows settings to
     // add extra props to the components, and in particular props used for
     // styling them.
-    let childAuxProps = settings.prepareInstance(
-      this.componentModule, props, state, auxProps, callerNode, callerEnv
-    );
+    let childAuxProps = settings.prepareInstance(this, callerNode, callerEnv);
 
     // If prepareInstance() returns a promise it means that the instance is not
     // yet prepared. In that case we queue a rerender for when the promise
@@ -308,10 +310,10 @@ class JSXInstance {
     // And before returning the new DOM node, call settings.transformInstance()
     // in order to transform the DOM node, in particular for applying style to
     // it (by giving it classes and/or inline styles). Note if this method has
-    // not yet been prepared, it will just do nothing.
+    // not yet been prepared for the instance, it will just do nothing, and
+    // wait for the rerender.
     settings.transformInstance(
-      this.componentModule, newDOMNode, ownDOMNodes, props, state, auxProps,
-      callerNode, compEnv
+      this, newDOMNode, ownDOMNodes, callerNode, compEnv
     );
 
     // Finally, return the instance's new DOM node.
@@ -906,7 +908,7 @@ export class SettingsObject extends AbstractObject {
     super("Settings");
   }
 
-  // TODO: Complete the following comments.
+  // TODO: Correct and complete the following comments.
 
   // initiate(userID, appComponent, node, env) ...
   initiate(userID, appComponent, node, env) {}

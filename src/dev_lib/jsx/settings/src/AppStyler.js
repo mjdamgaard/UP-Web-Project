@@ -47,6 +47,12 @@ export class AppStyler01 {
     this.styleSheetIDPromises = new Map();
     this.nextID = 1;
     this.instanceTransforms = new Map();
+
+    // As the initial auxProps object for the app, this system uses an empty
+    // array. This is because this system uses the stringifiedChildPropsEntries
+    // arrays (see below) as the auxProps that's passed between instances. And
+    // the app just starts with no auxProps, hence the empty array.
+    return [];
   }
 
   getNextID() {
@@ -55,8 +61,49 @@ export class AppStyler01 {
 
 
   // prepareInstance() is called..
-  prepareInstance(componentModule, auxProps, node, env) {
+  prepareInstance(
+    {componentModule, key}, auxProps, node, env, interpreter = undefined
+  ) {
+    interpreter ??= env.scriptVars.interpreter;
 
+    // If auxProps is a promise, call an async. version of this method instead
+    // and return the promise that it returns. 
+    if (auxProps instanceof Promise) {
+      return this.prepareInstanceAsyncHelper(
+        componentModule, key, auxProps, node, env, interpreter
+      );
+    }
+
+    // Get a "prepared" version of the transform, or a promise to one.
+    let {interpreter} = env.scriptVars;
+    let stringifiedChildPropsEntries = auxProps;
+    let preparedTransform = this.getTransform(
+      componentModule, key, stringifiedChildPropsEntries, node, env,
+      interpreter
+    );
+
+  }
+
+  async prepareInstanceAsyncHelper(
+    componentModule, key, auxProps, node, env, interpreter, preparedTransform
+  ) {
+    if (preparedTransform instanceof Promise) {
+      preparedTransform = await preparedTransform;
+    }
+    if (preparedTransform !== undefined) {
+    }
+    // If auxProps is a promise, await its result.
+    if (auxProps instanceof Promise) {
+      auxProps = await auxProps;
+    }
+
+    let ret = this.prepareInstance(
+      componentModule, key, auxProps, node, env, interpreter
+    );
+    if (ret instanceof Promise) {
+      ret = await ret;
+    }
+    return ret;
   }
 
 
