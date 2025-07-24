@@ -556,11 +556,11 @@ class JSXInstance {
 
 
 
-  // dispatch(event, input?) dispatches an event to the first among its ancestor
-  // instances who has an action with that event key (which might be a Symbol).
-  // The actions are declared by the 'actions' object exported by a component
-  // module. If no ancestors has an action of a matching key, dispatch() just
-  // fails silently and nothing happens.
+  // dispatch(eventKey, input?) dispatches an event to the first among the
+  // instance itself and its ancestors who has an action that matches the
+  // eventKey (which might be a Symbol). The actions are declared by the
+  // 'actions' object exported by a component module. If no ancestors has an
+  // action of a matching key, then dispatch() just fails silently.
   dispatch(eventKey, input, interpreter, callerNode, callerEnv) {
     let actions = this.componentModule.get("actions");
     eventKey = getStringOrSymbol(eventKey, callerNode, callerEnv);

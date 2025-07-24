@@ -54,13 +54,16 @@ export class AppStyler01 {
   }
 
 
-// TODO: Correct comment.
-  // getTransform() takes a componentModule and the instanceKey (from its
+  // prepareInstance() is called..
+
+
+
+  // getTransform() takes the componentModule and the instanceKey (from its
   // parent) of a given component instance, as well as the childProps object
-  // gotten from the parent instances transform object, and uses it to get the
-  // transform object from the instance.
+  // gotten from the transform object of the parent, and uses it to get the
+  // transform object of the instance.
   getTransform(
-    componentModule, instanceKey, stringifiedChildPropsEntries = [],
+    componentModule, instanceKey, stringifiedChildPropsEntries,
     settings, node, env, interpreter
   ) {
     // Extract the transformProps from stringifiedChildPropsEntries, where
@@ -95,8 +98,8 @@ export class AppStyler01 {
     }
 
     // Else call settings.getTransformModule() to potentially get a different
-    // module from which to get the transform (or else getTransformModule()
-    // will return/resolve with the same componentModule). getTransformModule()
+    // module from which to get the transform. (Or getTransformModule() might
+    // also just return/resolve with the same componentModule). The call might
     // might return a promise, in which case this method should also return a
     // promise (for the transform).
     let transformModule = settings.getTransformModule(
@@ -104,6 +107,8 @@ export class AppStyler01 {
     );
     let transformProps = jsonParse(stringifiedTransformProps, node, env);
     if (transformModule instanceof Promise) {
+      // Create a promise to the transform, calling getTransformFromSameModule()
+      // then the transformModule promise resolves.
       let transformPromise = new Promise((resolve, reject) => {
         transformModule.catch(
           err = reject(err)
@@ -115,6 +120,9 @@ export class AppStyler01 {
           )
         );
       });
+
+      // Then update transformMap with a self-replacing promise, and return the
+      // transformPromise.
       transformMap.set(stringifiedTransformProps, transformPromise);
       transformPromise.then(transform => {
         transformMap.set(stringifiedTransformProps, transform);
@@ -122,6 +130,9 @@ export class AppStyler01 {
       return transformPromise;
     }
     else {
+      // If transformModule is not a promise, call getTransformFromSameModule()
+      // directly, and update transformMap with the result before returning
+      // that same result.
       let transform = this.getTransformFromSameModule(
         transformModule, transformProps, node, env, interpreter
       );
@@ -131,6 +142,9 @@ export class AppStyler01 {
   }
 
 
+  // getTransformFromSameModule() extracts and prepares the transform exported
+  // from a module, either directly as a 'transform' variable, or through an
+  // exported 'getTransform()' function.
   getTransformFromSameModule(
     liveModule, transformProps, node, env, interpreter
   ) {
@@ -138,18 +152,18 @@ export class AppStyler01 {
     // and prepare it, and then return it.
     let transform = liveModule.get("transform");
     if (transform) {
-      return this.prepareTransform(transform);
+      return this.prepareTransform(transform, node, env);
     }
 
     // Else get 'getTransform()' function, if the module exports one, and if
     // so, and call it with the argument of transformProps to get the transform.
-    let getTransform = componentModule.get("getTransform");
+    let getTransform = liveModule.get("getTransform");
     if (getTransform) {
       transform = interpreter.executeFunction(
         getTransform, [transformProps], node, env, undefined,
         [CLEAR_FLAG]
       );
-      return this.prepareTransform(transform);
+      return this.prepareTransform(transform, node, env);
     }
 
     // And else behave as if the module had exported an empty transform.
@@ -157,8 +171,24 @@ export class AppStyler01 {
   }
 
 
-  prepareTransform(transform) {
-    // TODO: Impl.
+  // prepareTransform()'s job is just to turn the childProps property of
+  // the transform, if there, into an entries array and stringifying the values
+  // in the process, such that the resulting stringifiedChildPropsEntries is
+  // ready to be passed to getTransform() above.
+  prepareTransform(transform, node, env) {
+    transform ??= {};
+    verifyType(transform, "plain object", node, env);
+    let childProps = transform.childProps;
+    if (childProps !== undefined) {
+      verifyType(childProps, "plain object", node, env);
+      transform.stringifiedChildPropsEntries = Object.entries(childProps)
+        .forEach(entry => {
+          entry[1] = jsonStringify(entry[1]);
+        });
+    }
+    else {
+      transform.stringifiedChildPropsEntries = [];
+    }
   }
 
 
