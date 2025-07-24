@@ -55,7 +55,9 @@ export class AppStyler01 {
 
 
   // prepareInstance() is called..
+  prepareInstance(componentModule, auxProps, node, env) {
 
+  }
 
 
   // getTransform() takes the componentModule and the instanceKey (from its

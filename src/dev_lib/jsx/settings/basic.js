@@ -46,7 +46,7 @@ export class SettingsObject01 extends SettingsObject {
 
 
   // TODO: Implement.
-  prepareInstance(_, node, env) {
+  prepareInstance(componentModule, props, state, auxProps, node, env) {
 
   }
 
@@ -58,7 +58,9 @@ export class SettingsObject01 extends SettingsObject {
 
 
   // TODO: Implement.
-  transformInstance(domNode, ownDOMNodes, props, state, node, env) {
+  transformInstance(
+    componentModule, domNode, ownDOMNodes, props, state, auxProps, node, env
+  ) {
 
   }
 

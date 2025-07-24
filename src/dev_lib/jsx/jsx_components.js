@@ -24,7 +24,7 @@ export const CAN_CREATE_APP_FLAG = Symbol("can-create-app");
 // HTML page, in the element with the id of "up-app-root".
 export const createJSXApp = new DevFunction(
   "createJSXApp",
-  {isAsync: true, typeArr:["module", "object?", "abstract object"]},
+  {isAsync: true, typeArr:["module", "object?", "Settings"]},
   async function(
     {callerNode, execEnv, interpreter}, [appComponent, props = {}, settings]
   ) {
@@ -51,7 +51,7 @@ export const createJSXApp = new DevFunction(
     // add some props for getting user data and URL data, and pushing/replacing
     // a new browser session history state, to it.
     let rootInstance = new JSXInstance(
-      appComponent, "root", undefined, callerNode, appEnv
+      appComponent, "root", undefined, callerNode, appEnv, settings
     );
     props = addUserRelatedProps(
       props, rootInstance, interpreter, callerNode, appEnv
@@ -63,8 +63,7 @@ export const createJSXApp = new DevFunction(
     // Then render the root instance and insert it into the document.
     let rootParent = document.getElementById("up-app-root");
     let appNode = rootInstance.render(
-      props, settings, false, interpreter, callerNode, appEnv,
-      false, true, true
+      props, false, interpreter, callerNode, appEnv, false, true, true
     );
     rootParent.replaceChildren(appNode);
   }
@@ -79,7 +78,8 @@ export const createJSXApp = new DevFunction(
 class JSXInstance {
 
   constructor (
-    componentModule, key, parentInstance = undefined, callerNode, callerEnv
+    componentModule, key, parentInstance = undefined, callerNode, callerEnv,
+    settings = undefined,
   ) {
     if (!(componentModule instanceof LiveModule)) throw new RuntimeError(
       "JSX component needs to be an imported module namespace object",
@@ -88,6 +88,7 @@ class JSXInstance {
     this.componentModule = componentModule;
     this.key = getString(key, callerNode, callerEnv);
     this.parentInstance = parentInstance;
+    this.settings = settings ?? parentInstance.settings;
     this._isRequestOrigin = componentModule.get("isRequestOrigin");
     this.isIsolated = undefined;
     this.domNode = undefined;
@@ -96,7 +97,7 @@ class JSXInstance {
     this.props = undefined;
     this.state = undefined;
     this.refs = undefined;
-    this.settings = undefined;
+    this.auxProps = undefined;
     this.contextProvisions = undefined;
     this.contextSubscriptions = undefined;
     this.callerNode = callerNode;
@@ -118,10 +119,10 @@ class JSXInstance {
 
 
   render(
-    props = {}, settings, isDecorated, interpreter, callerNode, callerEnv,
+    props = {}, auxProps, isDecorated, interpreter, callerNode, callerEnv,
     replaceSelf = true, force = false,
   ) {
-    this.settings = settings;
+    this.auxProps = auxProps;
     this.isDecorated = isDecorated;
     this.callerNode = callerNode;
     this.callerEnv = callerEnv;
@@ -182,12 +183,12 @@ class JSXInstance {
 
     // Call settings.prepareInstance() to prepare the other methods of settings
     // for this instance, in particular transformInstance(), used below, such
-    // that it can be called synchronously. prepareInstance() also gets the
-    // childSettings to pass to the child instances. This allows settings to
+    // that it can be called synchronously. The method call also gets the
+    // childAuxProps to pass to the child instances. This allows settings to
     // add extra props to the components, and in particular props used for
     // styling them.
-    let childSettings = settings.prepareInstance(
-      this.componentModule, props, state, settings, callerNode, callerEnv
+    let childAuxProps = settings.prepareInstance(
+      this.componentModule, props, state, auxProps, callerNode, callerEnv
     );
 
     // If prepareInstance() returns a promise it means that the instance is not
@@ -196,9 +197,9 @@ class JSXInstance {
     // will simply paint a "_pending-settings" class onto the DOM node below
     // when we have obtained it, which can hide the instance from the user
     // while it waits for its right style.
-    let isPrepared = !(childSettings instanceof Promise);
+    let isPrepared = !(childAuxProps instanceof Promise);
     if (!isPrepared) {
-      childSettings.then(() => {
+      childAuxProps.then(() => {
         this.queueRerender(interpreter);
       });
     }
@@ -263,7 +264,7 @@ class JSXInstance {
       try {
         newDOMNode = this.getDOMNode(
           jsxElement, marks, interpreter, callerNode, compEnv,
-          ownDOMNodes, childSettings
+          ownDOMNodes, childAuxProps
         );
       }
       catch (err) {
@@ -309,7 +310,8 @@ class JSXInstance {
     // it (by giving it classes and/or inline styles). Note if this method has
     // not yet been prepared, it will just do nothing.
     settings.transformInstance(
-      newDOMNode, ownDOMNodes, props, state, callerNode, compEnv
+      this.componentModule, newDOMNode, ownDOMNodes, props, state, auxProps,
+      callerNode, compEnv
     );
 
     // Finally, return the instance's new DOM node.
@@ -357,7 +359,7 @@ class JSXInstance {
 
   getDOMNode(
     jsxElement, marks, interpreter, callerNode, callerEnv,
-    ownDOMNodes, settings, isOuterElement = true
+    ownDOMNodes, auxProps, isOuterElement = true
   ) {
     // If jsxElement is not a JSXElement instance, return a string derived from
     // JSXElement, except if it is an outer element, in which case wrap it in
@@ -383,7 +385,7 @@ class JSXInstance {
       let ret = children.map(val => (
         this.getDOMNode(
           val, marks, interpreter, callerNode, callerEnv,
-          ownDOMNodes, settings, false
+          ownDOMNodes, auxProps, false
         )
       ));
       if (isOuterElement) {
@@ -430,7 +432,7 @@ class JSXInstance {
         }
       );
       return childInstance.render(
-        jsxElement.props, settings, isOuterElement, interpreter,
+        jsxElement.props, auxProps, isOuterElement, interpreter,
         jsxElement.node, childEnv, false
       );
     }
@@ -519,7 +521,7 @@ class JSXInstance {
       ownDOMNodes.push(newDOMNode);
       this.createAndAppendChildren(
         newDOMNode, childArr, marks, interpreter, callerNode, callerEnv,
-        ownDOMNodes, settings
+        ownDOMNodes, auxProps
       );
 
       // Then return the DOM node of this new element.
@@ -530,18 +532,18 @@ class JSXInstance {
 
   createAndAppendChildren(
     domNode, childArr, marks, interpreter, callerNode, callerEnv,
-    ownDOMNodes, settings
+    ownDOMNodes, auxProps
   ) {
     childArr.forEach(val => {
       if (val instanceof Array) {
         this.createAndAppendChildren(
           domNode, val, marks, interpreter, callerNode, callerEnv,
-          ownDOMNodes, settings
+          ownDOMNodes, auxProps
         );
       } else {
         domNode.append(this.getDOMNode(
           val, marks, interpreter, callerNode, callerEnv,
-          ownDOMNodes, settings, false
+          ownDOMNodes, auxProps, false
         ));
       }
     });
@@ -647,7 +649,7 @@ class JSXInstance {
           // previous render, which is done in order to not increase the memory
           // for every single triggered action or call.
           this.render(
-            this.props, this.settings, this.isDecorated, interpreter,
+            this.props, this.auxProps, this.isDecorated, interpreter,
             this.callerNode, this.callerEnv, true, true
           );
         }
@@ -918,24 +920,26 @@ export class SettingsObject extends AbstractObject {
   // prepareComponent(componentModule, node, env) (optional) ...
   prepareComponent(componentModule, node, env) {}
 
-  // prepareInstance(componentModule, props, state, settings, node, env) has
+  // prepareInstance(componentModule, props, state, auxProps, node, env) has
   // to prepare transformInstance() such that it can be called synchronously.
-  // It should also return a childSettings object, which can be used in
+  // It should also return a childAuxProps object, which can be used in
   // particular to extend the existing props of the components with extra
   // ones used for styling them. prepareInstance() can also return a promise,
   // in which case the component renders as empty and/or with a "_pending-
   // settings" class on and queues a rerender when the promise resolves.
-  prepareInstance(_, node, env) {}
+  prepareInstance(componentModule, props, state, auxProps, node, env) {}
 
     // getComponentTrust(componentPath, node, env) takes a component path,
     // which will often be the so-called "request origin", and returns boolean
     // of whether client trust the component to make post requests, and to
     // fetch private data. If getComponentTrust() has not yet been prepared by
     // prepareInstance(), it might just return false temporarily.
-  getComponentTrust(_, node, env) {}
+  getComponentTrust(componentPath, node, env) {}
 
-  // transformInstance(domNode, ownDOMNodes, props, state, node, env) ...
-  transformInstance(domNode, ownDOMNodes, props, state, node, env) {}
+  // transformInstance() ...
+  transformInstance(
+    componentModule, domNode, ownDOMNodes, props, state, auxProps, node, env
+  ) {}
 
   // Note that these are just the minimal API needed for this module to
   // function. In practice the settings class will likely be extended with
