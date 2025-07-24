@@ -4,6 +4,7 @@ import {cssTransformer} from "./CSSTransformer.js";
 import {
   ArgTypeError, parseString, verifyTypes, verifyType, getString,
   getPropertyFromPlainObject, jsonStringify, getFullPath, CLEAR_FLAG,
+  jsonParse,
 } from "../../../../interpreting/ScriptInterpreter.js";
 
 const CLASS_REGEX = /^ *([a-z][a-z0-9\-]*)((_[a-z0-9\-]*)?) *$/;
@@ -37,10 +38,15 @@ const RELATIVE_ROUTE_START_REGEX = /^\.\.?\//;
 
 
 
-export class AppStyler {
-  constructor() {
-    this.styleSheetIDPromises = undefined;
+export class AppStyler01 {
+
+  initiate() {
+    [...document.querySelectorAll(`head style.up-style`)].forEach(node => {
+      node.remove();
+    });
+    this.styleSheetIDPromises = new Map();
     this.nextID = 1;
+    this.instanceTransforms = new Map();
   }
 
   getNextID() {
@@ -48,56 +54,111 @@ export class AppStyler {
   }
 
 
-  reset() {
-    [...document.querySelectorAll(`head style.up-style`)].forEach(node => {
-      node.remove();
-    });
-    this.styleSheetIDPromises = new Map();
-    this.nextID = 1;
-  }
-
-
+// TODO: Correct comment.
   // getTransform() takes a componentModule and the instanceKey (from its
   // parent) of a given component instance, as well as the childProps object
   // gotten from the parent instances transform object, and uses it to get the
-  // transform object (not validated) from the instance.
+  // transform object from the instance.
   getTransform(
-    componentModule, instanceKey, childPropsEntries = [],
-    node, env, interpreter
+    componentModule, instanceKey, stringifiedChildPropsEntries = [],
+    settings, node, env, interpreter
   ) {
-    // If the module exports a 'transform' variable, simply get and return that.
-    let transform = componentModule.get("transform");
-    if (transform) {
+    // Extract the transformProps from stringifiedChildPropsEntries, where
+    // the first entry is found going in the reverse direction, starting with
+    // the last entry in the array, where instanceKey matches key (format) of
+    // the childProps object.
+    let stringifiedTransformProps;
+    let len = stringifiedChildPropsEntries.length;
+    for (let i = len - 1; i >= 0; i--) {
+      let [key, val] = stringifiedChildPropsEntries[i];
+      if (testKey(instanceKey, key)) {
+        stringifiedTransformProps = val;
+        break;
+      }
+    }
+    stringifiedTransformProps ??= "null";
+
+    // If the component has already rendered before with the same (stringified)
+    // transformProps, then just return that result again.
+    let transform;
+    let componentPath = componentModule.modulePath;
+    let transformMap = this.instanceTransforms.get(componentPath);
+    if (transformMap) {
+      transform = transformMap.get(stringifiedTransformProps);
+      if (transform !== undefined) {
+        return transform;
+      }
+    }
+    else {
+      transformMap = new Map();
+      this.instanceTransforms.set(componentPath, transformMap);
+    }
+
+    // Else call settings.getTransformModule() to potentially get a different
+    // module from which to get the transform (or else getTransformModule()
+    // will return/resolve with the same componentModule). getTransformModule()
+    // might return a promise, in which case this method should also return a
+    // promise (for the transform).
+    let transformModule = settings.getTransformModule(
+      componentModule, node, env
+    );
+    let transformProps = jsonParse(stringifiedTransformProps, node, env);
+    if (transformModule instanceof Promise) {
+      let transformPromise = new Promise((resolve, reject) => {
+        transformModule.catch(
+          err = reject(err)
+        ).then(
+          transformModule => resolve(
+            this.getTransformFromSameModule(
+              transformModule, transformProps, node, env, interpreter
+            )
+          )
+        );
+      });
+      transformMap.set(stringifiedTransformProps, transformPromise);
+      transformPromise.then(transform => {
+        transformMap.set(stringifiedTransformProps, transform);
+      });
+      return transformPromise;
+    }
+    else {
+      let transform = this.getTransformFromSameModule(
+        transformModule, transformProps, node, env, interpreter
+      );
+      transformMap.set(stringifiedTransformProps, transform);
       return transform;
+    }
+  }
+
+
+  getTransformFromSameModule(
+    liveModule, transformProps, node, env, interpreter
+  ) {
+    // If the module exports a 'transform' variable, simply get that, validate
+    // and prepare it, and then return it.
+    let transform = liveModule.get("transform");
+    if (transform) {
+      return this.prepareTransform(transform);
     }
 
     // Else get 'getTransform()' function, if the module exports one, and if
-    // so, get a transformProps argument from childPropsEntries and call the
-    // function with that as its argument.
+    // so, and call it with the argument of transformProps to get the transform.
     let getTransform = componentModule.get("getTransform");
     if (getTransform) {
-      // Extract the transformProps from childPropsEntries, where the
-      // first entry is found going in the reverse direction, starting with the
-      // last entry in the array, where instanceKey matches key (format) of the
-      // childProps object.
-      let transformProps;
-      let len = childPropsEntries.length;
-      for (let i = len - 1; i >= 0; i--) {
-        let [key, val] = childPropsEntries[i];
-        if (testKey(instanceKey, key)) {
-          transformProps = val;
-          break;
-        }
-      }
-
-      // Then call getTransform() with transformProps as its argument. 
-      return interpreter.executeFunction(
-        getTransform, [transformProps ?? {}], node, env, undefined,
+      transform = interpreter.executeFunction(
+        getTransform, [transformProps], node, env, undefined,
         [CLEAR_FLAG]
       );
+      return this.prepareTransform(transform);
     }
 
-    // And else return undefined.
+    // And else behave as if the module had exported an empty transform.
+    return this.prepareTransform({});
+  }
+
+
+  prepareTransform(transform) {
+    // TODO: Impl.
   }
 
 

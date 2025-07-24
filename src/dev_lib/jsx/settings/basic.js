@@ -1,6 +1,6 @@
 import {
   DevFunction, forEachValue, LiveModule, PromiseObject, RuntimeError,
-  CSSModule as SCSSModule, AbstractObject,
+  LiveModule as SCSSModule, AbstractObject,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {SettingsObject} from "../jsx_components.js";
 
@@ -17,15 +17,13 @@ const styleSheetRoutes = new Map();
 
 
 
-export class BasicSettingsObject extends SettingsObject {
-  constructor() {
-    super();
-    this.userID = undefined;
-  }
+export class SettingsObject01 extends SettingsObject {
 
-  // TODO: Implement.
   initiate(userID, appComponent, node, env) {
-
+    this.userID = userID;
+    this.transformModuleMap = new Map();
+    
+    // TODO: Continue.
   }
 
 
@@ -62,6 +60,32 @@ export class BasicSettingsObject extends SettingsObject {
   // TODO: Implement.
   transformInstance(domNode, ownDOMNodes, props, state, node, env) {
 
+  }
+
+
+  getTransformModule(componentModule, node, env) {
+    // See if the transformModule for the given component has already been
+    // decided, or if there's a promise for it pending, and if so return it,
+    // promise or not.
+    let componentPath = componentModule.modulePath;
+    let transformModule = this.transformModuleMap.get(componentPath);
+    if (transformModule !== undefined) {
+      // Note that transformModule might be a promise here instead, but in
+      // either case, return it. 
+      return transformModule;
+    }
+
+    // TODO: Implement looking in some semantic list to see if there's a
+    // transformModule route with a high enough score that this module should
+    // be used instead of the componentModule. (And else we just return the
+    // componentModule. For now, let us just return a promise to the
+    // componentModule in order to illustrate how this.transformModuleMap is
+    // meant to work:
+    return new Promise(resolve => {
+      resolve(componentModule);
+    }).then(componentModule => {
+      this.transformModuleMap.set(componentPath, componentModule);
+    });
   }
 }
 
