@@ -20,7 +20,7 @@ const RELATIVE_ROUTE_START_REGEX = /^\.\.?\//;
 // transform := {(styleSheets?, rules?, childProps?},
 // styleSheets := {(<[a-z0-9\-]+ key>: <route>|<sheet>,)*},
 // rules :=   [({selector, style?, classes?, check?},)*],
-// style := {(<CSS property>: <CSS value string>,)*} | <function nama>,
+// style := {(<CSS property>: <CSS value string>,)*} | <function name>,
 // classes := [(<class>,)*],
 // check := <function name>,
 //
@@ -60,52 +60,33 @@ export class AppStyler01 {
   }
 
 
-  // prepareInstance() is called..
-  prepareInstance(jsxInstance, node, env) {
+  // prepareInstance() is a "semi-async." function, which we here take to mean
+  // that it might also return its result asynchronously via a reference
+  // argument, "retRef." 
+  async prepareInstance(jsxInstance, node, env, retRef = []) {
     let {componentModule, key, settingsData, parentInstance} = jsxInstance;
     let {settingsData: {stringifiedChildPropsEntries}} = parentInstance;
 
     // If stringifiedChildPropsEntries is a promise, call an async. helper of
     // this method instead and return the promise that it returns.
     if (stringifiedChildPropsEntries instanceof Promise) {
-      return this.prepareInstanceAsyncHelper(
-        jsxInstance, node, env, stringifiedChildPropsEntries
-      );
+      returnsAsync = true;
+      stringifiedChildPropsEntries = await stringifiedChildPropsEntries;
     }
 
-    let {preparedTransform} = settingsData;
-
-    // Get a "prepared" version of the transform, or a promise to one.
+    // Get a "prepared" version of the transform (and wait for it if it's a
+    // promise).
     let {interpreter} = env.scriptVars;
+    preparedTransformRef = [];
     preparedTransform = this.getTransform(
       componentModule, key, stringifiedChildPropsEntries, node, env,
-      interpreter
+      interpreter, preparedTransformRef
     );
-
-  }
-
-  // prepareInstanceAsyncHelper() allows prepareInstance() to function a lot
-  // like an async function without actually being one. When prepareInstance()
-  // runs, note that is tries to get each new pice of data from a data store,
-  // in particular form the settingsData objects. And whenever it encounters a
-  // promise, it redirects to this helper. This helper then waits for the
-  // promise and calls back the original method. This technique works on the
-  // premise that all promises in the settingsData objects are "self-replacing,"
-  // meaning that one of the first things that happen when they resolve is that
-  // they get replaced by their results in the given settingsData object. So
-  // when the given promise resolves and prepareInstance() is called back, it
-  // will now find a non-promise value in the same data store instead.
-  async prepareInstanceAsyncHelper(jsxInstance, node, env, continuePromise) {
-    // Await the continue promise before continuing.
-    await continuePromise;
-
-    // Then call back the original prepareInstance(), and potentially wait for
-    // the result before returning it.
-    let ret = this.prepareInstance(jsxInstance, node, env);
-    if (ret instanceof Promise) {
-      ret = await ret;
+    preparedTransform = preparedTransformRef[0] ?? prepareTransform;
+    if (preparedTransform instanceof Promise) {
+      preparedTransform = await preparedTransform;
     }
-    return ret;
+
   }
 
 
@@ -113,9 +94,9 @@ export class AppStyler01 {
   // parent) of a given component instance, as well as the childProps object
   // gotten from the transform object of the parent, and uses it to get the
   // transform object of the instance.
-  getTransform(
+  async getPreparedTransform(
     componentModule, instanceKey, stringifiedChildPropsEntries,
-    settings, node, env, interpreter
+    settings, node, env, interpreter, retRef = [],
   ) {
     // Extract the transformProps from stringifiedChildPropsEntries, where
     // the first entry is found going in the reverse direction, starting with
@@ -140,7 +121,10 @@ export class AppStyler01 {
     if (transformMap) {
       transform = transformMap.get(stringifiedTransformProps);
       if (transform !== undefined) {
-        return transform;
+        if (transform instanceof Promise) {
+          transform = await transform;
+        }
+        return retRef[0] = transform;
       }
     }
 
@@ -150,77 +134,71 @@ export class AppStyler01 {
       this.instanceTransforms.set(componentPath, transformMap);
     }
 
-    // Else call settings.getTransformModule() to potentially get a different
+    // Then call settings.getTransformModule() to potentially get a different
     // module from which to get the transform. (Or getTransformModule() might
-    // also just return/resolve with the same componentModule). The call might
-    // might return a promise, in which case this method should also return a
-    // promise (for the transform).
+    // also just return/resolve with the same componentModule). Note that the
+    // returned transformModule might also be a promise, which is fine since
+    // getTransformFromModule() also accepts a promise argument.
     let transformModule = settings.getTransformModule(
       componentModule, node, env
     );
-    let transformProps = jsonParse(stringifiedTransformProps, node, env);
-    if (transformModule instanceof Promise) {
-      // Create a promise to the transform, calling getTransformFromSameModule()
-      // then the transformModule promise resolves.
-      let transformPromise = new Promise((resolve, reject) => {
-        transformModule.catch(
-          err = reject(err)
-        ).then(
-          transformModule => resolve(
-            this.getTransformFromSameModule(
-              transformModule, transformProps, node, env, interpreter
-            )
-          )
-        );
-      });
 
-      // Then update transformMap with a self-replacing promise, and return the
-      // transformPromise.
-      transformMap.set(stringifiedTransformProps, transformPromise);
-      transformPromise.then(transform => {
+    // Now call getTransformFromModule(), to get the transform, which will be a
+    // promise unless if it is returned via the "retRef" of
+    // getTransformFromModule(), which we call transformRef here.
+    let transformProps = jsonParse(stringifiedTransformProps, node, env);
+    let transformRef = [];
+    transform = this.getTransformFromModule(
+      transformModule, transformProps, node, env, interpreter, transformRef
+    );
+    transform = transformRef[0] ?? transform;
+
+    // Also update transformMap with the result, and if the result is a
+    // promise, we also make it replace itself in the transformMap.
+    transformMap.set(stringifiedTransformProps, transform);
+    if (transform instanceof Promise) {
+      transform.then(transform => {
         transformMap.set(stringifiedTransformProps, transform);
       });
-      return transformPromise;
     }
-    else {
-      // If transformModule is not a promise, call getTransformFromSameModule()
-      // directly, and update transformMap with the result before returning
-      // that same result.
-      let transform = this.getTransformFromSameModule(
-        transformModule, transformProps, node, env, interpreter
-      );
-      transformMap.set(stringifiedTransformProps, transform);
-      return transform;
-    }
+
+    // Then return the result, and set retRef as well in case the result
+    // is ready on the first tick of the microtask event loop.
+    return retRef[0] = transform;
   }
 
 
-  // getTransformFromSameModule() extracts and prepares the transform exported
+  // getTransformFromModule() extracts and prepares the transform exported
   // from a module, either directly as a 'transform' variable, or through an
   // exported 'getTransform()' function.
-  getTransformFromSameModule(
-    liveModule, transformProps, node, env, interpreter
+  async getTransformFromModule(
+    liveModule, transformProps, node, env, interpreter, retRef
   ) {
+    if (liveModule instanceof Promise) {
+      liveModule = await liveModule;
+    }
+
     // If the module export a 'getTransform()' function, call it with the
     // argument of transformProps to get the transform.
+    let transform;
     let getTransform = liveModule.get("getTransform");
     if (getTransform) {
       transform = interpreter.executeFunction(
         getTransform, [transformProps], node, env, undefined,
         [CLEAR_FLAG]
       );
-      return this.prepareTransform(transform, node, env);
+      return retRef[0] = this.prepareTransform(transform, node, env);
     }
 
     // Else get the 'transform' variable, if the module exports one, then
     // validate and prepare it, before returning it.
-    let transform = liveModule.get("transform");
+    transform = liveModule.get("transform");
     if (transform) {
-      return this.prepareTransform(transform, node, env);
+      return retRef[0] = this.prepareTransform(transform, node, env);
     }
 
     // And else behave as if the module had exported an empty transform.
-    return this.prepareTransform({});
+    return retRef[0] = this.prepareTransform({});
   }
 
 
