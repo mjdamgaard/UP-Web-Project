@@ -35,7 +35,7 @@ export class SettingsObject01 extends SettingsObject {
 
   // TODO: Implement.
   changeUser(userID, node, env) {
-    console.log("changeUser() is called from BasicSettingsObject");
+
   }
 
 

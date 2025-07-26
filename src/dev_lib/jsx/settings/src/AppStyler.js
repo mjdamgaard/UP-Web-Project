@@ -19,10 +19,10 @@ const RELATIVE_ROUTE_START_REGEX = /^\.\.?\//;
 //
 // transform := {(styleSheets?, rules?, childProps?},
 // styleSheets := {(<[a-z0-9\-]+ key>: <route>|<sheet>,)*},
-// rules :=   [({selector, styles?, classes?, check?},)*],
-// styles := {(<CSS property>: <CSS value string>,)*},
+// rules :=   [({selector, style?, classes?, check?},)*],
+// style := {(<CSS property>: <CSS value string>,)*} | <function nama>,
 // classes := [(<class>,)*],
-// check := <function of props and state>,
+// check := <function name>,
 //
 // where <class> is ether a [a-z][a-z0-9\-]* string if styleSheet is defined
 // rather than style*Sheets*, or a [a-z][a-z0-9\-]*_[a-z][a-z0-9\-]* string if
@@ -61,45 +61,47 @@ export class AppStyler01 {
 
 
   // prepareInstance() is called..
-  prepareInstance(
-    {componentModule, key}, auxProps, node, env, interpreter = undefined
-  ) {
-    interpreter ??= env.scriptVars.interpreter;
+  prepareInstance(jsxInstance, node, env) {
+    let {componentModule, key, settingsData, parentInstance} = jsxInstance;
+    let {settingsData: {stringifiedChildPropsEntries}} = parentInstance;
 
-    // If auxProps is a promise, call an async. version of this method instead
-    // and return the promise that it returns. 
-    if (auxProps instanceof Promise) {
+    // If stringifiedChildPropsEntries is a promise, call an async. helper of
+    // this method instead and return the promise that it returns.
+    if (stringifiedChildPropsEntries instanceof Promise) {
       return this.prepareInstanceAsyncHelper(
-        componentModule, key, auxProps, node, env, interpreter
+        jsxInstance, node, env, stringifiedChildPropsEntries
       );
     }
 
+    let {preparedTransform} = settingsData;
+
     // Get a "prepared" version of the transform, or a promise to one.
     let {interpreter} = env.scriptVars;
-    let stringifiedChildPropsEntries = auxProps;
-    let preparedTransform = this.getTransform(
+    preparedTransform = this.getTransform(
       componentModule, key, stringifiedChildPropsEntries, node, env,
       interpreter
     );
 
   }
 
-  async prepareInstanceAsyncHelper(
-    componentModule, key, auxProps, node, env, interpreter, preparedTransform
-  ) {
-    if (preparedTransform instanceof Promise) {
-      preparedTransform = await preparedTransform;
-    }
-    if (preparedTransform !== undefined) {
-    }
-    // If auxProps is a promise, await its result.
-    if (auxProps instanceof Promise) {
-      auxProps = await auxProps;
-    }
+  // prepareInstanceAsyncHelper() allows prepareInstance() to function a lot
+  // like an async function without actually being one. When prepareInstance()
+  // runs, note that is tries to get each new pice of data from a data store,
+  // in particular form the settingsData objects. And whenever it encounters a
+  // promise, it redirects to this helper. This helper then waits for the
+  // promise and calls back the original method. This technique works on the
+  // premise that all promises in the settingsData objects are "self-replacing,"
+  // meaning that one of the first things that happen when they resolve is that
+  // they get replaced by their results in the given settingsData object. So
+  // when the given promise resolves and prepareInstance() is called back, it
+  // will now find a non-promise value in the same data store instead.
+  async prepareInstanceAsyncHelper(jsxInstance, node, env, continuePromise) {
+    // Await the continue promise before continuing.
+    await continuePromise;
 
-    let ret = this.prepareInstance(
-      componentModule, key, auxProps, node, env, interpreter
-    );
+    // Then call back the original prepareInstance(), and potentially wait for
+    // the result before returning it.
+    let ret = this.prepareInstance(jsxInstance, node, env);
     if (ret instanceof Promise) {
       ret = await ret;
     }
@@ -141,6 +143,8 @@ export class AppStyler01 {
         return transform;
       }
     }
+
+    // Else if transformMap wasn't initialized before, do so before continuing.
     else {
       transformMap = new Map();
       this.instanceTransforms.set(componentPath, transformMap);
@@ -197,21 +201,21 @@ export class AppStyler01 {
   getTransformFromSameModule(
     liveModule, transformProps, node, env, interpreter
   ) {
-    // If the module exports a 'transform' variable, simply get that, validate
-    // and prepare it, and then return it.
-    let transform = liveModule.get("transform");
-    if (transform) {
-      return this.prepareTransform(transform, node, env);
-    }
-
-    // Else get 'getTransform()' function, if the module exports one, and if
-    // so, and call it with the argument of transformProps to get the transform.
+    // If the module export a 'getTransform()' function, call it with the
+    // argument of transformProps to get the transform.
     let getTransform = liveModule.get("getTransform");
     if (getTransform) {
       transform = interpreter.executeFunction(
         getTransform, [transformProps], node, env, undefined,
         [CLEAR_FLAG]
       );
+      return this.prepareTransform(transform, node, env);
+    }
+
+    // Else get the 'transform' variable, if the module exports one, then
+    // validate and prepare it, before returning it.
+    let transform = liveModule.get("transform");
+    if (transform) {
       return this.prepareTransform(transform, node, env);
     }
 
