@@ -60,44 +60,32 @@ export class AppStyler01 {
   }
 
 
+  prepareInstance(jsxInstance, node, env) {
+    let whenPreparedRef = [];
+    let whenPrepared = this.prepareInstanceHelper(
+      jsxInstance, node, env, whenPreparedRef
+    );
+    return whenPreparedRef[0] ?? whenPrepared;
+  }
+
   // prepareInstance() is a "semi-async." function, which we here take to mean
   // that it might also return its result asynchronously via a reference
   // argument, "retRef." 
-  async prepareInstance(jsxInstance, node, env, retRef = []) {
-    let {componentModule, key, settingsData, parentInstance} = jsxInstance;
-    let {settingsData: {stringifiedChildPropsEntries}} = parentInstance;
+  async prepareInstanceHelper(jsxInstance, node, env, retRef = []) {
+    let {
+      componentModule, key: instanceKey, settings, settingsData,
+      parentInstance: {
+        settingsData: {
+          preparedTransform: {stringifiedChildPropsEntries}
+        }
+      }
+    } = jsxInstance;
 
-    // If stringifiedChildPropsEntries is a promise, call an async. helper of
-    // this method instead and return the promise that it returns.
+    // If stringifiedChildPropsEntries is a promise, wait for it.
     if (stringifiedChildPropsEntries instanceof Promise) {
-      returnsAsync = true;
       stringifiedChildPropsEntries = await stringifiedChildPropsEntries;
     }
 
-    // Get a "prepared" version of the transform (and wait for it if it's a
-    // promise).
-    let {interpreter} = env.scriptVars;
-    preparedTransformRef = [];
-    preparedTransform = this.getTransform(
-      componentModule, key, stringifiedChildPropsEntries, node, env,
-      interpreter, preparedTransformRef
-    );
-    preparedTransform = preparedTransformRef[0] ?? prepareTransform;
-    if (preparedTransform instanceof Promise) {
-      preparedTransform = await preparedTransform;
-    }
-
-  }
-
-
-  // getTransform() takes the componentModule and the instanceKey (from its
-  // parent) of a given component instance, as well as the childProps object
-  // gotten from the transform object of the parent, and uses it to get the
-  // transform object of the instance.
-  async getPreparedTransform(
-    componentModule, instanceKey, stringifiedChildPropsEntries,
-    settings, node, env, interpreter, retRef = [],
-  ) {
     // Extract the transformProps from stringifiedChildPropsEntries, where
     // the first entry is found going in the reverse direction, starting with
     // the last entry in the array, where instanceKey matches key (format) of
@@ -134,6 +122,40 @@ export class AppStyler01 {
       this.instanceTransforms.set(componentPath, transformMap);
     }
 
+    // Then call getPreparedTransform() to get the prepared transform.
+    let {interpreter} = env.scriptVars;
+    let transformRef = [];
+    transform = this.getPreparedTransform(
+      componentModule, stringifiedTransformProps, settings,
+      node, env, interpreter, transformRef
+    );
+    transform = transformRef[0] ?? transform;
+
+    // Also make sure update transformMap with the result, and if the result is
+    // a promise, we also make it replace itself in the transformMap when it
+    // resolves. And then we immediately wait for it to do so.
+    transformMap.set(stringifiedTransformProps, transform);
+    if (transform instanceof Promise) {
+      transform.then(transform => {
+        transformMap.set(stringifiedTransformProps, transform);
+      });
+      transform = await transform;
+    }
+
+    // Finally, update settingsData with the prepared transform, and return it.
+    settingsData.preparedTransform = transform;
+    return retRef[0] = transform;
+  }
+
+
+  // getTransform() takes the componentModule and the instanceKey (from its
+  // parent) of a given component instance, as well as the childProps object
+  // gotten from the transform object of the parent, and uses it to get the
+  // transform object of the instance.
+  async getPreparedTransform(
+    componentModule, stringifiedTransformProps, settings,
+    node, env, interpreter, retRef = [],
+  ) {
     // Then call settings.getTransformModule() to potentially get a different
     // module from which to get the transform. (Or getTransformModule() might
     // also just return/resolve with the same componentModule). Note that the
@@ -148,22 +170,26 @@ export class AppStyler01 {
     // getTransformFromModule(), which we call transformRef here.
     let transformProps = jsonParse(stringifiedTransformProps, node, env);
     let transformRef = [];
-    transform = this.getTransformFromModule(
+    let transform = this.getTransformFromModule(
       transformModule, transformProps, node, env, interpreter, transformRef
     );
     transform = transformRef[0] ?? transform;
-
-    // Also update transformMap with the result, and if the result is a
-    // promise, we also make it replace itself in the transformMap.
-    transformMap.set(stringifiedTransformProps, transform);
     if (transform instanceof Promise) {
-      transform.then(transform => {
-        transformMap.set(stringifiedTransformProps, transform);
-      });
+      transform = await transform;
     }
 
-    // Then return the result, and set retRef as well in case the result
-    // is ready on the first tick of the microtask event loop.
+    // Then import and load the transform's style sheets, and update its
+    // styleSheets property, before returning it.
+    let styleSheetsRef = [];
+    let styleSheets = this.importAndPrepareStyleSheets(
+      transform.styleSheets, settings, node, env, interpreter, styleSheetsRef
+    );
+    styleSheets = styleSheetsRef[0] ?? styleSheets;
+    if (styleSheets instanceof Promise) {
+      styleSheets = await styleSheets;
+    }
+    transform.styleSheets = styleSheets;
+
     return retRef[0] = transform;
   }
 
@@ -172,7 +198,7 @@ export class AppStyler01 {
   // from a module, either directly as a 'transform' variable, or through an
   // exported 'getTransform()' function.
   async getTransformFromModule(
-    liveModule, transformProps, node, env, interpreter, retRef
+    liveModule, transformProps, node, env, interpreter, retRef = []
   ) {
     if (liveModule instanceof Promise) {
       liveModule = await liveModule;
@@ -207,7 +233,7 @@ export class AppStyler01 {
   // in the process, such that the resulting stringifiedChildPropsEntries is
   // ready to be passed to getTransform() above.
   prepareTransform(transform, node, env) {
-    transform ??= {};
+    ret = {...transform};
     verifyType(transform, "plain object", node, env);
     let childProps = transform.childProps;
     if (childProps !== undefined) {
@@ -218,8 +244,9 @@ export class AppStyler01 {
         });
     }
     else {
-      transform.stringifiedChildPropsEntries = [];
+      ret.stringifiedChildPropsEntries = [];
     }
+    return ret;
   }
 
 
@@ -229,7 +256,7 @@ export class AppStyler01 {
   // already being loaded currently) by validating and transforming it, and
   // then inserting it into the document head.
   async importAndPrepareStyleSheets(
-    styleSheets, settings, node, env, interpreter
+    styleSheets, settings, node, env, interpreter, retRef = []
   ) {
     verifyType(rules, "plain object", node, env);
     let preparedStyleSheets = {};
@@ -237,6 +264,7 @@ export class AppStyler01 {
     // Go through each style sheet and push a promise to the following array
     // to import and apply the style sheet, returning an ID in each case, which
     // we can subsequently substitute the values in styleSheets for.
+    let idArr = [], isReady = true;
     let idPromiseArr = [];
     let styleSheetEntries = Object.entries(styleSheets);
     let len = styleSheetEntries.length;
