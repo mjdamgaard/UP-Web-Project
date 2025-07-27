@@ -3,8 +3,8 @@ import {cssParser} from "./CSSParser.js";
 import {cssTransformer} from "./CSSTransformer.js";
 import {
   ArgTypeError, parseString, verifyTypes, verifyType, getString,
-  getPropertyFromPlainObject, jsonStringify, getFullPath, CLEAR_FLAG,
-  jsonParse,
+  getPropertyFromPlainObject, jsonStringify, CLEAR_FLAG, jsonParse,
+  FunctionObject, getFullPath,
 } from "../../../../interpreting/ScriptInterpreter.js";
 
 const CLASS_REGEX = /^ *([a-z][a-z0-9\-]*)((_[a-z0-9\-]*)?) *$/;
@@ -48,6 +48,7 @@ export class AppStyler01 {
     this.styleSheetIDs = new Map();
     this.nextID = 1;
     this.instanceTransforms = new Map();
+    this.importedStyleValues = new Map();
   }
 
   getNextID() {
@@ -382,40 +383,65 @@ export class AppStyler01 {
   // used by transformInstance() below. It also takes a prepared styleSheets
   // object, whose keys are still the keys used in the classes of the rules,
   // but where the value has been exchanged for a valid style sheet ID. 
-  async prepareStyleAndCheck(rules, node, env, retRef = []) {
+  async prepareStyleAndCheck(rules, node, env, interpreter, retRef = []) {
     verifyType(rules, "array", node, env);
 
-    let semiPreparedRules = rules.map(rule => {
+    let ruleIndAndStylePromises = [];
+    let semiPreparedRules = rules.map((rule, ind) => {
       let preparedRule = {};
       let {selector, classes, style, check} = rule;
 
       // And we need to validate (and possibly stringify) the inline styles.
       if (style) {
+        // If style is a plain object, prepare it by turning it into an entries
+        // array where each key and value has been validated.
         if (typeof style === "object") {
-          verifyType(style, "plain object", node, env);
-          style = jsonStringify(style).slice(1, -1);
+          preparedRule.styleEntries = this.prepareStyleEntires(
+            style, node, env
+          );  
         }
-        if (typeof style !== "string") throw new ArgTypeError(
+        else if (typeof style !== "string") throw new ArgTypeError(
           `Invalid inline style: ${getString(style, node, env)}`,
           node, env
         );
-        if (RELATIVE_ROUTE_START_REGEX.test(val)) throw new ArgTypeError(
+        else if (RELATIVE_ROUTE_START_REGEX.test(val)) throw new ArgTypeError(
           "Style function routes must be absolute, but got: " +
           `"${getString(style, node, env)}". Please wrap relative routes in ` +
           "a call to abs().",
           node, env
         );
 
-        // If style is an absolute route
+        // If style is an absolute route, expect a ';get' route to a function
+        // or an object.
+        else if (style[0] === "/") {
+          let route = style;
+          let importedStyleValue = this.importedStyleValues.get(route);
+          if (importedStyleValue) {
+            if (importedStyleValue instanceof FunctionObject) {
+              preparedRule.styleFun = importedStyleValue;
+            }
+            else {
+              preparedRule.styleEntries = importedStyleValue;
+            }
+          }
+          else {
+            let importedValuePromise = interpreter.fetch(route, node, env);
+            let 
 
-
-        // Parse the style string, throwing a syntax error if the inline style
-        // is invalid or illegal (or not implemented yet).
-        style = style.trim();
-        parseString(style, node, env, cssParser, "declaration!1*$");
-
-        semiPreparedRules.style = style;
+          }
+          importedStylePromises.push([
+            interpreter.fetch(route, node, env), ind, route
+          ]);
+        }
+        else throw new ArgTypeError(
+          "The style value of a transform rule has to be either a plain " +
+          "object or an absolute route, but got: " +
+          `"${getString(style, node, env)}"`,
+          node, env
+        );
       }
+
+      // Now wait for all the imported 
 
       // This method assumes that the 'selector' and 'classes' properties will
       // be prepared later on (by prepareSelectorAndClasses()), so we just copy
@@ -429,6 +455,16 @@ export class AppStyler01 {
     return semiPreparedRules;
   }
 
+  prepareStyleEntires(styleObj, node, env) {
+    verifyType(styleObj, "plain object", node, env);
+
+    // ...
+
+    // Parse the style string, throwing a syntax error if the inline style
+    // is invalid or illegal (or not implemented yet).
+    style = style.trim();
+    parseString(style, node, env, cssParser, "declaration!1*$");
+  }
 
   // prepareSelectorAndClasses() prepares the 'selector' and 'classes'
   // properties of transform rules such that these rules is ready to be used by
@@ -438,7 +474,7 @@ export class AppStyler01 {
   prepareSelectorAndClasses(rules, preparedStyleSheets, node, env) {
     let preparedRules = rules.map(rule => {
       let preparedRule = {};
-      let {selector, classes = [], style, check} = rule;
+      let {selector, classes = [], styleEntries, check} = rule;
       verifyTypes([selector, classes], ["string", "array"], node, env);
 
       // Validate and transform the selector such that all classes gets a
@@ -472,10 +508,10 @@ export class AppStyler01 {
         return classNameRoot + "_" + styleSheetID;
       });
 
-      // This method assumes that the 'style' and 'check' properties have
-      // already been prepared (by prepareStyleAndCheck()), so we just copy
-      // those properties here.
-      preparedRule.style = style;
+      // This method assumes that the 'styleEntries' and 'check' properties
+      // have already been prepared (by prepareStyleAndCheck()), so we just
+      // copy those properties here.
+      preparedRule.styleEntries = styleEntries;
       preparedRule.check = check;
 
       return preparedRule;
