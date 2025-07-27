@@ -41,18 +41,13 @@ const RELATIVE_ROUTE_START_REGEX = /^\.\.?\//;
 export class AppStyler01 {
 
   initiate() {
-    [...document.querySelectorAll(`head style.up-style`)].forEach(node => {
-      node.remove();
-    });
-    this.styleSheetIDPromises = new Map();
+    // Remove any existing "up-style" elements from a previous setting.
+    let upStyleElements = [...document.querySelectorAll(`head style.up-style`)];
+    upStyleElements.forEach(node => node.remove());
+
+    this.styleSheetIDs = new Map();
     this.nextID = 1;
     this.instanceTransforms = new Map();
-
-    // As the initial auxProps object for the app, this system uses an empty
-    // array. This is because this system uses the stringifiedChildPropsEntries
-    // arrays (see below) as the auxProps that's passed between instances. And
-    // the app just starts with no auxProps, hence the empty array.
-    return [];
   }
 
   getNextID() {
@@ -265,7 +260,7 @@ export class AppStyler01 {
     // to import and apply the style sheet, returning an ID in each case, which
     // we can subsequently substitute the values in styleSheets for.
     let idArr = [], isReady = true;
-    let idPromiseArr = [];
+    let preparedEntryPromiseArr = [];
     let styleSheetEntries = Object.entries(styleSheets);
     let len = styleSheetEntries.length;
     for (let i = 0; i < len; i++) {
@@ -282,49 +277,75 @@ export class AppStyler01 {
       // warning that one ought to use absolute routes instead, making it
       // easier to extend and modify JSX components.
       if (RELATIVE_ROUTE_START_REGEX.test(val)) {
-        console.warn(
-          "A relative path was used for transform.styleSheets. " +
-          "It is better to wrap them in an abs() call to turn them absolute, " +
-          "most of all because this makes bundling easier."
+        // console.warn(
+        //   "A relative path was used for transform.styleSheets. " +
+        //   "It is better to wrap them in an abs() call to turn them absolute, " +
+        //   "most of all because this makes transforms easier to extend."
+        // );
+        // let curPath = env.getModuleEnv().modulePath;
+        // val = getFullPath(curPath, val, node, env);
+        throw new ArgTypeError(
+          "Style sheet paths must be absolute, but got: " +
+          `"${getString(val, node, env)}". Please wrap relative routes in a ` +
+          "call to abs().",
+          node, env
         );
-        let curPath = env.getModuleEnv().modulePath;
-        val = getFullPath(curPath, val, node, env);
       } 
 
-      // Then if the style sheet is already loaded, or is loading, just push
-      // the promise directly from this.styleSheetIDPromises.
-      let idPromise = this.styleSheetIDPromises.get(val);
-      if (idPromise) {
-        idPromiseArr.push(idPromise);
+      // Then if the style sheet is currently being loaded, in which this.
+      // styleSheetIDs will hold a promise for the id, push a promise to the
+      // prepared entry via #getPreparedEntry().
+      let id = this.styleSheetIDs.get(val);
+      if (id instanceof Promise) {
+        preparedEntryPromiseArr.push(this.#getPreparedEntry(key, id));
       }
 
-      // Else if val is now an absolute route, push a promise that imports the
-      // style sheet and resolves with a unique ID for that style sheet.
+      // And if the style sheet has already been, just mutate the return value,
+      // preparedStyleSheets, straightaway.
+      else if (id) {
+        preparedStyleSheets[key] = id;
+      }
+
+      // Else if val is an absolute route at this point, import and load the
+      // style sheet, then push a promise for the prepared entry.
       else if (val[0] === "/") {
-        idPromise = this.importAndLoadStyleSheet(
+        let idPromise = this.importAndLoadStyleSheet(
           val, settings, node, env, interpreter
         );
-        idPromiseArr.push(idPromise);
-        this.styleSheetIDPromises.set(val, idPromise);
+        preparedEntryPromiseArr.push(this.#getPreparedEntry(key, id));
+        this.styleSheetIDs.set(val, idPromise);
+        idPromise.then(id => {
+          this.styleSheetIDs.set(val, id);
+        });
       }
 
       // Else treat val as a style sheet string and load it directly, if an
       // identical style sheet has not already been done so.
       else {
-        idPromise = this.loadStyleSheet(val, false, node, env);
-        idPromiseArr.push(idPromise);
-        this.styleSheetIDPromises.set(val, idPromise);
+        id = this.loadStyleSheet(val, false, node, env);
+        preparedStyleSheets[key] = id;
+        this.styleSheetIDs.set(val, id);
       }
     }
 
-    // Now wait for all the style sheet IDs, and use them to transform the
-    // values of styleSheets to the IDs instead for the return value.
-    let styleSheetIDArr = await Promise.all(idPromiseArr);
-    styleSheetEntries.forEach(([key], ind) => {
-      preparedStyleSheets[key] = styleSheetIDArr[ind];
-    });
-    return preparedStyleSheets;
+    // Now wait for all the loading style sheet IDs, if any, and add the
+    // resulting entries to preparedStyleSheets.
+    if (preparedEntryPromiseArr.length > 0) {
+      let preparedEntriesArr = await Promise.all(preparedEntryPromiseArr);
+      preparedEntriesArr.forEach(([key, id]) => {
+        preparedStyleSheets[key] = id;
+      });
+    }
+
+    return retRef[0] = preparedStyleSheets;
   }
+
+
+  async #getPreparedEntry(key, idPromise) {
+    let id = await idPromise;
+    return [key, id];
+  }
+
 
 
   async importAndLoadStyleSheet(route, settings, node, env, interpreter) {
@@ -332,10 +353,10 @@ export class AppStyler01 {
       interpreter.import(route, node, env),
       settings.getStyleSheetTrust(route),
     ]);
-    return await loadStyleSheet(styleSheet, isTrusted, node, env);
+    return loadStyleSheet(styleSheet, isTrusted, node, env);
   }
 
-  async loadStyleSheet(styleSheet, isTrusted, node, env) {
+  loadStyleSheet(styleSheet, isTrusted, node, env) {
     // First get a new, unique ID for the style sheet.
     let id = this.getNextID();
 
@@ -357,22 +378,68 @@ export class AppStyler01 {
   }
 
 
-
-  // prepareTransformRules() prepares a rules array such that it is ready to be
+  // prepareStyleAndCheck() prepares a rules array such that it is ready to be
   // used by transformInstance() below. It also takes a prepared styleSheets
   // object, whose keys are still the keys used in the classes of the rules,
   // but where the value has been exchanged for a valid style sheet ID. 
-  prepareTransformRules(rules, preparedStyleSheets, node, env) {
+  async prepareStyleAndCheck(rules, node, env, retRef = []) {
     verifyType(rules, "array", node, env);
 
-    let preparedRules = [];
-    rules.forEach(({selector, classes = [], style, check}) => {
-      verifyTypes(
-        [selector, classes, check],
-        ["string", "array", "function?"],
-        node, env
-      );
+    let semiPreparedRules = rules.map(rule => {
       let preparedRule = {};
+      let {selector, classes, style, check} = rule;
+
+      // And we need to validate (and possibly stringify) the inline styles.
+      if (style) {
+        if (typeof style === "object") {
+          verifyType(style, "plain object", node, env);
+          style = jsonStringify(style).slice(1, -1);
+        }
+        if (typeof style !== "string") throw new ArgTypeError(
+          `Invalid inline style: ${getString(style, node, env)}`,
+          node, env
+        );
+        if (RELATIVE_ROUTE_START_REGEX.test(val)) throw new ArgTypeError(
+          "Style function routes must be absolute, but got: " +
+          `"${getString(style, node, env)}". Please wrap relative routes in ` +
+          "a call to abs().",
+          node, env
+        );
+
+        // If style is an absolute route
+
+
+        // Parse the style string, throwing a syntax error if the inline style
+        // is invalid or illegal (or not implemented yet).
+        style = style.trim();
+        parseString(style, node, env, cssParser, "declaration!1*$");
+
+        semiPreparedRules.style = style;
+      }
+
+      // This method assumes that the 'selector' and 'classes' properties will
+      // be prepared later on (by prepareSelectorAndClasses()), so we just copy
+      // those properties here.
+      preparedRule.selector = selector;
+      preparedRule.classes = classes;
+
+      return preparedRule;
+    });
+
+    return semiPreparedRules;
+  }
+
+
+  // prepareSelectorAndClasses() prepares the 'selector' and 'classes'
+  // properties of transform rules such that these rules is ready to be used by
+  // transformInstance() below. It also takes a prepared styleSheets object,
+  // whose keys are still the keys used in the classes of the rules, but where
+  // the values has been exchanged for a valid style sheet IDs. 
+  prepareSelectorAndClasses(rules, preparedStyleSheets, node, env) {
+    let preparedRules = rules.map(rule => {
+      let preparedRule = {};
+      let {selector, classes = [], style, check} = rule;
+      verifyTypes([selector, classes], ["string", "array"], node, env);
 
       // Validate and transform the selector such that all classes gets a
       // trailing underscore, which is similar of appending a style sheet ID of
@@ -387,7 +454,7 @@ export class AppStyler01 {
 
       // We also need to transform the classes by appending the right style
       // sheet ID suffix to them.
-      preparedRules.classes = classes.map(className => {
+      preparedRule.classes = classes.map(className => {
         className = getString(className, node, env);
         if (typeof className !== "string") return;
         let [match, classNameRoot, styleSheetKey] = CLASS_REGEX.exec(className);
@@ -405,27 +472,19 @@ export class AppStyler01 {
         return classNameRoot + "_" + styleSheetID;
       });
 
-      // And we need to validate (and possibly stringify) the inline styles.
-      if (style) {
-        if (typeof style === "object") {
-          verifyType(style, "plain object", node, env);
-          style = jsonStringify(style).slice(1, -1);
-        }
-        if (typeof style !== "string") throw new ArgTypeError(
-          `Invalid inline style: ${getString(style, node, env)}`,
-          node, env
-        );
-        // Parse the style string, throwing a syntax error if the inline style
-        // is invalid or illegal (or not implemented yet).
-        style = style.trim();
-        parseString(style, node, env, cssParser, "declaration!1*$");
+      // This method assumes that the 'style' and 'check' properties have
+      // already been prepared (by prepareStyleAndCheck()), so we just copy
+      // those properties here.
+      preparedRule.style = style;
+      preparedRule.check = check;
 
-        preparedRules.style = style;
-      }
+      return preparedRule;
     });
 
     return preparedRules;
   }
+
+
 
   // transformInstance() takes the outer DOM node of a component instance, an
   // array if its "own" DOM nodes, and a rules array that has already been
