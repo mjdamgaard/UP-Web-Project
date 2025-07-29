@@ -12,28 +12,17 @@ const STYLE_SHEET_KEY_REGEX = /^[a-z0-9\-]+$/;
 const RELATIVE_ROUTE_START_REGEX = /^\.\.?\//;
 
 
-// TODO: Correct, and move the description of what users should export
-// elsewhere:
 
 // The "transform" objects used by the ComponentTransformer are of the form:
 //
 // transform := {(styleSheets?, rules?, childProps?},
-// styleSheets := {(<[a-z0-9\-]+ key>: <route>|<sheet>,)*},
+// styleSheets := {(<[a-z0-9\-]+ key>: (<CSSModule>|<route>|<sheet>),)*},
 // rules :=   [({selector, style?, classes?, check?},)*],
-// style := {(<CSS property>: <CSS value string>,)*} | <function name>,
-// classes := [(<class>,)*],
-// check := <function name>,
+// style := {(<CSS property>: <CSS value string>,)*} | <function>,
+// classes := [(<[a-z][a-z0-9\-]*(_[a-z0-9\-]*)? class>,)*],
+// check := <function>,
+// childTransforms := {(<instance key format>: {route?, props?},)*},
 //
-// where <class> is ether a [a-z][a-z0-9\-]* string if styleSheet is defined
-// rather than style*Sheets*, or a [a-z][a-z0-9\-]*_[a-z][a-z0-9\-]* string if
-// styleSheets is defined, where the last part is the [a-z][a-z0-9\-]* key of
-// the style sheet that the class references.
-//
-// And although it is not relevant here, childProps := an object where the key
-// is a child instance key, possibly with a '*' wildcard at the end, and also
-// possibly with a '!' not operator in front, and where the values are then a
-// an object that is given as input to the getTransform() function of the
-// targeted child instances.
 
 
 
@@ -41,14 +30,13 @@ const RELATIVE_ROUTE_START_REGEX = /^\.\.?\//;
 export class AppStyler01 {
 
   initiate() {
-    // Remove any existing "up-style" elements from a previous setting.
+    // Remove any existing UP style elements from a previous setting.
     let upStyleElements = [...document.querySelectorAll(`head style.up-style`)];
     upStyleElements.forEach(node => node.remove());
 
     this.styleSheetIDs = new Map();
     this.nextID = 1;
-    this.instanceTransforms = new Map();
-    this.importedStyleValues = new Map();
+    this.preparedTransforms = new Map();
   }
 
   getNextID() {
@@ -56,6 +44,7 @@ export class AppStyler01 {
   }
 
 
+  // prepareInstance() ...
   prepareInstance(jsxInstance, node, env) {
     let whenPreparedRef = [];
     let whenPrepared = this.prepareInstanceHelper(
@@ -65,45 +54,50 @@ export class AppStyler01 {
   }
 
   // prepareInstance() is a "semi-async." function, which we here take to mean
-  // that it might also return its result asynchronously via a reference
-  // argument, "retRef." 
+  // that it might also return its result synchronously via a reference
+  // argument ('retRef'). 
   async prepareInstanceHelper(jsxInstance, node, env, retRef = []) {
     let {
       componentModule, key: instanceKey, settings, settingsData,
       parentInstance: {
         settingsData: {
-          preparedTransform: {stringifiedChildPropsEntries}
+          preparedTransform: {childTransformsEntries}
         }
       }
     } = jsxInstance;
 
-    // If stringifiedChildPropsEntries is a promise, wait for it.
-    if (stringifiedChildPropsEntries instanceof Promise) {
-      stringifiedChildPropsEntries = await stringifiedChildPropsEntries;
+    // If the instance has already been prepared, return early.
+    if (settingsData.preparedTransform) {
+      return retRef[0] = true;
     }
 
-    // Extract the transformProps from stringifiedChildPropsEntries, where
+    // If childTransformsEntries is a promise, wait for it.
+    if (childTransformsEntries instanceof Promise) {
+      childTransformsEntries = await childTransformsEntries;
+    }
+
+    // Extract the transformSpecs from childTransformsEntries, where
     // the first entry is found going in the reverse direction, starting with
     // the last entry in the array, where instanceKey matches key (format) of
     // the childProps object.
-    let stringifiedTransformProps;
-    let len = stringifiedChildPropsEntries.length;
+    let transformSpecs;
+    let len = childTransformsEntries.length;
     for (let i = len - 1; i >= 0; i--) {
-      let [key, val] = stringifiedChildPropsEntries[i];
+      let [key, val] = childTransformsEntries[i];
       if (testKey(instanceKey, key)) {
-        stringifiedTransformProps = val;
+        transformSpecs = val;
         break;
       }
     }
-    stringifiedTransformProps ??= "null";
+    let {route: transformRoute, props: transformProps} = transformSpecs ?? {};
 
     // If the component has already rendered before with the same (stringified)
     // transformProps, then just return that result again.
     let transform;
     let componentPath = componentModule.modulePath;
-    let transformMap = this.instanceTransforms.get(componentPath);
+    let transformMap = this.preparedTransforms.get(componentPath);
     if (transformMap) {
-      transform = transformMap.get(stringifiedTransformProps);
+      transform = transformMap.get(transformProps);
       if (transform !== undefined) {
         if (transform instanceof Promise) {
           transform = await transform;
@@ -115,14 +109,14 @@ export class AppStyler01 {
     // Else if transformMap wasn't initialized before, do so before continuing.
     else {
       transformMap = new Map();
-      this.instanceTransforms.set(componentPath, transformMap);
+      this.preparedTransforms.set(componentPath, transformMap);
     }
 
     // Then call getPreparedTransform() to get the prepared transform.
     let {interpreter} = env.scriptVars;
     let transformRef = [];
     transform = this.getPreparedTransform(
-      componentModule, stringifiedTransformProps, settings,
+      componentModule, transformProps, settings,
       node, env, interpreter, transformRef
     );
     transform = transformRef[0] ?? transform;
@@ -130,17 +124,17 @@ export class AppStyler01 {
     // Also make sure update transformMap with the result, and if the result is
     // a promise, we also make it replace itself in the transformMap when it
     // resolves. And then we immediately wait for it to do so.
-    transformMap.set(stringifiedTransformProps, transform);
+    transformMap.set(transformProps, transform);
     if (transform instanceof Promise) {
       transform.then(transform => {
-        transformMap.set(stringifiedTransformProps, transform);
+        transformMap.set(transformProps, transform);
       });
       transform = await transform;
     }
 
     // Finally, update settingsData with the prepared transform, and return it.
     settingsData.preparedTransform = transform;
-    return retRef[0] = transform;
+    return retRef[0] = true;
   }
 
 
@@ -149,7 +143,7 @@ export class AppStyler01 {
   // gotten from the transform object of the parent, and uses it to get the
   // transform object of the instance.
   async getPreparedTransform(
-    componentModule, stringifiedTransformProps, settings,
+    componentModule, transformProps, settings,
     node, env, interpreter, retRef = [],
   ) {
     // Then call settings.getTransformModule() to potentially get a different
@@ -164,7 +158,7 @@ export class AppStyler01 {
     // Now call getTransformFromModule(), to get the transform, which will be a
     // promise unless if it is returned via the "retRef" of
     // getTransformFromModule(), which we call transformRef here.
-    let transformProps = jsonParse(stringifiedTransformProps, node, env);
+    let transformProps = jsonParse(transformProps, node, env);
     let transformRef = [];
     let transform = this.getTransformFromModule(
       transformModule, transformProps, node, env, interpreter, transformRef
@@ -226,7 +220,7 @@ export class AppStyler01 {
 
   // prepareTransform()'s job is just to turn the childProps property of
   // the transform, if there, into an entries array and stringifying the values
-  // in the process, such that the resulting stringifiedChildPropsEntries is
+  // in the process, such that the resulting childTransformsEntries is
   // ready to be passed to getTransform() above.
   prepareTransform(transform, node, env) {
     ret = {...transform};
@@ -234,13 +228,13 @@ export class AppStyler01 {
     let childProps = transform.childProps;
     if (childProps !== undefined) {
       verifyType(childProps, "plain object", node, env);
-      transform.stringifiedChildPropsEntries = Object.entries(childProps)
+      transform.childTransformsEntries = Object.entries(childProps)
         .forEach(entry => {
           entry[1] = jsonStringify(entry[1]);
         });
     }
     else {
-      ret.stringifiedChildPropsEntries = [];
+      ret.childTransformsEntries = [];
     }
     return ret;
   }

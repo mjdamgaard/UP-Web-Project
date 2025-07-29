@@ -552,23 +552,15 @@ export class ScriptInterpreter {
     );
 
     // Then execute the function depending on its type.
-    let ret;
     if (fun instanceof DefinedFunction) {
-      ret = this.#executeDefinedFunction(fun.node, inputArr, execEnv);
+      return this.#executeDefinedFunction(fun.node, inputArr, execEnv);
     }
     else if (fun instanceof DevFunction) {
-      ret = this.#executeDevFunction(
+      return this.#executeDevFunction(
         fun, inputArr, callerNode, execEnv,
         thisVal
       );
     }
-
-    // If the function is a constructor, return the thisVal in its final state
-    // from execEnv, and else return ret.
-    if (fun.isConstructor) {
-      return execEnv.getThisVal();
-    }
-    return ret;
   }
 
 
@@ -837,11 +829,11 @@ export class ScriptInterpreter {
       }
       case "class-declaration": {
         // Get the superclass, if any.
-        let superVal;
+        let superclass;
         let superclassIdent = stmtNode.superclass;
         if (superclassIdent !== undefined) {
-          superVal = environment.get(superclassIdent, stmtNode);
-          if (!(superVal instanceof ClassObject)) throw new RuntimeError(
+          superclass = environment.get(superclassIdent, stmtNode);
+          if (!(superclass instanceof ClassObject)) throw new RuntimeError(
             "Superclass needs to be a class declared with the 'class' keyword"
           );
         }
@@ -853,24 +845,11 @@ export class ScriptInterpreter {
             "Invalid, falsy object key",
             member, environment
           );
-          let val = this.evaluateExpression(member.valExp, environment);
-          if (val instanceof FunctionObject) {
-            val = Object.create(val);
-            val.superVal = superVal;
-          }
-          prototype[key] = val;
+          prototype[key] = this.evaluateExpression(member.valExp, environment);
         });
 
-        // Extract the constructor method and transform it by setting
-        // isConstructor = true.
-        let constructor = prototype.constructor;
-        if (constructor instanceof FunctionObject) {
-          constructor = Object.create(constructor);
-          constructor.isConstructor = true;
-        }
-
         let classObj = new ClassObject(
-          stmtNode.name, constructor, prototype, superVal
+          stmtNode.name, prototype.constructor, prototype, superclass
         );
         environment.assign(stmtNode.name, () => [classObj, classObj], stmtNode);
         break;
@@ -1068,7 +1047,7 @@ export class ScriptInterpreter {
               break;
             case "instanceof":
               acc = (
-                acc instanceof AbstractObject && (
+                acc instanceof ObjectObject && (
                   nextVal instanceof ClassObject ||
                   nextVal instanceof FunctionObject
                 )
@@ -1362,27 +1341,20 @@ export class ScriptInterpreter {
         // maybe even reroute the debugger statement to call this and then exit.
       }
       case "super-call": {
-        let superVal = environment.getSuperVal();
-        if (superVal === undefined) throw new RuntimeError(
-          "'super' is not defined in this context",
-          expNode, environment
+        let superclass = environment.getSuperclass(expNode);
+        let thisVal = environment.getThisVal();
+        let inputArr = expNode.params.map(
+          param => this.evaluateExpression(param, environment)
         );
-        let thisVal = superVal.getNewInstance(
-          expNode.params.map(
-            param => this.evaluateExpression(param, environment)
-          ),
-          expNode, environment
+        this.executeFunction(
+          superclass.instanceConstructor, inputArr, expNode, environment,
+          thisVal, [SUPERCLASS_FLAG, superclass.superclass]
         );
-        environment.assignThisVal(thisVal);
       }
       case "super-access": {
-        let superVal = environment.getSuperVal();
-        if (superVal === undefined) throw new RuntimeError(
-          "'super' is not defined in this context",
-          expNode, environment
-        );
+        let superclass = environment.getSuperclass(expNode);
         let superPropVal = this.getProperty(
-          superVal.instanceProto, expNode.accessor, environment
+          superclass.instanceProto, expNode.accessor, environment
         );
         if (superPropVal instanceof FunctionObject) {
           superPropVal = Object.create(superPropVal);
@@ -1430,7 +1402,7 @@ export class ScriptInterpreter {
       return val;
     }
     else if (type === "object-destructuring") {
-      if (valProto !== OBJECT_PROTOTYPE && !(val instanceof AbstractObject)) {
+      if (valProto !== OBJECT_PROTOTYPE && !(val instanceof ObjectObject)) {
         throw new RuntimeError(
           "Destructuring an object with a non-object value",
           expNode, environment
@@ -1525,7 +1497,7 @@ export class ScriptInterpreter {
       // If the object is an AbstractObject, instead of assigning one of the
       // object's own properties directly, assign to the objects 'members'
       // property instead.
-      if (objVal instanceof AbstractObject) {
+      if (objVal instanceof ObjectObject) {
         key = getStringOrSymbol(key, expNode, environment);
         if (!key) throw new RuntimeError(
           "Empty object key",
@@ -1599,7 +1571,7 @@ export class ScriptInterpreter {
         val = val.getNewInstance(inputArr, expTuple, environment);
       }
       if (val instanceof FunctionObject) {
-        let newInst = new AbstractObject(val.name, {}, undefined, val);
+        let newInst = new ObjectObject(val.name, {}, undefined, val);
         this.executeFunction(
           val, inputArr, expTuple, environment, newInst
         );
@@ -1680,7 +1652,7 @@ export class ScriptInterpreter {
           val = Object.hasOwn(objVal, key) ? objVal[key] : undefined;
         }
       }
-      else if (objVal instanceof AbstractObject) {
+      else if (objVal instanceof ObjectObject) {
         val = objVal.get(key);
       }
       else if (typeof objVal === "string" && key === "length") {
@@ -1722,13 +1694,12 @@ export class Environment {
     this.flags = new Map();
     if (scopeType === "function") {
       let {
-        isArrowFun, isDevFun, flags: funFlags, thisVal: boundThisVal, superVal
+        isArrowFun, isDevFun, flags: funFlags, thisVal: boundThisVal,
       } = fun;
       thisVal = boundThisVal ?? thisVal;
       this.callerNode = callerNode;
       this.callerEnv = callerEnv;
       if (!isArrowFun && thisVal) this.thisVal = thisVal;
-      if (!isArrowFun && superVal) this.superVal = superVal;
       if (isArrowFun) this.isArrowFun = isArrowFun;
       if (isDevFun) this.isDevFun = isDevFun;
       if (funFlags) this.setFlags(funFlags);
@@ -1828,17 +1799,13 @@ export class Environment {
     }
   }
 
-  getSuperVal() {
-    let superVal = this.superVal;
-    if (superVal !== undefined) {
-      return (superVal === UNDEFINED) ? undefined : superVal;
-    }
-    else if (this.isNonArrowFunction) {
-      return undefined;
-    }
-    else if (this.parent) {
-      return this.parent.getSuperVal();
-    }
+  getSuperclass(node, nodeEnvironment = this) {
+    let superclass = this.getFlag(SUPERCLASS_FLAG);
+    if (superclass === undefined) throw new RuntimeError(
+      "'super' is not defined in this context",
+      node, nodeEnvironment
+    );
+    return superclass;
   }
 
   getFlag(flag, stopAtClear = true) {
@@ -1928,22 +1895,78 @@ export const CLEAR_FLAG = Symbol("clear");
 
 
 
-export class AbstractObject {
-  constructor(className, members = {}, prototype = {}, constructor) {
+export class ObjectObject {
+  constructor(
+    className, members = {}, prototype = {}, constructor, isMutable = undefined,
+    isArray = undefined,
+  ) {
     this.className = className;
     this.members = members;
     this.proto = prototype;
     this.classConstructor = constructor;
+    this.isMutable = isMutable;
+    if (isArray) this.isArray = isArray;
   }
 
-  get(key) {
-    return getPropertyFromPlainObject(this.members, key) ?? (
-      (this.proto instanceof AbstractObject) ? this.proto.get(key) :
-        getPropertyFromPlainObject(this.proto, key)
-    );
+  get(key, node, env) {
+    this.validateKey(key, node, env);
+    return this.getWhenValidated(key)
   }
-  set(key, val) {
-    this.members[key] = val;
+
+  assign(key, assignFun, node, env) {
+    if (!this.isMutable) throw new RuntimeError(
+      "Assignment to a member of an immutable object",
+      node, env
+    );
+    this.validateKey(key, node, env);
+    let prevVal = this.getWhenValidated(key, node, env);
+
+    let [newVal, ret] = assignFun(prevVal);
+    this.setWhenValidated(key, newVal, node, env)
+    return ret;
+  }
+
+  set(key, val, node, env) {
+    if (!this.isMutable) throw new RuntimeError(
+      "Assignment to a member of an immutable object",
+      node, env
+    );
+    this.validateKey(key, node, env);
+    return this.setWhenValidated(key, val, node, env);
+  }
+
+  getWhenValidated(key) {
+    let ret = this.members[key]
+    if (ret === undefined && this.proto) {
+      return getPropertyFromObject(this.proto)
+    }
+  }
+  setWhenValidated(key, val) {
+    if (this.isArray) this.members[key] = val;
+    else this.members[getStringOrSymbol(key,node, env)] = val;
+  }
+
+  validateKey(key, node, env) {
+    if (this.isArray) {
+      if (key !== "length") {
+        key = parseInt(key);
+        if (
+          key != parseInt(key) ||
+          Number.isNaN(key) || key < 0 || key > MAX_ARRAY_INDEX
+        ) {
+          throw new RuntimeError(
+            "Invalid key for array entry assignment",
+            node, env
+          );
+        }
+      }
+    }
+    else {
+      if (!getStringOrSymbol(key,node, env)) throw new RuntimeError(
+        "Invalid key for object property assignment",
+        node, env
+      );
+    }
   }
 
   stringify() {
@@ -1963,35 +1986,38 @@ export class AbstractObject {
 
 
 
-export class ClassObject extends AbstractObject {
+export class ClassObject extends ObjectObject {
   constructor(
-    className, constructor = undefined, prototype = {}, superclass = undefined
+    className, constructor = undefined, prototype = {}, superclass = undefined,
+    instancesAreMutable = superclass?.instancesAreMutable,
+    instancesAreArrays = superclass?.instancesAreArrays,
   ) {
     super("Class");
     this.className = className;
     this.instanceConstructor = constructor ?? (
       (superclass === undefined) ?
-        new DevFunction(className, {isConstructor: true}, () => {}) :
+        new DevFunction(className, {}, () => {}) :
         new DevFunction(
-          className, {isConstructor: true, superVal: superclass},
-          ({callerNode, execEnv}, inputArr) => {
-            let superVal = execEnv.getSuperVal();
-            let thisVal = superVal.getNewInstance(
-              inputArr, callerNode, execEnv
+          className, {}, ({callerNode, execEnv, thisVal}, inputArr) => {
+            let superclass = execEnv.getSuperclass(callerNode);
+            this.executeFunction(
+              superclass.instanceConstructor, inputArr, callerNode, execEnv,
+              thisVal, [SUPERCLASS_FLAG, superclass.superclass]
             );
-            execEnv.assignThisVal(thisVal);
           }
         )
     );
     this.instanceProto = prototype;
     this.superclass = superclass;
+    if (instancesAreMutable) this.instancesAreMutable = instancesAreMutable;
+    if (instancesAreArrays) this.instancesAreArrays = instancesAreArrays;
   }
 
   isInstanceOfThis(val) {
     if (val.classConstructor === this.instanceConstructor) {
       return true;
     }
-    else if (val.proto instanceof AbstractObject) {
+    else if (val.proto instanceof ObjectObject) {
       return this.isInstanceOfThis(val.proto);
     }
     else {
@@ -2001,22 +2027,36 @@ export class ClassObject extends AbstractObject {
 
   getNewInstance(inputArr, callerNode, callerEnv) {
     let {interpreter} = callerEnv.scriptVars;
-    let newInst = (this.superclass) ? undefined : new AbstractObject(
-      this.className, {}, this.instanceProto, this.instanceConstructor
+    let members = this.instancesAreArrays ? [] : {};
+    let newInst = (this.superclass) ? undefined : new ObjectObject(
+      this.className, members, this.instanceProto, this.instanceConstructor,
+      true, this.instancesAreArrays,
     );
-    return interpreter.executeFunction(
-      this.instanceConstructor, inputArr, callerNode, callerEnv, newInst
+    interpreter.executeFunction(
+      this.instanceConstructor, inputArr, callerNode, callerEnv, newInst,
+      [SUPERCLASS_FLAG, this.superclass]
     );
+    newInst.isMutable = this.instancesAreMutable;
+    return newInst;
   }
 }
 
+const SUPERCLASS_FLAG = Symbol("superclass");
+
+
+export const mutableObjectClass = new ClassObject(
+  "MutableObject", undefined, undefined, undefined, true
+);
+export const mutableArrayClass = new ClassObject(
+  "MutableArray", undefined, undefined, undefined, true, true
+);
 
 
 
 
 
 export function getPropertyFromObject(obj, key) {
-  if (obj instanceof AbstractObject) {
+  if (obj instanceof ObjectObject) {
     return obj.get(key);
   }
   else return getPropertyFromPlainObject(obj, key);
@@ -2039,7 +2079,7 @@ export function getString(val, node, env) {
   else if (val === null) {
     return "null";
   }
-  else if (val instanceof AbstractObject) {
+  else if (val instanceof ObjectObject) {
     return val.toString(node, env);
   }
   else if (val.toString instanceof Function) {
@@ -2056,7 +2096,7 @@ export function getStringOrSymbol(val, node, env) {
 
 
 export function jsonStringify(val) {
-  if (val instanceof AbstractObject) {
+  if (val instanceof ObjectObject) {
     return val.stringify();
   }
   else if (typeof val === "symbol") {
@@ -2096,7 +2136,7 @@ export function jsonParse(val, node, env) {
 
 
 export function forEachValue(value, node, env, callback) {
-  if (value instanceof AbstractObject) {
+  if (value instanceof ObjectObject) {
     Object.entries(value.members).forEach(([key, val]) => callback(val, key));
   }
   let valProto = getPrototypeOf(value);
@@ -2126,7 +2166,7 @@ export function getPrototypeOf(value) {
 
 // deepCopy() deep-copies the object and all ist nested properties.
 export function deepCopy(value) {
-  if (value instanceof AbstractObject) {
+  if (value instanceof ObjectObject) {
     let ret = Object.create(value);
     ret.members = deepCopy(value.members);
     ret.proto = deepCopy(value.proto);
@@ -2157,7 +2197,7 @@ export function deepCopy(value) {
 
 
 
-export class FunctionObject extends AbstractObject {
+export class FunctionObject extends ObjectObject {
   constructor() {
     super("Function");
   }
@@ -2166,7 +2206,7 @@ export class FunctionObject extends AbstractObject {
     if (val.classConstructor === this) {
       return true;
     }
-    else if (val.proto instanceof AbstractObject) {
+    else if (val.proto instanceof ObjectObject) {
       return this.isInstanceOfThis(val.proto);
     }
     else {
@@ -2176,16 +2216,11 @@ export class FunctionObject extends AbstractObject {
 };
 
 export class DefinedFunction extends FunctionObject {
-  constructor(
-    node, decEnv, thisVal = undefined, isConstructor = undefined,
-    superVal = undefined
-  ) {
+  constructor(node, decEnv, thisVal = undefined) {
     super();
     this.node = node;
     this.decEnv = decEnv;
     this.thisVal = thisVal;
-    this.isConstructor = isConstructor;
-    this.superVal = superVal;
   }
   get isArrowFun() {
     return this.node.type === "arrow-function";
@@ -2197,19 +2232,17 @@ export class DefinedFunction extends FunctionObject {
 
 export class DevFunction extends FunctionObject {
   constructor(name, options, fun) {
+    super();
     if (!fun) {
       fun = options;
       options = {};
     }
-    let {isAsync, typeArr, flags, thisVal, isConstructor, superVal} = options;
-    super();
+    let {isAsync, typeArr, flags, thisVal} = options;
     this._name = name;
     if (isAsync) this.isAsync = isAsync;
     if (typeArr) this.typeArr = typeArr;
     if (flags) this.flags = flags;
     if (thisVal) this.thisVal = thisVal;
-    if (isConstructor) this.isConstructor = isConstructor;
-    if (superVal) this.superVal = superVal;
     this.fun = fun;
   }
   get isArrowFun() {
@@ -2296,7 +2329,7 @@ export function verifyType(val, type, isOptional, node, env) {
       }
       break;
     case "abstract object":
-      if (!(val instanceof AbstractObject)) {
+      if (!(val instanceof ObjectObject)) {
         throw new ArgTypeError(
           `Value is not an abstract object: ${getString(val, node, env)}`,
           node, env
@@ -2306,7 +2339,7 @@ export function verifyType(val, type, isOptional, node, env) {
     case "object":
       if (
         getPrototypeOf(val) !== OBJECT_PROTOTYPE &&
-        !(val instanceof AbstractObject)
+        !(val instanceof ObjectObject)
       ) {
         throw new ArgTypeError(
           `Value is not an object: ${getString(val, node, env)}`,
@@ -2357,7 +2390,7 @@ export function verifyType(val, type, isOptional, node, env) {
       }
       return;
     case (typeof type === "symbol"):
-      if (!(val instanceof AbstractObject) || val.className !== type) {
+      if (!(val instanceof ObjectObject) || val.className !== type) {
         throw new ArgTypeError(
           `Value is not an instance of the ${type.valueOf()} class`,
           node, env
@@ -2365,7 +2398,7 @@ export function verifyType(val, type, isOptional, node, env) {
       }
       return;
     case (typeof type === "string" && type[0] === type[0].toUpperCase()):
-      if (!(val instanceof AbstractObject) || val.className !== type) {
+      if (!(val instanceof ObjectObject) || val.className !== type) {
         throw new ArgTypeError(
           `Value is not an instance of the ${type} class`,
           node, env
@@ -2396,7 +2429,7 @@ export function verifyTypes(valArr, typeArr, node, env) {
 
 
 
-export class LiveModule extends AbstractObject {
+export class LiveModule extends ObjectObject {
   constructor(modulePath, exports, scriptVars) {
     super("LiveModule");
     this.modulePath = modulePath;
@@ -2424,7 +2457,7 @@ export class LiveModule extends AbstractObject {
 
 
 
-export class JSXElement extends AbstractObject {
+export class JSXElement extends ObjectObject {
   constructor(node, decEnv, interpreter) {
     super("JSXElement");
     this.node = node;
@@ -2466,7 +2499,7 @@ export class JSXElement extends AbstractObject {
 
 
 
-export class PromiseObject extends AbstractObject {
+export class PromiseObject extends ObjectObject {
   constructor(promiseOrFun, interpreter, node, env) {
     super("Promise");
     this.hasCatch = false;
@@ -2553,8 +2586,8 @@ class BrokenOptionalChainException {
 export const exceptionClass = new ClassObject(
   "Exception",
   new DevFunction(
-    "Exception", {isConstructor: true}, ({thisVal}, [message]) => {
-      if (thisVal instanceof AbstractObject) {
+    "Exception", {}, ({thisVal}, [message]) => {
+      if (thisVal instanceof ObjectObject) {
         thisVal.set("message", message);
       }
     }
@@ -2562,7 +2595,7 @@ export const exceptionClass = new ClassObject(
   {
     toString: new DevFunction(
       "toString", {}, ({thisVal}) => {
-        if (thisVal instanceof AbstractObject) {
+        if (thisVal instanceof ObjectObject) {
           return thisVal.get("message");
         }
       }

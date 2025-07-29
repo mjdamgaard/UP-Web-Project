@@ -7,20 +7,21 @@ import {parseString} from "../../../../interpreting/ScriptInterpreter.js";
 export class CSSTransformer {
 
   // transformStyleSheet() validates and transforms the input styleSheet that
-  // has already been parsed into CSS that is ready to be inserted in the
-  // document head. transformStyleSheet() ignores @import statements, so these
-  // has to be handled by another method/function.
-  transformStyleSheet(styleSheetNode, id, isTrusted) {
+  // has already been parsed as a (processed) CSS syntax tree into a style
+  // sheet string ready to be inserted in the document head. Not that
+  // transformStyleSheet() ignores @import statements, so these have to be
+  // handled by another method/function.
+  transformStyleSheet(styleSheetNode, id) {
     return styleSheetNode.stmtArr.map(stmt => (
-      this.transformStatement(stmt, id, isTrusted)
+      this.transformStatement(stmt, id)
     )).join("\n")
   }
 
 
-  transformStatement(stmt, id, isTrusted, indentSpace = "") {
+  transformStatement(stmt, id, indentSpace = "") {
     let type = stmt.type;
     if (type === "ruleset") {
-      return this.transformRuleset(stmt, id, isTrusted, indentSpace);
+      return this.transformRuleset(stmt, id, indentSpace);
     }
     else if (type === "at-rule") {
       return indentSpace +
@@ -32,15 +33,10 @@ export class CSSTransformer {
   }
 
 
-  transformRuleset(stmt, id, isTrusted, indentSpace) {
-    // Transform the selector. If isTrusted is falsy, only compound selectors
-    // consisting of nothing but classes, pseudo-classes, and pseudo-elements
-    // are allowed, or lists of these. So no complex selectors (i.e. with
-    // combinators such as " " or ">"). Furthermore, each compound selector has
-    // to include at least one regular class. But if isTrusted is true, on the
-    // other hand, all kinds of selectors are allowed.
+  transformRuleset(stmt, id, indentSpace) {
+    // Transform the selector.
     let transformedSelectorList = this.transformSelectorList(
-      stmt.selectorList, id, isTrusted
+      stmt.selectorList, `:where(._${id})`
     );
 
     // Return the rule with the transformed selector list and the transformed
@@ -62,29 +58,21 @@ export class CSSTransformer {
   }
 
 
-  transformSelectorList(selectorList, id, isTrusted) {
+  transformSelectorList(selectorList, whereClause = "") {
     return selectorList.children.map(selector => (
-      this.transformComplexSelector(selector, id, isTrusted)
+      this.transformComplexSelector(selector, whereClause)
     )).join(", ");
   }
 
 
-  transformComplexSelector(selector, id, isTrusted) {
+  transformComplexSelector(selector, whereClause) {
     // The children of a complex selector node are the compound selectors at
     // every even index, starting with (and possibly ending in) 0, and then the
     // combinators at every odd index.
-    let complexSelectorChildren = selector.children;
-
-    // If the style sheet is not trusted, no combinators, including the
-    // descendant combinator (" "), are allowed.
-    if (!isTrusted && complexSelectorChildren.length > 1) {
-      return "._/* Style sheet trust required */._";
-    }
-    
-    return complexSelectorChildren.map((child, ind) => {
+    return selector.children.map((child, ind) => {
       // For even indices, transform the given compound selector.
       if (ind % 2 === 0) {
-        return this.transformCompoundSelector(child, id, isTrusted);
+        return this.transformCompoundSelector(child, id);
       }
       // For odd indices, transform the given combinator.
       else {
@@ -95,7 +83,7 @@ export class CSSTransformer {
     }).join("");
   }
 
-  transformCompoundSelector(selector, id, isTrusted) {
+  transformCompoundSelector(selector, id) {
     // Initialize a "hasClass" flag reference that is raised by
     // transformSimpleSelector() if the selector is a regular class selector.
     // When the simple selectors has been transformed, we then check that if
