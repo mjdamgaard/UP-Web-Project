@@ -1494,51 +1494,16 @@ export class ScriptInterpreter {
         }
       }
 
-      // If the object is an AbstractObject, instead of assigning one of the
-      // object's own properties directly, assign to the objects 'members'
-      // property instead.
+      // If the object is an ObjectObject, redirect to its assign() method.
       if (objVal instanceof ObjectObject) {
-        key = getStringOrSymbol(key, expNode, environment);
-        if (!key) throw new RuntimeError(
-          "Empty object key",
-          expNode, environment
-        );
-        let [newVal, ret] = assignFun(prevVal);
-        objVal.set(key, newVal);
-        return ret;
+        return objVal.assign(key, assignFun, expNode, environment);
       }
 
-      // Else check that objVal is a plain object or array, and assign to the
-      // member/entry if so.
-      let objProto = getPrototypeOf(objVal);
-      if (objProto === OBJECT_PROTOTYPE) {
-        key = getStringOrSymbol(key, expNode, environment);
-        if (!key) throw new RuntimeError(
-          "Empty object key",
-          expNode, environment
-        );
-      }
-      else if (objProto === ARRAY_PROTOTYPE) {
-        if (key !== "length") {
-          key = parseInt(key);
-          if (Number.isNaN(key) || key < 0 || key > MAX_ARRAY_INDEX) {
-            throw new RuntimeError(
-              "Invalid key for array entry assignment",
-              expNode, environment
-            );
-          }
-        }
-      }
+      // Else throw, since only ObjectObject instances can be mutable.
       else throw new RuntimeError(
-        "Assignment to a member of a non-object",
+        "Assignment to a property of an immutable object",
         expNode, environment
       );
-
-      // Then assign newVal to the member of objVal and return ret, where
-      // newVal and ret are both specified by the assignFun.
-      let [newVal, ret] = assignFun(prevVal);
-      objVal[key] = newVal;
-      return ret;
     }
   }
 
@@ -1897,8 +1862,8 @@ export const CLEAR_FLAG = Symbol("clear");
 
 export class ObjectObject {
   constructor(
-    className, members = {}, prototype = {}, constructor, isMutable = undefined,
-    isArray = undefined,
+    className, members = {}, prototype = {}, constructor = undefined,
+    isMutable = undefined, isArray = undefined, isMap = undefined
   ) {
     this.className = className;
     this.members = members;
@@ -1906,11 +1871,12 @@ export class ObjectObject {
     this.classConstructor = constructor;
     this.isMutable = isMutable;
     if (isArray) this.isArray = isArray;
+    if (isMap) this.isMap = isMap;
   }
 
   get(key, node, env) {
-    this.validateKey(key, node, env);
-    return this.getWhenValidated(key)
+    key = this.validateKey(key, node, env);
+    return this.#get(key)
   }
 
   assign(key, assignFun, node, env) {
@@ -1918,11 +1884,11 @@ export class ObjectObject {
       "Assignment to a member of an immutable object",
       node, env
     );
-    this.validateKey(key, node, env);
-    let prevVal = this.getWhenValidated(key, node, env);
+    key = this.validateKey(key, node, env);
+    let prevVal = this.#get(key, node, env);
 
     let [newVal, ret] = assignFun(prevVal);
-    this.setWhenValidated(key, newVal, node, env)
+    this.#set(key, newVal, node, env)
     return ret;
   }
 
@@ -1931,19 +1897,19 @@ export class ObjectObject {
       "Assignment to a member of an immutable object",
       node, env
     );
-    this.validateKey(key, node, env);
-    return this.setWhenValidated(key, val, node, env);
+    key = this.validateKey(key, node, env);
+    return this.#set(key, val, node, env);
   }
 
-  getWhenValidated(key) {
-    let ret = this.members[key]
+  #get(key) {
+    let ret = this.isMap ? this.members.get(key) : this.members[key]
     if (ret === undefined && this.proto) {
       return getPropertyFromObject(this.proto)
     }
   }
-  setWhenValidated(key, val) {
-    if (this.isArray) this.members[key] = val;
-    else this.members[getStringOrSymbol(key,node, env)] = val;
+  #set(key, val) {
+    if (this.isMap) this.members.set(key, val);
+    else this.members[key] = val;
   }
 
   validateKey(key, node, env) {
@@ -1961,16 +1927,24 @@ export class ObjectObject {
         }
       }
     }
+    else if (this.isMap) {
+      if (key === undefined) throw new RuntimeError(
+        "Invalid key for map entry assignment",
+        node, env
+      );
+    }
     else {
-      if (!getStringOrSymbol(key,node, env)) throw new RuntimeError(
+      key = getStringOrSymbol(key, node, env);
+      if (!key) throw new RuntimeError(
         "Invalid key for object property assignment",
         node, env
       );
     }
+    return key;
   }
 
   stringify() {
-    return `"${this.className}()"`;
+    return (this.isMap) ? `"Map()"` : jsonStringify(this.members);
   }
   toString(node, env) {
     let {interpreter} = env.scriptVars;
@@ -1991,6 +1965,7 @@ export class ClassObject extends ObjectObject {
     className, constructor = undefined, prototype = {}, superclass = undefined,
     instancesAreMutable = superclass?.instancesAreMutable,
     instancesAreArrays = superclass?.instancesAreArrays,
+    instancesAreMaps = superclass?.instancesAreMaps,
   ) {
     super("Class");
     this.className = className;
@@ -2011,6 +1986,7 @@ export class ClassObject extends ObjectObject {
     this.superclass = superclass;
     if (instancesAreMutable) this.instancesAreMutable = instancesAreMutable;
     if (instancesAreArrays) this.instancesAreArrays = instancesAreArrays;
+    if (instancesAreMaps) this.instancesAreMaps = instancesAreMaps;
   }
 
   isInstanceOfThis(val) {
@@ -2027,10 +2003,11 @@ export class ClassObject extends ObjectObject {
 
   getNewInstance(inputArr, callerNode, callerEnv) {
     let {interpreter} = callerEnv.scriptVars;
-    let members = this.instancesAreArrays ? [] : {};
+    let members = this.instancesAreArrays ? [] :
+      this.instancesAreMaps ? new Map() : {};
     let newInst = (this.superclass) ? undefined : new ObjectObject(
       this.className, members, this.instanceProto, this.instanceConstructor,
-      true, this.instancesAreArrays,
+      true, this.instancesAreArrays, this.instancesAreMaps,
     );
     interpreter.executeFunction(
       this.instanceConstructor, inputArr, callerNode, callerEnv, newInst,
@@ -2049,6 +2026,9 @@ export const mutableObjectClass = new ClassObject(
 );
 export const mutableArrayClass = new ClassObject(
   "MutableArray", undefined, undefined, undefined, true, true
+);
+export const mutableMapClass = new ClassObject(
+  "MutableMap", undefined, undefined, undefined, true, false, true
 );
 
 
@@ -2444,7 +2424,7 @@ export class LiveModule extends ObjectObject {
   }
 }
 
-// export class CSSModule extends AbstractObject {
+// export class CSSModule extends ObjectObject {
 //   constructor(modulePath, styleSheet) {
 //     super("CSSModule");
 //     this.modulePath = modulePath;

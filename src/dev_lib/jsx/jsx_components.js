@@ -1,7 +1,7 @@
 
 import {
   DevFunction, JSXElement, LiveModule, RuntimeError, getExtendedErrorMsg,
-  getString, AbstractObject, forEachValue, CLEAR_FLAG, deepCopy,
+  getString, ObjectObject, forEachValue, CLEAR_FLAG, deepCopy,
   OBJECT_PROTOTYPE, ArgTypeError, Environment, getPrototypeOf, ARRAY_PROTOTYPE,
   FunctionObject, Exception, getStringOrSymbol, PromiseObject,
 } from "../../interpreting/ScriptInterpreter.js";
@@ -89,8 +89,6 @@ class JSXInstance {
     this.parentInstance = parentInstance;
     this.settings = settings ?? parentInstance.settings;
     this.settingsData = {}; // Reserved property handled purely by settings.
-    this._isRequestOrigin = componentModule.get("isRequestOrigin");
-    this.isIsolated = undefined;
     this.domNode = undefined;
     this.isDecorated = undefined;
     this.childInstances = new Map();
@@ -107,13 +105,6 @@ class JSXInstance {
 
   get componentPath() {
     return this.componentModule.modulePath;
-  }
-  get isRequestOrigin() {
-    return this.isIsolated ? true : this._isRequestOrigin;
-  }
-  get requestOrigin() {
-    return this.isRequestOrigin ? this.componentPath :
-      this.parentInstance?.requestOrigin;
   }
 
 
@@ -183,27 +174,42 @@ class JSXInstance {
     // for this instance, in particular transformInstance(), used below.
     // prepareInstance(), like any other methods of settings, is allowed to
     // read and write to the 'settingsData' property of this JSXInstance.
-    // prepareInstance() returns a whenPrepared value which is a promise if and
+    // prepareInstance() returns a whenReady value which is a promise if and
     // only if the the instance has not been prepared yet. That promise will
     // then resolve once the instance is finally prepared, which means that we
     // can queue a rerender here when that happens.
-    let whenPrepared = settings.prepareInstance(this, callerNode, callerEnv);
-    let isPrepared = !(whenPrepared instanceof Promise);
-    if (!isPrepared) {
-      whenPrepared.then(() => this.queueRerender(interpreter));
+    let [
+      isReady, whenReady, renderBeforeReady = false
+    ] = settings.prepareInstance(this, callerNode, callerEnv);
+    if (!isReady) {
+      whenReady.then(() => this.queueRerender(interpreter));
+      if (!renderBeforeReady) {
+        let newDOMNode = document.createElement("template");
+        newDOMNode.setAttribute("class", "_pending-settings");
+        this.replaceDOMNode(newDOMNode, replaceSelf);
+        return newDOMNode;
+      }
+
     }
 
-    // Call settings.getComponentTrust() and use it to get a new environment
-    // for the component with a new "client-trust" flag. Note that if the
-    // instance is not yet prepared, getComponentTrust() might just return
-    // false temporarily, and wait for the rerender.
-    let isTrusted = settings.getComponentTrust(
-      this.requestOrigin, callerNode, callerEnv
+    // Call settings.getClientTrust() to get a boolean of whether the client
+    // trusts this instance to override CORS-like server module checks. And use
+    // this to create a new environment, with or without the "client-trust"
+    // flag. Note that if the instance is not yet prepared, getClientTrust()
+    // might just return false temporarily, and wait for the rerender. Similarly
+    // call settings.getRequestOrigin() to get the a component path (not
+    // necessarily that of the current component) which can also used in CORS-
+    // lie checks by the server modules.
+    let isTrusted = settings.getClientTrust(
+      this, callerNode, callerEnv
+    );
+    let requestOrigin = settings.getRequestOrigin(
+      this, callerNode, callerEnv
     );
     let compEnv = new Environment(callerEnv, undefined, {flags: [
       CLEAR_FLAG,
-      [REQUESTING_COMPONENT_FLAG, this.requestOrigin],
       [CLIENT_TRUST_FLAG, isTrusted],
+      [REQUESTING_COMPONENT_FLAG, requestOrigin],
     ]});
 
 
@@ -231,8 +237,7 @@ class JSXInstance {
     let jsxElement;
     try {
       jsxElement = interpreter.executeFunction(
-        renderFun, [deepCopyExceptRefs(props, callerNode, compEnv)],
-        callerNode, compEnv, new JSXInstanceInterface(this),
+        renderFun, [props], callerNode, compEnv, new JSXInstanceInterface(this)
       );
     }
     catch (err) {
@@ -284,7 +289,7 @@ class JSXInstance {
     // ready, add a "_pending-settings" class to the DOM node while waiting for
     // the rerender. (Note that the underscore here is meant to make it possible
     // for "trusted" style sheets to style the class.)
-    if (!isPrepared) {
+    if (!isReady) {
       newDOMNode.classList.add("_pending-settings");
     }
 
@@ -313,18 +318,22 @@ class JSXInstance {
       console.error(getExtendedErrorMsg(error));
       let newDOMNode = document.createElement("span");
       newDOMNode.setAttribute("class", "_failed");
-      this.childInstances.forEach(child => child.dismount());
-      this.childInstances = new Map();
-      if (replaceSelf && this.domNode) {
-        this.domNode.replaceWith(newDOMNode);
-        this.updateDecoratingAncestors(newDOMNode);
-      }
-      this.domNode = newDOMNode;
+      this.replaceDOMNode(newDOMNode, replaceSelf);
       return newDOMNode;
     }
     else {
       console.error(error);
     }
+  }
+
+  replaceDOMNode(newDOMNode, replaceSelf) {
+    this.childInstances.forEach(child => child.dismount());
+    this.childInstances = new Map();
+    if (replaceSelf && this.domNode) {
+      this.domNode.replaceWith(newDOMNode);
+      this.updateDecoratingAncestors(newDOMNode);
+    }
+    this.domNode = newDOMNode;
   }
 
   updateDecoratingAncestors(newDOMNode) {
@@ -726,15 +735,15 @@ class JSXInstance {
 
 
 
-class JSXInstanceInterface extends AbstractObject {
+class JSXInstanceInterface extends ObjectObject {
   constructor(jsxInstance) {
     super("JSXInstance");
     this.jsxInstance = jsxInstance;
 
     Object.assign(this.members, {
     /* Properties */
-      "props": deepCopy(this.jsxInstance.props),
-      "state": deepCopy(this.jsxInstance.state),
+      "props": this.jsxInstance.props,
+      "state": this.jsxInstance.state,
       "refs": this.jsxInstance.refs,
       /* Methods */
       "dispatch": this.dispatch,
@@ -824,9 +833,7 @@ class JSXInstanceInterface extends AbstractObject {
   // effect happens, and undefined is returned.
   subscribeToContext = new DevFunction(
     "subscribeToContext", {typeArr: ["object key"]}, (_, [key]) => {
-      return deepCopyExceptRefs(
-        this.jsxInstance.subscribeToContext(key)
-      );
+      return this.jsxInstance.subscribeToContext(key);
     }
   );
 
@@ -834,18 +841,14 @@ class JSXInstanceInterface extends AbstractObject {
   // meaning that it will no longer rerender if the context updates.
   unsubscribeFromContext = new DevFunction(
     "unsubscribeFromContext", {typeArr: ["object key"]}, (_, [key]) => {
-      return deepCopyExceptRefs(
-        this.jsxInstance.unsubscribeFromContext(key)
-      );
+      return this.jsxInstance.unsubscribeFromContext(key);
     }
   );
 
   // getOwnContext(key) the instance's own context of the given key.
   getOwnContext = new DevFunction(
     "getOwnContext", {typeArr: ["object key"]}, (_, [key]) => {
-      return deepCopyExceptRefs(
-        this.jsxInstance.getOwnContext(key)
-      );
+      return this.jsxInstance.getOwnContext(key);
     }
   );
 
@@ -861,7 +864,7 @@ class JSXInstanceInterface extends AbstractObject {
       if (settings instanceof Promise) {
         settings = await settings;
       }
-      return deepCopy(settings);
+      return settings;
     }
   );
 
@@ -876,7 +879,7 @@ class JSXInstanceInterface extends AbstractObject {
 
 
 // DOMNodeObjects can be returned by the render() functions of dev components.
-export class DOMNodeObject extends AbstractObject {
+export class DOMNodeObject extends ObjectObject {
   constructor(domNode) {
     super("DOMNode");
     this.domNode = domNode;
@@ -887,7 +890,7 @@ export class DOMNodeObject extends AbstractObject {
 // SettingsObject is an abstract class that is meant to be extended by settings
 // systems, i.e. the modules that define a getSettings() function to be passed
 // to createJSXApp().
-export class SettingsObject extends AbstractObject {
+export class SettingsObject extends ObjectObject {
   constructor() {
     super("Settings");
   }
@@ -903,7 +906,7 @@ export class SettingsObject extends AbstractObject {
   // changeUser(userID?, node, env) ...
   changeUser(userID, node, env) {}
 
-  // prepareComponent(componentModule, node, env) (optional) ...
+  // prepareComponent(componentModule, node, env) ...
   prepareComponent(componentModule, node, env) {}
 
   // prepareInstance(jsxInstance, node, env) has
@@ -913,12 +916,13 @@ export class SettingsObject extends AbstractObject {
   // queues a rerender when the promise resolves.
   prepareInstance(jsxInstance, node, env) {}
 
-    // getComponentTrust(componentPath, node, env) takes a component path,
-    // which will often be the so-called "request origin", and returns boolean
-    // of whether client trust the component to make post requests, and to
-    // fetch private data. If getComponentTrust() has not yet been prepared by
-    // prepareInstance(), it might just return false temporarily.
-  getComponentTrust(componentPath, node, env) {}
+  // TODO: Correct.
+  // getClientTrust(componentPath, node, env) takes a component path,
+  // which will often be the so-called "request origin", and returns boolean
+  // of whether client trust the component to make post requests, and to
+  // fetch private data. If getClientTrust() has not yet been prepared by
+  // prepareInstance(), it might just return false temporarily.
+  getClientTrust(jsxInstance, node, env) {}
 
   // transformInstance() ...
   transformInstance(
