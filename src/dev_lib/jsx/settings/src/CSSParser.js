@@ -100,27 +100,30 @@ export const cssGrammar = {
     process: (children, ruleInd) => {
       return (ruleInd <= 1) ? {
         type: "compound-selector",
-        children: [children[0], ...children[1].children],
+        mainChildren: [children[0], ...(children[1][0]?.mainChildren ?? [])],
+        pseudoElement: children[1][0]?.pseudoElement,
       } : {
         type: "compound-selector",
-        children: children[0].children,
+        mainChildren: children[0].children,
+        pseudoElement: children[0].pseudoElement,
       };
     },
   },
   "compound-selector^(1)": {
     rules: [
-      ["simple-selector!1+"],
+      ["simple-selector^(1)!1+!1", "pseudo-element!1?"],
+      ["pseudo-element"],
     ],
-    process: (children) => ({
+    process: (children, ruleInd) => ({
       type: "compound-selector",
-      children: children[0].children,
+      mainChildren: (ruleInd === 0) ? children[0] : [],
+      pseudoElement: (ruleInd === 0) ? children[1][0] : children[0],
     }),
   },
-  "simple-selector": {
+  "simple-selector^(1)": {
     rules: [
       ["class-selector"],
       ["pseudo-class-selector"],
-      ["pseudo-element"],
       // ["id-selector"],
     ],
     process: copyFromChild,

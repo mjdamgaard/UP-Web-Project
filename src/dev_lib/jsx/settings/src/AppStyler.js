@@ -15,14 +15,16 @@ const RELATIVE_ROUTE_START_REGEX = /^\.\.?\//;
 
 // The "transform" objects used by the ComponentTransformer are of the form:
 //
-// transform := {(styleSheets?, rules?, childProps?},
-// styleSheets := {(<[a-z0-9\-]+ key>: (<CSSModule>|<route>|<sheet>),)*},
-// rules :=   [({selector, style?, classes?, check?},)*],
-// style := {(<CSS property>: <CSS value string>,)*} | <function>,
-// classes := [(<[a-z][a-z0-9\-]*(_[a-z0-9\-]*)? class>,)*],
-// check := <function>,
-// childTransforms := {(<instance key format>: {route?, props?},)*},
-//
+// <transform> := {(styleSheets?, rules?, childRules?},
+// styleSheets : [(<CSSModule>,)*],
+// rules : [({selector, style?, class?, check?},)*],
+// style : [(<style>,)*] | <style>
+// <style> := {(<CSS property>: <CSS value string>,)*} | <function>,
+// class : [(<class>,)*] | <class>
+// <class> := [(<[a-z][a-z0-9\-]*(_[1-9][0-9]*)? string>,)*],
+// check : <function>,
+// childRules := [({key, transform, props?},)*],
+// transform : <transform> | "isolated".
 
 
 
