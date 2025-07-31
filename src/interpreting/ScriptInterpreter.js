@@ -6,8 +6,9 @@ import {
 
 
 
-export const ARRAY_PROTOTYPE = Object.getPrototypeOf([]);
 export const OBJECT_PROTOTYPE = Object.getPrototypeOf({});
+export const ARRAY_PROTOTYPE = Object.getPrototypeOf([]);
+export const MAP_PROTOTYPE = Object.getPrototypeOf(new Map());
 
 const MAX_ARRAY_INDEX = Number.MAX_SAFE_INTEGER;
 const MINIMAL_TIME_GAS = 10;
@@ -79,7 +80,7 @@ export class ScriptInterpreter {
     // Add the 'server' dev library (used for fetching scripts and other data)
     // to liveModules from the beginning.
     liveModules.set(
-      "query", new LiveModule(
+      "query", new LiveJSModule(
         "query", Object.entries(this.staticDevLibs.get("query")), scriptVars
       )
     );
@@ -271,7 +272,7 @@ export class ScriptInterpreter {
     });
 
     // And finally get the exported "live module," and return it.
-    return [moduleEnv.getLiveModule(), moduleEnv];
+    return [moduleEnv.getLiveJSModule(), moduleEnv];
   }
 
 
@@ -299,7 +300,7 @@ export class ScriptInterpreter {
       if (liveModule instanceof Promise) {
         liveModule = await liveModule;
       }
-      return deepCopy(liveModule);
+      return liveModule;
     }
 
     // If the module reference is a dev library reference, which always comes
@@ -309,7 +310,7 @@ export class ScriptInterpreter {
       let devMod;
       devMod = this.staticDevLibs.get(modulePath);
       if (devMod) {
-        liveModule = new LiveModule(
+        liveModule = new LiveJSModule(
           modulePath, Object.entries(devMod), globalEnv.scriptVars
         );
         liveModules.set(modulePath, liveModule);
@@ -323,7 +324,7 @@ export class ScriptInterpreter {
         try {
           let liveModulePromise = new Promise((resolve, reject) => {
             import(devLibURL).then(devMod => {
-              let liveModule = new LiveModule(
+              let liveModule = new LiveJSModule(
                 modulePath, Object.entries(devMod), globalEnv.scriptVars
               );
               resolve(liveModule);
@@ -340,11 +341,11 @@ export class ScriptInterpreter {
           );
         }
       }
-      return deepCopy(liveModule);
+      return liveModule;
     }
 
     // Else if the module is a user module, with a '.js' or '.jsx' extension,
-    // fetch/get it and create and return a LiveModule instance rom it.
+    // fetch/get it and create and return a LiveJSModule instance rom it.
     if (SCRIPT_ROUTE_REGEX.test(modulePath)) {
       // First try to get it from the parsedScripts buffer, then try to fetch
       // it from the database.
@@ -361,7 +362,7 @@ export class ScriptInterpreter {
         if (liveModule instanceof Promise) {
           liveModule = await liveModule;
         }
-        return deepCopy(liveModule);
+        return liveModule;
       }
 
       // Then execute the module, inside the global environment, and return the
@@ -378,7 +379,7 @@ export class ScriptInterpreter {
       liveModules.set(modulePath, liveModulePromise);
       liveModule = await liveModulePromise;
       liveModules.set(modulePath, liveModule);
-      return deepCopy(liveModule);
+      return liveModule;
     }
 
     // Else if the module is actually a non-JS text file, fetch/get it and
@@ -387,12 +388,11 @@ export class ScriptInterpreter {
       let text = await this.fetch(
         modulePath, callerNode, callerEnv
       );
-      // if (modulePath.slice(-5) === ".css") {
-      //   return new CSSModule(modulePath, text);
-      // } else {
-      //   return text;
-      // }
-      return text;
+      if (modulePath.slice(-4) === ".css") {
+        return new CSSModule(modulePath, text);
+      } else {
+        return text;
+      }
     }
 
     // Else throw a load error.
@@ -594,25 +594,19 @@ export class ScriptInterpreter {
 
 
 
-  thenPromise(promise, shouldCopy, callbackFun, node, env) {
+  thenPromise(promise, callbackFun, node, env) {
     promise.then(res => {
-      if (shouldCopy) {
-        res = deepCopy(res);
-      }
       this.executeFunctionOffSync(callbackFun, [res], node, env);
     });
   }
 
-  catchPromise(promise, shouldCopy, callbackFun, node, env) {
+  catchPromise(promise, callbackFun, node, env) {
     promise.catch(err => {
-      if (shouldCopy) {
-        err = deepCopy(err);
+      if (err instanceof Exception) {
+        this.executeFunctionOffSync(callbackFun, [err.val], node, env);
+      } else {
+        this.handleUncaughtException(err, env);
       }
-    if (err instanceof Exception) {
-      this.executeFunctionOffSync(callbackFun, [err.val], node, env);
-    } else {
-      this.handleUncaughtException(err, env);
-    }
     });
   }
 
@@ -1316,7 +1310,7 @@ export class ScriptInterpreter {
         if (expNode.callback) {
           let callback = this.evaluateExpression(expNode.callback, environment);
           this.thenPromise(
-            liveModulePromise, false, callback, expNode, environment
+            liveModulePromise, callback, expNode, environment
           );
         }
         ret = new PromiseObject(
@@ -1821,9 +1815,9 @@ export class Environment {
     this.exports.push([alias, val]);
   }
 
-  getLiveModule() {
+  getLiveJSModule() {
     if (!this.liveModule ) {
-      this.liveModule = new LiveModule(
+      this.liveModule = new LiveJSModule(
         this.modulePath, this.exports, this.scriptVars
       );
     }
@@ -1857,20 +1851,23 @@ export const CLEAR_FLAG = Symbol("clear");
 
 
 
-
+const emptyObj = {};
 
 
 export class ObjectObject {
   constructor(
-    className, members = {}, prototype = {}, constructor = undefined,
-    isMutable = undefined, isArray = undefined, isMap = undefined
+    className, members = {}, prototype = emptyObj, constructor = undefined,
+    isComparable = undefined, isMutable = undefined, isArray = undefined,
+    isMap = undefined,
   ) {
     this.className = className;
     this.members = members;
     this.proto = prototype;
     this.classConstructor = constructor;
+    this.isComparable = isComparable;
     this.isMutable = isMutable;
     if (isArray) this.isArray = isArray;
+    if (isMap) this.isMap = isMap;
     if (isMap) this.isMap = isMap;
   }
 
@@ -1963,6 +1960,7 @@ export class ObjectObject {
 export class ClassObject extends ObjectObject {
   constructor(
     className, constructor = undefined, prototype = {}, superclass = undefined,
+    instancesAreMutable = superclass?.instancesAreComparable,
     instancesAreMutable = superclass?.instancesAreMutable,
     instancesAreArrays = superclass?.instancesAreArrays,
     instancesAreMaps = superclass?.instancesAreMaps,
@@ -1984,9 +1982,10 @@ export class ClassObject extends ObjectObject {
     );
     this.instanceProto = prototype;
     this.superclass = superclass;
-    if (instancesAreMutable) this.instancesAreMutable = instancesAreMutable;
-    if (instancesAreArrays) this.instancesAreArrays = instancesAreArrays;
-    if (instancesAreMaps) this.instancesAreMaps = instancesAreMaps;
+    this.instancesAreComparable = instancesAreComparable;
+    this.instancesAreMutable = instancesAreMutable;
+    this.instancesAreArrays = instancesAreArrays;
+    this.instancesAreMaps = instancesAreMaps;
   }
 
   isInstanceOfThis(val) {
@@ -2007,7 +2006,8 @@ export class ClassObject extends ObjectObject {
       this.instancesAreMaps ? new Map() : {};
     let newInst = (this.superclass) ? undefined : new ObjectObject(
       this.className, members, this.instanceProto, this.instanceConstructor,
-      true, this.instancesAreArrays, this.instancesAreMaps,
+      this.instancesAreComparable, true, this.instancesAreArrays,
+      this.instancesAreMaps,
     );
     interpreter.executeFunction(
       this.instanceConstructor, inputArr, callerNode, callerEnv, newInst,
@@ -2022,13 +2022,13 @@ const SUPERCLASS_FLAG = Symbol("superclass");
 
 
 export const mutableObjectClass = new ClassObject(
-  "MutableObject", undefined, undefined, undefined, true
+  "MutableObject", undefined, undefined, undefined, true, true
 );
 export const mutableArrayClass = new ClassObject(
-  "MutableArray", undefined, undefined, undefined, true, true
+  "MutableArray", undefined, undefined, undefined, true, true, true
 );
 export const mutableMapClass = new ClassObject(
-  "MutableMap", undefined, undefined, undefined, true, false, true
+  "MutableMap", undefined, undefined, undefined, false, true, false, true
 );
 
 
@@ -2117,7 +2117,12 @@ export function jsonParse(val, node, env) {
 
 export function forEachValue(value, node, env, callback) {
   if (value instanceof ObjectObject) {
-    Object.entries(value.members).forEach(([key, val]) => callback(val, key));
+    if (value.isArray || value.isMap) {
+      value.members.forEach(callback);
+    }
+    else {
+      Object.entries(value.members).forEach(([key, val]) => callback(val, key));
+    }
   }
   let valProto = getPrototypeOf(value);
   if (valProto === ARRAY_PROTOTYPE) {
@@ -2144,32 +2149,32 @@ export function getPrototypeOf(value) {
 
 
 
-// deepCopy() deep-copies the object and all ist nested properties.
-export function deepCopy(value) {
-  if (value instanceof ObjectObject) {
-    let ret = Object.create(value);
-    ret.members = deepCopy(value.members);
-    ret.proto = deepCopy(value.proto);
-    if (value instanceof PromiseObject) {
-      ret.isCopied = true;
-    }
-    return ret;
-  }
-  let valProto = getPrototypeOf(value);
-  if (valProto === ARRAY_PROTOTYPE) {
-    return value.map(val => deepCopy(val));
-  }
-  else if (valProto === OBJECT_PROTOTYPE) {
-    let ret = {};
-    Object.entries(value).forEach(([key, val]) => {
-      ret[key] = deepCopy(val);
-    });
-    return ret;
-  }
-  else {
-    return value;
-  }
-}
+// // deepCopy() deep-copies the object and all ist nested properties.
+// export function deepCopy(value) {
+//   if (value instanceof ObjectObject) {
+//     let ret = Object.create(value);
+//     ret.members = deepCopy(value.members);
+//     ret.proto = deepCopy(value.proto);
+//     if (value instanceof PromiseObject) {
+//       ret.isCopied = true;
+//     }
+//     return ret;
+//   }
+//   let valProto = getPrototypeOf(value);
+//   if (valProto === ARRAY_PROTOTYPE) {
+//     return value.map(val => deepCopy(val));
+//   }
+//   else if (valProto === OBJECT_PROTOTYPE) {
+//     let ret = {};
+//     Object.entries(value).forEach(([key, val]) => {
+//       ret[key] = deepCopy(val);
+//     });
+//     return ret;
+//   }
+//   else {
+//     return value;
+//   }
+// }
 
 
 
@@ -2344,7 +2349,7 @@ export function verifyType(val, type, isOptional, node, env) {
       }
       break;
     case "module":
-      if (!(val instanceof LiveModule)) {
+      if (!(val instanceof LiveJSModule)) {
         throw new ArgTypeError(
           `Value is not a live module object: ${getString(val, node, env)}`,
           node, env
@@ -2409,9 +2414,9 @@ export function verifyTypes(valArr, typeArr, node, env) {
 
 
 
-export class LiveModule extends ObjectObject {
+export class LiveJSModule extends ObjectObject {
   constructor(modulePath, exports, scriptVars) {
-    super("LiveModule");
+    super("LiveJSModule");
     this.modulePath = modulePath;
     this.interpreter = scriptVars.interpreter;
     exports.forEach(([alias, val]) => {
@@ -2424,14 +2429,30 @@ export class LiveModule extends ObjectObject {
   }
 }
 
-// export class CSSModule extends ObjectObject {
-//   constructor(modulePath, styleSheet) {
-//     super("CSSModule");
-//     this.modulePath = modulePath;
-//     this.styleSheet = styleSheet;
-//     this.members["styleSheet"] = styleSheet;
-//   }
-// }
+export class CSSModule extends ObjectObject {
+  constructor(modulePath, styleSheet) {
+    super("CSSModule");
+    this.modulePath = modulePath;
+    this.styleSheet = styleSheet;
+    // this.parsedStyleSheet = undefined;
+    // this.classes = undefined;
+    this.members["styleSheet"] = styleSheet;
+  }
+
+  // getParsedStyleSheet(node, env) {
+  //   return this.parsedStyleSheet ?? (
+  //     this.parsedStyleSheet = parseString(
+  //       this.styleSheet, node, env, cssParser
+  //     )[0]
+  //   );
+  // }
+
+  // getClasses(node, env) {
+  //   return this.classes ?? (
+  //     this.classes = 
+  //   );
+  // }
+}
 
 
 
@@ -2483,7 +2504,6 @@ export class PromiseObject extends ObjectObject {
   constructor(promiseOrFun, interpreter, node, env) {
     super("Promise");
     this.hasCatch = false;
-    this.isCopied = false;
     if (promiseOrFun instanceof Promise) {
       this.promise = promiseOrFun;
     }
@@ -2505,7 +2525,7 @@ export class PromiseObject extends ObjectObject {
     this.members["then"] = new DevFunction(
       "then", {}, ({callerNode, execEnv, interpreter}, [callbackFun]) => {
         interpreter.thenPromise(
-          this.promise, this.isCopied, callbackFun, callerNode, execEnv
+          this.promise, callbackFun, callerNode, execEnv
         );
         return this;
       }
@@ -2513,7 +2533,7 @@ export class PromiseObject extends ObjectObject {
     this.members["catch"] = new DevFunction(
       "catch", {}, ({callerNode, execEnv, interpreter}, [callbackFun]) => {
         interpreter.catchPromise(
-          this.promise, this.isCopied, callbackFun, callerNode, execEnv
+          this.promise, callbackFun, callerNode, execEnv
         );
         this.hasCatch = true;
         return this;

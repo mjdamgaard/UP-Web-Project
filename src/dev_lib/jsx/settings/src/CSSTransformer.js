@@ -1,5 +1,5 @@
 
-import {cssParser} from "../../../../interpreting/parsing/CSSParser.js";
+import {cssParser} from "./CSSParser.js";
 import {parseString} from "../../../../interpreting/ScriptInterpreter.js";
 
 

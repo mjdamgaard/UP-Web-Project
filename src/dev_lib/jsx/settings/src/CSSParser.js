@@ -1,10 +1,10 @@
 
-import {Parser} from "./Parser.js";
+import {Parser} from "../../../../interpreting/parsing/Parser.js";
 import {
   straightenListSyntaxTree, copyFromChild, copyLexemeFromChild,
   processPolyadicInfixOperation, processLeftAssocPostfixes,
-} from "./processing.js";
-import {HTML_ELEMENT_TYPE_REGEX} from "./ScriptParser.js";
+} from "../../../../interpreting/parsing/processing.js";
+import {HTML_ELEMENT_TYPE_REGEX} from "../../../../interpreting/parsing/ScriptParser.js";
 
 
 const ELEMENT_TYPE_PATTERN = HTML_ELEMENT_TYPE_REGEX.source.slice(1, -1);

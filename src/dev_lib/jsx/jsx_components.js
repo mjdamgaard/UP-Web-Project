@@ -1,9 +1,9 @@
 
 import {
-  DevFunction, JSXElement, LiveModule, RuntimeError, getExtendedErrorMsg,
-  getString, ObjectObject, forEachValue, CLEAR_FLAG, deepCopy,
+  DevFunction, JSXElement, LiveJSModule, RuntimeError, getExtendedErrorMsg,
+  getString, ObjectObject, forEachValue, CLEAR_FLAG, PromiseObject,
   OBJECT_PROTOTYPE, ArgTypeError, Environment, getPrototypeOf, ARRAY_PROTOTYPE,
-  FunctionObject, Exception, getStringOrSymbol, PromiseObject,
+  FunctionObject, Exception, getStringOrSymbol, MAP_PROTOTYPE,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
@@ -80,7 +80,7 @@ class JSXInstance {
     componentModule, key, parentInstance = undefined, callerNode, callerEnv,
     settings = undefined,
   ) {
-    if (!(componentModule instanceof LiveModule)) throw new RuntimeError(
+    if (!(componentModule instanceof LiveJSModule)) throw new RuntimeError(
       "JSX component needs to be an imported module namespace object",
       callerNode, callerEnv
     );
@@ -120,7 +120,7 @@ class JSXInstance {
     // instance is not forced to rerender.
     if (
       !force && this.props !== undefined &&
-      deepCompareExceptRefs(props, this.props)
+      deepCompareExceptMutableAndRefs(props, this.props)
     ) {
       return this.domNode;
     }
@@ -676,7 +676,7 @@ class JSXInstance {
     this.contextProvisions ??= {};
     let {subscribers, prevContext} = this.contextProvisions[key] ?? {};
       this.contextProvisions[key] = {subscribers: new Map(), context: context};
-    if (subscribers && !deepCompareExceptRefs(context, prevContext)) {
+    if (subscribers && !deepCompareExceptMutableAndRefs(context, prevContext)) {
       subscribers.forEach((_, jsxInstance) => {
         jsxInstance.queueRerender(interpreter);
       });
@@ -941,7 +941,9 @@ export class SettingsObject extends ObjectObject {
 
 
 
-function deepCompareExceptRefs(props1, props2) {
+function deepCompareExceptMutableAndRefs(props1, props2) {
+  if (props1 === props2) return true;
+
   // Get the keys, and return false immediately if the two props have different
   // sets of keys.
   let keys1 = Object.keys(props1);
@@ -956,29 +958,47 @@ function deepCompareExceptRefs(props1, props2) {
   let ret = true;
   Object.entries(props1).some(([key, val1]) => {
     if (key === "refs") {
-      return false; // continue some() iteration.
+      return false; // continue the some() iteration.
     }
     let val2 = Object.hasOwn(props2, key) ? props2[key] : undefined;
-    if (!deepCompare(val1, val2)) {
+    if (!deepCompare(val1, val2, true)) {
       ret = false;
-      return true; // break some() iteration.
+      return true; // break the some() iteration.
     }
   });
   return ret;
 }
 
 
-export function deepCompare(val1, val2) {
+export function deepCompare(val1, val2, excludeMutableProps = false) {
+  if (val1 === val2) return true;
+
   if (!val1 || !val2 || !(val1 instanceof Object && val2 instanceof Object)) {
-    return val1 === val2;
+    return false;
+  }
+
+  if (val1 instanceof ObjectObject) {
+    if (
+      excludeMutableProps && val1.isMutable &&
+      val2 instanceof ObjectObject && val2.isMutable
+    ) {
+      return true;
+    }
+    if (
+      val1.isComparable && val2 instanceof ObjectObject && val2.isComparable
+      && val1.constructor === val2.constructor
+    ) {
+      val1 = val1.members;
+      val2 = val2.members;
+    }
+    else return false;
   }
 
   let proto1 = Object.getPrototypeOf(val1);
   let proto2 = Object.getPrototypeOf(val2);
+  if (proto1 !== proto2) return false;
+
   if (proto1 === OBJECT_PROTOTYPE) {
-    if (proto2 !== OBJECT_PROTOTYPE) {
-      return false;
-    }
     let keys1 = Object.keys(val1);
     let keys2 = Object.keys(val2);
     let unionedKeys = [...new Set(keys1.concat(keys2))];
@@ -988,7 +1008,7 @@ export function deepCompare(val1, val2) {
     let ret = true;
     Object.entries(val1).some(([key, prop1]) => {
       let prop2 = Object.hasOwn(val2, key) ? val2[key] : undefined;
-      if (!deepCompare(prop1, prop2)) {
+      if (!deepCompare(prop1, prop2, excludeMutableProps)) {
         ret = false;
         return true; // break some() iteration.
       }
@@ -996,40 +1016,22 @@ export function deepCompare(val1, val2) {
     return ret;
   }
   else if (proto1 === ARRAY_PROTOTYPE) {
-    if (proto2 !== ARRAY_PROTOTYPE) {
-      return false;
-    }
     if (val1.length !== val2.length) {
       return false;
     }
     let ret = true;
     val1.some((entry1, ind) => {
       let entry2 = val2[ind];
-      if (!deepCompare(entry1, entry2)) {
+      if (!deepCompare(entry1, entry2, excludeMutableProps)) {
         ret = false;
-        return true; // break some() iteration.
+        return true; // break the some() iteration.
       }
     });
     return ret;
   }
-  else {
-    return val1 === val2;
-  }
+  else return false;
 }
 
-
-
-function deepCopyExceptRefs(props, node, env) {
-  let ret = {};
-  forEachValue(props, node, env, (val, key) => {
-    if (key === "refs") {
-      ret[key] = val;
-    } else {
-      ret[key] = deepCopy(val);
-    }
-  });
-  return ret;
-}
 
 
 

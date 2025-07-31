@@ -1,6 +1,6 @@
 import {
-  DevFunction, forEachValue, LiveModule, PromiseObject, RuntimeError,
-  LiveModule as SCSSModule, AbstractObject,
+  DevFunction, forEachValue, LiveJSModule, PromiseObject, RuntimeError,
+  LiveJSModule as SCSSModule, AbstractObject,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {SettingsObject} from "../jsx_components.js";
 
@@ -104,7 +104,7 @@ export {settings as default};
 
 export const getSettings = new DevFunction(
   "getSettings", {}, ({callerNode, execEnv}, [liveModule]) => {
-    if (liveModule instanceof LiveModule) {
+    if (liveModule instanceof LiveJSModule) {
       let modulePath = liveModule.modulePath;
       let appComponentPath = undefined; // execEnv.getFlag(APP_COMPONENT_PATH_FLAG);
       let isAppRoot = modulePath === appComponentPath;
