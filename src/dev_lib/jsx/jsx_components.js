@@ -3,7 +3,7 @@ import {
   DevFunction, JSXElement, LiveJSModule, RuntimeError, getExtendedErrorMsg,
   getString, ObjectObject, forEachValue, CLEAR_FLAG, PromiseObject,
   OBJECT_PROTOTYPE, ArgTypeError, Environment, getPrototypeOf, ARRAY_PROTOTYPE,
-  FunctionObject, Exception, getStringOrSymbol, MAP_PROTOTYPE,
+  FunctionObject, Exception, getStringOrSymbol, getPropertyFromObject,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
@@ -146,27 +146,12 @@ class JSXInstance {
           return this.getFailedComponentDOMNode(err, replaceSelf);
         }
       } else {
-        state = this.componentModule.get("initState") || {};
+        state = this.componentModule.get("initState");
       }
-      let stateProto = getPrototypeOf(state);
-      if (stateProto !== OBJECT_PROTOTYPE) {
-        return this.getFailedComponentDOMNode(
-          new RuntimeError(
-            "State needs to be a plain object, but got: " +
-            getString(state, callerNode, callerEnv), // (Note that getString()
-            // will also clear any flags if calling a user-defined function.)
-            callerNode, callerEnv
-          ),
-          replaceSelf
-        );
-      }
-      this.state = state;
+      this.state = state ?? {};
 
       // And store the refs object.
       this.refs = props["refs"] ?? {};
-
-      // Also set this.isIsolated to true if 'isolated' is a truthy prop.
-      this.isIsolated = props["isolated"] ? true : false;
     }
 
 
@@ -552,28 +537,28 @@ class JSXInstance {
   }
 
 
+  // TODO: Add keyboard events, click events, and focus events and focus
+  // methods, like I have described it in my working notes (in my "23-xx"
+  // notes, which is currently located in my Notes/backup GitHub folder).
 
-  // dispatch(eventKey, input?) dispatches an event to the first among the
-  // instance itself and its ancestors who has an action that matches the
-  // eventKey (which might be a Symbol). The actions are declared by the
-  // 'actions' object exported by a component module. If no ancestors has an
-  // action of a matching key, then dispatch() just fails silently.
-  dispatch(eventKey, input, interpreter, callerNode, callerEnv) {
-    let actions = this.componentModule.get("actions");
+  // trigger(eventKey, input?) triggers an event to the first among the
+  // instance itself and its ancestors who has an event that matches the
+  // eventKey (which might be a Symbol). The events are declared by the
+  // 'events' object exported by a component module. If no ancestors has an
+  // event of a matching key, then trigger() just fails silently.
+  trigger(eventKey, input, interpreter, callerNode, callerEnv) {
+    let events = this.componentModule.get("events");
     eventKey = getStringOrSymbol(eventKey, callerNode, callerEnv);
-    let actionFun;
-    if (getPrototypeOf(actions) === OBJECT_PROTOTYPE) {
-      actionFun = actions[eventKey];
-    }
-    if (actionFun) {
+    let eventFun = getPropertyFromObject(events, eventKey);
+    if (eventFun) {
       interpreter.executeFunction(
-        actionFun, [input], callerNode, callerEnv,
+        eventFun, [input], callerNode, callerEnv,
         new JSXInstanceInterface(this), [CLEAR_FLAG],
       );
     }
     else {
       if (this.parentInstance) {
-        this.parentInstance.dispatch(
+        this.parentInstance.trigger(
           eventKey, input, interpreter, callerNode, callerEnv
         );
       }
@@ -642,7 +627,7 @@ class JSXInstance {
         if (!this.isDiscarded) {
           // Make sure to use the same callerNode and callerEnv as on the
           // previous render, which is done in order to not increase the memory
-          // for every single triggered action or call.
+          // for every single triggered event or call.
           this.render(
             this.props, this.isDecorated, interpreter,
             this.callerNode, this.callerEnv, true, true
@@ -746,7 +731,7 @@ class JSXInstanceInterface extends ObjectObject {
       "state": this.jsxInstance.state,
       "refs": this.jsxInstance.refs,
       /* Methods */
-      "dispatch": this.dispatch,
+      "trigger": this.trigger,
       "call": this.call,
       "setState": this.setState,
       "rerender": this.rerender,
@@ -759,11 +744,11 @@ class JSXInstanceInterface extends ObjectObject {
   }
 
 
-  // See the comments above for what dispatch() and call() does.
-  dispatch = new DevFunction(
-    "dispatch", {typeArr: ["object key", "any?"]},
+  // See the comments above for what trigger() and call() does.
+  trigger = new DevFunction(
+    "trigger", {typeArr: ["object key", "any?"]},
     ({callerNode, execEnv, interpreter}, [eventKey, input]) => {
-      this.jsxInstance.dispatch(
+      this.jsxInstance.trigger(
         eventKey, input, interpreter, callerNode, execEnv
       );
     }
@@ -778,14 +763,28 @@ class JSXInstanceInterface extends ObjectObject {
     }
   );
 
+  // triggerAncestor() does the same as trigger, but ships looking in the
+  // instance's own events.
+  triggerAncestor = new DevFunction(
+    "triggerAncestor", {typeArr: ["object key", "any?"]},
+    ({callerNode, execEnv, interpreter}, [eventKey, input]) => {
+      let parentInstance = this.jsxInstance.parentInstance;
+      if (parentInstance) {
+        parentInstance.trigger(
+          eventKey, input, interpreter, callerNode, execEnv
+        );
+      }
+    }
+  );
+
   // setState() assigns to jsxInstance.state immediately, which means that the
-  // state changes will be visible to all subsequently triggered actions and
+  // state changes will be visible to all subsequently triggered events and
   // calls to this instance. However, since the render() function can only
-  // access the state via its 'state' argument, the state changes will not be
-  // visible in the continued execution of a render() after it has set the new
-  // state, but only be visible on a subsequent rerender.
+  // access the state via 'this.state', the state changes will not be visible
+  // in the continued execution of a render() after it has set the new state,
+  // but only be visible on a subsequent rerender.
   setState = new DevFunction(
-    "setState", {typeArr: ["object"]},
+    "setState", {},
     ({interpreter}, [newState]) => {
       this.jsxInstance.state = newState;
       this.jsxInstance.queueRerender(interpreter);
