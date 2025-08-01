@@ -23,16 +23,22 @@ const RELATIVE_ROUTE_START_REGEX = /^\.\.?\//;
 // class : [(<class>,)*] | <class>
 // <class> := [(</[a-z][a-z0-9\-]*(_[1-9][0-9]*)?/ string>,)*],
 // check : <function>,
-// childRules := [({key, transform, props?},)*],
+// childRules := [({key, transform?, props?},)*],
 // key : </!?.+\*?/ key format>,
 // transform : <transform>.
-
+//
+// The settingsData props used are:
+// componentID?: <the ID of root component of the current style scope>,
+// transform?: <prepared transform>,
+// transformProps?: <an object passed as input to functions in the transform>.
 
 
 
 export class AppStyler01 {
 
-  async initiate(componentModule, node, env) {
+  async initiate(componentModule, settings, node, env) {
+    this.settings = settings;
+
     // Remove any existing UP style elements from a previous setting.
     let upStyleElements = [...document.querySelectorAll(`head style.up-style`)];
     upStyleElements.forEach(node => node.remove());
@@ -43,7 +49,7 @@ export class AppStyler01 {
     // {template : <string>, instances: {componentID: <classes?>}} values.
     this.componentIDs = {}; // with componentPath keys.
     this.nextComponentID = 1;
-    this.preparedTransforms = {}; // with componentPath keys.
+    this.defaultComponentStyles = {}; // with componentPath keys.
 
     await this.prepareComponent(componentModule, node, env);
   }
@@ -56,19 +62,134 @@ export class AppStyler01 {
   }
 
 
-  // prepareComponent() ...
+  // prepareComponent() looks to see if the component has already been
+  // prepared, or are currently being so, and otherwise if finds the default
+  // transform and transformProps for the component, consulting settings, and
+  // prepares the transform for use (including loading all the style sheets it
+  // uses).
   async prepareComponent(componentModule, node, env) {
+    let modulePath = componentModule.modulePath;
 
-  }
+    // Get the componentID for the component, and if one exists already, return
+    // early.
+    let componentID = this.componentIDs[modulePath];
+    if (componentID instanceof Promise) {
+      componentID = await componentID;
+    }
+    if (componentID) {
+      return;
+    }
 
-  // prepareInstance() ...
-  prepareInstance(jsxInstance, node, env) {
-    let whenPreparedRef = [];
-    let whenPrepared = this.prepareInstanceHelper(
-      jsxInstance, node, env, whenPreparedRef
+    // Else store a self-replacing promise at this.componentIDs[modulePath],
+    // which resolves with the componentID when the component has been prepared.
+    let idPromise = this.componentIDs[modulePath] = this.prepareComponentHelper(
+      componentModule, modulePath, node, env
     );
-    return whenPreparedRef[0] ?? whenPrepared;
+    idPromise.then(id => {
+      this.componentIDs[modulePath] = id;
+    });
+    return idPromise;
   }
+
+  async prepareComponentHelper(componentModule, modulePath, node, env) {
+    // Get a new, unique ID for the component.
+    componentID = this.componentIDs[modulePath] = this.getNextComponentID();
+
+    // Then call settings.getStyleModule() to get the so-called style module
+    // for the component. This might be the module pointed to by a
+    // 'styleModulePath' export of the component (in the form of a route), but
+    // the settings might also potentially override this with another style
+    // module.
+    let styleModule = await this.settings.getTransformModule(
+      componentModule, node, env
+    );
+
+    // Get the transform and the transformProps from that module.
+    let transform = styleModule.get("transform");
+    let transformProps = styleModule.get("transform");
+
+    // Then prepare this transform, and store the result as well as the default
+    // transformProps in this.defaultComponentStyles.
+    let preparedTransform = await this.prepareTransform(transform, node, env);
+    let defaultComponentStyle = {
+      transform: preparedTransform,
+      transformProps: transformProps,
+    };
+    this.defaultComponentStyles[modulePath] = defaultComponentStyle;
+
+    // And finally return the componentID.
+    return componentID;
+  }
+
+
+  // prepareInstance() finds the right transform and transformProps to use
+  // for the instance, then returns [isReady=true], unless the component has
+  // somehow not yet been prepared, which might happen if the regular import()
+  // function is used rather than JSXInstanceInterface.import().
+  prepareInstance(jsxInstance, node, env) {
+    let {parentInstance, settingsData, key, componentPath} = jsxInstance;
+    let {transform: childRules = [], componentID} = parentInstance.settingsData;
+
+    // Extract the transform and transformProps from the last child rule in the
+    // parent instance's childRules array where the key format matches this
+    // instance's key.
+    let transform, transformProps, childRule;
+    let len = childRules.length;
+    for (let i = len - 1; i >= 0; i--) {
+      let {key: keyFormat} = rule = childRules[i];
+      if (testKey(key, keyFormat)) {
+        transform = rule.transform;
+        transformProps = rule.transformProps;
+        break;
+      }
+    }
+
+    // If the transform is falsy, it means that the instance should be the
+    // root instance of a new scope.
+    if (!transform) {
+      // First get the componentID.
+      componentID = this.componentIDs[componentPath];
+
+      // If this is not ready yet, return it as the whenReady promise, such
+      // that the instance will rerender once it resolves (by which
+      // prepareInstance() will be called again).
+      if (componentID instanceof Promise) {
+        let whenReady = componentID;
+        return [false, whenReady];
+      }
+
+      // Else if it is undefined, call preparedComponent instead, as return
+      // that is the whenReady promise.
+      if (!componentID) {
+        let whenReady = this.prepareComponent(
+          jsxInstance.componentModule, node, env
+        );
+        return [false, whenReady];
+      }
+
+      // And else we know that we can find the transform (also prepared) at
+      // this.defaultComponentStyles, as well as a default transformProps if
+      // the one we already have gotten is undefined.
+      let defaultComponentStyle = this.defaultComponentStyles[componentPath];
+      transform = defaultComponentStyle.transform;
+      transformProps ??= defaultComponentStyle.transformProps;
+    }
+    
+    // Now that have the transform and transformProps (possibly after a
+    // rerender), we can store these in this instance's settingsData, along
+    // with the componentID, either gotten from the parent or from
+    // this.componentIDs.
+    settingsData.componentID = componentID;
+    settingsData.transform = transform;
+    settingsData.transformProps = transformProps;
+
+    // And finally, we can return isReady = true.
+    return [true];
+  }
+
+
+
+
 
   // prepareInstance() is a "semi-async." function, which we here take to mean
   // that it might also return its result synchronously via a reference
