@@ -3,8 +3,27 @@ import {cssParser} from "./CSSParser.js";
 import {parseString} from "../../../../interpreting/ScriptInterpreter.js";
 
 
+const COMPONENT_ID_PLACEHOLDER = /(?<!\\)\\cid/g;
+const STYLE_SHEET_ID_PLACEHOLDER = /(?<!\\)\\sid/g;
+
 
 export class CSSTransformer {
+
+  // instantiateStyleSheetTemplate() takes a template as returned from
+  // transformStyleSheet() below, as well as a component ID (of the root
+  // component of the current style scope) and a style sheet ID, and creates
+  // an instance of that template, which is a valid CSS string ready to be
+  // inserted in the document head.
+  instantiateStyleSheetTemplate(
+    styleSheetTemplate, componentID, styleSheetID
+  ) {
+    return styleSheetTemplate.replaceAll(
+      COMPONENT_ID_PLACEHOLDER, componentID
+    ).replaceAll(
+      STYLE_SHEET_ID_PLACEHOLDER, styleSheetID
+    );
+  }
+
 
   // transformStyleSheet() parses and transforms the input styleSheet into a
   // style sheet template with "\sid" and "\cid" placeholders, which are
@@ -140,13 +159,7 @@ export class CSSTransformer {
       let argType = argument?.type;
       let tuple;
       if (argType === "selector-list") {
-        tuple = "(" +
-          argument.children.map(selector => {
-            this.transformComplexSelector(
-              selector, environment, id, styleSheetIDs, true
-            )
-          }).join(", ") +
-        ")";
+        tuple = "(" + this.transformSelectorList(argument, classes) + ")";
       }
       else if (argType === "integer") {
         tuple = "(" + argument.lexeme + ")";
