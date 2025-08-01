@@ -2305,26 +2305,9 @@ export function verifyType(val, type, isOptional, node, env) {
         );
       }
       break;
-    case "plain object":
-      if (getPrototypeOf(val) !== OBJECT_PROTOTYPE) {
-        throw new ArgTypeError(
-          `Value is not a plain object: ${getString(val, node, env)}`,
-          node, env
-        );
-      }
-      break;
-    case "abstract object":
-      if (!(val instanceof ObjectObject)) {
-        throw new ArgTypeError(
-          `Value is not an abstract object: ${getString(val, node, env)}`,
-          node, env
-        );
-      }
-      break;
     case "object":
       if (
-        getPrototypeOf(val) !== OBJECT_PROTOTYPE &&
-        !(val instanceof ObjectObject)
+        getPrototypeOf(val) !== OBJECT_PROTOTYPE ||val instanceof ObjectObject
       ) {
         throw new ArgTypeError(
           `Value is not an object: ${getString(val, node, env)}`,
@@ -2434,24 +2417,8 @@ export class CSSModule extends ObjectObject {
     super("CSSModule");
     this.modulePath = modulePath;
     this.styleSheet = styleSheet;
-    // this.parsedStyleSheet = undefined;
-    // this.classes = undefined;
     this.members["styleSheet"] = styleSheet;
   }
-
-  // getParsedStyleSheet(node, env) {
-  //   return this.parsedStyleSheet ?? (
-  //     this.parsedStyleSheet = parseString(
-  //       this.styleSheet, node, env, cssParser
-  //     )[0]
-  //   );
-  // }
-
-  // getClasses(node, env) {
-  //   return this.classes ?? (
-  //     this.classes = 
-  //   );
-  // }
 }
 
 

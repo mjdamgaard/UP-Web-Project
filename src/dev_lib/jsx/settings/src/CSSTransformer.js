@@ -6,22 +6,31 @@ import {parseString} from "../../../../interpreting/ScriptInterpreter.js";
 
 export class CSSTransformer {
 
-  // transformStyleSheet() validates and transforms the input styleSheet that
-  // has already been parsed as a (processed) CSS syntax tree into a style
-  // sheet string ready to be inserted in the document head. Not that
-  // transformStyleSheet() ignores @import statements, so these have to be
-  // handled by another method/function.
-  transformStyleSheet(styleSheetNode, id) {
-    return styleSheetNode.stmtArr.map(stmt => (
-      this.transformStatement(stmt, id)
-    )).join("\n")
+  // transformStyleSheet() parses and transforms the input styleSheet into a
+  // style sheet template with "\sid" and "\cid" placeholders, which are
+  // substituted respectively with the style sheet ID and a component ID for
+  // the relevant style scope component before the style sheet is ready to be
+  // inserted in the document head.
+  transformStyleSheet(styleSheet, node, env) {
+    // Transform the style sheet and push each class occurrence to a classes
+    // array in the process.
+    let classes = [];
+    let styleSheetNode = parseString(styleSheet, node, env, cssParser);
+    let styleSheetTemplate = styleSheetNode.stmtArr.map(stmt => (
+      this.transformStatement(stmt, classes)
+    )).join("\n");
+
+    // Remove duplicates from the classes array, and return it along with the
+    // template.
+    classes = [...new Set(classes)];
+    return [styleSheetTemplate, classes]
   }
 
 
-  transformStatement(stmt, id, indentSpace = "") {
+  transformStatement(stmt, classes, indentSpace = "") {
     let type = stmt.type;
     if (type === "ruleset") {
-      return this.transformRuleset(stmt, id, indentSpace);
+      return this.transformRuleset(stmt, classes, indentSpace);
     }
     else if (type === "at-rule") {
       return indentSpace +
@@ -33,10 +42,10 @@ export class CSSTransformer {
   }
 
 
-  transformRuleset(stmt, id, indentSpace) {
+  transformRuleset(stmt, classes, indentSpace) {
     // Transform the selector.
     let transformedSelectorList = this.transformSelectorList(
-      stmt.selectorList, `:where(._${id})`
+      stmt.selectorList, classes
     );
 
     // Return the rule with the transformed selector list and the transformed
@@ -58,21 +67,21 @@ export class CSSTransformer {
   }
 
 
-  transformSelectorList(selectorList, whereClause = "") {
+  transformSelectorList(selectorList, classes = []) {
     return selectorList.children.map(selector => (
-      this.transformComplexSelector(selector, whereClause)
+      this.transformComplexSelector(selector, classes)
     )).join(", ");
   }
 
 
-  transformComplexSelector(selector, whereClause) {
+  transformComplexSelector(selector, classes = []) {
     // The children of a complex selector node are the compound selectors at
     // every even index, starting with (and possibly ending in) 0, and then the
     // combinators at every odd index.
     return selector.children.map((child, ind) => {
       // For even indices, transform the given compound selector.
       if (ind % 2 === 0) {
-        return this.transformCompoundSelector(child, id);
+        return this.transformCompoundSelector(child, classes);
       }
       // For odd indices, transform the given combinator.
       else {
@@ -83,48 +92,47 @@ export class CSSTransformer {
     }).join("");
   }
 
-  transformCompoundSelector(selector, id) {
-    // Initialize a "hasClass" flag reference that is raised by
-    // transformSimpleSelector() if the selector is a regular class selector.
-    // When the simple selectors has been transformed, we then check that if
-    // isTrusted is falsy, then the hasClass flag must have been raised.
-    let hasClassRef = [false];
-    let transformedCompoundSelector = selector.map(child => (
-      this.transformSimpleSelector(child, id, hasClassRef)
+  transformCompoundSelector(selector, classes) {
+    // First transform the "main children,"" i.e. all simple selectors but the
+    // trailing pseudo-element if there is one.
+    let transformedMainChildren = selector.mainChildren.map(child => (
+      this.transformSimpleSelector(child, classes)
     )).join("");
 
-    if (!isTrusted && !hasClassRef[0]) {
-      return "._/* Style sheet trust required */._";
-    }
-    return transformedCompoundSelector;
+    // Then append ":where(.c\cid)" to that part, where "\cid" is a
+    // placeholder that is meant to be replaced by a component ID.
+    transformedMainChildren = transformedMainChildren + ":where(.c\\cid)";
+
+    // Then append the pseudo-element if any, and return the result.
+    let pseudoElement = selector.pseudoElement;
+    return pseudoElement ? transformedMainChildren + transformSimpleSelector(
+      pseudoElement, classes
+    ) : transformedMainChildren;
   }
 
-  transformSimpleSelector(
-    selector, id, hasClassRef
-  ) {
+  transformSimpleSelector(selector, classes) {
     let type = selector.type;
     if (type === "class-selector") {
-      // Raise the hasClass flag.
-      hasClassRef[0] = true;
-
-      // If the class name does not contain any underscores to begin with,
-      // append the id to the class, after an underscore. And if it does, check
-      // that it is a leading one and that isTrusted is true, as trusted style
-      // sheets are allowed to style classes that are set by dev functions,
-      // such as e.g. "_failed" or "_pending-style".
       let className = selector.className;
+
+      // If the class name has a leading underscore, leave it as it is, and do
+      // not push it to classes. This is because such classes are built-in,
+      // dev-defined classes for which the style sheets are free to define
+      // their own styles.
       let indOfUnderscore = className.indexOf("_");
-      if (indOfUnderscore === -1) {
-        return "." + className + "_" + id;
-      }
-      else if (indOfUnderscore === 1) {
-        if (!isTrusted) {
-          return "._/* Style sheet trust required */._";
-        }
+      if (indOfUnderscore === 0 && className.length > 1) {
         return "." + className;
       }
+
+      // Else if there are no underscore, push the untransformed class name to
+      // the classes array, and return a transformed version where "_\sid" is
+      // appended to it. 
+      else if (indOfUnderscore === -1) {
+        classes.push(className);
+        return "." + className + "_\\sid";
+      }
       else {
-        return "._/* No non-leading underscores are allowed in a class */._";
+        return "._/* No non-leading underscores are allowed in classes */._";
       }
     }
     else if (type === "pseudo-class-selector") {

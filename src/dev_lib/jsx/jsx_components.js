@@ -1085,14 +1085,14 @@ function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
     jsxInstance.changePropsAndQueueRerender({urlData: urlData}, interpreter);
   });
   const replaceState = new DevFunction(
-    "replaceState", {typeArr: ["string", "plain object?"]},
+    "replaceState", {typeArr: ["string", "any?"]},
     ({callerNode, callerEnv}, [url, state = {}]) => {
       // TODO: Parse url for pathname, search, and hash, then call
       // replaceState() and .set() the urlContext.
     }
   );
   const pushState = new DevFunction(
-    "pushState", {typeArr: ["string", "plain object?"]},
+    "pushState", {typeArr: ["string", "any?"]},
     ({callerNode, callerEnv}, [url, state = {}]) => {
       // TODO: Parse url for pathname, search, and hash, then call pushState()
       // and .set() the urlContext.

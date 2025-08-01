@@ -229,8 +229,18 @@ export const cssGrammar = {
       [/"([^"\\]|\\[.\n])*"/, "S*"],
       [/'([^'\\]|\\[.\n])*'/, "S*"],
     ],
-    process: copyLexemeFromChild,
-    params: ["string"],
+    process: (children) => {
+      let jsonString;
+      try {
+        jsonString = JSON.stringify(JSON.parse(children[0]));
+      } catch (_) {
+        return "Invalid string";
+      }
+      return {
+        type: "string",
+        lexeme: jsonString,
+      }
+    },
   },
   "number": {
     rules: [

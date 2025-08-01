@@ -4,7 +4,7 @@ import {cssTransformer} from "./CSSTransformer.js";
 import {
   ArgTypeError, parseString, verifyTypes, verifyType, getString,
   getPropertyFromPlainObject, jsonStringify, CLEAR_FLAG, jsonParse,
-  FunctionObject, getFullPath,
+  FunctionObject,
 } from "../../../../interpreting/ScriptInterpreter.js";
 
 const CLASS_REGEX = /^ *([a-z][a-z0-9\-]*)((_[a-z0-9\-]*)?) *$/;
@@ -13,7 +13,7 @@ const RELATIVE_ROUTE_START_REGEX = /^\.\.?\//;
 
 
 
-// The "transform" objects used by the ComponentTransformer are of the form:
+// The "transform" objects used by the AppStyler01 are of the form:
 //
 // <transform> := {(styleSheets?, rules?, childRules?},
 // styleSheets : [(<CSSModule>,)*],
@@ -21,30 +21,45 @@ const RELATIVE_ROUTE_START_REGEX = /^\.\.?\//;
 // style : [(<style>,)*] | <style>
 // <style> := {(<CSS property>: <CSS value string>,)*} | <function>,
 // class : [(<class>,)*] | <class>
-// <class> := [(<[a-z][a-z0-9\-]*(_[1-9][0-9]*)? string>,)*],
+// <class> := [(</[a-z][a-z0-9\-]*(_[1-9][0-9]*)?/ string>,)*],
 // check : <function>,
 // childRules := [({key, transform, props?},)*],
-// transform : <transform> | "isolated".
+// key : </!?.+\*?/ key format>,
+// transform : <transform>.
 
 
 
 
 export class AppStyler01 {
 
-  initiate() {
+  async initiate(componentModule, node, env) {
     // Remove any existing UP style elements from a previous setting.
     let upStyleElements = [...document.querySelectorAll(`head style.up-style`)];
     upStyleElements.forEach(node => node.remove());
 
-    this.styleSheetIDs = new Map();
-    this.nextID = 1;
-    this.preparedTransforms = new Map();
+    this.styleSheetIDs = new Map(); // with styleSheetPath keys.
+    this.nextStyleSheetID = 1;
+    this.loadedStyleSheets = new Map(); // with styleSheetPath keys, and with
+    // {template : <string>, instances: {componentID: <classes?>}} values.
+    this.componentIDs = {}; // with componentPath keys.
+    this.nextComponentID = 1;
+    this.preparedTransforms = {}; // with componentPath keys.
+
+    await this.prepareComponent(componentModule, node, env);
   }
 
-  getNextID() {
-    return this.nextID++;
+  getNextStyleSheetID() {
+    return this.nextStyleSheetID++;
+  }
+  getNextComponentID() {
+    return this.nextComponentID++;
   }
 
+
+  // prepareComponent() ...
+  async prepareComponent(componentModule, node, env) {
+
+  }
 
   // prepareInstance() ...
   prepareInstance(jsxInstance, node, env) {
@@ -226,10 +241,10 @@ export class AppStyler01 {
   // ready to be passed to getTransform() above.
   prepareTransform(transform, node, env) {
     ret = {...transform};
-    verifyType(transform, "plain object", node, env);
+    verifyType(transform, "object", node, env);
     let childProps = transform.childProps;
     if (childProps !== undefined) {
-      verifyType(childProps, "plain object", node, env);
+      verifyType(childProps, "object", node, env);
       transform.childTransformsEntries = Object.entries(childProps)
         .forEach(entry => {
           entry[1] = jsonStringify(entry[1]);
@@ -250,7 +265,7 @@ export class AppStyler01 {
   async importAndPrepareStyleSheets(
     styleSheets, settings, node, env, interpreter, retRef = []
   ) {
-    verifyType(rules, "plain object", node, env);
+    verifyType(rules, "object", node, env);
     let preparedStyleSheets = {};
 
     // Go through each style sheet and push a promise to the following array
@@ -355,7 +370,7 @@ export class AppStyler01 {
 
   loadStyleSheet(styleSheet, isTrusted, node, env) {
     // First get a new, unique ID for the style sheet.
-    let id = this.getNextID();
+    let id = this.getNextStyleSheetID();
 
     // Then parse and transform the style sheet.
     let [styleSheetNode] = parseString(styleSheet, node, env, cssParser);
@@ -452,7 +467,7 @@ export class AppStyler01 {
   }
 
   prepareStyleEntires(styleObj, node, env) {
-    verifyType(styleObj, "plain object", node, env);
+    verifyType(styleObj, "object", node, env);
 
     // ...
 
