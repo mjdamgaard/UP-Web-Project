@@ -2148,6 +2148,15 @@ export function getPrototypeOf(value) {
 }
 
 
+export function isArray(value) {
+  if (value instanceof ObjectObject) {
+    return value.isArray;
+  }
+  else return (value instanceof Array);
+}
+
+
+
 
 // // deepCopy() deep-copies the object and all ist nested properties.
 // export function deepCopy(value) {

@@ -2,7 +2,7 @@
 import {Parser} from "../../../../interpreting/parsing/Parser.js";
 import {
   straightenListSyntaxTree, copyFromChild, copyLexemeFromChild,
-  processPolyadicInfixOperation, processLeftAssocPostfixes,
+  processPolyadicInfixOperation,
 } from "../../../../interpreting/parsing/processing.js";
 import {HTML_ELEMENT_TYPE_REGEX} from "../../../../interpreting/parsing/ScriptParser.js";
 
@@ -10,7 +10,7 @@ import {HTML_ELEMENT_TYPE_REGEX} from "../../../../interpreting/parsing/ScriptPa
 const ELEMENT_TYPE_PATTERN = HTML_ELEMENT_TYPE_REGEX.source.slice(1, -1);
 
 const ATOMIC_PSEUDO_CLASS_PATTERN =
-  "(first-child|last-child)";
+  "(scope|first-child|last-child)";
 // TODO: Continue this list.
 
 const SELECTOR_DEFINED_PSEUDO_CLASS_PATTERN =
