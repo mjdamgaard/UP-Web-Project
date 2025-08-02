@@ -31,25 +31,18 @@ export class CSSTransformer {
   // the relevant style scope component before the style sheet is ready to be
   // inserted in the document head.
   transformStyleSheet(styleSheet, node, env) {
-    // Transform the style sheet and push each class occurrence to a classes
-    // array in the process.
-    let classes = [];
     let styleSheetNode = parseString(styleSheet, node, env, cssParser);
-    let styleSheetTemplate = styleSheetNode.stmtArr.map(stmt => (
-      this.transformStatement(stmt, classes)
+    let  = styleSheetNode.stmtArr.map(stmt => (
+      this.transformStatement(stmt)
     )).join("\n");
-
-    // Remove duplicates from the classes array, and return it along with the
-    // template.
-    classes = [...new Set(classes)];
-    return [styleSheetTemplate, classes]
+    return styleSheetTemplate;
   }
 
 
-  transformStatement(stmt, classes, indentSpace = "") {
+  transformStatement(stmt, indentSpace = "") {
     let type = stmt.type;
     if (type === "ruleset") {
-      return this.transformRuleset(stmt, classes, indentSpace);
+      return this.transformRuleset(stmt, indentSpace);
     }
     else if (type === "at-rule") {
       return indentSpace +
@@ -61,11 +54,9 @@ export class CSSTransformer {
   }
 
 
-  transformRuleset(stmt, classes, indentSpace) {
+  transformRuleset(stmt, indentSpace) {
     // Transform the selector.
-    let transformedSelectorList = this.transformSelectorList(
-      stmt.selectorList, classes
-    );
+    let transformedSelectorList = this.transformSelectorList(stmt.selectorList);
 
     // Return the rule with the transformed selector list and the transformed
     // declarations inside the rule.
@@ -86,21 +77,21 @@ export class CSSTransformer {
   }
 
 
-  transformSelectorList(selectorList, classes = []) {
+  transformSelectorList(selectorList) {
     return selectorList.children.map(selector => (
-      this.transformComplexSelector(selector, classes)
+      this.transformComplexSelector(selector)
     )).join(", ");
   }
 
 
-  transformComplexSelector(selector, classes = []) {
+  transformComplexSelector(selector) {
     // The children of a complex selector node are the compound selectors at
     // every even index, starting with (and possibly ending in) 0, and then the
     // combinators at every odd index.
     return selector.children.map((child, ind) => {
       // For even indices, transform the given compound selector.
       if (ind % 2 === 0) {
-        return this.transformCompoundSelector(child, classes);
+        return this.transformCompoundSelector(child);
       }
       // For odd indices, transform the given combinator.
       else {
@@ -111,11 +102,11 @@ export class CSSTransformer {
     }).join("");
   }
 
-  transformCompoundSelector(selector, classes) {
+  transformCompoundSelector(selector) {
     // First transform the "main children,"" i.e. all simple selectors but the
     // trailing pseudo-element if there is one.
     let transformedMainChildren = selector.mainChildren.map(child => (
-      this.transformSimpleSelector(child, classes)
+      this.transformSimpleSelector(child)
     )).join("");
 
     // Then append ":where(.c\cid)" to that part, where "\cid" is a
@@ -124,12 +115,12 @@ export class CSSTransformer {
 
     // Then append the pseudo-element if any, and return the result.
     let pseudoElement = selector.pseudoElement;
-    return pseudoElement ? transformedMainChildren + transformSimpleSelector(
-      pseudoElement, classes
-    ) : transformedMainChildren;
+    return pseudoElement ?
+      transformedMainChildren + transformSimpleSelector(pseudoElement) :
+      transformedMainChildren;
   }
 
-  transformSimpleSelector(selector, classes) {
+  transformSimpleSelector(selector) {
     let type = selector.type;
     if (type === "class-selector") {
       let className = selector.className;
@@ -159,7 +150,7 @@ export class CSSTransformer {
       let argType = argument?.type;
       let tuple;
       if (argType === "selector-list") {
-        tuple = "(" + this.transformSelectorList(argument, classes) + ")";
+        tuple = "(" + this.transformSelectorList(argument) + ")";
       }
       else if (argType === "integer") {
         tuple = "(" + argument.lexeme + ")";

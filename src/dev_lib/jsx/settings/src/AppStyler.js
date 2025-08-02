@@ -7,14 +7,16 @@ import {
   FunctionObject, getPropertyFromObject, forEachValue, CSSModule, isArray,
 } from "../../../../interpreting/ScriptInterpreter.js";
 
-const CLASS_REGEX = /^ *([a-z][a-z0-9\-]*)((_[a-z0-9\-]*)?) *$/;
+const CLASS_STRING_REGEX = /^ *([a-z][a-z0-9\-]*)((_[a-z0-9\-]*)?) *$/;
+// const CLASS_NAME_AND_SUFFIX_REGEX = /^([a-z][a-z0-9\-]*)((_[a-z0-9\-]*)?)$/;
 const SPACE_REGEX = / +/;
 const STYLE_SHEET_KEY_REGEX = /^[a-z0-9\-]+$/;
 const RELATIVE_ROUTE_START_REGEX = /^\.\.?\//;
 
 
 
-// The "transform" objects used by the AppStyler01 are of the form:
+// The "transform" objects used by the AppStyler01 are of the following when
+// defined by the users:
 //
 // <transform> := {(styleSheets?, rules?, childRules?},
 // styleSheets : [(<CSSModule>,)*],
@@ -28,7 +30,18 @@ const RELATIVE_ROUTE_START_REGEX = /^\.\.?\//;
 // key : </!?.+\*?/ key format>,
 // transform : <transform>.
 //
-// The settingsData props used are:
+// And after having been prepared, they are of the form:
+//
+// <transform> := {(rules, childRules},
+// rules : [({selector, style, class, check?},)*],
+// style : <style string ready to be appended to a given style attribute>
+// class : [(<class ready to be added to an element's classList>,)*]
+// check : <function>,
+// childRules := [({key, transform?, props?},)*],
+// key : </!?.+\*?/ key format>,
+// transform : <transform>.
+//
+// Furthermore, the settingsData props used are:
 // componentID?: <the ID of root component of the current style scope>,
 // transform?: <prepared transform>,
 // transformProps?: <an object passed as input to functions in the transform>.
@@ -192,14 +205,13 @@ export class AppStyler01 {
 
 
   prepareTransform(transform, componentID, node, env) {
-    let ret = {};
+    let preparedTransform = {};
 
     // First go through all the styleSheets of the transform and make sure that
     // they are loaded into the document head if they haven't been so already.
-    // In the process, get an array of the classes array generated from each
-    // style sheet containing the classes occurring in that sheet.
+    // And in the process, get an array of the styleSheetIDs for each one.
     let styleSheets = getPropertyFromObject(transform, "styleSheets") ?? [];
-    let classesArr = [];
+    let styleSheetIDArr = [];
     forEachValue(styleSheets, node, env, cssModule => {
       // Verify that the style sheet is a CSSModule instance.
       if (!(cssModule instanceof CSSModule)) throw new ArgTypeError(
@@ -215,22 +227,21 @@ export class AppStyler01 {
       if (!styleSheetData) {
         styleSheetData = this.loadedStyleSheets[styleSheetPath] = {};
       }
-      let {styleSheetID, template, classes, instances} = styleSheetData;
+      let {styleSheetID, template, instances} = styleSheetData;
 
       // If the style sheet has not been transformed into a template before,
       // do so now.
       if (!styleSheetID) {
-        [template, classes] = cssTransformer.transformStyleSheet(
+        template = cssTransformer.transformStyleSheet(
           cssModule.styleSheet, node, env
         );
         styleSheetID = styleSheetData.styleSheetID = this.getNextStyleSheetID();
         styleSheetData.template = template;
-        styleSheetData.classes = classes;
         instances = styleSheetData.instances = {};
       }
 
-      // Push the classes array to classesArr.
-      classesArr.push(classes);
+      // Push the styleSheetID to classesArr.
+      styleSheetIDArr.push(styleSheetID);
 
       // If the style sheet has already been loaded for this particular
       // component before, we can just return here and continue the iteration.
@@ -250,17 +261,17 @@ export class AppStyler01 {
       document.querySelector("head").appendChild(styleElement);
     });
 
-    // With the classes array array, classesArr, in hand, we can now prepare
-    // the rules by appending or substituting the right styleSheetID suffix to
-    // the output classes. We also go through each of the output styles and
-    // validate these.
+    // With the styleSheetID array in hand, we can now prepare the rules by
+    // appending or substituting the right styleSheetID suffix to the output
+    // classes. We also go through each of the output styles and validate these.
     let rules = getPropertyFromObject(transform, "rules") ?? [];
     let preparedRules = [];
     forEachValue(rules, node, env, rule => {
-      let selector = getPropertyFromObject(transform, "selector");
-      let outClasses = getPropertyFromObject(transform, "class");
-      let styles = getPropertyFromObject(transform, "style");
-      let check = getPropertyFromObject(transform, "check");
+      let preparedRule = {};
+      let selector = getPropertyFromObject(rule, "selector");
+      let outClasses = getPropertyFromObject(rule, "class");
+      let styles = getPropertyFromObject(rule, "style");
+      let check = getPropertyFromObject(rule, "check");
       if (!isArray(outClasses)) {
         outClasses = [outClasses];
       }
@@ -269,22 +280,55 @@ export class AppStyler01 {
       }
 
       // Validate the selector.
-      // TODO: Do...
+      if (typeof selector !== "string") throw new ArgTypeError(
+        "...",
+        node, env
+      );
+      // TODO: Parse selector.
+      preparedRule.selector = "...";
 
       // Prepare the output classes.
       let preparedOutClasses = [];
       forEachValue(outClasses, node, env, classStr => {
-        if (typeof classStr !== string || !CLASS_REGEX.test(classStr)) {
+        if (typeof classStr !== string || !CLASS_STRING_REGEX.test(classStr)) {
           throw new ArgTypeError(
             `Invalid class string: ${getString(classStr, node, env)}`
           );
         }
         classStr.split(SPACE_REGEX).forEach(className => {
+          // Extract the user-defined styleSheets index, defaulting to 0, and
+          // convert it to the corresponding styleSheetID before pushing it to
+          // preparedOutClasses.
+          let styleSheetIndex = 0;
           let indOfUnderscore = classStr.indexOf("_");
-          let 
+          if (indOfUnderscore !== -1) {
+            [className, styleSheetIndex] = className.split("_");
+          }
+          styleSheetIndex = parseInt(styleSheetIndex);
+          let styleSheetID = styleSheetIDArr[styleSheetIndex];
+          let preparedOutClass = className + "_" + styleSheetID;
+          preparedOutClasses.push(preparedOutClass);
         });
       });
+      preparedRule.class = preparedOutClasses;
+
+      // Validate and prepare the styles.
+      let preparedStyles = [];
+      forEachValue(styles, node, env, style => {
+        // TODO: Validate style and possibly transform it such that it ends up
+        // being a string ready to append to the style attribute of each
+        // targeted element.
+        preparedStyles.push("...");
+      });
+      preparedRule.style = preparedStyles;
+
+      // TODO: Validate the check function if provided.
+      preparedRule.check = "...";
+
+      preparedRules.push(preparedRule);
     });
+    preparedTransform.rules = preparedRules;
+
   }
 
 
@@ -726,7 +770,7 @@ export class AppStyler01 {
       preparedRule.classes = classes.map(className => {
         className = getString(className, node, env);
         if (typeof className !== "string") return;
-        let [match, classNameRoot, styleSheetKey] = CLASS_REGEX.exec(className);
+        let [match, classNameRoot, styleSheetKey] = CLASS_STRING_REGEX.exec(className);
         if (!match) throw new ArgTypeError(
           `Invalid class: "${className}"`,
           node, env
