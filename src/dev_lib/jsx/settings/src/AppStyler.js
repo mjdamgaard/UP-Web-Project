@@ -8,11 +8,11 @@ import {
 } from "../../../../interpreting/ScriptInterpreter.js";
 
 const CLASS_STRING_REGEX = /^ *([a-z][a-z0-9\-]*)((_[a-z0-9\-]*)?) *$/;
-// const CLASS_NAME_AND_SUFFIX_REGEX = /^([a-z][a-z0-9\-]*)((_[a-z0-9\-]*)?)$/;
 const SPACE_REGEX = / +/;
 const STYLE_SHEET_KEY_REGEX = /^[a-z0-9\-]+$/;
 const RELATIVE_ROUTE_START_REGEX = /^\.\.?\//;
 
+const TRANSFORM_KEYWORD_REGEX = /^(inherit)$/;
 
 
 // The "transform" objects used by the AppStyler01 are of the following when
@@ -28,7 +28,7 @@ const RELATIVE_ROUTE_START_REGEX = /^\.\.?\//;
 // check : <function>,
 // childRules := [({key, transform?, props?},)*],
 // key : </!?.+\*?/ key format>,
-// transform : <transform>.
+// transform : <transform> | "inherit".
 //
 // And after having been prepared, they are of the form:
 //
@@ -282,7 +282,7 @@ export class AppStyler01 {
       // it by appending "_", which is similar to appending "_<styleSheetID>"
       // with styleSheetID = "". 
       if (typeof selector !== "string") throw new ArgTypeError(
-        `Invalid selector, ${getString(selector, node, env)}`,
+        `Invalid selector: ${getString(selector, node, env)}`,
         node, env
       );
       let selectorListNode = parseString(
@@ -368,11 +368,20 @@ export class AppStyler01 {
       // Make sure that key is a string.
       preparedChildRule.key = getString(key, node, env);
 
-      // If transform is defined, prepare it recursively..
-      if (transform !== undefined) {
-        transform = this.prepareTransform(transform, componentID, node, env);
+      // If transform is a string, check that it is a reserved keyword.
+      if (typeof transform === "string") {
+        if (!TRANSFORM_KEYWORD_REGEX.test(transform)) throw new ArgTypeError(
+          `Invalid transform keyword: ${getString(selector, node, env)}`,
+          node, env
+        );
+        preparedChildRule.transform = transform;
       }
-      preparedChildRule.transform = transform;
+
+      // Else if transform is defined, prepare it recursively.
+      else if (transform !== undefined) {
+        transform = this.prepareTransform(transform, componentID, node, env);
+        preparedChildRule.transform = transform;
+      }
       
       // And transformProps can be anything in principle, so just copy it.
       preparedChildRule.props = transformProps;
