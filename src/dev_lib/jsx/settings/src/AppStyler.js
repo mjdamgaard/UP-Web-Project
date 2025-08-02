@@ -37,9 +37,7 @@ const RELATIVE_ROUTE_START_REGEX = /^\.\.?\//;
 // style : <style string ready to be appended to a given style attribute>
 // class : [(<class ready to be added to an element's classList>,)*]
 // check : <function>,
-// childRules := [({key, transform?, props?},)*],
-// key : </!?.+\*?/ key format>,
-// transform : <transform>.
+// childRules := *same as above*.
 //
 // Furthermore, the settingsData props used are:
 // componentID?: <the ID of root component of the current style scope>,
@@ -279,20 +277,29 @@ export class AppStyler01 {
         styles = [styles];
       }
 
-      // Validate the selector.
+      // Validate and prepare the selector, transforming each class selector in
+      // it by appending "_", which is similar to appending "_<styleSheetID>"
+      // with styleSheetID = "". 
       if (typeof selector !== "string") throw new ArgTypeError(
-        "...",
+        `Invalid selector, ${getString(selector, node, env)}`,
         node, env
       );
-      // TODO: Parse selector.
-      preparedRule.selector = "...";
+      let selectorListNode = parseString(
+        selector, node, env, cssParser, "selector-list"
+      )
+      selectorTemplate = cssTransformer.transformSelectorList(selectorListNode);
+      let styleSheetID = "";
+      preparedRule.selector = cssTransformer.instantiateStyleSheetTemplate(
+        selectorTemplate, componentID, styleSheetID
+      );
 
       // Prepare the output classes.
       let preparedOutClasses = [];
       forEachValue(outClasses, node, env, classStr => {
         if (typeof classStr !== string || !CLASS_STRING_REGEX.test(classStr)) {
           throw new ArgTypeError(
-            `Invalid class string: ${getString(classStr, node, env)}`
+            `Invalid class string: ${getString(classStr, node, env)}`,
+            node, env
           );
         }
         classStr.split(SPACE_REGEX).forEach(className => {
@@ -315,21 +322,49 @@ export class AppStyler01 {
       // Validate and prepare the styles.
       let preparedStyles = [];
       forEachValue(styles, node, env, style => {
-        // TODO: Validate style and possibly transform it such that it ends up
-        // being a string ready to append to the style attribute of each
-        // targeted element.
-        preparedStyles.push("...");
+        // If style is an object, stringify it and remove the wrapping "{}".
+        if (style instanceof Object) {
+          style = jsonStringify(style).slice(1, -1);
+        }
+
+        // Else if it is a string, trim it in both ends.
+        else {
+          style = getString(style, node, env).trim();
+        }
+
+        // Then parse the declaration list, throwing on failure, and push the
+        // style string to preparedStyles on success.
+        parseString(style, node, env, cssParser, "declaration!1+");
+        preparedStyles.push(style);
       });
-      preparedRule.style = preparedStyles;
+      preparedRule.style = preparedStyles.join(" ");
 
-      // TODO: Validate the check function if provided.
-      preparedRule.check = "...";
+      // Validate the check function if one is provided.
+      if (check) {
+        if (!(check instanceof FunctionObject)) throw new ArgTypeError(
+          `Invalid check function: ${getString(check, node, env)}`,
+          node, env
+        );
+        preparedRule.check = check;
+      }
 
+      // And finally push the now prepared rule to preparedRules before
+      // continuing to the next rule.
       preparedRules.push(preparedRule);
     });
     preparedTransform.rules = preparedRules;
 
+
+    // TODO: Then prepare childRules.
   }
+
+
+
+
+
+
+
+
 
 
 

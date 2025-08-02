@@ -1947,9 +1947,10 @@ export class ObjectObject {
     let {interpreter} = env.scriptVars;
     let toStringMethod = this.get("toString");
     if (toStringMethod instanceof FunctionObject) {
-      return interpreter.executeFunction(
+      let ret = interpreter.executeFunction(
         toStringMethod, [], node, env, this, [CLEAR_FLAG]
       );
+      return getString(ret, node, env);
     }
     return `[object ${this.className}()]`;
   }
