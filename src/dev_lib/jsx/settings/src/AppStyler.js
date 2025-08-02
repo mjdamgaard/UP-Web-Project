@@ -33,9 +33,9 @@ const TRANSFORM_KEYWORD_REGEX = /^(inherit)$/;
 // And after having been prepared, they are of the form:
 //
 // <transform> := {(rules, childRules},
-// rules : [({selector, style, class, check?},)*],
+// rules : [({selector, style, classes, check?},)*],
 // style : <style string ready to be appended to a given style attribute>
-// class : [(<class ready to be added to an element's classList>,)*]
+// classes : [(<class ready to be added to an element's classList>,)*]
 // check : <function>,
 // childRules := *same as above*.
 //
@@ -322,7 +322,7 @@ export class AppStyler01 {
           preparedOutClasses.push(preparedOutClass);
         });
       });
-      preparedRule.class = preparedOutClasses;
+      preparedRule.classes = preparedOutClasses;
 
       // Validate and prepare the styles.
       let preparedStyles = [];
@@ -401,69 +401,69 @@ export class AppStyler01 {
 
 
 
-
   // transformInstance() takes the outer DOM node of a component instance, an
   // array if its "own" DOM nodes, and a rules array that has already been
   // validated and prepared by inserting the right style sheet IDs in classes,
   // and then transforms the nodes of that instance, giving it inline styles
   // and/or classes. 
-  transformInstance(domNode, ownDOMNodes, preparedRules) {
+  transformInstance(jsxInstance, domNode, ownDOMNodes, node, env) {
+    let {parentInstance, settingsData, props, state} = jsxInstance;
+    let {componentID, transform: {rules}, transformProps} = settingsData;
+    let {interpreter} = env.scriptVars;
     if (ownDOMNodes.length === 0) {
       return;
     }
 
-    // Add an "own-leaf" class to all of the ownDOMNodes who haven't got
-    // children themselves that are part of the ownDOMNodes. Since this array
-    // is ordered with ancestors coming before their descendants, we can do
-    // that the following way.
+    // Add the "c<componentID>" class to all ownDOMNodes, and also add an
+    // "own-leaf" class to all the nodes that haven't got children themselves
+    // that are part of the ownDOMNodes. Since the ownDOMNodes array is ordered
+    // with ancestors coming before their descendants, we can do that the
+    // following way.
+    let componentIDClass = `c${componentID}`;
     ownDOMNodes.forEach(node => {
       let parent = node.parentElement;
       if (parent.classList.contains("own-leaf")) {
         parent.classList.remove("own-leaf");
       }
-      node.classList.add("own-leaf");
+      node.classList.add("own-leaf", componentIDClass);
     });
 
     // Now go through each rule and add the inline styles and classes to the
-    // element that the rule selects.
-    preparedRules.forEach(({selector, classes, style}) => {
-      // Get the elements that the selector selects. Note that the selectors
-      // have to be validated for each rule (by parsing them successfully)
-      // before this method is called. And they also have to have all classes
-      // in them transformed by appending a '_' to them.
+    // element that the rule selects, but only if the check function succeeds,
+    // or it is undefined.
+    rules.forEach(({selector, classes, style, check}) => {
+      // Check if the rule applies to the instance with its current props and
+      // state, and return early otherwise.
+      if (check) {
+        let ruleApplies = interpreter.executeFunction(
+          check, [props, state, transformProps], node, env, undefined,
+          [CLEAR_FLAG]
+        );
+        if (!ruleApplies) return;
+      }
+
+      // Get the elements that the selector selects out of the ownDOMNodes.
       let transformedSelector = ':scope:where(' + selector + '), ' +
         ':scope :not(:scope .own-leaf *):where(' + selector + ')';
       let targetNodes = domNode.querySelectorAll(transformedSelector);
       
-      // Then apply the inline styles and classes. We also here assume that all
-      // styles has already been validated, and that all classes have been
-      // transformed, giving them the right style sheet ID suffix.
+      // Then apply the inline styles and classes.
       targetNodes.forEach(node => {
-        if (classes) {
-          classes.forEach(className => {
-            node.classList.add(className);
-          });
-        }
-        if (style) {
-          node.setAttribute("style", style);
-        }
+        classes.forEach(className => {
+          node.classList.add(className);
+        });
+        let prevStyle = node.getAttribute("style");
+        node.setAttribute("style", prevStyle + " " + style);
       });
     });
 
     // Finally, remove the "own-leaf" classes again.
-    ownDOMNodes.forEach(node => {
-      node.classList.remove("own-leaf");
-    });
+    ownDOMNodes.forEach(node => node.classList.remove("own-leaf"));
   }
 
 }
 
 
-// export class TransformError {
-//   constructor(msg) {
-//     this.msg = msg;
-//   }
-// }
 
 
 
