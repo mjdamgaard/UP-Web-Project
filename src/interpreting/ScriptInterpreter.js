@@ -1961,7 +1961,7 @@ export class ObjectObject {
 export class ClassObject extends ObjectObject {
   constructor(
     className, constructor = undefined, prototype = {}, superclass = undefined,
-    instancesAreMutable = superclass?.instancesAreComparable,
+    instancesAreComparable = superclass?.instancesAreComparable,
     instancesAreMutable = superclass?.instancesAreMutable,
     instancesAreArrays = superclass?.instancesAreArrays,
     instancesAreMaps = superclass?.instancesAreMaps,

@@ -165,7 +165,7 @@ class JSXInstance {
     // can queue a rerender here when that happens.
     let [
       isReady, whenReady, renderBeforeReady = false
-    ] = settings.prepareInstance(this, callerNode, callerEnv);
+    ] = this.settings.prepareInstance(this, callerNode, callerEnv);
     if (!isReady) {
       whenReady.then(() => this.queueRerender(interpreter));
       if (!renderBeforeReady) {
@@ -185,10 +185,10 @@ class JSXInstance {
     // call settings.getRequestOrigin() to get the a component path (not
     // necessarily that of the current component) which can also used in CORS-
     // lie checks by the server modules.
-    let isTrusted = settings.getClientTrust(
+    let isTrusted = this.settings.getClientTrust(
       this, callerNode, callerEnv
     );
-    let requestOrigin = settings.getRequestOrigin(
+    let requestOrigin = this.settings.getRequestOrigin(
       this, callerNode, callerEnv
     );
     let compEnv = new Environment(callerEnv, undefined, {flags: [
@@ -288,7 +288,7 @@ class JSXInstance {
     // it (by giving it classes and/or inline styles). Note if this method has
     // not yet been prepared for the instance, it will just do nothing, and
     // wait for the rerender.
-    settings.transformInstance(
+    this.settings.transformInstance(
       this, newDOMNode, ownDOMNodes, callerNode, compEnv
     );
 

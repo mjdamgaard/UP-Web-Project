@@ -158,6 +158,13 @@ export class AppStyler01 {
       }
     }
 
+    // If transform equals the "inherit" keyword, instead get the transform
+    // from the nearest ancestor instance of the same component with an actual
+    // transform stored in its settingsData.
+    if (transform === "inherit") {
+      transform = this.getInheritedTransform(parentInstance, componentPath);
+    }
+
     // If the transform is falsy, it means that the instance should be the
     // root instance of a new scope.
     if (!transform) {
@@ -200,6 +207,20 @@ export class AppStyler01 {
     // And finally, we can return isReady = true.
     return [true];
   }
+
+
+  getInheritedTransform(parentInstance, callerComponentPath) {
+    let {componentPath, settingsData: {transform}} = parentInstance;
+    if (componentPath === callerComponentPath && transform instanceof Object) {
+      return transform;
+    }
+    parentInstance = parentInstance.parentInstance;
+    if (parentInstance) {
+      return this.getInheritedTransform(parentInstance, callerComponentPath);
+    }
+    else return undefined;
+  }
+
 
 
   // prepareTransform() transforms a user-defined transform of the form
@@ -407,7 +428,7 @@ export class AppStyler01 {
   // and then transforms the nodes of that instance, giving it inline styles
   // and/or classes. 
   transformInstance(jsxInstance, domNode, ownDOMNodes, node, env) {
-    let {parentInstance, settingsData, props, state} = jsxInstance;
+    let {settingsData, props, state} = jsxInstance;
     let {componentID, transform: {rules}, transformProps} = settingsData;
     let {interpreter} = env.scriptVars;
     if (ownDOMNodes.length === 0) {
