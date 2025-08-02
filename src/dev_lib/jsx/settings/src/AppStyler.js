@@ -153,7 +153,7 @@ export class AppStyler01 {
       let {key: keyFormat} = rule = childRules[i];
       if (testKey(key, keyFormat)) {
         transform = rule.transform;
-        transformProps = rule.transformProps;
+        transformProps = rule.props;
         break;
       }
     }
@@ -259,6 +259,7 @@ export class AppStyler01 {
       document.querySelector("head").appendChild(styleElement);
     });
 
+
     // With the styleSheetID array in hand, we can now prepare the rules by
     // appending or substituting the right styleSheetID suffix to the output
     // classes. We also go through each of the output styles and validate these.
@@ -355,7 +356,34 @@ export class AppStyler01 {
     preparedTransform.rules = preparedRules;
 
 
-    // TODO: Then prepare childRules.
+    // Then prepare the childRules.
+    let childRules = getPropertyFromObject(transform, "childRules") ?? [];
+    let preparedChildRules = [];
+    forEachValue(childRules, node, env, childRule => {
+      let preparedChildRule = {};
+      let key = getPropertyFromObject(childRule, "key");
+      let transform = getPropertyFromObject(childRule, "transform");
+      let transformProps = getPropertyFromObject(childRule, "props");
+
+      // Make sure that key is a string.
+      preparedChildRule.key = getString(key, node, env);
+
+      // If transform is defined, prepare it recursively..
+      if (transform !== undefined) {
+        transform = this.prepareTransform(transform, componentID, node, env);
+      }
+      preparedChildRule.transform = transform;
+      
+      // And transformProps can be anything in principle, so just copy it.
+      preparedChildRule.props = transformProps;
+
+      // Then push the now prepared childRule and continue the iteration.
+      preparedChildRules.push(preparedChildRule);
+    });
+    preparedTransform.childRules = preparedChildRules;
+
+    // Finally, return the prepared {rules, childRules} transform.
+    return preparedTransform;
   }
 
 
