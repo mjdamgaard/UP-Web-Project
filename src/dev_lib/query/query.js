@@ -149,7 +149,7 @@ export const fetch = new DevFunction(
     {callerNode, execEnv, interpreter},
     [extendedRoute, isPrivate = false, options]
   ) {
-    let [result] = await query.fun(
+    let result = await query.fun(
       {callerNode, execEnv, interpreter},
       [extendedRoute, false, undefined, isPrivate, options],
     ) ?? [];
@@ -164,7 +164,7 @@ export const post = new DevFunction(
     {callerNode, execEnv, interpreter},
     [route, postData, options]
   ) {
-    let [result] = await query.fun(
+    let result = await query.fun(
       {callerNode, execEnv, interpreter},
       [route, true, postData, true, options],
     ) ?? [];

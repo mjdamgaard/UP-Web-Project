@@ -201,7 +201,9 @@ export class ScriptInterpreter {
 
 
 
-
+// TODO: Remove the parseScripts buffer; it should be redundant when we also
+// have the liveModules buffer, and already make sure that we never execute a
+// module more than once.
 
   async fetchParsedScript(
     scriptPath, parsedScripts, callerNode, callerEnv

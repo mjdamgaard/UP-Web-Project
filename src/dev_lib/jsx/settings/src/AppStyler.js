@@ -173,7 +173,10 @@ export class AppStyler01 {
     // If the transform is falsy, it means that the instance should be the
     // root instance of a new scope.
     if (!transform) {
-      // First get the componentID.
+      // First record that the instance is the root of a style scope.
+      settingsData.isScopeRoot = true;
+
+      // Then get the componentID.
       componentID = this.componentIDs[componentPath];
 
       // If this is not ready yet, return it as the whenReady promise, such
@@ -450,7 +453,8 @@ export class AppStyler01 {
   // and/or classes. 
   transformInstance(jsxInstance, domNode, ownDOMNodes, node, env) {
     let {settingsData, props, state} = jsxInstance;
-    let {componentID, transform: {rules}, transformProps} = settingsData;
+    let {componentID, transform: {rules}, transformProps, isScopeRoot} =
+      settingsData;
     let {interpreter} = env.scriptVars;
     if (ownDOMNodes.length === 0) {
       return;
@@ -510,6 +514,12 @@ export class AppStyler01 {
 
     // Finally, remove the "own-leaf" classes again.
     ownDOMNodes.forEach(node => node.classList.remove("own-leaf"));
+
+    // And in case of the outer component of a style scope, set the overflow
+    // style property as hidden.
+    if (isScopeRoot) {
+      domNode.style.overflow = "hidden";
+    }
   }
 
 }

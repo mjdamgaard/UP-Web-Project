@@ -51,7 +51,7 @@ export async function queryDB(
 
   // Query the database via the filetypeModule, and return the result.
   let result = await filetypeModule.query(
-    {node, env, interpreter},
+    {callerNode: node, execEnv: env, interpreter: interpreter},
     route, isPost, postData, options,
     homeDirID, filePath, fileExt, queryPathArr,
   );
