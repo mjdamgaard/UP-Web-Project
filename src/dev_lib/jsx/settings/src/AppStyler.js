@@ -34,7 +34,8 @@ const TRANSFORM_KEYWORD_REGEX = /^(inherit)$/;
 //
 // <transform> := {(rules, childRules},
 // rules : [({selector, style, classes, check?},)*],
-// style : <style string ready to be appended to a given style attribute>
+// styles : [(<style>,)*],
+// <style> := <string ready to be appended to a style attribute> | <function>,
 // classes : [(<class ready to be added to an element's classList>,)*]
 // check : <function>,
 // childRules := *same as above*.
@@ -348,22 +349,20 @@ export class AppStyler01 {
       // Validate and prepare the styles.
       let preparedStyles = [];
       forEachValue(styles, node, env, style => {
-        // If style is an object, stringify it and remove the wrapping "{}".
-        if (style instanceof Object) {
-          style = jsonStringify(style).slice(1, -1);
+        // If style is a function, push it as it is to preparedStyles and
+        // return in order to continue the iteration.
+        if (style instanceof FunctionObject) {
+          preparedStyles.push(style);
+          return;
         }
 
-        // Else if it is a string, trim it in both ends.
-        else {
-          style = getString(style, node, env).trim();
-        }
-
-        // Then parse the declaration list, throwing on failure, and push the
-        // style string to preparedStyles on success.
-        parseString(style, node, env, cssParser, "declaration!1*$");
+        // Else validate and possibly transform the user-defined style such
+        // that it is ready to be appended to a style attribute. (And if the
+        // validation fails, the following method call will throw.)
+        style = this.prepareStyle(style, node, env);
         preparedStyles.push(style);
       });
-      preparedRule.style = preparedStyles.join(" ");
+      preparedRule.styles = preparedStyles;
 
       // Validate the check function if one is provided.
       if (check) {
@@ -421,6 +420,24 @@ export class AppStyler01 {
   }
 
 
+  // prepareStyle() validates an input style, and possibly turns it from an
+  // object into a style string first, before the validation.
+  prepareStyle(style, node, env) {
+    // If it's an object, stringify it and remove the wrapping "{}".
+    if (style instanceof Object) {
+      style = jsonStringify(style).slice(1, -1);
+    }
+
+    // Else if it is a string, trim it in both ends.
+    else {
+      style = getString(style, node, env).trim();
+    }
+
+    // Then parse the declaration list, throwing on failure.
+    parseString(style, node, env, cssParser, "declaration!1*$");
+  }
+
+
 
   // transformInstance() takes the outer DOM node of a component instance, an
   // array if its "own" DOM nodes, and a rules array that has already been
@@ -452,12 +469,12 @@ export class AppStyler01 {
     // Now go through each rule and add the inline styles and classes to the
     // element that the rule selects, but only if the check function succeeds,
     // or it is undefined.
-    rules.forEach(({selector, classes, style, check}) => {
+    rules.forEach(({selector, classes, styles, check}) => {
       // Check if the rule applies to the instance with its current props and
       // state, and return early otherwise.
       if (check) {
         let ruleApplies = interpreter.executeFunction(
-          check, [props, state, transformProps], node, env, undefined,
+          check, [transformProps, props, state], node, env, undefined,
           [CLEAR_FLAG]
         );
         if (!ruleApplies) return;
@@ -473,8 +490,17 @@ export class AppStyler01 {
         classes.forEach(className => {
           node.classList.add(className);
         });
-        let prevStyle = node.getAttribute("style");
-        node.setAttribute("style", prevStyle + " " + style);
+        styles.forEach(style => {
+          if (style instanceof FunctionObject) {
+            style = interpreter.executeFunction(
+              style, [transformProps, props, state], node, env, undefined,
+              [CLEAR_FLAG]
+            );
+            style = this.prepareStyle(style, node, env);
+          }
+          let prevStyle = node.getAttribute("style");
+          node.setAttribute("style", prevStyle + " " + style);
+        });
       });
     });
 

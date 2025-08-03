@@ -1770,6 +1770,9 @@ export class Environment {
   getFlag(flag, stopAtClear = true) {
     let flagParams = this.flags.get(flag);
     if (flagParams !== undefined) {
+      if (flagParams === UNDEFINED) {
+        return undefined;
+      }
       return flagParams;
     }
     else if (stopAtClear && this.flags.get(CLEAR_FLAG)) {
@@ -1783,7 +1786,7 @@ export class Environment {
     }
   }
 
-  setFlag(flag, flagParams = null) {
+  setFlag(flag, flagParams = UNDEFINED) {
     this.flags.set(flag, flagParams);
   }
 
@@ -1972,9 +1975,10 @@ export class ClassObject extends ObjectObject {
       (superclass === undefined) ?
         new DevFunction(className, {}, () => {}) :
         new DevFunction(
-          className, {}, ({callerNode, execEnv, thisVal}, inputArr) => {
+          className, {},
+          ({callerNode, execEnv, thisVal, interpreter}, inputArr) => {
             let superclass = execEnv.getSuperclass(callerNode);
-            this.executeFunction(
+            interpreter.executeFunction(
               superclass.instanceConstructor, inputArr, callerNode, execEnv,
               thisVal, [SUPERCLASS_FLAG, superclass.superclass]
             );
@@ -2012,7 +2016,7 @@ export class ClassObject extends ObjectObject {
     );
     interpreter.executeFunction(
       this.instanceConstructor, inputArr, callerNode, callerEnv, newInst,
-      [SUPERCLASS_FLAG, this.superclass]
+      [[SUPERCLASS_FLAG, this.superclass]]
     );
     newInst.isMutable = this.instancesAreMutable;
     return newInst;
@@ -2022,15 +2026,15 @@ export class ClassObject extends ObjectObject {
 const SUPERCLASS_FLAG = Symbol("superclass");
 
 
-export const mutableObjectClass = new ClassObject(
-  "MutableObject", undefined, undefined, undefined, true, true
-);
-export const mutableArrayClass = new ClassObject(
-  "MutableArray", undefined, undefined, undefined, true, true, true
-);
-export const mutableMapClass = new ClassObject(
-  "MutableMap", undefined, undefined, undefined, false, true, false, true
-);
+// export const mutableObjectClass = new ClassObject(
+//   "MutableObject", undefined, undefined, undefined, true, true
+// );
+// export const mutableArrayClass = new ClassObject(
+//   "MutableArray", undefined, undefined, undefined, true, true, true
+// );
+// export const mutableMapClass = new ClassObject(
+//   "MutableMap", undefined, undefined, undefined, false, true, false, true
+// );
 
 
 
@@ -2250,6 +2254,21 @@ export class DevFunction extends FunctionObject {
     return this._name ?? "<anonymous dev function>";
   }
 }
+
+
+
+
+
+
+export const mutableObjectClass = new ClassObject(
+  "MutableObject", undefined, undefined, undefined, true, true
+);
+export const mutableArrayClass = new ClassObject(
+  "MutableArray", undefined, undefined, undefined, true, true, true
+);
+export const mutableMapClass = new ClassObject(
+  "MutableMap", undefined, undefined, undefined, false, true, false, true
+);
 
 
 

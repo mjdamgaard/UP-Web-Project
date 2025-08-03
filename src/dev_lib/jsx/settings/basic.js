@@ -90,7 +90,7 @@ export class SettingsObject01 extends SettingsObject {
 }
 
 
-export const settings = new BasicSettingsObject();
+export const settings = new SettingsObject01();
 
 export {settings as default};
 
