@@ -32,7 +32,7 @@ export class CSSTransformer {
   // inserted in the document head.
   transformStyleSheet(styleSheet, node, env) {
     let styleSheetNode = parseString(styleSheet, node, env, cssParser);
-    let  = styleSheetNode.stmtArr.map(stmt => (
+    let styleSheetTemplate = styleSheetNode.stmtArr.map(stmt => (
       this.transformStatement(stmt)
     )).join("\n");
     return styleSheetTemplate;
@@ -116,7 +116,7 @@ export class CSSTransformer {
     // Then append the pseudo-element if any, and return the result.
     let pseudoElement = selector.pseudoElement;
     return pseudoElement ?
-      transformedMainChildren + transformSimpleSelector(pseudoElement) :
+      transformedMainChildren + this.transformSimpleSelector(pseudoElement) :
       transformedMainChildren;
   }
 
@@ -138,7 +138,6 @@ export class CSSTransformer {
       // the classes array, and return a transformed version where "_\sid" is
       // appended to it. 
       else if (indOfUnderscore === -1) {
-        classes.push(className);
         return "." + className + "_\\sid";
       }
       else {

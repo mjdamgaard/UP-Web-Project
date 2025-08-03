@@ -2057,7 +2057,10 @@ export function getPropertyFromObject(obj, key) {
   if (obj instanceof ObjectObject) {
     return obj.get(key);
   }
-  else return getPropertyFromPlainObject(obj, key);
+  else if (obj instanceof Object) {
+    return getPropertyFromPlainObject(obj, key);
+  }
+  else return undefined;
 }
 
 export function getPropertyFromPlainObject(obj, key) {
@@ -2399,24 +2402,24 @@ export function verifyType(val, type, isOptional, node, env) {
         );
       }
       return;
-    case (typeof type === "symbol"):
-      if (!(val instanceof ObjectObject) || val.className !== type) {
-        throw new ArgTypeError(
-          `Value is not an instance of the ${type.valueOf()} class`,
-          node, env
-        );
-      }
-      return;
-    case (typeof type === "string" && type[0] === type[0].toUpperCase()):
-      if (!(val instanceof ObjectObject) || val.className !== type) {
-        throw new ArgTypeError(
-          `Value is not an instance of the ${type} class`,
-          node, env
-        );
-      }
-      return;
     default:
-      throw new RuntimeError(
+      if (typeof type === "symbol") {
+        if (!(val instanceof ObjectObject) || val.className !== type) {
+          throw new ArgTypeError(
+            `Value is not an instance of the ${type.valueOf()} class`,
+            node, env
+          );
+        }
+      }
+      else if (typeof type === "string" && type[0] === type[0].toUpperCase()) {
+        if (!(val instanceof ObjectObject) || val.className !== type) {
+          throw new ArgTypeError(
+            `Value is not an instance of the ${type} class`,
+            node, env
+          );
+        }
+      }
+      else throw new RuntimeError(
         "Unrecognized type", node, env
       );
   }

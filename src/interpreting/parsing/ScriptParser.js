@@ -31,7 +31,7 @@ export const scriptGrammar = {
     rules: [
       [
         "import-statement!1*",
-        "outer-statement+$"
+        "outer-statement!1*$"
       ],
     ],
     process: (children) => ({

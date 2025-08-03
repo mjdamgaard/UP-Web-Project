@@ -63,6 +63,7 @@ export class AppStyler01 {
     // instances: {componentID: <isLoaded>}} values.
     this.componentIDs = {}; // with componentPath keys.
     this.nextComponentID = 1;
+    this.componentPaths = {}; // with componentID keys.
     this.defaultComponentStyles = {}; // with componentPath keys.
 
     await this.prepareComponent(componentModule, node, env);
@@ -100,13 +101,16 @@ export class AppStyler01 {
       this.prepareComponentHelper(componentModule, componentPath, node, env);
     idPromise.then(id => {
       this.componentIDs[componentPath] = id;
+      this.componentPaths[id] = componentPath;
     });
     return idPromise;
   }
 
   async prepareComponentHelper(componentModule, componentPath, node, env) {
     // Get a new, unique ID for the component.
-    componentID = this.componentIDs[componentPath] = this.getNextComponentID();
+    let componentID = this.componentIDs[componentPath] =
+      this.getNextComponentID();
+    this.componentPaths[componentID] = componentPath;
 
     // Then call settings.getStyleModule() to get the so-called style module
     // for the component. This might be the module pointed to by a
@@ -148,7 +152,7 @@ export class AppStyler01 {
     // Extract the transform and transformProps from the last child rule in the
     // parent instance's childRules array where the key format matches this
     // instance's key.
-    let transform, transformProps;
+    let transform, transformProps, rule;
     let len = childRules.length;
     for (let i = len - 1; i >= 0; i--) {
       let {key: keyFormat} = rule = childRules[i];
@@ -277,7 +281,7 @@ export class AppStyler01 {
       let styleSheetInstance = cssTransformer.instantiateStyleSheetTemplate(
         template, componentID, styleSheetID 
       );
-      styleElement = document.createElement("style");
+      let styleElement = document.createElement("style");
       styleElement.append(styleSheetInstance);
       styleElement.setAttribute(
         "class", `up-style sid-${styleSheetID} cid-${componentID}`
@@ -311,10 +315,10 @@ export class AppStyler01 {
         `Invalid selector: ${getString(selector, node, env)}`,
         node, env
       );
-      let selectorListNode = parseString(
+      let selectorList = parseString(
         selector, node, env, cssParser, "selector-list"
       )
-      selectorTemplate = cssTransformer.transformSelectorList(selectorListNode);
+      let selectorTemplate = cssTransformer.transformSelectorList(selectorList);
       let styleSheetID = "";
       preparedRule.selector = cssTransformer.instantiateStyleSheetTemplate(
         selectorTemplate, componentID, styleSheetID
@@ -323,7 +327,7 @@ export class AppStyler01 {
       // Prepare the output classes.
       let preparedOutClasses = [];
       forEachValue(outClasses, node, env, classStr => {
-        if (typeof classStr !== string || !CLASS_STRING_REGEX.test(classStr)) {
+        if (typeof classStr !== "string" || !CLASS_STRING_REGEX.test(classStr)) {
           throw new ArgTypeError(
             `Invalid class string: ${getString(classStr, node, env)}`,
             node, env
@@ -395,7 +399,7 @@ export class AppStyler01 {
       // If transform is a string, check that it is a reserved keyword.
       if (typeof transform === "string") {
         if (!TRANSFORM_KEYWORD_REGEX.test(transform)) throw new ArgTypeError(
-          `Invalid transform keyword: ${getString(selector, node, env)}`,
+          `Invalid transform keyword: ${getString(transform, node, env)}`,
           node, env
         );
         preparedChildRule.transform = transform;
@@ -539,7 +543,7 @@ function testKeyHelper(key, keyFormat) {
 
 
 
-export const appStyler = new AppStyler();
+export const appStyler = new AppStyler01();
 
 
 export {appStyler as default};

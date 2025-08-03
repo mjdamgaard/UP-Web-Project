@@ -3,6 +3,7 @@ import {
   LiveJSModule as SCSSModule, AbstractObject,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {SettingsObject} from "../jsx_components.js";
+import {appStyler} from "./src/AppStyler.js";
 
 const CLASS_REGEX = /^([a-zA-Z][a-z-A-Z0-9\-]*)_([a-zA-Z][a-z-A-Z0-9\-]*)$/;
 const STYLE_SHEET_ID_REGEX = /^[a-zA-Z][a-z-A-Z0-9\-]$/;
@@ -23,7 +24,8 @@ export class SettingsObject01 extends SettingsObject {
     this.userID = userID;
     this.transformModuleMap = new Map();
     
-    // TODO: Continue.
+    this.appStyler = appStyler;
+    this.appStyler.initiate(appComponent, this, node, env);
   }
 
 
@@ -47,13 +49,18 @@ export class SettingsObject01 extends SettingsObject {
 
   // TODO: Implement.
   prepareInstance(jsxInstance, node, env) {
-
+    return [true];
   }
 
 
   // TODO: Implement.
-  getComponentTrust(requestOrigin, node, env) {
+  getClientTrust(requestOrigin, node, env) {
+    return false;
+  }
 
+  getRequestOrigin(jsxInstance) {
+    let {componentID} = jsxInstance.settingsData;
+    return this.appStyler.componentPaths[componentID];
   }
 
 
@@ -63,7 +70,7 @@ export class SettingsObject01 extends SettingsObject {
   }
 
 
-  getTransformModule(componentModule, node, env) {
+  getTransformModule(componentModule, node, env) {return componentModule;
     // See if the transformModule for the given component has already been
     // decided, or if there's a promise for it pending, and if so return it,
     // promise or not.

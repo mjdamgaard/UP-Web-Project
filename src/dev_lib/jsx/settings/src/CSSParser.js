@@ -300,9 +300,9 @@ export const cssGrammar = {
   },
   "at-rule": {
     rules: [
-      // ["at-media-rule"],
-      // ["at-container-rule"],
-      // ["at-layer-rule"],
+      ["at-media-rule"],
+      ["at-container-rule"],
+      ["at-layer-rule"],
     ],
     process: copyFromChild,
   },
