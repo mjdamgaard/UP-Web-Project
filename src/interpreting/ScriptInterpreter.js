@@ -1530,7 +1530,9 @@ export class ScriptInterpreter {
         val = val.getNewInstance(inputArr, expTuple, environment);
       }
       if (val instanceof FunctionObject) {
-        let newInst = new ObjectObject(val.name, {}, undefined, val);
+        let newInst = new ObjectObject(
+          "Object", undefined, {}, undefined, val
+        );
         this.executeFunction(
           val, inputArr, expTuple, environment, newInst
         );
@@ -1859,11 +1861,12 @@ const emptyObj = {};
 
 export class ObjectObject {
   constructor(
-    className, members = {}, prototype = emptyObj, constructor = undefined,
-    isComparable = undefined, isMutable = undefined, isArray = undefined,
-    isMap = undefined,
+    className, classObj = undefined, members = {}, prototype = emptyObj,
+    constructor = undefined, isComparable = undefined, isMutable = undefined,
+    isArray = undefined, isMap = undefined,
   ) {
     this.className = className;
+    this.class = classObj;
     this.members = members;
     this.proto = prototype;
     this.classConstructor = constructor;
@@ -1902,10 +1905,20 @@ export class ObjectObject {
   }
 
   #get(key) {
-    let ret = this.isMap ? this.members.get(key) : this.members[key]
-    if (ret === undefined && this.proto) {
-      return getPropertyFromObject(this.proto)
+    let ret = this.isMap ? this.members.get(key) :
+      Object.hasOwn(this.members, key) ? this.members[key] : undefined;
+    if (ret === undefined) {
+      ret = getPropertyFromObject(this.proto, key)
     }
+    if (ret === undefined) {
+      let classObj = this.class;
+      while (classObj !== undefined) {
+        ret = getPropertyFromObject(classObj.instanceProto, key);
+        if (ret !== undefined) break;
+        classObj = classObj.superclass;
+      }
+    }
+    return ret;
   }
   #set(key, val) {
     if (this.isMap) this.members.set(key, val);
@@ -2009,10 +2022,10 @@ export class ClassObject extends ObjectObject {
     let {interpreter} = callerEnv.scriptVars;
     let members = this.instancesAreArrays ? [] :
       this.instancesAreMaps ? new Map() : {};
-    let newInst = (this.superclass) ? undefined : new ObjectObject(
-      this.className, members, this.instanceProto, this.instanceConstructor,
-      this.instancesAreComparable, true, this.instancesAreArrays,
-      this.instancesAreMaps,
+    let newInst = new ObjectObject(
+      this.className, this, members, this.instanceProto,
+      this.instanceConstructor, this.instancesAreComparable, true,
+      this.instancesAreArrays, this.instancesAreMaps,
     );
     interpreter.executeFunction(
       this.instanceConstructor, inputArr, callerNode, callerEnv, newInst,
@@ -2692,7 +2705,7 @@ export function getExtendedErrorMsg(err) {
   }
 
   // Get the error message.
-  let msg = getString(err, err.node, err.environment);
+  let msg = getString(err.val, err.node, err.environment);
 
   // If error is thrown from the global environment, also return the
   // toString()'ed error as is.
