@@ -1,5 +1,6 @@
 
 import {fetch} from 'query';
+import {map} from 'array';
 
 
 export function getInitState({isAscending = true}) {
@@ -16,15 +17,20 @@ export function render() {
   }
 
   let len = postList.length;
-  let retChildren = [];
-  for (let i = 0; i < len; i++) {
-    retChildren[i] = (
-      <div>
-        <span>{i + 1}{"\t"}</span>
-        <span>{postList[i][1]}</span>
-      </div>
-    );
-  }
+  let retChildren = map(postList, ([, message], ind) => (
+    <div>
+      <span>{ind + 1}{"\t"}</span>
+      <span>{postList[ind][1]}</span>
+    </div>
+  ));
+  // for (let i = 0; i < len; i++) {
+  //   retChildren[i] = (
+  //     <div>
+  //       <span>{i + 1}{"\t"}</span>
+  //       <span>{postList[i][1]}</span>
+  //     </div>
+  //   );
+  // }
   return (
     <div>
       {retChildren}

@@ -32,3 +32,18 @@ export const indexOf = new DevFunction(
 );
 
 // TODO: Continue.
+
+
+
+
+export const createArray = new DevFunction(
+  "createArray", {typeArr: ["integer unsigned", "function?"]},
+  ({callerNode, execEnv, interpreter}, [length, callback]) => {
+    let ret = new Array(length);
+    return (callback) ? ret.map((_, ind, arr) => {
+      return interpreter.executeFunction(
+        callback, [ind, arr], callerNode, execEnv
+      );
+    }) : ret;
+  }
+);

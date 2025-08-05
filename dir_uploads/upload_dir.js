@@ -50,9 +50,14 @@ async function main() {
     let inst = await read({prompt: `dir #${dirID}> `});
     if (/^([uU]|upload)$/.test(inst)) {
       console.log("Uploading...");
-      dirID = await directoryUploader.uploadDir(
-        dirPath, dirID, deleteTableData
-      );
+      try {
+        dirID = await directoryUploader.uploadDir(
+          dirPath, dirID, deleteTableData
+        );
+      } catch (err) {
+        console.error(err);
+        continue;
+      }
       console.log("OK");
     }
     else if (/^([eE]|exit)$/.test(inst)) {

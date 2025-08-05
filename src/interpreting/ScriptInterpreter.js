@@ -2138,7 +2138,7 @@ export function jsonParse(val, node, env) {
 
 
 
-export function forEachValue(value, node, env, callback) {
+export function forEachValue(value, node, env, callback, ignore = false) {
   if (value instanceof ObjectObject) {
     if (value.isArray || value.isMap) {
       value.members.forEach(callback);
@@ -2154,8 +2154,8 @@ export function forEachValue(value, node, env, callback) {
   else if (valProto === OBJECT_PROTOTYPE) {
     Object.entries(value).forEach(([key, val]) => callback(val, key));
   }
-  else throw new RuntimeError(
-    "Iterating over a non-iterable value",
+  else if (!ignore) throw new RuntimeError(
+    "Iterating over a non-iterable value: " + getString(value, node, env),
     node, env
   );
 }

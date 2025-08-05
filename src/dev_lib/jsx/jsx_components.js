@@ -4,6 +4,7 @@ import {
   getString, ObjectObject, forEachValue, CLEAR_FLAG, PromiseObject,
   OBJECT_PROTOTYPE, ArgTypeError, Environment, getPrototypeOf, ARRAY_PROTOTYPE,
   FunctionObject, Exception, getStringOrSymbol, getPropertyFromObject,
+  getPropertyFromPlainObject,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
@@ -101,6 +102,9 @@ class JSXInstance {
     this.callerEnv = callerEnv;
     this.isDiscarded = undefined;
     this.rerenderPromise = undefined;
+    this.actions = {};
+    this.methods = {};
+    this.events = {};
   }
 
   get componentPath() {
@@ -127,7 +131,8 @@ class JSXInstance {
 
     // Record the props. And on the first render only, initialize the state,
     // and record the refs as well (which cannot be changed by a subsequent
-    // render).
+    // render). Also initialize the actions, methods, and events of the
+    // instance.
     this.props = props;
     let state;
     if (this.state === undefined) {
@@ -152,6 +157,9 @@ class JSXInstance {
 
       // And store the refs object.
       this.refs = props["refs"] ?? {};
+
+      // And set the actions, methods, and events.
+      this.prepareActionsMethodsAndEvents();
     }
 
 
@@ -485,6 +493,10 @@ class JSXInstance {
             };
             break;
           }
+          // TODO: Add keyboard events, more click events, and focus events and
+          // focus methods, like I have described it in my working notes (in my
+          // "23-xx" notes, which is currently located in my Notes/backup
+          // GitHub folder).
           default: throw new RuntimeError(
             `Invalid or not-yet-implemented attribute, "${key}" for ` +
             "non-component elements",
@@ -537,80 +549,130 @@ class JSXInstance {
   }
 
 
-  // TODO: Add keyboard events, click events, and focus events and focus
-  // methods, like I have described it in my working notes (in my "23-xx"
-  // notes, which is currently located in my Notes/backup GitHub folder).
 
-  // trigger(eventKey, input?) triggers an event to the first among the
-  // instance itself and its ancestors who has an event that matches the
-  // eventKey (which might be a Symbol). The events are declared by the
-  // 'events' object exported by a component module. If no ancestors has an
-  // event of a matching key, then trigger() just fails silently.
-  trigger(eventKey, input, interpreter, callerNode, callerEnv) {
-    let events = this.componentModule.get("events");
-    eventKey = getStringOrSymbol(eventKey, callerNode, callerEnv);
-    let eventFun = getPropertyFromObject(events, eventKey);
+
+  prepareActionsMethodsAndEvents() {
+    forEachValue(
+      this.componentModule.get("actions"), callerNode, callerEnv,
+      (fun, key) => {
+        key = getStringOrSymbol(key, callerNode, callerEnv) || " ";
+        this.actions[key] = fun;
+      },
+      true
+    );
+    forEachValue(
+      this.componentModule.get("methods"), callerNode, callerEnv,
+      keyOrAliasKeyPair => {
+        if (typeof keyOrAliasKeyPair === "string") {
+          let key = keyOrAliasKeyPair || " ";
+          this.methods[key] = this.actions[key];
+        }
+        else {
+          let alias = getPropertyFromObject(keyOrAliasKeyPair, "0");
+          let key = getPropertyFromObject(keyOrAliasKeyPair, "1");
+          alias = getStringOrSymbol(alias, callerNode, callerEnv) || " ";
+          key = getStringOrSymbol(key, callerNode, callerEnv);
+          this.methods[alias] = this.actions[key];
+        }
+      },
+      true
+    );
+    forEachValue(
+      this.componentModule.get("events"), callerNode, callerEnv,
+      keyOrAliasKeyPair => {
+        if (typeof keyOrAliasKeyPair === "string") {
+          let key = keyOrAliasKeyPair || " ";
+          this.events[key] = this.actions[key];
+        }
+        else {
+          let alias = getPropertyFromObject(keyOrAliasKeyPair, "0");
+          let key = getPropertyFromObject(keyOrAliasKeyPair, "1");
+          alias = getStringOrSymbol(alias, callerNode, callerEnv) || " ";
+          key = getStringOrSymbol(key, callerNode, callerEnv);
+          this.events[alias] = this.actions[key];
+        }
+      },
+      true
+    );
+  }
+
+
+  // do(actionKey, input?) triggers the action of the instance with the given
+  // actionKey, and with the optional second argument as the argument of the
+  // action function.
+  do(actionKey, input, interpreter, node, env) {
+    actionKey = getStringOrSymbol(actionKey, node, env);
+    let eventFun = getPropertyFromPlainObject(this.actions, actionKey);
     if (eventFun) {
       interpreter.executeFunction(
         eventFun, [input], callerNode, callerEnv,
         new JSXInstanceInterface(this), [CLEAR_FLAG],
       );
     }
+    else throw new RuntimeError(
+      `Call to a non-existent action, "${actionKey}", of the component at ` +
+      this.componentPath,
+      node, env
+    );
+  }
+
+  // trigger(eventKey, input?) triggers an event to the first among the
+  // instance's ancestors who has an event that matches the eventKey. The
+  // events are declared by the 'events' object exported by the component
+  // module, which is an array of action keys or [eventKey, actionKey] pair
+  // arrays (or a mix). If no ancestors has an event of a matching key, then
+  // trigger() just fails silently.
+  trigger(eventKey, input, interpreter, node, env) {
+    if (!this.parentInstance) return;
+    let events = this.parentInstance.events;
+    eventKey = getStringOrSymbol(eventKey, node, env);
+    let eventFun = getPropertyFromPlainObject(events, eventKey);
+    if (eventFun) {
+      interpreter.executeFunction(
+        eventFun, [input], node, env,
+        new JSXInstanceInterface(this.parentInstance), [CLEAR_FLAG],
+      );
+    }
     else {
-      if (this.parentInstance) {
-        this.parentInstance.trigger(
-          eventKey, input, interpreter, callerNode, callerEnv
-        );
-      }
+      this.parentInstance.trigger(
+        eventKey, input, interpreter, node, env
+      );
     }
 
   }
 
-
-  // call(instanceKey, methodKey, input?) either calls one of the instance's
-  // own methods, if instanceKey is falsy or equal to "self", or otherwise
-  // calls a method of the child instance with the same key. The method called
-  // is the one with the key of methodKey in the 'methods' object exported by
-  // the component module of the target instance.
+  // call(instanceKey, methodKey, input?) calls the method of the given
+  // methodKey on the the child instance of the given instanceKey. The methods
+  // of an instance is declared by the 'methods' object exported by the
+  // component module. As for the events, the methods are defined by an array
+  // of action keys, or alias--actionKey pairs, such that all methods are
+  // redirected to an action.
   call(
-    instanceKey, methodKey, input, interpreter, callerNode, callerEnv
+    instanceKey, methodKey, input, interpreter, node, env
   ) {
-    instanceKey = getString(instanceKey, callerNode, callerEnv);
+    instanceKey = getStringOrSymbol(instanceKey, node, env);
 
-    // First get the target instance.
-    let targetInstance;
-    if (instanceKey === "") {
-      targetInstance = this;
-    }
-    else {
-      targetInstance = this.childInstances.get(instanceKey);
-    }
+    // First get the targeted child instance.
+    let targetInstance = this.childInstances.get(instanceKey);
     if (!targetInstance) throw new RuntimeError(
       `No child instance found with the key of "${instanceKey}"`,
-      callerNode, callerEnv
+      node, env
     );
 
     // Then find and call its targeted method.
-    let methods = targetInstance.componentModule.get("methods");
-    methodKey = getStringOrSymbol(methodKey, callerNode, callerEnv);
-    if (!methodKey) throw new ArgTypeError(
-      "Invalid, falsy method key",
-      callerNode, callerEnv
-    );
-    let methodFun;
-    if (getPrototypeOf(methods) === OBJECT_PROTOTYPE) {
-      methodFun = methods[methodKey];
-    }
+    let methods = targetInstance.methods;
+    methodKey = getStringOrSymbol(methodKey, node, env);
+    let methodFun = getPropertyFromPlainObject(methods, eventKey);
     if (methodFun) {
       return interpreter.executeFunction(
-        methodFun, [input], callerNode, callerEnv,
+        methodFun, [input], node, env,
         new JSXInstanceInterface(targetInstance), [CLEAR_FLAG],
       );
     }
     else throw new RuntimeError(
-      `Call to a non-existent method, "${methodKey}", to a component ` +
-      `instance of "${targetInstance.componentPath}"`,
-      callerNode, callerEnv
+      `Call to a non-existent method, "${methodKey}", of the component at` +
+      targetInstance.componentPath,
+      node, env
     );
   }
 
@@ -731,6 +793,7 @@ class JSXInstanceInterface extends ObjectObject {
       "state": this.jsxInstance.state,
       "refs": this.jsxInstance.refs,
       /* Methods */
+      "do": this.do,
       "trigger": this.trigger,
       "call": this.call,
       "setState": this.setState,
@@ -744,7 +807,16 @@ class JSXInstanceInterface extends ObjectObject {
   }
 
 
-  // See the comments above for what trigger() and call() does.
+  // See the comments above for what do(), trigger(), and call() does.
+  do = new DevFunction(
+    "do", {typeArr: ["object key", "any?"]},
+    ({callerNode, execEnv, interpreter}, [actionKey, input]) => {
+      this.jsxInstance.do(
+        actionKey, input, interpreter, callerNode, execEnv
+      );
+    }
+  );
+
   trigger = new DevFunction(
     "trigger", {typeArr: ["object key", "any?"]},
     ({callerNode, execEnv, interpreter}, [eventKey, input]) => {
@@ -755,7 +827,7 @@ class JSXInstanceInterface extends ObjectObject {
   );
 
   call = new DevFunction(
-    "call", {typeArr: ["any", "object key", "any?"]},
+    "call", {typeArr: ["string", "object key", "any?"]},
     ({callerNode, execEnv, interpreter}, [instanceKey, methodKey, input]) => {
       return this.jsxInstance.call(
         instanceKey, methodKey, input, interpreter, callerNode, execEnv

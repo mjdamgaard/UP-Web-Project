@@ -66,7 +66,7 @@ export class DirectoryUploader {
     // go through each one and check that it also exist nested in the client-
     // side directory, and for each one that doesn't, request deletion of that
     // file server-side.
-    let filePaths = await serverQueryHandler.post(
+    let filePaths = await serverQueryHandler.fetchPrivate(
       `/1/${dirID}/_all`
     );
     let deletionPromises = [];

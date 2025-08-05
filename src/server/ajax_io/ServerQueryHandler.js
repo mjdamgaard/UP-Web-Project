@@ -136,19 +136,19 @@ export class ServerQueryHandler {
 
   fetch(route, options) {
     return this.queryServer(
-      true, route, false, undefined, options, OWN_UP_NODE_ID
+      false, route, false, undefined, options, OWN_UP_NODE_ID
     );
   }
 
   fetchPrivate(route, options) {
     return this.queryServer(
-      false, route, false, undefined, options, OWN_UP_NODE_ID
+      true, route, false, undefined, options, OWN_UP_NODE_ID
     );
   }
 
   post(route, postData, options) {
     return this.queryServer(
-      false, route, true, postData, options, OWN_UP_NODE_ID
+      true, route, true, postData, options, OWN_UP_NODE_ID
     );
   }
 
