@@ -2355,7 +2355,8 @@ export function verifyType(val, type, isOptional, node, env) {
       break;
     case "object":
       if (
-        getPrototypeOf(val) !== OBJECT_PROTOTYPE ||val instanceof ObjectObject
+        getPrototypeOf(val) !== OBJECT_PROTOTYPE &&
+        !(val instanceof ObjectObject)
       ) {
         throw new ArgTypeError(
           `Value is not an object: ${getString(val, node, env)}`,
@@ -2364,7 +2365,10 @@ export function verifyType(val, type, isOptional, node, env) {
       }
       break;
     case "array":
-      if (getPrototypeOf(val) !== ARRAY_PROTOTYPE) {
+      if (
+        getPrototypeOf(val) !== ARRAY_PROTOTYPE &&
+        (!(val instanceof ObjectObject) || !val.isArray)
+      ) {
         throw new ArgTypeError(
           `Value is not an array: ${getString(val, node, env)}`,
           node, env
@@ -2514,6 +2518,9 @@ export class JSXElement extends ObjectObject {
 }
 
 
+// TODO: Change the current syntactical implementation of Promise in the
+// language, and instead create a Promise ClassObject and make it one of the
+// few built-in global values (along with MutableObject etc. from above.)
 
 export class PromiseObject extends ObjectObject {
   constructor(promiseOrFun, interpreter, node, env) {

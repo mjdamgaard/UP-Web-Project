@@ -18,6 +18,7 @@ export function render({userID}) {
           this.setState({
             ...this.state, response: "You must be logged in before posting."
           });
+          return;
         }
         let textVal = this.call(0, "getValue");
         // TODO: Make a 'strings' dev library with a stringify() function in
@@ -32,7 +33,7 @@ export function render({userID}) {
               this.setState({
                 ...this.state, response: "Success."
               });
-              this.dispatch("refresh");
+              this.trigger("refresh");
             }
             else {
               this.setState({

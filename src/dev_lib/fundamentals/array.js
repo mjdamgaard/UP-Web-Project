@@ -1,15 +1,20 @@
 
-import {DevFunction} from "../../interpreting/ScriptInterpreter.js";
+import {
+  DevFunction, ObjectObject,
+} from "../../interpreting/ScriptInterpreter.js";
 
 
 export const at = new DevFunction(
   "at", {typeArr: ["array", "integer"]}, ({}, [arr, ind]) => {
+    if (arr instanceof ObjectObject) arr = arr.members;
     return arr.at(ind);
   }
 );
 
 export const slice = new DevFunction(
-  "slice", {typeArr: ["array", "integer", "integer?"]}, ({}, [arr, start, end]) => {
+  "slice", {typeArr: ["array", "integer", "integer?"]},
+  ({}, [arr, start, end]) => {
+    if (arr instanceof ObjectObject) arr = arr.members;
     return arr.slice(start, end);
   }
 );
@@ -17,19 +22,20 @@ export const slice = new DevFunction(
 export const map = new DevFunction(
   "map", {typeArr: ["array", "function"]},
   ({callerNode, execEnv, interpreter}, [arr, fun]) => {
-    return arr.map((val, ind, arr) => {
-      interpreter.executeFunction(
-        fun, [val, ind, arr], callerNode, execEnv
+    if (arr instanceof ObjectObject) arr = arr.members;
+    return arr.map((val, ind) => {
+      return interpreter.executeFunction(
+        fun, [val, ind], callerNode, execEnv
       );
     });
   }
 );
 
-export const indexOf = new DevFunction(
-  "indexOf", {typeArr: ["string", "string"]}, ({}, [str, needle]) => {
-    return str.indexOf(needle);
-  }
-);
+// export const indexOf = new DevFunction(
+//   "indexOf", {typeArr: ["string", "string"]}, ({}, [str, needle]) => {
+//     return str.indexOf(needle);
+//   }
+// );
 
 // TODO: Continue.
 

@@ -720,21 +720,21 @@ export const scriptGrammar = {
   },
   "expression^(14)": {
     rules: [
-      ["/new/?", "expression^(15)", "member-accessor-or-expression-tuple!1*"],
+      ["expression^(15)", "member-accessor-or-expression-tuple!1*"],
+      ["/new/", "expression^(15)", "member-accessor-or-expression-tuple!1*"],
     ],
-    process: (children) => {
-      let isNew = children[0][0] ? true : false;
-      let postfixArr = children[2];
-      if (!postfixArr[0] && !isNew) {
-        return children[1];
+    process: (children, ruleInd) => {
+      let postfixArr = children[1 + ruleInd];
+      if (!postfixArr[0] && !ruleInd) {
+        return children[0 + ruleInd];
       }
-      else if (isNew && postfixArr[1]?.type !== "expression-tuple") {
+      else if (ruleInd && postfixArr[1]?.type !== "expression-tuple") {
         return "'new' expression expects a (possibly empty) argument tuple"
       }
       else return {
         type: "chained-expression",
-        isNew: isNew,
-        rootExp: children[1],
+        isNew: ruleInd ? true : false,
+        rootExp: children[0 + ruleInd],
         postfixArr: postfixArr,
       };
     },

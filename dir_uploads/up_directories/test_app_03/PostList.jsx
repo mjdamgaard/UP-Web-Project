@@ -19,7 +19,7 @@ export function render() {
   let retChildren = map(postList, ([, message], ind) => (
     <div>
       <span>{ind + 1}{"\t"}</span>
-      <span>{postList[ind][1]}</span>
+      <span>{message}</span>
     </div>
   ));
   return (
