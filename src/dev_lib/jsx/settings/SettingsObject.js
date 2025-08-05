@@ -52,7 +52,6 @@ export class SettingsObject01 extends SettingsObject {
 
   // TODO: Implement.
   prepareInstance(jsxInstance, node, env) {
-    return [true];
     return this.appStyler.prepareInstance(jsxInstance, node, env);
   }
 
@@ -70,7 +69,6 @@ export class SettingsObject01 extends SettingsObject {
 
   // TODO: Implement.
   transformInstance(jsxInstance, domNode, ownDOMNodes, node, env) {
-    return;
     return this.appStyler.transformInstance(
       jsxInstance, domNode, ownDOMNodes, node, env
     );

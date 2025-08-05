@@ -17,7 +17,10 @@ export const render = new DevFunction(
       callerNode, execEnv
     );
     let jsxInstance = thisVal.jsxInstance;
-    let domNode = jsxInstance.domNode ?? document.createElement("textarea");
+    let domNode = jsxInstance.domNode;
+    if (!domNode || domNode.tagName !== "textarea") {
+      domNode = document.createElement("textarea")
+    }
     let onChangeFun = props.onChange;
     if (onChangeFun instanceof FunctionObject) {
       // Set an input event, but do it in a way that it is delayed for some
