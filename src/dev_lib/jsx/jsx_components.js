@@ -286,11 +286,6 @@ class JSXInstance {
       newDOMNode.classList.add("_pending-settings");
     }
 
-    // Also add a "this_" class to the node, which is equivalent of
-    // automatically adding a "this" class to the the className property to the
-    // outer node of all JSXElements returned by render (except for decorators).
-    newDOMNode.classList.add("this_");
-
     // And before returning the new DOM node, call settings.transformInstance()
     // in order to transform the DOM node, in particular for applying style to
     // it (by giving it classes and/or inline styles). Note if this method has
@@ -1117,7 +1112,7 @@ export async function getSetting(
 
 
 
-export function getUserID() {debugger;
+export function getUserID() {
   let {userID} = JSON.parse(
     localStorage.getItem("userData") ?? "{}"
   );

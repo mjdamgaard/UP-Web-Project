@@ -146,8 +146,9 @@ export class AppStyler01 {
   // somehow not yet been prepared, which might happen if the regular import()
   // function is used rather than JSXInstanceInterface.import().
   prepareInstance(jsxInstance, node, env) {
-    let {parentInstance, settingsData, key, componentPath} = jsxInstance;
-    let {transform: childRules = [], componentID} = parentInstance.settingsData;
+    let {parentInstance = {}, settingsData, key, componentPath} = jsxInstance;
+    let {transform: childRules = [], componentID} =
+      parentInstance.settingsData ?? {};
 
     // Extract the transform and transformProps from the last child rule in the
     // parent instance's childRules array where the key format matches this
@@ -218,7 +219,7 @@ export class AppStyler01 {
 
 
   getInheritedTransform(parentInstance, callerComponentPath) {
-    let {componentPath, settingsData: {transform}} = parentInstance;
+    let {componentPath, settingsData: {transform} = {}} = parentInstance;
     if (componentPath === callerComponentPath && transform instanceof Object) {
       return transform;
     }
@@ -454,7 +455,7 @@ export class AppStyler01 {
   transformInstance(jsxInstance, domNode, ownDOMNodes, node, env) {
     let {settingsData, props, state} = jsxInstance;
     let {componentID, transform: {rules}, transformProps, isScopeRoot} =
-      settingsData;
+      settingsData ?? {};
     let {interpreter} = env.scriptVars;
     if (ownDOMNodes.length === 0) {
       return;

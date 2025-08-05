@@ -22,6 +22,7 @@ export class SettingsObject01 extends SettingsObject {
 
   initiate(userID, appComponent, node, env) {
     this.userID = userID;
+    this.appComponent = appComponent;
     this.transformModuleMap = new Map();
     
     this.appStyler = appStyler;
@@ -29,27 +30,30 @@ export class SettingsObject01 extends SettingsObject {
   }
 
 
-  // TODO: Implement.
-  getUserID(node, env) {
-
+  getUserID() {
+    return this.userID;
   }
 
 
-  // TODO: Implement.
   changeUser(userID, node, env) {
-
+    if (this.appComponent) {
+      this.initiate(userID, this.appComponent, node, env);
+    }
+    else {
+      this.userID = userID;
+    }
   }
 
 
-  // TODO: Implement.
   prepareComponent(componentModule, node, env) {
-
+    return this.appStyler.prepareComponent(componentModule, node, env);
   }
 
 
   // TODO: Implement.
   prepareInstance(jsxInstance, node, env) {
     return [true];
+    return this.appStyler.prepareInstance(jsxInstance, node, env);
   }
 
 
@@ -66,7 +70,10 @@ export class SettingsObject01 extends SettingsObject {
 
   // TODO: Implement.
   transformInstance(jsxInstance, domNode, ownDOMNodes, node, env) {
-
+    return;
+    return this.appStyler.transformInstance(
+      jsxInstance, domNode, ownDOMNodes, node, env
+    );
   }
 
 

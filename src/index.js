@@ -7,7 +7,7 @@ import {CAN_CREATE_APP_FLAG} from "./dev_lib/jsx/jsx_components.js";
 
 import {main as constructAccountMenu} from "./account_menu/account_menu.js"
 
-import {settings} from "./dev_lib/jsx/settings/basic.js";
+import {settings} from "./dev_lib/jsx/settings/SettingsObject.js";
 
 /* Tests */
 
@@ -17,7 +17,7 @@ import {settings} from "./dev_lib/jsx/settings/basic.js";
 /* Static developer libraries */
 
 import * as queryMod from "./dev_lib/query/query.js";
-import * as basicSettingsMod from "./dev_lib/jsx/settings/basic.js";
+import * as basicSettingsMod from "./dev_lib/jsx/settings/SettingsObject.js";
 import * as jsxMod from "./dev_lib/jsx/jsx_components.js";
 import * as textareaCompMod from "./dev_lib/jsx/dev_components/Textarea1.js";
 import * as jsonMod from "./dev_lib/fundamentals/json.js";
