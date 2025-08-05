@@ -1,8 +1,9 @@
 
 import {
   FunctionObject, DevFunction, getString,
+  ArgTypeError,
 } from "../../../interpreting/ScriptInterpreter.js";
-import {DOMNodeObject} from "../jsx_components.js";
+import {DOMNodeObject, JSXInstanceInterface} from "../jsx_components.js";
 
 
 export const render = new DevFunction(
@@ -11,6 +12,10 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
+    if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
+      "Textarea.render(): 'this' is not a JSXInstance",
+      callerNode, execEnv
+    );
     let jsxInstance = thisVal.jsxInstance;
     let domNode = jsxInstance.domNode ?? document.createElement("textarea");
     let onChangeFun = props.onChange;
@@ -42,8 +47,17 @@ export const render = new DevFunction(
 );
 
 
+export const methods = [
+  "getValue",
+  "setValue",
+  "clear",
+  // TODD: First check that the element is a child of the currently focused
+  // element before being able to grab the focus.
+  // "focus",
+  // "blur",
+];
 
-export const methods = {
+export const actions = {
   "getValue": new DevFunction("getValue", {}, function({thisVal}, []) {
     return thisVal.jsxInstance.domNode.value;
   }),
@@ -66,10 +80,12 @@ export const methods = {
       domNode.dispatchEvent(new InputEvent("input"));
     }
   }),
-  "focus": new DevFunction("focus", {}, function({thisVal}, []) {
-    thisVal.jsxInstance.domNode.focus();
-  }),
-  "blur": new DevFunction("blur", {}, function({thisVal}, []) {
-    thisVal.jsxInstance.domNode.blur();
-  }),
+  // TODD: First check that the element is a child of the currently focused
+  // element before being able to grab the focus.
+  // "focus": new DevFunction("focus", {}, function({thisVal}, []) {
+  //   thisVal.jsxInstance.domNode.focus();
+  // }),
+  // "blur": new DevFunction("blur", {}, function({thisVal}, []) {
+  //   thisVal.jsxInstance.domNode.blur();
+  // }),
 };

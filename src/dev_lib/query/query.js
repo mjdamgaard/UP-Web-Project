@@ -19,11 +19,9 @@ export const query = new DevFunction(
     typeArr: ["string", "boolean?", "any?", "boolean?", "object?"],
   },
   async function(
-    {callerNode, execEnv, interpreter, liveModule},
+    {callerNode, execEnv, interpreter},
     [extendedRoute, isPost = false, postData, isPrivate, options = {}]
   ) {
-    isPost ||= isPrivate;
-
     // If isPost == true, check if the current environment is allowed to post.
     if (isPost) {
       checkIfCanPost(callerNode, execEnv);

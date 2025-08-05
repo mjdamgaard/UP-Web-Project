@@ -25,7 +25,7 @@ export class DirectoryUploader {
   }
 
 
-  getReadDirID(dirPath) {
+  readDirID(dirPath) {
     // Read the dirID.
     let idFilePath = path.normalize(dirPath + "/.id.js");
     let dirID;
@@ -46,7 +46,7 @@ export class DirectoryUploader {
   // as is, as well as file extensions of abstract files (often implemented via
   // one or several relational DB tables), for which the file content, if any,
   // will have to conform to a specific format.
-  async uploadDir(dirPath, dirID, deleteTableData) {
+  async uploadDir(userID, dirPath, dirID, deleteTableData) {
     // Initialize the serverQueryHandler with the provided authToken.
     let serverQueryHandler = new ServerQueryHandler(
       this.authToken, Infinity, fetch
@@ -56,10 +56,9 @@ export class DirectoryUploader {
     // and get the new dirID.
     let idFilePath = path.normalize(dirPath + "/.id.js");
     if (!dirID) {
-      dirID = await serverQueryHandler.post("/1/mkdir");
-      fs.writeFileSync(
-        idFilePath, dirID ? `export default "/1/${dirID}";` : ""
-      );
+      dirID = await serverQueryHandler.post(`/1/mkdir/a=${userID}`);
+      if (!dirID) throw "mkdir error";
+      fs.writeFileSync(idFilePath, `export default "/1/${dirID}";`);
     }
 
     // Request a list of all the files in the server-side directory, and then

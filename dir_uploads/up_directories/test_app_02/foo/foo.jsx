@@ -6,7 +6,7 @@ export function render({name}) {
     <span>
       {name}{"  "}
       <i onClick={() => {
-        this.dispatch("changeName", "Another Name");
+        this.trigger("changeName", "Another Name");
       }}>
         {"or click here!"}
       </i>
@@ -14,9 +14,16 @@ export function render({name}) {
   );
 }
 
+export const methods = [
+  "fooMethod1",
+  "fooMethod2",
+];
 
-export const methods = {
-  "myMethod": function(name) {
-    this.dispatch("changeName", name);
+export const actions = {
+  "fooMethod1": function(name) {
+    this.trigger("changeName", name);
+  },
+  "fooMethod2": function(name) {
+    this.trigger("IAmAnAlias", name);
   },
 };

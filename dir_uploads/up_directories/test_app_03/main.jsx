@@ -13,6 +13,9 @@ export function render({userID}) {
   );
 }
 
+export const events = [
+  "refresh",
+];
 
 export const actions = {
   "refresh": function() {

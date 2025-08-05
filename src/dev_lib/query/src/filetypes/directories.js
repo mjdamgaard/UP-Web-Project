@@ -24,14 +24,10 @@ export async function query(
         callerNode, execEnv
       );
       let [a, adminID] = (queryPathArr[1] ?? []);
-      if (a === "") {
-        if (!adminID) throw new RuntimeError(
-          "No admin ID was provided",
-          callerNode, execEnv
-        );
-      } else {
-        adminID = execEnv.scriptVars.contexts.userIDContext.get();
-      }
+      if (a !== "a" || !adminID) throw new RuntimeError(
+        "No admin ID was provided",
+        callerNode, execEnv
+      );
       payGas(callerNode, execEnv, {mkdir: 1});
       let [[dirID] = []] = await dbQueryHandler.queryDBProc(
         "createHomeDir", [adminID],

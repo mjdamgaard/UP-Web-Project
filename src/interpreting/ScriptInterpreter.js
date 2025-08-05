@@ -2066,7 +2066,8 @@ export function getPropertyFromObject(obj, key) {
 }
 
 export function getPropertyFromPlainObject(obj, key) {
-  if (Object.getPrototypeOf(obj) === OBJECT_PROTOTYPE) {
+  let objProto = Object.getPrototypeOf(obj);
+  if (objProto === OBJECT_PROTOTYPE || objProto === ARRAY_PROTOTYPE) {
     return Object.hasOwn(obj, key) ? obj[key] : undefined;
   }
 }

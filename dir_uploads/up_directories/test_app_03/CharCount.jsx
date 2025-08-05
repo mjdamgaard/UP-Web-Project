@@ -8,7 +8,11 @@ export function render() {
   );
 }
 
-export const methods = {
+export const methods = [
+  "setCharCount",
+];
+
+export const actions = {
   "setCharCount": function(count) {
     this.setState({count: count});
   }

@@ -49,6 +49,10 @@ export function render({userID}) {
   );
 }
 
+export const events = [
+  "setCharCount",
+];
+
 export const actions = {
   "setCharCount": function(count) {
     this.call(1, "setCharCount", count);
@@ -56,7 +60,7 @@ export const actions = {
 };
 
 function dispatchCharCount() {
-  let text = this.call("", "getValue");
+  let text = this.do("getValue");
   let count = text.length;
-  this.dispatch("setCharCount", count);
+  this.trigger("setCharCount", count);
 }

@@ -16,21 +16,12 @@ export function render() {
     return <div></div>;
   }
 
-  let len = postList.length;
   let retChildren = map(postList, ([, message], ind) => (
     <div>
       <span>{ind + 1}{"\t"}</span>
       <span>{postList[ind][1]}</span>
     </div>
   ));
-  // for (let i = 0; i < len; i++) {
-  //   retChildren[i] = (
-  //     <div>
-  //       <span>{i + 1}{"\t"}</span>
-  //       <span>{postList[i][1]}</span>
-  //     </div>
-  //   );
-  // }
   return (
     <div>
       {retChildren}
@@ -39,7 +30,11 @@ export function render() {
 }
 
 
-export const methods = {
+export const methods = [
+  "refresh",
+];
+
+export const actions = {
   "refresh": function() {
     fetchPostListAndUpdate(this);
   }

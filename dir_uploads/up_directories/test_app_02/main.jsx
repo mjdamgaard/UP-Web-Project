@@ -14,22 +14,22 @@ export function render({}) {
         {"Click me!"}
       </button>
       <hr/>
-      <span>{"Hello, "}<Foo key={0} name={name} />{"!"}</span>
+      <span>{"Hello, "}<Foo key={"foo"} name={name} />{"!"}</span>
       <br/>
       <span onClick={() => {
-        this.dispatch("changeName", "Third Name");
+        this.do("changeName", "Third Name");
       }}>
         {"...Or even click me!"}
       </span>
       <br/>
       <i onClick={() => {
-        this.call("self", "myMethod", "Fourth Name");
+        this.call("foo", "fooMethod1", "Fourth Name");
       }}>
         {"...or me."}
       </i>
       <br/>
       <b onClick={() => {
-        this.call(0, "myMethod", "Fifth Name");
+        this.call("foo", "fooMethod2", "Fifth Name");
       }}>
         {"...Or me!!"}
       </b>
@@ -49,8 +49,7 @@ export const actions = {
 };
 
 
-export const methods = {
-  "myMethod": function(name) {
-    this.setState({...this.state, name: name});
-  },
-};
+export const events = [
+  "changeName",
+  ["IAmAnAlias", "changeName"],
+];

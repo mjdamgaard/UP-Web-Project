@@ -159,7 +159,7 @@ class JSXInstance {
       this.refs = props["refs"] ?? {};
 
       // And set the actions, methods, and events.
-      this.prepareActionsMethodsAndEvents();
+      this.prepareActionsMethodsAndEvents(callerNode, callerEnv);
     }
 
 
@@ -551,17 +551,17 @@ class JSXInstance {
 
 
 
-  prepareActionsMethodsAndEvents() {
+  prepareActionsMethodsAndEvents(node, env) {
     forEachValue(
-      this.componentModule.get("actions"), callerNode, callerEnv,
+      this.componentModule.get("actions"), node, env,
       (fun, key) => {
-        key = getStringOrSymbol(key, callerNode, callerEnv) || " ";
+        key = getStringOrSymbol(key, node, env) || " ";
         this.actions[key] = fun;
       },
       true
     );
     forEachValue(
-      this.componentModule.get("methods"), callerNode, callerEnv,
+      this.componentModule.get("methods"), node, env,
       keyOrAliasKeyPair => {
         if (typeof keyOrAliasKeyPair === "string") {
           let key = keyOrAliasKeyPair || " ";
@@ -570,15 +570,15 @@ class JSXInstance {
         else {
           let alias = getPropertyFromObject(keyOrAliasKeyPair, "0");
           let key = getPropertyFromObject(keyOrAliasKeyPair, "1");
-          alias = getStringOrSymbol(alias, callerNode, callerEnv) || " ";
-          key = getStringOrSymbol(key, callerNode, callerEnv);
+          alias = getStringOrSymbol(alias, node, env) || " ";
+          key = getStringOrSymbol(key, node, env);
           this.methods[alias] = this.actions[key];
         }
       },
       true
     );
     forEachValue(
-      this.componentModule.get("events"), callerNode, callerEnv,
+      this.componentModule.get("events"), node, env,
       keyOrAliasKeyPair => {
         if (typeof keyOrAliasKeyPair === "string") {
           let key = keyOrAliasKeyPair || " ";
@@ -587,8 +587,8 @@ class JSXInstance {
         else {
           let alias = getPropertyFromObject(keyOrAliasKeyPair, "0");
           let key = getPropertyFromObject(keyOrAliasKeyPair, "1");
-          alias = getStringOrSymbol(alias, callerNode, callerEnv) || " ";
-          key = getStringOrSymbol(key, callerNode, callerEnv);
+          alias = getStringOrSymbol(alias, node, env) || " ";
+          key = getStringOrSymbol(key, node, env);
           this.events[alias] = this.actions[key];
         }
       },
@@ -604,8 +604,8 @@ class JSXInstance {
     actionKey = getStringOrSymbol(actionKey, node, env);
     let eventFun = getPropertyFromPlainObject(this.actions, actionKey);
     if (eventFun) {
-      interpreter.executeFunction(
-        eventFun, [input], callerNode, callerEnv,
+      return interpreter.executeFunction(
+        eventFun, [input], node, env,
         new JSXInstanceInterface(this), [CLEAR_FLAG],
       );
     }
@@ -628,13 +628,13 @@ class JSXInstance {
     eventKey = getStringOrSymbol(eventKey, node, env);
     let eventFun = getPropertyFromPlainObject(events, eventKey);
     if (eventFun) {
-      interpreter.executeFunction(
+      return interpreter.executeFunction(
         eventFun, [input], node, env,
         new JSXInstanceInterface(this.parentInstance), [CLEAR_FLAG],
       );
     }
     else {
-      this.parentInstance.trigger(
+      return this.parentInstance.trigger(
         eventKey, input, interpreter, node, env
       );
     }
@@ -662,7 +662,7 @@ class JSXInstance {
     // Then find and call its targeted method.
     let methods = targetInstance.methods;
     methodKey = getStringOrSymbol(methodKey, node, env);
-    let methodFun = getPropertyFromPlainObject(methods, eventKey);
+    let methodFun = getPropertyFromPlainObject(methods, methodKey);
     if (methodFun) {
       return interpreter.executeFunction(
         methodFun, [input], node, env,
@@ -782,7 +782,7 @@ class JSXInstance {
 
 
 
-class JSXInstanceInterface extends ObjectObject {
+export class JSXInstanceInterface extends ObjectObject {
   constructor(jsxInstance) {
     super("JSXInstance");
     this.jsxInstance = jsxInstance;
@@ -809,25 +809,25 @@ class JSXInstanceInterface extends ObjectObject {
 
   // See the comments above for what do(), trigger(), and call() does.
   do = new DevFunction(
-    "do", {typeArr: ["object key", "any?"]},
+    "do", {/*typeArr: ["any", "any?"]*/},
     ({callerNode, execEnv, interpreter}, [actionKey, input]) => {
-      this.jsxInstance.do(
+      return this.jsxInstance.do(
         actionKey, input, interpreter, callerNode, execEnv
       );
     }
   );
 
   trigger = new DevFunction(
-    "trigger", {typeArr: ["object key", "any?"]},
+    "trigger", {/*typeArr: ["any", "any?"]*/},
     ({callerNode, execEnv, interpreter}, [eventKey, input]) => {
-      this.jsxInstance.trigger(
+      return this.jsxInstance.trigger(
         eventKey, input, interpreter, callerNode, execEnv
       );
     }
   );
 
   call = new DevFunction(
-    "call", {typeArr: ["string", "object key", "any?"]},
+    "call", {/*typeArr: ["any", "any", "any?"]*/},
     ({callerNode, execEnv, interpreter}, [instanceKey, methodKey, input]) => {
       return this.jsxInstance.call(
         instanceKey, methodKey, input, interpreter, callerNode, execEnv
@@ -835,19 +835,6 @@ class JSXInstanceInterface extends ObjectObject {
     }
   );
 
-  // triggerAncestor() does the same as trigger, but ships looking in the
-  // instance's own events.
-  triggerAncestor = new DevFunction(
-    "triggerAncestor", {typeArr: ["object key", "any?"]},
-    ({callerNode, execEnv, interpreter}, [eventKey, input]) => {
-      let parentInstance = this.jsxInstance.parentInstance;
-      if (parentInstance) {
-        parentInstance.trigger(
-          eventKey, input, interpreter, callerNode, execEnv
-        );
-      }
-    }
-  );
 
   // setState() assigns to jsxInstance.state immediately, which means that the
   // state changes will be visible to all subsequently triggered events and

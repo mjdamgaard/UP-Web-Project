@@ -29,7 +29,7 @@ async function main() {
 
   // Create/update the directory on the server side.
   let userID = await directoryUploader.login(username, password);
-  let dirID = await directoryUploader.getReadDirID(dirPath) ?? "";
+  let dirID = directoryUploader.readDirID(dirPath) ?? "";
   if (!userID) {
     console.log("Login failed.");
     return;
@@ -52,7 +52,7 @@ async function main() {
       console.log("Uploading...");
       try {
         dirID = await directoryUploader.uploadDir(
-          dirPath, dirID, deleteTableData
+          userID, dirPath, dirID, deleteTableData
         );
       } catch (err) {
         console.error(err);
