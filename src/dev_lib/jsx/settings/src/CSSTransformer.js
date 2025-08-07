@@ -79,12 +79,16 @@ export class CSSTransformer {
 
   transformSelectorList(selectorList) {
     return selectorList.children.map(selector => (
-      this.transformComplexSelector(selector)
+      this.transformSelector(selector)
     )).join(", ");
   }
 
 
-  transformComplexSelector(selector) {
+  transformSelector(selector) {
+    if (selector.type === "compound-selector") {
+      return this.transformCompoundSelector(selector);
+    }
+
     // The children of a complex selector node are the compound selectors at
     // every even index, starting with (and possibly ending in) 0, and then the
     // combinators at every odd index.

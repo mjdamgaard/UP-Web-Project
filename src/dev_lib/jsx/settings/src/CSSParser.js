@@ -26,14 +26,14 @@ const PSEUDO_ELEMENT_PATTERN =
 // TODO: Continue this list.
 
 const PROPERTY_PATTERN =
-  "(color|background-color)";
+  "(color|background-color|font-style)";
 // TODO: Continue this list.
 
 const FLAG_PATTERN =
   "([^\\s\\S])";
 
 const BUILT_IN_VALUE_PATTERN =
-  "(red|green|blue|hidden|none|scroll|auto)";
+  "(red|green|blue|italic|bold|hidden|none|scroll|auto)";
 // TODO: Continue this list.
 
 
@@ -104,7 +104,7 @@ export const cssGrammar = {
         pseudoElement: children[1][0]?.pseudoElement,
       } : {
         type: "compound-selector",
-        mainChildren: children[0].children,
+        mainChildren: children[0].mainChildren,
         pseudoElement: children[0].pseudoElement,
       };
     },
@@ -194,9 +194,12 @@ export const cssGrammar = {
     rules: [
       [
         "/" + PROPERTY_PATTERN + "/", "S*", "/:/", "S*", "value!1+", "flag!1",
-        "/;/"
+        "/;/", "S*"
       ],
-      ["/" + PROPERTY_PATTERN + "/", "S*", "/:/", "S*", "value!1+", "/;/"],
+      [
+        "/" + PROPERTY_PATTERN + "/", "S*", "/:/", "S*", "value!1+", "/;/",
+        "S*"
+      ],
     ],
     process: (children) => ({
       type: "declaration",
@@ -318,10 +321,10 @@ export class CSSParser extends Parser {
       [
         /"([^"\\]|\\[.\n])*"/,
         /'([^'\\]|\\[.\n])*'/,
-        /-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
-        /((?<=\s)\-|#)?(0|[1-9][0-9]*)(\.[0-9]+)?(%|[a-zA-Z]+)?/,
-        /\|\||::|[.,:;\[\]{}()<>?=+\-*|^&!%/#]/,
         /[a-zA-Z0-9_\-]+/,
+        /-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
+        /((?<=\s)\-)?(0|[1-9][0-9]*)(\.[0-9]+)?(%|[a-zA-Z]+)?/,
+        /\|\||::|[.,:;\[\]{}()<>?=+\-*|^&!%/#]/,
         /[ \t\r\n\f]+/
       ],
       /\/\*([^*]|\*(?!\/))*(\*\/|$)/

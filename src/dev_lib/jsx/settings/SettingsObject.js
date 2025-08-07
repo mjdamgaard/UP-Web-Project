@@ -1,6 +1,6 @@
 import {
   DevFunction, forEachValue, LiveJSModule, PromiseObject, RuntimeError,
-  LiveJSModule as SCSSModule, AbstractObject,
+  LiveJSModule as SCSSModule, getFullPath,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {SettingsObject} from "../jsx_components.js";
 import {appStyler} from "./src/AppStyler.js";
@@ -23,10 +23,10 @@ export class SettingsObject01 extends SettingsObject {
   initiate(userID, appComponent, node, env) {
     this.userID = userID;
     this.appComponent = appComponent;
-    this.transformModuleMap = new Map();
+    this.styleModules = new Map();
     
     this.appStyler = appStyler;
-    this.appStyler.initiate(appComponent, this, node, env);
+    return this.appStyler.initiate(appComponent, this, node, env);
   }
 
 
@@ -75,29 +75,38 @@ export class SettingsObject01 extends SettingsObject {
   }
 
 
-  getTransformModule(componentModule, node, env) {return componentModule;
-    // See if the transformModule for the given component has already been
-    // decided, or if there's a promise for it pending, and if so return it,
-    // promise or not.
+  async getStyleModule(componentModule, node, env) {
+    let {interpreter} = env.scriptVars;
+
+    // See if the styleModule for the given component has already been decided,
+    // or if there's a promise for it pending, and if so return it, waiting for
+    // it first if it's a promise.
     let componentPath = componentModule.modulePath;
-    let transformModule = this.transformModuleMap.get(componentPath);
-    if (transformModule !== undefined) {
-      // Note that transformModule might be a promise here instead, but in
-      // either case, return it. 
-      return transformModule;
+    let styleModule = this.styleModules.get(componentPath);
+    if (styleModule !== undefined) {
+      if (styleModule instanceof Promise) {
+        styleModule = await styleModule;
+      }
+      return styleModule;
     }
 
     // TODO: Implement looking in some semantic list to see if there's a
-    // transformModule route with a high enough score that this module should
-    // be used instead of the componentModule. (And else we just return the
-    // componentModule. For now, let us just return a promise to the
-    // componentModule in order to illustrate how this.transformModuleMap is
-    // meant to work:
-    return new Promise(resolve => {
-      resolve(componentModule);
-    }).then(componentModule => {
-      this.transformModuleMap.set(componentPath, componentModule);
+    // styleModule route with a high enough score that this module should
+    // be used instead of the componentModule.
+
+    // If no overriding style module is found, look first if the component
+    // exports a 'stylePath' parameter from which to get the style transform,
+    // and else use the componentModule itself, in case the user exports the
+    // default transform (and default transformProps) from there.
+    let stylePath = componentModule.get("stylePath") || componentPath;
+    stylePath = getFullPath(componentPath, stylePath, node, env);
+    let styleModulePromise = interpreter.import(stylePath, node, env);
+    this.styleModules.set(componentPath, styleModulePromise);
+    styleModulePromise.then(styleModule => {
+      this.styleModules.set(componentPath, styleModule);
     });
+    styleModule = await styleModulePromise;
+    return styleModule;
   }
 }
 

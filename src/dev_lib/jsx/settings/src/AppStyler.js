@@ -56,15 +56,14 @@ export class AppStyler01 {
     let upStyleElements = [...document.querySelectorAll(`head style.up-style`)];
     upStyleElements.forEach(node => node.remove());
 
-    this.styleSheetIDs = {}; // with styleSheetPath keys.
-    this.nextStyleSheetID = 1;
-    this.loadedStyleSheets = {}; // with styleSheetPath keys, and with
+    this.loadedStyleSheets = new Map(); // with styleSheetPath keys, and with
     // {styleSheetID : <id>, template : <string>, classes : [<class name>,)*],
     // instances: {componentID: <isLoaded>}} values.
-    this.componentIDs = {}; // with componentPath keys.
+    this.nextStyleSheetID = 1;
+    this.componentIDs = new Map(); // with componentPath keys.
     this.nextComponentID = 1;
-    this.componentPaths = {}; // with componentID keys.
-    this.defaultComponentStyles = {}; // with componentPath keys.
+    this.componentPaths = []; // with componentID keys.
+    this.defaultComponentStyles = new Map(); // with componentPath keys.
 
     await this.prepareComponent(componentModule, node, env);
   }
@@ -87,7 +86,7 @@ export class AppStyler01 {
 
     // Get the componentID for the component, and if one exists already, return
     // early.
-    let componentID = this.componentIDs[componentPath];
+    let componentID = this.componentIDs.get(componentPath);
     if (componentID instanceof Promise) {
       componentID = await componentID;
     }
@@ -97,10 +96,12 @@ export class AppStyler01 {
 
     // Else store a self-replacing promise at this.componentIDs[modulePath],
     // which resolves with the componentID when the component has been prepared.
-    let idPromise = this.componentIDs[componentPath] =
-      this.prepareComponentHelper(componentModule, componentPath, node, env);
+    let idPromise = this.prepareComponentHelper(
+      componentModule, componentPath, node, env
+    );
+    this.componentIDs.set(componentPath, idPromise);
     idPromise.then(id => {
-      this.componentIDs[componentPath] = id;
+      this.componentIDs.set(componentPath, id);
       this.componentPaths[id] = componentPath;
     });
     return idPromise;
@@ -108,8 +109,8 @@ export class AppStyler01 {
 
   async prepareComponentHelper(componentModule, componentPath, node, env) {
     // Get a new, unique ID for the component.
-    let componentID = this.componentIDs[componentPath] =
-      this.getNextComponentID();
+    let componentID = this.getNextComponentID();
+    this.componentIDs.set(componentPath, componentID);
     this.componentPaths[componentID] = componentPath;
 
     // Then call settings.getStyleModule() to get the so-called style module
@@ -117,9 +118,12 @@ export class AppStyler01 {
     // 'styleModulePath' export of the component (in the form of a route), but
     // the settings might also potentially override this with another style
     // module.
-    let styleModule = await this.settings.getTransformModule(
+    let styleModule = this.settings.getStyleModule(
       componentModule, node, env
     );
+    if (styleModule instanceof Promise) {
+      styleModule = await styleModule;
+    }
 
     // Get the transform and the transformProps from that module.
     let transform = styleModule.get("transform");
@@ -134,7 +138,7 @@ export class AppStyler01 {
       transform: preparedTransform,
       transformProps: transformProps,
     };
-    this.defaultComponentStyles[componentPath] = defaultComponentStyle;
+    this.defaultComponentStyles.set(componentPath, defaultComponentStyle);
 
     // And finally return the componentID.
     return componentID;
@@ -178,7 +182,7 @@ export class AppStyler01 {
       settingsData.isScopeRoot = true;
 
       // Then get the componentID.
-      componentID = this.componentIDs[componentPath];
+      componentID = this.componentIDs.get(componentPath);
 
       // If this is not ready yet, return it as the whenReady promise, such
       // that the instance will rerender once it resolves (by which
@@ -200,7 +204,8 @@ export class AppStyler01 {
       // And else we know that we can find the transform (also prepared) at
       // this.defaultComponentStyles, as well as a default transformProps if
       // the one we already have gotten is undefined.
-      let defaultComponentStyle = this.defaultComponentStyles[componentPath];
+      let defaultComponentStyle =
+        this.defaultComponentStyles.get(componentPath);
       transform = defaultComponentStyle.transform;
       transformProps ??= defaultComponentStyle.transformProps;
     }
@@ -255,9 +260,9 @@ export class AppStyler01 {
       // Look in this.loadedStyleSheets to see if there is previous data stored
       // for the style sheet. 
       let styleSheetPath = cssModule.modulePath;
-      let styleSheetData = this.loadedStyleSheets[styleSheetPath];
+      let styleSheetData = this.loadedStyleSheets.get(styleSheetPath);
       if (!styleSheetData) {
-        styleSheetData = this.loadedStyleSheets[styleSheetPath] = {};
+        styleSheetData = this.loadedStyleSheets.set(styleSheetPath, {});
       }
       let {styleSheetID, template, instances} = styleSheetData;
 
@@ -302,8 +307,8 @@ export class AppStyler01 {
     forEachValue(rules, node, env, rule => {
       let preparedRule = {};
       let selector = getPropertyFromObject(rule, "selector");
-      let outClasses = getPropertyFromObject(rule, "class");
-      let styles = getPropertyFromObject(rule, "style");
+      let outClasses = getPropertyFromObject(rule, "class") ?? [];
+      let styles = getPropertyFromObject(rule, "style") ?? [];
       let check = getPropertyFromObject(rule, "check");
       if (!isArray(outClasses)) {
         outClasses = [outClasses];
@@ -319,7 +324,7 @@ export class AppStyler01 {
         `Invalid selector: ${getString(selector, node, env)}`,
         node, env
       );
-      let selectorList = parseString(
+      let [selectorList] = parseString(
         selector, node, env, cssParser, "selector-list"
       )
       let selectorTemplate = cssTransformer.transformSelectorList(selectorList);
@@ -443,6 +448,8 @@ export class AppStyler01 {
 
     // Then parse the declaration list, throwing on failure.
     parseString(style, node, env, cssParser, "declaration!1*$");
+
+    return style;
   }
 
 
@@ -469,7 +476,7 @@ export class AppStyler01 {
     let componentIDClass = `c${componentID}`;
     ownDOMNodes.forEach(node => {
       let parent = node.parentElement;
-      if (parent.classList.contains("own-leaf")) {
+      if (parent && parent.classList.contains("own-leaf")) {
         parent.classList.remove("own-leaf");
       }
       node.classList.add("own-leaf", componentIDClass);
@@ -508,7 +515,8 @@ export class AppStyler01 {
             style = this.prepareStyle(style, node, env);
           }
           let prevStyle = node.getAttribute("style");
-          node.setAttribute("style", prevStyle + " " + style);
+          style = prevStyle ? prevStyle + " " + style : style;
+          node.setAttribute("style", style);
         });
       });
     });
