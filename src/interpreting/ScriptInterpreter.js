@@ -370,12 +370,14 @@ export class ScriptInterpreter {
       // Then execute the module, inside the global environment, and return the
       // resulting liveModule, after also adding it to liveModules.
       let liveModulePromise = new Promise((resolve, reject) => {
-        this.executeModule(
+        let promise = this.executeModule(
           submoduleNode, lexArr, strPosArr, script, modulePath, globalEnv
-        ).catch(
-          err => reject(err)
-        ).then(
+        );
+        promise.then(
           ([liveModule]) => resolve(liveModule)
+        );
+        promise.catch(
+          err => reject(err)
         );
       });
       liveModules.set(modulePath, liveModulePromise);
@@ -389,6 +391,10 @@ export class ScriptInterpreter {
     else if (TEXT_FILE_ROUTE_REGEX.test(modulePath)) {
       let text = await this.fetch(
         modulePath, callerNode, callerEnv
+      );
+      if (typeof text !== "string") throw new LoadError(
+        `No text was found at ${modulePath}`,
+        callerNode, callerEnv
       );
       if (modulePath.slice(-4) === ".css") {
         return new CSSModule(modulePath, text);
@@ -878,7 +884,8 @@ export class ScriptInterpreter {
         };
         return new DefinedFunction(funNode, environment);
       }
-      case "destructuring-assignment" : {
+      case "array-destructuring-assignment" :
+      case "object-destructuring-assignment" : {
         let val = this.evaluateExpression(expNode.valExp, environment);
         return this.executeDestructuring(expNode.destExp, val, environment);
       }

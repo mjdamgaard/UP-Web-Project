@@ -304,10 +304,15 @@ export const cssGrammar = {
   "at-rule": {
     rules: [
       ["at-media-rule"],
-      ["at-container-rule"],
-      ["at-layer-rule"],
+      // ["at-container-rule"],
+      // ["at-layer-rule"],
     ],
     process: copyFromChild,
+  },
+  "at-media-rule": {
+    rules: [
+      [/[^\s\S]/],
+    ],
   },
 };
 

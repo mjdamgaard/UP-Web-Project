@@ -150,7 +150,7 @@ export const fetch = new DevFunction(
     let result = await query.fun(
       {callerNode, execEnv, interpreter},
       [extendedRoute, false, undefined, isPrivate, options],
-    ) ?? [];
+    );
     return result;
   }
 );
@@ -165,7 +165,7 @@ export const post = new DevFunction(
     let result = await query.fun(
       {callerNode, execEnv, interpreter},
       [route, true, postData, true, options],
-    ) ?? [];
+    );
     return result;
   }
 );

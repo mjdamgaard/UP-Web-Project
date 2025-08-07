@@ -1,6 +1,7 @@
 
 import {cssParser} from "./CSSParser.js";
-import {parseString} from "../../../../interpreting/ScriptInterpreter.js";
+import {getString, parseString}
+from "../../../../interpreting/ScriptInterpreter.js";
 
 
 const COMPONENT_ID_PLACEHOLDER = /(?<!\\)\\cid/g;
@@ -31,6 +32,7 @@ export class CSSTransformer {
   // the relevant style scope component before the style sheet is ready to be
   // inserted in the document head.
   transformStyleSheet(styleSheet, node, env) {
+    styleSheet = getString(styleSheet, node, env);
     let styleSheetNode = parseString(styleSheet, node, env, cssParser);
     let styleSheetTemplate = styleSheetNode.stmtArr.map(stmt => (
       this.transformStatement(stmt)

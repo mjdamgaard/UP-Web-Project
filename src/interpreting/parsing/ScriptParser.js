@@ -240,15 +240,27 @@ export const scriptGrammar = {
   },
   "destructuring": {
     rules: [
+      ["array-destructuring"],
+      ["object-destructuring"],
+    ],
+    process: copyFromChild,
+  },
+  "array-destructuring": {
+    rules: [
       [/\[/, "optional-parameter-list", "/,/?", /\]/],
+    ],
+    process: (children) => ({
+      type: "array-destructuring",
+      children: children[1].children,
+    }),
+  },
+  "object-destructuring": {
+    rules: [
       [/\{/, "parameter-member-list", "/,/?", /\}/],
       [/\{/, /\}/],
     ],
     process: (children, ruleInd) => (
       (ruleInd === 0) ? {
-        type: "array-destructuring",
-        children: children[1].children,
-      } : (ruleInd === 1) ? {
         type: "object-destructuring",
         children: children[1].children,
       } : {
@@ -556,7 +568,8 @@ export const scriptGrammar = {
       ["parameter-tuple", "/=>/", "function-body!"],
       ["identifier", "/=>/", "function-body!"],
       ["/function/", "parameter-tuple", "function-body!"],
-      ["destructuring", "/=/", "expression!"],
+      ["array-destructuring", "/=/", "expression!"],
+      [/\(/, "object-destructuring", "/=/", "expression!", /\)/],
       ["expression^(1)", /=|\+=|\-=|\*=|\/=|&&=|\|\|=|\?\?=/, "expression!"],
       ["expression^(1)", /\?/, "expression!", /:/, "expression"],
       ["expression^(1)"],
@@ -578,15 +591,19 @@ export const scriptGrammar = {
         params: children[1].children,
         body: children[2],
       } : (ruleInd === 3) ? {
-        type: "destructuring-assignment",
+        type: "array-destructuring-assignment",
         destExp: children[0],
         valExp: children[2],
       } : (ruleInd === 4) ? {
+        type: "object-destructuring-assignment",
+        destExp: children[1],
+        valExp: children[3],
+      } : (ruleInd === 5) ? {
         type: "assignment",
         exp1: children[0],
         exp2: children[2],
         op: children[1],
-      } : (ruleInd === 5) ? {
+      } : (ruleInd === 6) ? {
         type: "conditional-expression",
         cond: children[0],
         exp1: children[2],

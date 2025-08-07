@@ -1,11 +1,11 @@
 
-import * as styleSheet1 from "./style.css";
+import * as styleSheet1 from "./style11111.css";
 import * as FooStyle from "./foo.style.js";
 
 export const transform = {
-  // styleSheets: [
-  //   styleSheet1,
-  // ],
+  styleSheets: [
+    styleSheet1,
+  ],
   rules: [
     {selector: ".warning", style: [
       "color: #1cff07ff;", "color: #ffc107; font-style: italic;"
