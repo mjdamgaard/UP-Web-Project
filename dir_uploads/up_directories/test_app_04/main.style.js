@@ -1,5 +1,5 @@
 
-import * as styleSheet1 from "./style11111.css";
+import * as styleSheet1 from "./style1.css";
 import * as FooStyle from "./foo.style.js";
 
 export const transform = {
@@ -8,8 +8,8 @@ export const transform = {
   ],
   rules: [
     {selector: ".warning", style: [
-      "color: #1cff07ff;", "color: #ffc107; font-style: italic;"
+      "color: #00ff00;", "color: #ffc107; font-style: italic;"
     ]},
-    {selector: ".error", style: "color: #dc3545;", /*class: "danger"*/},
+    {selector: ".error", style: "color: #dc3545;", class-: "bold",},
   ],
 };

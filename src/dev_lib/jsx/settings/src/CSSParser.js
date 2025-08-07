@@ -46,7 +46,7 @@ export const cssGrammar = {
     ],
     process: (children) => ({
       type: "style-sheet",
-      stmtArr: children,
+      stmtArr: children[1],
     }),
   },
   "statement": {
@@ -63,7 +63,7 @@ export const cssGrammar = {
     process: (children) => ({
       type: "ruleset",
       selectorList: children[0],
-      decArr: children[2],
+      decArr: children[3],
     }),
   },
   "selector-list": {

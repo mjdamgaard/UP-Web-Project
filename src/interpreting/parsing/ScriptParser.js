@@ -872,8 +872,8 @@ export const scriptGrammar = {
   },
   "member": {
     rules: [
-      ["identifier", "/:/", "expression!"],
-      ["identifier", "expression-tuple", "block-statement!"],
+      [/[_\$a-zA-Z][_\$a-zA-Z0-9]*/, "/:/", "expression!"],
+      [/[_\$a-zA-Z][_\$a-zA-Z0-9]*/, "expression-tuple", "block-statement!"],
       ["string", "/:/!", "expression"],
       [/\[/, "expression", /\]/, "/:/", "expression"],
       ["spread"],
@@ -881,11 +881,11 @@ export const scriptGrammar = {
     process: (children, ruleInd) => (
       (ruleInd === 0) ? {
         type: "member",
-        ident: children[0].ident,
+        ident: children[0],
         valExp: children[2],
       } : (ruleInd === 1) ? {
         type: "member",
-        ident: children[0].ident,
+        ident: children[0],
         valExp: {
           type: "function-expression",
           params: children[1].children,

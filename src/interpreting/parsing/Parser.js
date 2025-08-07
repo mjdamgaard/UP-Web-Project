@@ -527,7 +527,7 @@ export class Parser {
 
         // First set doOrDie depending how how far nextPos got, regardless
         // of whether the rule symbol succeeded or not.
-        if (nextPos - ruleSymPos >= doOrDieLevel) {
+        if (childSyntaxTree.nextPos - ruleSymPos >= doOrDieLevel) {
           doOrDie = true;
         }
 

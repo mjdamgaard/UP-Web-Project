@@ -33,7 +33,7 @@ export class CSSTransformer {
   // inserted in the document head.
   transformStyleSheet(styleSheet, node, env) {
     styleSheet = getString(styleSheet, node, env);
-    let styleSheetNode = parseString(styleSheet, node, env, cssParser);
+    let [styleSheetNode] = parseString(styleSheet, node, env, cssParser);
     let styleSheetTemplate = styleSheetNode.stmtArr.map(stmt => (
       this.transformStatement(stmt)
     )).join("\n");
