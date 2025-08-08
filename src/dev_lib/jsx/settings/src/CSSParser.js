@@ -26,7 +26,7 @@ const PSEUDO_ELEMENT_PATTERN =
 // TODO: Continue this list.
 
 const PROPERTY_PATTERN =
-  "(color|background-color|font-style|font-weight)";
+  "(display|color|background-color|font-style|font-weight)";
 // TODO: Continue this list.
 
 const FLAG_PATTERN =

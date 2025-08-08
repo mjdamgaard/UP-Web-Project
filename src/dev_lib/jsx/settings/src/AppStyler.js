@@ -151,7 +151,7 @@ export class AppStyler01 {
   // function is used rather than JSXInstanceInterface.import().
   prepareInstance(jsxInstance, node, env) {
     let {parentInstance = {}, settingsData, key, componentPath} = jsxInstance;
-    let {transform: childRules = [], componentID} =
+    let {transform: {childRules = []} = {}, componentID} =
       parentInstance.settingsData ?? {};
 
     // Extract the transform and transformProps from the last child rule in the

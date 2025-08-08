@@ -999,13 +999,11 @@ export const scriptGrammar = {
     rules: [
       ["jsx-element!1"],
       [/\{/, "expression", /\}/],
+      [/\{/, /\}/],
     ],
     process: (children, ruleInd) => {
-      if (ruleInd === 0) {
-        return children[0];
-      } else {
-        return children[1];
-      }
+      return (ruleInd === 0) ? children[0] : (ruleInd === 1) ? children[1] :
+        {type: "empty-jsx-content"};
     },
   },
   "literal-list": {

@@ -9,7 +9,8 @@ export function render() {
         <p className="warning">{"I am a paragraph with some urgent text!"}</p>
         <p className="error">{"AAAaaaargh!! (just kidding)"}</p>
       </div>
-      <Foo key={0} />
+      <Foo key={1} />
+      <Foo key={2} />
     </div>
   );
 }

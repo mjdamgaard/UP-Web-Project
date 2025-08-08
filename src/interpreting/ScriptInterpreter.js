@@ -2507,10 +2507,11 @@ export class JSXElement extends ObjectObject {
       }
     });
     if (children) {
-      let childrenProp = [];
-      children.forEach((contentNode, ind) => {
+      let childrenProp = [], i = 0;
+      children.forEach((contentNode) => {
+        if (contentNode.type === "empty-jsx-content") return;
         let val = interpreter.evaluateExpression(contentNode, decEnv);
-        childrenProp[ind] = val;
+        childrenProp[i++] = val;
       });
       this.props["children"] = childrenProp;
     }
