@@ -36,6 +36,9 @@ const BUILT_IN_VALUE_PATTERN =
   "(red|green|blue|italic|bold|oblique|hidden|none|scroll|auto)";
 // TODO: Continue this list.
 
+const UNIT_PATTERN =
+  "(cm|mm|Q|in|pc|pt|px|em|rem|vh|vw|deg)";
+// TODO: Continue this list.
 
 
 
@@ -219,11 +222,10 @@ export const cssGrammar = {
   },
   "value": {
     rules: [
-      ["string"],
+      ["dimension"],
       ["number"],
-      ["color"],
-      ["length"],
-      ["degree"],
+      ["string"],
+      ["hex-color"],
       ["built-in-value"],
     ],
     process: copyFromChild,
@@ -267,12 +269,6 @@ export const cssGrammar = {
     process: copyLexemeFromChild,
     params: ["float"],
   },
-  "color": {
-    rules: [
-      ["hex-color"],
-    ],
-    process: copyFromChild,
-  },
   "hex-color": {
     rules: [
       ["/#/", "/([0-9a-fA-F]{2}){3,4}/", "S*"],
@@ -282,30 +278,18 @@ export const cssGrammar = {
       value: children[0] + children[1],
     }),
   },
-  "length": {
+  "dimension": {
     rules: [
       [
-        /\-?(0|[1-9][0-9]*)(\.[0-9]+)?/, /(cm|mm|Q|in|pc|pt|px|em|rem|vh|vw)/,
-        "S*"
+        "/\\-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][\\-\\+]?(0|[1-9][0-9]*))?" +
+        UNIT_PATTERN + "/", "S*"
       ],
     ],
     process: (children) => ({
-      type: "length",
+      type: "dimension",
       value: children[0] + children[1],
     }),
-    params: ["length"],
-  },
-  "degree": {
-    rules: [
-      [
-        /\-?(0|[1-9][0-9]*)(\.[0-9]+)?/, /(deg)/, "S*"
-      ],
-    ],
-    process: (children) => ({
-      type: "degree",
-      value: children[0] + children[1],
-    }),
-    params: ["length"],
+    params: ["dimension"],
   },
   "built-in-value": {
     rules: [
@@ -340,8 +324,7 @@ export class CSSParser extends Parser {
         /"([^"\\]|\\[.\n])*"/,
         /'([^'\\]|\\[.\n])*'/,
         /[a-zA-Z0-9_\-]+/,
-        /-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
-        /((?<=\s)\-)?(0|[1-9][0-9]*)(\.[0-9]+)?(%|[a-zA-Z]+)?/,
+        /((?<=\s)\-)?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
         /\|\||::|[.,:;\[\]{}()<>?=+\-*|^&!%/#]/,
         /[ \t\r\n\f]+/
       ],
