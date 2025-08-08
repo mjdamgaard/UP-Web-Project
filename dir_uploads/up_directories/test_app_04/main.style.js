@@ -10,6 +10,6 @@ export const transform = {
     {selector: ".warning", style: [
       "color: #00ff00;", "color: #ffc107; font-style: italic;"
     ]},
-    {selector: ".error", style: "color: #dc3545;", class&: "bold",},
+    {selector: ".error", style: "color: #dc3545;", class: "bold-text",},
   ],
 };

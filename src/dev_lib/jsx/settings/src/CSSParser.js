@@ -26,14 +26,14 @@ const PSEUDO_ELEMENT_PATTERN =
 // TODO: Continue this list.
 
 const PROPERTY_PATTERN =
-  "(color|background-color|font-style)";
+  "(color|background-color|font-style|font-weight)";
 // TODO: Continue this list.
 
 const FLAG_PATTERN =
   "([^\\s\\S])";
 
 const BUILT_IN_VALUE_PATTERN =
-  "(red|green|blue|italic|bold|hidden|none|scroll|auto)";
+  "(red|green|blue|italic|bold|oblique|hidden|none|scroll|auto)";
 // TODO: Continue this list.
 
 
@@ -223,6 +223,7 @@ export const cssGrammar = {
       ["number"],
       ["color"],
       ["length"],
+      ["degree"],
       ["built-in-value"],
     ],
     process: copyFromChild,
@@ -294,9 +295,21 @@ export const cssGrammar = {
     }),
     params: ["length"],
   },
+  "degree": {
+    rules: [
+      [
+        /\-?(0|[1-9][0-9]*)(\.[0-9]+)?/, /(deg)/, "S*"
+      ],
+    ],
+    process: (children) => ({
+      type: "degree",
+      value: children[0] + children[1],
+    }),
+    params: ["length"],
+  },
   "built-in-value": {
     rules: [
-      ["/" + BUILT_IN_VALUE_PATTERN + "/"],
+      ["/" + BUILT_IN_VALUE_PATTERN + "/", "S*"],
     ],
     process: copyLexemeFromChild,
     params: ["built-in-value"],

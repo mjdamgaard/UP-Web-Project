@@ -1,4 +1,5 @@
 
 .bold-text {
-  font-style: bold; 
+  font-weight: bold;
+  /* font-style: oblique 40deg; */
 }
