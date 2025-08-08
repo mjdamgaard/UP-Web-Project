@@ -271,7 +271,7 @@ export const scriptGrammar = {
   },
   "parameter-member-list": {
     rules: [
-      ["parameter", "/,/", "parameter-member-list!1"],
+      ["parameter-member", "/,/", "parameter-member-list!1"],
       ["parameter-member"],
     ],
     process: straightenListSyntaxTree,

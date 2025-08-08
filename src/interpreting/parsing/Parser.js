@@ -1,7 +1,5 @@
 
-
 const ERROR_ECHO_STR_LEN = 400;
-
 
 const NONTERMINAL_SYM_REGEXP =
   /^[^/?*+{}$!]+$/;
@@ -19,9 +17,6 @@ const NUMBER_SUBSTR_REGEXP_G =
 
 
 export const EOS_ERROR = "End of partial string";
-
-
-
 
 
 
