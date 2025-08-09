@@ -112,6 +112,7 @@ export const actions = {
 
 export const events = [
   ["peg-selected", "insertPeg"],
+  "changeCurrentSlot",
 ];
 
 
