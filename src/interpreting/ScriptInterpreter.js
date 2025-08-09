@@ -206,6 +206,9 @@ export class ScriptInterpreter {
     globalEnv.declare("MutableArray", mutableArrayClass, true, null);
     globalEnv.declare("MutableObject", mutableObjectClass, true, null);
     globalEnv.declare("MutableMap", mutableMapClass, true, null);
+    // TODO: Add more, in particular a Promise object, once we reimplement that.
+
+    return globalEnv;
   }
 
 

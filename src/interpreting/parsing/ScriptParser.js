@@ -548,7 +548,8 @@ export const scriptGrammar = {
     rules: [
       ["spread", "/,/", "expression-or-spread-list!1"],
       ["expression", "/,/", "expression-or-spread-list!1"],
-      ["expression"],
+      ["spread", "/,/?"],
+      ["expression", "/,/?"],
     ],
     process: (children, ruleInd) => straightenListSyntaxTree(
       children, ruleInd, undefined, false, 2,
@@ -745,7 +746,7 @@ export const scriptGrammar = {
       if (!postfixArr[0] && !ruleInd) {
         return children[0 + ruleInd];
       }
-      else if (ruleInd && postfixArr[1]?.type !== "expression-tuple") {
+      else if (ruleInd && postfixArr[0]?.type !== "expression-tuple") {
         return "'new' expression expects a (possibly empty) argument tuple"
       }
       else return {

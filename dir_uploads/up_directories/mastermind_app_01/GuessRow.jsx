@@ -1,6 +1,5 @@
 
 import {map} from 'array';
-
 import * as Peg from "./Peg.jsx";
 
 export function render({guess: {curSlot, slots}, answer, isActive}) {

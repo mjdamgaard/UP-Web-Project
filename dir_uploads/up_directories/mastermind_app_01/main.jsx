@@ -36,12 +36,12 @@ export function render({maxGuesses = 10}) {
 
 export function getInitState() {
   return {
-    secret: secret = getSecret(),
+    secret: getSecret(),
     guesses: [{slots: createArray(4), curSlot: 0}],
     answers: [],
     isDone: false,
     hasWon: false,
-  }
+  };
 }
 
 
