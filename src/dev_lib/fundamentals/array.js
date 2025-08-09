@@ -1,6 +1,6 @@
 
 import {
-  DevFunction, ObjectObject,
+  DevFunction, forEachValue, ObjectObject,
 } from "../../interpreting/ScriptInterpreter.js";
 
 
@@ -25,6 +25,17 @@ export const map = new DevFunction(
     if (arr instanceof ObjectObject) arr = arr.members;
     return arr.map((val, ind) => {
       return interpreter.executeFunction(
+        fun, [val, ind], callerNode, execEnv
+      );
+    });
+  }
+);
+
+export const forEach = new DevFunction(
+  "forEach", {typeArr: ["array", "function"]},
+  ({callerNode, execEnv, interpreter}, [arr, fun]) => {
+    forEachValue(arr, callerNode, execEnv, (val, ind) => {
+      interpreter.executeFunction(
         fun, [val, ind], callerNode, execEnv
       );
     });

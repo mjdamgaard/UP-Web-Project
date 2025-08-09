@@ -72,10 +72,7 @@ export class ScriptInterpreter {
 
     // First create a global environment, which is used as a parent environment
     // for all modules.
-    let globalEnv = new Environment(
-      undefined, "global", {scriptVars: scriptVars},
-    );
-    scriptVars.globalEnv = globalEnv;
+    let globalEnv = this.createGlobalEnvironment(scriptVars);
 
     // Add the 'server' dev library (used for fetching scripts and other data)
     // to liveModules from the beginning.
@@ -197,6 +194,18 @@ export class ScriptInterpreter {
       // callback, or by the timeout callback.
       return await outputAndLogPromise;
     }
+  }
+
+
+  createGlobalEnvironment(scriptVars) {
+    let globalEnv = new Environment(
+      undefined, "global", {scriptVars: scriptVars},
+    );
+    scriptVars.globalEnv = globalEnv;
+
+    globalEnv.declare("MutableArray", mutableArrayClass, true, null);
+    globalEnv.declare("MutableObject", mutableObjectClass, true, null);
+    globalEnv.declare("MutableMap", mutableMapClass, true, null);
   }
 
 
@@ -2080,6 +2089,16 @@ export function getPropertyFromPlainObject(obj, key) {
 }
 
 
+export function setPropertyOfObject(obj, key, val, node, env) {
+  if (obj instanceof ObjectObject) {
+    return obj.set(key, val, node, env);
+  }
+  else throw new RuntimeError(
+    "Assignment to a property of an Immutable object or non-object",
+    node, env
+  );
+}
+
 
 
 
@@ -2290,7 +2309,13 @@ export const mutableObjectClass = new ClassObject(
   "MutableObject", undefined, undefined, undefined, true, true
 );
 export const mutableArrayClass = new ClassObject(
-  "MutableArray", undefined, undefined, undefined, true, true, true
+  "MutableArray", new DevFunction(
+    "MutableArray", {},( {callerNode, execEnv, thisVal}, [length]) => {
+      if (length) {
+        setPropertyOfObject(thisVal, "length", length, callerNode, execEnv);
+      }
+    }
+  ), undefined, undefined, true, true, true
 );
 export const mutableMapClass = new ClassObject(
   "MutableMap", undefined, undefined, undefined, false, true, false, true

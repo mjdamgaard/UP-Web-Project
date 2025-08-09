@@ -1,4 +1,7 @@
 
+// A test app that shows that the backend works, at least enough to have a
+// server module that governs an ATT table.
+
 import * as PostField from "./PostField.jsx";
 import * as PostList from "./PostList.jsx";
 

@@ -25,16 +25,18 @@ const PSEUDO_ELEMENT_PATTERN =
   "(before|after|first-line)";
 // TODO: Continue this list.
 
-const PROPERTY_PATTERN =
-  "(display|color|background-color|font-style|font-weight)";
-// TODO: Continue this list.
+// const PROPERTY_PATTERN =
+//   "(display|color|background-color|font-style|font-weight)";
+// TODO: Make sure that this is okay:
+const PROPERTY_PATTERN = "[a-z][a-z\-]*";
 
 const FLAG_PATTERN =
   "([^\\s\\S])";
 
-const BUILT_IN_VALUE_PATTERN =
-  "(red|green|blue|italic|bold|oblique|hidden|none|scroll|auto)";
-// TODO: Continue this list.
+// const BUILT_IN_VALUE_PATTERN =
+//   "(red|green|blue|italic|bold|oblique|hidden|none|scroll|auto)";
+// TODO: Make sure that this is okay:
+const BUILT_IN_VALUE_PATTERN = "[a-z]+";
 
 const UNIT_PATTERN =
   "(cm|mm|Q|in|pc|pt|px|em|rem|vh|vw|deg)";

@@ -1,4 +1,8 @@
 
+// A simple test app of the styling system.
+// TODO: Test transformProps as well, and test both style() and check()
+// functions.
+
 import * as Foo from "./foo.jsx";
 
 export function render() {
