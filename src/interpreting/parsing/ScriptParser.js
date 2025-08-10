@@ -1077,6 +1077,8 @@ export const scriptGrammar = {
       };
     },
   },
+// TODO: Make console.log() accept more than one input: make it use an
+// "expression-tuple".
   "console-call": {
     rules: [
       ["/console/", /\./, "/log/", /\(/, "expression", /\)/],

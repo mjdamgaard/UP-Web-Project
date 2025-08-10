@@ -91,10 +91,10 @@ export const cssGrammar = {
   },
   "non-space-combinator": {
     rules: [
-      [/>|\+|~/, "S*"],
+      ["S*", />|\+|~/, "S*"],
     ],
     process: copyLexemeFromChild,
-    params: ["non-space-combinator"],
+    params: ["non-space-combinator", 1],
   },
   "compound-selector": {
     rules: [

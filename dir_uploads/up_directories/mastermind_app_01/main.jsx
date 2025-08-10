@@ -3,7 +3,7 @@
 // And can so far only be controlled by mouse (since keyboard events aren't
 // implemented yet for the JSX components).
 
-import {createArray, map, slice, forEach} from 'array';
+import {createArray, map, slice, at, forEach} from 'array';
 import {random, floor} from 'math';
 import * as HeaderMenu from "./HeaderMenu.jsx";
 import * as GuessRow from "./GuessRow.jsx";
@@ -99,7 +99,7 @@ export const actions = {
   },
   "changeCurrentSlot": function(newSlot) {
     let {guesses} = this.state;
-    let {slots} = guesses.at(-1);
+    let {slots} = at(guesses, -1);
     let newGuesses = [
       ...slice(guesses, 0, -1),
       {curSlot: newSlot, slots: slots},
