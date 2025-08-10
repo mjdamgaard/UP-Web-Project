@@ -435,6 +435,7 @@ class JSXInstance {
       let childArr = [];
       let {node: jsxNode, decEnv: jsxDecEnv} = jsxElement;
       forEachValue(jsxElement.props, jsxNode, jsxDecEnv, (val, key) => {
+        let mouseEventProperty, canPost;
         switch (key) {
           case "children" : {
             if (tagName === "br" || tagName === "hr") throw new RuntimeError(
@@ -469,25 +470,39 @@ class JSXInstance {
           // instance (e.g. handed down through refs), unless one is okay with
           // bleeding the CAN_POST and REQUEST_ORIGIN privileges granted to
           // this onClick handler function into the parent instance.
-          case "onClick": {
+          case "onClick":
+            mouseEventProperty ??= "onclick";
+          case "onDBLClick":
+            mouseEventProperty ??= "ondblclick";
+          case "onMouseDown":
+            mouseEventProperty ??= "onmousedown";
+          case "onMouseUp":
+            mouseEventProperty ??= "onmouseup";
+            canPost ??= true;
+          case "onMouseEnter":
+            mouseEventProperty ??= "onmouseenter";
+          case "onMouseLeave":
+            mouseEventProperty ??= "onmouseleave";
+          case "onMouseMove":
+            mouseEventProperty ??= "onmousemove";
+            canPost ??= false;
             if (!(val instanceof FunctionObject)) {
               break;
             }
-            newDOMNode.onclick = async () => {
+            newDOMNode[mouseEventProperty] = async () => {
               try {
                 // Execute the function object held in val, with elevated
                 // privileges that allows the function to make POST-like
                 // requests.
                 interpreter.executeFunctionOffSync(
                   val, [], callerNode, callerEnv,
-                  new JSXInstanceInterface(this), [CAN_POST_FLAG]
+                  new JSXInstanceInterface(this), [[CAN_POST_FLAG, canPost]]
                 );
               } catch (err) {
                 console.error(err);
               }
             };
             break;
-          }
           // TODO: Add keyboard events, more click events, and focus events and
           // focus methods, like I have described it in my working notes (in my
           // "23-xx" notes, which is currently located in my Notes/backup

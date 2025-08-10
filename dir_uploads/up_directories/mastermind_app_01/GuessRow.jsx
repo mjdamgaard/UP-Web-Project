@@ -13,8 +13,8 @@ export function render({
           this.trigger("changeCurrentSlot", ind);
         };
         return (
-          <div className={className} onClick={onClick}>
-            <Peg key={"g-" + ind} colorID={colorID}/>
+          <div className={className} onMouseDown={onClick}>
+            <Peg key={"p-g-" + ind} colorID={colorID}/>
           </div>
         );
       })
@@ -23,7 +23,7 @@ export function render({
   let answerGroup = (
     <div className="answer">{
       map(answer, (colorID, ind) => (
-        <Peg key={"a-" + ind} colorID={colorID}/>
+        <Peg key={"p-a-" + ind} colorID={colorID}/>
       ))
     }</div>
   );

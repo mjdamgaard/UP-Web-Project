@@ -9,7 +9,7 @@ export function render() {
         <div onClick={() => {
           this.trigger("peg-selected", ind);
         }}>
-          <Peg key={ind} colorID={ind} />
+          <Peg key={"p-" + ind} colorID={ind} />
         </div>
       ))
     }</div>

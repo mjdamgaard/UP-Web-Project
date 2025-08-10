@@ -402,8 +402,10 @@ export class AppStyler01 {
   // function is used rather than JSXInstanceInterface.import().
   prepareInstance(jsxInstance, node, env) {
     let {parentInstance = {}, settingsData, key, componentPath} = jsxInstance;
-    let {transform: parentTransform, componentID} =
-      parentInstance.settingsData ?? {};
+    let {
+      componentID,
+      transform: parentTransform, transformProps: parentTransformProps,
+    } = parentInstance.settingsData ?? {};
     let {childRules = []} = parentTransform ?? {};
 
     // Extract the transform and transformProps from the last child rule in the
@@ -424,12 +426,16 @@ export class AppStyler01 {
     // from the nearest ancestor instance of the same component with an actual
     // transform stored in its settingsData.
     if (transform === "inherit") {
-      transform = this.getInheritedTransform(parentInstance, componentPath);
+      let inheritedTransformProps;
+      [transform, inheritedTransformProps] =
+        this.getInheritedTransformSpecs(parentInstance, componentPath);
+      transformProps ??= inheritedTransformProps;
     }
 
     // And if it equals "copy", just copy the parent's transform.
     else if (transform === "copy") {
-      transform = parentTransform
+      transform = parentTransform;
+      transformProps ??= parentTransformProps;
     }
 
     // If the transform is still falsy at this point, it means that the
@@ -480,14 +486,14 @@ export class AppStyler01 {
   }
 
 
-  getInheritedTransform(parentInstance, callerComponentPath) {
+  getInheritedTransformSpecs(parentInstance, callerComponentPath) {
     let {componentPath, settingsData: {transform} = {}} = parentInstance;
     if (componentPath === callerComponentPath && transform instanceof Object) {
       return transform;
     }
     parentInstance = parentInstance.parentInstance;
     if (parentInstance) {
-      return this.getInheritedTransform(parentInstance, callerComponentPath);
+      return this.getInheritedTransformSpecs(parentInstance, callerComponentPath);
     }
     else return undefined;
   }

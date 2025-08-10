@@ -171,4 +171,4 @@ export function getAnswer(newSlots, secret) {
 }
 
 
-export const stylePath = "./style.css";
+export const stylePath = "./main.style.js";
