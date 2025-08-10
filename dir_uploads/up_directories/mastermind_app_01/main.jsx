@@ -18,8 +18,8 @@ export function render({maxGuesses = 10}) {
   let rows = createArray(maxGuesses, ind => {
     let rowIndex = maxGuesses - ind - 1;
     return <GuessRow key={"r-" + rowIndex}
-      guess={guesses[ind]} isActive={rowIndex == curRowIndex}
-      answer={answers[ind]}
+      guess={guesses[rowIndex]} isActive={rowIndex == curRowIndex}
+      answer={answers[rowIndex]}
     />;
   });
 
@@ -101,7 +101,7 @@ export const actions = {
     let {guesses} = this.state;
     let {slots} = at(guesses, -1);
     let newGuesses = [
-      ...slice(guesses, 0, -1),
+      ...slice(guesses, 0, -2),
       {curSlot: newSlot, slots: slots},
     ];
     this.setState({...this.state, guesses: newGuesses});

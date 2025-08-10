@@ -27,7 +27,7 @@ export function render({
       ))
     }</div>
   );
-if (curSlot != 0) console.log(guessRow);
+
   return (
     <div className={isActive ? "active" : ""}>
       {guessRow}

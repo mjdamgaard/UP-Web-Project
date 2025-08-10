@@ -37,6 +37,9 @@
   grid-template-rows: 1fr 1fr;
 }
 
+.peg {
+  text-align: center;
+}
 .peg::after {
   content: "o";
 }
