@@ -1,6 +1,38 @@
 
 .game-area {
+  width: 300px;
+  height: 400px;
+  display: grid;
+  grid-template-columns: 1fr 6fr;
   background-color: #e7e7e7;
-  width: 500px;
-  height: 700px;
+}
+
+
+.peg-selection {
+  display: grid;
+}
+
+.rows {
+  display: grid;
+}
+
+.rows > * {
+  display: grid;
+  grid-template-columns: 4fr 1fr;
+  gap: 1fr;
+}
+
+.guess-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
+.answer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.peg::after {
+  content: "o";
 }

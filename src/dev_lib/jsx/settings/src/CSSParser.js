@@ -39,7 +39,7 @@ const FLAG_PATTERN =
 const BUILT_IN_VALUE_PATTERN = "[a-z]+";
 
 const UNIT_PATTERN =
-  "(cm|mm|Q|in|pc|pt|px|em|rem|vh|vw|deg)";
+  "(cm|mm|Q|in|pc|pt|px|em|rem|vh|vw|deg|fr)";
 // TODO: Continue this list.
 
 
@@ -197,10 +197,10 @@ export const cssGrammar = {
   },
   "declaration": {
     rules: [
-      [
-        "/" + PROPERTY_PATTERN + "/", "S*", "/:/", "S*", "value!1+", "flag!1",
-        "/;/", "S*"
-      ],
+      // [
+      //   "/" + PROPERTY_PATTERN + "/", "S*", "/:/", "S*", "value!1+", "flag!1",
+      //   "/;/", "S*"
+      // ],
       [
         "/" + PROPERTY_PATTERN + "/", "S*", "/:/", "S*", "value!1+", "/;/",
         "S*"
@@ -210,7 +210,7 @@ export const cssGrammar = {
       type: "declaration",
       propName: children[0],
       valueArr: children[4],
-      flagName: children[5]?.name,
+      // flagName: children[5]?.name,
     }),
   },
   "flag": {

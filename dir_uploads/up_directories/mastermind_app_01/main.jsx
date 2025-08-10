@@ -28,8 +28,8 @@ export function render({maxGuesses = 10}) {
       <HeaderMenu key="menu" />
       <GameOverPrompt key="prompt" isDone={isDone} hasWon={hasWon} />
       <div className="game-area">
-        <div className="rows">{rows}</div>
         <PegSelection key="pegs" />
+        <div className="rows">{rows}</div>
       </div>
     </div>
   );

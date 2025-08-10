@@ -1400,7 +1400,7 @@ export class ScriptInterpreter {
 
 
   executeDestructuring(expNode, val, environment, isDeclaration, isConst) {
-    let type = expNode.type
+    let type = expNode.type;
     let valProto = getPrototypeOf(val);
     if (type === "array-destructuring") {
       if (valProto !== ARRAY_PROTOTYPE) throw new RuntimeError(
@@ -1419,7 +1419,8 @@ export class ScriptInterpreter {
     else if (type === "object-destructuring") {
       if (valProto !== OBJECT_PROTOTYPE && !(val instanceof ObjectObject)) {
         throw new RuntimeError(
-          "Destructuring an object with a non-object value",
+          "Destructuring an object with a non-object value: " +
+          getString(val, expNode, environment),
           expNode, environment
         );
       }

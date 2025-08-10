@@ -278,17 +278,16 @@ export const scriptGrammar = {
   },
   "parameter-member": {
     rules: [
-      ["identifier", "/:/", "parameter", "/=/", "expression!"],
       ["identifier", "/:/", "parameter!"],
       ["identifier", "/=/", "expression!"],
       ["identifier"],
     ],
     process: (children, ruleInd) => (
-      (ruleInd <= 1) ? {
+      (ruleInd === 0) ? {
         type: "parameter-member",
         ident: children[0].ident,
         targetExp: children[2].targetExp,
-        defaultExp: children[4],
+        defaultExp: children[2].defaultExp,
       } : {
         type: "parameter-member",
         ident: children[0].ident,

@@ -1,6 +1,7 @@
 
 export function render({colorID}) {
   return (
-    <div className={(colorID !== undefined) ? "color-" + colorID : ""}></div>
+    <div className={(colorID !== undefined) ? "peg color-" + colorID : "peg"}>
+    </div>
   );
 }

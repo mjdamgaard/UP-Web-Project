@@ -4,7 +4,7 @@ import * as Peg from "./Peg.jsx";
 
 export function render() {
   return (
-    <div>{
+    <div className="peg-selection">{
       createArray(8, ind => (
         <div onClick={() => {
           this.trigger("peg-selected", ind);
