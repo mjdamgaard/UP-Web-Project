@@ -49,14 +49,13 @@ export class SettingsObject01 extends SettingsObject {
     return this.appStyler.prepareComponent(componentModule, node, env);
   }
 
-
-  // TODO: Implement.
   prepareInstance(jsxInstance, node, env) {
     return this.appStyler.prepareInstance(jsxInstance, node, env);
   }
 
-
-  // TODO: Implement.
+  // TODO: At some point reimplement this such that certain components can get
+  // "CLIENT_TRUST", and make this be able to depend on user preferences as
+  // well.
   getClientTrust(requestOrigin, node, env) {
     return false;
   }
@@ -66,8 +65,6 @@ export class SettingsObject01 extends SettingsObject {
     return this.appStyler.componentPaths[componentID];
   }
 
-
-  // TODO: Implement.
   transformInstance(jsxInstance, domNode, ownDOMNodes, node, env) {
     return this.appStyler.transformInstance(
       jsxInstance, domNode, ownDOMNodes, node, env

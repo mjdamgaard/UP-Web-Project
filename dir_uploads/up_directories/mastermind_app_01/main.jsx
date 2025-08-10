@@ -10,13 +10,14 @@ import * as GuessRow from "./GuessRow.jsx";
 import * as PegSelection from "./PegSelection.jsx";
 import * as GameOverPrompt from "./GameOverPrompt.jsx";
 
+
 export function render({maxGuesses = 10}) {
   let {isDone, hasWon, guesses, answers} = this.state;
   let curRowIndex = answers.length;
 
   let rows = createArray(maxGuesses, ind => {
     let rowIndex = maxGuesses - ind - 1;
-    return <GuessRow key={"r" + rowIndex}
+    return <GuessRow key={"r-" + rowIndex}
       guess={guesses[ind]} isActive={rowIndex == curRowIndex}
       answer={answers[ind]}
     />;
@@ -168,3 +169,5 @@ export function getAnswer(newSlots, secret) {
   });
   return [answer, hasWon];
 }
+
+export const stylePath = "./main.style.js";

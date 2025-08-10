@@ -5,10 +5,12 @@ import {
   ArgTypeError, parseString, verifyTypes, verifyType, getString,
   getPropertyFromPlainObject, jsonStringify, CLEAR_FLAG, jsonParse,
   FunctionObject, getPropertyFromObject, forEachValue, CSSModule, isArray,
+  LiveJSModule,
 } from "../../../../interpreting/ScriptInterpreter.js";
 
 const CLASS_STRING_REGEX = /^ *([a-z][a-z0-9\-]*)((_[a-z0-9\-]*)?) *$/;
 const SPACE_REGEX = / +/;
+const TRAILING_UNDERSCORE_REGEX_G = /_(?=(\s|$))/g;
 const STYLE_SHEET_KEY_REGEX = /^[a-z0-9\-]+$/;
 const RELATIVE_ROUTE_START_REGEX = /^\.\.?\//;
 
@@ -18,7 +20,7 @@ const TRANSFORM_KEYWORD_REGEX = /^(inherit)$/;
 // The "transform" objects used by the AppStyler01 are of the following when
 // defined by the users:
 //
-// <transform> := {(styleSheets?, rules?, childRules?},
+// <transform> := {(styleSheets?, rules?, childRules?, removeInitialClasses?},
 // styleSheets : [(<CSSModule>,)*],
 // rules : [({selector, style?, class?, check?},)*],
 // style : [(<style>,)*] | <style>
@@ -26,18 +28,20 @@ const TRANSFORM_KEYWORD_REGEX = /^(inherit)$/;
 // class : [(<class>,)*] | <class>
 // <class> := [(</[a-z][a-z0-9\-]*(_[1-9][0-9]*)?/ string>,)*],
 // check : <function>,
+// removeInitialClasses := <boolean>,
 // childRules := [({key, transform?, props?},)*],
 // key : </!?.+\*?/ key format>,
-// transform : <transform> | "inherit".
+// transform : <transform> | "copy" | "inherit".
 //
 // And after having been prepared, they are of the form:
 //
-// <transform> := {(rules, childRules},
+// <transform> := {(rules, childRules, initialClassesSuffix},
 // rules : [({selector, style, classes, check?},)*],
 // styles : [(<style>,)*],
 // <style> := <string ready to be appended to a style attribute> | <function>,
 // classes : [(<class ready to be added to an element's classList>,)*]
 // check : <function>,
+// initialClassesSuffix := "" | <integer string>.,
 // childRules := *same as above*.
 //
 // Furthermore, the settingsData props used are:
@@ -125,9 +129,28 @@ export class AppStyler01 {
       styleModule = await styleModule;
     }
 
-    // Get the transform and the transformProps from that module.
-    let transform = styleModule.get("transform");
-    let transformProps = styleModule.get("transform");
+    // If the styleModule is a CSSModule, we use a default transform format
+    // where the given style sheet simple gets to target it and all descendants
+    // of the component (and will get to style the JSXElement-defined classes).
+    let transform, transformProps;
+    if (styleModule instanceof CSSModule) {
+      transform = {
+        styleSheets: [styleModule],
+        childRules: [{key: "*", transform: "copy"}],
+      };
+    }
+
+    // Else we expect styleModule to be a LiveJSModule that exports a
+    // 'transform' variable, and potentially a default 'transformProps'
+    // variable as well.
+    else if (styleModule instanceof LiveJSModule) {
+      transform = styleModule.get("transform");
+      transformProps = styleModule.get("transform");
+    }
+    else throw new ArgTypeError(
+      "Invalid style module: " + getString(styleModule, node, env),
+      node, env
+    );
 
     // Then prepare this transform, and store the result as well as the default
     // transformProps in this.defaultComponentStyles.
@@ -144,96 +167,6 @@ export class AppStyler01 {
     return componentID;
   }
 
-
-  // prepareInstance() finds the right transform and transformProps to use
-  // for the instance, then returns [isReady=true], unless the component has
-  // somehow not yet been prepared, which might happen if the regular import()
-  // function is used rather than JSXInstanceInterface.import().
-  prepareInstance(jsxInstance, node, env) {
-    let {parentInstance = {}, settingsData, key, componentPath} = jsxInstance;
-    let {transform: {childRules = []} = {}, componentID} =
-      parentInstance.settingsData ?? {};
-
-    // Extract the transform and transformProps from the last child rule in the
-    // parent instance's childRules array where the key format matches this
-    // instance's key.
-    let transform, transformProps, rule;
-    let len = childRules.length;
-    for (let i = len - 1; i >= 0; i--) {
-      let {key: keyFormat} = rule = childRules[i];
-      if (testKey(key, keyFormat)) {
-        transform = rule.transform;
-        transformProps = rule.props;
-        break;
-      }
-    }
-
-    // If transform equals the "inherit" keyword, instead get the transform
-    // from the nearest ancestor instance of the same component with an actual
-    // transform stored in its settingsData.
-    if (transform === "inherit") {
-      transform = this.getInheritedTransform(parentInstance, componentPath);
-    }
-
-    // If the transform is falsy, it means that the instance should be the
-    // root instance of a new scope.
-    if (!transform) {
-      // First record that the instance is the root of a style scope.
-      settingsData.isScopeRoot = true;
-
-      // Then get the componentID.
-      componentID = this.componentIDs.get(componentPath);
-
-      // If this is not ready yet, return it as the whenReady promise, such
-      // that the instance will rerender once it resolves (by which
-      // prepareInstance() will be called again).
-      if (componentID instanceof Promise) {
-        let whenReady = componentID;
-        return [false, whenReady];
-      }
-
-      // Else if it is undefined, call preparedComponent instead, as return
-      // that is the whenReady promise.
-      if (!componentID) {
-        let whenReady = this.prepareComponent(
-          jsxInstance.componentModule, node, env
-        );
-        return [false, whenReady];
-      }
-
-      // And else we know that we can find the transform (also prepared) at
-      // this.defaultComponentStyles, as well as a default transformProps if
-      // the one we already have gotten is undefined.
-      let defaultComponentStyle =
-        this.defaultComponentStyles.get(componentPath);
-      transform = defaultComponentStyle.transform;
-      transformProps ??= defaultComponentStyle.transformProps;
-    }
-    
-    // Now that have the transform and transformProps (possibly after a
-    // rerender), we can store these in this instance's settingsData, along
-    // with the componentID, either gotten from the parent or from
-    // this.componentIDs.
-    settingsData.componentID = componentID;
-    settingsData.transform = transform;
-    settingsData.transformProps = transformProps;
-
-    // And finally, we can return isReady = true.
-    return [true];
-  }
-
-
-  getInheritedTransform(parentInstance, callerComponentPath) {
-    let {componentPath, settingsData: {transform} = {}} = parentInstance;
-    if (componentPath === callerComponentPath && transform instanceof Object) {
-      return transform;
-    }
-    parentInstance = parentInstance.parentInstance;
-    if (parentInstance) {
-      return this.getInheritedTransform(parentInstance, callerComponentPath);
-    }
-    else return undefined;
-  }
 
 
 
@@ -428,6 +361,14 @@ export class AppStyler01 {
     });
     preparedTransform.childRules = preparedChildRules;
 
+
+    // And unless removeInitialClasses is true, assign the initialClassesSuffix
+    // property the first styleSheetID from styleSheetIDArr, and otherwise
+    // assign it "".
+    preparedTransform.initialClassesSuffix =
+      getPropertyFromObject(transform, "removeInitialClasses") ? "" :
+        (styleSheetIDArr[0] ?? "").toString();
+
     // Finally, return the prepared {rules, childRules} transform.
     return preparedTransform;
   }
@@ -454,19 +395,118 @@ export class AppStyler01 {
 
 
 
+
+  // prepareInstance() finds the right transform and transformProps to use
+  // for the instance, then returns [isReady=true], unless the component has
+  // somehow not yet been prepared, which might happen if the regular import()
+  // function is used rather than JSXInstanceInterface.import().
+  prepareInstance(jsxInstance, node, env) {
+    let {parentInstance = {}, settingsData, key, componentPath} = jsxInstance;
+    let {transform: parentTransform, componentID} =
+      parentInstance.settingsData ?? {};
+    let {childRules = []} = parentTransform ?? {};
+
+    // Extract the transform and transformProps from the last child rule in the
+    // parent instance's childRules array where the key format matches this
+    // instance's key.
+    let transform, transformProps, rule;
+    let len = childRules.length;
+    for (let i = len - 1; i >= 0; i--) {
+      let {key: keyFormat} = rule = childRules[i];
+      if (testKey(key, keyFormat)) {
+        transform = rule.transform;
+        transformProps = rule.props;
+        break;
+      }
+    }
+
+    // If transform equals the "inherit" keyword, instead get the transform
+    // from the nearest ancestor instance of the same component with an actual
+    // transform stored in its settingsData.
+    if (transform === "inherit") {
+      transform = this.getInheritedTransform(parentInstance, componentPath);
+    }
+
+    // And if it equals "copy", just copy the parent's transform.
+    else if (transform === "copy") {
+      transform = parentTransform
+    }
+
+    // If the transform is still falsy at this point, it means that the
+    // instance should be the root instance of a new scope.
+    if (!transform) {
+      // First record that the instance is the root of a style scope.
+      settingsData.isScopeRoot = true;
+
+      // Then get the componentID.
+      componentID = this.componentIDs.get(componentPath);
+
+      // If this is not ready yet, return it as the whenReady promise, such
+      // that the instance will rerender once it resolves (by which
+      // prepareInstance() will be called again).
+      if (componentID instanceof Promise) {
+        let whenReady = componentID;
+        return [false, whenReady];
+      }
+
+      // Else if it is undefined, call preparedComponent instead, as return
+      // that is the whenReady promise.
+      if (!componentID) {
+        let whenReady = this.prepareComponent(
+          jsxInstance.componentModule, node, env
+        );
+        return [false, whenReady];
+      }
+
+      // And else we know that we can find the transform (also prepared) at
+      // this.defaultComponentStyles, as well as a default transformProps if
+      // the one we already have gotten is undefined.
+      let defaultComponentStyle =
+        this.defaultComponentStyles.get(componentPath);
+      transform = defaultComponentStyle.transform;
+      transformProps ??= defaultComponentStyle.transformProps;
+    }
+    
+    // Now that have the transform and transformProps (possibly after a
+    // rerender), we can store these in this instance's settingsData, along
+    // with the componentID, either gotten from the parent or from
+    // this.componentIDs.
+    settingsData.componentID = componentID;
+    settingsData.transform = transform;
+    settingsData.transformProps = transformProps;
+
+    // And finally, we can return isReady = true.
+    return [true];
+  }
+
+
+  getInheritedTransform(parentInstance, callerComponentPath) {
+    let {componentPath, settingsData: {transform} = {}} = parentInstance;
+    if (componentPath === callerComponentPath && transform instanceof Object) {
+      return transform;
+    }
+    parentInstance = parentInstance.parentInstance;
+    if (parentInstance) {
+      return this.getInheritedTransform(parentInstance, callerComponentPath);
+    }
+    else return undefined;
+  }
+
+
+
+
   // transformInstance() takes the outer DOM node of a component instance, an
   // array if its "own" DOM nodes, and a rules array that has already been
   // validated and prepared by inserting the right style sheet IDs in classes,
   // and then transforms the nodes of that instance, giving it inline styles
   // and/or classes. 
   transformInstance(jsxInstance, domNode, ownDOMNodes, node, env) {
+    if (ownDOMNodes.length === 0) return;
     let {settingsData, props, state} = jsxInstance;
-    let {componentID, transform: {rules}, transformProps, isScopeRoot} =
+    let {componentID, transform, transformProps, isScopeRoot} =
       settingsData ?? {};
+    let {rules = [], initialClassesSuffix} = transform ?? {};
     let {interpreter} = env.scriptVars;
-    if (ownDOMNodes.length === 0) {
-      return;
-    }
 
     // Add the "c<componentID>" class to all ownDOMNodes, and also add an
     // "own-leaf" class to all the nodes that haven't got children themselves
@@ -520,6 +560,19 @@ export class AppStyler01 {
         });
       });
     });
+
+    // Then append the initialClassesSuffix all the JSXElement-defined
+    // classes, who all have a trailing '_', so that, unless removeInitial-
+    // Classes is true, the first among the component's style sheets will get
+    // to style the JSXElement-defined classes.
+    if (initialClassesSuffix) {
+      ownDOMNodes.forEach(node => {
+        let className = node.getAttribute("class");
+        node.setAttribute("class", className.replaceAll(
+          TRAILING_UNDERSCORE_REGEX_G, initialClassesSuffix
+        ));
+      });
+    }
 
     // Finally, remove the "own-leaf" classes again.
     ownDOMNodes.forEach(node => node.classList.remove("own-leaf"));

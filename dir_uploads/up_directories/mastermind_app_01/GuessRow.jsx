@@ -12,7 +12,7 @@ export function render({guess: {curSlot, slots}, answer, isActive}) {
         };
         return (
           <div className={className} onClick={onClick}>
-            <Peg colorID={colorID}/>
+            <Peg key={"g-" + ind} colorID={colorID}/>
           </div>
         );
       })
@@ -20,9 +20,9 @@ export function render({guess: {curSlot, slots}, answer, isActive}) {
   );
   let answerGroup = (
     <div>{
-      map(answer, colorID => (
+      map(answer, (colorID, ind) => (
         <div>
-          <Peg colorID={colorID}/>
+          <Peg key={"a-" + ind} colorID={colorID}/>
         </div>
       ))
     }</div>
