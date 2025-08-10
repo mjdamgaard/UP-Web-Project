@@ -519,10 +519,11 @@ export class Parser {
         childSyntaxTree = this.parseRuleSymbol(
           lexArr, nextPos, ruleSym, (nextPos === pos) ? triedSymbols : []
         );
+        nextPos = childSyntaxTree.nextPos;
 
         // First set doOrDie depending how how far nextPos got, regardless
         // of whether the rule symbol succeeded or not.
-        if (childSyntaxTree.nextPos - ruleSymPos >= doOrDieLevel) {
+        if (nextPos - ruleSymPos >= doOrDieLevel) {
           doOrDie = true;
         }
 
