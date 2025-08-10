@@ -1432,10 +1432,10 @@ export class ScriptInterpreter {
       });
       return val;
     }
-    else throw new RuntimeError(
+    else {debugger;throw new RuntimeError(
       "Cannot assign to this type of expression",
       expNode, environment
-    );
+    );}
   }
 
 
@@ -2335,7 +2335,8 @@ export function verifyType(val, type, isOptional, node, env) {
       return;
     }
     else throw new ArgTypeError(
-      "Value is undefined", node, env
+      "Value is undefined, expected " + getString(type, node, env),
+      node, env
     );
   }
   let typeOfVal = typeof val;

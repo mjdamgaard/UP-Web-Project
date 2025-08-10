@@ -14,7 +14,7 @@ const TRAILING_UNDERSCORE_REGEX_G = /_(?=(\s|$))/g;
 const STYLE_SHEET_KEY_REGEX = /^[a-z0-9\-]+$/;
 const RELATIVE_ROUTE_START_REGEX = /^\.\.?\//;
 
-const TRANSFORM_KEYWORD_REGEX = /^(inherit)$/;
+const TRANSFORM_KEYWORD_REGEX = /^(copy|inherit)$/;
 
 
 // The "transform" objects used by the AppStyler01 are of the following when
@@ -41,7 +41,7 @@ const TRANSFORM_KEYWORD_REGEX = /^(inherit)$/;
 // <style> := <string ready to be appended to a style attribute> | <function>,
 // classes : [(<class ready to be added to an element's classList>,)*]
 // check : <function>,
-// initialClassesSuffix := "" | <integer string>.,
+// initialClassesSuffix := "_" | "_" + <integer string>,
 // childRules := *same as above*.
 //
 // Furthermore, the settingsData props used are:
@@ -366,8 +366,8 @@ export class AppStyler01 {
     // property the first styleSheetID from styleSheetIDArr, and otherwise
     // assign it "".
     preparedTransform.initialClassesSuffix =
-      getPropertyFromObject(transform, "removeInitialClasses") ? "" :
-        (styleSheetIDArr[0] ?? "").toString();
+      getPropertyFromObject(transform, "removeInitialClasses") ? "_" :
+        "_" + (styleSheetIDArr[0] ?? "");
 
     // Finally, return the prepared {rules, childRules} transform.
     return preparedTransform;

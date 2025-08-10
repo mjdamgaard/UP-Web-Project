@@ -287,7 +287,7 @@ export const scriptGrammar = {
       (ruleInd <= 1) ? {
         type: "parameter-member",
         ident: children[0].ident,
-        targetExp: children[2],
+        targetExp: children[2].targetExp,
         defaultExp: children[4],
       } : {
         type: "parameter-member",

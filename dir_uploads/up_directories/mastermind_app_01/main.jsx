@@ -24,10 +24,10 @@ export function render({maxGuesses = 10}) {
   });
 
   return (
-    <div>
+    <div className="app">
       <HeaderMenu key="menu" />
       <GameOverPrompt key="prompt" isDone={isDone} hasWon={hasWon} />
-      <div>
+      <div className="game-area">
         <div className="rows">{rows}</div>
         <PegSelection key="pegs" />
       </div>
@@ -170,4 +170,5 @@ export function getAnswer(newSlots, secret) {
   return [answer, hasWon];
 }
 
-export const stylePath = "./main.style.js";
+
+export const stylePath = "./style.css";

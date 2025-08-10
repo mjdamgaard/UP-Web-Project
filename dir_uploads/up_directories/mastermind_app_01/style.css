@@ -1,5 +1,6 @@
 
-.bold-text {
-  font-weight: bold;
-  font-style: oblique 30deg;
+.game-area {
+  background-color: #e7e7e7;
+  width: 500px;
+  height: 700px;
 }

@@ -1,8 +1,10 @@
 
-import {map} from 'array';
+import {map, createArray} from 'array';
 import * as Peg from "./Peg.jsx";
 
-export function render({guess: {curSlot, slots}, answer, isActive}) {
+export function render({
+  guess: {curSlot, slots} = defaultGuess, answer = defaultAnswer, isActive
+}) {
   let guessRow = (
     <div>{
       map(slots, (colorID, ind) => {
@@ -35,3 +37,6 @@ export function render({guess: {curSlot, slots}, answer, isActive}) {
     </div>
   );
 }
+
+const defaultGuess = {slots: createArray(4), curSlot: 0};
+const defaultAnswer = createArray(4);

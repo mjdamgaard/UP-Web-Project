@@ -56,7 +56,7 @@ export const forEach = new DevFunction(
 export const createArray = new DevFunction(
   "createArray", {typeArr: ["integer unsigned", "function?"]},
   ({callerNode, execEnv, interpreter}, [length, callback]) => {
-    let ret = new Array(length);
+    let ret = new Array(length).fill(undefined);
     return (callback) ? ret.map((_, ind, arr) => {
       return interpreter.executeFunction(
         callback, [ind, arr], callerNode, execEnv

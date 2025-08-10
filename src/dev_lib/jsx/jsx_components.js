@@ -365,7 +365,7 @@ class JSXInstance {
     // and return an array of all these values, some of which are DOM nodes and
     // some of which are strings. This is unless the element is an outer one,
     // in which case we wrap it in a div element.
-    if (jsxElement.isFragment || isArray) {
+    if (jsxElement.isFragment || isArray) {debugger;
       let children = isArray ? jsxElement : jsxElement.props["children"] ?? [];
       let ret = children.map(val => (
         this.getDOMNode(
