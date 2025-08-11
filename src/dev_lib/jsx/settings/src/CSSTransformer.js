@@ -160,7 +160,7 @@ export class CSSTransformer {
       else if (argType === "integer") {
         tuple = "(" + argument.lexeme + ")";
       }
-      return ":" + selector.lexeme + tuple ?? "";
+      return ":" + selector.lexeme + (tuple ?? "");
     }
     else if (type === "pseudo-element") {
       return "::" + selector.lexeme;

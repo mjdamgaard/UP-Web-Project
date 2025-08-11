@@ -517,7 +517,7 @@ export class AppStyler01 {
     // Add the "c<componentID>" class to all ownDOMNodes, and also add an
     // "own-leaf" class to all the nodes that haven't got children themselves
     // that are part of the ownDOMNodes. Since the ownDOMNodes array is ordered
-    // with ancestors coming before their descendants, we can do that the
+    // with ancestors coming before their descendants, we can do this the
     // following way.
     let componentIDClass = `c${componentID}`;
     ownDOMNodes.forEach(node => {
@@ -543,9 +543,12 @@ export class AppStyler01 {
       }
 
       // Get the elements that the selector selects out of the ownDOMNodes.
-      let transformedSelector = ':scope:where(' + selector + '), ' +
+      let transformedScopeSelector = ':scope:where(' + selector + ')';
+      let transformedDescendantSelector =
         ':scope :not(:scope .own-leaf *):where(' + selector + ')';
-      let targetNodes = domNode.querySelectorAll(transformedSelector);
+      let targetNodes = domNode.matches(transformedScopeSelector) ?
+        [domNode, ...domNode.querySelectorAll(transformedDescendantSelector)] :
+        [...domNode.querySelectorAll(transformedDescendantSelector)];
       
       // Then apply the inline styles and classes.
       targetNodes.forEach(node => {
