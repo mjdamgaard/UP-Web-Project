@@ -39,7 +39,7 @@ const FLAG_PATTERN =
 const BUILT_IN_VALUE_PATTERN = "[a-z]+";
 
 const UNIT_PATTERN =
-  "(cm|mm|Q|in|pc|pt|px|em|rem|vh|vw|deg|fr)";
+  "(%|cm|mm|Q|in|pc|pt|px|em|rem|vh|vw|deg|fr)";
 // TODO: Continue this list.
 
 
@@ -224,6 +224,7 @@ export const cssGrammar = {
   },
   "value": {
     rules: [
+      ["ratio"],
       ["dimension"],
       ["number"],
       ["string"],
@@ -266,10 +267,22 @@ export const cssGrammar = {
   },
   "float": {
     rules: [
-      [/(0|[1-9][0-9]*)(\.[0-9]+)?/, "S*"],
+      [/(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/, "S*"],
     ],
     process: copyLexemeFromChild,
     params: ["float"],
+  },
+  "ratio": {
+    rules: [
+      [
+        /(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/, "S*", /\//,
+        "S*!", /(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/, "S*"
+      ],
+    ],
+    process: (children) => ({
+      type: "ratio",
+      value: children[0] + " / " + children[4],
+    }),
   },
   "hex-color": {
     rules: [
@@ -325,7 +338,7 @@ export class CSSParser extends Parser {
       [
         /"([^"\\]|\\[.\n])*"/,
         /'([^'\\]|\\[.\n])*'/,
-        /[a-zA-Z0-9_\-]+/,
+        /[a-zA-Z0-9_\-%]+/,
         /((?<=\s)\-)?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
         /\|\||::|[.,:;\[\]{}()<>?=+\-*|^&!%/#]/,
         /[ \t\r\n\f]+/

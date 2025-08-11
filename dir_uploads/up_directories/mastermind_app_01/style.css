@@ -38,8 +38,6 @@
 }
 
 .peg {
-  text-align: center;
-}
-.peg::after {
-  content: "o";
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
 }
