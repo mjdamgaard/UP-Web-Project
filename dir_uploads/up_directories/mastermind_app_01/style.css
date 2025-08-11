@@ -1,4 +1,8 @@
 
+.app {
+  margin: 10px;
+}
+
 .game-area {
   width: 300px;
   height: 400px;
@@ -10,21 +14,26 @@
 
 .peg-selection {
   display: grid;
+  border: 1px solid #00000080;
 }
 
 .rows {
   display: grid;
+  border: 1px solid #00000080;
 }
 
 .rows > * {
   display: grid;
   grid-template-columns: 4fr 1fr;
   gap: 1fr;
+  border: 1px solid #00000080;
 }
 
 .guess-row {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr;
+  border: 1px solid #00000080;
+  background-color: white;
 }
 
 .active > .guess-row > .selected {
@@ -35,9 +44,13 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
+  border: 1px solid #00000080;
 }
 
 .peg {
+  height: 85%;
+  width: auto;
   aspect-ratio: 1 / 1;
   border-radius: 50%;
+  margin: auto;
 }

@@ -101,7 +101,7 @@ export const actions = {
     let {guesses} = this.state;
     let {slots} = at(guesses, -1);
     let newGuesses = [
-      ...slice(guesses, 0, -2),
+      ...slice(guesses, 0, -1),
       {curSlot: newSlot, slots: slots},
     ];
     this.setState({...this.state, guesses: newGuesses});
@@ -144,7 +144,7 @@ export function getAnswer(newSlots, secret) {
   // secret slot.
   forEach(newSlots, (guessColorID, guessSlotInd) => {
     forEach(secret, (secretColorID, secretSlotInd) => {
-      if (usedSecretSlots[guessSlotInd] || usedSecretSlots[secretSlotInd]) {
+      if (usedGuessSlots[guessSlotInd] || usedSecretSlots[secretSlotInd]) {
         return;
       }
       if (guessColorID === secretColorID) {

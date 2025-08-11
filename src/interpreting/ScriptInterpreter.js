@@ -1542,16 +1542,16 @@ export class ScriptInterpreter {
     // but with i starting at 1 instead of 0.
 
     if (isNew) {
-      // (Note that the parser has failed if not the postfixArr[1] is an
+      // (Note that the parser has failed if not the postfixArr[0] is an
       // expression tuple.)
-      let expTuple = postfixArr[1];
+      let expTuple = postfixArr[0];
       let inputArr = expTuple.children.map(
         param => this.evaluateExpression(param, environment)
       );
       if (val instanceof ClassObject) {
         val = val.getNewInstance(inputArr, expTuple, environment);
       }
-      if (val instanceof FunctionObject) {
+      else if (val instanceof FunctionObject) {
         let newInst = new ObjectObject(
           "Object", undefined, {}, undefined, val
         );
