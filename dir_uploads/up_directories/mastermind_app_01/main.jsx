@@ -26,11 +26,13 @@ export function render({maxGuesses = 10}) {
   return (
     <div className="app">
       <HeaderMenu key="menu" />
-      <GameOverPrompt key="prompt" isDone={isDone} hasWon={hasWon} />
       <div className="game-area">
         <PegSelection key="pegs" />
         <div className="rows">{rows}</div>
       </div>
+      <GameOverPrompt key="prompt"
+        isDone={isDone} hasWon={hasWon} answers={answers}
+      />
     </div>
   );
 }
@@ -83,7 +85,7 @@ export const actions = {
       newAnswers = [...answers, newAnswer];
 
       // Check if the payer has won or lost.
-      if (hasWon || newAnswers.length === this.props.maxGuesses) {
+      if (hasWon || newAnswers.length === (this.props.maxGuesses ?? 10)) {
         isDone = true;
       }
     }
@@ -114,6 +116,9 @@ export const actions = {
 export const events = [
   ["peg-selected", "insertPeg"],
   "changeCurrentSlot",
+  "newGame",
+  ["exit", "newGame"], // "exit" isn't implement yet; just redirects to
+  // "new-game".
 ];
 
 

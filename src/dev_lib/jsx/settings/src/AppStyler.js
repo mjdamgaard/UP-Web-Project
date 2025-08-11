@@ -195,7 +195,8 @@ export class AppStyler01 {
       let styleSheetPath = cssModule.modulePath;
       let styleSheetData = this.loadedStyleSheets.get(styleSheetPath);
       if (!styleSheetData) {
-        styleSheetData = this.loadedStyleSheets.set(styleSheetPath, {});
+        styleSheetData = {};
+        this.loadedStyleSheets.set(styleSheetPath, styleSheetData);
       }
       let {styleSheetID, template, instances} = styleSheetData;
 
@@ -205,9 +206,9 @@ export class AppStyler01 {
         template = cssTransformer.transformStyleSheet(
           cssModule.styleSheet, node, env
         );
-        styleSheetID = styleSheetData.styleSheetID = this.getNextStyleSheetID();
+        styleSheetData.styleSheetID = styleSheetID = this.getNextStyleSheetID();
         styleSheetData.template = template;
-        instances = styleSheetData.instances = {};
+        styleSheetData.instances = instances = {};
       }
 
       // Push the styleSheetID to classesArr.
@@ -229,6 +230,7 @@ export class AppStyler01 {
         "class", `up-style sid-${styleSheetID} cid-${componentID}`
       );
       document.querySelector("head").appendChild(styleElement);
+      instances[componentID] = true;
     });
 
 

@@ -10,7 +10,7 @@ import {HTML_ELEMENT_TYPE_REGEX} from "../../../../interpreting/parsing/ScriptPa
 const ELEMENT_TYPE_PATTERN = HTML_ELEMENT_TYPE_REGEX.source.slice(1, -1);
 
 const ATOMIC_PSEUDO_CLASS_PATTERN =
-  "(scope|first-child|last-child)";
+  "(scope|hover|first-child|last-child|first-of-type|last-of-type)";
 // TODO: Continue this list.
 
 const SELECTOR_DEFINED_PSEUDO_CLASS_PATTERN =
@@ -338,8 +338,8 @@ export class CSSParser extends Parser {
       [
         /"([^"\\]|\\[.\n])*"/,
         /'([^'\\]|\\[.\n])*'/,
-        /[a-zA-Z0-9_\-%]+/,
-        /((?<=\s)\-)?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
+/((?<=\s)\-)?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?[%a-zA-Z0-9_\-]*/,
+        /[a-zA-Z0-9_\-]+/,
         /\|\||::|[.,:;\[\]{}()<>?=+\-*|^&!%/#]/,
         /[ \t\r\n\f]+/
       ],
