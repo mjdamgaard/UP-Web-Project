@@ -22,8 +22,8 @@ export const initState = {isFirstRender: true};
 
 
 function runTests() {
-  let arr1 = ["AAA"];
   console.log('Test 1: Converting ["AAA"] to a base64 string.');
+  let arr1 = ["AAA"];
   let typeArr1 = ["string"];
   let b64Str = arrayToBase64(arr1, typeArr1);
   console.log("Result:");
@@ -44,9 +44,9 @@ function runTests() {
   console.log(" ");
 
 
+  console.log('Test 2: Converting ["AAA", "BB"] back and forth.');
   arr1 = ["AAA", "BB"];
   typeArr1 = ["string", "string"];
-  console.log('Test 2: Converting ["AAA", "BB"] back and forth.');
   b64Str = arrayToBase64(arr1, ["string", "string"]);
   console.log("Result in base 64:");
   console.log(b64Str);
@@ -57,9 +57,9 @@ function runTests() {
   console.log("That worked! So consider Test 2 successful!");
   console.log(" ");
 
+  console.log('Test 3: Let\'s increase the tempo and try to convert');
   arr1 = [0, 1, 15, 16, -128];
   typeArr1 = ["int", "uint", "int(1)", "int(2)", "int(1)"];
-  console.log('Test 3: Let\'s increase the tempo and try to convert');
   console.log('the array, [0, 1, 15, 16, -128], with the type array,');
   console.log('["int", "uint", "int(1)", "int(2)", "int(1)"]');
   b64Str = arrayToBase64(arr1, typeArr1);
@@ -70,4 +70,55 @@ function runTests() {
   console.log("And converting it back:");
   console.log(arrayFromBase64(b64Str, typeArr1));
   console.log("... And now this also works. So Test 3 is now successful.");
+  console.log(" ");
+
+  console.log('Test 4: Floating point numbers (within specified intervals).');
+  arr1 = [
+    0.5, 0.55555555, 0.55555555, -1.2, 0
+  ];
+  typeArr1 = [
+    "float(0,1)", "float(0,1,1)", "float(0,1,2)", "float(-10,10)", "float(0,1)"
+  ];
+  console.log('Array:');
+  console.log(arr1);
+  console.log('Type array:');
+  console.log(typeArr1);
+  b64Str = arrayToBase64(arr1, typeArr1);
+  console.log("Result in base 64:");
+  console.log(b64Str);
+  console.log("Result in hexadecimal:");
+  console.log(hexFromBase64(b64Str));
+  console.log("And converting it back:");
+  console.log(arrayFromBase64(b64Str, typeArr1));
+  console.log(
+    "...Oh, that actually also seems to work after just a little debugging."
+  );
+  console.log("Yeah, so let us consider that test successful.");
+  console.log(" ");
+
+  console.log(
+    'Test 5: It seems that I can turn the val < hi limit into val <= hi ' +
+    'instead..'
+  );
+  arr1 = [
+    0, 2345, -30
+  ];
+  typeArr1 = [
+    "float(0,1)", "float(-30,2345)", "float(-30,2345)"
+  ];
+  console.log('Array:');
+  console.log(arr1);
+  console.log('Type array:');
+  console.log(typeArr1);
+  b64Str = arrayToBase64(arr1, typeArr1);
+  console.log("Result in base 64:");
+  console.log(b64Str);
+  console.log("Result in hexadecimal:");
+  console.log(hexFromBase64(b64Str));
+  console.log("And converting it back:");
+  console.log(arrayFromBase64(b64Str, typeArr1));
+  console.log(
+    "Yep, we can, which is nice. Test 5 is also successful."
+  );
+  console.log(" ");
 }

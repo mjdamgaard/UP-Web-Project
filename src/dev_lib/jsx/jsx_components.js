@@ -341,6 +341,9 @@ class JSXInstance {
 
 
 
+  // TODO: Reimplement getDOMNode(), together with render(), such that the
+  // components reuse elements whenever possible when they rerender, resetting
+  // the attributes of those elements.
 
   getDOMNode(
     jsxElement, marks, interpreter, callerNode, callerEnv,

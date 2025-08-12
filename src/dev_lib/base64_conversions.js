@@ -10,7 +10,7 @@ const NULL_CHAR_REGEX = /\0/;
 const LEADING_ZERO_PAIRS_REGEX = /^(00)+/;
 const INTEGER_TYPE_REGEX = /^(u)?int(\([1-9][0-9]*\))?$/;
 const FLOAT_TYPE_REGEX =
-  /^float\(([0-9.E+\-]+),([0-9.E+\-]+)(,([1-9][0-9]*))?\)$/;
+  /^float\(([0-9.E+\-]+) *, *([0-9.E+\-]+) *(, *([1-9][0-9]*))? *\)$/;
 
 const maxUInts = [
   255,
@@ -58,11 +58,11 @@ export const arrayToBase64 = new DevFunction(
         return;
       }
 
-      // If type = 'hex-number', treat val as a hexadecimal string of variable
+      // If type = 'hex-int', treat val as a hexadecimal string of variable
       // length. We remove any leading pairs of zeros automatically, and
       // instead prepend the length of the hex string divided by 2 so that hex
       // strings are thus collated w.r.t. their numerical values.
-      if (type === "hex-number") {
+      if (type === "hex-int") {
         let initVal = getString(val, callerNode, execEnv);
         val = initVal.replace(LEADING_ZERO_PAIRS_REGEX, "");
         if (val === "") val = "00";
@@ -93,7 +93,7 @@ export const arrayToBase64 = new DevFunction(
       }
 
       // If type = '[u]int[(len)]', treat val as an integer of len bytes.
-      [match, isUnsigned, lenExp] = type.match(INTEGER_TYPE_REGEX);
+      [match, isUnsigned, lenExp] = type.match(INTEGER_TYPE_REGEX) ?? [];
       if (match) {
         let initVal = val;
         val = parseInt(initVal);
@@ -104,8 +104,7 @@ export const arrayToBase64 = new DevFunction(
         );
         let len = parseInt(lenExp ? lenExp.slice(1, -1) : 4);
         if (Number.isNaN(len) || len < 1 || len > 6) throw new ArgTypeError(
-          "Integer byte length needs to be between 1 and 6, but got: " +
-          lenExp.slice(1, -1),
+          "Integer byte length needs to be between 1 and 6, but got: " + len,
           callerNode, execEnv
         );
         // If the integer is signed, add |minInt| to translate the minInt-
@@ -126,7 +125,7 @@ export const arrayToBase64 = new DevFunction(
       // If type = 'float(lo, hi[, len])', treat val as an floating-point number
       // of len bytes (determining the precision) in the range between lo and
       // hi.
-      [match, loExp, hiExp, lenExp] = type.match(FLOAT_TYPE_REGEX);
+      [match, loExp, hiExp, lenExp] = type.match(FLOAT_TYPE_REGEX) ?? [];
       if (match) {
         let initVal = val;
         val = parseFloat(initVal);
@@ -147,8 +146,8 @@ export const arrayToBase64 = new DevFunction(
           "Invalid float limit: " + (Number.isNaN(lo) ? loExp : hiExp),
           callerNode, execEnv
         );
-        if (val < lo || val >= hi) throw new ArgTypeError(
-          `Float value needs to be inside limits: ${loExp} <= ${val} < ` +
+        if (lo >= hi || val < lo || val > hi) throw new ArgTypeError(
+          `Float value needs to be inside limits: ${loExp} <= ${val} <= ` +
           hiExp,
           callerNode, execEnv
         );
@@ -236,8 +235,8 @@ export const arrayFromBase64 = new DevFunction(
         return;
       }
 
-      // Reverse conversion for the 'hex-number' type.
-      if (type === "hex-number") {
+      // Reverse conversion for the 'hex-int' type.
+      if (type === "hex-int") {
         let len = combBinArr[accLen];
         let newLen = accLen + 1 + len;
         if (len < 1 || newLen > combLen) throw new ArgTypeError(
@@ -260,8 +259,7 @@ export const arrayFromBase64 = new DevFunction(
       if (match) {
         let len = parseInt(lenExp ? lenExp.slice(1, -1) : 4);
         if (Number.isNaN(len) || len < 1 || len > 6) throw new ArgTypeError(
-          "Integer byte length needs to be between 1 and 6, but got: " +
-          lenExp.slice(1, -1),
+          "Integer byte length needs to be between 1 and 6, but got: " + len,
           callerNode, execEnv
         );
         if (accLen + len > combBinArr.length) throw new ArgTypeError(
@@ -286,10 +284,10 @@ export const arrayFromBase64 = new DevFunction(
       // hi.
       [match, loExp, hiExp, lenExp] = type.match(FLOAT_TYPE_REGEX) ?? [];
       if (match) {
-        let len = parseInt(lenExp ? lenExp.slice(1, -1) : 4);
+        let len = parseInt(lenExp ? lenExp.substring(1) : 4);
         if (Number.isNaN(len) || len < 1 || len > 6) throw new ArgTypeError(
-          "Integer byte length needs to be between 1 and 6, but got: " +
-          lenExp.slice(1, -1),
+          "Float byte length needs to be between 1 and 6, but got: " +
+          lenExp.substring(1),
           callerNode, execEnv
         );
         if (accLen + len > combBinArr.length) throw new ArgTypeError(
@@ -329,45 +327,6 @@ export const arrayFromBase64 = new DevFunction(
 );
 
 
-
-
-
-
-
-// function getBytes(n, len, node, env) {
-//   let reverseByteArr = [];
-//   try {
-//     getBytesHelper(n, len, reverseByteArr);
-//   }
-//   catch (err) {
-//     if (err instanceof ArgTypeError) {
-//       err.val = `Integer ${n} exceeds maximum value of ${maxUInts[len - 1]}`;
-//       err.node = node;
-//       err.environment = env;
-//     }
-//   }
-//   return reverseByteArr.reverse();
-// }
-
-// function getBytesHelper(n, len, reverseByteArr) {
-//   if (len <= 0) {
-//     if (n > 0) throw new ArgTypeError();
-//     return;
-//   };
-//   let nextN = n >> 8;
-//   let byte = n - nextN << 8;
-//   reverseByteArr.push(byte);
-//   getBytesHelper(nextN, len, reverseByteArr);
-// }
-
-
-
-function getNum(bytes) {
-  let reverseByteArr = [...bytes].reverse();
-  return reverseByteArr.reduce(
-    (acc, val, ind) => acc + val * maxUInts[ind - 1]
-  );
-}
 
 
 
