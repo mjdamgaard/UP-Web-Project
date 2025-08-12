@@ -97,7 +97,7 @@ export const arrayToBase64 = new DevFunction(
 
       // If type = '[u]int[(len)]', treat val as an integer of len bytes.
       [match, isUnsigned, lenExp] = type.match(INTEGER_TYPE_REGEX);
-      if (match) {
+      if (match) {debugger;
         let valExp = valArr[ind];
         let val = parseInt(valExp);
         if (Number.isNaN(val)) throw new ArgTypeError(
@@ -124,7 +124,7 @@ export const arrayToBase64 = new DevFunction(
       // of len bytes (determining the precision) in the range between lo and
       // hi.
       [match, loExp, hiExp, lenExp] = type.match(FLOAT_TYPE_REGEX);
-      if (match) {
+      if (match) {debugger;
         let valExp = valArr[ind];
         let val = parseInt(valExp);
         if (Number.isNaN(val)) throw new ArgTypeError(
@@ -242,6 +242,11 @@ export const arrayFromBase64 = new DevFunction(
           `Invalid hexadecimal string encoding: ${base64Str} at index ${ind}`,
           callerNode, execEnv
         );
+        if (newLen> combBinArr.length) throw new ArgTypeError(
+          "End of the base 64 string was reached before all array entries " +
+          "was converted",
+          callerNode, execEnv
+        );
         let binArr = combBinArr.slice(accLen + 1, newLen);
         valArr.push(binArr.toHex());
         accLen = newLen;
@@ -249,12 +254,17 @@ export const arrayFromBase64 = new DevFunction(
       }
 
       // Reverse conversion for the '[u]int[(len)]' type.
-      [match, isUnsigned, lenExp] = type.match(INTEGER_TYPE_REGEX);
+      [match, isUnsigned, lenExp] = type.match(INTEGER_TYPE_REGEX) ?? [];
       if (match) {
         let len = parseInt(lenExp ? lenExp.slice(1, -1) : 4);
         if (Number.isNaN(len) || len < 1 || len > 6) throw new ArgTypeError(
           "Integer byte length needs to be between 1 and 6, but got: " +
           lenExp.slice(1, -1),
+          callerNode, execEnv
+        );
+        if (accLen + len > combBinArr.length) throw new ArgTypeError(
+          "End of the base 64 string was reached before all array entries " +
+          "was converted",
           callerNode, execEnv
         );
         let binArr = combBinArr.slice(accLen, accLen + len);
@@ -266,17 +276,23 @@ export const arrayFromBase64 = new DevFunction(
         }
         valArr.push(n);
         accLen = accLen + len;
+        return;
       }
 
       // If type = 'float(lo, hi[, len])', treat val as an floating-point number
       // of len bytes (determining the precision) in the range between lo and
       // hi.
-      [match, loExp, hiExp, lenExp] = type.match(FLOAT_TYPE_REGEX);
+      [match, loExp, hiExp, lenExp] = type.match(FLOAT_TYPE_REGEX) ?? [];
       if (match) {
         let len = parseInt(lenExp ? lenExp.slice(1, -1) : 4);
         if (Number.isNaN(len) || len < 1 || len > 6) throw new ArgTypeError(
           "Integer byte length needs to be between 1 and 6, but got: " +
           lenExp.slice(1, -1),
+          callerNode, execEnv
+        );
+        if (accLen + len > combBinArr.length) throw new ArgTypeError(
+          "End of the base 64 string was reached before all array entries " +
+          "was converted",
           callerNode, execEnv
         );
         let binArr = combBinArr.slice(accLen, accLen + len);
@@ -296,6 +312,7 @@ export const arrayFromBase64 = new DevFunction(
         
         valArr.push(x);
         accLen = accLen + len;
+        return;
       }
 
       // If code reaches here, throw an 'unrecognized type' error.
@@ -344,7 +361,7 @@ function getBytesHelper(n, len, reverseByteArr) {
 
 
 function getNum(bytes) {
-  let reverseByteArr = bytes.toReverse();
+  let reverseByteArr = [...bytes].reverse();
   return reverseByteArr.reduce(
     (acc, val, ind) => acc + val * maxUInts[ind - 1]
   );

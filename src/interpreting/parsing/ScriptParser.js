@@ -6,6 +6,9 @@ import {
 } from "./processing.js";
 
 
+const ESCAPED_SINGLE_QUOTE_REGEX_G = /(?<!(\\\\)*\\)\\'/g;
+
+
 const RESERVED_KEYWORD_REGEXP = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
@@ -1031,12 +1034,14 @@ export const scriptGrammar = {
       let str;
       if (ruleInd === 1) {
         stringLiteral =
-          '"' + stringLiteral.replaceAll('"', '\\"').slice(1, -1) + '"';
+          '"' + stringLiteral.slice(1, -1).replaceAll('"', '\\"')
+            .replaceAll(ESCAPED_SINGLE_QUOTE_REGEX_G, "'") +
+          '"';
       }
       try {
         str = JSON.parse(stringLiteral);
-      } catch (error) {
-        return [false, `Invalid string: ${stringLiteral}`];
+      } catch (error) {debugger;
+        return `Invalid string: ${stringLiteral}`;
       }
       return {type: "string", str: str};
     },
