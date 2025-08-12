@@ -249,7 +249,11 @@ export const arrayFromBase64 = new DevFunction(
           callerNode, execEnv
         );
         let binArr = combBinArr.slice(accLen + 1, newLen);
-        valArr.push(binArr.toHex());
+        let hexStr = binArr.toHex();
+        if (hexStr[0] === "0") {
+          hexStr = hexStr.substring(1);
+        } 
+        valArr.push(hexStr);
         accLen = newLen;
         return;
       }
