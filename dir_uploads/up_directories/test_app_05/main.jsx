@@ -121,4 +121,52 @@ function runTests() {
     "Yep, we can, which is nice. Test 5 is also successful."
   );
   console.log(" ");
+
+  console.log('Test 6: A test of the hex-ints.');
+  arr1 = [
+    "F", "00", "0123456789abcdefABCEF0", "", "00aa", "11a", "00000001",
+  ];
+  typeArr1 = [
+    "hex-int", "hex-int", "hex-int", "hex-int", "hex-int", "hex-int", "hex-int",
+  ];
+  console.log('Array:');
+  console.log(arr1);
+  console.log('Type array:');
+  console.log(typeArr1);
+  b64Str = arrayToBase64(arr1, typeArr1);
+  console.log("Result in base 64:");
+  console.log(b64Str);
+  console.log("Result in hexadecimal:");
+  console.log(hexFromBase64(b64Str));
+  console.log("And converting it back:");
+  console.log(arrayFromBase64(b64Str, typeArr1));
+  console.log(
+    "And that just also works at expected from the get-go. Test 6 is a success."
+  );
+  console.log(" ");
+
+  console.log('Test 7: Then let\'s mix it up.');
+  arr1 = [
+    "F", "F", "0123456789abcdefABCEF0", 3, "-4.4", "00000001", 0
+  ];
+  typeArr1 = [
+    "hex-int", "string", "string", "uint(2)", "float(-10,-1, 6)", "hex-int",
+    "int"
+  ];
+  console.log('Array:');
+  console.log(arr1);
+  console.log('Type array:');
+  console.log(typeArr1);
+  b64Str = arrayToBase64(arr1, typeArr1);
+  console.log("Result in base 64:");
+  console.log(b64Str);
+  console.log("Result in hexadecimal:");
+  console.log(hexFromBase64(b64Str));
+  console.log("And converting it back:");
+  console.log(arrayFromBase64(b64Str, typeArr1));
+  console.log(
+    "And that also works, and btw nice to get -4.4 back exactly. " +
+    "Test 7 is successful."
+  );
+  console.log(" ");
 }
