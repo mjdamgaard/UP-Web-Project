@@ -57,16 +57,17 @@ function runTests() {
   console.log("That worked! So consider Test 2 successful!");
   console.log(" ");
 
-  arr1 = [0, 1, 15, 16, -256];
-  typeArr1 = ["int", "uint", "int(1)", "int(2)", "uint(2)"];
+  arr1 = [0, 1, 15, 16, -128];
+  typeArr1 = ["int", "uint", "int(1)", "int(2)", "int(1)"];
   console.log('Test 3: Let\'s increase the tempo and try to convert');
-  console.log('the array, [0, 1, 15, 16, -256], with the type array,');
-  console.log('["int", "uint", "int(1)", "int(2)", "uint(2)"]');
-  b64Str = arrayToBase64(arr1, ["string", "string"]);
+  console.log('the array, [0, 1, 15, 16, -128], with the type array,');
+  console.log('["int", "uint", "int(1)", "int(2)", "int(1)"]');
+  b64Str = arrayToBase64(arr1, typeArr1);
   console.log("Result in base 64:");
   console.log(b64Str);
   console.log("Result in hexadecimal:");
   console.log(hexFromBase64(b64Str));
   console.log("And converting it back:");
   console.log(arrayFromBase64(b64Str, typeArr1));
+  console.log("... And now this also works. So Test 3 is now successful.");
 }

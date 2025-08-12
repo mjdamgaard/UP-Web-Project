@@ -32,10 +32,7 @@ const minInts = [
 
 export const arrayToBase64 = new DevFunction(
   "arrayToBase64", {typeArr: ["array", "array"]},
-  function(
-    {callerNode, execEnv},
-    [valArr, typeArr]
-  ) {
+  function({callerNode, execEnv}, [valArr, typeArr]) {
     // Initialize an array and then push to it each Uint8Array generated from
     // converting a value from valArr into a binary array according to the
     // specified type. The binary representations of the values seeks to be
@@ -97,11 +94,12 @@ export const arrayToBase64 = new DevFunction(
 
       // If type = '[u]int[(len)]', treat val as an integer of len bytes.
       [match, isUnsigned, lenExp] = type.match(INTEGER_TYPE_REGEX);
-      if (match) {debugger;
-        let valExp = valArr[ind];
-        let val = parseInt(valExp);
+      if (match) {
+        let initVal = val;
+        val = parseInt(initVal);
         if (Number.isNaN(val)) throw new ArgTypeError(
-          `Cannot convert a non-integer to a uint type: ${valExp}`,
+          "Cannot convert a non-integer to a uint type: " +
+          getString(initVal, callerNode, execEnv),
           callerNode, execEnv
         );
         let len = parseInt(lenExp ? lenExp.slice(1, -1) : 4);
@@ -114,8 +112,13 @@ export const arrayToBase64 = new DevFunction(
         // maxInt range into the 0-maxUInt range.
         if (!isUnsigned) {
           val = val - minInts[len - 1];
-        } 
-        let binArr = new Uint8Array(getBytes(val, len, callerNode, execEnv));
+        }
+        if (val < 0 || val > maxUInts[len - 1]) throw new ArgTypeError(
+          "Invalid " + type + ": " + getString(initVal, callerNode, execEnv),
+          callerNode, execEnv
+        );
+        let hexStr = val.toString(16).padStart(len * 2, "0");
+        let binArr = Uint8Array.fromHex(hexStr);
         binArrArr.push(binArr);
         return;
       }
@@ -124,11 +127,12 @@ export const arrayToBase64 = new DevFunction(
       // of len bytes (determining the precision) in the range between lo and
       // hi.
       [match, loExp, hiExp, lenExp] = type.match(FLOAT_TYPE_REGEX);
-      if (match) {debugger;
-        let valExp = valArr[ind];
-        let val = parseInt(valExp);
+      if (match) {
+        let initVal = val;
+        val = parseFloat(initVal);
         if (Number.isNaN(val)) throw new ArgTypeError(
-          `Cannot convert a non-float to a float type: ${valExp}`,
+          "Cannot convert a non-float to a float type: " +
+          getString(initVal, callerNode, execEnv),
           callerNode, execEnv
         );
         let len = parseInt(lenExp ? lenExp.substring(1) : 4);
@@ -144,12 +148,13 @@ export const arrayToBase64 = new DevFunction(
           callerNode, execEnv
         );
         if (val < lo || val >= hi) throw new ArgTypeError(
-          `Float value needs to be inside limits: ${loExp} <= ${valExp} < ` +
+          `Float value needs to be inside limits: ${loExp} <= ${val} < ` +
           hiExp,
           callerNode, execEnv
         );
         let n = parseInt((val - lo) * maxUInts[len - 1] / (hi - lo));
-        let binArr = new Uint8Array(getBytes(n, len, callerNode, execEnv));
+        let hexStr = n.toString(16).padStart(len * 2, "0");
+        let binArr = Uint8Array.fromHex(hexStr);
         binArrArr.push(binArr);
         return;
       }
@@ -184,10 +189,7 @@ export const arrayToBase64 = new DevFunction(
 
 export const arrayFromBase64 = new DevFunction(
   "arrayFromBase64", {typeArr: ["string", "array"]},
-  function(
-    {callerNode, execEnv},
-    [base64Str, typeArr]
-  ) {
+  function({callerNode, execEnv}, [base64Str, typeArr]) {
     let valArr = [];
     let combBinArr;
     let accLen = 0;
@@ -268,7 +270,7 @@ export const arrayFromBase64 = new DevFunction(
           callerNode, execEnv
         );
         let binArr = combBinArr.slice(accLen, accLen + len);
-        let n = getNum(binArr);
+        let n = parseInt(binArr.toHex(), 16);
 
         // If the int is signed, subtract the |minInt| again.
         if (!isUnsigned) {
@@ -296,7 +298,7 @@ export const arrayFromBase64 = new DevFunction(
           callerNode, execEnv
         );
         let binArr = combBinArr.slice(accLen, accLen + len);
-        let n = getNum(binArr);
+        let n = parseInt(binArr.toHex(), 16);
 
         let lo = parseFloat(loExp);
         let hi = parseFloat(hiExp);
@@ -332,31 +334,31 @@ export const arrayFromBase64 = new DevFunction(
 
 
 
-function getBytes(n, len, node, env) {
-  let reverseByteArr = [];
-  try {
-    getBytesHelper(n, len, reverseByteArr);
-  }
-  catch (err) {
-    if (err instanceof ArgTypeError) {
-      err.val = `Integer ${n} exceeds maximum value of ${maxUInts[len - 1]}`;
-      err.node = node;
-      err.environment = env;
-    }
-  }
-  return reverseByteArr.reverse();
-}
+// function getBytes(n, len, node, env) {
+//   let reverseByteArr = [];
+//   try {
+//     getBytesHelper(n, len, reverseByteArr);
+//   }
+//   catch (err) {
+//     if (err instanceof ArgTypeError) {
+//       err.val = `Integer ${n} exceeds maximum value of ${maxUInts[len - 1]}`;
+//       err.node = node;
+//       err.environment = env;
+//     }
+//   }
+//   return reverseByteArr.reverse();
+// }
 
-function getBytesHelper(n, len, reverseByteArr) {
-  if (len <= 0) {
-    if (n > 0) throw new ArgTypeError();
-    return;
-  };
-  let nextN = n >> 8;
-  let byte = n - nextN << 8;
-  reverseByteArr.push(byte);
-  getBytesHelper(nextN, len, reverseByteArr);
-}
+// function getBytesHelper(n, len, reverseByteArr) {
+//   if (len <= 0) {
+//     if (n > 0) throw new ArgTypeError();
+//     return;
+//   };
+//   let nextN = n >> 8;
+//   let byte = n - nextN << 8;
+//   reverseByteArr.push(byte);
+//   getBytesHelper(nextN, len, reverseByteArr);
+// }
 
 
 
