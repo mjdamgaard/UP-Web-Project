@@ -169,4 +169,7 @@ function runTests() {
     "Test 7 is successful."
   );
   console.log(" ");
+
+
+  // TODO: Continue by making some tests of the relational tables.
 }
