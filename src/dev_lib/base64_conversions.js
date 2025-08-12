@@ -1,6 +1,6 @@
 
 import {
-  DevFunction, getString, ArgTypeError
+  DevFunction, getString, ArgTypeError, forEachValue, getPropertyFromObject,
 } from '../interpreting/ScriptInterpreter.js';
 
 const textEncoder = new TextEncoder();
@@ -44,13 +44,14 @@ export const arrayToBase64 = new DevFunction(
     // an signed integer of -5 is less than one of 5, -5 should get a binary
     // representation with a lower numeric value of the two.   
     let binArrArr = [];
-    typeArr.forEach((type, ind) => {
+    forEachValue(typeArr, callerNode, execEnv, (type, ind) => {
       type = getString(type, callerNode, execEnv);
+      let val = getPropertyFromObject(valArr, ind);
       let match, isUnsigned, lenExp, loExp, hiExp;
 
       // If type = 'string', treat val as a string of variable length.
       if (type === "string") {
-        let val = getString(valArr[ind], callerNode, execEnv);
+        val = getString(val, callerNode, execEnv);
         if (NULL_CHAR_REGEX.test(val)) throw new ArgTypeError(
           `Cannot convert a string containing a null character: ${val}`,
           callerNode, execEnv
@@ -60,13 +61,13 @@ export const arrayToBase64 = new DevFunction(
         return;
       }
 
-      // If type = 'hex', treat val as a hexadecimal string of variable length.
-      // We remove any leading pairs of zeros automatically, and instead
-      // prepend the length of the hex string divided by 2 so that hex strings
-      // are thus collated w.r.t. their numerical values.
-      if (type === "hex") {
-        let val = getString(valArr[ind], callerNode, execEnv);
-        val = val.replace(LEADING_ZERO_PAIRS_REGEX, "");
+      // If type = 'hex-number', treat val as a hexadecimal string of variable
+      // length. We remove any leading pairs of zeros automatically, and
+      // instead prepend the length of the hex string divided by 2 so that hex
+      // strings are thus collated w.r.t. their numerical values.
+      if (type === "hex-number") {
+        let initVal = getString(val, callerNode, execEnv);
+        val = initVal.replace(LEADING_ZERO_PAIRS_REGEX, "");
         if (val === "") val = "00";
         let len = val.length / 2;
         if (!Number.isInteger(len)) {
@@ -85,7 +86,7 @@ export const arrayToBase64 = new DevFunction(
         catch (err) {
           if (err instanceof TypeError || err instanceof SyntaxError) {
             throw new ArgTypeError(
-              `Invalid hexadecimal string: ${val}`,
+              `Invalid hexadecimal string: ${initVal}`,
               callerNode, execEnv
             );
           }
@@ -174,7 +175,7 @@ export const arrayToBase64 = new DevFunction(
       },
       0
     );
-    return combBinArray.toBase64("base64url");
+    return combBinArray.toBase64({alphabet: "base64url"});
   }
 );
 
@@ -191,7 +192,7 @@ export const arrayFromBase64 = new DevFunction(
     let combBinArr;
     let accLen = 0;
     try {
-      combBinArr = Uint8Array.fromBase64(base64Str, "base64url");
+      combBinArr = Uint8Array.fromBase64(base64Str, {alphabet: "base64url"});
     }
     catch (err) {
       if (err instanceof TypeError || err instanceof SyntaxError) {
@@ -202,7 +203,7 @@ export const arrayFromBase64 = new DevFunction(
       }
     }
     let combLen = combBinArr.length;
-    typeArr.forEach((type, ind) => {
+    forEachValue(typeArr, callerNode, execEnv, (type, ind) => {
       type = getString(type, callerNode, execEnv);
       let match, isUnsigned, lenExp, loExp, hiExp;
 
@@ -233,8 +234,8 @@ export const arrayFromBase64 = new DevFunction(
         return;
       }
 
-      // Reverse conversion for the 'hex[(len)]' type.
-      if (type === "hex") {
+      // Reverse conversion for the 'hex-number' type.
+      if (type === "hex-number") {
         let len = combBinArr[accLen];
         let newLen = accLen + 1 + len;
         if (len < 1 || newLen > combLen) throw new ArgTypeError(
@@ -348,3 +349,50 @@ function getNum(bytes) {
     (acc, val, ind) => acc + val * maxUInts[ind - 1]
   );
 }
+
+
+
+
+
+
+
+
+export const hexFromBase64 = new DevFunction(
+  "hexFromBase64", {typeArr: ["string"]},
+  function({callerNode, execEnv}, [base64Str]) {
+    let ret;
+    try {
+      ret = Uint8Array.fromBase64(base64Str, {alphabet: "base64url"}).toHex();
+    }
+    catch (err) {
+      if (err instanceof TypeError) {
+        throw new ArgTypeError(
+          `Invalid base 64 string: ${base64Str}`,
+          callerNode, execEnv
+        );
+      }
+    }
+    return ret;
+  }
+);
+
+
+
+export const hexToBase64 = new DevFunction(
+  "hexToBase64", {typeArr: ["string"]},
+  function({callerNode, execEnv}, [hexStr]) {
+    let ret;
+    try {
+      ret = Uint8Array.fromHex(hexStr).toBase64({alphabet: "base64url"});
+    }
+    catch (err) {
+      if (err instanceof TypeError) {
+        throw new ArgTypeError(
+          `Invalid hexadecimal string: ${hexStr}`,
+          callerNode, execEnv
+        );
+      }
+    }
+    return ret;
+  }
+);

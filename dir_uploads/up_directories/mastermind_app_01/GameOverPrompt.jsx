@@ -2,7 +2,7 @@
 export function render({isDone, hasWon, answers}) {
   let guessNum = answers.length;
   let message = !isDone ? "" : hasWon ? (
-    "Congratulations! You guessed correctly after " + guessNum + " attempts."
+    "Congratulations! You guessed correctly with " + guessNum + " attempts."
   ) : (
     "Your lost. Better luck next time!"
   );
