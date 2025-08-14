@@ -30,6 +30,16 @@ const minInts = [
 ];
 
 
+// TODO: Apparently the methods of Uint8Array isn't widely supported in
+// browsers, so see about how to use another library. ...Well, apparently it's
+// an experimental feature in Chrome, so maybe it'll be fine.. ..Oh, Node.js
+// doesn't support it natively.. ..But maybe it works with the uint8arrays
+// package, I'll see.. ... Oh, and since you can also provide the inputArr with
+// the postData for callSMF routes, it won't be too critical to have this
+// library on the client side..
+
+
+
 export const arrayToBase64 = new DevFunction(
   "arrayToBase64", {typeArr: ["array", "array"]},
   function({callerNode, execEnv}, [valArr, typeArr]) {
@@ -172,13 +182,11 @@ export const arrayToBase64 = new DevFunction(
       0
     );
     let combBinArray = new Uint8Array(combLen);
-    binArrArr.reduce(
-      (accLen, binArr) => {
-        combBinArray.set(binArr, accLen);
-        return accLen + binArr.length;
-      },
-      0
-    );
+    let accLen = 0;
+    binArrArr.forEach(binArr => {
+      combBinArray.set(binArr, accLen);
+      accLen = accLen + binArr.length;
+    });
     return combBinArray.toBase64({alphabet: "base64url"});
   }
 );
@@ -187,8 +195,10 @@ export const arrayToBase64 = new DevFunction(
 
 
 export const arrayFromBase64 = new DevFunction(
-  "arrayFromBase64", {typeArr: ["string", "array"]},
-  function({callerNode, execEnv}, [base64Str, typeArr]) {
+  "arrayFromBase64", {typeArr: ["string", "array", "boolean?"]},
+  function(
+    {callerNode, execEnv}, [base64Str, typeArr, acceptIncomplete = false]
+  ) {
     let valArr = [];
     let combBinArr;
     let accLen = 0;
@@ -214,7 +224,7 @@ export const arrayFromBase64 = new DevFunction(
         if (indOfNullChar === -1) {
           throw new ArgTypeError(
             "Invalid string encoding that does not end in a null character: " +
-            `${base64Str} at index ${ind}`,
+            `${base64Str}`,
             callerNode, execEnv
           );
         }
@@ -225,7 +235,7 @@ export const arrayFromBase64 = new DevFunction(
         catch (err) {
           if (err instanceof TypeError) {
             throw new ArgTypeError(
-              `Invalid UFT-8 string encoding: ${base64Str} at index ${ind}`,
+              `Invalid UFT-8 string encoding: ${base64Str}`,
               callerNode, execEnv
             );
           }
@@ -240,12 +250,7 @@ export const arrayFromBase64 = new DevFunction(
         let len = combBinArr[accLen];
         let newLen = accLen + 1 + len;
         if (len < 1 || newLen > combLen) throw new ArgTypeError(
-          `Invalid hexadecimal string encoding: ${base64Str} at index ${ind}`,
-          callerNode, execEnv
-        );
-        if (newLen> combBinArr.length) throw new ArgTypeError(
-          "End of the base 64 string was reached before all array entries " +
-          "was converted",
+          `Invalid hexadecimal string encoding: ${base64Str}`,
           callerNode, execEnv
         );
         let binArr = combBinArr.slice(accLen + 1, newLen);
@@ -266,7 +271,7 @@ export const arrayFromBase64 = new DevFunction(
           "Integer byte length needs to be between 1 and 6, but got: " + len,
           callerNode, execEnv
         );
-        if (accLen + len > combBinArr.length) throw new ArgTypeError(
+        if (accLen + len > combLen) throw new ArgTypeError(
           "End of the base 64 string was reached before all array entries " +
           "was converted",
           callerNode, execEnv
@@ -294,7 +299,7 @@ export const arrayFromBase64 = new DevFunction(
           lenExp.substring(1),
           callerNode, execEnv
         );
-        if (accLen + len > combBinArr.length) throw new ArgTypeError(
+        if (accLen + len > combLen) throw new ArgTypeError(
           "End of the base 64 string was reached before all array entries " +
           "was converted",
           callerNode, execEnv
@@ -326,11 +331,84 @@ export const arrayFromBase64 = new DevFunction(
       );
     });
 
-    return valArr;
+    if (acceptIncomplete) {
+      let remainder = combBinArr.slice(accLen)
+        .toBase64({alphabet: "base64url"});
+      return [valArr, remainder];
+    }
+    else {
+      if (accLen !== combLen) throw new ArgTypeError(
+        "The base 64 decoding did not exhaust the input string",
+        callerNode, execEnv
+      );
+      return valArr;
+    }
   }
 );
 
 
+
+export const valueToBase64 = new DevFunction(
+  "valueToBase64", {typeArr: ["any", "string"]},
+  function({callerNode, execEnv}, [val, type]) {
+    if (type === "string") {
+      return textEncoder.encode(val).toBase64({alphabet: "base64url"});
+    }
+    else if (type === "hex-string") {
+      try {
+        return Uint8Array.fromHex(val).toBase64({alphabet: "base64url"});
+      }
+      catch (err) {
+        if (err instanceof TypeError || err instanceof SyntaxError) {
+          throw new ArgTypeError(
+            "Invalid hexadecimal string: " +
+            getString(val, callerNode, execEnv),
+            callerNode, execEnv
+          );
+        }
+      }
+    }
+    else return arrayToBase64.fun({callerNode, execEnv}, [[val], [type]]);
+  }
+);
+
+export const valueFromBase64 = new DevFunction(
+  "valueFromBase64", {typeArr: ["string", "string"]},
+  function({callerNode, execEnv}, [base64Str, type]) {
+    if (type === "string") {
+      try {
+        return textDecoder.decode(
+          Uint8Array.fromBase64(base64Str, {alphabet: "base64url"})
+        );
+      }
+      catch (err) {
+        if (err instanceof TypeError || err instanceof SyntaxError) {
+          throw new ArgTypeError(
+            "Invalid base 64 string: " +
+            getString(base64Str, callerNode, execEnv),
+            callerNode, execEnv
+          );
+        }
+      }
+    }
+    else if (type === "hex-string") {
+      try {
+        return Uint8Array.fromBase64(base64Str, {alphabet: "base64url"})
+          .toHex();
+      }
+      catch (err) {
+        if (err instanceof TypeError || err instanceof SyntaxError) {
+          throw new ArgTypeError(
+            "Invalid base 64 string: " +
+            getString(base64Str, callerNode, execEnv),
+            callerNode, execEnv
+          );
+        }
+      }
+    }
+    else return arrayFromBase64.fun({callerNode, execEnv}, [base64Str, [type]]);
+  }
+);
 
 
 

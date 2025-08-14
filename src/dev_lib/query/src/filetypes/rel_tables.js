@@ -31,10 +31,11 @@ export async function query(
       callerNode, execEnv
     );
     payGas(callerNode, execEnv, {dbWrite: 1});
-    return await dbQueryHandler.queryDBProc(
+    let [[wasCreated] = []] = await dbQueryHandler.queryDBProc(
       "touchTableFile", [homeDirID, filePath],
       route, options, callerNode, execEnv,
-    );
+    ) ?? [];
+    return wasCreated;
   }
 
   // If route equals ".../<homeDirID>/<filepath>/_put" create a table file
@@ -51,10 +52,11 @@ export async function query(
       (fileExt === "ct") ? "putCT" :
       (fileExt === "bbt") ? "putBBT" :
       undefined;
-    return await dbQueryHandler.queryDBProc(
+    let [[wasCreated] = []] = await dbQueryHandler.queryDBProc(
       procName, [homeDirID, filePath],
       route, options, callerNode, execEnv,
-    );
+    ) ?? [];
+    return wasCreated;
   }
 
 
@@ -71,10 +73,11 @@ export async function query(
       (fileExt === "ct") ? "deleteCT" :
       (fileExt === "bbt") ? "deleteBBT" :
       undefined;
-    return await dbQueryHandler.queryDBProc(
+    let [[wasDeleted] = []] = await dbQueryHandler.queryDBProc(
       procName, [homeDirID, filePath],
       route, options, callerNode, execEnv,
-    );
+    ) ?? [];
+    return wasDeleted;
   }
 
 
@@ -103,10 +106,11 @@ export async function query(
       );
     }
     let {l: listID = "", k: elemKey = ""} = paramObj;
-    return await dbQueryHandler.queryDBProc(
+    let [[wasDeleted] = []] = await dbQueryHandler.queryDBProc(
       procName, [homeDirID, filePath, listID, elemKey],
       route, options, callerNode, execEnv,
-    );
+    ) ?? [];
+    return wasDeleted;
   }
 
   // If route equals ".../<homeDirID>/<filepath>/_deleteList[/l=<listID>]" +
@@ -137,10 +141,11 @@ export async function query(
     // TODO: Verify that hi === undefined makes it NULL when inserted in the
     // SQL (and otherwise perhaps use a hack of using a non-base-64 string).
     let {l: listID = "", lo: lo = "", hi: hi} = paramObj;
-    return await dbQueryHandler.queryDBProc(
+    let [[wasDeleted] = []] = await dbQueryHandler.queryDBProc(
       procName, [homeDirID, filePath, listID, lo, hi],
       route, options, callerNode, execEnv,
-    );
+    ) ?? [];
+    return wasDeleted;
   }
 
   // If route equals ".../<homeDirID>/<filepath>/entry[/l=<listID>]" +
@@ -166,10 +171,11 @@ export async function query(
       );
     }
     let {l: listID = "", k: elemKey = ""} = paramObj;
-    return await dbQueryHandler.queryDBProc(
+    let [resultRow] = await dbQueryHandler.queryDBProc(
       procName, [homeDirID, filePath, listID, elemKey],
       route, options, callerNode, execEnv,
-    );
+    ) ?? [];
+    return resultRow;
   }
 
   // If route equals ".../<homeDirID>/<filepath>/list[/l=<listID][/lo=<lo>]" +
@@ -255,8 +261,8 @@ export async function query(
   }
 
   // If route equals ".../<homeDirID>/<filepath>/_insert/[/l=<listID>]" +
-  // "k=<elemKey>[/s=<elemScore>][/p=<elemPayload>][/o=<overwrite>]", insert a
-  // single table entry with those row values, ignoring any existing entry
+  // "[/k=<elemKey>][/s=<elemScore>][/p=<elemPayload>][/o=<overwrite>]", insert
+  // a single table entry with those row values, ignoring any existing entry
   // of the same key, unless the overwrite parameter (o) is defined and truthy.
   // This does not apply .att files, but for these, if elemKey is defined and
   // not the empty string, the entry will be overwritten if one already exist.
@@ -297,9 +303,10 @@ export async function query(
       : (fileExt === "att") ?
         [homeDirID, filePath, listID, elemKey, elemPayload] :
         [homeDirID, filePath, listID, elemKey, elemPayload, overwrite];
-    return await dbQueryHandler.queryDBProc(
+    let [[wasUpdatedOrNewID] = []] = await dbQueryHandler.queryDBProc(
       procName, paramValArr, route, options, callerNode, execEnv,
-    );
+    ) ?? [];
+    return wasUpdatedOrNewID;
   }
 
   // If route equals ".../<homeDirID>/<filepath>/_insertList[/l=<listID>]" +
@@ -354,9 +361,10 @@ export async function query(
     overwrite = overwrite ? 1 : 0;
     payGas(callerNode, execEnv, {dbWrite: postData.length});
     let paramValArr = [homeDirID, filePath, listID, postData, overwrite];
-    return await dbQueryHandler.queryDBProc(
+    let [[rowCount] = []] = await dbQueryHandler.queryDBProc(
       procName, paramValArr, route, options, callerNode, execEnv,
-    );
+    ) ?? [];
+    return rowCount
   }
 
   // If the route was not matched at this point, throw an error.
