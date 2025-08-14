@@ -2559,6 +2559,10 @@ export class JSXElement extends ObjectObject {
 }
 
 
+
+// TODO: Add a Promise.race() outcome to all user-defined promises that
+// resolves when the script's time gas runs out.
+
 // TODO: Change the current syntactical implementation of Promise in the
 // language, and instead create a Promise ClassObject and make it one of the
 // few built-in global values (along with MutableObject etc. from above.)
