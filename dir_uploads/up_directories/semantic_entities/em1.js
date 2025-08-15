@@ -109,6 +109,12 @@ export const getRelevancyQuality = (classID) => ({
 // "Parents" (with the object class being e.g. a "Persons" class), we can use
 // the title, "Parents," directly for e.g. section headers, tab titles, table
 // labels, etc.
+// Note also that while "<Object> → <Relation>" might serve as a useful name
+// format for these classes, the "Name"/"Title"/"Label" attributes of entities
+// can always be overridden by the app that displays them, and can also
+// potentially even depend on user preferences. And this goes not just for
+// formats like this, but the words themselves. (For instance, users might
+// potentially be able to choose a different language.)
 export const relations = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Relations",
@@ -180,10 +186,93 @@ export const getSemanticList = (qualID, aggregatorID) => ({
 });
 
 
-// ...
+// An aggregator is defined by, first of all a name, and then an aggregator
+// object, which might be an instance of the Aggregator JS class below, or
+// should at least follow the same API to some extend.
 export const aggregators = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Aggregators",
+  "Constructor": getAggregator,
   "Superclass": abs("./em1.js;get/entities"),
+  "Common attributes": ["Name", "Aggregator object", "Description"],
   "Description": abs("./em1_aux1.js;get/aggregatorsDesc"),
 };
+
+export class Aggregator {
+
+  getScore(qualID, subjID) {}
+
+  getList(qualID, maxNum, offset, hi, lo) {}
+
+  updateScore(qualID, subjID) {}
+
+  updateList(qualID) {}
+}
+
+
+
+// Some useful metrics for qualities.
+
+export const percentageMetric = {
+  "Class": abs("./em1.js;get/metrics"),
+  "Name": "Percentage metric",
+  "Unit": "%",
+  "Lower bound": 0,
+  "Upper bound": 100,
+  "Description": abs("./em1_aux1.js;get/percentageMetricsDesc"),
+};
+
+export const predicateMetric = {
+  "Class": abs("./em1.js;get/metrics"),
+  "Name": "Predicate metric",
+  "Lower bound": -10,
+  "Upper bound": 10,
+  "Interval labels": [
+    [-10, -8,  "extremely not"],
+    [-8,  -6,  "very much not"],
+    [-6,  -4,  "truly not"],
+    [-4,  -2,  "somewhat not"],
+    [-2,   0,  "slightly not"],
+    [ 0,   2,  "slightly"],
+    [ 2,   4,  "somewhat"],
+    [ 4,   6,  "truly"],
+    [ 6,   8,  "very much"],
+    [ 8,  10,  "extremely"],
+  ],
+  "Description": abs("./em1_aux1.js;get/predicateMetricsDesc"),
+};
+
+export const priceInUSDMetric = {
+  "Class": abs("./em1.js;get/metrics"),
+  "Name": "Prince metric (USD)",
+  "Unit": "$",
+  "Prepend unit": true,
+  "Description": abs("./em1_aux1.js;get/priceInUSDMetricDesc"),
+};
+
+export const timeInYearsMetric = {
+  "Class": abs("./em1.js;get/metrics"),
+  "Name": "Time metric (years)",
+  "Unit": "yr",
+  "Lower bound": 0,
+  "Description": abs("./em1_aux1.js;get/timeInYearsMetricDesc"),
+};
+export const timeInDaysMetric = {
+  "Class": abs("./em1.js;get/metrics"),
+  "Name": "Time metric (days)",
+  "Unit": "days",
+  "Lower bound": 0,
+  "Description": abs("./em1_aux1.js;get/timeInDaysMetricDesc"),
+};
+export const timeInSecondsMetric = {
+  "Class": abs("./em1.js;get/metrics"),
+  "Name": "Time metric (seconds)",
+  "Unit": "s",
+  "Lower bound": 0,
+  "Description": abs("./em1_aux1.js;get/timeInSecondsMetricDesc"),
+};
+
+
+// Some useful qualities.
+
+// TODO: Continue.
