@@ -4,7 +4,8 @@ import {
   straightenListSyntaxTree, copyFromChild, copyLexemeFromChild,
   processPolyadicInfixOperation,
 } from "../../../../interpreting/parsing/processing.js";
-import {HTML_ELEMENT_TYPE_REGEX} from "../../../../interpreting/parsing/ScriptParser.js";
+import {HTML_ELEMENT_TYPE_REGEX}
+from "../../../../interpreting/parsing/ScriptParser.js";
 
 
 const ELEMENT_TYPE_PATTERN = HTML_ELEMENT_TYPE_REGEX.source.slice(1, -1);

@@ -7,7 +7,7 @@
 
 import homePath from "./.id.js";
 import {post, fetch} from 'query';
-import {valueToBase64, valueFromBase64} from 'base64';
+import {valueToBase64} from 'base64';
 
 
 
@@ -22,27 +22,23 @@ export function postEntity(entPath, useSecIdx = true) {
     }
     else {
       let entPathBase64 = valueToBase64(entPath, "string");
-      fetch(homePath + "/entIDs.bt/entry/k=" + entPathBase64).then(
-        entIDBase64 => {
-          // If the entPath already has an entID, resolve with that.
-          if (entIDBase64) {
-          let entID = valueFromBase64(entIDBase64, "hex-int");
-            return resolve(entID);
-          }
-          
-          // Else post a new entity, and when the new entID is gotten, try to
-          // insert it in the entIDs.bt table if an entry has not been inserted
-          // for that same entPath in the meantime.
-          post(homePath + "/entPaths.att/_insert", entPath).then(entID => {
-            let entIDBase64 = valueToBase64(entID, "hex-int");
-            post(
-              homePath + "/entIDs.bt/_insert/k=" + entPathBase64 +
-              "/p=" + entIDBase64 + "/o=0"
-            );
-            resolve(entID);
-          });
+      fetch(homePath + "/entIDs.bt/entry/k=" + entPathBase64).then(entID => {
+        // If the entPath already has an entID, resolve with that.
+        if (entID) {
+          return resolve(entID);
         }
-      );
+        
+        // Else post a new entity, and when the new entID is gotten, try to
+        // insert it in the entIDs.bt table if an entry has not been inserted
+        // for that same entPath in the meantime.
+        post(homePath + "/entPaths.att/_insert", entPath).then(entID => {
+          post(
+            homePath + "/entIDs.bt/_insert/k=" + entPathBase64 +
+            "/p=" + entID + "/o=0"
+          );
+          resolve(entID);
+        });
+      });
     }
   });
 }
@@ -51,22 +47,21 @@ export function postEntity(entPath, useSecIdx = true) {
 
 export function addSecondaryIndex(entID) {
   return new Promise(resolve => {
-    let entIDBase64 = valueToBase64(entID, "hex-int");
-    fetch(homePath + "/entPaths.att/entry/k=" + entIDBase64).then(entPath => {
+    fetch(homePath + "/entPaths.att/entry/k=" + entID).then(entPath => {
       let entPathBase64 = valueToBase64(entPath, "string");
       fetch(homePath + "/entIDs.bt/entry/k=" + entPathBase64).then(
-        prevIDBase64 => {
+        existingEntID => {
           // If the entPath already has another entID, resolve with false, and
           // if it already has the same ID, resolve with true.
-          if (prevIDBase64) {
-            return resolve(prevIDBase64 == entIDBase64);
+          if (existingEntID) {
+            return resolve(existingEntID == entID);
           }
           
           // Else try to insert that entID in the entIDs.bt table if an entry has
           // not been inserted for that same entPath in the meantime.
           post(
             homePath + "/entIDs.bt/_insert/k=" + entPathBase64 +
-            "/p=" + entIDBase64 + "/o=0"
+            "/p=" + entID + "/o=0"
           ).then(wasUpdated => resolve(wasUpdated));
         }
       );
