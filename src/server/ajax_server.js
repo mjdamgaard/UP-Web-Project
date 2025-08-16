@@ -36,7 +36,7 @@ staticDevLibs.set("json", jsonMod);
 staticDevLibs.set("string", stringMod);
 staticDevLibs.set("array", arrayMod);
 staticDevLibs.set("math", mathMod);
-staticDevLibs.set("request_origin", reqOrigMod);
+staticDevLibs.set("request", reqOrigMod);
 staticDevLibs.set("base64", base64Mod);
 staticDevLibs.set("error", errorMod);
 

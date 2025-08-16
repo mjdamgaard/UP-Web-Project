@@ -1639,7 +1639,15 @@ export class ScriptInterpreter {
         val = objVal.get(key);
       }
       else if (typeof objVal === "string" && key === "length") {
-        val = objVal.length;
+        if (key === "length") {
+          val = objVal.length;
+        }
+        else {
+          let intKey = parseInt(key);
+          if (!Number.isNaN(intKey) && intKey == key) {
+            val = objVal[intKey];
+          } 
+        }
       }
       else throw new RuntimeError(
         "Trying to access a member of a non-object",

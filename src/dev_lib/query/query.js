@@ -6,7 +6,7 @@ import {
 } from '../../interpreting/ScriptInterpreter.js';
 import {parseRoute} from './src/parseRoute.js';
 
-import {checkAdminPrivileges, checkIfCanPost} from "./src/flags.js";
+import {checkAdminPrivileges, checkIfCanPost, USER_ID_FLAG} from "./src/flags.js";
 
 const ownUPNodeID = "1";
 
@@ -180,3 +180,4 @@ export const getCurrentHomePath = new DevFunction(
     return ret; 
   }
 );
+

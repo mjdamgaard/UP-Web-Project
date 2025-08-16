@@ -3,8 +3,8 @@
 
 export const entitiesDesc = <div>
   <h1>{"All entities"}</h1>
-  <h2>{"Introduction"}</h2>
   <section>
+    <h2>{"Introduction"}</h2>
     <p>{
       "This is the all-encompassing class of all things, or of all " +
       "\"entities,\" as we call it here."
@@ -27,8 +27,8 @@ export const entitiesDesc = <div>
       "itself."
     }</p>
   </section>
-  <h2>{"How entities are defined"}</h2>
   <section>
+    <h2>{"How entities are defined"}</h2>
     <p>{
       "..."
     }</p>

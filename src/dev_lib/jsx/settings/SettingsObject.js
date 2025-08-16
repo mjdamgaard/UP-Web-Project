@@ -54,10 +54,10 @@ export class SettingsObject01 extends SettingsObject {
   }
 
   // TODO: At some point reimplement this such that certain components can get
-  // "CLIENT_TRUST", and make this be able to depend on user preferences as
-  // well.
+  // "CLIENT_TRUST", other than the outer app component, and make this be able
+  // to depend on user preferences as well.
   getClientTrust(requestOrigin, node, env) {
-    return false;
+    return requestOrigin === this.appComponent;
   }
 
   getRequestOrigin(jsxInstance) {

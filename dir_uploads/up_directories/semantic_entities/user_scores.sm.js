@@ -12,14 +12,26 @@
 // what is the standard.
 
 import homePath from "./.id.js";
-import {post, fetch} from 'query';
-import {valueToBase64} from 'base64';
+import {post} from 'query';
+import {getRequestingUserID, checkRequestOrigin} from 'request';
 
 
 
-export function postUserScore() {
+export function postUserScore(qualID, subjID, scoreBase64, payloadBase64) {
+  checkRequestOrigin(true, [
+    "TODO: Add trusted components that can upload user scores."
+  ]);
+
+  let userID = getRequestingUserID();
+  let listID = qualID + "&" + userID;
   return new Promise(resolve => {
-    
+    post(homePath + "/users.bt/_insert/k=" + userID);
+    post(
+      homePath + "/userScores.bbt/_insert/l=" + listID + "/k=" + subjID +
+      "/s=" + scoreBase64 + (payloadBase64 ? "/p=" + payloadBase64 : "")
+    ).then(
+      wasUpdated => resolve(wasUpdated)
+    );
   });
 }
 

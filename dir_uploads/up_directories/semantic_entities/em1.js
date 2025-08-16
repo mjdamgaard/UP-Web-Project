@@ -200,13 +200,13 @@ export const aggregators = {
 
 export class Aggregator {
 
-  getScore(qualID, subjID) {}
+  getScore(qualIDOrPath, subjIDOrPath) {}
 
-  getList(qualID, maxNum, offset, hi, lo) {}
+  getList(qualIDOrPath, isAscending, maxNum, offset, hi, lo) {}
 
-  updateScore(qualID, subjID) {}
+  updateScore(qualIDOrPath, subjIDOrPath) {}
 
-  updateList(qualID) {}
+  updateList(qualIDOrPath) {}
 }
 
 

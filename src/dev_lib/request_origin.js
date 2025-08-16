@@ -1,19 +1,18 @@
 
 import {
-  DevFunction, Exception, ClassObject, exceptionClass,
+  DevFunction, NetworkError, ObjectObject, getString,
 } from '../interpreting/ScriptInterpreter.js';
 import {
   CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG, 
 } from './query/src/flags.js';
 
 
-// TODO: Correct and extend this library to use the new flags correctly.  
 
 export const checkRequestOrigin = new DevFunction(
-  "checkRequestOrigin", {typeArr: ["boolean", "array"]},
+  "checkRequestOrigin", {typeArr: ["boolean", "array?"]},
   function(
     {callerNode, execEnv},
-    [canForce, whitelist]
+    [canForce, whitelist = []]
   ) {
     // If canForce is true, check if the client trusts the request to be forced
     // through this CORS-like check.
@@ -27,22 +26,33 @@ export const checkRequestOrigin = new DevFunction(
     // Else see if the request origin matches any one in the whitelist, where a
     // trailing '*' in a whitelisted request origin string is a wildcard that
     // means that all extensions of that string is allowed as well.
-    let requestOrigin = undefined//execEnv.getFlag(REQUESTING_COMPONENT_FLAG);
+    let requestOrigin = execEnv.getFlag(REQUESTING_COMPONENT_FLAG);
+    if (whitelist instanceof ObjectObject) whitelist = whitelist.members;
     let isAllowed = whitelist.some(str => {
+      str = getString(str, callerNode, execEnv);
       if (str.at(-1) === "*") {
         let requiredSubstring = str.slice(0, -1);
         return requestOrigin.substring(0, requiredSubstring.length) ===
           requiredSubstring;
       } else {
-        return requestOrigin === str;
+        return str === requestOrigin;
       }
     });
     
     // Throw if the request origin was not accepted.
-    if (!isAllowed) throw new Exception(
-      RequestOriginError.getNewInstance(
-        ["Request origin not allowed"], callerNode, execEnv
-      ),
+    if (!isAllowed) throw new NetworkError(
+      "Request origin not allowed",
+      callerNode, execEnv
+    );
+  }
+);
+
+
+
+export const checkClientTrust = new DevFunction(
+  "checkClientTrust", {}, function({callerNode, execEnv}, []) {
+    if (!execEnv.getFlag(CLIENT_TRUST_FLAG)) throw new NetworkError(
+      "Client trust required for this request",
       callerNode, execEnv
     );
   }
@@ -57,15 +67,15 @@ export const getRequestOrigin = new DevFunction(
 );
 
 
-export const getUserID = new DevFunction(
-  "getUserID", {}, function({execEnv}, []) {
-    return execEnv.scriptVars.contexts.userIDContext.get();
+
+
+
+export const getRequestingUserID = new DevFunction(
+  "getRequestingUserID", {},
+  function({execEnv}, []) {
+    return execEnv.getFlag(USER_ID_FLAG); 
   }
 );
 
 
-
-export const RequestOriginError = new ClassObject(
-  "RequestOriginError", undefined, undefined, exceptionClass
-);
 

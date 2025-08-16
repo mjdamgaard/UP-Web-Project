@@ -44,6 +44,20 @@ export function postEntity(entPath, useSecIdx = true) {
 }
 
 
+// This function does not need to be called via a 'callSMF' route, but can also
+// be imported and used by other modules. (This is not true for the post
+// methods; there you need to use 'callSMF' routes to this specific SM.)
+export function fetchEntityID(entPath) {
+  return new Promise(resolve => {
+    let entPathBase64 = valueToBase64(entPath, "string");
+    fetch(homePath + "/entIDs.bt/entry/k=" + entPathBase64).then(
+      entID => resolve(entID)
+    );
+  });
+}
+
+
+
 
 export function addSecondaryIndex(entID) {
   return new Promise(resolve => {
