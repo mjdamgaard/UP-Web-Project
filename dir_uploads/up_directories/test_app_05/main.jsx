@@ -77,7 +77,8 @@ function runTests() {
     0.5, 0.55555555, 0.55555555, -1.2, 0
   ];
   typeArr1 = [
-    "float(0,1)", "float(0,1,1)", "float(0,1,2)", "float(-10,10)", "float(0,1)"
+    "float(0,1,4)", "float(0,1,1)", "float(0,1,2)", "float(-10,10, 4)",
+    "float( 0, 1, 4 )"
   ];
   console.log('Array:');
   console.log(arr1);
@@ -104,7 +105,7 @@ function runTests() {
     0, 2345, -30
   ];
   typeArr1 = [
-    "float(0,1)", "float(-30,2345)", "float(-30,2345)"
+    "float(0,1, 4)", "float(-30,2345,4)", "float(-30,2345,4)"
   ];
   console.log('Array:');
   console.log(arr1);
@@ -169,6 +170,28 @@ function runTests() {
     "Test 7 is successful."
   );
   console.log(" ");
+
+
+  console.log('Test 8: Float types with without one or both limits.');
+  arr1 = [
+    0.5, 0.5, 0.5, -1.2,
+    1E+4, 1E+4, 1E-4, 1E-4,
+  ];
+  typeArr1 = [
+    "float(0,,2)", "float(-111, , 3)", "float(,1,2)", "float(-3, ,4)",
+    "float(-3, ,4)", "float(,,4)", "float(,3,4)", "float(,,4)",
+  ];
+  console.log('Array:');
+  console.log(arr1);
+  console.log('Type array:');
+  console.log(typeArr1);
+  b64Str = arrayToBase64(arr1, typeArr1);
+  console.log("Result in base 64:");
+  console.log(b64Str);
+  console.log("Result in hexadecimal:");
+  console.log(hexFromBase64(b64Str));
+  console.log("And converting it back:");
+  console.log(arrayFromBase64(b64Str, typeArr1));
 
 
   // TODO: Continue by making some tests of the relational tables.

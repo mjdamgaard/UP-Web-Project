@@ -67,7 +67,7 @@ export const metrics = {
   "Name": "Metrics",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-    "Name", "Unit", "Prepend unit", "Lower bound", "Upper bound",
+    "Name", "Unit", "Prepend unit", "Lower limit", "Upper limit",
     "Interval labels", "Description"
   ],
   "Description": abs("./em1_aux1.js;get/metricsDesc"),
@@ -217,16 +217,16 @@ export const percentageMetric = {
   "Class": abs("./em1.js;get/metrics"),
   "Name": "Percentage metric",
   "Unit": "%",
-  "Lower bound": 0,
-  "Upper bound": 100,
+  "Lower limit": 0,
+  "Upper limit": 100,
   "Description": abs("./em1_aux1.js;get/percentageMetricsDesc"),
 };
 
 export const predicateMetric = {
   "Class": abs("./em1.js;get/metrics"),
   "Name": "Predicate metric",
-  "Lower bound": -10,
-  "Upper bound": 10,
+  "Lower limit": -10,
+  "Upper limit": 10,
   "Interval labels": [
     [-10, -8,  "extremely not"],
     [-8,  -6,  "very much not"],
@@ -254,21 +254,21 @@ export const timeInYearsMetric = {
   "Class": abs("./em1.js;get/metrics"),
   "Name": "Time metric (years)",
   "Unit": "yr",
-  "Lower bound": 0,
+  "Lower limit": 0,
   "Description": abs("./em1_aux1.js;get/timeInYearsMetricDesc"),
 };
 export const timeInDaysMetric = {
   "Class": abs("./em1.js;get/metrics"),
   "Name": "Time metric (days)",
   "Unit": "days",
-  "Lower bound": 0,
+  "Lower limit": 0,
   "Description": abs("./em1_aux1.js;get/timeInDaysMetricDesc"),
 };
 export const timeInSecondsMetric = {
   "Class": abs("./em1.js;get/metrics"),
   "Name": "Time metric (seconds)",
   "Unit": "s",
-  "Lower bound": 0,
+  "Lower limit": 0,
   "Description": abs("./em1_aux1.js;get/timeInSecondsMetricDesc"),
 };
 

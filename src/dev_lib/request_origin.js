@@ -3,7 +3,7 @@ import {
   DevFunction, NetworkError, ObjectObject, getString,
 } from '../interpreting/ScriptInterpreter.js';
 import {
-  CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG, 
+  CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG, USER_ID_FLAG,
 } from './query/src/flags.js';
 
 

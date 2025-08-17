@@ -10,7 +10,7 @@ const NULL_CHAR_REGEX = /\0/;
 const LEADING_ZERO_PAIRS_REGEX = /^(00)+/;
 const INTEGER_TYPE_REGEX = /^(u)?int(\([1-9][0-9]*\))?$/;
 const FLOAT_TYPE_REGEX =
-  /^float\(([0-9.E+\-]+) *, *([0-9.E+\-]+) *(, *([1-9][0-9]*))? *\)$/;
+  /^float\( *([0-9.E+\-]+)?, *([0-9.E+\-]+)?, *([1-9][0-9]*) *\)$/;
 
 const maxUInts = [
   255,
@@ -132,9 +132,9 @@ export const arrayToBase64 = new DevFunction(
         return;
       }
 
-      // If type = 'float(lo, hi[, len])', treat val as an floating-point number
-      // of len bytes (determining the precision) in the range between lo and
-      // hi.
+      // If type = 'float(lo?,hi?,len)', treat val as a floating-point number
+      // with a precision of len bytes (determining the precision) in the range
+      // between lo and hi.
       [match, loExp, hiExp, lenExp] = type.match(FLOAT_TYPE_REGEX) ?? [];
       if (match) {
         let initVal = val;
@@ -144,7 +144,7 @@ export const arrayToBase64 = new DevFunction(
           getString(initVal, callerNode, execEnv),
           callerNode, execEnv
         );
-        let len = parseInt(lenExp ? lenExp.substring(1) : 4);
+        let len = parseInt(lenExp);
         if (Number.isNaN(len) || len < 1 || len > 6) throw new ArgTypeError(
           "Float byte length needs to be between 1 and 6, but got: " +
           lenExp.substring(1),
@@ -152,17 +152,95 @@ export const arrayToBase64 = new DevFunction(
         );
         let lo = parseFloat(loExp);
         let hi = parseFloat(hiExp);
-        if (Number.isNaN(lo) || Number.isNaN(hi)) throw new ArgTypeError(
-          "Invalid float limit: " + (Number.isNaN(lo) ? loExp : hiExp),
-          callerNode, execEnv
-        );
+        if (loExp && Number.isNaN(lo) || hiExp && Number.isNaN(hi)) {
+          throw new ArgTypeError(
+            "Invalid float limit: " + (Number.isNaN(lo) ? loExp : hiExp),
+            callerNode, execEnv
+          );
+        }
         if (lo >= hi || val < lo || val > hi) throw new ArgTypeError(
           `Float value needs to be inside limits: ${loExp} <= ${val} <= ` +
           hiExp,
           callerNode, execEnv
         );
-        let n = parseInt((val - lo) * maxUInts[len - 1] / (hi - lo));
-        let hexStr = n.toString(16).padStart(len * 2, "0");
+
+        // If both lo and hi is defined, we need no exponent, but only need to
+        // store the a value between 0 and 1 with len precision.
+        let hexStr;
+        if (loExp && hiExp) {
+          let n = Math.floor((val - lo) * maxUInts[len - 1] / (hi - lo));
+          hexStr = n.toString(16).padStart(len * 2, "0");
+        }
+
+        // If only there's a lower limit, subtract that and store the resulting
+        // float simply as an 8-bit exponent, followed by a len*8-bit 
+        // significand.
+        else if (loExp) {
+          val = val - lo;
+          let exp = Math.floor(Math.log2(val));
+          if (exp < -128) {
+            hexStr = "00" + "00".repeat(len);
+          }
+          if (exp > 127) {
+            hexStr = "FF" + "FF".repeat(len);
+          }
+          else {
+            let expHexStr = (exp + 128).toString(16).padStart(2, "0");
+            let n = Math.floor((val / 2**(exp + 1)) * maxUInts[len - 1]);
+            hexStr = expHexStr + n.toString(16).padStart(len * 2, "0");
+          }
+        }
+
+        // And if only there's an upper limit, do a similar thing, but with
+        // negative values, and then negate all bit bitwise at the end.
+        else if (hiExp) {
+          val = hi - val;
+          let exp = Math.floor(Math.log2(val));
+          if (exp < -128) {
+            hexStr = "FF" + "FF".repeat(len);
+          }
+          if (exp > 127) {
+            hexStr = "00" + "00".repeat(len);
+          }
+          else {
+            let expHexStr = (exp + 128).toString(16).padStart(2, "0");
+            let n = parseInt((val / 2**(exp + 1)) * maxUInts[len - 1]);
+            hexStr = expHexStr + n.toString(16).padStart(len * 2, "0");
+            hexStr = bitwiseNegateHexString(hexStr);
+          }
+        }
+
+        // And if there is no limit, we only store a 7-bit exponent, and let
+        // the first bit be the negated sign bit. And in case of a negative
+        // val, 
+        else {
+          let absVal = (val < 0) ? -val : val; 
+          let exp = Math.floor(Math.log2(absVal));
+          if (exp < -64) {
+            if (val >= 0) {
+              hexStr = "80" + "00".repeat(len);
+            } else {
+              hexStr = "7F" + "FF".repeat(len);
+            }
+          }
+          if (exp > 63) {
+            if (val >= 0) {
+              hexStr = "FF" + "FF".repeat(len);
+            } else {
+              hexStr = "00" + "00".repeat(len);
+            }
+          }
+          else {
+            let posSignExp = exp + 128;
+            let posSignExpHexStr = posSignExp.toString(16).padStart(2, "0");
+            let n = parseInt((absVal / 2**(exp + 1)) * maxUInts[len - 1]);
+            hexStr = posSignExpHexStr + n.toString(16).padStart(len * 2, "0");
+            if (val < 0) {
+              hexStr = bitwiseNegateHexString(hexStr);
+            }
+          }
+        }
+
         let binArr = Uint8Array.fromHex(hexStr);
         binArrArr.push(binArr);
         return;
@@ -288,39 +366,63 @@ export const arrayFromBase64 = new DevFunction(
         return;
       }
 
-      // If type = 'float(lo, hi[, len])', treat val as an floating-point number
-      // of len bytes (determining the precision) in the range between lo and
-      // hi.
+      // Reverse conversion for the 'float(lo?,hi?,len)' type.
       [match, loExp, hiExp, lenExp] = type.match(FLOAT_TYPE_REGEX) ?? [];
       if (match) {
-        let len = parseInt(lenExp ? lenExp.substring(1) : 4);
+        let len = parseInt(lenExp);
         if (Number.isNaN(len) || len < 1 || len > 6) throw new ArgTypeError(
           "Float byte length needs to be between 1 and 6, but got: " +
           lenExp.substring(1),
           callerNode, execEnv
         );
-        if (accLen + len > combLen) throw new ArgTypeError(
-          "End of the base 64 string was reached before all array entries " +
-          "was converted",
-          callerNode, execEnv
-        );
-        let binArr = combBinArr.slice(accLen, accLen + len);
-        let n = parseInt(binArr.toHex(), 16);
-
         let lo = parseFloat(loExp);
         let hi = parseFloat(hiExp);
-        if (Number.isNaN(lo) || Number.isNaN(hi)) throw new ArgTypeError(
-          "Invalid float limit: " + (Number.isNaN(lo) ? loExp : hiExp),
-          callerNode, execEnv
-        );
-        if (lo >= hi) throw new ArgTypeError(
-          `Invalid float limits: ${loExp} < ${hiExp}`,
-          callerNode, execEnv
-        );
-        let x = lo + (hi - lo) * n / maxUInts[len - 1];
+        if (loExp && Number.isNaN(lo) || hiExp && Number.isNaN(hi)) {
+          throw new ArgTypeError(
+            "Invalid float limit: " +
+            (loExp && Number.isNaN(lo) ? loExp : hiExp),
+            callerNode, execEnv
+          );
+        }
+        if (combLen < accLen + len + (loExp && hiExp ? 0 : 1)) {
+          throw new ArgTypeError(
+            "End of the base 64 string was reached before all array entries " +
+            "was converted",
+            callerNode, execEnv
+          );
+        }
+
+        // Reverse the above encodings depending on which limits are defined.
+        let val;
+        if (loExp && hiExp) {
+          let binArr = combBinArr.slice(accLen, accLen + len);
+          accLen = accLen + len;
+          let n = parseInt(binArr.toHex(), 16);
+          val = lo + (hi - lo) * n / maxUInts[len - 1];
+        }
+        else {
+          let binArr = combBinArr.slice(accLen, accLen + len + 1);
+          accLen = accLen + len + 1;
+          let exp = binArr[0];
+          if (loExp || hiExp) {
+            let n = parseInt(binArr.toHex().substring(2), 16);
+            val =  2**(exp + 1) * n / maxUInts[len - 1];
+            val = loExp ? val + lo : hi - val;
+          }
+          else {
+            let isNegative = (exp < 128);
+            if (isNegative) {
+              binArr = new Uint8Array(binArr.map(x => -x - 1));
+              exp = binArr[0];
+            }
+            let n = parseInt(binArr.toHex().substring(2), 16);
+            val =  2**(exp + 1) * n / maxUInts[len - 1];
+            val = isNegative ? -val : val;
+          }
+        }
         
-        valArr.push(x);
-        accLen = accLen + len;
+        val = parseFloat(val.toPrecision(Math.floor(8 * len / Math.log2(10))));
+        valArr.push(val);
         return;
       }
 
@@ -456,3 +558,34 @@ export const hexToBase64 = new DevFunction(
     return ret;
   }
 );
+
+
+
+
+
+
+// TODO: Just use ~x = -x - 1 when x is a signed int(1) instead of using the
+// following functions.
+
+function bitwiseNegateHexString(hexStr) {
+  return hexStr.split("").map(char => bitwiseNegateHexadecimal(char)).join("");
+}
+
+function bitwiseNegateHexadecimal(char) {
+  return (char === "0") ? "f" :
+    (char === "1") ? "e" :
+    (char === "2") ? "d" :
+    (char === "3") ? "c" :
+    (char === "4") ? "b" :
+    (char === "5") ? "a" :
+    (char === "6") ? "9" :
+    (char === "7") ? "8" :
+    (char === "8") ? "7" :
+    (char === "9") ? "6" :
+    (char === "a") ? "5" :
+    (char === "b") ? "4" :
+    (char === "c") ? "3" :
+    (char === "d") ? "2" :
+    (char === "e") ? "1" :
+    (char === "f") ? "0" : "_";
+}
