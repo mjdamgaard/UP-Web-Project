@@ -172,26 +172,31 @@ function runTests() {
   console.log(" ");
 
 
+
+  console.log("...");
+  console.log(" ");
   console.log('Test 8: Float types with without one or both limits.');
   arr1 = [
-    0.5, 0.5, 0.5, -1.2,
+    2, 0.5, 0.5, -1.2,
     1E+4, 1E+4, 1E-4, 1E-4,
+    -1E+4, -1E-4,
   ];
   typeArr1 = [
     "float(0,,2)", "float(-111, , 3)", "float(,1,2)", "float(-3, ,4)",
     "float(-3, ,4)", "float(,,4)", "float(,3,4)", "float(,,4)",
+     "float(,,1)",  "float(,,1)"
   ];
   console.log('Array:');
   console.log(arr1);
   console.log('Type array:');
   console.log(typeArr1);
   b64Str = arrayToBase64(arr1, typeArr1);
-  console.log("Result in base 64:");
-  console.log(b64Str);
   console.log("Result in hexadecimal:");
   console.log(hexFromBase64(b64Str));
   console.log("And converting it back:");
   console.log(arrayFromBase64(b64Str, typeArr1));
+  console.log("Test 8 is successful.");
+  console.log(" ");
 
 
   // TODO: Continue by making some tests of the relational tables.

@@ -174,39 +174,22 @@ export const arrayToBase64 = new DevFunction(
 
         // If only there's a lower limit, subtract that and store the resulting
         // float simply as an 8-bit exponent, followed by a len*8-bit 
-        // significand.
-        else if (loExp) {
-          val = val - lo;
+        // significand. And if only there's an upper limit, do a similar thing,
+        // but with negative values, and then negate all bit bitwise at the end.
+        else if (loExp || hiExp) {
+          val = loExp ? val - lo : hi - val;
           let exp = Math.floor(Math.log2(val));
-          if (exp < -128) {
+          if (loExp && exp < -128 || hiExp && exp > 127) {
             hexStr = "00" + "00".repeat(len);
           }
-          if (exp > 127) {
+          else if (loExp && exp > 127 || hiExp && exp < -128) {
             hexStr = "FF" + "FF".repeat(len);
           }
           else {
             let expHexStr = (exp + 128).toString(16).padStart(2, "0");
             let n = Math.floor((val / 2**(exp + 1)) * maxUInts[len - 1]);
             hexStr = expHexStr + n.toString(16).padStart(len * 2, "0");
-          }
-        }
-
-        // And if only there's an upper limit, do a similar thing, but with
-        // negative values, and then negate all bit bitwise at the end.
-        else if (hiExp) {
-          val = hi - val;
-          let exp = Math.floor(Math.log2(val));
-          if (exp < -128) {
-            hexStr = "FF" + "FF".repeat(len);
-          }
-          if (exp > 127) {
-            hexStr = "00" + "00".repeat(len);
-          }
-          else {
-            let expHexStr = (exp + 128).toString(16).padStart(2, "0");
-            let n = parseInt((val / 2**(exp + 1)) * maxUInts[len - 1]);
-            hexStr = expHexStr + n.toString(16).padStart(len * 2, "0");
-            hexStr = bitwiseNegateHexString(hexStr);
+            if (hiExp) hexStr = bitwiseNegateHexString(hexStr);
           }
         }
 
@@ -217,27 +200,19 @@ export const arrayToBase64 = new DevFunction(
           let absVal = (val < 0) ? -val : val; 
           let exp = Math.floor(Math.log2(absVal));
           if (exp < -64) {
-            if (val >= 0) {
-              hexStr = "80" + "00".repeat(len);
-            } else {
-              hexStr = "7F" + "FF".repeat(len);
-            }
+            hexStr = (val >= 0) ?
+              "80" + "00".repeat(len) : "7F" + "FF".repeat(len);
           }
           if (exp > 63) {
-            if (val >= 0) {
-              hexStr = "FF" + "FF".repeat(len);
-            } else {
-              hexStr = "00" + "00".repeat(len);
-            }
+            hexStr = (val >= 0) ?
+              "7F" + "FF".repeat(len) : "80" + "00".repeat(len);
           }
           else {
-            let posSignExp = exp + 128;
+            let posSignExp = exp + 192;
             let posSignExpHexStr = posSignExp.toString(16).padStart(2, "0");
             let n = parseInt((absVal / 2**(exp + 1)) * maxUInts[len - 1]);
             hexStr = posSignExpHexStr + n.toString(16).padStart(len * 2, "0");
-            if (val < 0) {
-              hexStr = bitwiseNegateHexString(hexStr);
-            }
+            if (val < 0) hexStr = bitwiseNegateHexString(hexStr);
           }
         }
 
@@ -404,7 +379,12 @@ export const arrayFromBase64 = new DevFunction(
           let binArr = combBinArr.slice(accLen, accLen + len + 1);
           accLen = accLen + len + 1;
           let exp = binArr[0];
+          if (hiExp) {
+            binArr = new Uint8Array(binArr.map(x => -x - 1));
+            exp = binArr[0];
+          }
           if (loExp || hiExp) {
+            exp = exp - 128;
             let n = parseInt(binArr.toHex().substring(2), 16);
             val =  2**(exp + 1) * n / maxUInts[len - 1];
             val = loExp ? val + lo : hi - val;
@@ -415,6 +395,7 @@ export const arrayFromBase64 = new DevFunction(
               binArr = new Uint8Array(binArr.map(x => -x - 1));
               exp = binArr[0];
             }
+            exp = exp - 192;
             let n = parseInt(binArr.toHex().substring(2), 16);
             val =  2**(exp + 1) * n / maxUInts[len - 1];
             val = isNegative ? -val : val;
