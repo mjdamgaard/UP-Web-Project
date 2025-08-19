@@ -1,0 +1,60 @@
+
+
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-rows: 50px auto;
+  background-color: #fafafa;
+}
+.app > * {
+  background-color: white;
+}
+
+.app-header {
+  height: 50px;
+  display: flex;
+  flex-direction: row;
+  font-size: 25px;
+  text-align: center;
+  background-color: #d4dfe4;
+}
+.app-header > * {
+  padding: 6px 10px;
+}
+.app-header > :hover {
+  background-color: #91989c;
+  cursor: pointer;
+}
+.app-header > :first-child {
+  font-size: 30px;
+}
+.app-header > :first-child:hover {
+  background-color: unset;
+}
+
+
+.app-main {
+  overflow-y: scroll;
+  margin: 0px 20%;
+  padding: 20px 50px;
+}
+
+.app-main section {
+  margin-top: 2em;
+}
+
+
+
+
+.link {
+  color: #1d1dff;
+}
+.link:hover {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+
+.tutorial-list {
+  font-size: 25px;
+}

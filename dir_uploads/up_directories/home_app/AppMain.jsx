@@ -8,7 +8,10 @@ export function render() {
 
   let pageContent;
   if (!pageIdent || pageIdent === "home") {
-    pageContent = <h3>{"Home page not implemented yet."}</h3>;
+    pageContent = <div>
+      <h3>{"Home page not implemented yet."}</h3>
+      <p>{"Try the tutorials instead!"}</p>
+    </div>;
   }
   else if (pageIdent === "tutorials") {
     pageContent = <TutorialIndexPage key="idx" />;

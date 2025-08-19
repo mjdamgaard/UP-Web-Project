@@ -5,10 +5,12 @@ import * as AppMain from "./AppMain.jsx";
 
 
 export function render() {
-  return <div className="app">
-    <AppHeader key="h" />
-    <AppMain key="m" />
-  </div>;
+  return (
+    <div className="app">
+      <AppHeader key="h" />
+      <AppMain key="m" />
+    </div>
+  );
 }
 
 
@@ -29,3 +31,6 @@ export const events = [
   "goToTutorialsPage",
   "goToIntroTutorialPage",
 ];
+
+
+export const stylePath = "./style.css";

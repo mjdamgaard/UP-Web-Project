@@ -179,8 +179,3 @@ html, body, #up-app-root {
 #overlay-page-container.open dt, dd {
   display: inline;
 }
-
-
-* {
-  overflow: hidden;
-}
