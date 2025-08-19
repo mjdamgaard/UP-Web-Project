@@ -7,6 +7,9 @@ export function render() {
       this.trigger("goToHomePage");
     }}>{"LogoTBD"}</div>
     <div onClick={() => {
+      this.trigger("goToAboutPage");
+    }}>{"About"}</div>
+    <div onClick={() => {
       this.trigger("goToTutorialsPage");
     }}>{"Tutorials"}</div>
   </header>;

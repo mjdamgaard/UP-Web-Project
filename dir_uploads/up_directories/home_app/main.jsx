@@ -18,6 +18,9 @@ export const actions = {
   "goToHomePage": function() {
     this.call("m", "goToHomePage");
   },
+  "goToAboutPage": function() {
+    this.call("m", "goToAboutPage");
+  },
   "goToTutorialsPage": function() {
     this.call("m", "goToTutorialsPage");
   },
@@ -28,6 +31,7 @@ export const actions = {
 
 export const events = [
   "goToHomePage",
+  "goToAboutPage",
   "goToTutorialsPage",
   "goToIntroTutorialPage",
 ];

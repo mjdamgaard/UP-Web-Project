@@ -54,6 +54,13 @@
   text-decoration: underline;
 }
 
+tt.command {
+  display: inline-block;
+  padding-right: 40px;
+  background-color: #303030;
+  color: white;
+}
+
 
 .tutorial-list {
   font-size: 25px;

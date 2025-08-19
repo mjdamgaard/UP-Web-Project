@@ -37,7 +37,7 @@ const FLAG_PATTERN =
 // const BUILT_IN_VALUE_PATTERN =
 //   "(red|green|blue|italic|bold|oblique|hidden|none|scroll|auto)";
 // TODO: Make sure that this is okay:
-const BUILT_IN_VALUE_PATTERN = "[a-z]+";
+const BUILT_IN_VALUE_PATTERN = "[a-z][a-z\-]*";
 
 const UNIT_PATTERN =
   "(%|cm|mm|Q|in|pc|pt|px|em|rem|vh|vw|deg|fr)";

@@ -8,7 +8,7 @@ export function render() {
       <li className="link" onClick={() => {
         this.trigger("goToIntroTutorialPage");
       }}>{
-        "Introduction"
+        "Tutorial: Basics"
       }</li>
     </ol>
   </div>;

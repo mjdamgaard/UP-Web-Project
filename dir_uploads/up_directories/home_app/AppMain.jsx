@@ -1,6 +1,7 @@
 
 import * as TutorialIndexPage from "./tutorials/index.jsx";
 import * as TutorialIntroPage from "./tutorials/intro.jsx";
+import * as AboutPage from "./about.jsx";
 
 
 export function render() {
@@ -10,8 +11,11 @@ export function render() {
   if (!pageIdent || pageIdent === "home") {
     pageContent = <div>
       <h3>{"Home page not implemented yet."}</h3>
-      <p>{"Try the tutorials instead!"}</p>
+      <p>{"Try the About page or the Tutorials instead!"}</p>
     </div>;
+  }
+  else if (pageIdent === "about") {
+    pageContent = <AboutPage key="about" />;
   }
   else if (pageIdent === "tutorials") {
     pageContent = <TutorialIndexPage key="idx" />;
@@ -35,6 +39,9 @@ export const actions = {
   "goToHomePage": function() {
     this.setState({...this.state, pageIdent: "home"});
   },
+  "goToAboutPage": function() {
+    this.setState({...this.state, pageIdent: "about"});
+  },
   "goToTutorialsPage": function() {
     this.setState({...this.state, pageIdent: "tutorials"});
   },
@@ -46,6 +53,7 @@ export const actions = {
 
 export const methods = [
   "goToHomePage",
+  "goToAboutPage",
   "goToTutorialsPage",
   "goToIntroTutorialPage",
 ];
