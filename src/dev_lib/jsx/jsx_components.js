@@ -473,6 +473,15 @@ class JSXInstance {
           // instance (e.g. handed down through refs), unless one is okay with
           // bleeding the CAN_POST and REQUEST_ORIGIN privileges granted to
           // this onClick handler function into the parent instance.
+          // *Well, this is done quite simply: It should be explained how click
+          // event grants the function post privileges. And then it should be
+          // warned that you do not want to call unknown functions, as this
+          // produces a vulnerability where other components can corrupt the
+          // data that the component in question is able to affect. (Okay, not
+          // *so* simple, but doable..)
+          // TODO: All click events should at some point get an event argument
+          // where one can read off info about e.g. the position of the click,
+          // and also potentially other info about the source of the event.
           case "onClick":
             mouseEventProperty ??= "onclick";
           case "onDBLClick":
