@@ -271,7 +271,7 @@ export class Parser {
         syntaxTree.error = new SyntaxError(
           `Failed symbol '${failedNodeSymbol}' after \n\`` +
           subStr.substring(strPos - ERROR_ECHO_STR_LEN) +
-          `\` \nExpected symbol(s) ${expectedSymbols}, but got \`` +
+          `\` \n■\nExpected symbol(s) ${expectedSymbols}, but got \`` +
           str.substring(strPos, strPos + Math.floor(ERROR_ECHO_STR_LEN/4)) +
           "`",
           ln, col
