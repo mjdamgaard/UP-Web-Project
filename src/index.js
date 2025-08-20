@@ -76,7 +76,15 @@ class AppContext {
 }
 
 const settingsContext = new AppContext(settings);
-const urlContext = new AppContext();
+const urlContext = new AppContext({
+  url: window.location.pathname, stateJSON: "null"
+});
+
+// Create a popstate event that updates the urlContext.
+window.addEventListener("popstate", (event) => {
+  let urlData = {url: url, stateJSON: event.state};
+  urlContext.setVal(urlData);
+});
 
 
 // Set up the account menu, used for account-related settings and user

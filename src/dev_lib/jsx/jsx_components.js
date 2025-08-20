@@ -4,12 +4,16 @@ import {
   getString, ObjectObject, forEachValue, CLEAR_FLAG, PromiseObject,
   OBJECT_PROTOTYPE, Environment, ARRAY_PROTOTYPE, FunctionObject, Exception,
   getStringOrSymbol, getPropertyFromObject, getPropertyFromPlainObject,
+  jsonStringify,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
 } from "../query/src/flags.js";
 
 const CLASS_NAME_REGEX = /^ *([a-z][a-z0-9\-]* *)*$/;
+
+export const HREF_REGEX = /^(\.{0,2}\/)?[a-zA-Z0-9_\-./~!&$+=]*$/;
+export const HREF_CD_START_REGEX = /^\.{0,2}\/$/;
 
 
 export const CAN_CREATE_APP_FLAG = Symbol("can-create-app");
@@ -1163,52 +1167,58 @@ function addUserRelatedProps(props, jsxInstance, interpreter, node, env) {
 
 
 function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
+  // Subscribe the app component's jsxInstance to the urlContext.
   let {contexts: {urlContext}} = env.scriptVars;
-  let urlData = urlContext.getVal();
   urlContext.addSubscriberCallback((urlData) => {
     jsxInstance.changePropsAndQueueRerender({urlData: urlData}, interpreter);
   });
-  const replaceState = new DevFunction(
-    "replaceState", {typeArr: ["string", "any?"]},
-    ({callerNode, callerEnv}, [url, state = {}]) => {
-      // TODO: Parse url for pathname, search, and hash, then call
-      // replaceState() and .set() the urlContext.
-    }
-  );
+
+  // Note that the following popstate event listener is added in index.js:
+  /*   window.addEventListener("popstate", (event) => {
+   *     let urlData = {url: url, stateJSON: event.state};
+   *     urlContext.setVal(urlData);
+   *   });
+   **/
+
+  // Define the functions to change the urlContext.
+  let validateAndUpdateURLContext = (state, url, callerNode, execEnv) => {
+    // Validate url, and prepend './' to it if doesn't start with /.?.?\//.
+    if (!HREF_REGEX.test(url)) throw new ArgTypeError(
+      "Invalid URL pathname: " + url,
+      callerNode, execEnv
+    );
+    if (!HREF_CD_START_REGEX.test(url)) url = './' + url;
+
+    let urlData = {url: url, stateJSON: jsonStringify(state)};
+    urlContext.setVal(urlData);
+  };
   const pushState = new DevFunction(
     "pushState", {typeArr: ["string", "any?"]},
-    ({callerNode, callerEnv}, [url, state = {}]) => {
-      // TODO: Parse url for pathname, search, and hash, then call pushState()
-      // and .set() the urlContext.
+    ({callerNode, execEnv}, [state = null, url]) => {
+      validateAndUpdateURLContext(state, url, callerNode, execEnv);
+      window.history.pushState(stateJSON, "", url);
     }
   );
+  const replaceState = new DevFunction(
+    "replaceState", {typeArr: ["string", "any?"]},
+    ({callerNode, execEnv}, [state = null, url]) => {
+      validateAndUpdateURLContext(state, url, callerNode, execEnv);
+      window.history.replaceState(stateJSON, "", url);
+    }
+  );
+  const back = new DevFunction("back", {}, () => {
+    window.history.back();
+  });
+  const forward = new DevFunction("forward", {}, () => {
+    window.history.forward();
+  });
+  const go = new DevFunction("go", {typeArr: ["integer?"]}, ({}, [delta]) => {
+    window.history.go(delta);
+  });
   return {
-    ...props, urlData: urlData, replaceState: replaceState,
-    pushState: pushState
+    ...props,
+    urlData: urlContext.getVal(),
+    pushState: pushState, replaceState: replaceState,
+    back: back, forward: forward, go: go,
   };
 }
-
-  // let {hostname, pathname, search, hash} = window.location;
-  // props = {
-  //   location: {
-  //     hostname: hostname, pathname: pathname, search: search, hash: hash,
-  //     state: window.history.state,
-  //   },
-  //   ...props
-  // };
-  // let pushState = new DevFunction(
-  //   {typeArr:["string", "object?"]},
-  //   ({callerNode, execEnv}, [path, state]) => {
-  //     let {protocol, host, pathname} = window.location;
-  //     let newPath = getFullPath(pathname, path, callerNode, execEnv);
-  //     // TODO: Validate newPath!
-  //     let newFullURL = protocol + '//' + host + newPath;
-  //     window.history.pushState(state, undefined, newFullURL);
-  //     jsxInstance.changePropsAndQueueRerender()
-  //   }
-  // );
-  // let refs = props.refs;
-  // refs = getPrototypeOf(refs) === OBJECT_PROTOTYPE ? refs : {};
-  // props.refs = {pushState, ...refs};
-
-// }

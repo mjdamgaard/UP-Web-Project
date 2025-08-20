@@ -1,11 +1,10 @@
 
 import {
   DevFunction, getString, ArgTypeError, ObjectObject,
+  HREF_REGEX, HREF_CD_START_REGEX
 } from "../../../interpreting/ScriptInterpreter.js";
 import {DOMNodeObject, JSXInstanceInterface} from "../jsx_components.js";
 
-const HREF_REGEX = /^(\.{0,2}\/)?[a-zA-Z0-9_\-./~!&$+=]*$/;
-const HREF_CD_START_REGEX = /^\.{0,2}\/$/;
 
 
 export const render = new DevFunction(
