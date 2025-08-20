@@ -1,7 +1,6 @@
 
 import {
-  FunctionObject, DevFunction, getString,
-  ArgTypeError,
+  DevFunction, getString, ArgTypeError, ObjectObject,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {DOMNodeObject, JSXInstanceInterface} from "../jsx_components.js";
 
@@ -12,17 +11,25 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
+    if (props instanceof ObjectObject) {
+      props = props.members;
+    }
+    let {onChange} = props;
+
     if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
       "Textarea.render(): 'this' is not a JSXInstance",
       callerNode, execEnv
     );
+
+    // Create the DOM node if it has no been so already.
     let jsxInstance = thisVal.jsxInstance;
     let domNode = jsxInstance.domNode;
     if (!domNode || domNode.tagName !== "textarea") {
       domNode = document.createElement("textarea")
     }
-    let onChangeFun = props.onChange;
-    if (onChangeFun instanceof FunctionObject) {
+
+    // Set the onChange event if props.onChange is supplied.
+    if (onChange) {
       // Set an input event, but do it in a way that it is delayed for some
       // milliseconds, and where a new oninput event fired in the meantime will
       // essentially overwrite the existing one. Thus the input event will fire
@@ -34,8 +41,9 @@ export const render = new DevFunction(
           if (ref[0] !== eventID) return;
           // TODO: Make sure that this will not cause uncaught async errors,
           // which it probably will at this point..
+          // TODO: Add event argument when implemented.
           interpreter.executeFunctionOffSync(
-            onChangeFun, [], callerNode, execEnv, thisVal,
+            onChange, [], callerNode, execEnv,
           );
           // This prevents the loss of focus for but a brief moment if an
           // ancestor component rerenders as a consequence of the input event.
@@ -45,6 +53,7 @@ export const render = new DevFunction(
         }, 50);
       };
     }
+
     return new DOMNodeObject(domNode);
   }
 );

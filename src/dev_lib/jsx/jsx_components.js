@@ -2,9 +2,8 @@
 import {
   DevFunction, JSXElement, LiveJSModule, RuntimeError, getExtendedErrorMsg,
   getString, ObjectObject, forEachValue, CLEAR_FLAG, PromiseObject,
-  OBJECT_PROTOTYPE, ArgTypeError, Environment, getPrototypeOf, ARRAY_PROTOTYPE,
-  FunctionObject, Exception, getStringOrSymbol, getPropertyFromObject,
-  getPropertyFromPlainObject,
+  OBJECT_PROTOTYPE, Environment, ARRAY_PROTOTYPE, FunctionObject, Exception,
+  getStringOrSymbol, getPropertyFromObject, getPropertyFromPlainObject,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
@@ -220,11 +219,6 @@ class JSXInstance {
       );
     }
 
-    // Initialize a marks Map to keep track of which existing child instances
-    // was used or created in the render, such that instances that are no
-    // longer used can be removed afterwards.
-    let marks = new Map();
-
     // Now call the component module's render() function, but catch and instead
     // log any error, rather than letting the whole app fail.
     let jsxElement;
@@ -237,6 +231,11 @@ class JSXInstance {
       return this.getFailedComponentDOMNode(err, replaceSelf);
     }
 
+    // Initialize a marks Map to keep track of which existing child instances
+    // was used or created in the render, such that instances that are no
+    // longer used can be removed afterwards.
+    let marks = new Map();
+
     // If a JSXElement was successfully returned, call getDOMNode() to generate
     // the instance's new DOM node, unless render() is a dev function that
     // returns a DOM node directly, wrapped in the DOMNodeWrapper class
@@ -246,6 +245,8 @@ class JSXInstance {
     let newDOMNode, ownDOMNodes = [];
     if (jsxElement instanceof DOMNodeObject) {
       newDOMNode = jsxElement.domNode;
+      ownDOMNodes = jsxElement.ownDOMNodes ?? [newDOMNode];
+      marks = jsxElement.marks ?? marks;
     }
     else {
       try {
@@ -368,7 +369,7 @@ class JSXInstance {
     // and return an array of all these values, some of which are DOM nodes and
     // some of which are strings. This is unless the element is an outer one,
     // in which case we wrap it in a div element.
-    if (jsxElement.isFragment || isArray) {debugger;
+    if (jsxElement.isFragment || isArray) {
       let children = isArray ? jsxElement : jsxElement.props["children"] ?? [];
       let ret = children.map(val => (
         this.getDOMNode(
@@ -960,9 +961,11 @@ export class JSXInstanceInterface extends ObjectObject {
 
 // DOMNodeObjects can be returned by the render() functions of dev components.
 export class DOMNodeObject extends ObjectObject {
-  constructor(domNode) {
+  constructor(domNode, ownDOMNodes = undefined, marks = undefined) {
     super("DOMNode");
     this.domNode = domNode;
+    this.ownDOMNodes = ownDOMNodes;
+    this.marks = marks;
   }
 }
 

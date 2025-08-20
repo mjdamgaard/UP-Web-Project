@@ -1,7 +1,6 @@
 
 
 
-// TODO: ..
 
 export function render() {
   return (
