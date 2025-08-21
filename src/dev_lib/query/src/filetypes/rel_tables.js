@@ -289,7 +289,7 @@ export async function query(
     }
     let {
       l: listID = "", k: elemKey = "", s: elemScore = "", p: elemPayload = "",
-      o: overwrite = 0,
+      o: overwrite = 1,
     } = paramObj;
     overwrite = overwrite ? 1 : 0;
     if (postData) {
@@ -357,7 +357,7 @@ export async function query(
         callerNode, execEnv
       );
     }
-    let {l: listID = "", o: overwrite = 0,} = paramObj;
+    let {l: listID = "", o: overwrite = 1} = paramObj;
     overwrite = overwrite ? 1 : 0;
     payGas(callerNode, execEnv, {dbWrite: postData.length});
     let paramValArr = [homeDirID, filePath, listID, postData, overwrite];

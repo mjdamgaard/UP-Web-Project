@@ -5,7 +5,7 @@
 export class Aggregator {
 
   constructor(userGroupID) {
-
+    this.userGroupID = userGroupID;
   }
 
   getScore(qualIDOrPath, subjIDOrPath) {}
@@ -14,5 +14,5 @@ export class Aggregator {
 
   updateScore(qualIDOrPath, subjIDOrPath) {}
 
-  updateList(qualIDOrPath) {}
+  updateList = undefined;
 }

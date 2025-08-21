@@ -1,4 +1,6 @@
 
+// '_cs' means 'client-side': This aggregator should just filter the lists
+// client side.
 
 // TODO: Make an aggregator that updates its lists by taken the given user
 // group list (from the constructor), and for.. non-relevancy qualities that
