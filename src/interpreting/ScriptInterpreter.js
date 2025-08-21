@@ -206,6 +206,17 @@ export class ScriptInterpreter {
     globalEnv.declare("MutableArray", mutableArrayClass, true, null);
     globalEnv.declare("MutableObject", mutableObjectClass, true, null);
     globalEnv.declare("MutableMap", mutableMapClass, true, null);
+
+    let clearPermissions = new DevFunction(
+      "clearPermissions", {typeArr: ["function"]},
+      ({callerNode, execEnv, interpreter}, [callback]) => {
+        interpreter.executeFunction(
+          callback, [], callerNode, execEnv, undefined, [CLEAR_FLAG]
+        );
+      },
+    );
+    globalEnv.declare("clearPermissions", clearPermissions, true, null);
+
     // TODO: Add more, in particular a Promise object, once we reimplement that.
 
     return globalEnv;
@@ -2358,6 +2369,14 @@ export function verifyType(val, type, isOptional, node, env) {
         `Value is not a string: ${getString(val, node, env)}`,
         node, env
       );
+      break;
+    case "hex-string":
+      if (typeOfVal !== "string" || !/^[0-9a-fA-F]*$/.test(val)) {
+        throw new ArgTypeError(
+          `Value is not a hexadecimal string: ${getString(val, node, env)}`,
+          node, env
+        );
+      }
       break;
     case "number":
       if (typeOfVal !== "number") throw new ArgTypeError(

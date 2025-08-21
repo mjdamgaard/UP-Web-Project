@@ -1,34 +1,54 @@
 
 
 
-
-
 import homePath from "./.id.js";
 import {post} from 'query';
+import {verifyType} from 'types';
 import {fetchEntityID} from "../../entities.sm.js";
-import {getRequestingUserID} from 'request';
 
-export function updateScore(qualIDOrPath, subjIDOrPath, userGroupID) {
-  let userID = getRequestingUserID();
+
+
+export function fetchEntityIDIfPath(entIDOrPath) {
+  return (entIDOrPath[0] === "/") ? fetchEntityID(entIDOrPath) :
+    new Promise(res => res(entIDOrPath));
+}
+
+export function getFloatScore(userScoreBase64, metric) {
+  // TODO: Implement.
+}
+
+
+
+
+export function updateScore(
+  qualIDOrPath, subjIDOrPath, userID, userGroupPath
+) {
+  verifyType(userID, "hex-string");
+
   return new Promise(resolve => {
-    let qualIDPromise = (qualIDOrPath[0] === "/") ?
-      fetchEntityID(qualIDOrPath) : new Promise(res => res(qualIDOrPath));
-    let subjIDPromise = (subjIDOrPath[0] === "/") ?
-      fetchEntityID(subjIDOrPath) : new Promise(res => res(subjIDOrPath));
+    let qualIDPromise = fetchEntityIDIfPath(qualIDOrPath);
+    let subjIDPromise = fetchEntityIDIfPath(subjIDOrPath);
     
-    let userWeightPromise = 
-    
-    Promise.all([qualIDPromise, subjIDPromise]).then(([qualID, subjID]) => {
-      
-    });
-    if (qualIDOrPath[0] === "/") {
-      fetchEntityID(qualIDOrPath).then(qualID => {
-        updateListHelper(qualID, resolve);
+    let curUserScorePromise = new Promise(res => {
+      Promise.all(
+        [qualIDPromise, subjIDPromise]
+      ).then(([qualID, subjID]) => {
+        fetchUserScoreAndMetric(qualID, subjID, userID).then(
+          ([userScoreBase64, metric]) => {
+            let userScore = getFloatScore(userScoreBase64, metric);
+            resolve(userScore);
+          }
+        );
       });
-    } else {
-      updateListHelper(qualIDOrPath, resolve);
-    }
+    });
+
+    let userWeightPromise = "...";
+
   });
 }
 
 
+
+export function fetchUserScoreAndMetric(qualID, subjID, userID) {
+  // TODO: Implement.
+}

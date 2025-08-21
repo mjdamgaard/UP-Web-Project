@@ -2,11 +2,12 @@
 import {
   DevFunction, RuntimeError, LoadError, jsonParse, jsonStringify,
   getPrototypeOf, OBJECT_PROTOTYPE, ARRAY_PROTOTYPE, FunctionObject,
-  CLEAR_FLAG, PromiseObject,
+  CLEAR_FLAG, PromiseObject, Environment,
 } from '../../interpreting/ScriptInterpreter.js';
 import {parseRoute} from './src/parseRoute.js';
 
-import {checkAdminPrivileges, checkIfCanPost, USER_ID_FLAG} from "./src/flags.js";
+import {checkAdminPrivileges, checkIfCanPost, CAN_POST_FLAG}
+from "./src/flags.js";
 
 const ownUPNodeID = "1";
 
@@ -25,6 +26,14 @@ export const query = new DevFunction(
     // If isPost == true, check if the current environment is allowed to post.
     if (isPost) {
       checkIfCanPost(callerNode, execEnv);
+    }
+
+    // And else change to an environment where the "can-post" flag is set to
+    // false.
+    else {
+      execEnv = new Environment(
+        execEnv, undefined, {flags: [[CAN_POST_FLAG, false]]},
+      );
     }
 
     // First split the input route along each (optional) occurrence of '/>',

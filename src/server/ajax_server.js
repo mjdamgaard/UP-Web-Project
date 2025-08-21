@@ -169,6 +169,13 @@ async function requestHandler(req, res, returnGasRef) {
   }
   let {returnLog, gas: reqGas = {}} = options;
 
+  // For now, we ignore the reqGas object, as this gives the early developers/
+  // user programmers the possibility not to use database transactions. When we
+  // then implement database transactions (which won't take long), we can give
+  // these devs/users a little time to correct their SMs before we remove the
+  // following line again.
+  reqGas = {};  
+
 
   // If the header includes an Authorization header, query the DB in order to
   // authenticate the user. We obtain the userID in this process as well, which
