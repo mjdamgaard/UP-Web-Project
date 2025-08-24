@@ -5,8 +5,12 @@ SET GLOBAL connect_timeout = 600;
 SET GLOBAL innodb_lock_wait_timeout = 600;
 SET GLOBAL lock_wait_timeout = 600;
 
-DROP FUNCTION toBase64;
-DROP FUNCTION fromBase64;
+-- DROP FUNCTION toBase64;
+-- DROP FUNCTION fromBase64;
+DROP FUNCTION strToHex;
+DROP FUNCTION hexToStr;
+DROP FUNCTION numToHex;
+DROP FUNCTION hexToNum;
 
 DROP PROCEDURE readHomeDirAdminID;
 DROP PROCEDURE readDirectoriesOfAdmin;
@@ -67,14 +71,31 @@ DROP PROCEDURE insertBBTList;
 
 
 
-CREATE FUNCTION toBase64 (rawStr VARBINARY(255))
-RETURNS VARCHAR(340) DETERMINISTIC
-RETURN REPLACE(REPLACE(TO_BASE64(rawStr), "+", "-"), "/", "_");
+-- CREATE FUNCTION toBase64 (rawStr VARBINARY(255))
+-- RETURNS VARCHAR(510) DETERMINISTIC
+-- RETURN REPLACE(REPLACE(TO_BASE64(rawStr), "+", "-"), "/", "_");
 
-CREATE FUNCTION fromBase64 (encodedStr VARCHAR(340))
+-- CREATE FUNCTION fromBase64 (encodedStr VARCHAR(510))
+-- RETURNS VARBINARY(255) DETERMINISTIC
+-- RETURN FROM_BASE64(REPLACE(REPLACE(encodedStr, "_", "/"), "-", "+"));
+
+
+CREATE FUNCTION strToHex (rawStr VARBINARY(255))
+RETURNS VARCHAR(510) DETERMINISTIC
+RETURN LOWER(HEX(rawStr));
+
+CREATE FUNCTION hexToStr (encodedStr VARCHAR(510))
 RETURNS VARBINARY(255) DETERMINISTIC
-RETURN FROM_BASE64(REPLACE(REPLACE(encodedStr, "_", "/"), "-", "+"));
+RETURN CAST(UNHEX(rawStr) AS CHAR);
 
+
+CREATE FUNCTION numToHex (num BIGINT UNSIGNED)
+RETURNS VARCHAR(16) DETERMINISTIC
+RETURN numToHex(num);
+
+CREATE FUNCTION hexToNum (hexStr VARCHAR(16))
+RETURNS BIGINT UNSIGNED DETERMINISTIC
+RETURN hexToNum((hexStr));
 
 
 
@@ -83,9 +104,9 @@ CREATE PROCEDURE readHomeDirAdminID (
     IN dirIDHex VARCHAR(16)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
 
-    SELECT CONV(admin_id, 10, 16) AS adminID
+    SELECT numToHex(admin_id) AS adminID
     FROM HomeDirectories FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID;
 END //
@@ -99,9 +120,9 @@ CREATE PROCEDURE readDirectoriesOfAdmin (
     IN numOffset INT UNSIGNED
 )
 BEGIN
-    DECLARE admin BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE admin BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
 
-    SELECT CONV(dir_id, 10, 16) AS dirID
+    SELECT numToHex(dir_id) AS dirID
     FROM HomeDirectories FORCE INDEX (sec_idx)
     WHERE admin_id <=> adminIDHex
     ORDER BY dir_id ASC
@@ -117,7 +138,7 @@ CREATE PROCEDURE readHomeDirDescendants (
     IN numOffset INT UNSIGNED
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
 
     SELECT file_path AS filePath
     FROM Files FORCE INDEX (PRIMARY)
@@ -134,14 +155,14 @@ CREATE PROCEDURE createHomeDir (
     IN adminIDHex VARCHAR(16)
 )
 proc: BEGIN
-    DECLARE adminID BIGINT UNSIGNED DEFAULT CONV((adminIDHex), 16, 10);
+    DECLARE adminID BIGINT UNSIGNED DEFAULT hexToNum((adminIDHex));
     IF (adminID IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
     END IF;
     INSERT INTO HomeDirectories (admin_id)
     VALUES (adminID);
-    SELECT CONV(LAST_INSERT_ID(), 10, 16) AS dirID;
+    SELECT numToHex(LAST_INSERT_ID()) AS dirID;
 END proc //
 DELIMITER ;
 
@@ -152,8 +173,8 @@ CREATE PROCEDURE editHomeDir (
     IN adminIDHex VARCHAR(16)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
-    DECLARE adminID BIGINT UNSIGNED DEFAULT CONV((adminIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
+    DECLARE adminID BIGINT UNSIGNED DEFAULT hexToNum((adminIDHex));
 
     UPDATE HomeDirectories
     SET admin_id = adminID
@@ -169,7 +190,7 @@ CREATE PROCEDURE deleteHomeDir (
     IN dirIDHex VARCHAR(16)
 )
 proc: BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE firstFileID BIGINT UNSIGNED;
 
     SELECT file_id INTO firstFileID
@@ -202,7 +223,7 @@ CREATE PROCEDURE selectSMGas (
     IN doLock BOOL
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID BIGINT UNSIGNED;
 
     SELECT file_id INTO fileID
@@ -229,7 +250,7 @@ CREATE PROCEDURE updateSMGas (
     IN doUnlock BOOL
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID BIGINT UNSIGNED;
 
     SELECT file_id INTO fileID
@@ -264,7 +285,7 @@ CREATE PROCEDURE readFileMetaData (
     IN filePath VARCHAR(700)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE firstFileID BIGINT UNSIGNED;
 
     SELECT modified_at, prev_modified_at
@@ -281,7 +302,7 @@ CREATE PROCEDURE moveFile (
     IN newFilePath VARCHAR(700)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE firstFileID BIGINT UNSIGNED;
 
     UPDATE IGNORE Files
@@ -301,7 +322,7 @@ CREATE PROCEDURE readTextFile (
     IN filePath VARCHAR(700)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID BIGINT UNSIGNED;
 
     SELECT file_id INTO fileID
@@ -322,7 +343,7 @@ CREATE PROCEDURE putTextFile (
     IN contentText TEXT
 )
 proc: BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL OR contentText IS NULL) THEN
         SELECT NULL;
@@ -357,7 +378,7 @@ CREATE PROCEDURE deleteTextFile (
     IN filePath VARCHAR(700)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID BIGINT UNSIGNED;
 
     SELECT file_id INTO fileID
@@ -386,7 +407,7 @@ CREATE PROCEDURE touchTableFile (
     IN filePath VARCHAR(700)
 )
 proc: BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL) THEN
         SELECT NULL;
@@ -421,7 +442,7 @@ CREATE PROCEDURE putATT (
     IN filePath VARCHAR(700)
 )
 proc: BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL) THEN
         SELECT NULL;
@@ -458,7 +479,7 @@ CREATE PROCEDURE deleteATT (
     IN filePath VARCHAR(700)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID BIGINT UNSIGNED;
 
     SELECT file_id INTO fileID
@@ -483,15 +504,15 @@ DELIMITER //
 CREATE PROCEDURE insertATTEntry (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
+    IN listIDHex VARCHAR(510),
     IN textIDHex VARCHAR(16),
     IN textData TEXT
 )
 proc: BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID, newTextID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
-    DECLARE textID BIGINT UNSIGNED DEFAULT CONV((textIDHex), 16, 10);
+    DECLARE listID VARBINARY(255) DEFAULT hexToStr(listIDHex);
+    DECLARE textID BIGINT UNSIGNED DEFAULT hexToNum((textIDHex));
     IF (dirID IS NULL OR filePath IS NULL OR textData IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
@@ -516,7 +537,7 @@ proc: BEGIN
         VALUES (fileID, listID, newTextID, textData);
 
         DO RELEASE_LOCK(CONCAT("ATT", fileID));
-        SELECT CONV(newTextID, 10, 16) AS newTextID;
+        SELECT numToHex(newTextID) AS newTextID;
     ELSE
         UPDATE AutoKeyTextTables
         SET text_data = textData
@@ -532,14 +553,14 @@ DELIMITER //
 CREATE PROCEDURE deleteATTEntry (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
+    IN listIDHex VARCHAR(510),
     IN textIDHex VARCHAR(16)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
-    DECLARE textID BIGINT UNSIGNED DEFAULT CONV((textIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
+    DECLARE textID BIGINT UNSIGNED DEFAULT hexToNum((textIDHex));
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
+    DECLARE listID VARBINARY(255) DEFAULT hexToStr(listIDHex);
 
     SELECT file_id INTO fileID
     FROM Files FORCE INDEX (PRIMARY)
@@ -560,16 +581,16 @@ DELIMITER //
 CREATE PROCEDURE deleteATTList (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
+    IN listIDHex VARCHAR(510),
     IN loIDHex VARCHAR(16),
     IN hiIDHex VARCHAR(16)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
-    DECLARE lo BIGINT UNSIGNED DEFAULT CONV((loIDHex), 16, 10);
-    DECLARE hi BIGINT UNSIGNED DEFAULT CONV((hiIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
+    DECLARE lo BIGINT UNSIGNED DEFAULT hexToNum((loIDHex));
+    DECLARE hi BIGINT UNSIGNED DEFAULT hexToNum((hiIDHex));
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
+    DECLARE listID VARBINARY(255) DEFAULT hexToStr(listIDHex);
 
     SELECT file_id INTO fileID
     FROM Files FORCE INDEX (PRIMARY)
@@ -594,14 +615,14 @@ DELIMITER //
 CREATE PROCEDURE readATTEntry (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
+    IN listIDHex VARCHAR(510),
     IN textIDHex VARCHAR(16)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
-    DECLARE textID BIGINT UNSIGNED DEFAULT CONV((textIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
+    DECLARE textID BIGINT UNSIGNED DEFAULT hexToNum((textIDHex));
     DECLARE fileID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
+    DECLARE listID VARBINARY(255) DEFAULT hexToStr(listIDHex);
 
     SELECT file_id INTO fileID
     FROM Files FORCE INDEX (PRIMARY)
@@ -619,7 +640,7 @@ DELIMITER //
 CREATE PROCEDURE readATTList (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
+    IN listIDHex VARCHAR(510),
     IN loHex VARCHAR(16),
     IN hiHex VARCHAR(16),
     IN maxNum INT UNSIGNED,
@@ -627,17 +648,17 @@ CREATE PROCEDURE readATTList (
     IN isAscending BOOL
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
-    DECLARE lo BIGINT UNSIGNED DEFAULT CONV((loHex), 16, 10);
-    DECLARE hi BIGINT UNSIGNED DEFAULT CONV((hiHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
+    DECLARE lo BIGINT UNSIGNED DEFAULT hexToNum((loHex));
+    DECLARE hi BIGINT UNSIGNED DEFAULT hexToNum((hiHex));
     DECLARE fileID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
+    DECLARE listID VARBINARY(255) DEFAULT hexToStr(listIDHex);
 
     SELECT file_id INTO fileID
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
-    SELECT CONV(text_id, 10, 16) AS textID, text_data AS textData
+    SELECT numToHex(text_id) AS textID, text_data AS textData
     FROM AutoKeyTextTables FORCE INDEX (PRIMARY)
     WHERE
         file_id = fileID AND
@@ -658,14 +679,14 @@ DELIMITER //
 CREATE PROCEDURE insertATTList (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
+    IN listIDHex VARCHAR(510),
     IN listArrJSON JSON,
     IN doOverwrite BOOL
 )
 proc: BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID, newTextID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
+    DECLARE listID VARBINARY(255) DEFAULT hexToStr(listIDHex);
     IF (dirID IS NULL OR filePath IS NULL OR listID) THEN
         SELECT NULL;
         LEAVE proc;
@@ -681,7 +702,7 @@ proc: BEGIN
         )
         SELECT
             fileID, listID,
-            UNHEX(t1.textIDHex), fromBase64(t1.textData)
+            hexToStr(t1.textIDHex), hexToStr(t1.textData)
         FROM JSON_TABLE(
             listArrJSON, '$[*]' COLUMNS (
                 textIDHex VARCHAR(16) PATH '$[0]'
@@ -691,13 +712,13 @@ proc: BEGIN
             )
         ) AS t1
         ON DUPLICATE KEY UPDATE
-            elem_payload = fromBase64(t1.elemPayloadBase64);
+            elem_payload = hexToStr(t1.elemPayloadHex);
     ELSE
         INSERT INTO AutoKeyTextTables (
             file_id, list_id, text_data
         )
         SELECT
-            fileID, listID, fromBase64(t1.textData)
+            fileID, listID, hexToStr(t1.textData)
         FROM JSON_TABLE(
             listArrJSON, '$[*]' COLUMNS (
                 textData TEXT PATH '$[0]'
@@ -730,7 +751,7 @@ CREATE PROCEDURE putBT (
     IN filePath VARCHAR(700)
 )
 proc: BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL) THEN
         SELECT NULL;
@@ -767,7 +788,7 @@ CREATE PROCEDURE deleteBT (
     IN filePath VARCHAR(700)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID BIGINT UNSIGNED;
 
     SELECT file_id INTO fileID
@@ -793,17 +814,17 @@ DELIMITER //
 CREATE PROCEDURE insertBTEntry (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
-    IN elemKeyBase64 VARCHAR(340),
-    IN elemPayloadBase64 VARCHAR(340),
+    IN listIDHex VARCHAR(510),
+    IN elemKeyHex VARCHAR(510),
+    IN elemPayloadHex VARCHAR(510),
     IN doOverwrite BOOL
 )
 proc: BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID, newTextID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
-    DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
-    DECLARE elemPayload VARBINARY(255) DEFAULT fromBase64(elemPayloadBase64);
+    DECLARE listID VARBINARY(255) DEFAULT hexToStr(listIDHex);
+    DECLARE elemKey VARBINARY(255) DEFAULT hexToStr(elemKeyHex);
+    DECLARE elemPayload VARBINARY(255) DEFAULT hexToStr(elemPayloadHex);
     IF (
         dirID IS NULL OR filePath IS NULL OR
         listID IS NULL OR elemKey IS NULL OR elemPayload IS NULL
@@ -842,14 +863,14 @@ DELIMITER //
 CREATE PROCEDURE deleteBTEntry (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
-    IN elemKeyBase64 VARCHAR(340)
+    IN listIDHex VARCHAR(510),
+    IN elemKeyHex VARCHAR(510)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
-    DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
+    DECLARE listID VARBINARY(255) DEFAULT hexToStr(listIDHex);
+    DECLARE elemKey VARBINARY(255) DEFAULT hexToStr(elemKeyHex);
 
     SELECT file_id INTO fileID
     FROM Files FORCE INDEX (PRIMARY)
@@ -867,16 +888,16 @@ DELIMITER //
 CREATE PROCEDURE deleteBTList (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
-    IN loBase64 VARCHAR(340),
-    IN hiBase64 VARCHAR(340)
+    IN listIDHex VARCHAR(510),
+    IN loHex VARCHAR(510),
+    IN hiHex VARCHAR(510)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
-    DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
-    DECLARE hi VARBINARY(255) DEFAULT fromBase64(hiBase64);
+    DECLARE listID VARBINARY(255) DEFAULT hexToStr(listIDHex);
+    DECLARE lo VARBINARY(255) DEFAULT hexToStr(loHex);
+    DECLARE hi VARBINARY(255) DEFAULT hexToStr(hiHex);
 
     SELECT file_id INTO fileID
     FROM Files FORCE INDEX (PRIMARY)
@@ -898,21 +919,21 @@ DELIMITER //
 CREATE PROCEDURE readBTEntry (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
-    IN elemKeyBase64 VARCHAR(340)
+    IN listIDHex VARCHAR(510),
+    IN elemKeyHex VARCHAR(510)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
-    DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
+    DECLARE listID VARBINARY(255) DEFAULT fromHex(listIDHex);
+    DECLARE elemKey VARBINARY(255) DEFAULT fromHex(elemKeyHex);
 
     SELECT file_id INTO fileID
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
     SELECT
-        toBase64(elem_payload) AS elemPayload
+        toHex(elem_payload) AS elemPayload
     FROM BinaryKeyTables FORCE INDEX (PRIMARY)
     WHERE file_id = fileID AND list_id = listID AND elem_key = elemKey;
 END //
@@ -924,25 +945,25 @@ DELIMITER //
 CREATE PROCEDURE readBTList (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
-    IN loBase64 VARCHAR(340),
-    IN hiBase64 VARCHAR(340),
+    IN listIDHex VARCHAR(510),
+    IN loHex VARCHAR(510),
+    IN hiHex VARCHAR(510),
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscending BOOL
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
-    DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
-    DECLARE hi VARBINARY(255) DEFAULT fromBase64(hiBase64);
+    DECLARE listID VARBINARY(255) DEFAULT fromHex(listIDHex);
+    DECLARE lo VARBINARY(255) DEFAULT fromHex(loHex);
+    DECLARE hi VARBINARY(255) DEFAULT fromHex(hiHex);
 
     SELECT file_id INTO fileID
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
-    SELECT toBase64(elem_key) AS elemKey, toBase64(elem_payload) AS elemPayload
+    SELECT toHex(elem_key) AS elemKey, toHex(elem_payload) AS elemPayload
     FROM BinaryKeyTables FORCE INDEX (PRIMARY)
     WHERE
         file_id = fileID AND
@@ -963,14 +984,14 @@ DELIMITER //
 CREATE PROCEDURE insertBTList (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
+    IN listIDHex VARCHAR(510),
     IN listArrJSON JSON,
     IN doOverwrite BOOL
 )
 proc: BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID, newTextID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
+    DECLARE listID VARBINARY(255) DEFAULT fromHex(listIDHex);
     IF (
         dirID IS NULL OR filePath IS NULL OR
         listID IS NULL OR elemKey IS NULL OR elemPayload IS NULL
@@ -993,29 +1014,29 @@ proc: BEGIN
         )
         SELECT
             fileID, listID,
-            fromBase64(t1.elemKeyBase64), fromBase64(t1.elemPayloadBase64)
+            fromHex(t1.elemKeyHex), fromHex(t1.elemPayloadHex)
         FROM JSON_TABLE(
             listArrJSON, '$[*]' COLUMNS (
-                elemKeyBase64 VARCHAR(340) PATH '$[0]'
+                elemKeyHex VARCHAR(510) PATH '$[0]'
                     DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR,
-                elemPayloadBase64 VARCHAR(340) PATH '$[1]'
+                elemPayloadHex VARCHAR(510) PATH '$[1]'
                     DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR
             )
         ) AS t1
         ON DUPLICATE KEY UPDATE
-            elem_payload = fromBase64(t1.elemPayloadBase64);
+            elem_payload = fromHex(t1.elemPayloadHex);
     ELSE
         INSERT IGNORE INTO BinaryKeyTables (
             file_id, list_id, elem_key, elem_payload
         )
         SELECT
             fileID, listID,
-            fromBase64(t1.elemKeyBase64), fromBase64(t1.elemPayloadBase64)
+            fromHex(t1.elemKeyHex), fromHex(t1.elemPayloadHex)
         FROM JSON_TABLE(
             listArrJSON, '$[*]' COLUMNS (
-                elemKeyBase64 VARCHAR(340) PATH '$[0]'
+                elemKeyHex VARCHAR(510) PATH '$[0]'
                     DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR,
-                elemPayloadBase64 VARCHAR(340) PATH '$[1]'
+                elemPayloadHex VARCHAR(510) PATH '$[1]'
                     DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR
             )
         ) AS t1;
@@ -1040,7 +1061,7 @@ CREATE PROCEDURE putCT (
     IN filePath VARCHAR(700)
 )
 proc: BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL) THEN
         SELECT NULL;
@@ -1077,7 +1098,7 @@ CREATE PROCEDURE deleteCT (
     IN filePath VARCHAR(700)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID BIGINT UNSIGNED;
 
     SELECT file_id INTO fileID
@@ -1103,17 +1124,17 @@ DELIMITER //
 CREATE PROCEDURE insertCTEntry (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
-    IN elemKeyBase64 VARCHAR(340),
-    IN elemPayloadBase64 VARCHAR(340),
+    IN listIDHex VARCHAR(510),
+    IN elemKeyHex VARCHAR(510),
+    IN elemPayloadHex VARCHAR(510),
     IN doOverwrite BOOL
 )
 proc: BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID, newTextID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
-    DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
-    DECLARE elemPayload VARBINARY(255) DEFAULT fromBase64(elemPayloadBase64);
+    DECLARE listID VARBINARY(255) DEFAULT fromHex(listIDHex);
+    DECLARE elemKey VARBINARY(255) DEFAULT fromHex(elemKeyHex);
+    DECLARE elemPayload VARBINARY(255) DEFAULT fromHex(elemPayloadHex);
     IF (
         dirID IS NULL OR filePath IS NULL OR
         elemKey IS NULL OR elemPayload IS NULL
@@ -1154,14 +1175,14 @@ DELIMITER //
 CREATE PROCEDURE deleteCTEntry (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
-    IN elemKeyBase64 VARCHAR(340)
+    IN listIDHex VARCHAR(510),
+    IN elemKeyHex VARCHAR(510)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
-    DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
+    DECLARE listID VARBINARY(255) DEFAULT fromHex(listIDHex);
+    DECLARE elemKey VARBINARY(255) DEFAULT fromHex(elemKeyHex);
 
     SELECT file_id INTO fileID
     FROM Files FORCE INDEX (PRIMARY)
@@ -1179,16 +1200,16 @@ DELIMITER //
 CREATE PROCEDURE deleteCTList (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
-    IN loBase64 VARCHAR(340),
-    IN hiBase64 VARCHAR(340)
+    IN listIDHex VARCHAR(510),
+    IN loHex VARCHAR(510),
+    IN hiHex VARCHAR(510)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
-    DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
-    DECLARE hi VARBINARY(255) DEFAULT fromBase64(hiBase64);
+    DECLARE listID VARBINARY(255) DEFAULT fromHex(listIDHex);
+    DECLARE lo VARBINARY(255) DEFAULT fromHex(loHex);
+    DECLARE hi VARBINARY(255) DEFAULT fromHex(hiHex);
 
     SELECT file_id INTO fileID
     FROM Files FORCE INDEX (PRIMARY)
@@ -1210,21 +1231,21 @@ DELIMITER //
 CREATE PROCEDURE readCTEntry (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
-    IN elemKeyBase64 VARCHAR(340)
+    IN listIDHex VARCHAR(510),
+    IN elemKeyHex VARCHAR(510)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
-    DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
+    DECLARE listID VARBINARY(255) DEFAULT fromHex(listIDHex);
+    DECLARE elemKey VARBINARY(255) DEFAULT fromHex(elemKeyHex);
 
     SELECT file_id INTO fileID
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
     SELECT
-        toBase64(elem_payload) AS elemPayload
+        toHex(elem_payload) AS elemPayload
     FROM CharKeyTables FORCE INDEX (PRIMARY)
     WHERE file_id = fileID AND list_id = listID AND elem_key = elemKey;
 END //
@@ -1236,25 +1257,25 @@ DELIMITER //
 CREATE PROCEDURE readCTList (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
-    IN loBase64 VARCHAR(340),
-    IN hiBase64 VARCHAR(340),
+    IN listIDHex VARCHAR(510),
+    IN loHex VARCHAR(510),
+    IN hiHex VARCHAR(510),
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscending BOOL
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
-    DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
-    DECLARE hi VARBINARY(255) DEFAULT fromBase64(hiBase64);
+    DECLARE listID VARBINARY(255) DEFAULT fromHex(listIDHex);
+    DECLARE lo VARBINARY(255) DEFAULT fromHex(loHex);
+    DECLARE hi VARBINARY(255) DEFAULT fromHex(hiHex);
 
     SELECT file_id INTO fileID
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
-    SELECT elem_key AS elemKey, toBase64(elem_payload) AS elemPayload
+    SELECT elem_key AS elemKey, toHex(elem_payload) AS elemPayload
     FROM CharKeyTables FORCE INDEX (PRIMARY)
     WHERE
         file_id = fileID AND
@@ -1274,14 +1295,14 @@ DELIMITER //
 CREATE PROCEDURE insertCTList (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
+    IN listIDHex VARCHAR(510),
     IN listArrJSON JSON,
     IN doOverwrite BOOL
 )
 proc: BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID, newTextID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
+    DECLARE listID VARBINARY(255) DEFAULT fromHex(listIDHex);
     IF (
         dirID IS NULL OR filePath IS NULL OR
         listID IS NULL OR elemKey IS NULL OR elemPayload IS NULL
@@ -1304,29 +1325,29 @@ proc: BEGIN
         )
         SELECT
             fileID, listID,
-            fromBase64(t1.elemKeyBase64), fromBase64(t1.elemPayloadBase64)
+            fromHex(t1.elemKeyHex), fromHex(t1.elemPayloadHex)
         FROM JSON_TABLE(
             listArrJSON, '$[*]' COLUMNS (
-                elemKeyBase64 VARCHAR(340) PATH '$[0]'
+                elemKeyHex VARCHAR(510) PATH '$[0]'
                     DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR,
-                elemPayloadBase64 VARCHAR(340) PATH '$[1]'
+                elemPayloadHex VARCHAR(510) PATH '$[1]'
                     DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR
             )
         ) AS t1
         ON DUPLICATE KEY UPDATE
-            elem_payload = fromBase64(t1.elemPayloadBase64);
+            elem_payload = fromHex(t1.elemPayloadHex);
     ELSE
         INSERT IGNORE INTO CharKeyTables (
             file_id, list_id, elem_key, elem_payload
         )
         SELECT
             fileID, listID,
-            fromBase64(t1.elemKeyBase64), fromBase64(t1.elemPayloadBase64)
+            fromHex(t1.elemKeyHex), fromHex(t1.elemPayloadHex)
         FROM JSON_TABLE(
             listArrJSON, '$[*]' COLUMNS (
-                elemKeyBase64 VARCHAR(340) PATH '$[0]'
+                elemKeyHex VARCHAR(510) PATH '$[0]'
                     DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR,
-                elemPayloadBase64 VARCHAR(340) PATH '$[1]'
+                elemPayloadHex VARCHAR(510) PATH '$[1]'
                     DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR
             )
         ) AS t1;
@@ -1358,7 +1379,7 @@ CREATE PROCEDURE putBBT (
     IN filePath VARCHAR(700)
 )
 proc: BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL) THEN
         SELECT NULL;
@@ -1395,7 +1416,7 @@ CREATE PROCEDURE deleteBBT (
     IN filePath VARCHAR(700)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID BIGINT UNSIGNED;
 
     SELECT file_id INTO fileID
@@ -1421,19 +1442,19 @@ DELIMITER //
 CREATE PROCEDURE insertBBTEntry (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
-    IN elemKeyBase64 VARCHAR(340),
-    IN elemScoreBase64 VARCHAR(340),
-    IN elemPayloadBase64 VARCHAR(340),
+    IN listIDHex VARCHAR(510),
+    IN elemKeyHex VARCHAR(510),
+    IN elemScoreHex VARCHAR(510),
+    IN elemPayloadHex VARCHAR(510),
     IN doOverwrite BOOL
 )
 proc: BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID, newTextID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
-    DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
-    DECLARE elemScore VARBINARY(255) DEFAULT fromBase64(elemScoreBase64);
-    DECLARE elemPayload VARBINARY(255) DEFAULT fromBase64(elemPayloadBase64);
+    DECLARE listID VARBINARY(255) DEFAULT fromHex(listIDHex);
+    DECLARE elemKey VARBINARY(255) DEFAULT fromHex(elemKeyHex);
+    DECLARE elemScore VARBINARY(255) DEFAULT fromHex(elemScoreHex);
+    DECLARE elemPayload VARBINARY(255) DEFAULT fromHex(elemPayloadHex);
     IF (
         dirID IS NULL OR filePath IS NULL OR
         elemKey IS NULL OR elemScore IS NULL OR elemPayload IS NULL
@@ -1477,14 +1498,14 @@ DELIMITER //
 CREATE PROCEDURE deleteBBTEntry (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
-    IN elemKeyBase64 VARCHAR(340)
+    IN listIDHex VARCHAR(510),
+    IN elemKeyHex VARCHAR(510)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
-    DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
+    DECLARE listID VARBINARY(255) DEFAULT fromHex(listIDHex);
+    DECLARE elemKey VARBINARY(255) DEFAULT fromHex(elemKeyHex);
 
     SELECT file_id INTO fileID
     FROM Files FORCE INDEX (PRIMARY)
@@ -1502,16 +1523,16 @@ DELIMITER //
 CREATE PROCEDURE deleteBBTList (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
-    IN loBase64 VARCHAR(340),
-    IN hiBase64 VARCHAR(340)
+    IN listIDHex VARCHAR(510),
+    IN loHex VARCHAR(510),
+    IN hiHex VARCHAR(510)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
-    DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
-    DECLARE hi VARBINARY(255) DEFAULT fromBase64(hiBase64);
+    DECLARE listID VARBINARY(255) DEFAULT fromHex(listIDHex);
+    DECLARE lo VARBINARY(255) DEFAULT fromHex(loHex);
+    DECLARE hi VARBINARY(255) DEFAULT fromHex(hiHex);
 
     SELECT file_id INTO fileID
     FROM Files FORCE INDEX (PRIMARY)
@@ -1532,22 +1553,22 @@ DELIMITER //
 CREATE PROCEDURE readBBTEntry (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
-    IN elemKeyBase64 VARCHAR(340)
+    IN listIDHex VARCHAR(510),
+    IN elemKeyHex VARCHAR(510)
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
-    DECLARE elemKey VARBINARY(255) DEFAULT fromBase64(elemKeyBase64);
+    DECLARE listID VARBINARY(255) DEFAULT fromHex(listIDHex);
+    DECLARE elemKey VARBINARY(255) DEFAULT fromHex(elemKeyHex);
 
     SELECT file_id INTO fileID
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
     SELECT
-        toBase64(elem_score) AS elemScore,
-        toBase64(elem_payload) AS elemPayload
+        toHex(elem_score) AS elemScore,
+        toHex(elem_payload) AS elemPayload
     FROM BinaryKeyBinaryScoreTables FORCE INDEX (PRIMARY)
     WHERE file_id = fileID AND list_id = listID AND elem_key = elemKey;
 END //
@@ -1558,19 +1579,19 @@ DELIMITER //
 CREATE PROCEDURE readBBTScoreOrderedList (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
-    IN loBase64 VARCHAR(340),
-    IN hiBase64 VARCHAR(340),
+    IN listIDHex VARCHAR(510),
+    IN loHex VARCHAR(510),
+    IN hiHex VARCHAR(510),
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscending BOOL
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
-    DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
-    DECLARE hi VARBINARY(255) DEFAULT fromBase64(hiBase64);
+    DECLARE listID VARBINARY(255) DEFAULT fromHex(listIDHex);
+    DECLARE lo VARBINARY(255) DEFAULT fromHex(loHex);
+    DECLARE hi VARBINARY(255) DEFAULT fromHex(hiHex);
     SET numOffset = IFNULL(numOffset, 0);
 
     SELECT file_id INTO fileID
@@ -1578,8 +1599,8 @@ BEGIN
     WHERE dir_id = dirID AND file_path = filePath;
 
     SELECT
-        toBase64(elem_key) AS elemKey, toBase64(elem_score) AS elemScore,
-        toBase64(elem_payload) AS elemPayload
+        toHex(elem_key) AS elemKey, toHex(elem_score) AS elemScore,
+        toHex(elem_payload) AS elemPayload
     FROM BinaryKeyBinaryScoreTables FORCE INDEX (sec_idx)
     WHERE
         file_id = fileID AND
@@ -1598,27 +1619,27 @@ DELIMITER //
 CREATE PROCEDURE readBBTKeyOrderedList (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
-    IN loBase64 VARCHAR(340),
-    IN hiBase64 VARCHAR(340),
+    IN listIDHex VARCHAR(510),
+    IN loHex VARCHAR(510),
+    IN hiHex VARCHAR(510),
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED,
     IN isAscending BOOL
 )
 BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
-    DECLARE lo VARBINARY(255) DEFAULT fromBase64(loBase64);
-    DECLARE hi VARBINARY(255) DEFAULT fromBase64(hiBase64);
+    DECLARE listID VARBINARY(255) DEFAULT fromHex(listIDHex);
+    DECLARE lo VARBINARY(255) DEFAULT fromHex(loHex);
+    DECLARE hi VARBINARY(255) DEFAULT fromHex(hiHex);
 
     SELECT file_id INTO fileID
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
     SELECT
-        toBase64(elem_key) AS elemKey, toBase64(elem_score) AS elemScore,
-        toBase64(elem_payload) AS elemPayload
+        toHex(elem_key) AS elemKey, toHex(elem_score) AS elemScore,
+        toHex(elem_payload) AS elemPayload
     FROM BinaryKeyBinaryScoreTables FORCE INDEX (PRIMARY)
     WHERE
         file_id = fileID AND
@@ -1638,14 +1659,14 @@ DELIMITER //
 CREATE PROCEDURE insertBBTList (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700),
-    IN listIDBase64 VARCHAR(340),
+    IN listIDHex VARCHAR(510),
     IN listArrJSON JSON,
     IN doOverwrite BOOL
 )
 proc: BEGIN
-    DECLARE dirID BIGINT UNSIGNED DEFAULT CONV((dirIDHex), 16, 10);
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID, newTextID BIGINT UNSIGNED;
-    DECLARE listID VARBINARY(255) DEFAULT fromBase64(listIDBase64);
+    DECLARE listID VARBINARY(255) DEFAULT fromHex(listIDHex);
     IF (
         dirID IS NULL OR filePath IS NULL OR
         listID IS NULL OR elemKey IS NULL OR elemPayload IS NULL
@@ -1667,34 +1688,34 @@ proc: BEGIN
             file_id, list_id, elem_key, elem_score, elem_payload
         )
         SELECT
-            fileID, listID, fromBase64(t1.elemKeyBase64),
-            fromBase64(t1.elemScoreBase64), fromBase64(t1.elemPayloadBase64)
+            fileID, listID, fromHex(t1.elemKeyHex),
+            fromHex(t1.elemScoreHex), fromHex(t1.elemPayloadHex)
         FROM JSON_TABLE(
             listArrJSON, '$[*]' COLUMNS (
-                elemKeyBase64 VARCHAR(340) PATH '$[0]'
+                elemKeyHex VARCHAR(510) PATH '$[0]'
                     DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR,
-                elemScoreBase64 VARCHAR(340) PATH '$[1]'
+                elemScoreHex VARCHAR(510) PATH '$[1]'
                     DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR,
-                elemPayloadBase64 VARCHAR(340) PATH '$[2]'
+                elemPayloadHex VARCHAR(510) PATH '$[2]'
                     DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR
             )
         ) AS t1
         ON DUPLICATE KEY UPDATE
-            elem_payload = fromBase64(t1.elemPayloadBase64);
+            elem_payload = fromHex(t1.elemPayloadHex);
     ELSE
         INSERT IGNORE INTO BinaryKeyBinaryScoreTables (
             file_id, list_id, elem_key, elem_score, elem_payload
         )
         SELECT
-            fileID, listID, fromBase64(t1.elemKeyBase64),
-            fromBase64(t1.elemScoreBase64), fromBase64(t1.elemPayloadBase64)
+            fileID, listID, fromHex(t1.elemKeyHex),
+            fromHex(t1.elemScoreHex), fromHex(t1.elemPayloadHex)
         FROM JSON_TABLE(
             listArrJSON, '$[*]' COLUMNS (
-                elemKeyBase64 VARCHAR(340) PATH '$[0]'
+                elemKeyHex VARCHAR(510) PATH '$[0]'
                     DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR,
-                elemScoreBase64 VARCHAR(340) PATH '$[1]'
+                elemScoreHex VARCHAR(510) PATH '$[1]'
                     DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR,
-                elemPayloadBase64 VARCHAR(340) PATH '$[2]'
+                elemPayloadHex VARCHAR(510) PATH '$[2]'
                     DEFAULT '""' ON EMPTY DEFAULT '""' ON ERROR
             )
         ) AS t1;

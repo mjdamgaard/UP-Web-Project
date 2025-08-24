@@ -214,9 +214,9 @@ export const aggregators = {
 
 export class Aggregator {
 
-  getScore(qualIDOrPath, subjIDOrPath) {}
+  fetchScore(qualIDOrPath, subjIDOrPath) {}
 
-  getList(qualIDOrPath, isAscending, maxNum, offset, hi, lo) {}
+  fetchList(qualIDOrPath, isAscending, maxNum, offset, hi, lo) {}
 
   updateScore(qualIDOrPath, subjIDOrPath) {}
 

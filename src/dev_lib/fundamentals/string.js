@@ -1,6 +1,13 @@
 
-import {DevFunction} from "../../interpreting/ScriptInterpreter.js";
+import {DevFunction, getString} from "../../interpreting/ScriptInterpreter.js";
 
+
+
+export const toString = new DevFunction(
+  "toString", {typeArr: ["any?"]}, ({callerNode, execEnv}, [val]) => {
+    return getString(val, callerNode, execEnv);
+  }
+);
 
 export const at = new DevFunction(
   "at", {typeArr: ["string", "integer"]}, ({}, [str, ind]) => {

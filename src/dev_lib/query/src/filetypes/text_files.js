@@ -84,11 +84,10 @@ export async function query(
     return liveModule.get(alias);
   }
 
-  // If route equals ".../<homeDirID>/<filePath>/call/<alias>/" +
-  // "<inputArrBase64>", execute the module similarly to the /get routes just
-  // above, and then execute the gotten function with the decoded inputArr and
-  // return its returned value. Note the inputArrBase64 should be a base-64-
-  // encoded JSON array.
+  // If route equals ".../<homeDirID>/<filePath>/call/<alias>[/"<input>]*",
+  // execute the module similarly to the /get routes just above, and then
+  // execute the gotten function with the decoded inputArr and return its
+  // returned value.
   if (queryType === "call") {
     if (isPost) throw new RuntimeError(
       `Unrecognized route for POST-like requests: "${route}"`,
@@ -98,13 +97,13 @@ export async function query(
       `Invalid route: ${route}`,
       callerNode, execEnv
     );
-    let [ , alias, inputArrBase64] = queryPathArr;
+    let [ , alias, ...inputArr] = queryPathArr;
     if (!alias) throw new RuntimeError(
       "No function name provided",
       callerNode, execEnv
     );
-    let inputArr, isValid = true;
     if (postData) {
+      let isValid = true;
       try {
         inputArr = JSON.parse(postData);
       } catch (err) {
@@ -115,23 +114,6 @@ export async function query(
         callerNode, execEnv
       );
     }
-    else if (typeof inputArrBase64 === "string") {
-      try {
-        inputArr = JSON.parse(
-          atob(inputArrBase64.replaceAll("-", "+").replaceAll("_", "/"))
-        );
-      } catch (err) {
-        isValid = false;
-      }
-      if (!isValid || !(inputArr instanceof Array)) throw new RuntimeError(
-        "Input array not a valid base-64-encoded JSON array",
-        callerNode, execEnv
-      );
-    }
-    else throw new RuntimeError(
-      "No input array provided",
-      callerNode, execEnv
-    );
 
     // Import and execute the given JS module using interpreter.import(), and
     // do so within a dev function with the "clear" flag, which removes all
@@ -155,23 +137,23 @@ export async function query(
   }
 
   // If route equals ".../<homeDirID>/<filePath>/callSMF/<alias>" +
-  // "[/<inputArrBase64>]", verify that filePath ends in '.sm.js', and if so,
+  // "[/<inputArrHex>]", verify that filePath ends in '.sm.js', and if so,
   // execute the module and get the function exported as <alias>, then call it
   // on the inputArr and return its output. inputArr can either come from the
-  // optional last segment of the route (JSON-then-base-64-encoded) or from the
+  // optional last segment of the route (JSON-then-hex-encoded) or from the
   // postData (only JSON-encoded).
   if (queryType === "callSMF") {
     if (filePath.slice(-6) !== ".sm.js") throw new RuntimeError(
       `Invalid route: ${route}`,
       callerNode, execEnv
     );
-    let [ , alias, inputArrBase64] = queryPathArr;
+    let [ , alias, ...inputArr] = queryPathArr;
     if (!alias) throw new RuntimeError(
       "No function name provided",
       callerNode, execEnv
     );
-    let inputArr, isValid = true;
     if (postData) {
+      let isValid = true;
       try {
         inputArr = JSON.parse(postData);
       } catch (err) {
@@ -182,35 +164,18 @@ export async function query(
         callerNode, execEnv
       );
     }
-    else if (typeof inputArrBase64 === "string") {
-      try {
-        inputArr = JSON.parse(
-          atob(inputArrBase64.replaceAll("-", "+").replaceAll("_", "/"))
-        );
-      } catch (err) {
-        isValid = false;
-      }
-      if (!isValid || !(inputArr instanceof Array)) throw new RuntimeError(
-        "Input array not a valid base-64-encoded JSON array",
-        callerNode, execEnv
-      );
-    }
-    else throw new RuntimeError(
-      "No input array provided",
-      callerNode, execEnv
-    );
 
     // Import and execute the given JS module using interpreter.import(), and
     // do so within a dev function with "admin privileges" the execution of the
     // SMF (server module function). Note that these elevated privileges can
     // only be used to post to files within the called SM's home directory, and
     // that all previous such privileges are removed by the new flag. We also
-    // set a "current-SMF-route" flag with the current /callSMF route ...
-  // , which
-    // means that if the given SMF calls another server module, the CORS-
-    // like system will treat the calls as originating from that SMF, and not
-    // whatever current module (be it a JSX component module or another SMF)
-    // made this /callSMF query.
+    // make sure update the "current-SMF-route" and "requesting-SMF-route" flags
+    // such that if an SMF is called from another SMF of a different home
+    // directory, the called SMF can make CORS like checks to see if the
+    // requesting SMF is allowed access. (Such CORS-like checks are recommended
+    // for all SMFs that can alter the state of the database. And they can also
+    // be used to limit access to private data.)  
     return await (async() => {
       let liveModule = await interpreter.import(
         `/${ownUPNodeID}/${homeDirID}/${filePath}`, callerNode, execEnv
@@ -222,13 +187,12 @@ export async function query(
       );
       // The new "current-SMF-route" flag is copied as is from the former
       // "current-SMF-route" flag, and the old "current-SMF-route" flag becomes
-      // the "requesting-SMF-route" flag instead. Calling it "routes" is
-      // actually not entirely right as these "SMF routes" are actually equal
-      // to the given route only up until the '/callSMF' part, and then the
-      // inputArr is always appended as a plain-text JSON array (not base-64-
-      // encoded) after that.
-      let currentSMFRoute = `/${ownUPNodeID}/${homeDirID}/${filePath}/` +
-        "callSMF/" + JSON.stringify(inputArr);
+      // the "requesting-SMF-route" flag instead. If the input array was passed
+      // via postData, we just append the JSON array to the route for the "SMF
+      // route".
+      let currentSMFRoute = !postData ? route :
+        `/${ownUPNodeID}/${homeDirID}/${filePath}/` +
+          "callSMF/" + JSON.stringify(inputArr);
       let requestingSMFRoute = execEnv.getFlag(CURRENT_SMF_ROUTE_FLAG);
       let result = interpreter.executeFunction(
         fun, inputArr, callerNode, execEnv, undefined, [

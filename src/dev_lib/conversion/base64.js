@@ -1,7 +1,7 @@
 
 import {
   DevFunction, getString, ArgTypeError, forEachValue, getPropertyFromObject,
-} from '../interpreting/ScriptInterpreter.js';
+} from '../../interpreting/ScriptInterpreter.js';
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();

@@ -139,7 +139,7 @@ export async function query(
       );
     }
     // TODO: Verify that hi === undefined makes it NULL when inserted in the
-    // SQL (and otherwise perhaps use a hack of using a non-base-64 string).
+    // SQL (and otherwise perhaps use a hack of using a non-hex string).
     let {l: listID = "", lo: lo = "", hi: hi} = paramObj;
     let [[wasDeleted] = []] = await dbQueryHandler.queryDBProc(
       procName, [homeDirID, filePath, listID, lo, hi],
@@ -151,7 +151,7 @@ export async function query(
   // If route equals ".../<homeDirID>/<filepath>/entry[/l=<listID>]" +
   // "/k=<elemKey>", read and return the table entry with the given list ID and
   // element key. Note that for binary and UTF-8 keys, listID and elemKey
-  // should be base-64-encoded.
+  // should be hex-encoded.
   if (queryType === "entry") {
     payGas(callerNode, execEnv, {dbRead: 1});
     let procName =
@@ -314,9 +314,9 @@ export async function query(
   // table. The overwrite parameter also determines whether to ignore on
   // duplicate keys or to overwrite. For .att files, if overwrite is true, the
   // the rows of rowArr should have the form '\[<textID>,<textJSONStr>\]'. And
-  // for the .bt, .ct, and .bbt files, the form should be '\[<elemKeyBase64>,' +
-  // '[<elemScoreBase64>,][<elemPayloadBase64>]\]', but where elemScoreBase64
-  // should of course only be present in the case of a .bbt file. 
+  // for the .bt, .ct, and .bbt files, the form should be '\[<elemKeyHex>,' +
+  // '[<elemScoreHex>,][<elemPayloadHex>]\]', but where elemScoreHex should of
+  // course only be present in the case of a .bbt file. 
   if (queryType === "_insertList") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,

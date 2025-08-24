@@ -203,6 +203,8 @@ export class ScriptInterpreter {
     );
     scriptVars.globalEnv = globalEnv;
 
+    globalEnv.declare("IS_SERVER_SIDE", this.isServerSide, true, null);
+
     globalEnv.declare("MutableArray", mutableArrayClass, true, null);
     globalEnv.declare("MutableObject", mutableObjectClass, true, null);
     globalEnv.declare("MutableMap", mutableMapClass, true, null);
