@@ -24,4 +24,16 @@ export const random = new DevFunction(
 );
 
 
+export const min = new DevFunction(
+  "min", {typeArr: ["number", "number"]}, ({}, [x, y]) => {
+    return Math.min(x, y);
+  }
+);
+
+export const max = new DevFunction(
+  "max", {typeArr: ["number", "number"]}, ({}, [x, y]) => {
+    return Math.max(x, y);
+  }
+);
+
 // TODO: Continue implementing all other standard Math functions/methods.

@@ -42,6 +42,13 @@ export const forEach = new DevFunction(
   }
 );
 
+export const join = new DevFunction(
+  "join", {typeArr: ["array", "string?"]}, ({}, [arr, delimiter]) => {
+    if (arr instanceof ObjectObject) arr = arr.members;
+    return arr.join(delimiter);
+  }
+);
+
 // export const indexOf = new DevFunction(
 //   "indexOf", {typeArr: ["string", "string"]}, ({}, [str, needle]) => {
 //     return str.indexOf(needle);

@@ -15,39 +15,27 @@ import {
 
 
 export function updateScore(
-  qualIDOrPath, subjIDOrPath, userID, userGroupPath
+  qualIDOrPath, subjIDOrPath, userID, userGroupIDOrPath
 ) {
   verifyType(userID, "hex-string");
 
   return new Promise(resolve => {
     let qualIDProm = fetchEntityIDIfPath(qualIDOrPath);
     let subjIDProm = fetchEntityIDIfPath(subjIDOrPath);
+    let userGroupIDProm = fetchEntityIDIfPath(subjIDOrPath);
+    let userWeightProm = fetchUserWeight(userID, userGroupIDOrPath);
 
-    // Create a promise for the user wight
-    let userWeightProm = new Promise(res => {
-      fetch(userGroupPath).then(userGroupAggregator => {
-        userGroupAggregator.fetchScore(userID).then(userWeight => {
-          res(userWeight);
-        });
-      }); 
-    });
-
-    Promise.all([qualIDProm, subjIDProm]).then(([qualID, subjID]) => {
-      updateScoreHelper(qualID, subjID, userID, userWeightProm, resolve);
+    Promise.all([
+      qualIDProm, subjIDProm, userGroupIDProm
+    ]).then(([qualID, subjID, userGroupID]) => {
+      let curUserScoreProm = fetchUserScore(qualID, subjID, userID);
+      let prevUserScoreProm = fetch
     });
 
   });
 }
 
 function updateScoreHelper(qualID, subjID, userID, userWeightProm, resolve) {
-  let curUserScoreProm = new Promise(res => {
-    fetchUserScoreHexAndMetric(qualID, subjID, userID).then(
-      ([userScoreHex, metric]) => {
-        let userScore = getFloatScore(userScoreHex, metric);
-        res(userScore);
-      }
-    );
-  });
 }
 
 

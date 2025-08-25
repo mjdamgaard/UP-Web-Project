@@ -17,7 +17,7 @@ import {getRequestingUserID, checkRequestOrigin} from 'request';
 
 
 
-export function postUserScore(qualID, subjID, scoreBase64, payloadBase64) {
+export function postUserScoreHex(qualID, subjID, scoreHex, payloadHex) {
   checkRequestOrigin(true, [
     "TODO: Add trusted components that can upload user scores."
   ]);
@@ -28,7 +28,7 @@ export function postUserScore(qualID, subjID, scoreBase64, payloadBase64) {
     post(homePath + "/users.bt/_insert/k=" + userID);
     post(
       homePath + "/userScores.bbt/_insert/l=" + listID + "/k=" + subjID +
-      "/s=" + scoreBase64 + (payloadBase64 ? "/p=" + payloadBase64 : "")
+      "/s=" + scoreHex + (payloadHex ? "/p=" + payloadHex : "")
     ).then(
       wasUpdated => resolve(wasUpdated)
     );
