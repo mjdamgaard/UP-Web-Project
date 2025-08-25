@@ -132,9 +132,9 @@ export const arrayToBase64 = new DevFunction(
         return;
       }
 
-      // If type = 'float(lo?,hi?,len)', treat val as a floating-point number
-      // with a precision of len bytes (determining the precision) in the range
-      // between lo and hi.
+      // If type = 'float(lo?,hi?,sigLen)', treat val as a floating-point
+      // number with a precision of sigLen bytes (determining the precision)
+      // in the range between lo and hi.
       [match, loExp, hiExp, lenExp] = type.match(FLOAT_TYPE_REGEX) ?? [];
       if (match) {
         let initVal = val;

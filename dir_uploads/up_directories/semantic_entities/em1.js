@@ -32,11 +32,11 @@ export const users = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Users",
   "Superclass": abs("./em1.js;get/entities"),
-  "Constructor": getUser,
+  "Constructor": User,
   "Description": abs("./em1_aux1.js;get/usersDesc"),
 };
 
-export const getUser = (userID, upNodeID) => ({
+export const User = (userID, upNodeID) => ({
   "Class": abs("./em1.js;get/users"),
   "User ID": userID,
   "UP node ID": upNodeID,
@@ -96,11 +96,11 @@ export const relevancyQualities = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Relevancy qualities",
   "Superclass": abs("./em1.js;get/qualities"),
-  "Constructor": getRelevancyQuality,
+  "Constructor": RelevancyQuality,
   "Description": abs("./em1_aux1.js;get/relevancyQualitiesDesc"),
 };
 
-export const getRelevancyQuality = (classID) => ({
+export const RelevancyQuality = (classID) => ({
   "Class": abs("./em1.js;get/relevancyQualities"),
   "Target class": "e#" + classID,
   "Label": "Relevant for " + "e#" + classID,
@@ -144,11 +144,11 @@ export const relationalClasses = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Relational classes",
   "Superclass": abs("./em1.js;get/classes"),
-  "Constructor": getRelationalClass,
+  "Constructor": RelationalClass,
   "Description": abs("./em1_aux1.js;get/relationalClassesDesc"),
 };
 
-export const getRelationalClass = (relID, objID) => ({
+export const RelationalClass = (relID, objID) => ({
   "Class": abs("./em1.js;get/classes"),
   "Relation": "e#" + relID,
   "Relational object": "e#" + objID,
@@ -166,11 +166,11 @@ export const semanticParameters = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Semantic parameters",
   "Superclass": abs("./em1.js;get/entities"),
-  "Constructor": getSemanticParameter,
+  "Constructor": SemanticParameter,
   "Description": abs("./em1_aux1.js;get/semanticParametersDesc"),
 };
 
-export const getSemanticParameter = (subjID, qualID) => ({
+export const SemanticParameter = (subjID, qualID) => ({
   "Class": abs("./em1.js;get/semanticParameters"),
   "Subject": "e#" + subjID,
   "Quality": "e#" + qualID,
@@ -188,11 +188,11 @@ export const semanticLists = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Semantic lists",
   "Superclass": abs("./em1.js;get/entities"),
-  "Constructor": getSemanticList,
+  "Constructor": SemanticList,
   "Description": abs("./em1_aux1.js;get/semanticListsDesc"),
 };
 
-export const getSemanticList = (qualID, aggregatorID) => ({
+export const SemanticList = (qualID, aggregatorID) => ({
   "Class": abs("./em1.js;get/semanticLists"),
   "Quality": "e#" + qualID,
   "Aggregator": "e#" + aggregatorID,
@@ -206,7 +206,6 @@ export const getSemanticList = (qualID, aggregatorID) => ({
 export const aggregators = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Aggregators",
-  "Constructor": getAggregator,
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": ["Name", "Aggregator object", "Description"],
   "Description": abs("./em1_aux1.js;get/aggregatorsDesc"),
@@ -346,16 +345,18 @@ export const agreement = {
 // (compound) static verbs, but these can also be abbreviated (and often
 // should) when the meaning can be implicitly understood, such as using label
 // of 'spoilers' rather than 'has spoilers'. Here, we will by the way follow a
-// convention of not capitalizing the labels of qualities. 
+// convention of not capitalizing the labels of all description-less qualities,
+// such that the users will have a way to know if a description is included or
+// not, without having to look for it. 
 export const simplePredicates = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Simple predicates",
   "Superclass": abs("./em1.js;get/qualities"),
-  "Constructor": getSimplePredicate,
+  "Constructor": SimplePredicate,
   "Description": abs("./em1_aux1.js;get/simplePredicatesDesc"),
 };
 
-export const getSimplePredicateQuality = (label) => ({
+export const SimplePredicate = (label) => ({
   "Class": abs("./em1.js;get/simplePredicates"),
   "Label": label,
   "Default metric": abs("./em1.js;get/predicateMetric"),

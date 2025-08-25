@@ -25,7 +25,7 @@ import * as stringMod from "./dev_lib/fundamentals/string.js";
 import * as arrayMod from "./dev_lib/fundamentals/array.js";
 import * as mathMod from "./dev_lib/fundamentals/math.js";
 import * as reqOrigMod from "./dev_lib/request_origin.js";
-import * as base64Mod from "./dev_lib/base64_conversions.js";
+import * as hexMod from "./dev_lib/conversion/hex.js";
 import * as errorMod from "./dev_lib/error.js";
 
 const staticDevLibs = new Map();
@@ -38,7 +38,7 @@ staticDevLibs.set("string", stringMod);
 staticDevLibs.set("array", arrayMod);
 staticDevLibs.set("math", mathMod);
 staticDevLibs.set("request_origin", reqOrigMod);
-staticDevLibs.set("base64", base64Mod);
+staticDevLibs.set("hex", hexMod);
 staticDevLibs.set("error", errorMod);
 
 

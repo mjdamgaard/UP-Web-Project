@@ -7,7 +7,7 @@
 
 import homePath from "./.id.js";
 import {post, fetch} from 'query';
-import {valueToBase64} from 'base64';
+import {valueToHex} from 'hex';
 
 
 
@@ -21,8 +21,8 @@ export function postEntity(entPath, useSecIdx = true) {
       );
     }
     else {
-      let entPathBase64 = valueToBase64(entPath, "string");
-      fetch(homePath + "/entIDs.bt/entry/k=" + entPathBase64).then(entID => {
+      let entPathHex = valueToHex(entPath, "string");
+      fetch(homePath + "/entIDs.bt/entry/k=" + entPathHex).then(entID => {
         // If the entPath already has an entID, resolve with that.
         if (entID) {
           return resolve(entID);
@@ -33,7 +33,7 @@ export function postEntity(entPath, useSecIdx = true) {
         // for that same entPath in the meantime.
         post(homePath + "/entPaths.att/_insert", entPath).then(entID => {
           post(
-            homePath + "/entIDs.bt/_insert/k=" + entPathBase64 +
+            homePath + "/entIDs.bt/_insert/k=" + entPathHex +
             "/p=" + entID + "/o=0"
           );
           resolve(entID);
@@ -44,26 +44,14 @@ export function postEntity(entPath, useSecIdx = true) {
 }
 
 
-// This function does not need to be called via a 'callSMF' route, but can also
-// be imported and used by other modules. (This is not true for the post
-// methods; there you need to use 'callSMF' routes to this specific SM.)
-export function fetchEntityID(entPath) {
-  return new Promise(resolve => {
-    let entPathBase64 = valueToBase64(entPath, "string");
-    fetch(homePath + "/entIDs.bt/entry/k=" + entPathBase64).then(
-      entID => resolve(entID)
-    );
-  });
-}
-
 
 
 
 export function addSecondaryIndex(entID) {
   return new Promise(resolve => {
     fetch(homePath + "/entPaths.att/entry/k=" + entID).then(entPath => {
-      let entPathBase64 = valueToBase64(entPath, "string");
-      fetch(homePath + "/entIDs.bt/entry/k=" + entPathBase64).then(
+      let entPathHex = valueToHex(entPath, "string");
+      fetch(homePath + "/entIDs.bt/entry/k=" + entPathHex).then(
         existingEntID => {
           // If the entPath already has another entID, resolve with false, and
           // if it already has the same ID, resolve with true.
@@ -74,7 +62,7 @@ export function addSecondaryIndex(entID) {
           // Else try to insert that entID in the entIDs.bt table if an entry has
           // not been inserted for that same entPath in the meantime.
           post(
-            homePath + "/entIDs.bt/_insert/k=" + entPathBase64 +
+            homePath + "/entIDs.bt/_insert/k=" + entPathHex +
             "/p=" + entID + "/o=0"
           ).then(wasUpdated => resolve(wasUpdated));
         }
@@ -82,3 +70,51 @@ export function addSecondaryIndex(entID) {
     });
   });
 }
+
+
+
+// The following functions does not need to be called via a 'callSMF' route,
+// which is generally true for functions that doesn't post any data. These can
+// thus also freely be imported and used by other modules. (This is not true
+// for the post methods; there you need to use 'callSMF' routes to this
+// specific SM.)
+
+export function fetchEntityID(entPath) {
+  return new Promise(resolve => {
+    let entPathHex = valueToHex(entPath, "string");
+    fetch(homePath + "/entIDs.bt/entry/k=" + entPathHex).then(
+      entID => resolve(entID)
+    );
+  });
+}
+
+export function fetchEntityPath(entID) {
+  return new Promise(resolve => {
+    fetch(homePath + "/entPaths.att/entry/k=" + entID).then(
+      entPath => resolve(entPath)
+    );
+  });
+}
+
+
+
+export function fetchEntityIDIfPath(entIDOrPath) {
+  return (entIDOrPath[0] === "/") ? fetchEntityID(entIDOrPath) :
+    new Promise(res => res(entIDOrPath));
+}
+
+export function fetchEntityPathIfID(entIDOrPath) {
+  return (entIDOrPath[0] === "/") ? new Promise(res => res(entIDOrPath)) :
+    fetchEntityPath(entIDOrPath);
+}
+
+
+
+export function fetchEntityDefinition(entIDOrPath) {
+  return new Promise(resolve => {
+    fetchEntityPathIfID(entIDOrPath).then(entPath => {
+      fetch(entPath).then(entDef => resolve(entDef));
+    });
+  });
+}
+
