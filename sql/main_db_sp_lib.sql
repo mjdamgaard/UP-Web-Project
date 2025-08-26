@@ -1599,8 +1599,7 @@ BEGIN
     WHERE dir_id = dirID AND file_path = filePath;
 
     SELECT
-        toHex(elem_key) AS elemKey, toHex(elem_score) AS elemScore,
-        toHex(elem_payload) AS elemPayload
+        toHex(elem_key) AS elemKey, toHex(elem_score) AS elemScore
     FROM BinaryKeyBinaryScoreTables FORCE INDEX (sec_idx)
     WHERE
         file_id = fileID AND

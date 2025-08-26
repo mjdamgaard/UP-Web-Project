@@ -74,7 +74,7 @@ export class DirectoryUploader {
       let serverFilePath = path.normalize(`/1/${dirID}/${relPath}`);
       if (!fs.existsSync(clientFilePath)) {
         deletionPromises.push(
-          serverQueryHandler.post(serverFilePath + "/_delete")
+          serverQueryHandler.post(serverFilePath + "/_rm")
         );
       }
     });

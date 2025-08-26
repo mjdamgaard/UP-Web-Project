@@ -8,11 +8,11 @@ export class Aggregator {
     this.userGroupID = userGroupID;
   }
 
-  getScore(qualIDOrPath, subjIDOrPath) {}
+  getScore(qualIdent, subjIdent) {}
 
-  getList(qualIDOrPath, isAscending, maxNum, offset, hi, lo) {}
+  getList(qualIdent, isAscending, maxNum, offset, hi, lo) {}
 
-  updateScore(qualIDOrPath, subjIDOrPath) {}
+  updateScore(qualIdent, subjIdent) {}
 
   updateList = undefined;
 }

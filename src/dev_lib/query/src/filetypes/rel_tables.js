@@ -60,9 +60,9 @@ export async function query(
   }
 
 
-  // If route equals ".../<homeDirID>/<filepath>/_delete", delete the table
-  // file (and its content) if its there.
-  if (queryType === "_delete") {
+  // If route equals ".../<homeDirID>/<filepath>/_rm", delete the table file
+  // (and its content) if its there.
+  if (queryType === "_rm") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv

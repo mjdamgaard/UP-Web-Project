@@ -30,6 +30,8 @@ const minInts = [
   -140737488355328,
 ];
 
+const log10_2 = Math.log10(2);
+
 
 
 
@@ -128,7 +130,8 @@ export const arrayToHex = new DevFunction(
 
       // If type = 'float(lo?,hi?,sigLen)', treat val as a floating-point
       // number with a precision of sigLen bytes (determining the precision)
-      // in the range between lo and hi.
+      // in the range between lo and hi. (Btw, 'sig' here is short for
+      // significand.)
       [match, loExp, hiExp, lenExp] = type.match(FLOAT_TYPE_REGEX) ?? [];
       if (match) {
         let initVal = val;
@@ -398,7 +401,7 @@ export const hexToArray = new DevFunction(
           }
         }
         
-        val = parseFloat(val.toPrecision(Math.floor(8 * len / Math.log2(10))));
+        val = parseFloat(val.toPrecision(Math.floor(8 * len * log10_2)));
         valArr.push(val);
         return;
       }

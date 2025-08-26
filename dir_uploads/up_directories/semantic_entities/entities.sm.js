@@ -8,6 +8,7 @@
 import homePath from "./.id.js";
 import {post, fetch} from 'query';
 import {valueToHex} from 'hex';
+import {verifyType} from 'types';
 
 
 
@@ -48,6 +49,7 @@ export function postEntity(entPath, useSecIdx = true) {
 
 
 export function addSecondaryIndex(entID) {
+  verifyType(entID, "hex-string");
   return new Promise(resolve => {
     fetch(homePath + "/entPaths.att/entry/k=" + entID).then(entPath => {
       let entPathHex = valueToHex(entPath, "string");
@@ -89,6 +91,7 @@ export function fetchEntityID(entPath) {
 }
 
 export function fetchEntityPath(entID) {
+  verifyType(entID, "hex-string");
   return new Promise(resolve => {
     fetch(homePath + "/entPaths.att/entry/k=" + entID).then(
       entPath => resolve(entPath)
@@ -98,21 +101,30 @@ export function fetchEntityPath(entID) {
 
 
 
-export function fetchEntityIDIfPath(entIDOrPath) {
-  return (entIDOrPath[0] === "/") ? fetchEntityID(entIDOrPath) :
-    new Promise(res => res(entIDOrPath));
+export function fetchEntityIDIfPath(entIdent) {
+  if (entIdent[0] === "/") {
+    return fetchEntityID(entIdent);
+  } else {
+    return new Promise(res => {
+      verifyType(entID, "hex-string");
+      res(entIdent)
+    });
+  }
 }
 
-export function fetchEntityPathIfID(entIDOrPath) {
-  return (entIDOrPath[0] === "/") ? new Promise(res => res(entIDOrPath)) :
-    fetchEntityPath(entIDOrPath);
+export function fetchEntityPathIfID(entIdent) {
+  if (entIdent[0] === "/") {
+    return entIdent;
+  } else {
+    return fetchEntityPath(entIdent);
+  }
 }
 
 
 
-export function fetchEntityDefinition(entIDOrPath) {
+export function fetchEntityDefinition(entIdent) {
   return new Promise(resolve => {
-    fetchEntityPathIfID(entIDOrPath).then(entPath => {
+    fetchEntityPathIfID(entIdent).then(entPath => {
       fetch(entPath).then(entDef => resolve(entDef));
     });
   });

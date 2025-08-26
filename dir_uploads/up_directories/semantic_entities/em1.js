@@ -213,13 +213,15 @@ export const aggregators = {
 
 export class Aggregator {
 
-  fetchScore(qualIDOrPath, subjIDOrPath) {}
+  fetchScore(userGroupIdent, qualIdent, subjIdent) {}
 
-  fetchList(qualIDOrPath, isAscending, maxNum, offset, hi, lo) {}
+  fetchList(userGroupIdent, qualIdent, isAscending, maxNum, offset, hi, lo) {}
 
-  updateScore(qualIDOrPath, subjIDOrPath) {}
+  updateScoreForUser(userGroupIdent, qualIdent, subjIdent, userID) {}
 
-  updateList(qualIDOrPath) {}
+  updateScoreForGroup(userGroupIdent, qualIdent, subjIdent) {}
+
+  updateList(userGroupIdent, qualIdent) {}
 }
 
 

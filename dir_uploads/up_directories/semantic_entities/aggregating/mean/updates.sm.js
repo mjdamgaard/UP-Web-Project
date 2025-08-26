@@ -7,35 +7,76 @@ import {verifyType} from 'types';
 import {hexToValue} from 'hex';
 import {floor} from 'math';
 import {
-  fetchEntityIDIfPath, fetchUserWeight, fetchUserScore,
-  fetchUserScoreHexAndMetric, getFloatScore
+  fetchEntityIDIfPath, fetchUserWeight, fetchUserScore, fetchScoreAndWeight,
+  postScoreAndWeight, deleteScore,
 } from "../../scores.js";
 
+const contributionsPath = abs("./contributions.btt");
+const aggrPath = abs("./aggr.btt");
+
+
+// TODO: This, and other modules like it should use database transactions (by
+// creating a persistent connection and passing it in the options argument of
+// the post() calls) as soon as these are implemented and ready.
 
 
 
-export function updateScore(
-  qualIDOrPath, subjIDOrPath, userID, userGroupIDOrPath
+export function updateScoreForUser(
+  userGroupIdent, qualIdent, subjIdent, userID
 ) {
   verifyType(userID, "hex-string");
-
   return new Promise(resolve => {
-    let qualIDProm = fetchEntityIDIfPath(qualIDOrPath);
-    let subjIDProm = fetchEntityIDIfPath(subjIDOrPath);
-    let userGroupIDProm = fetchEntityIDIfPath(subjIDOrPath);
-    let userWeightProm = fetchUserWeight(userID, userGroupIDOrPath);
+    let qualIDProm = fetchEntityIDIfPath(qualIdent);
+    let subjIDProm = fetchEntityIDIfPath(subjIdent);
+    let userGroupIDProm = fetchEntityIDIfPath(userGroupIdent);
+    let userWeightProm = fetchUserWeight(userID, userGroupIdent);
 
     Promise.all([
       qualIDProm, subjIDProm, userGroupIDProm
     ]).then(([qualID, subjID, userGroupID]) => {
-      let curUserScoreProm = fetchUserScore(qualID, subjID, userID);
-      let prevUserScoreProm = fetch
-    });
+      // Get the current user score from the userScores.bbt table, and the
+      // previous score contributed to this aggregate, if any.
+      let curUserScoreProm = fetchUserScore(qualID, subjID, userID, true);
+      let prevUserScoreAndWeightProm = fetchScoreAndWeight(
+        contributionsPath, qualID, [userGroupID, subjID], userID
+      );
+      let prevMeanAndCombWeightProm = fetchScoreAndWeight(
+        aggrPath, qualID, [userGroupID], subjID
+      );
 
+      Promise.all([
+        userWeightProm, curUserScoreProm, prevMeanAndCombWeightProm,
+        prevUserScoreAndWeightProm,
+      ]).then(([
+        userWeight = 0, curUserScore = 0, [prevMean = 0, prevCombWeight = 0],
+        [prevScore = 0, prevWeight = 0],
+      ]) => {
+        // If the user weight is above 0, insert the current score in the
+        // contributions table, and otherwise delete any existing contribution. 
+        if (userWeight > 0) {
+          postScoreAndWeight(
+            contributionsPath, qualID, [userGroupID, subjID], userID,
+            curUserScore, userWeight
+          );
+        } else {
+          deleteScore(
+            contributionsPath, qualID, [userGroupID, subjID], userID
+          );
+        }
+
+        // Then update the mean aggregate and combined weight.
+        let newCombWeight = prevCombWeight + userWeight - prevWeight;
+        let newMean = (
+          prevMean * prevCombWeight +
+          curUserScore * userWeight - prevScore * prevWeight
+        ) / newCombWeight;
+        postScoreAndWeight(
+          aggrPath, qualID, [userGroupID], subjID, newMean, newCombWeight
+        ).then(
+          wasUpdated => resolve(wasUpdated)
+        );
+      });
+    });
   });
 }
-
-function updateScoreHelper(qualID, subjID, userID, userWeightProm, resolve) {
-}
-
 

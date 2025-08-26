@@ -105,10 +105,10 @@ export async function query(
     return wasEdited;
   }
 
-  // If route equals ".../<homeDirID>/_delete", request a deletion of the
+  // If route equals ".../<homeDirID>/_rm", request a deletion of the
   // directory, but note that directories can only be deleted after each nested
   // file in it has been deleted (as this query does not delete the files).
-  if (queryType === "_delete") {
+  if (queryType === "_rm") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
