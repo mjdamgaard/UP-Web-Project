@@ -12,10 +12,21 @@ import {
 
 
 
+// Function to fetch the weight-ordered list of the whole user group.
+export function fetchUserList(userGroupIdent) {
+  return new Promise(resolve => {
+    fetchEntityPathIfID(userGroupIdent).then(userGroupPath => {
+      fetch(userGroupPath).then(userGroupAggregator => {
+        userGroupAggregator.fetchList().then(list => resolve(list));
+      });
+    });
+  }); 
+}
+
 // Function to fetch the user weight from a so-called "user group," which is
 // an aggregator that aggregates dimensionless scores, i.e. user weights, in
 // .btt tables where each entry key is the given userID.
-export function fetchUserWeight(userID, userGroupIdent) {
+export function fetchUserWeight(userGroupIdent, userID) {
   return new Promise(resolve => {
     fetchEntityPathIfID(userGroupIdent).then(userGroupPath => {
       fetch(userGroupPath).then(userGroupAggregator => {
@@ -86,7 +97,7 @@ export function getScoreHex(score, metric, sigLen = undefined) {
 
 
 
-// An function that can be used to get aggregated scores, including ones that
+// A function that can be used to get aggregated scores, including ones that
 // are stored in foreign home directories. This function assumes that the score
 // column is actually a float(,,3),float(,,1) array, where the first float is
 // the score (ignoring bounds), and the second float is the weight of the score
@@ -95,7 +106,7 @@ export function fetchScoreAndWeight(
   tableFilePath, qualIdent, otherListIDsOrPaths, keyIdent
 ) {
   return new Promise(resolve => {
-    fetchScoreHexAndWeightHex(
+    fetchScoreHex(
       tableFilePath, qualIdent, otherListIDsOrPaths, keyIdent
     ).then(scoreAndWeightHex => {
       if (scoreAndWeightHex === undefined) return [];
@@ -107,8 +118,9 @@ export function fetchScoreAndWeight(
   });
 }
 
+
 // A function to fetch the hex-encoded score of any BTT table.
-export function fetchScoreHexAndWeightHex(
+export function fetchScoreHex(
   tableFilePath, qualIdent, otherListIDsOrPaths, keyIdent
 ) {
   return new Promise(resolve => {
@@ -234,3 +246,57 @@ export function postUserScore(
 
 
 
+
+
+
+
+
+
+// A function to fetch whole score--weight list.
+export function fetchScoreAndWeightList(
+  tableFilePath, qualIdent, otherListIDsOrPaths, lo, hi, maxNum, numOffset,
+  isAscending,
+) {
+  return new Promise(resolve => {
+    fetchScoreHexList(
+      tableFilePath, qualIdent, otherListIDsOrPaths, lo, hi, maxNum, numOffset,
+      isAscending,
+    ).then(list => {
+      resolve(map(list, ([entID, scoreAndWeightHex]) => {
+        let [score, weight] = arrayFromHex(
+          scoreAndWeightHex, ["float(,,3)", "float(,,1)"]
+        );
+        return [entID, score, weight];
+      }));
+    });
+  });
+}
+
+
+// A function to fetch the hex-encoded score of any BTT table.
+export function fetchScoreHexList(
+  tableFilePath, qualIdent, otherListIDsOrPaths, lo, hi, maxNum, numOffset,
+  isAscending,
+) {
+  return new Promise(resolve => {
+    let qualIDProm = fetchEntityIDIfPath(qualIdent);
+    let otherListPartsPromArr = map(
+      otherListIDsOrPaths, idOrPath => fetchEntityIDIfPath(idOrPath)
+    );
+    Promise.all([
+      qualIDProm, ...otherListPartsPromArr
+    ]).then(([...listParts]) => {
+      let listID = join(listParts, "&");
+      fetch(
+        tableFilePath + "skList/l=" + listID +
+        (lo === undefined ? "" : "/lo=" + lo) +
+        (hi === undefined ? "" : "/hi=" + hi) +
+        (maxNum === undefined ? "" : "/n=" + maxNum) +
+        (numOffset === undefined ? "" : "/o=" + numOffset) +
+        (isAscending === undefined ? "" : "/a=" + isAscending)
+      ).then(
+        list => resolve(list)
+      );
+    });
+  });
+}

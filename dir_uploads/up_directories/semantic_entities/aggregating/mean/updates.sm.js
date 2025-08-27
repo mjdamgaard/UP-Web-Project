@@ -1,11 +1,8 @@
 
 
 
-import homePath from "./.id.js";
-import {post, fetch} from 'query';
 import {verifyType} from 'types';
-import {hexToValue} from 'hex';
-import {floor} from 'math';
+import {forEach} from 'array';
 import {
   fetchEntityIDIfPath, fetchUserWeight, fetchUserScore, fetchScoreAndWeight,
   postScoreAndWeight, deleteScore,
@@ -17,7 +14,10 @@ const aggrPath = abs("./aggr.btt");
 
 // TODO: This, and other modules like it should use database transactions (by
 // creating a persistent connection and passing it in the options argument of
-// the post() calls) as soon as these are implemented and ready.
+// the post() calls) as soon as these are implemented and ready. *In fact, this
+// algorithm is faulty (if several user's scores are updated at the same time),
+// so implementing transactions is actually a semi-urgent todo. (And I should
+// also make use of gas depositing and withdrawal for longer algorithms.)
 
 
 
@@ -29,7 +29,7 @@ export function updateScoreForUser(
     let qualIDProm = fetchEntityIDIfPath(qualIdent);
     let subjIDProm = fetchEntityIDIfPath(subjIdent);
     let userGroupIDProm = fetchEntityIDIfPath(userGroupIdent);
-    let userWeightProm = fetchUserWeight(userID, userGroupIdent);
+    let userWeightProm = fetchUserWeight(userGroupIdent, userID);
 
     Promise.all([
       qualIDProm, subjIDProm, userGroupIDProm
@@ -80,3 +80,25 @@ export function updateScoreForUser(
   });
 }
 
+
+
+
+
+// export function updateScoreForGroup(
+//   userGroupIdent, qualIdent, subjIdent
+// ) {
+//   return new Promise(resolve => {
+//     let qualIDProm = fetchEntityIDIfPath(qualIdent);
+//     let subjIDProm = fetchEntityIDIfPath(subjIdent);
+//     let userGroupIDProm = fetchEntityIDIfPath(userGroupIdent);
+//     let userListProm = fetchUserList(userGroupIdent);
+
+//     Promise.all([
+//       qualIDProm, subjIDProm, userGroupIDProm, userListProm
+//     ]).then(([qualID, subjID, userGroupID, userList]) => {
+//       forEach(userList, ([userID, _]) => {
+//         updateScoreForUser(user) // ...
+//       });
+//     });
+//   });
+// }
