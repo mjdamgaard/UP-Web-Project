@@ -12,12 +12,20 @@ import {
 
 
 
-// Function to fetch the weight-ordered list of the whole user group.
-export function fetchUserList(userGroupIdent) {
+// Function to fetch the weight-ordered list of the user group.
+export function fetchUserList(
+  userGroupIdent, lo, hi, maxNum, numOffset, isAscending
+) {
   return new Promise(resolve => {
     fetchEntityPathIfID(userGroupIdent).then(userGroupPath => {
-      fetch(userGroupPath).then(userGroupAggregator => {
-        userGroupAggregator.fetchList().then(list => resolve(list));
+      fetch(userGroupPath).then(userGroupDef => {
+        let qualIdent = userGroupDef["Quality"];
+        let evaluatorIdent = userGroupDef["Evaluator"];
+        fetchList(
+          evaluatorIdent, qualIdent, lo, hi, maxNum, numOffset, isAscending
+        ).then(
+          list => resolve(list)
+        );
       });
     });
   }); 

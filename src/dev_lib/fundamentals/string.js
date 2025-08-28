@@ -15,8 +15,16 @@ export const at = new DevFunction(
   }
 );
 
+export const substring = new DevFunction(
+  "substring", {typeArr: ["string", "integer", "integer?"]},
+  ({}, [str, start, end]) => {
+    return str.substring(start, end);
+  }
+);
+
 export const slice = new DevFunction(
-  "slice", {typeArr: ["string", "integer", "integer?"]}, ({}, [str, start, end]) => {
+  "slice", {typeArr: ["string", "integer", "integer?"]},
+  ({}, [str, start, end]) => {
     return str.slice(start, end);
   }
 );

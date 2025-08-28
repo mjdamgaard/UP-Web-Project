@@ -62,14 +62,18 @@ export const texts = {
 // a floating-point parameter that describes something about the subject. Each
 // quality also has a domain, which is a class to which the subjects are
 // supposed to belong. The users are meant to "score" qualities according to
-// their opinions, and so-called "Aggregators" (see below) are then meant to
-// aggregate these scores.
+// their opinions, and these scores are also meant to be aggregated into e.g.
+// mean or median estimators over larger user groups. Such user groups do not
+// need to include all users of the system, but can also be a limited list of
+// users. (And the users in the group might even have different weights,
+// meaning that the scores of some might count for more than others.)
 export const qualities = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Qualities",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-    "Label", "Domain", "Default metric", "Description"
+    "Label", "Domain", "Default metric", "Default evaluator class",
+    "Description"
   ],
   "Description": abs("./em1_aux1.js;get/qualitiesDesc"),
 };
@@ -102,8 +106,8 @@ export const relevancyQualities = {
 
 export const RelevancyQuality = (classID) => ({
   "Class": abs("./em1.js;get/relevancyQualities"),
-  "Target class": "e#" + classID,
-  "Label": "Relevant for " + "e#" + classID,
+  "Target class": "#" + classID,
+  "Label": "Relevant for " + "#" + classID,
   "Domain": abs("./em1.js;get/entities"),
   "Default metric": abs("./em1.js;get/predicateMetric"),
 });
@@ -134,7 +138,8 @@ export const relations = {
   "Name": "Relations",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-    "Title", "Object class", "Subject class", "Description"
+    "Title", "Object class", "Subject class", "Default evaluator class",
+    "Description"
   ],
   "Description": abs("./em1_aux1.js;get/relationsDesc"),
 };
@@ -150,18 +155,18 @@ export const relationalClasses = {
 
 export const RelationalClass = (relID, objID) => ({
   "Class": abs("./em1.js;get/classes"),
-  "Relation": "e#" + relID,
-  "Relational object": "e#" + objID,
-  "Name": "e#" + objID + "→" + "e#" + relID,
+  "Relation": "#" + relID,
+  "Relational object": "#" + objID,
+  "Name": "#" + objID + "→" + "#" + relID,
   "Superclass": abs("./em1.js;get/relationalClasses"),
 });
 
 
 // Semantic parameters refers to the floating-point number scales that are the
 // outputs of a quality when paired with a subject. Note that we take "semantic
-// parameter" to refer to the *scale* that can be scored by users or
-// aggregators, and we take "score" to mean the specific values that are given
-// to those scales.
+// parameter" to refer to the *scale* that can be scored by users or user
+// groups, and we take "score" to mean the specific values that are given to
+// those scales.
 export const semanticParameters = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Semantic parameters",
@@ -172,18 +177,18 @@ export const semanticParameters = {
 
 export const SemanticParameter = (subjID, qualID) => ({
   "Class": abs("./em1.js;get/semanticParameters"),
-  "Subject": "e#" + subjID,
-  "Quality": "e#" + qualID,
-  "Label": "e#" + subjID + "⋲" + "e#" + qualID,
+  "Subject": "#" + subjID,
+  "Quality": "#" + qualID,
+  "Label": "#" + subjID + "⋲" + "#" + qualID,
 });
 
 
 
 // Each quality results in an ordered list (at least partially so) of subjects,
-// namely ordered by the scores. However, it takes someone to provide these
-// scores, and that is the so-called Aggregator. Note that an aggregator is
-// free to aggregate the scores from just a single user, which is how one can
-// also construct semantic lists directly from just a single user's scores.
+// namely ordered by the scores, but only when combined with an "evaluator,"
+// which consists of a user group along with an estimator (such as the mean or
+// median) which tells you how the user scores are aggregated into a single one
+// for each subject.
 export const semanticLists = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Semantic lists",
@@ -192,30 +197,61 @@ export const semanticLists = {
   "Description": abs("./em1_aux1.js;get/semanticListsDesc"),
 };
 
-export const SemanticList = (qualID, aggregatorID) => ({
+export const SemanticList = (qualID, evaluatorID) => ({
   "Class": abs("./em1.js;get/semanticLists"),
-  "Quality": "e#" + qualID,
-  "Aggregator": "e#" + aggregatorID,
-  "Label": "e#" + qualID + "< e#" + aggregatorID + ">",
+  "Quality": "#" + qualID,
+  "Evaluator": "#" + evaluatorID,
+  "Label": "#" + qualID + "< #" + evaluatorID + ">",
+});
+
+// Evaluators consists of a user group and an estimator algorithm which when
+// combined gives an evaluation algorithm a get a score for each quality--
+// subject pair.
+export const evaluators = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "Evaluator algorithms",
+  "Superclass": abs("./em1.js;get/entities"),
+  "Constructor": Evaluator,
+  "Description": abs("./em1_aux1.js;get/evaluatorsDesc"),
+};
+
+export const Evaluator = (userGroupID, estimatorID) => ({
+  "Class": abs("./em1.js;get/semanticLists"),
+  "User group": "#" + userGroupID,
+  "Estimator": "#" + estimatorID,
+  "Label": "#" + userGroupID + " ( #" + estimatorID + ")",
 });
 
 
-// An aggregator is defined by, first of all a name, and then an aggregator
-// object, which might be an instance of the Aggregator JS class below, or
-// should at least follow the same API to some extend.
-export const aggregators = {
+// User groups are just a subclass of semantic lists. And the following 'User
+// groups' class is not meant to be used when defining user groups; just define
+// these via the 'Semantic lists' class above instead.
+export const userGroups = {
   "Class": abs("./em1.js;get/classes"),
-  "Name": "Aggregators",
-  "Superclass": abs("./em1.js;get/entities"),
-  "Common attributes": ["Name", "Aggregator object", "Description"],
-  "Description": abs("./em1_aux1.js;get/aggregatorsDesc"),
+  "Name": "User groups",
+  "Superclass": abs("./em1.js;get/semanticLists"),
+  "Description": abs("./em1_aux1.js;get/userGroupsDesc"),
 };
 
-export class Aggregator {
 
-  fetchScore(userGroupIdent, qualIdent, subjIdent) {}
+// An estimator is defined by, first of all a name, and then an estimator
+// object, which might be an instance of the Estimator JS class below, or
+// should at least follow the same API to some extend.
+export const estimators = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "Estimator algorithms",
+  "Superclass": abs("./em1.js;get/entities"),
+  "Common attributes": ["Label", "Estimator object", "Description"],
+  "Description": abs("./em1_aux1.js;get/estimatorsDesc"),
+};
 
-  fetchList(userGroupIdent, qualIdent, isAscending, maxNum, offset, hi, lo) {}
+export class Estimator {
+
+  fetchEntryData(userGroupIdent, qualIdent, subjIdent) {}
+
+  fetchList(userGroupIdent, qualIdent, lo, hi, maxNum, offset, isAscending) {}
+
+  fetchTopEntry(userGroupIdent, qualIdent) {}
 
   updateScoreForUser(userGroupIdent, qualIdent, subjIdent, userID) {}
 
@@ -223,6 +259,8 @@ export class Aggregator {
 
   updateList(userGroupIdent, qualIdent) {}
 }
+
+
 
 
 

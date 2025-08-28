@@ -9,6 +9,7 @@ import homePath from "./.id.js";
 import {post, fetch} from 'query';
 import {valueToHex} from 'hex';
 import {verifyType} from 'types';
+import {substring} from 'string';
 
 
 
@@ -90,7 +91,8 @@ export function fetchEntityID(entPath) {
   });
 }
 
-export function fetchEntityPath(entID) {
+export function fetchEntityPath(entIDIdent) {
+  let entID = substring(entIDIdent, 1);
   verifyType(entID, "hex-string");
   return new Promise(resolve => {
     fetch(homePath + "/entPaths.att/entry/k=" + entID).then(
@@ -105,9 +107,10 @@ export function fetchEntityIDIfPath(entIdent) {
   if (entIdent[0] === "/") {
     return fetchEntityID(entIdent);
   } else {
-    return new Promise(res => {
+    return new Promise(resolve => {
+      let entID = substring(entIdent, 1);
       verifyType(entID, "hex-string");
-      res(entIdent)
+      resolve(entIdent)
     });
   }
 }
