@@ -4,7 +4,19 @@
 // whole semantic system.
 
 
-// Class of all things, all "entities."
+// Class of all things, all "entities." Entities can be any JS value, but an
+// important kind of entities are the ones you primarily see below of objects
+// with capitalized property names, and always with a "Class" property. We will
+// call these "referential entities," as they represent the thing or concept
+// that their properties refer to, or rather their "attributes," as we will
+// generally call these defining properties of referential entities. It should
+// be noted that all these "attributes" of an entity are not set in stone. Any
+// attribute can be overridden by what we can call "semantic properties," which
+// are properties determined by the users when they score the "relations" that
+// is introduced below. So all the attributes that you see below are in
+// principle only the "initial" or "default" ones, possibly. And their job is
+// thus only to specify what is being referred to, as well as possibly to
+// declare some metadata properties that the app might use as a default option. 
 export const entities = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "All entities",
@@ -27,7 +39,7 @@ export const classes = {
 };
 
 // Class of all users. These are all defined solely by the userID assigned to
-// the given user and the ID UP node that created the user profile.
+// the given user and the ID or the UP node that created the user profile.
 export const users = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Users",
@@ -66,14 +78,32 @@ export const texts = {
 // mean or median estimators over larger user groups. Such user groups do not
 // need to include all users of the system, but can also be a limited list of
 // users. (And the users in the group might even have different weights,
-// meaning that the scores of some might count for more than others.)
+// meaning that the scores of some might count for more than others.) Some
+// qualities are not meant to be scored, however, namely if they are "derived"
+// qualities, meaning that they are defined specifically as an aggregate of
+// other qualities. (We will often refer to non-derived qualities as "atomic,"
+// even though qualities can in practice always be split up into smaller parts.
+// But they are "atomic" for our purposes, in that they are meant to be scored
+// directly by the users.)
 export const qualities = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Qualities",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-    "Label", "Domain", "Default metric", "Default evaluator class",
-    "Description"
+    "Label", "Domain", "Metric", "Area of expertise", "Description",
+    /* Some common attributes for derived qualities */
+    "Is derived", "Dependencies", // A list of atomic quality IDs.
+    "getScoreData", // A method that receives an array of "score data" from
+    // each dependency quality and returns a set of score data. "Score data"
+    // here refers to an array of just a score and a weight, but this might be
+    // extended in the future. (Note that method attributes like this are not
+    // capitalized.)
+    "Is stored", // Whether to store the resulting scores server-side, or just
+    // always calculate the value client-side.
+    "No updates after", // A time after which the stored scores should not be
+    // updated.
+    "User group", // If you want the user group to be constant for all users,
+    // you can set this attribute, making the quality user-group-dependent.
   ],
   "Description": abs("./em1_aux1.js;get/qualitiesDesc"),
 };
@@ -91,11 +121,36 @@ export const metrics = {
   "Description": abs("./em1_aux1.js;get/metricsDesc"),
 };
 
+// The so-called "areas of expertise" are used for determining with user group
+// to query when looking for the scores of a given quality. Different users
+// might trust different user groups to deliver the best scores. But rather
+// than voting on the best user group to query for every single quality, we can
+// instead group qualities into "areas of expertise," as we might call it, such
+// as e.g. "Taste in fictional media," "Science," "UI," "URL safety," etc., and
+// then the users only need to pick one user group to use for each of these
+// areas. Note that areas can change in time, such as "Science" here being
+// split into several subareas, and users might not agree completely on which
+// areas to use, and that's completely fine. Like all attributes of entities,
+// the "Area of expertise" attribute of quality entities are only guiding; it
+// is by no means set in stone.  
+export const areasOfExpertise = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "Areas of expertise",
+  "Superclass": abs("./em1.js;get/entities"),
+  "Common attributes": ["Name", "Description"],
+  "Description": abs("./em1_aux1.js;get/areasOfExpertiseDesc"),
+};
+
+
 // Relevancy qualities is how we truly define whether or not a given entity
 // belongs to a given class. Entities does thus not just belong the class
 // that is used for their definition (i.e. the "Class" attribute), as well as
 // the superclasses of that class, of course, but can belong to any number of
-// classes. Relevancy qualities are defined solely by a single "target class."
+// classes. Relevancy qualities are defined either by a single "target class,"
+// or by a relation and an object, in which case the target class is assumed to
+// be the "relational class" (see below) formed from that pair. (When defining
+// a relevancy quality for a relational class, always use the two-argument
+// version of the constructor, rather than using the classID directly.)
 export const relevancyQualities = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Relevancy qualities",
@@ -104,10 +159,15 @@ export const relevancyQualities = {
   "Description": abs("./em1_aux1.js;get/relevancyQualitiesDesc"),
 };
 
-export const RelevancyQuality = (classID) => ({
+export const RelevancyQuality = (classOrRelID, objID = undefined) => ({
   "Class": abs("./em1.js;get/relevancyQualities"),
-  "Target class": "#" + classID,
-  "Label": "Relevant for " + "#" + classID,
+  "Target class": objID === undefined ? "#" + classOrRelID : undefined,
+  "Relation": objID === undefined ?  undefined : "#" + classOrRelID,
+  "Relational object": objID === undefined ?  undefined : "#" + objID,
+  "Label": "Relevant for " + (objID === undefined ?
+    "#" + classOrRelID :
+    "#" + objID + "→" + "#" + classOrRelID
+  ),
   "Domain": abs("./em1.js;get/entities"),
   "Default metric": abs("./em1.js;get/predicateMetric"),
 });
@@ -116,29 +176,25 @@ export const RelevancyQuality = (classID) => ({
 
 // "Relations" in this system are functions that take a sentence object (or
 // "relational object" as we call it here), and returns a new class, namely a
-// "relational class" (see below). One might naturally think the verbs would
+// "relational class" (see below). One might naturally think that verbs would
 // be the preferred choice for describing relations, but here we generally much
-// prefer using nouns (including compound ones, of course), as this first of
-// all allows us to write relational classes compactly as
-// "<Object> → <Relation>" (similarly to how properties are accessed in a
-// program language (only using '→' instead of '.' when comparing to JS)), and
-// it also gives us the titles for free if the relation is used for, say, a
-// tab or a section header. For instance, if the relation in question is
-// "Parents" (with the object class being e.g. a "Persons" class), we can use
-// the title, "Parents," directly for e.g. section headers, tab titles, table
-// labels, etc.
-// Note also that while "<Object> → <Relation>" might serve as a useful name
-// format for these classes, the "Name"/"Title"/"Label" attributes of entities
-// can always be overridden by the app that displays them, and can also
-// potentially even depend on user preferences. And this goes not just for
-// formats like this, but the words themselves. (For instance, users might
-// potentially be able to choose a different language.)
+// prefer using nouns (including compound ones, of course). This first of all
+// allows us to write relational classes compactly as "<Object> → <Relation>"
+// (similarly to how properties are accessed in a program language (only using
+// '→' instead of '.' when comparing to JS)), and it also gives us the titles
+// for free if the relation is used for, say, a tab or a section header. For
+// instance, if the relation in question is "Parents" (with the object class
+// being e.g. a "Persons" class), we can use the title, "Parents," directly for
+// e.g. section headers, tab titles, table labels, etc.
+// (And note that like all entity attributes, the labels of "<Object> →
+// <Relation>" that we use here can always be overridden by the app, and be
+// made to depend on user preferences.)
 export const relations = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Relations",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-    "Title", "Object class", "Subject class", "Default evaluator class",
+    "Title", "Object class", "Subject class", "Area of expertise",
     "Description"
   ],
   "Description": abs("./em1_aux1.js;get/relationsDesc"),
@@ -175,77 +231,101 @@ export const semanticParameters = {
   "Description": abs("./em1_aux1.js;get/semanticParametersDesc"),
 };
 
-export const SemanticParameter = (subjID, qualID) => ({
+export const SemanticParameter = (qualID, subjID) => ({
   "Class": abs("./em1.js;get/semanticParameters"),
-  "Subject": "#" + subjID,
   "Quality": "#" + qualID,
+  "Subject": "#" + subjID,
   "Label": "#" + subjID + "⋲" + "#" + qualID,
 });
 
 
 
-// Each quality results in an ordered list (at least partially so) of subjects,
-// namely ordered by the scores, but only when combined with an "evaluator,"
-// which consists of a user group along with an estimator (such as the mean or
-// median) which tells you how the user scores are aggregated into a single one
-// for each subject.
-export const semanticLists = {
-  "Class": abs("./em1.js;get/classes"),
-  "Name": "Semantic lists",
-  "Superclass": abs("./em1.js;get/entities"),
-  "Constructor": SemanticList,
-  "Description": abs("./em1_aux1.js;get/semanticListsDesc"),
-};
+// // Each quality results in an ordered list (at least partially so) of subjects,
+// // namely ordered by the scores, but only when combined with an "evaluator,"
+// // which consists of a user group along with an estimator (such as the mean or
+// // median) which tells you how the user scores are aggregated into a single one
+// // for each subject.
+// export const semanticLists = {
+//   "Class": abs("./em1.js;get/classes"),
+//   "Name": "Semantic lists",
+//   "Superclass": abs("./em1.js;get/entities"),
+//   "Constructor": SemanticList,
+//   "Description": abs("./em1_aux1.js;get/semanticListsDesc"),
+// };
 
-export const SemanticList = (qualID, evaluatorID) => ({
-  "Class": abs("./em1.js;get/semanticLists"),
-  "Quality": "#" + qualID,
-  "Evaluator": "#" + evaluatorID,
-  "Label": "#" + qualID + "< #" + evaluatorID + ">",
-});
+// export const SemanticList = (qualID, evaluatorID) => ({
+//   "Class": abs("./em1.js;get/semanticLists"),
+//   "Quality": "#" + qualID,
+//   "Evaluator": "#" + evaluatorID,
+//   "Label": "#" + qualID + "< #" + evaluatorID + ">",
+// });
 
-// Evaluators consists of a user group and an estimator algorithm which when
-// combined gives an evaluation algorithm a get a score for each quality--
-// subject pair.
-export const evaluators = {
-  "Class": abs("./em1.js;get/classes"),
-  "Name": "Evaluator algorithms",
-  "Superclass": abs("./em1.js;get/entities"),
-  "Constructor": Evaluator,
-  "Description": abs("./em1_aux1.js;get/evaluatorsDesc"),
-};
+// // Evaluators consists of a user group and an estimator algorithm which when
+// // combined gives an evaluation algorithm a get a score for each quality--
+// // subject pair.
+// export const evaluators = {
+//   "Class": abs("./em1.js;get/classes"),
+//   "Name": "Evaluator algorithms",
+//   "Superclass": abs("./em1.js;get/entities"),
+//   "Constructor": Evaluator,
+//   "Description": abs("./em1_aux1.js;get/evaluatorsDesc"),
+// };
 
-export const Evaluator = (userGroupID, estimatorID) => ({
-  "Class": abs("./em1.js;get/semanticLists"),
-  "User group": "#" + userGroupID,
-  "Estimator": "#" + estimatorID,
-  "Label": "#" + userGroupID + " ( #" + estimatorID + ")",
-});
+// export const Evaluator = (userGroupID, estimatorID) => ({
+//   "Class": abs("./em1.js;get/semanticLists"),
+//   "User group": "#" + userGroupID,
+//   "Estimator": "#" + estimatorID,
+//   "Label": "#" + userGroupID + " ( #" + estimatorID + ")",
+// });
 
 
-// User groups are just a subclass of semantic lists. And the following 'User
-// groups' class is not meant to be used when defining user groups; just define
-// these via the 'Semantic lists' class above instead.
+// // User groups are just a subclass of semantic lists. And the following 'User
+// // groups' class is not meant to be used when defining user groups; just define
+// // these via the 'Semantic lists' class above instead.
+// export const userGroups = {
+//   "Class": abs("./em1.js;get/classes"),
+//   "Name": "User groups",
+//   "Superclass": abs("./em1.js;get/semanticLists"),
+//   "Description": abs("./em1_aux1.js;get/userGroupsDesc"),
+// };
+
+
+
+
+// User groups are generally defined from a quality, typically a derived one,
+// where the scores use a positive dimensionless metric representing the so-
+// called weight of each user in the user group. These wights are used when
+// aggregating scores from the user group: If all weights are equal, each
+// user's score counts the same, but otherwise some users' scores might count
+// for more than others. 
 export const userGroups = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "User groups",
   "Superclass": abs("./em1.js;get/semanticLists"),
+  "Common attributes": [
+    "Name", "Weight quality", "Description"
+  ],
   "Description": abs("./em1_aux1.js;get/userGroupsDesc"),
 };
 
 
-// An estimator is defined by, first of all a name, and then an estimator
-// object, which might be an instance of the Estimator JS class below, or
-// should at least follow the same API to some extend.
-export const estimators = {
+
+// Aggregators are a class of JS objects, which might be an instances of the
+// Aggregator JS class below, or should at least follow the same API to some
+// extend. Similarly as for the Texts class above, this class is thus not meant
+// to be used when defining new aggregators (as aggregators are not meant to
+// be "referential entities"). And what is an aggregator? It is an extensive
+// JS object that handles almost everything about the scores: How they are
+// fetched, where they are stored, how they are updated...
+export const aggregators = {
   "Class": abs("./em1.js;get/classes"),
-  "Name": "Estimator algorithms",
+  "Name": "Aggregator algorithms",
   "Superclass": abs("./em1.js;get/entities"),
-  "Common attributes": ["Label", "Estimator object", "Description"],
-  "Description": abs("./em1_aux1.js;get/estimatorsDesc"),
+  "Common attributes": ["Name", "Aggregator object", "Description"],
+  "Description": abs("./em1_aux1.js;get/aggregatorsDesc"),
 };
 
-export class Estimator {
+export class Aggregator {
 
   fetchEntryData(userGroupIdent, qualIdent, subjIdent) {}
 
@@ -260,6 +340,30 @@ export class Estimator {
   updateList(userGroupIdent, qualIdent) {}
 }
 
+
+
+// // Evaluator categories are used to divide qualities up into groups where users
+// // will often want the same evaluator for all qualities in that group. For
+// // instance, if the qualities deals with taste in fictional media, users might
+// // want often want to use the same user group (and same aggregator) for such
+// // qualities. Thus, 'Fictional media' might be the name of one such evaluation
+// // category. Other examples could be 'Science,' 'UI,' 'URL safety,' etc. But
+// // note that users can also always split such categories up into several sub-
+// // categories, and any user is in principle free to use their own set of
+// // categories (although one generally wants to use a set that is used by others
+// // as well). Whenever the app encounters a new quality, it will first look for
+// // the best evaluator category for that quality, given the user's preferences,
+// // and once it has that, is will find the top evaluator (see above) upvoted for
+// // that category (also possibly dependent on the user's own preferences).
+// // And when it has the evaluator, it can now use that to get scores and lists
+// // for the given quality.
+// export const evaluationCategory = {
+//   "Class": abs("./em1.js;get/classes"),
+//   "Name": "Evaluation category",
+//   "Superclass": abs("./em1.js;get/entities"),
+//   "Common attributes": ["Name", "Description"],
+//   "Description": abs("./em1_aux1.js;get/evaluationCategoryDesc"),
+// };
 
 
 
@@ -282,15 +386,15 @@ export const predicateMetric = {
   "Upper limit": 10,
   "Interval labels": [
     [-10, -8,  "extremely not"],
-    [-8,  -6,  "very much not"],
-    [-6,  -4,  "truly not"],
-    [-4,  -2,  "somewhat not"],
-    [-2,   0,  "slightly not"],
-    [ 0,   2,  "slightly"],
-    [ 2,   4,  "somewhat"],
-    [ 4,   6,  "truly"],
-    [ 6,   8,  "very much"],
-    [ 8,  10,  "extremely"],
+    [ -8, -6,  "very much not"],
+    [ -6, -4,  "truly not"],
+    [ -4, -2,  "somewhat not"],
+    [ -2,  0,  "slightly not"],
+    [  0,  2,  "slightly"],
+    [  2,  4,  "somewhat"],
+    [  4,  6,  "truly"],
+    [  6,  8,  "very much"],
+    [  8, 10,  "extremely"],
   ],
   "Description": abs("./em1_aux1.js;get/predicateMetricsDesc"),
 };

@@ -91,11 +91,13 @@ export function fetchEntityID(entPath) {
   });
 }
 
-export function fetchEntityPath(entIDIdent) {
-  let entID = substring(entIDIdent, 1);
-  verifyType(entID, "hex-string");
+export function fetchEntityPath(entIdent) {
+  if (entIdent[0] === "#") {
+    entIdent = substring(entIdent, 1);
+  }
+  verifyType(entIdent, "hex-string");
   return new Promise(resolve => {
-    fetch(homePath + "/entPaths.att/entry/k=" + entID).then(
+    fetch(homePath + "/entPaths.att/entry/k=" + entIdent).then(
       entPath => resolve(entPath)
     );
   });
@@ -108,8 +110,10 @@ export function fetchEntityIDIfPath(entIdent) {
     return fetchEntityID(entIdent);
   } else {
     return new Promise(resolve => {
-      let entID = substring(entIdent, 1);
-      verifyType(entID, "hex-string");
+      if (entIdent[0] === "#") {
+        entIdent = substring(entIdent, 1);
+      }
+      verifyType(entIdent, "hex-string");
       resolve(entIdent)
     });
   }
