@@ -95,8 +95,11 @@ export const qualities = {
     "Is derived", "Dependencies", // A list of atomic quality IDs.
     "getScoreData", // A method that receives an array of "score data" from
     // each dependency quality and returns a set of score data. "Score data"
-    // here refers to an array of just a score and a weight, but this might be
-    // extended in the future. (Note that method attributes like this are not
+    // here refers to a [score, weight, auxData?] array, where the score is
+    // the (possibly aggregated score), the weight is generally a measure of
+    // how many (trusted) users has scored the quality (summing their weights
+    // in the given user group), and auxData, if defined, is a plain object of
+    // additional data. (Note that method attributes like this are not
     // capitalized.)
     "Is stored", // Whether to store the resulting scores server-side, or just
     // always calculate the value client-side.
@@ -240,57 +243,6 @@ export const SemanticParameter = (qualID, subjID) => ({
 
 
 
-// // Each quality results in an ordered list (at least partially so) of subjects,
-// // namely ordered by the scores, but only when combined with an "evaluator,"
-// // which consists of a user group along with an estimator (such as the mean or
-// // median) which tells you how the user scores are aggregated into a single one
-// // for each subject.
-// export const semanticLists = {
-//   "Class": abs("./em1.js;get/classes"),
-//   "Name": "Semantic lists",
-//   "Superclass": abs("./em1.js;get/entities"),
-//   "Constructor": SemanticList,
-//   "Description": abs("./em1_aux1.js;get/semanticListsDesc"),
-// };
-
-// export const SemanticList = (qualID, evaluatorID) => ({
-//   "Class": abs("./em1.js;get/semanticLists"),
-//   "Quality": "#" + qualID,
-//   "Evaluator": "#" + evaluatorID,
-//   "Label": "#" + qualID + "< #" + evaluatorID + ">",
-// });
-
-// // Evaluators consists of a user group and an estimator algorithm which when
-// // combined gives an evaluation algorithm a get a score for each quality--
-// // subject pair.
-// export const evaluators = {
-//   "Class": abs("./em1.js;get/classes"),
-//   "Name": "Evaluator algorithms",
-//   "Superclass": abs("./em1.js;get/entities"),
-//   "Constructor": Evaluator,
-//   "Description": abs("./em1_aux1.js;get/evaluatorsDesc"),
-// };
-
-// export const Evaluator = (userGroupID, estimatorID) => ({
-//   "Class": abs("./em1.js;get/semanticLists"),
-//   "User group": "#" + userGroupID,
-//   "Estimator": "#" + estimatorID,
-//   "Label": "#" + userGroupID + " ( #" + estimatorID + ")",
-// });
-
-
-// // User groups are just a subclass of semantic lists. And the following 'User
-// // groups' class is not meant to be used when defining user groups; just define
-// // these via the 'Semantic lists' class above instead.
-// export const userGroups = {
-//   "Class": abs("./em1.js;get/classes"),
-//   "Name": "User groups",
-//   "Superclass": abs("./em1.js;get/semanticLists"),
-//   "Description": abs("./em1_aux1.js;get/userGroupsDesc"),
-// };
-
-
-
 
 // User groups are generally defined from a quality, typically a derived one,
 // where the scores use a positive dimensionless metric representing the so-
@@ -310,60 +262,90 @@ export const userGroups = {
 
 
 
-// Aggregators are a class of JS objects, which might be an instances of the
-// Aggregator JS class below, or should at least follow the same API to some
+// ScoreHandlers are a class of JS objects, which might be an instances of the
+// ScoreHandler JS class below, or should at least follow the same API to some
 // extend. Similarly as for the Texts class above, this class is thus not meant
-// to be used when defining new aggregators (as aggregators are not meant to
-// be "referential entities"). And what is an aggregator? It is an extensive
+// to be used when defining new ScoreHandlers (as these are not meant to be
+// "referential entities"). And what is a ScoreHandler? It is an extensive
 // JS object that handles almost everything about the scores: How they are
-// fetched, where they are stored, how they are updated...
-export const aggregators = {
+// fetched, where they are stored, how they are updated, how they are
+// aggregated (e.g. whether to use the mean or the median for a given quality),
+// which "areas of expertise" (AoE) are used for which quality and what user
+// group is chosen for each AoE. They are also responsible for interpreting and
+// handling derived qualities. Since ScoreHandlers are able to adjust their
+// methods to the specific user's own preferences, it is likely that the user
+// base will gravitate towards using the same (advanced) ScoreHandler in the
+// end. But the development of a better and better ScoreHandler will require
+// experimentation, where some (super)users will develop and/or try new
+// versions, which is why we need for users to be able to choose between more
+// than just one ScoreHandler for the app, which in turn is why we need this
+// class of ScoreHandlers as one of the fundamental classes of the system.
+export const scoreHandlers = {
   "Class": abs("./em1.js;get/classes"),
-  "Name": "Aggregator algorithms",
+  "Name": "ScoreHandlers",
   "Superclass": abs("./em1.js;get/entities"),
-  "Common attributes": ["Name", "Aggregator object", "Description"],
-  "Description": abs("./em1_aux1.js;get/aggregatorsDesc"),
+  "Description": abs("./em1_aux1.js;get/scoreHandlersDesc"),
 };
 
-export class Aggregator {
+export class ScoreHandler {
 
-  fetchEntryData(userGroupIdent, qualIdent, subjIdent) {}
+  // "Score data" refers to a [score, weight, auxData?] array, as described
+  // above. Note that an "identifier" (shortened to "ident") here can be either
+  // an absolute entity path, or an entity ID prefixed with "#", or can also
+  // just be the entity ID without the leading "#". Note also that the 'options'
+  // argument can contain auxiliary like a 'userGroup' option, which overrides
+  // whatever user group the ScoreHandler would just by default for the quality,
+  // and for the given user. Another important option is a 'prioritize' option,
+  // with the (optional) values of "user", "user-first", and "group". If "user"
+  // is chosen, the ScoreHandler should only return the user's own score
+  // (possibly undefined). If "user-first" is chosen, the ScoreHandler will
+  // query for both the user's own score and that of the appropriate user group,
+  // and return the former only if is defined, and else return the latter. And
+  // a value of "group" means that only the user group is queried.
+  fetchScoreData(qualIdent, subjIdent, options) {}
 
-  fetchList(userGroupIdent, qualIdent, lo, hi, maxNum, offset, isAscending) {}
+  // When fetching a semantic list, the 'options' argument can in particular
+  // contain the options: 'lo', 'hi', 'maxNum', 'offset', and 'isAscending',
+  // which combines to specify which section of the list should be defined.
+  // (And like all options, the ScoreHandler will provide default values for
+  // each one.)
+  fetchList(qualIdent, options) {}
 
-  fetchTopEntry(userGroupIdent, qualIdent) {}
+  // Fetch the [entID, score, weight, auxData?] of the entity with the highest
+  // score on the list. This method is useful for fetching one-to-one "semantic
+  // properties" of an entity (i.e. properties that are defined via relations
+  // rather than as part of the entity's "attributes").
+  fetchTopEntry(qualIdent) {}
 
-  updateScoreForUser(userGroupIdent, qualIdent, subjIdent, userID) {}
+  // When a user submits a score for a quality, this method should be called.
+  updateScoreForUser(qualIdent, subjIdent, userID) {}
 
+  // When viewing a score from a user group, the app might afford a button to
+  // "refresh" or "update" the score for the given subject. If the user clicks
+  // that, this methods should then be called.
   updateScoreForGroup(userGroupIdent, qualIdent, subjIdent) {}
 
-  updateList(userGroupIdent, qualIdent) {}
+  // Similar to updateScoreForGroup() but for a whole list of subjects at once.
+  // When viewing a semantic list, the app might thus provide also afford a
+  // "refresh"/"update" button to click. Note that since updating a whole list
+  // might be expensive, the ScoreHandler might use a SMF for such updates,
+  // that rather than running the whole update each time, instead just deposits
+  // some gas at the server module (see the filetypes/text_files.js module in
+  // the src folder for the 'query' dev lib), and then only run the update once
+  // enough gas has been deposited. (And updateScoreForGroup() can also do the
+  // same for that matter.)
+  updateList(qualIdent) {}
+
+  // Function to get the default options chosen by the ScoreHandler for a given
+  // quality, which allows the app to inform the user of these choices should
+  // they inspect the score in more detail. This is obviously important if we
+  // want the users to take part in the algorithms, which we obviously do: It
+  // the whole point with a "user-programmable" system.
+  getDefaultOptions(qualIdent) {}
+
 }
 
 
-
-// // Evaluator categories are used to divide qualities up into groups where users
-// // will often want the same evaluator for all qualities in that group. For
-// // instance, if the qualities deals with taste in fictional media, users might
-// // want often want to use the same user group (and same aggregator) for such
-// // qualities. Thus, 'Fictional media' might be the name of one such evaluation
-// // category. Other examples could be 'Science,' 'UI,' 'URL safety,' etc. But
-// // note that users can also always split such categories up into several sub-
-// // categories, and any user is in principle free to use their own set of
-// // categories (although one generally wants to use a set that is used by others
-// // as well). Whenever the app encounters a new quality, it will first look for
-// // the best evaluator category for that quality, given the user's preferences,
-// // and once it has that, is will find the top evaluator (see above) upvoted for
-// // that category (also possibly dependent on the user's own preferences).
-// // And when it has the evaluator, it can now use that to get scores and lists
-// // for the given quality.
-// export const evaluationCategory = {
-//   "Class": abs("./em1.js;get/classes"),
-//   "Name": "Evaluation category",
-//   "Superclass": abs("./em1.js;get/entities"),
-//   "Common attributes": ["Name", "Description"],
-//   "Description": abs("./em1_aux1.js;get/evaluationCategoryDesc"),
-// };
 
 
 
