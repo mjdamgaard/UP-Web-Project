@@ -105,8 +105,17 @@ export const qualities = {
     // always calculate the value client-side.
     "No updates after", // A time after which the stored scores should not be
     // updated.
-    "User group", // If you want the user group to be constant for all users,
-    // you can set this attribute, making the quality user-group-dependent.
+    "User group", // If you want the semantic list that the quality generates
+    // to be constant for all users, you can set this attribute, along with the
+    // following "ScoreHandler" attribute, making the quality dependent on the
+    // given user group.
+    "ScoreHandler", // When set together with the "User group" quality, the
+    // quality is constant for all users, depending on the user group, as well
+    // as how the ScoreHandler decides to aggregate the scores coming from that
+    // user group for the quality.
+    "User", // Or another way to get a constant semantic list is to set this
+    // "User" attribute for the quality, making the quality defined by the
+    // opinions of a single user (which can also be a bot, by the way).
   ],
   "Description": abs("./em1_aux1.js;get/qualitiesDesc"),
 };
@@ -129,13 +138,13 @@ export const metrics = {
 // might trust different user groups to deliver the best scores. But rather
 // than voting on the best user group to query for every single quality, we can
 // instead group qualities into "areas of concern," as we might call it, such
-// as e.g. "Taste in fictional media," "Science," "UI," "URL safety," etc., and
-// then the users only need to pick one user group to use for each of these
-// areas. Note that areas can change in time, such as "Science" here being
-// split into several subareas, and users might not agree completely on which
-// areas to use, and that's completely fine. Like all attributes of entities,
-// the "Area of concern" attribute of quality entities are only guiding; it
-// is by no means set in stone.  
+// as e.g. "Taste in fictional media," "Science," "UI," "URL safety,"
+// "Sensitive user safety" etc., and then the users only need to pick one user
+// group to use for each of these areas. Note that areas can change in time,
+// such as "Science" here being split into several subareas, and users might
+// not agree completely on which areas to use, and that's completely fine. Like
+// all attributes of entities, the "Area of concern" attribute of quality
+// entities are only guiding; it is by no means set in stone.  
 export const areasOfConcern = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Areas of concern",
@@ -309,7 +318,12 @@ export const userGroups = {
   "Name": "User groups",
   "Superclass": abs("./em1.js;get/semanticLists"),
   "Common attributes": [
-    "Name", "Weight quality", "Description"
+    "Name",
+    "Weight quality", // This quality, which defines the so-called "weight" of
+    // each user in the user group, is supposed to be constant for all users,
+    // meaning that it ought to have either the "User" attribute set, or the
+    // "User group"--"ScoreHandler" attribute pair.
+    "Description"
   ],
   "Description": abs("./em1_aux1.js;get/userGroupsDesc"),
 };
@@ -396,15 +410,6 @@ export class ScoreHandler {
   // want the users to take part in the algorithms, which we obviously do: It
   // the whole point with a "user-programmable" system.
   getDefaultOptions(qualIdent) {}
-
-
-  // A wrapper around fetchScoreData() that gets the quality from a user group
-  // entity argument.
-  fetchUserWeightData(userGroupIdent, userID, options) {}
-
-  // A wrapper around fetchList() that gets the quality from a user group
-  // entity argument.
-  fetchUserList(userGroupIdent, options) {}
 
 }
 

@@ -275,3 +275,22 @@ export function fetchScoreHexList(
 
 
 
+
+
+
+
+export function fetchUserWeight(userGroupIdent, userID) {
+
+}
+
+
+export function fetchUserWeightData(userGroupIdent, userID) {
+
+}
+
+
+export function fetchUserList(
+  userGroupIdent, lo, hi, maxNum, numOffset, isAscending
+) {
+
+}
