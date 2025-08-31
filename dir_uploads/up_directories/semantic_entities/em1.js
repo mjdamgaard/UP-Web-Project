@@ -90,7 +90,7 @@ export const qualities = {
   "Name": "Qualities",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-    "Label", "Domain", "Metric", "Area of expertise", "Description",
+    "Label", "Domain", "Metric", "Area of concern", "Description",
     /* Some common attributes for derived qualities */
     "Is derived", "Dependencies", // A list of atomic quality IDs.
     "getScoreData", // A method that receives an array of "score data" from
@@ -124,25 +124,79 @@ export const metrics = {
   "Description": abs("./em1_aux1.js;get/metricsDesc"),
 };
 
-// The so-called "areas of expertise" are used for determining with user group
+// The so-called "areas of concern" are used for determining with user group
 // to query when looking for the scores of a given quality. Different users
 // might trust different user groups to deliver the best scores. But rather
 // than voting on the best user group to query for every single quality, we can
-// instead group qualities into "areas of expertise," as we might call it, such
+// instead group qualities into "areas of concern," as we might call it, such
 // as e.g. "Taste in fictional media," "Science," "UI," "URL safety," etc., and
 // then the users only need to pick one user group to use for each of these
 // areas. Note that areas can change in time, such as "Science" here being
 // split into several subareas, and users might not agree completely on which
 // areas to use, and that's completely fine. Like all attributes of entities,
-// the "Area of expertise" attribute of quality entities are only guiding; it
+// the "Area of concern" attribute of quality entities are only guiding; it
 // is by no means set in stone.  
-export const areasOfExpertise = {
+export const areasOfConcern = {
   "Class": abs("./em1.js;get/classes"),
-  "Name": "Areas of expertise",
+  "Name": "Areas of concern",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": ["Name", "Description"],
-  "Description": abs("./em1_aux1.js;get/areasOfExpertiseDesc"),
+  "Description": abs("./em1_aux1.js;get/areasOfConcernDesc"),
 };
+
+// Areas of concern can furthermore also be used as a way to achieve almost
+// perfect user anonymity while at the same time being able to assign trust to
+// anonymous users. Here's how that can work. The system is made open towards
+// creating several user profiles with the same e-mail address, and this is so
+// for a reason. We want users to create several profiles, namely for different
+// areas of concern. A user can then have a sort of "main" profile, either a
+// public one, which can be confirmed as a real person via a friend-of-a-friend
+// (FoaF) network (similar to Facebook and what have you, and Facebook might
+// potentially be used for this FoaF network to some extend), or the "main" user
+// profile can also be a private one that is nonetheless able to garner trust
+// among the user network. But regardless of whether your "main" profile is
+// public or not, you don't necessarily want it connected to all your other
+// opinions about everything. Be it political opinions or opinions about
+// sensitive things like pornography and sexual matter. Or you might want a
+// private account to share and discuss secrets and/or private experiences with
+// others. Or you even just might not want, say, your boss and your coworkers,
+// and everyone else that you know, to know all your tastes in movies, free-time
+// activities, and all other things. But if you just create a new anonymous
+// profile for this, how will people know that you are not just a bot (a
+// concern that is more relevant than ever with AI bots taking over the web)?
+// Well, they can if you connect the new profile privately (using private data
+// tables) to your main profile, with respect to a given user group, such that
+// others only get to see that the new profile is connected to *some* profile
+// that is part of the given user group, and what approximate weight that
+// profile has in that user group (they can't know the precise wight as that
+// might out the exact profile). This can indeed be achieved, but then comes
+// the question: How to prevent users from just creating a horde of other
+// profiles in order to boost their opinions in the network? By making sure
+// that the new profiles can't score the same semantic parameters as the "main"
+// profile or any of the other profiles that is connected to it. And that is
+// what the 'areas of concern' is used for in this regard. Each profile needs
+// to select a set of areas of concern, possibly just one, when it connects to
+// other profiles this way. And the areas of concern will be publicly known
+// for each profile such that the user community can make sure that the profile
+// does not score something that is unrelated to those areas, or just not
+// aggregate the scores if they are. And when the user profiles connect with a
+// "main" profile, you make sure to store the selected areas of concern, and
+// make sure they don't overlap with any of the ones that are already chosen,
+// by the "main" profile or by others that has previously been connected to it.
+// And how to decide if two areas overlap? Simply by querying a 'Overlaps
+// with' relation (with some appropriate user group to decide this), and
+// checking that the score here is below a certain threshold (and with a high
+// enough combined weight). And there we go, this is how users can get near
+// perfect anonymity, while still making it possible for the user network to
+// prevent bots posing as humans to a very great extend, and from users
+// duplicating their scores. (And the UP node will of course also sign
+// contracts not to read private data such as the data stored for connecting
+// the profiles, now and in the future, and even if they are somehow not able
+// to sign such contracts, there are still encryption schemes that you can
+// implement to make sure that they also can't read the data, namely where the
+// user holds an encryption key to the data.)
+
+
 
 
 // Relevancy qualities is how we truly define whether or not a given entity
@@ -197,7 +251,7 @@ export const relations = {
   "Name": "Relations",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-    "Title", "Object class", "Subject class", "Area of expertise",
+    "Title", "Object class", "Subject class", "Area of concern",
     "Description"
   ],
   "Description": abs("./em1_aux1.js;get/relationsDesc"),
@@ -270,8 +324,8 @@ export const userGroups = {
 // JS object that handles almost everything about the scores: How they are
 // fetched, where they are stored, how they are updated, how they are
 // aggregated (e.g. whether to use the mean or the median for a given quality),
-// which "areas of expertise" (AoE) are used for which quality and what user
-// group is chosen for each AoE. They are also responsible for interpreting and
+// which "areas of concern" (AoC) are used for which quality and what user
+// group is chosen for each AoC. They are also responsible for interpreting and
 // handling derived qualities. Since ScoreHandlers are able to adjust their
 // methods to the specific user's own preferences, it is likely that the user
 // base will gravitate towards using the same (advanced) ScoreHandler in the
