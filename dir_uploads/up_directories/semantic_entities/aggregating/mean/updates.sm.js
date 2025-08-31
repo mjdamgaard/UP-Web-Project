@@ -9,7 +9,7 @@ import {
 } from "../../scores.js";
 
 const contributionsPath = abs("./contributions.btt");
-const aggrPath = abs("./aggr.btt");
+const aggrPath = abs("./aggregates.btt");
 
 
 // TODO: This, and other modules like it should use database transactions (by
@@ -19,6 +19,7 @@ const aggrPath = abs("./aggr.btt");
 // so implementing transactions is actually a semi-urgent todo. (And I should
 // also make use of gas depositing and withdrawal for longer algorithms.)
 
+// TODO: What to do about fetchUserWeight()?...
 
 
 export function updateScoreForUser(

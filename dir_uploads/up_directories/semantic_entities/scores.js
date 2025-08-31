@@ -223,67 +223,6 @@ export function postUserScore(
 
 
 
-// Function to fetch the score and weight from a float(,,3),float(,,1) table
-// like described above when given a identifier of a semantic list entity (see
-// ./em1.js). 
-export function fetchScoreAndWeightFromListEntity(listEntIdent, subjIdent) {
-  return new Promise(resolve => {
-    fetchEntityPathIfID(listEntIdent).then(listEntPath => {
-      fetch(listEntPath).then(listEntDef => {
-        let qualIdent = listEntDef["Quality"];
-        let evaluatorIdent = listEntDef["Evaluator"];
-        fetchList(
-          evaluatorIdent, qualIdent, lo, hi, maxNum, numOffset, isAscending
-        ).then(
-          list => resolve(list)
-        );
-      });
-    });
-  }); 
-}
-
-
-
-// Function to fetch the user weight from a so-called "user group," which is
-// an aggregator that aggregates dimensionless scores, i.e. user weights, in
-// .btt tables where each entry key is the given userID.
-export function fetchUserWeight(userGroupIdent, userID) {
-  return new Promise(resolve => {
-    fetchEntityPathIfID(userGroupIdent).then(userGroupPath => {
-      fetch(userGroupPath).then(userGroupAggregator => {
-        userGroupAggregator.fetchScore(userID).then(userWeight => {
-          resolve(userWeight);
-        });
-      });
-    });
-  }); 
-}
-
-
-
-
-// Function to fetch the weight-ordered list of the user group.
-export function fetchUserList(
-  userGroupIdent, lo, hi, maxNum, numOffset, isAscending
-) {
-  return new Promise(resolve => {
-    fetchEntityPathIfID(userGroupIdent).then(userGroupPath => {
-      fetch(userGroupPath).then(userGroupDef => {
-        let qualIdent = userGroupDef["Quality"];
-        let evaluatorIdent = userGroupDef["Evaluator"];
-        fetchList(
-          evaluatorIdent, qualIdent, lo, hi, maxNum, numOffset, isAscending
-        ).then(
-          list => resolve(list)
-        );
-      });
-    });
-  }); 
-}
-
-
-
-
 // A function to fetch whole score--weight list.
 export function fetchScoreAndWeightList(
   tableFilePath, qualIdent, otherListIDsOrPaths, lo, hi, maxNum, numOffset,

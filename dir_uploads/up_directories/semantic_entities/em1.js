@@ -377,7 +377,7 @@ export class ScoreHandler {
   // When viewing a score from a user group, the app might afford a button to
   // "refresh" or "update" the score for the given subject. If the user clicks
   // that, this methods should then be called.
-  updateScoreForGroup(userGroupIdent, qualIdent, subjIdent) {}
+  updateScoreForGroup(qualIdent, subjIdent) {}
 
   // Similar to updateScoreForGroup() but for a whole list of subjects at once.
   // When viewing a semantic list, the app might thus provide also afford a
@@ -396,6 +396,15 @@ export class ScoreHandler {
   // want the users to take part in the algorithms, which we obviously do: It
   // the whole point with a "user-programmable" system.
   getDefaultOptions(qualIdent) {}
+
+
+  // A wrapper around fetchScoreData() that gets the quality from a user group
+  // entity argument.
+  fetchUserWeightData(userGroupIdent, userID, options) {}
+
+  // A wrapper around fetchList() that gets the quality from a user group
+  // entity argument.
+  fetchUserList(userGroupIdent, options) {}
 
 }
 
