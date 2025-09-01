@@ -12,26 +12,42 @@
 // what is the standard.
 
 import homePath from "./.id.js";
-import {post} from 'query';
+import {post, upNodeID} from 'query';
 import {getRequestingUserID, checkRequestOrigin} from 'request';
+import {fetchEntityDefinition, fetchEntityID} from "./entities.sm.js";
 
 
 
-export function postUserScoreHex(qualID, subjID, scoreHex, payloadHex) {
+export function postUserScoreHex(
+  qualIdent, subjIdent, userIdent, scoreHex, payloadHex = undefined
+) {
   checkRequestOrigin(true, [
     "TODO: Add trusted components that can upload user scores."
   ]);
 
-  let userID = getRequestingUserID();
-  let listID = qualID + "&" + userID;
+  let qualIDProm = fetchEntityID(qualIdent);
+  let subjIDProm = fetchEntityID(subjIdent);
+  let userEntDefProm = fetchEntityDefinition(userIdent);
   return new Promise(resolve => {
-    post(homePath + "/users.bt/_insert/k=" + userID);
-    post(
-      homePath + "/userScores.bbt/_insert/l=" + listID + "/k=" + subjID +
-      "/s=" + scoreHex + (payloadHex ? "/p=" + payloadHex : "")
-    ).then(
-      wasUpdated => resolve(wasUpdated)
-    );
+    Promise.all([
+      qualIDProm, subjIDProm, userEntDefProm
+    ]).then(([qualID, subjID, userEntDef]) => {
+      let userID = userEntDef["User ID"];
+      let userUPNodeID = userEntDef["UP Node ID"];
+      if (userID !== getRequestingUserID() || userUPNodeID !== upNodeID) {
+        resolve(false);
+      }
+      else {
+        let listID = qualID + "&" + userID;
+        post(homePath + "/users.bt/_insert/k=" + userID);
+        post(
+          homePath + "/userScores.bbt/_insert/l=" + listID + "/k=" + subjID +
+          "/s=" + scoreHex + (payloadHex ? "/p=" + payloadHex : "")
+        ).then(
+          wasUpdated => resolve(wasUpdated)
+        );
+      }
+    });
   });
 }
 

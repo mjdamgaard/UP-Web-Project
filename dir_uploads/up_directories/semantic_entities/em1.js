@@ -327,16 +327,19 @@ export const scoredLists = {
     // capitalized.)
     "User group", // In order to make the scored list constant for all users,
     // the scored list entity needs to define a specific user group to query,
-    // as well as the following "ScoreHandler" attribute, which is responsible
+    // as well as the "ScoreHandler" attribute below, which is responsible
     // for deciding how the user group's scores are aggregated. If this list
     // uses more than one quality, namely is the "Dependencies" attribute is
-    // set, you can also choose to use the "User groups" attribute below instead
-    // of this one, defining a specific user group to use for each quality.
+    // set, you can also choose to use the "User groups" attribute below
+    // instead of this one, defining a specific user group to use for each
+    // quality. Or if wanting to just use the scores of a single user, use the
+    // "User" attribute below instead.
+    "User groups",
+    "User",
     "ScoreHandler", // When set together with the "User group" quality, the
     // quality is constant for all users, depending on the user group, as well
     // as how the ScoreHandler decides to aggregate the scores coming from that
     // user group for the quality.
-    "User groups",
     "Is stored", // Whether to store the resulting scores server-side, or just
     // always calculate the values client-side.
     "No updates after", // A time after which the stored scores should not be

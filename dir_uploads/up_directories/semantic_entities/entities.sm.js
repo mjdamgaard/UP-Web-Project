@@ -10,6 +10,7 @@ import {post, fetch, upNodeID} from 'query';
 import {valueToHex} from 'hex';
 import {verifyType} from 'types';
 import {substring} from 'string';
+import {TypeError} from 'error';
 
 
 
@@ -82,21 +83,55 @@ export function addSecondaryIndex(entID) {
 // for the post methods; there you need to use 'callSMF' routes to this
 // specific SM.)
 
-export function fetchEntityID(entPath) {
-  return new Promise(resolve => {
-    let entPathHex = valueToHex(entPath, "string");
-    fetch(homePath + "/entIDs.bt/entry/k=" + entPathHex).then(
-      entID => resolve(entID)
-    );
-  });
+export function fetchEntityID(entIdent) {
+  // If entIdent is a path, fetch the entID from ./entIDs.bt.
+  if (entIdent[0] === "/") {
+    return new Promise(resolve => {
+      let entPathHex = valueToHex(entIdent, "string");
+      fetch(homePath + "/entIDs.bt/entry/k=" + entPathHex).then(
+        entID => resolve(entID)
+      );
+    });
+  }
+
+  // Else if it is a user identifier, of the form '@<userID>', fetch the ID of
+  // the user entity (assuming that this has been uploaded).
+  else if (entIdent[0] === "@") {
+    return new Promise(resolve => {
+      let entPath = homePath + "/em1.js;call/User/" + userID + "/" + upNodeID;
+      let entPathHex = valueToHex(entPath, "string");
+      fetch(homePath + "/entIDs.bt/entry/k=" + entPathHex).then(
+        entID => resolve(entID)
+      );
+    });
+  }
+
+  // Else if of the form '#<entID>' or '<entID>', return a trivial promise to
+  // that entID.
+  else {
+    return new Promise(resolve => {
+      if (entIdent[0] === "#") {
+        entIdent = substring(entIdent, 1);
+      }
+      verifyType(entIdent, "hex-string");
+      resolve(entIdent)
+    });
+  }
 }
 
 export function fetchEntityPath(entIdent) {
-  // If the entity identifier is of the form '@<userID>', generate the path
-  // instead of fetching it.
+  // If entIdent is a path, just return a trivial promise to the same path.
+  if (entIdent[0] === "/") {
+    return new Promise(resolve => resolve(entIdent));
+  }
+
+  // Else if the entity identifier is of the form '@<userID>', generate the
+  // path instead of fetching it.
   if (entIdent[0] === "@") {
     let userID = substring(entIdent, 1);
-    return homePath + "/em1.js;call/User/" + userID + "/" + upNodeID;
+    return new Promise(resolve => resolve(
+      homePath + "/em1.js;call/User/" + userID + "/" + upNodeID
+    ));
   }
 
   // Else expect entIdent to be of the form '#<entID>' or just '<entID>', and
@@ -114,32 +149,9 @@ export function fetchEntityPath(entIdent) {
 
 
 
-export function fetchEntityIDIfPath(entIdent) {
-  if (entIdent[0] === "/") {
-    return fetchEntityID(entIdent);
-  }
-  else return new Promise(resolve => {
-    if (entIdent[0] === "#") {
-      entIdent = substring(entIdent, 1);
-    }
-    verifyType(entIdent, "hex-string");
-    resolve(entIdent)
-  });
-}
-
-export function fetchEntityPathIfID(entIdent) {
-  if (entIdent[0] === "/") {
-    return entIdent;
-  } else {
-    return fetchEntityPath(entIdent);
-  }
-}
-
-
-
 export function fetchEntityDefinition(entIdent) {
   return new Promise(resolve => {
-    fetchEntityPathIfID(entIdent).then(entPath => {
+    fetchEntityPath(entIdent).then(entPath => {
       fetch(entPath).then(entDef => resolve(entDef));
     });
   });

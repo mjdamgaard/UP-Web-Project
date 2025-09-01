@@ -4,7 +4,7 @@
 import {verifyType} from 'types';
 import {forEach} from 'array';
 import {
-  fetchEntityIDIfPath, fetchUserWeight, fetchUserScore, fetchScoreAndWeight,
+  fetchEntityID, fetchUserWeight, fetchUserScore, fetchScoreAndWeight,
   postScoreAndWeight, deleteScore,
 } from "../../scores.js";
 
@@ -23,14 +23,13 @@ const aggrPath = abs("./aggregates.btt");
 
 
 export function updateScoreForUser(
-  userGroupIdent, qualIdent, subjIdent, userID
+  userGroupIdent, qualIdent, subjIdent, userIdent
 ) {
-  verifyType(userID, "hex-string");
   return new Promise(resolve => {
-    let qualIDProm = fetchEntityIDIfPath(qualIdent);
-    let subjIDProm = fetchEntityIDIfPath(subjIdent);
-    let userGroupIDProm = fetchEntityIDIfPath(userGroupIdent);
-    let userWeightProm = fetchUserWeight(userGroupIdent, userID);
+    let qualIDProm = fetchEntityID(qualIdent);
+    let subjIDProm = fetchEntityID(subjIdent);
+    let userGroupIDProm = fetchEntityID(userGroupIdent);
+    let userWeightProm = fetchUserWeight(userGroupIdent, userIdent);
 
     Promise.all([
       qualIDProm, subjIDProm, userGroupIDProm
@@ -82,6 +81,9 @@ export function updateScoreForUser(
 }
 
 
+export function updateScoreForGroup() {}
+
+export function updateList() {}
 
 
 
@@ -89,9 +91,9 @@ export function updateScoreForUser(
 //   userGroupIdent, qualIdent, subjIdent
 // ) {
 //   return new Promise(resolve => {
-//     let qualIDProm = fetchEntityIDIfPath(qualIdent);
-//     let subjIDProm = fetchEntityIDIfPath(subjIdent);
-//     let userGroupIDProm = fetchEntityIDIfPath(userGroupIdent);
+//     let qualIDProm = fetchEntityID(qualIdent);
+//     let subjIDProm = fetchEntityID(subjIdent);
+//     let userGroupIDProm = fetchEntityID(userGroupIdent);
 //     let userListProm = fetchUserList(userGroupIdent);
 
 //     Promise.all([

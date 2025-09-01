@@ -7,7 +7,7 @@ import {map, join} from 'array';
 import {min} from 'math';
 import {hexToArray, valueToHex, hexFromArray} from 'hex';
 import {
-  fetchEntityIDIfPath, fetchEntityPathIfID, fetchEntityDefinition,
+  fetchEntityID, fetchEntityPath, fetchEntityDefinition,
 } from "../../entities.sm.js";
 
 
@@ -31,7 +31,7 @@ export function fetchUserScore(qualIdent, subjIdent, userID) {
 export function fetchUserScoreHex(qualIdent, subjIdent, userID) {
   return new Promise(resolve => {
     Promise.all([
-      fetchEntityIDIfPath(qualIdent), fetchEntityIDIfPath(subjIdent)
+      fetchEntityID(qualIdent), fetchEntityID(subjIdent)
     ]).then(([qualID, subjID]) => {
       let listID = qualID + "&" + userID;
       fetch(
@@ -97,10 +97,10 @@ export function fetchScoreHex(
   tableFilePath, qualIdent, otherListIDsOrPaths, keyIdent
 ) {
   return new Promise(resolve => {
-    let qualIDProm = fetchEntityIDIfPath(qualIdent);
-    let keyIDProm = fetchEntityIDIfPath(keyIdent);
+    let qualIDProm = fetchEntityID(qualIdent);
+    let keyIDProm = fetchEntityID(keyIdent);
     let otherListPartsPromArr = map(
-      otherListIDsOrPaths, idOrPath => fetchEntityIDIfPath(idOrPath)
+      otherListIDsOrPaths, idOrPath => fetchEntityID(idOrPath)
     );
     Promise.all([
       keyIDProm, qualIDProm, ...otherListPartsPromArr
@@ -142,10 +142,10 @@ export function postScoreAndWeightHex(
   scoreAndWeightHex
 ) {
   return new Promise(resolve => {
-    let qualIDProm = fetchEntityIDIfPath(qualIdent);
-    let keyIDProm = fetchEntityIDIfPath(keyIdent);
+    let qualIDProm = fetchEntityID(qualIdent);
+    let keyIDProm = fetchEntityID(keyIdent);
     let otherListPartsPromArr = map(
-      otherListIDsOrPaths, idOrPath => fetchEntityIDIfPath(idOrPath)
+      otherListIDsOrPaths, idOrPath => fetchEntityID(idOrPath)
     );
     Promise.all([
       keyIDProm, qualIDProm, ...otherListPartsPromArr
@@ -170,10 +170,10 @@ export function deleteScore(
   tableFilePath, qualIdent, otherListIDsOrPaths, keyIdent
 ) {
   return new Promise(resolve => {
-    let qualIDProm = fetchEntityIDIfPath(qualIdent);
-    let keyIDProm = fetchEntityIDIfPath(keyIdent);
+    let qualIDProm = fetchEntityID(qualIdent);
+    let keyIDProm = fetchEntityID(keyIdent);
     let otherListPartsPromArr = map(
-      otherListIDsOrPaths, ident => fetchEntityIDIfPath(ident)
+      otherListIDsOrPaths, ident => fetchEntityID(ident)
     );
     Promise.all([
       keyIDProm, qualIDProm, ...otherListPartsPromArr
@@ -197,19 +197,20 @@ export function deleteScore(
 // hex-encoded score, looking at the quality's metric to get the right
 // encoding. 
 export function postUserScore(
-  qualIdent, subjIdent, score, payloadHex = undefined
+  qualIdent, subjIdent, userIdent, score, payloadHex = undefined
 ) {
-  let qualIDProm = fetchEntityIDIfPath(qualIdent);
-  let subjIDProm = fetchEntityIDIfPath(subjIdent);
+  let qualIDProm = fetchEntityID(qualIdent);
+  let subjIDProm = fetchEntityID(subjIdent);
+  let userIDProm = fetchEntityID(userIdent);
   let metricProm = fetchMetric(qualIdent);
   return new Promise(resolve => {
     Promise.all([
-      qualIDProm, subjIDProm, metricProm
-    ]).then(([qualID, subjID, metric]) => {
+      qualIDProm, subjIDProm, userIDProm, metricProm
+    ]).then(([qualID, subjID, userID, metric]) => {
       let scoreHex = getScoreHex(score, metric);
       post(
-        homePath + "/user_scores.sm.js/callSMF/postUserScoreHex/" + qualID +
-        "/" + subjID + "/" + scoreHex + (payloadHex  ? "/" + payloadHex : "")
+        homePath + "/user_scores.sm.js/callSMF/postUserScoreHex",
+        [qualID, subjID, userID, scoreHex, payloadHex]
       ).then(
         wasUpdated => resolve(wasUpdated)
       );
@@ -250,9 +251,9 @@ export function fetchScoreHexList(
   isAscending,
 ) {
   return new Promise(resolve => {
-    let qualIDProm = fetchEntityIDIfPath(qualIdent);
+    let qualIDProm = fetchEntityID(qualIdent);
     let otherListPartsPromArr = map(
-      otherListIDsOrPaths, idOrPath => fetchEntityIDIfPath(idOrPath)
+      otherListIDsOrPaths, idOrPath => fetchEntityID(idOrPath)
     );
     Promise.all([
       qualIDProm, ...otherListPartsPromArr
