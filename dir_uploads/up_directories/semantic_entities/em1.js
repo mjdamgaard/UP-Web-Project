@@ -410,12 +410,21 @@ export class ScoreHandler {
   // a value of "group" means that only the user group is queried.
   fetchScoreData(qualIdent, subjIdent, options) {}
 
+  // A method similar to fetchScoreData(), but where the quality argument is
+  // replaced by a scored list entity, meaning that the fetched score data
+  // should be the same for all users.
+  fetchScoreDataFromScoredList(listIdent, subjIdent) {}
+
   // When fetching a scored list, the 'options' argument can in particular
   // contain the options: 'lo', 'hi', 'maxNum', 'offset', and 'isAscending',
   // which combines to specify which section of the list should be defined.
   // (And like all options, the ScoreHandler will provide default values for
   // each one.)
   fetchList(qualIdent, options) {}
+
+  // A method similar to fetchList(), but where the quality argument is
+  // replaced by a scored list entity.
+  fetchListFromScoredList(listIdent) {}
 
   // Fetch the [entID, score, weight, auxData?] of the entity with the highest
   // score on the list. This method is useful for fetching one-to-one "scored

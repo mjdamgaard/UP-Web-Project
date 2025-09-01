@@ -13,10 +13,10 @@ import {
 
 
 // Function to fetch user scores uploaded via ./user_scores.sm.js.
-export function fetchUserScore(qualIdent, subjIdent, userID) {
+export function fetchUserScore(qualIdent, subjIdent, userIdent) {
   return new Promise(resolve => {
     Promise.all([
-      fetchUserScoreHex(qualIdent, subjIdent, userID),
+      fetchUserScoreHex(qualIdent, subjIdent, userIdent),
       fetchMetric(qualIdent)
     ]).then(([userScoreHex, metric]) => {
       if (userScoreHex === undefined) return undefined;
@@ -28,11 +28,14 @@ export function fetchUserScore(qualIdent, subjIdent, userID) {
 
 // Helper function to fetch user scores uploaded via ./user_scores.sm.js, which
 // we will nonetheless also export.
-export function fetchUserScoreHex(qualIdent, subjIdent, userID) {
+export function fetchUserScoreHex(qualIdent, subjIdent, userIdent) {
+  let qualIDProm = fetchEntityID(qualIdent);
+  let subjIDProm = fetchEntityID(subjIdent);
+  let userIDProm = fetchEntityID(userIdent);
   return new Promise(resolve => {
     Promise.all([
-      fetchEntityID(qualIdent), fetchEntityID(subjIdent)
-    ]).then(([qualID, subjID]) => {
+      qualIDProm, subjIDProm, userIDProm
+    ]).then(([qualID, subjID, userID]) => {
       let listID = qualID + "&" + userID;
       fetch(
         homePath + "/userScores.bbt/l=" + listID + "/k=" + subjID
@@ -280,13 +283,42 @@ export function fetchScoreHexList(
 
 
 
-export function fetchUserWeight(userGroupIdent, userID) {
-
+export function fetchUserWeight(userGroupIdent, userIdent) {
+  return new Promise(resolve => {
+    fetchUserWeightData(userGroupIdent, userIdent).then(
+      ([weight]) => resolve(weight)
+    );
+  });
 }
 
+export function fetchUserWeightData(userGroupIdent, userIdent) {
+  return new Promise(resolve => {
+    fetchUserListIdent(userGroupIdent).then(userListIdent => {
+      fetchScoreDataFromScoredList(userListIdent, userIdent).then(
+        (weightData) => resolve(weightData)
+      );
+    });
+  });
+}
 
-export function fetchUserWeightData(userGroupIdent, userID) {
+export function fetchUserListIdent(userGroupIdent) {
+  return new Promise(resolve => {
+    fetchEntityDefinition(userGroupIdent).then(userGroupDef => {
+      let userListIdent = userGroupDef["User list"];
+      resolve(userListIdent);
+    });
+  });
+}
 
+export function fetchScoreDataFromScoredList(listIdent, subjID) {
+  return new Promise(resolve => {
+    fetchEntityDefinition(listIdent).then(listDef => {
+      let scoreHandler = listDef["ScoreHandler"];
+      scoreHandler.fetchScoreDataFromScoredList(listIdent, subjID).then(
+        scoreData => resolve(scoreData)
+      );
+    });
+  });
 }
 
 

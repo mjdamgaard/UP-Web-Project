@@ -1,8 +1,4 @@
 
-
-
-import {verifyType} from 'types';
-import {forEach} from 'array';
 import {
   fetchEntityID, fetchUserWeight, fetchUserScore, fetchScoreAndWeight,
   postScoreAndWeight, deleteScore,
@@ -19,21 +15,21 @@ const aggrPath = abs("./aggregates.btt");
 // so implementing transactions is actually a semi-urgent todo. (And I should
 // also make use of gas depositing and withdrawal for longer algorithms.)
 
-// TODO: What to do about fetchUserWeight()?...
 
 
 export function updateScoreForUser(
   userGroupIdent, qualIdent, subjIdent, userIdent
 ) {
   return new Promise(resolve => {
+    let userGroupIDProm = fetchEntityID(userGroupIdent);
     let qualIDProm = fetchEntityID(qualIdent);
     let subjIDProm = fetchEntityID(subjIdent);
-    let userGroupIDProm = fetchEntityID(userGroupIdent);
+    let userIDProm = fetchEntityID(userIdent);
     let userWeightProm = fetchUserWeight(userGroupIdent, userIdent);
 
     Promise.all([
-      qualIDProm, subjIDProm, userGroupIDProm
-    ]).then(([qualID, subjID, userGroupID]) => {
+      userGroupIDProm, qualIDProm, subjIDProm, userIDProm
+    ]).then(([userGroupID, qualID, subjID, userID]) => {
       // Get the current user score from the userScores.bbt table, and the
       // previous score contributed to this aggregate, if any.
       let curUserScoreProm = fetchUserScore(qualID, subjID, userID, true);
