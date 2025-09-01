@@ -6,7 +6,7 @@
 // entID searchable as well.
 
 import homePath from "./.id.js";
-import {post, fetch} from 'query';
+import {post, fetch, upNodeID} from 'query';
 import {valueToHex} from 'hex';
 import {verifyType} from 'types';
 import {substring} from 'string';
@@ -92,6 +92,15 @@ export function fetchEntityID(entPath) {
 }
 
 export function fetchEntityPath(entIdent) {
+  // If the entity identifier is of the form '@<userID>', generate the path
+  // instead of fetching it.
+  if (entIdent[0] === "@") {
+    let userID = substring(entIdent, 1);
+    return homePath + "/em1.js;call/User/" + userID + "/" + upNodeID;
+  }
+
+  // Else expect entIdent to be of the form '#<entID>' or just '<entID>', and
+  // fetch the path from the entPaths.att table.
   if (entIdent[0] === "#") {
     entIdent = substring(entIdent, 1);
   }
@@ -108,15 +117,14 @@ export function fetchEntityPath(entIdent) {
 export function fetchEntityIDIfPath(entIdent) {
   if (entIdent[0] === "/") {
     return fetchEntityID(entIdent);
-  } else {
-    return new Promise(resolve => {
-      if (entIdent[0] === "#") {
-        entIdent = substring(entIdent, 1);
-      }
-      verifyType(entIdent, "hex-string");
-      resolve(entIdent)
-    });
   }
+  else return new Promise(resolve => {
+    if (entIdent[0] === "#") {
+      entIdent = substring(entIdent, 1);
+    }
+    verifyType(entIdent, "hex-string");
+    resolve(entIdent)
+  });
 }
 
 export function fetchEntityPathIfID(entIdent) {

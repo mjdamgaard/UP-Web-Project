@@ -9,7 +9,9 @@ import {parseRoute} from './src/parseRoute.js';
 import {checkAdminPrivileges, checkIfCanPost, CAN_POST_FLAG}
 from "./src/flags.js";
 
-const ownUPNodeID = "1";
+
+
+export const upNodeID = "1";
 
 
 
@@ -58,7 +60,7 @@ export const query = new DevFunction(
     // server is part of, query the database, but not before checking admin
     // privileges for the given home directory if the route is locked.
     let result;
-    if (interpreter.isServerSide && upNodeID === ownUPNodeID) {
+    if (interpreter.isServerSide && upNodeID === upNodeID) {
       if (isLocked) {
         checkAdminPrivileges(homeDirID, callerNode, execEnv);
       }
@@ -107,7 +109,7 @@ export const query = new DevFunction(
           // Import and execute the given JS module using interpreter.import(),
           // then get the export of the given alias.
           let liveModule = await interpreter.import(
-            `/${ownUPNodeID}/${homeDirID}/${filePath}`, callerNode, execEnv
+            `/${upNodeID}/${homeDirID}/${filePath}`, callerNode, execEnv
           );
           result = liveModule.get(alias);
         }
@@ -120,7 +122,7 @@ export const query = new DevFunction(
           // environment. And when the liveModule is gotten, get and execute
           // the function, also within the same enclosed execution environment.
           let liveModule = await interpreter.import(
-            `/${ownUPNodeID}/${homeDirID}/${filePath}`, callerNode, execEnv
+            `/${upNodeID}/${homeDirID}/${filePath}`, callerNode, execEnv
           );
           let fun = liveModule.get(alias);
           if (!(fun instanceof FunctionObject)) throw new RuntimeError(

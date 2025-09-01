@@ -11,7 +11,7 @@
 // that their properties refer to, or rather their "attributes," as we will
 // generally call these defining properties of referential entities. It should
 // be noted that all these "attributes" of an entity are not set in stone. Any
-// attribute can be overridden by what we can call "semantic properties," which
+// attribute can be overridden by what we can call "scored properties," which
 // are properties determined by the users when they score the "relations" that
 // is introduced below. So all the attributes that you see below are in
 // principle only the "initial" or "default" ones, possibly. And their job is
@@ -70,54 +70,48 @@ export const texts = {
 
 
 
-// A "quality" in this system is a function that takes a subject and returns
-// a floating-point parameter that describes something about the subject. Each
-// quality also has a domain, which is a class to which the subjects are
-// supposed to belong. The users are meant to "score" qualities according to
-// their opinions, and these scores are also meant to be aggregated into e.g.
-// mean or median estimators over larger user groups. Such user groups do not
-// need to include all users of the system, but can also be a limited list of
-// users. (And the users in the group might even have different weights,
-// meaning that the scores of some might count for more than others.) Some
-// qualities are not meant to be scored, however, namely if they are "derived"
-// qualities, meaning that they are defined specifically as an aggregate of
-// other qualities. (We will often refer to non-derived qualities as "atomic,"
-// even though qualities can in practice always be split up into smaller parts.
-// But they are "atomic" for our purposes, in that they are meant to be scored
-// directly by the users.)
+// A "quality" in this system refers to a property of an entity that can be
+// described by floating-point number within some range. And an important
+// subclass of "qualities" is the class of what we will refer to as "semantic
+// qualities," which are qualities that are described by a label and a
+// description, which users are supposed to score directly. One can think of
+// the well-known "tags" that you see in many places on the web, but where each
+// tag has a floating-point scale that you rate them on. For example, a movie
+// might be rated with respect to a quality of "scary," and the rating scale
+// of the quality would then (normally) represents how scary the movie is. And
+// that is just one example, qualities can be anything. And outside of "semantic
+// qualities," we also have qualities that are algorithmically derived from
+// other qualities and/or other data in the database. We will not introduce a
+// collected class of all algorithmic qualities here. Instead each new
+// algorithmic quality class is just added when being implemented. 
 export const qualities = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Qualities",
   "Superclass": abs("./em1.js;get/entities"),
+  "Description": abs("./em1_aux1.js;get/qualitiesDesc"),
+};
+
+
+// This is the important subclass of so-called "semantic qualities."  The users
+// are meant to score these with respect to given subjects according to their
+// opinions, and these scores are also meant to be aggregated into e.g. mean or
+// median estimators over larger user groups. Such user groups do not need to
+// include all users of the system, but can also be a limited list of users.
+// (And the users in the group might even have different weights, meaning that
+// the scores of some might count for more than others.) Each semantic quality
+// also has a domain, which is a class to which the subjects are supposed to
+// belong, and a metric, which defines the semantics of the range of the
+// floating-point score. And the can also have a (default) "area of concern,"
+// which, as described below, helps the app choose the right user group to
+// query for score aggregates for the given quality.
+export const semanticQualities = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "Semantic qualities",
+  "Superclass": abs("./em1.js;get/qualities"),
   "Common attributes": [
     "Label", "Domain", "Metric", "Area of concern", "Description",
-    /* Some common attributes for derived qualities */
-    "Is derived", "Dependencies", // A list of atomic quality IDs.
-    "getScoreData", // A method that receives an array of "score data" from
-    // each dependency quality and returns a set of score data. "Score data"
-    // here refers to a [score, weight, auxData?] array, where the score is
-    // the (possibly aggregated score), the weight is generally a measure of
-    // how many (trusted) users has scored the quality (summing their weights
-    // in the given user group), and auxData, if defined, is a plain object of
-    // additional data. (Note that method attributes like this are not
-    // capitalized.)
-    "Is stored", // Whether to store the resulting scores server-side, or just
-    // always calculate the value client-side.
-    "No updates after", // A time after which the stored scores should not be
-    // updated.
-    "User group", // If you want the semantic list that the quality generates
-    // to be constant for all users, you can set this attribute, along with the
-    // following "ScoreHandler" attribute, making the quality dependent on the
-    // given user group.
-    "ScoreHandler", // When set together with the "User group" quality, the
-    // quality is constant for all users, depending on the user group, as well
-    // as how the ScoreHandler decides to aggregate the scores coming from that
-    // user group for the quality.
-    "User", // Or another way to get a constant semantic list is to set this
-    // "User" attribute for the quality, making the quality defined by the
-    // opinions of a single user (which can also be a bot, by the way).
   ],
-  "Description": abs("./em1_aux1.js;get/qualitiesDesc"),
+  "Description": abs("./em1_aux1.js;get/semanticQualitiesDesc"),
 };
 
 // A metric is used to describe the semantics of the range of the floating-
@@ -181,29 +175,29 @@ export const areasOfConcern = {
 // might out the exact profile). This can indeed be achieved, but then comes
 // the question: How to prevent users from just creating a horde of other
 // profiles in order to boost their opinions in the network? By making sure
-// that the new profiles can't score the same semantic parameters as the "main"
-// profile or any of the other profiles that is connected to it. And that is
-// what the 'areas of concern' is used for in this regard. Each profile needs
-// to select a set of areas of concern, possibly just one, when it connects to
-// other profiles this way. And the areas of concern will be publicly known
-// for each profile such that the user community can make sure that the profile
-// does not score something that is unrelated to those areas, or just not
-// aggregate the scores if they are. And when the user profiles connect with a
-// "main" profile, you make sure to store the selected areas of concern, and
-// make sure they don't overlap with any of the ones that are already chosen,
-// by the "main" profile or by others that has previously been connected to it.
-// And how to decide if two areas overlap? Simply by querying a 'Overlaps
-// with' relation (with some appropriate user group to decide this), and
-// checking that the score here is below a certain threshold (and with a high
-// enough combined weight). And there we go, this is how users can get near
-// perfect anonymity, while still making it possible for the user network to
-// prevent bots posing as humans to a very great extend, and from users
-// duplicating their scores. (And the UP node will of course also sign
-// contracts not to read private data such as the data stored for connecting
-// the profiles, now and in the future, and even if they are somehow not able
-// to sign such contracts, there are still encryption schemes that you can
-// implement to make sure that they also can't read the data, namely where the
-// user holds an encryption key to the data.)
+// that the new profiles can't score the same qualities as the "main"  profile
+// or any of the other profiles that is connected to it. And that is what the
+// 'areas of concern' is used for in this regard. Each profile needs to select
+// a set of areas of concern, possibly just one, when it connects to other
+// profiles this way. And the areas of concern will be publicly known for each
+// profile such that the user community can make sure that the profile does not
+// score something that is unrelated to those areas, or just not aggregate the
+// scores if they are. And when the user profiles connect with a "main" profile,
+// you make sure to store the selected areas of concern, and make sure they
+// don't overlap with any of the ones that are already chosen, by the "main"
+// profile or by others that has previously been connected to it. And how to
+// decide if two areas overlap? Simply by querying a 'Overlaps with' relation
+// (with some appropriate user group to decide this), and checking that the
+// score here is below a certain threshold (and with a high enough combined
+// weight). And there we go, this is how users can get near perfect anonymity,
+// while still making it possible for the user network to prevent bots posing
+// as humans to a very great extend, and from users duplicating their scores.
+// (And the UP node will of course also sign contracts not to read private data
+// such as the data stored for connecting the profiles, now and in the future,
+// and even if they are somehow not able to sign such contracts, there are
+// still encryption schemes that you can implement to make sure that they also
+// can't read the data, namely where the user holds an encryption key to the
+// data.)
 
 
 
@@ -284,21 +278,20 @@ export const RelationalClass = (relID, objID) => ({
 });
 
 
-// Semantic parameters refers to the floating-point number scales that are the
-// outputs of a quality when paired with a subject. Note that we take "semantic
-// parameter" to refer to the *scale* that can be scored by users or user
-// groups, and we take "score" to mean the specific values that are given to
-// those scales.
-export const semanticParameters = {
+// Quality variables refers to the floating-point number scales that are the
+// outputs of a quality when paired with a subject. Note that we take "quality
+// variable" to refer to the *scale* that can be scored by users, and we take
+// "score" to mean the specific values that are given to those scales.
+export const qualityVariables = {
   "Class": abs("./em1.js;get/classes"),
-  "Name": "Semantic parameters",
+  "Name": "Quality variables",
   "Superclass": abs("./em1.js;get/entities"),
-  "Constructor": SemanticParameter,
-  "Description": abs("./em1_aux1.js;get/semanticParametersDesc"),
+  "Constructor": QualityVariable,
+  "Description": abs("./em1_aux1.js;get/qualityVariablesDesc"),
 };
 
-export const SemanticParameter = (qualID, subjID) => ({
-  "Class": abs("./em1.js;get/semanticParameters"),
+export const QualityVariable = (qualID, subjID) => ({
+  "Class": abs("./em1.js;get/qualityVariables"),
   "Quality": "#" + qualID,
   "Subject": "#" + subjID,
   "Label": "#" + subjID + "⋲" + "#" + qualID,
@@ -306,24 +299,65 @@ export const SemanticParameter = (qualID, subjID) => ({
 
 
 
+// Scored lists are similar to qualities in that they each associate a set of
+// subjects to a score for that subject, but while the list for the qualities
+// might depend on the user viewing them, as different users might choose
+// different user groups to query, and/or different algorithms to aggregate the
+// scores, the scored lists are supposed to be objectively defined and thus
+// independent of the user the views or accesses the list. (The scored lists
+// might still vary in time, though.) Note that while this class of all scored
+// lists can be used directly to define new scored lists, we are also free to
+// implement subclasses of it with a different set of common attributes, and
+// possibly with more algorithmic options for generating lists.
+export const scoredLists = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "Scored lists",
+  "Superclass": abs("./em1.js;get/entities"),
+  "Common attributes": [
+    "Quality", // If the scored lists only depends on one quality, use this
+    // attribute, and else use the following two.
+    "Dependencies", // An array of quality identifiers.
+    "getScoreData", // A method that receives an array of "score data" from
+    // each dependency quality and returns a set of score data. "Score data"
+    // here refers to a [score, weight, auxData?] array, where the score is
+    // the (possibly aggregated score), the weight is generally a measure of
+    // how many (trusted) users has scored the quality (summing their weights
+    // in the given user group), and auxData, if defined, is a plain object of
+    // additional data. (Note that method attributes like this are not
+    // capitalized.)
+    "User group", // In order to make the scored list constant for all users,
+    // the scored list entity needs to define a specific user group to query,
+    // as well as the following "ScoreHandler" attribute, which is responsible
+    // for deciding how the user group's scores are aggregated. If this list
+    // uses more than one quality, namely is the "Dependencies" attribute is
+    // set, you can also choose to use the "User groups" attribute below instead
+    // of this one, defining a specific user group to use for each quality.
+    "ScoreHandler", // When set together with the "User group" quality, the
+    // quality is constant for all users, depending on the user group, as well
+    // as how the ScoreHandler decides to aggregate the scores coming from that
+    // user group for the quality.
+    "User groups",
+    "Is stored", // Whether to store the resulting scores server-side, or just
+    // always calculate the values client-side.
+    "No updates after", // A time after which the stored scores should not be
+    // updated.
+  ],
+  "Description": abs("./em1_aux1.js;get/semanticQualitiesDesc"),
+};
 
-// User groups are generally defined from a quality, typically a derived one,
-// where the scores use a positive dimensionless metric representing the so-
-// called weight of each user in the user group. These wights are used when
-// aggregating scores from the user group: If all weights are equal, each
-// user's score counts the same, but otherwise some users' scores might count
-// for more than others. 
+
+// User groups are defined from just a single scored list, namely a list of
+// user entities, where the scores use a positive dimensionless metric
+// representing the so-called weight of each user in the user group. These
+// wights are used when aggregating scores from the user group: If all weights
+// are equal, each user score counts the same, but otherwise some users' scores
+// might count for more than others. 
 export const userGroups = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "User groups",
-  "Superclass": abs("./em1.js;get/semanticLists"),
+  "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-    "Name",
-    "Weight quality", // This quality, which defines the so-called "weight" of
-    // each user in the user group, is supposed to be constant for all users,
-    // meaning that it ought to have either the "User" attribute set, or the
-    // "User group"--"ScoreHandler" attribute pair.
-    "Description"
+    "Name", "User list", "Description"
   ],
   "Description": abs("./em1_aux1.js;get/userGroupsDesc"),
 };
@@ -340,14 +374,15 @@ export const userGroups = {
 // aggregated (e.g. whether to use the mean or the median for a given quality),
 // which "areas of concern" (AoC) are used for which quality and what user
 // group is chosen for each AoC. They are also responsible for interpreting and
-// handling derived qualities. Since ScoreHandlers are able to adjust their
-// methods to the specific user's own preferences, it is likely that the user
-// base will gravitate towards using the same (advanced) ScoreHandler in the
-// end. But the development of a better and better ScoreHandler will require
-// experimentation, where some (super)users will develop and/or try new
-// versions, which is why we need for users to be able to choose between more
-// than just one ScoreHandler for the app, which in turn is why we need this
-// class of ScoreHandlers as one of the fundamental classes of the system.
+// handling the algorithmic qualities, as well as the scored lists. Since
+// ScoreHandlers are able to adjust their methods to the specific user's own
+// preferences, it is likely that the user base will gravitate towards using
+// the same (advanced) ScoreHandler in the end. But the development of a better
+// and better ScoreHandler will require experimentation, where some (super)users
+// will develop and/or try new versions, which is why we need for users to be
+// able to choose between more than just one ScoreHandler for the app, which in
+// turn is why we need this class of ScoreHandlers as one of the fundamental
+// classes of the system.
 export const scoreHandlers = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "ScoreHandlers",
@@ -372,7 +407,7 @@ export class ScoreHandler {
   // a value of "group" means that only the user group is queried.
   fetchScoreData(qualIdent, subjIdent, options) {}
 
-  // When fetching a semantic list, the 'options' argument can in particular
+  // When fetching a scored list, the 'options' argument can in particular
   // contain the options: 'lo', 'hi', 'maxNum', 'offset', and 'isAscending',
   // which combines to specify which section of the list should be defined.
   // (And like all options, the ScoreHandler will provide default values for
@@ -380,7 +415,7 @@ export class ScoreHandler {
   fetchList(qualIdent, options) {}
 
   // Fetch the [entID, score, weight, auxData?] of the entity with the highest
-  // score on the list. This method is useful for fetching one-to-one "semantic
+  // score on the list. This method is useful for fetching one-to-one "scored
   // properties" of an entity (i.e. properties that are defined via relations
   // rather than as part of the entity's "attributes").
   fetchTopEntry(qualIdent) {}
@@ -394,7 +429,7 @@ export class ScoreHandler {
   updateScoreForGroup(qualIdent, subjIdent) {}
 
   // Similar to updateScoreForGroup() but for a whole list of subjects at once.
-  // When viewing a semantic list, the app might thus provide also afford a
+  // When viewing a scored list, the app might thus provide also afford a
   // "refresh"/"update" button to click. Note that since updating a whole list
   // might be expensive, the ScoreHandler might use a SMF for such updates,
   // that rather than running the whole update each time, instead just deposits
