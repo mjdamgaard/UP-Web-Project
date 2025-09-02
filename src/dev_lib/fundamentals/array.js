@@ -32,7 +32,7 @@ export const map = new DevFunction(
 );
 
 export const forEach = new DevFunction(
-  "forEach", {typeArr: ["array", "function"]},
+  "forEach", {typeArr: ["any", "function"]},
   ({callerNode, execEnv, interpreter}, [arr, fun]) => {
     forEachValue(arr, callerNode, execEnv, (val, ind) => {
       interpreter.executeFunction(

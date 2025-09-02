@@ -1,55 +1,59 @@
 
 import {ScoreHandler, ScoredList} from "./em1";
 import {initialModeratorWeights} from "./init_mods.js";
+import {MeanAggregator} from "./aggregating/mean/MeanAggregator.js";
+import {forEach} from 'array';
 
 
 
 
-export class ScoreHandler01 extends ScoreHandler {
+export const ScoreHandler01 = {
+  "Class": abs("./em1.js;get/scoreHandlers"),
 
 
-  fetchScoreData(qualIdent, subjIdent, options) {}
+  fetchScoreData: (qualIdent, subjIdent, options) => {},
 
 
-  
 
-
-  fetchList(qualIdent, options) {}
-
-  
-
-
-  fetchTopEntry(qualIdent) {}
+  fetchList: (qualIdent, options) => {},
 
 
 
 
-  updateScoreForUser(qualIdent, subjIdent, userID) {}
-
-  
+  fetchTopEntry: (qualIdent) => {},
 
 
-  updateScoreForGroup(qualIdent, subjIdent) {}
-
-  
 
 
-  updateList(qualIdent) {}
-
-  
+  updateScoreForUser: (qualIdent, subjIdent, userID) => {},
 
 
-  getDefaultOptions(qualIdent) {}
 
 
-  
+  updateScoreForGroup: (qualIdent, subjIdent) => {},
 
 
-  fetchUserWeightData(userGroupIdent, userID, options) {}
 
-  
-  fetchUserList(userGroupIdent, options) {}
 
+  updateList: (qualIdent) => {},
+
+
+
+
+  getDefaultOptions: (qualIdent) => {},
+
+
+
+
+
+  fetchUserWeightData: (userGroupIdent, userID, options) => {},
+
+
+  fetchUserList: (userGroupIdent, options) => {},
+
+
+  // TODO: Add documentation.
+  "Documentation": undefined,
 }
 
 

@@ -373,33 +373,35 @@ export const scoredLists = {
   "Name": "Scored lists",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-  // fetchScoreData(subjIdent) fetches the score data for the given "subject,"
-  // i.e. the given entity on the list. "Score data" refers here to a [score,
-  // weight, auxData?] array, as described above. Note that an "identifier"
-  // (shortened to "ident") here can be either an absolute entity path, a user
-  // ID prefixed by "@", an entity ID prefixed with "#", or can also just be
-  // the entity ID without the leading "#".
-  "fetchScoreData",
+    // fetchScoreData(subjIdent) fetches the score data for the given "subject,"
+    // i.e. the given entity on the list. "Score data" refers here to a [score,
+    // weight, auxData?] array, as described above. Note that an "identifier"
+    // (shortened to "ident") here can be either an absolute entity path, a
+    // user ID prefixed by "@", an entity ID prefixed with "#", or can also
+    // just be the entity ID without the leading "#".
+    "fetchScoreData",
 
-  // fetchList({lo, hi, maxNum, offset, isAscending}) fetches a section of the
-  // scored list as a 2-dimensional array. The arguments 'lo', 'hi', 'maxNum',
-  // 'offset', and 'isAscending' specifies which section of the list should be
-  // returned. (And and all these arguments should have default values and thus
-  // be optional.) Each row of the returned 2-dimensional array should be of
-  // the form [entID, score, weight?, auxData?], but note that auxData in
-  // particular does not need to be included here even if it exists (and can
-  // also just contain only a subset of the full auxData objects properties).
-  // (You generally don't want to include any data that is stored in the
-  // "payload" column of the BTT table.)
-  "fetchList",
+    // fetchList({lo, hi, maxNum, offset, isAscending}) fetches a section of
+    // the scored list as a 2-dimensional array. The arguments 'lo', 'hi',
+    // 'maxNum', 'offset', and 'isAscending' specifies which section of the
+    // list should be returned. (And and all these arguments should have default
+    // values and thus be optional.) Each row of the returned 2-dimensional
+    // array should be of the form [entID, score, weight?, auxData?], but note
+    // that auxData in particular does not need to be included here even if it
+    // exists (and can also just contain only a subset of the full auxData
+    // objects properties). (You generally don't want to include any data that
+    // is stored in the "payload" column of the BTT table.)
+    "fetchList",
 
-  // fetchTopEntry() fetches the [entID, score, weight?, auxData?] of the
-  // subject with the highest score on the list. This method is useful for
-  // fetching one-to-one "scored properties" of an entity (i.e. properties that
-  // are defined via relations rather than as part of the entity's
-  // "attributes").
-  "fetchTopEntry",
+    // fetchTopEntry() fetches the [entID, score, weight?, auxData?] of the
+    // subject with the highest score on the list. This method is useful for
+    // fetching one-to-one "scored properties" of an entity (i.e. properties
+    // that are defined via relations rather than as part of the entity's
+    // "attributes").
+    "fetchTopEntry",
 
+    // Documentation describing the scored list is generated.
+    "Documentation",
   ],
   "Description": abs("./em1_aux1.js;get/scoredListsDesc"),
 };
@@ -510,6 +512,8 @@ export const scoreHandlers = {
     // fields can be gotten from this method.
     "getDefaultOptions",
 
+    // Documentation describing the given score handler works and its usage.
+    "Documentation",
   ],
   "Description": abs("./em1_aux1.js;get/scoreHandlersDesc"),
 };
@@ -630,6 +634,31 @@ export const agreement = {
   "Description": abs("./em1_aux1.js;get/agreementDesc"),
 };
 
+
+
+// This "Trust" quality is meant as a standard way to obtain the weighted user
+// lists that are used for user groups, namely by having a "moderator group"
+// that scores other users, and themselves, with respect to this "Trust"
+// quality. And then the resulting weight of each user in the new user group is
+// supposed to be the average/median Trust scored by the moderator group. Now,
+// as things progress, it is likely that users will create more specific sub-
+// qualities of this one, which will define the sought-for qualities of the new
+// user group in more detail. (For instance, one might make sub-qualities of
+// "Trusted w.r.t. URL safety" or "Trusted w.r.t. (the field of) Quantum
+// Mechanics", etc.) But initially, this more vague "Trust" quality will
+// probably do.
+// Oh, and note that we deliberately use the dimensionlessMetric rather than
+// the positiveDimensionlessMetric, as this will make it easier to vote users
+// completely out of the new group, namely such negative "Trust" scores are
+// just meant to be filtered out before turning into a (non-negative) user
+// weight. 
+export const trust = {
+  "Class": abs("./em1.js;get/qualities"),
+  "Label": "Trust",
+  "Domain": abs("./em1.js;get/users"),
+  "Default metric": abs("./em1.js;get/dimensionlessMetric"),
+  "Description": abs("./em1_aux1.js;get/trustDesc"),
+};
 
 
 // Some times, it's better to leave the description out of the qualities,
