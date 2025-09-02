@@ -4,12 +4,12 @@
 // whole semantic system.
 
 
-// Class of all things, all "entities." Entities can be any JS value, but an
-// important kind of entities are the ones you primarily see below of objects
-// with capitalized property names, and always with a "Class" property. We will
-// call these "referential entities," as they represent the thing or concept
-// that their properties refer to, or rather their "attributes," as we will
-// generally call these defining properties of referential entities.
+
+
+// Class of all things, all "entities." Entities are defined/represented by
+// objects of the kind you see below, namely with capitalized property names,
+// and always with a "Class" property. We will tend to refer to these defining
+// properties of entities as their "attributes."
 // It should be noted that all these "attributes" of an entity are not set in
 // stone. Any attribute can be overridden by what we can call "scored
 // properties," which are properties determined by the users when they score
@@ -17,7 +17,30 @@
 // see below are in principle only the "initial" or "default" ones, possibly.
 // And their job is thus only to specify what thing or concept is being
 // referred to, as well as possibly to declare some metadata properties that
-// the app might use as default options. 
+// the app might use as default options.
+// Entities will often refer to a real-world things or concepts, or a things or
+// concepts relating to this semantic and/or user-programmable system. But they
+// can also be self-contained objects that just refers to themselves. Such
+// objects will often carry "methods" as part of their attributes, the names for
+// which we will tend to use lower camel case (as in e.g. "fetchScoreData"),
+// making these entities able to be treated similarly to objects from an OOP
+// language.
+// The values of the attributes can be anything such as strings and numbers,
+// and methods as just mentioned, and can also paths leading to such data. And
+// most importantly, they can be so-called "identifiers" of other entities.
+// Such identifiers can either be paths to the entity's definition object (as
+// see e.g. for all "Class" attributes defined below), or they can be strings
+// of the form '#<entID>' or just '<entID>', where entID (entity ID) is a
+// hexadecimal string that is assigned to the entity when uploading it via the
+// ./entities.sm.js server module. They can also be of the form '@<userID>',
+// where userID is the hexadecimal string that the backend uses in order to
+// identify users.
+// The kind of values to expect for each attributes and their interpretations
+// should be defined by the class's description. But unless otherwise specified,
+// it should be the convention to escape '#' and '@' characters in string-
+// valued attributes, as well as leading '/'s, using backslashes for doing so,
+// unless these are to be interpreted as part of an entity identifier and/or a
+// path.
 export const entities = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "All entities",
@@ -39,6 +62,7 @@ export const classes = {
   "Description": abs("./em1_aux1.js;get/classesDesc"),
 };
 
+
 // Class of all users. These are all defined solely by the userID assigned to
 // the given user and the ID or the UP node that created the user profile.
 export const users = {
@@ -56,17 +80,20 @@ export const User = (userID, upNodeID) => ({
 });
 
 
-// Class of all texts. Texts can be defined in many ways, and the don't have
-// to be "referential entities," i.e. entities represented by objects with a
-// "Class" attribute, etc. They can also just be JS strings or JSX elements,
-// and in fact, this ought be the norm for the texts created by users of this
-// system, which is why the "Common attributes" below is meant for when the
-// texts in an external one.
+// Class of all texts. Texts can be defined in many ways, so while this class
+// of all text introduces the "Common attributes" of "Path" and "URL" to locate
+// the text's content, it is expected that users might also define subclasses
+// of this 'Texts' class and give them different "Common attributes," such that
+// texts can be defined in other ways.
+// Note that the "Path" attribute here is meant to be an internal path/route
+// to the text (which can either be a JS string or a JSXElement instance), and
+// the "URL" attribute is meant to be used if the text has a URL on the WWW.
+// At least one of those two attributes is meant to be defined.
 export const texts = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Texts",
   "Superclass": abs("./em1.js;get/entities"),
-  "Common attributes": ["Title", "URL"],
+  "Common attributes": ["Title", "Path", "URL"],
   "Description": abs("./em1_aux1.js;get/textsDesc"),
 };
 
@@ -340,43 +367,43 @@ export const derivedQualities = {
 // might depend on the user viewing them, as different users might choose
 // different user groups to query, and/or different algorithms to aggregate the
 // scores, the scored lists are supposed to be objectively defined and thus
-// independent of the user viewing or accessing the list. This 'scored lists'
-// class is not a class of referential entities, hence the lack of a "Common
-// attributes" or "Constructor" attribute, but is instead a class entities that
-// are all JS objects, preferably all instances of the ScoredList class below.
+// independent of the user viewing or accessing the list.
 export const scoredLists = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Scored lists",
   "Superclass": abs("./em1.js;get/entities"),
-  "Description": abs("./em1_aux1.js;get/scoredListsDesc"),
-};
+  "Common attributes": [
+  // fetchScoreData(subjIdent) fetches the score data for the given "subject,"
+  // i.e. the given entity on the list. "Score data" refers here to a [score,
+  // weight, auxData?] array, as described above. Note that an "identifier"
+  // (shortened to "ident") here can be either an absolute entity path, a user
+  // ID prefixed by "@", an entity ID prefixed with "#", or can also just be
+  // the entity ID without the leading "#".
+  "fetchScoreData",
 
-export class ScoredList {
-
-  // "Score data" refers to a [score, weight, auxData?] array, as described
-  // above. Note that an "identifier" (shortened to "ident") here can be either
-  // an absolute entity path, a user ID prefixed by "@", an entity ID prefixed
-  // with "#", or can also just be the entity ID without the leading "#".
-  fetchScoreData(subjIdent) {}
-
-  // When fetching a scored list, the arguments 'lo', 'hi', 'maxNum', 'offset',
-  // and 'isAscending' specifies which section of the list should be returned.
-  // (And and all these arguments should have default values and thus be
-  // optional.) Each row of the returned table (2-dimensional array) should be
-  // of the form [entID, score, weight?, auxData?], but note that auxData in
+  // fetchList({lo, hi, maxNum, offset, isAscending}) fetches a section of the
+  // scored list as a 2-dimensional array. The arguments 'lo', 'hi', 'maxNum',
+  // 'offset', and 'isAscending' specifies which section of the list should be
+  // returned. (And and all these arguments should have default values and thus
+  // be optional.) Each row of the returned 2-dimensional array should be of
+  // the form [entID, score, weight?, auxData?], but note that auxData in
   // particular does not need to be included here even if it exists (and can
   // also just contain only a subset of the full auxData objects properties).
   // (You generally don't want to include any data that is stored in the
   // "payload" column of the BTT table.)
-  fetchList({lo, hi, maxNum, offset, isAscending}) {}
+  "fetchList",
 
-  // Fetch the [entID, score, weight?, auxData?] of the entity with the highest
-  // score. This method is useful for fetching one-to-one "scored properties"
-  // of an entity (i.e. properties that are defined via relations rather than
-  // as part of the entity's "attributes").
-  fetchTopEntry() {}
+  // fetchTopEntry() fetches the [entID, score, weight?, auxData?] of the
+  // subject with the highest score on the list. This method is useful for
+  // fetching one-to-one "scored properties" of an entity (i.e. properties that
+  // are defined via relations rather than as part of the entity's
+  // "attributes").
+  "fetchTopEntry",
 
-}
+  ],
+  "Description": abs("./em1_aux1.js;get/scoredListsDesc"),
+};
+
 
 
 // User groups are defined from just a single scored list, namely a list of
@@ -397,94 +424,95 @@ export const userGroups = {
 
 
 
-// ScoreHandlers are a class of JS objects, which might be an instances of the
-// ScoreHandler JS class below, or should at least follow the same API to some
-// extend. A ScoreHandler is an extensive JS object that handles almost
+// Score handlers are extensive objects with methods that handle almost
 // everything about the scores of both the semantic and the derived qualities:
 // How they are fetched, where they are stored, how they are updated, how they
 // are aggregated (e.g. whether to use the mean or the median for a given
 // quality), which "areas of concern" (AoC) are used for which quality and what
 // user group is chosen for each AoC.
-// Since ScoreHandlers are able to adjust their methods to the specific user's
-// own preferences, it is likely that the user base will gravitate towards using
-// the same (advanced) ScoreHandler in the end. But the development of a better
-// and better ScoreHandler will require experimentation, where some (super)users
-// will develop and/or try new versions, which is why we need for users to be
-// able to choose between more than just one ScoreHandler for the app, hence the
-// need for this 'Score handlers' class.
+// Since score handlers are able to adjust their methods to the specific user's
+// own preferences, it is likely that the user base will gravitate towards
+// using the same (advanced) score handler in the end. But the development of a
+// better and better score handler will require experimentation, where some
+// (super)users will develop and/or try new versions, which is why we need for
+// users to be able to choose between more than just one score handler for the
+// app, hence the need for this 'Score handlers' class.
 export const scoreHandlers = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Score handlers",
   "Superclass": abs("./em1.js;get/entities"),
+  "Common attributes": [
+    // fetchScoreData(qualIdent, subjIdent, options) is similar to
+    // fetchScoreData() of the scored lists, except that you need to specify
+    // the quality that the scores concern.
+    // Furthermore, the 'options' argument can contain auxiliary parameters
+    // such as a 'userGroup' option, which overrides whatever user group the
+    // score handler would choose by default for the quality, and for the given
+    // user.
+    // Another important option is a 'query' option, with the (optional) values
+    // of "user", "user-first", and "group". If "user" is chosen, the score
+    // handler should only return the user's own score (possibly undefined).
+    // If "user-first" is chosen, the score handler will query for both the
+    // user's own score and that of the appropriate user group, and return the
+    // former only if it is defined, and else return the latter. And a value of
+    // "group" means that only the user group is queried.  
+    "fetchScoreData",
+
+    // fetchList(qualIdent, options) is similar to the fetchList() method of
+    // scored lists, but where the 'lo', 'hi', 'maxNum', 'offset', and
+    // 'isAscending' parameters are part of the 'options' object.
+    // There's also an important 'minWeight' option, which defines the minimum
+    // weight that a score needs to have in order to be shown in the list. One
+    // might think that 0 would be the natural default value for this, but it
+    // will actually probably be better for a score handler to choose a
+    // positive default value, such as e.g. 10. This will mean that the app can
+    // show weight-filtered lists as the default option (and rely on the score
+    // handler to choose default weight threshold), making the search result
+    // more reliable than if just showing all the elements. And if a user is
+    // interested to see of their are other candidates for list entries that
+    // just haven't got a sufficient amount of scores yet, they can then adjust
+    // the minWeight option manually (via some input field somewhere) to see
+    // more of the candidates for the list.  
+    "fetchList",
+
+
+    // fetchTopEntry(qualIdent) is similar to fetchTopEntry() method of scored
+    // lists.
+    "fetchTopEntry",
+
+    // updateScoreForUser(qualIdent, subjIdent, userID): When a user submits a
+    // score for a quality, this method should be called.
+    "updateScoreForUser",
+
+    // updateScoreForGroup(qualIdent, subjIdent): When viewing a score from a
+    // user group, the app might afford a button to "refresh"/"update" the
+    // score for the given subject. If the user clicks that button, this
+    // methods should then be called.
+    "updateScoreForGroup",
+
+    // updateList(qualIdent) is similar to updateScoreForGroup() but for a
+    // whole list of subjects at once. When viewing a scored list, the app
+    // might thus provide also afford a "refresh"/"update" button to click.
+    // Note that since updating a whole list might be expensive, the score
+    // handler might use a SMF for such updates, that rather than running the
+    // whole update each time, instead just deposits some gas at the server
+    // module (see the filetypes/text_files.js module in the src folder for the
+    // 'query' dev lib), and then only run the update once enough gas has been
+    // deposited. (And updateScoreForGroup() can also do the same for that
+    // matter.)
+    "updateList",
+
+    // getDefaultOptions(qualIdent) returns the default options chosen by the
+    // score handler for a given quality, which allows the app to inform the
+    // user of these choices should they inspect the score in more detail.
+    // Thus, if the user open a menu to adjust the search options, e.g. when
+    // viewing a list, the appropriate initial values of the various input
+    // fields can be gotten from this method.
+    "getDefaultOptions",
+
+  ],
   "Description": abs("./em1_aux1.js;get/scoreHandlersDesc"),
 };
-
-export class ScoreHandler {
-
-  // This method is similar to ScoredList.fetchScoreData(), except that you
-  // need to specify the quality that the scores concern. Furthermore, the
-  // 'options' argument can contain auxiliary like a 'userGroup' option, which
-  // overrides whatever user group the ScoreHandler would choose by default for
-  // the quality, and for the given user.
-  // Another important option is a 'query' option, with the (optional) values
-  // of "user", "user-first", and "group". If "user" is chosen, the ScoreHandler
-  // should only return the user's own score (possibly undefined). If "user-
-  // first" is chosen, the ScoreHandler will query for both the user's own
-  // score and that of the appropriate user group, and return the former only
-  // if is defined, and else return the latter. And a value of "group" means
-  // that only the user group is queried.  
-  fetchScoreData(qualIdent, subjIdent, options) {}
-
-  // This method is similar to ScoredList.fetchList(), but where the 'lo',
-  // 'hi', 'maxNum', 'offset', and 'isAscending' parameters are part of the
-  // 'options' object.
-  // There's also an important 'minWeight' option, which defines the minimum
-  // weight that a score needs to have in order to be shown in the list. One
-  // might think that 0 would be the natural default value for this, but it
-  // will actually probably be better for a ScoreHandler to choose a positive
-  // default value, such as e.g. 10. This will mean that the app can show
-  // weight-filtered lists as the default option (and rely on the ScoreHandler
-  // to choose default weight threshold), making the search result more
-  // reliable than if just showing all the elements. And if a user is
-  // interested to see of their are other candidates for list entries that just
-  // haven't got a sufficient amount of scores yet, they can then adjust the
-  // minWeight option manually (via some input field somewhere) to see more of
-  // the candidates for the list.  
-  fetchList(qualIdent, options) {}
-
-
-  // This method is similar to ScoredList.fetchTopEntry()
-  fetchTopEntry(qualIdent) {}
-
-
-  // When a user submits a score for a quality, this method should be called.
-  updateScoreForUser(qualIdent, subjIdent, userID) {}
-
-  // When viewing a score from a user group, the app might afford a button to
-  // "refresh" or "update" the score for the given subject. If the user clicks
-  // that, this methods should then be called.
-  updateScoreForGroup(qualIdent, subjIdent) {}
-
-  // Similar to updateScoreForGroup() but for a whole list of subjects at once.
-  // When viewing a scored list, the app might thus provide also afford a
-  // "refresh"/"update" button to click. Note that since updating a whole list
-  // might be expensive, the ScoreHandler might use a SMF for such updates,
-  // that rather than running the whole update each time, instead just deposits
-  // some gas at the server module (see the filetypes/text_files.js module in
-  // the src folder for the 'query' dev lib), and then only run the update once
-  // enough gas has been deposited. (And updateScoreForGroup() can also do the
-  // same for that matter.)
-  updateList(qualIdent) {}
-
-  // Function to get the default options chosen by the ScoreHandler for a given
-  // quality, which allows the app to inform the user of these choices should
-  // they inspect the score in more detail. Thus, if the user open a menu to
-  // adjust the search options, e.g. when viewing a list, the appropriate
-  // initial values of the various input fields can be gotten from this method.
-  getDefaultOptions(qualIdent) {}
-
-}
-
 
 
 

@@ -192,3 +192,30 @@ export const getCurrentHomePath = new DevFunction(
   }
 );
 
+
+
+
+
+export const clearPermissions = new DevFunction(
+  "clearPermissions", {},
+  async function(
+    {callerNode, execEnv, interpreter},
+    [callback]
+  ) {
+    return interpreter.executeFunction(
+      callback, [], callerNode, execEnv, undefined, [CLEAR_FLAG]
+    );
+  }
+);
+
+export const noPost = new DevFunction(
+  "noPost", {},
+  async function(
+    {callerNode, execEnv, interpreter},
+    [callback]
+  ) {
+    return interpreter.executeFunction(
+      callback, [], callerNode, execEnv, undefined, [[CAN_POST_FLAG, false]]
+    );
+  }
+);

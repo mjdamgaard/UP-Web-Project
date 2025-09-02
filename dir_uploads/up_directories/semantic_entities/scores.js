@@ -2,12 +2,12 @@
 
 
 import homePath from "./.id.js";
-import {fetch} from 'query';
+import {fetch, noPost} from 'query';
 import {map, join} from 'array';
 import {min} from 'math';
 import {hexToArray, valueToHex, hexFromArray} from 'hex';
 import {
-  fetchEntityID, fetchEntityPath, fetchEntityDefinition,
+  fetchEntityID, fetchEntityDefinition,
 } from "../../entities.sm.js";
 
 
@@ -310,13 +310,14 @@ export function fetchUserListIdent(userGroupIdent) {
   });
 }
 
-export function fetchScoreDataFromScoredList(listIdent, subjID) {
+export function fetchScoreDataFromScoredList(listIdent, subjIdent) {
   return new Promise(resolve => {
-    fetchEntityDefinition(listIdent).then(listDef => {
-      let scoreHandler = listDef["ScoreHandler"];
-      scoreHandler.fetchScoreDataFromScoredList(listIdent, subjID).then(
-        scoreData => resolve(scoreData)
-      );
+    fetchEntityDefinition(listIdent).then(listObj => {
+      noPost(() => {
+        listObj.fetchScoreData(subjIdent).then(
+          scoreData => resolve(scoreData)
+        );
+      });
     });
   });
 }
