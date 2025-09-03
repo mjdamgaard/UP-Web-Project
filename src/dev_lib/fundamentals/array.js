@@ -31,6 +31,21 @@ export const map = new DevFunction(
   }
 );
 
+export const reduce = new DevFunction(
+  "reduce", {typeArr: ["array", "function", "any?"]},
+  ({callerNode, execEnv, interpreter}, [arr, fun, initVal]) => {
+    if (arr instanceof ObjectObject) arr = arr.members;
+    return arr.reduce(
+      (acc, val, ind) => {
+        return interpreter.executeFunction(
+          fun, [acc, val, ind], callerNode, execEnv
+        );
+      },
+      initVal
+    );
+  }
+);
+
 export const forEach = new DevFunction(
   "forEach", {typeArr: ["any", "function"]},
   ({callerNode, execEnv, interpreter}, [arr, fun]) => {
