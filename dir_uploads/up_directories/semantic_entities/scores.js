@@ -229,12 +229,12 @@ export function postUserScore(
 
 // A function to fetch whole score--weight list.
 export function fetchScoreAndWeightList(
-  tableFilePath, qualIdent, otherListIDsOrPaths, lo, hi, maxNum, numOffset,
+  tableFilePath, qualIdent, otherListIDsOrPaths, lo, hi, maxNum, offset,
   isAscending,
 ) {
   return new Promise(resolve => {
     fetchScoreHexList(
-      tableFilePath, qualIdent, otherListIDsOrPaths, lo, hi, maxNum, numOffset,
+      tableFilePath, qualIdent, otherListIDsOrPaths, lo, hi, maxNum, offset,
       isAscending,
     ).then(list => {
       resolve(map(list, ([entID, scoreAndWeightHex]) => {
@@ -250,7 +250,7 @@ export function fetchScoreAndWeightList(
 
 // A function to fetch the hex-encoded score of any BTT table.
 export function fetchScoreHexList(
-  tableFilePath, qualIdent, otherListIDsOrPaths, lo, hi, maxNum, numOffset,
+  tableFilePath, qualIdent, otherListIDsOrPaths, lo, hi, maxNum, offset,
   isAscending,
 ) {
   return new Promise(resolve => {
@@ -267,7 +267,7 @@ export function fetchScoreHexList(
         (lo === undefined ? "" : "/lo=" + lo) +
         (hi === undefined ? "" : "/hi=" + hi) +
         (maxNum === undefined ? "" : "/n=" + maxNum) +
-        (numOffset === undefined ? "" : "/o=" + numOffset) +
+        (offset === undefined ? "" : "/o=" + offset) +
         (isAscending === undefined ? "" : "/a=" + isAscending)
       ).then(
         list => resolve(list)
@@ -324,7 +324,7 @@ export function fetchScoreDataFromScoredList(listIdent, subjIdent) {
 
 
 export function fetchUserList(
-  userGroupIdent, lo, hi, maxNum, numOffset, isAscending
+  userGroupIdent, lo, hi, maxNum, offset, isAscending
 ) {
 
 }

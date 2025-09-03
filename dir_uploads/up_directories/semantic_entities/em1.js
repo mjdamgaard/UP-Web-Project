@@ -393,12 +393,12 @@ export const scoredLists = {
     // is stored in the "payload" column of the BTT table.)
     "fetchList",
 
-    // fetchTopEntry() fetches the [entID, score, weight?, auxData?] of the
-    // subject with the highest score on the list. This method is useful for
-    // fetching one-to-one "scored properties" of an entity (i.e. properties
-    // that are defined via relations rather than as part of the entity's
-    // "attributes").
-    "fetchTopEntry",
+    // // fetchTopEntry() fetches the [entID, score, weight?, auxData?] of the
+    // // subject with the highest score on the list. This method is useful for
+    // // fetching one-to-one "scored properties" of an entity (i.e. properties
+    // // that are defined via relations rather than as part of the entity's
+    // // "attributes").
+    // "fetchTopEntry",
 
     // Documentation describing the scored list is generated.
     "Documentation",
@@ -477,24 +477,19 @@ export const scoreHandlers = {
     // more of the candidates for the list.  
     "fetchList",
 
-
-    // fetchTopEntry(qualIdent) is similar to fetchTopEntry() method of scored
-    // lists.
-    "fetchTopEntry",
-
-    // updateScoreForUser(qualIdent, subjIdent, userID): When a user submits a
-    // score for a quality, this method should be called.
+    // updateScoreForUser(qualIdent, subjIdent, userID, options): When a user
+    // submits a score for a quality, this method should be called.
     "updateScoreForUser",
 
-    // updateScoreForGroup(qualIdent, subjIdent): When viewing a score from a
-    // user group, the app might afford a button to "refresh"/"update" the
-    // score for the given subject. If the user clicks that button, this
+    // updateScoreForGroup(qualIdent, subjIdent, options): When viewing a score
+    // from a user group, the app might afford a button to "refresh"/"update"
+    // the score for the given subject. If the user clicks that button, this
     // methods should then be called.
     "updateScoreForGroup",
 
-    // updateList(qualIdent) is similar to updateScoreForGroup() but for a
-    // whole list of subjects at once. When viewing a scored list, the app
-    // might thus provide also afford a "refresh"/"update" button to click.
+    // updateList(qualIdent, options) is similar to updateScoreForGroup() but
+    // for a whole list of subjects at once. When viewing a scored list, the
+    // app might thus provide also afford a "refresh"/"update" button to click.
     // Note that since updating a whole list might be expensive, the score
     // handler might use a SMF for such updates, that rather than running the
     // whole update each time, instead just deposits some gas at the server
@@ -636,28 +631,24 @@ export const agreement = {
 
 
 
-// This "Trust" quality is meant as a standard way to obtain the weighted user
-// lists that are used for user groups, namely by having a "moderator group"
-// that scores other users, and themselves, with respect to this "Trust"
-// quality. And then the resulting weight of each user in the new user group is
-// supposed to be the average/median Trust scored by the moderator group. Now,
-// as things progress, it is likely that users will create more specific sub-
-// qualities of this one, which will define the sought-for qualities of the new
-// user group in more detail. (For instance, one might make sub-qualities of
-// "Trusted w.r.t. URL safety" or "Trusted w.r.t. (the field of) Quantum
-// Mechanics", etc.) But initially, this more vague "Trust" quality will
+// This "Trusted" quality is meant as a standard way to obtain the weighted
+// user lists that are used for user groups, namely by having a "moderator
+// group" that scores other users, and themselves, with respect to this
+// "Trusted" quality. The quality uses the predicate metric, with the range
+// from -10 to 10, and how this range is converted to a (non-negative) weight
+// is up to who defines the user list. 
+// Now, as things progress, it is likely that users will create more specific
+// sub- qualities of this one, which will define the sought-for qualities of
+// the new user group in more detail. (For instance, one might make sub-
+// qualities of "Trusted w.r.t. URL safety" or "Trusted w.r.t. (the field of)
+// Chemistry", etc.) But initially, this more vague "Trusted" quality will
 // probably do.
-// Oh, and note that we deliberately use the dimensionlessMetric rather than
-// the positiveDimensionlessMetric, as this will make it easier to vote users
-// completely out of the new group, namely such negative "Trust" scores are
-// just meant to be filtered out before turning into a (non-negative) user
-// weight. 
-export const trust = {
+export const trusted = {
   "Class": abs("./em1.js;get/qualities"),
-  "Label": "Trust",
+  "Label": "Trusted",
   "Domain": abs("./em1.js;get/users"),
-  "Default metric": abs("./em1.js;get/dimensionlessMetric"),
-  "Description": abs("./em1_aux1.js;get/trustDesc"),
+  "Default metric": abs("./em1.js;get/predicateMetric"),
+  "Description": abs("./em1_aux1.js;get/trustedDesc"),
 };
 
 

@@ -681,7 +681,7 @@ CREATE PROCEDURE insertATTList (
     IN filePath VARCHAR(700),
     IN listIDHex VARCHAR(510),
     IN listArrJSON JSON,
-    IN doOverwrite BOOL
+    IN doIgnore BOOL
 )
 proc: BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
@@ -696,7 +696,7 @@ proc: BEGIN
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
-    IF (doOverwrite) THEN
+    IF (NOT doIgnore) THEN
         INSERT INTO AutoKeyTextTables (
             file_id, list_id, text_id, text_data
         )
@@ -817,7 +817,7 @@ CREATE PROCEDURE insertBTEntry (
     IN listIDHex VARCHAR(510),
     IN elemKeyHex VARCHAR(510),
     IN elemPayloadHex VARCHAR(510),
-    IN doOverwrite BOOL
+    IN doIgnore BOOL
 )
 proc: BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
@@ -841,7 +841,7 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (doOverwrite) THEN
+    IF (NOT doIgnore) THEN
         INSERT INTO BinaryKeyTables (
             file_id, list_id, elem_key, elem_payload
         )
@@ -986,7 +986,7 @@ CREATE PROCEDURE insertBTList (
     IN filePath VARCHAR(700),
     IN listIDHex VARCHAR(510),
     IN listArrJSON JSON,
-    IN doOverwrite BOOL
+    IN doIgnore BOOL
 )
 proc: BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
@@ -1008,7 +1008,7 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (doOverwrite) THEN
+    IF (NOT doIgnore) THEN
         INSERT INTO BinaryKeyTables (
             file_id, list_id, elem_key, elem_payload
         )
@@ -1127,7 +1127,7 @@ CREATE PROCEDURE insertCTEntry (
     IN listIDHex VARCHAR(510),
     IN elemKeyHex VARCHAR(510),
     IN elemPayloadHex VARCHAR(510),
-    IN doOverwrite BOOL
+    IN doIgnore BOOL
 )
 proc: BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
@@ -1151,7 +1151,7 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (doOverwrite) THEN
+    IF (NOT doIgnore) THEN
         INSERT INTO CharKeyTables (
             file_id, list_id, elem_key, elem_payload
         )
@@ -1297,7 +1297,7 @@ CREATE PROCEDURE insertCTList (
     IN filePath VARCHAR(700),
     IN listIDHex VARCHAR(510),
     IN listArrJSON JSON,
-    IN doOverwrite BOOL
+    IN doIgnore BOOL
 )
 proc: BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
@@ -1319,7 +1319,7 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (doOverwrite) THEN
+    IF (NOT doIgnore) THEN
         INSERT INTO CharKeyTables (
             file_id, list_id, elem_key, elem_payload
         )
@@ -1446,7 +1446,7 @@ CREATE PROCEDURE insertBBTEntry (
     IN elemKeyHex VARCHAR(510),
     IN elemScoreHex VARCHAR(510),
     IN elemPayloadHex VARCHAR(510),
-    IN doOverwrite BOOL
+    IN doIgnore BOOL
 )
 proc: BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
@@ -1471,7 +1471,7 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (doOverwrite) THEN
+    IF (NOT doIgnore) THEN
         INSERT INTO BinaryKeyBinaryScoreTables (
             file_id, list_id, elem_key, elem_score, elem_payload
         )
@@ -1660,7 +1660,7 @@ CREATE PROCEDURE insertBBTList (
     IN filePath VARCHAR(700),
     IN listIDHex VARCHAR(510),
     IN listArrJSON JSON,
-    IN doOverwrite BOOL
+    IN doIgnore BOOL
 )
 proc: BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
@@ -1682,7 +1682,7 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    IF (doOverwrite) THEN
+    IF (NOT doIgnore) THEN
         INSERT INTO BinaryKeyBinaryScoreTables (
             file_id, list_id, elem_key, elem_score, elem_payload
         )

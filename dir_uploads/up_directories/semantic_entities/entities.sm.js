@@ -37,7 +37,7 @@ export function postEntity(entPath, useSecIdx = true) {
         post(homePath + "/entPaths.att/_insert", entPath).then(entID => {
           post(
             homePath + "/entIDs.bt/_insert/k=" + entPathHex +
-            "/p=" + entID + "/o=0"
+            "/p=" + entID + "/i=1"
           );
           resolve(entID);
         });
@@ -67,7 +67,7 @@ export function addSecondaryIndex(entID) {
           // not been inserted for that same entPath in the meantime.
           post(
             homePath + "/entIDs.bt/_insert/k=" + entPathHex +
-            "/p=" + entID + "/o=0"
+            "/p=" + entID + "/i=1"
           ).then(wasUpdated => resolve(wasUpdated));
         }
       );

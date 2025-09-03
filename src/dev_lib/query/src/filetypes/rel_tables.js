@@ -261,9 +261,9 @@ export async function query(
   }
 
   // If route equals ".../<homeDirID>/<filepath>/_insert/[/l=<listID>]" +
-  // "[/k=<elemKey>][/s=<elemScore>][/p=<elemPayload>][/o=<overwrite>]", insert
-  // a single table entry with those row values, ignoring any existing entry
-  // of the same key, unless the overwrite parameter (o) is defined and truthy.
+  // "[/k=<elemKey>][/s=<elemScore>][/p=<elemPayload>][/i=<ignore>]", insert
+  // a single table entry with those row values, overwriting any existing entry
+  // of the same key, unless the ignore parameter (i) is defined and truthy.
   // This does not apply .att files, but for these, if elemKey is defined and
   // not the empty string, the entry will be overwritten if one already exist.
   if (queryType === "_insert") {
@@ -289,9 +289,9 @@ export async function query(
     }
     let {
       l: listID = "", k: elemKey = "", s: elemScore = "", p: elemPayload = "",
-      o: overwrite = 1,
+      i: ignore,
     } = paramObj;
-    overwrite = overwrite ? 1 : 0;
+    ignore = ignore ? 1 : 0;
     if (postData) {
       elemPayload = postData;
     }
@@ -299,10 +299,10 @@ export async function query(
       elemPayload.length;
     payGas(callerNode, execEnv, {dbWrite: rowLen});
     let paramValArr = (fileExt === "bbt") ?
-      [homeDirID, filePath, listID, elemKey, elemScore, elemPayload, overwrite]
+      [homeDirID, filePath, listID, elemKey, elemScore, elemPayload, ignore]
       : (fileExt === "att") ?
         [homeDirID, filePath, listID, elemKey, elemPayload] :
-        [homeDirID, filePath, listID, elemKey, elemPayload, overwrite];
+        [homeDirID, filePath, listID, elemKey, elemPayload, ignore];
     let [[wasUpdatedOrNewID] = []] = await dbQueryHandler.queryDBProc(
       procName, paramValArr, route, options, callerNode, execEnv,
     ) ?? [];
@@ -310,9 +310,9 @@ export async function query(
   }
 
   // If route equals ".../<homeDirID>/<filepath>/_insertList[/l=<listID>]" +
-  // "[/o=<overwrite>]", treat postData as an array of rows to insert into the
-  // table. The overwrite parameter also determines whether to ignore on
-  // duplicate keys or to overwrite. For .att files, if overwrite is true, the
+  // "[/i=<ignore>]", treat postData as an array of rows to insert into the
+  // table. The ignore parameter also determines whether to ignore on
+  // duplicate keys or to overwrite. For .att files, if ignore is falsy, the
   // the rows of rowArr should have the form '\[<textID>,<textJSONStr>\]'. And
   // for the .bt, .ct, and .bbt files, the form should be '\[<elemKeyHex>,' +
   // '[<elemScoreHex>,][<elemPayloadHex>]\]', but where elemScoreHex should of
@@ -357,10 +357,10 @@ export async function query(
         callerNode, execEnv
       );
     }
-    let {l: listID = "", o: overwrite = 1} = paramObj;
-    overwrite = overwrite ? 1 : 0;
+    let {l: listID = "", i: ignore} = paramObj;
+    ignore = ignore ? 1 : 0;
     payGas(callerNode, execEnv, {dbWrite: postData.length});
-    let paramValArr = [homeDirID, filePath, listID, postData, overwrite];
+    let paramValArr = [homeDirID, filePath, listID, postData, ignore];
     let [[rowCount] = []] = await dbQueryHandler.queryDBProc(
       procName, paramValArr, route, options, callerNode, execEnv,
     ) ?? [];
