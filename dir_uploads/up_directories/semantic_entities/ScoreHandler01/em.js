@@ -23,28 +23,15 @@ export const initialModeratorList = {
     });
   },
 
-  fetchList: ({lo, hi, maxNum, offset, isAscending}) => {
+  fetchList: ({lo, hi, maxNum = 4000, offset = 0, isAscending = 0}) => {
     return new Promise(resolve => {
       fetchScoreAndWeightList(
-        abs("./init_mods.btt"), [], lo, hi, maxNum = 4000,
-        offset = 0, isAscending = 0
+        abs("./init_mods.btt"), [], lo, hi, maxNum, offset, isAscending
       ).then(
         list => resolve(list)
       );
     });
   },
-
-  // fetchTopEntry: () => {
-  //   return new Promise(resolve => {
-  //     fetchScoreAndWeightList(
-  //       abs("./init_mods.btt"), trustedQualIdent, [], lo, hi, maxNum = 1,
-  //       offset = 0, isAscending = 0
-  //     ).then(
-  //       (list = []) => resolve(list[0])
-  //     );
-  //   });
-  // },
-
 
   "Documentation": <div>
     <h1>{"Initial moderator list"}</h1>
@@ -86,15 +73,6 @@ export const allUsersList = {
     });
   },
 
-  // fetchTopEntry: () => {
-  //   return new Promise(resolve => {
-  //     fetch(abs(".././users.bt/skList/n=1")).then(list => {
-  //       resolve(map(list, ([userEntID]) => [userEntID, 1])[0]);
-  //     });
-  //   });
-  // },
-
-
   "Documentation": <div>
     <h1>{"All users"}</h1>
     <p>{
@@ -102,6 +80,40 @@ export const allUsersList = {
       "fetchScoreData() method just returns [userID, 1] without " +
       "checking that the user exists. And the fetchList() methods returns " +
       "the user list gotten from " + abs("./../users.bt") + "."
+    }</p>
+  </div>,
+}
+
+
+
+export const initialTrustedUsers = {
+  "Class": abs("./em1.js;get/scoredLists"),
+
+  fetchScoreData: (subjIdent) => {
+    return new Promise(resolve => {
+      fetchScoreAndWeight(
+        abs("./init_mods.btt"), [], subjIdent
+      ).then(
+        scoreData => resolve(scoreData)
+      );
+    });
+  },
+
+  fetchList: ({lo, hi, maxNum = 4000, offset = 0, isAscending = 0}) => {
+    return new Promise(resolve => {
+      fetchScoreAndWeightList(
+        abs("./init_mods.btt"), [], lo, hi, maxNum, offset, isAscending
+      ).then(
+        list => resolve(list)
+      );
+    });
+  },
+
+  "Documentation": <div>
+    <h1>{"Initial trusted users"}</h1>
+    <p>{
+      "A list of the users that the \"initial moderators\" (see " +
+      abs("./em.js;get/initialModeratorList") + ") trusts."
     }</p>
   </div>,
 }

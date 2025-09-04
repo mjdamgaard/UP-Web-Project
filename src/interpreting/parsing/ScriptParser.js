@@ -345,18 +345,23 @@ export const scriptGrammar = {
   "class-member": {
     rules: [
       ["identifier", "expression-tuple", "block-statement!"],
-      // TODO: Potentially add more kinds of class members at some point (or
-      // don't).
+      ["identifier", "/=/", "expression", "/;/"],
     ],
-    process: (children) => ({
-      type: "member",
-      ident: children[0].ident,
-      valExp: {
-        type: "function-expression",
-        params: children[1].children,
-        body: children[2],
-      },
-    }),
+    process: (children, ruleInd) => (
+      (ruleInd === 0) ? {
+        type: "member",
+        ident: children[0].ident,
+        valExp: {
+          type: "function-expression",
+          params: children[1].children,
+          body: children[2],
+        },
+      } : {
+        type: "member",
+        ident: children[0].ident,
+        valExp: children[2],
+      }
+    ),
   },
   "statement": {
     rules: [

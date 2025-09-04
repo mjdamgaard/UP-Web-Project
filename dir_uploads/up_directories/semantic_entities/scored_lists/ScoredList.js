@@ -1,30 +1,17 @@
 
-import {fetchScoreAndWeight, fetchScoreAndWeightList} from "../scores.js";
-import {fetchEntityDefinition, fetchEntityID} from "../entities.sm.js";
+import {fetchScoreAndWeight, fetchScoreAndWeightList} from "../../scores.js";
+import {fetchEntityDefinition, fetchEntityID} from "../../entities.sm.js";
 import {map, join} from 'array';
 
 
 
 
-
-// A class to generate a list combined of several other scored lists. 
-export class CombinedList {
+export class ScoredList {
   
-  constructor(ownEntPath, listIdentArr, weightFactorArr) {
+  constructor(ownEntPath, listTablePath, updateSMPath) {
     this.ownEntIDProm = fetchEntityID(ownEntPath);
-    this.listDefArrProm = Promise.all(
-      map(listIdentArr, listIdent => fetchEntityDefinition(listIdent))
-    );
-    this.weightFactorArr = weightFactorArr;
-
-    this["Documentation"] = <div>
-      <h1>{"Combined list"}</h1>
-      <p>{
-        "This scored list is combined from merging the lists: " +
-        join(listIdentArr, ", ") + ", using the respective weight factors: " +
-        join(weightFactorArr, ", ") + "."
-      }</p>
-    </div>;
+    this.listTablePath = listTablePath;
+    this.updateSMPath = updateSMPath;
   }
 
   Class = abs("./em1.js;get/scoredLists");
@@ -34,7 +21,7 @@ export class CombinedList {
     return new Promise(resolve => {
       this.ownEntIDProm.then(ownEntID => {
         fetchScoreAndWeight(
-          abs("./comb_lists.bbt"), [ownEntID], subjIdent
+          this.listTablePath, [ownEntID], subjIdent
         ).then(
           scoreData => resolve(scoreData)
         );
@@ -46,7 +33,7 @@ export class CombinedList {
     return new Promise(resolve => {
       this.ownEntIDProm.then(ownEntID => {
         fetchScoreAndWeightList(
-          abs("./comb_lists.bbt"), [ownEntID], lo, hi, maxNum, offset,
+          this.listTablePath, [ownEntID], lo, hi, maxNum, offset,
           isAscending
         ).then(
           list => resolve(list)
@@ -59,7 +46,7 @@ export class CombinedList {
     return new Promise(resolve => {
       this.ownEntIDProm.then(ownEntID => {
         post(
-          abs("./comb_lists.sm.js/callSMF/updateScore"), [ownEntID, subjIdent],
+          this.updateSMPath + "/callSMF/updateScore", [ownEntID, subjIdent],
         ).then(
           wasUpdated => resolve(wasUpdated)
         );
@@ -71,7 +58,7 @@ export class CombinedList {
     return new Promise(resolve => {
       this.ownEntIDProm.then(ownEntID => {
         post(
-          abs("./comb_lists.sm.js/callSMF/updateList"), [ownEntID],
+          this.updateSMPath + "/callSMF/updateList", [ownEntID],
         ).then(
           wasUpdated => resolve(wasUpdated)
         );

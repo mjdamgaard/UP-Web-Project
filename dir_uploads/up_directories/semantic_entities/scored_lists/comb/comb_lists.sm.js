@@ -1,8 +1,7 @@
 
-import {postScoreAndWeight} from "../scores.js";
-import {fetchEntityDefinition} from "../entities.sm.js";
+import {postScoreAndWeight} from "../../scores.js";
+import {fetchEntityDefinition} from "../../entities.sm.js";
 import {map, reduce} from 'array';
-
 
 
 
@@ -10,7 +9,11 @@ import {map, reduce} from 'array';
 export function updateScore(combListIdent, subjIdent) {
   return new Promise(resolve => {
     fetchEntityDefinition(combListIdent).then(combListDef => {
-      combListDef.listDefArrProm.then(listDefArr => {
+      let listIdentArr = combListDef.listIdentArr;
+      let listDefArrProm = Promise.all(
+        map(listIdentArr, listIdent => fetchEntityDefinition(listIdent))
+      );
+      listDefArrProm.then(listDefArr => {
         let scoreDataArrProm = Promise.all(map(listDefArr, listDef => (
           listDef.fetchScoreData(subjIdent)
         )));

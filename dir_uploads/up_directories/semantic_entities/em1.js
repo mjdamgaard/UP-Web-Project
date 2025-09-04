@@ -403,7 +403,8 @@ export const scoredLists = {
     // getLength() (optional) returns the current length of the list.
     "getLength",
 
-    // updateScore(subjID) updates the score for a given subject on the list.
+    // updateScore(subjID) (optional) updates the score for a given subject on
+    // the list.
     "updateScore",
 
     // updateList() (optional) updates the whole list.
