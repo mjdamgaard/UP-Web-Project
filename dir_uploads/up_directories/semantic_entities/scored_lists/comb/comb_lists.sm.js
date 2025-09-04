@@ -1,7 +1,8 @@
 
 import {postScoreAndWeight} from "../../scores.js";
-import {fetchEntityDefinition} from "../../entities.sm.js";
+import {fetchEntityDefinition, fetchEntityID} from "../../entities.sm.js";
 import {map, reduce} from 'array';
+import {noPost} from 'query';
 
 
 
@@ -9,13 +10,14 @@ import {map, reduce} from 'array';
 export function updateScore(combListIdent, subjIdent) {
   return new Promise(resolve => {
     fetchEntityDefinition(combListIdent).then(combListDef => {
+      let listIDProm = fetchEntityID(combListDef.ownEntPath);
       let listIdentArr = combListDef.listIdentArr;
       let listDefArrProm = Promise.all(
         map(listIdentArr, listIdent => fetchEntityDefinition(listIdent))
       );
       listDefArrProm.then(listDefArr => {
         let scoreDataArrProm = Promise.all(map(listDefArr, listDef => (
-          listDef.fetchScoreData(subjIdent)
+          noPost(() => listDef.fetchScoreData(subjIdent))
         )));
         scoreDataArrProm.then(scoreDataArr => {
           // Aggregate the score and weight into one combined pair (ignoring
@@ -33,12 +35,14 @@ export function updateScore(combListIdent, subjIdent) {
           );
 
           // Then post this combined score and weight.
-          postScoreAndWeight(
-            abs("./comb_lists.bbt"), combListIdent, subjIdent,
-            ...combinedScoreData
-          ).then(
-            wasUpdated => resolve(wasUpdated)
-          );
+          listIDProm.then(listID => {
+            postScoreAndWeight(
+              abs("./comb_lists.bbt"), [listID], subjIdent,
+              combinedScoreData[0], combinedScoreData[1]
+            ).then(
+              wasUpdated => resolve(wasUpdated)
+            );
+          });
         });
       });
     });

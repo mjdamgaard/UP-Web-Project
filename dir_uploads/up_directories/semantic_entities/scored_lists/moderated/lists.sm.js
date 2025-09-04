@@ -1,7 +1,7 @@
 
 import {postScoreAndWeight} from "../../scores.js";
-import {fetchEntityDefinition} from "../../entities.sm.js";
-import {map, reduce} from 'array';
+import {fetchEntityDefinition, fetchEntityID} from "../../entities.sm.js";
+import {noPost} from 'query';
 
 
 
@@ -9,20 +9,28 @@ import {map, reduce} from 'array';
 export function updateScore(listIdent, subjIdent) {
   return new Promise(resolve => {
     fetchEntityDefinition(listIdent).then(listDef => {
-      let {userGroupIdent, qualIdent, scoreHandlerIdent, convert} = listDef;
-      
+      let {
+        ownEntPath, userGroupIdent, qualIdent, scoreHandlerIdent, convert
+      } = listDef;
+      fetchEntityID(ownEntPath).then(listID => {
+        fetchEntityDefinition(scoreHandlerIdent).then(scoreHandler => {
+          noPost(() => scoreHandler.fetchScoreData(
+            qualIdent, subjIdent, {userGroup: userGroupIdent}
+          )).then(scoreData => {
+            postScoreAndWeight(
+              abs("./lists.bbt"), [listID], subjIdent,
+              noPost(() => convert(scoreData[0])), scoreData[1]
+            ).then(
+              wasUpdated => resolve(wasUpdated)
+            );
+          });
+        });
+      });
     });
   });
 }
 
 
-    // // Then post this combined score and weight.
-    // postScoreAndWeight(
-    //   abs("./comb_lists.bbt"), listIdent, subjIdent,
-    //   ...combinedScoreData
-    // ).then(
-    //   wasUpdated => resolve(wasUpdated)
-    // );
 
 export function updateList(combListIdent) {
   // TODO: Implement.
