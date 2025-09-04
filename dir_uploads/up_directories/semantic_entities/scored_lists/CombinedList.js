@@ -57,21 +57,25 @@ export class CombinedList {
 
   updateScore(subjIdent) {
     return new Promise(resolve => {
-      post(
-        abs("./comb_lists.sm.js/callSMF/updateScore"), [subjIdent],
-      ).then(
-        wasUpdated => resolve(wasUpdated)
-      );
+      this.ownEntIDProm.then(ownEntID => {
+        post(
+          abs("./comb_lists.sm.js/callSMF/updateScore"), [ownEntID, subjIdent],
+        ).then(
+          wasUpdated => resolve(wasUpdated)
+        );
+      });
     });
   }
 
   updateList() {
     return new Promise(resolve => {
-      post(
-        abs("./comb_lists.sm.js/callSMF/updateList")
-      ).then(
-        wasUpdated => resolve(wasUpdated)
-      );
+      this.ownEntIDProm.then(ownEntID => {
+        post(
+          abs("./comb_lists.sm.js/callSMF/updateList"), [ownEntID],
+        ).then(
+          wasUpdated => resolve(wasUpdated)
+        );
+      });
     });
   }
 
