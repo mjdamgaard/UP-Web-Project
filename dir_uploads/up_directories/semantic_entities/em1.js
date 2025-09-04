@@ -368,6 +368,13 @@ export const derivedQualities = {
 // different user groups to query, and/or different algorithms to aggregate the
 // scores, the scored lists are supposed to be objectively defined and thus
 // independent of the user viewing or accessing the list.
+// The lists that the app shows the users whenever they e.g. browse a quality
+// are also referred to as 'scored lists,' but these are generally just
+// 'anonymous' ones. Scored lists can also be defined via a 'scored list'
+// entity of the following class. And while the anonymous scored lists might
+// only exist for a moment, the entity-defined scored lists are supposed to be
+// stored in a table on its own, which is why these entities do not only have
+// methods to fetch data from the list, but also methods to update it.
 export const scoredLists = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Scored lists",
@@ -393,12 +400,14 @@ export const scoredLists = {
     // is stored in the "payload" column of the BTT table.)
     "fetchList",
 
-    // // fetchTopEntry() fetches the [entID, score, weight?, auxData?] of the
-    // // subject with the highest score on the list. This method is useful for
-    // // fetching one-to-one "scored properties" of an entity (i.e. properties
-    // // that are defined via relations rather than as part of the entity's
-    // // "attributes").
-    // "fetchTopEntry",
+    // getLength() (optional) returns the current length of the list.
+    "getLength",
+
+    // updateScore(subjID) updates the score for a given subject on the list.
+    "updateScore",
+
+    // updateList() (optional) updates the whole list.
+    "updateList",
 
     // Documentation describing the scored list is generated.
     "Documentation",

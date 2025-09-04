@@ -17,7 +17,7 @@ export class Aggregator {
   fetchScore(userGroupIdent, qualIdent, subjIdent) {
     return new Promise(resolve => {
       fetchScoreAndWeight(
-        this.aggrPath, qualIdent, [userGroupIdent], subjIdent
+        this.aggrPath, [qualIdent, userGroupIdent], subjIdent
       ).then(
         ([score]) => resolve(score)
       );
@@ -27,7 +27,7 @@ export class Aggregator {
   fetchScoreAndWeight(userGroupIdent, qualIdent, subjIdent) {
     return new Promise(resolve => {
       fetchScoreAndWeight(
-        this.aggrPath, qualIdent, [userGroupIdent], subjIdent
+        this.aggrPath, [qualIdent, userGroupIdent], subjIdent
       ).then(
         scoreAndWeight => resolve(scoreAndWeight)
       );
@@ -38,7 +38,7 @@ export class Aggregator {
   fetchList(userGroupIdent, qualIdent, {lo, hi, maxNum, offset, isAscending}) {
     return new Promise(resolve => {
       fetchScoreAndWeightList(
-        this.aggrPath, qualIdent, [userGroupIdent], lo, hi, maxNum, offset,
+        this.aggrPath, [qualIdent, userGroupIdent], lo, hi, maxNum, offset,
         isAscending,
       ).then(
         list => resolve(list)

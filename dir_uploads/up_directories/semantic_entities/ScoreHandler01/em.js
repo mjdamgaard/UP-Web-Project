@@ -16,7 +16,7 @@ export const initialModeratorList = {
   fetchScoreData: (subjIdent) => {
     return new Promise(resolve => {
       fetchScoreAndWeight(
-        abs("./init_mods.btt"), trustedQualIdent, [], subjIdent
+        abs("./init_mods.btt"), [], subjIdent
       ).then(
         scoreData => resolve(scoreData)
       );
@@ -26,7 +26,7 @@ export const initialModeratorList = {
   fetchList: ({lo, hi, maxNum, offset, isAscending}) => {
     return new Promise(resolve => {
       fetchScoreAndWeightList(
-        abs("./init_mods.btt"), trustedQualIdent, [], lo, hi, maxNum = 4000,
+        abs("./init_mods.btt"), [], lo, hi, maxNum = 4000,
         offset = 0, isAscending = 0
       ).then(
         list => resolve(list)

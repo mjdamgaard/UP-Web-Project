@@ -34,10 +34,10 @@ export function updateScoreForUser(
       // previous score contributed to this aggregate, if any.
       let curUserScoreProm = fetchUserScore(qualID, subjID, userID, true);
       let prevUserScoreAndWeightProm = fetchScoreAndWeight(
-        contributionsPath, qualID, [userGroupID, subjID], userID
+        contributionsPath, [qualID, userGroupID, subjID], userID
       );
       let prevMeanAndCombWeightProm = fetchScoreAndWeight(
-        aggrPath, qualID, [userGroupID], subjID
+        aggrPath, [qualID, userGroupID], subjID
       );
 
       Promise.all([

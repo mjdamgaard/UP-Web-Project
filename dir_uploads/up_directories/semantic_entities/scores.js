@@ -79,11 +79,11 @@ export function getScoreHex(score, metric, sigLen = undefined) {
 // column is actually a float(,,3),float(,,1) array, where the first float is
 // the score (ignoring bounds), and the second float is the weight of the score.
 export function fetchScoreAndWeight(
-  tableFilePath, qualIdent, otherListIDsOrPaths, keyIdent
+  tableFilePath, listIDIdentArr, keyIdent
 ) {
   return new Promise(resolve => {
     fetchScoreHex(
-      tableFilePath, qualIdent, otherListIDsOrPaths, keyIdent
+      tableFilePath, listIDIdentArr, keyIdent
     ).then(scoreAndWeightHex => {
       if (scoreAndWeightHex === undefined) return [];
       let [score, weight] = arrayFromHex(
@@ -97,20 +97,20 @@ export function fetchScoreAndWeight(
 
 // A function to fetch the hex-encoded score of any BTT table.
 export function fetchScoreHex(
-  tableFilePath, qualIdent, otherListIDsOrPaths, keyIdent
+  tableFilePath, listIDIdentArr, keyIdent
 ) {
   return new Promise(resolve => {
-    let qualIDProm = fetchEntityID(qualIdent);
     let keyIDProm = fetchEntityID(keyIdent);
-    let otherListPartsPromArr = map(
-      otherListIDsOrPaths, idOrPath => fetchEntityID(idOrPath)
+    let listIDPartsPromArr = map(
+      listIDIdentArr, entIdent => fetchEntityID(entIdent)
     );
     Promise.all([
-      keyIDProm, qualIDProm, ...otherListPartsPromArr
-    ]).then(([keyID, ...listParts]) => {
-      let listID = join(listParts, "&");
+      keyIDProm, ...listIDPartsPromArr
+    ]).then(([keyID, ...listIDParts]) => {
+      let listID = join(listIDParts, "&");
+      let listIDSegment = listID ? "/l=" + listID : "";
       fetch(
-        tableFilePath + "/l=" + listID + "/k=" + keyID
+        tableFilePath + listIDSegment + "/k=" + keyID
       ).then(
         ([scoreAndWeightHex]) => resolve(scoreAndWeightHex)
       );
@@ -125,15 +125,14 @@ export function fetchScoreHex(
 // by used SMs that want to store score tables using the float(,,3),float(,,1)
 // array convention (of score and weight).
 export function postScoreAndWeight(
-  tableFilePath, qualIdent, otherListIDsOrPaths, keyIdent, score, weight
+  tableFilePath, listIDIdentArr, keyIdent, score, weight
 ) {
   return new Promise(resolve => {
     let scoreAndWeightHex = hexFromArray(
       [score, weight], ["float(,,3)", "float(,,1)"]
     );
     postScoreAndWeightHex(
-      tableFilePath, qualIdent, otherListIDsOrPaths, keyIdent,
-      scoreAndWeightHex
+      tableFilePath, listIDIdentArr, keyIdent, scoreAndWeightHex
     ).then(
       wasUpdated => resolve(wasUpdated)
     );
@@ -141,21 +140,20 @@ export function postScoreAndWeight(
 }
 
 export function postScoreAndWeightHex(
-  tableFilePath, qualIdent, otherListIDsOrPaths, keyIdent,
-  scoreAndWeightHex
+  tableFilePath, listIDIdentArr, keyIdent, scoreAndWeightHex
 ) {
   return new Promise(resolve => {
-    let qualIDProm = fetchEntityID(qualIdent);
     let keyIDProm = fetchEntityID(keyIdent);
-    let otherListPartsPromArr = map(
-      otherListIDsOrPaths, idOrPath => fetchEntityID(idOrPath)
+    let listIDPartsPromArr = map(
+      listIDIdentArr, entIdent => fetchEntityID(entIdent)
     );
     Promise.all([
-      keyIDProm, qualIDProm, ...otherListPartsPromArr
-    ]).then(([keyID, ...listParts]) => {
-      let listID = join(listParts, "&");
+      keyIDProm, ...listIDPartsPromArr
+    ]).then(([keyID, ...listIDParts]) => {
+      let listID = join(listIDParts, "&");
+      let listIDSegment = listID ? "/l=" + listID : "";
       post(
-        tableFilePath + "/_insert/l=" + listID + "/k=" + keyID +
+        tableFilePath + "/_insert" + listIDSegment + "/k=" + keyID +
         "/s=" + scoreAndWeightHex
       ).then(
         wasUpdated => resolve(wasUpdated)
@@ -170,20 +168,20 @@ export function postScoreAndWeightHex(
 // deletes the entry (and doesn't require anything about the
 // float(,,3),float(,,1) format).
 export function deleteScore(
-  tableFilePath, qualIdent, otherListIDsOrPaths, keyIdent
+  tableFilePath, listIDIdentArr, keyIdent
 ) {
   return new Promise(resolve => {
-    let qualIDProm = fetchEntityID(qualIdent);
     let keyIDProm = fetchEntityID(keyIdent);
-    let otherListPartsPromArr = map(
-      otherListIDsOrPaths, ident => fetchEntityID(ident)
+    let listIDPartsPromArr = map(
+      listIDIdentArr, entIdent => fetchEntityID(entIdent)
     );
     Promise.all([
-      keyIDProm, qualIDProm, ...otherListPartsPromArr
-    ]).then(([keyID, ...listParts]) => {
-      let listID = join(listParts, "&");
+      keyIDProm, ...listIDPartsPromArr
+    ]).then(([keyID, ...listIDParts]) => {
+      let listID = join(listIDParts, "&");
+      let listIDSegment = listID ? "/l=" + listID : "";
       post(
-        tableFilePath + "/_deleteEntry/l=" + listID + "/k=" + keyID
+        tableFilePath + "/_deleteEntry" + listIDSegment + "/k=" + keyID
       ).then(
         wasDeleted => resolve(wasDeleted)
       );
@@ -229,13 +227,12 @@ export function postUserScore(
 
 // A function to fetch whole score--weight list.
 export function fetchScoreAndWeightList(
-  tableFilePath, qualIdent, otherListIDsOrPaths, lo, hi, maxNum, offset,
+  tableFilePath, listIDIdentArr, lo, hi, maxNum, offset,
   isAscending,
 ) {
   return new Promise(resolve => {
     fetchScoreHexList(
-      tableFilePath, qualIdent, otherListIDsOrPaths, lo, hi, maxNum, offset,
-      isAscending,
+      tableFilePath, listIDIdentArr, lo, hi, maxNum, offset, isAscending,
     ).then(list => {
       resolve(map(list, ([entID, scoreAndWeightHex]) => {
         let [score, weight] = arrayFromHex(
@@ -250,20 +247,19 @@ export function fetchScoreAndWeightList(
 
 // A function to fetch the hex-encoded score of any BTT table.
 export function fetchScoreHexList(
-  tableFilePath, qualIdent, otherListIDsOrPaths, lo, hi, maxNum, offset,
-  isAscending,
+  tableFilePath, listIDIdentArr, lo, hi, maxNum, offset, isAscending,
 ) {
   return new Promise(resolve => {
-    let qualIDProm = fetchEntityID(qualIdent);
-    let otherListPartsPromArr = map(
-      otherListIDsOrPaths, idOrPath => fetchEntityID(idOrPath)
+    let listIDPartsPromArr = map(
+      listIDIdentArr, entIdent => fetchEntityID(entIdent)
     );
-    Promise.all([
-      qualIDProm, ...otherListPartsPromArr
-    ]).then(([...listParts]) => {
-      let listID = join(listParts, "&");
+    Promise.all(
+      listIDPartsPromArr
+    ).then(listIDParts => {
+      let listID = join(listIDParts, "&");
+      let listIDSegment = listID ? "/l=" + listID : "";
       fetch(
-        tableFilePath + "skList/l=" + listID +
+        tableFilePath + "skList" + listIDSegment +
         (lo === undefined ? "" : "/lo=" + lo) +
         (hi === undefined ? "" : "/hi=" + hi) +
         (maxNum === undefined ? "" : "/n=" + maxNum) +
