@@ -1,8 +1,5 @@
 
-import {MeanAggregator} from "../../aggregating/mean/MeanAggregator.js";
 import {fetchUserScore} from "../scores.js";
-
-const meanAggregator = new MeanAggregator();
 
 
 
@@ -10,7 +7,8 @@ const meanAggregator = new MeanAggregator();
 // A class to generate a list combined of several other scored lists. 
 export class SimpleScoreHandler {
   
-  constructor(fetchUserGroup, doc) {
+  constructor(aggregator, fetchUserGroup, doc) {
+    this.aggregator = aggregator;
     this.fetchUserGroup = fetchUserGroup;
     this["Documentation"] = doc;
   }
@@ -20,50 +18,33 @@ export class SimpleScoreHandler {
 
   fetchScoreData(qualIdent, subjIdent, options = {}) {
     return new Promise(resolve => {
-      let {
-        user: userIdent, query = userIdent ? "user-first" : "group"
-      } = options;
+      let {user: userIdent, queryUser} = options;
 
-      // Unless query == "user", query the user group for its score data.
-      let groupScoreDataProm = new Promise(res => {
-        if (query === "user") {
-          return res();
-        }
+      // If the queryUser option is true, query and resolve with the user's
+      // own score (and an undefined weight) 
+      if (queryUser) {
+        fetchUserScore(qualIdent, subjIdent, userIdent).then(userScore => {
+          resolve([userScore]);
+        });
+      }
+
+      // And else, query an appropriate user group for their (aggregated) score.
+      else {
         this.fetchUserGroup(qualIdent, options).then(userGroupIdent => {
-          meanAggregator.fetchScoreData(
+          this.aggregator.fetchScoreData(
             userGroupIdent, qualIdent, subjIdent, options
           ).then(
-            scoreData => res(scoreData)
+            scoreData => resolve(scoreData)
           );
         });
-      });
-
-      // Unless query == "group", query for the user's own score.
-      let userScoreProm = (query === "group") ? new Promise(res => res()) :
-        fetchUserScore(qualIdent, subjIdent, userIdent);
-      
-      // And when the score data has been gotten, combine it if query == "user-
-      // first", and else just return one of the two.
-      Promise.all([groupScoreDataProm, userScoreProm]).then(
-        ([groupScoreData, userScore]) => {
-          if (query === "group") {
-            resolve(groupScoreData);
-          }
-          else if (query === "user") {
-            resolve([userScore]);
-          }
-          else {
-            resolve(userScore !== undefined ? [userScore] : groupScoreData);
-          }
-        }
-      );
+      }
     });
   }
 
 
 
   fetchList(qualIdent, options = {}) {
-    
+
   }
 
 
@@ -71,7 +52,7 @@ export class SimpleScoreHandler {
   updateScoreForUser(qualIdent, subjIdent, userID, options = {}) {
     return new Promise(resolve => {
       this.fetchUserGroup(qualIdent, options).then(userGroupIdent => {
-        meanAggregator.updateScoreForUser(
+        this.aggregator.updateScoreForUser(
           userGroupIdent, qualIdent, subjIdent, userID, options
         ).then(
           wasUpdated => resolve(wasUpdated)
@@ -85,7 +66,7 @@ export class SimpleScoreHandler {
   updateScoreForGroup(qualIdent, subjIdent, options = {}) {
     return new Promise(resolve => {
       this.fetchUserGroup(qualIdent, options).then(userGroupIdent => {
-        meanAggregator.updateScoreForGroup(
+        this.aggregator.updateScoreForGroup(
           userGroupIdent, qualIdent, subjIdent, options
         ).then(
           wasUpdated => resolve(wasUpdated)
@@ -99,7 +80,7 @@ export class SimpleScoreHandler {
   updateList(qualIdent, options = {}) {
     return new Promise(resolve => {
       this.fetchUserGroup(qualIdent, options).then(userGroupIdent => {
-        meanAggregator.updateList(
+        this.aggregator.updateList(
           userGroupIdent, qualIdent, options
         ).then(
           wasUpdated => resolve(wasUpdated)

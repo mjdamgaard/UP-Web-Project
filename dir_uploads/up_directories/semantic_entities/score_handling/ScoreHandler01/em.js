@@ -6,8 +6,11 @@ import {map} from 'array';
 import ModeratedList from "../../scored_lists/moderated/ModeratedList.js";
 import CombinedList from "../../scored_lists/comb/CombinedList.js";
 import SimpleScoreHandler from "../SimpleScoreHandler.js";
+import {MeanAggregator} from "../../aggregating/mean/MeanAggregator.js";
 
 const trustedQualIdent = abs("./../em1.js;get/trusted");
+
+const meanAggregator = new MeanAggregator();
 
 
 
@@ -229,7 +232,10 @@ const sensitiveQualities = {
 
 
 
+
+
 export const scoreHandler01 = new SimpleScoreHandler(
+  meanAggregator,
   fetchUserGroup,
   <div>{"TODO: Make."}</div>
 )

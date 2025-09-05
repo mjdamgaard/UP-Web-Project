@@ -463,13 +463,10 @@ export const scoreHandlers = {
     // user. And speaking of the given user, the user (entity) ID should also
     // generally be passed via the 'user' option when the score handler is used
     // client-side.
-    // Another important option is a 'query' option, with the (optional) values
-    // of "user", "user-first", and "group". If "user" is chosen, the score
-    // handler should only return the user's own score (possibly undefined).
-    // If "user-first" is chosen, the score handler will query for both the
-    // user's own score and that of the appropriate user group, and return the
-    // former only if it is defined, and else return the latter. And a value of
-    // "group" means that only the user group is queried.  
+    // Another important option is a boolean 'queryUser' option, which if set
+    // as true, means the score handler should only return the user's own
+    // score(s) (possibly undefined), instead of choosing a user group and
+    // querying that.
     "fetchScoreData",
 
     // fetchList(qualIdent, options) is similar to the fetchList() method of
