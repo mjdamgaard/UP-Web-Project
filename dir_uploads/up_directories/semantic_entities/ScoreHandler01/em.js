@@ -2,7 +2,7 @@
 import {initialModerators} from "./init.sm.js";
 import {MeanAggregator} from "../aggregating/mean/MeanAggregator.js";
 import {fetchScoreAndWeight, fetchScoreAndWeightList} from "../scores.js";
-import {fetchEntityID} from "./../entities.sm.js";
+import {fetchEntityID, fetchEntityPath} from "./../entities.sm.js";
 import {map} from 'array';
 import ModeratedList from "../scored_lists/moderated/ModeratedList.js";
 import CombinedList from "../scored_lists/comb/CombinedList.js";
@@ -134,6 +134,7 @@ export const initialTrustedUserGroup = {
 }
 
 
+
 // And this is a group of the users trusted by those "initially trusted users,"
 // i.e. the users trusted by the users trusted by the moderators.
 
@@ -194,6 +195,7 @@ export const initialStandardUserGroup = {
 
 
 
+const meanAggregator = new MeanAggregator();
 
 
 export const scoreHandler01 = {
@@ -209,27 +211,56 @@ export const scoreHandler01 = {
 
 
 
-  fetchTopEntry: (qualIdent, options) => {},
+  updateScoreForUser: (qualIdent, subjIdent, userID) => {
+    return new Promise(resolve => {
+      fetchUserGroup(qualIdent, options).then(userGroupIdent => {
+        meanAggregator.updateScoreForUser(
+          userGroupIdent, qualIdent, subjIdent, userID, options
+        ).then(
+          wasUpdated => resolve(wasUpdated)
+        );
+      });
+    });
+  },
 
 
 
 
-  updateScoreForUser: (qualIdent, subjIdent, userID) => {},
+  updateScoreForGroup: (qualIdent, subjIdent, options) => {
+    return new Promise(resolve => {
+      fetchUserGroup(qualIdent, options).then(userGroupIdent => {
+        meanAggregator.updateScoreForGroup(
+          userGroupIdent, qualIdent, subjIdent, options
+        ).then(
+          wasUpdated => resolve(wasUpdated)
+        );
+      });
+    });
+  },
 
 
 
+  updateList: (qualIdent, options) => {
+    return new Promise(resolve => {
+      fetchUserGroup(qualIdent, options).then(userGroupIdent => {
+        meanAggregator.updateList(
+          userGroupIdent, qualIdent, options
+        ).then(
+          wasUpdated => resolve(wasUpdated)
+        );
+      });
+    });
+  },
 
-  updateScoreForGroup: (qualIdent, subjIdent, options) => {},
 
 
-
-
-  updateList: (qualIdent, options) => {},
-
-
-
-
-  getDefaultOptions: (qualIdent) => {},
+  fetchDefaultOptions: (qualIdent) => {
+    return new Promise(resolve => {
+      fetchUserGroup(qualIdent).then(userGroupIdent => {
+        resolve({userGroup: userGroupIdent});
+      });
+    });
+  },
 
 
 
@@ -239,24 +270,35 @@ export const scoreHandler01 = {
 
 
 
-
-export const rootUserGroup = {
-  "Class": abs("./em1.js;get/userGroups"),
-  "Name": "Root user group",
-  "User list":  abs("./ScoreHandler01.js;get/rootUserList"),
-};
-
-class RootUserList extends ScoredList {
-
-  fetchScoreData(userIdent) {
-    initialModerators
-  }
+// Function that this initial score handler uses to get the user group to use
+// for a given quality.  
+function fetchUserGroup(qualIdent, options = {}) {
+  // TODO: Reimplement this function to use the "areas of concern" of the
+  // qualities, instead of this hard-coded implementation where one just
+  // compares the qualPath to a list of security/UI-related qualities, and
+  // use the trusted user group for these qualities, instead of using the
+  // standard, second-hand-trusted users + all users group, which is used for
+  // all other qualities.
+  return new Promise(resolve => {
+    if (options.userGroup) {
+      resolve(options.userGroup);
+    }
+    else {
+      fetchEntityPath(qualIdent).then(qualPath => {
+        let userGroupIdent = sensitiveQualities[qualPath] ||
+          abs("./em.js;get/initialStandardUserGroup");
+        resolve(userGroupIdent);
+      });
+    }
+  });
 }
 
-export const rootUserList = new RootUserList();
+// A qualPath->userGroupIdent object used for this initial implementation of
+// the fetchUserGroup() above.
+const sensitiveQualities = {
+  // TODO: Add sensitive qualities.
+  [abs("./<qualPath>")]:
+    abs("./em.js;get/initialTrustedUserGroup"),
+}
 
 
-
-
-
-export {ScoreHandler01 as default};

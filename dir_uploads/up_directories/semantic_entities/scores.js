@@ -308,9 +308,9 @@ export function fetchUserListIdent(userGroupIdent) {
 
 export function fetchScoreDataFromScoredList(listIdent, subjIdent) {
   return new Promise(resolve => {
-    fetchEntityDefinition(listIdent).then(listObj => {
+    fetchEntityDefinition(listIdent).then(listDef => {
       noPost(() => {
-        listObj.fetchScoreData(subjIdent).then(
+        listDef.fetchScoreData(subjIdent).then(
           scoreData => resolve(scoreData)
         );
       });

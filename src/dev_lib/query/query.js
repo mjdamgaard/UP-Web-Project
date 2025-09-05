@@ -6,8 +6,9 @@ import {
 } from '../../interpreting/ScriptInterpreter.js';
 import {parseRoute} from './src/parseRoute.js';
 
-import {checkAdminPrivileges, checkIfCanPost, CAN_POST_FLAG}
-from "./src/flags.js";
+import {
+  checkAdminPrivileges, checkIfCanPost, CAN_POST_FLAG, ADMIN_PRIVILEGES_FLAG,
+} from "./src/flags.js";
 
 
 
@@ -216,6 +217,19 @@ export const noPost = new DevFunction(
   ) {
     return interpreter.executeFunction(
       callback, [], callerNode, execEnv, undefined, [[CAN_POST_FLAG, false]]
+    );
+  }
+);
+
+export const clearPrivileges = new DevFunction(
+  "clearPrivileges", {},
+  async function(
+    {callerNode, execEnv, interpreter},
+    [callback]
+  ) {
+    return interpreter.executeFunction(
+      callback, [], callerNode, execEnv, undefined,
+      [[ADMIN_PRIVILEGES_FLAG, false]]
     );
   }
 );

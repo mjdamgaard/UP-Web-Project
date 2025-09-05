@@ -2,8 +2,8 @@
 
 import {Aggregator} from "../Aggregator.js";
 
-const updatesSMPath = abs("./aggr.btt");
-const aggrPath = abs("./aggr.btt");
+const updatesSMPath = abs("./updates.sm.js");
+const aggrPath = abs("./aggregates.btt");
 
 
 // TODO: This aggregator has some faults as of yet, as stated in

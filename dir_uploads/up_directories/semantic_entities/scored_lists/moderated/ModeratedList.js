@@ -23,7 +23,8 @@ export class ModeratedList extends ScoredList {
     this["Documentation"] = <div>
       <h1>{"Moderated list"}</h1>
       <p>{
-        "TODO: Make."
+        "A user group moderated by another user group, " + userGroupIdent +
+        ", using the quality " + qualIdent + " to determine the weights."
       }</p>
     </div>;
   }

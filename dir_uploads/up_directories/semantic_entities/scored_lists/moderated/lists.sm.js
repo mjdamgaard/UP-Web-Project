@@ -34,6 +34,7 @@ export function updateScore(listIdent, subjIdent) {
 
 export function updateList(combListIdent) {
   // TODO: Implement.
+  return Promise(resolve => resolve());
 }
 
 

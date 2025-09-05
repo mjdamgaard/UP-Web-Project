@@ -509,13 +509,13 @@ export const scoreHandlers = {
     // matter.)
     "updateList",
 
-    // getDefaultOptions(qualIdent) returns the default options chosen by the
-    // score handler for a given quality, which allows the app to inform the
-    // user of these choices should they inspect the score in more detail.
-    // Thus, if the user open a menu to adjust the search options, e.g. when
-    // viewing a list, the appropriate initial values of the various input
+    // fetchDefaultOptions(qualIdent) returns a promise to the default options
+    // chosen by the score handler for a given quality. This allows the app to
+    // inform the user of these choices should they inspect the score in more
+    // detail. Thus, if the user open a menu to adjust the search options, e.g.
+    // when viewing a list, the appropriate initial values of the various input
     // fields can be gotten from this method.
-    "getDefaultOptions",
+    "fetchDefaultOptions",
 
     // Documentation describing the given score handler works and its usage.
     "Documentation",

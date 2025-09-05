@@ -77,9 +77,15 @@ export function updateScoreForUser(
 }
 
 
-export function updateScoreForGroup() {}
+export function updateScoreForGroup() {
+  // TODO: Implement.
+  return Promise(resolve => resolve());
+}
 
-export function updateList() {}
+export function updateList() {
+  // TODO: Implement.
+  return Promise(resolve => resolve());
+}
 
 
 
