@@ -460,7 +460,9 @@ export const scoreHandlers = {
     // Furthermore, the 'options' argument can contain auxiliary parameters
     // such as a 'userGroup' option, which overrides whatever user group the
     // score handler would choose by default for the quality, and for the given
-    // user.
+    // user. And speaking of the given user, the user (entity) ID should also
+    // generally be passed via the 'user' option when the score handler is used
+    // client-side.
     // Another important option is a 'query' option, with the (optional) values
     // of "user", "user-first", and "group". If "user" is chosen, the score
     // handler should only return the user's own score (possibly undefined).

@@ -13,7 +13,7 @@ export class ScoredList {
     this.updateSMPath = updateSMPath;
   }
 
-  Class = abs("./em1.js;get/scoredLists");
+  Class = abs("../em1.js;get/scoredLists");
 
 
   fetchScoreData(subjIdent) {

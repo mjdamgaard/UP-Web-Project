@@ -1,11 +1,11 @@
 
 import {initialModerators} from "./init.sm.js";
-import {MeanAggregator} from "../aggregating/mean/MeanAggregator.js";
-import {fetchScoreAndWeight, fetchScoreAndWeightList} from "../scores.js";
-import {fetchEntityID, fetchEntityPath} from "./../entities.sm.js";
+import {fetchScoreAndWeight, fetchScoreAndWeightList} from "../../scores.js";
+import {fetchEntityID, fetchEntityPath} from "../../entities.sm.js";
 import {map} from 'array';
-import ModeratedList from "../scored_lists/moderated/ModeratedList.js";
-import CombinedList from "../scored_lists/comb/CombinedList.js";
+import ModeratedList from "../../scored_lists/moderated/ModeratedList.js";
+import CombinedList from "../../scored_lists/comb/CombinedList.js";
+import SimpleScoreHandler from "../SimpleScoreHandler.js";
 
 const trustedQualIdent = abs("./../em1.js;get/trusted");
 
@@ -76,7 +76,7 @@ export const allUsersList = {
   fetchList: ({lo, hi, maxNum, offset, isAscending}) => {
     return new Promise(resolve => {
       fetch(
-        abs(".././users.bt/skList") +
+        abs("../.././users.bt/skList") +
         (lo !== undefined ? "/lo=" + lo : "") +
         (hi !== undefined ? "/hi=" + hi : "") +
         (maxNum !== undefined ? "/n=" + maxNum : "") +
@@ -94,7 +94,7 @@ export const allUsersList = {
       "A list of all users with equal weights, all of 1. The " +
       "fetchScoreData() method just returns [userID, 1] without " +
       "checking that the user exists. And the fetchList() methods returns " +
-      "the user list gotten from " + abs("./../users.bt") + "."
+      "the user list gotten from " + abs("./../../users.bt") + "."
     }</p>
   </div>,
 }
@@ -195,80 +195,6 @@ export const initialStandardUserGroup = {
 
 
 
-const meanAggregator = new MeanAggregator();
-
-
-export const scoreHandler01 = {
-  "Class": abs("./em1.js;get/scoreHandlers"),
-
-
-  fetchScoreData: (qualIdent, subjIdent, options) => {},
-
-
-
-  fetchList: (qualIdent, options) => {},
-
-
-
-
-  updateScoreForUser: (qualIdent, subjIdent, userID) => {
-    return new Promise(resolve => {
-      fetchUserGroup(qualIdent, options).then(userGroupIdent => {
-        meanAggregator.updateScoreForUser(
-          userGroupIdent, qualIdent, subjIdent, userID, options
-        ).then(
-          wasUpdated => resolve(wasUpdated)
-        );
-      });
-    });
-  },
-
-
-
-
-  updateScoreForGroup: (qualIdent, subjIdent, options) => {
-    return new Promise(resolve => {
-      fetchUserGroup(qualIdent, options).then(userGroupIdent => {
-        meanAggregator.updateScoreForGroup(
-          userGroupIdent, qualIdent, subjIdent, options
-        ).then(
-          wasUpdated => resolve(wasUpdated)
-        );
-      });
-    });
-  },
-
-
-
-  updateList: (qualIdent, options) => {
-    return new Promise(resolve => {
-      fetchUserGroup(qualIdent, options).then(userGroupIdent => {
-        meanAggregator.updateList(
-          userGroupIdent, qualIdent, options
-        ).then(
-          wasUpdated => resolve(wasUpdated)
-        );
-      });
-    });
-  },
-
-
-
-  fetchDefaultOptions: (qualIdent) => {
-    return new Promise(resolve => {
-      fetchUserGroup(qualIdent).then(userGroupIdent => {
-        resolve({userGroup: userGroupIdent});
-      });
-    });
-  },
-
-
-
-  // TODO: Add documentation.
-  "Documentation": undefined,
-}
-
-
 
 // Function that this initial score handler uses to get the user group to use
 // for a given quality.  
@@ -301,4 +227,10 @@ const sensitiveQualities = {
     abs("./em.js;get/initialTrustedUserGroup"),
 }
 
+
+
+export const scoreHandler01 = new SimpleScoreHandler(
+  fetchUserGroup,
+  <div>{"TODO: Make."}</div>
+)
 
