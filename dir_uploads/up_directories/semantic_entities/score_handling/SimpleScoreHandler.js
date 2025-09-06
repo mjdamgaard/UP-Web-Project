@@ -1,5 +1,6 @@
 
-import {fetchUserScore} from "../scores.js";
+import {fetchUserScore, fetchUserScoreList} from "../scores.js";
+import {filterScoredListWRTWeight} from 'scored_lists';
 
 
 
@@ -44,7 +45,35 @@ export class SimpleScoreHandler {
 
 
   fetchList(qualIdent, options = {}) {
+    return new Promise(resolve => {
+      let {
+        user: userIdent, queryUser, minWeight,
+        lo, hi, maxNum, offset, isAscending
+      } = options;
 
+      // If the queryUser option is true, query and resolve with the user's
+      // own score (and an undefined weight) 
+      if (queryUser) {
+        fetchUserScoreList(
+          qualIdent, userIdent, lo, hi, maxNum, offset, isAscending
+        ).then(
+          list => resolve(list)
+        );
+      }
+
+      // And else, query an appropriate user group for their (aggregated)
+      // score. Note that the length of the result is not equal to maxNum,
+      // which is what we want; maxNum is the max number of *fetched* entries
+      // (at least for each individual list that is queried in the process).
+      else {
+        this.fetchUserGroup(qualIdent, options).then(userGroupIdent => {
+          this.aggregator.fetchList(
+            userGroupIdent, qualIdent, options
+          ).then(
+            list => filterScoredListWRTWeight(list, minWeight));
+        });
+      }
+    });
   }
 
 

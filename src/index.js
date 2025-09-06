@@ -27,6 +27,7 @@ import * as mathMod from "./dev_lib/fundamentals/math.js";
 import * as reqOrigMod from "./dev_lib/request_origin.js";
 import * as hexMod from "./dev_lib/conversion/hex.js";
 import * as errorMod from "./dev_lib/error.js";
+import * as scoredListsAlgMod from "./dev_lib/array_algorithms/scored_lists.js";
 
 const staticDevLibs = new Map();
 staticDevLibs.set("query", queryMod);
@@ -40,6 +41,7 @@ staticDevLibs.set("math", mathMod);
 staticDevLibs.set("request_origin", reqOrigMod);
 staticDevLibs.set("hex", hexMod);
 staticDevLibs.set("error", errorMod);
+staticDevLibs.set("scored_lists", scoredListsAlgMod);
 
 
 

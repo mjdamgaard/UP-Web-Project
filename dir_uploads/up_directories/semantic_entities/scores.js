@@ -74,6 +74,53 @@ export function getScoreHex(score, metric, sigLen = undefined) {
 
 
 
+
+// Function to fetch a list of user-scored entities.
+export function fetchUserScoreList(
+  qualIdent, userIdent, lo, hi, maxNum, offset, isAscending
+) {
+  return new Promise(resolve => {
+    Promise.all([
+      fetchUserScoreHexList(
+        qualIdent, userIdent, lo, hi, maxNum, offset, isAscending
+      ),
+      fetchMetric(qualIdent)
+    ]).then(([userScoreHexList, metric]) => {
+      let userScoreList = map(userScoreHexList, ([subjID, userScoreHex]) => (
+        [subjID, getFloatScore(userScoreHex, metric)]
+      ));
+      resolve(userScoreList);
+    });
+  });
+}
+
+// Helper function to fetch user-scored list.
+export function fetchUserScoreHexList(
+  qualIdent, userIdent, lo, hi, maxNum, offset, isAscending
+) {
+  let qualIDProm = fetchEntityID(qualIdent);
+  let userIDProm = fetchEntityID(userIdent);
+  return new Promise(resolve => {
+    Promise.all([qualIDProm, userIDProm]).then(([qualID, userID]) => {
+      let listID = qualID + "&" + userID;
+      fetch(
+        homePath + "/userScores.bbt/skList/l=" + listID +
+        (lo === undefined ? "" : "/lo=" + lo) +
+        (hi === undefined ? "" : "/hi=" + hi) +
+        (maxNum === undefined ? "" : "/n=" + maxNum) +
+        (offset === undefined ? "" : "/o=" + offset) +
+        (isAscending === undefined ? "" : "/a=" + isAscending)
+      ).then(
+        (userScoreHexList = []) => resolve(userScoreHexList)
+      );
+    });
+  });
+}
+
+
+
+
+
 // A function that can be used to get aggregated scores, including ones that
 // are stored in foreign home directories. This function assumes that the score
 // column is actually a float(,,3),float(,,1) array, where the first float is
@@ -117,6 +164,57 @@ export function fetchScoreHex(
     });
   });
 }
+
+
+
+// A function to fetch whole score--weight list.
+export function fetchScoreAndWeightList(
+  tableFilePath, listIDIdentArr, lo, hi, maxNum, offset,
+  isAscending,
+) {
+  return new Promise(resolve => {
+    fetchScoreHexList(
+      tableFilePath, listIDIdentArr, lo, hi, maxNum, offset, isAscending,
+    ).then(list => {
+      resolve(map(list, ([subjID, scoreAndWeightHex]) => {
+        let [score, weight] = arrayFromHex(
+          scoreAndWeightHex, ["float(,,3)", "float(,,1)"]
+        );
+        return [subjID, score, weight];
+      }));
+    });
+  });
+}
+
+
+// A function to fetch the hex-encoded score of any BTT table.
+export function fetchScoreHexList(
+  tableFilePath, listIDIdentArr, lo, hi, maxNum, offset, isAscending,
+) {
+  return new Promise(resolve => {
+    let listIDPartsPromArr = map(
+      listIDIdentArr, entIdent => fetchEntityID(entIdent)
+    );
+    Promise.all(
+      listIDPartsPromArr
+    ).then(listIDParts => {
+      let listID = join(listIDParts, "&");
+      let listIDSegment = listID ? "/l=" + listID : "";
+      fetch(
+        tableFilePath + "skList" + listIDSegment +
+        (lo === undefined ? "" : "/lo=" + lo) +
+        (hi === undefined ? "" : "/hi=" + hi) +
+        (maxNum === undefined ? "" : "/n=" + maxNum) +
+        (offset === undefined ? "" : "/o=" + offset) +
+        (isAscending === undefined ? "" : "/a=" + isAscending)
+      ).then(
+        list => resolve(list)
+      );
+    });
+  });
+}
+
+
 
 
 
@@ -222,55 +320,6 @@ export function postUserScore(
 
 
 
-
-
-
-// A function to fetch whole score--weight list.
-export function fetchScoreAndWeightList(
-  tableFilePath, listIDIdentArr, lo, hi, maxNum, offset,
-  isAscending,
-) {
-  return new Promise(resolve => {
-    fetchScoreHexList(
-      tableFilePath, listIDIdentArr, lo, hi, maxNum, offset, isAscending,
-    ).then(list => {
-      resolve(map(list, ([entID, scoreAndWeightHex]) => {
-        let [score, weight] = arrayFromHex(
-          scoreAndWeightHex, ["float(,,3)", "float(,,1)"]
-        );
-        return [entID, score, weight];
-      }));
-    });
-  });
-}
-
-
-// A function to fetch the hex-encoded score of any BTT table.
-export function fetchScoreHexList(
-  tableFilePath, listIDIdentArr, lo, hi, maxNum, offset, isAscending,
-) {
-  return new Promise(resolve => {
-    let listIDPartsPromArr = map(
-      listIDIdentArr, entIdent => fetchEntityID(entIdent)
-    );
-    Promise.all(
-      listIDPartsPromArr
-    ).then(listIDParts => {
-      let listID = join(listIDParts, "&");
-      let listIDSegment = listID ? "/l=" + listID : "";
-      fetch(
-        tableFilePath + "skList" + listIDSegment +
-        (lo === undefined ? "" : "/lo=" + lo) +
-        (hi === undefined ? "" : "/hi=" + hi) +
-        (maxNum === undefined ? "" : "/n=" + maxNum) +
-        (offset === undefined ? "" : "/o=" + offset) +
-        (isAscending === undefined ? "" : "/a=" + isAscending)
-      ).then(
-        list => resolve(list)
-      );
-    });
-  });
-}
 
 
 
