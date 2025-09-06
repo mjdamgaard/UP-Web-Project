@@ -71,7 +71,7 @@ export const render = new DevFunction(
       if (onClick) {
         // TODO: Add event argument when implemented.
         let shouldFollowLink = interpreter.executeFunctionOffSync(
-          onClick, [], callerNode, execEnv,
+          onClick, [], callerNode, execEnv, thisVal
         ) ?? true;
         if (!shouldFollowLink) {
           return;
@@ -80,7 +80,7 @@ export const render = new DevFunction(
 
       if (pushState) {
         interpreter.executeFunctionOffSync(
-          pushState, [href], callerNode, execEnv,
+          pushState, [href], callerNode, execEnv, thisVal
         );
         return false;
       }

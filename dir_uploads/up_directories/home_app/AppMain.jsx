@@ -36,24 +36,12 @@ export function render() {
 
 
 export const actions = {
-  "goToHomePage": function() {
-    this.setState({...this.state, pageIdent: "home"});
+  "goToPage": function(pageIdent) {
+    this.setState({...this.state, pageIdent: pageIdent});
   },
-  "goToAboutPage": function() {
-    this.setState({...this.state, pageIdent: "about"});
-  },
-  "goToTutorialsPage": function() {
-    this.setState({...this.state, pageIdent: "tutorials"});
-  },
-  "goToIntroTutorialPage": function() {
-    this.setState({...this.state, pageIdent: "intro-tutorial"});
-  }
 };
 
 
 export const methods = [
-  "goToHomePage",
-  "goToAboutPage",
-  "goToTutorialsPage",
-  "goToIntroTutorialPage",
+  "goToPage",
 ];

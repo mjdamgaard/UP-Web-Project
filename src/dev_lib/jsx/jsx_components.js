@@ -4,7 +4,7 @@ import {
   getString, ObjectObject, forEachValue, CLEAR_FLAG, PromiseObject,
   OBJECT_PROTOTYPE, Environment, ARRAY_PROTOTYPE, FunctionObject, Exception,
   getStringOrSymbol, getPropertyFromObject, getPropertyFromPlainObject,
-  jsonStringify,
+  jsonStringify, ArgTypeError,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
@@ -1181,7 +1181,7 @@ function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
    **/
 
   // Define the functions to change the urlContext.
-  let validateAndUpdateURLContext = (state, url, callerNode, execEnv) => {
+  let validateAndUpdateURLContext = (stateJSON, url, callerNode, execEnv) => {
     // Validate url, and prepend './' to it if doesn't start with /.?.?\//.
     if (!HREF_REGEX.test(url)) throw new ArgTypeError(
       "Invalid URL pathname: " + url,
@@ -1189,20 +1189,22 @@ function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
     );
     if (!HREF_CD_START_REGEX.test(url)) url = './' + url;
 
-    let urlData = {url: url, stateJSON: jsonStringify(state)};
+    let urlData = {url: url, stateJSON: stateJSON};
     urlContext.setVal(urlData);
   };
   const pushState = new DevFunction(
     "pushState", {typeArr: ["string", "any?"]},
     ({callerNode, execEnv}, [state = null, url]) => {
-      validateAndUpdateURLContext(state, url, callerNode, execEnv);
+      let stateJSON = jsonStringify(state);
+      validateAndUpdateURLContext(stateJSON, url, callerNode, execEnv);
       window.history.pushState(stateJSON, "", url);
     }
   );
   const replaceState = new DevFunction(
     "replaceState", {typeArr: ["string", "any?"]},
     ({callerNode, execEnv}, [state = null, url]) => {
-      validateAndUpdateURLContext(state, url, callerNode, execEnv);
+      let stateJSON = jsonStringify(state);
+      validateAndUpdateURLContext(stateJSON, url, callerNode, execEnv);
       window.history.replaceState(stateJSON, "", url);
     }
   );

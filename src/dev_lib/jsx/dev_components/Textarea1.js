@@ -43,7 +43,7 @@ export const render = new DevFunction(
           // which it probably will at this point..
           // TODO: Add event argument when implemented.
           interpreter.executeFunctionOffSync(
-            onChange, [], callerNode, execEnv,
+            onChange, [], callerNode, execEnv, thisVal
           );
           // This prevents the loss of focus for but a brief moment if an
           // ancestor component rerenders as a consequence of the input event.

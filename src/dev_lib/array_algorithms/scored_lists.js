@@ -1,7 +1,7 @@
 
 import {
   DevFunction, ObjectObject, verifyType,
-} from "../../interpreting/ScriptInterpreter";
+} from "../../interpreting/ScriptInterpreter.js";
 
 
 

@@ -47,7 +47,7 @@ export class SimpleScoreHandler {
   fetchList(qualIdent, options = {}) {
     return new Promise(resolve => {
       let {
-        user: userIdent, queryUser, minWeight,
+        user: userIdent, queryUser, minWeight = 10,
         lo, hi, maxNum, offset, isAscending
       } = options;
 

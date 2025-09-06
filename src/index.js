@@ -84,7 +84,7 @@ const urlContext = new AppContext({
 
 // Create a popstate event that updates the urlContext.
 window.addEventListener("popstate", (event) => {
-  let urlData = {url: url, stateJSON: event.state};
+  let urlData = {url:  window.location.pathname, stateJSON: event.state};
   urlContext.setVal(urlData);
 });
 
@@ -118,7 +118,7 @@ setInterval(
 );
 
 // The script the initializes the UP app.
-const TEST_APP_ID = "A";
+const TEST_APP_ID = "3";
 const mainScript = `
   import {createJSXApp} from 'jsx';
   import {settings} from 'settings1';

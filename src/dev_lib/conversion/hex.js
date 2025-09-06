@@ -475,7 +475,7 @@ export const hexToValue = new DevFunction(
     }
     else if (type === "hex-string") {
       try {
-        Uint8Array.fromHex(hexStr);
+        return Uint8Array.fromHex(hexStr);
       }
       catch (err) {
         if (err instanceof TypeError || err instanceof SyntaxError) {
@@ -487,7 +487,6 @@ export const hexToValue = new DevFunction(
         }
         else throw err;
       }
-      return val;
     }
     else return hexToArray.fun({callerNode, execEnv}, [hexStr, [type]]);
   }

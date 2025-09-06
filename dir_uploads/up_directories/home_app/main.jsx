@@ -15,25 +15,13 @@ export function render() {
 
 
 export const actions = {
-  "goToHomePage": function() {
-    this.call("m", "goToHomePage");
+  "goToPage": function(pageIdent) {
+    this.call("m", "pageIdent", pageIdent);
   },
-  "goToAboutPage": function() {
-    this.call("m", "goToAboutPage");
-  },
-  "goToTutorialsPage": function() {
-    this.call("m", "goToTutorialsPage");
-  },
-  "goToIntroTutorialPage": function() {
-    this.call("m", "goToIntroTutorialPage");
-  }
 };
 
 export const events = [
-  "goToHomePage",
-  "goToAboutPage",
-  "goToTutorialsPage",
-  "goToIntroTutorialPage",
+  "goToPage",
 ];
 
 
