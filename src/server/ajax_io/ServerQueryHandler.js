@@ -142,16 +142,22 @@ export class ServerQueryHandler {
 
   fetchPrivate(route, options) {
     return this.queryServer(
-      true, route, false, undefined, options, OWN_UP_NODE_ID
+      true, route, false, undefined, options, OWN_UP_NODE_ID,
+      {["request-admin-privileges"]: true}
     );
   }
 
-  post(route, postData, options) {
+  post(route, postData, options, flags) {
     return this.queryServer(
-      true, route, true, postData, options, OWN_UP_NODE_ID
+      true, route, true, postData, options, OWN_UP_NODE_ID, flags
     );
   }
 
+  postAsAdmin(route, postData, options) {
+    return this.post(
+      route, postData, options, {["request-admin-privileges"]: true}
+    );
+  }
 
 }
 

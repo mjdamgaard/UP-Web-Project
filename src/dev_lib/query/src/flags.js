@@ -11,6 +11,8 @@ export function checkAdminPrivileges(homeDirID, node, env) {
   );
 }
 
+export const REQUEST_ADMIN_PRIVILEGES_FLAG = Symbol("request-admin-privileges");
+
 
 export const CAN_POST_FLAG = Symbol("can-post-privileges");
 

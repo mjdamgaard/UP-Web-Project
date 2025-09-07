@@ -47,8 +47,8 @@ async function main() {
   }
   let hasExited = false;
   while(!hasExited) {
-    let inst = await read({prompt: `dir #${dirID}> `});
-    if (/^([uU]|upload)$/.test(inst)) {
+    let command = await read({prompt: `dir #${dirID}> `});
+    if (/^([uU]|upload)$/.test(command)) {
       console.log("Uploading...");
       try {
         dirID = await directoryUploader.uploadDir(
@@ -60,7 +60,7 @@ async function main() {
       }
       console.log("OK");
     }
-    else if (/^([eE]|exit)$/.test(inst)) {
+    else if (/^([eE]|exit)$/.test(command)) {
       hasExited = true;
     }
     else {

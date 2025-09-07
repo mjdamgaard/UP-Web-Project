@@ -4,11 +4,11 @@ import * as AppMain from "./AppMain.jsx";
 
 
 
-export function render() {
+export function render(url, history) {
   return (
     <div className="app">
       <AppHeader key="h" />
-      <AppMain key="m" />
+      <AppMain key="m" url={url} history={history} />
     </div>
   );
 }

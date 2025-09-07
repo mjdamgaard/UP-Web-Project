@@ -1175,7 +1175,7 @@ function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
 
   // Note that the following popstate event listener is added in index.js:
   /*   window.addEventListener("popstate", (event) => {
-   *     let urlData = {url: url, stateJSON: event.state};
+   *     let urlData = {url: window.location.pathname, stateJSON: event.state};
    *     urlContext.setVal(urlData);
    *   });
    **/
@@ -1217,10 +1217,14 @@ function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
   const go = new DevFunction("go", {typeArr: ["integer?"]}, ({}, [delta]) => {
     window.history.go(delta);
   });
+  let {url, stateJSON} = urlContext.getVal();
   return {
     ...props,
-    urlData: urlContext.getVal(),
-    pushState: pushState, replaceState: replaceState,
-    back: back, forward: forward, go: go,
+    url: url,
+    history: {
+      state: JSON.parse(stateJSON ?? 'null'),
+      pushState: pushState, replaceState: replaceState,
+      back: back, forward: forward, go: go,
+    },
   };
 }

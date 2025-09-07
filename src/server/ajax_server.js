@@ -19,6 +19,7 @@ import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
 
 import {
   ADMIN_PRIVILEGES_FLAG, CAN_POST_FLAG, USER_ID_FLAG,
+  REQUEST_ADMIN_PRIVILEGES_FLAG,
 } from "../dev_lib/query/src/flags.js";
 
 import * as queryMod from "../dev_lib/query/query.js";
@@ -208,16 +209,21 @@ async function requestHandler(req, res, returnGasRef) {
   }
 
 
+  // Call FlagTransmitter.receiveFlags(), with the optional reqFlags array
+  // determined by the client, to get the flags which are raised initially for
+  // when the main() function is executed.
+  let flags = FlagTransmitter.receiveFlags(reqFlags);
+
   // Parse whether the route is a "locked" route (which can only be accessed by
   // the admin, if any, or by a server module function (SMF) of that directory).
   // These are all paths that includes '/_' anywhere within them. If it is
   // indeed locked, query for the adminID of the home directory and verify that
-  // userID == adminID, then add the "admin-privileges" flag to the 'flags,'
-  // array.
+  // userID == adminID, and that the user has requested admin privileges, then
+  // add the "admin-privileges" flag to the 'flags' array.
   let isLocked = LOCKED_ROUTE_REGEX.test(route);
-  let flags = isPost ? [CAN_POST_FLAG] : [];
+  if (isPost) flags.push(CAN_POST_FLAG);
   if (isLocked) {
-    if (!userID) {
+    if (!userID || !flags.includes(REQUEST_ADMIN_PRIVILEGES_FLAG)) {
       endWithUnauthorizedError(res);
       return;
     }
@@ -238,11 +244,6 @@ async function requestHandler(req, res, returnGasRef) {
     flags.push([USER_ID_FLAG, userID]);
   }
 
-  // Then call FlagTransmitter, with the optional reqFlags array determined by
-  // the client, to get the flags which are raised initially for when the
-  // main() function is executed.
-  let transmittedFlags = FlagTransmitter.receiveFlags(reqFlags);
-  flags = flags.concat(transmittedFlags);
 
 
   // Now run the main.js script, whose main() function redirects to a call to

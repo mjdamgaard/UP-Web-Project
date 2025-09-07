@@ -31,7 +31,7 @@ export class DirectoryUploader {
     let dirID;
     try {
       let contents = fs.readFileSync(idFilePath, 'utf8');
-      [ , dirID] = /\/[0-9A-F]+\/([0-9A-F]+)/.exec(contents) ?? [];
+      [ , dirID] = /\/[0-9a-f]+\/([0-9a-f]+)/.exec(contents) ?? [];
     } catch (_) {}
     return dirID;
   }
@@ -74,7 +74,7 @@ export class DirectoryUploader {
       let serverFilePath = path.normalize(`/1/${dirID}/${relPath}`);
       if (!fs.existsSync(clientFilePath)) {
         deletionPromises.push(
-          serverQueryHandler.post(serverFilePath + "/_rm")
+          serverQueryHandler.postAsAdmin(serverFilePath + "/_rm")
         );
       }
     });
@@ -121,7 +121,7 @@ export class DirectoryUploader {
       else if (/\.(jsx?|txt|json|html|xml|svg|css|md)$/.test(name)) {
         let contentText = fs.readFileSync(childAbsPath, 'utf8');
         uploadPromises.push(
-          serverQueryHandler.post(
+          serverQueryHandler.postAsAdmin(
             `/1/${childRelPath}/_put`,
             contentText,
           )
@@ -130,12 +130,12 @@ export class DirectoryUploader {
       else if (/\.(att|bt|ct|bbt|ftt)$/.test(name)) {
         if (deleteTableData) {
           uploadPromises.push(
-            serverQueryHandler.post(`/1/${childRelPath}/_put`)
+            serverQueryHandler.postAsAdmin(`/1/${childRelPath}/_put`)
           );
         }
         else {
           uploadPromises.push(
-            serverQueryHandler.post(`/1/${childRelPath}/_touch`)
+            serverQueryHandler.postAsAdmin(`/1/${childRelPath}/_touch`)
           );
         }
       }
