@@ -10,8 +10,8 @@
 ### User-programmable web applications
 This project seeks to create a new version of the Web where the users have complete control over both the appearance and the underlying algorithms of the web applications, and in such a way that each individual user can choose the appearance and the algorithms that suits them best.
 
-This is achieved by implementing a web development framework where it is safe for users to share their programming modules and try out those of others without really having to worry about being attacked.
-And when the modules are ready for use, the website can then also make them immediately available for other users to try with minimal oversight required.
+This is achieved by implementing a web development framework where it is safe for users to share their programming modules, and to try out those of others, without having to worry about being attacked.
+And once these modules are ready for use, the website can make them immediately available for other users to try, with minimal central oversight required.
 
 This allows us to create a very decentralized system where users can create web apps in collaboration with each other in a modular way — much like building with LEGO — and where they can immediately try out their solutions and share them with others.
 
@@ -32,10 +32,10 @@ In fact, the whole project aims to become a distributed and decentralized system
 ## A React-like JS framework that runs all source code in a sandbox
 
 
-## Basics
+### Basics
 At the core if this technology is a special JS interpreter that runs all source code in a sandbox, with a different set of functions available when compared to regular JS, such that each accessible function is safe to be executed for all users.
 
-Apart from a few functions that are built into the JS interpreter itself, most of the fundamental functions available, that are not user-defined ones, comes from so-called 'developer libraries.' These libraries are imported dynamically by the user scripts, which means that there are no limit to the number of developer libraries that the given service provider might make available for its users.
+Apart from a few functions that are built into the JS interpreter itself, most of the fundamental functions available, that are not user-defined ones, come from so-called 'developer libraries.' These libraries are imported dynamically by the user scripts, which means that there are no limit to the number of developer libraries that the given service provider might make available for its users.
 
 Furthermore, users are also free to import functions and classes, etc., from other user-uploaded directories. (And they can choose whether to bundle these imports together with their own modules, if and when they want to bundle their project directory, or to just import the foreign user modules dynamically as well).
 
@@ -43,27 +43,27 @@ When a user wants to upload a new project, they can upload it as a whole directo
 
 
 
-## Front-end React-like components
+### Front-end React-like components
 One particular developer library that is already available from the beginning is one that implements a React-like JS framework, where users can write React-like JSX components for the front end. This is how users are able to program new web apps for the website, and/or new components for existing web apps to use.
 
-In fact, when the prototype is ready at [www.up-web.org](https://www.up-web.org), almost everything you see on the site, apart from the top right account menu, is programmed in this React-like framework. And any user will thus be able to program the same thing, and much more.
+In fact, when the prototype is ready at [up-web.org](https://www.up-web.org), almost everything you see on the site, apart from the top right account menu, is programmed in this React-like framework. And any user will thus be able to program the same thing, and much more.
 
 The users might even find that this alternative React-like framework is easier to use in some ways than regular React, since it removes a lot of boilerplate code that you would otherwise have to include in React, in particular when you want a component to be able to transmit signals to and from its ancestor components and/or its descendant components.
 
 
 
-## Back-end server modules
+### Back-end server modules
 Furthermore, users are also able to create and upload back-end modules, to which the front-end components can connect in order to fetch or post data to the database. We will refer to such modules as 'server modules' (SMs).
 
-A server module (SM) is any JS module that is uploaded to a directory with the extension of '.sm.js'. For such modules, each function that is exported from the module is treated as part of the API of the server module, allowing clients to call these functions via special HTTP calls.
+A server module (SM) is any JS module that is uploaded to a directory with the extension of '.sm.js'. For such modules, each function that is exported from the module is treated as part of the API of the SM, allowing clients to call these functions via special HTTP calls.
 
-When the called server module function (SMF) is executed this way, it automatically elevates the privileges of the execution such that the function is allowed to post data to the database (at least in the case of a POST request). And the elevated privileges also allow the SMF to fetch private data that can only be accessed by that SM (and possibly its admin, if it the SM still has an active one).
+When the called server module function (SMF) is executed this way, it automatically elevates the privileges of the execution such that the function is allowed to post data to the database (at least in the case of a POST request). And the elevated privileges also allow the SMF to fetch private data that can only be accessed by that SM (and possibly its admin, if it the SM still has an active one). And each project will get a unique key prefix for all its data, meaning that SMs in different project directories can't affect the data of each other directly.
 
-The keenest of readers might then ask: If users are supposed to be able to freely try out the web apps and app components of others, what is preventing those components from sending requests to any server module that they want and request it to delete or corrupt some of the user's data, or to fetch private data on behalf of the user, and then trick the user into posting this data again to another SM, where others are able read it?
+A very keen reader might then ask: If users are supposed to be able to freely try out web apps and app components of other users, what is preventing those components from sending requests to any server module that they want and request it to delete or corrupt some of the user's data, or to fetch private data on behalf of the user, and then trick the user into posting this data again to another SM, where others are able read it?
 
-The answer to this by utilizing a system much like the Cross-Origin Resource Sharing (CORS) system used by HTTP, and making sure that each SMF that carries out such a sensitive action is guarded by an initial call to function that checks and validates the origin of the request. And in this CORS-like system, it is not the web domain that are the "request origins," but rather the specific components that sends the requests. This means the the authors of a given SMF is able to make a whitelist of components that are allowed to call this SMF without needing special permissions first. And as long as these components are clear and explicit about the action that is about to happen, this should prevent users from accidentally deleting data or publicizing any of their data.
+The answer is by utilizing a system much like the Cross-Origin Resource Sharing (CORS) system used by HTTP, but where the "origin" of the request is not the domain of the website, but rather the path to the given component that sends the request. Any SMF that carries out such a sensitive action can then make sure to call a function initially that checks and authorizes the requesting component. And as long as these components are clear and explicit about the action that is about to happen, this should prevent users from accidentally deleting or publicizing any of their data.
 
-The SMFs can also allow clients to override their CORS-like checks, namely if said clients has assigned special trust the requesting component, declaring that they trust it to only carry out requests that are expected by the client. This means that old server modules can still remain in use, without having to continuously update their component whitelists whenever a part of the userbase starts using different front-end components to communicate with the same SMs.
+The SMFs can also allow clients to override their CORS-like checks, namely if said clients have assigned special trust the requesting component. This means that old server modules can still remain in use, without having to continuously update their component whitelists whenever a part of the userbase starts using different front-end components to communicate with the same SMs.
 
 
 
@@ -71,31 +71,31 @@ The SMFs can also allow clients to override their CORS-like checks, namely if sa
 
 As mentioned, the prototype at [up-web.org](https://www.up-web.org) is currently still a few weeks from being ready to showcase. But let us try to give a quick overview of how that website will function in order to allow users to create web applications in a modular and collaborative way.
 
-When a user has uploaded a project directory containing some components that they want to make available for others, they can create a new entity in the database for each of these components. These entities will include defining information about the entity, including the internal URL for importing it into another script, a description of the component, and also a link to a GitHub repository containing the source code. By using GitHub this way, it allows users to identify themselves as authors of the code. And it allows users to choose the license for their source code. By choosing a open-source, copy-left license, it signals that other users are free to build upon your solutions and to use them in other projects.
+When a user has uploaded a project directory containing some app components that they want to make available for others, they can create a new entity in the database for each of these components. These entities will contain defining information about the component, including the internal URL for importing it into another script, as well as a description of it, and also a link to a GitHub repository containing the source code. By using GitHub this way, it allows users to identify themselves as authors of the code, and it also allows users to choose the license for their source code. By choosing an open-source, copy-left license, it signals that other users are free to build upon your solutions and to use them in other projects.
 
-Using GitHub also this way also automatically gives us an online backup of the source code, which means that if a service provider somehow fails, maybe from being hacked, or maybe the userbase loses trust in them, then it is easier to which to another. And it is easier to copy projects onto a new service provider in the network in general. The admins of a project directory will also be able to download backups of the public user data held in relational tables, which means that this data can also be backed up and copied onto other service provider nodes in the network.
+Using GitHub this way also automatically gives us an online backup of the source code, which means that if a service provider somehow fails — maybe from being hacked, or maybe the userbase loses trust in them — then user can easily just copy projects onto a new service provider in the network. Furthermore, the admins of a project directories will also be able to download backups of the public user data held in relational database tables, which means that this data can also be backed up and copied onto other service provider nodes in the network.
 
-When an entity representing a component is added to the database, the user will be able to navigate to a category of all 'App components' on the website, and submit the component entity to that category. Other users will then be able to try it out and to up-rate it among the existing components.
+When an entity representing a component is added to the database, the user will be able to navigate to a category of all 'App components' on the website, and submit the component entity to that category. Other users will then be able to view it and try it out, and to up-rate it among the existing components in the category.
 
-This main category of 'App components' will initially provide a good way for users to share web applications with each other. But as the list grows, at will be necessary with subcategories as well. In order to get that, the website allows users to submit entities representing subcategories as well. And in the same way the user can submit and up-rate components for the outer 'App components' category, they will also be able to submit and up-rate subcategories to this category. This could e.g. be a subcategory of 'Social media apps,' or 'Games,' or 'UI utility components,' etc.
+This main category of 'App components' will thus initially provide a good way for users to share web applications with each other. But as the list grows, it will be necessary with subcategories as well. In order to get that, the website also allows users to submit entities representing subcategories as well, and to up-rate them as well, exactly in the same way that they are able to submit and rate members of the category. Examples of subcategories for the 'App components' category might include a category of 'Social media apps,' or 'Games,' or 'UI utility components,' etc.
 
-And of course, each of these subcategories can then again get their own subcategories, and so on, giving us a growing tree of component categories. With such a tree, users will be able to categorize their new solutions precisely, and others will be able to find these solutions easily, simply be going down the tree of categories until they find exactly the category of components that they are looking for.
+And of course, each of these subcategories can then again get their own subcategories, and so on, giving us a growing tree full of different kinds of components. With such a tree, users will be able to categorize their new solutions precisely, and others will be able to find these solutions easily, simply be going down the tree of categories until they find exactly the category of components that they are looking for.
 
 
 
 ## An "Everything Website"
 
-The 'App components' tree will be available on its own web page of at [up-web.org](https://www.up-web.org), accessed from the header menu. But what will be on the home page of the website, then? Which component should be shown here?
+The 'App components' tree will be available on its own web page at [up-web.org](https://www.up-web.org), accessed from the header menu. But what will be on the home page of the website, then? Which component should be shown here?
 
-Here we will actually also give the reins completely to the users, and have them decide what the index page should contain. The 'App components' tree might thus contain a category specifically of 'Home pages.' So why not simply choose the top-rated one in that category?
+Here we will actually also give the reins completely to the users, and have them decide what this index page should contain. The 'App components' tree thus ought to contain a category specifically of 'Home pages.' And why not simply choose the top-rated one in that category as the home page of the website?
 
-Sure, the website might start with a default home page, and with a high enough rating that it will take decent amount of user votes to surpass it. But after that, it is completely up to the users.
+Sure, the website might start with a default home page, and with a high enough rating that it will take decent amount of user votes to surpass it. But after that, it is completely up to the users how the home page should look.
 
 Furthermore, we will implement two components that will hopefully see a lot of use. First, there will be a component that doesn't have any content by default, but only a prop (i.e. a 'property' in React terminology) defining a component category. And when this component is loaded, all it does is to fetch the top-rated component in that given category, import it dynamically, and then display it inside of it. This component is indeed what will be used for the home page, namely with a category prop pointing to the 'Home pages' category.
 
-So when making a new web page, whether as a candidate for the home page or a completely different page, the author is able to make parts of that page variable such that they are updated continuously, without the authors intervention, to be the best versions of themselves, according the the category's description, that is currently available. For instance, if the page is some Wikipedia-like article, say, about a person, the author of article component is able to define a category of components for an 'Early life' section, or any other section in the article. And by using this "self-updating" component, as we might call it, the whole article can thus become self-updating in this way. 
+So when making a new web page, whether as a candidate for the home page or a completely different page, the author is able to make parts of that page variable such that they are updated continuously, without the authors intervention, to be the best versions of themselves that is currently available in the network. For instance, if the page is some Wikipedia-like article, say, about a person, the author of article component is able to define a category of components for an 'Early life' section for that person, or any other section in the article. And by using this "self-updating" component, as we might call it, the whole article can thus become self-updating in this way. 
 
-Second, we will also implement a similar component but for internal links on the website. Rather than displaying the top-rated component for a given category, these link component will then lead to the top-rated component of the given category. That way, a web page can thus also utilize "self-updating" links.
+Second, we will also implement a similar component but for internal links on the website, which, rather than displaying the top-rated component for the given category, will instead lead to that component when the user clicks the link. That way, a web page can thus also utilize "self-updating" links, as we might call them.
 
 With these ingredients, we can thus essentially get an "Everything Website," namely where all kinds of web apps can be accessed, and where apps and pages can automatically update themselves with the latest best solutions, without requiring the authors of the components to continuously intervene in this process.
 
@@ -107,33 +107,33 @@ In the previous two sections, we talked about how front-end components might be 
 
 Once again, the answer is to give the reins to the users themselves to decide this, and in a decentralized way such that each user can effectively choose their own system for how the votes are distributed.
 
-More precisely, each user is able to choose an algorithm that distributes "weights" among the userbase. These weights are then used by the algorithms that aggregate the user's score, and in particular when it comes to rating the components within a component category.
+More precisely, each user is able to choose an algorithm that distributes "weights" among the userbase. These weights can then used by other algorithms that aggregate the users' scores. And this system can in particular be used when it comes to rating the components within a component category.
 
 So when one of the two aforementioned "self-updating" components looks for the "top-rated" component for a given category, they can thus query for this using the preferred algorithm of the given user.
 
-For instance, a user that prefers longer articles more elaborate articles might get longer sections in the articles then a user that prefers more brief and concise articles.
+For instance, a user that prefers longer, more elaborate articles might get longer sections in the articles when compared to a user that prefers more brief and concise articles.
 
-And when it comes to the algorithms used in e.g. feeds or search result of various web applications, the users can also be completely in charge of the algorithms that they want to use. Sure, some web applications might use a fixed algorithm. But unless there is a good reason for doing so, users will then likely just choose an alternative application to use instead where they have more agency over the algorithms.
+And when it comes to the algorithms used in e.g. feeds or search result of various web applications, the users can also be completely in charge of which algorithms they want to use. Sure, some web applications might use a fixed algorithm only. But unless there is a good reason for doing so, users will then likely just choose an alternative application instead where they have more agency over the algorithms.
 
-This will hopefully usher in a new age of the web where using an algorithm isn't a quid pro quo: The algorithms collect personal data about you when using it, in an obscure and non-transparent way, and in return you get results that has a chance of being more relevant to you (at least until the process of "enshittification" invariable takes its toll).
+This will hopefully usher in a new age of the Web where using an algorithm is not a quid pro quo like how things are now: The algorithms collect personal data about you when you use them, often in a non-transparent way, and in return you get results that might be more relevant to you if you are lucky (at least until the process of "enshittification" invariable takes its toll).
 
-Instead, the users will be able to provide only the data that they want to the algorithms, and if they don't want to provide any at all, they are also just free to tweak the parameters of an algorithm manually, to get what they think might suit them the best. No quid pro quo needed.
+Instead, the users will be able to provide only the data that they want to the algorithms, and if they don't want to provide any at all, they are also just free to tweak the parameters of an algorithm manually to get what they think might suit them best, no quid pro quo needed.
 
 
 
 ## Superusers and regular users
 
-Obviously, not all users will programmers, contributing source code to the network. Some users will just be using the apps of the network. So when we have talked about users contributing components, etc., above, we were actually talking about superusers.
+Obviously, not all users will be programmers that contribute source code to the network. Some users will of course just be using the apps of the network without contributing source code on their own, and that is perfectly fine.
 
-And the same is true when it comes to selecting which algorithm to use. Obviously we cannot expect each individual user to go and select their preferred algorithms before being able to use the website. Instead we will allow a particular group of main moderators of the site to choose the *defualt* preferences for each new user. And from there we should just try to make it as easy as possibly for users to change their algorithms (while also making sure to warn them, if they do, not to e.g. fall for phishing attempts and such, namely if their newly chosen algorithms will lead them apps and web pages that are off the main stream).
+The same is true when it comes to selecting which algorithm to use. Obviously we cannot expect each individual user to go and select their preferred algorithms before being able to use the website. Instead we will allow a particular group of moderators of the site to choose the *defualt* preferences that each new user starts out with. And then we just ought to make it as easy as possibly for users to change these preferences for their algorithms.
 
 
 
 ## GDPR and legal matters
 
-In terms of things like GDPR, the hope is the the network will achieve a legal status similar to the Word-Wide Web, where it is the users that are liable when it comes to the web applications they provide. But until this is achieved, [up-web.org](https://www.up-web.org) will simply reserve the right to delete any app along with its data, that doesn't comply to GDPR, or if it doesn't comply to other terms of service.
+In terms of things like GDPR, the hope is the the network will achieve a legal status similar to the Word-Wide Web, where it is the users that are liable when it comes to the web applications that hey provide. But until this is achieved, [up-web.org](https://www.up-web.org) will simply reserve the right to delete any app, along with its data, that does not comply to GDPR, or does not comply to other terms of service.
 
-And for apps that tries any sort of malicious behavior, such as phishing attempts, or attempts to make the users delete or corrupt, or involuntarily publicize their data at other server modules, we will probably also keep reserving the right to delete these.
+And for apps that tries any sort of malicious behavior, such as phishing attempts, or attempts to make the users delete or corrupt, or involuntarily publicize their data at other server modules, we will probably also keep reserving the right to delete these for any foreseeable future.
 
 
 
@@ -141,11 +141,11 @@ And for apps that tries any sort of malicious behavior, such as phishing attempt
 
 Last but not least, let us talk a bit about how the website intends to get its funds.
 
-Obviously, since the most of the contents, including the front-end and back-end source code, is supposed to come from, and be maintained by, the users, the cost of maintaining the website will be relatively low. But we will still need money to provide the servers necessary for the system, as well as for maintaining and updating the so-called developer libraries that was introduced above.
+Obviously, since the most of the content of the website, including the front-end and back-end source code, is supposed to come from and be maintained by the users, the cost of maintaining the website will be relatively low. But we will still need money to provide the servers necessary for the system, as well as for maintaining and updating the so-called developer libraries that was introduced above.
 
-Of course, a fallback option could always be for the website to show ads in the margins. But [up-web.org](https://www.up-web.org) will commit itself to not doing this. We would much rather simply keep a 'Sponsors' tab at the top, and ask the users to go to this tab once in while and send some mental appreciation towards our sponsors. With a large enough userbase, this will hopefully be able generate more than enough revenue to keep the site going.
+Of course, a fallback option could always be for the website to show ads in the margins. But [up-web.org](https://www.up-web.org) will commit itself to not do this. We would much rather simply keep a 'Sponsors' tab at the top, and ask the users to go to this tab once in while and send some mental appreciation towards our sponsors. With a large enough userbase, this will hopefully be able generate more than enough revenue to keep the site going.
 
-Other potential service providers of the network in the future are of course free to monetize the websites that they use however they want. But since the users can choose freely between all the service providers in principle, and be able to switch to another one whenever they like, the userbase will thus have the power to prevent "enshittification."
+Other potential service providers of the network in the future are of course free to monetize their websites in whichever way they want. But since the users can choose freely between all the service providers in principle, and be able to switch to another one whenever they like, the userbase will thus have the power to prevent "enshittification."
 
 
 Lastly, [up-web.org](https://www.up-web.org) also at some point intends to found an organization for monetizing user-contributions, not necessarily so much when it comes to the user-made source code for the site, but more so when it comes to user content such as videos and images, and all such creative content. Hopefully we will be able to create a good organization where such content creators can pool their IPs, and vote on what paywalls to set up for what content, in a fair, democratic way.
