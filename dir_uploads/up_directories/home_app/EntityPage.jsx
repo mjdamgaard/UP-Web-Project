@@ -2,7 +2,7 @@
 
 
 
-export function render(props) {
+export function render({url, history}) {
   return (
     <div></div>
   );

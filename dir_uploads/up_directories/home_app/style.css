@@ -4,7 +4,7 @@
   height: 100%;
   display: grid;
   grid-template-rows: 50px auto;
-  background-color: #fafafa;
+  background-color: #f8f8f8;
 }
 .app > * {
   background-color: white;

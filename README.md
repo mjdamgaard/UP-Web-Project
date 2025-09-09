@@ -1,166 +1,155 @@
-# Semantic Network Project
-<!-- 
-*My other README introduction is way too long and nerdy. So I'm in the process of writing this one, which ought to be way shorter.*
-*(I also have to shorten the long version as well.)*
- -->
 
-<!-- 
- *There is also a longer version of this introduction as well in the other [README document](https://github.com/mjdamgaard/openSDB/blob/main/README_long_version.md). It mostly repeats the points below, but it mentions some additional points as well.*
- -->
+# A User-Programmable Web
 
-## Semantic ratings
+*A prototype of this project will be available soon on [www.up-web.org](https://www.up-web.org), possibly within just a few weeks.*
 
-<!-- ### Short description -->
 
-This project wants to create
-a website—and a browser extension—where
-users can rate all kinds of resources (movies, videos, books, products, you name it!) according to arbitrary predicates!
 
+## Summary
 
-### Existing technology 
+### User-programmable web applications
+This project seeks to create a new version of the Web where the users have complete control over both the appearance and the underlying algorithms of the web applications, and in such a way that each individual user can choose the appearance and the algorithms that suits them best.
 
-Existing [folksonomy](https://en.wikipedia.org/wiki/Folksonomy) systems allow users to add [tags](https://en.wikipedia.org/wiki/Tag_(metadata)) to the various resources on the given site.
-This makes it possible for other users to get a quick overview of the qualities of a given resource, and it can also be used for filtering searches.
+This is achieved by implementing a web development framework where it is safe for users to share their programming modules and try out those of others without really having to worry about being attacked.
+And when the modules are ready for use, the website can then also make them immediately available for other users to try with minimal oversight required.
 
-However, existing systems only allow users to see *if* a given resource has a certain quality or not; they do not allow the users to see *how much* it fits that quality!
+This allows us to create a very decentralized system where users can create web apps in collaboration with each other in a modular way — much like building with LEGO — and where they can immediately try out their solutions and share them with others.
 
-For instance, if you are looking for scary movie to watch, you might be able to get a list of all the movies that carries the 'scary' tag on a conventional site, but you cannot see *how* scary any given movie is in order to match the degree that you are searching for.
+### Low costs
+Furthermore, the cost of creating a new web apps using this system is extremely low: The cost of uploading a new app (or app component) is just the cost of uploading its source code alone. And this true even for apps that stores user data in database, as the developer does not need to allocate the storage space needed for this. And the database does not care whether a user uploads some data to one app or another, so there is no real reason that the developer should have to pay anything more in order for their app to be able to store data in the database.
 
-You could of course try to read comments and reviews for each individual resource, but this process is both slow and not very reliable, since reviews often vary greatly and do not necessarily cover all the things that you might be interested in.
+This means that even if you want to create, say, something like a new social media app, perhaps for select group of people that you know, or with a special theme in mind, the cost of doing this will be so low that it will likely be a free service in most cases. And once this project takes off, other users will likely have already made some good templates that you can use, which will make creating such apps very quick and very cheap.
 
-### Ratable tags!
 
-So how about system that allows the users to rate each tag on a scale?
-<!-- so that each user can then tailor their searches and get their feeds sorted after exactly the qualities that they are looking for? -->
-<!-- so that one can quickly get an overview of all the qualities of a given resource, without having  -->
+### A distributed and decentralized open source web 
+Naturally, the whole project is open source, and copy-lefted, which means that anyone is free to fork the project if they want to, and are also free to set up their own service providers for the network.
 
-This would mean that the users could easily get a **quick and nuanced overview** of all the qualities that they are interested in for each resource that they browse.
+In fact, the whole project aims to become a distributed and decentralized system in time, with a whole network of independent nodes that are programmed, by the users, to work together and create what we might then call the 'User-Programmable Web.'
 
-And it would furthermore make it possible to create **advanced searches** where users can search for *exactly* the qualities that they want in the type of resource that they are after![^1]
 
-[^1]: The importance of this point cannot be overstated: Searching for things is such a big part of how we use the web, and if this project can better that experience, it could affect millions and millions of people.
 
-It also makes it way easier an quicker for each user to **express their opinions** about resources with a high degree of nuance. Instead of spending several minutes writing a comment or a review that then just becomes the 10,000th one in a list, as is often the case, they would be able to quickly submit scores for the various ratings that are relevant to them. And after having done so, they will know that their contributions will benefit *all* the other users that browse or search for the same kind of resource, and not just the couple of users that make it down to that 10,000th comment.
 
-This project believes that there is a giant possibility here for improving user experience and utility of the web!
+## A React-like JS framework that runs all source code in a sandbox
 
-<!-- ### Another example
 
-<!-- TODO: Change this for an example/examples of rating products (etc.). -/->
+## Basics
+At the core if this technology is a special JS interpreter that runs all source code in a sandbox, with a different set of functions available when compared to regular JS, such that each accessible function is safe to be executed for all users.
 
-To give another example, imagine that you are looking for an article about a subject, and you want to find one that is both very educational and also somewhat entertaining. Then you could take those two tags, 'educational' and 'entertaining,' in addition to a standard 'liked' rating, and by giving a lot of weight (by adjusting by a slider) to the 'educational' rating, and a little weight as well to the 'entertaining' rating, you can get these kinds of resources listed first in the search feed.
+Apart from a few functions that are built into the JS interpreter itself, most of the fundamental functions available, that are not user-defined ones, comes from so-called 'developer libraries.' These libraries are imported dynamically by the user scripts, which means that there are no limit to the number of developer libraries that the given service provider might make available for its users.
 
-For each resource in such a search feed, you can then see the score for each of the given tags that you used in your search, as well as your other favorite tags. -->
+Furthermore, users are also free to import functions and classes, etc., from other user-uploaded directories. (And they can choose whether to bundle these imports together with their own modules, if and when they want to bundle their project directory, or to just import the foreign user modules dynamically as well).
 
+When a user wants to upload a new project, they can upload it as a whole directory at once. A tutorial for how to do this will available soon. They will then become the admin of that directory, which means that they are also free to edit the files in that directory at will.
 
-<!-- ### Advanced searches
 
-To elaborate on how the ratable tags can be used for advanced searches, .. Hm, maybe this is not important enough for this readme.. ..I considered mentioning that the advanced searches could both consist of determining weights (like my educational--entertaining example above) and also on determining ranges (like my scary-movie example). -->
 
+## Front-end React-like components
+One particular developer library that is already available from the beginning is one that implements a React-like JS framework, where users can write React-like JSX components for the front end. This is how users are able to program new web apps for the website, and/or new components for existing web apps to use.
 
-## A Semantic Network
+In fact, when the prototype is ready at [www.up-web.org](https://www.up-web.org), almost everything you see on the site, apart from the top right account menu, is programmed in this React-like framework. And any user will thus be able to program the same thing, and much more.
 
-### User-to-user ratings and user groupings.
+The users might even find that this alternative React-like framework is easier to use in some ways than regular React, since it removes a lot of boilerplate code that you would otherwise have to include in React, in particular when you want a component to be able to transmit signals to and from its ancestor components and/or its descendant components.
 
-Apart from resources, the users can also rate themselves and each other. This further allows for the possibility that users can be grouped according to e.g. interests, opinions, reputation, activity, and so on.
 
-This will make users able to further refine their searches and their feeds by adjusting what weight is given, not just to the various tags used in the search, but also to the various *user groups* as well.
 
-This allows users to find out what groups they tend to agree with in certain matters, and then boost the opinions of those groups! This will then affect all the ratings that they see on the site, and it will also affect their search results and their feeds!
+## Back-end server modules
+Furthermore, users are also able to create and upload back-end modules, to which the front-end components can connect in order to fetch or post data to the database. We will refer to such modules as 'server modules' (SMs).
 
-And if a user wants to change their preferences for what user groups are boosted, e.g. because they are in a different mood or they want to explore other user groups, they can do so manually and with immediate effect: They do not have to go through the long process of training an algorithm to notice their change in desires.    
+A server module (SM) is any JS module that is uploaded to a directory with the extension of '.sm.js'. For such modules, each function that is exported from the module is treated as part of the API of the server module, allowing clients to call these functions via special HTTP calls.
 
-<!-- (And they also don't have to do this when creating a new account, btw.) -->
+When the called server module function (SMF) is executed this way, it automatically elevates the privileges of the execution such that the function is allowed to post data to the database (at least in the case of a POST request). And the elevated privileges also allow the SMF to fetch private data that can only be accessed by that SM (and possibly its admin, if it the SM still has an active one).
 
+The keenest of readers might then ask: If users are supposed to be able to freely try out the web apps and app components of others, what is preventing those components from sending requests to any server module that they want and request it to delete or corrupt some of the user's data, or to fetch private data on behalf of the user, and then trick the user into posting this data again to another SM, where others are able read it?
 
-### A browser extension and a network of ratings across the web
+The answer to this by utilizing a system much like the Cross-Origin Resource Sharing (CORS) system used by HTTP, and making sure that each SMF that carries out such a sensitive action is guarded by an initial call to function that checks and validates the origin of the request. And in this CORS-like system, it is not the web domain that are the "request origins," but rather the specific components that sends the requests. This means the the authors of a given SMF is able to make a whitelist of components that are allowed to call this SMF without needing special permissions first. And as long as these components are clear and explicit about the action that is about to happen, this should prevent users from accidentally deleting data or publicizing any of their data.
 
-The project also seeks to develop a browser extension such that users can access the ratings of the Semantic Network across the web. This browser extension can then read the URL of any webpage that the user visits and query the network[^2] for ratings and comments that are relevant for the resource that the given webpage is about.
+The SMFs can also allow clients to override their CORS-like checks, namely if said clients has assigned special trust the requesting component, declaring that they trust it to only carry out requests that are expected by the client. This means that old server modules can still remain in use, without having to continuously update their component whitelists whenever a part of the userbase starts using different front-end components to communicate with the same SMs.
 
-[^2]: All this traffic is encrypted and not logged at all; only actively submitted ratings and comments are stored.
 
 
-For instance, if a user watches a video on YouTube, the browser extension can then query on show all the relevant ratings and comments for that video. Of course, in this particular example, YouTube will already have a comment section. But it does not have ratable tags for one thing, and it does not have the ability to prioritize comments and ratings from your own favorite user groups!
+## An outline of how to use the system
 
+As mentioned, the prototype at [up-web.org](https://www.up-web.org) is currently still a few weeks from being ready to showcase. But let us try to give a quick overview of how that website will function in order to allow users to create web applications in a modular and collaborative way.
 
-<!-- With this simple technology, users will thus be able to access and use the network across the web. And with further development, the browser extension could also analyze the webpage itself in order to recognize individual resources on it and query about data for them.. -->
+When a user has uploaded a project directory containing some components that they want to make available for others, they can create a new entity in the database for each of these components. These entities will include defining information about the entity, including the internal URL for importing it into another script, a description of the component, and also a link to a GitHub repository containing the source code. By using GitHub this way, it allows users to identify themselves as authors of the code. And it allows users to choose the license for their source code. By choosing a open-source, copy-left license, it signals that other users are free to build upon your solutions and to use them in other projects.
 
+Using GitHub also this way also automatically gives us an online backup of the source code, which means that if a service provider somehow fails, maybe from being hacked, or maybe the userbase loses trust in them, then it is easier to which to another. And it is easier to copy projects onto a new service provider in the network in general. The admins of a project directory will also be able to download backups of the public user data held in relational tables, which means that this data can also be backed up and copied onto other service provider nodes in the network.
 
+When an entity representing a component is added to the database, the user will be able to navigate to a category of all 'App components' on the website, and submit the component entity to that category. Other users will then be able to try it out and to up-rate it among the existing components.
 
+This main category of 'App components' will initially provide a good way for users to share web applications with each other. But as the list grows, at will be necessary with subcategories as well. In order to get that, the website allows users to submit entities representing subcategories as well. And in the same way the user can submit and up-rate components for the outer 'App components' category, they will also be able to submit and up-rate subcategories to this category. This could e.g. be a subcategory of 'Social media apps,' or 'Games,' or 'UI utility components,' etc.
 
-<!-- Having a giant hub of.. -->
+And of course, each of these subcategories can then again get their own subcategories, and so on, giving us a growing tree of component categories. With such a tree, users will be able to categorize their new solutions precisely, and others will be able to find these solutions easily, simply be going down the tree of categories until they find exactly the category of components that they are looking for.
 
 
-## Semantic structures
 
-### Semantically structured resources
+## An "Everything Website"
 
-The semantic system that the project builds upon also allows for all resources to be structured in a semantic [graphs](https://www.geeksforgeeks.org/generic-treesn-array-trees/) of categories and subcategories. At the top level we have a category of everything, which the users can subdivide into subcategories, such as e.g. 'Media,' 'Science,' 'Products and services,' 'Fiction,' 'Websites,' etc.
+The 'App components' tree will be available on its own web page of at [up-web.org](https://www.up-web.org), accessed from the header menu. But what will be on the home page of the website, then? Which component should be shown here?
 
-This first of all gives the following alternative to conventional keyword searches: Instead of searching by typing in keywords in a search field, you can also search by browsing categories and subcategories. If you are searching for some music of a given genre to listen to, you might select "Media → Music → Pop → Indiepop" and browse the resources in that category.
+Here we will actually also give the reins completely to the users, and have them decide what the index page should contain. The 'App components' tree might thus contain a category specifically of 'Home pages.' So why not simply choose the top-rated one in that category?
 
-It is the users themselves that are responsible for making and structuring the categories and subcategories of the website. And they do so via the semantic ratings as well: They rate which resources belong to which categories, and they rate which subcategories are relevant for which categories.
+Sure, the website might start with a default home page, and with a high enough rating that it will take decent amount of user votes to surpass it. But after that, it is completely up to the users.
 
+Furthermore, we will implement two components that will hopefully see a lot of use. First, there will be a component that doesn't have any content by default, but only a prop (i.e. a 'property' in React terminology) defining a component category. And when this component is loaded, all it does is to fetch the top-rated component in that given category, import it dynamically, and then display it inside of it. This component is indeed what will be used for the home page, namely with a category prop pointing to the 'Home pages' category.
 
-### Semantically structured comment sections
+So when making a new web page, whether as a candidate for the home page or a completely different page, the author is able to make parts of that page variable such that they are updated continuously, without the authors intervention, to be the best versions of themselves, according the the category's description, that is currently available. For instance, if the page is some Wikipedia-like article, say, about a person, the author of article component is able to define a category of components for an 'Early life' section, or any other section in the article. And by using this "self-updating" component, as we might call it, the whole article can thus become self-updating in this way. 
 
-Comments are also implemented as "resources" in the system, which means that these can be rated and grouped into categories in the same way as other resources. In particular, this means that comment sections can be structured into categories and subcategories as well.
+Second, we will also implement a similar component but for internal links on the website. Rather than displaying the top-rated component for a given category, these link component will then lead to the top-rated component of the given category. That way, a web page can thus also utilize "self-updating" links.
 
-So suppose for example that you have just watched a video, or read an article or a post, and you have a specific question that you want to ask about it. With conventional comment sections, you would then often have to scroll past a great amount of comments before you find what you are looking for (or give up).
+With these ingredients, we can thus essentially get an "Everything Website," namely where all kinds of web apps can be accessed, and where apps and pages can automatically update themselves with the latest best solutions, without requiring the authors of the components to continuously intervene in this process.
 
-With a semantically structured comment sections, on the other hand, all comments can be grouped into tabs and sub-tabs by the users. All the reaction comments can thus be grouped into one tab, and all factual comments (questions, discussions, etc.), can be grouped into another, and the latter can also further be grouped into topics (if there are a lot of comments).
 
-This can potentially make it a lot easier to find the given answer that you are looking for.
 
-And in terms of discussions, these can furthermore be structured into whole [trees](https://www.geeksforgeeks.org/generic-treesn-array-trees/) of arguments and counterarguments. This could make it much easier for users to find all the arguments and counterarguments for a given discussion, and thus make them able to better form an informed opinion about the matter.
+## Decentralization of algorithms
 
-It would thus also greatly help users fact-check information on the web, and especially with a well-developed browser extension that allows them to query the Semantic Network about facts immediately while they are on whichever other website that serves them the information.   
+In the previous two sections, we talked about how front-end components might be rated among the users. But who decides which users have a vote and who does not? Do all users have an equal amount of voting power, or do some users' votes count as more than others?
 
+Once again, the answer is to give the reins to the users themselves to decide this, and in a decentralized way such that each user can effectively choose their own system for how the votes are distributed.
 
+More precisely, each user is able to choose an algorithm that distributes "weights" among the userbase. These weights are then used by the algorithms that aggregate the user's score, and in particular when it comes to rating the components within a component category.
 
-<!-- 
-### Benefits of a decentralized network
+So when one of the two aforementioned "self-updating" components looks for the "top-rated" component for a given category, they can thus query for this using the preferred algorithm of the given user.
 
-This project is completely open source and aims for decentralization! One of the major benefits of this from the users' perspective is that their inputs
--->
+For instance, a user that prefers longer articles more elaborate articles might get longer sections in the articles then a user that prefers more brief and concise articles.
 
+And when it comes to the algorithms used in e.g. feeds or search result of various web applications, the users can also be completely in charge of the algorithms that they want to use. Sure, some web applications might use a fixed algorithm. But unless there is a good reason for doing so, users will then likely just choose an alternative application to use instead where they have more agency over the algorithms.
 
+This will hopefully usher in a new age of the web where using an algorithm isn't a quid pro quo: The algorithms collect personal data about you when using it, in an obscure and non-transparent way, and in return you get results that has a chance of being more relevant to you (at least until the process of "enshittification" invariable takes its toll).
 
+Instead, the users will be able to provide only the data that they want to the algorithms, and if they don't want to provide any at all, they are also just free to tweak the parameters of an algorithm manually, to get what they think might suit them the best. No quid pro quo needed.
 
 
 
-<!--
+## Superusers and regular users
 
-"
-\subsection{Selling the idea to existing open source communities}
+Obviously, not all users will programmers, contributing source code to the network. Some users will just be using the apps of the network. So when we have talked about users contributing components, etc., above, we were actually talking about superusers.
 
-(02.02.24, 10:52) I am absolutely convinced that my Semantic Network Project will lead to the future of the web, and the idea \emph{must} also be ``sellable,'' in particular also to the various open source communities like the Linux community and Mozilla. The point is this: You have already shown, Linux and Mozilla, that open source project can very well compete with commercial solutions. Linux definitely competes with e.g.\ Windows---and I think that it is even quite a bit better! And Firefox definitely also competes with Chrome and Edge (it is my preferred browser)! So why couldn't open source also compete with web sites/platforms like YouTube and Facebook, etc.?? (And especially Reddit.\,.) `Well,' you might say, `a website requires servers and maintenance etc.' Yes, they do, but so what? If the users are happy to use the service, they will provide enough money to maintain the service. And if your service also helps other organizations/companies (like my Semantic Network Project!), then your absolutely golden: the service maintenance will be paid for! But hold on, should open source then try to compete with all existing websites at once, or which website should we choose to compete with first? Well! I know exactly what website we should begin with! Enter the concepts of a `Semantic Database' (SDB) and the concept of a `User-Programmable Application' (UPA)!
+And the same is true when it comes to selecting which algorithm to use. Obviously we cannot expect each individual user to go and select their preferred algorithms before being able to use the website. Instead we will allow a particular group of main moderators of the site to choose the *defualt* preferences for each new user. And from there we should just try to make it as easy as possibly for users to change their algorithms (while also making sure to warn them, if they do, not to e.g. fall for phishing attempts and such, namely if their newly chosen algorithms will lead them apps and web pages that are off the main stream).
 
-The great thing about an SDB is that you don't need to change the backend and add new relations to your database whenever you want to develop a new part of the web app. You have to do that with a relational database. If you for instance want to add a like button to your resources, you have to add new relations to contain the associated data. A relational database has its advantages. But one of the big advantage of an SDB is that you don't have to do this! The database is so flexible that you can just use the core of it for pretty much anything that you want.\footnote{The only time that you would need to write SQL (not counting the times that you upgrade the SDB solution itself, if you happen to be both a developer and a user of the SDB solution) is if you want to write the so-called `Aggregation Bots,' but these can also be implemented outside of the backend, and even by third parties.}
-With an SDB, the users themselves can create whatever data structures they desire!\footnote{To fully make this point understandable, I should preferably have developed my prototype (openSDB) just a little bit further.}
-%But of course, if you want to implement something like a like button, say, then you also need to change the frontend code, and this is also typically the job of the developers as well. %..Hm, lad mig lige tænke lidt inden jeg fortsætter, for open source kan jo allerede meget i sig selv, uden UPA.. (11:28) ...(11:50) Jo, lad mig bare fortsætte denne pointe. ..Ah, men lad mig lige starte på en anden måde..
-This means that application can evolve quite a lot in how it can be used in different ways even without any actions required from the developers. This saves a lot of work from the developers, which means that the services are easier to pay for (by the users and donors).
 
-But it gets even better! Introducing he concept of an `UPA,' which is that users can also upload scripts, (including React modules), HTML snippets, and CSS style sheets to the site! These will of course not be approved automatically,\footnote{Except if someone at some point were to complete my `safe JS subset' language, or a language like it.} but will be approved by the developers, requiring some work by them. However! Here the developers can safe a lot of work by out-sourcing the code validation to the users! This can be done by having a `safe script' rating, which the users can then rate. (This is almost trivial to implement.) And by utilizing something which I often refer to as `user groups' (implemented via a so-called `Aggregation bot' which then aggregates ratings of users), the developers can implement a user ranking based on how much they trust the users decisions of when a script is safe and not. This technology can even be furthered by implementing code annotations with attached ratings such that users can even rate specific snippets of a script for safety, which means that the next users to read through it can get an overview of which parts are the most tested/analyzed ones and which part are in greatest need for testing and/or analyzing. And with this, the developers then only need to read through the scripts that has risen to the surface in this process\footnote{Oh, by the way, users can also rate how interested they are in new script, meaning that the interesting scripts will get more attention by the user community.} a few times before accepting it for users to then be able to add to the site, i.e.\ as a kind of (so-called) `add-on' (similarly to how a `browser extension' works to change the contents of a site). Each user can then simply choose which extensions to use, a bit similarly to how open source projects can fork in general, but where the the process of forking back and forth a now just way more flexible, and can be decided by the individual users!
 
-Not only does all this help reduce the cost of maintenance, which help justify the open source model, but it does something even more important as well. It answers the question posed in the beginning of this text of `what website to start with.' Well, if you start with this website, then it can branch and develop into all other websites! For instance, it could develop such that open-source `Facebook' is just under one tab in the site header, and YouTube, Reddit Wikipedia, etc., is under other tabs! So by starting with this website for this proposed open source website project, we get all possible websites for the price of one!
+## GDPR and legal matters
 
-And what is more, because there are in fact more, the SDB website that I have in mind will also fill out a hole in the market that isn't discovered yet! I thus strongly believe that even without all the points above, and even without being an open source site, the `semantic website' that I have in mind would be a great commercial idea, had I wanted to make it a private enterprise. I really believe that the things that the site will afford will be greatly appreciated by the users, even without this whole deal of being open source, and about being a UPA. This is what truly makes this idea so golden: You don't even have to convince the users to join alone on being an `open source alternative to existing commercial sites,' and on being a flexible UPA, \emph{once} it has gathered enough interest. The website will also be able to attract users simply on the ground on filling out a hole in the market, providing the users with affordances/abilities that the didn't know they needed. If this sounds interesting, see my README.md introduction to the site on github.com/mjdamgaard/Semantic-Network-Project. (There is also a longer version (not well-edited, though) of that README which mentions more points about being open source etc.) %(12:42)
+In terms of things like GDPR, the hope is the the network will achieve a legal status similar to the Word-Wide Web, where it is the users that are liable when it comes to the web applications they provide. But until this is achieved, [up-web.org](https://www.up-web.org) will simply reserve the right to delete any app along with its data, that doesn't comply to GDPR, or if it doesn't comply to other terms of service.
 
-So there we go, this is an absolutely great idea---immensely great, I would say! Now, there is also another important point about how to ensure that the users can always trust the companies/organizations not to be corrupted over time. But I have described this in several other places (here in this `23-xx note collection.tex' document, possibly in my `main.text'/`2021 notes' document also, and in my READMEs in the GitHub repo of the project), so let me not repeat this here.
+And for apps that tries any sort of malicious behavior, such as phishing attempts, or attempts to make the users delete or corrupt, or involuntarily publicize their data at other server modules, we will probably also keep reserving the right to delete these.
 
-*\textit{The next paragraph is not so important; feel free to skip it:}
 
-.\,.\,Oh, except that I should actually mention an important point.\,. .\,.\,Yeah okay so the outline of the idea is that the organizations/companies whose supplies the web services to run the website should all allow for any competitor/collaborator/third party to copy all their data and set up a copy of the site. This allows for a whole network of service providers where if one `node' in this network all of a sudden becomes corrupt (e.g.\ by not adhering to this rule), then the users can just immediately switch to and use some of the other `nodes.' Now, the new point that I wanted to mention is this: When this ``copying'' happens, it should be a public process that all users can see (perhaps getting notifications about it, even). The users have then agreed to this from the start, as part of using the services in the first place. And (now comes the point), if a user wants to have some data deleted about them,\footnote{Anonymity is greatly advised for the Semantic Network Project for the accounts/profiles that the users use in every-day matters, but a user might for instance accidentally reveal there identity even so.} then they just have to send this request to all nodes who has copied the data in question. (However, this is only in principle; in reality, the network will work together such that a user only needs to put in the request in one place, and then it will be sent to all other relevant nodes in the network (and confirmations of the deletion will also be sent back by each node).) Since all these nodes are required by law (as far as I know) to then delete the relevant data, this whole distributedness of the Semantic Network should thus not be a hindrance in practice for the users to get data deleted.
 
-.\,.\,Okay, this was all I wanted to write here, I guess. If I think of something else that I've forgotten, then I will just append it here. (13:14)
+## Funding the project
 
+Last but not least, let us talk a bit about how the website intends to get its funds.
 
+Obviously, since the most of the contents, including the front-end and back-end source code, is supposed to come from, and be maintained by, the users, the cost of maintaining the website will be relatively low. But we will still need money to provide the servers necessary for the system, as well as for maintaining and updating the so-called developer libraries that was introduced above.
 
-(14:10, 16.02.24) There is actually another point which is quite important to mention in relation to the UPA idea. And that is that users will have to uprate the scripts, style sheets, and modules before they can use them.\footnote{
-	By the way, if a user logs into another computer, they will be prompted again, in serious tones, to ensure that they trust the various scripts etc.\ that they have are using (going through each one of them). This will make it a lot harder for people to convince people online to log into their own account and accept their scripts, since they users will then have to click through several warnings in that process. By the way, all the scripts etc.\ will also by checked by a parser/language checker for a supposedly safe subset of the given language, and these extra precautions are thus only there to ensure that this parser/language checker does not need to immediately be absolute 100 \% devoid of exploits on day one.
-}
-And this means that it will be quite easy to figure out which script-etc.\ creators have contributed a lot to the community. So when we also get the donation system that I have in mind (see my other notes, e.g.\ my `READE\_longer\_version.md' document) into the picture. It means that people will with all likelihood start donating serious money to these creators. (And the site can also run adds as something which the users can opt in to, where the money will then go to the `user groups' that the user chooses.) Think of how much money is involved on sites such as YouTube for the perspective of the creators. With this open source UPA idea, we can get an open source site where the open source creators can be rewarded with similar sums of money! (14:27)
-"
+Of course, a fallback option could always be for the website to show ads in the margins. But [up-web.org](https://www.up-web.org) will commit itself to not doing this. We would much rather simply keep a 'Sponsors' tab at the top, and ask the users to go to this tab once in while and send some mental appreciation towards our sponsors. With a large enough userbase, this will hopefully be able generate more than enough revenue to keep the site going.
 
--->
+Other potential service providers of the network in the future are of course free to monetize the websites that they use however they want. But since the users can choose freely between all the service providers in principle, and be able to switch to another one whenever they like, the userbase will thus have the power to prevent "enshittification."
+
+
+Lastly, [up-web.org](https://www.up-web.org) also at some point intends to found an organization for monetizing user-contributions, not necessarily so much when it comes to the user-made source code for the site, but more so when it comes to user content such as videos and images, and all such creative content. Hopefully we will be able to create a good organization where such content creators can pool their IPs, and vote on what paywalls to set up for what content, in a fair, democratic way.
+
+
+
+
