@@ -39,7 +39,7 @@ Apart from a few functions that are built into the JS interpreter itself, most o
 
 Furthermore, users are also free to import functions and classes, etc., from other user-uploaded directories. (And they can choose whether to bundle these imports together with their own modules, namely if they want to bundle their project directory, or to just import the foreign user modules dynamically as well).
 
-When a user wants to upload a new project, they can upload it as a whole directory at once. A tutorial for how to do this will available soon. They will then become the admin of that directory, which means that they are also free to edit the files in that directory at will.
+When a user wants to upload a new project, they can upload it as a whole directory at once. A tutorial for how to do this will available soon. They will then become the admin of that directory, which means that they are also free to edit the files in that directory.
 
 
 
@@ -53,7 +53,7 @@ The users might even find that this alternative React-like framework is easier t
 
 
 ### Back-end server modules
-Users are furthermore able to create and upload back-end modules, to which the front-end components can connect in order to fetch or post data to the database. We will refer to such modules as 'server modules' (SMs).
+Users are furthermore able to create and upload back-end modules, to which the front-end components can connect in order to fetch or post data to the database. We will refer to such modules here as 'server modules' (SMs).
 
 A server module (SM) is any JS module that is uploaded to a directory with the extension of '.sm.js'. For such modules, each function that is exported from the module is treated as part of the API of the SM, allowing clients to call these functions via a certain type of HTTP requests.
 
@@ -91,7 +91,7 @@ The 'App components' tree will be available on its own web page at [up-web.org](
 
 Here we will actually also give the reins completely to the users, and have them decide what this home page should contain. The 'App components' tree thus ought to include a category specifically of 'Home pages.' And here we will simply choose the top-rated one in that category to show as the home page of the website.
 
-It will thus be completely up to the users what the home page should look like, including what other pages it links to, and what web applications it links to. One might compare this to a wiki site such as Wikipedia, but where the pages can link not just to other article pages, but to any kind of page or web app, or any kind of component at all. This will thus essentially allow the users to build what we might call an "Everything Website," with every kind of application that the users want.
+It will thus be completely up to the users what the home page should look like, including what other pages it links to, and what web applications it links to. One might compare this to a wiki site such as Wikipedia, but where the pages can link not just to other article pages, but to any kind of page or web app, or any kind of component at all. This will thus essentially allow the users to build what we might call an "Everything Website," with the ability to contain any kind of application that the users want.
 
 
 
@@ -99,7 +99,7 @@ It will thus be completely up to the users what the home page should look like, 
 
 Furthermore, we will implement what we might refer to as "self-updating" links. These are links that instead of leading to a constant component, does a similar thing as we do for the home page, namely to query for the top-rated component for a given category, and then link to that.
 
-This first of all means that the author of a page or an app does not need to keep continuously update the links contained in the page/app. By using one of the "self-updating" links, the link will just always automatically lead to the best version of the given component that is available in the network, as rated by the users.
+This first of all means that the author of a page or an app does not need to keep updating the links contained in the page/app continuously. By using one of the "self-updating" links, the link will just always automatically lead to the best version of the given component that is available in the network, as rated by the users.
 
 And we can even do the same thing for nested components, namely by implementing a component that automatically queries for the top-rated component for a given category and then renders that.
 
@@ -108,7 +108,7 @@ For instance, if the page is some Wikipedia-like article, say, about a person, t
 
 ### User-tailored pages
 
-And while the automatic self-updating will be very handy, it is not even the main reason that one might choose to use such a self-updating component. An even more exciting reason is to allow users to get the version of the page/app that suits them the best. The self-updating components are thus able to look at the specific user's preferences when it comes to what is the "best" component to show.
+And while this automatic updating of components will be very handy, it is not even the main reason that one might choose to use such self-updating components. An even more exciting reason to use these is that it can allow users to get the version of the page/app best suits their own specific preferences. The self-updating components are thus able to look at the specific user's preferences when it comes to what is the best component to show, or to link to.
 
 For example, when it comes to Wikipedia-like articles, one user might generally prefer longer and more elaborate articles, and another user might generally prefer more brief and concise articles.
 
@@ -121,9 +121,9 @@ And if the application uses these "self-updating" components, it will thus be po
 
 And when it comes to the algorithms used in e.g. feeds or search result of various web applications, the users can also be in complete charge of which algorithms they want to use.
 
-Sure, any web application is free to use any specific algorithm that it chooses. But unless there is a good reason for not choosing an algorithm with a high level of transparency and ability to be tailored specifically to the individual user's own preferences, the users will likely just choose an alternative to that application instead where they have more agency over the algorithms.
+Sure, any web application is free to use any specific algorithm that it chooses. But unless there is a good reason for not choosing an algorithm with a high level of transparency and ability to be tailored specifically to the individual user's own preferences, the users will likely just choose an alternative application instead where they have more agency over the algorithms.
 
-This will hopefully usher in a new age of the Web where using an algorithm is not a quid pro quo like how things are now: The algorithms collect personal data about you when you use them, often in a non-transparent way, and in return you get results that might be more relevant to you if you are lucky (at least until the process of "enshittification" inevitable takes its toll).
+This will hopefully usher in a new age of the Web where using an algorithm is not a quid pro quo like how things are now: The algorithms collect personal data about you when you use them, often in a non-transparent way, and in return you get results that might be more relevant to you, if you are lucky (at least until the process of "enshittification" inevitable takes its toll).
 
 Instead, the users will be able to provide only the data that *they* want to the algorithms. And if they don't want to provide any at all, they are also free to just try to tweak the parameters of the algorithms manually, in order to make them suit their preferences, no quid pro quo needed.
 
