@@ -169,7 +169,7 @@ Instead, the users will be able to provide only the data that they *want* to the
 
 Obviously, not all users will be programmers that contribute source code to the network. Some users will of course just be using the apps of the network without contributing source code on their own. And that is perfectly fine.
 
-The same is true when it comes to selecting which algorithm to use. Obviously, we cannot expect each individual user to go and select their preferred algorithms before being able to use the website. Instead we will allow a particular group of moderators of the site to choose the *defualt* preferences that each new user starts out with. And then we just ought to make it as easy as possibly for users to change these preferences whenever they want.
+The same is true when it comes to selecting which algorithm to use. Obviously, we cannot expect each individual user to go and select their preferred algorithms before being able to use the website. Instead we will simply select the most popular set of preferences as the default ones that each new user starts out with, and then make it easy for users to change these preferences whenever they want.
 
 
 
