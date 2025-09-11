@@ -18,14 +18,14 @@ const aggrPath = abs("./aggregates.btt");
 
 
 export function updateScoreForUser(
-  userGroupIdent, qualIdent, subjIdent, userIdent
+  userGroupKey, qualKey, subjKey, userKey
 ) {
   return new Promise(resolve => {
-    let userGroupIDProm = fetchEntityID(userGroupIdent);
-    let qualIDProm = fetchEntityID(qualIdent);
-    let subjIDProm = fetchEntityID(subjIdent);
-    let userIDProm = fetchEntityID(userIdent);
-    let userWeightProm = fetchUserWeight(userGroupIdent, userIdent);
+    let userGroupIDProm = fetchEntityID(userGroupKey);
+    let qualIDProm = fetchEntityID(qualKey);
+    let subjIDProm = fetchEntityID(subjKey);
+    let userIDProm = fetchEntityID(userKey);
+    let userWeightProm = fetchUserWeight(userGroupKey, userKey);
 
     Promise.all([
       userGroupIDProm, qualIDProm, subjIDProm, userIDProm
@@ -90,13 +90,13 @@ export function updateList() {
 
 
 // export function updateScoreForGroup(
-//   userGroupIdent, qualIdent, subjIdent
+//   userGroupKey, qualKey, subjKey
 // ) {
 //   return new Promise(resolve => {
-//     let qualIDProm = fetchEntityID(qualIdent);
-//     let subjIDProm = fetchEntityID(subjIdent);
-//     let userGroupIDProm = fetchEntityID(userGroupIdent);
-//     let userListProm = fetchUserList(userGroupIdent);
+//     let qualIDProm = fetchEntityID(qualKey);
+//     let subjIDProm = fetchEntityID(subjKey);
+//     let userGroupIDProm = fetchEntityID(userGroupKey);
+//     let userListProm = fetchUserList(userGroupKey);
 
 //     Promise.all([
 //       qualIDProm, subjIDProm, userGroupIDProm, userListProm

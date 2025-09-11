@@ -27,11 +27,11 @@
 // language.
 // The values of the attributes can be anything such as strings and numbers,
 // and methods as just mentioned, and can also paths leading to such data. And
-// most importantly, they can be so-called "identifiers" of other entities.
-// Such identifiers can either be paths to the entity's definition object (as
-// see e.g. for all "Class" attributes defined below), or they can be strings
-// of the form '#<entID>' or just '<entID>', where entID (entity ID) is a
-// hexadecimal string that is assigned to the entity when uploading it via the
+// most importantly, they can be the "keys" of other entities. Such entity keys
+// can either be paths to the entity's definition object (as seen e.g. for all
+// "Class" attributes defined below), or they can be strings of the form
+// '#<entID>' or just '<entID>', where entID (entity ID) is a hexadecimal
+// string that is assigned to the entity when uploading it via the
 // ./entities.sm.js server module. They can also be of the form '@<userID>',
 // where userID is the hexadecimal string that the backend uses in order to
 // identify users.
@@ -39,8 +39,7 @@
 // should be defined by the class's description. But unless otherwise specified,
 // it should be the convention to escape '#' and '@' characters in string-
 // valued attributes, as well as leading '/'s, using backslashes for doing so,
-// unless these are to be interpreted as part of an entity identifier and/or a
-// path.
+// unless these are to be interpreted as part of an entity key and/or a path.
 export const entities = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "All entities",
@@ -348,7 +347,7 @@ export const derivedQualities = {
   "Name": "Scored lists",
   "Superclass": abs("./em1.js;get/qualities"),
   "Common attributes": [
-    "Dependencies", // An array of quality identifiers.
+    "Dependencies", // An array of quality keys.
     "getScoreData", // A method that receives an array of "score data" from
     // each dependency quality and returns a set of score data. "Score data"
     // here refers to a [score, weight, auxData?] array, where the score is
@@ -380,12 +379,12 @@ export const scoredLists = {
   "Name": "Scored lists",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-    // fetchScoreData(subjIdent) fetches the score data for the given "subject,"
+    // fetchScoreData(subjKey fetches the score data for the given "subject,"
     // i.e. the given entity on the list. "Score data" refers here to a [score,
-    // weight, auxData?] array, as described above. Note that an "identifier"
-    // (shortened to "ident") here can be either an absolute entity path, a
-    // user ID prefixed by "@", an entity ID prefixed with "#", or can also
-    // just be the entity ID without the leading "#".
+    // weight, auxData?] array, as described above. Note that an "key" here can
+    // be either an absolute entity path, a user ID prefixed by "@", an entity
+    // ID prefixed with "#", or can also just be the entity ID without the
+    // leading "#".
     "fetchScoreData",
 
     // fetchList({lo, hi, maxNum, offset, isAscending}) fetches a section of
@@ -454,7 +453,7 @@ export const scoreHandlers = {
   "Name": "Score handlers",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-    // fetchScoreData(qualIdent, subjIdent, options) is similar to
+    // fetchScoreData(qualKey, subjKey, options) is similar to
     // fetchScoreData() of the scored lists, except that you need to specify
     // the quality that the scores concern.
     // Furthermore, the 'options' argument can contain auxiliary parameters
@@ -469,7 +468,7 @@ export const scoreHandlers = {
     // querying that.
     "fetchScoreData",
 
-    // fetchList(qualIdent, options) is similar to the fetchList() method of
+    // fetchList(qualKey, options) is similar to the fetchList() method of
     // scored lists, but where the 'lo', 'hi', 'maxNum', 'offset', and
     // 'isAscending' parameters are part of the 'options' object.
     // There's also an important 'minWeight' option, which defines the minimum
@@ -486,17 +485,17 @@ export const scoreHandlers = {
     // more of the candidates for the list.  
     "fetchList",
 
-    // updateScoreForUser(qualIdent, subjIdent, userID, options): When a user
+    // updateScoreForUser(qualKey, subjKey, userID, options): When a user
     // submits a score for a quality, this method should be called.
     "updateScoreForUser",
 
-    // updateScoreForGroup(qualIdent, subjIdent, options): When viewing a score
+    // updateScoreForGroup(qualKey, subjKey, options): When viewing a score
     // from a user group, the app might afford a button to "refresh"/"update"
     // the score for the given subject. If the user clicks that button, this
     // methods should then be called.
     "updateScoreForGroup",
 
-    // updateList(qualIdent, options) is similar to updateScoreForGroup() but
+    // updateList(qualKey, options) is similar to updateScoreForGroup() but
     // for a whole list of subjects at once. When viewing a scored list, the
     // app might thus provide also afford a "refresh"/"update" button to click.
     // Note that since updating a whole list might be expensive, the score
@@ -508,7 +507,7 @@ export const scoreHandlers = {
     // matter.)
     "updateList",
 
-    // fetchDefaultOptions(qualIdent) returns a promise to the default options
+    // fetchDefaultOptions(qualKey) returns a promise to the default options
     // chosen by the score handler for a given quality. This allows the app to
     // inform the user of these choices should they inspect the score in more
     // detail. Thus, if the user open a menu to adjust the search options, e.g.

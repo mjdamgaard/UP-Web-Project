@@ -2,7 +2,7 @@
 import {post} from 'query';
 import {fetchEntityID} from "../../entities.sm.js";
 
-const trustedQualIdent = abs("./../em1.js;get/trusted");
+const trustedQualKey = abs("./../em1.js;get/trusted");
 
 
 // A [([userEntID, weight],)*] array over all the initial moderators, and their
@@ -14,7 +14,7 @@ export const initialModerators = [
 
 export function insertInitialModerators() {
   return new Promise(resolve => {
-    fetchEntityID(trustedQualIdent).then(qualID => {
+    fetchEntityID(trustedQualKey).then(qualID => {
       post(
         abs("./init_mods.bbt") + "/_insertList/l=" + qualID,
         initialModerators

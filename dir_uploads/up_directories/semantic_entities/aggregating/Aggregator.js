@@ -14,20 +14,20 @@ export class Aggregator {
   }
 
 
-  fetchScore(userGroupIdent, qualIdent, subjIdent) {
+  fetchScore(userGroupKey, qualKey, subjKey) {
     return new Promise(resolve => {
       fetchScoreAndWeight(
-        this.aggrPath, [qualIdent, userGroupIdent], subjIdent
+        this.aggrPath, [qualKey, userGroupKey], subjKey
       ).then(
         ([score]) => resolve(score)
       );
     });
   }
 
-  fetchScoreAndWeight(userGroupIdent, qualIdent, subjIdent) {
+  fetchScoreAndWeight(userGroupKey, qualKey, subjKey) {
     return new Promise(resolve => {
       fetchScoreAndWeight(
-        this.aggrPath, [qualIdent, userGroupIdent], subjIdent
+        this.aggrPath, [qualKey, userGroupKey], subjKey
       ).then(
         scoreAndWeight => resolve(scoreAndWeight)
       );
@@ -35,10 +35,10 @@ export class Aggregator {
   }
 
 
-  fetchList(userGroupIdent, qualIdent, {lo, hi, maxNum, offset, isAscending}) {
+  fetchList(userGroupKey, qualKey, {lo, hi, maxNum, offset, isAscending}) {
     return new Promise(resolve => {
       fetchScoreAndWeightList(
-        this.aggrPath, [qualIdent, userGroupIdent], lo, hi, maxNum, offset,
+        this.aggrPath, [qualKey, userGroupKey], lo, hi, maxNum, offset,
         isAscending,
       ).then(
         list => resolve(list)
@@ -49,11 +49,11 @@ export class Aggregator {
 
 
 
-  updateScoreForUser(userGroupIdent, qualIdent, subjIdent, userID) {
+  updateScoreForUser(userGroupKey, qualKey, subjKey, userID) {
     return new Promise(resolve => {
       post(
         this.updateSMPath + "/callSMF/updateScoreForUser",
-        [userGroupIdent, qualIdent, subjIdent, userID],
+        [userGroupKey, qualKey, subjKey, userID],
       ).then(
         wasUpdated => resolve(wasUpdated)
       );
@@ -61,22 +61,22 @@ export class Aggregator {
   }
 
 
-  updateScoreForGroup(userGroupIdent, qualIdent, subjIdent) {
+  updateScoreForGroup(userGroupKey, qualKey, subjKey) {
     return new Promise(resolve => {
       post(
         this.updateSMPath + "/callSMF/updateScoreForGroup",
-        [userGroupIdent, qualIdent, subjIdent],
+        [userGroupKey, qualKey, subjKey],
       ).then(
         wasUpdated => resolve(wasUpdated)
       );
     });
   }
 
-  updateList(userGroupIdent, qualIdent) {
+  updateList(userGroupKey, qualKey) {
     return new Promise(resolve => {
       post(
         this.updateSMPath + "/callSMF/updateList",
-        [userGroupIdent, qualIdent],
+        [userGroupKey, qualKey],
       ).then(
         wasUpdated => resolve(wasUpdated)
       );

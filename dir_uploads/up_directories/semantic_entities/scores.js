@@ -13,11 +13,11 @@ import {
 
 
 // Function to fetch user scores uploaded via ./user_scores.sm.js.
-export function fetchUserScore(qualIdent, subjIdent, userIdent) {
+export function fetchUserScore(qualKey, subjKey, userKey) {
   return new Promise(resolve => {
     Promise.all([
-      fetchUserScoreHex(qualIdent, subjIdent, userIdent),
-      fetchMetric(qualIdent)
+      fetchUserScoreHex(qualKey, subjKey, userKey),
+      fetchMetric(qualKey)
     ]).then(([userScoreHex, metric]) => {
       if (userScoreHex === undefined) return undefined;
       let userScore = getFloatScore(userScoreHex, metric);
@@ -28,10 +28,10 @@ export function fetchUserScore(qualIdent, subjIdent, userIdent) {
 
 // Helper function to fetch user scores uploaded via ./user_scores.sm.js, which
 // we will nonetheless also export.
-export function fetchUserScoreHex(qualIdent, subjIdent, userIdent) {
-  let qualIDProm = fetchEntityID(qualIdent);
-  let subjIDProm = fetchEntityID(subjIdent);
-  let userIDProm = fetchEntityID(userIdent);
+export function fetchUserScoreHex(qualKey, subjKey, userKey) {
+  let qualIDProm = fetchEntityID(qualKey);
+  let subjIDProm = fetchEntityID(subjKey);
+  let userIDProm = fetchEntityID(userKey);
   return new Promise(resolve => {
     Promise.all([
       qualIDProm, subjIDProm, userIDProm
@@ -47,9 +47,9 @@ export function fetchUserScoreHex(qualIdent, subjIdent, userIdent) {
 }
 
 
-export function fetchMetric(qualIdent) {
+export function fetchMetric(qualKey) {
   return new Promise(resolve => {
-    fetchEntityDefinition(qualIdent).then(
+    fetchEntityDefinition(qualKey).then(
       entDef => resolve(entDef.Metric)
     );
   });
@@ -77,14 +77,14 @@ export function getScoreHex(score, metric, sigLen = undefined) {
 
 // Function to fetch a list of user-scored entities.
 export function fetchUserScoreList(
-  qualIdent, userIdent, lo, hi, maxNum, offset, isAscending
+  qualKey, userKey, lo, hi, maxNum, offset, isAscending
 ) {
   return new Promise(resolve => {
     Promise.all([
       fetchUserScoreHexList(
-        qualIdent, userIdent, lo, hi, maxNum, offset, isAscending
+        qualKey, userKey, lo, hi, maxNum, offset, isAscending
       ),
-      fetchMetric(qualIdent)
+      fetchMetric(qualKey)
     ]).then(([userScoreHexList, metric]) => {
       let userScoreList = map(userScoreHexList, ([subjID, userScoreHex]) => (
         [subjID, getFloatScore(userScoreHex, metric)]
@@ -96,10 +96,10 @@ export function fetchUserScoreList(
 
 // Helper function to fetch user-scored list.
 export function fetchUserScoreHexList(
-  qualIdent, userIdent, lo, hi, maxNum, offset, isAscending
+  qualKey, userKey, lo, hi, maxNum, offset, isAscending
 ) {
-  let qualIDProm = fetchEntityID(qualIdent);
-  let userIDProm = fetchEntityID(userIdent);
+  let qualIDProm = fetchEntityID(qualKey);
+  let userIDProm = fetchEntityID(userKey);
   return new Promise(resolve => {
     Promise.all([qualIDProm, userIDProm]).then(([qualID, userID]) => {
       let listID = qualID + "&" + userID;
@@ -126,11 +126,11 @@ export function fetchUserScoreHexList(
 // column is actually a float(,,3),float(,,1) array, where the first float is
 // the score (ignoring bounds), and the second float is the weight of the score.
 export function fetchScoreAndWeight(
-  tableFilePath, listIDIdentArr, keyIdent
+  tableFilePath, listIDKeyArr, keyEntKey
 ) {
   return new Promise(resolve => {
     fetchScoreHex(
-      tableFilePath, listIDIdentArr, keyIdent
+      tableFilePath, listIDKeyArr, keyEntKey
     ).then(scoreAndWeightHex => {
       if (scoreAndWeightHex === undefined) return [];
       let [score, weight] = arrayFromHex(
@@ -144,12 +144,12 @@ export function fetchScoreAndWeight(
 
 // A function to fetch the hex-encoded score of any BTT table.
 export function fetchScoreHex(
-  tableFilePath, listIDIdentArr, keyIdent
+  tableFilePath, listIDKeyArr, keyEntKey
 ) {
   return new Promise(resolve => {
-    let keyIDProm = fetchEntityID(keyIdent);
+    let keyIDProm = fetchEntityID(keyEntKey);
     let listIDPartsPromArr = map(
-      listIDIdentArr, entIdent => fetchEntityID(entIdent)
+      listIDKeyArr, entKey => fetchEntityID(entKey)
     );
     Promise.all([
       keyIDProm, ...listIDPartsPromArr
@@ -169,12 +169,12 @@ export function fetchScoreHex(
 
 // A function to fetch whole score--weight list.
 export function fetchScoreAndWeightList(
-  tableFilePath, listIDIdentArr, lo, hi, maxNum, offset,
+  tableFilePath, listIDKeyArr, lo, hi, maxNum, offset,
   isAscending,
 ) {
   return new Promise(resolve => {
     fetchScoreHexList(
-      tableFilePath, listIDIdentArr, lo, hi, maxNum, offset, isAscending,
+      tableFilePath, listIDKeyArr, lo, hi, maxNum, offset, isAscending,
     ).then(list => {
       resolve(map(list, ([subjID, scoreAndWeightHex]) => {
         let [score, weight] = arrayFromHex(
@@ -189,11 +189,11 @@ export function fetchScoreAndWeightList(
 
 // A function to fetch the hex-encoded score of any BTT table.
 export function fetchScoreHexList(
-  tableFilePath, listIDIdentArr, lo, hi, maxNum, offset, isAscending,
+  tableFilePath, listIDKeyArr, lo, hi, maxNum, offset, isAscending,
 ) {
   return new Promise(resolve => {
     let listIDPartsPromArr = map(
-      listIDIdentArr, entIdent => fetchEntityID(entIdent)
+      listIDKeyArr, entKey => fetchEntityID(entKey)
     );
     Promise.all(
       listIDPartsPromArr
@@ -223,14 +223,14 @@ export function fetchScoreHexList(
 // by used SMs that want to store score tables using the float(,,3),float(,,1)
 // array convention (of score and weight).
 export function postScoreAndWeight(
-  tableFilePath, listIDIdentArr, keyIdent, score, weight
+  tableFilePath, listIDKeyArr, keyEntKey, score, weight
 ) {
   return new Promise(resolve => {
     let scoreAndWeightHex = hexFromArray(
       [score, weight], ["float(,,3)", "float(,,1)"]
     );
     postScoreAndWeightHex(
-      tableFilePath, listIDIdentArr, keyIdent, scoreAndWeightHex
+      tableFilePath, listIDKeyArr, keyEntKey, scoreAndWeightHex
     ).then(
       wasUpdated => resolve(wasUpdated)
     );
@@ -238,12 +238,12 @@ export function postScoreAndWeight(
 }
 
 export function postScoreAndWeightHex(
-  tableFilePath, listIDIdentArr, keyIdent, scoreAndWeightHex
+  tableFilePath, listIDKeyArr, keyEntKey, scoreAndWeightHex
 ) {
   return new Promise(resolve => {
-    let keyIDProm = fetchEntityID(keyIdent);
+    let keyIDProm = fetchEntityID(keyEntKey);
     let listIDPartsPromArr = map(
-      listIDIdentArr, entIdent => fetchEntityID(entIdent)
+      listIDKeyArr, entKey => fetchEntityID(entKey)
     );
     Promise.all([
       keyIDProm, ...listIDPartsPromArr
@@ -266,12 +266,12 @@ export function postScoreAndWeightHex(
 // deletes the entry (and doesn't require anything about the
 // float(,,3),float(,,1) format).
 export function deleteScore(
-  tableFilePath, listIDIdentArr, keyIdent
+  tableFilePath, listIDKeyArr, keyEntKey
 ) {
   return new Promise(resolve => {
-    let keyIDProm = fetchEntityID(keyIdent);
+    let keyIDProm = fetchEntityID(keyEntKey);
     let listIDPartsPromArr = map(
-      listIDIdentArr, entIdent => fetchEntityID(entIdent)
+      listIDKeyArr, entKey => fetchEntityID(entKey)
     );
     Promise.all([
       keyIDProm, ...listIDPartsPromArr
@@ -296,12 +296,12 @@ export function deleteScore(
 // hex-encoded score, looking at the quality's metric to get the right
 // encoding. 
 export function postUserScore(
-  qualIdent, subjIdent, userIdent, score, payloadHex = undefined
+  qualKey, subjKey, userKey, score, payloadHex = undefined
 ) {
-  let qualIDProm = fetchEntityID(qualIdent);
-  let subjIDProm = fetchEntityID(subjIdent);
-  let userIDProm = fetchEntityID(userIdent);
-  let metricProm = fetchMetric(qualIdent);
+  let qualIDProm = fetchEntityID(qualKey);
+  let subjIDProm = fetchEntityID(subjKey);
+  let userIDProm = fetchEntityID(userKey);
+  let metricProm = fetchMetric(qualKey);
   return new Promise(resolve => {
     Promise.all([
       qualIDProm, subjIDProm, userIDProm, metricProm
@@ -328,38 +328,38 @@ export function postUserScore(
 
 
 
-export function fetchUserWeight(userGroupIdent, userIdent) {
+export function fetchUserWeight(userGroupKey, userKey) {
   return new Promise(resolve => {
-    fetchUserWeightData(userGroupIdent, userIdent).then(
+    fetchUserWeightData(userGroupKey, userKey).then(
       ([weight]) => resolve(weight)
     );
   });
 }
 
-export function fetchUserWeightData(userGroupIdent, userIdent) {
+export function fetchUserWeightData(userGroupKey, userKey) {
   return new Promise(resolve => {
-    fetchUserListIdent(userGroupIdent).then(userListIdent => {
-      fetchScoreDataFromScoredList(userListIdent, userIdent).then(
+    fetchUserListKey(userGroupKey).then(userListKey => {
+      fetchScoreDataFromScoredList(userListKey, userKey).then(
         (weightData) => resolve(weightData)
       );
     });
   });
 }
 
-export function fetchUserListIdent(userGroupIdent) {
+export function fetchUserListKey(userGroupKey) {
   return new Promise(resolve => {
-    fetchEntityDefinition(userGroupIdent).then(userGroupDef => {
-      let userListIdent = userGroupDef["User list"];
-      resolve(userListIdent);
+    fetchEntityDefinition(userGroupKey).then(userGroupDef => {
+      let userListKey = userGroupDef["User list"];
+      resolve(userListKey);
     });
   });
 }
 
-export function fetchScoreDataFromScoredList(listIdent, subjIdent) {
+export function fetchScoreDataFromScoredList(listKey, subjKey) {
   return new Promise(resolve => {
-    fetchEntityDefinition(listIdent).then(listDef => {
+    fetchEntityDefinition(listKey).then(listDef => {
       noPost(() => {
-        listDef.fetchScoreData(subjIdent).then(
+        listDef.fetchScoreData(subjKey).then(
           scoreData => resolve(scoreData)
         );
       });
@@ -369,7 +369,7 @@ export function fetchScoreDataFromScoredList(listIdent, subjIdent) {
 
 
 export function fetchUserList(
-  userGroupIdent, lo, hi, maxNum, offset, isAscending
+  userGroupKey, lo, hi, maxNum, offset, isAscending
 ) {
 
 }

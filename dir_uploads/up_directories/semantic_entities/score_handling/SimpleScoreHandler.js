@@ -17,23 +17,23 @@ export class SimpleScoreHandler {
   Class = abs("../em1.js;get/scoreHandlers");
 
 
-  fetchScoreData(qualIdent, subjIdent, options = {}) {
+  fetchScoreData(qualKey, subjKey, options = {}) {
     return new Promise(resolve => {
-      let {user: userIdent, queryUser} = options;
+      let {user: userKey, queryUser} = options;
 
       // If the queryUser option is true, query and resolve with the user's
       // own score (and an undefined weight) 
       if (queryUser) {
-        fetchUserScore(qualIdent, subjIdent, userIdent).then(userScore => {
+        fetchUserScore(qualKey, subjKey, userKey).then(userScore => {
           resolve([userScore]);
         });
       }
 
       // And else, query an appropriate user group for their (aggregated) score.
       else {
-        this.fetchUserGroup(qualIdent, options).then(userGroupIdent => {
+        this.fetchUserGroup(qualKey, options).then(userGroupKey => {
           this.aggregator.fetchScoreData(
-            userGroupIdent, qualIdent, subjIdent, options
+            userGroupKey, qualKey, subjKey, options
           ).then(
             scoreData => resolve(scoreData)
           );
@@ -44,10 +44,10 @@ export class SimpleScoreHandler {
 
 
 
-  fetchList(qualIdent, options = {}) {
+  fetchList(qualKey, options = {}) {
     return new Promise(resolve => {
       let {
-        user: userIdent, queryUser, minWeight = 10,
+        user: userKey, queryUser, minWeight = 10,
         lo, hi, maxNum, offset, isAscending
       } = options;
 
@@ -55,7 +55,7 @@ export class SimpleScoreHandler {
       // own score (and an undefined weight) 
       if (queryUser) {
         fetchUserScoreList(
-          qualIdent, userIdent, lo, hi, maxNum, offset, isAscending
+          qualKey, userKey, lo, hi, maxNum, offset, isAscending
         ).then(
           list => resolve(list)
         );
@@ -66,9 +66,9 @@ export class SimpleScoreHandler {
       // which is what we want; maxNum is the max number of *fetched* entries
       // (at least for each individual list that is queried in the process).
       else {
-        this.fetchUserGroup(qualIdent, options).then(userGroupIdent => {
+        this.fetchUserGroup(qualKey, options).then(userGroupKey => {
           this.aggregator.fetchList(
-            userGroupIdent, qualIdent, options
+            userGroupKey, qualKey, options
           ).then(
             list => filterScoredListWRTWeight(list, minWeight));
         });
@@ -78,11 +78,11 @@ export class SimpleScoreHandler {
 
 
 
-  updateScoreForUser(qualIdent, subjIdent, userID, options = {}) {
+  updateScoreForUser(qualKey, subjKey, userID, options = {}) {
     return new Promise(resolve => {
-      this.fetchUserGroup(qualIdent, options).then(userGroupIdent => {
+      this.fetchUserGroup(qualKey, options).then(userGroupKey => {
         this.aggregator.updateScoreForUser(
-          userGroupIdent, qualIdent, subjIdent, userID, options
+          userGroupKey, qualKey, subjKey, userID, options
         ).then(
           wasUpdated => resolve(wasUpdated)
         );
@@ -92,11 +92,11 @@ export class SimpleScoreHandler {
 
 
 
-  updateScoreForGroup(qualIdent, subjIdent, options = {}) {
+  updateScoreForGroup(qualKey, subjKey, options = {}) {
     return new Promise(resolve => {
-      this.fetchUserGroup(qualIdent, options).then(userGroupIdent => {
+      this.fetchUserGroup(qualKey, options).then(userGroupKey => {
         this.aggregator.updateScoreForGroup(
-          userGroupIdent, qualIdent, subjIdent, options
+          userGroupKey, qualKey, subjKey, options
         ).then(
           wasUpdated => resolve(wasUpdated)
         );
@@ -106,11 +106,11 @@ export class SimpleScoreHandler {
 
 
 
-  updateList(qualIdent, options = {}) {
+  updateList(qualKey, options = {}) {
     return new Promise(resolve => {
-      this.fetchUserGroup(qualIdent, options).then(userGroupIdent => {
+      this.fetchUserGroup(qualKey, options).then(userGroupKey => {
         this.aggregator.updateList(
-          userGroupIdent, qualIdent, options
+          userGroupKey, qualKey, options
         ).then(
           wasUpdated => resolve(wasUpdated)
         );
@@ -120,10 +120,10 @@ export class SimpleScoreHandler {
 
 
 
-  fetchDefaultOptions(qualIdent) {
+  fetchDefaultOptions(qualKey) {
     return new Promise(resolve => {
-      this.fetchUserGroup(qualIdent).then(userGroupIdent => {
-        resolve({userGroup: userGroupIdent});
+      this.fetchUserGroup(qualKey).then(userGroupKey => {
+        resolve({userGroup: userGroupKey});
       });
     });
   }

@@ -10,21 +10,21 @@ import {ScoredList} from "../ScoredList.js";
 export class ModeratedList extends ScoredList {
   
   constructor(
-    ownEntPath, userGroupIdent, qualIdent, scoreHandlerIdent, convert
+    ownEntPath, userGroupKey, qualKey, scoreHandlerKey, convert
   ) {
     super(ownEntPath, abs("./comb_lists.bbt"), abs("./comb_lists.sm.js"));
 
     // These attributes are used by the update SM.
-    this.userGroupIdent = userGroupIdent;
-    this.qualIdent = qualIdent;
-    this.scoreHandlerIdent = scoreHandlerIdent;
+    this.userGroupKey = userGroupKey;
+    this.qualKey = qualKey;
+    this.scoreHandlerKey = scoreHandlerKey;
     this.convert = convert;
 
     this["Documentation"] = <div>
       <h1>{"Moderated list"}</h1>
       <p>{
-        "A user group moderated by another user group, " + userGroupIdent +
-        ", using the quality " + qualIdent + " to determine the weights."
+        "A user group moderated by another user group, " + userGroupKey +
+        ", using the quality " + qualKey + " to determine the weights."
       }</p>
     </div>;
   }

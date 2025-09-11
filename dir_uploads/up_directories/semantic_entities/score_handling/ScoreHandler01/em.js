@@ -8,7 +8,7 @@ import CombinedList from "../../scored_lists/comb/CombinedList.js";
 import SimpleScoreHandler from "../SimpleScoreHandler.js";
 import {MeanAggregator} from "../../aggregating/mean/MeanAggregator.js";
 
-const trustedQualIdent = abs("./../em1.js;get/trusted");
+const trustedQualKey = abs("./../em1.js;get/trusted");
 
 const meanAggregator = new MeanAggregator();
 
@@ -18,10 +18,10 @@ const meanAggregator = new MeanAggregator();
 export const initialModeratorList = {
   "Class": abs("./em1.js;get/scoredLists"),
 
-  fetchScoreData: (subjIdent) => {
+  fetchScoreData: (subjKey) => {
     return new Promise(resolve => {
       fetchScoreAndWeight(
-        abs("./init_mods.btt"), [], subjIdent
+        abs("./init_mods.btt"), [], subjKey
       ).then(
         scoreData => resolve(scoreData)
       );
@@ -68,9 +68,9 @@ export const initialModeratorGroup = {
 export const allUsersList = {
   "Class": abs("./em1.js;get/scoredLists"),
 
-  fetchScoreData: (subjIdent) => {
+  fetchScoreData: (subjKey) => {
     return new Promise(resolve => {
-      fetchEntityID(subjIdent).then(userEntID => resolve(
+      fetchEntityID(subjKey).then(userEntID => resolve(
         [userEntID, 1]
       ));
     });
@@ -113,7 +113,7 @@ export const allUsersList = {
 export const initialTrustedUserList = new ModeratedList(
   abs("./em.js;get/initialTrustedUserList"),
   abs("./em.js;get/initialModeratorGroup"),
-  trustedQualIdent, 
+  trustedQualKey, 
   abs("./em.js;get/scoreHandler01"),
   exponentialConvert,
 );
@@ -144,7 +144,7 @@ export const initialTrustedUserGroup = {
 export const initialSecondHandTrustedUserList = new ModeratedList(
   abs("./em.js;get/initialSecondHandTrustedUserList"),
   abs("./em.js;get/initialTrustedUserGroup"),
-  trustedQualIdent, 
+  trustedQualKey, 
   abs("./em.js;get/scoreHandler01"),
   exponentialConvert,
 );
@@ -201,7 +201,7 @@ export const initialStandardUserGroup = {
 
 // Function that this initial score handler uses to get the user group to use
 // for a given quality.  
-function fetchUserGroup(qualIdent, options = {}) {
+function fetchUserGroup(qualKey, options = {}) {
   // TODO: Reimplement this function to use the "areas of concern" of the
   // qualities, instead of this hard-coded implementation where one just
   // compares the qualPath to a list of security/UI-related qualities, and
@@ -213,16 +213,16 @@ function fetchUserGroup(qualIdent, options = {}) {
       resolve(options.userGroup);
     }
     else {
-      fetchEntityPath(qualIdent).then(qualPath => {
-        let userGroupIdent = sensitiveQualities[qualPath] ||
+      fetchEntityPath(qualKey).then(qualPath => {
+        let userGroupKey = sensitiveQualities[qualPath] ||
           abs("./em.js;get/initialStandardUserGroup");
-        resolve(userGroupIdent);
+        resolve(userGroupKey);
       });
     }
   });
 }
 
-// A qualPath->userGroupIdent object used for this initial implementation of
+// A qualPath->userGroupKey object used for this initial implementation of
 // the fetchUserGroup() above.
 const sensitiveQualities = {
   // TODO: Add sensitive qualities.

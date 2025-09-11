@@ -16,11 +16,11 @@ export class ScoredList {
   Class = abs("../em1.js;get/scoredLists");
 
 
-  fetchScoreData(subjIdent) {
+  fetchScoreData(subjKey) {
     return new Promise(resolve => {
       fetchEntityID(this.ownEntPath).then(ownEntID => {
         fetchScoreAndWeight(
-          this.listTablePath, [ownEntID], subjIdent
+          this.listTablePath, [ownEntID], subjKey
         ).then(
           scoreData => resolve(scoreData)
         );
@@ -41,11 +41,11 @@ export class ScoredList {
     });
   }
 
-  updateScore(subjIdent) {
+  updateScore(subjKey) {
     return new Promise(resolve => {
       fetchEntityID(this.ownEntPath).then(ownEntID => {
         post(
-          this.updateSMPath + "/callSMF/updateScore", [ownEntID, subjIdent],
+          this.updateSMPath + "/callSMF/updateScore", [ownEntID, subjKey],
         ).then(
           wasUpdated => resolve(wasUpdated)
         );

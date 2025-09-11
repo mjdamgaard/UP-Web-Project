@@ -7,24 +7,24 @@ import {noPost, clearPrivileges} from 'query';
 
 
 
-export function updateScore(combListIdent, subjIdent) {
+export function updateScore(combListKey, subjKey) {
   return new Promise(resolve => {
-    fetchEntityDefinition(combListIdent).then(combListDef => {
+    fetchEntityDefinition(combListKey).then(combListDef => {
       let listIDProm = fetchEntityID(combListDef.ownEntPath);
-      let listIdentArr = combListDef.listIdentArr;
+      let listKeyArr = combListDef.listKeyArr;
       let listDefArrProm = Promise.all(
-        map(listIdentArr, listIdent => fetchEntityDefinition(listIdent))
+        map(listKeyArr, listKey => fetchEntityDefinition(listKey))
       );
       listDefArrProm.then(listDefArr => {
         // Update the underlying lists before fetching the scores from them.
         Promise.all(map(listDefArr, listDef => (
           clearPrivileges(() => (
-            listDef.updateScore ? listDef.updateScore(subjIdent) :
+            listDef.updateScore ? listDef.updateScore(subjKey) :
               new Promise(res => res())
           ))
         ))).then(() => {
           let scoreDataArrProm = Promise.all(map(listDefArr, listDef => (
-            noPost(() => listDef.fetchScoreData(subjIdent))
+            noPost(() => listDef.fetchScoreData(subjKey))
           )));
           scoreDataArrProm.then(scoreDataArr => {
             // Aggregate the score and weight into one combined pair (ignoring
@@ -44,7 +44,7 @@ export function updateScore(combListIdent, subjIdent) {
             // Then post this combined score and weight.
             listIDProm.then(listID => {
               postScoreAndWeight(
-                abs("./comb_lists.bbt"), [listID], subjIdent,
+                abs("./comb_lists.bbt"), [listID], subjKey,
                 combinedScoreData[0], combinedScoreData[1]
               ).then(
                 wasUpdated => resolve(wasUpdated)
@@ -58,7 +58,7 @@ export function updateScore(combListIdent, subjIdent) {
 }
 
 
-export function updateList(combListIdent) {
+export function updateList(combListKey) {
   // TODO: Implement at some point.
   return Promise(resolve => resolve());
 }

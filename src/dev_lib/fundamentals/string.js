@@ -30,8 +30,9 @@ export const slice = new DevFunction(
 );
 
 export const indexOf = new DevFunction(
-  "indexOf", {typeArr: ["string", "string"]}, ({}, [str, needle]) => {
-    return str.indexOf(needle);
+  "indexOf", {typeArr: ["string", "string", "integer?"]},
+  ({}, [str, needle, position]) => {
+    return str.indexOf(needle, position);
   }
 );
 

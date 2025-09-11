@@ -19,15 +19,15 @@ import {fetchEntityDefinition, fetchEntityID} from "./entities.sm.js";
 
 
 export function postUserScoreHex(
-  qualIdent, subjIdent, userIdent, scoreHex, payloadHex = undefined
+  qualKey, subjKey, userKey, scoreHex, payloadHex = undefined
 ) {
   checkRequestOrigin(true, [
     "TODO: Add trusted components that can upload user scores."
   ]);
 
-  let qualIDProm = fetchEntityID(qualIdent);
-  let subjIDProm = fetchEntityID(subjIdent);
-  let userEntDefProm = fetchEntityDefinition(userIdent);
+  let qualIDProm = fetchEntityID(qualKey);
+  let subjIDProm = fetchEntityID(subjKey);
+  let userEntDefProm = fetchEntityDefinition(userKey);
   return new Promise(resolve => {
     Promise.all([
       qualIDProm, subjIDProm, userEntDefProm
