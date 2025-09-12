@@ -530,6 +530,24 @@ export const scoreHandlers = {
 
 
 
+// Component entities (short for 'JSX components' or 'App components) represent
+// internal JSX components in the database/network, that can be imported into
+// scripts. A defining attribute is obviously the path (or "route," if you will)
+// to the given component's module. And then there are some optional metadata
+// attributes, including an URL to the GitHub repo from which the module stems.
+export const components = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "App components",
+  "Superclass": abs("./em1.js;get/entities"),
+  "Common attributes": [
+    "Name", "Component path", "GitHub repository", "Author(s)",
+    "Is free to use", "Description"
+  ],
+  "Description": abs("./em1_aux1.js;get/componentsDesc"),
+};
+
+
+
 
 
 // Some useful metrics for qualities.
@@ -802,5 +820,33 @@ export const subQualities = {
   "Subject class": abs("./em1.js;get/qualities"),
   "Description": abs("./em1_aux1.js;get/subQualitiesDesc"),
 };
+
+
+
+// A relation that points to the best entity page component for the given class
+// (as scored by the users).
+export const entityPage = {
+  "Class": abs("./em1.js;get/relations"),
+  "Title": "Entity page",
+  "Object class": abs("./em1.js;get/classes"),
+  "Subject class": abs("./em1.js;get/components"),
+  "Description": abs("./em1_aux1.js;get/entityPageDesc"),
+};
+
+// Similar to the "Entity page" relation, but for entity components that is
+// supposed to be shown in a list. (Obviously, the ideal component here might
+// very well depend on the list and on the context, which is why users might
+// want to add sub-relations to this one, but this "Entity element" relation
+// is supposed to point to components that can be used in general cases, and
+// in particular when viewing the members of a class.)
+export const entityElement = {
+  "Class": abs("./em1.js;get/relations"),
+  "Title": "Entity element",
+  "Object class": abs("./em1.js;get/classes"),
+  "Subject class": abs("./em1.js;get/components"),
+  "Description": abs("./em1_aux1.js;get/entityElementDesc"),
+};
+
+
 
 // TODO: Continue.

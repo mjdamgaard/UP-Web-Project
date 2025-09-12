@@ -1,9 +1,8 @@
 
-import {
-  fetchRelevancyQualityPath, fetchEntityDefinition
-} from "/1/1/entities.js";
+import {fetchRelevancyQualityPath} from "/1/1/entities.js";
 
 import * as EntityLink from "./EntityLink.jsx";
+import * as ComponentEntityComponent from "./ComponentEntityComponent.jsx";
 
 
 // TODO: We can reimplement this component using fewer HTTP rounds if we
@@ -13,9 +12,9 @@ import * as EntityLink from "./EntityLink.jsx";
 
 
 export function render(props) {
-  let {classKey, showClass = true} = props;
+  let {classKey} = props;
   let scoreHandler = this.subscribeToContext("score-handler");
-  let {relevancyQualPath, topEntry, componentDef, Component} = this.state;
+  let {relevancyQualPath, topEntry} = this.state;
   let content;
 
   // If the relevancy quality for the class has not been fetched yet, do so.
@@ -24,12 +23,6 @@ export function render(props) {
       this.setState({...this.state, relevancyQualPath: qualPath ?? false});
     });
     content = <div className="fetching"></div>;
-  }
-
-  // And if it has, but is missing in the database, render an empty variable
-  // component (possibly with some ::after content).
-  else if (!relevancyQualPath) {
-    content = <div className="missing"></div>;
   }
 
   // Else if the quality path is ready, but the top entry has not yet been
@@ -42,67 +35,36 @@ export function render(props) {
   }
 
   // And if it has, but is undefined (in the case of an empty list), also
-  // render an empty variable component.
+  // render an empty component (possibly with some ::after content).
   else if (!topEntry) {
     content = <div className="missing"></div>;
   }
 
-  // Else if the top entry is ready, expect it to have a "Component path"
-  // attribute at which to find the component to render. If this component path
-  // is not already gotten, fetch the entity's definition which ought to
-  // contain it.
-  else if (componentDef === undefined) {
+  // Else if the top entry is ready, expect it to be an entity of the "App
+  // component" class, with a "Component path" attribute, and render this via
+  // the ComponentEntityComponent.
+  else {
     let [compEntID, score] = topEntry;
+    // If the score is not positive, reject the top entry and behave as if the
+    // list is empty.
     if (score <= 0) {
       return (
         <div className="missing"></div>
       );
     }
-    fetchEntityDefinition(compEntID).then(compDef => {
-      this.setState({...this.state, compDef: compDef});
-    });
-    content = <div className="fetching"></div>;
+    content = <ComponentEntityComponent {...props} compEntID={compEntID} />;
   }
 
-  // And if the component is not already imported, do so.
-  else if (Component === undefined) {
-    let componentPath = componentDef["Component path"];
-    import(componentPath).then(Component => {
-      this.setState({...this.state, Component: Component});
-    });
-    content = <div className="fetching"></div>;
-  }
-
-  // Finally, if the component is ready, render it, passing it the same props
-  // is this component, except that showClass is turned into classWasShown
-  // instead. TODO: Implement such that showClass is removed, after having
-  // first implemented "...rest" syntax for object destructuring.
-  else {
-    content = <div>
-      <Component key="comp" {...props} classWasShown={showClass} />
-    </div>;
-  }
-
+  // Return the content, together with an initial link to the component class
+  // (which can always be hidden by the style, say, if the component already
+  // contains this link), which allows users to inspect alternative components
+  // for this class, and to score them and/or add new ones themselves.
   return (
     <div className="variable-component">
-      {showClass ? (
-        <div className="class-link">
-          <EntityLink key="class" entKey={classKey} />
-        </div>
-      ) : undefined}
+      <div className="class-link">
+        <EntityLink key="class" entKey={classKey} />
+      </div>
       {content}
     </div>
   );
 }
-
-
-
-export const actions = {
-  "relevancy-quality-has-been-posted": function(qualPath) {
-    this.setState({...this.state, relevancyQualPath: qualPath ?? false});
-  },
-};
-
-export const events = [
-  "relevancy-quality-has-been-posted",
-];
