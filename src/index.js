@@ -19,7 +19,8 @@ import {settings} from "./dev_lib/jsx/settings/SettingsObject.js";
 import * as queryMod from "./dev_lib/query/query.js";
 import * as basicSettingsMod from "./dev_lib/jsx/settings/SettingsObject.js";
 import * as jsxMod from "./dev_lib/jsx/jsx_components.js";
-import * as textareaCompMod from "./dev_lib/jsx/dev_components/Textarea1.js";
+import * as TextareaMod from "./dev_lib/jsx/dev_components/Textarea.js";
+import * as ILinkMod from "./dev_lib/jsx/dev_components/ILink.js";
 import * as jsonMod from "./dev_lib/fundamentals/json.js";
 import * as stringMod from "./dev_lib/fundamentals/string.js";
 import * as arrayMod from "./dev_lib/fundamentals/array.js";
@@ -28,12 +29,14 @@ import * as reqOrigMod from "./dev_lib/request_origin.js";
 import * as hexMod from "./dev_lib/conversion/hex.js";
 import * as errorMod from "./dev_lib/error.js";
 import * as scoredListsAlgMod from "./dev_lib/array_algorithms/scored_lists.js";
+import * as entitiesMod from "./dev_lib/semantic_entities/entities.js";
 
 const staticDevLibs = new Map();
 staticDevLibs.set("query", queryMod);
 staticDevLibs.set("settings1", basicSettingsMod);
 staticDevLibs.set("jsx", jsxMod);
-staticDevLibs.set("Textarea1.jsx", textareaCompMod);
+staticDevLibs.set("Textarea.jsx", TextareaMod);
+staticDevLibs.set("ILink.jsx", ILinkMod);
 staticDevLibs.set("json", jsonMod);
 staticDevLibs.set("string", stringMod);
 staticDevLibs.set("array", arrayMod);
@@ -42,6 +45,7 @@ staticDevLibs.set("request_origin", reqOrigMod);
 staticDevLibs.set("hex", hexMod);
 staticDevLibs.set("error", errorMod);
 staticDevLibs.set("scored_lists", scoredListsAlgMod);
+staticDevLibs.set("entities", entitiesMod);
 
 
 

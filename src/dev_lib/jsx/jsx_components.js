@@ -819,6 +819,7 @@ export class JSXInstanceInterface extends ObjectObject {
       "props": this.jsxInstance.props,
       "state": this.jsxInstance.state,
       "refs": this.jsxInstance.refs,
+      "component": this.jsxInstance.componentModule,
       /* Methods */
       "do": this.do,
       "trigger": this.trigger,

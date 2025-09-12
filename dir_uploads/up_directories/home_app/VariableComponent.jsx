@@ -1,7 +1,7 @@
 
 import {fetchRelevancyQualityPath} from "/1/1/entities.js";
 
-import * as EntityLink from "./EntityLink.jsx";
+import * as EntityReference from "./EntityReference.jsx";
 import * as ComponentEntityComponent from "./ComponentEntityComponent.jsx";
 
 
@@ -62,7 +62,7 @@ export function render(props) {
   return (
     <div className="variable-component">
       <div className="class-link">
-        <EntityLink key="class" entKey={classKey} />
+        <EntityReference key="class" entKey={classKey} />
       </div>
       {content}
     </div>

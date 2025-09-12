@@ -2,7 +2,7 @@
 import {post} from 'query';
 import homePath from "./.id.js";
 import * as JSON from 'json';
-import * as Textarea from 'Textarea1.jsx';
+import * as Textarea from 'Textarea.jsx';
 import * as CharCount from './CharCount.jsx';
 
 export function render({userID}) {
