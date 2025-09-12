@@ -1,7 +1,7 @@
 
 import {initialModerators} from "./init.sm.js";
 import {fetchScoreAndWeight, fetchScoreAndWeightList} from "../../scores.js";
-import {fetchEntityID, fetchEntityPath} from "../../entities.sm.js";
+import {fetchEntityID, fetchEntityPath} from "../../entities.js";
 import {map} from 'array';
 import ModeratedList from "../../scored_lists/moderated/ModeratedList.js";
 import CombinedList from "../../scored_lists/comb/CombinedList.js";

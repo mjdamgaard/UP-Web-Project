@@ -8,7 +8,7 @@ import {min} from 'math';
 import {hexToArray, valueToHex, hexFromArray} from 'hex';
 import {
   fetchEntityID, fetchEntityDefinition,
-} from "../../entities.sm.js";
+} from "../../entities.js";
 
 
 
@@ -126,11 +126,11 @@ export function fetchUserScoreHexList(
 // column is actually a float(,,3),float(,,1) array, where the first float is
 // the score (ignoring bounds), and the second float is the weight of the score.
 export function fetchScoreAndWeight(
-  tableFilePath, listIDKeyArr, keyEntKey
+  tableFilePath, listIDKeyArr, subjKey
 ) {
   return new Promise(resolve => {
     fetchScoreHex(
-      tableFilePath, listIDKeyArr, keyEntKey
+      tableFilePath, listIDKeyArr, subjKey
     ).then(scoreAndWeightHex => {
       if (scoreAndWeightHex === undefined) return [];
       let [score, weight] = arrayFromHex(
@@ -144,10 +144,10 @@ export function fetchScoreAndWeight(
 
 // A function to fetch the hex-encoded score of any BTT table.
 export function fetchScoreHex(
-  tableFilePath, listIDKeyArr, keyEntKey
+  tableFilePath, listIDKeyArr, subjKey
 ) {
   return new Promise(resolve => {
-    let keyIDProm = fetchEntityID(keyEntKey);
+    let keyIDProm = fetchEntityID(subjKey);
     let listIDPartsPromArr = map(
       listIDKeyArr, entKey => fetchEntityID(entKey)
     );
@@ -223,14 +223,14 @@ export function fetchScoreHexList(
 // by used SMs that want to store score tables using the float(,,3),float(,,1)
 // array convention (of score and weight).
 export function postScoreAndWeight(
-  tableFilePath, listIDKeyArr, keyEntKey, score, weight
+  tableFilePath, listIDKeyArr, subjKey, score, weight
 ) {
   return new Promise(resolve => {
     let scoreAndWeightHex = hexFromArray(
       [score, weight], ["float(,,3)", "float(,,1)"]
     );
     postScoreAndWeightHex(
-      tableFilePath, listIDKeyArr, keyEntKey, scoreAndWeightHex
+      tableFilePath, listIDKeyArr, subjKey, scoreAndWeightHex
     ).then(
       wasUpdated => resolve(wasUpdated)
     );
@@ -238,10 +238,10 @@ export function postScoreAndWeight(
 }
 
 export function postScoreAndWeightHex(
-  tableFilePath, listIDKeyArr, keyEntKey, scoreAndWeightHex
+  tableFilePath, listIDKeyArr, subjKey, scoreAndWeightHex
 ) {
   return new Promise(resolve => {
-    let keyIDProm = fetchEntityID(keyEntKey);
+    let keyIDProm = fetchEntityID(subjKey);
     let listIDPartsPromArr = map(
       listIDKeyArr, entKey => fetchEntityID(entKey)
     );
@@ -266,10 +266,10 @@ export function postScoreAndWeightHex(
 // deletes the entry (and doesn't require anything about the
 // float(,,3),float(,,1) format).
 export function deleteScore(
-  tableFilePath, listIDKeyArr, keyEntKey
+  tableFilePath, listIDKeyArr, subjKey
 ) {
   return new Promise(resolve => {
-    let keyIDProm = fetchEntityID(keyEntKey);
+    let keyIDProm = fetchEntityID(subjKey);
     let listIDPartsPromArr = map(
       listIDKeyArr, entKey => fetchEntityID(entKey)
     );

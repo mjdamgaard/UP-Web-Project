@@ -1,6 +1,6 @@
 
 import {post} from 'query';
-import {fetchEntityID} from "../../entities.sm.js";
+import {fetchEntityID} from "../../entities.js";
 
 const trustedQualKey = abs("./../em1.js;get/trusted");
 

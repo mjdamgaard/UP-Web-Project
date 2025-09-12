@@ -1,6 +1,6 @@
 
 import {postScoreAndWeight} from "../../scores.js";
-import {fetchEntityDefinition, fetchEntityID} from "../../entities.sm.js";
+import {fetchEntityDefinition, fetchEntityID} from "../../entities.js";
 import {map, reduce} from 'array';
 import {noPost, clearPrivileges} from 'query';
 

@@ -251,14 +251,14 @@ export const relevancyQualities = {
   "Description": abs("./em1_aux1.js;get/relevancyQualitiesDesc"),
 };
 
-export const RelevancyQuality = (classOrRelID, objID = undefined) => ({
+export const RelevancyQuality = (classOrObjID, relID = undefined) => ({
   "Class": abs("./em1.js;get/relevancyQualities"),
-  "Target class": objID === undefined ? "#" + classOrRelID : undefined,
-  "Relation": objID === undefined ?  undefined : "#" + classOrRelID,
-  "Relational object": objID === undefined ?  undefined : "#" + objID,
-  "Label": "Relevant for " + (objID === undefined ?
-    "#" + classOrRelID :
-    "#" + objID + "→" + "#" + classOrRelID
+  "Target class": relID === undefined ? "#" + classOrObjID : undefined,
+  "Relation": relID === undefined ?  undefined : "#" + relID,
+  "Relational object": relID === undefined ?  undefined : "#" + classOrObjID,
+  "Label": "Relevant for " + (relID === undefined ?
+    "#" + classOrObjID :
+    "#" + classOrObjID + "→" + "#" + relID
   ),
   "Domain": abs("./em1.js;get/entities"),
   "Default metric": abs("./em1.js;get/predicateMetric"),
@@ -484,6 +484,13 @@ export const scoreHandlers = {
     // the minWeight option manually (via some input field somewhere) to see
     // more of the candidates for the list.  
     "fetchList",
+
+    // fetchTopEntry(qualKey, options) fetches and returns only the top entity
+    // of the list. This is useful for fetching e.g. "scored properties" of an
+    // entity (not all properties of an entity is defined by its attributes; in
+    // principle an entity has infinitely many properties, which can be defined
+    // via relations, scored by the users). 
+    "fetchTopEntry",
 
     // updateScoreForUser(qualKey, subjKey, userID, options): When a user
     // submits a score for a quality, this method should be called.

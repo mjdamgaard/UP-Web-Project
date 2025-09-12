@@ -14,7 +14,7 @@
 import homePath from "./.id.js";
 import {post, upNodeID} from 'query';
 import {getRequestingUserID, checkRequestOrigin} from 'request';
-import {fetchEntityDefinition, fetchEntityID} from "./entities.sm.js";
+import {fetchEntityDefinition, fetchEntityID} from "./entities.js";
 
 
 

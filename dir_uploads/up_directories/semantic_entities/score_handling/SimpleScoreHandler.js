@@ -77,6 +77,15 @@ export class SimpleScoreHandler {
   }
 
 
+  fetchTopEntry(qualKey, options = {}) {
+    return new Promise(resolve => {
+      this.fetchList(qualKey, options).then(
+        ([topEntry] = []) => resolve(topEntry)
+      );
+    });
+  }
+
+
 
   updateScoreForUser(qualKey, subjKey, userID, options = {}) {
     return new Promise(resolve => {

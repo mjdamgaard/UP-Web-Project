@@ -1,6 +1,6 @@
 
 import {fetchScoreAndWeight, fetchScoreAndWeightList} from "../../scores.js";
-import {fetchEntityID} from "../../entities.sm.js";
+import {fetchEntityID} from "../../entities.js";
 
 
 

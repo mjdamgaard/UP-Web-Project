@@ -97,35 +97,37 @@ It will thus be completely up to the users what the home page should look like, 
 
 ### Self-updating links and nested components
 
-Furthermore, we will implement what we might refer to as "self-updating" links. These are links that instead of leading to a constant component, does a similar thing as we do for the home page, namely to query for the top-rated component for a given category, and then link to that.
+Furthermore, we will implement what we might refer to as 'variable links,' or 'self-updating links.' These are links that instead of leading to a constant component, does a similar thing as we do for the home page, namely to query for the top-rated component for a given category, and then link to that.
 
-This first of all means that the author of a page or an app does not need to keep updating the links contained in the page/app continuously. By using one of the "self-updating" links, the link will just always automatically lead to the best version of the given component that is available in the network, as rated by the users.
+This first of all means that the author of a page or an app does not need to keep updating the links contained in the page/app continuously. By using one of the variable links, the link will just always automatically lead to the best version of the given component that is available in the network, as rated by the users.
 
 And we can even do the same thing for nested components, namely by implementing a component that automatically queries for the top-rated component for a given category and then renders that.
 
-For instance, if the page is some Wikipedia-like article, say, about a person, the author of the article component is able to define a component category of 'Early life' sections for that person, or any other section in the article, for that matter. And by using this "self-updating" component, the whole article can thus becomes self-updating in this way.
+For instance, if the page is some Wikipedia-like article, say, about a person, the author of the article component is able to define a component category of 'Early life' sections for that person. And whenever some user writes/edits a better version of that section, as rated by the users, it will automatically replace the previous one. And the author can do this with any other section as well. So by using these 'variable component,' the whole article can thus become self-updating in this way in principle.
 
 
 ### User-tailored pages
 
-And while this automatic updating of components will be very handy, it is not even the main reason that one might choose to use such self-updating components. An even more exciting reason to use these is that it can allow users to get the version of the page/app best suits their own specific preferences. The self-updating components are thus able to look at the specific user's preferences when it comes to what is the best component to show, or to link to.
+And while this automatic updating of components will be very handy, it is not even the main reason that one might choose to use such variable components and links. An even more exciting reason to use these is that it allows users to get the version of the page/app that best suits their own individual preferences. The self-updating components are thus able to look at the specific user's preferences when it comes to what is the best component to show, or to link to.
 
 For example, when it comes to Wikipedia-like articles, one user might generally prefer longer and more elaborate articles, and another user might generally prefer more brief and concise articles.
 
-Or some users might prefer a different layout or theme for a web application than others.
+And for social media apps, some users might prefer a more keen and careful moderation that filters out undesired posts from the user's feed, while other users might prefer a less thorough moderation in general. And there might also be a big difference in what kind of posts each user is sensitive to.
 
-And if the application uses these "self-updating" components, it will thus be possible to tailor the layout and the contents to different types of users.  
+Furthermore, even when it comes to the layout and theme of a given app or page, the variable components can allow users to get different versions. There is thus no limit, in principle, for how much each web app or web page can be tailored to any specific type of user.
 
 
 ### Decentralized algorithms
 
 And when it comes to the algorithms used in e.g. feeds or search result of various web applications, the users can also be in complete charge of which algorithms they want to use.
 
-Sure, any web application is free to use any specific algorithm that it chooses. But unless there is a good reason for not choosing an algorithm with a high level of transparency and ability to be tailored specifically to the individual user's own preferences, the users will likely just choose an alternative application instead where they have more agency over the algorithms.
+Sure, any web application is free to use any specific algorithm that it wants. But unless there is a good reason for not choosing an algorithm with a high level of transparency and ability to be tailored specifically to the individual user's preferences, the users will likely just choose an alternative application instead where they have more agency over the algorithms.
 
-This will hopefully usher in a new age of the Web where using an algorithm is not a quid pro quo like how things are now: The algorithms collect personal data about you when you use them, often in a non-transparent way, and in return you get results that might be more relevant to you, if you are lucky (at least until the process of "enshittification" inevitable takes its toll).
+This will hopefully usher in a new age of the Web where using an algorithm is not a quid pro quo, like how things are now: The algorithms collect personal data about you when you use them, often in a non-transparent way, and in return you get results that might be more relevant to you, if you are lucky (at least until the process of "enshittification" inevitable takes its toll).
 
-Instead, the users will be able to provide only the data that *they* want to the algorithms. And if they don't want to provide any at all, they are also free to just try to tweak the parameters of the algorithms manually, in order to make them suit their preferences, no quid pro quo needed.
+But with this user-programmable system, the users can be in complete charge over the algorithms. They are the ones that program them, first of all. And each of them can be free to choose whichever algorithm that they themselves want to use.
+
+Particularly, in terms of the user data that is fed to the algorithms, each user will be able to provide only the data that *they* want. And even if they don't want to provide any at all, this is also possible, as they can then instead just try to tweak the parameters of a given algorithm manually, in order to make them suit their preferences the best. No quid pro quo needed.
 
 
 <!--
@@ -169,7 +171,7 @@ Instead, the users will be able to provide only the data that they *want* to the
 
 Obviously, not all users will be programmers that contribute source code to the network. Some users will of course just be using the apps of the network without contributing source code on their own. And that is perfectly fine.
 
-The same is true when it comes to selecting which algorithm to use. Obviously, we cannot expect each individual user to go and select their preferred algorithms before being able to use the website. Instead we will simply select the most popular set of preferences as the default ones that each new user starts out with, and then make it easy for users to change these preferences whenever they want.
+The same is true when it comes to selecting which algorithm to use. Obviously, we cannot expect each individual user to go and select their preferred algorithms before being able to use the website. Instead we will simply select the most popular set of preferences as the default ones for each new user, and then make it easy for users to change these preferences whenever they want.
 
 
 
@@ -187,7 +189,7 @@ And for apps that tries any sort of malicious behavior, such as phishing attempt
 
 Last but not least, let us talk a bit about how the website intends to get its funds.
 
-Obviously, since the most of the content of the website, including the front-end and back-end source code, is supposed to come from and be maintained by the users themselves, the cost of maintaining the website will be relatively low. But we will still need money to provide the servers necessary for the system, as well as for maintaining and updating the so-called developer libraries that was introduced above.
+Obviously, since most of the content of the website, including the front-end and back-end source code, is supposed to come from and be maintained by the users themselves, the cost of maintaining the website will be relatively low. But we will still need money to provide the servers necessary for the system, as well as for maintaining and updating the so-called developer libraries that was introduced above.
 
 Of course, a fallback option could always be for the website to show ads in the margins. But [up-web.org](https://www.up-web.org) will commit itself to not push any ads on the users. We would much rather simply keep a 'Sponsors' tab at the top, and ask the users to go to this tab once in while and send some mental appreciation towards our sponsors.
 

@@ -2,9 +2,7 @@
 import {indexOf, substring} from 'string';
 
 
-export function render({url, history}) {
-  let indOfSlash = indexOf(url, "/");
-  let entID = substring(url, 0, indOfSlash);
+export function render({entKey}) {
   return (
     <div></div>
   );

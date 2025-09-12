@@ -258,6 +258,7 @@ export const scriptGrammar = {
       children: children[1].children,
     }),
   },
+// TODO: Implement "...rest" syntax for object destructuring.
   "object-destructuring": {
     rules: [
       [/\{/, "parameter-member-list", "/,/?", /\}/],
