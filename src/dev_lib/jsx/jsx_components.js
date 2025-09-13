@@ -815,7 +815,7 @@ export class JSXInstanceInterface extends ObjectObject {
     this.jsxInstance = jsxInstance;
 
     Object.assign(this.members, {
-    /* Properties */
+      /* Properties */
       "props": this.jsxInstance.props,
       "state": this.jsxInstance.state,
       "refs": this.jsxInstance.refs,

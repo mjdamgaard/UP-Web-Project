@@ -10,7 +10,7 @@ export const splitStringAlongEntityKeyEndPoints = new DevFunction(
     // Use String.match() to split the string into an array where each entity
     // key is alone in its own array entry.
     let segmentArr = str.match(
-      /#[0-9a-f]*|\/[^\s,.]*)|\\([\s\S]|$)|[^#/\\]+/g
+      /#[0-9a-f]*|\/[^\s\\#]*)|\\([\s\S]|$)|[^#/\\]+/g
     ) ?? [];
     
     // Then initialize the is-entity-key array, and go through each entry,

@@ -1,9 +1,10 @@
 
 import {
   DevFunction, getString, ArgTypeError, ObjectObject,
-  HREF_REGEX, HREF_CD_START_REGEX
 } from "../../../interpreting/ScriptInterpreter.js";
-import {DOMNodeObject, JSXInstanceInterface} from "../jsx_components.js";
+import {
+  DOMNodeObject, JSXInstanceInterface, HREF_REGEX, HREF_CD_START_REGEX,
+} from "../jsx_components.js";
 
 
 

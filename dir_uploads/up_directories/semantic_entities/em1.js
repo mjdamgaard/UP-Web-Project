@@ -56,7 +56,8 @@ export const classes = {
   "Name": "Classes",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-    "Name", "Superclass", "Common attributes", "Constructor", "Description"
+    "Name", "Superclass", "Common attributes", "Constructor", "Area of concern",
+    "Description"
   ],
   "Description": abs("./em1_aux1.js;get/classesDesc"),
 };
@@ -830,6 +831,7 @@ export const entityPage = {
   "Title": "Entity page",
   "Object class": abs("./em1.js;get/classes"),
   "Subject class": abs("./em1.js;get/components"),
+  "Area of concern": "./em1.js;get/uiAoC",
   "Description": abs("./em1_aux1.js;get/entityPageDesc"),
 };
 
@@ -844,9 +846,16 @@ export const entityElement = {
   "Title": "Entity element",
   "Object class": abs("./em1.js;get/classes"),
   "Subject class": abs("./em1.js;get/components"),
+  "Area of concern": "./em1.js;get/uiAoC",
   "Description": abs("./em1_aux1.js;get/entityElementDesc"),
 };
 
+
+export const uiAoC = {
+  "Class": abs("./em1.js;get/areasOfConcern"),
+  "Name": "UI",
+  "Description": abs("./em1_aux1.js;get/uiAoCDesc"),
+};
 
 
 // TODO: Continue.
