@@ -37,7 +37,7 @@ At the core if this technology is a special JS interpreter that runs all source 
 
 Apart from a few functions that are built into the JS interpreter itself, most of the fundamental functions available, that are not user-defined ones, come from so-called 'developer libraries.' These libraries are imported dynamically by the user scripts, which means that there are no limit to the number of developer libraries that the given service provider might make available for its users.
 
-Furthermore, users are also free to import functions and classes, etc., from other user-uploaded directories. (And they can choose whether to bundle these imports together with their own modules, namely if they want to bundle their project directory, or to just import the foreign user modules dynamically as well).
+Furthermore, users are also free to import functions and classes, etc., from other user-uploaded directories. (And they can choose whether to bundle these imports together with their own modules, or to just import the foreign user modules dynamically as well).
 
 When a user wants to upload a new project, they can upload it as a whole directory at once. A tutorial for how to do this will available soon. They will then become the admin of that directory, which means that they are also free to edit the files in that directory.
 
@@ -55,9 +55,9 @@ The users might even find that this alternative React-like framework is easier t
 ### Back-end server modules
 Users are furthermore able to create and upload back-end modules, to which the front-end components can connect in order to fetch or post data to the database. We will refer to such modules here as 'server modules' (SMs).
 
-A server module (SM) is any JS module that is uploaded to a directory with the extension of '.sm.js'. For such modules, each function that is exported from the module is treated as part of the API of the SM, allowing clients to call these functions via a certain type of HTTP requests.
+A server module (SM) is any JS module that is uploaded to a directory with the extension of '.sm.js'. For such modules, each function that is exported from the module is treated as part of the API of that SM, allowing clients to call these functions via a certain type of HTTP request.
 
-When a called server module function (SMF) is executed this way, it automatically elevates the privileges of the execution such that the function is allowed to post data to the database (at least in the case of a POST request), and to fetch private data. Other server modules in other project directories will not be able to write directly to the same part of the database, nor read any of the private data stored there. So if a serer module wants to post data to a different SM in a different project directory, it will have to use the same exact API as the clients do.
+When a called server module function (SMF) is executed this way, it automatically elevates the privileges of the execution such that the function is allowed to post data to the database (at least in the case of a POST request), and to fetch private data. Other server modules in other project directories will not be able to write directly to the same part of the database, nor read any of the private data stored there. So if a given SM wants to post data to a different SM in a different project directory, it will have to use the same exact API as the clients do.
 
 A very keen reader might then ask: If users are supposed to be able to freely try out web apps and app components of other users, what is preventing those components from sending requests to any SM that they want and request it to delete or corrupt some of the user's data, or to fetch private data on behalf of the user, and then trick the user into posting this data again to another SM, where others are able read it?
 
@@ -71,7 +71,7 @@ The SMFs can also allow clients to override their CORS-like checks, namely if sa
 
 As mentioned, the prototype at [up-web.org](https://www.up-web.org) is currently still a few weeks from being ready to showcase. But let us try to give a quick overview of how that website will function in order to allow users to create web applications in a modular and collaborative way.
 
-When a user has uploaded a project directory containing some app components that they want to make available for others, they can create a new entity in the database for each of these components. These entities will contain defining information about the component, including the internal URL for importing it into other scripts, as well as a description of it, and also preferably a link to a GitHub repository containing the source code. By using GitHub this way, it allows users to identify themselves as authors of the code, and it also allows users to choose the license for their source code. By choosing an open-source, copy-left license, it signals that other users are free to build upon your solutions and to use them in other projects.
+When a user has uploaded a project directory containing some app components that they want to make available for others, they can create a new entity in the database for each of these components. These entities will contain defining information about the component, including the internal URL for importing it into other scripts, as well as a description of it, and also preferably a link to a GitHub repository containing the source code. By using GitHub this way, it first of all means that the source code is backed up online. And it also allows users to identify themselves as authors of the code, and to choose the license for their source code. By choosing an open-source, copy-left license, it signals that other users are free to build upon your solutions and to use them in other projects.
 
 <!-- Using GitHub this way also automatically gives us an online backup of the source code, which means that if a service provider somehow fails — maybe from being hacked, or maybe the userbase loses trust in them — then user can easily just copy projects onto a new service provider in the network. Furthermore, the admins of a project directories will also be able to download backups of the public user data held in relational database tables, which means that this data can also be backed up and copied onto other service provider nodes in the network. -->
 
@@ -99,11 +99,11 @@ It will thus be completely up to the users what the home page should look like, 
 
 Furthermore, we will implement what we might refer to as 'variable links,' or 'self-updating links.' These are links that instead of leading to a constant component, does a similar thing as we do for the home page, namely to query for the top-rated component for a given category, and then link to that.
 
-This first of all means that the author of a page or an app does not need to keep updating the links contained in the page/app continuously. By using one of the variable links, the link will just always automatically lead to the best version of the given component that is available in the network, as rated by the users.
+This first of all means that the author of a page or an app does not need to keep updating the links contained in the page/app continuously. Instead, by using one of the 'variable links,' the link will just always automatically lead to the best version of the given component that is available in the network, as rated by the users.
 
 And we can even do the same thing for nested components, namely by implementing a component that automatically queries for the top-rated component for a given category and then renders that.
 
-For instance, if the page is some Wikipedia-like article, say, about a person, the author of the article component is able to define a component category of 'Early life' sections for that person. And whenever some user writes/edits a better version of that section, as rated by the users, it will automatically replace the previous one. And the author can do this with any other section as well. So by using these 'variable component,' the whole article can thus become self-updating in this way in principle.
+For instance, if the page is some Wikipedia-like article, say, about a person, the author of the article component is able to define a component category of 'Early life' sections for that person. And whenever some user writes/edits a better version of that section, as rated by the users, it will automatically replace the previous one. And the author can do this with any other section as well. So by using these 'variable components,' the whole article can thus become self-updating in this way in principle.
 
 
 ### User-tailored pages
@@ -125,7 +125,7 @@ Sure, any web application is free to use any specific algorithm that it wants. B
 
 This will hopefully usher in a new age of the Web where using an algorithm is not a quid pro quo, like how things are now: The algorithms collect personal data about you when you use them, often in a non-transparent way, and in return you get results that might be more relevant to you, if you are lucky (at least until the process of "enshittification" inevitable takes its toll).
 
-But with this user-programmable system, the users can be in complete charge over the algorithms. They are the ones that program them, first of all. And each of them can be free to choose whichever algorithm that they themselves want to use.
+But with this user-programmable system, the users can be in complete charge over the algorithms. They are the ones that program them, first of all. And each of them can be free to choose whichever algorithm that they want to use themselves.
 
 Particularly, in terms of the user data that is fed to the algorithms, each user will be able to provide only the data that *they* want. And even if they don't want to provide any at all, this is also possible, as they can then instead just try to tweak the parameters of a given algorithm manually, in order to make them suit their preferences the best. No quid pro quo needed.
 
@@ -192,6 +192,8 @@ Last but not least, let us talk a bit about how the website intends to get its f
 Obviously, since most of the content of the website, including the front-end and back-end source code, is supposed to come from and be maintained by the users themselves, the cost of maintaining the website will be relatively low. But we will still need money to provide the servers necessary for the system, as well as for maintaining and updating the so-called developer libraries that was introduced above.
 
 Of course, a fallback option could always be for the website to show ads in the margins. But [up-web.org](https://www.up-web.org) will commit itself to not push any ads on the users. We would much rather simply keep a 'Sponsors' tab at the top, and ask the users to go to this tab once in while and send some mental appreciation towards our sponsors.
+
+And additionally, we will also be open for user donations.
 
 With a large enough userbase, this will hopefully be able generate more than enough revenue to keep the site going, without needing to push any ads on the users at all.
 

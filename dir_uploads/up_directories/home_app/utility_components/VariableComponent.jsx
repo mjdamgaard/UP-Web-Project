@@ -12,8 +12,8 @@ import * as ComponentEntityComponent from "./ComponentEntityComponent.jsx";
 
 
 export function render(props) {
-  let {classKey} = props;
-  let scoreHandler = this.subscribeToContext("score-handler");
+  let {classKey, scoreHandler} = props;
+  scoreHandler = scoreHandler ?? this.subscribeToContext("score-handler");
   let {relevancyQualPath, topEntry} = this.state;
   let content;
 
