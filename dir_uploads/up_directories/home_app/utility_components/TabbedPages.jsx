@@ -76,6 +76,7 @@ export const actions = {
     // Remove the tabKey's entry from loadedPages, and if tabKey is the
     // currently open tab, open the last entry in loadedPages. // TODO:
     // consider storing the previous open tab in order to go to that instead.
+    // (One could also even implement using something similar to an LRU list.)
     let {openTabKey, loadedPages} = this.state;
     let newLoadedPages = {...loadedPages, [tabKey]: undefined};
     if (tabKey === openTabKey) {

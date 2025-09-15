@@ -10,13 +10,17 @@ import {map} from 'array';
 // the page reloads (after we have also implemented such scroll actions/methods
 // (unless wanting to implement it in another way)).. 
 
+// TODO: And a much more urgent todo is to add some button at the top to add
+// a new entry to the entity list.
+
 
 // This component takes either a quality, a relation--object pair, or a class,
 // and renders a list of entities fetched either from the provided quality, or
 // from the relevancy quality formed by either the relation--object pair, or
 // the class.
 export function render({
-  qualKey, relKey, objKey, classKey, scoreHandler, ElementComponent, options,
+  qualKey, relKey, objKey, classKey, ElementComponent,
+  scoreHandler = undefined, options = undefined,
   paginationLength = 50, paginationIndex = 0,
 }) {
   scoreHandler = scoreHandler ?? this.subscribeToContext("score-handler");
