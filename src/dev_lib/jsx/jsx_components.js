@@ -146,8 +146,8 @@ class JSXInstance {
       if (getInitState) {
         try {
           state = interpreter.executeFunction(
-            getInitState, [props], callerNode, callerEnv, undefined,
-            [CLEAR_FLAG],
+            getInitState, [props], callerNode, callerEnv,
+            new JSXInstanceInterface(this), [CLEAR_FLAG],
           );
         }
         catch (err) {

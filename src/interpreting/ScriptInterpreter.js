@@ -2082,15 +2082,7 @@ export class ClassObject extends ObjectObject {
 const SUPERCLASS_FLAG = Symbol("superclass");
 
 
-// export const mutableObjectClass = new ClassObject(
-//   "MutableObject", undefined, undefined, undefined, true, true
-// );
-// export const mutableArrayClass = new ClassObject(
-//   "MutableArray", undefined, undefined, undefined, true, true, true
-// );
-// export const mutableMapClass = new ClassObject(
-//   "MutableMap", undefined, undefined, undefined, false, true, false, true
-// );
+
 
 
 
@@ -2334,13 +2326,25 @@ export class DevFunction extends FunctionObject {
 
 
 export const mutableObjectClass = new ClassObject(
-  "MutableObject", undefined, undefined, undefined, true, true
+  "MutableObject", new DevFunction(
+    "MutableObject", {typeArr: ["any?"]},
+    ({callerNode, execEnv, thisVal}, [obj]) => {
+      if (obj) {
+        forEachValue(obj, callerNode, execEnv, (val, key) => {
+          setPropertyOfObject(thisVal, key, val, callerNode, execEnv);
+        });
+      }
+    }
+  ), undefined, undefined, true, true
 );
 export const mutableArrayClass = new ClassObject(
   "MutableArray", new DevFunction(
-    "MutableArray", {},( {callerNode, execEnv, thisVal}, [length]) => {
-      if (length) {
-        setPropertyOfObject(thisVal, "length", length, callerNode, execEnv);
+    "MutableArray", {typeArr: ["array?"]},
+    ({callerNode, execEnv, thisVal}, [arr]) => {
+      if (arr) {
+        forEachValue(arr, callerNode, execEnv, (val, ind) => {
+          setPropertyOfObject(thisVal, ind, val, callerNode, execEnv);
+        });
       }
     }
   ), undefined, undefined, true, true, true

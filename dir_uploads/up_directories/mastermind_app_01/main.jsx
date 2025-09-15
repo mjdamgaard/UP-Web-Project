@@ -130,8 +130,8 @@ export function getSecret() {
 
 export function getAnswer(newSlots, secret) {
   let redCount = 0, whiteCount = 0, hasWon = false;
-  let usedSecretSlots = new MutableArray(4);
-  let usedGuessSlots = new MutableArray(4);
+  let usedSecretSlots = new MutableArray();
+  let usedGuessSlots = new MutableArray();
 
   // Count the red answer pegs (right place, right color), and mark them
   // in the usedSecretSlots array such that we can omit them when counting
