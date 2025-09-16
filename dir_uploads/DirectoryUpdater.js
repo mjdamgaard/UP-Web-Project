@@ -1,14 +1,14 @@
 
 import {ServerQueryHandler}
-  from '../../src/server/ajax_io/ServerQueryHandler.js';
-import {requestLoginServer} from '../../src/account_menu/account_menu.js';
+  from '../src/server/ajax_io/ServerQueryHandler.js';
+import {requestLoginServer} from '../src/account_menu/account_menu.js';
 
 import fs from 'fs';
 import path from 'path';
 import fetch from 'node-fetch';
 
 
-export class DirectoryUploader {
+export class DirectoryUpdater {
   constructor(authToken) {
     this.authToken = authToken;
   }
@@ -36,9 +36,8 @@ export class DirectoryUploader {
     return dirID;
   }
 
-  // TODO: Correct:
-  // uploadDir() first looks in a '.id' file to get the dirID of the home
-  // directory, and if noe is found, it requests the server to create a new home
+  // uploadDir() first looks in a '.id.js' file to get the dirID of the home
+  // directory, and if not is found, it requests the server to create a new home
   // directory. Then it loops through all files of the directory at path and
   // uploads all that has a recognized file extension to the (potentially new)
   // server-side directory. The valid file extensions are text file extensions
@@ -143,6 +142,18 @@ export class DirectoryUploader {
   }
 
 
+  // post() posts a request with admin privileges. In particular, for a callSMF
+  // request, if the SMF calls checkAdminPrivileges() (from the 'request' dev
+  // lib), the check will succeed and the execution of the SMF will continue
+  // from there. // TODO: Implement postDataFilePath to read the postData from
+  // a file.
+  post(userID, dirPath, dirID, relativeRoute, postDataFilePath) {
+
+  }
+
+  fetch(userID, dirPath, dirID, relativeRoute) {
+    
+  }
 
   // TODO: Implement a bundler method, and an associated command in the command
   // line, which can then either be called automatically for before each

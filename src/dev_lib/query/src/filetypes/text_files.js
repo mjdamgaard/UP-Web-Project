@@ -1,10 +1,11 @@
 
 import {
-  RuntimeError, payGas, DevFunction, CLEAR_FLAG, PromiseObject, FunctionObject,
+  RuntimeError, payGas, CLEAR_FLAG, PromiseObject, FunctionObject,
 } from "../../../../interpreting/ScriptInterpreter.js";
 
 import {
-  ADMIN_PRIVILEGES_FLAG, REQUESTING_SMF_ROUTE_FLAG, CURRENT_SMF_ROUTE_FLAG
+  ELEVATED_PRIVILEGES_FLAG, REQUESTING_SMF_ROUTE_FLAG, CURRENT_SMF_ROUTE_FLAG,
+  ADMIN_PRIVILEGES_FLAG, GRANT_ADMIN_PRIVILEGES_FLAG,
 } from "../flags.js";
 
 import {DBQueryHandler} from "../../../../server/db_io/DBQueryHandler.js";
@@ -166,16 +167,18 @@ export async function query(
     }
 
     // Import and execute the given JS module using interpreter.import(), and
-    // do so within a dev function with "admin privileges" the execution of the
-    // SMF (server module function). Note that these elevated privileges can
-    // only be used to post to files within the called SM's home directory, and
-    // that all previous such privileges are removed by the new flag. We also
-    // make sure update the "current-SMF-route" and "requesting-SMF-route" flags
-    // such that if an SMF is called from another SMF of a different home
-    // directory, the called SMF can make CORS like checks to see if the
-    // requesting SMF is allowed access. (Such CORS-like checks are recommended
-    // for all SMFs that can alter the state of the database. And they can also
-    // be used to limit access to private data.)  
+    // do so within a dev function with "elevated privileges" the execution of
+    // the SMF (server module function). Note that these elevated privileges
+    // can only be used to post to files within the called SM's home directory,
+    // and that all previous such privileges are removed by the new flag. And
+    // if the admin has requested admin privileges, we also set the "admin-
+    // privileges" flag.
+    // We also make sure update the "current-SMF-route" and "requesting-SMF-
+    // route" // flags such that if an SMF is called from another SMF of a
+    // different home directory, the called SMF can make CORS like checks to
+    // see if the requesting SMF is allowed access. (Such CORS-like checks are
+    // recommended for all SMFs that can alter the state of the database. And
+    // they can also be used to limit access to private data.)  
     return await (async() => {
       let liveModule = await interpreter.import(
         `/${ownUPNodeID}/${homeDirID}/${filePath}`, callerNode, execEnv
@@ -194,11 +197,14 @@ export async function query(
         `/${ownUPNodeID}/${homeDirID}/${filePath}/` +
           "callSMF/" + JSON.stringify(inputArr);
       let requestingSMFRoute = execEnv.getFlag(CURRENT_SMF_ROUTE_FLAG);
+      let grantAdminPrivileges = execEnv.getFlag(GRANT_ADMIN_PRIVILEGES_FLAG);
       let result = interpreter.executeFunction(
         fun, inputArr, callerNode, execEnv, undefined, [
           [CURRENT_SMF_ROUTE_FLAG, currentSMFRoute],
           [REQUESTING_SMF_ROUTE_FLAG, requestingSMFRoute],
-          [ADMIN_PRIVILEGES_FLAG, homeDirID],
+          [ELEVATED_PRIVILEGES_FLAG, homeDirID],
+          [ADMIN_PRIVILEGES_FLAG, grantAdminPrivileges],
+          [GRANT_ADMIN_PRIVILEGES_FLAG, false],
         ]
       );
       if (result instanceof PromiseObject) {

@@ -4,6 +4,7 @@ import {
 } from '../interpreting/ScriptInterpreter.js';
 import {
   CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG, USER_ID_FLAG,
+  ADMIN_PRIVILEGES_FLAG,
 } from './query/src/flags.js';
 
 
@@ -42,6 +43,16 @@ export const checkRequestOrigin = new DevFunction(
     // Throw if the request origin was not accepted.
     if (!isAllowed) throw new NetworkError(
       "Request origin not allowed",
+      callerNode, execEnv
+    );
+  }
+);
+
+
+export const checkAdminPrivileges = new DevFunction(
+  "checkAdminPrivileges", {}, function({callerNode, execEnv}, []) {
+    if (!execEnv.getFlag(ADMIN_PRIVILEGES_FLAG)) throw new NetworkError(
+      "Admin privileges required for this request",
       callerNode, execEnv
     );
   }

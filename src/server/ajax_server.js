@@ -18,8 +18,8 @@ import {FlagTransmitter} from "../interpreting/FlagTransmitter.js";
 import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
 
 import {
-  ADMIN_PRIVILEGES_FLAG, CAN_POST_FLAG, USER_ID_FLAG,
-  REQUEST_ADMIN_PRIVILEGES_FLAG,
+  ELEVATED_PRIVILEGES_FLAG, CAN_POST_FLAG, USER_ID_FLAG,
+  REQUEST_ADMIN_PRIVILEGES_FLAG, GRANT_ADMIN_PRIVILEGES_FLAG,
 } from "../dev_lib/query/src/flags.js";
 
 import * as queryMod from "../dev_lib/query/query.js";
@@ -224,11 +224,12 @@ async function requestHandler(req, res, returnGasRef) {
   // These are all paths that includes '/_' anywhere within them. If it is
   // indeed locked, query for the adminID of the home directory and verify that
   // userID == adminID, and that the user has requested admin privileges, then
-  // add the "admin-privileges" flag to the 'flags' array.
+  // add the "elevated-privileges" flag to the 'flags' array.
   let isLocked = LOCKED_ROUTE_REGEX.test(route);
   if (isPost) flags.push(CAN_POST_FLAG);
-  if (isLocked) {
-    if (!userID || !flags.includes(REQUEST_ADMIN_PRIVILEGES_FLAG)) {
+  let requestAdminPrivileges = flags.includes(REQUEST_ADMIN_PRIVILEGES_FLAG);
+  if (isLocked || requestAdminPrivileges) {
+    if (!userID || isLocked && !requestAdminPrivileges) {
       endWithUnauthorizedError(res);
       return;
     }
@@ -243,7 +244,10 @@ async function requestHandler(req, res, returnGasRef) {
       endWithUnauthorizedError(res);
       return;
     }
-    flags.push([ADMIN_PRIVILEGES_FLAG, homeDirID]);
+    flags.push([ELEVATED_PRIVILEGES_FLAG, homeDirID]);
+    if (requestAdminPrivileges) {
+      flags.push([GRANT_ADMIN_PRIVILEGES_FLAG, true]);
+    }
   }
   if (userID) {
     flags.push([USER_ID_FLAG, userID]);

@@ -59,7 +59,7 @@ export function parseRoute(route) {
   let [ , fileExt] = lastFileExtRegEx.exec(filePath) ?? [];
 
   // Parse whether the given file or directory, or query path, is locked for
-  // the admin only.
+  // the admin and server modules only.
   let isLocked = lockedRouteRegex.test(route);
 
   // If defined, split the queryPath into an array of key--value entries array

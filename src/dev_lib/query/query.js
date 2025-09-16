@@ -7,7 +7,8 @@ import {
 import {parseRoute} from './src/parseRoute.js';
 
 import {
-  checkAdminPrivileges, checkIfCanPost, CAN_POST_FLAG, ADMIN_PRIVILEGES_FLAG,
+  checkElevatedPrivileges, checkIfCanPost, CAN_POST_FLAG,
+  ELEVATED_PRIVILEGES_FLAG,
 } from "./src/flags.js";
 
 
@@ -58,12 +59,13 @@ export const query = new DevFunction(
     }
 
     // If on the server side, and if upNodeID is that of the UP node that the
-    // server is part of, query the database, but not before checking admin
-    // privileges for the given home directory if the route is locked.
+    // server is part of, query the database, but not before checking if the
+    // privileges are elevated for the given home directory if the route is
+    // locked.
     let result;
     if (interpreter.isServerSide && upNodeID === upNodeID) {
       if (isLocked) {
-        checkAdminPrivileges(homeDirID, callerNode, execEnv);
+        checkElevatedPrivileges(homeDirID, callerNode, execEnv);
       }
       result = await interpreter.queryDB(
         route, isPost, postData, options,
@@ -229,7 +231,7 @@ export const clearPrivileges = new DevFunction(
   ) {
     return interpreter.executeFunction(
       callback, [], callerNode, execEnv, undefined,
-      [[ADMIN_PRIVILEGES_FLAG, false]]
+      [[ELEVATED_PRIVILEGES_FLAG, false]]
     );
   }
 );

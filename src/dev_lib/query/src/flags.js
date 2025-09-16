@@ -1,17 +1,19 @@
 
 import {RuntimeError} from "../../../interpreting/ScriptInterpreter.js";
 
-export const ADMIN_PRIVILEGES_FLAG = Symbol("admin-privileges");
+export const ELEVATED_PRIVILEGES_FLAG = Symbol("elevated-privileges");
 
-export function checkAdminPrivileges(homeDirID, node, env) {
-  let curHomeDirID = env.getFlag(ADMIN_PRIVILEGES_FLAG);
+export function checkElevatedPrivileges(homeDirID, node, env) {
+  let curHomeDirID = env.getFlag(ELEVATED_PRIVILEGES_FLAG);
   if (!curHomeDirID || curHomeDirID !== homeDirID) throw new RuntimeError(
-    `Requested admin privileges on Directory ${homeDirID} not granted`,
+    `Requested elevated privileges on Directory ${homeDirID} not granted`,
     node, env
   );
 }
 
 export const REQUEST_ADMIN_PRIVILEGES_FLAG = Symbol("request-admin-privileges");
+export const GRANT_ADMIN_PRIVILEGES_FLAG = Symbol("grant-admin-privileges");
+export const ADMIN_PRIVILEGES_FLAG = Symbol("admin-privileges");
 
 
 export const CAN_POST_FLAG = Symbol("can-post-privileges");
