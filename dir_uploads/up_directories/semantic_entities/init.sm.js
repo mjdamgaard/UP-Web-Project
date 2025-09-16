@@ -1,20 +1,13 @@
 
-// Server module (SM) that allows user to upload a score for a given quality--
-// subject pair. The user can also provide some additional data along with the
-// score, namely to the "payload" column of the relevant BBT table. The "score"
-// part of each row represents the user score, and the "payload" part, if
-// provided, should start with the ID of an entity of the so-called 'Data
-// format' class. This entity then defines the data types and the
-// interpretations of all data strings that follow the data format ID.
-// This auxiliary data might for instance by a sigma (STD) representing the
-// error of the score, or it might also be a weight factor below 1,
-// representing that the user wants their score to count as less then what is
-// the standard.
+// An admin-only server module for uploading initial entities, as well as some
+// initial scores. 
 
 import homePath from "./.id.js";
-import {post, upNodeID} from 'query';
+import {post} from 'query';
 import {checkAdminPrivileges} from 'request';
-import {fetchEntityDefinition, fetchEntityID} from "./entities.js";
+import {map} from 'object';
+import * as entityMod1 from "./em1.js";
+import * as scoreHandlerEntityMod from "./score_handling/ScoreHandler01/em.js";
 
 
 
@@ -23,7 +16,30 @@ export function uploadInitialEntities() {
   // and not from an UP app).
   checkAdminPrivileges();
 
-  // TODO: Continue.
+  // Post all the entities simultaneously, then return a promise that resolves
+  // when all the posts has resolved.
+  let postPromArr = [
+    ...map(entityMod1, (val, alias) => {
+      if (val.Class !== undefined) {
+        let entPath = homePath + "/em1.js;get/" + alias;
+        return post(homePath + "/entities.sm.js/callSMF", entPath);
+      }
+      else {
+        return new Promise(res => res());
+      }
+    }),
+    ...map(scoreHandlerEntityMod, (val, alias) => {
+      if (val.Class !== undefined) {
+        let entPath = homePath + "/score_handling/ScoreHandler01/em.js;get/" +
+          alias;
+        return post(homePath + "/entities.sm.js/callSMF", entPath);
+      }
+      else {
+        return new Promise(res => res());
+      }
+    }),
+  ];
+  return Promise.all(postPromArr);
 }
 
 

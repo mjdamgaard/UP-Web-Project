@@ -27,3 +27,21 @@ export const entries = new DevFunction(
     return ret;
   }
 );
+
+
+export const map = new DevFunction(
+  "map", {typeArr: ["any", "function"]},
+  ({callerNode, execEnv, interpreter}, [obj]) => {
+    let entries = [];
+    let ind = 0;
+    forEachValue(obj, callerNode, execEnv, (val, key) => {
+      entries[ind] = [key, val];
+      ind++;
+    });
+    return entries.map(([key, val], ind) => {
+      return interpreter.executeFunction(
+        fun, [val, key, ind], callerNode, execEnv
+      );
+    });
+  }
+);
