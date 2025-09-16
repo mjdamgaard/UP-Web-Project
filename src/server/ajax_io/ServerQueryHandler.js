@@ -140,7 +140,7 @@ export class ServerQueryHandler {
     );
   }
 
-  fetchPrivate(route, options) {
+  fetchAsAdmin(route, options) {
     return this.queryServer(
       true, route, false, undefined, options, OWN_UP_NODE_ID,
       {["request-admin-privileges"]: true}

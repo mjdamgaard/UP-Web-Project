@@ -61,6 +61,9 @@ async function main() {
       }
       console.log("Success");
     }
+    if (/^([bB]|bundle)$/.test(command)) {
+      console.log("Bundling not implemented yet.");
+    }
     else if (/^([pP]|post)$/.test(command)) {
       // TODO: Implement syntax to append a file path after the request route,
       // which should lead to a file containing the postData for the request.
@@ -70,7 +73,7 @@ async function main() {
       let result;
       try {
         result = await directoryUpdater.post(
-          userID, dirPath, dirID, relativeRoute, postDataFilePath
+          dirID, relativeRoute, dirPath, postDataFilePath
         );
       } catch (err) {
         console.error(err);
@@ -84,9 +87,7 @@ async function main() {
       console.log("Fetching...");
       let result;
       try {
-        result = await directoryUpdater.fetch(
-          userID, dirPath, dirID, relativeRoute
-        );
+        result = await directoryUpdater.fetch(dirID, relativeRoute);
       } catch (err) {
         console.error(err);
         continue;

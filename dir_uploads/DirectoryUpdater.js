@@ -64,7 +64,7 @@ export class DirectoryUpdater {
     // go through each one and check that it also exist nested in the client-
     // side directory, and for each one that doesn't, request deletion of that
     // file server-side.
-    let filePaths = await serverQueryHandler.fetchPrivate(
+    let filePaths = await serverQueryHandler.fetchAsAdmin(
       `/1/${dirID}/_all`
     );
     let deletionPromises = [];
@@ -142,18 +142,40 @@ export class DirectoryUpdater {
   }
 
 
+
   // post() posts a request with admin privileges. In particular, for a callSMF
   // request, if the SMF calls checkAdminPrivileges() (from the 'request' dev
   // lib), the check will succeed and the execution of the SMF will continue
   // from there. // TODO: Implement postDataFilePath to read the postData from
   // a file.
-  post(userID, dirPath, dirID, relativeRoute, postDataFilePath) {
+  async post(dirID, relativeRoute, dirPath, postDataFilePath) {
+    let postData = undefined;
+
+    // Initialize the serverQueryHandler with the provided authToken.
+    let serverQueryHandler = new ServerQueryHandler(
+      this.authToken, Infinity, fetch
+    );
+
+    // Construct the full route, then query the server.
+    let route = path.normalize("/1/" + dirID + "/" + relativeRoute);
+    return await serverQueryHandler.postAsAdmin(route, postData);
 
   }
 
-  fetch(userID, dirPath, dirID, relativeRoute) {
-    
+  // fetch() sends a fetch request as the admin, able in particular to read
+  // data at locked routes directly.
+  async fetch(dirID, relativeRoute) {
+    // Initialize the serverQueryHandler with the provided authToken.
+    let serverQueryHandler = new ServerQueryHandler(
+      this.authToken, Infinity, fetch
+    );
+
+    // Construct the full route, then query the server.
+    let route = path.normalize("/1/" + dirID + "/" + relativeRoute);
+    return await serverQueryHandler.fetchAsAdmin(route);
   }
+
+
 
   // TODO: Implement a bundler method, and an associated command in the command
   // line, which can then either be called automatically for before each
