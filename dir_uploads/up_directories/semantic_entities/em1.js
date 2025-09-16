@@ -397,7 +397,7 @@ export const scoredLists = {
     // that auxData in particular does not need to be included here even if it
     // exists (and can also just contain only a subset of the full auxData
     // objects properties). (You generally don't want to include any data that
-    // is stored in the "payload" column of the BTT table.)
+    // is stored in the "payload" column of the BBT table.)
     "fetchList",
 
     // getLength() (optional) returns the current length of the list.

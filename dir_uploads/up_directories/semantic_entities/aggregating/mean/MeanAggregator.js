@@ -3,7 +3,7 @@
 import {Aggregator} from "../Aggregator.js";
 
 const updatesSMPath = abs("./updates.sm.js");
-const aggrPath = abs("./aggregates.btt");
+const aggrPath = abs("./aggregates.bbt");
 
 
 // TODO: This aggregator has some faults as of yet, as stated in

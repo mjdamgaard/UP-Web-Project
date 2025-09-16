@@ -4,10 +4,11 @@
 // well as functions to fetch entity definitions, and such.
 
 import homePath from "./.id.js";
-import {fetch, upNodeID} from 'query';
+import {post, fetch, upNodeID} from 'query';
 import {valueToHex} from 'hex';
 import {verifyType} from 'types';
 import {substring} from 'string';
+import {map} from 'object';
 
 
 
@@ -110,3 +111,45 @@ export function fetchRelevancyQualityPath(classOrObjKey, relKey = undefined) {
   });
 }
 
+
+
+
+
+
+
+export function postRelevancyQuality(classOrObjKey, relKey = undefined) {
+  let classOrObjIDProm = fetchEntityID(classOrObjKey);
+  let relIDProm = relKey ? fetchEntityID(relKey) : new Promise(res => res());
+  return new Promise(resolve => {
+    Promise.all([
+      classOrObjIDProm, relIDProm
+    ]).then(([classOrObjID, relID]) => {
+      let entPath = homePath + "/em1.js;call/RelevancyQuality/" +
+        classOrObjID + (relID ? "/" + relID : "");
+      post(homePath + "/entities.sm.js/callSMF", entPath).then(
+        entID => resolve(entID)
+      );
+    });
+  });
+}
+
+
+
+export function postAllEntitiesFromModule(modulePath) {
+  return new Promise(resolve => {
+    import(modulePath).then(entityModule => {
+      // Post all the entities simultaneously, then wait for all these post
+      // requests before resolving.
+      let postPromArr = map(entityModule, (val, alias) => {
+        if (val.Class !== undefined) {
+          let entPath = modulePath + ";get/" + alias;
+          return post(homePath + "/entities.sm.js/callSMF", entPath);
+        }
+        else {
+          return new Promise(res => res());
+        }
+      });
+      Promise.all(postPromArr).then(() => resolve(true));
+    });
+  });
+}

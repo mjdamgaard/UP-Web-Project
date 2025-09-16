@@ -4,8 +4,8 @@ import {
   postScoreAndWeight, deleteScore,
 } from "../../scores.js";
 
-const contributionsPath = abs("./contributions.btt");
-const aggrPath = abs("./aggregates.btt");
+const contributionsPath = abs("./contributions.bbt");
+const aggrPath = abs("./aggregates.bbt");
 
 
 // TODO: This, and other modules like it should use database transactions (by

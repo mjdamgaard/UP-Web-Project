@@ -1,5 +1,4 @@
 
-import {initialModerators} from "./init.sm.js";
 import {fetchScoreAndWeight, fetchScoreAndWeightList} from "../../scores.js";
 import {fetchEntityID, fetchEntityPath} from "../../entities.js";
 import {map} from 'array';
@@ -21,7 +20,7 @@ export const initialModeratorList = {
   fetchScoreData: (subjKey) => {
     return new Promise(resolve => {
       fetchScoreAndWeight(
-        abs("./init_mods.btt"), [], subjKey
+        abs("./init_mods.bbt"), [], subjKey
       ).then(
         scoreData => resolve(scoreData)
       );
@@ -31,7 +30,7 @@ export const initialModeratorList = {
   fetchList: ({lo, hi, maxNum = 4000, offset = 0, isAscending = 0}) => {
     return new Promise(resolve => {
       fetchScoreAndWeightList(
-        abs("./init_mods.btt"), [], lo, hi, maxNum, offset, isAscending
+        abs("./init_mods.bbt"), [], lo, hi, maxNum, offset, isAscending
       ).then(
         list => resolve(list)
       );

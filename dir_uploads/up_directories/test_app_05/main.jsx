@@ -1,5 +1,5 @@
 
-// A test app to test the binary tables, BT and BTT, together with the base-64
+// A test app to test the binary tables, BT and BBT, together with the base-64
 // conversion library. Let's just make this "app" console-based-
 
 import {

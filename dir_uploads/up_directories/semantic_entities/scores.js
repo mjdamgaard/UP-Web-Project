@@ -142,7 +142,7 @@ export function fetchScoreAndWeight(
 }
 
 
-// A function to fetch the hex-encoded score of any BTT table.
+// A function to fetch the hex-encoded score of any BBT table.
 export function fetchScoreHex(
   tableFilePath, listIDKeyArr, subjKey
 ) {
@@ -187,7 +187,7 @@ export function fetchScoreAndWeightList(
 }
 
 
-// A function to fetch the hex-encoded score of any BTT table.
+// A function to fetch the hex-encoded score of any BBT table.
 export function fetchScoreHexList(
   tableFilePath, listIDKeyArr, lo, hi, maxNum, offset, isAscending,
 ) {
