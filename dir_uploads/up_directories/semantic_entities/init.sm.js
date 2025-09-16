@@ -4,7 +4,8 @@
 
 import homePath from "./.id.js";
 import {checkAdminPrivileges} from 'request';
-import {post} from 'query';
+import {post, upNodeID} from 'query';
+import {map} from 'array';
 import {
   fetchEntityID, postAllEntitiesFromModule, postRelevancyQuality,
 } from "./entities.js";
@@ -32,34 +33,53 @@ export function insertInitialModerators() {
   checkAdminPrivileges();
 
   return new Promise(resolve => {
-    fetchEntityID(trustedQualKey).then(qualID => {
-      post(
-        homePath + "/score_handling/ScoreHandler01/init_mods.bbt/_put"
-      ).then(() => {
+    let transformedInitialModeratorListProm = Promise.all(
+      map(initialModerators, ([userID, weight, weightWeight]) => {
+        return new Promise(resolve => {
+          let userEntPath = homePath + "/em1.js;call/User/" + userID +
+            "/" + upNodeID;
+          let scoreHex = hexFromArray(
+            [weight, weightWeight], ["float(,,3)", "float(,,1)"]
+          );
+          post(
+            homePath + "/entities.sm.js/callSMF/postEntity", userEntPath
+          ).then(
+            userEntID => resolve([userEntID, scoreHex])
+          );
+        }); 
+      })
+    );
+    transformedInitialModeratorListProm.then(initModList => {
+      fetchEntityID(trustedQualKey).then(qualID => {
         post(
-          homePath + "/score_handling/ScoreHandler01/init_mods.bbt" +
-            "/_insertList/l=" + qualID,
-          initialModerators
-        ).then(
-          wasUpdated => resolve(wasUpdated)
-        );
+          homePath + "/score_handling/ScoreHandler01/init_mods.bbt/_put"
+        ).then(() => {
+          post(
+            homePath + "/score_handling/ScoreHandler01/init_mods.bbt" +
+              "/_insertList/l=" + qualID,
+            initModList
+          ).then(
+            wasUpdated => resolve(wasUpdated)
+          );
+        });
       });
     });
   });
 }
 
-// A [([userEntID, weightHex],)*] array over all the initial moderators, and
-// their weights. (This object can be edited.) 
+// A [([userID, weight, weightWeight],)*] array over all the initial
+// moderators, and their weights. (This object can be edited.) 
 export const initialModerators = [
   // Some initial "test moderators":
-  ["1", hexFromArray([20, 20], ["float(,,3)", "float(,,1)"])],
-  ["2", hexFromArray([15, 20], ["float(,,3)", "float(,,1)"])],
-  ["3", hexFromArray([10, 20], ["float(,,3)", "float(,,1)"])],
-  ["4", hexFromArray([10, 20], ["float(,,3)", "float(,,1)"])],
-  ["5", hexFromArray([5, 20], ["float(,,3)", "float(,,1)"])],
-  ["6", hexFromArray([5, 20], ["float(,,3)", "float(,,1)"])],
-  ["7", hexFromArray([5, 20], ["float(,,3)", "float(,,1)"])],
-  ["8", hexFromArray([5, 20], ["float(,,3)", "float(,,1)"])],
+  ["1", 20, 20],
+  ["2", 15, 20],
+  ["3", 10, 20],
+  ["4", 10, 20],
+  ["5", 5, 20],
+  ["6", 5, 20],
+  ["7", 5, 20],
+  ["8", 5, 20],
+
   // TODO: Add some actual moderators when there are some.
 ];
 
@@ -68,7 +88,7 @@ export const initialModerators = [
 
 
 
-export function postScoresFromInitialModerators(step = 0) {
+export function postScoresFromInitialModerators(step = 0, carry = {}) {
   // Only the admin can call this SMF.
   checkAdminPrivileges();
 
@@ -77,17 +97,37 @@ export function postScoresFromInitialModerators(step = 0) {
   // order to report back at which step the function failed, if it does so. 
   let stepCounter = 0;
   try {
+    // First get an array of the (entity) IDs of the initial moderator.
     if (step === stepCounter++) {
       return new Promise(resolve => {
-        // TODO: Do something.
-
-        // Go to the next step. (This should be wrapped in a promise.)
-        postScoresFromInitialModerators(stepCounter).then(
-          res => resolve(res)
+        // Fetch the moderator IDs.
+        let initModeratorIDArrProm = Promise.all(
+          map(initialModerators, ([userID]) => {
+            return new Promise(res => {
+              let userEntPath = homePath + "/em1.js;call/User/" + userID +
+                "/" + upNodeID;
+              fetch(
+                homePath + "/entities.sm.js/callSMF/postEntity", userEntPath
+              ).then(
+                userEntID => res(userEntID)
+              );
+            }); 
+          })
         );
+
+        // Then go to the next step, carrying over the initModeratorIDArr.
+        initModeratorIDArrProm.then(initModeratorIDArr => {
+          let carry = {initModeratorIDArr: initModeratorIDArr};
+          postScoresFromInitialModerators(stepCounter, carry).then(
+            result => resolve(result)
+          );
+        });
       });
     }
+
+    // Then upload some trust scores among the moderators.
     else if (step === stepCounter++) {
+      let {initModeratorIDArr} = carry;
       return new Promise(resolve => {
         // TODO: Do something.
 

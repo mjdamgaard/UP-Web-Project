@@ -7,7 +7,9 @@ import CombinedList from "../../scored_lists/comb/CombinedList.js";
 import SimpleScoreHandler from "../SimpleScoreHandler.js";
 import {MeanAggregator} from "../../aggregating/mean/MeanAggregator.js";
 
-const trustedQualKey = abs("./../em1.js;get/trusted");
+export * from "./init_mods.js";
+
+const trustedQualKey = abs("../../em1.js;get/trusted");
 
 const meanAggregator = new MeanAggregator();
 
@@ -15,7 +17,7 @@ const meanAggregator = new MeanAggregator();
 
 // List of initial moderators of the app.
 export const initialModeratorList = {
-  "Class": abs("./em1.js;get/scoredLists"),
+  "Class": abs("../../em1.js;get/scoredLists"),
 
   fetchScoreData: (subjKey) => {
     return new Promise(resolve => {
@@ -48,7 +50,7 @@ export const initialModeratorList = {
 }
 
 export const initialModeratorGroup = {
-  "Class": abs("./em1.js;get/userGroups"),
+  "Class": abs("../../em1.js;get/userGroups"),
   "Name": "Initial moderator group",
   "User list": abs("./em.js;get/initialModeratorList"),
   "Description": <div>
@@ -65,7 +67,7 @@ export const initialModeratorGroup = {
 
 // List of all users with equal weights = 1.
 export const allUsersList = {
-  "Class": abs("./em1.js;get/scoredLists"),
+  "Class": abs("../../em1.js;get/scoredLists"),
 
   fetchScoreData: (subjKey) => {
     return new Promise(resolve => {
@@ -124,7 +126,7 @@ function exponentialConvert(predicateScore) {
 
 
 export const initialTrustedUserGroup = {
-  "Class": abs("./em1.js;get/userGroups"),
+  "Class": abs("../../em1.js;get/userGroups"),
   "Name": "Initial trusted user group",
   "User list": abs("./em.js;get/initialTrustedUserList"),
   "Description": <div>
@@ -149,7 +151,7 @@ export const initialSecondHandTrustedUserList = new ModeratedList(
 );
 
 export const initialSecondHandTrustedUserGroup = {
-  "Class": abs("./em1.js;get/userGroups"),
+  "Class": abs("../../em1.js;get/userGroups"),
   "Name": "Initial second-hand-trusted user group",
   "User list": abs("./em.js;get/initialTrustedUserList2"),
   "Description": <div>
@@ -181,7 +183,7 @@ export const initialStandardUserList = new CombinedList(
 );
 
 export const initialStandardUserGroup = {
-  "Class": abs("./em1.js;get/userGroups"),
+  "Class": abs("../../em1.js;get/userGroups"),
   "Name": "Initial standard user group",
   "User list": abs("./em.js;get/initialStandardUserList"),
   "Description": <div>

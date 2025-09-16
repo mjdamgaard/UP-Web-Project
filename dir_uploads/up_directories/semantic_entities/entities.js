@@ -8,7 +8,7 @@ import {post, fetch, upNodeID} from 'query';
 import {valueToHex} from 'hex';
 import {verifyType} from 'types';
 import {substring} from 'string';
-import {map} from 'object';
+import {mapToArray} from 'object';
 
 
 
@@ -126,7 +126,7 @@ export function postRelevancyQuality(classOrObjKey, relKey = undefined) {
     ]).then(([classOrObjID, relID]) => {
       let entPath = homePath + "/em1.js;call/RelevancyQuality/" +
         classOrObjID + (relID ? "/" + relID : "");
-      post(homePath + "/entities.sm.js/callSMF", entPath).then(
+      post(homePath + "/entities.sm.js/callSMF/postEntity", entPath).then(
         entID => resolve(entID)
       );
     });
@@ -140,10 +140,10 @@ export function postAllEntitiesFromModule(modulePath) {
     import(modulePath).then(entityModule => {
       // Post all the entities simultaneously, then wait for all these post
       // requests before resolving.
-      let postPromArr = map(entityModule, (val, alias) => {
+      let postPromArr = mapToArray(entityModule, (val, alias) => {
         if (val.Class !== undefined) {
           let entPath = modulePath + ";get/" + alias;
-          return post(homePath + "/entities.sm.js/callSMF", entPath);
+          return post(homePath + "/entities.sm.js/callSMF/postEntity", entPath);
         }
         else {
           return new Promise(res => res());

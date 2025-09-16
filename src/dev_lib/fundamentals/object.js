@@ -29,8 +29,8 @@ export const entries = new DevFunction(
 );
 
 
-export const map = new DevFunction(
-  "map", {typeArr: ["any", "function"]},
+export const mapToArray = new DevFunction(
+  "mapToArray", {typeArr: ["any", "function"]},
   ({callerNode, execEnv, interpreter}, [obj]) => {
     let entries = [];
     let ind = 0;
