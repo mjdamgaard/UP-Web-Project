@@ -27,19 +27,20 @@ export function postUserScoreHex(
 
   let qualIDProm = fetchEntityID(qualKey);
   let subjIDProm = fetchEntityID(subjKey);
+  let userEntIDProm = fetchEntityID(userKey);
   let userEntDefProm = fetchEntityDefinition(userKey);
   return new Promise(resolve => {
     Promise.all([
-      qualIDProm, subjIDProm, userEntDefProm
-    ]).then(([qualID, subjID, userEntDef]) => {
+      qualIDProm, subjIDProm, userEntIDProm, userEntDefProm
+    ]).then(([qualID, subjID, userEntID, userEntDef]) => {
       let userID = userEntDef["User ID"];
       let userUPNodeID = userEntDef["UP Node ID"];
       if (userID !== getRequestingUserID() || userUPNodeID !== upNodeID) {
         resolve(false);
       }
       else {
-        let listID = qualID + "&" + userID;
-        post(homePath + "/users.bt/_insert/k=" + userID);
+        let listID = qualID + "&" + userEntID;
+        post(homePath + "/users.bt/_insert/k=" + userEntID);
         post(
           homePath + "/userScores.bbt/_insert/l=" + listID + "/k=" + subjID +
           "/s=" + scoreHex + (payloadHex ? "/p=" + payloadHex : "")

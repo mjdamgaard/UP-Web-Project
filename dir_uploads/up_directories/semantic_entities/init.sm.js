@@ -6,6 +6,7 @@ import homePath from "./.id.js";
 import {checkAdminPrivileges} from 'request';
 import {post, upNodeID} from 'query';
 import {map} from 'array';
+import {valueToHex} from 'hex';
 import {getSequentialPromise} from 'promise';
 import {
   fetchEntityID, postAllEntitiesFromModule, postRelevancyQuality,
@@ -122,10 +123,23 @@ export function postScoresFromInitialModerators() {
       initModArr = initModeratorArr;
     },
 
-    // Post some trust scores for the first moderator.
+    // Post some trust scores from the first moderator to the other ones, and
+    // also themselves (which normally doesn't really make sense, but here it
+    // does). TODO: Redirect to another function that also updates all user
+    // groups in an array.
     () => {
-
+      let firstModID = initModArr[0];
+      let trustScoreArr = [9, 9, 9, 8, 8, 6, 6];
+      return getSequentialPromise(map(initModArr, (modID, ind) => {
+        let score = trustScoreArr[ind] ?? 5;
+        let scoreHex = valueToHex(score, "float(-10,10,1)");
+        return () => postUserScoreHex(
+          trustedQualKey, modID, firstModID, scoreHex
+        );
+      }));
     },
+
+    // TODO: Continue.
   ];
 
   return getSequentialPromise(promiseCallbackArr);
@@ -137,63 +151,44 @@ export function postScoresFromInitialModerators() {
 
 
 
-// export function postScoresFromInitialModerators(step = 0, carry = {}) {
-//   // Only the admin can call this SMF.
-//   checkAdminPrivileges();
+// This function is essentially a copy of postUserScoreHex() from
+// user_scores.sm.js, only without the authentication and validation.
+// (Obviously do not export this function, unless adding an
+// checkAdminPrivileges() call.)
+function postUserScoreHex(
+  qualKey, subjKey, userKey, scoreHex, payloadHex = undefined
+) {
+  let qualIDProm = fetchEntityID(qualKey);
+  let subjIDProm = fetchEntityID(subjKey);
+  let userEntIDProm = fetchEntityID(userKey);
+  return new Promise(resolve => {
+    Promise.all([
+      qualIDProm, subjIDProm, userEntIDProm
+    ]).then(([qualID, subjID, userEntID]) => {
+      let listID = qualID + "&" + userEntID;
+      post(homePath + "/users.bt/_insert/k=" + userEntID);
+      post(
+        homePath + "/userScores.bbt/_insert/l=" + listID + "/k=" + subjID +
+        "/s=" + scoreHex + (payloadHex ? "/p=" + payloadHex : "")
+      ).then(
+        wasUpdated => resolve(wasUpdated)
+      );
+    });
+  });
+}
 
-//   // We use the step argument and step counter as a hack to be able to avoid
-//   // a callback hell, without having access to async functions, and also in
-//   // order to report back at which step the function failed, if it does so. 
-//   let stepCounter = 0;
-//   try {
-//     // First get an array of the (entity) IDs of the initial moderator.
-//     if (step === stepCounter++) {
-//       return new Promise(resolve => {
-//         // Fetch the moderator IDs.
-//         let initModeratorIDArrProm = Promise.all(
-//           map(initialModerators, ([userID]) => {
-//             return new Promise(res => {
-//               let userEntPath = homePath + "/em1.js;call/User/" + userID +
-//                 "/" + upNodeID;
-//               fetch(
-//                 homePath + "/entities.sm.js/callSMF/postEntity", userEntPath
-//               ).then(
-//                 userEntID => res(userEntID)
-//               );
-//             }); 
-//           })
-//         );
 
-//         // Then go to the next step, carrying over the initModeratorIDArr.
-//         initModeratorIDArrProm.then(initModeratorIDArr => {
-//           let carry = {initModeratorIDArr: initModeratorIDArr};
-//           postScoresFromInitialModerators(stepCounter, carry).then(
-//             result => resolve(result)
-//           );
-//         });
-//       });
-//     }
 
-//     // Then upload some trust scores among the moderators.
-//     else if (step === stepCounter++) {
-//       let {initModeratorIDArr} = carry;
-//       return new Promise(resolve => {
-//         // TODO: Do something.
 
-//         // Go to the next step. (This should be wrapped in a promise.)
-//         postScoresFromInitialModerators(stepCounter).then(
-//           res => resolve(res)
-//         );
-//       });
-//     }
-//   }
-//   catch (err) {
-//     throw "Error at step = " + step + ": " + err;
-//   }
+function postUserPredicateScoreAndUpdateUserGroups(
+  qualKey, subjKey, userKey, score, userGroupKeyArr
+) {
+  let scoreHex = valueToHex(score, "float(-10,10,1)");
+  postUserScoreHex(qualKey, subjKey, userKey, scoreHex).then(() => {
+    
+  });
+}
 
-//   // If all the step succeeded, return a promise that resolves with true.
-//   return new Promise(resolve => resolve(true))
-// }
 
 
 
