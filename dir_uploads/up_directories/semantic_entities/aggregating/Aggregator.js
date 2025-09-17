@@ -49,11 +49,11 @@ export class Aggregator {
 
 
 
-  updateScoreForUser(userGroupKey, qualKey, subjKey, userID) {
+  updateScoreForUser(userGroupKey, qualKey, subjKey, userKey) {
     return new Promise(resolve => {
       post(
         this.updateSMPath + "/callSMF/updateScoreForUser",
-        [userGroupKey, qualKey, subjKey, userID],
+        [userGroupKey, qualKey, subjKey, userKey],
       ).then(
         wasUpdated => resolve(wasUpdated)
       );

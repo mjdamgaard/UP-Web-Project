@@ -493,7 +493,7 @@ export const scoreHandlers = {
     // via relations, scored by the users). 
     "fetchTopEntry",
 
-    // updateScoreForUser(qualKey, subjKey, userID, options): When a user
+    // updateScoreForUser(qualKey, subjKey, userKey, options): When a user
     // submits a score for a quality, this method should be called.
     "updateScoreForUser",
 

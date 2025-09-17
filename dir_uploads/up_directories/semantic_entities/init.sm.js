@@ -11,8 +11,13 @@ import {getSequentialPromise} from 'promise';
 import {
   fetchEntityID, postAllEntitiesFromModule, postRelevancyQuality,
 } from "./entities.js";
+import {
+  scoreHandler01, initialTrustedUserGroup, initialStandardUserGroup,
+} from "./score_handling/ScoreHandler01/em.js";
 
 const trustedQualKey = abs("./em1.js;get/trusted");
+
+
 
 
 export function uploadInitialEntities() {
@@ -132,9 +137,10 @@ export function postScoresFromInitialModerators() {
       let trustScoreArr = [9, 9, 9, 8, 8, 6, 6];
       return getSequentialPromise(map(initModArr, (modID, ind) => {
         let score = trustScoreArr[ind] ?? 5;
-        let scoreHex = valueToHex(score, "float(-10,10,1)");
-        return () => postUserScoreHex(
-          trustedQualKey, modID, firstModID, scoreHex
+        return () => postUserPredicateScoreAndUpdateUserGroups(
+          trustedQualKey, modID, firstModID, score, [
+            initialTrustedUserGroup, initialStandardUserGroup,
+          ],
         );
       }));
     },
@@ -184,8 +190,16 @@ function postUserPredicateScoreAndUpdateUserGroups(
   qualKey, subjKey, userKey, score, userGroupKeyArr
 ) {
   let scoreHex = valueToHex(score, "float(-10,10,1)");
-  postUserScoreHex(qualKey, subjKey, userKey, scoreHex).then(() => {
-    
+  return new Promise(resolve => {
+    postUserScoreHex(qualKey, subjKey, userKey, scoreHex).then(() => {
+      getSequentialPromise(map(userGroupKeyArr, (userGroupKey => {
+        return () => scoreHandler01.updateScoreForUser(
+          qualKey, subjKey, userKey, {userGroup: userGroupKey}
+        );
+      }))).then(
+        () => resolve(true)
+      );
+    });
   });
 }
 

@@ -87,11 +87,11 @@ export class SimpleScoreHandler {
 
 
 
-  updateScoreForUser(qualKey, subjKey, userID, options = {}) {
+  updateScoreForUser(qualKey, subjKey, userKey, options = {}) {
     return new Promise(resolve => {
       this.fetchUserGroup(qualKey, options).then(userGroupKey => {
         this.aggregator.updateScoreForUser(
-          userGroupKey, qualKey, subjKey, userID, options
+          userGroupKey, qualKey, subjKey, userKey, options
         ).then(
           wasUpdated => resolve(wasUpdated)
         );
