@@ -9,6 +9,7 @@ import {valueToHex} from 'hex';
 import {verifyType} from 'types';
 import {substring} from 'string';
 import {mapToArray} from 'object';
+import {map, forEach} from 'array';
 
 
 
@@ -114,9 +115,6 @@ export function fetchRelevancyQualityPath(classOrObjKey, relKey = undefined) {
 
 
 
-
-
-
 export function postRelevancyQuality(classOrObjKey, relKey = undefined) {
   let classOrObjIDProm = fetchEntityID(classOrObjKey);
   let relIDProm = relKey ? fetchEntityID(relKey) : new Promise(res => res());
@@ -134,6 +132,31 @@ export function postRelevancyQuality(classOrObjKey, relKey = undefined) {
 }
 
 
+export function postConstructedEntity(
+  modulePath, constructorAlias, argEntKeyArr = []
+) {
+  let entIDPromArr = map(argEntKeyArr, entKey => fetchEntityID(entKey));
+  let relIDProm = relKey ? fetchEntityID(relKey) : new Promise(res => res());
+  return new Promise(resolve => {
+    Promise.all(entIDPromArr).then(entIDArr => {
+      let entPath = modulePath + ";call/" + constructorAlias;
+      forEach(entIDArr, entID => {
+        entPath = entPath + "/" + entID;
+      });
+      post(homePath + "/entities.sm.js/callSMF/postEntity", entPath).then(
+        entID => resolve(entID)
+      );
+    });
+  });
+}
+
+
+
+export function postEntity(modulePath, alias) {
+  let entPath = modulePath + ";get/" + alias;
+  return post(homePath + "/entities.sm.js/callSMF/postEntity", entPath);
+}
+
 
 export function postAllEntitiesFromModule(modulePath) {
   return new Promise(resolve => {
@@ -142,8 +165,7 @@ export function postAllEntitiesFromModule(modulePath) {
       // requests before resolving.
       let postPromArr = mapToArray(entityModule, (val, alias) => {
         if (val.Class !== undefined) {
-          let entPath = modulePath + ";get/" + alias;
-          return post(homePath + "/entities.sm.js/callSMF/postEntity", entPath);
+          return postEntity(modulePath, alias);
         }
         else {
           return new Promise(res => res());
@@ -153,3 +175,5 @@ export function postAllEntitiesFromModule(modulePath) {
     });
   });
 }
+
+
