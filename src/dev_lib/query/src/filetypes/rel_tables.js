@@ -201,8 +201,8 @@ export async function query(
       );
     }
     let {
-      l: listID = "", lo = "", hi, n: maxNum, o: numOffset = 0,
-      a: isAscending
+      l: listID = "", lo = "", hi, n: maxNum = 4000, o: numOffset = 0,
+      a: isAscending = 0
     } = paramObj;
     maxNum = parseInt(maxNum);
     isAscending = parseInt(isAscending);
@@ -241,7 +241,7 @@ export async function query(
       );
     }
     let {
-      l: listID = "", lo = "", hi, n: maxNum, o: numOffset = 0,
+      l: listID = "", lo = "", hi, n: maxNum = 4000, o: numOffset = 0,
       a: isAscending = 0
     } = paramObj;
     maxNum = parseInt(maxNum);
