@@ -1,6 +1,6 @@
 
 import {
-  DevFunction, forEachValue, ObjectObject,
+  DevFunction, forEachValue, ObjectObject, getString,
 } from "../../interpreting/ScriptInterpreter.js";
 
 
@@ -58,9 +58,10 @@ export const forEach = new DevFunction(
 );
 
 export const join = new DevFunction(
-  "join", {typeArr: ["array", "string?"]}, ({}, [arr, delimiter]) => {
+  "join", {typeArr: ["array", "string?"]},
+  ({callerNode, execEnv}, [arr, delimiter]) => {
     if (arr instanceof ObjectObject) arr = arr.members;
-    return arr.join(delimiter);
+    return arr.map(val => getString(val, callerNode, execEnv)).join(delimiter);
   }
 );
 

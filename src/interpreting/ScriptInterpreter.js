@@ -1356,13 +1356,13 @@ export class ScriptInterpreter {
             console.log(expVal);
           }
           log.entries.push(expVal);
-          return undefined;
         }
         // TODO: Implement a console.trace() call as well.
         // TODO: Implement an extended trace() (called whatever seems
         // appropriate) that returns the whole environment stack in some way,
         // perhaps with a maxLevel limit argument. And on the server side,
         // maybe even reroute the debugger statement to call this and then exit.
+        return undefined;
       }
       case "super-call": {
         let superclass = environment.getSuperclass(expNode);
@@ -1374,6 +1374,7 @@ export class ScriptInterpreter {
           superclass.instanceConstructor, inputArr, expNode, environment,
           thisVal, [SUPERCLASS_FLAG, superclass.superclass]
         );
+        return undefined;
       }
       case "super-access": {
         let superclass = environment.getSuperclass(expNode);
@@ -1647,7 +1648,7 @@ export class ScriptInterpreter {
       else if (objVal instanceof ObjectObject) {
         val = objVal.get(key);
       }
-      else if (typeof objVal === "string" && key === "length") {
+      else if (typeof objVal === "string") {
         if (key === "length") {
           val = objVal.length;
         }
@@ -1655,7 +1656,10 @@ export class ScriptInterpreter {
           let intKey = parseInt(key);
           if (!Number.isNaN(intKey) && intKey == key) {
             val = objVal[intKey];
-          } 
+          }
+          else {
+            val = undefined;
+          }
         }
       }
       else throw new RuntimeError(

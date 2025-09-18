@@ -5,7 +5,7 @@ import * as DefaultEntityElement
 from "./entity_elements/DefaultEntityElement.jsx";
 import {scoreHandler01} from "/1/1/score_handling/ScoreHandler01/em.js";
 
-const trustedQualKey = "1/1/em1.js;get/trusted";
+const trustedQualKey = "/1/1/em1.js;get/trusted";
 
 
 export function render(props) {

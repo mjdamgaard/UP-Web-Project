@@ -109,6 +109,11 @@ export const allUsersList = {
 // Here we make a user group of users that are trusted by the initial
 // moderators.
 
+function exponentialConvert(predicateScore) {
+  let weight = 4 ** predicateScore;
+  return weight;
+}
+
 export const initialTrustedUserList = new ModeratedList(
   abs("./em.js;get/initialTrustedUserList"),
   abs("./em.js;get/initialModeratorGroup"),
@@ -116,11 +121,6 @@ export const initialTrustedUserList = new ModeratedList(
   abs("./em.js;get/scoreHandler01"),
   exponentialConvert,
 );
-
-function exponentialConvert(predicateScore) {
-  let weight = 4 ** predicateScore;
-  return weight;
-}
 
 
 export const initialTrustedUserGroup = {

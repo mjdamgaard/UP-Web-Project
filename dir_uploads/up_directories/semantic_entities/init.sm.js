@@ -171,7 +171,7 @@ function postUserScoreHex(
     Promise.all([
       qualIDProm, subjIDProm, userEntIDProm
     ]).then(([qualID, subjID, userEntID]) => {
-      let listID = qualID + "&" + userEntID;
+      let listID = qualID + "+" + userEntID;
       post(homePath + "/users.bt/_insert/k=" + userEntID);
       post(
         homePath + "/userScores.bbt/_insert/l=" + listID + "/k=" + subjID +

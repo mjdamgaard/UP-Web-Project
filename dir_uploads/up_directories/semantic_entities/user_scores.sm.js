@@ -39,7 +39,7 @@ export function postUserScoreHex(
         resolve(false);
       }
       else {
-        let listID = qualID + "&" + userEntID;
+        let listID = qualID + "+" + userEntID;
         post(homePath + "/users.bt/_insert/k=" + userEntID);
         post(
           homePath + "/userScores.bbt/_insert/l=" + listID + "/k=" + subjID +
