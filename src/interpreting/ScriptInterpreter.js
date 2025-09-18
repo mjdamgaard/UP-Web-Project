@@ -400,8 +400,7 @@ export class ScriptInterpreter {
         );
         promise.then(
           ([liveModule]) => resolve(liveModule)
-        );
-        promise.catch(
+        ).catch(
           err => reject(err)
         );
       });
