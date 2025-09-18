@@ -1,7 +1,7 @@
 
 
 import {post} from 'query';
-import {fetchScoreAndWeight, fetchScoreAndWeightList} from "../../scores.js";
+import {fetchScoreAndWeight, fetchScoreAndWeightList} from "../scores.js";
 
 
 

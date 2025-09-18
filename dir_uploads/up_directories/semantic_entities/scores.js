@@ -6,9 +6,7 @@ import {fetch, noPost} from 'query';
 import {map, join} from 'array';
 import {min} from 'math';
 import {hexToArray, valueToHex, hexFromArray} from 'hex';
-import {
-  fetchEntityID, fetchEntityDefinition,
-} from "../../entities.js";
+import {fetchEntityID, fetchEntityDefinition} from "./entities.js";
 
 
 

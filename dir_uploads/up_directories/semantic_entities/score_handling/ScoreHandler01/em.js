@@ -7,8 +7,6 @@ import CombinedList from "../../scored_lists/comb/CombinedList.js";
 import SimpleScoreHandler from "../SimpleScoreHandler.js";
 import {MeanAggregator} from "../../aggregating/mean/MeanAggregator.js";
 
-export * from "./init_mods.js";
-
 const trustedQualKey = abs("../../em1.js;get/trusted");
 
 const meanAggregator = new MeanAggregator();
@@ -47,7 +45,7 @@ export const initialModeratorList = {
       "important, security-related matters."
     }</p>
   </div>,
-}
+};
 
 export const initialModeratorGroup = {
   "Class": abs("../../em1.js;get/userGroups"),
@@ -61,7 +59,7 @@ export const initialModeratorGroup = {
       "important, security-related matters."
     }</p>
   </div>,
-}
+};
 
 
 
@@ -101,7 +99,7 @@ export const allUsersList = {
       "the user list gotten from " + abs("./../../users.bt") + "."
     }</p>
   </div>,
-}
+};
 
 
 
@@ -135,7 +133,7 @@ export const initialTrustedUserGroup = {
       "TODO: Make."
     }</p>
   </div>,
-}
+};
 
 
 
@@ -160,7 +158,7 @@ export const initialSecondHandTrustedUserGroup = {
       "TODO: Make."
     }</p>
   </div>,
-}
+};
 
 
 
@@ -192,7 +190,7 @@ export const initialStandardUserGroup = {
       "TODO: Make."
     }</p>
   </div>,
-}
+};
 
 
 
@@ -233,7 +231,7 @@ const sensitiveQualities = {
   // TODO: Add sensitive qualities.
   [abs("./<qualPath>")]:
     abs("./em.js;get/initialTrustedUserGroup"),
-}
+};
 
 
 
@@ -243,5 +241,5 @@ export const scoreHandler01 = new SimpleScoreHandler(
   meanAggregator,
   fetchUserGroup,
   <div>{"TODO: Make."}</div>
-)
+);
 

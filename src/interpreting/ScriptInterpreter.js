@@ -498,7 +498,7 @@ export class ScriptInterpreter {
       environment.declare(stmtNode.ident, val, true, stmtNode);
       environment.export(stmtNode.ident, undefined, stmtNode);
     }
-    else if (stmtNode.subtype === "function-export") {
+    else if (stmtNode.subtype === "function-or-class-export") {
       this.executeStatement(stmtNode.stmt, environment);
       environment.export(stmtNode.ident, undefined, stmtNode);
       if (stmtNode.isDefault) {
@@ -847,9 +847,7 @@ export class ScriptInterpreter {
       }
       case "function-declaration": {
         let funVal = new DefinedFunction(stmtNode, environment);
-        environment.declare(
-          stmtNode.name, funVal, false, stmtNode
-        );
+        environment.declare(stmtNode.name, funVal, false, stmtNode);
         break;
       }
       case "class-declaration": {
@@ -876,7 +874,7 @@ export class ScriptInterpreter {
         let classObj = new ClassObject(
           stmtNode.name, prototype.constructor, prototype, superclass
         );
-        environment.assign(stmtNode.name, () => [classObj, classObj], stmtNode);
+        environment.declare(stmtNode.name, classObj, false, stmtNode);
         break;
       }
       case "expression-statement": {
@@ -2830,7 +2828,7 @@ export function getExtendedErrorMsg(err) {
 
 const PATH_REGEX = /^([^/]+)?(\/[^/]+)*$/;
 const FILENAME_REGEX = /\/[^./]+\.[^/]+$/;
-const SEGMENT_TO_REMOVE_REGEX = /(\/\.\/|[^/]+\/\.\.\/)/g;
+const SEGMENT_TO_REMOVE_REGEX = /(\/\.?\/|[^/]+\/\.\.\/)/g;
 
 
 export function getFullPath(curPath, path, callerNode, callerEnv) {
@@ -2859,8 +2857,13 @@ export function getFullPath(curPath, path, callerNode, callerEnv) {
     fullPath = moddedCurPath + "/" + path;
   }
 
-  // Then replace any occurrences of "/./" and "<dirName>/../" with "/".
-  fullPath = fullPath.replaceAll(SEGMENT_TO_REMOVE_REGEX, "/");
+  // Then replace any occurrences of "//", "/./", and "<dirName>/../" with "/".
+  let prevFullPath;
+  do {
+    prevFullPath = fullPath
+    fullPath = fullPath.replaceAll(SEGMENT_TO_REMOVE_REGEX, "/");
+  }
+  while (fullPath !== prevFullPath);
 
   if (fullPath.substring(0, 4) === "/../") throw new LoadError(
     `Ill-formed path: "${path}"`, callerNode, callerEnv

@@ -116,6 +116,7 @@ export const scriptGrammar = {
       ["/export/", "/default/?", "class-declaration!1"],
       ["/export/", "/default/", "expression-statement"],
       ["/export/", /\{/, "named-export-list!1?", /\}/, "/;/"],
+// TODO: Implement 'export * from' and export * as <name>' statements as well.
     ],
     process: (children, ruleInd) => {
       if (ruleInd === 0) {
@@ -126,23 +127,13 @@ export const scriptGrammar = {
           exp: children[4],
         };
       }
-      else if (ruleInd === 1) {
+      else if (ruleInd === 1 || ruleInd === 2) {
         return {
           type: "export-statement",
-          subtype: "function-export",
+          subtype: "function-or-class-export",
           isDefault: children[1][0] ? true : false,
           ident: children[2].name,
           stmt: children[2],
-        };
-      }
-      else if (ruleInd === 2) {
-        return {
-          type: "export-statement",
-          subtype: "class-export",
-          isDefault: children[1][0] ? true : false,
-          ident: children[2].name,
-          superclass: children[2].superclass,
-          members: children[2].members,
         };
       }
       else if (ruleInd === 3) {
@@ -157,7 +148,7 @@ export const scriptGrammar = {
         return {
           type: "export-statement",
           subtype: "named-exports",
-          namedExportArr: children[2].children,
+          namedExportArr: children[2][0]?.children ?? [],
         };
       }
     },
@@ -177,7 +168,7 @@ export const scriptGrammar = {
     ],
     process: (children, ruleInd) => {
       let ret = (ruleInd === 0) ? {
-        ident: children[2].ident,
+        ident: children[0].ident,
         alias: "default",
       } : (ruleInd === 1) ? {
         ident: children[0].ident,
@@ -337,7 +328,7 @@ export const scriptGrammar = {
       ["/class/", "identifier", /\{/, "class-member!1*", /\}/],
     ],
     process: (children, ruleInd) => ({
-      type: "function-declaration",
+      type: "class-declaration",
       name: children[1].ident,
       superclass: (ruleInd === 0) ? children[3].ident : undefined,
       members: (ruleInd === 0) ? children[5] : children[3],
@@ -345,7 +336,7 @@ export const scriptGrammar = {
   },
   "class-member": {
     rules: [
-      ["identifier", "expression-tuple", "block-statement!"],
+      ["identifier", "parameter-tuple", "block-statement!"],
       ["identifier", "/=/", "expression", "/;/"],
     ],
     process: (children, ruleInd) => (
