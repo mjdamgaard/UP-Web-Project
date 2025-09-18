@@ -61,7 +61,7 @@ async function main() {
       }
       console.log("Success");
     }
-    if (/^([bB]|bundle)$/.test(command)) {
+    else if (/^([bB]|bundle)$/.test(command)) {
       console.log("Bundling not implemented yet.");
     }
     else if (/^([pP]|post)$/.test(command)) {

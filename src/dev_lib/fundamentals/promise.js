@@ -1,6 +1,6 @@
 
 import {
-  DevFunction, PromiseObject
+  DevFunction, PromiseObject, ObjectObject,
 } from "../../interpreting/ScriptInterpreter.js";
 
 

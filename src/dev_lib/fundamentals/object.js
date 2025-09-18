@@ -7,10 +7,10 @@ import {
 
 export const forEach = new DevFunction(
   "forEach", {typeArr: ["any", "function"]},
-  ({callerNode, execEnv, interpreter}, [obj, fun]) => {
+  ({callerNode, execEnv, interpreter}, [obj, callback]) => {
     forEachValue(obj, callerNode, execEnv, (val, ind) => {
       interpreter.executeFunction(
-        fun, [val, ind], callerNode, execEnv
+        callback, [val, ind], callerNode, execEnv
       );
     });
   }
@@ -31,7 +31,7 @@ export const entries = new DevFunction(
 
 export const mapToArray = new DevFunction(
   "mapToArray", {typeArr: ["any", "function"]},
-  ({callerNode, execEnv, interpreter}, [obj]) => {
+  ({callerNode, execEnv, interpreter}, [obj, callback]) => {
     let entries = [];
     let ind = 0;
     forEachValue(obj, callerNode, execEnv, (val, key) => {
@@ -40,7 +40,7 @@ export const mapToArray = new DevFunction(
     });
     return entries.map(([key, val], ind) => {
       return interpreter.executeFunction(
-        fun, [val, key, ind], callerNode, execEnv
+        callback, [val, key, ind], callerNode, execEnv
       );
     });
   }

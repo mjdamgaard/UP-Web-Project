@@ -19,9 +19,8 @@ import {map} from 'array';
 // from the relevancy quality formed by either the relation--object pair, or
 // the class.
 export function render({
-  qualKey, relKey, objKey, classKey, ElementComponent,
-  scoreHandler = undefined, options = undefined,
-  paginationLength = 50, paginationIndex = 0,
+  qualKey, relKey, objKey, classKey, ElementComponent, scoreHandler,
+  options = undefined, paginationLength = 50, paginationIndex = 0,
 }) {
   scoreHandler = scoreHandler ?? this.subscribeToContext("score-handler");
   let {qualPath, list} = this.state;

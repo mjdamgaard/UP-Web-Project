@@ -1,4 +1,7 @@
 
+import {DevFunction} from "../../interpreting/ScriptInterpreter.js";
+
+
 
 // This function splits a string into an array where all entity keys are
 // contained in their own entry. It then returns that array, along with a
@@ -10,13 +13,13 @@ export const splitStringAlongEntityKeyEndPoints = new DevFunction(
     // Use String.match() to split the string into an array where each entity
     // key is alone in its own array entry.
     let segmentArr = str.match(
-      /#[0-9a-f]*|\/[^\s\\#]*)|\\([\s\S]|$)|[^#/\\]+/g
+      /#[0-9a-f]*|\/[^\s\\#]*|\\([\s\S]|$)|[^#/\\]+/g
     ) ?? [];
     
     // Then initialize the is-entity-key array, and go through each entry,
     // transforming all non-entity-keys by removing backslashes, while also
     // filling out the isEntKeyArr along the way.
-    isEntKeyArr = [];
+    let isEntKeyArr = [];
     segmentArr.forEach((segment, ind) => {
       if (segment[0] === "#" || segment[0] === "/") {
         isEntKeyArr[ind] = true;
