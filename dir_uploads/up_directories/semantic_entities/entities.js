@@ -6,7 +6,7 @@
 import homePath from "./.id.js";
 import {post, fetch, upNodeID} from 'query';
 import {valueToHex} from 'hex';
-import {verifyType} from 'types';
+import {verifyType} from 'type';
 import {substring} from 'string';
 import {mapToArray} from 'object';
 import {map, forEach} from 'array';
@@ -45,7 +45,7 @@ export function fetchEntityID(entKey) {
         entKey = substring(entKey, 1);
       }
       verifyType(entKey, "hex-string");
-      resolve(entKey)
+      resolve(entKey);
     });
   }
 }

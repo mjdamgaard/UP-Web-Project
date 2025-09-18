@@ -395,10 +395,9 @@ export class ScriptInterpreter {
       // Then execute the module, inside the global environment, and return the
       // resulting liveModule, after also adding it to liveModules.
       let liveModulePromise = new Promise((resolve, reject) => {
-        let promise = this.executeModule(
+        this.executeModule(
           submoduleNode, lexArr, strPosArr, script, modulePath, globalEnv
-        );
-        promise.then(
+        ).then(
           ([liveModule]) => resolve(liveModule)
         ).catch(
           err => reject(err)

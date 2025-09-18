@@ -30,6 +30,7 @@ import * as promiseMod from "./dev_lib/fundamentals/promise.js";
 import * as reqOrigMod from "./dev_lib/request_origin.js";
 import * as hexMod from "./dev_lib/conversion/hex.js";
 import * as errorMod from "./dev_lib/error.js";
+import * as typeMod from "./dev_lib/type.js";
 import * as scoredListsAlgMod from "./dev_lib/array_algorithms/scored_lists.js";
 import * as entitiesMod from "./dev_lib/semantic_entities/entities.js";
 
@@ -48,6 +49,7 @@ staticDevLibs.set("promise", promiseMod);
 staticDevLibs.set("request_origin", reqOrigMod);
 staticDevLibs.set("hex", hexMod);
 staticDevLibs.set("error", errorMod);
+staticDevLibs.set("type", typeMod);
 staticDevLibs.set("scored_lists", scoredListsAlgMod);
 staticDevLibs.set("entities", entitiesMod);
 
@@ -126,7 +128,7 @@ setInterval(
 );
 
 // The script the initializes the UP app.
-const TEST_APP_ID = "12";
+const TEST_APP_ID = "2";
 const mainScript = `
   import {createJSXApp} from 'jsx';
   import {settings} from 'settings1';

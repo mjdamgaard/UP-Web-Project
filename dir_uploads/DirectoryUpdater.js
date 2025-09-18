@@ -55,9 +55,12 @@ export class DirectoryUpdater {
     // and get the new dirID.
     let idFilePath = path.normalize(dirPath + "/.id.js");
     if (!dirID) {
-      dirID = await serverQueryHandler.post(`/1/mkdir/a=${userID}`);
-      if (!dirID) throw "mkdir error";
-      fs.writeFileSync(idFilePath, `export default "/1/${dirID}";`);
+      dirID = this.readDirID(dirPath) ?? "";
+      if (!dirID) {
+        dirID = await serverQueryHandler.post(`/1/mkdir/a=${userID}`);
+        if (!dirID) throw "mkdir error";
+        fs.writeFileSync(idFilePath, `export default "/1/${dirID}";`);
+      }
     }
 
     // Request a list of all the files in the server-side directory, and then
