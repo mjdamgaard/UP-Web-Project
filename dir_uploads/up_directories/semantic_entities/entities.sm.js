@@ -24,7 +24,9 @@ export function postEntity(entPath, useSecIdx = true) {
     }
     else {
       let entPathHex = valueToHex(entPath, "string");
-      fetch(homePath + "/entIDs.bt/entry/k=" + entPathHex).then(entID => {
+      fetch(
+        homePath + "/entIDs.bt/entry/k=" + entPathHex
+      ).then(([entID] = []) => {
         // If the entPath already has an entID, resolve with that.
         if (entID) {
           return resolve(entID);
@@ -49,24 +51,27 @@ export function postEntity(entPath, useSecIdx = true) {
 export function addSecondaryIndex(entID) {
   verifyType(entID, "hex-string");
   return new Promise(resolve => {
-    fetch(homePath + "/entPaths.att/entry/k=" + entID).then(entPath => {
+    fetch(
+      homePath + "/entPaths.att/entry/k=" + entID
+    ).then(([entPath] = []) => {
+      if (!entPath) return resolve(false);
       let entPathHex = valueToHex(entPath, "string");
-      fetch(homePath + "/entIDs.bt/entry/k=" + entPathHex).then(
-        existingEntID => {
-          // If the entPath already has another entID, resolve with false, and
-          // if it already has the same ID, resolve with true.
-          if (existingEntID) {
-            return resolve(existingEntID == entID);
-          }
-          
-          // Else try to insert that entID in the entIDs.bt table if an entry has
-          // not been inserted for that same entPath in the meantime.
-          post(
-            homePath + "/entIDs.bt/_insert/k=" + entPathHex +
-            "/p=" + entID + "/i=1"
-          ).then(wasUpdated => resolve(wasUpdated));
+      fetch(
+        homePath + "/entIDs.bt/entry/k=" + entPathHex
+      ).then(([existingEntID] = []) => {
+        // If the entPath already has another entID, resolve with false, and
+        // if it already has the same ID, resolve with true.
+        if (existingEntID) {
+          return resolve(existingEntID == entID);
         }
-      );
+        
+        // Else try to insert that entID in the entIDs.bt table if an entry has
+        // not been inserted for that same entPath in the meantime.
+        post(
+          homePath + "/entIDs.bt/_insert/k=" + entPathHex +
+          "/p=" + entID + "/i=1"
+        ).then(wasUpdated => resolve(wasUpdated));
+      });
     });
   });
 }

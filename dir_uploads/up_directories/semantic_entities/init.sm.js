@@ -6,7 +6,7 @@ import homePath from "./.id.js";
 import {checkAdminPrivileges} from 'request';
 import {post, upNodeID} from 'query';
 import {map} from 'array';
-import {valueToHex} from 'hex';
+import {valueToHex, arrayToHex} from 'hex';
 import {getSequentialPromise} from 'promise';
 import {
   fetchEntityID, postAllEntitiesFromModule, postRelevancyQuality,
@@ -45,7 +45,7 @@ export function insertInitialModerators() {
         return new Promise(resolve => {
           let userEntPath = homePath + "/em1.js;call/User/" + userID +
             "/" + upNodeID;
-          let scoreHex = hexFromArray(
+          let scoreHex = arrayToHex(
             [weight, weightWeight], ["float(,,3)", "float(,,1)"]
           );
           post(

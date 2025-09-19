@@ -332,6 +332,7 @@ export async function query(
         }
       } else {
         rowArr = postData;
+        postData = JSON.stringify(rowArr ?? []);
       }
       if (!(rowArr instanceof Array)) {
         isValid = false;
@@ -363,7 +364,7 @@ export async function query(
     }
     let {l: listID = "", i: ignore} = paramObj;
     ignore = ignore ? 1 : 0;
-    payGas(callerNode, execEnv, {dbWrite: rowArr.length});
+    payGas(callerNode, execEnv, {dbWrite: postData.length});
     let paramValArr = [homeDirID, filePath, listID, postData, ignore];
     let [[rowCount] = []] = await dbQueryHandler.queryDBProc(
       procName, paramValArr, route, options, callerNode, execEnv,

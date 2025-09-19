@@ -991,10 +991,7 @@ proc: BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID, newTextID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT hexToBin(listIDHex);
-    IF (
-        dirID IS NULL OR filePath IS NULL OR
-        listID IS NULL OR elemKey IS NULL OR elemPayload IS NULL
-    ) THEN
+    IF (dirID IS NULL OR filePath IS NULL OR listID IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
     END IF;
@@ -1302,10 +1299,7 @@ proc: BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID, newTextID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT hexToBin(listIDHex);
-    IF (
-        dirID IS NULL OR filePath IS NULL OR
-        listID IS NULL OR elemKey IS NULL OR elemPayload IS NULL
-    ) THEN
+    IF (dirID IS NULL OR filePath IS NULL OR listID IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
     END IF;
@@ -1665,10 +1659,7 @@ proc: BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum((dirIDHex));
     DECLARE fileID, newTextID BIGINT UNSIGNED;
     DECLARE listID VARBINARY(255) DEFAULT hexToBin(listIDHex);
-    IF (
-        dirID IS NULL OR filePath IS NULL OR
-        listID IS NULL OR elemKey IS NULL OR elemPayload IS NULL
-    ) THEN
+    IF (dirID IS NULL OR filePath IS NULL OR listID IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
     END IF;

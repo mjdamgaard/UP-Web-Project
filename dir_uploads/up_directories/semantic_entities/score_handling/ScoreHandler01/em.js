@@ -7,7 +7,7 @@ import CombinedList from "../../scored_lists/comb/CombinedList.js";
 import SimpleScoreHandler from "../SimpleScoreHandler.js";
 import {MeanAggregator} from "../../aggregating/mean/MeanAggregator.js";
 
-const trustedQualKey = abs("../../em1.js;get/trusted");
+const trustedQualPath = abs("../../em1.js;get/trusted");
 
 const meanAggregator = new MeanAggregator();
 
@@ -117,7 +117,7 @@ function exponentialConvert(predicateScore) {
 export const initialTrustedUserList = new ModeratedList(
   abs("./em.js;get/initialTrustedUserList"),
   abs("./em.js;get/initialModeratorGroup"),
-  trustedQualKey, 
+  trustedQualPath, 
   abs("./em.js;get/scoreHandler01"),
   exponentialConvert,
 );
@@ -143,7 +143,7 @@ export const initialTrustedUserGroup = {
 export const initialSecondHandTrustedUserList = new ModeratedList(
   abs("./em.js;get/initialSecondHandTrustedUserList"),
   abs("./em.js;get/initialTrustedUserGroup"),
-  trustedQualKey, 
+  trustedQualPath, 
   abs("./em.js;get/scoreHandler01"),
   exponentialConvert,
 );
@@ -229,6 +229,9 @@ function fetchUserGroup(qualKey, options = {}) {
 // Function that this initial score handler uses to get the user groups to use
 // when updating the score for a given quality variable.  
 function fetchUserGroupsForUpdate(qualKey, options = {}) {
+  // TODO: If updating all four user groups for every score update feels to
+  // slow, consider only using the initial and first-hand trusted moderator
+  // groups when qualPath == trustedQualPath.
   return new Promise(resolve => {
     if (options.userGroupsForUpdate) {
       resolve(options.userGroupsForUpdate);
