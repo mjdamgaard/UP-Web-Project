@@ -475,9 +475,8 @@ export class ScriptInterpreter {
         else if (impType === "default-import") {
           let val = liveSubmodule.get("default");
           if (val === undefined) throw new LoadError(
-            "No export found of the name '" + ident + "' in module " +
-            liveSubmodule.modulePath,
-            namedImp, curModuleEnv
+            "No default export in module " + liveSubmodule.modulePath,
+            imp, curModuleEnv
           );
           curModuleEnv.declare(imp.ident, val, true, imp);
         }
