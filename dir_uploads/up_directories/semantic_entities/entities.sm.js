@@ -8,7 +8,7 @@
 import homePath from "./.id.js";
 import {post, fetch} from 'query';
 import {valueToHex} from 'hex';
-import {verifyType} from 'types';
+import {verifyType} from 'type';
 
 
 

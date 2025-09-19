@@ -80,7 +80,7 @@ async function main() {
         continue;
       }
       console.log("Post request returned with result:");
-      console.log(JSON.parse(result));
+      console.log(result);
     }
     else if (/^([fF]|fetch)$/.test(command)) {
       let relativeRoute = await read({prompt: `~# `});
@@ -93,7 +93,7 @@ async function main() {
         continue;
       }
       console.log("Fetch request returned with result:");
-      console.log(JSON.parse(result));
+      console.log(result);
     }
     else if (/^([eE]|exit)$/.test(command)) {
       hasExited = true;

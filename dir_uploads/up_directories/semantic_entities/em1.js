@@ -65,6 +65,11 @@ export const classes = {
 
 // Class of all users. These are all defined solely by the userID assigned to
 // the given user and the ID or the UP node that created the user profile.
+export const User = (userID, upNodeID) => ({
+  "Class": abs("./em1.js;get/users"),
+  "User ID": userID,
+  "UP node ID": upNodeID,
+});
 export const users = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Users",
@@ -73,11 +78,6 @@ export const users = {
   "Description": abs("./em1_aux1.js;get/usersDesc"),
 };
 
-export const User = (userID, upNodeID) => ({
-  "Class": abs("./em1.js;get/users"),
-  "User ID": userID,
-  "UP node ID": upNodeID,
-});
 
 
 // Class of all texts. Texts can be defined in many ways, so while this class
@@ -244,15 +244,9 @@ export const areasOfConcern = {
 // be the "relational class" (see below) formed from that pair. (When defining
 // a relevancy quality for a relational class, always use the two-argument
 // version of the constructor, rather than using the classID directly.)
-export const relevancyQualities = {
-  "Class": abs("./em1.js;get/classes"),
-  "Name": "Relevancy qualities",
-  "Superclass": abs("./em1.js;get/qualities"),
-  "Constructor": RelevancyQuality,
-  "Description": abs("./em1_aux1.js;get/relevancyQualitiesDesc"),
-};
-
-export const RelevancyQuality = (classOrObjID, relID = undefined) => ({
+// (Let us shorten RelevancyQuality() to just RQ(), since it will be used quite
+// a lot in requests, namely when fetching entity IDs.)  
+export const RQ = (classOrObjID, relID = undefined) => ({
   "Class": abs("./em1.js;get/relevancyQualities"),
   "Target class": relID === undefined ? "#" + classOrObjID : undefined,
   "Relation": relID === undefined ?  undefined : "#" + relID,
@@ -264,6 +258,14 @@ export const RelevancyQuality = (classOrObjID, relID = undefined) => ({
   "Domain": abs("./em1.js;get/entities"),
   "Default metric": abs("./em1.js;get/predicateMetric"),
 });
+export const relevancyQualities = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "Relevancy qualities",
+  "Superclass": abs("./em1.js;get/qualities"),
+  "Constructor": RQ,
+  "Description": abs("./em1_aux1.js;get/relevancyQualitiesDesc"),
+};
+
 
 
 
@@ -294,6 +296,13 @@ export const relations = {
 };
 
 // Relational classes are defined solely by a relation and a relational object.
+export const RelationalClass = (relID, objID) => ({
+  "Class": abs("./em1.js;get/classes"),
+  "Relation": "#" + relID,
+  "Relational object": "#" + objID,
+  "Name": "#" + objID + "→" + "#" + relID,
+  "Superclass": abs("./em1.js;get/relationalClasses"),
+});
 export const relationalClasses = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Relational classes",
@@ -302,17 +311,15 @@ export const relationalClasses = {
   "Description": abs("./em1_aux1.js;get/relationalClassesDesc"),
 };
 
-export const RelationalClass = (relID, objID) => ({
-  "Class": abs("./em1.js;get/classes"),
-  "Relation": "#" + relID,
-  "Relational object": "#" + objID,
-  "Name": "#" + objID + "→" + "#" + relID,
-  "Superclass": abs("./em1.js;get/relationalClasses"),
-});
-
 
 // Quality variables refers to the floating-point number scales that are scored
 // by the users, and/or aggregated algorithmically.
+export const QualityVariable = (qualID, subjID) => ({
+  "Class": abs("./em1.js;get/qualityVariables"),
+  "Quality": "#" + qualID,
+  "Subject": "#" + subjID,
+  "Label": "#" + subjID + "⋲" + "#" + qualID,
+});
 export const qualityVariables = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Quality variables",
@@ -321,12 +328,6 @@ export const qualityVariables = {
   "Description": abs("./em1_aux1.js;get/qualityVariablesDesc"),
 };
 
-export const QualityVariable = (qualID, subjID) => ({
-  "Class": abs("./em1.js;get/qualityVariables"),
-  "Quality": "#" + qualID,
-  "Subject": "#" + subjID,
-  "Label": "#" + subjID + "⋲" + "#" + qualID,
-});
 
 
 
@@ -696,6 +697,11 @@ export const trusted = {
 // convention of not capitalizing the labels of all description-less qualities,
 // such that the users will have a way to know if a description is included or
 // not, without having to look for it. 
+export const SimplePredicate = (label) => ({
+  "Class": abs("./em1.js;get/simplePredicates"),
+  "Label": label,
+  "Default metric": abs("./em1.js;get/predicateMetric"),
+});
 export const simplePredicates = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Simple predicates",
@@ -704,11 +710,6 @@ export const simplePredicates = {
   "Description": abs("./em1_aux1.js;get/simplePredicatesDesc"),
 };
 
-export const SimplePredicate = (label) => ({
-  "Class": abs("./em1.js;get/simplePredicates"),
-  "Label": label,
-  "Default metric": abs("./em1.js;get/predicateMetric"),
-});
 
 // Some useful simple predicates are 'good', 'funny', 'witty', 'spoilers',
 // 'good acting', 'inspiring' and so on. But as all "derived entities" ( i.e.

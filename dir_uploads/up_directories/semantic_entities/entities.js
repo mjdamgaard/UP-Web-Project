@@ -104,7 +104,7 @@ export function fetchRelevancyQualityPath(classOrObjKey, relKey = undefined) {
         resolve(undefined);
       }
       else {
-        let qualPath = homePath + "/em1.js;call/RelevancyQuality/" +
+        let qualPath = homePath + "/em1.js;call/RQ/" +
           classOrObjID + (relID ? "/" + relID : "");
         resolve(qualPath);
       }
@@ -122,7 +122,7 @@ export function postRelevancyQuality(classOrObjKey, relKey = undefined) {
     Promise.all([
       classOrObjIDProm, relIDProm
     ]).then(([classOrObjID, relID]) => {
-      let entPath = homePath + "/em1.js;call/RelevancyQuality/" +
+      let entPath = homePath + "/em1.js;call/RQ/" +
         classOrObjID + (relID ? "/" + relID : "");
       post(homePath + "/entities.sm.js/callSMF/postEntity", entPath).then(
         entID => resolve(entID)

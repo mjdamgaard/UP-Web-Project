@@ -2194,17 +2194,18 @@ export function forEachValue(value, node, env, callback, ignore = false) {
       Object.entries(value.members).forEach(([key, val]) => callback(val, key));
     }
   }
-  let valProto = getPrototypeOf(value);
-  if (valProto === ARRAY_PROTOTYPE) {
-    value.forEach(callback);
-  }
-  else if (valProto === OBJECT_PROTOTYPE) {
-    Object.entries(value).forEach(([key, val]) => callback(val, key));
-  }
-  else if (!ignore) throw new RuntimeError(
-    "Iterating over a non-iterable value: " + getString(value, node, env),
-    node, env
-  );
+  else {
+    let valProto = getPrototypeOf(value);
+    if (valProto === ARRAY_PROTOTYPE) {
+      value.forEach(callback);
+    }
+    else if (valProto === OBJECT_PROTOTYPE) {
+      Object.entries(value).forEach(([key, val]) => callback(val, key));
+    }
+    else if (!ignore) throw new RuntimeError(
+      "Iterating over a non-iterable value: " + getString(value, node, env),
+      node, env
+    );
   }
 }
 

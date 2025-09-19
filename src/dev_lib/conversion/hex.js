@@ -83,7 +83,7 @@ export const arrayToHex = new DevFunction(
         let binArr;
         let transformedHexStr = len.toString(16).padStart(2, "0") + val;
         try {
-          binArr = Uint8Array.fromHex(transformedHexStr);
+          binArr = uint8ArrayFromHex(transformedHexStr);
         }
         catch (err) {
           if (err instanceof TypeError || err instanceof SyntaxError) {
@@ -123,7 +123,7 @@ export const arrayToHex = new DevFunction(
           callerNode, execEnv
         );
         let hexStr = val.toString(16).padStart(len * 2, "0");
-        let binArr = Uint8Array.fromHex(hexStr);
+        let binArr = uint8ArrayFromHex(hexStr);
         binArrArr.push(binArr);
         return;
       }
@@ -213,7 +213,7 @@ export const arrayToHex = new DevFunction(
           }
         }
 
-        let binArr = Uint8Array.fromHex(hexStr);
+        let binArr = uint8ArrayFromHex(hexStr);
         binArrArr.push(binArr);
         return;
       }
@@ -237,7 +237,7 @@ export const arrayToHex = new DevFunction(
       combBinArray.set(binArr, accLen);
       accLen = accLen + binArr.length;
     });
-    return combBinArray.toHex();
+    return uint8ArrayToHex(combBinArray);
   }
 );
 
@@ -253,7 +253,7 @@ export const hexToArray = new DevFunction(
     let combBinArr;
     let accLen = 0;
     try {
-      combBinArr = Uint8Array.fromHex(hexStr);
+      combBinArr = uint8ArrayFromHex(hexStr);
     }
     catch (err) {
       if (err instanceof TypeError || err instanceof SyntaxError) {
@@ -306,7 +306,7 @@ export const hexToArray = new DevFunction(
           callerNode, execEnv
         );
         let binArr = combBinArr.slice(accLen + 1, newLen);
-        let hexStr = binArr.toHex();
+        let hexStr = uint8ArrayToHex(binArr);
         if (hexStr[0] === "0") {
           hexStr = hexStr.substring(1);
         } 
@@ -329,7 +329,7 @@ export const hexToArray = new DevFunction(
           callerNode, execEnv
         );
         let binArr = combBinArr.slice(accLen, accLen + len);
-        let n = parseInt(binArr.toHex(), 16);
+        let n = parseInt(uint8ArrayToHex(binArr), 16);
 
         // If the int is signed, subtract the |minInt| again.
         if (!isUnsigned) {
@@ -371,7 +371,7 @@ export const hexToArray = new DevFunction(
         if (loExp && hiExp) {
           let binArr = combBinArr.slice(accLen, accLen + len);
           accLen = accLen + len;
-          let n = parseInt(binArr.toHex(), 16);
+          let n = parseInt(uint8ArrayToHex(binArr), 16);
           val = lo + (hi - lo) * n / maxUInts[len - 1];
         }
         else {
@@ -384,7 +384,7 @@ export const hexToArray = new DevFunction(
           }
           if (loExp || hiExp) {
             exp = exp - 128;
-            let n = parseInt(binArr.toHex().substring(2), 16);
+            let n = parseInt(uint8ArrayToHex(binArr).substring(2), 16);
             val =  2**(exp + 1) * n / maxUInts[len - 1];
             val = loExp ? val + lo : hi - val;
           }
@@ -395,7 +395,7 @@ export const hexToArray = new DevFunction(
               exp = binArr[0];
             }
             exp = exp - 192;
-            let n = parseInt(binArr.toHex().substring(2), 16);
+            let n = parseInt(uint8ArrayToHex(binArr).substring(2), 16);
             val =  2**(exp + 1) * n / maxUInts[len - 1];
             val = isNegative ? -val : val;
           }
@@ -414,7 +414,7 @@ export const hexToArray = new DevFunction(
     });
 
     if (acceptIncomplete) {
-      let remainder = combBinArr.slice(accLen).toHex();
+      let remainder = uint8ArrayToHex(combBinArr.slice(accLen));
       return [valArr, remainder];
     }
     else {
@@ -433,11 +433,11 @@ export const valueToHex = new DevFunction(
   "valueToHex", {typeArr: ["any", "string"]},
   function({callerNode, execEnv}, [val, type]) {
     if (type === "string") {
-      return textEncoder.encode(val).toHex();
+      return uint8ArrayToHex(textEncoder.encode(val));
     }
     else if (type === "hex-string") {
       try {
-        Uint8Array.fromHex(val);
+        uint8ArrayFromHex(val);
       }
       catch (err) {
         if (err instanceof TypeError || err instanceof SyntaxError) {
@@ -460,7 +460,7 @@ export const hexToValue = new DevFunction(
   function({callerNode, execEnv}, [hexStr, type]) {
     if (type === "string") {
       try {
-        return textDecoder.decode(Uint8Array.fromHex(hexStr));
+        return textDecoder.decode(uint8ArrayFromHex(hexStr));
       }
       catch (err) {
         if (err instanceof TypeError || err instanceof SyntaxError) {
@@ -475,7 +475,7 @@ export const hexToValue = new DevFunction(
     }
     else if (type === "hex-string") {
       try {
-        return Uint8Array.fromHex(hexStr);
+        return uint8ArrayFromHex(hexStr);
       }
       catch (err) {
         if (err instanceof TypeError || err instanceof SyntaxError) {
@@ -525,6 +525,23 @@ export const hexArrayToArray = new DevFunction(
 
 
 
+
+
+function uint8ArrayToHex(unit8Arr) {
+  if (unit8Arr.toHex) {
+    return unit8Arr.toHex();
+  } else {
+    return Buffer.from(unit8Arr).toString('hex');
+  }
+}
+
+function uint8ArrayFromHex(hexStr) {
+  if (Uint8Array.fromHex) {
+    return Uint8Array.fromHex(hexStr);
+  } else {
+    return Buffer.from(hexStr, 'hex');
+  }
+}
 
 
 

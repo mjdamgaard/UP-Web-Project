@@ -65,7 +65,7 @@ const stdPostReqGas = {
   comp: 100000,
   import: 500,
   fetch: 500,
-  time: 10000,
+  time: 15000,
   dbRead: 1000,
   dbWrite: 100000,
   conn: 3000,
