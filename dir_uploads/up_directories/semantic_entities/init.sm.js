@@ -105,7 +105,7 @@ export function postScoresFromInitialModerators() {
       return new Promise(res => {
         let userEntPath = homePath + "/em1.js;call/User/" + userID +
           "/" + upNodeID;
-        fetch(
+        post(
           homePath + "/entities.sm.js/callSMF/postEntity", userEntPath
         ).then(
           userEntID => res(userEntID)
@@ -138,9 +138,7 @@ export function postScoresFromInitialModerators() {
       return getSequentialPromise(map(initModArr, (modID, ind) => {
         let score = trustScoreArr[ind] ?? 5;
         return () => postUserPredicateScoreAndUpdateUserGroups(
-          trustedQualKey, modID, firstModID, score, [
-            initialTrustedUserGroup, initialStandardUserGroup,
-          ],
+          trustedQualKey, modID, firstModID, score
         );
       }));
     },
@@ -171,10 +169,10 @@ function postUserScoreHex(
     Promise.all([
       qualIDProm, subjIDProm, userEntIDProm
     ]).then(([qualID, subjID, userEntID]) => {
-      let listID = qualID + "+" + userEntID;
+      let listIDHex = valueToHex(qualID + "+" + userEntID, "string");
       post(homePath + "/users.bt/_insert/k=" + userEntID);
       post(
-        homePath + "/userScores.bbt/_insert/l=" + listID + "/k=" + subjID +
+        homePath + "/userScores.bbt/_insert/l=" + listIDHex + "/k=" + subjID +
         "/s=" + scoreHex + (payloadHex ? "/p=" + payloadHex : "")
       ).then(
         wasUpdated => resolve(wasUpdated)
@@ -187,17 +185,15 @@ function postUserScoreHex(
 
 
 function postUserPredicateScoreAndUpdateUserGroups(
-  qualKey, subjKey, userKey, score, userGroupKeyArr
+  qualKey, subjKey, userKey, score, userGroupKeyArr = undefined
 ) {
   let scoreHex = valueToHex(score, "float(-10,10,1)");
   return new Promise(resolve => {
     postUserScoreHex(qualKey, subjKey, userKey, scoreHex).then(() => {
-      getSequentialPromise(map(userGroupKeyArr, (userGroupKey => {
-        return () => scoreHandler01.updateScoreForUser(
-          qualKey, subjKey, userKey, {userGroup: userGroupKey}
-        );
-      }))).then(
-        () => resolve(true)
+      scoreHandler01.updateScoreForUser(
+        qualKey, subjKey, userKey, {userGroupsForUpdate: userGroupKeyArr}
+      ).then(
+        (wasUpdated) => resolve(wasUpdated)
       );
     });
   });

@@ -464,11 +464,21 @@ export class ScriptInterpreter {
             let ident = namedImp.ident ?? "default";
             let alias = namedImp.alias ?? ident;
             let val = liveSubmodule.get(ident);
+            if (val === undefined) throw new LoadError(
+              "No export found of the name '" + ident + "' in module " +
+              liveSubmodule.modulePath,
+              namedImp, curModuleEnv
+            );
             curModuleEnv.declare(alias, val, true, namedImp);
           });
         }
         else if (impType === "default-import") {
           let val = liveSubmodule.get("default");
+          if (val === undefined) throw new LoadError(
+            "No export found of the name '" + ident + "' in module " +
+            liveSubmodule.modulePath,
+            namedImp, curModuleEnv
+          );
           curModuleEnv.declare(imp.ident, val, true, imp);
         }
         else throw "finalizeImportStatement(): Unrecognized import type";

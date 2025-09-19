@@ -1,6 +1,7 @@
 
 import {fetchUserScore, fetchUserScoreList} from "../scores.js";
 import {filterScoredListWRTWeight} from 'scored_lists';
+import {map} from 'array';
 import {getSequentialPromise} from 'promise';
 
 

@@ -5,7 +5,7 @@ import homePath from "./.id.js";
 import {fetch, noPost} from 'query';
 import {map, join} from 'array';
 import {min} from 'math';
-import {hexToArray, valueToHex, hexFromArray} from 'hex';
+import {hexToArray, valueToHex, arrayToHex} from 'hex';
 import {fetchEntityID, fetchEntityDefinition} from "./entities.js";
 
 
@@ -224,7 +224,7 @@ export function postScoreAndWeight(
   tableFilePath, listIDKeyArr, subjKey, score, weight
 ) {
   return new Promise(resolve => {
-    let scoreAndWeightHex = hexFromArray(
+    let scoreAndWeightHex = arrayToHex(
       [score, weight], ["float(,,3)", "float(,,1)"]
     );
     postScoreAndWeightHex(

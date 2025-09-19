@@ -1,8 +1,9 @@
 
 import {
-  fetchEntityID, fetchUserWeight, fetchUserScore, fetchScoreAndWeight,
-  postScoreAndWeight, deleteScore,
+  fetchUserWeight, fetchUserScore, fetchScoreAndWeight, postScoreAndWeight,
+  deleteScore,
 } from "../../scores.js";
+import {fetchEntityID} from "../../entities.js";
 
 const contributionsPath = abs("./contributions.bbt");
 const aggrPath = abs("./aggregates.bbt");
@@ -79,12 +80,12 @@ export function updateScoreForUser(
 
 export function updateScoreForGroup() {
   // TODO: Implement.
-  return Promise(resolve => resolve());
+  return new Promise(resolve => resolve());
 }
 
 export function updateList() {
   // TODO: Implement.
-  return Promise(resolve => resolve());
+  return new Promise(resolve => resolve());
 }
 
 
