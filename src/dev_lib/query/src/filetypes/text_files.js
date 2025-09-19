@@ -1,6 +1,6 @@
 
 import {
-  RuntimeError, payGas, CLEAR_FLAG, PromiseObject, FunctionObject,
+  RuntimeError, payGas, CLEAR_FLAG, PromiseObject, FunctionObject, getString,
 } from "../../../../interpreting/ScriptInterpreter.js";
 
 import {
@@ -41,7 +41,7 @@ export async function query(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
     );
-    let text = postData;
+    let text = getString(postData, callerNode, execEnv);
     payGas(callerNode, execEnv, {dbWrite: text.length});
     let [[wasCreated] = []] = await dbQueryHandler.queryDBProc(
       "putTextFile", [homeDirID, filePath, text],
@@ -104,16 +104,12 @@ export async function query(
       callerNode, execEnv
     );
     if (postData) {
-      let isValid = true;
-      try {
-        inputArr = JSON.parse(postData);
-      } catch (err) {
-        isValid = false;
+      if (postData instanceof Array) {
+        inputArr = postData;
       }
-      if (!isValid || !(inputArr instanceof Array)) throw new RuntimeError(
-        "Input array not a valid JSON array",
-        callerNode, execEnv
-      );
+      else {
+        inputArr = [postData];
+      }
     }
 
     // Import and execute the given JS module using interpreter.import(), and
@@ -154,16 +150,12 @@ export async function query(
       callerNode, execEnv
     );
     if (postData) {
-      let isValid = true;
-      try {
-        inputArr = JSON.parse(postData);
-      } catch (err) {
-        isValid = false;
+      if (postData instanceof Array) {
+        inputArr = postData;
       }
-      if (!isValid || !(inputArr instanceof Array)) throw new RuntimeError(
-        "Input array not a valid JSON array",
-        callerNode, execEnv
-      );
+      else {
+        inputArr = [postData];
+      }
     }
 
     // Import and execute the given JS module using interpreter.import(), and
@@ -228,16 +220,22 @@ export async function query(
       `Invalid route: ${route}`,
       callerNode, execEnv
     );
-    let reqGas;
+    let reqGas, isValid = true;
     if (postData) {
-      try {
-        reqGas = JSON.parse(postData);
-      } catch (err) {
-        throw new RuntimeError(
-          "Invalid gas JSON object",
-          callerNode, execEnv
-        );
+      if (typeof postData !== "string") {
+        try {
+          reqGas = JSON.parse(postData);
+        } catch (err) {
+          isValid = false;
+        }
       }
+      if (!reqGas || typeof reqGas !== "object") {
+        isValid = false;
+      }
+      if (!isValid) throw new RuntimeError(
+        "Invalid gas object",
+        callerNode, execEnv
+      );
     }
     else throw new RuntimeError(
       "No requested gas JSON object provided",
@@ -291,14 +289,20 @@ export async function query(
     );
     let reqGas;
     if (postData) {
-      try {
-        reqGas = JSON.parse(postData);
-      } catch (err) {
-        throw new RuntimeError(
-          "Invalid gas JSON object",
-          callerNode, execEnv
-        );
+      if (typeof postData !== "string") {
+        try {
+          reqGas = JSON.parse(postData);
+        } catch (err) {
+          isValid = false;
+        }
       }
+      if (!reqGas || typeof reqGas !== "object") {
+        isValid = false;
+      }
+      if (!isValid) throw new RuntimeError(
+        "Invalid gas object",
+        callerNode, execEnv
+      );
     }
     else throw new RuntimeError(
       "No requested gas JSON object provided",

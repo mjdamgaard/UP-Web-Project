@@ -2205,6 +2205,7 @@ export function forEachValue(value, node, env, callback, ignore = false) {
     "Iterating over a non-iterable value: " + getString(value, node, env),
     node, env
   );
+  }
 }
 
 

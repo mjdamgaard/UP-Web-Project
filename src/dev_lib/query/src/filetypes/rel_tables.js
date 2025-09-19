@@ -1,7 +1,7 @@
 
 
 import {
-  RuntimeError, payGas,
+  RuntimeError, payGas, ObjectObject,
 } from "../../../../interpreting/ScriptInterpreter.js";
 import {DBQueryHandler} from "../../../../server/db_io/DBQueryHandler.js";
 
@@ -324,17 +324,21 @@ export async function query(
     );
     let rowArr, isValid = true;
     if (postData) {
-      try {
-        rowArr = JSON.parse(postData);
-      } catch (err) {
-        isValid = false;
+      if (typeof postData === "string") {
+        try {
+          rowArr = JSON.parse(postData);
+        } catch (err) {
+          isValid = false;
+        }
+      } else {
+        rowArr = postData;
       }
       if (!(rowArr instanceof Array)) {
         isValid = false;
       }
     }
     else throw new RuntimeError(
-      "No JSON array provided",
+      "No list array provided",
       callerNode, execEnv
     );
     if (!isValid) throw new RuntimeError(
@@ -359,7 +363,7 @@ export async function query(
     }
     let {l: listID = "", i: ignore} = paramObj;
     ignore = ignore ? 1 : 0;
-    payGas(callerNode, execEnv, {dbWrite: postData.length});
+    payGas(callerNode, execEnv, {dbWrite: rowArr.length});
     let paramValArr = [homeDirID, filePath, listID, postData, ignore];
     let [[rowCount] = []] = await dbQueryHandler.queryDBProc(
       procName, paramValArr, route, options, callerNode, execEnv,

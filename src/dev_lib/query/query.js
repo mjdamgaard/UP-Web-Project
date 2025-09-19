@@ -58,6 +58,13 @@ export const query = new DevFunction(
       throw new RuntimeError(errMsg, callerNode, execEnv);
     }
 
+    // Also make sure to deep-copy the postData if it is an object, and do it
+    // via a JSON conversion back and forth such that the object is turned into
+    // a plain one.
+    if (postData && typeof postData === "object") {
+      postData = JSON.parse(jsonStringify(postData));
+    }
+
     // If on the server side, and if upNodeID is that of the UP node that the
     // server is part of, query the database, but not before checking if the
     // privileges are elevated for the given home directory if the route is
