@@ -199,7 +199,7 @@ export const initialStandardUserGroup = {
 
 
 // Function that this initial score handler uses to get the user group to use
-// for a given quality.  
+// when fetching scores for a given quality.  
 function fetchUserGroup(qualKey, options = {}) {
   // TODO: Reimplement this function to use the "areas of concern" of the
   // qualities, instead of this hard-coded implementation where one just
@@ -225,6 +225,24 @@ function fetchUserGroup(qualKey, options = {}) {
   });
 }
 
+
+// Function that this initial score handler uses to get the user groups to use
+// when updating the score for a given quality variable.  
+function fetchUserGroupsForUpdate(qualKey, options = {}) {
+  return new Promise(resolve => {
+    if (options.userGroupsForUpdate) {
+      resolve(options.userGroupsForUpdate);
+    }
+    else {
+      resolve([
+        abs("./em.js;get/initialModeratorGroup"),
+        abs("./em.js;get/initialTrustedUserGroup"),
+        abs("./em.js;get/initialStandardUserGroup"),
+      ]);
+    }
+  });
+}
+
 // A qualPath->userGroupKey object used for this initial implementation of
 // the fetchUserGroup() above.
 const sensitiveQualities = {
@@ -240,6 +258,7 @@ const sensitiveQualities = {
 export const scoreHandler01 = new SimpleScoreHandler(
   meanAggregator,
   fetchUserGroup,
+  fetchUserGroupsForUpdate,
   <div>{"TODO: Make."}</div>
 );
 

@@ -1,6 +1,7 @@
 
 import {fetchUserScore, fetchUserScoreList} from "../scores.js";
 import {filterScoredListWRTWeight} from 'scored_lists';
+import {getSequentialPromise} from 'promise';
 
 
 
@@ -8,9 +9,10 @@ import {filterScoredListWRTWeight} from 'scored_lists';
 // A class to generate a list combined of several other scored lists. 
 export class SimpleScoreHandler {
   
-  constructor(aggregator, fetchUserGroup, doc) {
+  constructor(aggregator, fetchUserGroup, fetchUserGroupsForUpdate, doc) {
     this.aggregator = aggregator;
     this.fetchUserGroup = fetchUserGroup;
+    this.fetchUserGroupsForUpdate = fetchUserGroupsForUpdate;
     this["Documentation"] = doc;
   }
 
@@ -89,10 +91,12 @@ export class SimpleScoreHandler {
 
   updateScoreForUser(qualKey, subjKey, userKey, options = {}) {
     return new Promise(resolve => {
-      this.fetchUserGroup(qualKey, options).then(userGroupKey => {
-        this.aggregator.updateScoreForUser(
-          userGroupKey, qualKey, subjKey, userKey, options
-        ).then(
+      this.fetchUserGroupsForUpdate(qualKey, options).then(userGroupKeyArr => {
+        getSequentialPromise(map(userGroupKeyArr, userGroupKey => {
+          return () => this.aggregator.updateScoreForUser(
+            userGroupKey, qualKey, subjKey, userKey, options
+          );
+        })).then(
           wasUpdated => resolve(wasUpdated)
         );
       });
@@ -103,10 +107,12 @@ export class SimpleScoreHandler {
 
   updateScoreForGroup(qualKey, subjKey, options = {}) {
     return new Promise(resolve => {
-      this.fetchUserGroup(qualKey, options).then(userGroupKey => {
-        this.aggregator.updateScoreForGroup(
-          userGroupKey, qualKey, subjKey, options
-        ).then(
+      this.fetchUserGroupsForUpdate(qualKey, options).then(userGroupKeyArr => {
+        getSequentialPromise(map(userGroupKeyArr, userGroupKey => {
+          return () => this.aggregator.updateScoreForGroup(
+            userGroupKey, qualKey, subjKey, options
+          );
+        })).then(
           wasUpdated => resolve(wasUpdated)
         );
       });
@@ -117,10 +123,12 @@ export class SimpleScoreHandler {
 
   updateList(qualKey, options = {}) {
     return new Promise(resolve => {
-      this.fetchUserGroup(qualKey, options).then(userGroupKey => {
-        this.aggregator.updateList(
-          userGroupKey, qualKey, options
-        ).then(
+      this.fetchUserGroupsForUpdate(qualKey, options).then(userGroupKeyArr => {
+        getSequentialPromise(map(userGroupKeyArr, userGroupKey => {
+          return () => this.aggregator.updateList(
+            userGroupKey, qualKey, options
+          );
+        })).then(
           wasUpdated => resolve(wasUpdated)
         );
       });
@@ -131,8 +139,13 @@ export class SimpleScoreHandler {
 
   fetchDefaultOptions(qualKey) {
     return new Promise(resolve => {
-      this.fetchUserGroup(qualKey).then(userGroupKey => {
-        resolve({userGroup: userGroupKey});
+      Promise.all([
+        this.fetchUserGroup(qualKey), this.fetchUserGroupsForUpdate(qualKey)
+      ]).then(([userGroupKey, userGroupKeyArr]) => {
+        resolve({
+          userGroup: userGroupKey,
+          userGroupsForUpdate: userGroupKeyArr,
+        });
       });
     });
   }
