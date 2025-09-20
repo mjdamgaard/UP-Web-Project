@@ -586,8 +586,8 @@ export class ScriptInterpreter {
     // Initialize a new environment for the execution of the function.
     let execEnv = new Environment(
       fun.decEnv ?? callerEnv.getGlobalEnv(), "function", {
-        fun: fun, callerNode: callerNode, callerEnv: callerEnv,
-        thisVal: thisVal, flags: flags,
+        fun: fun, inputArr: inputArr, callerNode: callerNode,
+        callerEnv: callerEnv, thisVal: thisVal, flags: flags,
       }
     );
 
@@ -1220,9 +1220,7 @@ export class ScriptInterpreter {
       case "chained-expression": {
         let val;
         try {
-          [val] = this.evaluateChainedExpression(
-            expNode.rootExp, expNode.postfixArr, expNode.isNew, environment
-          );
+          [val] = this.evaluateChainedExpression(expNode, environment);
         }
         catch (err) {
           if (err instanceof BrokenOptionalChainException) {
@@ -1358,19 +1356,31 @@ export class ScriptInterpreter {
         return ret;
       }
       case "console-call": {
+        let {isExiting, log} = environment.scriptVars;
+        let expValArr = expNode.expArr.map(
+          exp => this.evaluateExpression(exp, environment)
+        );
         if (expNode.subtype === "log") {
-          let {isExiting, log} = environment.scriptVars;
-          let expVal = this.evaluateExpression(expNode.exp, environment);
           if (!this.isServerSide && !isExiting) {
-            console.log(expVal);
+            console.log(...expValArr);
           }
-          log.entries.push(expVal);
+          log.entries.push(expValArr);
         }
-        // TODO: Implement a console.trace() call as well.
-        // TODO: Implement an extended trace() (called whatever seems
-        // appropriate) that returns the whole environment stack in some way,
-        // perhaps with a maxLevel limit argument. And on the server side,
-        // maybe even reroute the debugger statement to call this and then exit.
+        // We experiment here with another API for console.trace(), which is:
+        // console.trace(maxNum = 15, stringify = true), which returns a list
+        // of at most maxNum function calls, but not just with the function
+        // names; we also include their input tuple and the module in which
+        // they are defined.
+        else if (expNode.subtype === "trace") {
+          let maxNum = Math.abs(parseInt(expValArr[0]));
+          maxNum = Number.isNaN(maxNum) ? undefined : maxNum;
+          let stringify = expValArr[0] ? true : false;
+          let trace = environment.getCallTrace(maxNum, stringify)
+          if (!this.isServerSide && !isExiting) {
+            trace.forEach(str => console.log(str));
+          }
+          log.entries.push(trace.map(str => [str]));
+        }
         return undefined;
       }
       case "super-call": {
@@ -1515,7 +1525,7 @@ export class ScriptInterpreter {
       let prevVal, objVal, key;
       try {
         [prevVal, objVal, key] = this.evaluateChainedExpression(
-          expNode.rootExp, expNode.postfixArr, expNode.isNew, environment
+          expNode, environment
         );
       }
       catch (err) {
@@ -1547,7 +1557,8 @@ export class ScriptInterpreter {
   // a BrokenOptionalChainException. Here, val is the value of the whole
   // expression, and objVal, is the value of the object before the last member
   // accessor (if the last postfix is a member accessor and not a tuple).
-  evaluateChainedExpression(rootExp, postfixArr, isNew, environment) {
+  evaluateChainedExpression(expNode, environment) {
+    let {rootExp, postfixArr, isNew} = expNode;
     let postfix, objVal, key;
     let val = this.evaluateExpression(rootExp, environment);
     let len = postfixArr.length;
@@ -1607,7 +1618,7 @@ export class ScriptInterpreter {
 
         // Then execute the function and assign its return value to val.
         val = this.executeFunction(
-          val, inputValArr, postfix, environment, objVal
+          val, inputValArr, expNode, environment, objVal
         );
         objVal = undefined;
       }
@@ -1693,7 +1704,7 @@ export class ScriptInterpreter {
 export class Environment {
   constructor(
     parent, scopeType = "block", {
-      fun, callerNode, callerEnv, thisVal, flags,
+      fun, inputArr, callerNode, callerEnv, thisVal, flags,
       modulePath, lexArr, strPosArr, script,
       scriptVars,
     } = {},
@@ -1707,14 +1718,18 @@ export class Environment {
     this.flags = new Map();
     if (scopeType === "function") {
       let {
-        isArrowFun, isDevFun, flags: funFlags, thisVal: boundThisVal,
+        isArrowFun, isDevFun, flags: funFlags, thisVal: boundThisVal, name,
       } = fun;
       thisVal = boundThisVal ?? thisVal;
+      this.inputArr = inputArr;
       this.callerNode = callerNode;
       this.callerEnv = callerEnv;
       if (!isArrowFun && thisVal) this.thisVal = thisVal;
       if (isArrowFun) this.isArrowFun = isArrowFun;
-      if (isDevFun) this.isDevFun = isDevFun;
+      if (isDevFun) {
+        this.isDevFun = isDevFun;
+        this.name = name;
+      }
       if (funFlags) this.setFlags(funFlags);
     }
     else if (scopeType === "module") {
@@ -1894,6 +1909,30 @@ export class Environment {
     }
   }
 
+
+  getCallTrace(maxLen = 15, stringify = true) {
+    return this.getCallTraceHelper(maxLen, stringify).reverse();
+  }
+
+  getCallTraceHelper(maxLen, stringify) {
+    if (maxLen <= 0 || this.scopeType === "module") return [];
+    else if (this.scopeType === "function") {
+      let {callerNode, callerEnv} = this;
+      let callStr;
+      if (callerEnv.isDevFun) {
+        callStr = "<call inside of " + callerEnv.name + ">";
+      }
+      else {
+        callStr = getCallString(callerNode, callerEnv);
+      }
+      let parentTrace = callerEnv.getCallTrace(maxLen - 1, stringify);
+      parentTrace.push(callStr);
+    }
+    else {
+      return this.parent.getCallTrace(maxLen, stringify);
+    }
+  }
+
 }
 
 export const UNDEFINED = Symbol("undefined");
@@ -1902,6 +1941,15 @@ export const CLEAR_FLAG = Symbol("clear");
 
 
 
+function getCallString(callNode, callEnv, execEnv, stringify) {
+  let nodeStr = getNodeString(callNode, callEnv, true);
+  let {inputArr} = execEnv;
+  return nodeStr + ", arguments: (" +
+    inputArr.map(val => (
+      stringify ? jsonStringify(val) : getString(val, callNode, callEnv)
+    )).join(", ") +
+  ")";
+}
 
 
 
@@ -2301,7 +2349,7 @@ export class DefinedFunction extends FunctionObject {
     return this.node.type === "arrow-function";
   }
   get name() {
-    return this.node.name ?? "<anonymous function>";
+    return this.node.name ?? "<anonymous>";
   }
 }
 
@@ -2821,8 +2869,7 @@ export function getExtendedErrorMsg(err) {
 
   // Else construct an error message containing the line and column number, as
   // well as a code snippet around where the error occurred.
-  let pos = err.node.pos;
-  let nextPos = err.node.nextPos;
+  let {pos, nextPos} = err.node;
   let strPos = strPosArr[pos];
   let finStrPos = strPosArr[nextPos - 1] + lexArr[nextPos - 1].length;
   let [ln, col] = getLnAndCol(script.substring(0, strPos));
@@ -2835,6 +2882,22 @@ export function getExtendedErrorMsg(err) {
     `Ln ${ln}, Col ${col}: \`\n${codeSnippet}\n\``
   );
 }
+
+
+
+export function getNodeString(node, env, appendModuleLocation = false) {
+  let {modulePath, lexArr, strPosArr, script} = env.getModuleEnv();
+  let {pos, nextPos} = node;
+  let strPos = strPosArr[pos];
+  let finStrPos = strPosArr[nextPos - 1] + lexArr[nextPos - 1].length;
+  let ret = script.substring(strPos, finStrPos);
+  if (appendModuleLocation) {
+    let [ln, col] = getLnAndCol(script.substring(0, strPos));
+    ret = ret + ` in ${modulePath ?? "root script"}, Ln ${ln}, Col ${col}`
+  }
+  return ret;
+}
+
 
 
 

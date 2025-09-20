@@ -149,8 +149,9 @@ export class DirectoryUpdater {
   // post() posts a request with admin privileges. In particular, for a callSMF
   // request, if the SMF calls checkAdminPrivileges() (from the 'request' dev
   // lib), the check will succeed and the execution of the SMF will continue
-  // from there. // TODO: Implement postDataFilePath to read the postData from
-  // a file.
+  // from there.
+  // TODO: Implement postDataFilePath to read the postData from a file.
+  // TODO: Implement setting returnLog = true for the request.
   async post(dirID, relativeRoute, dirPath, postDataFilePath) {
     let postData = undefined;
 
@@ -167,6 +168,7 @@ export class DirectoryUpdater {
 
   // fetch() sends a fetch request as the admin, able in particular to read
   // data at locked routes directly.
+  // TODO: Implement setting returnLog = true for the request.
   async fetch(dirID, relativeRoute) {
     // Initialize the serverQueryHandler with the provided authToken.
     let serverQueryHandler = new ServerQueryHandler(
