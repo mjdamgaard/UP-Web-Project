@@ -348,6 +348,9 @@ export function fetchUserListKey(userGroupKey) {
   return new Promise(resolve => {
     fetchEntityDefinition(userGroupKey).then(userGroupDef => {
       let userListKey = userGroupDef["User list"];
+      if (!userListKey) throw (
+        "No user list found for User group " + userGroupKey
+      );
       resolve(userListKey);
     });
   });

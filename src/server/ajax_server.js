@@ -10,7 +10,7 @@ import {
 } from './err/errors.js';
 import {getData} from './user_input/getData.js';
 import {
-  ScriptInterpreter, jsonStringify,
+  ScriptInterpreter, jsonStringify, getExtendedErrorMsg, Exception,
 } from "../interpreting/ScriptInterpreter.js";
 import {queryDB} from '../dev_lib/query/src/queryDB.js';
 import {UserDBConnection, MainDBConnection} from './db_io/DBConnection.js';
@@ -271,17 +271,20 @@ async function requestHandler(req, res, returnGasRef) {
   );
 
 
-  // If the script logged an error, set an error status and write back the
-  // stringified log to the client.
-  if (log.error) {
-      endWithError(res, log.error);
+  // If returnLog is true, write back an array containing the result and the
+  // log.
+  if (returnLog) {
+    if (log.error instanceof Exception) {
+      log.error = getExtendedErrorMsg(log.error);
+    }
+    result = jsonStringify([result, log]);
+    res.writeHead(200, {'Content-Type': 'application/json'});
+    res.end(result);
   }
 
-  // Else if returnLog is true, write back an array containing the result,
-  // wasReady, and also the log.
-  else if (returnLog) {
-    res.writeHead(200, {'Content-Type': 'application/json'});
-    res.end(jsonStringify([result, log]));
+  // Else if the script logged an error, write back the error to the client.
+  else if (log.error) {
+    endWithError(res, log.error);
   }
 
   // And else simply write back the result with the specified MIME type, after

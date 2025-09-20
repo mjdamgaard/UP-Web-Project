@@ -1381,6 +1381,12 @@ export class ScriptInterpreter {
           }
           log.entries.push(trace.map(str => [str]));
         }
+        else if (expNode.subtype === "error") {
+          if (!this.isServerSide && !isExiting) {
+            console.error(...expValArr);
+          }
+          log.error = expValArr[0];
+        }
         return undefined;
       }
       case "super-call": {

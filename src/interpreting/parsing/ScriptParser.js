@@ -1084,7 +1084,7 @@ export const scriptGrammar = {
 // "expression-tuple".
   "console-call": {
     rules: [
-      ["/console/", /\./, "/log|trace/", "expression-tuple"],
+      ["/console/", /\./, "/log|trace|error/", "expression-tuple"],
     ],
     process: (children) => ({
       type: "console-call",

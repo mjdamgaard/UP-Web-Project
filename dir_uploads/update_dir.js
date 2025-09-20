@@ -75,8 +75,24 @@ async function main() {
         console.error(err);
         continue;
       }
-      console.log("Post request returned with result:");
-      console.log(result);
+      if (returnLog) {
+        let log;
+        [result, log] = result;
+        if (log.error) {
+          console.log("Post request failed with error:");
+          console.error(log.error);
+        }
+        else {
+          console.log("Post request returned with result:");
+          console.log(result);
+        }
+        console.log("And log:");
+        (log.entries ?? []).forEach(entry => console.log(...entry));
+      }
+      else {
+        console.log("Post request returned with result:");
+        console.log(result);
+      }
     }
     else if (/^([fF]|fetch)$/.test(command)) {
       let answer = await read({prompt: `~# `});
@@ -90,8 +106,24 @@ async function main() {
         console.error(err);
         continue;
       }
-      console.log("Fetch request returned with result:");
-      console.log(result);
+      if (returnLog) {
+        let log;
+        [result, log] = result;
+        if (log.error) {
+          console.log("Fetch request failed with error:");
+          console.error(log.error);
+        }
+        else {
+          console.log("Fetch request returned with result:");
+          console.log(result);
+        }
+        console.log("And log:");
+        (log.entries ?? []).forEach(entry => console.log(...entry));
+      }
+      else {
+        console.log("Fetch request returned with result:");
+        console.log(result);
+      }
     }
     else if (/^([dD]|delete)$/.test(command)) {
       // TODO: Implement a 'reset' flag (or perhaps a 'reset'(/'r') option),
