@@ -421,7 +421,8 @@ class JSXInstance {
       // a callback function.
       let childEnv = new Environment(
         jsxElement.decEnv, "function", {
-          fun: {}, callerNode: callerNode, callerEnv: callerEnv,
+          fun: {}, inputArr: [jsxElement.props], callerNode: callerNode,
+          callerEnv: callerEnv,
         }
       );
       return childInstance.render(

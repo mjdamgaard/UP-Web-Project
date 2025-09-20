@@ -1374,7 +1374,7 @@ export class ScriptInterpreter {
         else if (expNode.subtype === "trace") {
           let maxNum = Math.abs(parseInt(expValArr[0]));
           maxNum = Number.isNaN(maxNum) ? undefined : maxNum;
-          let stringify = expValArr[0] ? true : false;
+          let stringify = expValArr[0];
           let trace = environment.getCallTrace(maxNum, stringify)
           if (!this.isServerSide && !isExiting) {
             trace.forEach(str => console.log(str));
@@ -1923,13 +1923,14 @@ export class Environment {
         callStr = "<call inside of " + callerEnv.name + ">";
       }
       else {
-        callStr = getCallString(callerNode, callerEnv);
+        callStr = getCallString(callerNode, callerEnv, this, stringify);
       }
-      let parentTrace = callerEnv.getCallTrace(maxLen - 1, stringify);
-      parentTrace.push(callStr);
+      let ret = callerEnv.getCallTraceHelper(maxLen - 1, stringify);
+      ret.push(callStr);
+      return ret;
     }
     else {
-      return this.parent.getCallTrace(maxLen, stringify);
+      return this.parent.getCallTraceHelper(maxLen, stringify);
     }
   }
 
@@ -1946,7 +1947,8 @@ function getCallString(callNode, callEnv, execEnv, stringify) {
   let {inputArr} = execEnv;
   return nodeStr + ", arguments: (" +
     inputArr.map(val => (
-      stringify ? jsonStringify(val) : getString(val, callNode, callEnv)
+      (val === undefined) ? "undefined" :
+        stringify ? jsonStringify(val) : getString(val, callNode, callEnv)
     )).join(", ") +
   ")";
 }
@@ -2214,11 +2216,11 @@ export function jsonStringify(val) {
     return "[" + val.map(val => (jsonStringify(val))).join(",") + "]";
   }
   else if (valProto === OBJECT_PROTOTYPE) {
-    let ret = "{";
-    Object.entries(val).map(([key, val]) => (
-      `${JSON.stringify(key)}:${jsonStringify(val)}`
-    )).join(",");
-    return ret + "}";
+    return "{" +
+      Object.entries(val).map(([key, val]) => (
+        `${JSON.stringify(key)}:${jsonStringify(val)}`
+      )).join(",") +
+    "}";
   }
   else if (val instanceof Object) {
     throw "User has access to an object that they shouldn't have";
