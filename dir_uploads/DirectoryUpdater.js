@@ -127,6 +127,10 @@ export class DirectoryUpdater {
         );
       }
       else if (/\.(att|bt|ct|bbt|ftt)$/.test(name)) {
+        // TODO: Also implement reading the content of the file, expecting
+        // a JSON array (unless empty or whitespace-filled), and then check if
+        // the table file already exists, and if not, then make an /_insertList
+        // request after the /_touch request. 
         uploadPromises.push(
           serverQueryHandler.postAsAdmin(`/1/${childRelPath}/_touch`)
         );
@@ -197,7 +201,7 @@ export class DirectoryUpdater {
   // from there.
   // TODO: Implement postDataFilePath to read the postData from a file.
   // TODO: Implement setting returnLog = true for the request.
-  async post(dirID, relativeRoute, dirPath, postDataFilePath) {
+  async post(dirID, relativeRoute, returnLog, dirPath, postDataFilePath) {
     let postData = undefined;
 
     // Initialize the serverQueryHandler with the provided authToken.
@@ -207,14 +211,16 @@ export class DirectoryUpdater {
 
     // Construct the full route, then query the server.
     let route = path.normalize("/1/" + dirID + "/" + relativeRoute);
-    return await serverQueryHandler.postAsAdmin(route, postData);
+    return await serverQueryHandler.postAsAdmin(
+      route, postData, {returnLog: returnLog}
+    );
 
   }
 
   // fetch() sends a fetch request as the admin, able in particular to read
   // data at locked routes directly.
   // TODO: Implement setting returnLog = true for the request.
-  async fetch(dirID, relativeRoute) {
+  async fetch(dirID, relativeRoute, returnLog) {
     // Initialize the serverQueryHandler with the provided authToken.
     let serverQueryHandler = new ServerQueryHandler(
       this.authToken, Infinity, fetch
@@ -222,7 +228,9 @@ export class DirectoryUpdater {
 
     // Construct the full route, then query the server.
     let route = path.normalize("/1/" + dirID + "/" + relativeRoute);
-    return await serverQueryHandler.fetchAsAdmin(route);
+    return await serverQueryHandler.fetchAsAdmin(
+      route, {returnLog: returnLog}
+    );
   }
 
 

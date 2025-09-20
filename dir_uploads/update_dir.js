@@ -57,13 +57,19 @@ async function main() {
     else if (/^([pP]|post)$/.test(command)) {
       // TODO: Implement syntax to append a file path after the request route,
       // which should lead to a file containing the postData for the request.
-      let relativeRoute = await read({prompt: `~# `});
+      console.log("Usage: ~# relative_route [--log] [-f file_path]");
+      console.log(
+        "(Actually, the [-f file_path] option has not been implemented yet.)"
+      );
+      let answer = await read({prompt: `~# `});
+      let [relativeRoute, ...options] = answer.split(/ +/);
+      let returnLog = options.includes("--log");
       let postDataFilePath = undefined;
       console.log("Posting...");
       let result;
       try {
         result = await directoryUpdater.post(
-          dirID, relativeRoute, dirPath, postDataFilePath
+          dirID, relativeRoute, returnLog, dirPath, postDataFilePath
         );
       } catch (err) {
         console.error(err);
@@ -73,11 +79,13 @@ async function main() {
       console.log(result);
     }
     else if (/^([fF]|fetch)$/.test(command)) {
-      let relativeRoute = await read({prompt: `~# `});
+      let answer = await read({prompt: `~# `});
+      let [relativeRoute, ...options] = answer.split(/ +/);
+      let returnLog = options.includes("--log");
       console.log("Fetching...");
       let result;
       try {
-        result = await directoryUpdater.fetch(dirID, relativeRoute);
+        result = await directoryUpdater.fetch(dirID, relativeRoute, returnLog);
       } catch (err) {
         console.error(err);
         continue;
@@ -86,6 +94,11 @@ async function main() {
       console.log(result);
     }
     else if (/^([dD]|delete)$/.test(command)) {
+      // TODO: Implement a 'reset' flag (or perhaps a 'reset'(/'r') option),
+      // which inserts the JSON array stored in the client-side table file
+      // right after the data has been deleted, thus resetting the table to its
+      // normal initial state. (Do this after such list insertions have been
+      // implemented for the 'upload' option in the first place.)
       let relativePath = await read({prompt: `Path of file(s) to delete: `});
       await directoryUpdater.deleteData(dirID, relativePath);
     }
