@@ -45,7 +45,7 @@ export class DirectoryUpdater {
   // as is, as well as file extensions of abstract files (often implemented via
   // one or several relational DB tables), for which the file content, if any,
   // will have to conform to a specific format.
-  async uploadDir(userID, dirPath, dirID, deleteTableData) {
+  async uploadDir(userID, dirPath, dirID) {
     // Initialize the serverQueryHandler with the provided authToken.
     let serverQueryHandler = new ServerQueryHandler(
       this.authToken, Infinity, fetch
@@ -86,9 +86,7 @@ export class DirectoryUpdater {
     // directory itself or any of its nested directories and uploads them,
     // pushing a promise for the response of each one to uploadPromises.
     let uploadPromises = [];
-    this.#uploadDirHelper(
-      dirPath, dirID, deleteTableData, uploadPromises, serverQueryHandler
-    );
+    this.#uploadDirHelper(dirPath, dirID, uploadPromises, serverQueryHandler);
     await Promise.all(uploadPromises);
 
     return dirID;
@@ -96,7 +94,7 @@ export class DirectoryUpdater {
 
 
   async #uploadDirHelper(
-    dirPath, relPath, deleteTableData, uploadPromises, serverQueryHandler
+    dirPath, relPath, uploadPromises, serverQueryHandler
   ) {
     // Get each file in the directory at path, and loop through and handle each
     // one according to its extension (or lack thereof).
@@ -114,8 +112,7 @@ export class DirectoryUpdater {
       // helper method recursively.
       if (/^\.*[^.]+$/.test(name)) {
         this.#uploadDirHelper(
-          childAbsPath, childRelPath, deleteTableData, uploadPromises,
-          serverQueryHandler
+          childAbsPath, childRelPath, uploadPromises, serverQueryHandler
         );
       }
 
@@ -130,18 +127,66 @@ export class DirectoryUpdater {
         );
       }
       else if (/\.(att|bt|ct|bbt|ftt)$/.test(name)) {
-        if (deleteTableData) {
-          uploadPromises.push(
-            serverQueryHandler.postAsAdmin(`/1/${childRelPath}/_put`)
-          );
-        }
-        else {
-          uploadPromises.push(
-            serverQueryHandler.postAsAdmin(`/1/${childRelPath}/_touch`)
-          );
+        uploadPromises.push(
+          serverQueryHandler.postAsAdmin(`/1/${childRelPath}/_touch`)
+        );
+      }
+    });
+  }
+
+
+
+  // deleteData(dirID, relativePath) deletes the table data at all table files
+  // (i.e. .att, .bt, .ct, .bbt, or .ftt files) that is either equal to
+  // "/<upNodeID>/<homeDirID>/<relativePath>", or extends this path if
+  // relativePath ends in a '*' wildcard.
+  async deleteData(dirID, relativePath, read) {
+    // Initialize the serverQueryHandler with the provided authToken.
+    let serverQueryHandler = new ServerQueryHandler(
+      this.authToken, Infinity, fetch
+    );
+
+    // If no dirID was provided, fail.
+    if (!dirID) {
+      return console.error("Failure: No dirID was provided.")
+    }
+
+    // Request a list of all the files in the server-side directory, and then
+    // go through each one and check if they match of relativePath, and are
+    // table files (nothing happens to matched text files), and if so add them
+    // to an array of serverFilePaths for data deletion.
+    let filePaths = await serverQueryHandler.fetchAsAdmin(
+      `/1/${dirID}/_all`
+    );
+    let serverFilePaths = [];
+    let hasWildCard = relativePath.at(-1) === "*";
+    if (hasWildCard) relativePath = relativePath.slice(0, -1);
+    let relativePathLen = relativePath.length;
+    filePaths.forEach((relPath) => {
+      if (/\.(att|bt|ct|bbt|ftt)$/.test(relPath)) {
+        let isMatch = hasWildCard ?
+          relPath.substring(0, relativePathLen) === relativePath :
+          relPath === relativePath;
+        if (isMatch) {
+          serverFilePaths.push(path.normalize(`/1/${dirID}/${relPath}`));
         }
       }
     });
+  
+    // Let the user confirm that they want to delete the data at these paths.
+    console.log("Matching table file paths are:")
+    serverFilePaths.forEach(path => console.log(path));
+    let confResponse = await read({
+      prompt: 'Do you want to delete all data held in these tables? [y/n] '
+    });
+    if (/^[yY]$/.test(confResponse)) {
+      await Promise.all(serverFilePaths.map(serverFilePath => (
+        serverQueryHandler.postAsAdmin(serverFilePath + "/_put")
+      )));
+    }
+    else {
+      console.log("Aborted.")
+    }
   }
 
 

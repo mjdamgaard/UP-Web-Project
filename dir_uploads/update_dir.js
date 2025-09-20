@@ -13,12 +13,11 @@ let hasExited = false;
 // it is a relative path.
 let [ , curPath, dirPath, ...options] = process.argv;
 if (!dirPath) throw (
-  "Specify dirPath in '$ node <program path> <dirPath> [DELETE_DATA]'"
+  "Specify dirPath in '$ node <program path> <dirPath>'"
 );
 if (dirPath[0] === ".") {
   dirPath = path.normalize(path.dirname(curPath) + "/" + dirPath);
 }
-let deleteTableData = options[0] === "DELETE_DATA";
 
 async function main() {
   // Prompt for the user's username and password, then try to log in, and on
@@ -37,24 +36,15 @@ async function main() {
   console.log(`Logged in with user #${userID}, and directory #${dirID}.`);
   console.log(
     "Type 'u' for upload, 'b' for bundle, 'p' for post, 'f' for fetch, " +
-    "or 'e' for exit."
+    "'d' for delete data, or 'e' for exit."
   );
-  if (deleteTableData) {
-    console.log(
-      "CAUTION: The DELETE_DATA option was chosen, meaning that all table " +
-      "data will be deleted at every upload. If this is not desired, exit " +
-      "program and remove the DELETE_DATA option from the command."
-    );
-  }
   let hasExited = false;
   while(!hasExited) {
     let command = await read({prompt: `dir #${dirID}> `});
     if (/^([uU]|upload)$/.test(command)) {
       console.log("Uploading...");
       try {
-        dirID = await directoryUpdater.uploadDir(
-          userID, dirPath, dirID, deleteTableData
-        );
+        dirID = await directoryUpdater.uploadDir(userID, dirPath, dirID);
       } catch (err) {
         console.error(err);
         continue;
@@ -94,6 +84,10 @@ async function main() {
       }
       console.log("Fetch request returned with result:");
       console.log(result);
+    }
+    else if (/^([dD]|delete)$/.test(command)) {
+      let relativePath = await read({prompt: `Path of file(s) to delete: `});
+      await directoryUpdater.deleteData(dirID, relativePath);
     }
     else if (/^([eE]|exit)$/.test(command)) {
       hasExited = true;
