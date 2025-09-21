@@ -175,7 +175,11 @@ export async function query(
       procName, [homeDirID, filePath, listID, elemKey],
       route, options, callerNode, execEnv,
     ) ?? [];
-    return resultRow;
+    if (fileExt === "bbt") {
+      return resultRow;
+    } else {
+      return (resultRow ?? [])[0];
+    }
   }
 
   // If route equals ".../<homeDirID>/<filepath>/list[/l=<listID][/lo=<lo>]" +

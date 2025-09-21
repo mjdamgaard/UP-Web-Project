@@ -26,7 +26,7 @@ export function postEntity(entPath, useSecIdx = true) {
       let entPathHex = valueToHex(entPath, "string");
       fetch(
         homePath + "/entIDs.bt/entry/k=" + entPathHex
-      ).then(([entID] = []) => {
+      ).then(entID => {
         // If the entPath already has an entID, resolve with that.
         if (entID) {
           return resolve(entID);
@@ -53,12 +53,12 @@ export function addSecondaryIndex(entID) {
   return new Promise(resolve => {
     fetch(
       homePath + "/entPaths.att/entry/k=" + entID
-    ).then(([entPath] = []) => {
+    ).then(entPath => {
       if (!entPath) return resolve(false);
       let entPathHex = valueToHex(entPath, "string");
       fetch(
         homePath + "/entIDs.bt/entry/k=" + entPathHex
-      ).then(([existingEntID] = []) => {
+      ).then(existingEntID => {
         // If the entPath already has another entID, resolve with false, and
         // if it already has the same ID, resolve with true.
         if (existingEntID) {

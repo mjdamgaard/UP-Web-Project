@@ -212,20 +212,39 @@ export const scriptGrammar = {
   },
   "optional-parameter-list": {
     rules: [
-      ["/,/", "optional-parameter-list!1"],
-      ["parameter", "/,/", "optional-parameter-list!1"],
-      ["parameter"],
+      ["optional-parameter-list^(1)", "parameter"],
+      ["optional-parameter-list^(1)"],
     ],
-    process: (children, ruleInd) => straightenListSyntaxTree(
-      children, ruleInd, undefined, false, 2,
-    ),
+    process: (children, ruleInd) => ({
+      type: "optional-parameter-list",
+      children: (ruleInd === 0) ? [...children[0], children[1]] : children[0],
+    }),
+  },
+  "optional-parameter-list^(1)": {
+    rules: [
+      ["optional-parameter*"],
+    ],
+    process: (children) => ({
+      type: "optional-parameter-list^(1)",
+      children: children[0].map(val => val.child),
+    }),
+  },
+  "optional-parameter": {
+    rules: [
+      ["parameter", "/,/"],
+      ["/,/"],
+    ],
+    process: (children) => ({
+      type: "optional-parameter",
+      child: children[0],
+    }),
   },
   "parameter": {
     rules: [
       ["destructuring", "/=/", "expression!"],
       ["destructuring"],
-      ["expression^(14)", "/=/", "expression!"],
-      ["expression^(14)"],
+      ["identifier", "/=/", "expression!"],
+      ["identifier"],
     ],
     process: (children) => ({
       type: "parameter",
@@ -242,11 +261,18 @@ export const scriptGrammar = {
   },
   "array-destructuring": {
     rules: [
-      [/\[/, "optional-parameter-list", "/,/?", /\]/],
+      [/\[/, "optional-parameter-list^(1)", "/\.\.\./", "identifier", /\]/],
+      [/\[/, "optional-parameter-list^(1)", "parameter", /\]/],
+      [/\[/, "optional-parameter-list^(1)", /\]/],
     ],
-    process: (children) => ({
+    process: (children, ruleInd) => ({
       type: "array-destructuring",
-      children: children[1].children,
+      children: (ruleInd === 1) ? children[1].children.concat(children[2]) :
+        children[1].children,
+      restParam: (ruleInd === 0) ? {
+        type: "parameter",
+        targetExp: children[3],
+      } : undefined,
     }),
   },
 // TODO: Implement "...rest" syntax for object destructuring.
@@ -1080,8 +1106,6 @@ export const scriptGrammar = {
       };
     },
   },
-// TODO: Make console.log() accept more than one input: make it use an
-// "expression-tuple".
   "console-call": {
     rules: [
       ["/console/", /\./, "/log|trace|error/", "expression-tuple"],

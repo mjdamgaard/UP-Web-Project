@@ -347,6 +347,7 @@ export function fetchUserWeightData(userGroupKey, userKey) {
 export function fetchUserListKey(userGroupKey) {
   return new Promise(resolve => {
     fetchEntityDefinition(userGroupKey).then(userGroupDef => {
+console.log(userGroupKey);console.log(userGroupDef);
       let userListKey = userGroupDef["User list"];
       if (!userListKey) throw (
         "No user list found for User group " + userGroupKey

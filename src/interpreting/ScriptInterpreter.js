@@ -1449,6 +1449,12 @@ export class ScriptInterpreter {
           );
         }
       });
+      if (expNode.restParam) {
+        this.assignToParameter(
+          expNode.restParam, val.slice(expNode.children.length),
+          environment, isDeclaration, isConst
+        );
+      }
       return val;
     }
     else if (type === "object-destructuring") {
@@ -1468,10 +1474,10 @@ export class ScriptInterpreter {
       });
       return val;
     }
-    else {debugger;throw new RuntimeError(
+    else throw new RuntimeError(
       "Cannot assign to this type of expression",
       expNode, environment
-    );}
+    );
   }
 
 
@@ -2076,7 +2082,9 @@ export class ObjectObject {
       );
       return getString(ret, node, env);
     }
-    return `[object ${this.className}()]`;
+    else {
+      return `[object ${this.className}()]`;
+    }
   }
 }
 
@@ -2196,6 +2204,11 @@ export function getString(val, node, env) {
   }
   else if (val instanceof ObjectObject) {
     return val.toString(node, env);
+  }
+  else if (val instanceof Array) {
+    return "[" +
+      val.map(entry => getString(entry, node, env)).join(", ") +
+    "]";
   }
   else if (val.toString instanceof Function) {
     return val.toString();

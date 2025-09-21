@@ -32,7 +32,7 @@ export function fetchEntityID(entKey) {
       let entPath = homePath + "/em1.js;call/User/" + userID + "/" + upNodeID;
       let entPathHex = valueToHex(entPath, "string");
       fetch(homePath + "/entIDs.bt/entry/k=" + entPathHex).then(
-        entID => resolve(entID)
+        entID=> resolve(entID)
       );
     });
   }
