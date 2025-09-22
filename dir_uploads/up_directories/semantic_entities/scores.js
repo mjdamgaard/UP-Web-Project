@@ -38,7 +38,7 @@ export function fetchUserScoreHex(qualKey, subjKey, userKey) {
       fetch(
         homePath + "/userScores.bbt/entry/l=" + listIDHex + "/k=" + subjID
       ).then(
-        ([userScoreHex]) => resolve(userScoreHex)
+        ([userScoreHex] = []) => resolve(userScoreHex)
       );
     });
   });
@@ -48,7 +48,7 @@ export function fetchUserScoreHex(qualKey, subjKey, userKey) {
 export function fetchMetric(qualKey) {
   return new Promise(resolve => {
     fetchEntityDefinition(qualKey).then(
-      entDef => resolve(entDef.Metric)
+      entDef => resolve(entDef["Default metric"])
     );
   });
 }
@@ -157,7 +157,7 @@ export function fetchScoreHex(
       fetch(
         tableFilePath + "/entry" + listIDSegment + "/k=" + keyID
       ).then(
-        ([scoreAndWeightHex]) => resolve(scoreAndWeightHex)
+        scoreAndWeightHex => resolve(scoreAndWeightHex)
       );
     });
   });

@@ -10,9 +10,6 @@ const trustedQualKey = "/1/1/em1.js;get/trusted";
 
 
 export function render(props) {
-  fetchEntityDefinition(trustedQualKey).then(qualDef => {
-    console.log(qualDef);
-  });
   return (
     // <EntityPage key="0" {...props} />
     <EntityList key="0" qualKey={trustedQualKey}

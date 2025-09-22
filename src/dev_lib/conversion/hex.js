@@ -361,7 +361,7 @@ export const hexToArray = new DevFunction(
         if (combLen < accLen + len + (loExp && hiExp ? 0 : 1)) {
           throw new ArgTypeError(
             "End of the hexadecimal string was reached before all array " +
-            "entries was converted",
+            "entries were converted",
             callerNode, execEnv
           );
         }
