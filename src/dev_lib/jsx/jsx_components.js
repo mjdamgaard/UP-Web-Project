@@ -4,7 +4,7 @@ import {
   getString, ObjectObject, forEachValue, CLEAR_FLAG, PromiseObject,
   OBJECT_PROTOTYPE, Environment, ARRAY_PROTOTYPE, FunctionObject, Exception,
   getStringOrSymbol, getPropertyFromObject, getPropertyFromPlainObject,
-  jsonStringify, ArgTypeError,
+  jsonStringify, ArgTypeError, LoadError,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
@@ -893,6 +893,10 @@ export class JSXInstanceInterface extends ObjectObject {
     "import", {isAsync: true, typeArr: ["string"]},
     async ({callerNode, execEnv, interpreter}, [route]) => {
       let liveModule = interpreter.import(route, callerNode, execEnv);
+      if (!(liveModule instanceof LiveJSModule)) throw new LoadError(
+        "No JS module found at " + route,
+        callerNode, execEnv
+      );
       let settings = this.jsxInstance.settings;
       if (route.slice(-4) === ".jsx") {
         await settings.prepareComponent(liveModule, callerNode, execEnv);

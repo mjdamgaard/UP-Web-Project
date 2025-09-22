@@ -1,10 +1,10 @@
 
-import {query} from 'query';
+import {queryRoute} from 'query';
 
 export function main(
   isPublic, route, isPost, postData, options, resolve
 ) {
-  query(isPublic, route, isPost, postData, options).then(
+  queryRoute(isPublic, route, isPost, postData, options).then(
     output => resolve(output)
   );
 }

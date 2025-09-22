@@ -36,7 +36,7 @@ export function fetchUserScoreHex(qualKey, subjKey, userKey) {
     ]).then(([qualID, subjID, userID]) => {
       let listIDHex = valueToHex(qualID + "+" + userID, "string");
       fetch(
-        homePath + "/userScores.bbt/l=" + listIDHex + "/k=" + subjID
+        homePath + "/userScores.bbt/entry/l=" + listIDHex + "/k=" + subjID
       ).then(
         ([userScoreHex]) => resolve(userScoreHex)
       );
@@ -131,7 +131,7 @@ export function fetchScoreAndWeight(
       tableFilePath, listIDKeyArr, subjKey
     ).then(scoreAndWeightHex => {
       if (scoreAndWeightHex === undefined) return [];
-      let [score, weight] = arrayFromHex(
+      let [score, weight] = hexToArray(
         scoreAndWeightHex, ["float(,,3)", "float(,,1)"]
       );
       resolve([score, weight, scoreAndWeightHex]);
@@ -155,7 +155,7 @@ export function fetchScoreHex(
       let listID = join(listIDParts, "+");
       let listIDSegment = listID ? "/l=" + valueToHex(listID, "string") : "";
       fetch(
-        tableFilePath + listIDSegment + "/k=" + keyID
+        tableFilePath + "/entry" + listIDSegment + "/k=" + keyID
       ).then(
         ([scoreAndWeightHex]) => resolve(scoreAndWeightHex)
       );
@@ -175,7 +175,7 @@ export function fetchScoreAndWeightList(
       tableFilePath, listIDKeyArr, lo, hi, maxNum, offset, isAscending,
     ).then(list => {
       resolve(map(list, ([subjID, scoreAndWeightHex]) => {
-        let [score, weight] = arrayFromHex(
+        let [score, weight] = hexToArray(
           scoreAndWeightHex, ["float(,,3)", "float(,,1)"]
         );
         return [subjID, score, weight];
@@ -347,7 +347,6 @@ export function fetchUserWeightData(userGroupKey, userKey) {
 export function fetchUserListKey(userGroupKey) {
   return new Promise(resolve => {
     fetchEntityDefinition(userGroupKey).then(userGroupDef => {
-console.log(userGroupKey);console.log(userGroupDef);
       let userListKey = userGroupDef["User list"];
       if (!userListKey) throw (
         "No user list found for User group " + userGroupKey

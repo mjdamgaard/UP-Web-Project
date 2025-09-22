@@ -2,8 +2,10 @@
 import {
   DevFunction, RuntimeError, LoadError, jsonParse, jsonStringify,
   getPrototypeOf, OBJECT_PROTOTYPE, ARRAY_PROTOTYPE, FunctionObject,
-  CLEAR_FLAG, PromiseObject, Environment,
+  CLEAR_FLAG, PromiseObject, Environment, LiveJSModule, parseString,
+  TEXT_FILE_ROUTE_REGEX, SCRIPT_ROUTE_REGEX, CSSModule,
 } from '../../interpreting/ScriptInterpreter.js';
+import {scriptParser} from "../../interpreting/parsing/ScriptParser.js";
 import {parseRoute} from './src/parseRoute.js';
 
 import {
@@ -18,14 +20,14 @@ export const upNodeID = "1";
 
 
 
-export const query = new DevFunction(
-  "query", {
+export const queryRoute = new DevFunction(
+  "queryRoute", {
     isAsync: true,
     typeArr: ["string", "boolean?", "any?", "boolean?", "object?"],
   },
   async function(
     {callerNode, execEnv, interpreter},
-    [extendedRoute, isPost = false, postData, isPrivate, options = {}]
+    [route, isPost = false, postData, isPrivate, options = {}]
   ) {
     // If isPost == true, check if the current environment is allowed to post.
     if (isPost) {
@@ -39,13 +41,6 @@ export const query = new DevFunction(
         execEnv, undefined, {flags: [[CAN_POST_FLAG, false]]},
       );
     }
-
-    // First split the input route along each (optional) occurrence of '/>',
-    // where the first part is then the actual route that is queried, and any
-    // and all of the subsequent parts are what we can call "casting paths",
-    // which reinterprets/casts the queried result into something else.
-    let route, castingPathArr;
-    [route, ...castingPathArr] = extendedRoute.split(';');
 
     // Parse the route, extracting parameters and qualities from it.
     let isLocked, upNodeID, homeDirID, filePath, fileExt, queryPathArr;
@@ -89,77 +84,262 @@ export const query = new DevFunction(
       );
     }
 
-    // If there are any casting paths, cast the result accordingly.
-    let len = castingPathArr.length;
+    // And finally, return the result.
+    return result;
+  }
+);
+
+
+
+
+export const query = new DevFunction(
+  "query", {
+    isAsync: true,
+    typeArr: ["string", "boolean?", "any?", "boolean?", "object?"],
+  },
+  async function(
+    {callerNode, execEnv, interpreter},
+    [extendedRoute, isPost = false, postData, isPrivate, options = {}]
+  ) {
+    // First split the input route along each (optional) occurrence of '/>',
+    // where the first part is then the actual route that is queried, and any
+    // and all of the subsequent parts are what we can call "casting paths",
+    // which reinterprets/casts the queried result into something else.
+    let route, castingSegmentArr;
+    [route, ...castingSegmentArr] = extendedRoute.split(';');
+
+    // If the route is a module that has already been executed, get it from the
+    // liveModules cache instead.
+    let {liveModules, parsedScripts} = execEnv.scriptVars;
+    let liveModule = liveModules.get(route);
+    let result;
+    if (liveModule) {
+      if (liveModule instanceof Promise) {
+        liveModule = await liveModule;
+      }
+      result = liveModule;
+    }
+
+    // If route is a dev library path, which always comes in the form of a bare
+    // module specifier (left over in the build step, if any), try to import
+    // the given library.
+    else if (route[0] !== "/") {
+      let devMod = interpreter.staticDevLibs.get(route);
+      if (devMod) {
+        liveModule = new LiveJSModule(
+          route, Object.entries(devMod), execEnv.scriptVars
+        );
+        liveModules.set(route, liveModule);
+      }
+      else {
+        let devLibURL = interpreter.devLibURLs.get(route);
+        if (!devLibURL) throw new LoadError(
+          `Developer library "${route}" not found`,
+          callerNode, execEnv
+        );
+        try {
+          let liveModulePromise = new Promise((resolve, reject) => {
+            import(devLibURL).then(devMod => {
+              let liveModule = new LiveJSModule(
+                route, Object.entries(devMod), execEnv.scriptVars
+              );
+              resolve(liveModule);
+            }).catch(err => reject(err));
+          });
+          liveModules.set(route, liveModulePromise);
+          liveModule = await liveModulePromise;
+          liveModules.set(route, liveModule);
+        } catch (err) {
+          throw new LoadError(
+            `Developer library "${route}" failed to import ` +
+            `from ${devLibURL}`,
+            callerNode, execEnv
+          );
+        }
+      }
+      result = liveModule;
+    }
+
+    // Else if the module is a user module, with a '.js' or '.jsx' extension,
+    // fetch/get it and create and return a LiveJSModule instance rom it.
+    else if (SCRIPT_ROUTE_REGEX.test(route)) {
+      // First try to get it from the parsedScripts buffer, then try to fetch
+      // it from the database.
+      let [parsedScript, lexArr, strPosArr, script] =
+        parsedScripts.get(route) ?? [];
+      if (!parsedScript) {
+        script = await queryRoute.fun(
+          {callerNode, execEnv, interpreter},
+          [route, false, undefined, isPrivate, options],
+        );
+        if (typeof script !== "string") throw new LoadError(
+          `No script was found at ${route}`,
+          callerNode, execEnv
+        );
+        [parsedScript, lexArr, strPosArr] = parseString(
+          script, callerNode, execEnv, scriptParser
+        );
+        if (!isPrivate) {
+          parsedScripts.set(route, [parsedScript, lexArr, strPosArr, script]);
+        }
+      }
+
+      // Before executing the module, first check that the module haven't been
+      // executed while waiting for the script to be fetched.
+      liveModule = liveModules.get(route);
+      if (liveModule) {
+        if (liveModule instanceof Promise) {
+          liveModule = await liveModule;
+        }
+        result = liveModule;
+      }
+
+      // Else execute the module, inside the global environment, and return the
+      // resulting liveModule, after also adding it to liveModules.
+      else {
+        let globalEnv = execEnv.getGlobalEnv();
+        let liveModulePromise = new Promise((resolve, reject) => {
+          interpreter.executeModule(
+            parsedScript, lexArr, strPosArr, script, route, globalEnv
+          ).then(
+            ([liveModule]) => resolve(liveModule)
+          ).catch(
+            err => reject(err)
+          );
+        });
+        if (!isPrivate) {
+          liveModules.set(route, liveModulePromise);
+          liveModule = await liveModulePromise;
+          liveModules.set(route, liveModule);
+        } else {
+          liveModule = await liveModulePromise;
+        }
+        result = liveModule;
+      }
+    }
+
+    // Else if the module is actually a non-JS text file, fetch/get it and
+    // return a string of its content instead.
+    else if (TEXT_FILE_ROUTE_REGEX.test(route)) {
+      let text = await queryRoute.fun(
+        {callerNode, execEnv, interpreter},
+        [route, false, undefined, isPrivate, options],
+      );
+      if (typeof text !== "string") throw new LoadError(
+        `No text was found at ${route}`,
+        callerNode, execEnv
+      );
+      if (route.slice(-4) === ".css") {
+        result = new CSSModule(route, text);
+      } else {
+        result = text;
+      }
+    }
+
+    // Else simply redirect to queryRoute().
+    else {
+      result = await queryRoute.fun(
+        {callerNode, execEnv, interpreter},
+        [route, isPost, postData, isPrivate, options],
+      );
+    };
+
+
+    // We now have the result from querying the route itself, but the extended
+    // route might also contain extra segments, separated by semicolons, used
+    // for "casting" this result into a different form (or extracting data
+    // from it, in particular by using ';get/<alias>' segments, which returns
+    // a particular export of the given module, or ';call/<alias>[/argument]*'
+    // segments which calls the exported function and returns what it returns).
+    let len = castingSegmentArr.length;
     for (let i = 0; i < len; i++) {
-      let castingPath = castingPathArr[i];
-      if (castingPath === "object") {
+      let castingSegment = castingSegmentArr[i];
+
+      // The following casting segment types are for casting between JSON
+      // objects (strings) and actual JS objects.
+      if (castingSegment === "object") {
         result = jsonParse(result, callerNode, execEnv);
         if (getPrototypeOf(result) !== OBJECT_PROTOTYPE) throw new LoadError(
           "JSON value is not a plain object",
           callerNode, execEnv
         );
       }
-      else if (castingPath === "array") {
+      else if (castingSegment === "array") {
         result = jsonParse(result, callerNode, execEnv);
         if (getPrototypeOf(result) !== ARRAY_PROTOTYPE) throw new LoadError(
           "JSON value is not an array",
           callerNode, execEnv
         );
       }
-      else if (castingPath === "parse") {
+      else if (castingSegment === "parse") {
         result = jsonParse(result, callerNode, execEnv);
       }
-      else if (castingPath === "stringify") {
+      else if (castingSegment === "stringify") {
         result = jsonStringify(result);
       }
-      else if (/^(\.jsx?)?\//.test(castingPath)) {
-        let [ , queryType, alias, inputArrJSON] = castingPath.split("/");
-        if (queryType === "get") {
-          // Import and execute the given JS module using interpreter.import(),
-          // then get the export of the given alias.
-          let liveModule = await interpreter.import(
-            `/${upNodeID}/${homeDirID}/${filePath}`, callerNode, execEnv
-          );
-          result = liveModule.get(alias);
-        }
-        else if (queryType === "call") {
-          let inputArr = jsonParse(inputArrJSON, callerNode, execEnv);
 
-          // Import and execute the given JS module using interpreter.import(),
-          // and do so within a dev function with the "clear" flag, which
-          // removes all permission-granting flags for the module's execution
-          // environment. And when the liveModule is gotten, get and execute
-          // the function, also within the same enclosed execution environment.
-          let liveModule = await interpreter.import(
-            `/${upNodeID}/${homeDirID}/${filePath}`, callerNode, execEnv
-          );
-          let fun = liveModule.get(alias);
-          if (!(fun instanceof FunctionObject)) throw new RuntimeError(
-            `No function of name '${alias}' is exported from ${route}`
+      // You can also cast any string-valued result into a JS or JSX module,
+      // or a CSS module.
+      else if (/^\.jsx?$/.test(castingSegment)) {
+        let [parsedScript, lexArr, strPosArr] = parseString(
+          result, callerNode, execEnv, scriptParser
+        );
+        let globalEnv = execEnv.getGlobalEnv();
+        let scriptPath = route + ";" +
+          castingSegmentArr.slice(0, i + 1).join(";");
+        let [liveModule] = interpreter.executeModule(
+          parsedScript, lexArr, strPosArr, result, scriptPath, globalEnv
+        );
+        result = liveModule;
+      }
+      else if (/^\.css$/.test(castingSegment)) {
+        let modulePath = route + ";" +
+          castingSegmentArr.slice(0, i + 1).join(";");
+        result = new CSSModule(modulePath, result);
+      }
+
+      // And then we have the ';get' and ';call' casting segments, which work
+      // similarly to '/get' and '/call' routes, except the casting happens on
+      // the current machine, and not on the server that is queried. ';get' and
+      // ';call' routes are thus often preferred over '/get' and '/call',
+      // as they allow for more efficient use of HTTP caching.
+      else if (/^(get|call)\//.test(castingSegment)) {
+        let [queryType, alias, ...inputArr] = castingSegment.split("/");
+        if (!(result instanceof LiveJSModule)) throw new LoadError(
+          "No JS module found at " + route +
+            (i > 0) ? castingSegmentArr.slice(0, i).join(";") : "",
+          callerNode, execEnv
+        );
+        result = result.get(alias);
+        if (result === undefined) throw new LoadError(
+          "No export of the name '" + alias + "' found in " + route +
+            (i > 0) ? castingSegmentArr.slice(0, i).join(";") : "",
+          callerNode, execEnv
+        );
+        if (queryType === "call") {
+          if (!(result instanceof FunctionObject)) throw new LoadError(
+            "No function of the name '" + alias + "' exported from " + route +
+              (i > 0) ? castingSegmentArr.slice(0, i).join(";") : "",
+            callerNode, execEnv
           );
           result = interpreter.executeFunction(
-            fun, inputArr, callerNode, execEnv, undefined, [CLEAR_FLAG]
+            result, inputArr, callerNode, execEnv, undefined, [CLEAR_FLAG]
           );
           if (result instanceof PromiseObject) {
             result = await result.promise;
           }
         }
       }
-      else {
-        // Simply do nothing if the casting path does not match the above
-        // cases, as casting paths might also be used in order to change the
-        // behavior of import(). For instance, putting ';.js' at the end of a
-        // route will make import() treat the result as a JS module, and one
-        // can also do the same thing with ';.jsx' or ';.css'.
-      }
+      else throw new LoadError(
+        "Unrecognized casting segment: '" + castingSegment + "'",
+        callerNode, execEnv
+      );
     }
 
     // And finally, return the result.
     return result;
   }
 );
-
 
 
 export const fetch = new DevFunction(

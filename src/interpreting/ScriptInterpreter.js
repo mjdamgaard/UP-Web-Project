@@ -13,8 +13,9 @@ export const MAP_PROTOTYPE = Object.getPrototypeOf(new Map());
 const MAX_ARRAY_INDEX = Number.MAX_SAFE_INTEGER;
 const MINIMAL_TIME_GAS = 10;
 
-const TEXT_FILE_ROUTE_REGEX = /.+\.(jsx?|txt|json|html|xml|svg|md|css|)$/;
-const SCRIPT_ROUTE_REGEX = /.+\.jsx?$/;
+export const TEXT_FILE_ROUTE_REGEX =
+  /.+\.(jsx?|txt|json|html|xml|svg|md|css|)$/;
+export const SCRIPT_ROUTE_REGEX = /.+\.jsx?$/;
 
 const GAS_NAMES = {
   comp: "computation",
@@ -226,9 +227,9 @@ export class ScriptInterpreter {
 
 
 
-// TODO: Remove the parseScripts buffer; it should be redundant when we also
-// have the liveModules buffer, and already make sure that we never execute a
-// module more than once.
+// TODO: Maybe remove the parseScripts buffer; it should be redundant when we
+// also have the liveModules buffer, and already make sure that we never
+// execute a module more than once.
 
   async fetchParsedScript(
     scriptPath, parsedScripts, callerNode, callerEnv
@@ -314,123 +315,20 @@ export class ScriptInterpreter {
   }
 
 
-  async import(modulePath, callerNode, callerEnv) {
+  async import(route, callerNode, callerEnv) {
     decrCompGas(callerNode, callerEnv);
     decrGas(callerNode, callerEnv, "import");
 
-    let {liveModules, parsedScripts} = callerEnv.scriptVars;
-    let globalEnv = callerEnv.getGlobalEnv();
-
-    // If the module has already been executed, we can return early.
-    let liveModule = liveModules.get(modulePath);
-    if (liveModule) {
-      if (liveModule instanceof Promise) {
-        liveModule = await liveModule;
-      }
-      return liveModule;
+    // If modulePath is a relative path, get the current modulePath and
+    // compute the full path.
+    if (/^\.\.?\//.test(route)) {
+      let curPath = callerNode.getModuleEnv().modulePath;
+      route = getFullPath(curPath, route, callerNode, callerEnv);
     }
 
-    // If the module reference is a dev library reference, which always comes
-    // in the form of a bare module specifier (left over in the build step, if
-    // any), try to import the given library.
-    if (modulePath[0] !== "/") {
-      let devMod;
-      devMod = this.staticDevLibs.get(modulePath);
-      if (devMod) {
-        liveModule = new LiveJSModule(
-          modulePath, Object.entries(devMod), globalEnv.scriptVars
-        );
-        liveModules.set(modulePath, liveModule);
-      }
-      else {
-        let devLibURL = this.devLibURLs.get(modulePath);
-        if (!devLibURL) throw new LoadError(
-          `Developer library "${modulePath}" not found`,
-          callerNode, callerEnv
-        );
-        try {
-          let liveModulePromise = new Promise((resolve, reject) => {
-            import(devLibURL).then(devMod => {
-              let liveModule = new LiveJSModule(
-                modulePath, Object.entries(devMod), globalEnv.scriptVars
-              );
-              resolve(liveModule);
-            }).catch(err => reject(err));
-          });
-          liveModules.set(modulePath, liveModulePromise);
-          liveModule = await liveModulePromise;
-          liveModules.set(modulePath, liveModule);
-        } catch (err) {
-          throw new LoadError(
-            `Developer library "${modulePath}" failed to import ` +
-            `from ${devLibURL}`,
-            callerNode, callerEnv
-          );
-        }
-      }
-      return liveModule;
-    }
-
-    // Else if the module is a user module, with a '.js' or '.jsx' extension,
-    // fetch/get it and create and return a LiveJSModule instance rom it.
-    if (SCRIPT_ROUTE_REGEX.test(modulePath)) {
-      // First try to get it from the parsedScripts buffer, then try to fetch
-      // it from the database.
-      let [
-        submoduleNode, lexArr, strPosArr, script
-      ] = await this.fetchParsedScript(
-        modulePath, parsedScripts, callerNode, callerEnv
-      );
-
-      // Before executing the module, first check that the module haven't been
-      // executed while waiting for the script to be fetched.
-      liveModule = liveModules.get(modulePath);
-      if (liveModule) {
-        if (liveModule instanceof Promise) {
-          liveModule = await liveModule;
-        }
-        return liveModule;
-      }
-
-      // Then execute the module, inside the global environment, and return the
-      // resulting liveModule, after also adding it to liveModules.
-      let liveModulePromise = new Promise((resolve, reject) => {
-        this.executeModule(
-          submoduleNode, lexArr, strPosArr, script, modulePath, globalEnv
-        ).then(
-          ([liveModule]) => resolve(liveModule)
-        ).catch(
-          err => reject(err)
-        );
-      });
-      liveModules.set(modulePath, liveModulePromise);
-      liveModule = await liveModulePromise;
-      liveModules.set(modulePath, liveModule);
-      return liveModule;
-    }
-
-    // Else if the module is actually a non-JS text file, fetch/get it and
-    // return a string of its content instead.
-    else if (TEXT_FILE_ROUTE_REGEX.test(modulePath)) {
-      let text = await this.fetch(
-        modulePath, callerNode, callerEnv
-      );
-      if (typeof text !== "string") throw new LoadError(
-        `No text was found at ${modulePath}`,
-        callerNode, callerEnv
-      );
-      if (modulePath.slice(-4) === ".css") {
-        return new CSSModule(modulePath, text);
-      } else {
-        return text;
-      }
-    }
-
-    // Else throw a load error.
-    else throw new LoadError(
-      `Invalid module path: ${modulePath}`,
-      callerNode, callerEnv
-    );
+    // Then simple redirect to this.fetch(). (We do not check that the result
+    // is a JS module, as import() can also be used to import other values.
+    return await this.fetch(route, callerNode, callerEnv);  
   }
 
 
@@ -1344,12 +1242,6 @@ export class ScriptInterpreter {
             this.handleUncaughtException(err, environment);
           }
         });
-        if (expNode.callback) {
-          let callback = this.evaluateExpression(expNode.callback, environment);
-          this.thenPromise(
-            liveModulePromise, callback, expNode, environment
-          );
-        }
         ret = new PromiseObject(
           liveModulePromise, this, expNode, environment
         );

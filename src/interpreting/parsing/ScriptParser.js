@@ -1092,19 +1092,12 @@ export const scriptGrammar = {
   },
   "import-call": {
     rules: [
-      ["/import/", /\(/, "expression", "/,/", "expression", /\)/],
       ["/import/", /\(/, "expression", /\)/],
     ],
-    process: (children, ruleInd) => {
-      return (ruleInd === 0) ? {
-        type: "import-call",
-        pathExp: children[2],
-        callback: children[4],
-      } : {
-        type: "import-call",
-        pathExp: children[2],
-      };
-    },
+    process: (children) => ({
+      type: "import-call",
+      pathExp: children[2],
+    }),
   },
   "console-call": {
     rules: [
