@@ -63,7 +63,7 @@ export function updateScoreForUser(
 
         // Then update the mean aggregate and combined weight.
         let newCombWeight = prevCombWeight + userWeight - prevWeight;
-        let newMean = (
+        let newMean = (newCombWeight <= 0) ? 0 : (
           prevMean * prevCombWeight +
           curUserScore * userWeight - prevScore * prevWeight
         ) / newCombWeight;

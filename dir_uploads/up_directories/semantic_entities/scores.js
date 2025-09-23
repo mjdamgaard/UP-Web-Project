@@ -2,7 +2,7 @@
 
 
 import homePath from "./.id.js";
-import {fetch, noPost} from 'query';
+import {fetch, post, noPost} from 'query';
 import {map, join} from 'array';
 import {min} from 'math';
 import {hexToArray, valueToHex, arrayToHex} from 'hex';
@@ -135,7 +135,7 @@ export function fetchScoreAndWeight(
     fetchScoreHex(
       tableFilePath, listIDKeyArr, subjKey
     ).then(scoreAndWeightHex => {
-      if (scoreAndWeightHex === undefined) {
+      if (!scoreAndWeightHex) {
         return resolve([]);
       }
       let [score, weight] = hexToArray(
@@ -164,7 +164,7 @@ export function fetchScoreHex(
       fetch(
         tableFilePath + "/entry" + listIDSegment + "/k=" + keyID
       ).then(
-        scoreAndWeightHex => resolve(scoreAndWeightHex)
+        ([scoreAndWeightHex] = []) => resolve(scoreAndWeightHex)
       );
     });
   });
