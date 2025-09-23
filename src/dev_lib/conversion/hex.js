@@ -200,7 +200,7 @@ export const arrayToHex = new DevFunction(
             hexStr = (val >= 0) ?
               "80" + "00".repeat(len) : "7F" + "FF".repeat(len);
           }
-          if (exp > 63) {
+          else if (exp > 63) {
             hexStr = (val >= 0) ?
               "7F" + "FF".repeat(len) : "80" + "00".repeat(len);
           }

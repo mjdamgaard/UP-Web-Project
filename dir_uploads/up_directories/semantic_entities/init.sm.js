@@ -57,18 +57,16 @@ export function insertInitialModerators() {
       })
     );
     transformedInitialModeratorListProm.then(initModList => {
-      fetchEntityID(trustedQualKey).then(qualID => {
+      post(
+        homePath + "/score_handling/ScoreHandler01/init_mods.bbt/_put"
+      ).then(() => {
         post(
-          homePath + "/score_handling/ScoreHandler01/init_mods.bbt/_put"
-        ).then(() => {
-          post(
-            homePath + "/score_handling/ScoreHandler01/init_mods.bbt" +
-              "/_insertList/l=" + qualID,
-            initModList
-          ).then(
-            wasUpdated => resolve(wasUpdated)
-          );
-        });
+          homePath + "/score_handling/ScoreHandler01/init_mods.bbt" +
+            "/_insertList",
+          initModList
+        ).then(
+          wasUpdated => resolve(wasUpdated)
+        );
       });
     });
   });

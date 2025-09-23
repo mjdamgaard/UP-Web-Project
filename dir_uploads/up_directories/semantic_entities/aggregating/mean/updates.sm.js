@@ -47,7 +47,10 @@ export function updateScoreForUser(
       ]).then(([
         userWeight = 0, curUserScore = 0, [prevMean = 0, prevCombWeight = 0],
         [prevScore = 0, prevWeight = 0],
-      ]) => {
+      ]) => {console.log(
+    userWeight, curUserScore, [prevMean, prevCombWeight],
+    [prevScore, prevWeight]
+  );
         // If the user weight is above 0, insert the current score in the
         // contributions table, and otherwise delete any existing contribution. 
         if (userWeight > 0) {

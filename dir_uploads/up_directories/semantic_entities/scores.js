@@ -17,7 +17,9 @@ export function fetchUserScore(qualKey, subjKey, userKey) {
       fetchUserScoreHex(qualKey, subjKey, userKey),
       fetchMetric(qualKey)
     ]).then(([userScoreHex, metric]) => {
-      if (userScoreHex === undefined) return undefined;
+      if (!userScoreHex) {
+        return resolve(undefined);
+      };
       let userScore = getFloatScore(userScoreHex, metric);
       resolve(userScore);
     });
@@ -63,7 +65,7 @@ export function getFloatScore(userScoreHex, metric) {
   let hi = metric["Upper limit"] ?? "";
   let sigLen = min(6, userScoreHex.length / 2 - (lo || hi ? 0 : 1));
   let type = "float(" + lo + "," + hi + "," + sigLen + ")";
-  let [score] = hexToArray(userScoreHex, [type], true);
+  let [[score]] = hexToArray(userScoreHex, [type], true);
   return score;
 }
 
