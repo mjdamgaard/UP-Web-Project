@@ -325,7 +325,7 @@ export const hexToArray = new DevFunction(
         );
         if (accLen + len > combLen) throw new ArgTypeError(
           "End of the hexadecimal string was reached before all array " +
-          "entries was converted",
+          "entries were converted",
           callerNode, execEnv
         );
         let binArr = combBinArr.slice(accLen, accLen + len);

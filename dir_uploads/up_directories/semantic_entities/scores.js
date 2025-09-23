@@ -47,16 +47,21 @@ export function fetchUserScoreHex(qualKey, subjKey, userKey) {
 
 export function fetchMetric(qualKey) {
   return new Promise(resolve => {
-    fetchEntityDefinition(qualKey).then(
-      entDef => resolve(entDef["Default metric"])
-    );
+    fetchEntityDefinition(qualKey).then(entDef => {
+      // TODO: Query a scored 'Metric' property, and certainly if there is no
+      // default metric. 
+      let metricKey = entDef["Default metric"];
+      fetchEntityDefinition(metricKey).then(
+        metric => resolve(metric)
+      );
+    });
   });
 }
 
 export function getFloatScore(userScoreHex, metric) {
   let lo = metric["Lower limit"] ?? "";
   let hi = metric["Upper limit"] ?? "";
-  let sigLen = min(6, userScoreHex.length / 2 - (lo || hi ? 1 : 0));
+  let sigLen = min(6, userScoreHex.length / 2 - (lo || hi ? 0 : 1));
   let type = "float(" + lo + "," + hi + "," + sigLen + ")";
   let [score] = hexToArray(userScoreHex, [type], true);
   return score;
@@ -130,7 +135,9 @@ export function fetchScoreAndWeight(
     fetchScoreHex(
       tableFilePath, listIDKeyArr, subjKey
     ).then(scoreAndWeightHex => {
-      if (scoreAndWeightHex === undefined) return [];
+      if (scoreAndWeightHex === undefined) {
+        return resolve([]);
+      }
       let [score, weight] = hexToArray(
         scoreAndWeightHex, ["float(,,3)", "float(,,1)"]
       );

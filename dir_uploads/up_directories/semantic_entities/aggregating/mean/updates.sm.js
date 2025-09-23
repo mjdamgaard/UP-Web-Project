@@ -52,12 +52,12 @@ export function updateScoreForUser(
         // contributions table, and otherwise delete any existing contribution. 
         if (userWeight > 0) {
           postScoreAndWeight(
-            contributionsPath, qualID, [userGroupID, subjID], userID,
+            contributionsPath, [qualID, userGroupID, subjID], userID,
             curUserScore, userWeight
           );
         } else {
           deleteScore(
-            contributionsPath, qualID, [userGroupID, subjID], userID
+            contributionsPath, [qualID, userGroupID, subjID], userID
           );
         }
 
@@ -68,7 +68,7 @@ export function updateScoreForUser(
           curUserScore * userWeight - prevScore * prevWeight
         ) / newCombWeight;
         postScoreAndWeight(
-          aggrPath, qualID, [userGroupID], subjID, newMean, newCombWeight
+          aggrPath, [qualID, userGroupID], subjID, newMean, newCombWeight
         ).then(
           wasUpdated => resolve(wasUpdated)
         );
