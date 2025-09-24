@@ -24,7 +24,7 @@ export class Aggregator {
     });
   }
 
-  fetchScoreAndWeight(userGroupKey, qualKey, subjKey) {
+  fetchScoreData(userGroupKey, qualKey, subjKey) {
     return new Promise(resolve => {
       fetchScoreAndWeight(
         this.aggrPath, [qualKey, userGroupKey], subjKey

@@ -127,11 +127,9 @@ export function fetchUserScoreHexList(
 
 
 // A function that can be used to get aggregated scores, including ones that
-// are stored in foreign home directories. This function assumes that the score
-// column is actually a float(,,3),float(,,1) array, where the first float is
-// the score (ignoring bounds), and the second float is the weight of the score.
+// are stored in foreign home directories.
 export function fetchScoreAndWeight(
-  tableFilePath, listIDKeyArr, subjKey
+  tableFilePath, listIDKeyArr, subjKey, scoreSigLen = 3, weightSigLen = 3
 ) {
   return new Promise(resolve => {
     fetchScoreHex(
@@ -141,7 +139,8 @@ export function fetchScoreAndWeight(
         return resolve([]);
       }
       let [score, weight] = hexToArray(
-        scoreAndWeightHex, ["float(,,3)", "float(,,1)"]
+        scoreAndWeightHex,
+        ["float(,," + scoreSigLen + ")", "float(,," + weightSigLen + ")"]
       );
       resolve([score, weight, scoreAndWeightHex]);
     });
@@ -177,16 +176,17 @@ export function fetchScoreHex(
 // A function to fetch whole score--weight list.
 export function fetchScoreAndWeightList(
   tableFilePath, listIDKeyArr, loHex, hiHex, maxNum, offset,
-  isAscending,
+  isAscending, scoreSigLen = 3, weightSigLen = 3
 ) {
   return new Promise(resolve => {
     fetchScoreHexList(
       tableFilePath, listIDKeyArr, loHex, hiHex, maxNum, offset, isAscending,
     ).then(list => {
+      let typeArr = [
+        "float(,," + scoreSigLen + ")", "float(,," + weightSigLen + ")"
+      ];
       resolve(map(list, ([subjID, scoreAndWeightHex]) => {
-        let [score, weight] = hexToArray(
-          scoreAndWeightHex, ["float(,,3)", "float(,,1)"]
-        );
+        let [score, weight] = hexToArray(scoreAndWeightHex, typeArr);
         return [subjID, score, weight];
       }));
     });
@@ -226,16 +226,16 @@ export function fetchScoreHexList(
 
 
 // postScoreAndWeight() and postScoreHexAndWeightHex() are the reverse
-// functions of the two fetch functions above. These functions can be imported
-// by used SMs that want to store score tables using the float(,,3),float(,,1)
-// array convention (of score and weight).
+// functions of the two fetch functions above.
 export function postScoreAndWeight(
-  tableFilePath, listIDKeyArr, subjKey, score, weight
+  tableFilePath, listIDKeyArr, subjKey, score, weight,
+  scoreSigLen = 3, weightSigLen = 3
 ) {
   return new Promise(resolve => {
-    let scoreAndWeightHex = arrayToHex(
-      [score, weight], ["float(,,3)", "float(,,1)"]
-    );
+    let typeArr = [
+      "float(,," + scoreSigLen + ")", "float(,," + weightSigLen + ")"
+    ];
+    let scoreAndWeightHex = arrayToHex([score, weight], typeArr);
     postScoreAndWeightHex(
       tableFilePath, listIDKeyArr, subjKey, scoreAndWeightHex
     ).then(
@@ -270,8 +270,7 @@ export function postScoreAndWeightHex(
 
 
 // And deleteScore functions similarly to postScoreAndWeight, except it just
-// deletes the entry (and doesn't require anything about the
-// float(,,3),float(,,1) format).
+// deletes the entry.
 export function deleteScore(
   tableFilePath, listIDKeyArr, subjKey
 ) {

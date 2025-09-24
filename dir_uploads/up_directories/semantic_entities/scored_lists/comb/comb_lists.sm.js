@@ -90,7 +90,7 @@ export function updateScore(listKey, subjKey) {
 
 export function updateList(listKey) {
   // TODO: Implement at some point.
-  return Promise(resolve => resolve());
+  return new Promise(resolve => resolve());
 }
 
 

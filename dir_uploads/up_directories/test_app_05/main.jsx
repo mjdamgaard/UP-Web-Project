@@ -1,10 +1,9 @@
 
-// A test app to test the binary tables, BT and BBT, together with the base-64
-// conversion library. Let's just make this "app" console-based-
+// A test "app" to test the hex conversion.
 
 import {
-  arrayToBase64, arrayFromBase64, hexFromBase64, hexToBase64,
-} from 'base64';
+  arrayToHex, hexToArray
+} from 'hex';
 
 
 export function render() {
@@ -22,23 +21,13 @@ export const initState = {isFirstRender: true};
 
 
 function runTests() {
-  console.log('Test 1: Converting ["AAA"] to a base64 string.');
+  console.log('Test 1: Converting ["AAA"] to a hexadecimal string.');
   let arr1 = ["AAA"];
   let typeArr1 = ["string"];
-  let b64Str = arrayToBase64(arr1, typeArr1);
+  let hexStr = arrayToHex(arr1, typeArr1);
   console.log("Result:");
-  console.log(b64Str);
-  console.log("which in hexadecimal is:");
-  let hexStr = hexFromBase64(b64Str);
   console.log(hexStr);
-  console.log("This is correct! And if we convert back to base 64:");
-  console.log(hexToBase64(hexStr));
-  console.log(
-    "...we get the same thing, so the hex--base 64 conversions also seems " +
-    "to work"
-  );
-  console.log("Now, let's try to convert back to an array:");
-  arr1 = arrayFromBase64(b64Str, typeArr1);
+  arr1 = hexToArray(hexStr, typeArr1);
   console.log(arr1);
   console.log("We get the same array back, so consider Test 1 successful!");
   console.log(" ");
@@ -47,13 +36,11 @@ function runTests() {
   console.log('Test 2: Converting ["AAA", "BB"] back and forth.');
   arr1 = ["AAA", "BB"];
   typeArr1 = ["string", "string"];
-  b64Str = arrayToBase64(arr1, ["string", "string"]);
-  console.log("Result in base 64:");
-  console.log(b64Str);
+  hexStr = arrayToHex(arr1, ["string", "string"]);
   console.log("Result in hexadecimal:");
-  console.log(hexFromBase64(b64Str));
+  console.log(hexStr);
   console.log("And converting it back:");
-  console.log(arrayFromBase64(b64Str, typeArr1));
+  console.log(hexToArray(hexStr, typeArr1));
   console.log("That worked! So consider Test 2 successful!");
   console.log(" ");
 
@@ -62,13 +49,11 @@ function runTests() {
   typeArr1 = ["int", "uint", "int(1)", "int(2)", "int(1)"];
   console.log('the array, [0, 1, 15, 16, -128], with the type array,');
   console.log('["int", "uint", "int(1)", "int(2)", "int(1)"]');
-  b64Str = arrayToBase64(arr1, typeArr1);
-  console.log("Result in base 64:");
-  console.log(b64Str);
+  hexStr = arrayToHex(arr1, typeArr1);
   console.log("Result in hexadecimal:");
-  console.log(hexFromBase64(b64Str));
+  console.log(hexStr);
   console.log("And converting it back:");
-  console.log(arrayFromBase64(b64Str, typeArr1));
+  console.log(hexToArray(hexStr, typeArr1));
   console.log("... And now this also works. So Test 3 is now successful.");
   console.log(" ");
 
@@ -84,13 +69,11 @@ function runTests() {
   console.log(arr1);
   console.log('Type array:');
   console.log(typeArr1);
-  b64Str = arrayToBase64(arr1, typeArr1);
-  console.log("Result in base 64:");
-  console.log(b64Str);
+  hexStr = arrayToHex(arr1, typeArr1);
   console.log("Result in hexadecimal:");
-  console.log(hexFromBase64(b64Str));
+  console.log(hexStr);
   console.log("And converting it back:");
-  console.log(arrayFromBase64(b64Str, typeArr1));
+  console.log(hexToArray(hexStr, typeArr1));
   console.log(
     "...Oh, that actually also seems to work after just a little debugging."
   );
@@ -111,13 +94,11 @@ function runTests() {
   console.log(arr1);
   console.log('Type array:');
   console.log(typeArr1);
-  b64Str = arrayToBase64(arr1, typeArr1);
-  console.log("Result in base 64:");
-  console.log(b64Str);
+  hexStr = arrayToHex(arr1, typeArr1);
   console.log("Result in hexadecimal:");
-  console.log(hexFromBase64(b64Str));
+  console.log(hexStr);
   console.log("And converting it back:");
-  console.log(arrayFromBase64(b64Str, typeArr1));
+  console.log(hexToArray(hexStr, typeArr1));
   console.log(
     "Yep, we can, which is nice. Test 5 is also successful."
   );
@@ -134,13 +115,11 @@ function runTests() {
   console.log(arr1);
   console.log('Type array:');
   console.log(typeArr1);
-  b64Str = arrayToBase64(arr1, typeArr1);
-  console.log("Result in base 64:");
-  console.log(b64Str);
+  hexStr = arrayToHex(arr1, typeArr1);
   console.log("Result in hexadecimal:");
-  console.log(hexFromBase64(b64Str));
+  console.log(hexStr);
   console.log("And converting it back:");
-  console.log(arrayFromBase64(b64Str, typeArr1));
+  console.log(hexToArray(hexStr, typeArr1));
   console.log(
     "And that just also works at expected from the get-go. Test 6 is a success."
   );
@@ -158,13 +137,11 @@ function runTests() {
   console.log(arr1);
   console.log('Type array:');
   console.log(typeArr1);
-  b64Str = arrayToBase64(arr1, typeArr1);
-  console.log("Result in base 64:");
-  console.log(b64Str);
+  hexStr = arrayToHex(arr1, typeArr1);
   console.log("Result in hexadecimal:");
-  console.log(hexFromBase64(b64Str));
+  console.log(hexStr);
   console.log("And converting it back:");
-  console.log(arrayFromBase64(b64Str, typeArr1));
+  console.log(hexToArray(hexStr, typeArr1));
   console.log(
     "And that also works, and btw nice to get -4.4 back exactly. " +
     "Test 7 is successful."
@@ -190,11 +167,9 @@ function runTests() {
   console.log(arr1);
   console.log('Type array:');
   console.log(typeArr1);
-  b64Str = arrayToBase64(arr1, typeArr1);
-  console.log("Result in hexadecimal:");
-  console.log(hexFromBase64(b64Str));
+  hexStr = arrayToHex(arr1, typeArr1);
   console.log("And converting it back:");
-  console.log(arrayFromBase64(b64Str, typeArr1));
+  console.log(hexToArray(hexStr, typeArr1));
   console.log("Test 8 is successful.");
   console.log(" ");
 

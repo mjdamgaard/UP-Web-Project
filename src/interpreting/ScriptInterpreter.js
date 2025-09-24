@@ -1256,7 +1256,9 @@ export class ScriptInterpreter {
           if (!this.isServerSide && !isExiting) {
             console.log(...expValArr);
           }
-          log.entries.push(expValArr);
+          log.entries.push(
+            expValArr.map(val => getString(val, expNode, environment))
+          );
         }
         // We experiment here with another API for console.trace(), which is:
         // console.trace(maxNum = 15, stringify = true), which returns a list
@@ -1975,7 +1977,7 @@ export class ObjectObject {
       return getString(ret, node, env);
     }
     else {
-      return `[object ${this.className}()]`;
+      return `[object ${this.className}]`;
     }
   }
 }
@@ -2101,6 +2103,13 @@ export function getString(val, node, env) {
     return "[" +
       val.map(entry => getString(entry, node, env)).join(", ") +
     "]";
+  }
+  else if (getPrototypeOf(val) === OBJECT_PROTOTYPE) {
+    return "{" +
+      Object.entries(val).map(
+        ([key, prop]) => key + ": " + getString(prop, node, env)
+      ).join(", ") +
+    "}";
   }
   else if (val.toString instanceof Function) {
     return val.toString();

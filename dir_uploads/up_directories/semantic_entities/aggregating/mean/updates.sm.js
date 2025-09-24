@@ -26,7 +26,6 @@ export function updateScoreForUser(
     let qualIDProm = fetchEntityID(qualKey);
     let subjIDProm = fetchEntityID(subjKey);
     let userIDProm = fetchEntityID(userKey);
-    // TODO: Update user weight as well first..
     let userWeightProm = fetchUserWeight(userGroupKey, userKey);
 
     Promise.all([

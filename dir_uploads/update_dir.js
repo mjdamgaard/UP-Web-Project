@@ -132,7 +132,7 @@ async function main() {
       // normal initial state. (Do this after such list insertions have been
       // implemented for the 'upload' option in the first place.)
       let relativePath = await read({prompt: `Path of file(s) to delete: `});
-      await directoryUpdater.deleteData(dirID, relativePath);
+      await directoryUpdater.deleteData(dirID, relativePath, read);
     }
     else if (/^([eE]|exit)$/.test(command)) {
       hasExited = true;

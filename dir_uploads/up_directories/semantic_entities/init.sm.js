@@ -46,7 +46,7 @@ export function insertInitialModerators() {
           let userEntPath = homePath + "/em1.js;call/User/" + userID +
             "/" + upNodeID;
           let scoreHex = arrayToHex(
-            [weight, weightWeight], ["float(,,3)", "float(,,1)"]
+            [weight, weightWeight], ["float(,,3)", "float(,,3)"]
           );
           post(
             homePath + "/entities.sm.js/callSMF/postEntity", userEntPath

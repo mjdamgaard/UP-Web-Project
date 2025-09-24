@@ -27,7 +27,7 @@ export const initialModeratorList = {
     });
   },
 
-  fetchList: ({lo, hi, maxNum = 4000, offset = 0, isAscending = 0}) => {
+  fetchList: (lo, hi, maxNum = 4000, offset = 0, isAscending = 0) => {
     return new Promise(resolve => {
       fetchScoreAndWeightList(
         abs("./init_mods.bbt"), [], lo, hi, maxNum, offset, isAscending
@@ -75,7 +75,7 @@ export const allUsersList = {
     });
   },
 
-  fetchList: ({lo, hi, maxNum, offset, isAscending}) => {
+  fetchList: (lo, hi, maxNum, offset, isAscending) => {
     return new Promise(resolve => {
       fetch(
         abs("../.././users.bt/skList") +

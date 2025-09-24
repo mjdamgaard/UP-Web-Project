@@ -389,8 +389,8 @@ export const scoredLists = {
     // leading "#".
     "fetchScoreData",
 
-    // fetchList({lo, hi, maxNum, offset, isAscending}) fetches a section of
-    // the scored list as a 2-dimensional array. The arguments 'lo', 'hi',
+    // fetchList(loHex, hiHex, maxNum, offset, isAscending) fetches a section
+    // of the scored list as a 2-dimensional array. The arguments 'lo', 'hi',
     // 'maxNum', 'offset', and 'isAscending' specifies which section of the
     // list should be returned. (And and all these arguments should have default
     // values and thus be optional.) Each row of the returned 2-dimensional
