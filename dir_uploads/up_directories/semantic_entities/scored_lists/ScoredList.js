@@ -1,5 +1,4 @@
 
-import {fetchScoreAndWeight, fetchScoreAndWeightList} from "../scores.js";
 import {fetchEntityID} from "../entities.js";
 
 
@@ -7,10 +6,9 @@ import {fetchEntityID} from "../entities.js";
 
 export class ScoredList {
   
-  constructor(ownEntPath, listTablePath, updateSMPath) {
+  constructor(ownEntPath, smPath) {
     this.ownEntPath = ownEntPath;
-    this.listTablePath = listTablePath;
-    this.updateSMPath = updateSMPath;
+    this.smPath = smPath;
   }
 
   Class = abs("../em1.js;get/scoredLists");
@@ -18,9 +16,11 @@ export class ScoredList {
 
   fetchScoreData(subjKey) {
     return new Promise(resolve => {
-      fetchEntityID(this.ownEntPath).then(ownEntID => {
-        fetchScoreAndWeight(
-          this.listTablePath, [ownEntID], subjKey
+      let onwEntIDProm = fetchEntityID(this.ownEntPath);
+      let subjIDProm = fetchEntityID(subjKey);
+      Promise.all([onwEntIDProm, subjIDProm]).then(([ownEntID, subjID]) => {
+        fetch(
+          this.smPath + "/callSMF/fetchScoreData/" + ownEntID + "/" + subjID
         ).then(
           scoreData => resolve(scoreData)
         );
@@ -28,12 +28,13 @@ export class ScoredList {
     });
   }
 
-  fetchList({lo, hi, maxNum, offset, isAscending}) {
+  fetchList(
+    loHex = "", hiHex = "", maxNum = "", offset = 0, isAscending = 0) {
     return new Promise(resolve => {
       fetchEntityID(this.ownEntPath).then(ownEntID => {
-        fetchScoreAndWeightList(
-          this.listTablePath, [ownEntID], lo, hi, maxNum, offset,
-          isAscending
+        fetch(
+          this.smPath + "/callSMF/fetchList/" + ownEntID + "/" + loHex + "/" +
+          loHex + "/" + hiHex + "/" + maxNum + "/" + offset + "/" + isAscending
         ).then(
           list => resolve(list)
         );
@@ -45,7 +46,7 @@ export class ScoredList {
     return new Promise(resolve => {
       fetchEntityID(this.ownEntPath).then(ownEntID => {
         post(
-          this.updateSMPath + "/callSMF/updateScore", [ownEntID, subjKey],
+          this.smPath + "/callSMF/updateScore", [ownEntID, subjKey],
         ).then(
           wasUpdated => resolve(wasUpdated)
         );
@@ -57,7 +58,7 @@ export class ScoredList {
     return new Promise(resolve => {
       fetchEntityID(this.ownEntPath).then(ownEntID => {
         post(
-          this.updateSMPath + "/callSMF/updateList", [ownEntID],
+          this.smPath + "/callSMF/updateList", [ownEntID],
         ).then(
           wasUpdated => resolve(wasUpdated)
         );

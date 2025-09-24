@@ -82,12 +82,12 @@ export function getScoreHex(score, metric, sigLen = undefined) {
 
 // Function to fetch a list of user-scored entities.
 export function fetchUserScoreList(
-  qualKey, userKey, lo, hi, maxNum, offset, isAscending
+  qualKey, userKey, loHex, hiHex, maxNum, offset, isAscending
 ) {
   return new Promise(resolve => {
     Promise.all([
       fetchUserScoreHexList(
-        qualKey, userKey, lo, hi, maxNum, offset, isAscending
+        qualKey, userKey, loHex, hiHex, maxNum, offset, isAscending
       ),
       fetchMetric(qualKey)
     ]).then(([userScoreHexList, metric]) => {
@@ -101,7 +101,7 @@ export function fetchUserScoreList(
 
 // Helper function to fetch user-scored list.
 export function fetchUserScoreHexList(
-  qualKey, userKey, lo, hi, maxNum, offset, isAscending
+  qualKey, userKey, loHex, hiHex, maxNum, offset, isAscending
 ) {
   let qualIDProm = fetchEntityID(qualKey);
   let userIDProm = fetchEntityID(userKey);
@@ -110,11 +110,11 @@ export function fetchUserScoreHexList(
       let listIDHex = valueToHex(qualID + "+" + userID, "string");
       fetch(
         homePath + "/userScores.bbt/skList/l=" + listIDHex +
-        (lo === undefined ? "" : "/lo=" + lo) +
-        (hi === undefined ? "" : "/hi=" + hi) +
+        (!loHex ? "" : "/lo=" + loHex) +
+        (!hiHex ? "" : "/hi=" + hiHex) +
         (maxNum === undefined ? "" : "/n=" + maxNum) +
         (offset === undefined ? "" : "/o=" + offset) +
-        (isAscending === undefined ? "" : "/a=" + isAscending)
+        (isAscending === undefined ? "" : "/a=" + isAscending ? "1" : "0")
       ).then(
         (userScoreHexList = []) => resolve(userScoreHexList)
       );
@@ -176,12 +176,12 @@ export function fetchScoreHex(
 
 // A function to fetch whole score--weight list.
 export function fetchScoreAndWeightList(
-  tableFilePath, listIDKeyArr, lo, hi, maxNum, offset,
+  tableFilePath, listIDKeyArr, loHex, hiHex, maxNum, offset,
   isAscending,
 ) {
   return new Promise(resolve => {
     fetchScoreHexList(
-      tableFilePath, listIDKeyArr, lo, hi, maxNum, offset, isAscending,
+      tableFilePath, listIDKeyArr, loHex, hiHex, maxNum, offset, isAscending,
     ).then(list => {
       resolve(map(list, ([subjID, scoreAndWeightHex]) => {
         let [score, weight] = hexToArray(
@@ -196,7 +196,7 @@ export function fetchScoreAndWeightList(
 
 // A function to fetch the hex-encoded score of any BBT table.
 export function fetchScoreHexList(
-  tableFilePath, listIDKeyArr, lo, hi, maxNum, offset, isAscending,
+  tableFilePath, listIDKeyArr, loHex, hiHex, maxNum, offset, isAscending,
 ) {
   return new Promise(resolve => {
     let listIDPartsPromArr = map(
@@ -209,11 +209,11 @@ export function fetchScoreHexList(
       let listIDSegment = listID ? "/l=" + valueToHex(listID, "string") : "";
       fetch(
         tableFilePath + "/skList" + listIDSegment +
-        (lo === undefined ? "" : "/lo=" + lo) +
-        (hi === undefined ? "" : "/hi=" + hi) +
+        (!loHex ? "" : "/lo=" + loHex) +
+        (!hiHex ? "" : "/hi=" + hiHex) +
         (maxNum === undefined ? "" : "/n=" + maxNum) +
         (offset === undefined ? "" : "/o=" + offset) +
-        (isAscending === undefined ? "" : "/a=" + isAscending)
+        (isAscending === undefined ? "" : "/a=" + isAscending ? "1" : "0")
       ).then(
         list => resolve(list)
       );
@@ -379,7 +379,7 @@ export function fetchScoreDataFromScoredList(listKey, subjKey) {
 
 
 export function fetchUserList(
-  userGroupKey, lo, hi, maxNum, offset, isAscending
+  userGroupKey, loHex, hiHex, maxNum, offset, isAscending
 ) {
 
 }

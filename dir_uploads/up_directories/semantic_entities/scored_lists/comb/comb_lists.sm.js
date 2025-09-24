@@ -1,5 +1,7 @@
 
-import {postScoreAndWeight} from "../../scores.js";
+import {
+  postScoreAndWeight, fetchScoreAndWeight, fetchScoreAndWeightList,
+} from "../../scores.js";
 import {fetchEntityDefinition, fetchEntityID} from "../../entities.js";
 import {map, reduce} from 'array';
 import {noPost, clearPrivileges} from 'query';
@@ -7,11 +9,39 @@ import {noPost, clearPrivileges} from 'query';
 
 
 
-export function updateScore(combListKey, subjKey) {
+export function fetchScoreData(listKey, subjKey) {
   return new Promise(resolve => {
-    fetchEntityDefinition(combListKey).then(combListDef => {
-      let listIDProm = fetchEntityID(combListDef.ownEntPath);
-      let listKeyArr = combListDef.listKeyArr;
+    fetchEntityID(listKey).then(listID => {
+      fetchScoreAndWeight(
+        abs("./comb_lists.bbt"), [listID], subjKey
+      ).then(
+        scoreData => resolve(scoreData)
+      );
+    });
+  });
+}
+
+
+export function fetchList(listKey, loHex, hiHex, maxNum, offset, isAscending) {
+  return new Promise(resolve => {
+    fetchEntityID(listKey).then(listID => {
+      fetchScoreAndWeightList(
+        abs("./comb_lists.bbt"), [listID],
+        loHex, hiHex, maxNum, offset, isAscending
+      ).then(
+        list => resolve(list)
+      );
+    });
+  });
+}
+
+
+
+export function updateScore(listKey, subjKey) {
+  return new Promise(resolve => {
+    fetchEntityDefinition(listKey).then(listDef => {
+      let listIDProm = fetchEntityID(listDef.ownEntPath);
+      let listKeyArr = listDef.listKeyArr;
       let listDefArrProm = Promise.all(
         map(listKeyArr, listKey => fetchEntityDefinition(listKey))
       );
@@ -58,7 +88,7 @@ export function updateScore(combListKey, subjKey) {
 }
 
 
-export function updateList(combListKey) {
+export function updateList(listKey) {
   // TODO: Implement at some point.
   return Promise(resolve => resolve());
 }

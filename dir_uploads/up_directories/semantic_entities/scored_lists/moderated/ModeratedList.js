@@ -12,7 +12,7 @@ export class ModeratedList extends ScoredList {
   constructor(
     ownEntPath, userGroupKey, qualKey, scoreHandlerKey, convert
   ) {
-    super(ownEntPath, abs("./comb_lists.bbt"), abs("./comb_lists.sm.js"));
+    super(ownEntPath, abs("./mod_lists.sm.js"));
 
     // These attributes are used by the update SM.
     this.userGroupKey = userGroupKey;

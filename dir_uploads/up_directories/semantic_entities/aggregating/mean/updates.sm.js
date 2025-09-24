@@ -26,6 +26,7 @@ export function updateScoreForUser(
     let qualIDProm = fetchEntityID(qualKey);
     let subjIDProm = fetchEntityID(subjKey);
     let userIDProm = fetchEntityID(userKey);
+    // TODO: Update user weight as well first..
     let userWeightProm = fetchUserWeight(userGroupKey, userKey);
 
     Promise.all([
@@ -49,7 +50,7 @@ export function updateScoreForUser(
         [prevScore = 0, prevWeight = 0],
       ]) => {console.log(
     userWeight, curUserScore, [prevMean, prevCombWeight],
-    [prevScore, prevWeight]
+    [prevScore, prevWeight],
   );
         // If the user weight is above 0, insert the current score in the
         // contributions table, and otherwise delete any existing contribution. 

@@ -9,7 +9,7 @@ import {join} from 'array';
 export class CombinedList extends ScoredList {
   
   constructor(ownEntPath, listKeyArr, weightFactorArr) {
-    super(ownEntPath, abs("./comb_lists.bbt"), abs("./comb_lists.sm.js"));
+    super(ownEntPath, abs("./comb_lists.sm.js"));
 
     // These two attributes are used by the update SM, which also fetches the
     // combined list's entity definition in order to update the scores
