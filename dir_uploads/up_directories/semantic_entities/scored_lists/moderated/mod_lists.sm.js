@@ -65,9 +65,9 @@ export function updateScore(listKey, subjKey) {
         userGroupKey, qualKey, scoreHandlerKey,
       } = listDef;
       fetchEntityDefinition(scoreHandlerKey).then(scoreHandler => {
-        noPost(() => scoreHandler.updateScoreForGroup(
+        scoreHandler.updateScoreForGroup(
           qualKey, subjKey, {userGroup: userGroupKey}
-        )).then(
+        ).then(
           wasUpdated => resolve(wasUpdated));
       });
     });
@@ -83,9 +83,9 @@ export function updateList(listKey) {
         userGroupKey, qualKey, scoreHandlerKey,
       } = listDef;
       fetchEntityDefinition(scoreHandlerKey).then(scoreHandler => {
-        noPost(() => scoreHandler.updateList(
+        scoreHandler.updateList(
           qualKey, {userGroup: userGroupKey}
-        )).then(
+        ).then(
           wasUpdated => resolve(wasUpdated));
       });
     });

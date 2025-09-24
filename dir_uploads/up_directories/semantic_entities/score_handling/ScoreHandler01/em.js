@@ -110,7 +110,7 @@ export const allUsersList = {
 // moderators.
 
 function exponentialConvert(predicateScore) {
-  let weight = 4 ** predicateScore;
+  let weight = (predicateScore > 0) ? 2 ** (predicateScore - 5) : 0;
   return weight;
 }
 

@@ -62,7 +62,7 @@ export function updateScore(listKey, subjKey) {
             let combinedScoreData = reduce(
               scoreDataArr, (acc, val, ind) => {
                 val ??= [0, 0];
-                let factor = this.weightFactorArr[ind];
+                let factor = listDef.weightFactorArr[ind];
                 return [
                   acc[0] + val[0] * factor,
                   acc[1] + val[1] * factor,

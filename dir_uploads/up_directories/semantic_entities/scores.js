@@ -364,6 +364,25 @@ export function fetchUserListKey(userGroupKey) {
   });
 }
 
+
+export function updateUserWeight(userGroupKey, userKey) {
+  return new Promise(resolve => {
+    fetchUserListKey(userGroupKey).then(userListKey => {
+      fetchEntityDefinition(userListKey).then(userListDef => {
+        if (userListDef.updateScore) {
+          userListDef.updateScore(userKey).then(
+            wasUpdated => resolve(wasUpdated)
+          );
+        } else {
+          resolve(true);
+        }
+      });
+    });
+  });
+}
+
+
+
 export function fetchScoreDataFromScoredList(listKey, subjKey) {
   return new Promise(resolve => {
     fetchEntityDefinition(listKey).then(listDef => {
