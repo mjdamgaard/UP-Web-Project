@@ -9,7 +9,7 @@ const subclassesRel = "/1/1/em1.js;get/subclasses";
 
 export function render({entKey}) {
   return (
-    <TabbedPages initTabKey={"members"} tabs={{
+    <TabbedPages key="0" initTabKey={"members"} tabs={{
       members: {
         title: "Members",
         Component: EntityList,

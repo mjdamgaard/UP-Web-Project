@@ -4,11 +4,12 @@ import * as AppMain from "./AppMain.jsx";
 
 
 
-export function render(url, history) {
+export function render({url, history}) {
+  this.provideContext("history", history);
   return (
     <div className="app">
       <AppHeader key="h" />
-      <AppMain key="m" url={url} history={history} />
+      <AppMain key="m" url={url} />
     </div>
   );
 }

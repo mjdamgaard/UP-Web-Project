@@ -561,7 +561,7 @@ class JSXInstance {
         this.createAndAppendChildren(
           domNode, val, marks, interpreter, callerNode, callerEnv, ownDOMNodes
         );
-      } else {
+      } else if (val !== undefined) {
         domNode.append(this.getDOMNode(
           val, marks, interpreter, callerNode, callerEnv, ownDOMNodes, false
         ));
@@ -910,7 +910,7 @@ export class JSXInstanceInterface extends ObjectObject {
   // value in return. And if this instance ever calls provideContext() with a
   // different value for that key, all the subscribing instances will rerender.
   provideContext = new DevFunction(
-    "provideContext", {typeArr: ["object key", "object"]},
+    "provideContext", {typeArr: ["object key", "any?"]},
     ({interpreter}, [key, context]) => {
       this.jsxInstance.provideContext(key, context, interpreter);
     },
@@ -1036,6 +1036,8 @@ export class SettingsObject extends ObjectObject {
 
 function deepCompareExceptMutableAndRefs(props1, props2) {
   if (props1 === props2) return true;
+  if (typeof props1 !== typeof props2) return false;
+  if (typeof props1 !== "object") return false;
 
   // Get the keys, and return false immediately if the two props have different
   // sets of keys.
@@ -1199,7 +1201,7 @@ function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
     urlContext.setVal(urlData);
   };
   const pushState = new DevFunction(
-    "pushState", {typeArr: ["string", "any?"]},
+    "pushState", {typeArr: ["any?", "string"]},
     ({callerNode, execEnv}, [state = null, url]) => {
       let stateJSON = jsonStringify(state);
       validateAndUpdateURLContext(stateJSON, url, callerNode, execEnv);

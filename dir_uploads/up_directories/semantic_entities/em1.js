@@ -69,6 +69,7 @@ export const User = (userID, upNodeID) => ({
   "Class": abs("./em1.js;get/users"),
   "User ID": userID,
   "UP node ID": upNodeID,
+  "Label": "User " + userID,
 });
 export const users = {
   "Class": abs("./em1.js;get/classes"),

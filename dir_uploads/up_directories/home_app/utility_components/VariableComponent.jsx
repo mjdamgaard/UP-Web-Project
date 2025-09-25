@@ -48,11 +48,13 @@ export function render(props) {
     // If the score is not positive, reject the top entry and behave as if the
     // list is empty.
     if (score <= 0) {
-      return (
-        <div className="missing"></div>
-      );
+      content = <div className="missing"></div>;
     }
-    content = <ComponentEntityComponent {...props} compEntID={compEntID} />;
+    else {
+      content = <ComponentEntityComponent key="0"
+        {...props} compEntID={compEntID}
+      />;
+    }
   }
 
   // Return the content, together with an initial link to the component class

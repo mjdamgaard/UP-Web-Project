@@ -35,12 +35,12 @@ export const render = new DevFunction(
     if (href !== undefined) {
       href = getString(href, callerNode, execEnv);
 
-      // Validate href, and prepend './' to it if doesn't start with /.?.?\//.
+      // Validate href, and prepend '/' to it if doesn't start with /.?.?\//.
       if (!HREF_REGEX.test(href)) throw new ArgTypeError(
         "Invalid href: " + href,
         callerNode, execEnv
       );
-      if (!HREF_CD_START_REGEX.test(href)) href = './' + href;
+      if (!HREF_CD_START_REGEX.test(href)) href = '/' + href;
 
       // Add the href attribute.
       domNode.setAttribute("href", href);
@@ -52,7 +52,7 @@ export const render = new DevFunction(
     let marks = new Map();
     let ownDOMNodes = [];
     if (children !== undefined) {
-      let childrenNodes = thisVal.getDOMNode(
+      let childrenNodes = jsxInstance.getDOMNode(
         children, marks, interpreter, callerNode, execEnv, ownDOMNodes, false
       );
       if (childrenNodes instanceof Array) {
@@ -81,7 +81,7 @@ export const render = new DevFunction(
 
       if (pushState) {
         interpreter.executeFunctionOffSync(
-          pushState, [href], callerNode, execEnv, thisVal
+          pushState, [undefined, href], callerNode, execEnv, thisVal
         );
         return false;
       }

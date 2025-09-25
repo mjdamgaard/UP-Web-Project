@@ -1689,7 +1689,9 @@ export class Environment {
       node, this
     );
     if (prevVal !== undefined) {
-      let [newVal, ret] = assignFun(prevVal);
+      let [newVal, ret] = assignFun(
+        prevVal === UNDEFINED ? undefined : prevVal
+      );
       newVal = (newVal === undefined) ? UNDEFINED : newVal;
       this.variables.get(ident)[0] = newVal;
       return ret;

@@ -2,6 +2,9 @@
 import {fetchRelevancyQualityPath} from "/1/1/entities.js";
 import {map} from 'array';
 
+import * as VariableEntityElement
+from "../entity_elements/VariableEntityElement.jsx";
+
 
 // TODO: This component should at some point be extended with a menu for
 // changing the sorting and filtering options. And it should maybe also at some
@@ -14,13 +17,15 @@ import {map} from 'array';
 // a new entry to the entity list.
 
 
+
 // This component takes either a quality, a relation--object pair, or a class,
 // and renders a list of entities fetched either from the provided quality, or
 // from the relevancy quality formed by either the relation--object pair, or
 // the class.
 export function render({
-  qualKey, relKey, objKey, classKey, ElementComponent, scoreHandler,
-  options = undefined, paginationLength = 50, paginationIndex = 0,
+  qualKey, relKey, objKey, classKey, ElementComponent = VariableEntityElement,
+  scoreHandler = undefined, options = undefined,
+  paginationLength = 50, paginationIndex = 0,
 }) {
   scoreHandler = scoreHandler ?? this.subscribeToContext("score-handler");
   let {qualPath, list} = this.state;

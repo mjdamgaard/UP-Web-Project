@@ -78,6 +78,10 @@ export function render({entKey, isLink = true, pushState = undefined}) {
 
   // Then return either an ILink or a span element, depending on isLink.
   return isLink ?
-    <ILink className={className} href={"/e/" + entID}>{content}</ILink> :
+    <ILink key="0" className={className}
+      href={"e/" + entID} pushState={pushState}
+    >{
+      content
+    }</ILink> :
     <span className={className}>{content}</span>;
 }
