@@ -40,8 +40,8 @@ export function render({
   else if (list === undefined) {
     scoreHandler.fetchList(qualKey ?? qualPath, options).then(list => {
       this.setState({...this.state, list: list ?? []});
-      content = <div className="fetching"></div>;
     });
+    content = <div className="fetching"></div>;
   }
 
   // And if the list is ready, render the elements. TODO: Only render some

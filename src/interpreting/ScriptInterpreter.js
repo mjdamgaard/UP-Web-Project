@@ -1796,7 +1796,7 @@ export class Environment {
   getLiveJSModule() {
     if (!this.liveModule ) {
       this.liveModule = new LiveJSModule(
-        this.modulePath, this.exports, this.scriptVars
+        this.modulePath, this.exports, this.scriptVars, this.script
       );
     }
     return this.liveModule;
@@ -2504,9 +2504,10 @@ export function verifyTypes(valArr, typeArr, node, env) {
 
 
 export class LiveJSModule extends ObjectObject {
-  constructor(modulePath, exports, scriptVars) {
+  constructor(modulePath, exports, scriptVars, script = undefined) {
     super("LiveJSModule");
     this.modulePath = modulePath;
+    this.script = script;
     this.interpreter = scriptVars.interpreter;
     exports.forEach(([alias, val]) => {
       // Filter out any Function instance, which might be exported from a dev

@@ -73,7 +73,7 @@ export class SimpleScoreHandler {
           this.aggregator.fetchList(
             userGroupKey, qualKey, options
           ).then(
-            list => filterScoredListWRTWeight(list, minWeight));
+            list => resolve(filterScoredListWRTWeight(list, minWeight)));
         });
       }
     });

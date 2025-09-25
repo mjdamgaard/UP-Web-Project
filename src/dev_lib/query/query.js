@@ -3,7 +3,7 @@ import {
   DevFunction, RuntimeError, LoadError, jsonParse, jsonStringify,
   getPrototypeOf, OBJECT_PROTOTYPE, ARRAY_PROTOTYPE, FunctionObject,
   CLEAR_FLAG, PromiseObject, Environment, LiveJSModule, parseString,
-  TEXT_FILE_ROUTE_REGEX, SCRIPT_ROUTE_REGEX, CSSModule,
+  TEXT_FILE_ROUTE_REGEX, SCRIPT_ROUTE_REGEX, CSSModule, getString,
 } from '../../interpreting/ScriptInterpreter.js';
 import {scriptParser} from "../../interpreting/parsing/ScriptParser.js";
 import {parseRoute} from './src/parseRoute.js';
@@ -281,6 +281,9 @@ export const query = new DevFunction(
       // You can also cast any string-valued result into a JS or JSX module,
       // or a CSS module.
       else if (/^\.jsx?$/.test(castingSegment)) {
+        if (result instanceof LiveJSModule) {
+          return result;
+        }
         let [parsedScript, lexArr, strPosArr] = parseString(
           result, callerNode, execEnv, scriptParser
         );
@@ -293,9 +296,25 @@ export const query = new DevFunction(
         result = liveModule;
       }
       else if (/^\.css$/.test(castingSegment)) {
+        if (result instanceof CSSModule) {
+          return result;
+        }
         let modulePath = route + ";" +
           castingSegmentArr.slice(0, i + 1).join(";");
         result = new CSSModule(modulePath, result);
+      }
+
+      // Or get the source code for a JS or a CSS module (although one can also
+      // use queryRoute() for this).
+      else if (/^\.txt$/.test(castingSegment)) {
+        if (result instanceof LiveJSModule) {
+          return result.script ??
+            "***Casting to the source code of a dev lib not implemented yet***";
+        }
+        else if (result instanceof CSSModule) {
+          return result.styleSheet;
+        }
+        else return getString(result, callerNode, execEnv);
       }
 
       // And then we have the ';get' and ';call' casting segments, which work
