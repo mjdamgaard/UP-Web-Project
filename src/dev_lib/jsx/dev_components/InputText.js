@@ -1,12 +1,12 @@
 
 import {
-  DevFunction, getString, ArgTypeError, ObjectObject, verifyTypes,
+  DevFunction, getString, ArgTypeError, ObjectObject,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {DOMNodeObject, JSXInstanceInterface} from "../jsx_components.js";
 
 
 export const render = new DevFunction(
-  "Textarea.render", {typeArr: ["object?"]},
+  "InputText.render", {typeArr: ["object?"]},
   function(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
@@ -14,22 +14,22 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {placeholder, onChange} = props;
-    verifyTypes([placeholder, onChange], ["string?", "function?"]);
+    let {size, value, onChange} = props;
+    verifyTypes([size, onChange], ["positive integer?", "function?"]);
+    if (value !== undefined) value = getString(value, callerNode, execEnv);
 
     if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
-      "Textarea.render(): 'this' is not a JSXInstance",
+      "InputText.render(): 'this' is not a JSXInstance",
       callerNode, execEnv
     );
 
     // Create the DOM node if it has no been so already.
     let jsxInstance = thisVal.jsxInstance;
     let domNode = jsxInstance.domNode;
-    if (!domNode || domNode.tagName !== "textarea") {
-      domNode = document.createElement("textarea");
-      if (placeholder !== undefined) {
-        domNode.setAttribute("placeholder", placeholder);
-      }
+    if (!domNode || domNode.tagName !== "input") {
+      domNode = document.createElement("input");
+      if (size !== undefined) domNode.setAttribute("size", size);
+      if (value !== undefined) domNode.value = value;
     }
 
     // Set the onChange event if props.onChange is supplied.

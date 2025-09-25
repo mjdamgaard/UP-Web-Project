@@ -6,7 +6,7 @@ import {DOMNodeObject, JSXInstanceInterface} from "../jsx_components.js";
 
 
 export const render = new DevFunction(
-  "Textarea.render", {typeArr: ["object?"]},
+  "InputRange.render", {typeArr: ["object?"]},
   function(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
@@ -14,22 +14,26 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {placeholder, onChange} = props;
-    verifyTypes([placeholder, onChange], ["string?", "function?"]);
+    let {min, max, value, step, onChange} = props;
+    verifyTypes(
+      [min, max, value, step, onChange],
+      ["number?", "number?", "number?", "number?", "function?"]
+    );
 
     if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
-      "Textarea.render(): 'this' is not a JSXInstance",
+      "InputRange.render(): 'this' is not a JSXInstance",
       callerNode, execEnv
     );
 
     // Create the DOM node if it has no been so already.
     let jsxInstance = thisVal.jsxInstance;
     let domNode = jsxInstance.domNode;
-    if (!domNode || domNode.tagName !== "textarea") {
-      domNode = document.createElement("textarea");
-      if (placeholder !== undefined) {
-        domNode.setAttribute("placeholder", placeholder);
-      }
+    if (!domNode || domNode.tagName !== "input") {
+      domNode = document.createElement("input");
+      if (min !== undefined) domNode.setAttribute("min", min);
+      if (max !== undefined) domNode.setAttribute("max", max);
+      if (value !== undefined) domNode.setAttribute("value", value);
+      if (step !== undefined) domNode.setAttribute("step", step);
     }
 
     // Set the onChange event if props.onChange is supplied.
@@ -76,8 +80,8 @@ export const actions = {
     return thisVal.jsxInstance.domNode.value;
   }),
   "setValue": new DevFunction(
-    "setValue", {}, function({thisVal, callerNode, execEnv}, [val]) {
-      val = getString(val, callerNode, execEnv);
+    "setValue", {typeArr: ["number"]},
+    function({thisVal}, [val]) {
       let domNode = thisVal.jsxInstance.domNode;
       let prevVal = domNode.value;
       domNode.value = val;
@@ -89,8 +93,10 @@ export const actions = {
   "clear": new DevFunction("clear", {}, function({thisVal}, []) {
     let domNode = thisVal.jsxInstance.domNode;
     let prevVal = domNode.value;
-    domNode.value = "";
-    if (prevVal !== "") {
+    let initVal = parseFloat(domNode.getAttribute("value"));
+    if (Number.isNaN(initVal)) return;
+    domNode.value = initVal;
+    if (prevVal !== initVal) {
       domNode.dispatchEvent(new InputEvent("input"));
     }
   }),
