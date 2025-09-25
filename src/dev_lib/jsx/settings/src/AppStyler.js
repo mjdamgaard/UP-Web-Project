@@ -130,13 +130,15 @@ export class AppStyler01 {
     }
 
     // If the styleModule is a CSSModule, we use a default transform format
-    // where the given style sheet simple gets to target it and all descendants
-    // of the component (and will get to style the JSXElement-defined classes).
+    // where the given style sheet will simply target the component and all
+    // its descendants that does not have keys the begin with "_". And if a
+    // descendant is reached with a key starting with "_", it will then get
+    // its own style scope.
     let transform, transformProps;
     if (styleModule instanceof CSSModule) {
       transform = {
         styleSheets: [styleModule],
-        childRules: [{key: "*", transform: "copy"}],
+        childRules: [{key: "!_*", transform: "copy"}],
       };
     }
 
