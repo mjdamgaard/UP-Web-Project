@@ -1,6 +1,6 @@
 
 import {
-  DevFunction, getString, ArgTypeError, ObjectObject,
+  DevFunction, getString, ArgTypeError, ObjectObject, verifyTypes,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {DOMNodeObject, JSXInstanceInterface} from "../jsx_components.js";
 
