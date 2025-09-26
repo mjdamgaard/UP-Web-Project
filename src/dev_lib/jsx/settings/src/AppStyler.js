@@ -233,8 +233,11 @@ export class AppStyler01 {
 
       // Else generate and store a new instance of the style sheet template
       // for the given componentID, and load it into the document head.
+      // Correction: We no longer let CSS classes be specific to a single
+      // style sheet, so instead of passing styleSheetID here as the third
+      // argument, we just pass "0" instead.
       let styleSheetInstance = cssTransformer.instantiateStyleSheetTemplate(
-        template, componentID, styleSheetID 
+        template, componentID, "0" // styleSheetID 
       );
       let styleElement = document.createElement("style");
       styleElement.append(styleSheetInstance);
@@ -293,14 +296,18 @@ export class AppStyler01 {
           // Extract the user-defined styleSheets index, defaulting to 0, and
           // convert it to the corresponding styleSheetID before pushing it to
           // preparedOutClasses.
-          let styleSheetIndex = 0;
-          let indOfUnderscore = classStr.indexOf("_");
-          if (indOfUnderscore !== -1) {
-            [className, styleSheetIndex] = className.split("_");
-          }
-          styleSheetIndex = parseInt(styleSheetIndex);
-          let styleSheetID = styleSheetIDArr[styleSheetIndex];
-          let preparedOutClass = className + "_" + styleSheetID;
+          // Correction: This was necessary in a previous implementation where
+          // each CSS class was confined to a specific style sheet, but now we
+          // make no such distinctions, which is why the following code snippet
+          // is out-commented. 
+          // let styleSheetIndex = 0;
+          // let indOfUnderscore = classStr.indexOf("_");
+          // if (indOfUnderscore !== -1) {
+          //   [className, styleSheetIndex] = className.split("_");
+          // }
+          // styleSheetIndex = parseInt(styleSheetIndex);
+          // let styleSheetID = styleSheetIDArr[styleSheetIndex];
+          let preparedOutClass = className + "_0"; // "_" + styleSheetID;
           preparedOutClasses.push(preparedOutClass);
         });
       });
@@ -379,9 +386,11 @@ export class AppStyler01 {
     // And unless removeInitialClasses is true, assign the initialClassesSuffix
     // property the first styleSheetID from styleSheetIDArr, and otherwise
     // assign it "".
+    // Correction: Now that we don't use style sheet ID suffixes, we let the
+    // suffix be "_0" rather than "_" + styleSheetIDArr[0]
     preparedTransform.initialClassesSuffix =
       getPropertyFromObject(transform, "removeInitialClasses") ? "_" :
-        "_" + (styleSheetIDArr[0] ?? "");
+        "_0"; // "_" + (styleSheetIDArr[0] ?? "");
 
     // Finally, return the prepared {rules, childRules} transform.
     return preparedTransform;

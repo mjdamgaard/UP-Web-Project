@@ -27,4 +27,5 @@ export function render({entID, score, weight, qualKeyArr}) {
 
 export const styleSheetPaths = [
   ...DropDownBox.styleSheetPaths,
+  abs("./DefaultEntityElement.css"),
 ];
