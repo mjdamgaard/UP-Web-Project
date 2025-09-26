@@ -101,9 +101,9 @@ export class SettingsObject01 extends SettingsObject {
     let styleModulePromise;
     let styleSheetPaths = componentModule.get("styleSheetPaths");
     if (styleSheetPaths) {
-      let styleSheetPromises = mapValues(styleSheetPaths, node, env, path => {
+      let styleSheetPromises = mapValues(styleSheetPaths, node, env, path => (
         interpreter.import(path, node, env)
-      });
+      ));
       styleModulePromise = Promise.all(styleSheetPromises);
     }
     else {

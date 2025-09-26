@@ -4,16 +4,14 @@ import {
 } from "/1/1/entities.js";
 
 import * as EntityReference from "../utility_components/EntityReference.jsx";
-import * as DefaultEntityElement from "./DefaultEntityElement.jsx";
-import * as MissingEntityElement from "./MissingEntityElement.jsx";
-import * as ComponentEntityComponent
-from "../utility_components/ComponentEntityComponent.jsx";
+import * as DefaultEntityElement
+from "../entity_elements/DefaultEntityElement.jsx";
+import * as MissingEntityElement
+from "../entity_elements/MissingEntityElement.jsx";
+import * as ComponentEntityComponent from "./ComponentEntityComponent.jsx";
 
 const entityElementRelPath = "/1/1/em1.js;get/entityElement";
 
-// TODO: We can reimplement this component using fewer HTTP rounds if we
-// instead call a server module that fetches the componentPath for us, perhaps
-// where we also give it a path to the score handler to use. 
 
 
 

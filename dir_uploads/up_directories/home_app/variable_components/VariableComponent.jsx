@@ -1,13 +1,8 @@
 
 import {fetchRelevancyQualityPath} from "/1/1/entities.js";
 
-import * as EntityReference from "./EntityReference.jsx";
+import * as EntityReference from "../utility_components/EntityReference.jsx";
 import * as ComponentEntityComponent from "./ComponentEntityComponent.jsx";
-
-
-// TODO: We can reimplement this component using fewer HTTP rounds if we
-// instead call a server module that fetches the componentPath for us, perhaps
-// where we also give it a path to the score handler to use. 
 
 
 

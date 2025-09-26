@@ -2030,7 +2030,7 @@ export class ClassObject extends ObjectObject {
     }
   }
 
-  getNewInstance(inputArr, callerNode, callerEnv) {
+  getNewInstance(inputArr, callerNode, callerEnv) {if (!callerEnv) debugger;
     let {interpreter} = callerEnv.scriptVars;
     let members = this.instancesAreArrays ? [] :
       this.instancesAreMaps ? new Map() : {};

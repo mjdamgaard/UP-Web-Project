@@ -198,7 +198,8 @@ export class AppStyler01 {
       if (!(cssModule instanceof CSSModule)) throw new ArgTypeError(
         `Invalid CSS module, ${getString(cssModule, node, env)}, in ` +
         "transform.styleSheets. Expected a style sheet imported as a module " +
-        "namespace object ('import * as myStyleSheet from ...')."
+        "namespace object ('import * as myStyleSheet from ...').",
+        node, env
       );
 
       // Look in this.loadedStyleSheets to see if there is previous data stored

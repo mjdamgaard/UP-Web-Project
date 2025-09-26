@@ -27,3 +27,9 @@ export function render({children, keepAlive}) {
 export function getInitState({isOpenInitially}) {
   return {isOpen: isOpenInitially ? true : false};
 }
+
+
+
+export const styleSheetPaths = [
+  abs("./DropDownBox.css"),
+];

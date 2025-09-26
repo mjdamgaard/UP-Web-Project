@@ -1,7 +1,7 @@
 
 import * as EntityReference from "../utility_components/EntityReference.jsx";
 import * as DropDownBox from "../utility_components/DropDownBox.jsx";
-import * as ScoringMenu from "../utility_components/ScoringMenu.jsx";
+import * as ScoringMenu from "../scoring/ScoringMenu.jsx";
 
 
 
@@ -18,7 +18,13 @@ export function render({entID, score, weight, qualKeyArr}) {
       </div>
     </div>
     <DropDownBox key="ddb">
-      <ScoringMenu key="0" entKey={entID} qualKeyArr={qualKeyArr} />
+      <ScoringMenu key="_sm" entKey={entID} qualKeyArr={qualKeyArr} />
     </DropDownBox>
   </div>;
 }
+
+
+
+export const styleSheetPaths = [
+  ...DropDownBox.styleSheetPaths,
+];

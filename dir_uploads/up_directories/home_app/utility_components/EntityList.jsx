@@ -3,7 +3,7 @@ import {fetchRelevancyQualityPath} from "/1/1/entities.js";
 import {map} from 'array';
 
 import * as VariableEntityElement
-from "../entity_elements/VariableEntityElement.jsx";
+from "../variable_components/VariableEntityElement.jsx";
 
 
 // TODO: This component should at some point be extended with a menu for
@@ -53,7 +53,7 @@ export function render({
   // elements, namely in a pagination.
   else {
     content = map(list, ([entID, score, weight]) => (
-      <ElementComponent key={entID}
+      <ElementComponent key={"_" + entID}
         entID={entID} score={score} weight={weight}
       />
     ));

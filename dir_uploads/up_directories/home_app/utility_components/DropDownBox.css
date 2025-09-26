@@ -1,0 +1,10 @@
+
+
+
+.drop-down-box > .collapse-expand-button.collapsed::after {
+  content: "⌄";
+}
+
+.drop-down-box > .collapse-expand-button.expanded::after {
+  content: "⌃";
+}
