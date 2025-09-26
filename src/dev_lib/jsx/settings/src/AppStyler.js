@@ -142,12 +142,21 @@ export class AppStyler01 {
       };
     }
 
+    // Or if it is an array of CSSModules, do something similar, but where the
+    // styeSheets array is set as that whole array. 
+    else if (styleModule instanceof Array) {
+      transform = {
+        styleSheets: styleModule,
+        childRules: [{key: "!_*", transform: "copy"}],
+      };
+    }
+
     // Else we expect styleModule to be a LiveJSModule that exports a
     // 'transform' variable, and potentially a default 'transformProps'
     // variable as well.
     else if (styleModule instanceof LiveJSModule) {
       transform = styleModule.get("transform");
-      transformProps = styleModule.get("transform");
+      transformProps = styleModule.get("transformProps");
     }
     else throw new ArgTypeError(
       "Invalid style module: " + getString(styleModule, node, env),

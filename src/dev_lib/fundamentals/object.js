@@ -1,6 +1,6 @@
 
 import {
-  DevFunction, forEachValue,
+  DevFunction, forEachValue, mapValues,
 } from "../../interpreting/ScriptInterpreter.js";
 
 
@@ -32,15 +32,9 @@ export const entries = new DevFunction(
 export const mapToArray = new DevFunction(
   "mapToArray", {typeArr: ["any", "function"]},
   ({callerNode, execEnv, interpreter}, [obj, callback]) => {
-    let entries = [];
-    let ind = 0;
-    forEachValue(obj, callerNode, execEnv, (val, key) => {
-      entries[ind] = [key, val];
-      ind++;
-    });
-    return entries.map(([key, val], ind) => {
+    return mapValues(obj, callerNode, execEnv, (val, ind) => {
       return interpreter.executeFunction(
-        callback, [val, key, ind], callerNode, execEnv
+        callback, [val, ind], callerNode, execEnv
       );
     });
   }

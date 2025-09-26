@@ -1,6 +1,6 @@
 
 import {
-  DevFunction, forEachValue, ObjectObject, getString,
+  DevFunction, forEachValue, ObjectObject, getString, mapValues,
 } from "../../interpreting/ScriptInterpreter.js";
 
 
@@ -20,10 +20,9 @@ export const slice = new DevFunction(
 );
 
 export const map = new DevFunction(
-  "map", {typeArr: ["array", "function"]},
+  "map", {typeArr: ["any", "function"]},
   ({callerNode, execEnv, interpreter}, [arr, fun]) => {
-    if (arr instanceof ObjectObject) arr = arr.members;
-    return arr.map((val, ind) => {
+    return mapValues(arr, callerNode, execEnv, (val, ind) => {
       return interpreter.executeFunction(
         fun, [val, ind], callerNode, execEnv
       );

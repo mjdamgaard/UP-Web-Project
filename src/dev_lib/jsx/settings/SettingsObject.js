@@ -1,6 +1,6 @@
 import {
   DevFunction, forEachValue, LiveJSModule, PromiseObject, RuntimeError,
-  LiveJSModule as SCSSModule, getFullPath,
+  LiveJSModule as SCSSModule, getFullPath, mapValues,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {SettingsObject} from "../jsx_components.js";
 import {appStyler} from "./src/AppStyler.js";
@@ -91,17 +91,35 @@ export class SettingsObject01 extends SettingsObject {
     // styleModule route with a high enough score that this module should
     // be used instead of the componentModule.
 
+
     // If no overriding style module is found, look first if the component
     // exports a 'stylePath' parameter from which to get the style transform,
     // and else use the componentModule itself, in case the user exports the
-    // default transform (and default transformProps) from there.
-    let stylePath = componentModule.get("stylePath") || componentPath;
-    stylePath = getFullPath(componentPath, stylePath, node, env);
-    let styleModulePromise = interpreter.import(stylePath, node, env);
+    // default transform (and default transformProps) from there. Or if the
+    // component exports a 'styleSheetPaths' array parameter, we let
+    // styleModule be an array of (imported) modules, which is also allowed.
+    let styleModulePromise;
+    let styleSheetPaths = componentModule.get("styleSheetPaths");
+    if (styleSheetPaths) {
+      let styleSheetPromises = mapValues(styleSheetPaths, node, env, path => {
+        interpreter.import(path, node, env)
+      });
+      styleModulePromise = Promise.all(styleSheetPromises);
+    }
+    else {
+      let stylePath = componentModule.get("stylePath") || componentPath;
+      stylePath = getFullPath(componentPath, stylePath, node, env);
+      styleModulePromise = interpreter.import(stylePath, node, env);
+    }
+
+    // Cache the styleModule promise, and then it resolves, replace it with the
+    // result in the cache.
     this.styleModules.set(componentPath, styleModulePromise);
     styleModulePromise.then(styleModule => {
       this.styleModules.set(componentPath, styleModule);
     });
+
+    // Then wait for styleModule and return it.
     styleModule = await styleModulePromise;
     return styleModule;
   }

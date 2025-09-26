@@ -2190,6 +2190,37 @@ export function forEachValue(value, node, env, callback, ignore = false) {
   }
 }
 
+export function mapValues(value, node, env, callback) {
+  if (value instanceof ObjectObject) {
+    if (value.isArray) {
+      return value.members.map(callback);
+    }
+    else if (value.isMap) {
+      return value.members.entries().map(
+        ([key, val]) => callback(val, key)
+      );
+    }
+    else {
+      return Object.entries(value.members).map(
+        ([key, val]) => callback(val, key)
+      );
+    }
+  }
+  else {
+    let valProto = getPrototypeOf(value);
+    if (valProto === ARRAY_PROTOTYPE) {
+      return value.map(callback);
+    }
+    else if (valProto === OBJECT_PROTOTYPE) {
+      return Object.entries(value).map(([key, val]) => callback(val, key));
+    }
+    else throw new RuntimeError(
+      "Iterating over a non-iterable value: " + getString(value, node, env),
+      node, env
+    );
+  }
+}
+
 
 export function getPrototypeOf(value) {
   if (value && value instanceof Object) {
