@@ -17,10 +17,18 @@ const _parseInt = new DevFunction(
 );
 export {_parseInt as parseInt};
 
-const isNaN = new DevFunction(
+export const isNaN = new DevFunction(
   "isNaN", {}, ({}, [val]) => {
     return Number.isNaN(val);
   }
 );
+
+export const toPrecision = new DevFunction(
+  "toPrecision", {typeArr: ["number", "integer positive?"]},
+  ({}, [val, precision]) => {
+    return val.toPrecision(precision);
+  }
+);
+
 
 // TODO: Continue implementing.

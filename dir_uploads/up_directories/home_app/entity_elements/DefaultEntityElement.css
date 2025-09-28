@@ -10,3 +10,20 @@
   display: grid;
   grid-template-columns: 4fr 1fr;
 }
+
+
+.entity-element > :first-child > .main-content {
+  display: grid;
+  grid-template-columns: 20px auto;
+}
+
+.entity-element > :first-child > .main-content > .entity-id {
+  margin: auto;
+  font-size: 10pt;
+}
+
+
+.entity-element > :first-child > .main-content > :last-child {
+  margin: auto 20px;
+  font-size: 20pt;
+}

@@ -2415,6 +2415,14 @@ export function verifyType(val, type, isOptional, node, env) {
     case "integer unsigned":
       if (typeOfVal !== "number" || parseInt(val) !== val || val < 0) {
         throw new ArgTypeError(
+          `Value is not an non-negative integer: ${getString(val, node, env)}`,
+          node, env
+        );
+      }
+      break;
+    case "integer positive":
+      if (typeOfVal !== "number" || parseInt(val) !== val || val <= 0) {
+        throw new ArgTypeError(
           `Value is not a positive integer: ${getString(val, node, env)}`,
           node, env
         );

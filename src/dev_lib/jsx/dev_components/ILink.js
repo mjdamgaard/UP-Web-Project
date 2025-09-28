@@ -68,7 +68,7 @@ export const render = new DevFunction(
     // link, it should still open a new tab in the browser, however.) But if
     // the onClick prop is defined, we first execute that, and if that returns
     // false, we prevent the normal behavior.
-    domNode.onclick = () => {
+    domNode.onclick = (event) => {
       if (onClick) {
         // TODO: Add event argument when implemented.
         let shouldFollowLink = interpreter.executeFunctionOffSync(
@@ -80,10 +80,15 @@ export const render = new DevFunction(
       }
 
       if (pushState) {
-        interpreter.executeFunctionOffSync(
-          pushState, [undefined, href], callerNode, execEnv, thisVal
-        );
-        return false;
+        if (event.ctrlKey || event.which == 2) {
+          return true;
+        }
+        else {
+          interpreter.executeFunctionOffSync(
+            pushState, [undefined, href], callerNode, execEnv, thisVal
+          );
+          return false; // Prevents default event propagation.
+        }
       }
 
       return true;
