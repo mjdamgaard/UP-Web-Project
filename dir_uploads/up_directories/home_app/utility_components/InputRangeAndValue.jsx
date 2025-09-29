@@ -10,7 +10,9 @@ export function render({min, max, value, step, size = 4, onChange}) {
       <InputRange key="r"
         min={min} max={max} value={value} step={step} onChange={val => {
           this.call("t", "setValue", val);
-          onChange(val);
+          if (onChange) {
+            onChange(val);
+          }
         }}
       />
       <InputText key="t"
@@ -18,7 +20,9 @@ export function render({min, max, value, step, size = 4, onChange}) {
           val = parseFloat(val);
           if (isNaN(val)) return;
           this.call("r", "setValue", val);
-          onChange(val);
+          if (onChange) {
+            onChange(val);
+          }
         }}
       />
     </div>

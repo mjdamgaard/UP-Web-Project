@@ -59,7 +59,11 @@ export const render = new DevFunction(
       };
     }
 
-    return new DOMNodeObject(domNode);
+    // TODO: Confirm that letting the user be able to style the text field
+    // directly (i.e. by letting ownDOMNodes = [domNode] here), will not let
+    // them be able to trick the browser into auto-filling in text, and
+    // especially not a password. 
+    return new DOMNodeObject(domNode, [domNode]);
   }
 );
 
@@ -68,10 +72,8 @@ export const methods = [
   "getValue",
   "setValue",
   "clear",
-  // TODD: First check that the element is a child of the currently focused
-  // element before being able to grab the focus.
-  // "focus",
-  // "blur",
+  "focus",
+  "blur",
 ];
 
 export const actions = {
@@ -98,11 +100,13 @@ export const actions = {
     }
   }),
   // TODD: First check that the element is a child of the currently focused
-  // element before being able to grab the focus.
-  // "focus": new DevFunction("focus", {}, function({thisVal}, []) {
-  //   thisVal.jsxInstance.domNode.focus();
-  // }),
-  // "blur": new DevFunction("blur", {}, function({thisVal}, []) {
-  //   thisVal.jsxInstance.domNode.blur();
-  // }),
+  // element before being able to grab the focus. *(Or maybe actually just that
+  // the currently focused element has the same style scope (/ component ID))
+  // as this one.
+  "focus": new DevFunction("focus", {}, function({thisVal}, []) {
+    thisVal.jsxInstance.domNode.focus();
+  }),
+  "blur": new DevFunction("blur", {}, function({thisVal}, []) {
+    thisVal.jsxInstance.domNode.blur();
+  }),
 };

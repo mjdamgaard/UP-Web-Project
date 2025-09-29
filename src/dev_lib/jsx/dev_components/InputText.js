@@ -43,8 +43,10 @@ export const render = new DevFunction(
       // essentially overwrite the existing one. Thus the input event will fire
       // less frequently when the user types something.
       let ref = [];
-      domNode.oninput = () => {
+      domNode.onchange = () => {
         let eventID = ref[0] = {};
+        // TODO: THis setTimeout() thing might be redundant when using onchange
+        // rather than oninput, so consider removing it.
         setTimeout(() => {
           if (ref[0] !== eventID) return;
           // TODO: Add event argument when implemented.
@@ -60,7 +62,11 @@ export const render = new DevFunction(
       };
     }
 
-    return new DOMNodeObject(domNode);
+    // TODO: Confirm that letting the user be able to style the text field
+    // directly (i.e. by letting ownDOMNodes = [domNode] here), will not let
+    // them be able to trick the browser into auto-filling in text, and
+    // especially not a password. 
+    return new DOMNodeObject(domNode, [domNode]);
   }
 );
 
@@ -69,10 +75,8 @@ export const methods = [
   "getValue",
   "setValue",
   "clear",
-  // TODD: First check that the element is a child of the currently focused
-  // element before being able to grab the focus.
-  // "focus",
-  // "blur",
+  "focus",
+  "blur",
 ];
 
 export const actions = {
@@ -84,7 +88,9 @@ export const actions = {
       val = getString(val, callerNode, execEnv);
       let domNode = thisVal.jsxInstance.domNode;
       let prevVal = domNode.value;
+      // let activeElement = document.activeElement;
       domNode.value = val;
+      // activeElement.focus();
       if (prevVal !== val) {
         domNode.dispatchEvent(new InputEvent("input"));
       }
@@ -99,11 +105,13 @@ export const actions = {
     }
   }),
   // TODD: First check that the element is a child of the currently focused
-  // element before being able to grab the focus.
-  // "focus": new DevFunction("focus", {}, function({thisVal}, []) {
-  //   thisVal.jsxInstance.domNode.focus();
-  // }),
-  // "blur": new DevFunction("blur", {}, function({thisVal}, []) {
-  //   thisVal.jsxInstance.domNode.blur();
-  // }),
+  // element before being able to grab the focus. *(Or maybe actually just that
+  // the currently focused element has the same style scope (/ component ID))
+  // as this one.
+  "focus": new DevFunction("focus", {}, function({thisVal}, []) {
+    thisVal.jsxInstance.domNode.focus();
+  }),
+  "blur": new DevFunction("blur", {}, function({thisVal}, []) {
+    thisVal.jsxInstance.domNode.blur();
+  }),
 };
