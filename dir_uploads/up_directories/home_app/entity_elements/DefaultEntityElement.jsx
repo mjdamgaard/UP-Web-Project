@@ -12,7 +12,9 @@ export function render({entID, score, weight, qualKeyArr}) {
     <div>
       <div className="main-content">
         <div className="entity-id">{"#" + entID}</div>
-        <EntityReference key="er" entKey={entID} />
+        <div className="entity-display">
+          <EntityReference key="er" entKey={entID} />
+        </div>
       </div>
       <div className="score-display">
         <div className="score">{toPrecision(score, 3)}</div>

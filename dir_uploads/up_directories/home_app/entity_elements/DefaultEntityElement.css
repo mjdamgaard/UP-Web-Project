@@ -6,7 +6,7 @@
 
 
 .entity-element > :first-child {
-  height: 100px;
+  height: 60px;
   display: grid;
   grid-template-columns: 4fr 1fr;
 }
@@ -23,7 +23,13 @@
 }
 
 
-.entity-element > :first-child > .main-content > :last-child {
+.entity-element > :first-child > .main-content .entity-display {
+  display: flex;
+  align-items: center;
   margin: auto 20px;
-  font-size: 20pt;
+  font-size: 18pt;
+}
+
+.entity-reference.fetching::after {
+  content: "...";
 }

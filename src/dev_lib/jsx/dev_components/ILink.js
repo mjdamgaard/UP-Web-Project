@@ -61,6 +61,7 @@ export const render = new DevFunction(
         domNode.append(childrenNodes);
       }
     }
+    ownDOMNodes = [domNode, ...ownDOMNodes];
 
     // If pushState is defined we put an onclick event on the <a> element,
     // in order to redirect to pushState() rather than following the href

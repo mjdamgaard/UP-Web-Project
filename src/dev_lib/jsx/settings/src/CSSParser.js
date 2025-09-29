@@ -4,11 +4,11 @@ import {
   straightenListSyntaxTree, copyFromChild, copyLexemeFromChild,
   processPolyadicInfixOperation,
 } from "../../../../interpreting/parsing/processing.js";
-import {HTML_ELEMENT_TYPE_REGEX}
-from "../../../../interpreting/parsing/ScriptParser.js";
+// import {HTML_ELEMENT_TYPE_REGEX}
+// from "../../../../interpreting/parsing/ScriptParser.js";
 
 
-const ELEMENT_TYPE_PATTERN = HTML_ELEMENT_TYPE_REGEX.source.slice(1, -1);
+const ELEMENT_TYPE_PATTERN = "[a-z]+";
 
 const ATOMIC_PSEUDO_CLASS_PATTERN =
   "(scope|hover|first-child|last-child|first-of-type|last-of-type)";
