@@ -17,7 +17,8 @@ export const render = new DevFunction(
     let {min, max, value, step, onChange} = props;
     verifyTypes(
       [min, max, value, step, onChange],
-      ["number?", "number?", "number?", "number?", "function?"]
+      ["number?", "number?", "number?", "number?", "function?"],
+      callerNode, execEnv
     );
 
     if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
@@ -30,6 +31,7 @@ export const render = new DevFunction(
     let domNode = jsxInstance.domNode;
     if (!domNode || domNode.tagName !== "input") {
       domNode = document.createElement("input");
+      domNode.setAttribute("type", "range");
       if (min !== undefined) domNode.setAttribute("min", min);
       if (max !== undefined) domNode.setAttribute("max", max);
       if (value !== undefined) domNode.setAttribute("value", value);

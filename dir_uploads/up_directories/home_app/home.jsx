@@ -1,8 +1,8 @@
 
 // import * as EntityPage from "./EntityPage.jsx";
 import * as EntityList from "./utility_components/EntityList.jsx";
-import * as DefaultEntityElement
-from "./entity_elements/DefaultEntityElement.jsx";
+import * as GeneralEntityElement
+from "./entity_elements/GeneralEntityElement.jsx";
 import {scoreHandler01} from "/1/1/score_handling/ScoreHandler01/em.js";
 import {fetchEntityDefinition} from "/1/1/entities.js";
 
@@ -13,7 +13,7 @@ export function render(props) {
   return (
     // <EntityPage key="0" {...props} />
     <EntityList key="0" qualKey={trustedQualKey}
-      scoreHandler={scoreHandler01} ElementComponent={DefaultEntityElement}
+      scoreHandler={scoreHandler01} ElementComponent={GeneralEntityElement}
     />
   );
 }

@@ -15,7 +15,10 @@ export const render = new DevFunction(
       props = props.members;
     }
     let {size, value, onChange} = props;
-    verifyTypes([size, onChange], ["positive integer?", "function?"]);
+    verifyTypes(
+      [size, onChange], ["integer positive?", "function?"],
+      callerNode, execEnv
+    );
     if (value !== undefined) value = getString(value, callerNode, execEnv);
 
     if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
@@ -28,6 +31,7 @@ export const render = new DevFunction(
     let domNode = jsxInstance.domNode;
     if (!domNode || domNode.tagName !== "input") {
       domNode = document.createElement("input");
+      domNode.setAttribute("type", "text");
       if (size !== undefined) domNode.setAttribute("size", size);
       if (value !== undefined) domNode.value = value;
     }

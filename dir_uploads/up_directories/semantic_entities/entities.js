@@ -93,6 +93,10 @@ export function fetchEntityDefinition(entKey) {
 
 
 export function fetchRelevancyQualityPath(classOrObjKey, relKey = undefined) {
+  // TODO: Reimplement such that the class's entity definition is fetched, or
+  // just its path, actually, and then it is checked if the class is a
+  // relational class, and if so, we return the path to the corresponding
+  // relational relevancy quality. 
   let classOrObjIDProm = fetchEntityID(classOrObjKey);
   let relIDProm = relKey ? fetchEntityID(relKey) :
     new Promise(res => res(undefined));

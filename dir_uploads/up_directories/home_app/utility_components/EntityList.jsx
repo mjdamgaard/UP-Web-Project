@@ -55,6 +55,7 @@ export function render({
     content = map(list, ([entID, score, weight]) => (
       <ElementComponent key={"_" + entID}
         entID={entID} score={score} weight={weight}
+        qualKeyArr={[qualKey ?? qualPath]}
       />
     ));
   }

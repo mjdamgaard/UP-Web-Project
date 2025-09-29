@@ -1,8 +1,8 @@
 
 import * as EntityList from "../utility_components/EntityList.jsx";
 import * as TabbedPages from "../utility_components/TabbedPages.jsx";
-import * as DefaultEntityElement
-from "../entity_elements/DefaultEntityElement.jsx";
+import * as GeneralEntityElement
+from "../entity_elements/GeneralEntityElement.jsx";
 
 const subclassesRel = "/1/1/em1.js;get/subclasses";
 
@@ -15,7 +15,7 @@ export function render({entKey}) {
         Component: EntityList,
         props: {
           classKey: entKey,
-          ElementComponent: DefaultEntityElement,
+          ElementComponent: GeneralEntityElement,
         }
       },
       subclasses: {
@@ -24,7 +24,7 @@ export function render({entKey}) {
         props: {
           relKey: subclassesRel,
           objKey: entKey,
-          ElementComponent: DefaultEntityElement,
+          ElementComponent: GeneralEntityElement,
         },
       },
     }}/>

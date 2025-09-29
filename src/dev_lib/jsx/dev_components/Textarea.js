@@ -15,7 +15,10 @@ export const render = new DevFunction(
       props = props.members;
     }
     let {placeholder, onChange} = props;
-    verifyTypes([placeholder, onChange], ["string?", "function?"]);
+    verifyTypes(
+      [placeholder, onChange], ["string?", "function?"],
+      callerNode, execEnv
+    );
 
     if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
       "Textarea.render(): 'this' is not a JSXInstance",

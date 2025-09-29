@@ -22,7 +22,7 @@ export function render({entID, score, weight, qualKeyArr}) {
       </div>
     </div>
     <DropDownBox key="ddb">
-      <ScoringMenu key="_sm" entKey={entID} qualKeyArr={qualKeyArr} />
+      <ScoringMenu key="_sm" subjKey={entID} qualKeyArr={qualKeyArr} />
     </DropDownBox>
   </div>;
 }
@@ -31,5 +31,5 @@ export function render({entID, score, weight, qualKeyArr}) {
 
 export const styleSheetPaths = [
   ...DropDownBox.styleSheetPaths,
-  abs("./DefaultEntityElement.css"),
+  abs("./GeneralEntityElement.css"),
 ];

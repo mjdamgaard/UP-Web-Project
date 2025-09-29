@@ -1,5 +1,6 @@
 
 import * as InputRange from 'InputRange.jsx';
+import * as InputText from 'InputText.jsx';
 import {parseFloat, isNaN} from 'number';
 
 

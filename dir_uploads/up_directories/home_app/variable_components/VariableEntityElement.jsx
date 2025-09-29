@@ -4,8 +4,8 @@ import {
 } from "/1/1/entities.js";
 
 import * as EntityReference from "../utility_components/EntityReference.jsx";
-import * as DefaultEntityElement
-from "../entity_elements/DefaultEntityElement.jsx";
+import * as GeneralEntityElement
+from "../entity_elements/GeneralEntityElement.jsx";
 import * as MissingEntityElement
 from "../entity_elements/MissingEntityElement.jsx";
 import * as ComponentEntityComponent from "./ComponentEntityComponent.jsx";
@@ -56,7 +56,7 @@ export function render(props) {
   // And if it has, but is undefined (in the case of an empty list), render the
   // default entity element component.
   else if (!topEntry) {
-    return <DefaultEntityElement key="0" {...props} />;
+    return <GeneralEntityElement key="0" {...props} />;
   }
 
   // Else if the top entry is ready, expect it to be an entity of the "App
@@ -67,7 +67,7 @@ export function render(props) {
     // If the score is not positive, reject the top entry and behave as if the
     // list is empty.
     if (score <= 0) {
-      return <DefaultEntityElement key="0" {...props} />;
+      return <GeneralEntityElement key="0" {...props} />;
     }
     content = <ComponentEntityComponent key="0"
       {...props} compEntID={compEntID}
