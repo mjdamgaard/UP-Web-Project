@@ -5,6 +5,8 @@ import {scoreHandler01} from "/1/1/score_handling/ScoreHandler01/em.js";
 
 import * as InputRangeAndValue
 from "../utility_components/InputRangeAndValue.jsx";
+import * as QualityVariableReference from "./QualityVariableReference.jsx";
+import * as AggregatedScoreDisplay from "./AggregatedScoreDisplay.jsx";
 
 
 
@@ -47,15 +49,35 @@ export function render({subjKey, qualKey}) {
     let min = metric["Lower limit"] ?? -10;
     let max = metric["Upper limit"] ?? 10;
     let step = parseFloat(toPrecision((max - min) / 100, 3));
-    content = <div>
-      <div>
-        <InputRangeAndValue key="0"
+    content = [
+      <div className="score-bar">
+      <QualityVariableReference key="qvr"
+        qualKey={qualKey} subjKey={subjKey}
+      />
+        <InputRangeAndValue key="ir"
           value={hasPrevScore ? prevScore : undefined}
           placeholder={hasPrevScore ? undefined : "N/A"}
           min={min} max={max} step={step}
         />
+        <div className="todo-impl-interval-labels">{/*
+          TODO: Implement showing interval labels matching the current value.
+        */}</div>
+        <button className="submit" onClick={() => {
+          this.do("submitScore");
+        }}>{
+          "Submit"
+        }</button>
+        <button className="clear" onClick={() => {
+          this.do("deleteScore");
+        }}>{
+          "Clear"
+        }</button>
+      </div>,
+      <div className="score-display">
+        <div className="user-score">{hasPrevScore ? prevScore : undefined}</div>
+        <AggregatedScoreDisplay key="as" qualKey={qualKey} subjKey={subjKey} />
       </div>
-    </div>;
+    ];
   }
 
   return (

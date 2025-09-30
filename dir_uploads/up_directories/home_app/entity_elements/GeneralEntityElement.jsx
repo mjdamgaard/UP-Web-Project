@@ -4,6 +4,7 @@ import {toPrecision} from 'number';
 import * as EntityReference from "../utility_components/EntityReference.jsx";
 import * as DropDownBox from "../utility_components/DropDownBox.jsx";
 import * as ScoringMenu from "../scoring/ScoringMenu.jsx";
+import * as AggregatedScoreDisplay from "../scoring/AggregatedScoreDisplay.jsx";
 
 
 
@@ -17,8 +18,9 @@ export function render({entID, score, weight, qualKeyArr}) {
         </div>
       </div>
       <div className="score-display">
-        <div className="score">{toPrecision(score, 3)}</div>
-        <div className="weight">{toPrecision(weight, 3)}</div>
+        <AggregatedScoreDisplay key="as"
+          score={toPrecision(score, 3)} weight={toPrecision(weight, 3)}
+        />
       </div>
     </div>
     <DropDownBox key="ddb">
