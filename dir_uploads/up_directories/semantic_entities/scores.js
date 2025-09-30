@@ -312,6 +312,7 @@ export function postUserScore(
     Promise.all([
       qualIDProm, subjIDProm, userIDProm, metricProm
     ]).then(([qualID, subjID, userID, metric]) => {
+      // TODO: Verify hex-string types of the IDs here. 
       let scoreHex = getScoreHex(score, metric);
       post(
         homePath + "/user_scores.sm.js/callSMF/postUserScoreHex",
@@ -323,6 +324,24 @@ export function postUserScore(
   });
 }
 
+export function deleteUserScore(qualKey, subjKey, userKey) {
+  let qualIDProm = fetchEntityID(qualKey);
+  let subjIDProm = fetchEntityID(subjKey);
+  let userIDProm = fetchEntityID(userKey);
+  return new Promise(resolve => {
+    Promise.all([
+      qualIDProm, subjIDProm, userIDProm
+    ]).then(([qualID, subjID, userID]) => {
+      // TODO: Verify hex-string types of the IDs here. 
+      post(
+        homePath + "/user_scores.sm.js/callSMF/deleteUserScore",
+        [qualID, subjID, userID]
+      ).then(
+        wasUpdated => resolve(wasUpdated)
+      );
+    });
+  });
+}
 
 
 

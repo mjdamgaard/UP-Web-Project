@@ -33,6 +33,7 @@ export function postUserScoreHex(
     Promise.all([
       qualIDProm, subjIDProm, userEntIDProm, userEntDefProm
     ]).then(([qualID, subjID, userEntID, userEntDef]) => {
+      // TODO: Verify hex-string types of the IDs here. 
       let userID = userEntDef["User ID"];
       let userUPNodeID = userEntDef["UP Node ID"];
       if (userID !== getRequestingUserID() || userUPNodeID !== upNodeID) {
@@ -52,3 +53,35 @@ export function postUserScoreHex(
   });
 }
 
+
+export function deleteUserScore(qualKey, subjKey, userKey) {
+  checkRequestOrigin(true, [
+    "TODO: Add trusted components that can upload user scores."
+  ]);
+
+  let qualIDProm = fetchEntityID(qualKey);
+  let subjIDProm = fetchEntityID(subjKey);
+  let userEntIDProm = fetchEntityID(userKey);
+  let userEntDefProm = fetchEntityDefinition(userKey);
+  return new Promise(resolve => {
+    Promise.all([
+      qualIDProm, subjIDProm, userEntIDProm, userEntDefProm
+    ]).then(([qualID, subjID, userEntID, userEntDef]) => {
+      // TODO: Verify hex-string types of the IDs here. 
+      let userID = userEntDef["User ID"];
+      let userUPNodeID = userEntDef["UP Node ID"];
+      if (userID !== getRequestingUserID() || userUPNodeID !== upNodeID) {
+        resolve(false);
+      }
+      else {
+        let listIDHex = valueToHex(qualID + "+" + userEntID, "string");
+        post(
+          homePath + "/userScores.bbt/_deleteEntry/l=" + listIDHex +
+          "/k=" + subjID
+        ).then(
+          wasDeleted => resolve(wasDeleted)
+        );
+      }
+    });
+  });
+}

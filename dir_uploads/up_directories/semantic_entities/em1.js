@@ -495,8 +495,20 @@ export const scoreHandlers = {
     // via relations, scored by the users). 
     "fetchTopEntry",
 
+    // postScore(qualKey, subjKey, userKey, score, options) posts a new user
+    // score, and will generally call updateScoreForUser() immediately after.
+    // If auxiliary data is posted along with the score itself, perhaps to be
+    // stored at the "payload" column of the score table, this data should be
+    // passed as part of the options argument.
+    "postScore",
+
+    // deleteScore(qualKey, subjKey, userKey, options) is similar to postScore()
+    // above, but deletes the existing user score instead.
+    "deleteScore",
+
     // updateScoreForUser(qualKey, subjKey, userKey, options): When a user
-    // submits a score for a quality, this method should be called.
+    // submits a score for a quality, this method should generally be called.
+    // And the method can also be called at any subsequent point.
     "updateScoreForUser",
 
     // updateScoreForGroup(qualKey, subjKey, options): When viewing a score

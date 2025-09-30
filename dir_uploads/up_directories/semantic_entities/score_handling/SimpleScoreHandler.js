@@ -1,5 +1,7 @@
 
-import {fetchUserScore, fetchUserScoreList} from "../scores.js";
+import {
+  fetchUserScore, fetchUserScoreList, postUserScore, deleteUserScore
+} from "../scores.js";
 import {filterScoredListWRTWeight} from 'scored_lists';
 import {map} from 'array';
 import {getSequentialPromise} from 'promise';
@@ -88,6 +90,26 @@ export class SimpleScoreHandler {
     });
   }
 
+
+  postScore(qualKey, subjKey, userKey, score, options = {}) {
+    return new Promise(resolve => {
+      postUserScore(qualKey, subjKey, userKey, score).then(() => {
+        this.updateScoreForUser(qualKey, subjKey, userKey, options).then(
+          wasUpdated => resolve(wasUpdated)
+        );
+      });
+    });
+  }
+
+  deleteScore(qualKey, subjKey, userKey, options = {}) {
+    return new Promise(resolve => {
+      deleteUserScore(qualKey, subjKey, userKey).then(() => {
+        this.updateScoreForUser(qualKey, subjKey, userKey, options).then(
+          wasUpdated => resolve(wasUpdated)
+        );
+      });
+    });
+  }
 
 
   updateScoreForUser(qualKey, subjKey, userKey, options = {}) {

@@ -11,7 +11,7 @@ import * as AppMain from "./AppMain.jsx";
 export function render({url, history, userID}) {
   let {userEntID} = this.state;
   this.provideContext("history", history);
-  this.provideContext("userEntID", userID ? userEntID : undefined);
+  this.provideContext("userEntID", userEntID ? userEntID : undefined);
 
   if (userID && userEntID === undefined) {
     fetchConstructedEntityID("/1/1/em1.js", "User", [userID]).then(entID => {

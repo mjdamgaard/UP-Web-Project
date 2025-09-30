@@ -36,7 +36,7 @@ async function main() {
   console.log(`Logged in with user #${userID}, and directory #${dirID}.`);
   console.log(
     "Type 'u' for upload, 'b' for bundle, 'p' for post, 'f' for fetch, " +
-    "'d' for delete data, or 'e' for exit."
+    "'delete' for deleting table data, or 'e' for exit."
   );
   let hasExited = false;
   while(!hasExited) {
@@ -125,7 +125,7 @@ async function main() {
         console.log(result);
       }
     }
-    else if (/^([dD]|delete)$/.test(command)) {
+    else if (/^delete$/.test(command)) {
       // TODO: Implement a 'reset' flag (or perhaps a 'reset'(/'r') option),
       // which inserts the JSON array stored in the client-side table file
       // right after the data has been deleted, thus resetting the table to its

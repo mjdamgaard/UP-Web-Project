@@ -1,5 +1,5 @@
 
-import {toPrecision, parseFloat} from 'number';
+import {toPrecision, parseFloat, isNaN} from 'number';
 import {fetchMetric, fetchUserScore} from "/1/1/scores.js";
 import {scoreHandler01} from "/1/1/score_handling/ScoreHandler01/em.js";
 
@@ -84,3 +84,107 @@ export function render({subjKey, qualKey}) {
     <div className="score-interface">{content}</div>
   );
 }
+
+
+
+export const actions = {
+  "submitScore": function() {
+    let userEntID = this.subscribeToContext("userEntID");
+    return new Promise(resolve => {
+      if (userEntID) {
+        this.do("submitScoreWithUserEntID", userEntID).then(
+          result => resolve(result)
+        );
+      } else {
+        this.trigger("postUserEntity").then(userEntID => {
+          if (userEntID) {
+            this.do("submitScoreWithUserEntID", userEntID).then(
+              result => resolve(result)
+            );
+          } else {
+            this.setState(state => ({...state,
+              msg: <span className="warning">{"User is not logged in."}</span>,
+            }));
+            resolve(false);
+          }
+        });
+      }
+    });
+  },
+  "submitScoreWithUserEntID": function(userEntID) {
+    let {qualKey, subjKey} = this.props;
+    let score = parseFloat(this.call("ir", "getValue"));
+    return new Promise(resolve => {
+      if (isNaN(score)) {
+        this.setState(state => ({...state,
+          msg: <span className="warning">{"Ill-formed score value."}</span>,
+        }));
+        resolve(false);
+      }
+      else {
+        scoreHandler01.postScore(
+          qualKey, subjKey, userEntID, score
+        ).then(wasUpdated => {
+          if (wasUpdated) {
+            this.setState(state => ({...state,
+              prevScore: score,
+              msg: <span className="success">{"Score was submitted."}</span>,
+            }));
+            resolve(true);
+          }
+          else {
+            this.setState(state => ({...state,
+              msg: <span className="error">{"Something went wrong."}</span>,
+            }));
+            resolve(false);
+          }
+        });
+      }
+    });
+  },
+  "deleteScore": function() {
+    let userEntID = this.subscribeToContext("userEntID");
+    return new Promise(resolve => {
+      if (userEntID) {
+        this.do("deleteScoreWithUserEntID", userEntID).then(
+          result => resolve(result)
+        );
+      } else {
+        this.trigger("postUserEntity").then(userEntID => {
+          if (userEntID) {
+            this.do("deleteScoreWithUserEntID", userEntID).then(
+              result => resolve(result)
+            );
+          } else {
+            this.setState(state => ({...state,
+              msg: <span className="warning">{"User is not logged in."}</span>,
+            }));
+            resolve(false);
+          }
+        });
+      }
+    });
+  },
+  "deleteScoreWithUserEntID": function(userEntID) {
+    let {qualKey, subjKey} = this.props;
+    return new Promise(resolve => {
+      scoreHandler01.deleteScore(
+        qualKey, subjKey, userEntID, score
+      ).then(wasDeleted => {
+        if (wasDeleted) {
+          this.setState(state => ({...state,
+            prevScore: score,
+            msg: <span className="success">{"Score was deleted."}</span>,
+          }));
+          resolve(true);
+        }
+        else {
+          this.setState(state => ({...state,
+            msg: <span className="error">{"Something went wrong."}</span>,
+          }));
+          resolve(false);
+        }
+      });
+    });
+  },
+};
