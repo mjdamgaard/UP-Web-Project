@@ -14,12 +14,17 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {size, value, onChange} = props;
+    let {size, value, placeholder, onChange} = props;
     verifyTypes(
       [size, onChange], ["integer positive?", "function?"],
       callerNode, execEnv
     );
-    if (value !== undefined) value = getString(value, callerNode, execEnv);
+    if (placeholder !== undefined) {
+      placeholder = getString(placeholder, callerNode, execEnv);
+    }
+    if (value !== undefined) {
+      value = getString(value, callerNode, execEnv);
+    }
 
     if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
       "InputText.render(): 'this' is not a JSXInstance",
@@ -34,6 +39,9 @@ export const render = new DevFunction(
       domNode.setAttribute("type", "text");
       if (size !== undefined) domNode.setAttribute("size", size);
       if (value !== undefined) domNode.value = value;
+      if (placeholder !== undefined) {
+        domNode.setAttribute("placeholder", placeholder);
+      }
     }
 
     // Set the onChange event if props.onChange is supplied.
@@ -43,7 +51,7 @@ export const render = new DevFunction(
       // essentially overwrite the existing one. Thus the input event will fire
       // less frequently when the user types something.
       let ref = [];
-      domNode.onchange = () => {
+      domNode.oninput = () => {
         let eventID = ref[0] = {};
         // TODO: THis setTimeout() thing might be redundant when using onchange
         // rather than oninput, so consider removing it.
@@ -88,11 +96,11 @@ export const actions = {
       val = getString(val, callerNode, execEnv);
       let domNode = thisVal.jsxInstance.domNode;
       let prevVal = domNode.value;
-      // let activeElement = document.activeElement;
+      let activeElement = document.activeElement;
       domNode.value = val;
       // activeElement.focus();
       if (prevVal !== val) {
-        domNode.dispatchEvent(new InputEvent("input"));
+        // domNode.dispatchEvent(new InputEvent("input"));
       }
     }
   ),

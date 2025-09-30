@@ -14,6 +14,9 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
+    // TODO: Add an oninput event as well (and make it so that components like
+    // InputRangeAndValue.jsx can work without changing focus at the wrong
+    // times.
     let {min, max, value, step, onChange} = props;
     verifyTypes(
       [min, max, value, step, onChange],

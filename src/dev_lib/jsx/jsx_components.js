@@ -873,7 +873,13 @@ export class JSXInstanceInterface extends ObjectObject {
   // but only be visible on a subsequent rerender.
   setState = new DevFunction(
     "setState", {},
-    ({interpreter}, [newState]) => {
+    ({callerNode, execEnv, interpreter}, [newStateOrCallback]) => {
+      let newState = newStateOrCallback;
+      if (newState instanceof FunctionObject) {
+        newState = interpreter.executeFunction(
+          newStateOrCallback, [this.jsxInstance.state], callerNode, execEnv
+        );
+      }
       this.jsxInstance.state = newState;
       this.jsxInstance.queueRerender(interpreter);
     }
