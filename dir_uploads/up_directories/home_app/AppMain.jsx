@@ -5,7 +5,7 @@ import * as AboutPage from "./about.jsx";
 import * as HomePage from "./home.jsx";
 
 
-export function render(url, history) {
+export function render({url}) {
   let {pageIdent} = this.state;
 
   // TODO: Reimplement such that the home page isn't erased when when clicking
@@ -16,16 +16,16 @@ export function render(url, history) {
   // "home" page alone.  
   let pageContent;
   if (!pageIdent || pageIdent === "home") {
-    pageContent = <HomePage key="home" url={url} history={history} />;
+    pageContent = <HomePage key="home" url={url} />;
   }
   else if (pageIdent === "about") {
-    pageContent = <AboutPage key="about" history={history} />;
+    pageContent = <AboutPage key="about" />;
   }
   else if (pageIdent === "tutorials") {
-    pageContent = <TutorialIndexPage key="idx" history={history} />;
+    pageContent = <TutorialIndexPage key="idx" />;
   }
   else if (pageIdent === "intro-tutorial") {
-    pageContent = <TutorialIntroPage key="intro" history={history} />;
+    pageContent = <TutorialIntroPage key="intro" />;
   }
   else {
     pageContent = <h3>{"Error: Unknown page: \"" + pageIdent + '"'}</h3>;

@@ -15,7 +15,7 @@ export function getInitState({classKey = undefined}) {
 
 export function render(props) {
   let {entKey, scoreHandler} = props;
-  scoreHandler = scoreHandler ?? this.subscribeToContext("score-handler");
+  scoreHandler = scoreHandler ?? this.subscribeToContext("scoreHandler");
   let {classKey, entityPageQualPath, topEntry} = this.state;
   let content;
 

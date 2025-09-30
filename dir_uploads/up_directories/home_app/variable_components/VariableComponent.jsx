@@ -8,7 +8,7 @@ import * as ComponentEntityComponent from "./ComponentEntityComponent.jsx";
 
 export function render(props) {
   let {classKey, scoreHandler} = props;
-  scoreHandler = scoreHandler ?? this.subscribeToContext("score-handler");
+  scoreHandler = scoreHandler ?? this.subscribeToContext("scoreHandler");
   let {relevancyQualPath, topEntry} = this.state;
   let content;
 

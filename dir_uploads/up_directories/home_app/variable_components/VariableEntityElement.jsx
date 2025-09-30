@@ -17,7 +17,7 @@ const entityElementRelPath = "/1/1/em1.js;get/entityElement";
 
 export function render(props) {
   let {entKey, scoreHandler} = props;
-  scoreHandler = scoreHandler ?? this.subscribeToContext("score-handler");
+  scoreHandler = scoreHandler ?? this.subscribeToContext("scoreHandler");
   let {classKey, relevancyQualPath, topEntry} = this.state;
   let content;
 

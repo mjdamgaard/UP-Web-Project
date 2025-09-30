@@ -27,7 +27,7 @@ export function render({
   scoreHandler = undefined, options = undefined,
   paginationLength = 50, paginationIndex = 0,
 }) {
-  scoreHandler = scoreHandler ?? this.subscribeToContext("score-handler");
+  scoreHandler = scoreHandler ?? this.subscribeToContext("scoreHandler");
   let {qualPath, list} = this.state;
   let content;
 

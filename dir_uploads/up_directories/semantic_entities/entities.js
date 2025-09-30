@@ -137,28 +137,42 @@ export function postRelevancyQuality(classOrObjKey, relKey = undefined) {
 
 
 export function postConstructedEntity(
-  modulePath, constructorAlias, argEntKeyArr = []
+  modulePath, constructorAlias, argArr
 ) {
-  let entIDPromArr = map(argEntKeyArr, entKey => fetchEntityID(entKey));
-  let relIDProm = relKey ? fetchEntityID(relKey) : new Promise(res => res());
-  return new Promise(resolve => {
-    Promise.all(entIDPromArr).then(entIDArr => {
-      let entPath = modulePath + ";call/" + constructorAlias;
-      forEach(entIDArr, entID => {
-        entPath = entPath + "/" + entID;
-      });
-      post(homePath + "/entities.sm.js/callSMF/postEntity", entPath).then(
-        entID => resolve(entID)
-      );
-    });
+  let entPath = modulePath + ";call/" + constructorAlias;
+  forEach(argArr, arg => {
+    entPath = entPath + "/" + arg;
   });
+  return postEntity(entPath);
+}
+
+
+export function fetchConstructedEntityID(
+  modulePath, constructorAlias, argArr
+) {
+  let entPath = modulePath + ";call/" + constructorAlias;
+  forEach(argArr, arg => {
+    entPath = entPath + "/" + arg;
+  });
+  return fetchEntityID(entPath);
 }
 
 
 
-export function postEntity(modulePath, alias) {
-  let entPath = modulePath + ";get/" + alias;
-  return post(homePath + "/entities.sm.js/callSMF/postEntity", entPath);
+export function postEntity(moduleOrEntPath, alias = undefined) {
+  let entPath = alias ? moduleOrEntPath + ";get/" + alias : moduleOrEntPath;
+  return new Promise(resolve => {
+    fetch(entPath).then(entDef => {
+      if (!entDef || !entDef.Class) {
+        resolve(false);
+      }
+      else {
+        post(homePath + "/entities.sm.js/callSMF/postEntity", entPath).then(
+          entID => resolve(entID)
+        );
+      }
+    });
+  });
 }
 
 

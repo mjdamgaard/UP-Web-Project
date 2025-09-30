@@ -1,5 +1,5 @@
 
-import {fetchMetric} from "/1/1/scores.js";
+import {fetchMetric, fetchUserScore} from "/1/1/scores.js";
 
 import * as InputRangeAndValue
 from "../utility_components/InputRangeAndValue.jsx";
