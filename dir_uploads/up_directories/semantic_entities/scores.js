@@ -39,9 +39,10 @@ export function fetchUserScoreHex(qualKey, subjKey, userKey) {
       let listIDHex = valueToHex(qualID + "+" + userID, "string");
       fetch(
         homePath + "/userScores.bbt/entry/l=" + listIDHex + "/k=" + subjID
-      ).then(
-        ([userScoreHex] = []) => resolve(userScoreHex)
-      );
+      ).then(entry => {
+        let [userScoreHex] = entry ?? [];
+        resolve(userScoreHex ?? undefined);
+      });
     });
   });
 }
@@ -54,7 +55,7 @@ export function fetchMetric(qualKey) {
       // default metric. 
       let metricKey = entDef["Default metric"];
       fetchEntityDefinition(metricKey).then(
-        metric => resolve(metric)
+        metric => resolve(metric ?? undefined)
       );
     });
   });
@@ -115,9 +116,10 @@ export function fetchUserScoreHexList(
         (maxNum === undefined ? "" : "/n=" + maxNum) +
         (offset === undefined ? "" : "/o=" + offset) +
         (isAscending === undefined ? "" : "/a=" + isAscending ? "1" : "0")
-      ).then(
-        (userScoreHexList = []) => resolve(userScoreHexList)
-      );
+      ).then(userScoreHexList => {
+        userScoreHexList ??= [];
+        resolve(userScoreHexList);
+      });
     });
   });
 }
@@ -164,9 +166,10 @@ export function fetchScoreHex(
       let listIDSegment = listID ? "/l=" + valueToHex(listID, "string") : "";
       fetch(
         tableFilePath + "/entry" + listIDSegment + "/k=" + keyID
-      ).then(
-        ([scoreAndWeightHex] = []) => resolve(scoreAndWeightHex)
-      );
+      ).then(entry => {
+        let [scoreAndWeightHex] = entry ?? [];
+        resolve(scoreAndWeightHex ?? undefined);
+      });
     });
   });
 }

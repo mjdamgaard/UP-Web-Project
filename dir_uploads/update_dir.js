@@ -57,6 +57,8 @@ async function main() {
     else if (/^([pP]|post)$/.test(command)) {
       // TODO: Implement syntax to append a file path after the request route,
       // which should lead to a file containing the postData for the request.
+      // TODO: More urgent: Implement a -data and -flags option as well to
+      // supply postData and flags (as JSON objects) to the command. 
       console.log("Usage: ~# relative_route [--log] [-f file_path]");
       console.log(
         "(Actually, the [-f file_path] option has not been implemented yet.)"

@@ -507,7 +507,7 @@ class JSXInstance {
             if (!(val instanceof FunctionObject)) {
               break;
             }
-            newDOMNode[mouseEventProperty] = async () => {
+            newDOMNode[mouseEventProperty] = () => {
               try {
                 // Execute the function object held in val, with elevated
                 // privileges that allows the function to make POST-like
@@ -633,8 +633,7 @@ class JSXInstance {
     let eventFun = getPropertyFromPlainObject(this.actions, actionKey);
     if (eventFun) {
       return interpreter.executeFunction(
-        eventFun, [input], node, env,
-        new JSXInstanceInterface(this), [CLEAR_FLAG],
+        eventFun, [input], node, env, new JSXInstanceInterface(this),
       );
     }
     else throw new RuntimeError(
@@ -656,9 +655,16 @@ class JSXInstance {
     eventKey = getStringOrSymbol(eventKey, node, env);
     let eventFun = getPropertyFromPlainObject(events, eventKey);
     if (eventFun) {
+      // TODO: Right now we choose to be very restrictive and clear all
+      // permission-giving flags, except the "can-post" flag, between
+      // components when triggering events and calling methods, but we might
+      // want to change this at some point, potentially. Luckily, is is easy to
+      // loosen restrictions in the future, rather than imposing new ones.
+      let canPost = env.getFlag(CAN_POST_FLAG);
       return interpreter.executeFunction(
         eventFun, [input], node, env,
-        new JSXInstanceInterface(this.parentInstance), [CLEAR_FLAG],
+        new JSXInstanceInterface(this.parentInstance),
+        [CLEAR_FLAG, [CAN_POST_FLAG, canPost]],
       );
     }
     else {
@@ -692,9 +698,12 @@ class JSXInstance {
     methodKey = getStringOrSymbol(methodKey, node, env);
     let methodFun = getPropertyFromPlainObject(methods, methodKey);
     if (methodFun) {
+      // TODO: The same todo applies here as in the trigger() method above.
+      let canPost = env.getFlag(CAN_POST_FLAG);
       return interpreter.executeFunction(
         methodFun, [input], node, env,
-        new JSXInstanceInterface(targetInstance), [CLEAR_FLAG],
+        new JSXInstanceInterface(targetInstance),
+        [CLEAR_FLAG, [CAN_POST_FLAG, canPost]],
       );
     }
     else throw new RuntimeError(

@@ -64,8 +64,8 @@ export function updateScore(listKey, subjKey) {
                 val ??= [0, 0];
                 let factor = listDef.weightFactorArr[ind];
                 return [
-                  acc[0] + val[0] * factor,
-                  acc[1] + val[1] * factor,
+                  acc[0] + (val[0] ?? 0) * factor,
+                  acc[1] + (val[1] ?? 0) * factor,
                 ];
               },
               [0, 0],

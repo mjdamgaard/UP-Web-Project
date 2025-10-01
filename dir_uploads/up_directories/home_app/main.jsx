@@ -34,6 +34,7 @@ export const actions = {
     this.call("m", "pageIdent", pageIdent);
   },
   "postUserEntity": function() {
+  let {userID} = this.props;
     return new Promise(resolve => {
       let {userEntID} = this.state;
       if (!userID) {

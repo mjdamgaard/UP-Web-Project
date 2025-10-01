@@ -22,7 +22,8 @@ export function postUserScoreHex(
   qualKey, subjKey, userKey, scoreHex, payloadHex = undefined
 ) {
   checkRequestOrigin(true, [
-    "TODO: Add trusted components that can upload user scores."
+    "/1/2/main.jsx",
+    "/1/2/scoring/ScoreInterface.jsx",
   ]);
 
   let qualIDProm = fetchEntityID(qualKey);
@@ -56,7 +57,8 @@ export function postUserScoreHex(
 
 export function deleteUserScore(qualKey, subjKey, userKey) {
   checkRequestOrigin(true, [
-    "TODO: Add trusted components that can upload user scores."
+    "/1/2/main.jsx",
+    "/1/2/scoring/ScoreInterface.jsx",
   ]);
 
   let qualIDProm = fetchEntityID(qualKey);
