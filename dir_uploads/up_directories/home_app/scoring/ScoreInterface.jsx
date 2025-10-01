@@ -17,7 +17,7 @@ export function render({subjKey, qualKey}) {
   // whitelist.
   let scoreHandler = scoreHandler01;
   let userEntID = this.subscribeToContext("userEntID");
-  let {hasBegunFetching, metric, prevScore} = this.state;
+  let {hasBegunFetching, metric, prevScore, msg} = this.state;
   let content;
 
   // If the metric and the previous user score are not yet fetched, do so.
@@ -72,6 +72,7 @@ export function render({subjKey, qualKey}) {
         }}>{
           "Clear"
         }</button>
+        <div className="response">{msg}</div>
       </div>,
       <div className="score-display">
         <div className="user-score">{hasPrevScore ? prevScore : undefined}</div>
@@ -89,6 +90,9 @@ export function render({subjKey, qualKey}) {
 
 export const actions = {
   "submitScore": function() {
+    this.setState(state => ({...state,
+      msg: <span className="working">{"Submitting score..."}</span>,
+    }));
     let userEntID = this.subscribeToContext("userEntID");
     return new Promise(resolve => {
       if (userEntID) {
@@ -143,6 +147,9 @@ export const actions = {
     });
   },
   "deleteScore": function() {
+    this.setState(state => ({...state,
+      msg: <span className="working">{"Deleting score..."}</span>,
+    }));
     let userEntID = this.subscribeToContext("userEntID");
     return new Promise(resolve => {
       if (userEntID) {
@@ -169,11 +176,11 @@ export const actions = {
     let {qualKey, subjKey} = this.props;
     return new Promise(resolve => {
       scoreHandler01.deleteScore(
-        qualKey, subjKey, userEntID, score
+        qualKey, subjKey, userEntID
       ).then(wasDeleted => {
         if (wasDeleted) {
           this.setState(state => ({...state,
-            prevScore: score,
+            prevScore: false,
             msg: <span className="success">{"Score was deleted."}</span>,
           }));
           resolve(true);

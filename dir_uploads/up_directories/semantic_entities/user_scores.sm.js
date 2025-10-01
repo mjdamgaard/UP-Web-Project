@@ -72,7 +72,7 @@ export function deleteUserScore(qualKey, subjKey, userKey) {
     ]).then(([qualID, subjID, userEntID, userEntDef]) => {
       // TODO: Verify hex-string types of the IDs here. 
       let userID = userEntDef["User ID"];
-      let userUPNodeID = userEntDef["UP Node ID"];
+      let userUPNodeID = userEntDef["UP node ID"];
       if (userID !== getRequestingUserID() || userUPNodeID !== upNodeID) {
         resolve(false);
       }
