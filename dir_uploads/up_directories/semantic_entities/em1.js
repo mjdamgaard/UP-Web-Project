@@ -254,7 +254,7 @@ export const RQ = (classOrObjID, relID = undefined) => ({
   "Relational object": relID === undefined ?  undefined : "#" + classOrObjID,
   "Label": "Relevant for " + (relID === undefined ?
     "#" + classOrObjID :
-    "#" + classOrObjID + "→" + "#" + relID
+    "#" + classOrObjID + " → " + "#" + relID
   ),
   "Domain": abs("./em1.js;get/entities"),
   "Default metric": abs("./em1.js;get/predicateMetric"),
@@ -301,7 +301,7 @@ export const RelationalClass = (relID, objID) => ({
   "Class": abs("./em1.js;get/classes"),
   "Relation": "#" + relID,
   "Relational object": "#" + objID,
-  "Name": "#" + objID + "→" + "#" + relID,
+  "Name": "#" + objID + " → " + "#" + relID,
   "Superclass": abs("./em1.js;get/relationalClasses"),
 });
 export const relationalClasses = {
@@ -319,7 +319,7 @@ export const QualityVariable = (qualID, subjID) => ({
   "Class": abs("./em1.js;get/qualityVariables"),
   "Quality": "#" + qualID,
   "Subject": "#" + subjID,
-  "Label": "#" + subjID + "⋲" + "#" + qualID,
+  "Label": "#" + subjID + " ⇒ " + "#" + qualID,
 });
 export const qualityVariables = {
   "Class": abs("./em1.js;get/classes"),

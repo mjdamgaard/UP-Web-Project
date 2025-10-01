@@ -23,8 +23,8 @@ export function render({url, history, userID}) {
 
   return (
     <div className="app">
-      <AppHeader key="h" />
-      <AppMain key="m" url={url} />
+      <AppHeader key="h" url={url} history={history} />
+      <AppMain key="m" url={url} history={history} />
     </div>
   );
 }
@@ -32,9 +32,6 @@ export function render({url, history, userID}) {
 
 
 export const actions = {
-  "goToPage": function(pageIdent) {
-    this.call("m", "pageIdent", pageIdent);
-  },
   "postUserEntity": function() {
   let {userID} = this.props;
     return new Promise(resolve => {
@@ -58,7 +55,6 @@ export const actions = {
 };
 
 export const events = [
-  "goToPage",
   "postUserEntity",
 ];
 

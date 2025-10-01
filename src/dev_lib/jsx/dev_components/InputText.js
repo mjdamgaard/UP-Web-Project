@@ -37,6 +37,7 @@ export const render = new DevFunction(
     if (!domNode || domNode.tagName !== "input") {
       domNode = document.createElement("input");
       domNode.setAttribute("type", "text");
+      domNode.setAttribute("class", "input-text_0");
       if (size !== undefined) domNode.setAttribute("size", size);
       if (value !== undefined) domNode.value = value;
       if (placeholder !== undefined) {

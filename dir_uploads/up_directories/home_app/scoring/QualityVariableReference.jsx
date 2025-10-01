@@ -1,8 +1,13 @@
 
+import * as EntityReference from "../utility_components/EntityReference.jsx";
 
 
 export function render({qualKey, subjKey}) {
 
-  return <div>{"TODO: Impl. QualityVariableReference"}</div>;
+  return <span>
+    <EntityReference key="s" entKey={subjKey} />
+    {" ⇒ "}
+    <EntityReference key="q" entKey={qualKey} />
+  </span>;
 
 }

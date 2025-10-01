@@ -1,6 +1,7 @@
 
 import {
-  DevFunction, getString, ArgTypeError, ObjectObject,
+  DevFunction, getString, ArgTypeError, ObjectObject, verifyTypes,
+  getPropertyFromObject,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
   DOMNodeObject, JSXInstanceInterface, HREF_REGEX, HREF_CD_START_REGEX,
@@ -18,6 +19,15 @@ export const render = new DevFunction(
       props = props.members;
     }
     let {href, pushState, children, onClick} = props;
+    if (pushState === undefined) {
+      let history = thisVal.jsxInstance.subscribeToContext("history");
+      if (history) {
+        pushState = getPropertyFromObject(history, "pushState");
+      }
+    }
+    verifyTypes(
+      [pushState, onClick], ["function?", "function?"], callerNode, execEnv
+    );
 
     if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
       "ILink.render(): 'this' is not a JSXInstance",
@@ -28,19 +38,20 @@ export const render = new DevFunction(
     let jsxInstance = thisVal.jsxInstance;
     let domNode = jsxInstance.domNode;
     if (!domNode || domNode.tagName !== "a") {
-      domNode = document.createElement("a")
+      domNode = document.createElement("a");
+      domNode.setAttribute("class", "i-link_0");
     }
 
     // Add the relative href if provided.
     if (href !== undefined) {
       href = getString(href, callerNode, execEnv);
 
-      // Validate href, and prepend '/' to it if doesn't start with /.?.?\//.
+      // Validate href, and prepend './' to it if doesn't start with /.?.?\//.
       if (!HREF_REGEX.test(href)) throw new ArgTypeError(
         "Invalid href: " + href,
         callerNode, execEnv
       );
-      if (!HREF_CD_START_REGEX.test(href)) href = '/' + href;
+      if (!HREF_CD_START_REGEX.test(href)) href = './' + href;
 
       // Add the href attribute.
       domNode.setAttribute("href", href);

@@ -35,6 +35,7 @@ export const render = new DevFunction(
     if (!domNode || domNode.tagName !== "input") {
       domNode = document.createElement("input");
       domNode.setAttribute("type", "range");
+      domNode.setAttribute("class", "input-range_0");
       if (min !== undefined) domNode.setAttribute("min", min);
       if (max !== undefined) domNode.setAttribute("max", max);
       if (value !== undefined) domNode.setAttribute("value", value);

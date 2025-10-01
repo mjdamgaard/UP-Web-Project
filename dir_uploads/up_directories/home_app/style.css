@@ -46,13 +46,20 @@
 
 
 
-.link {
+.i-link {
   color: #1d1dff;
+  text-decoration: none;
 }
-.link:hover {
+.i-link:hover {
   cursor: pointer;
   text-decoration: underline;
 }
+
+.app-header .i-link {
+  color: black;
+}
+
+
 
 tt.command {
   display: inline-block;
