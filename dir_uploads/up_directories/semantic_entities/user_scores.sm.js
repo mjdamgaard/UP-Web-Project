@@ -13,6 +13,7 @@
 
 import homePath from "./.id.js";
 import {post, upNodeID} from 'query';
+import {valueToHex} from 'hex';
 import {getRequestingUserID, checkRequestOrigin} from 'request';
 import {fetchEntityDefinition, fetchEntityID} from "./entities.js";
 
@@ -36,7 +37,7 @@ export function postUserScoreHex(
     ]).then(([qualID, subjID, userEntID, userEntDef]) => {
       // TODO: Verify hex-string types of the IDs here. 
       let userID = userEntDef["User ID"];
-      let userUPNodeID = userEntDef["UP Node ID"];
+      let userUPNodeID = userEntDef["UP node ID"];
       if (userID !== getRequestingUserID() || userUPNodeID !== upNodeID) {
         resolve(false);
       }
