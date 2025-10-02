@@ -12,7 +12,7 @@ import {
 
 const CLASS_NAME_REGEX = /^ *([a-z][a-z0-9\-]* *)*$/;
 
-export const HREF_REGEX = /^(\.{0,2}\/)?[a-zA-Z0-9_\-./~!&$+=]*$/;
+export const HREF_REGEX = /^(\.{0,2}\/)?[a-zA-Z0-9_\-./~!&$+=;]*$/;
 export const HREF_CD_START_REGEX = /^\.{0,2}\//;
 
 

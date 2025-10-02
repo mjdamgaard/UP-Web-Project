@@ -65,10 +65,10 @@ export const classes = {
 
 // Class of all users. These are all defined solely by the userID assigned to
 // the given user and the ID or the UP node that created the user profile.
-export const User = (userID, upNodeID) => ({
+export const User = (upNodeID, userID) => ({
   "Class": abs("./em1.js;get/users"),
-  "User ID": userID,
   "UP node ID": upNodeID,
+  "User ID": userID,
   "Label": "User " + userID,
 });
 export const users = {

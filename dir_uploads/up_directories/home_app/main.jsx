@@ -14,7 +14,7 @@ export function render({url, history, userID}) {
   this.provideContext("userEntID", userEntID ? userEntID : undefined);
 
   if (userID && userEntID === undefined) {
-    fetchConstructedEntityID("/1/1/em1.js", "User", [userID, "1"]).then(
+    fetchConstructedEntityID("/1/1/em1.js", "User", ["1", userID]).then(
       entID => {
         this.setState(state => ({...state, userEntID: entID ?? false}));
       }
@@ -43,7 +43,7 @@ export const actions = {
         resolve(userEntID);
       }
       else {
-        postConstructedEntity("/1/1/em1.js", "User", [userID, "1"]).then(
+        postConstructedEntity("/1/1/em1.js", "User", ["1", userID]).then(
           entID => {
             this.setState(state => ({...state, userEntID: entID}));
             resolve(entID);

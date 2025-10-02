@@ -1,5 +1,5 @@
 
-import {fetchEntityDefinition, fetchEntityID} from "/1/1/entities.js";
+import {fetchEntityDefinition, fetchEntityPath} from "/1/1/entities.js";
 import {splitStringAlongEntityKeyEndPoints} from 'entities';
 import {map} from 'array';
 import * as ILink from 'ILink.jsx';
@@ -13,7 +13,7 @@ import * as ILink from 'ILink.jsx';
 
 
 export function render({entKey, isLink = true, pushState = undefined}) {
-  let {entDef, entID} = this.state;
+  let {entDef, entPath} = this.state;
   pushState ??= isLink ? (this.subscribeToContext("history") ?? {}).pushState :
     undefined;
   let className, content = "";
@@ -25,9 +25,9 @@ export function render({entKey, isLink = true, pushState = undefined}) {
       this.setState({...this.state, entDef: entDef ?? false});
     });
   }
-  if (isLink && entID === undefined) {
-    fetchEntityID(entKey).then(entID => {
-      this.setState({...this.state, entID: entID ?? false});
+  if (isLink && entPath === undefined) {
+    fetchEntityPath(entKey).then(entPath => {
+      this.setState({...this.state, entPath: entPath ?? false});
     });
   }
 
@@ -43,12 +43,12 @@ export function render({entKey, isLink = true, pushState = undefined}) {
   }
 
   // Else if still needing the entID to be fetched, wait for that.
-  else if (isLink && entID === undefined) {
+  else if (isLink && entPath === undefined) {
     className = "entity-reference fetching";
   }
 
   // And if it turns out to be missing, render a missing entity title.
-  else if (isLink && !entID) {
+  else if (isLink && !entPath) {
     className = "entity-reference missing-entity";
   }
 
@@ -79,7 +79,7 @@ export function render({entKey, isLink = true, pushState = undefined}) {
   // Then return either an ILink or a span element, depending on isLink.
   return isLink ?
     <span className={className}>
-      <ILink key="0" href={"/e/" + entID} pushState={pushState} >{
+      <ILink key="0" href={"/e" + entPath} pushState={pushState} >{
         content
       }</ILink>
     </span> :

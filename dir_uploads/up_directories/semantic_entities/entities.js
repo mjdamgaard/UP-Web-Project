@@ -29,7 +29,7 @@ export function fetchEntityID(entKey) {
   // the user entity (assuming that this has been uploaded).
   else if (entKey[0] === "@") {
     return new Promise(resolve => {
-      let entPath = homePath + "/em1.js;call/User/" + userID + "/" + upNodeID;
+      let entPath = homePath + "/em1.js;call/User/" + upNodeID + "/" + userID;
       let entPathHex = valueToHex(entPath, "string");
       fetch(homePath + "/entIDs.bt/entry/k=" + entPathHex).then(
         entID=> resolve(entID)
@@ -61,7 +61,7 @@ export function fetchEntityPath(entKey) {
   if (entKey[0] === "@") {
     let userID = substring(entKey, 1);
     return new Promise(resolve => resolve(
-      homePath + "/em1.js;call/User/" + userID + "/" + upNodeID
+      homePath + "/em1.js;call/User/" + upNodeID + "/" + userID
     ));
   }
 

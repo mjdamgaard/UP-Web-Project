@@ -43,8 +43,8 @@ export function insertInitialModerators() {
     let transformedInitialModeratorListProm = Promise.all(
       map(initialModerators, ([userID, weight, weightWeight]) => {
         return new Promise(resolve => {
-          let userEntPath = homePath + "/em1.js;call/User/" + userID +
-            "/" + upNodeID;
+          let userEntPath = homePath + "/em1.js;call/User/" + upNodeID +
+            "/" + userID;
           let scoreHex = arrayToHex(
             [weight, weightWeight], ["float(,,3)", "float(,,3)"]
           );
@@ -101,8 +101,8 @@ export function postScoresFromInitialModerators() {
   let initModeratorIDArrProm = Promise.all(
     map(initialModerators, ([userID]) => {
       return new Promise(res => {
-        let userEntPath = homePath + "/em1.js;call/User/" + userID +
-          "/" + upNodeID;
+        let userEntPath = homePath + "/em1.js;call/User/" + upNodeID +
+          "/" + userID;
         post(
           homePath + "/entities.sm.js/callSMF/postEntity", userEntPath
         ).then(
