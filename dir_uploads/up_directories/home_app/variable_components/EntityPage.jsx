@@ -20,7 +20,7 @@ export function render(props) {
   let content;
 
   // If the class key is not provided, and has not already been fetched, do so.
-  if (relevancyQualPath === undefined) {
+  if (classKey === undefined) {
     fetchEntityDefinition(entKey).then(entDef => {
       this.setState({...this.state, classKey: entDef["Class"]});
     });
