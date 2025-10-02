@@ -48,34 +48,40 @@ export function updateScoreForUser(
           userWeightProm, curUserScoreProm, prevMeanAndCombWeightProm,
           prevUserScoreAndWeightProm,
         ]).then(([
-          userWeight = 0, curUserScore = 0, [prevMean = 0, prevCombWeight = 0],
+          userWeight = 0, curUserScore, [prevMean = 0, prevCombWeight = 0],
           [prevScore = 0, prevWeight = 0],
         ]) => {
-          // If the user weight is above 0, insert the current score in the
-          // contributions table, and otherwise delete any existing
-          // contribution. 
+          // If the user score exists and user weight is above 0, insert the
+          // current score in the contributions table, and otherwise delete any
+          // existing contribution.
+          if (typeof curUserScore !== "number") {
+            userWeight = curUserScore = 0;
+          }
+          let contributionUpdateProm;
           if (userWeight > 0) {
-            postScoreAndWeight(
+            contributionUpdateProm = postScoreAndWeight(
               contributionsPath, [qualID, userGroupID, subjID], userID,
               curUserScore, userWeight
             );
           } else {
-            deleteScore(
+            contributionUpdateProm = deleteScore(
               contributionsPath, [qualID, userGroupID, subjID], userID
             );
           }
 
           // Then update the mean aggregate and combined weight.
-          let newCombWeight = prevCombWeight + userWeight - prevWeight;
-          let newMean = (newCombWeight <= 0) ? 0 : (
-            prevMean * prevCombWeight +
-            curUserScore * userWeight - prevScore * prevWeight
-          ) / newCombWeight;
-          postScoreAndWeight(
-            aggrPath, [qualID, userGroupID], subjID, newMean, newCombWeight
-          ).then(
-            wasUpdated => resolve(wasUpdated)
-          );
+          contributionUpdateProm.then(() => {
+            let newCombWeight = prevCombWeight - prevWeight + userWeight;
+            let newMean = (newCombWeight <= 0) ? 0 : (
+              prevMean * prevCombWeight +
+              curUserScore * userWeight - prevScore * prevWeight
+            ) / newCombWeight;
+            postScoreAndWeight(
+              aggrPath, [qualID, userGroupID], subjID, newMean, newCombWeight
+            ).then(
+              wasUpdated => resolve(wasUpdated)
+            );
+          });
         });
       });
     });

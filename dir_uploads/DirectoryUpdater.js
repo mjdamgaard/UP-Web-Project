@@ -152,7 +152,8 @@ export class DirectoryUpdater {
 
     // If no dirID was provided, fail.
     if (!dirID) {
-      return console.error("Failure: No dirID was provided.")
+      console.error("Failure: No dirID was provided.");
+      return;
     }
 
     // Request a list of all the files in the server-side directory, and then
@@ -187,9 +188,10 @@ export class DirectoryUpdater {
       await Promise.all(serverFilePaths.map(serverFilePath => (
         serverQueryHandler.postAsAdmin(serverFilePath + "/_put")
       )));
+      console.log("Filed successfully deleted.");
     }
     else {
-      console.log("Aborted.")
+      console.log("Aborted.");
     }
   }
 
