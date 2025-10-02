@@ -1,9 +1,5 @@
 
 import {ajaxServerDomainURL} from "../config.js";
-import {
-  payGas, NetworkError as InterpreterNetworkError,
-} from "../../interpreting/ScriptInterpreter.js";
-import {FlagTransmitter} from "../../interpreting/FlagTransmitter.js";
 
 // const flagTransmitter = new FlagTransmitter;
 

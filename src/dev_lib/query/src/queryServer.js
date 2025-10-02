@@ -1,6 +1,6 @@
 
 import {
-  payGas, NetworkError as InterpreterNetworkError,
+  payGas, NetworkError as InterpreterNetworkError, jsonStringify,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
   ServerQueryHandler, NetworkError
@@ -16,6 +16,7 @@ export async function queryServer(
 ) {
   payGas(node, env, {fetch: 1});
   let flags = isPrivate ? FlagTransmitter.getTransmittedFlags(env) : undefined;
+  options ||= JSON.parse(jsonStringify(options));
   try {
     return await serverQueryHandler.queryServer(
       isPrivate, route, isPost, postData, options, upNodeID, flags

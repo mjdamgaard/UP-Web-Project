@@ -179,6 +179,9 @@ async function requestHandler(req, res, returnGasRef) {
   if (!options || typeof options !== "object") {
     options = {};
   }
+  if (isPrivate) {
+    options.isPrivate = true;
+  }
   let {returnLog, gas: reqGas = {}} = options;
 
   // For now, we ignore the reqGas object, as this gives the early developers/
@@ -266,7 +269,7 @@ async function requestHandler(req, res, returnGasRef) {
     [virMainPath, [parsedMainScript, lexArr, strPosArr, mainScript]]
   ]);
   let [result, log] = await scriptInterpreter.interpretScript(
-    gas, undefined, virMainPath, [route, isPost, postData, isPrivate, options],
+    gas, undefined, virMainPath, [route, isPost, postData, options],
     flags, {}, parsedScripts,
   );
 

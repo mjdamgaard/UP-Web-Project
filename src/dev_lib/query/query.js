@@ -4,6 +4,7 @@ import {
   getPrototypeOf, OBJECT_PROTOTYPE, ARRAY_PROTOTYPE, FunctionObject,
   CLEAR_FLAG, PromiseObject, Environment, LiveJSModule, parseString,
   TEXT_FILE_ROUTE_REGEX, SCRIPT_ROUTE_REGEX, CSSModule, getString,
+  getPropertyFromObject,
 } from '../../interpreting/ScriptInterpreter.js';
 import {scriptParser} from "../../interpreting/parsing/ScriptParser.js";
 import {parseRoute} from './src/parseRoute.js';
@@ -23,11 +24,11 @@ export const upNodeID = "1";
 export const queryRoute = new DevFunction(
   "queryRoute", {
     isAsync: true,
-    typeArr: ["string", "boolean?", "any?", "boolean?", "object?"],
+    typeArr: ["string", "boolean?", "any?", "object?"],
   },
   async function(
     {callerNode, execEnv, interpreter},
-    [route, isPost = false, postData, isPrivate, options = {}]
+    [route, isPost = false, postData, options = {}]
   ) {
     // If isPost == true, check if the current environment is allowed to post.
     if (isPost) {
@@ -78,6 +79,7 @@ export const queryRoute = new DevFunction(
 
     // Else query a server at the given UP node.
     else {
+      let isPrivate = isPost || getPropertyFromObject(options, "isPrivate");
       result = await interpreter.queryServer(
         isPrivate, route, isPost, postData, options, upNodeID,
         callerNode, execEnv
@@ -95,12 +97,14 @@ export const queryRoute = new DevFunction(
 export const query = new DevFunction(
   "query", {
     isAsync: true,
-    typeArr: ["string", "boolean?", "any?", "boolean?", "object?"],
+    typeArr: ["string", "boolean?", "any?", "object?"],
   },
   async function(
     {callerNode, execEnv, interpreter},
-    [extendedRoute, isPost = false, postData, isPrivate, options = {}]
+    [extendedRoute, isPost = false, postData, options = {}]
   ) {
+    let isPrivate = isPost || getPropertyFromObject(options, "isPrivate");
+
     // First split the input route along each (optional) occurrence of '/>',
     // where the first part is then the actual route that is queried, and any
     // and all of the subsequent parts are what we can call "casting paths",
@@ -170,7 +174,7 @@ export const query = new DevFunction(
       if (!parsedScript) {
         script = await queryRoute.fun(
           {callerNode, execEnv, interpreter},
-          [route, false, undefined, isPrivate, options],
+          [route, false, undefined, options],
         );
         if (typeof script !== "string") throw new LoadError(
           `No script was found at ${route}`,
@@ -223,7 +227,7 @@ export const query = new DevFunction(
     else if (TEXT_FILE_ROUTE_REGEX.test(route)) {
       let text = await queryRoute.fun(
         {callerNode, execEnv, interpreter},
-        [route, false, undefined, isPrivate, options],
+        [route, false, undefined, options],
       );
       if (typeof text !== "string") throw new LoadError(
         `No text was found at ${route}`,
@@ -240,7 +244,7 @@ export const query = new DevFunction(
     else {
       result = await queryRoute.fun(
         {callerNode, execEnv, interpreter},
-        [route, isPost, postData, isPrivate, options],
+        [route, isPost, postData, options],
       );
     };
 
@@ -362,14 +366,14 @@ export const query = new DevFunction(
 
 
 export const fetch = new DevFunction(
-  "fetch", {isAsync: true, typeArr: ["string", "boolean?", "any?"]},
+  "fetch", {isAsync: true, typeArr: ["string", "any?"]},
   async function(
     {callerNode, execEnv, interpreter},
-    [extendedRoute, isPrivate = false, options]
+    [extendedRoute, options]
   ) {
     let result = await query.fun(
       {callerNode, execEnv, interpreter},
-      [extendedRoute, false, undefined, isPrivate, options],
+      [extendedRoute, false, undefined, options],
     );
     return result;
   }
@@ -384,7 +388,7 @@ export const post = new DevFunction(
   ) {
     let result = await query.fun(
       {callerNode, execEnv, interpreter},
-      [route, true, postData, true, options],
+      [route, true, postData, options],
     );
     return result;
   }
