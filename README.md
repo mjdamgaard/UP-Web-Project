@@ -184,7 +184,7 @@ But until that is achieved, [up-web.org](https://www.up-web.org) will simply res
 And for apps that tries any sort of malicious behavior, such as phishing attempts, or attempts to make the users delete, corrupt, or involuntarily publicize their data, we will most likely also keep reserving the right to delete such apps for any foreseeable future.
 
 
-
+<!-- 
 ## Funding the project
 
 Last but not least, let us talk a bit about how the website intends to get its funds.
@@ -197,13 +197,86 @@ And additionally, we will also be open for user donations.
 
 With a large enough userbase, this will hopefully be able generate more than enough revenue to keep the site going, without needing to push any ads on the users at all.
 
-<!-- We will also make it possible for users to donate to the website, which might also have the beneficial side-effect for the user of gaining more esteem in the user network. And at some point, we might also make a system where user can watch ads as an alternative way of donating to the website. -->
+<!-- We will also make it possible for users to donate to the website, which might also have the beneficial side-effect for the user of gaining more esteem in the user network. And at some point, we might also make a system where user can watch ads as an alternative way of donating to the website. -/->
 
 Other potential service providers of the network in the future are of course free to monetize their websites in whichever way they want. But since the users can choose freely between all the service providers in principle, and are able to switch to another one whenever they like, the userbase should thereby have the power to prevent "enshittification" of the network.
 
 
 Lastly, [up-web.org](https://www.up-web.org) also at some point intends to found an organization for monetizing user-contributions, not necessarily so much when it comes to the user-made source code for the site, but more so when it comes to user content such as videos and images, and all such creative content. Hopefully we will be able to create a good organization where such content creators can pool their IPs, and vote on what paywalls to set up for what content, in a fair and democratic way.
 
+ -->
+
+
+## Business model
+
+There are several different approaches that one could take in order to fund this open source project. And the most simple one would be to have all the websites involved with the project include a 'Sponsors' page where sponsors of the project can advertise themselves. The money that this would bring could easily be enough to pay the costs of providing access to the databases needed for the project.
+
+
+However, there is also a more elaborate approach that one might take, which can hopefully bring a lot more money to the project, while still eliminating the risk of enshittification that a purely capitalistic approach would normally entail.
+
+This approach involves a (so far) hypothetical company model of a 'Share-Redistributing Company' (SRC).
+
+
+### A Share-Redistributing Company
+
+In short, an SRC is a company whose shares are slowly and continuously redistributed to the customers, namely by requiring that each purchase comes with an attachment of a small share in the company.
+The shares are not given out for free, however. The company will generally increase the price accordingly, such that the customer pays for both the price of original product or service that the buy, as well as the price of the share that is attached to the purchase.
+
+What this does is essentially to force the customers to make a small investment with each purchase, slowly buying out the original owners of the company.
+Now, on the surface, being forced to make such an investment would not seem to be a benefit to the customer. Except for the fact that all other customers are equally forced to do the same thing. And by knowing that the majority of the shares will be overtaken by the customers in a near future, each customer can then rest assured that the company will not take a turn for the worse once the customer base has grown dependent on the company, and start trying to squeeze as much money and value out of the customers as they can get away with.
+
+When the overlap between the shareholders and the customers has grown large enough, there is simply no real point in squeezing.
+
+For more information about this SRC model, see *TODO: Insert link to a more detailed explanation of an SRC, also including the point about how the shares are locked for trade after being redistributed.*
+
+
+### Ad-watching end users as the primary customers
+
+Of course, when talking about websites, the customers are often not the actual end users, but rather the companies that buys ad space on the websites. However, we can always reinterpret the money coming from advertising as coming from the users instead, meaning that it is the users that watches the ads who are the ones to earn company shares.
+
+A particular way that this could be achieved is to make sure that each ad comes with a code at the bottom, which the user can redeem in order to prove that they have viewed the ad. And when it comes to video ads, typing in the code could even be how you skip the ad. When the ad plays, more and more of the code is revealed, meaning that the user might get a greater reward for watching more of the ad.
+
+Each advertising company should then be able to determine the specifics of how and when the codes are shown, and what they are worth when redeemed, as well as how much these rewards diminishes if the same user watches the same ad again within a short span of time.
+
+And instead of requiring the advertising company to pay up front, we can instead make a deal where they pay exactly the amount of money that has been redeemed from their ads by the users. This way we can essentially see it as the advertising companies paying the users that watches their ads, who then immediately pay that money to the SRC, granting them access to more content on the website, as well as rewarding them shares in the company.
+
+And given that the advertising companies thus essentially buy the ad space directly from the very users that watches their ads, it then makes total sense to then give the users complete freedom in choosing the algorithm that governs which ads are shown, and when. Each individual user can then choose their own plan for how ads are shown, and as long as they generate enough money this way, when compared to the content that they consume, the SRC does not need to care about which ads the money comes from. And similarly if the user just wants to pay that money directly themselves instead, rather than having to watch ads, that should also not matter to the SRC.
+
+
+### A balance between capitalism and open source
+
+By implementing this SRC, we can hopefully strike a perfect balance between capitalism and open source. It should be obvious that if the this company grows enough to rival current Web 2.0 websites, like Facebook or YouTube fr example, or even surpasses these, then there is a lot of money on the line for investors.
+
+This prospect will hopefully allow us to attract large investments early on, by what will become the initial shareholders of the company. The plan is then to immediately start rewarding the users that contribute source code to the UP Web, and preferably quite generously, such that we can attract even more open source developers.
+
+Getting more developers early on means that the web application that the system offers will sooner be able to attract users. And more users means more excitement about the project, which will lead to more investments, and so on.
+
+Now, in the beginning, it makes sense to just rely on rewarding open source contributions to the project. But after a time, it will also make sense to create a license that allows developers to dedicate their work specifically to the SRC in question, and not just to any fork of the UP Web project. And if they do so, the SRC might give them greater rewards in return, as this help to create insurances to the investors that they will at some point be able to require the user to either watch ads and/or to pay in order to access content.
+
+However, when the company starts acquiring IP rights to the source code, it obviously also runs the risk of losing the interest that follows with being an open source alternative. And this could affect both the developers as well as the regular users. After all, if the company is just another capitalistic similar to the existing options out there, what is the point of getting excited?
+
+This is where point of choosing an SRC as the company model comes into play. Hopefully, when the users know that all their contributed IPs will eventually end up in being distributed widely among the user base, rather than being owned by a relatively small group of investors, they will still retain the excitement of taking part in the project.
+
+This way we might thus be able to retain the excitement of the users coming from being a new open source alternative to existing websites, while at the same time even being able to grant the monetary rewards to the source code contributors that they deserve for their work.
+
+
+### Initial shareholders of the SRC
+
+Lastly, let us also talk a bit about who the initial investors of the company are. A typical approach here would be to start out with some initial owners, who are then able to sell shares to other investors as they please, and to possibly keep a sizable part of the initial shares to themselves.
+
+However, in the spirit of openness and fairness, this is not the plan for the aforementioned SRC. Instead we intend to start the company as public one from the very outset.
+
+This is done by distributing a fixed amount of shares each month, maybe something of the order of 5 % of the total shares, which would mean that the whole company will be sold in the time span of 20 months.
+
+And instead of using a first-come-first-served principle, we instead allow the investors to pay nay money that they want during that each month, and the shares that they end up getting will then simply be given by the money that they paid divided by the total amount for that month.
+
+This will obviously mean that the investors will not now the exact amount of shares that they will get for their money, but by analyzing the trend for each month, they will still be able to make a good estimation.
+
+Furthermore, in order to be even more fair to all, we will set an initial investment threshold that needs to be reached before the first month of this process officially start. And all money that was invested before this event is then just counted as belonging to the first month. The idea is that this will help ensure that the public has a chance of learning about the opportunity in good time before the sale truly begins. 
 
 
 
+
+### More information
+
+*TODO: Reference a text that goes through the business plan in more chronological order, and with some additional details added about the company model.*
