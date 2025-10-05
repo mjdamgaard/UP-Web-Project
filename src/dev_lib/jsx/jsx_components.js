@@ -1,7 +1,7 @@
 
 import {
-  DevFunction, JSXElement, LiveJSModule, RuntimeError, getExtendedErrorMsg,
-  getString, ObjectObject, forEachValue, CLEAR_FLAG, PromiseObject,
+  DevFunction, JSXElement, LiveJSModule, RuntimeError, getString, ObjectObject,
+  forEachValue, CLEAR_FLAG, PromiseObject, logExtendedErrorAndTrace,
   OBJECT_PROTOTYPE, Environment, ARRAY_PROTOTYPE, FunctionObject, Exception,
   getStringOrSymbol, getPropertyFromObject, getPropertyFromPlainObject,
   jsonStringify, ArgTypeError, LoadError,
@@ -308,7 +308,7 @@ class JSXInstance {
 
   getFailedComponentDOMNode(error, replaceSelf) {
     if (error instanceof Exception) {
-      console.error(getExtendedErrorMsg(error));
+      logExtendedErrorAndTrace(error);
       let newDOMNode = document.createElement("span");
       newDOMNode.setAttribute("class", "_failed");
       this.replaceDOMNode(newDOMNode, replaceSelf);

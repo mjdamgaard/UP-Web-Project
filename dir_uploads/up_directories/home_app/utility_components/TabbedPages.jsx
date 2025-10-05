@@ -18,9 +18,9 @@ export function render({tabs, closeInactiveTabs = undefined}) {
       <div className="tab-menu">{
         map(tabEntries, ([tabKey, tabData]) => {
           if (!tabData) return undefined;
-          let {title} = tabData
+          let {title} = tabData;
           return <Tab key={"t-" + tabKey} tabKey={tabKey} children={title}
-            isOpen={tabKey === openTabKey} isLoaded={loadedTabs[tabKey]}
+            isOpen={tabKey === openTabKey} isLoaded={loadedPages[tabKey]}
           />;
         })
       }</div>
@@ -41,7 +41,7 @@ export function render({tabs, closeInactiveTabs = undefined}) {
 
 
 export function getInitState({tabs, initTabKey = undefined}) {
-  return new {
+  return {
     openTabKey: initTabKey,
     loadedPages: {[initTabKey]: tabs[initTabKey]},
   };

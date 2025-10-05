@@ -9,10 +9,7 @@ import {
 import {scriptParser} from "../../interpreting/parsing/ScriptParser.js";
 import {parseRoute} from './src/parseRoute.js';
 
-import {
-  checkElevatedPrivileges, checkIfCanPost, CAN_POST_FLAG,
-  ELEVATED_PRIVILEGES_FLAG,
-} from "./src/flags.js";
+import {CAN_POST_FLAG, ELEVATED_PRIVILEGES_FLAG} from "./src/flags.js";
 
 
 
@@ -32,7 +29,11 @@ export const queryRoute = new DevFunction(
   ) {
     // If isPost == true, check if the current environment is allowed to post.
     if (isPost) {
-      checkIfCanPost(callerNode, execEnv);
+      let canPost = execEnv.getFlag(CAN_POST_FLAG);
+      if (!canPost) throw new RuntimeError(
+        "Cannot post from here",
+        callerNode, execEnv
+      );
     }
 
     // And else change to an environment where the "can-post" flag is set to
@@ -68,7 +69,11 @@ export const queryRoute = new DevFunction(
     let result;
     if (interpreter.isServerSide && upNodeID === upNodeID) {
       if (isLocked) {
-        checkElevatedPrivileges(homeDirID, callerNode, execEnv);
+        let curHomeDirID = execEnv.getFlag(ELEVATED_PRIVILEGES_FLAG);
+        if (!curHomeDirID || curHomeDirID !== homeDirID) throw new RuntimeError(
+          `Requested elevated privileges on Directory ${homeDirID} not granted`,
+          callerNode, execEnv
+        );
       }
       result = await interpreter.queryDB(
         route, isPost, postData, options,

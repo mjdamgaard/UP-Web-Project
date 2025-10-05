@@ -224,7 +224,7 @@ The shares are not given out for free, however. The company will generally incre
 
 Additionally, an SRC generally prohibits the shares that have been redistributed this way to be traded[^1], thus ensuring that the majority of the company will eventually end up being owned by the customers.
 
-[^1]: Exceptions can be made for customer shareholders that has reached an old enough age, which thus allows the customer shares to function as part of a pension plan.
+[^1]: Exceptions can be made for customer shareholders that has reached an old enough age, allowing them to sell shares back to the company, which thus means that the customer shares can function as part of a pension plan.
 
 What this does is thus essentially to force the customers to make a small, binding investment with each purchase, slowly buying out the original owners of the company.
 Now, on the surface, being forced to make such an investment would not seem to be a benefit to the customer. Except for the fact that all other customers are equally forced to do the same thing. And by knowing that the majority of the shares will be taken over by the customers in a near future, each customer can then rest assured that the company will not take a turn for the worse, once the customer base has grown dependent on the company, and start trying to squeeze as much money and value out of the customers as they can get away with.

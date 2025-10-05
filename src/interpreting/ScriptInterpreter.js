@@ -3,6 +3,8 @@ import {scriptParser} from "./parsing/ScriptParser.js";
 import {
   getExtendedErrorMsg as getExtendedSyntaxErrorMsg, getLnAndCol,
 } from "./parsing/Parser.js";
+import {REQUESTING_SMF_ROUTE_FLAG} from "../dev_lib/query/src/flags.js";
+
 
 
 
@@ -67,7 +69,7 @@ export class ScriptInterpreter {
     let scriptVars = {
       gas: gas, log: {entries: []}, scriptPath: scriptPath,
       flags: flags, contexts: contexts, globalEnv: undefined, interpreter: this,
-      isExiting: false, resolveScript: undefined,
+      isExiting: false, resolveScript: undefined, exitPromise: undefined,
       parsedScripts: parsedScripts, liveModules: liveModules,
     };
 
@@ -117,6 +119,7 @@ export class ScriptInterpreter {
         resolve([output, log]);
       };
     }).catch(err => console.error(err));
+    scriptVars.exitPromise = outputAndLogPromise;
 
 
     // Now execute the script as a module, followed by an execution of any
@@ -566,11 +569,11 @@ export class ScriptInterpreter {
       if (this.isServerSide) {
         env.scriptVars.resolveScript(undefined, err);
       } else {
-        console.error(getExtendedErrorMsg(err));
+        logExtendedErrorAndTrace(err);
       }
     }
     else if (!(err instanceof ExitException)) {
-      console.error(getExtendedErrorMsg(err));
+      logExtendedErrorAndTrace(err);
     }
   }
 
@@ -1818,8 +1821,12 @@ export class Environment {
   }
 
 
+  setCallTrace(trace) {
+    this.trace = trace;
+  }
+
   getCallTrace(maxLen = 15, stringify = true) {
-    return this.getCallTraceHelper(maxLen, stringify).reverse();
+    return this.trace ?? this.getCallTraceHelper(maxLen, stringify).reverse();
   }
 
   getCallTraceHelper(maxLen, stringify) {
@@ -1837,6 +1844,12 @@ export class Environment {
       ret.push(callStr);
       return ret;
     }
+    else if (this.flags.get(REQUESTING_SMF_ROUTE_FLAG)) {
+      // If the function is an SMF called by another SMF, stop the trace before
+      // it bleeds into the caller SMF (in order to prevent data leaks).
+      // TODO: Test that the trace is cut off at the correct point.
+      return [];
+    }
     else {
       return this.parent.getCallTraceHelper(maxLen, stringify);
     }
@@ -1849,7 +1862,8 @@ export const UNDEFINED = Symbol("undefined");
 export const CLEAR_FLAG = Symbol("clear");
 
 
-
+// TODO: There's a bug where a component's JSX element node isn't always
+// matched with the right arguments. Fix that. 
 function getCallString(callNode, callEnv, execEnv, stringify) {
   let nodeStr = getNodeString(callNode, callEnv, true);
   let {inputArr} = execEnv;
@@ -2633,6 +2647,7 @@ export class PromiseObject extends ObjectObject {
     else {
       let fun = promiseOrFun;
       this.promise = new Promise((resolve, reject) => {
+        env.scriptVars.exitPromise.then(() => {reject()});
         let userResolve = new DevFunction(
           "resolve", {}, ({}, [res]) => resolve(res)
         );
@@ -2642,7 +2657,7 @@ export class PromiseObject extends ObjectObject {
         interpreter.executeFunctionOffSync(
           fun, [userResolve, userReject], node, env
         );
-      }).catch(err => console.error(err));
+      });
     }
 // TODO: Add onRejected callback argument to then().
     this.members["then"] = new DevFunction(
@@ -2823,7 +2838,6 @@ export function getExtendedErrorMsg(err) {
 
   // If error is thrown from the global environment, also return the
   // toString()'ed error as is.
-  if (!err.environment) console.error("Missing environment for thrown error!");
   let {
     modulePath, lexArr, strPosArr, script
   } = err.environment.getModuleEnv() ?? {};
@@ -2862,6 +2876,20 @@ export function getNodeString(node, env, appendModuleLocation = false) {
   return ret;
 }
 
+
+export function getExtendedErrorMsgAndTrace(err) {
+  let msg = getExtendedErrorMsg(err);
+  let trace = err.environment.getCallTrace();
+  return [msg, trace];
+}
+
+export function logExtendedErrorAndTrace(err) {
+  let [msg, trace] = getExtendedErrorMsgAndTrace(err);
+  console.error(msg);
+  console.error(
+    "Trace when the previous error occurred:\n" + trace.join(",\n")
+  );
+}
 
 
 

@@ -114,8 +114,6 @@ export class ServerQueryHandler {
 
 
     if (!response.ok) {
-      // TODO: Consider changing the name of LoadError, and/or making a new
-      // error type for server request errors.
       throw new NetworkError(
         "HTTP error " + response.status +
         (responseText ? ": " + responseText : ""),

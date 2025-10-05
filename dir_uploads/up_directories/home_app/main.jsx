@@ -6,12 +6,14 @@ import {
 import * as AppHeader from "./AppHeader.jsx";
 import * as AppMain from "./AppMain.jsx";
 
+import {scoreHandler01} from "/1/1/score_handling/ScoreHandler01/em.js";
 
 
 export function render({url, history, userID}) {
   let {userEntID} = this.state;
   this.provideContext("history", history);
   this.provideContext("userEntID", userEntID ? userEntID : undefined);
+  this.provideContext("scoreHandler", scoreHandler01);
 
   if (userID && userEntID === undefined) {
     fetchConstructedEntityID("/1/1/em1.js", "User", ["1", userID]).then(

@@ -3,6 +3,9 @@ import {
   fetchEntityDefinition, fetchRelevancyQualityPath,
 } from "/1/1/entities.js";
 
+import * as EntityReference from "../utility_components/EntityReference.jsx";
+import * as GeneralEntityPage from "../entity_pages/GeneralEntityPage.jsx";
+
 const entityPageRel = "/1/1/em1.js;get/entityPage";
 
 
@@ -45,18 +48,17 @@ export function render(props) {
     content = <div className="fetching"></div>;
   }
   
+  // Else ff top entry is non-existent, or the score is non-positive, render
+  // a general entity page as the default.
+  if (!topEntry || topEntry[1] <= 0) {
+    content = <GeneralEntityPage {...props} />;
+  }
+
   // Else if the top entry is ready, expect it to be an entity of the "App
   // component" class, with a "Component path" attribute, and render this via
   // the ComponentEntityComponent.
-  else {
-    let [compEntID, score] = topEntry;
-    // If the score is not positive, reject the top entry and behave as if the
-    // list is empty.
-    if (score <= 0) {
-      return (
-        <div className="missing"></div>
-      );
-    }
+  else {console.log(topEntry);
+    let [compEntID] = topEntry;
     content = <ComponentEntityComponent {...props} compEntID={compEntID} />;
   }
 
@@ -66,9 +68,9 @@ export function render(props) {
   // for this class, and to score them and/or add new ones themselves.
   return (
     <div className="variable-component">
-      <div className="class-link">
-        <EntityLink key="class" entKey={classKey} />
-      </div>
+      <div className="class-link">{
+        classKey ? <EntityReference key="class" entKey={classKey} /> : undefined
+      }</div>
       {content}
     </div>
   );
