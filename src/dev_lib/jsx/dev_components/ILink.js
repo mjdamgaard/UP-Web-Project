@@ -64,7 +64,8 @@ export const render = new DevFunction(
     let ownDOMNodes = [];
     if (children !== undefined) {
       let childrenNodes = jsxInstance.getDOMNode(
-        children, marks, interpreter, callerNode, execEnv, ownDOMNodes, false
+        children, marks, interpreter, callerNode, execEnv, props,
+        ownDOMNodes, false
       );
       if (childrenNodes instanceof Array) {
         domNode.append(...childrenNodes);

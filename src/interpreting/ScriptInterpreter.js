@@ -1821,12 +1821,8 @@ export class Environment {
   }
 
 
-  setCallTrace(trace) {
-    this.trace = trace;
-  }
-
-  getCallTrace(maxLen = 15, stringify = true) {
-    return this.trace ?? this.getCallTraceHelper(maxLen, stringify).reverse();
+  getCallTrace(maxLen = 15, stringify = false) {
+    return this.getCallTraceHelper(maxLen, stringify).reverse();
   }
 
   getCallTraceHelper(maxLen, stringify) {
@@ -1862,15 +1858,15 @@ export const UNDEFINED = Symbol("undefined");
 export const CLEAR_FLAG = Symbol("clear");
 
 
-// TODO: There's a bug where a component's JSX element node isn't always
-// matched with the right arguments. Fix that. 
+
 function getCallString(callNode, callEnv, execEnv, stringify) {
   let nodeStr = getNodeString(callNode, callEnv, true);
   let {inputArr} = execEnv;
   return nodeStr + ", arguments: (" +
     inputArr.map(val => (
       (val === undefined) ? "undefined" :
-        stringify ? jsonStringify(val) : getString(val, callNode, callEnv)
+        (typeof val === "string") ? JSON.stringify(val) :
+          stringify ? jsonStringify(val) : getString(val, callNode, callEnv)
     )).join(", ") +
   ")";
 }
@@ -2123,7 +2119,11 @@ export function getString(val, node, env) {
   else if (getPrototypeOf(val) === OBJECT_PROTOTYPE) {
     return "{" +
       Object.entries(val).map(
-        ([key, prop]) => key + ": " + getString(prop, node, env)
+        ([key, prop]) => key + ": " + (
+          typeof prop === "string" ?
+            JSON.stringify(prop) :
+            getString(prop, node, env)
+        )
       ).join(", ") +
     "}";
   }
@@ -2877,14 +2877,9 @@ export function getNodeString(node, env, appendModuleLocation = false) {
 }
 
 
-export function getExtendedErrorMsgAndTrace(err) {
+export function logExtendedErrorAndTrace(err) {
   let msg = getExtendedErrorMsg(err);
   let trace = err.environment.getCallTrace();
-  return [msg, trace];
-}
-
-export function logExtendedErrorAndTrace(err) {
-  let [msg, trace] = getExtendedErrorMsgAndTrace(err);
   console.error(msg);
   console.error(
     "Trace when the previous error occurred:\n" + trace.join(",\n")

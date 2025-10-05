@@ -202,11 +202,11 @@ class JSXInstance {
     let requestOrigin = this.settings.getRequestOrigin(
       this, callerNode, callerEnv
     );
-    let compEnv = new Environment(callerEnv, undefined, {flags: [
+    let flags = [
       CLEAR_FLAG,
       [CLIENT_TRUST_FLAG, isTrusted],
       [REQUESTING_COMPONENT_FLAG, requestOrigin],
-    ]});
+    ];
 
 
     // Then get the component module's render() function.
@@ -217,7 +217,7 @@ class JSXInstance {
         new RuntimeError(
           'Component module is missing a render() function at "' +
           this.componentPath + '"',
-          callerNode, compEnv
+          callerNode, callerEnv
         ),
         replaceSelf
       );
@@ -228,7 +228,8 @@ class JSXInstance {
     let jsxElement;
     try {
       jsxElement = interpreter.executeFunction(
-        renderFun, [props], callerNode, compEnv, new JSXInstanceInterface(this)
+        renderFun, [props], callerNode, callerEnv,
+        new JSXInstanceInterface(this), flags
       );
     }
     catch (err) {
@@ -255,7 +256,8 @@ class JSXInstance {
     else {
       try {
         newDOMNode = this.getDOMNode(
-          jsxElement, marks, interpreter, callerNode, compEnv, ownDOMNodes
+          jsxElement, marks, interpreter, callerNode, callerEnv, props,
+          ownDOMNodes
         );
       }
       catch (err) {
@@ -297,7 +299,7 @@ class JSXInstance {
     // not yet been prepared for the instance, it will just do nothing, and
     // wait for the rerender.
     this.settings.transformInstance(
-      this, newDOMNode, ownDOMNodes, callerNode, compEnv
+      this, newDOMNode, ownDOMNodes, callerNode, callerEnv
     );
 
     // Finally, return the instance's new DOM node.
@@ -351,7 +353,7 @@ class JSXInstance {
   // the attributes of those elements.
 
   getDOMNode(
-    jsxElement, marks, interpreter, callerNode, callerEnv,
+    jsxElement, marks, interpreter, callerNode, callerEnv, props,
     ownDOMNodes, isOuterElement = true
   ) {
     // If jsxElement is not a JSXElement instance, return a string derived from
@@ -377,7 +379,7 @@ class JSXInstance {
       let children = isArray ? jsxElement : jsxElement.props["children"] ?? [];
       let ret = children.map(val => (
         this.getDOMNode(
-          val, marks, interpreter, callerNode, callerEnv,
+          val, marks, interpreter, callerNode, callerEnv, props,
           ownDOMNodes, false
         )
       ));
@@ -421,7 +423,7 @@ class JSXInstance {
       // a callback function.
       let childEnv = new Environment(
         jsxElement.decEnv, "function", {
-          fun: {}, inputArr: [jsxElement.props], callerNode: callerNode,
+          fun: {}, inputArr: [props], callerNode: callerNode,
           callerEnv: callerEnv,
         }
       );
@@ -542,7 +544,7 @@ class JSXInstance {
       // end.
       ownDOMNodes.push(newDOMNode);
       this.createAndAppendChildren(
-        newDOMNode, childArr, marks, interpreter, callerNode, callerEnv,
+        newDOMNode, childArr, marks, interpreter, callerNode, callerEnv, props,
         ownDOMNodes
       );
 
@@ -553,17 +555,19 @@ class JSXInstance {
 
 
   createAndAppendChildren(
-    domNode, childArr, marks, interpreter, callerNode, callerEnv,
+    domNode, childArr, marks, interpreter, callerNode, callerEnv, props,
     ownDOMNodes
   ) {
     childArr.forEach(val => {
       if (val instanceof Array) {
         this.createAndAppendChildren(
-          domNode, val, marks, interpreter, callerNode, callerEnv, ownDOMNodes
+          domNode, val, marks, interpreter, callerNode, callerEnv, props,
+          ownDOMNodes
         );
       } else if (val !== undefined) {
         domNode.append(this.getDOMNode(
-          val, marks, interpreter, callerNode, callerEnv, ownDOMNodes, false
+          val, marks, interpreter, callerNode, callerEnv, props, ownDOMNodes,
+          false
         ));
       }
     });
