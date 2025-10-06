@@ -932,7 +932,7 @@ export const scriptGrammar = {
   },
   "jsx-element": {
     rules: [
-      ["/</", "/>/", "jsx-content!1*", "/</", /\/>/],
+      ["/<>/", "jsx-content!1*", /<\/>/],
       ["/</", "tag-name", "jsx-property!1*", /\/>/],
       [
         "/</", "tag-name", "jsx-property!1*", "/>/", "jsx-content!1*",
@@ -944,7 +944,7 @@ export const scriptGrammar = {
         return {
           type: "jsx-element",
           isFragment: true,
-          children: children[2],
+          children: children[1],
         };
       } else if (ruleInd === 1) {
         let tagName = children[1].lexeme;
@@ -1163,7 +1163,7 @@ export class ScriptParser extends Parser {
         /(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
         /\+=|\-=|\*=|\/=|&&=|\|\|=|\?\?=/,
         /&&|\|\||\?\?|\+\+|\-\-|\*\*/,
-        /\?\.|\.\.\.|=>|\/>|<\/()/,
+        /\?\.|\.\.\.|=>|<\/?>|\/>|<\//,
         /===|==|!==|!=|<=|>=/,
         /[.,:;\[\]{}()<>?=+\-*|^&!%/]/,
         /[_$a-zA-Z0-9]+/,

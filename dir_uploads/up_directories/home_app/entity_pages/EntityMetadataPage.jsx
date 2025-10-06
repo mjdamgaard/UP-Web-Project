@@ -1,6 +1,32 @@
 
-
+import {fetchEntityDefinition} from "/1/1/entities.js";
 
 export function render({entKey}) {
-  return "Test";
+  let {entDef} = this.state;
+  let content;
+
+  // If the class key is not provided, and has not already been fetched, do so.
+  if (entDef === undefined) {
+    fetchEntityDefinition(entKey).then(entDef => {
+      this.setState(state => ({...state, entDef: entDef ?? false}));
+    });
+    content = <div className="fetching"></div>;
+  }
+
+  else if (!entDef) {
+    content = <div className="missing"></div>;
+  }
+
+  else {
+    content = <>
+      {"entDef:"}
+      {entDef}
+    </>;
+  }
+  
+  return (
+    <div className="metadata-page">
+      {content}
+    </div>
+  );
 }

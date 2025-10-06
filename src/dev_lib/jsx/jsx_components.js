@@ -589,18 +589,24 @@ class JSXInstance {
           props, ownDOMNodes, indRef
         );
       } else if (val !== undefined) {
-        let newChildNode = this.getDOMNode(
+        let childNodeOrChildArr = this.getDOMNode(
           val, curChildArr[indRef[0]], marks, interpreter, callerNode,
           callerEnv, props, ownDOMNodes, false
         );
-        if (newChildNode instanceof Array) {
-          newChildNode.forEach(childNode => {
+        if (childNodeOrChildArr instanceof Array) {
+          let childArr = childNodeOrChildArr;
+          childArr.forEach(child => {
+            let childNode = this.getDOMNode(
+              child, curChildArr[indRef[0]], marks, interpreter, callerNode,
+              callerEnv, props, ownDOMNodes, false
+            );
             this.#replaceChild(domNode, curChildArr, childNode, indRef[0]);
             indRef[0]++;
           });
         }
         else {
-          this.#replaceChild(domNode, curChildArr, newChildNode, indRef[0]);
+          let childNode = childNodeOrChildArr;
+          this.#replaceChild(domNode, curChildArr, childNode, indRef[0]);
           indRef[0]++;
         }
       } else {

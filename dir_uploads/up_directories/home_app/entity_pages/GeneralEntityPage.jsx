@@ -9,6 +9,6 @@ const subclassesRel = "/1/1/em1.js;get/subclasses";
 
 export function render({entKey}) {
   return (
-    <EntityMetadataPage key="0" initTabKey={"members"} />
+    <EntityMetadataPage key="0" entKey={entKey} />
   );
 }
