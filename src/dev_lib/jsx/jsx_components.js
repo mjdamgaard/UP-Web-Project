@@ -256,8 +256,8 @@ class JSXInstance {
     else {
       try {
         newDOMNode = this.getDOMNode(
-          jsxElement, marks, interpreter, callerNode, callerEnv, props,
-          ownDOMNodes
+          jsxElement, this.domNode, marks, interpreter, callerNode, callerEnv,
+          props, ownDOMNodes
         );
       }
       catch (err) {
@@ -278,8 +278,8 @@ class JSXInstance {
     // in the DOM tree. Also call updateDecoratingAncestors() to update the
     // this.domNode property of any potential decorating ancestor (i.e. one
     // that shares the same DOM node as this one).
-    if (replaceSelf) {
-      this.domNode.replaceWith(newDOMNode);
+    if (replaceSelf && this.domNode) {
+      if (this.domNode !== newDOMNode) this.domNode.replaceWith(newDOMNode);
       this.updateDecoratingAncestors(newDOMNode);
     }
     this.domNode = newDOMNode;
@@ -325,7 +325,7 @@ class JSXInstance {
     this.childInstances.forEach(child => child.dismount());
     this.childInstances = new Map();
     if (replaceSelf && this.domNode) {
-      this.domNode.replaceWith(newDOMNode);
+      if (newDOMNode !== this.domNode) this.domNode.replaceWith(newDOMNode);
       this.updateDecoratingAncestors(newDOMNode);
     }
     this.domNode = newDOMNode;
@@ -353,47 +353,53 @@ class JSXInstance {
   // the attributes of those elements.
 
   getDOMNode(
-    jsxElement, marks, interpreter, callerNode, callerEnv, props,
+    jsxElement, curNode, marks, interpreter, callerNode, callerEnv, props,
     ownDOMNodes, isOuterElement = true
   ) {
-    // If jsxElement is not a JSXElement instance, return a string derived from
-    // JSXElement, except if it is an outer element, in which case wrap it in
-    // a span element.
+    let newDOMNode;
+    // If jsxElement is not a JSXElement instance, let the new DOM node be a
+    // string derived from JSXElement, except if it is an outer element, in
+    // which case wrap it in a span element.
     let isArray = jsxElement instanceof Array;
     if (!(jsxElement instanceof JSXElement) && !isArray) {
       if (isOuterElement) {
-        let newDOMNode = document.createElement("span");
-        if (jsxElement !== undefined) newDOMNode.append(
-          getString(jsxElement, callerNode, callerEnv)
-        );
-        return newDOMNode;
+        newDOMNode = (curNode?.tagName === "span") ?
+          removeChildren(clearAttributes(curNode)) :
+          document.createElement("span");
+        if (jsxElement !== undefined) {
+          newDOMNode.append(getString(jsxElement, callerNode, callerEnv));
+        }
       }
-      else return getString(jsxElement, callerNode, callerEnv);
+      else if (jsxElement !== undefined) {
+        newDOMNode = new Text(getString(jsxElement, callerNode, callerEnv));
+      }
+      else {
+        newDOMNode = new Text();
+      }
     }
 
     // If jsxElement is a fragment, we render each of its children individually,
     // and return an array of all these values, some of which are DOM nodes and
     // some of which are strings. This is unless the element is an outer one,
     // in which case we wrap it in a div element.
-    if (jsxElement.isFragment || isArray) {
-      let children = isArray ? jsxElement : jsxElement.props["children"] ?? [];
-      let ret = children.map(val => (
-        this.getDOMNode(
-          val, marks, interpreter, callerNode, callerEnv, props,
-          ownDOMNodes, false
-        )
-      ));
+    else if (jsxElement.isFragment || isArray) {
+      let childArr = isArray ? jsxElement : jsxElement.props["children"] ?? [];
       if (isOuterElement) {
-        let newDOMNode = document.createElement("div");
-        if (jsxElement !== undefined) newDOMNode.append(...children);
-        return newDOMNode;
+        newDOMNode = (curNode?.tagName === "div") ?
+          clearAttributes(curNode) :
+          document.createElement("div");
+        this.replaceChildren(
+          newDOMNode, childArr, marks, interpreter, callerNode, callerEnv,
+          props, ownDOMNodes
+        );
       }
-      else return ret;
+      else return childArr;
     }
 
     // If componentModule is defined, render the component instance.
-    let componentModule = jsxElement.componentModule;
-    if (componentModule) {
+    else if (jsxElement.componentModule) {
+      let componentModule = jsxElement.componentModule;
+
       // First we check if the childInstances to see if the child component
       // instance already exists, and if not, create a new one. In both cases,
       // we also make sure to mark the childInstance as being used.
@@ -416,18 +422,17 @@ class JSXInstance {
       marks.set(key, true);
 
       // Then we call childInstance.render() to render/rerender (if its props
-      // have changed) the child instance and get its DOM node, which can be
-      // returned straightaway. In order to get better error reporting, we also
-      // create an intermediate environment such that it will appear as if the
-      // render() function is called from the JSXElement itself, as if it were
-      // a callback function.
+      // have changed) the child instance and get its DOM node.
+      // In order to get better error reporting, we also create an intermediate
+      // environment such that it will appear as if the render() function is
+      // called from the JSXElement itself, as if it were a callback function.
       let childEnv = new Environment(
         jsxElement.decEnv, "function", {
           fun: {}, inputArr: [props], callerNode: callerNode,
           callerEnv: callerEnv,
         }
       );
-      return childInstance.render(
+      newDOMNode = childInstance.render(
         jsxElement.props, isOuterElement, interpreter,
         jsxElement.node, childEnv, false
       );
@@ -438,7 +443,9 @@ class JSXInstance {
     // attributes and/or append some content to it.
     else {
       let tagName = jsxElement.tagName;
-      let newDOMNode = document.createElement(tagName);
+      newDOMNode = (curNode?.tagName === tagName) ?
+        clearAttributes(curNode) :
+        document.createElement(tagName);
 
       // Update allowed selection of attributes, and throw an invalid/non-
       // implemented attribute is set. Also record the children prop for the
@@ -543,35 +550,77 @@ class JSXInstance {
       // that ownDOMNodes will be ordered from ancestors to descendants at the
       // end.
       ownDOMNodes.push(newDOMNode);
-      this.createAndAppendChildren(
-        newDOMNode, childArr, marks, interpreter, callerNode, callerEnv, props,
-        ownDOMNodes
+      this.replaceChildren(
+        newDOMNode, childArr, marks, interpreter, callerNode, callerEnv,
+        props, ownDOMNodes
       );
+    }
 
-      // Then return the DOM node of this new element.
-      return newDOMNode;
+    // Return the DOM node of this new element.
+    return newDOMNode;
+  }
+
+
+  replaceChildren(
+    domNode, childArr, marks, interpreter, callerNode, callerEnv,
+    props, ownDOMNodes
+  ) {
+    let curChildArr = [...domNode.childNodes];
+    let indRef = [0];
+    this.#replaceChildrenHelper(
+      domNode, childArr, curChildArr, marks, interpreter, callerNode, callerEnv,
+      props, ownDOMNodes, indRef
+    );
+
+    let len = curChildArr.length;
+    for (let i = indRef[0]; i < len; i++) {
+      curChildArr[i].remove();
     }
   }
 
-
-  createAndAppendChildren(
-    domNode, childArr, marks, interpreter, callerNode, callerEnv, props,
-    ownDOMNodes
+  #replaceChildrenHelper(
+    domNode, childArr, curChildArr, marks, interpreter, callerNode, callerEnv,
+    props, ownDOMNodes, indRef
   ) {
     childArr.forEach(val => {
       if (val instanceof Array) {
-        this.createAndAppendChildren(
-          domNode, val, marks, interpreter, callerNode, callerEnv, props,
-          ownDOMNodes
+        this.#replaceChildrenHelper(
+          domNode, val, curChildArr, marks, interpreter, callerNode, callerEnv,
+          props, ownDOMNodes, indRef
         );
       } else if (val !== undefined) {
-        domNode.append(this.getDOMNode(
-          val, marks, interpreter, callerNode, callerEnv, props, ownDOMNodes,
-          false
-        ));
+        let newChildNode = this.getDOMNode(
+          val, curChildArr[indRef[0]], marks, interpreter, callerNode,
+          callerEnv, props, ownDOMNodes, false
+        );
+        if (newChildNode instanceof Array) {
+          newChildNode.forEach(childNode => {
+            this.#replaceChild(domNode, curChildArr, childNode, indRef[0]);
+            indRef[0]++;
+          });
+        }
+        else {
+          this.#replaceChild(domNode, curChildArr, newChildNode, indRef[0]);
+          indRef[0]++;
+        }
+      } else {
+        let childNode = new Text();
+        this.#replaceChild(domNode, curChildArr, childNode, indRef[0]);
+        indRef[0]++;
       }
     });
   }
+
+  #replaceChild(domNode, curChildArr, childNode, ind) {
+    let prevChildNode = curChildArr[ind];
+    if (!prevChildNode) {
+      domNode.append(childNode);
+    }
+    else if (childNode !== prevChildNode) {
+      prevChildNode.replaceWith(childNode);
+    }
+  }
+
 
 
   getFullKey() {
@@ -1049,6 +1098,22 @@ export class SettingsObject extends ObjectObject {
 
 
 
+
+
+function clearAttributes(elementNode) {
+  let attributeNames = elementNode.attributes.map(attrNode => attrNode.name);
+  attributeNames.forEach(name => {
+    elementNode.removeAttribute(name);
+  });
+  return elementNode;
+}
+
+function removeChildren(elementNode) {
+  ([...elementNode.childNodes]).forEach(childNode => {
+    childNode.remove();
+  });
+  return elementNode;
+}
 
 
 

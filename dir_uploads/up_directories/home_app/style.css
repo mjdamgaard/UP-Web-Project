@@ -22,7 +22,7 @@
   padding: 6px 10px;
 }
 .app-header > :hover {
-  background-color: #91989c;
+  background-color: #bfc8ce;
   cursor: pointer;
 }
 .app-header > :first-child {
@@ -30,6 +30,7 @@
 }
 .app-header > :first-child:hover {
   background-color: unset;
+  text-decoration: none;
 }
 
 

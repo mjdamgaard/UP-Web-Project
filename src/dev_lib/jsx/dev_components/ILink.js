@@ -63,15 +63,10 @@ export const render = new DevFunction(
     let marks = new Map();
     let ownDOMNodes = [];
     if (children !== undefined) {
-      let childrenNodes = jsxInstance.getDOMNode(
-        children, marks, interpreter, callerNode, execEnv, props,
-        ownDOMNodes, false
+      jsxInstance.replaceChildren(
+        domNode, [children], marks, interpreter, callerNode, execEnv,
+        props, ownDOMNodes
       );
-      if (childrenNodes instanceof Array) {
-        domNode.append(...childrenNodes);
-      } else {
-        domNode.append(childrenNodes);
-      }
     }
     ownDOMNodes = [domNode, ...ownDOMNodes];
 

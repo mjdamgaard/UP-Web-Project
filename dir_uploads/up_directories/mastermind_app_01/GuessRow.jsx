@@ -13,7 +13,7 @@ export function render({
           this.trigger("changeCurrentSlot", ind);
         };
         return (
-          <div className={className} onMouseDown={onClick}>
+          <div className={className} onClick={onClick}>
             <Peg key={"p-g-" + ind} colorID={colorID}/>
           </div>
         );
