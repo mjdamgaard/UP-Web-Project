@@ -20,7 +20,7 @@ export class DBConnection {
     // Get the connection.
     let conn = await this.connPromise;
 
-    // Query the database and get the results table as a multidimensional array. 
+    // Query the database and get the results table as a multidimensional array.
     let options = {sql: sql, rowsAsArray: true};
     let [[results = []]] = await conn.query(options, paramValArr);
     return results;
@@ -45,7 +45,42 @@ export class DBConnection {
   //   return val;
   // }
 
+
+
+  async startTransaction() {
+    let conn = await this.connPromise;
+    await conn.query({sql: "START TRANSACTION"});
+  }
+  async commit() {
+    let conn = await this.connPromise;
+    await conn.query({sql: "COMMIT"});
+  }
+  async rollback() {
+    let conn = await this.connPromise;
+    await conn.query({sql: "ROLLBACK"});
+  }
+
+  async getLock(name, time = 10) {
+    let conn = await this.connPromise;
+    let [[rowArr = []]] = await conn.query(
+      {sql: "GET_LOCK(?, ?)", rowsAsArray: true}, [name, time]
+    );
+    return rowArr[0];
+  }
+  async releaseLock(name) {
+    let conn = await this.connPromise;
+    let [[rowArr = []]] = await conn.query(
+      {sql: "RELEASE_LOCK(?)", rowsAsArray: true}, [name]
+    );
+    return rowArr[0];
+  }
+
+  isReadyPromise() {
+    return this.connPromise;
+  }
+
 }
+
 
 
 export function getProcCallSQL(procName, paramNum = 0) {
