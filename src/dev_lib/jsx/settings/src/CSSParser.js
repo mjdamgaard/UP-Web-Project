@@ -40,6 +40,17 @@ const UNIT_PATTERN =
 // TODO: Continue this list.
 
 
+const FUNCTION_NAME_PATTERN =
+  "(abs|acos|asin|atan|atan2|blur|brightness|calc|circle|clamp|color-mix|" +
+  "color|conic-gradient|contrast|cos|counters?|cubic-bezier|drop-shadow|" +
+  "ellipse|exp|fit-content|grayscale|hsl|hue-rotate|hwb|hypot|inset|" +
+  "invert|lab|lch|light-dark|linear-gradient|linear|log|matrix|matrix3d|" +
+  "max|min|minmax|mod|oklab|oklch|opacity|path|perspective|polygon|pow|" +
+  "radial-gradient|ray|rect|rem|repeat|" +
+  "repeating-(conic|linear|radial)-gradient|rgb|" +
+  "rotate(3d|X|Y|Z)?|scale(3d|X|Y|Z)?|skew[XYZ]?|translate(3d|X|Y|Z)?|" +
+  "round|saturate|scroll|sepia|shape|sign|sin|sqrt|steps|tan|view|xywh)";
+
 
 export const cssGrammar = {
   "style-sheet": {
@@ -227,7 +238,7 @@ export const cssGrammar = {
       ["string"],
       ["hex-color"],
       ["built-in-value"],
-      // TODO: Implement function calls (with only safe functions).
+      ["function-call"],
     ],
     process: copyFromChild,
   },
@@ -311,12 +322,34 @@ export const cssGrammar = {
     process: copyLexemeFromChild,
     params: ["built-in-value"],
   },
+  "function-call": {
+    rules: [
+      ["/" + FUNCTION_NAME_PATTERN + "/", /\(/, "value-or-operator!1*", /\)/],
+    ],
+    process: (children) => ({
+      type: "function-call",
+      ident: children[0],
+      valOrOpArr: children[2],
+    }),
+  },
+  "value-or-operator": {
+    rules: [
+      ["value"],
+      [/[,+\-*/]/, "S*"],
+    ],
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? copyFromChild(children, ruleInd) : {
+        type: "operator",
+        lexeme: children[0],
+      };
+    },
+  },
   "at-rule": {
     rules: [
       ["at-container-rule"],
       ["at-keyframes-rule"],
       // TODO: Implement:
-      // ["at-media-rule"],
+      // ["at-media-rule"], // (Only implement a subset of this.)
       // ["at-supports-rule"],
     ],
     process: copyFromChild,

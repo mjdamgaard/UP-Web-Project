@@ -89,8 +89,17 @@ export class CSSTransformer {
 
 
   transformValue(valueNode) {
-    // TODO: Change when implementing built-in functions.
-    return valueNode.value ?? valueNode.lexeme;
+    if (valueNode.type === "function-call") {
+      return valueNode.ident + "(" +
+        valueNode.valOrOpArr.map(valOrOp => {
+          return (valOrOp.type === "operator") ? valOrOp.lexeme :
+            this.transformValue(valOrOp);
+        }).join(" ").replaceAll(" ,", ",") +
+      ")";
+    }
+    else {
+      return valueNode.value ?? valueNode.lexeme;
+    }
   }
 
 
