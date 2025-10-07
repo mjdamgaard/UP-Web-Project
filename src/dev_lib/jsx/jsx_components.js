@@ -202,11 +202,11 @@ class JSXInstance {
     let requestOrigin = this.settings.getRequestOrigin(
       this, callerNode, callerEnv
     );
-    let flags = [
+    let compEnv = new Environment(callerEnv, undefined, {flags: [
       CLEAR_FLAG,
       [CLIENT_TRUST_FLAG, isTrusted],
       [REQUESTING_COMPONENT_FLAG, requestOrigin],
-    ];
+    ]});
 
 
     // Then get the component module's render() function.
@@ -217,7 +217,7 @@ class JSXInstance {
         new RuntimeError(
           'Component module is missing a render() function at "' +
           this.componentPath + '"',
-          callerNode, callerEnv
+          callerNode, compEnv
         ),
         replaceSelf
       );
@@ -228,8 +228,7 @@ class JSXInstance {
     let jsxElement;
     try {
       jsxElement = interpreter.executeFunction(
-        renderFun, [props], callerNode, callerEnv,
-        new JSXInstanceInterface(this), flags
+        renderFun, [props], callerNode, compEnv, new JSXInstanceInterface(this)
       );
     }
     catch (err) {
@@ -256,7 +255,7 @@ class JSXInstance {
     else {
       try {
         newDOMNode = this.getDOMNode(
-          jsxElement, this.domNode, marks, interpreter, callerNode, callerEnv,
+          jsxElement, this.domNode, marks, interpreter, callerNode, compEnv,
           props, ownDOMNodes
         );
       }
@@ -299,7 +298,7 @@ class JSXInstance {
     // not yet been prepared for the instance, it will just do nothing, and
     // wait for the rerender.
     this.settings.transformInstance(
-      this, newDOMNode, ownDOMNodes, callerNode, callerEnv
+      this, newDOMNode, ownDOMNodes, callerNode, compEnv
     );
 
     // Finally, return the instance's new DOM node.
@@ -358,19 +357,10 @@ class JSXInstance {
   ) {
     let newDOMNode;
     // If jsxElement is not a JSXElement instance, let the new DOM node be a
-    // string derived from JSXElement, except if it is an outer element, in
-    // which case wrap it in a span element.
+    // string derived from JSXElement.
     let isArray = jsxElement instanceof Array;
     if (!(jsxElement instanceof JSXElement) && !isArray) {
-      if (isOuterElement) {
-        newDOMNode = (curNode?.tagName === "span") ?
-          removeChildren(clearAttributes(curNode)) :
-          document.createElement("span");
-        if (jsxElement !== undefined) {
-          newDOMNode.append(getString(jsxElement, callerNode, callerEnv));
-        }
-      }
-      else if (jsxElement !== undefined) {
+      if (jsxElement !== undefined) {
         newDOMNode = new Text(getString(jsxElement, callerNode, callerEnv));
       }
       else {
@@ -384,16 +374,13 @@ class JSXInstance {
     // in which case we wrap it in a div element.
     else if (jsxElement.isFragment || isArray) {
       let childArr = isArray ? jsxElement : jsxElement.props["children"] ?? [];
-      if (isOuterElement) {
-        newDOMNode = (curNode?.tagName === "div") ?
-          clearAttributes(curNode) :
-          document.createElement("div");
-        this.replaceChildren(
-          newDOMNode, childArr, marks, interpreter, callerNode, callerEnv,
-          props, ownDOMNodes
-        );
-      }
-      else return childArr;
+      newDOMNode = (curNode?.tagName === "div") ?
+        clearAttributes(curNode) :
+        document.createElement("div");
+      this.replaceChildren(
+        newDOMNode, childArr, marks, interpreter, callerNode, callerEnv,
+        props, ownDOMNodes
+      );
     }
 
     // If componentModule is defined, render the component instance.
@@ -582,34 +569,24 @@ class JSXInstance {
     domNode, childArr, curChildArr, marks, interpreter, callerNode, callerEnv,
     props, ownDOMNodes, indRef
   ) {
-    childArr.forEach(val => {
-      if (val instanceof Array) {
+    childArr.forEach(child => {
+      let isArray = child instanceof Array;
+      if (child?.isFragment || isArray) {
+        let nestedChildArr = isArray ? child : child.props["children"] ?? [];
         this.#replaceChildrenHelper(
-          domNode, val, curChildArr, marks, interpreter, callerNode, callerEnv,
-          props, ownDOMNodes, indRef
+          domNode, nestedChildArr, curChildArr, marks, interpreter, callerNode,
+          callerEnv, props, ownDOMNodes, indRef
         );
-      } else if (val !== undefined) {
-        let childNodeOrChildArr = this.getDOMNode(
-          val, curChildArr[indRef[0]], marks, interpreter, callerNode,
+      }
+      else if (child !== undefined) {
+        let childNode = this.getDOMNode(
+          child, curChildArr[indRef[0]], marks, interpreter, callerNode,
           callerEnv, props, ownDOMNodes, false
         );
-        if (childNodeOrChildArr instanceof Array) {
-          let childArr = childNodeOrChildArr;
-          childArr.forEach(child => {
-            let childNode = this.getDOMNode(
-              child, curChildArr[indRef[0]], marks, interpreter, callerNode,
-              callerEnv, props, ownDOMNodes, false
-            );
-            this.#replaceChild(domNode, curChildArr, childNode, indRef[0]);
-            indRef[0]++;
-          });
-        }
-        else {
-          let childNode = childNodeOrChildArr;
-          this.#replaceChild(domNode, curChildArr, childNode, indRef[0]);
-          indRef[0]++;
-        }
-      } else {
+        this.#replaceChild(domNode, curChildArr, childNode, indRef[0]);
+        indRef[0]++;
+      }
+      else {
         let childNode = new Text();
         this.#replaceChild(domNode, curChildArr, childNode, indRef[0]);
         indRef[0]++;

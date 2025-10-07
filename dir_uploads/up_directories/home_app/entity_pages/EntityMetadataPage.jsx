@@ -11,6 +11,31 @@ export function render({entKey}) {
       this.setState(state => ({...state, entDef: entDef ?? false}));
     });
     content = <div className="fetching"></div>;
+    content = <>
+      {"entDef:"}
+      {[
+        "_1_",
+        "_2_",
+        [
+          "_3_",
+          <>
+            <span>{"_5_"}</span>
+            {[
+              "_7_",
+              "_8_",
+            ]}
+          </>
+        ],
+        "...",
+        "...",
+        "...",
+        "...",
+        "...",
+        "...",
+      ]}
+      {entDef}
+
+    </>;
   }
 
   else if (!entDef) {
@@ -20,7 +45,24 @@ export function render({entKey}) {
   else {
     content = <>
       {"entDef:"}
+      {[
+        "_1_",
+        "_2_",
+        [
+          "_3_",
+          "_4_",
+          <>
+            <span>{"_5_"}</span>
+            {"_6_"}
+            {[
+              "_7_",
+              "_8_",
+            ]}
+          </>
+        ],
+      ]}
       {entDef}
+
     </>;
   }
   
