@@ -227,6 +227,7 @@ export const cssGrammar = {
       ["string"],
       ["hex-color"],
       ["built-in-value"],
+      // TODO: Implement function calls (with only safe functions).
     ],
     process: copyFromChild,
   },
@@ -313,10 +314,10 @@ export const cssGrammar = {
   "at-rule": {
     rules: [
       ["at-container-rule"],
+      ["at-keyframes-rule"],
       // TODO: Implement:
       // ["at-media-rule"],
       // ["at-supports-rule"],
-      // ["at-keyframes-rule"],
     ],
     process: copyFromChild,
   },
@@ -397,6 +398,40 @@ export const cssGrammar = {
       hiOp: children[7],
       hiVal: children[9],
 
+    }),
+  },
+  "at-keyframes-rule": {
+    rules: [
+      [
+        "/@keyframes/", "S*", "identifier?", /\{/, "S*", "keyframes-content",
+        /\}/, "S*"
+      ],
+    ],
+    process: (children) => ({
+      type: "at-rule",
+      atKeyword: "@keyframes",
+      params: children[2],
+      content: children[5],
+    }),
+  },
+  "keyframes-content": {
+    rules: [
+      ["keyframes-statement!1*"],
+    ],
+    process: (children) => ({
+      type: "keyframes-content",
+      stmtArr: children[0],
+    }),
+  },
+  "keyframes-statement": {
+    rules: [
+      [/to|from|(0|100|[1-9][0-9])%/, /\{/, "S*", "declaration!1*", /\}/, "S*"],
+      [/to|from|(0|100|[1-9][0-9])%/, "/,/", "S*"],
+    ],
+    process: (children, ruleInd) => ({
+      type: "ruleset",
+      offset: children[0],
+      decArr: (ruleInd === 0) ? children[3] : undefined,
     }),
   },
   // "at-media-rule": {

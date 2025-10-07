@@ -64,7 +64,7 @@ export class DBConnection {
     let conn = await this.connPromise;
     let [[rowArr = []]] = await conn.query(
       {sql: "GET_LOCK(?, ?)", rowsAsArray: true}, [name, time]
-    );
+    );console.log("rowArr=", rowArr); // Check that rowArr[0] is the correct boolean value.
     return rowArr[0];
   }
   async releaseLock(name) {

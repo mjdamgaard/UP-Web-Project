@@ -71,7 +71,7 @@ export class CSSTransformer {
         stmt.decArr.map(dec => (
           this.transformDeclaration(dec, indentSpace + "  ")
       )).join("") +
-      indentSpace + "\n}\n"
+      indentSpace + "}\n"
     );
   }
 
@@ -204,10 +204,11 @@ export class CSSTransformer {
       indentSpace + stmt.atKeyword + " " + transformedParameterList + (
         stmt.content === undefined ? ";" : " {\n" +
           this.transformParsedStyleSheet(stmt.content, indentSpace + "  ") +
-        indentSpace + "\n}\n"
+        indentSpace + "}\n"
       )
     );
   }
+
 
   transformAtRuleParameterList(params) {
     return params.map(param => {
@@ -232,6 +233,28 @@ export class CSSTransformer {
       }
       else throw "transformAtRuleParameterList(): Unrecognized param.type"
     }).join(" ");
+  }
+
+
+  transformAtRuleContent(content, indentSpace) {
+    if (content.type === "style-sheet") {
+      return this.transformParsedStyleSheet(content, indentSpace);
+    }
+    else if (content.type === "keyframes-content") {
+      return this.transformKeyframesContent(content, indentSpace);
+    }
+    else throw "transformAtRuleContent(): Unrecognized content.type"
+  }
+
+
+  transformKeyframesContent(content, indentSpace) {
+    return content.stmtArr.map(stmt => (
+      indentSpace + stmt.offset + (!stmt.decArr ? ",\n" : " {\n" +
+        stmt.decArr.map(dec => (
+          this.transformDeclaration(dec, indentSpace + "  ")
+        )).join("") +
+      indentSpace + "}\n")
+    )).join("");
   }
 
 }
