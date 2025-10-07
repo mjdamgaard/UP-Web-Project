@@ -34,21 +34,25 @@ export class CSSTransformer {
   transformStyleSheet(styleSheet, node, env) {
     styleSheet = getString(styleSheet, node, env);
     let [styleSheetNode] = parseString(styleSheet, node, env, cssParser);
-    let styleSheetTemplate = styleSheetNode.stmtArr.map(stmt => (
-      this.transformStatement(stmt)
-    )).join("\n");
+    let styleSheetTemplate = this.transformParsedStyleSheet(styleSheetNode);
     return styleSheetTemplate;
   }
 
 
-  transformStatement(stmt, indentSpace = "") {
+  transformParsedStyleSheet(styleSheetNode, indentSpace = "") {
+    return styleSheetNode.stmtArr.map(stmt => (
+      this.transformStatement(stmt, indentSpace)
+    )).join("\n");
+  }
+
+
+  transformStatement(stmt, indentSpace) {
     let type = stmt.type;
     if (type === "ruleset") {
       return this.transformRuleset(stmt, indentSpace);
     }
     else if (type === "at-rule") {
-      return indentSpace +
-        "/* Error: At-rules are not implemented just yet */\n"
+      return this.transformAtRule(stmt, indentSpace);
     }
     else throw (
       "Unrecognized CSS statement type: " + type
@@ -79,8 +83,14 @@ export class CSSTransformer {
     // "app frame," as I've often called it) to use larger z-indices then the
     // UP app can. ..(And let us also similarly limit negative values.)
     return indentSpace + dec.propName + ": " + dec.valueArr.map(
-      valueNode => valueNode.value ?? valueNode.lexeme
+      valueNode => this.transformValue(valueNode)
     ).join(" ") + ";\n";
+  }
+
+
+  transformValue(valueNode) {
+    // TODO: Change when implementing built-in functions.
+    return valueNode.value ?? valueNode.lexeme;
   }
 
 
@@ -179,6 +189,50 @@ export class CSSTransformer {
     else throw "CSSTransformer.transformSimpleSelector(): Unrecognized type";
   }
 
+
+
+  transformAtRule(stmt, indentSpace) {
+    // Transform the parameters.
+    let transformedParameterList = this.transformAtRuleParameterList(
+      stmt.params
+    );
+
+    // Return the at-rule with the transformed parameter list, either followed
+    // by a ";" or by a block with a nested style sheet, if the 'content'
+    // property is defined.
+    return (
+      indentSpace + stmt.atKeyword + " " + transformedParameterList + (
+        stmt.content === undefined ? ";" : " {\n" +
+          this.transformParsedStyleSheet(stmt.content, indentSpace + "  ") +
+        indentSpace + "\n}\n"
+      )
+    );
+  }
+
+  transformAtRuleParameterList(params) {
+    return params.map(param => {
+      if (param.type === "identifier") {
+        return param.lexeme;
+      }
+      else if (param.type === "style-feature") {
+        if (param.subType === "relation") {
+          let op = (param.operator === ":") ? ": " :
+            " " +  param.operator + " ";
+          return "(" +
+            param.property + op + this.transformValue(param.value) +
+          ")";
+        }
+        else if (param.subType === "range") {
+          return "(" +
+            this.transformValue(param.loVal) + " " +  param.loOp + " " +
+            param.property + " " + param.hiOp + " " +
+            this.transformValue(param.hiVal) +
+          ")";
+        }
+      }
+      else throw "transformAtRuleParameterList(): Unrecognized param.type"
+    }).join(" ");
+  }
 
 }
 

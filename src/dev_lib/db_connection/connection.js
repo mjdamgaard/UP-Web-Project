@@ -13,7 +13,7 @@ export class Connection extends ObjectObject {
     this.connStartedAt = undefined;
 
     if (connectionTime) {
-      this.start.fun({callerNode: node, execEnv: env}, [])
+      this.start.fun({callerNode: node, execEnv: env}, [connectionTime])
     }
 
     Object.assign(this.members, {
@@ -121,6 +121,7 @@ export class Connection extends ObjectObject {
         "Connection was not started before being used",
         callerNode, execEnv
       );
+      // TODO: Add homeDirID in front, and fail if not inside an SMF call.
       return await this.conn.getLock(name, time);
     }
   );
@@ -132,6 +133,7 @@ export class Connection extends ObjectObject {
         "Connection was not started before being used",
         callerNode, execEnv
       );
+      // TODO: Add homeDirID in front, and fail if not inside an SMF call.
       return await this.conn.releaseLock(name);
     }
   );
@@ -150,7 +152,7 @@ function depositBackConnectionGas(env, connStartedAt) {
 
 
 export const getConnection = new DevFunction(
-  "getConnection", {typeArr: ["integer unsigned"]},
+  "getConnection", {typeArr: ["integer unsigned?"]},
   ({callerNode, execEnv}, [connectionTime]) => {
     return new Connection(callerNode, execEnv, connectionTime);
   }

@@ -30,9 +30,9 @@ const FLAG_PATTERN =
   "([^\\s\\S])";
 
 
-const PROPERTY_PATTERN = "[a-z][a-z\-]*";
+const PROPERTY_PATTERN = "[a-z][a-z\\-]*";
 
-const BUILT_IN_VALUE_PATTERN = "[a-z][a-z\-]*";
+const BUILT_IN_VALUE_PATTERN = "[a-z][a-z\\-]*";
 
 
 const UNIT_PATTERN =
@@ -44,7 +44,7 @@ const UNIT_PATTERN =
 export const cssGrammar = {
   "style-sheet": {
     rules: [
-      ["S*", "statement*$"],
+      ["S*", "statement!1*"],
     ],
     process: (children) => ({
       type: "style-sheet",
@@ -312,17 +312,106 @@ export const cssGrammar = {
   },
   "at-rule": {
     rules: [
-      ["at-media-rule"],
-      // ["at-container-rule"],
-      // ["at-layer-rule"],
+      ["at-container-rule"],
+      // TODO: Implement:
+      // ["at-media-rule"],
+      // ["at-supports-rule"],
+      // ["at-keyframes-rule"],
     ],
     process: copyFromChild,
   },
-  "at-media-rule": {
+  "at-container-rule": {
     rules: [
-      [/[^\s\S]/],
+      [
+        "/@container/", "S*", "identifier?", "style-feature-list?",
+        /\{/, "style-sheet", /\}/, "S*"
+      ],
     ],
+    process: (children) => ({
+      type: "at-rule",
+      atKeyword: "@container",
+      params: children[2].concat(children[3][0]?.children ?? []),
+      content: children[5],
+    }),
   },
+  "identifier": {
+    rules: [
+      [/[a-z][a-z\-]*/, "S*"],
+    ],
+    process: (children) => ({
+      type: "identifier",
+      lexeme: children[0],
+    }),
+  },
+  "style-feature-list": {
+    rules: [
+      ["/not/", "S*", "style-feature"],
+      ["style-feature", "style-feature-list-tail"],
+      ["style-feature",],
+    ],
+    process: (children, ruleInd) => ({
+      type: "style-feature-list",
+      children: (ruleInd === 0) ? [children[0], children[2]] :
+        (ruleInd === 1) ? [children[0], ...children[1].children] :
+        [children[0]],
+    }),
+  },
+  "style-feature-list-tail": {
+    rules: [
+      ["/and|or/", "S*", "style-feature", "style-feature-list-tail"],
+      ["/and|or/", "S*", "style-feature"],
+    ],
+    process: (children, ruleInd) => ({
+      type: "style-feature-list-tail",
+      children: (ruleInd === 0) ? [
+        children[0], children[2], ...children[1].children
+      ] : [
+        children[0], children[2],
+      ],
+    }),
+  },
+  "style-feature": {
+    rules: [
+      [
+        /\(/, "/" + PROPERTY_PATTERN + "/", "S*", "/:|<|<=|>|>=/", "S*",
+        "value", "S*", /\)/, "S*"
+      ],
+      [
+        /\(/, "value", "S*", "/<|<=/", "S*", "/" + PROPERTY_PATTERN + "/",
+        "S*", "/<|<=/", "S*", "value", "S*", /\)/, "S*"
+      ],
+    ],
+    process: (children, ruleInd) => (
+      (ruleInd === 0) ? {
+      type: "style-feature",
+      subType: "relation",
+      property: children[1],
+      operator: children[3],
+      value: children[5],
+    } : {
+      type: "style-feature",
+      subType: "range",
+      loVal: children[1],
+      loOp: children[3],
+      property: children[5],
+      hiOp: children[7],
+      hiVal: children[9],
+
+    }),
+  },
+  // "at-media-rule": {
+  //   rules: [
+  //     [
+  //       "/@media/", "S+", "media-query!1+", "S*", /\{/,
+  //       "style-sheet", /\}/, "S*"
+  //     ],
+  //   ],
+  //   process: (children) => ({
+  //     type: "at-media-rule",
+  //     params: children[2],
+  //     content: children[5],
+  //   }),
+  // },
 };
 
 
@@ -336,7 +425,7 @@ export class CSSParser extends Parser {
         /"([^"\\]|\\[.\n])*"/,
         /'([^'\\]|\\[.\n])*'/,
 /((?<=\s)\-)?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?[%a-zA-Z0-9_\-]*/,
-        /[a-zA-Z0-9_\-]+/,
+        /@?[a-zA-Z0-9_\-]+/,
         /\|\||::|[.,:;\[\]{}()<>?=+\-*|^&!%/#]/,
         /[ \t\r\n\f]+/
       ],
