@@ -1,6 +1,7 @@
 
 import {MainDBConnection, getProcCallSQL} from "./DBConnection.js";
-import {NetworkError} from '../../interpreting/ScriptInterpreter.js';
+import {ArgTypeError, NetworkError} from '../../interpreting/ScriptInterpreter.js';
+import {Connection} from "../../dev_lib/db_connection/connection.js";
 
 
 
@@ -20,15 +21,24 @@ export class DBQueryHandler {
 
   // queryDBProc() handles queries that is implemented via a single stored DB
   // procedure.
-  async queryDBProc(procName, paramValArr, route, {conn}, node, env) {
+  async queryDBProc(procName, paramValArr, route, {connection}, node, env) {
     // TODO: route is unused as of yet, but will be used if/when we implement
     // a server-side cache, which we probably will at some point.
     route = route; 
 
     // Get a connection the the main DB, if one is not provided as part of
     // options.
-    let releaseAfter = !conn; 
-    conn ??= this.getConnection();
+    let conn;
+    if (connection) {
+      if (!(connection instanceof Connection)) throw new ArgTypeError(
+        "Connection option is not a valid instance of the Connection class",
+        node, env
+      );
+      conn = connection.conn;
+    }
+    else {
+      conn = this.getConnection();
+    }
 
     // Generate the SQL (with '?' placeholders in it).
     let sql = getProcCallSQL(procName, paramValArr.length);
@@ -45,7 +55,7 @@ export class DBQueryHandler {
     }
 
     // Release the connection again if it was not provided through options.
-    if (releaseAfter) {
+    if (!connection) {
       this.releaseConnection(conn);
     }
 

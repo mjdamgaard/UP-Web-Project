@@ -23,6 +23,7 @@ import {
 } from "../dev_lib/query/src/flags.js";
 
 import * as queryMod from "../dev_lib/query/query.js";
+import * as connMod from "../dev_lib/db_connection/connection.js";
 import * as jsonMod from "../dev_lib/fundamentals/json.js";
 import * as stringMod from "../dev_lib/fundamentals/string.js";
 import * as arrayMod from "../dev_lib/fundamentals/array.js";
@@ -39,6 +40,7 @@ import * as entitiesMod from "../dev_lib/semantic_entities/entities.js";
 
 const staticDevLibs = new Map();
 staticDevLibs.set("query", queryMod);
+staticDevLibs.set("connection", connMod);
 staticDevLibs.set("json", jsonMod);
 staticDevLibs.set("string", stringMod);
 staticDevLibs.set("array", arrayMod);

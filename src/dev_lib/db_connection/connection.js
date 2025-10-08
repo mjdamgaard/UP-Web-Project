@@ -1,8 +1,9 @@
 
 import {
-  DevFunction, RuntimeError, getString,
+  DevFunction, ObjectObject, RuntimeError, getString,
 } from "../../interpreting/ScriptInterpreter.js";
 import {MainDBConnection} from "../../server/db_io/DBConnection.js";
+import {ELEVATED_PRIVILEGES_FLAG} from "../query/src/flags.js";
 
 
 
@@ -11,6 +12,7 @@ export class Connection extends ObjectObject {
     super("Connection");
     this.conn = undefined;
     this.connStartedAt = undefined;
+    this.withdrawnConnGas = undefined;
 
     if (connectionTime) {
       this.start.fun({callerNode: node, execEnv: env}, [connectionTime])
@@ -39,7 +41,7 @@ export class Connection extends ObjectObject {
 
       // Withdraw as much connection (time) gas as possibly out of the desired
       // connectionTime.
-      let withdrawnConnGas = withdrawConnectionGas(
+      this.withdrawnConnGas = withdrawConnectionGas(
         callerNode, execEnv, connectionTime
       );
 
@@ -50,13 +52,13 @@ export class Connection extends ObjectObject {
       setTimeout(() => {
         if (this.conn === conn) {
           this.conn.end();
-          this.conn = this.connStartedAt = undefined;
+          this.conn = this.connStartedAt = this.withdrawnConnGas = undefined;
           throw new RuntimeError(
             "Connection timed out",
             callerNode, execEnv
           );
         }
-      }, withdrawnConnGas);
+      }, this.withdrawnConnGas);
 
       conn.isReadyPromise.catch(err => console.error(err));
     }
@@ -70,12 +72,14 @@ export class Connection extends ObjectObject {
       );
 
       // Deposit back the connection (time) gas that wasn't used.
-      depositBackConnectionGas(execEnv, this.connStartedAt);
+      depositBackConnectionGas(
+        execEnv, this.withdrawnConnGas, this.connStartedAt
+      );
 
       // Then end the connection and remove the associated properties from this
       // object.
       this.conn.end().catch(err => console.error(err));
-      this.conn = this.connStartedAt = undefined;
+      this.conn = this.connStartedAt = this.withdrawnConnGas = undefined;
     }
   );
 
@@ -121,8 +125,14 @@ export class Connection extends ObjectObject {
         "Connection was not started before being used",
         callerNode, execEnv
       );
-      // TODO: Add homeDirID in front, and fail if not inside an SMF call.
-      return await this.conn.getLock(name, time);
+
+      // Get the homeDirID, and add it as a prefix to the name.
+      let homeDirID = execEnv.getFlag(ELEVATED_PRIVILEGES_FLAG);
+      if (!homeDirID) throw new RuntimeError(
+        "Cannot get a lock from this context",
+        callerNode, execEnv
+      );
+      return await this.conn.getLock(homeDirID + "." + name, time);
     }
   );
   releaseLock = new DevFunction(
@@ -133,8 +143,14 @@ export class Connection extends ObjectObject {
         "Connection was not started before being used",
         callerNode, execEnv
       );
-      // TODO: Add homeDirID in front, and fail if not inside an SMF call.
-      return await this.conn.releaseLock(name);
+
+      // Get the homeDirID, and add it as a prefix to the name.
+      let homeDirID = execEnv.getFlag(ELEVATED_PRIVILEGES_FLAG);
+      if (!homeDirID) throw new RuntimeError(
+        "Cannot release a lock from this context",
+        callerNode, execEnv
+      );
+      return await this.conn.releaseLock(homeDirID + "." + name);
     }
   );
 
@@ -142,11 +158,22 @@ export class Connection extends ObjectObject {
 
 
 function withdrawConnectionGas(node, env, connectionTime) {
-  // Withdraw conn gas, and throw if there is none (or not enough) to withdraw.
+  let {gas} = env.scriptVars;
+  if ((gas.conn ?? 0) <= 20) throw new OutOfGasError(
+    "Ran out of " + GAS_NAMES.conn + " gas",
+    node, env
+  );
+  let ret = (gas.conn < connectionTime) ? gas.conn : connectionTime;
+  gas.conn -= ret;
+  return ret;
 }
 
-function depositBackConnectionGas(env, connStartedAt) {
-  // Deposit back the connection (time) gas that wasn't used.
+function depositBackConnectionGas(env, withdrawnGas, connStartedAt) {
+  let {gas} = env.scriptVars;
+  let timeSinceStarted = Date.now() - connStartedAt;
+  let gasToDeposit = withdrawnGas - timeSinceStarted;
+  if (gasToDeposit < 0) gasToDeposit = 0;
+  gas.conn += gasToDeposit;
 }
 
 
