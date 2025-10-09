@@ -13,11 +13,11 @@ export function render({url = ""}) {
     url = slice(url, 0, -1);
   }
 
-return (
-  <main className="app-main">
-    <EntityPage key="e" entKey={"/1/1/em1.js;get/entities"} />
-  </main>
-);
+// return (
+//   <main className="app-main">
+//     <EntityPage key="e" entKey={"/1/1/em1.js;get/entities"} />
+//   </main>
+// );
 
   // If the url is equal to "", go to the home page.
   if (!url) {

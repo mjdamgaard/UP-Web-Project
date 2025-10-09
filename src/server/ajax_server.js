@@ -70,7 +70,7 @@ const stdPostReqGas = {
   time: 15000,
   dbRead: 1000,
   dbWrite: 100000,
-  conn: 3000,
+  conn: 20000,
   mkdir: 1,
   mkTable: 0,
 };
@@ -82,7 +82,7 @@ const autoRefillGas = {
   time: 1000000,
   dbRead: 100000,
   dbWrite: 1000000,
-  conn: 300000,
+  conn: 1000000,
   mkdir: 100,
   mkTable: 0,
 };

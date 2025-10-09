@@ -318,7 +318,7 @@ export class ScriptInterpreter {
   }
 
 
-  async import(route, callerNode, callerEnv) {
+  async import(route, callerNode, callerEnv, assertJSModule = false) {
     decrCompGas(callerNode, callerEnv);
     decrGas(callerNode, callerEnv, "import");
 
@@ -329,9 +329,14 @@ export class ScriptInterpreter {
       route = getFullPath(curPath, route, callerNode, callerEnv);
     }
 
-    // Then simple redirect to this.fetch(). (We do not check that the result
-    // is a JS module, as import() can also be used to import other values.
-    return await this.fetch(route, callerNode, callerEnv);  
+    // Then simple redirect to this.fetch(), and if assertJSModule is true,
+    // assert that the returned value is a LiveJSModule instance.
+    let ret = await this.fetch(route, callerNode, callerEnv);
+    if (assertJSModule && !(ret instanceof LiveJSModule)) throw new LoadError(
+      `No script was found at ${route}`,
+      callerNode, callerEnv
+    );
+    return ret;
   }
 
 
@@ -2657,6 +2662,8 @@ export class PromiseObject extends ObjectObject {
         interpreter.executeFunctionOffSync(
           fun, [userResolve, userReject], node, env
         );
+      }).catch(err => {
+        if (err instanceof Error) console.error(err);
       });
     }
 // TODO: Add onRejected callback argument to then().
@@ -2891,7 +2898,7 @@ export function logExtendedErrorAndTrace(err) {
 
 
 
-const PATH_REGEX = /^([^/]+)?(\/[^/]+)*$/;
+// const PATH_REGEX = /^([^/]+)?(\/[^/]+)*$/;
 const FILENAME_REGEX = /\/[^./]+\.[^/]+$/;
 const SEGMENT_TO_REMOVE_REGEX = /(\/\.?\/|[^/]+\/\.\.\/)/g;
 
@@ -2899,12 +2906,12 @@ const SEGMENT_TO_REMOVE_REGEX = /(\/\.?\/|[^/]+\/\.\.\/)/g;
 export function getFullPath(curPath, path, callerNode, callerEnv) {
   if (!curPath) curPath = "/";
 
-  if (!path || !PATH_REGEX.test(path)) throw new LoadError(
+  if (!path) throw new LoadError(
     `Ill-formed path: "${path}"`, callerNode, callerEnv
   );
 
   if (path[0] === "/" || path[0] !== ".") {
-    return path;
+    return path.replace(/\/$/, "");
   }
 
   // Remove the last file name from the current path, if any.
@@ -2915,12 +2922,8 @@ export function getFullPath(curPath, path, callerNode, callerEnv) {
   }
 
   // Then concatenate the two paths.
-  let fullPath;
-  if (curPath.at(-1) === "/") {
-    fullPath = moddedCurPath + path;
-  } else {
-    fullPath = moddedCurPath + "/" + path;
-  }
+  let fullPath = (curPath.at(-1) === "/") ? moddedCurPath + path :
+    moddedCurPath + "/" + path;
 
   // Then replace any occurrences of "//", "/./", and "<dirName>/../" with "/".
   let prevFullPath;
@@ -2934,7 +2937,7 @@ export function getFullPath(curPath, path, callerNode, callerEnv) {
     `Ill-formed path: "${path}"`, callerNode, callerEnv
   );
 
-  return fullPath;
+  return fullPath.replace(/\/$/, "");
 }
 
 

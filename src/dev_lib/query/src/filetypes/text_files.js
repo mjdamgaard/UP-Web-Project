@@ -80,7 +80,7 @@ export async function query(
     // Import and execute the given JS module using interpreter.import(),
     // then return the export of the given alias.
     let liveModule = await interpreter.import(
-      `/${ownUPNodeID}/${homeDirID}/${filePath}`, callerNode, execEnv
+      `/${ownUPNodeID}/${homeDirID}/${filePath}`, callerNode, execEnv, true
     );
     return liveModule.get(alias);
   }
@@ -118,7 +118,7 @@ export async function query(
     // when the liveModule is gotten, get and execute the function, also within
     // the same enclosed execution environment.
     let liveModule = await interpreter.import(
-      `/${ownUPNodeID}/${homeDirID}/${filePath}`, callerNode, execEnv
+      `/${ownUPNodeID}/${homeDirID}/${filePath}`, callerNode, execEnv, true
     );
     let fun = liveModule.get(alias);
     if (!(fun instanceof FunctionObject)) throw new RuntimeError(
@@ -170,40 +170,38 @@ export async function query(
     // different home directory, the called SMF can make CORS like checks to
     // see if the requesting SMF is allowed access. (Such CORS-like checks are
     // recommended for all SMFs that can alter the state of the database. And
-    // they can also be used to limit access to private data.)  
-    return await (async() => {
-      let liveModule = await interpreter.import(
-        `/${ownUPNodeID}/${homeDirID}/${filePath}`, callerNode, execEnv
-      );
-      let fun = liveModule.get(alias);
-      if (!(fun instanceof FunctionObject)) throw new RuntimeError(
-        `No function of name '${alias}' is exported from ${route}`,
-        callerNode, execEnv
-      );
-      // The new "current-SMF-route" flag is copied as is from the former
-      // "current-SMF-route" flag, and the old "current-SMF-route" flag becomes
-      // the "requesting-SMF-route" flag instead. If the input array was passed
-      // via postData, we just append the JSON array to the route for the "SMF
-      // route".
-      let currentSMFRoute = !postData ? route :
-        `/${ownUPNodeID}/${homeDirID}/${filePath}/` +
-          "callSMF/" + JSON.stringify(inputArr);
-      let requestingSMFRoute = execEnv.getFlag(CURRENT_SMF_ROUTE_FLAG);
-      let grantAdminPrivileges = execEnv.getFlag(GRANT_ADMIN_PRIVILEGES_FLAG);
-      let result = interpreter.executeFunction(
-        fun, inputArr, callerNode, execEnv, undefined, [
-          [CURRENT_SMF_ROUTE_FLAG, currentSMFRoute],
-          [REQUESTING_SMF_ROUTE_FLAG, requestingSMFRoute],
-          [ELEVATED_PRIVILEGES_FLAG, homeDirID],
-          [ADMIN_PRIVILEGES_FLAG, grantAdminPrivileges],
-          [GRANT_ADMIN_PRIVILEGES_FLAG, false],
-        ]
-      );
-      if (result instanceof PromiseObject) {
-        result = await result.promise;
-      }
-      return result;
-    })();
+    // they can also be used to limit access to private data.)
+    let liveModule = await interpreter.import(
+      `/${ownUPNodeID}/${homeDirID}/${filePath}`, callerNode, execEnv, true
+    );
+    let fun = liveModule.get(alias);
+    if (!(fun instanceof FunctionObject)) throw new RuntimeError(
+      `No function of name '${alias}' is exported from ${route}`,
+      callerNode, execEnv
+    );
+    // The new "current-SMF-route" flag is copied as is from the former
+    // "current-SMF-route" flag, and the old "current-SMF-route" flag becomes
+    // the "requesting-SMF-route" flag instead. If the input array was passed
+    // via postData, we just append the JSON array to the route for the "SMF
+    // route".
+    let currentSMFRoute = !postData ? route :
+      `/${ownUPNodeID}/${homeDirID}/${filePath}/` +
+        "callSMF/" + JSON.stringify(inputArr);
+    let requestingSMFRoute = execEnv.getFlag(CURRENT_SMF_ROUTE_FLAG);
+    let grantAdminPrivileges = execEnv.getFlag(GRANT_ADMIN_PRIVILEGES_FLAG);
+    let result = interpreter.executeFunction(
+      fun, inputArr, callerNode, execEnv, undefined, [
+        [CURRENT_SMF_ROUTE_FLAG, currentSMFRoute],
+        [REQUESTING_SMF_ROUTE_FLAG, requestingSMFRoute],
+        [ELEVATED_PRIVILEGES_FLAG, homeDirID],
+        [ADMIN_PRIVILEGES_FLAG, grantAdminPrivileges],
+        [GRANT_ADMIN_PRIVILEGES_FLAG, false],
+      ]
+    );
+    if (result instanceof PromiseObject) {
+      result = await result.promise;
+    }
+    return result;
   }
 
 

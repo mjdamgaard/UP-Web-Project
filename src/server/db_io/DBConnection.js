@@ -63,19 +63,19 @@ export class DBConnection {
   async getLock(name, time = 10) {
     let conn = await this.connPromise;
     let [[rowArr = []]] = await conn.query(
-      {sql: "GET_LOCK(?, ?)", rowsAsArray: true}, [name, time]
-    );console.log("rowArr=", rowArr); // Check that rowArr[0] is the correct boolean value.
+      {sql: "SELECT GET_LOCK(?, ?)", rowsAsArray: true}, [name, time]
+    );
     return rowArr[0];
   }
   async releaseLock(name) {
     let conn = await this.connPromise;
     let [[rowArr = []]] = await conn.query(
-      {sql: "RELEASE_LOCK(?)", rowsAsArray: true}, [name]
+      {sql: "SELECT RELEASE_LOCK(?)", rowsAsArray: true}, [name]
     );
     return rowArr[0];
   }
 
-  isReadyPromise() {
+  get isReadyPromise() {
     return this.connPromise;
   }
 

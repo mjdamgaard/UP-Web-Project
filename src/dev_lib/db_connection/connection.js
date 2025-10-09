@@ -7,16 +7,37 @@ import {ELEVATED_PRIVILEGES_FLAG} from "../query/src/flags.js";
 
 
 
+
+export const getConnection = new DevFunction(
+  "getConnection",
+  {isAsync: true, typeArr: ["integer unsigned?", "any?", "string?"]}, async (
+    execVars, [connectionTime, startTransaction = true, lockName]
+  ) => {
+    let connection = new Connection();
+
+    // If connectionTime is a positive integer, start the connection right away.
+    if (connectionTime) {
+      await connection.start.fun(execVars, [connectionTime, startTransaction]);
+
+      // And if lockName is also defined, get a lock at the same time of that
+      // name.
+      if (lockName !== undefined) {
+        await connection.getLock.fun(execVars, [lockName, connectionTime]);
+      }
+    }
+    return connection;
+  }
+);
+
+
+
+
 export class Connection extends ObjectObject {
-  constructor(node, env, connectionTime) {
+  constructor() {
     super("Connection");
     this.conn = undefined;
     this.connStartedAt = undefined;
     this.withdrawnConnGas = undefined;
-
-    if (connectionTime) {
-      this.start.fun({callerNode: node, execEnv: env}, [connectionTime])
-    }
 
     Object.assign(this.members, {
       /* Methods */
@@ -32,8 +53,10 @@ export class Connection extends ObjectObject {
   }
 
   start = new DevFunction(
-    "start", {typeArr: ["integer positive"]},
-    ({callerNode, execEnv}, [connectionTime]) => {
+    "start", {isAsync: true, typeArr: ["integer positive", "any?"]}, async (
+      {callerNode, execEnv, interpreter},
+      [connectionTime, startTransaction = true]
+    ) => {
       if (this.conn) throw new RuntimeError(
         "Connection is already started",
         callerNode, execEnv
@@ -41,8 +64,9 @@ export class Connection extends ObjectObject {
 
       // Withdraw as much connection (time) gas as possibly out of the desired
       // connectionTime.
+      let connectionGas = connectionTime * 1000;
       this.withdrawnConnGas = withdrawConnectionGas(
-        callerNode, execEnv, connectionTime
+        callerNode, execEnv, connectionGas
       );
 
       // Start the connection, and set a timeout to end the connection and
@@ -51,21 +75,28 @@ export class Connection extends ObjectObject {
       this.connStartedAt = Date.now();
       setTimeout(() => {
         if (this.conn === conn) {
-          this.conn.end();
+          conn.end();
           this.conn = this.connStartedAt = this.withdrawnConnGas = undefined;
-          throw new RuntimeError(
-            "Connection timed out",
-            callerNode, execEnv
+          interpreter.handleUncaughtException(
+            new RuntimeError(
+              "Connection timed out",
+              callerNode, execEnv
+            ),
+            execEnv
           );
         }
       }, this.withdrawnConnGas);
 
-      conn.isReadyPromise.catch(err => console.error(err));
+      // If startTransaction = true, start a transaction.
+      await conn.isReadyPromise;
+      if (startTransaction) {
+        await conn.startTransaction();
+      }
     }
   );
 
   end = new DevFunction(
-    "end", {}, ({callerNode, execEnv}, []) => {
+    "end", {isAsync: true}, async ({callerNode, execEnv}, [commit = true]) => {
       if (!this.conn) throw new RuntimeError(
         "Connection was already ended",
         callerNode, execEnv
@@ -76,10 +107,22 @@ export class Connection extends ObjectObject {
         execEnv, this.withdrawnConnGas, this.connStartedAt
       );
 
+      // Then remove the associated properties from this object.
+      let conn = this.conn;
+      this.conn = this.connStartedAt = this.withdrawnConnGas = undefined;
+
+      // If commit is true, commit any current transaction, and if it is false
+      // (and not just nullish), roll back any current transaction. 
+      if (commit) {
+        await conn.commit();
+      }
+      else if (commit === false) {
+        await conn.rollback();
+      }
+
       // Then end the connection and remove the associated properties from this
       // object.
-      this.conn.end().catch(err => console.error(err));
-      this.conn = this.connStartedAt = this.withdrawnConnGas = undefined;
+      await conn.end();
     }
   );
 
@@ -157,13 +200,13 @@ export class Connection extends ObjectObject {
 }
 
 
-function withdrawConnectionGas(node, env, connectionTime) {
+function withdrawConnectionGas(node, env, connectionGas) {
   let {gas} = env.scriptVars;
   if ((gas.conn ?? 0) <= 20) throw new OutOfGasError(
     "Ran out of " + GAS_NAMES.conn + " gas",
     node, env
   );
-  let ret = (gas.conn < connectionTime) ? gas.conn : connectionTime;
+  let ret = (gas.conn < connectionGas) ? gas.conn : connectionGas;
   gas.conn -= ret;
   return ret;
 }
@@ -176,11 +219,3 @@ function depositBackConnectionGas(env, withdrawnGas, connStartedAt) {
   gas.conn += gasToDeposit;
 }
 
-
-
-export const getConnection = new DevFunction(
-  "getConnection", {typeArr: ["integer unsigned?"]},
-  ({callerNode, execEnv}, [connectionTime]) => {
-    return new Connection(callerNode, execEnv, connectionTime);
-  }
-);

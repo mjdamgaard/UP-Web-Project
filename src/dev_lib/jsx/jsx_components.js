@@ -943,11 +943,7 @@ export class JSXInstanceInterface extends ObjectObject {
   import = new DevFunction(
     "import", {isAsync: true, typeArr: ["string"]},
     async ({callerNode, execEnv, interpreter}, [route]) => {
-      let liveModule = interpreter.import(route, callerNode, execEnv);
-      if (!(liveModule instanceof LiveJSModule)) throw new LoadError(
-        "No JS module found at " + route,
-        callerNode, execEnv
-      );
+      let liveModule = interpreter.import(route, callerNode, execEnv, true);
       let settings = this.jsxInstance.settings;
       if (route.slice(-4) === ".jsx") {
         await settings.prepareComponent(liveModule, callerNode, execEnv);
