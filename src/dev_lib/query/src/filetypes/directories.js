@@ -39,6 +39,7 @@ export async function query(
     // If route equals ".../directories/a=<adminID>[/...]...", ...
     else if (queryPathArr[0] === "directories") {
       // TODO: Implement.
+      return [];
     }
     else throw new RuntimeError(
       `Unrecognized route: ${route}`,
@@ -52,12 +53,12 @@ export async function query(
     callerNode, execEnv
   );
 
-  // If route equals just ".../<homeDirID>", without any query path, return
+  // If route equals ".../<homeDirID>/all", without any query path, return
   // a list of all nested file paths of the home directory, except paths of
   // files nested inside locked subdirectories (with any leading underscores).
   if (!queryPathArr) {
     let filePathTable = await dbQueryHandler.queryDBProc(
-      "readHomeDirDescendants", [homeDirID, 4000, 0],
+      "readAllHomeDirDescendants", [homeDirID, 4000, 0],
       route, options, callerNode, execEnv,
     ) ?? [];
     return filePathTable.map(([filePath]) => filePath)
@@ -70,7 +71,7 @@ export async function query(
   // file paths of the home directory.
   if (queryType === "_all") {
     let filePathTable = await dbQueryHandler.queryDBProc(
-      "readHomeDirDescendants", [homeDirID, 4000, 0],
+      "readAllHomeDirDescendants", [homeDirID, 4000, 0],
       route, options, callerNode, execEnv,
     ) ?? [];
     return filePathTable.map(([filePath]) => filePath);
@@ -128,7 +129,10 @@ export async function query(
   // queries these routes, the gas amounts are automatically added or removed
   // from the live gas object (in scriptVars). This system will then afford a
   // way for users to be able to pool gas together for costly computations or
-  // other actions. 
+  // other actions.
+  // *I've implemented this for text files instead, but maybe it would be
+  // better to use the home directories instead, and let the users chose the
+  // prefix/"account ID" themselves, similarly to how it is for named locks.
 
   // If the route was not matched at this point, throw an error.
   throw new RuntimeError(

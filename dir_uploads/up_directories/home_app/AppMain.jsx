@@ -6,6 +6,7 @@ import * as TutorialIntroPage from "./tutorials/intro.jsx";
 import * as AboutPage from "./about.jsx";
 import * as HomePage from "./home.jsx";
 import * as EntityPage from "./variable_components/EntityPage.jsx";
+import * as FileBrowser from "./file_browsing/FileBrowser.jsx";
 
 
 export function render({url = ""}) {
@@ -13,11 +14,8 @@ export function render({url = ""}) {
     url = slice(url, 0, -1);
   }
 
-// return (
-//   <main className="app-main">
-//     <EntityPage key="e" entKey={"/1/1/em1.js;get/entities"} />
-//   </main>
-// );
+// TODO: Remove this:
+if (url[0] !== "f") url = "f" + abs("./");
 
   // If the url is equal to "", go to the home page.
   if (!url) {
@@ -47,7 +45,7 @@ export function render({url = ""}) {
     let route = slice(url, 1);
     return (
       <main className="app-main">
-        {"TODO: Insert file browsing app component here."}
+        <FileBrowser key="f" route={route} />
       </main>
     );
   }

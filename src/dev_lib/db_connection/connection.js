@@ -62,6 +62,10 @@ export class Connection extends ObjectObject {
         callerNode, execEnv
       );
 
+      // TODO: Consider removing this line, but do so only if it is made sure
+      // that connection timeout errors don't cause the server to halt.
+      if (connectionTime > 8) connectionTime = 8; 
+
       // Withdraw as much connection (time) gas as possibly out of the desired
       // connectionTime.
       let connectionGas = connectionTime * 1000;

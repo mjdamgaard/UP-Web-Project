@@ -16,7 +16,7 @@ const MAX_ARRAY_INDEX = Number.MAX_SAFE_INTEGER;
 const MINIMAL_TIME_GAS = 10;
 
 export const TEXT_FILE_ROUTE_REGEX =
-  /.+\.(jsx?|txt|json|html|xml|svg|md|css|)$/;
+  /.+\.(jsx?|txt|json|html|xml|svg|md|css)$/;
 export const SCRIPT_ROUTE_REGEX = /.+\.jsx?$/;
 
 const GAS_NAMES = {

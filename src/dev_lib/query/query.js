@@ -110,7 +110,7 @@ export const query = new DevFunction(
   ) {
     let isPrivate = isPost || getPropertyFromObject(options, "isPrivate");
 
-    // First split the input route along each (optional) occurrence of '/>',
+    // First split the input route along each (optional) occurrence of ';',
     // where the first part is then the actual route that is queried, and any
     // and all of the subsequent parts are what we can call "casting paths",
     // which reinterprets/casts the queried result into something else.
@@ -358,6 +358,48 @@ export const query = new DevFunction(
           }
         }
       }
+
+      // We can also cast a list of all home directory descendants, namely when
+      // route is of the form "If route is of the form "/<upNodeID>/" +
+      // "<homeDirID>", such that we instead get a list of only the children
+      // of a given subdirectory. More precisely, if the casting segment has
+      // the form ';/<dirPath>', where dirPath is either an empty string or a
+      // string of the form "(<dirName>/)+", we check that the previous result
+      // is an array of strings, and if so, we treat it as an array of all
+      // descendants and extract the children of the given subdirectory.
+      else if (/^\/([^/]+\/)*/.test(castingSegment)) {
+        // Throw is result is not an array of strings.
+        if (
+          !(result instanceof Array) ||
+          result.some(val => typeof val !== "string")
+        ) {
+          throw new LoadError(
+            "Result was not an array of file names at " + route +
+              (i > 0) ? castingSegmentArr.slice(0, i).join(";") : "",
+            callerNode, execEnv
+          );
+        }
+
+        // First transform the result such that each file path is cut off at
+        // the first slash that comes after the subdirectory path.
+        let subdirectoryPath = castingSegment.substring(1);
+        let len = subdirectoryPath.length;
+        let transformedResult = result.map(val => {
+          let indOfNextSlash = val.indexOf("/", len);
+          return (indOfNextSlash === -1) ? val.substring(len) :
+            val.substring(len, indOfNextSlash);
+        });
+
+        // Then filter out all strings where the original string isn't a super-
+        // string of subdirectoryPath, as well as all duplicates.
+        result = transformedResult.filter((val, ind) => {
+          return  (
+            (ind === 0 || val !== transformedResult[ind - 1]) && 
+            result[ind].substring(0, len) !== subdirectoryPath
+          );
+        });
+      }
+    
       else throw new LoadError(
         "Unrecognized casting segment: '" + castingSegment + "'",
         callerNode, execEnv

@@ -1,6 +1,6 @@
 
 import {
-  DevFunction, forEachValue, ObjectObject, getString, mapValues,
+  DevFunction, forEachValue, ObjectObject, getString, mapValues, verifyType,
 } from "../../interpreting/ScriptInterpreter.js";
 
 
@@ -63,6 +63,19 @@ export const join = new DevFunction(
     return arr.map(val => getString(val, callerNode, execEnv)).join(delimiter);
   }
 );
+
+export const concat = new DevFunction(
+  "concat", {typeArr: ["array"]},
+  ({callerNode, execEnv}, [arr, ...arrays]) => {
+    if (arr instanceof ObjectObject) arr = arr.members;
+    arrays = arrays.map(arr => {
+      verifyType(arr, "array", false, callerNode, execEnv);
+      return (arr instanceof ObjectObject) ? arr.members : arr;
+    });
+    return arr.concat(...arrays);
+  }
+);
+
 
 // export const indexOf = new DevFunction(
 //   "indexOf", {typeArr: ["string", "string"]}, ({}, [str, needle]) => {

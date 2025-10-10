@@ -209,7 +209,11 @@ export async function query(
   // "<gasJSON>" verify that filePath ends in '.sm.js', and if so, deposit the
   // requested amount of gas (from the current execution environment) there,
   // which can be unlocked by the locked "/_withdrawGas" route type below.
-  if (queryType === "depositGas") {
+  if (queryType === "depositGas") {throw new RuntimeError(
+      "This route has not been tested yet, and might be obsolete", // as we
+      // might reimplement it as a route related to the home directory instead.
+      callerNode, execEnv
+    );
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -276,7 +280,11 @@ export async function query(
   // "<gasJSON>" verify that filePath ends in '.sm.js', and if so, withdraw the
   // requested amount of gas (adding it to the gas object of the current
   // execution environment).
-  if (queryType === "_withdrawGas") {
+  if (queryType === "_withdrawGas") {throw new RuntimeError(
+      "This route has not been tested yet, and might be obsolete", // as we
+      // might reimplement it as a route related to the home directory instead.
+      callerNode, execEnv
+    );
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv

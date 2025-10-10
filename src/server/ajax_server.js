@@ -80,7 +80,7 @@ const autoRefillGas = {
   import: 50000,
   fetch: 50000,
   time: 1000000,
-  dbRead: 100000,
+  dbRead: 1000000,
   dbWrite: 1000000,
   conn: 1000000,
   mkdir: 100,

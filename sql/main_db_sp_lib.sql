@@ -14,7 +14,7 @@ DROP FUNCTION hexToNum;
 
 DROP PROCEDURE readHomeDirAdminID;
 DROP PROCEDURE readDirectoriesOfAdmin;
-DROP PROCEDURE readHomeDirDescendants;
+DROP PROCEDURE readAllHomeDirDescendants;
 DROP PROCEDURE createHomeDir;
 DROP PROCEDURE editHomeDir;
 DROP PROCEDURE deleteHomeDir;
@@ -132,7 +132,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE readHomeDirDescendants (
+CREATE PROCEDURE readAllHomeDirDescendants (
     IN dirIDHex VARCHAR(16),
     IN maxNum INT UNSIGNED,
     IN numOffset INT UNSIGNED
@@ -222,7 +222,7 @@ CREATE PROCEDURE selectSMGas (
     IN filePath VARCHAR(700),
     IN doLock BOOL
 )
-BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
+proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum(dirIDHex);
     DECLARE fileID BIGINT UNSIGNED;
 
@@ -231,13 +231,16 @@ BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     WHERE dir_id = dirID AND file_path = filePath;
 
     IF (doLock) THEN
-        DO GET_LOCK(CONCAT("SMGas.", fileID), 600);
+        IF NOT GET_LOCK(CONCAT("SMGas.", fileID), 600) THEN
+            SELECT NULL;
+            LEAVE proc;
+        END IF;
     END IF;
 
     SELECT gas_json AS gasJSON
     FROM ServerModuleGas FORCE INDEX (PRIMARY)
     WHERE file_id = fileID;
-END; END //
+END; END proc //
 DELIMITER ;
 
 
@@ -345,6 +348,7 @@ CREATE PROCEDURE putTextFile (
 proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum(dirIDHex);
     DECLARE fileID BIGINT UNSIGNED;
+    DECLARE fileCount INT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL OR contentText IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
@@ -359,6 +363,21 @@ proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
         WHERE file_id = fileID;
         SELECT 0 AS wasCreated;
     ELSE
+        IF NOT GET_LOCK(CONCAT("Touch.", dirID), 10) THEN
+            SELECT NULL;
+            LEAVE proc;
+        END IF;
+
+        -- Check that the maximal file count is not exceeded.
+        SELECT COUNT(file_path) INTO fileCount
+        FROM Files FORCE INDEX (PRIMARY)
+        WHERE dir_id = dirID;
+        IF (fileCount >= 4000) THEN
+            SELECT NULL;
+            LEAVE proc;
+        END IF;
+
+        -- And if not, insert the new file.
         INSERT INTO FileIDs () VALUES ();
         SET fileID = LAST_INSERT_ID();
         DELETE FROM FileIDs WHERE file_id < fileID;
@@ -366,6 +385,8 @@ proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
         VALUES (dirID, filePath, fileID);
         INSERT INTO TextFiles (file_id, content_text)
         VALUES (fileID, contentText);
+
+        DO RELEASE_LOCK(CONCAT("Put.", dirID));
         SELECT 1 AS wasCreated;
     END IF;
 END; END proc //
@@ -409,6 +430,7 @@ CREATE PROCEDURE touchTableFile (
 proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum(dirIDHex);
     DECLARE fileID BIGINT UNSIGNED;
+    DECLARE fileCount INT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
@@ -420,11 +442,28 @@ proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     IF (fileID IS NOT NULL) THEN
         SELECT 0 AS wasCreated;
     ELSE
+        IF NOT GET_LOCK(CONCAT("Touch.", dirID), 10) THEN
+            SELECT NULL;
+            LEAVE proc;
+        END IF;
+
+        -- Check that the maximal file count is not exceeded.
+        SELECT COUNT(file_path) INTO fileCount
+        FROM Files FORCE INDEX (PRIMARY)
+        WHERE dir_id = dirID;
+        IF (fileCount >= 4000) THEN
+            SELECT NULL;
+            LEAVE proc;
+        END IF;
+
+        -- And if not, touch the new file.
         INSERT INTO FileIDs () VALUES ();
         SET fileID = LAST_INSERT_ID();
         DELETE FROM FileIDs WHERE file_id < fileID;
         INSERT INTO Files (dir_id, file_path, file_id)
         VALUES (dirID, filePath, fileID);
+
+        DO RELEASE_LOCK(CONCAT("Put.", dirID));
         SELECT 1 AS wasCreated;
     END IF;
 END; END proc //
@@ -453,7 +492,10 @@ proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     WHERE dir_id = dirID AND file_path = filePath;
 
     IF (fileID IS NOT NULL) THEN
-        DO GET_LOCK(CONCAT("ATT.", fileID), 10);
+        IF NOT GET_LOCK(CONCAT("ATT.", fileID), 10) THEN
+            SELECT NULL;
+            LEAVE proc;
+        END IF;
 
         DELETE FROM AutoKeyTextTables
         WHERE file_id = fileID;
@@ -478,7 +520,7 @@ CREATE PROCEDURE deleteATT (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700)
 )
-BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
+proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum(dirIDHex);
     DECLARE fileID BIGINT UNSIGNED;
 
@@ -486,7 +528,10 @@ BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
-    DO GET_LOCK(CONCAT("ATT.", fileID), 10);
+    IF NOT GET_LOCK(CONCAT("ATT.", fileID), 10) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
 
     DELETE FROM AutoKeyTextTables
     WHERE file_id = fileID;
@@ -495,7 +540,7 @@ BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     SELECT ROW_COUNT() AS wasDeleted;
 
     DO RELEASE_LOCK(CONCAT("ATT.", fileID));
-END; END //
+END; END proc //
 DELIMITER ;
 
 
@@ -527,7 +572,10 @@ proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     END IF;
 
     IF (NOT textID OR textID IS NULL) THEN
-        DO GET_LOCK(CONCAT("ATT", fileID), 10);
+        IF NOT GET_LOCK(CONCAT("ATT.", fileID), 10) THEN
+            SELECT NULL;
+            LEAVE proc;
+        END IF;
 
         SELECT IFNULL(MAX(text_id), 0) + 1 INTO newTextID
         FROM AutoKeyTextTables FORCE INDEX (PRIMARY)
@@ -556,7 +604,7 @@ CREATE PROCEDURE deleteATTEntry (
     IN listIDHex VARCHAR(510),
     IN textIDHex VARCHAR(16)
 )
-BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
+proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum(dirIDHex);
     DECLARE textID BIGINT UNSIGNED DEFAULT hexToNum(textIDHex);
     DECLARE fileID, maxTextID BIGINT UNSIGNED;
@@ -566,14 +614,17 @@ BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
-    DO GET_LOCK(CONCAT("ATT", fileID), 10);
+    IF NOT GET_LOCK(CONCAT("ATT.", fileID), 10) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
 
     DELETE FROM AutoKeyTextTables
     WHERE file_id = fileID AND list_id = listID AND text_id = textID;
     SELECT ROW_COUNT() AS wasDeleted;
 
     DO RELEASE_LOCK(CONCAT("ATT", fileID));
-END; END //
+END; END proc //
 DELIMITER ;
 
 
@@ -585,7 +636,7 @@ CREATE PROCEDURE deleteATTList (
     IN loIDHex VARCHAR(16),
     IN hiIDHex VARCHAR(16)
 )
-BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
+proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum(dirIDHex);
     DECLARE lo BIGINT UNSIGNED DEFAULT hexToNum(loIDHex);
     DECLARE hi BIGINT UNSIGNED DEFAULT hexToNum(hiIDHex);
@@ -596,7 +647,10 @@ BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
-    DO GET_LOCK(CONCAT("ATT", fileID), 10);
+    IF NOT GET_LOCK(CONCAT("ATT.", fileID), 10) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
 
     DELETE FROM AutoKeyTextTables
     WHERE (
@@ -607,7 +661,7 @@ BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     DO RELEASE_LOCK(CONCAT("ATT", fileID));
 
     SELECT ROW_COUNT() AS wasDeleted;
-END; END //
+END; END proc //
 DELIMITER ;
 
 
@@ -761,7 +815,10 @@ proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     WHERE dir_id = dirID AND file_path = filePath;
 
     IF (fileID IS NOT NULL) THEN
-        DO GET_LOCK(CONCAT("BT.", fileID), 10);
+        IF NOT GET_LOCK(CONCAT("BT.", fileID), 10) THEN
+            SELECT NULL;
+            LEAVE proc;
+        END IF;
 
         DELETE FROM BinaryKeyTables
         WHERE file_id = fileID;
@@ -786,7 +843,7 @@ CREATE PROCEDURE deleteBT (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700)
 )
-BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
+proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum(dirIDHex);
     DECLARE fileID BIGINT UNSIGNED;
 
@@ -794,7 +851,10 @@ BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
-    DO GET_LOCK(CONCAT("BT.", fileID), 10);
+    IF NOT GET_LOCK(CONCAT("BT.", fileID), 10) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
 
     DELETE FROM BinaryKeyTables
     WHERE file_id = fileID;
@@ -803,7 +863,7 @@ BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     SELECT ROW_COUNT() AS wasDeleted;
 
     DO RELEASE_LOCK(CONCAT("BT.", fileID));
-END; END //
+END; END proc //
 DELIMITER ;
 
 
@@ -1068,7 +1128,10 @@ proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     WHERE dir_id = dirID AND file_path = filePath;
 
     IF (fileID IS NOT NULL) THEN
-        DO GET_LOCK(CONCAT("CT.", fileID), 10);
+        IF NOT GET_LOCK(CONCAT("CT.", fileID), 10) THEN
+            SELECT NULL;
+            LEAVE proc;
+        END IF;
 
         DELETE FROM CharKeyTables
         WHERE file_id = fileID;
@@ -1093,7 +1156,7 @@ CREATE PROCEDURE deleteCT (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700)
 )
-BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
+proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum(dirIDHex);
     DECLARE fileID BIGINT UNSIGNED;
 
@@ -1101,7 +1164,10 @@ BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
-    DO GET_LOCK(CONCAT("CT.", fileID), 10);
+    IF NOT GET_LOCK(CONCAT("CT.", fileID), 10) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
 
     DELETE FROM CharKeyTables
     WHERE file_id = fileID;
@@ -1110,7 +1176,7 @@ BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     SELECT ROW_COUNT() AS wasDeleted;
 
     DO RELEASE_LOCK(CONCAT("CT.", fileID));
-END; END //
+END; END proc //
 DELIMITER ;
 
 
@@ -1383,7 +1449,10 @@ proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     WHERE dir_id = dirID AND file_path = filePath;
 
     IF (fileID IS NOT NULL) THEN
-        DO GET_LOCK(CONCAT("BBT.", fileID), 10);
+        IF NOT GET_LOCK(CONCAT("BBT.", fileID), 10) THEN
+            SELECT NULL;
+            LEAVE proc;
+        END IF;
 
         DELETE FROM BinaryKeyBinaryScoreTables
         WHERE file_id = fileID;
@@ -1408,7 +1477,7 @@ CREATE PROCEDURE deleteBBT (
     IN dirIDHex VARCHAR(16),
     IN filePath VARCHAR(700)
 )
-BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
+proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum(dirIDHex);
     DECLARE fileID BIGINT UNSIGNED;
 
@@ -1416,7 +1485,10 @@ BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
-    DO GET_LOCK(CONCAT("BBT.", fileID), 10);
+    IF NOT GET_LOCK(CONCAT("BBT.", fileID), 10) THEN
+        SELECT NULL;
+        LEAVE proc;
+    END IF;
 
     DELETE FROM BinaryKeyBinaryScoreTables
     WHERE file_id = fileID;
@@ -1425,7 +1497,7 @@ BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     SELECT ROW_COUNT() AS wasDeleted;
 
     DO RELEASE_LOCK(CONCAT("BBT.", fileID));
-END; END //
+END; END proc //
 DELIMITER ;
 
 
