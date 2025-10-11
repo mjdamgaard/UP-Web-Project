@@ -15,7 +15,9 @@ export function render(props) {
   // If the relevancy quality for the class has not been fetched yet, do so.
   if (relevancyQualPath === undefined) {
     fetchRelevancyQualityPath(classKey).then(qualPath => {
-      this.setState(state => {...state, relevancyQualPath: qualPath ?? false}));
+      this.setState(state => ({
+        ...state, relevancyQualPath: qualPath ?? false
+      }));
     });
     content = <div className="fetching"></div>;
   }

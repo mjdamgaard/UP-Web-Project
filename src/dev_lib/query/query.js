@@ -395,7 +395,7 @@ export const query = new DevFunction(
         result = transformedResult.filter((val, ind) => {
           return  (
             (ind === 0 || val !== transformedResult[ind - 1]) && 
-            result[ind].substring(0, len) !== subdirectoryPath
+            result[ind].substring(0, len) === subdirectoryPath
           );
         });
       }

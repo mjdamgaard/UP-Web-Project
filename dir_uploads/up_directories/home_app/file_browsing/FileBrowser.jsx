@@ -1,5 +1,5 @@
 
-import {split, at as atStr, toString, slice as sliceStr} from 'string';
+import {split, at as atStr, toString, slice as sliceStr, indexOf} from 'string';
 import {slice as sliceArr, at as atArr, join, map} from 'array';
 import {parseRoute, isTextFileExtension} from 'route';
 
@@ -181,11 +181,14 @@ export function render({route}) {
     // route is a directory route, in which case let each line be an ILink
     // to the given child of the directory.
     let transformedResult = isDirectoryPath ?
-      map((result ?? []), child => <div>
-        <ILink key={"child" + ind} href={"/f" + route + "/" + child}>
-          {child}
-        </ILink> 
-      </div>) :
+      map((result ?? []), (child, ind) => {
+        let isFile = (indexOf(child, ".") !== -1);
+        return <div className={isFile ? "file-link" : "directory-link"}>
+          <ILink key={"child" + ind} href={"/f" + route + "/" + child}>
+            {child}
+          </ILink> 
+        </div>;
+      }) :
       map(split(toString(result), "\n"), (line, ind) => (
         <div className="line">{ind + 1}{": "}{line}</div>
       ));

@@ -2891,6 +2891,13 @@ export function logExtendedErrorAndTrace(err) {
   console.error(
     "Trace when the previous error occurred:\n" + trace.join(",\n")
   );
+  // TODO: Also display a list of all variables in the err.environment and all
+  // its ancestor environments (and do not filter variables that are
+  // redeclared). And at each environment, introduce it by a line with info
+  // about where it was declared, perhaps by logging its line number. Surely
+  // this will be useful --- maybe one will even sometimes catch bugs because
+  // of this that is not related to the current error. ..Oh, maybe it could
+  // even just be part of console.trace()'s normal behavior as well.
 }
 
 
