@@ -25,7 +25,7 @@ export function render(props) {
   // If the class key is not provided, and has not already been fetched, do so.
   if (classKey === undefined) {
     fetchEntityDefinition(entKey).then(entDef => {
-      this.setState({...this.state, classKey: entDef["Class"]});
+      this.setState(state => ({...state, classKey: entDef["Class"]}));
     });
     content = <div className="fetching"></div>;
   }
@@ -34,7 +34,9 @@ export function render(props) {
   // fetched yet, do so.
   else if (entityPageQualPath === undefined) {
     fetchRelevancyQualityPath(classKey, entityPageRel).then(qualPath => {
-      this.setState({...this.state, entityPageQualPath: qualPath ?? false});
+      this.setState(state => ({
+        ...state, entityPageQualPath: qualPath ?? false
+      }));
     });
     content = <div className="fetching"></div>;
   }
@@ -43,7 +45,7 @@ export function render(props) {
   // fetched, do that.
   else if (topEntry === undefined) {
     scoreHandler.fetchTopEntry(entityPageQualPath).then(topEntry => {
-      this.setState({...this.state, topEntry: topEntry ?? false});
+      this.setState(state => ({...state, topEntry: topEntry ?? false}));
     });
     content = <div className="fetching"></div>;
   }

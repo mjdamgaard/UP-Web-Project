@@ -22,7 +22,7 @@ export function render({subjKey, qualKey}) {
 
   // If the metric and the previous user score are not yet fetched, do so.
   if (!hasBegunFetching) {
-    this.setState({...this.state, hasBegunFetching: true});
+    this.setState(state => ({...state, hasBegunFetching: true}));
     fetchMetric(qualKey).then(metric => {
       this.setState(state => ({...state, metric: metric ?? false}));
     });

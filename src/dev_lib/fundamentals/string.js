@@ -36,6 +36,13 @@ export const indexOf = new DevFunction(
   }
 );
 
+export const split = new DevFunction(
+  "split", {typeArr: ["string", "string", "integer unsigned?"]},
+  ({}, [str, separator, limit]) => {
+    return str.split(separator, limit);
+  }
+);
+
 // TODO: Continue implementing all other standard String methods, except RegEx-
 // related ones, since RegExes should only be implemented at a later point and
 // in another dev lib, where we then need to make sure to prevent exponential

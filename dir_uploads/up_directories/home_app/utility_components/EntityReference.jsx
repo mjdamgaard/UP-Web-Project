@@ -22,12 +22,12 @@ export function render({entKey, isLink = true, pushState = undefined}) {
   // true, also fetch the entity ID.
   if (entDef === undefined) {
     fetchEntityDefinition(entKey).then(entDef => {
-      this.setState({...this.state, entDef: entDef ?? false});
+      this.setState(state => ({...state, entDef: entDef ?? false}));
     });
   }
   if (isLink && entPath === undefined) {
     fetchEntityPath(entKey).then(entPath => {
-      this.setState({...this.state, entPath: entPath ?? false});
+      this.setState(state => ({...state, entPath: entPath ?? false}));
     });
   }
 

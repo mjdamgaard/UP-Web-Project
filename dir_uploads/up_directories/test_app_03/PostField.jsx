@@ -15,9 +15,9 @@ export function render({userID}) {
       </div>
       <button onClick={() => {
         if (!userID) {
-          this.setState({
-            ...this.state, response: "You must be logged in before posting."
-          });
+          this.setState(state => ({
+            ...state, response: "You must be logged in before posting."
+          }));
           return;
         }
         let textVal = this.call(0, "getValue");
@@ -29,15 +29,15 @@ export function render({userID}) {
           ).then(wasCreated => {this.call(0, "clear");
             if (wasCreated) {
               this.call(0, "clear");
-              this.setState({
-                ...this.state, response: "Success."
-              });
+              this.setState(state => ({
+                ...state, response: "Success."
+              }));
               this.trigger("refresh");
             }
             else {
-              this.setState({
-                ...this.state, response: "Something went wrong."
-              });
+              this.setState(state => ({
+                ...state, response: "Something went wrong."
+              }));
             }
           });
         }

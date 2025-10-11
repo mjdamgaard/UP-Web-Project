@@ -35,7 +35,7 @@ export function render({
   // do so.
   if (!qualKey && qualPath === undefined) {
     fetchRelevancyQualityPath(relKey ?? classKey, objKey).then(qualPath => {
-      this.setState({...this.state, qualPath: qualPath ?? false});
+      this.setState(state => ({...state, qualPath: qualPath ?? false}));
     });
     content = <div className="fetching"></div>;
   }
@@ -44,7 +44,7 @@ export function render({
   // hasn't been fetched already.
   else if (list === undefined) {
     scoreHandler.fetchList(qualKey ?? qualPath, options).then(list => {
-      this.setState({...this.state, list: list ?? []});
+      this.setState(state => ({...state, list: list ?? []}));
     });
     content = <div className="fetching"></div>;
   }

@@ -10,7 +10,7 @@ export function render(props) {
   // contain it.
   if (componentDef === undefined) {
     fetchEntityDefinition(compEntID).then(compDef => {
-      this.setState({...this.state, componentDef: compDef});
+      this.setState(state => ({...state, componentDef: compDef}));
     });
     return <div className="fetching"></div>;
   }
@@ -20,7 +20,7 @@ export function render(props) {
   else if (Component === undefined) {
     let componentPath = componentDef["Component path"];
     import(componentPath).then(Component => {
-      this.setState({...this.state, Component: Component});
+      this.setState(state => ({...state, Component: Component}));
     });
     return <div className="fetching"></div>;
   }

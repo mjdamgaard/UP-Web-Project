@@ -538,16 +538,15 @@ export const scriptGrammar = {
       //   "statement!1*", /\}/
       // ],
       [
-        "/try/", /\{/, "statement!1*", /\}/, "/catch/", /\(/, /\[/,
-        "identifier", "/,/?", /\]/, /\)/, /{/,
-        "statement!1*", /\}/
+        "/try/", /\{/, "statement!1*", /\}/, "/catch/", /\(/, "identifier",
+        /\)/, /{/, "statement!1*", /\}/
       ],
     ],
     process: (children) => ({
       type: "try-catch-statement",
       tryStmtArr: children[2],
-      ident: children[7].ident,
-      catchStmtArr: children[12],
+      ident: children[6].ident,
+      catchStmtArr: children[9],
     }),
   },
   "instruction-statement": {

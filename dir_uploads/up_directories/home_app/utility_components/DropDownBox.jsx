@@ -8,7 +8,7 @@ export function render({children, keepAlive}) {
     return <div className="drop-down-box">
       <div className="content">{children}</div>
       <div className="collapse-expand-button expanded" onClick={() => {
-        this.setState({...this.state, isOpen: false, isLoaded: true});
+        this.setState(state => ({...state, isOpen: false, isLoaded: true}));
       }}></div>
     </div>;
   } else {
@@ -17,7 +17,7 @@ export function render({children, keepAlive}) {
         {keepAlive && isLoaded ? children : undefined}
       </div>
       <div className="collapse-expand-button collapsed" onClick={() => {
-        this.setState({...this.state, isOpen: true});
+        this.setState(state => ({...state, isOpen: true}));
       }}></div>
     </div>;
   }

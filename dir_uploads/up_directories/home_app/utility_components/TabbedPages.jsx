@@ -62,9 +62,9 @@ export const actions = {
     if (!loadedPages[tabKey]) {
       loadedPages = {...loadedPages, [tabKey]: tabs[tabKey]};
     }
-    this.setState({
-      ...this.state, openTabKey: tabKey, loadedPages: loadedPages
-    });
+    this.setState(state => ({
+      ...state, openTabKey: tabKey, loadedPages: loadedPages
+    }));
 
     // If closeInactiveTabs is true, and prevOpenTabKey !== tabKey, close the
     // previous open tab.
@@ -87,9 +87,9 @@ export const actions = {
       });
       openTabKey = newTabKey;
     }
-    this.setState({
-      ...this.state, openTabKey: openTabKey, loadedPages: newLoadedPages
-    });
+    this.setState(state => ({
+      ...state, openTabKey: openTabKey, loadedPages: newLoadedPages
+    }));
   },
 };
 

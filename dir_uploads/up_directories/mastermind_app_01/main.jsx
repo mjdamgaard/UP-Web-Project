@@ -106,7 +106,7 @@ export const actions = {
       ...slice(guesses, 0, -1),
       {curSlot: newSlot, slots: slots},
     ];
-    this.setState({...this.state, guesses: newGuesses});
+    this.setState(state => ({...state, guesses: newGuesses}));
   },
   "newGame": function() {
     this.setState(getInitState());

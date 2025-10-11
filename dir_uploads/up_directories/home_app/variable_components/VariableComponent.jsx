@@ -15,7 +15,7 @@ export function render(props) {
   // If the relevancy quality for the class has not been fetched yet, do so.
   if (relevancyQualPath === undefined) {
     fetchRelevancyQualityPath(classKey).then(qualPath => {
-      this.setState({...this.state, relevancyQualPath: qualPath ?? false});
+      this.setState(state => {...state, relevancyQualPath: qualPath ?? false}));
     });
     content = <div className="fetching"></div>;
   }
@@ -24,7 +24,7 @@ export function render(props) {
   // fetched, do that.
   else if (topEntry === undefined) {
     scoreHandler.fetchTopEntry(relevancyQualPath).then(topEntry => {
-      this.setState({...this.state, topEntry: topEntry ?? false});
+      this.setState(state => ({...state, topEntry: topEntry ?? false}));
     });
     content = <div className="fetching"></div>;
   }

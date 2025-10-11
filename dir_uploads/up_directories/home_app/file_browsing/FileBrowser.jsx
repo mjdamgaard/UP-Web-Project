@@ -1,8 +1,9 @@
 
-import {split, indexOf, toString, slice as sliceStr} from 'string';
-import {some, slice as sliceArr, at, join, map, concat} from 'array';
+import {split, at as atStr, toString, slice as sliceStr} from 'string';
+import {slice as sliceArr, at as atArr, join, map} from 'array';
 import {parseRoute, isTextFileExtension} from 'route';
 
+import {fetch} from 'query';
 import * as ILink from 'ILink.jsx'; 
 
 
@@ -14,17 +15,17 @@ import * as ILink from 'ILink.jsx';
 // right after the homeDirID, which casts the "/<upNodeID>/<homeDirID>" result
 // into a list of children of the specific subdirectory pointed to by route.
 export function getInitState({route: extRoute}) {
-  if (at(extRoute, -1) === "/") extRoute = sliceStr(extRoute, 0, -1);
+  if (atStr(extRoute, -1) === "/") extRoute = sliceStr(extRoute, 0, -1);
   // Parse and the (extended) route.
   let [route, ...castingSegments] = split(extRoute, ";");
   let isLocked, upNodeID, homeDirID, filePath, fileExt, queryPathArr;
   try {
     [
-      isLocked, upNodeID, homeDirID, filePath, fileExt, queryPathArr
+      isLocked, upNodeID, homeDirID, filePath, fileExt, queryPathArr = []
     ] = parseRoute(route);
   }
-  catch {
-    return {isInvalid: true}
+  catch (_) {
+    return {isInvalid: true};
   }
 
   // Calculate the home path of the route.
@@ -46,15 +47,15 @@ export function getInitState({route: extRoute}) {
   // Also record if the route is a query to a text file, e.g. a "/call" or
   // "/get" route.
   let isTextFileQuery = fileExt && isTextFileExtension(fileExt) &&
-    queryPathArr?.length > 0;
+    queryPathArr.length > 0;
 
   // Then call getRouteJSXWithSubLinks() to get a <span> element with the route
   // where every single queryable segment is an individual ILink, meaning that
   // the user can navigate to ancestor directories, or to pre-casted versions
   // of a casted route.
   let routeJSXWithSubLinks = getRouteJSXWithSubLinks(
-    castingSegments, routeHomePath, filePath, isTextFileQuery,
-    queryPathArr, isDirectoryPath
+    castingSegments, routeHomePath, filePath, isDirectoryPath, isTextFileQuery,
+    queryPathArr
   );
 
   return {
@@ -70,7 +71,7 @@ export function getInitState({route: extRoute}) {
 
 function getRouteJSXWithSubLinks(
   castingSegments, routeHomePath, filePath, isDirectoryPath, isTextFileQuery,
-  queryPathArr
+  queryPathArr = []
 ) {
   // If there is no filePath, interpret queryPathArr as an array of
   // subdirectories, and else parse the subdirectories and file name from
@@ -79,22 +80,22 @@ function getRouteJSXWithSubLinks(
   if (isDirectoryPath) {
     directorySegments = queryPathArr;
   }
-  else if (filePath) {
+  else {
     let pathSegments = split(filePath, "/");
     directorySegments = sliceArr(pathSegments, 0, -1);
-    fileName = at(pathSegments, -1);
+    fileName = atArr(pathSegments, -1);
   }
 
   // Initialize an accumulative path for the following ILinks.
   let acc = "/f" + routeHomePath;
 
   // Create an ILink to the home directory.
-  let homeILink = <ILink key="h" href={acc}>{routeHomePath}</ILink>
+  let homeILink = <ILink key="h" href={acc}>{routeHomePath}</ILink>;
 
   // Then create an array of ILinks to each additional subdirectory, if any.
-  let subdirectoryLinks = directorySegments.map((val, ind) => {
+  let subdirectoryLinks = map(directorySegments, (val, ind) => {
     acc += "/" + val;
-    return <ILink key={"s" + ind} href={acc}>{val}</ILink>
+    return <ILink key={"s" + ind} href={acc}>{val}</ILink>;
   });
 
   // Also create an ILinks to the file if the file is a text file and the
@@ -112,20 +113,20 @@ function getRouteJSXWithSubLinks(
   </ILink>;
 
   // Then create an ILink for each casting segment.
-  let castingLinks = castingSegments.map(segment => {
+  let castingLinks = map(castingSegments, segment => {
     acc += ";" + segment;
-    return <ILink key={"cast" + ind} href={acc}>{segment}</ILink>
+    return <ILink key={"cast" + ind} href={acc}>{segment}</ILink>;
   });
 
   // Then gather all these links into an array that also includes "/"
   // delimiters, and return that.
-  let slashDelimiter = <span className='slash'>{"/"}</span>
-  let semicolonDelimiter = <span className='semicolon'>{";"}</span>
+  let slashDelimiter = <span className='slash'>{"/"}</span>;
+  let semicolonDelimiter = <span className='semicolon'>{";"}</span>;
   return [
-    homeILink, ...subdirectoryLinks.map(link => [slashDelimiter, link]),
+    homeILink, ...map(subdirectoryLinks, link => [slashDelimiter, link]),
     ...(fileLink ? [slashDelimiter, fileLink] : []),
     ...(resultLink ? [slashDelimiter, resultLink] : []),
-    ...castingLinks.map(link => [semicolonDelimiter, link]),
+    ...map(castingLinks, link => [semicolonDelimiter, link]),
   ];
 }
 
@@ -133,7 +134,7 @@ function getRouteJSXWithSubLinks(
 
 
 export function render({route}) {
-  if (at(route, -1) === "/") route = sliceStr(route, 0, -1);
+  if (atStr(route, -1) === "/") route = sliceStr(route, 0, -1);
   let {
     isInvalid, isMissing, isLocked, routeHomePath, filePath,
     transformedRoute, isDirectoryPath, isTextFileQuery, routeJSXWithSubLinks,
@@ -155,14 +156,14 @@ export function render({route}) {
   else if (adminID === undefined) {
     this.setState(state => ({...state, adminID: false}));
     fetch(routeHomePath + "/admin").then(adminID => {
-      this.setState({...this.state, adminID: adminID ? adminID : "None"});
+      this.setState(state => ({...state, adminID: adminID ? adminID : "None"}));
     });
     fetch(transformedRoute).then(result => {
-      this.setState({...this.state, result: result});
+      this.setState(state => ({...state, result: result}));
     });
     if (isTextFileQuery) {
       fetch(routeHomePath + "/" + filePath).then(text => {
-        this.setState({...this.state, fileText: text});
+        this.setState(state => ({...state, fileText: text}));
       });
     }
     content = <div className="fetching"></div>;
@@ -180,22 +181,22 @@ export function render({route}) {
     // route is a directory route, in which case let each line be an ILink
     // to the given child of the directory.
     let transformedResult = isDirectoryPath ?
-      (result ?? []).map(child => <div>
+      map((result ?? []), child => <div>
         <ILink key={"child" + ind} href={"/f" + route + "/" + child}>
           {child}
         </ILink> 
       </div>) :
-      split(toString(result), "\n").map((line, ind) => (
+      map(split(toString(result), "\n"), (line, ind) => (
         <div className="line">{ind + 1}{": "}{line}</div>
       ));
     
     // And in case of a text file query, break up the fileText into individual
     // lines with line numbers in front.
-    let brokenUpText = isTextFileQuery ? split(
-      toString(fileText), "\n"
-    ).map((line, ind) => (
-      <div className="line">{ind + 1}{": "}{line}</div>
-    )) : undefined;
+    let brokenUpText = isTextFileQuery ? map(
+      split(toString(fileText), "\n"), (line, ind) => (
+        <div className="line">{ind + 1}{": "}{line}</div>
+      )
+    ) : undefined;
 
     // Then construct the final content.
     content = [

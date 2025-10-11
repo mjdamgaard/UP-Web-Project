@@ -56,6 +56,19 @@ export const forEach = new DevFunction(
   }
 );
 
+export const some = new DevFunction(
+  "some", {typeArr: ["any", "function"]},
+  ({callerNode, execEnv, interpreter}, [arr, fun]) => {
+    let stop = false;
+    forEachValue(arr, callerNode, execEnv, (val, ind) => {
+      if (stop) return;
+      stop = interpreter.executeFunction(
+        fun, [val, ind], callerNode, execEnv
+      );
+    });
+  }
+);
+
 export const join = new DevFunction(
   "join", {typeArr: ["array", "string?"]},
   ({callerNode, execEnv}, [arr, delimiter]) => {

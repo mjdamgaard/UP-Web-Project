@@ -44,7 +44,7 @@ export const initState = {name: "World"};
 
 export const actions = {
   "changeName": function(name) {
-    this.setState({...this.state, name: name});
+    this.setState(state => ({...state, name: name}));
   },
 };
 
