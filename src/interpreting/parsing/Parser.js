@@ -11,6 +11,7 @@ const TRAILING_DOD_OP_SUBSTR_REGEXP =
   /!(0|[1-9][0-9]*)?$/;
 const LEADING_POS_DOD_OP_SUBSTR_REGEXP =
   /^![1-9][0-9]*/;
+const TRAILING_DOD_OP_REGEXP = /![1-9][0-9]*$/;
 
 const NUMBER_SUBSTR_REGEXP_G =
   /0|[1-9][0-9]*/g;
@@ -318,12 +319,11 @@ export class Parser {
     let failedSymArr = [];
     rules.forEach(rule => {
       if (rule.length < childrenLen) return;
-      let partialRule = rule.slice(0, childrenLen - 1).map(sym => {
-        let indOfBang = sym.indexOf("!");
-        return (indOfBang === -1) ? sym : sym.substring(0, indOfBang);
-      });
+      let partialRule = rule.slice(0, childrenLen - 1);
       let isAlmostSuccessful = partialRule.reduce(
-        (acc, sym, ind) => acc && (children[ind] ?? {}).sym === sym,
+        (acc, sym, ind) => acc && this.#compareUntilLastBang(
+          (children[ind] ?? {}).sym, sym
+        ),
         true
       );
       if (isAlmostSuccessful) {
@@ -337,6 +337,12 @@ export class Parser {
       let joinedSymbols = failedSymArr.join("' or '");
       return [undefined, syntaxTree.sym, `'${joinedSymbols}'`];;
     }
+  }
+
+  #compareUntilLastBang(sym1, sym2) {
+    if (!sym1) return false;
+    return sym1.replace(TRAILING_DOD_OP_REGEXP, "") ===
+      sym2.replace(TRAILING_DOD_OP_REGEXP, "");
   }
 
 

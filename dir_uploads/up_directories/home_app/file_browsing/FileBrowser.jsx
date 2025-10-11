@@ -53,7 +53,8 @@ export function getInitState({route: extRoute}) {
   // the user can navigate to ancestor directories, or to pre-casted versions
   // of a casted route.
   let routeJSXWithSubLinks = getRouteJSXWithSubLinks(
-    castingSegments, routeHomePath, filePath, isTextFile, queryPathArr
+    castingSegments, routeHomePath, filePath, isTextFileQuery,
+    queryPathArr, isDirectoryPath
   );
 
   return {
@@ -68,16 +69,17 @@ export function getInitState({route: extRoute}) {
 
 
 function getRouteJSXWithSubLinks(
-  castingSegments, routeHomePath, filePath, isTextFile, queryPathArr
+  castingSegments, routeHomePath, filePath, isDirectoryPath, isTextFileQuery,
+  queryPathArr
 ) {
   // If there is no filePath, interpret queryPathArr as an array of
   // subdirectories, and else parse the subdirectories and file name from
   // filePath.
   let directorySegments, fileName;
-  if (!filePath) {
+  if (isDirectoryPath) {
     directorySegments = queryPathArr;
   }
-  else {
+  else if (filePath) {
     let pathSegments = split(filePath, "/");
     directorySegments = sliceArr(pathSegments, 0, -1);
     fileName = at(pathSegments, -1);
@@ -97,18 +99,34 @@ function getRouteJSXWithSubLinks(
 
   // Also create an ILinks to the file if the file is a text file and the
   // queryPathArr is nonempty.
-  let fileLink = (isTextFile && queryPathArr.length > 0) ?
+  let fileLink = isTextFileQuery ?
     <ILink key={"f"} href={acc + "/" + fileName}>{fileName}</ILink> :
     undefined;
   
   // Then create an ILink to the result as it is before any casting.
-  let resultLink = <ILink key={"f"} href={
-    acc + "/" + fileName + (
-      queryPathArr.length === 0 ? "" : join(queryPathArr, "/")
-    )
-  }>{"....."}</ILink>;
+  let resultSegment = fileName ? fileName + (
+    queryPathArr.length === 0 ? "" : join(queryPathArr, "/")
+  ) : undefined;
+  let resultLink = <ILink key={"f"} href={acc + "/" + resultSegment}>
+    {resultSegment}
+  </ILink>;
 
-  // ...
+  // Then create an ILink for each casting segment.
+  let castingLinks = castingSegments.map(segment => {
+    acc += ";" + segment;
+    return <ILink key={"cast" + ind} href={acc}>{segment}</ILink>
+  });
+
+  // Then gather all these links into an array that also includes "/"
+  // delimiters, and return that.
+  let slashDelimiter = <span className='slash'>{"/"}</span>
+  let semicolonDelimiter = <span className='semicolon'>{";"}</span>
+  return [
+    homeILink, ...subdirectoryLinks.map(link => [slashDelimiter, link]),
+    ...(fileLink ? [slashDelimiter, fileLink] : []),
+    ...(resultLink ? [slashDelimiter, resultLink] : []),
+    ...castingLinks.map(link => [semicolonDelimiter, link]),
+  ];
 }
 
 
@@ -163,7 +181,9 @@ export function render({route}) {
     // to the given child of the directory.
     let transformedResult = isDirectoryPath ?
       (result ?? []).map(child => <div>
-        <ILink key={"child" + ind} href={route + "/" + child}>{child}</ILink> 
+        <ILink key={"child" + ind} href={"/f" + route + "/" + child}>
+          {child}
+        </ILink> 
       </div>) :
       split(toString(result), "\n").map((line, ind) => (
         <div className="line">{ind + 1}{": "}{line}</div>
