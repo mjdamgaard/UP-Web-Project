@@ -66,6 +66,8 @@ export function render(props) {
   // (which can always be hidden by the style, say, if the component already
   // contains this link), which allows users to inspect alternative entity pages
   // for this class, and to score them and/or add new ones themselves.
+  // TODO: Isn't it a mistake that it's "variable-component" instead of
+  // "entity-page" here:
   return (
     <div className="variable-component">
       <div className="class-link">{

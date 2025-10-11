@@ -211,11 +211,19 @@ export class DirectoryUpdater {
       this.authToken, Infinity, fetch
     );
 
-    // Construct the full route, then query the server.
+    // Construct the full route, then query the server. If the route still
+    // starts with "/1/<dirID>/", post as admin, and else just post regularly,
+    // without requesting admin privileges.
     let route = path.normalize("/1/" + dirID + "/" + relativeRoute);
-    return await serverQueryHandler.postAsAdmin(
-      route, postData, {returnLog: returnLog}
-    );
+    if (route.substring(0, dirID.length + 3) === "/1/" + dirID) {
+      return await serverQueryHandler.postAsAdmin(
+        route, postData, {returnLog: returnLog}
+      );
+    } else {
+      return await serverQueryHandler.post(
+        route, postData, {returnLog: returnLog}
+      );
+    }
 
   }
 

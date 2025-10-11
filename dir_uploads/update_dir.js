@@ -59,10 +59,8 @@ async function main() {
       // which should lead to a file containing the postData for the request.
       // TODO: More urgent: Implement a -data and -flags option as well to
       // supply postData and flags (as JSON objects) to the command. 
-      console.log("Usage: ~# relative_route [--log] [-f file_path]");
-      console.log(
-        "(Actually, the [-f file_path] option has not been implemented yet.)"
-      );
+      console.log("Usage: ~# relative_route [--log] [-d JSON_data] [-f flags]");
+      // TODO:  Implement the -d and -f options.
       let answer = await read({prompt: `~# `});
       let [relativeRoute, ...options] = answer.split(/ +/);
       let returnLog = options.includes("--log");
