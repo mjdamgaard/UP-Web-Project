@@ -6,7 +6,8 @@ import {slice as sliceArr, at as atArr, join, map} from 'array';
 import {parseRoute, isTextFileExtension} from 'route';
 
 import {fetch} from 'query';
-import * as ILink from 'ILink.jsx'; 
+import * as ILink from 'ILink.jsx';
+import * as EntityReference from "../utility_components/EntityReference.jsx";
 
 
 
@@ -40,7 +41,7 @@ export function getInitState({route: extRoute}) {
   // If if it is a directory path, reinterpret the route by putting a ';' after
   // the homeDirID, which means that the route becomes a casted as a
   // subdirectory route.
-  let transformedRoute = route;
+  let transformedRoute = extRoute;
   if (isDirectoryPath) {
     let subdirectoryPath = join(queryPathArr, "/");
     transformedRoute = routeHomePath + ";/" + subdirectoryPath;
@@ -114,9 +115,8 @@ function getRouteJSXWithSubLinks(
   let resultSegment = fileName ? fileName + (
     queryPathArr.length === 0 ? "" : join(queryPathArr, "/")
   ) : undefined;
-  let resultLink = <ILink key={"r"} href={acc + "/" + resultSegment}>
-    {resultSegment}
-  </ILink>;
+  acc += "/" + resultSegment;
+  let resultLink = <ILink key={"r"} href={acc}>{resultSegment}</ILink>;
 
   // Then create an ILink for each casting segment.
   let castingLinks = map(castingSegments, (segment, ind) => {
@@ -213,7 +213,12 @@ export function render({route}) {
 
     // Then construct the final content.
     content = [
-      <div className="admin-id">{"Admin ID: "}{adminID}</div>,
+      <hr/>,
+      <div className="admin">{"Admin: "}{
+        adminID ? <EntityReference key="admin" entKey={"@" + adminID} /> :
+          "None"
+      }</div>,
+      <hr/>,
       <div className="result">{
         isTextFile && !fetchFile ? <h5>{"File contents"}</h5> :
           isDirectoryPath ? <h5>{"Directory contents"}</h5> :
@@ -221,6 +226,7 @@ export function render({route}) {
         }
         <div>{transformedResult}</div>
       </div>,
+      <hr/>,
       fetchFile ? <div className="text-file-content">
         <h5>{"File contents"}</h5>
         <div>{brokenUpText}</div>

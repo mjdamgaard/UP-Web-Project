@@ -327,20 +327,23 @@ export const query = new DevFunction(
       else if (/^(get|call)\//.test(castingSegment)) {
         let [queryType, alias, ...inputArr] = castingSegment.split("/");
         if (!(result instanceof LiveJSModule)) throw new LoadError(
-          "No JS module found at " + route +
-            (i > 0) ? castingSegmentArr.slice(0, i).join(";") : "",
+          "No JS module found at " + route + (
+            (i > 0) ? castingSegmentArr.slice(0, i).join(";") : ""
+          ),
           callerNode, execEnv
         );
         result = result.get(alias);
         if (result === undefined) throw new LoadError(
-          "No export of the name '" + alias + "' found in " + route +
-            (i > 0) ? castingSegmentArr.slice(0, i).join(";") : "",
+          "No export of the name '" + alias + "' found in " + route + (
+            (i > 0) ? castingSegmentArr.slice(0, i).join(";") : ""
+          ),
           callerNode, execEnv
         );
         if (queryType === "call") {
           if (!(result instanceof FunctionObject)) throw new LoadError(
-            "No function of the name '" + alias + "' exported from " + route +
-              (i > 0) ? castingSegmentArr.slice(0, i).join(";") : "",
+            "No function of the name '" + alias + "' exported from " + route + (
+              (i > 0) ? castingSegmentArr.slice(0, i).join(";") : ""
+            ),
             callerNode, execEnv
           );
           result = interpreter.executeFunction(
@@ -367,8 +370,9 @@ export const query = new DevFunction(
           result.some(val => typeof val !== "string")
         ) {
           throw new LoadError(
-            "Result was not an array of file names at " + route +
-              (i > 0) ? castingSegmentArr.slice(0, i).join(";") : "",
+            "Result was not an array of file names at " + route + (
+              (i > 0) ? castingSegmentArr.slice(0, i).join(";") : ""
+            ),
             callerNode, execEnv
           );
         }
