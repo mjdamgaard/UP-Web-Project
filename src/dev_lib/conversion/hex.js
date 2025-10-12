@@ -47,13 +47,13 @@ export const arrayToHex = new DevFunction(
     // representation with a lower numeric value of the two.   
     let binArrArr = [];
     forEachValue(typeArr, callerNode, execEnv, (type, ind) => {
-      type = getString(type, callerNode, execEnv);
+      type = getString(type, execEnv);
       let val = getPropertyFromObject(valArr, ind);
       let match, isUnsigned, lenExp, loExp, hiExp;
 
       // If type = 'string', treat val as a string of variable length.
       if (type === "string") {
-        val = getString(val, callerNode, execEnv);
+        val = getString(val, execEnv);
         if (NULL_CHAR_REGEX.test(val)) throw new ArgTypeError(
           `Cannot convert a string containing a null character: ${val}`,
           callerNode, execEnv
@@ -68,7 +68,7 @@ export const arrayToHex = new DevFunction(
       // instead prepend the length of the hex string divided by 2 so that hex
       // strings are thus collated w.r.t. their numerical values.
       if (type === "hex-int") {
-        let initVal = getString(val, callerNode, execEnv);
+        let initVal = getString(val, execEnv);
         val = initVal.replace(LEADING_ZERO_PAIRS_REGEX, "");
         if (val === "") val = "00";
         let len = val.length / 2;
@@ -105,7 +105,7 @@ export const arrayToHex = new DevFunction(
         val = parseInt(initVal);
         if (Number.isNaN(val)) throw new ArgTypeError(
           "Cannot convert a non-integer to a uint type: " +
-          getString(initVal, callerNode, execEnv),
+          getString(initVal, execEnv),
           callerNode, execEnv
         );
         let len = parseInt(lenExp ? lenExp.slice(1, -1) : 4);
@@ -119,7 +119,7 @@ export const arrayToHex = new DevFunction(
           val = val - minInts[len - 1];
         }
         if (val < 0 || val > maxUInts[len - 1]) throw new ArgTypeError(
-          "Invalid " + type + ": " + getString(initVal, callerNode, execEnv),
+          "Invalid " + type + ": " + getString(initVal, execEnv),
           callerNode, execEnv
         );
         let hexStr = val.toString(16).padStart(len * 2, "0");
@@ -138,7 +138,7 @@ export const arrayToHex = new DevFunction(
         val = parseFloat(initVal);
         if (Number.isNaN(val)) throw new ArgTypeError(
           "Cannot convert a non-float to a float type: " +
-          getString(initVal, callerNode, execEnv),
+          getString(initVal, execEnv),
           callerNode, execEnv
         );
         let len = parseInt(lenExp);
@@ -266,7 +266,7 @@ export const hexToArray = new DevFunction(
     }
     let combLen = combBinArr.length;
     forEachValue(typeArr, callerNode, execEnv, (type, ind) => {
-      type = getString(type, callerNode, execEnv);
+      type = getString(type, execEnv);
       let match, isUnsigned, lenExp, loExp, hiExp;
 
       // Reverse conversion for the 'string' type.
@@ -443,7 +443,7 @@ export const valueToHex = new DevFunction(
         if (err instanceof TypeError || err instanceof SyntaxError) {
           throw new ArgTypeError(
             "Invalid hexadecimal string: " +
-            getString(val, callerNode, execEnv),
+            getString(val, execEnv),
             callerNode, execEnv
           );
         }
@@ -466,7 +466,7 @@ export const hexToValue = new DevFunction(
         if (err instanceof TypeError || err instanceof SyntaxError) {
           throw new ArgTypeError(
             "Invalid hexadecimal string: " +
-            getString(hexStr, callerNode, execEnv),
+            getString(hexStr, execEnv),
             callerNode, execEnv
           );
         }
@@ -481,7 +481,7 @@ export const hexToValue = new DevFunction(
         if (err instanceof TypeError || err instanceof SyntaxError) {
           throw new ArgTypeError(
             "Invalid hexadecimal string: " +
-            getString(hexStr, callerNode, execEnv),
+            getString(hexStr, execEnv),
             callerNode, execEnv
           );
         }
@@ -501,7 +501,7 @@ export const arrayToHexArray = new DevFunction(
     if (typeArr instanceof ObjectObject) typeArr = typeArr.members;
     else return valArr.map((val, ind) => {
       let type = typeArr[ind];
-      type = getString(type, callerNode, execEnv);
+      type = getString(type, execEnv);
       return valueToHex.fun({callerNode, execEnv}, [val, type]);
     });
   }
@@ -515,8 +515,8 @@ export const hexArrayToArray = new DevFunction(
     if (typeArr instanceof ObjectObject) typeArr = typeArr.members;
     else return hexArr.map((hexStr, ind) => {
       let type = typeArr[ind];
-      hexStr = getString(hexStr, callerNode, execEnv);
-      type = getString(type, callerNode, execEnv);
+      hexStr = getString(hexStr, execEnv);
+      type = getString(type, execEnv);
       return hexToValue.fun({callerNode, execEnv}, [hexStr, type]);
     });
   }

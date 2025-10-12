@@ -71,9 +71,9 @@ export const some = new DevFunction(
 
 export const join = new DevFunction(
   "join", {typeArr: ["array", "string?"]},
-  ({callerNode, execEnv}, [arr, delimiter]) => {
+  ({execEnv}, [arr, delimiter]) => {
     if (arr instanceof ObjectObject) arr = arr.members;
-    return arr.map(val => getString(val, callerNode, execEnv)).join(delimiter);
+    return arr.map(val => getString(val, execEnv)).join(delimiter);
   }
 );
 

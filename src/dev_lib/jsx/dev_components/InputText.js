@@ -20,10 +20,10 @@ export const render = new DevFunction(
       callerNode, execEnv
     );
     if (placeholder !== undefined) {
-      placeholder = getString(placeholder, callerNode, execEnv);
+      placeholder = getString(placeholder, execEnv);
     }
     if (value !== undefined) {
-      value = getString(value, callerNode, execEnv);
+      value = getString(value, execEnv);
     }
 
     if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
@@ -94,7 +94,7 @@ export const actions = {
   }),
   "setValue": new DevFunction(
     "setValue", {}, function({thisVal, callerNode, execEnv}, [val]) {
-      val = getString(val, callerNode, execEnv);
+      val = getString(val, execEnv);
       let domNode = thisVal.jsxInstance.domNode;
       let prevVal = domNode.value;
       let activeElement = document.activeElement;

@@ -323,7 +323,7 @@ export const query = new DevFunction(
         else if (result instanceof CSSModule) {
           return result.styleSheet;
         }
-        else return getString(result, callerNode, execEnv);
+        else return getString(result, execEnv);
       }
 
       // And then we have the ';get' and ';call' casting segments, which work

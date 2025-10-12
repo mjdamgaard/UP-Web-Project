@@ -842,8 +842,8 @@ export class ScriptInterpreter {
                 let val = this.evaluateExpression(expNode.exp2, environment);
                 let newVal;
                 if (typeof prevVal === "string" || typeof val === "string") {
-                  newVal = getString(prevVal, expNode, environment) +
-                    getString(val, expNode, environment);
+                  newVal = getString(prevVal, environment) +
+                    getString(val, environment);
                 }
                 else if (
                   typeof prevVal !== "number" || typeof val !== "number"
@@ -1003,8 +1003,8 @@ export class ScriptInterpreter {
               break;
             case "+":
               acc = (typeof acc === "string" || typeof nextVal === "string") ?
-                getString(acc, expNode, environment) +
-                  getString(nextVal, expNode, environment) :
+                getString(acc, environment) +
+                  getString(nextVal, environment) :
                 parseFloat(acc) + parseFloat(nextVal);
               break;
             case "-":
@@ -1265,7 +1265,7 @@ export class ScriptInterpreter {
             console.log(...expValArr);
           }
           log.entries.push(
-            expValArr.map(val => getString(val, expNode, environment))
+            expValArr.map(val => getString(val, environment))
           );
         }
         // We experiment here with another API for console.trace(), which is:
@@ -1277,9 +1277,14 @@ export class ScriptInterpreter {
           let maxNum = Math.abs(parseInt(expValArr[0]));
           maxNum = Number.isNaN(maxNum) ? undefined : maxNum;
           let stringify = expValArr[0];
-          let trace = environment.getCallTrace(maxNum, stringify)
+          let trace = environment.getCallTrace(maxNum, stringify);
+          let varReadout = environment.getVariableReadout();
           if (!this.isServerSide && !isExiting) {
+            console.log("Trace:");
             trace.forEach(str => console.log(str));
+            console.log(" ");
+            console.log("Declared variables:");
+            varReadout.split("\n").forEach(str => console.log(str));
           }
           log.entries.push(trace.map(str => [str]));
         }
@@ -1363,7 +1368,7 @@ export class ScriptInterpreter {
       if (valProto !== OBJECT_PROTOTYPE && !(val instanceof ObjectObject)) {
         throw new RuntimeError(
           "Destructuring an object with a non-object value: " +
-          getString(val, expNode, environment),
+          getString(val, environment),
           expNode, environment
         );
       }
@@ -1834,13 +1839,9 @@ export class Environment {
     if (maxLen <= 0 || this.scopeType === "module") return [];
     else if (this.scopeType === "function") {
       let {callerNode, callerEnv} = this;
-      let callStr;
-      if (callerEnv.isDevFun) {
-        callStr = "<call inside of " + callerEnv.name + ">";
-      }
-      else {
-        callStr = getCallString(callerNode, callerEnv, this, stringify);
-      }
+      let callStr = (callerEnv.isDevFun) ?
+        "<call inside of " + callerEnv.name + ">" :
+        getCallString(callerNode, callerEnv, this, stringify);
       let ret = callerEnv.getCallTraceHelper(maxLen - 1, stringify);
       ret.push(callStr);
       return ret;
@@ -1854,6 +1855,18 @@ export class Environment {
     else {
       return this.parent.getCallTraceHelper(maxLen, stringify);
     }
+  }
+
+  getVariableReadout() {
+    let scopeReadout = "<" + this.scopeType + " scope>:\n" +
+      this.variables.entries().toArray().map(([ident, [val]]) => (
+        ident + " = " + (
+          typeof val === "string" ? JSON.stringify(val) : getString(val, this)
+        )
+      )).join("\n");
+    return scopeReadout + (
+      this.parent ? "\n" + this.parent.getVariableReadout() : ""
+    );
   }
 
 }
@@ -1871,7 +1884,7 @@ function getCallString(callNode, callEnv, execEnv, stringify) {
     inputArr.map(val => (
       (val === undefined) ? "undefined" :
         (typeof val === "string") ? JSON.stringify(val) :
-          stringify ? jsonStringify(val) : getString(val, callNode, callEnv)
+          stringify ? jsonStringify(val) : getString(val, callEnv)
     )).join(", ") +
   ")";
 }
@@ -1972,7 +1985,7 @@ export class ObjectObject {
       );
     }
     else {
-      key = getStringOrSymbol(key, node, env);
+      key = getStringOrSymbol(key, env);
       if (!key) throw new RuntimeError(
         "Invalid key for object property assignment",
         node, env
@@ -1984,14 +1997,25 @@ export class ObjectObject {
   stringify() {
     return (this.isMap) ? `"Map()"` : jsonStringify(this.members);
   }
-  toString(node, env) {
+  toString(env) {
     let {interpreter} = env.scriptVars;
     let toStringMethod = this.get("toString");
     if (toStringMethod instanceof FunctionObject) {
-      let ret = interpreter.executeFunction(
-        toStringMethod, [], node, env, this, [CLEAR_FLAG]
-      );
-      return getString(ret, node, env);
+      let ret, isInvalid; 
+      try {
+        ret = interpreter.executeFunction(
+          toStringMethod, [], null, env, this, [CLEAR_FLAG]
+        );
+      } catch (_) {
+        isInvalid = true;
+      }
+      if (!isInvalid && typeof ret === "object" && ret !== null) {
+        isInvalid = true
+      }
+      if (isInvalid) {
+        ret = "[" + this.className + ".toString() error]";
+      }
+      return ret.toString();
     }
     else {
       return `[object ${this.className}]`;
@@ -2061,6 +2085,10 @@ export class ClassObject extends ObjectObject {
     newInst.isMutable = this.instancesAreMutable;
     return newInst;
   }
+
+  toString() {
+    return "[object Class]";
+  }
 }
 
 const SUPERCLASS_FLAG = Symbol("superclass");
@@ -2106,7 +2134,7 @@ export function setPropertyOfObject(obj, key, val, node, env) {
 
 
 
-export function getString(val, node, env) {
+export function getString(val, env) {
   if (val === undefined) {
     return "undefined";
   }
@@ -2114,11 +2142,11 @@ export function getString(val, node, env) {
     return "null";
   }
   else if (val instanceof ObjectObject) {
-    return val.toString(node, env);
+    return val.toString(env);
   }
   else if (val instanceof Array) {
     return "[" +
-      val.map(entry => getString(entry, node, env)).join(", ") +
+      val.map(entry => getString(entry, env)).join(", ") +
     "]";
   }
   else if (getPrototypeOf(val) === OBJECT_PROTOTYPE) {
@@ -2127,7 +2155,7 @@ export function getString(val, node, env) {
         ([key, prop]) => key + ": " + (
           typeof prop === "string" ?
             JSON.stringify(prop) :
-            getString(prop, node, env)
+            getString(prop, env)
         )
       ).join(", ") +
     "}";
@@ -2140,8 +2168,8 @@ export function getString(val, node, env) {
   );
 }
 
-export function getStringOrSymbol(val, node, env) {
-  return (typeof val === "symbol") ? val : getString(val, node, env);
+export function getStringOrSymbol(val, env) {
+  return (typeof val === "symbol") ? val : getString(val, env);
 }
 
 
@@ -2203,7 +2231,7 @@ export function forEachValue(value, node, env, callback, ignore = false) {
       Object.entries(value).forEach(([key, val]) => callback(val, key));
     }
     else if (!ignore) throw new RuntimeError(
-      "Iterating over a non-iterable value: " + getString(value, node, env),
+      "Iterating over a non-iterable value: " + getString(value, env),
       node, env
     );
   }
@@ -2234,7 +2262,7 @@ export function mapValues(value, node, env, callback) {
       return Object.entries(value).map(([key, val]) => callback(val, key));
     }
     else throw new RuntimeError(
-      "Iterating over a non-iterable value: " + getString(value, node, env),
+      "Iterating over a non-iterable value: " + getString(value, env),
       node, env
     );
   }
@@ -2397,7 +2425,7 @@ export function verifyType(val, type, isOptional, node, env) {
       return;
     }
     else throw new ArgTypeError(
-      "Value is undefined, expected " + getString(type, node, env),
+      "Value is undefined, expected " + getString(type, env),
       node, env
     );
   }
@@ -2405,28 +2433,28 @@ export function verifyType(val, type, isOptional, node, env) {
   switch (type) {
     case "string":
       if (typeOfVal !== "string") throw new ArgTypeError(
-        `Value is not a string: ${getString(val, node, env)}`,
+        `Value is not a string: ${getString(val, env)}`,
         node, env
       );
       break;
     case "hex-string":
       if (typeOfVal !== "string" || !/^[0-9a-fA-F]*$/.test(val)) {
         throw new ArgTypeError(
-          `Value is not a hexadecimal string: ${getString(val, node, env)}`,
+          `Value is not a hexadecimal string: ${getString(val, env)}`,
           node, env
         );
       }
       break;
     case "number":
       if (typeOfVal !== "number") throw new ArgTypeError(
-        `Value is not a number: ${getString(val, node, env)}`,
+        `Value is not a number: ${getString(val, env)}`,
         node, env
       );
       break;
     case "integer":
       if (typeOfVal !== "number" || parseInt(val) !== val) {
         throw new ArgTypeError(
-          `Value is not an integer: ${getString(val, node, env)}`,
+          `Value is not an integer: ${getString(val, env)}`,
           node, env
         );
       }
@@ -2434,7 +2462,7 @@ export function verifyType(val, type, isOptional, node, env) {
     case "integer unsigned":
       if (typeOfVal !== "number" || parseInt(val) !== val || val < 0) {
         throw new ArgTypeError(
-          `Value is not an non-negative integer: ${getString(val, node, env)}`,
+          `Value is not an non-negative integer: ${getString(val, env)}`,
           node, env
         );
       }
@@ -2442,27 +2470,27 @@ export function verifyType(val, type, isOptional, node, env) {
     case "integer positive":
       if (typeOfVal !== "number" || parseInt(val) !== val || val <= 0) {
         throw new ArgTypeError(
-          `Value is not a positive integer: ${getString(val, node, env)}`,
+          `Value is not a positive integer: ${getString(val, env)}`,
           node, env
         );
       }
       break;
     case "boolean":
       if (typeOfVal !== "boolean") throw new ArgTypeError(
-        `Value is not a boolean: ${getString(val, node, env)}`,
+        `Value is not a boolean: ${getString(val, env)}`,
         node, env
       );
       break;
     case "symbol":
       if (typeOfVal !== "symbol") throw new ArgTypeError(
-        `Value is not a Symbol: ${getString(val, node, env)}`,
+        `Value is not a Symbol: ${getString(val, env)}`,
         node, env
       );
       break;
     case "object key":
       if (!val || (typeOfVal !== "string" && typeOfVal !== "symbol")) {
         throw new ArgTypeError(
-          `Value is not a valid object key: ${getString(val, node, env)}`,
+          `Value is not a valid object key: ${getString(val, env)}`,
           node, env
         );
       }
@@ -2473,7 +2501,7 @@ export function verifyType(val, type, isOptional, node, env) {
         !(val instanceof ObjectObject)
       ) {
         throw new ArgTypeError(
-          `Value is not an object: ${getString(val, node, env)}`,
+          `Value is not an object: ${getString(val, env)}`,
           node, env
         );
       }
@@ -2484,7 +2512,7 @@ export function verifyType(val, type, isOptional, node, env) {
         (!(val instanceof ObjectObject) || !val.isArray)
       ) {
         throw new ArgTypeError(
-          `Value is not an array: ${getString(val, node, env)}`,
+          `Value is not an array: ${getString(val, env)}`,
           node, env
         );
       }
@@ -2492,7 +2520,7 @@ export function verifyType(val, type, isOptional, node, env) {
     case "function":
       if (!(val instanceof FunctionObject)) {
         throw new ArgTypeError(
-          `Value is not a function: ${getString(val, node, env)}`,
+          `Value is not a function: ${getString(val, env)}`,
           node, env
         );
       }
@@ -2500,7 +2528,7 @@ export function verifyType(val, type, isOptional, node, env) {
     case "module":
       if (!(val instanceof LiveJSModule)) {
         throw new ArgTypeError(
-          `Value is not a live module object: ${getString(val, node, env)}`,
+          `Value is not a live module object: ${getString(val, env)}`,
           node, env
         );
       }
@@ -2508,7 +2536,7 @@ export function verifyType(val, type, isOptional, node, env) {
     case "class":
       if (!(val instanceof ClassObject)) {
         throw new ArgTypeError(
-          `Value is not a class: ${getString(val, node, env)}`,
+          `Value is not a class: ${getString(val, env)}`,
           node, env
         );
       }
@@ -2778,7 +2806,7 @@ export class Exception {
     this.environment = environment;
   }
   toString() {
-    return getString(this.val, this.node, this.environment);
+    return getString(this.val, this.environment);
   }
 }
 
@@ -2841,7 +2869,7 @@ export function getExtendedErrorMsg(err) {
   }
 
   // Get the error message.
-  let msg = getString(err.val, err.node, err.environment);
+  let msg = getString(err.val, err.environment);
 
   // If error is thrown from the global environment, also return the
   // toString()'ed error as is.
@@ -2887,9 +2915,13 @@ export function getNodeString(node, env, appendModuleLocation = false) {
 export function logExtendedErrorAndTrace(err) {
   let msg = getExtendedErrorMsg(err);
   let trace = err.environment.getCallTrace();
+  let varReadout = err.environment.getVariableReadout();
   console.error(msg);
   console.error(
     "Trace when the previous error occurred:\n" + trace.join(",\n")
+  );
+  console.error(
+    "Declared variables where the previous error occurred:\n" + varReadout
   );
   // TODO: Also display a list of all variables in the err.environment and all
   // its ancestor environments (and do not filter variables that are

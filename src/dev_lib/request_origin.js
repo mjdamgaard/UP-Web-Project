@@ -30,7 +30,7 @@ export const checkRequestOrigin = new DevFunction(
     let requestOrigin = execEnv.getFlag(REQUESTING_COMPONENT_FLAG);
     if (whitelist instanceof ObjectObject) whitelist = whitelist.members;
     let isAllowed = whitelist.some(str => {
-      str = getString(str, callerNode, execEnv);
+      str = getString(str, execEnv);
       if (str.at(-1) === "*") {
         let requiredSubstring = str.slice(0, -1);
         return requestOrigin.substring(0, requiredSubstring.length) ===

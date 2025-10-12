@@ -52,13 +52,13 @@ export const arrayToBase64 = new DevFunction(
     // representation with a lower numeric value of the two.   
     let binArrArr = [];
     forEachValue(typeArr, callerNode, execEnv, (type, ind) => {
-      type = getString(type, callerNode, execEnv);
+      type = getString(type, execEnv);
       let val = getPropertyFromObject(valArr, ind);
       let match, isUnsigned, lenExp, loExp, hiExp;
 
       // If type = 'string', treat val as a string of variable length.
       if (type === "string") {
-        val = getString(val, callerNode, execEnv);
+        val = getString(val, execEnv);
         if (NULL_CHAR_REGEX.test(val)) throw new ArgTypeError(
           `Cannot convert a string containing a null character: ${val}`,
           callerNode, execEnv
@@ -73,7 +73,7 @@ export const arrayToBase64 = new DevFunction(
       // instead prepend the length of the hex string divided by 2 so that hex
       // strings are thus collated w.r.t. their numerical values.
       if (type === "hex-int") {
-        let initVal = getString(val, callerNode, execEnv);
+        let initVal = getString(val, execEnv);
         val = initVal.replace(LEADING_ZERO_PAIRS_REGEX, "");
         if (val === "") val = "00";
         let len = val.length / 2;
@@ -109,7 +109,7 @@ export const arrayToBase64 = new DevFunction(
         val = parseInt(initVal);
         if (Number.isNaN(val)) throw new ArgTypeError(
           "Cannot convert a non-integer to a uint type: " +
-          getString(initVal, callerNode, execEnv),
+          getString(initVal, execEnv),
           callerNode, execEnv
         );
         let len = parseInt(lenExp ? lenExp.slice(1, -1) : 4);
@@ -123,7 +123,7 @@ export const arrayToBase64 = new DevFunction(
           val = val - minInts[len - 1];
         }
         if (val < 0 || val > maxUInts[len - 1]) throw new ArgTypeError(
-          "Invalid " + type + ": " + getString(initVal, callerNode, execEnv),
+          "Invalid " + type + ": " + getString(initVal, execEnv),
           callerNode, execEnv
         );
         let hexStr = val.toString(16).padStart(len * 2, "0");
@@ -141,7 +141,7 @@ export const arrayToBase64 = new DevFunction(
         val = parseFloat(initVal);
         if (Number.isNaN(val)) throw new ArgTypeError(
           "Cannot convert a non-float to a float type: " +
-          getString(initVal, callerNode, execEnv),
+          getString(initVal, execEnv),
           callerNode, execEnv
         );
         let len = parseInt(lenExp);
@@ -268,7 +268,7 @@ export const arrayFromBase64 = new DevFunction(
     }
     let combLen = combBinArr.length;
     forEachValue(typeArr, callerNode, execEnv, (type, ind) => {
-      type = getString(type, callerNode, execEnv);
+      type = getString(type, execEnv);
       let match, isUnsigned, lenExp, loExp, hiExp;
 
       // Reverse conversion for the 'string' type.
@@ -445,7 +445,7 @@ export const valueToBase64 = new DevFunction(
         if (err instanceof TypeError || err instanceof SyntaxError) {
           throw new ArgTypeError(
             "Invalid hexadecimal string: " +
-            getString(val, callerNode, execEnv),
+            getString(val, execEnv),
             callerNode, execEnv
           );
         }
@@ -468,7 +468,7 @@ export const valueFromBase64 = new DevFunction(
         if (err instanceof TypeError || err instanceof SyntaxError) {
           throw new ArgTypeError(
             "Invalid base 64 string: " +
-            getString(base64Str, callerNode, execEnv),
+            getString(base64Str, execEnv),
             callerNode, execEnv
           );
         }
@@ -483,7 +483,7 @@ export const valueFromBase64 = new DevFunction(
         if (err instanceof TypeError || err instanceof SyntaxError) {
           throw new ArgTypeError(
             "Invalid base 64 string: " +
-            getString(base64Str, callerNode, execEnv),
+            getString(base64Str, execEnv),
             callerNode, execEnv
           );
         }

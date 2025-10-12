@@ -159,7 +159,7 @@ export class AppStyler01 {
       transformProps = styleModule.get("transformProps");
     }
     else throw new ArgTypeError(
-      "Invalid style module: " + getString(styleModule, node, env),
+      "Invalid style module: " + getString(styleModule, env),
       node, env
     );
 
@@ -196,7 +196,7 @@ export class AppStyler01 {
     forEachValue(styleSheets, node, env, cssModule => {
       // Verify that the style sheet is a CSSModule instance.
       if (!(cssModule instanceof CSSModule)) throw new ArgTypeError(
-        `Invalid CSS module, ${getString(cssModule, node, env)}, in ` +
+        `Invalid CSS module, ${getString(cssModule, env)}, in ` +
         "transform.styleSheets. Expected a style sheet imported as a module " +
         "namespace object ('import * as myStyleSheet from ...').",
         node, env
@@ -271,7 +271,7 @@ export class AppStyler01 {
       // it by appending "_", which is similar to appending "_<styleSheetID>"
       // with styleSheetID = "". 
       if (typeof selector !== "string") throw new ArgTypeError(
-        `Invalid selector: ${getString(selector, node, env)}`,
+        `Invalid selector: ${getString(selector, env)}`,
         node, env
       );
       let [selectorList] = parseString(
@@ -288,7 +288,7 @@ export class AppStyler01 {
       forEachValue(outClasses, node, env, classStr => {
         if (typeof classStr !== "string" || !CLASS_STRING_REGEX.test(classStr)) {
           throw new ArgTypeError(
-            `Invalid class string: ${getString(classStr, node, env)}`,
+            `Invalid class string: ${getString(classStr, env)}`,
             node, env
           );
         }
@@ -334,7 +334,7 @@ export class AppStyler01 {
       // Validate the check function if one is provided.
       if (check) {
         if (!(check instanceof FunctionObject)) throw new ArgTypeError(
-          `Invalid check function: ${getString(check, node, env)}`,
+          `Invalid check function: ${getString(check, env)}`,
           node, env
         );
         preparedRule.check = check;
@@ -357,12 +357,12 @@ export class AppStyler01 {
       let transformProps = getPropertyFromObject(childRule, "props");
 
       // Make sure that key is a string.
-      preparedChildRule.key = getString(key, node, env);
+      preparedChildRule.key = getString(key, env);
 
       // If transform is a string, check that it is a reserved keyword.
       if (typeof transform === "string") {
         if (!TRANSFORM_KEYWORD_REGEX.test(transform)) throw new ArgTypeError(
-          `Invalid transform keyword: ${getString(transform, node, env)}`,
+          `Invalid transform keyword: ${getString(transform, env)}`,
           node, env
         );
         preparedChildRule.transform = transform;
@@ -407,7 +407,7 @@ export class AppStyler01 {
 
     // Else if it is a string, trim it in both ends.
     else {
-      style = getString(style, node, env).trim();
+      style = getString(style, env).trim();
     }
 
     // Then parse the declaration list, throwing on failure.

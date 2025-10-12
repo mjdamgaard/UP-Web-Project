@@ -32,7 +32,7 @@ export class CSSTransformer {
   // the relevant style scope component before the style sheet is ready to be
   // inserted in the document head.
   transformStyleSheet(styleSheet, node, env) {
-    styleSheet = getString(styleSheet, node, env);
+    styleSheet = getString(styleSheet, env);
     let [styleSheetNode] = parseString(styleSheet, node, env, cssParser);
     let styleSheetTemplate = this.transformParsedStyleSheet(styleSheetNode);
     return styleSheetTemplate;

@@ -83,7 +83,7 @@ export const actions = {
   }),
   "setValue": new DevFunction(
     "setValue", {}, function({thisVal, callerNode, execEnv}, [val]) {
-      val = getString(val, callerNode, execEnv);
+      val = getString(val, execEnv);
       let domNode = thisVal.jsxInstance.domNode;
       let prevVal = domNode.value;
       domNode.value = val;

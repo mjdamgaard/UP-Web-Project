@@ -44,7 +44,7 @@ export const render = new DevFunction(
 
     // Add the relative href if provided.
     if (href !== undefined) {
-      href = getString(href, callerNode, execEnv);
+      href = getString(href, execEnv);
 
       // Validate href, and prepend './' to it if doesn't start with /.?.?\//.
       if (!HREF_REGEX.test(href)) throw new ArgTypeError(

@@ -185,7 +185,7 @@ export class Connection extends ObjectObject {
   releaseLock = new DevFunction(
     "releaseLock", {isAsync: true, typeArr: ["string"]},
     async ({callerNode, execEnv}, [name]) => {
-      name = getString(name, callerNode, execEnv);
+      name = getString(name, execEnv);
       if (!this.conn) throw new RuntimeError(
         "Connection was not started before being used",
         callerNode, execEnv

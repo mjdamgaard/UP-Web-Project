@@ -41,7 +41,7 @@ export async function query(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
     );
-    let text = getString(postData, callerNode, execEnv);
+    let text = getString(postData, execEnv);
     payGas(callerNode, execEnv, {dbWrite: text.length});
     let [[wasCreated] = []] = await dbQueryHandler.queryDBProc(
       "putTextFile", [homeDirID, filePath, text],

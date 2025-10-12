@@ -89,7 +89,7 @@ class JSXInstance {
       callerNode, callerEnv
     );
     this.componentModule = componentModule;
-    this.key = getString(key, callerNode, callerEnv);
+    this.key = getString(key, callerEnv);
     this.parentInstance = parentInstance;
     this.settings = settings ?? parentInstance.settings;
     this.settingsData = {}; // Reserved property handled purely by settings.
@@ -361,7 +361,7 @@ class JSXInstance {
     let isArray = jsxElement instanceof Array;
     if (!(jsxElement instanceof JSXElement) && !isArray) {
       if (jsxElement !== undefined) {
-        newDOMNode = new Text(getString(jsxElement, callerNode, callerEnv));
+        newDOMNode = new Text(getString(jsxElement, callerEnv));
       }
       else {
         newDOMNode = new Text();
@@ -390,7 +390,7 @@ class JSXInstance {
       // First we check if the childInstances to see if the child component
       // instance already exists, and if not, create a new one. In both cases,
       // we also make sure to mark the childInstance as being used.
-      let key = getString(jsxElement.key, callerNode, callerEnv);
+      let key = getString(jsxElement.key, callerEnv);
       if (marks.get(key)) throw new RuntimeError(
         `Key "${key}" is already being used by another child component ` +
         "instance",
@@ -619,7 +619,7 @@ class JSXInstance {
     forEachValue(
       this.componentModule.get("actions"), node, env,
       (fun, key) => {
-        key = getStringOrSymbol(key, node, env) || " ";
+        key = getStringOrSymbol(key, env) || " ";
         this.actions[key] = fun;
       },
       true
@@ -634,8 +634,8 @@ class JSXInstance {
         else {
           let alias = getPropertyFromObject(keyOrAliasKeyPair, "0");
           let key = getPropertyFromObject(keyOrAliasKeyPair, "1");
-          alias = getStringOrSymbol(alias, node, env) || " ";
-          key = getStringOrSymbol(key, node, env);
+          alias = getStringOrSymbol(alias, env) || " ";
+          key = getStringOrSymbol(key, env);
           this.methods[alias] = this.actions[key];
         }
       },
@@ -651,8 +651,8 @@ class JSXInstance {
         else {
           let alias = getPropertyFromObject(keyOrAliasKeyPair, "0");
           let key = getPropertyFromObject(keyOrAliasKeyPair, "1");
-          alias = getStringOrSymbol(alias, node, env) || " ";
-          key = getStringOrSymbol(key, node, env);
+          alias = getStringOrSymbol(alias, env) || " ";
+          key = getStringOrSymbol(key, env);
           this.events[alias] = this.actions[key];
         }
       },
@@ -665,7 +665,7 @@ class JSXInstance {
   // actionKey, and with the optional second argument as the argument of the
   // action function.
   do(actionKey, input, interpreter, node, env) {
-    actionKey = getStringOrSymbol(actionKey, node, env);
+    actionKey = getStringOrSymbol(actionKey, env);
     let eventFun = getPropertyFromPlainObject(this.actions, actionKey);
     if (eventFun) {
       return interpreter.executeFunction(
@@ -688,7 +688,7 @@ class JSXInstance {
   trigger(eventKey, input, interpreter, node, env) {
     if (!this.parentInstance) return;
     let events = this.parentInstance.events;
-    eventKey = getStringOrSymbol(eventKey, node, env);
+    eventKey = getStringOrSymbol(eventKey, env);
     let eventFun = getPropertyFromPlainObject(events, eventKey);
     if (eventFun) {
       // TODO: Right now we choose to be very restrictive and clear all
@@ -720,7 +720,7 @@ class JSXInstance {
   call(
     instanceKey, methodKey, input, interpreter, node, env
   ) {
-    instanceKey = getStringOrSymbol(instanceKey, node, env);
+    instanceKey = getStringOrSymbol(instanceKey, env);
 
     // First get the targeted child instance.
     let targetInstance = this.childInstances.get(instanceKey);
@@ -731,7 +731,7 @@ class JSXInstance {
 
     // Then find and call its targeted method.
     let methods = targetInstance.methods;
-    methodKey = getStringOrSymbol(methodKey, node, env);
+    methodKey = getStringOrSymbol(methodKey, env);
     let methodFun = getPropertyFromPlainObject(methods, methodKey);
     if (methodFun) {
       // TODO: The same todo applies here as in the trigger() method above.
