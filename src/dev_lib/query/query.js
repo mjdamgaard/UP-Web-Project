@@ -383,6 +383,9 @@ export const query = new DevFunction(
         // First transform the result such that each file path is cut off at
         // the first slash that comes after the subdirectory path.
         let subdirectoryPath = castingSegment.substring(1);
+        if (subdirectoryPath && subdirectoryPath.at(-1) !== "/") {
+          subdirectoryPath += "/";
+        }
         let len = subdirectoryPath.length;
         let transformedResult = result.map(val => {
           let indOfNextSlash = val.indexOf("/", len);
