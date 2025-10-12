@@ -102,13 +102,13 @@ export class AppStyler01 {
     // which resolves with the componentID when the component has been prepared.
     let idPromise = this.prepareComponentHelper(
       componentModule, componentPath, node, env
-    );
-    this.componentIDs.set(componentPath, idPromise);
-    idPromise.then(id => {
+    ).then(id => {
       this.componentIDs.set(componentPath, id);
       this.componentPaths[id] = componentPath;
     });
-    return idPromise;
+    this.componentIDs.set(componentPath, idPromise);
+
+    return await idPromise;
   }
 
   async prepareComponentHelper(componentModule, componentPath, node, env) {

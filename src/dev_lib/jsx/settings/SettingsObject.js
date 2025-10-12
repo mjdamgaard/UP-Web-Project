@@ -20,13 +20,13 @@ const styleSheetRoutes = new Map();
 
 export class SettingsObject01 extends SettingsObject {
 
-  initiate(userID, appComponent, node, env) {
+  async initiate(userID, appComponent, node, env) {
     this.userID = userID;
     this.appComponent = appComponent;
     this.styleModules = new Map();
     
     this.appStyler = appStyler;
-    return this.appStyler.initiate(appComponent, this, node, env);
+    return await this.appStyler.initiate(appComponent, this, node, env);
   }
 
 
