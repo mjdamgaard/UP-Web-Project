@@ -73,11 +73,11 @@ export function render() {
           "framework. To do this, go open a terminal and cd to the GitHub " +
           "repository that you just downloaded. Then run the following command."
         }</p>
-        <p><tt className="command">{
+        <p><code className="command">{
           // TODO: This leads nowhere yet. Make it lead to an app with the
           // tasks of this tutorial (that the reader will be tasked to edit). 
           "$ node ./dir_uploads/upload_dir.js ./up_directories/tutorials/intro"
-        }</tt></p>
+        }</code></p>
         <p>{
           "This will now prompt you for the username and password of your " +
           "account. (If you used an auto-generated password, you can find " +

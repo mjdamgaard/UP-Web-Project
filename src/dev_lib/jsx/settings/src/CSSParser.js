@@ -232,13 +232,13 @@ export const cssGrammar = {
   },
   "value": {
     rules: [
+      ["function-call"],
       ["ratio"],
       ["dimension"],
       ["number"],
       ["string"],
       ["hex-color"],
       ["built-in-value"],
-      ["function-call"],
     ],
     process: copyFromChild,
   },

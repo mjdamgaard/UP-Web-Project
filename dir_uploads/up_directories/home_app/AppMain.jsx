@@ -15,7 +15,6 @@ export function render({url = ""}) {
   }
 
 // TODO: Remove this:
-console.log("url=", url);
 if (url[1] !== "f") url = "/f" + abs("./");
 
   // If the url is equal to "", go to the home page.

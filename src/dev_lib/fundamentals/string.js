@@ -4,8 +4,9 @@ import {DevFunction, getString} from "../../interpreting/ScriptInterpreter.js";
 
 
 export const toString = new DevFunction(
-  "toString", {typeArr: ["any?"]}, ({execEnv}, [val]) => {
-    return getString(val, execEnv);
+  "toString", {typeArr: ["any?", "any?"]},
+  ({execEnv}, [val, getSourceCode]) => {
+    return getString(val, execEnv, getSourceCode);
   }
 );
 

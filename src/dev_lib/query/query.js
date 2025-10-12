@@ -286,6 +286,12 @@ export const query = new DevFunction(
       else if (castingSegment === "stringify") {
         result = jsonStringify(result);
       }
+      else if (
+        castingSegment === "string" ||
+        /^\.txt$/.test(castingSegment)
+      ) {
+        result = getString(result, execEnv, true);
+      }
 
       // You can also cast any string-valued result into a JS or JSX module,
       // or a CSS module.
@@ -311,19 +317,6 @@ export const query = new DevFunction(
         let modulePath = route + ";" +
           castingSegmentArr.slice(0, i + 1).join(";");
         result = new CSSModule(modulePath, result);
-      }
-
-      // Or get the source code for a JS or a CSS module (although one can also
-      // use queryRoute() for this).
-      else if (/^\.txt$/.test(castingSegment)) {
-        if (result instanceof LiveJSModule) {
-          return result.script ??
-            "***Casting to the source code of a dev lib not implemented yet***";
-        }
-        else if (result instanceof CSSModule) {
-          return result.styleSheet;
-        }
-        else return getString(result, execEnv);
       }
 
       // And then we have the ';get' and ';call' casting segments, which work

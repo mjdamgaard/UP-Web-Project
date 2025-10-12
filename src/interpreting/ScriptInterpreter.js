@@ -314,7 +314,7 @@ export class ScriptInterpreter {
     impStmt, curModulePath, callerModuleEnv
   ) {
     let submodulePath = getFullPath(curModulePath, impStmt.str);
-    return await this.import(submodulePath, impStmt, callerModuleEnv);
+    return await this.import(submodulePath, impStmt, callerModuleEnv, true);
   }
 
 
@@ -1862,11 +1862,12 @@ export class Environment {
 
   getVariableReadout() {
     let scopeReadout = "<" + this.scopeType + " scope>:\n" +
-      this.variables.entries().toArray().map(([ident, [val]]) => (
-        ident + " = " + (
-          typeof val === "string" ? JSON.stringify(val) : getString(val, this)
-        )
-      )).join("\n");
+      this.variables.entries().toArray().map(([ident, [val]]) => {
+        val = (val === UNDEFINED) ? "undefined" :
+          typeof val === "string" ? JSON.stringify(val) :
+            getString(val, this)
+        return ident + " = " + val;
+    }).join("\n");
     return scopeReadout + (
       this.parent ? "\n" + this.parent.getVariableReadout() : ""
     );
@@ -2136,7 +2137,7 @@ export function setPropertyOfObject(obj, key, val, node, env) {
 
 
 
-export function getString(val, env) {
+export function getString(val, env, getSourceCode = false) {
   if (val === undefined) {
     return "undefined";
   }
@@ -2144,7 +2145,7 @@ export function getString(val, env) {
     return "null";
   }
   else if (val instanceof ObjectObject) {
-    return val.toString(env);
+    return val.toString(env, getSourceCode);
   }
   else if (val instanceof Array) {
     return "[" +
@@ -2607,6 +2608,13 @@ export class LiveJSModule extends ObjectObject {
       }
     });
   }
+
+  toString(env, getSourceCode) {
+    return getSourceCode ? (
+      this.script ??
+      "***Casting to the source code of a dev lib not implemented yet***"
+    ) : super.toString(env);
+  }
 }
 
 export class CSSModule extends ObjectObject {
@@ -2615,6 +2623,10 @@ export class CSSModule extends ObjectObject {
     this.modulePath = modulePath;
     this.styleSheet = styleSheet;
     this.members["styleSheet"] = styleSheet;
+  }
+
+  toString(env, getSourceCode) {
+    return getSourceCode ? this.styleSheet : super.toString(env);
   }
 }
 

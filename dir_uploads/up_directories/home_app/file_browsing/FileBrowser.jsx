@@ -1,5 +1,7 @@
 
-import {split, at as atStr, toString, slice as sliceStr, indexOf} from 'string';
+import {
+  split, at as atStr, toString, slice as sliceStr, indexOf
+} from 'string';
 import {slice as sliceArr, at as atArr, join, map} from 'array';
 import {parseRoute, isTextFileExtension} from 'route';
 
@@ -58,11 +60,14 @@ export function getInitState({route: extRoute}) {
     queryPathArr
   );
 
+  // Record wether a separate query for the text file should be made.
+  let fetchFile = isTextFileQuery || isTextFile && castingSegments.length > 0;
+
   return {
     extRoute: extRoute, isLocked: isLocked, routeHomePath: routeHomePath,
     filePath: filePath,
     transformedRoute: transformedRoute, isDirectoryPath: isDirectoryPath,
-    isTextFileQuery: isTextFileQuery, isTextFile: isTextFile,
+    fetchFile: fetchFile, isTextFile: isTextFile,
     routeJSXWithSubLinks: routeJSXWithSubLinks,
   };
 } 
@@ -109,12 +114,12 @@ function getRouteJSXWithSubLinks(
   let resultSegment = fileName ? fileName + (
     queryPathArr.length === 0 ? "" : join(queryPathArr, "/")
   ) : undefined;
-  let resultLink = <ILink key={"f"} href={acc + "/" + resultSegment}>
+  let resultLink = <ILink key={"r"} href={acc + "/" + resultSegment}>
     {resultSegment}
   </ILink>;
 
   // Then create an ILink for each casting segment.
-  let castingLinks = map(castingSegments, segment => {
+  let castingLinks = map(castingSegments, (segment, ind) => {
     acc += ";" + segment;
     return <ILink key={"cast" + ind} href={acc}>{segment}</ILink>;
   });
@@ -138,7 +143,7 @@ export function render({route}) {
   if (atStr(route, -1) === "/") route = sliceStr(route, 0, -1);
   let {
     isInvalid, isMissing, extRoute, isLocked, routeHomePath, filePath,
-    transformedRoute, isDirectoryPath, isTextFileQuery, isTextFile,
+    transformedRoute, isDirectoryPath, fetchFile, isTextFile,
     routeJSXWithSubLinks,
     adminID, fileText, result
   } = this.state;
@@ -167,8 +172,8 @@ export function render({route}) {
     fetch(transformedRoute).then(result => {
       this.setState(state => ({...state, result: result}));
     });
-    if (isTextFileQuery) {
-      fetch(routeHomePath + "/" + filePath).then(text => {
+    if (fetchFile) {
+      fetch(routeHomePath + "/" + filePath + ";string").then(text => {
         this.setState(state => ({...state, fileText: text}));
       });
     }
@@ -176,8 +181,7 @@ export function render({route}) {
   }
 
   else if (
-    !adminID || result === undefined ||
-    isTextFileQuery && fileText === undefined
+    !adminID || result === undefined || fetchFile && fileText === undefined
   ) {
     content = <div className="fetching">{"..."}</div>;
   }
@@ -195,29 +199,32 @@ export function render({route}) {
           </ILink> 
         </div>;
       }) :
-      map(split(toString(result), "\n"), (line, ind) => (
-        <div className="line">{ind + 1}{": "}{line}</div>
+      map(split(toString(result, true), "\n"), (line, ind) => (
+        <code className="line">{ind + 1}{": "}{line}<br/></code>
       ));
     
     // And in case of a text file query, break up the fileText into individual
     // lines with line numbers in front.
-    let brokenUpText = isTextFileQuery ? map(
-      split(toString(fileText), "\n"), (line, ind) => (
-        <div className="line">{ind + 1}{": "}{line}</div>
+    let brokenUpText = fetchFile ? map(
+      split(fileText, "\n"), (line, ind) => (
+        <code className="line">{ind + 1}{": "}{line}<br/></code>
       )
     ) : undefined;
 
     // Then construct the final content.
     content = [
       <div className="admin-id">{"Admin ID: "}{adminID}</div>,
-      <div className="result">
-        {"Result: "}{<br/>}
+      <div className="result">{
+        isTextFile && !fetchFile ? <h5>{"File contents"}</h5> :
+          isDirectoryPath ? <h5>{"Directory contents"}</h5> :
+            <h5>{"Result"}</h5>
+        }
         <div>{transformedResult}</div>
       </div>,
-      !isTextFileQuery ? undefined : <div className="text-file-content">
-        {"Text file: "}{<br/>}
+      fetchFile ? <div className="text-file-content">
+        <h5>{"File contents"}</h5>
         <div>{brokenUpText}</div>
-      </div>,
+      </div> : undefined,
     ];
   }
 
