@@ -27,7 +27,7 @@ export function render(props) {
       let classKey = entDef.Class;
       this.setState(state => ({...state, classKey: classKey ?? false}));
     });
-    content = <div className="fetching"></div>;
+    content = <div className="fetching">{"..."}</div>;
   }
 
   // If the entity definition is missing, or is ill-formed (without a "Class"
@@ -43,7 +43,7 @@ export function render(props) {
         ...state, relevancyQualPath: qualPath ?? false
       }));
     });
-    content = <div className="fetching"></div>;
+    content = <div className="fetching">{"..."}</div>;
   }
 
   // Else if the quality path is ready, but the top entry has not yet been
@@ -52,7 +52,7 @@ export function render(props) {
     scoreHandler.fetchTopEntry(relevancyQualPath).then(topEntry => {
       this.setState(state => ({...state, topEntry: topEntry ?? false}));
     });
-    content = <div className="fetching"></div>;
+    content = <div className="fetching">{"..."}</div>;
   }
 
   // And if it has, but is undefined (in the case of an empty list), render the

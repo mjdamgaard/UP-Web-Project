@@ -577,6 +577,9 @@ export class ScriptInterpreter {
         logExtendedErrorAndTrace(err);
       }
     }
+    else if (err instanceof Error) {
+      console.error(err);
+    }
     else if (!(err instanceof ExitException)) {
       logExtendedErrorAndTrace(err);
     }
@@ -724,7 +727,7 @@ export class ScriptInterpreter {
             let catchEnv = new Environment(environment);
             catchEnv.declare(stmtNode.ident, err.val, false, stmtNode);
             try {
-              stmtNode.catchStmt.forEach(stmt => {
+              stmtNode.catchStmtArr.forEach(stmt => {
                 this.executeStatement(stmt, catchEnv);
               });
             } catch (err2) {
@@ -1912,7 +1915,6 @@ export class ObjectObject {
     this.isMutable = isMutable;
     if (isArray) this.isArray = isArray;
     if (isMap) this.isMap = isMap;
-    if (isMap) this.isMap = isMap;
   }
 
   get(key, node, env) {
@@ -2243,7 +2245,7 @@ export function mapValues(value, node, env, callback) {
       return value.members.map(callback);
     }
     else if (value.isMap) {
-      return value.members.entries().map(
+      return value.members.entries().toArray().map(
         ([key, val]) => callback(val, key)
       );
     }
@@ -2923,13 +2925,6 @@ export function logExtendedErrorAndTrace(err) {
   console.error(
     "Declared variables where the previous error occurred:\n" + varReadout
   );
-  // TODO: Also display a list of all variables in the err.environment and all
-  // its ancestor environments (and do not filter variables that are
-  // redeclared). And at each environment, introduce it by a line with info
-  // about where it was declared, perhaps by logging its line number. Surely
-  // this will be useful --- maybe one will even sometimes catch bugs because
-  // of this that is not related to the current error. ..Oh, maybe it could
-  // even just be part of console.trace()'s normal behavior as well.
 }
 
 

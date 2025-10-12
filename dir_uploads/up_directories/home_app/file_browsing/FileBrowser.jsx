@@ -44,10 +44,10 @@ export function getInitState({route: extRoute}) {
     transformedRoute = routeHomePath + ";/" + subdirectoryPath;
   }
 
-  // Also record if the route is a query to a text file, e.g. a "/call" or
-  // "/get" route.
-  let isTextFileQuery = fileExt && isTextFileExtension(fileExt) &&
-    queryPathArr.length > 0;
+  // Also record if the route is a text file, and whether is has a query path,
+  // e.g. a "/call" or "/get" query path.
+  let isTextFile = fileExt && isTextFileExtension(fileExt);
+  let isTextFileQuery = isTextFile && queryPathArr.length > 0;
 
   // Then call getRouteJSXWithSubLinks() to get a <span> element with the route
   // where every single queryable segment is an individual ILink, meaning that
@@ -59,9 +59,10 @@ export function getInitState({route: extRoute}) {
   );
 
   return {
-    isLocked: isLocked, routeHomePath: routeHomePath, filePath: filePath,
+    extRoute: extRoute, isLocked: isLocked, routeHomePath: routeHomePath,
+    filePath: filePath,
     transformedRoute: transformedRoute, isDirectoryPath: isDirectoryPath,
-    isTextFileQuery: isTextFileQuery,
+    isTextFileQuery: isTextFileQuery, isTextFile: isTextFile,
     routeJSXWithSubLinks: routeJSXWithSubLinks,
   };
 } 
@@ -136,18 +137,23 @@ function getRouteJSXWithSubLinks(
 export function render({route}) {
   if (atStr(route, -1) === "/") route = sliceStr(route, 0, -1);
   let {
-    isInvalid, isMissing, isLocked, routeHomePath, filePath,
-    transformedRoute, isDirectoryPath, isTextFileQuery, routeJSXWithSubLinks,
+    isInvalid, isMissing, extRoute, isLocked, routeHomePath, filePath,
+    transformedRoute, isDirectoryPath, isTextFileQuery, isTextFile,
+    routeJSXWithSubLinks,
     adminID, fileText, result
   } = this.state;
   let content;
 
+  // If the route changes (significantly), reset adminID, fileText, and result.
+  if (route !== extRoute) {
+    this.setState(getInitState({route: route}));
+  }
 
   if (isLocked || isInvalid || !routeHomePath) {
-    content = <div className="invalid-route"></div>;
+    content = <div className="invalid-route">{"invalid route: "}{route}</div>;
   }
   else if (isMissing) {
-    content = <div className="missing"></div>;
+    content = <div className="fetching">{"missing"}</div>;
   }
 
   // Before any fetches has been made, fetch the admin ID, the result pointed
@@ -166,14 +172,14 @@ export function render({route}) {
         this.setState(state => ({...state, fileText: text}));
       });
     }
-    content = <div className="fetching"></div>;
+    content = <div className="fetching">{"..."}</div>;
   }
 
   else if (
     !adminID || result === undefined ||
     isTextFileQuery && fileText === undefined
   ) {
-    content = <div className="fetching"></div>;
+    content = <div className="fetching">{"..."}</div>;
   }
 
   else {

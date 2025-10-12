@@ -10,11 +10,11 @@ export function render({entKey}) {
     fetchEntityDefinition(entKey).then(entDef => {
       this.setState(state => ({...state, entDef: entDef ?? false}));
     });
-    content = <div className="fetching"></div>;
+    content = <div className="fetching">{"..."}</div>;
   }
 
   else if (!entDef) {
-    content = <div className="missing"></div>;
+    content = <div className="fetching">{"missing"}</div>;
   }
 
   else {

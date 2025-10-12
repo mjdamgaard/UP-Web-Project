@@ -19,7 +19,7 @@ export function render(props) {
         ...state, relevancyQualPath: qualPath ?? false
       }));
     });
-    content = <div className="fetching"></div>;
+    content = <div className="fetching">{"..."}</div>;
   }
 
   // Else if the quality path is ready, but the top entry has not yet been
@@ -28,13 +28,13 @@ export function render(props) {
     scoreHandler.fetchTopEntry(relevancyQualPath).then(topEntry => {
       this.setState(state => ({...state, topEntry: topEntry ?? false}));
     });
-    content = <div className="fetching"></div>;
+    content = <div className="fetching">{"..."}</div>;
   }
 
   // And if it has, but is undefined (in the case of an empty list), also
   // render an empty component (possibly with some ::after content).
   else if (!topEntry) {
-    content = <div className="missing"></div>;
+    content = <div className="fetching">{"missing"}</div>;
   }
 
   // Else if the top entry is ready, expect it to be an entity of the "App
@@ -45,7 +45,7 @@ export function render(props) {
     // If the score is not positive, reject the top entry and behave as if the
     // list is empty.
     if (score <= 0) {
-      content = <div className="missing"></div>;
+      content = <div className="fetching">{"missing"}</div>;
     }
     else {
       content = <ComponentEntityComponent key="0"

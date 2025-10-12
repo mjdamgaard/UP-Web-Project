@@ -37,7 +37,7 @@ export function render({
     fetchRelevancyQualityPath(relKey ?? classKey, objKey).then(qualPath => {
       this.setState(state => ({...state, qualPath: qualPath ?? false}));
     });
-    content = <div className="fetching"></div>;
+    content = <div className="fetching">{"..."}</div>;
   }
 
   // Else use the qualKey ?? qualPath to fetch the scored list to show, if it
@@ -46,7 +46,7 @@ export function render({
     scoreHandler.fetchList(qualKey ?? qualPath, options).then(list => {
       this.setState(state => ({...state, list: list ?? []}));
     });
-    content = <div className="fetching"></div>;
+    content = <div className="fetching">{"..."}</div>;
   }
 
   // And if the list is ready, render the elements. TODO: Only render some

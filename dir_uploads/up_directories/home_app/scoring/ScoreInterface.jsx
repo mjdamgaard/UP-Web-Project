@@ -33,11 +33,11 @@ export function render({subjKey, qualKey}) {
     } else {
       this.setState(state => ({...state, prevScore: false}));
     }
-    content = <div className="fetching"></div>;
+    content = <div className="fetching">{"..."}</div>;
   }
 
   else if (metric === undefined || prevScore === undefined) {
-    content = <div className="fetching"></div>;
+    content = <div className="fetching">{"..."}</div>;
   }
 
   // TODO: Check here against a missing or ill-formed metric.

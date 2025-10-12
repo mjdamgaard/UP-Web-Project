@@ -15,7 +15,8 @@ export function render({url = ""}) {
   }
 
 // TODO: Remove this:
-if (url[0] !== "f") url = "f" + abs("./");
+console.log("url=", url);
+if (url[1] !== "f") url = "/f" + abs("./");
 
   // If the url is equal to "", go to the home page.
   if (!url) {
@@ -28,9 +29,9 @@ if (url[0] !== "f") url = "f" + abs("./");
 
   // Else if url is of the form "e" + entPath, go to the EntityPage of the
   // given entity.
-  let urlStart = slice(url, 0, 2);
-  if (urlStart === "e/") {
-    let entPath = slice(url, 1);
+  let urlStart = slice(url, 0, 3);
+  if (urlStart === "/e/") {
+    let entPath = slice(url, 2);
     return (
       <main className="app-main">
         <EntityPage key="e" entKey={entPath} />
@@ -41,8 +42,8 @@ if (url[0] !== "f") url = "f" + abs("./");
   // Else if url is of the form "f" + route (where 'f' might stand for 'file'
   // or 'fetch' if you will), go to the file browser app with that route
   // given entity.
-  if (urlStart === "f/") {
-    let route = slice(url, 1);
+  if (urlStart === "/f/") {
+    let route = slice(url, 2);
     return (
       <main className="app-main">
         <FileBrowser key="f" route={route} />
@@ -52,8 +53,8 @@ if (url[0] !== "f") url = "f" + abs("./");
 
   // Else if url is of the form "c" + entPath go to the component showcasing
   // app and open the given component entity pointed to by entPath.
-  if (urlStart === "c/") {
-    let entPath = slice(url, 1);
+  if (urlStart === "/c/") {
+    let entPath = slice(url, 2);
     return (
       <main className="app-main">
         {"TODO: Insert component showcasing app component here."}
@@ -62,7 +63,7 @@ if (url[0] !== "f") url = "f" + abs("./");
   }
 
   // Else if url = "about", go to the about page.
-  if (url === "about") {
+  if (url === "/about") {
     return (
       <main className="app-main">
         {"TODO: Insert 'About' page component here."}
@@ -73,7 +74,7 @@ if (url[0] !== "f") url = "f" + abs("./");
   // Else if url = "tutorials", go to a tutorial index page, which similarly to
   // the home page is also supposed to be a variable, user-determined page at
   // some point. TODO: Implement that.
-  if (url === "tutorials") {
+  if (url === "/tutorials") {
     return (
       <main className="app-main">
         {"TODO: Insert variable 'Tutorials' page component here."}
@@ -82,7 +83,7 @@ if (url[0] !== "f") url = "f" + abs("./");
   }
 
   // Else if url = "donations", go to the about page.
-  if (url === "donations") {
+  if (url === "/donations") {
     return (
       <main className="app-main">
         {"TODO: Insert 'Donations' page component here."}
@@ -91,7 +92,7 @@ if (url[0] !== "f") url = "f" + abs("./");
   }
 
   // Else if url = "sponsors", go to the about page.
-  if (url === "sponsors") {
+  if (url === "/sponsors") {
     return (
       <main className="app-main">
         {"TODO: Insert 'Sponsors' page component here."}

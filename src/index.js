@@ -111,12 +111,8 @@ window.addEventListener("popstate", (event) => {
 // preferences.
 constructAccountMenu(settingsContext);
 
-// Set the url data for urlContext.
-let {pathname, search, hash} = window.location;
-urlContext.setVal({pathname: pathname, search: search, hash: hash, state: {}});
 
-
-
+// Initialize the interpreter.
 const scriptInterpreter = new ScriptInterpreter(
   false, queryServer, undefined, staticDevLibs, undefined
 );

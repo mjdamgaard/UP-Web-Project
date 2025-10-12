@@ -1238,18 +1238,7 @@ function addUserRelatedProps(props, jsxInstance, interpreter, node, env) {
 
 
 function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
-  // Subscribe the app component's jsxInstance to the urlContext.
   let {contexts: {urlContext}} = env.scriptVars;
-  urlContext.addSubscriberCallback((urlData) => {
-    jsxInstance.changePropsAndQueueRerender({urlData: urlData}, interpreter);
-  });
-
-  // Note that the following popstate event listener is added in index.js:
-  /*   window.addEventListener("popstate", (event) => {
-   *     let urlData = {url: window.location.pathname, stateJSON: event.state};
-   *     urlContext.setVal(urlData);
-   *   });
-   **/
 
   // Define the functions to change the urlContext.
   let validateAndUpdateURLContext = (stateJSON, url, callerNode, execEnv) => {
@@ -1263,6 +1252,8 @@ function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
     let urlData = {url: url, stateJSON: stateJSON};
     urlContext.setVal(urlData);
   };
+
+  // Define the methods of the history object.
   const pushState = new DevFunction(
     "pushState", {typeArr: ["any?", "string"]},
     ({callerNode, execEnv}, [state = null, url]) => {
@@ -1288,7 +1279,31 @@ function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
   const go = new DevFunction("go", {typeArr: ["integer?"]}, ({}, [delta]) => {
     window.history.go(delta);
   });
+
+  // Get the current "URL" (which is actually the location.pathname) and the
+  // state JSON.
   let {url, stateJSON} = urlContext.getVal();
+
+
+  // Then subscribe the app component's jsxInstance to the urlContext.
+  urlContext.addSubscriberCallback((urlData) => {
+    jsxInstance.changePropsAndQueueRerender({
+      url: urlData.url,
+      history: {
+        state: JSON.parse(urlData.stateJSON ?? 'null'),
+        pushState: pushState, replaceState: replaceState,
+        back: back, forward: forward, go: go,
+      },
+    }, interpreter);
+  });
+
+  // And note that the following popstate event listener is added in index.js:
+  // window.addEventListener("popstate", (event) => {
+  //   let urlData = {url: window.location.pathname, stateJSON: event.state};
+  //   urlContext.setVal(urlData);
+  // });
+
+  // Then return the initial URL-related props. 
   return {
     ...props,
     url: url,
