@@ -15,7 +15,7 @@ export function render({url = ""}) {
   }
 
 // TODO: Remove this:
-if (url[1] !== "f") url = "/f" + abs("./");
+if (url === "") url = "/e/1/1/em1.js;get/entities";
 
   // If the url is equal to "", go to the home page.
   if (!url) {

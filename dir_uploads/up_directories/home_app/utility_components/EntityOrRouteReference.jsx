@@ -1,35 +1,26 @@
 
 import {fetchEntityDefinition, fetchEntityPath} from "/1/1/entities.js";
 import {replaceReferences} from 'entities';
-
 import * as ILink from 'ILink.jsx';
-import * as EntityOrRouteReference from "./EntityOrRouteReference.jsx";
-
-
-// TODO: We should at some point probably change this component into something
-// more elaborate. But for now, we will just let it fetch the given entity's
-// definition,  look at the "Name" ?? "Title" ?? "Label" attribute, and the
-// render an ILink with that as its content, but also where we parse the
-// name/title/label and substitute any entity key with a nested EntityReference
-// (with isLink=false).
 
 
 
-export function render({entKey, isLink = true, pushState = undefined}) {
+export function render({ident, isLink = true, pushState = undefined}) {
   let {entDef, entPath} = this.state;
   pushState ??= isLink ? (this.subscribeToContext("history") ?? {}).pushState :
     undefined;
+  let EntityOrRouteReference = this.component;
   let content = "", href = "./";
 
   // If the entity definition has not been fetched, do so. And if isLink is
   // true, also fetch the entity ID.
   if (entDef === undefined) {
-    fetchEntityDefinition(entKey).then(entDef => {
+    fetchEntityDefinition(ident).then(entDef => {
       this.setState(state => ({...state, entDef: entDef ?? false}));
     });
   }
   if (isLink && entPath === undefined) {
-    fetchEntityPath(entKey).then(entPath => {
+    fetchEntityPath(ident).then(entPath => {
       this.setState(state => ({...state, entPath: entPath ?? false}));
     });
   }
@@ -43,6 +34,13 @@ export function render({entKey, isLink = true, pushState = undefined}) {
   // Else if the entity does not exist, render a missing entity title.
   else if (!entDef) {
     content = <span className="missing">{"missing"}</span>;
+  }
+
+  // Else check that entDef is indeed an entity definition, with a "Class"
+  // attribute, and if not, return and ILink to the file browser instead.
+  else if (typeof entDef !== "object" || !entDef.Class) {
+    content = ident;
+    href = "/f" + ident;
   }
 
   // Else if still needing the entID to be fetched, wait for that.
@@ -70,7 +68,7 @@ export function render({entKey, isLink = true, pushState = undefined}) {
     // Else call replaceReferences in order to parse the title and substitute
     // any nested entity keys with EntityReferences.
     else {
-      let substitutedSegmentArr = replaceReferences(title, (refIdent, ind) => (
+      let substitutedSegmentArr = replaceReferences(title, (entKey, ind) => (
         <EntityOrRouteReference key={ind} ident={refIdent} isLink={false} />
       ));
       content = substitutedSegmentArr;

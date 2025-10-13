@@ -32,9 +32,9 @@ export const entries = new DevFunction(
 export const mapToArray = new DevFunction(
   "mapToArray", {typeArr: ["any", "function"]},
   ({callerNode, execEnv, interpreter}, [obj, callback]) => {
-    return mapValues(obj, callerNode, execEnv, (val, ind) => {
+    return mapValues(obj, callerNode, execEnv, (val, key, ind) => {
       return interpreter.executeFunction(
-        callback, [val, ind], callerNode, execEnv
+        callback, [val, key, ind], callerNode, execEnv
       );
     });
   }

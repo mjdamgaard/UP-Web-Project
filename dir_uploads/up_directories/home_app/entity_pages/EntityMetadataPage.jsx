@@ -1,11 +1,33 @@
 
-import {fetchEntityDefinition} from "/1/1/entities.js";
+import {fetchEntityDefinition, fetchEntityPath} from "/1/1/entities.js";
+import {mapToArray} from 'object';
+
+import * as ILink from 'ILink.jsx';
+import * as TextWithSubstitutedLinks from "./TextWithSubstitutedLinks.jsx";
+
 
 export function render({entKey}) {
-  let {entDef} = this.state;
+  let {entPath, entDef, curEntKey} = this.state;
   let content;
 
-  // If the class key is not provided, and has not already been fetched, do so.
+  // If entKey changes reset the state.
+  if (entKey !== curEntKey) {
+    this.setState(getInitState({entKey: entKey}));
+  }
+
+  // If the entity path has not already been fetched, do so.
+  if (entPath === undefined) {
+    fetchEntityPath(entKey).then(entPath => {
+      this.setState(state => ({...state, entPath: entPath ?? false}));
+    });
+    content = <div className="fetching">{"..."}</div>;
+  }
+
+  else if (!entPath) {
+    content = <div className="fetching">{"missing"}</div>;
+  }
+
+  // Else if the entity definition has not already been fetched, do so.
   if (entDef === undefined) {
     fetchEntityDefinition(entKey).then(entDef => {
       this.setState(state => ({...state, entDef: entDef ?? false}));
@@ -18,27 +40,26 @@ export function render({entKey}) {
   }
 
   else {
-    content = <>
-      {"entDef:"}
-      {[
-        "_1_",
-        "_2_",
-        [
-          "_3_",
-          "_4_",
-          <>
-            <span>{"_5_"}</span>
-            {"_6_"}
-            {[
-              "_7_",
-              "_8_",
-            ]}
-          </>
-        ],
-      ]}
-      {entDef}
-
-    </>;
+    content = [
+      <div className="ent-path">
+        {"Entity path: "}
+        <ILink key="em" href={"/f" + entPath}>{entPath}</ILink>
+      </div>,
+      <table className="attribute-table">{
+        mapToArray(entDef, (val, key, ind) => (
+          <tr>
+            <th>{key}</th>
+            <td>{
+              typeof val === "string" ?
+                <TextWithSubstitutedLinks key={"attr-" + ind}
+                  children={val}
+                /> :
+                (val === undefined) ? "undefined" : val
+            }</td>
+          </tr>
+        ))
+      }</table>
+    ];
   }
   
   return (
@@ -46,4 +67,10 @@ export function render({entKey}) {
       {content}
     </div>
   );
+}
+
+
+
+export function getInitState({entKey}) {
+  return {curEntKey: entKey};
 }
