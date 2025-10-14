@@ -8,33 +8,51 @@
   margin: 0.1em 0.1em 0em;
   display: inline-block;
   border: 2px solid lightgray;
-  border-bottom: 0px solid lightgray;
+  border-bottom: 1px solid lightgray;
 }
 .tabbed-pages .tab-menu .tab.open {
   border-bottom: 0px;
 }
+.tabbed-pages .tab-menu .tab.open .title {
+  color: black;
+  pointer-events: none;
+}
 .tabbed-pages .tab-menu .tab .title {
   color: #1d70ff;
-  margin: 0.1em 0.5em;
+  margin: 0.1em 0.5em 0em;
 }
 .tabbed-pages .tab-menu .tab .title:hover {
   cursor: pointer;
   text-decoration: underline;
 }
-.tabbed-pages .tab-menu .close-button {
+.tabbed-pages .tab-menu .tab.open .title:hover {
+  cursor: pointer;
+  cursor: auto;
+  text-decoration: underline;
+}
+
+.tabbed-pages .tab-menu .tab .close-button {
   margin: 0.1em 0.5em 0.1em 0em;
+  height: 1em;
   display: inline-block;
 }
-.tabbed-pages .tab-menu .close-button:hover {
+.tabbed-pages .tab-menu .tab .close-button:hover {
   cursor: pointer;
 }
-.tabbed-pages .tab-menu .close-button::after {
+.tabbed-pages .tab-menu .tab .close-button::after {
   content: "🗙";
 }
+.tabbed-pages .tab-menu .tab:not(.loaded) .close-button {
+  display: none;
+}
+
 
 
 .tabbed-pages .page-container {
   border: 2px solid darkgray;
   border-top: 0px solid lightgray;
   padding: 1em;
+}
+.tabbed-pages .page-container > :not(.open) {
+  display: none;
 }

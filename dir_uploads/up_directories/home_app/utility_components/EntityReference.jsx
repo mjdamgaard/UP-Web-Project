@@ -15,11 +15,17 @@ import * as EntityOrRouteReference from "./EntityOrRouteReference.jsx";
 
 
 
-export function render({entKey, isLink = true, pushState = undefined}) {
-  let {entDef, entPath} = this.state;
+export function render(props) {
+  let {entKey, isLink = true, pushState = undefined} = props;
+  let {entDef, entPath, curEntKey} = this.state;
   pushState ??= isLink ? (this.subscribeToContext("history") ?? {}).pushState :
     undefined;
   let content = "", href = "./";
+
+  // If the entKey prop has changed, reset the state.
+  if (entKey !== curEntKey) {
+    this.setState(getInitState(props));
+  }
 
   // If the entity definition has not been fetched, do so. And if isLink is
   // true, also fetch the entity ID.
@@ -86,4 +92,10 @@ export function render({entKey, isLink = true, pushState = undefined}) {
       }</ILink>
     </span> :
     <span className={"entity-reference"}>{content}</span>;
+}
+
+
+
+export function getInitState({entKey}) {
+  return {curEntKey: entKey};
 }

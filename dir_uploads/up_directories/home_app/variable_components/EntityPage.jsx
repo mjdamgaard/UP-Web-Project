@@ -3,24 +3,30 @@ import {
   fetchEntityDefinition, fetchRelevancyQualityPath,
 } from "/1/1/entities.js";
 
-// import * as EntityReference from "../utility_components/EntityReference.jsx";
-import * as GeneralEntityPage from "../entity_pages/GeneralEntityPage.jsx";
+// TODO: Change back to GeneralEntityPage again.
+import * as GeneralEntityPage //from "../entity_pages/GeneralEntityPage.jsx";
+  from "../entity_pages/ClassPage.jsx";
 
 const entityPageRel = "/1/1/em1.js;get/entityPage";
 
 
 
 
-export function getInitState({classKey = undefined}) {
-  return {classKey: classKey};
+export function getInitState({entKey, classKey = undefined}) {
+  return {classKey: classKey, curEntKey: entKey};
 }
 
 
 export function render(props) {
   let {entKey, scoreHandler} = props;
   scoreHandler = scoreHandler ?? this.subscribeToContext("scoreHandler");
-  let {classKey, entityPageQualPath, topEntry} = this.state;
+  let {classKey, entityPageQualPath, topEntry, curEntKey} = this.state;
   let content;
+
+  // If the entKey prop has changed, reset the state.
+  if (entKey !== curEntKey) {
+    this.setState(getInitState(props));
+  }
 
   // If the class key is not provided, and has not already been fetched, do so.
   if (classKey === undefined) {
@@ -69,9 +75,6 @@ export function render(props) {
   // Return the content.
   return (
     <div className="entity-page-container">
-      {/* <div className="class-link">{
-        classKey ? <EntityReference key="class" entKey={classKey} /> : undefined
-      }</div> */}
       {content}
     </div>
   );

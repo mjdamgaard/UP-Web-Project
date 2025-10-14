@@ -27,11 +27,10 @@ export function render({tabs, closeInactiveTabs = undefined}) {
       <div className="page-container">{
         map(loadedPageEntries, ([tabKey, tabData]) => {
           if (!tabData) return undefined;
+          let isOpen = tabKey === openTabKey;
           let {Component, props: pageProps} = tabData;
-          return <div className="page">
-            <Component
-              {...pageProps} isOpen={tabKey === openTabKey} key={"p-" + tabKey}
-            />
+          return <div className={"page" + (isOpen ? " open" : "")}>
+            <Component {...pageProps} key={"p-" + tabKey} />
           </div>;
         })
       }</div>
