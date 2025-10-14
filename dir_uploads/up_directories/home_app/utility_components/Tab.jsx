@@ -16,7 +16,7 @@ export function render({tabKey, children: title, isOpen, isLoaded}) {
       <span className="title" onClick={() => {
         this.trigger("open-tab", tabKey);
       }}>{title}</span>
-      <span className="close-button" onClick={function() {
+      <span className="close-button" onClick={() => {
         this.trigger("close-tab", tabKey);
       }}></span>
     </div>

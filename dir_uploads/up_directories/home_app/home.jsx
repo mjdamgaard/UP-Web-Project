@@ -11,7 +11,7 @@ const trustedQualKey = "/1/1/em1.js;get/trusted";
 
 export function render(props) {
   return (
-    // <EntityPage key="0" {...props} />
+    // <EntityPage {...props} key="0" />
     <EntityList key="0" qualKey={trustedQualKey}
       scoreHandler={scoreHandler01} ElementComponent={GeneralEntityElement}
     />

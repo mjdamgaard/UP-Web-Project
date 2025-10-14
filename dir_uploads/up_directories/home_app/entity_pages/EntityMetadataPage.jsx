@@ -1,6 +1,7 @@
 
 import {fetchEntityDefinition, fetchEntityPath} from "/1/1/entities.js";
 import {mapToArray} from 'object';
+import {stringify} from 'json';
 
 import * as ILink from 'ILink.jsx';
 import * as TextWithSubstitutedLinks from "./TextWithSubstitutedLinks.jsx";
@@ -53,11 +54,12 @@ export function render({entKey}) {
           <tr>
             <th>{key}</th>
             <td>{
-              typeof val === "string" ?
+              (typeof val === "string") ?
                 <TextWithSubstitutedLinks key={"attr-" + ind}
                   children={val}
                 /> :
-                (val === undefined) ? "undefined" : val
+              (val && typeof val === "object") ? stringify(val) :
+              (val === undefined) ? "undefined" : val
             }</td>
           </tr>
         ))

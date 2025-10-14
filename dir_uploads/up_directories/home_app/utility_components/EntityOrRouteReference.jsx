@@ -83,5 +83,5 @@ export function render({ident, isLink = true, pushState = undefined}) {
         content
       }</ILink>
     </span> :
-    <span className={className}>{content}</span>;
+    <span className={"entity-reference"}>{content}</span>;
 }

@@ -3,7 +3,7 @@ import {
   fetchEntityDefinition, fetchRelevancyQualityPath,
 } from "/1/1/entities.js";
 
-import * as EntityReference from "../utility_components/EntityReference.jsx";
+// import * as EntityReference from "../utility_components/EntityReference.jsx";
 import * as GeneralEntityPage from "../entity_pages/GeneralEntityPage.jsx";
 
 const entityPageRel = "/1/1/em1.js;get/entityPage";
@@ -53,7 +53,7 @@ export function render(props) {
   // Else ff top entry is non-existent, or the score is non-positive, render
   // a general entity page as the default.
   if (!topEntry || topEntry[1] <= 0) {
-    content = <GeneralEntityPage {...props} />;
+    content = <GeneralEntityPage {...props} key="_0" />;
   }
 
   // Else if the top entry is ready, expect it to be an entity of the "App
@@ -61,20 +61,17 @@ export function render(props) {
   // the ComponentEntityComponent.
   else {console.log(topEntry);
     let [compEntID] = topEntry;
-    content = <ComponentEntityComponent {...props} compEntID={compEntID} />;
+    content = <ComponentEntityComponent
+      {...props} compEntID={compEntID} key="0"
+    />;
   }
 
-  // Return the content, together with an initial link to the component class
-  // (which can always be hidden by the style, say, if the component already
-  // contains this link), which allows users to inspect alternative entity pages
-  // for this class, and to score them and/or add new ones themselves.
-  // TODO: Isn't it a mistake that it's "variable-component" instead of
-  // "entity-page" here:
+  // Return the content.
   return (
-    <div className="variable-component">
-      <div className="class-link">{
+    <div className="entity-page-container">
+      {/* <div className="class-link">{
         classKey ? <EntityReference key="class" entKey={classKey} /> : undefined
-      }</div>
+      }</div> */}
       {content}
     </div>
   );

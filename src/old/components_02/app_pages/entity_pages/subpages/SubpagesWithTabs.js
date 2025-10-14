@@ -100,7 +100,7 @@ export const SubpagesWithTabs = (props) => {
     let isOpen = tabID == curTabID;
     let isItalic = italicizeFirstTab && tabID == tabIDArr[0];
     return (
-      <div key={tabID}
+      <div
         className={"tab" +
             (isFetching ? " fetching" : "") +
             (isMissing  ? " missing"  : "") +
@@ -121,17 +121,17 @@ export const SubpagesWithTabs = (props) => {
     let [PageComponent, pageProps] = getPageCompFromID(tabID);
     let styleProps = tabID == curTabID ? {} : {style: {display: "none"}};
     return (
-      <div key={tabID} className="subpage" {...styleProps}>
-        <PageComponent tabID={tabID} {...pageProps} />
+      <div className="subpage" {...styleProps}>
+        <PageComponent tabID={tabID} {...pageProps} key={tabID} />
       </div>
     );
   });
 
   const moreTabsSubpage = !moreTabsSubpageIsLoaded ? <></> : (
-    <div key={"more-tabs"} className="more-tabs-page"
+    <div className="more-tabs-page"
       {...(curTabID === "more-tabs" ? {} : {style: {display: "none"}})}
     >
-      <MoreTabsSubpage tabScaleKeysJSON={tabScaleKeysJSON} />
+      <MoreTabsSubpage tabScaleKeysJSON={tabScaleKeysJSON} key={"more-tabs"} />
     </div>
   );
 

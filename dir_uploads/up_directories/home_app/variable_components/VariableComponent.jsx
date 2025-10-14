@@ -48,8 +48,8 @@ export function render(props) {
       content = <div className="missing">{"missing"}</div>;
     }
     else {
-      content = <ComponentEntityComponent key="0"
-        {...props} compEntID={compEntID}
+      content = <ComponentEntityComponent 
+        {...props} key="0" compEntID={compEntID}
       />;
     }
   }

@@ -29,8 +29,8 @@ export function render({tabs, closeInactiveTabs = undefined}) {
           if (!tabData) return undefined;
           let {Component, props: pageProps} = tabData;
           return <div className="page">
-            <Component key={"p-" + tabKey}
-              isOpen={tabKey === openTabKey} {...pageProps}
+            <Component
+              {...pageProps} isOpen={tabKey === openTabKey} key={"p-" + tabKey}
             />
           </div>;
         })
@@ -40,7 +40,7 @@ export function render({tabs, closeInactiveTabs = undefined}) {
 }
 
 
-export function getInitState({tabs, initTabKey = undefined}) {
+export function getInitState({tabs, initTabKey}) {
   return {
     openTabKey: initTabKey,
     loadedPages: {[initTabKey]: tabs[initTabKey]},
@@ -58,7 +58,7 @@ export const actions = {
 
     // Change openTabKey, and add a new entry to loadedPages if it has not
     // already been added.
-    let {loadedPages, openTabKey: prevOpenTabKey} = this.state.loadedPages;
+    let {loadedPages, openTabKey: prevOpenTabKey} = this.state;
     if (!loadedPages[tabKey]) {
       loadedPages = {...loadedPages, [tabKey]: tabs[tabKey]};
     }
@@ -80,7 +80,7 @@ export const actions = {
     let {openTabKey, loadedPages} = this.state;
     let newLoadedPages = {...loadedPages, [tabKey]: undefined};
     if (tabKey === openTabKey) {
-      let loadedPageEntries = entries(loadedPages);
+      let loadedPageEntries = entries(newLoadedPages);
       let newTabKey = "";
       forEach(loadedPageEntries, ([loadedTabKey, tabData]) => {
         if (tabData) newTabKey = loadedTabKey;
@@ -97,4 +97,11 @@ export const actions = {
 export const events = [
   "open-tab",
   "close-tab",
+];
+
+
+
+
+export const styleSheetPaths = [
+  abs("./TabbedPages.css"),
 ];

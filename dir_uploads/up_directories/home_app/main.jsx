@@ -61,4 +61,6 @@ export const events = [
 ];
 
 
-export const stylePath = "./style.css";
+export const styleSheetPaths = [
+  abs("./style.css"),
+];
