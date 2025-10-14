@@ -34,7 +34,7 @@ export function render(props) {
   // And if it has, but is undefined (in the case of an empty list), also
   // render an empty component (possibly with some ::after content).
   else if (!topEntry) {
-    content = <div className="fetching">{"missing"}</div>;
+    content = <div className="missing">{"missing"}</div>;
   }
 
   // Else if the top entry is ready, expect it to be an entity of the "App
@@ -45,7 +45,7 @@ export function render(props) {
     // If the score is not positive, reject the top entry and behave as if the
     // list is empty.
     if (score <= 0) {
-      content = <div className="fetching">{"missing"}</div>;
+      content = <div className="missing">{"missing"}</div>;
     }
     else {
       content = <ComponentEntityComponent key="0"

@@ -144,9 +144,9 @@ export class AppStyler01 {
 
     // Or if it is an array of CSSModules, do something similar, but where the
     // styeSheets array is set as that whole array. 
-    else if (styleModule instanceof Array) {
+    else if (!styleModule || styleModule instanceof Array) {
       transform = {
-        styleSheets: styleModule,
+        styleSheets: styleModule ? styleModule : [],
         childRules: [{key: "!_*", transform: "copy"}],
       };
     }

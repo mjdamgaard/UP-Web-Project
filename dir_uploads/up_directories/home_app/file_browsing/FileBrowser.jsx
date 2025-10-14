@@ -158,7 +158,7 @@ export function render({route}) {
     content = <div className="invalid-route">{"invalid route: "}{route}</div>;
   }
   else if (isMissing) {
-    content = <div className="fetching">{"missing"}</div>;
+    content = <div className="missing">{"missing"}</div>;
   }
 
   // Before any fetches has been made, fetch the admin ID, the result pointed
@@ -220,15 +220,15 @@ export function render({route}) {
       }</div>,
       <hr/>,
       <div className="result">{
-        isTextFile && !fetchFile ? <h5>{"File contents"}</h5> :
-          isDirectoryPath ? <h5>{"Directory contents"}</h5> :
-            <h5>{"Result"}</h5>
+        isTextFile && !fetchFile ? <h3>{"File contents"}</h3> :
+          isDirectoryPath ? <h3>{"Directory contents"}</h3> :
+            <h3>{"Result"}</h3>
         }
         <div>{transformedResult}</div>
       </div>,
       <hr/>,
       fetchFile ? <div className="text-file-content">
-        <h5>{"File contents"}</h5>
+        <h3>{"File contents"}</h3>
         <div>{brokenUpText}</div>
       </div> : undefined,
     ];

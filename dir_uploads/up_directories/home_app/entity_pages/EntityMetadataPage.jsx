@@ -4,10 +4,11 @@ import {mapToArray} from 'object';
 
 import * as ILink from 'ILink.jsx';
 import * as TextWithSubstitutedLinks from "./TextWithSubstitutedLinks.jsx";
+import * as TextDisplay from "../utility_components/TextDisplay.jsx";
 
 
 export function render({entKey}) {
-  let {entPath, entDef, curEntKey} = this.state;
+  let {entPath, entDef, curEntKey, description} = this.state;
   let content;
 
   // If entKey changes reset the state.
@@ -24,7 +25,7 @@ export function render({entKey}) {
   }
 
   else if (!entPath) {
-    content = <div className="fetching">{"missing"}</div>;
+    content = <div className="missing">{"missing"}</div>;
   }
 
   // Else if the entity definition has not already been fetched, do so.
@@ -36,15 +37,17 @@ export function render({entKey}) {
   }
 
   else if (!entDef) {
-    content = <div className="fetching">{"missing"}</div>;
+    content = <div className="missing">{"missing"}</div>;
   }
 
   else {
     content = [
+      <h3>{"Entity path"}</h3>,
       <div className="ent-path">
-        {"Entity path: "}
         <ILink key="em" href={"/f" + entPath}>{entPath}</ILink>
       </div>,
+      <hr/>,
+      <h3>{"Attributes"}</h3>,
       <table className="attribute-table">{
         mapToArray(entDef, (val, key, ind) => (
           <tr>
@@ -58,7 +61,12 @@ export function render({entKey}) {
             }</td>
           </tr>
         ))
-      }</table>
+      }</table>,
+      <hr/>,
+      <h3>{entDef.Documentation ? "Documentation" : "Description"}</h3>,
+      <TextDisplay key="_desc"
+        jsxLink={entDef.Documentation ?? entDef.Description}
+      />
     ];
   }
   

@@ -99,7 +99,8 @@ export class SettingsObject01 extends SettingsObject {
     // component exports a 'styleSheetPaths' array parameter, we let
     // styleModule be an array of (imported) modules, which is also allowed.
     let styleModulePromise;
-    let styleSheetPaths = componentModule.get("styleSheetPaths");
+    let styleSheetPaths = componentModule.get("styleSheetPaths") ??
+      componentModule.get("styleSheets");
     if (styleSheetPaths) {
       let styleSheetPromises = mapValues(styleSheetPaths, node, env, path => (
         interpreter.import(path, node, env)
