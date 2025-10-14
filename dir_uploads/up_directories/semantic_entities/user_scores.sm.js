@@ -23,7 +23,6 @@ export function postUserScoreHex(
   qualKey, subjKey, userKey, scoreHex, payloadHex = undefined
 ) {
   checkRequestOrigin(true, [
-    "/1/2/main.jsx",
     "/1/2/scoring/ScoreInterface.jsx",
   ]);
 
@@ -58,7 +57,6 @@ export function postUserScoreHex(
 
 export function deleteUserScore(qualKey, subjKey, userKey) {
   checkRequestOrigin(true, [
-    "/1/2/main.jsx",
     "/1/2/scoring/ScoreInterface.jsx",
   ]);
 

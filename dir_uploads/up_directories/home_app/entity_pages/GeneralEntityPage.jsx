@@ -8,8 +8,10 @@ const subclassesRel = "/1/1/em1.js;get/subclasses";
 
 export function render({entKey}) {
   return <div className="entity-page">
-    <h1><EntityReference key="title" entKey={entKey} isLink={false} /></h1>
-    <TabbedPages key="tp" initTabKey="about" tabs={{
+    <h1>
+      <EntityReference key={"t-" + entKey} entKey={entKey} isLink={false} />
+    </h1>
+    <TabbedPages key={"tp-" + entKey} initTabKey="about" tabs={{
       about: {
         title: "About", Component: EntityMetadataPage, props: {entKey: entKey}
       }

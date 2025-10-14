@@ -9,7 +9,7 @@ import * as TextDisplay from "../utility_components/TextDisplay.jsx";
 
 
 export function render({entKey}) {
-  let {entPath, entDef, curEntKey, description} = this.state;
+  let {entPath, entDef, curEntKey} = this.state;
   let content;
 
   // If entKey changes reset the state.

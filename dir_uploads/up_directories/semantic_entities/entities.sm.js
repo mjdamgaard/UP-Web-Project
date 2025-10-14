@@ -14,6 +14,10 @@ import {verifyType} from 'type';
 
 
 export function postEntity(entPath, useSecIdx = true) {
+  // Consider removing the following line again to allow for entities without
+  // a secondary index entry (entPath -> entID).
+  useSecIdx = true;
+ 
   return new Promise(resolve => {
     // If the user does not want to use the secondary index, just post to
     // the entPaths.att table.

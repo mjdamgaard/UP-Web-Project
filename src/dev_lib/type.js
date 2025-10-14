@@ -1,6 +1,6 @@
 
 import {
-  DevFunction, ObjectObject,
+  DevFunction, ObjectObject, ArgTypeError,
   verifyType as _verifyType, verifyTypes as _verifyTypes,
 } from '../interpreting/ScriptInterpreter.js';
 
@@ -19,5 +19,22 @@ export const verifyTypes = new DevFunction(
     if (valArr instanceof ObjectObject) valArr = valArr.members;
     if (typeArr instanceof ObjectObject) typeArr = typeArr.members;
     return _verifyTypes(valArr, typeArr, callerNode, execEnv);
+  },
+);
+
+
+
+export const hasType = new DevFunction(
+  "hasType", {typeArr: ["any", "string", "boolean?"]},
+  ({callerNode, execEnv}, [val, type, isOptional]) => {
+    try {
+      _verifyType(val, type, isOptional, callerNode, execEnv);
+      return true;
+    } catch (err) {
+      if (err instanceof ArgTypeError) {
+        return false;
+      }
+      else throw err;
+    }
   },
 );

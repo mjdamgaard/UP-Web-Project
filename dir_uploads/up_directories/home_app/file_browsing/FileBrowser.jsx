@@ -4,10 +4,12 @@ import {
 } from 'string';
 import {slice as sliceArr, at as atArr, join, map} from 'array';
 import {parseRoute, isTextFileExtension} from 'route';
+import {hasType} from 'type';
 
 import {fetch} from 'query';
 import * as ILink from 'ILink.jsx';
 import * as EntityReference from "../utility_components/EntityReference.jsx";
+import * as TextDisplay from "../utility_components/TextDisplay.jsx";
 
 
 
@@ -199,10 +201,12 @@ export function render({route}) {
           </ILink> 
         </div>;
       }) :
-      map(split(toString(result, true), "\n"), (line, ind) => (
-        <code className="line">{ind + 1}{": "}{line}<br/></code>
-      ));
-    
+      (hasType(result, "JSXElement")) ?
+        <TextDisplay key="_result" jsxElement={result} /> :
+        map(split(toString(result, true), "\n"), (line, ind) => (
+          <code className="line">{ind + 1}{": "}{line}<br/></code>
+        ));
+
     // And in case of a text file query, break up the fileText into individual
     // lines with line numbers in front.
     let brokenUpText = fetchFile ? map(
