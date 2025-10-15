@@ -506,17 +506,8 @@ class JSXInstance {
             newDOMNode[mouseEventProperty] = (event) => {
               // Execute the function object held in val, with elevated
               // privileges that allows the function to make POST-like
-              // requests. This is unless the component instance at the root
-              // of the current "style scope" is not visible in the viewport,
-              // or has overlaps from elements of different style scopes.
-              let styleScopeRootNode = this.settings.getStyleScopeRoot(
-                this, callerNode, callerEnv
-              );
-              let isVisible = getIsVisible(styleScopeRootNode);
-              canPost &&= isVisible;
-
-              // Also pass some of the properties of event, as well as an added
-              // canPost property. // TODO: Add more properties.
+              // requests. Also pass some of the properties of event, as well
+              // as an added canPost property. TODO: Add more properties.
               let {which, ctrlKey} = event;
               let e = {
                 canPost: canPost,
@@ -1067,7 +1058,6 @@ export class JSXInstanceInterface extends ObjectObject {
 
 
 const MARGIN_OF_ALLOWED_OVERLAP = 0.01;
-const MARGIN_OF_BEING_OUT_OF_VIEWPORT = 0.10;
 
 // getIsVisible() that checks that the input DOM node is on screen and without
 // overlaps from its siblings, as well as any of its ancestors' siblings. 
@@ -1079,12 +1069,7 @@ export function getIsVisible(domNode) {
 
   // Check that the node is not too much out of the viewport.
   let {innerHeight, innerWidth} = window;
-  if (
-    top + top * MARGIN_OF_BEING_OUT_OF_VIEWPORT < 0 ||
-    left + left * MARGIN_OF_BEING_OUT_OF_VIEWPORT < 0 ||
-    right - right * MARGIN_OF_BEING_OUT_OF_VIEWPORT > innerWidth ||
-    bottom - bottom * MARGIN_OF_BEING_OUT_OF_VIEWPORT > innerHeight
-  ) {
+  if (top < 0 || left < 0 || right > innerWidth || bottom > innerHeight) {
     return false;
   }
 
@@ -1098,11 +1083,21 @@ export function getIsVisible(domNode) {
   let upRootNode = document.getElementById("up-app-root");
   let ret = true;
   while(ret && curDOMNode !== upRootNode) {
-    // Get curDOMNode's the siblings (and itself), and then go through each
-    // one and check that it does not overlap, as well as any of its
+    // First check that domNode does not overflow its parent node.
+    let {parentNode} = curDOMNode;
+    let {top, right, bottom, left} = parentNode.getBoundingClientRect();
+    let doesOverflow =  top > effectiveTop || left > effectiveLeft ||
+      right < effectiveRight || bottom < effectiveBottom;
+    if (doesOverflow) {
+      ret = false;
+      break;
+    }
+
+    // Then get curDOMNode's the siblings (and itself), and then go through
+    // each one and check that it does not overlap, as well as any of its
     // descendants. However, we only check said descendants if the (computed)
     // 'overflow:visible' style is set.
-    let siblingsAndSelf = [...curDOMNode.parentNode.childNodes];
+    let siblingsAndSelf = [...parentNode.childNodes];
     ret = !siblingsAndSelf.some(sibling => {
       if (sibling === curDOMNode || !sibling.getBoundingClientRect) {
         return;

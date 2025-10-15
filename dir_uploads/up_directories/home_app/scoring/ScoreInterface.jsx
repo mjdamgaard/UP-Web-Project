@@ -90,6 +90,18 @@ export function render({subjKey, qualKey}) {
 
 export const actions = {
   "submitScore": function() {
+    // Check that the scoring interface is fully visible before allowing any
+    // posts. (This hinders other components tricking the user by showing only
+    // a small part of the interface.)
+    if (!this.getIsVisible()) {
+      this.setState(state => ({...state,
+        msg: <span className="warning">{
+          "Please scroll fully into view before submitting a score"
+        }</span>,
+      }));
+      return;
+    }
+
     this.setState(state => ({...state,
       msg: <span className="working">{"Submitting score..."}</span>,
     }));
@@ -147,6 +159,17 @@ export const actions = {
     });
   },
   "deleteScore": function() {
+    // Check that the scoring interface is fully visible before allowing any
+    // posts.
+    if (!this.getIsVisible()) {
+      this.setState(state => ({...state,
+        msg: <span className="warning">{
+          "Please scroll fully into view before submitting or deleting a score"
+        }</span>,
+      }));
+      return;
+    }
+
     this.setState(state => ({...state,
       msg: <span className="working">{"Deleting score..."}</span>,
     }));
