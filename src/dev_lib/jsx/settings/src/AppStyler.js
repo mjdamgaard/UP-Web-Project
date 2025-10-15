@@ -100,11 +100,14 @@ export class AppStyler01 {
 
     // Else store a self-replacing promise at this.componentIDs[modulePath],
     // which resolves with the componentID when the component has been prepared.
-    let idPromise = this.prepareComponentHelper(
-      componentModule, componentPath, node, env
-    ).then(id => {
-      this.componentIDs.set(componentPath, id);
-      this.componentPaths[id] = componentPath;
+    let idPromise = new Promise((resolve, reject) => {
+      this.prepareComponentHelper(
+        componentModule, componentPath, node, env
+      ).then(id => {
+        this.componentIDs.set(componentPath, id);
+        this.componentPaths[id] = componentPath;
+        resolve(id);
+      }).catch(err => reject(err));
     });
     this.componentIDs.set(componentPath, idPromise);
 
@@ -430,6 +433,7 @@ export class AppStyler01 {
       transform: parentTransform, transformProps: parentTransformProps,
     } = parentInstance.settingsData ?? {};
     let {childRules = []} = parentTransform ?? {};
+    let {interpreter} = env.scriptVars;
 
     // Extract the transform and transformProps from the last child rule in the
     // parent instance's childRules array where the key format matches this
@@ -483,7 +487,7 @@ export class AppStyler01 {
       if (!componentID) {
         let whenReady = this.prepareComponent(
           jsxInstance.componentModule, node, env
-        );
+        ).catch(err => interpreter.handleUncaughtException(err, env));
         return [false, whenReady];
       }
 
@@ -610,11 +614,9 @@ export class AppStyler01 {
     ownDOMNodes.forEach(node => node.classList.remove("own-leaf"));
 
     // And in case of the outer component of a style scope, set the overflow
-    // style property as hidden, and set the z-index as the maximal value.
+    // style property as hidden.
     if (isScopeRoot) {
       domNode.style.overflow = "hidden";
-      domNode.style.position = "relative";
-      domNode.style["z-index"] = "2147483647";
     }
   }
 

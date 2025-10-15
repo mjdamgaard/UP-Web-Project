@@ -1066,19 +1066,21 @@ export function getIsVisible(domNode) {
     return undefined;
   }
   let {top, right, bottom, left} = domNode.getBoundingClientRect();
+  let effectiveTop = top + top * MARGIN_OF_ALLOWED_OVERLAP;
+  let effectiveLeft = left + left * MARGIN_OF_ALLOWED_OVERLAP;
+  let effectiveRight = right - right * MARGIN_OF_ALLOWED_OVERLAP;
+  let effectiveBottom = bottom - bottom * MARGIN_OF_ALLOWED_OVERLAP;
 
   // Check that the node is not too much out of the viewport.
   let {innerHeight, innerWidth} = window;
-  if (top < 0 || left < 0 || right > innerWidth || bottom > innerHeight) {
+  let isOutOfViewport = effectiveTop < 0 || effectiveLeft < 0 ||
+    effectiveRight > innerWidth || effectiveBottom > innerHeight;
+  if (isOutOfViewport) {
     return false;
   }
 
   // Then check that none of the siblings or ancestor siblings overlap too much
   // with the node.
-  let effectiveTop = top + top * MARGIN_OF_ALLOWED_OVERLAP;
-  let effectiveLeft = left + left * MARGIN_OF_ALLOWED_OVERLAP;
-  let effectiveRight = right - right * MARGIN_OF_ALLOWED_OVERLAP;
-  let effectiveBottom = bottom - bottom * MARGIN_OF_ALLOWED_OVERLAP;
   let curDOMNode = domNode;
   let upRootNode = document.getElementById("up-app-root");
   let ret = true;

@@ -30,14 +30,12 @@ const FLAG_PATTERN =
   "([^\\s\\S])";
 
 
-const PROPERTY_PATTERN = "[a-z][a-z\\-]*";
+const PROPERTY_PATTERN = "[a-z\\-]+";
 
-const BUILT_IN_VALUE_PATTERN = "[a-z][a-z\\-]*";
+const BUILT_IN_VALUE_PATTERN = "[a-z\\-]+";
 
 
-const UNIT_PATTERN =
-  "(%|cm|mm|Q|in|pc|pt|px|em|rem|vh|vw|deg|fr)";
-// TODO: Continue this list.
+const UNIT_PATTERN = "(%|[a-z]+)";
 
 
 const FUNCTION_NAME_PATTERN =

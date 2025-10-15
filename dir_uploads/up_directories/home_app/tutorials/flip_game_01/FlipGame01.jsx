@@ -1,7 +1,7 @@
 
-import {createArray} from 'math';
+import {createArray} from 'array';
 
-import * as GameSquare from "./GameSquare.sjx";
+import * as GameSquare from "./GameSquare.jsx";
 
 
 
@@ -36,10 +36,28 @@ export function render({rowNum = 3, colNum = 3}) {
 // actions, rather than arrow functions, such that 'this' can be bound to the
 // desired JSXInstance object.)
 export const actions = {
+  // The "new-move" event is triggered when a square is selected by the user.
   "new-move": function([rowInd, colInd]) {
-    
+    let {rowNum = 3, colNum = 3} = this.props;
+
+    // Call the flip() method of the square at (rowInd, colInd), as well as all
+    // its neighbors.
+    this.call("s-" + rowInd + "-" + colInd, "flip");
+    if (rowInd > 0) {
+      this.call("s-" + (rowInd - 1) + "-" + colInd, "flip");
+    }
+    if (colInd > 0) {
+      this.call("s-" + rowInd + "-" + (colInd - 1), "flip");
+    }
+    if (rowInd < rowNum - 1) {
+      this.call("s-" + (rowInd + 1) + "-" + colInd, "flip");
+    }
+    if (colInd < colNum - 1) {
+      this.call("s-" + rowInd + "-" + (colInd + 1), "flip");
+    }
   },
 };
+
 
 // The 'events' export of a component declares all the actions that should be
 // elevated as "events" of the component, which can then be triggered by
@@ -51,5 +69,5 @@ export const events = [
 
 
 export const styleSheets = [
-  abs("./FlipGame.css"),
+  abs("./FlipGame01.css"),
 ];

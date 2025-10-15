@@ -1,7 +1,7 @@
 
 import {slice, at} from 'string';
 
-import * as TutorialIndexPage from "./tutorials/index.jsx";
+import * as TutorialIndexPage from "./tutorials/TutorialIndexPage.jsx";
 import * as TutorialIntroPage from "./tutorials/intro.jsx";
 import * as AboutPage from "./about.jsx";
 import * as HomePage from "./home.jsx";
@@ -76,7 +76,7 @@ export function render({url = ""}) {
   if (url === "/tutorials") {
     return (
       <main className="app-main">
-        {"TODO: Insert variable 'Tutorials' page component here."}
+        <TutorialIndexPage key="tut"/>
       </main>
     );
   }

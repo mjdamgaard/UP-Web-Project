@@ -18,6 +18,12 @@ html, body, #up-app-root {
   overflow: hidden;
 }
 
+/* Hide that error overlay for now */
+/* #webpack-dev-server-client-overlay {
+  display: none;
+} */
+
+
 
 
 /* #account-menu-header::after {

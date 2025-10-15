@@ -1,0 +1,32 @@
+
+
+
+.game {
+  display: inline-grid;
+  grid-column: 1;
+  background-color: lightgray;
+}
+.game .row {
+  display: grid;
+  grid-row: 1;
+  background-color: lightgray;
+}
+
+.game-square {
+  width: 80px;
+  height: 80px;
+  /* display: inline-block; */
+  border: 4px solid black;
+  background-color: white;
+  transition: background-color 200ms linear;
+}
+.game-square.colored {
+  background-color: rgb(59, 59, 59);
+  -webkit-transition: background-color 1000ms linear;
+  -ms-transition: background-color 1000ms linear;
+  transition: background-color 1000ms linear;
+}
+.game-square:hover {
+  cursor: pointer;
+  opacity: 70%;
+}
