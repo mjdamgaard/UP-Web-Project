@@ -503,12 +503,27 @@ class JSXInstance {
             if (!(val instanceof FunctionObject)) {
               break;
             }
-            newDOMNode[mouseEventProperty] = () => {
+            newDOMNode[mouseEventProperty] = (event) => {
               // Execute the function object held in val, with elevated
               // privileges that allows the function to make POST-like
-              // requests.
+              // requests. This is unless the component instance at the root
+              // of the current "style scope" is not visible in the viewport,
+              // or has overlaps from elements of different style scopes.
+              let styleScopeRootNode = this.settings.getStyleScopeRoot(
+                this, callerNode, callerEnv
+              );
+              let isVisible = getIsVisible(styleScopeRootNode);
+              canPost &&= isVisible;
+
+              // Also pass some of the properties of event, as well as an added
+              // canPost property. // TODO: Add more properties.
+              let {which, ctrlKey} = event;
+              let e = {
+                canPost: canPost,
+                which: which, ctrlKey: ctrlKey,
+              };
               interpreter.executeFunctionOffSync(
-                val, [], callerNode, callerEnv,
+                val, [e], callerNode, callerEnv,
                 new JSXInstanceInterface(this), [[CAN_POST_FLAG, canPost]]
               );
             };
@@ -1087,7 +1102,7 @@ export function getIsVisible(domNode) {
     // one and check that it does not overlap, as well as any of its
     // descendants. However, we only check said descendants if the (computed)
     // 'overflow:visible' style is set.
-    let siblingsAndSelf = curDOMNode.parentNode.childNodes;
+    let siblingsAndSelf = [...curDOMNode.parentNode.childNodes];
     ret = !siblingsAndSelf.some(sibling => {
       if (sibling === curDOMNode || !sibling.getBoundingClientRect) {
         return;
@@ -1119,6 +1134,8 @@ export function getIsVisible(domNode) {
     // iteration.
     curDOMNode = curDOMNode.parentNode;
   }
+
+  return ret;
 }
 
 
@@ -1177,6 +1194,10 @@ export class SettingsObject extends ObjectObject {
   transformInstance(
     jsxInstance, domNode, ownDOMNodes, node, env
   ) {}
+
+  // getStyleScopeRoot(jsxInstance) gets the DOM node at the root of the
+  // current style scope.
+  getStyleScopeRoot(jsxInstance, node, env) {}
 
   // Note that these are just the minimal API needed for this module to
   // function. In practice the settings class will likely be extended with

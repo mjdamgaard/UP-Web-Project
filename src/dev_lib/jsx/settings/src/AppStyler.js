@@ -618,6 +618,21 @@ export class AppStyler01 {
     }
   }
 
+
+
+  getStyleScopeRoot(jsxInstance, _node, _env) {
+    let {componentID} = jsxInstance.settingsData;
+    let parentInstance = jsxInstance.parentInstance;
+    while(
+      parentInstance && parentInstance.settingsData.componentID === componentID
+    ) {
+      jsxInstance = parentInstance;
+      parentInstance = jsxInstance.parentInstance;
+    }
+    return jsxInstance.domNode;
+  }
+
+
 }
 
 

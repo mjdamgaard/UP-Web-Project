@@ -11,6 +11,15 @@ html, body, #up-app-root {
   z-index: 1;
 }
 
+
+/* This rule is important, as it makes it easier to prove that a style scope
+ * component does not have any overlapping elements from other style scopes. */
+#up-app-root * {
+  overflow: hidden;
+}
+
+
+
 /* #account-menu-header::after {
   content: "👤";
 }
