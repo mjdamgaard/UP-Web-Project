@@ -504,17 +504,13 @@ class JSXInstance {
               break;
             }
             newDOMNode[mouseEventProperty] = () => {
-              try {
-                // Execute the function object held in val, with elevated
-                // privileges that allows the function to make POST-like
-                // requests.
-                interpreter.executeFunctionOffSync(
-                  val, [], callerNode, callerEnv,
-                  new JSXInstanceInterface(this), [[CAN_POST_FLAG, canPost]]
-                );
-              } catch (err) {
-                console.error(err);
-              }
+              // Execute the function object held in val, with elevated
+              // privileges that allows the function to make POST-like
+              // requests.
+              interpreter.executeFunctionOffSync(
+                val, [], callerNode, callerEnv,
+                new JSXInstanceInterface(this), [[CAN_POST_FLAG, canPost]]
+              );
             };
             break;
           // TODO: Add keyboard events, more click events, and focus events and
@@ -877,6 +873,9 @@ export class JSXInstanceInterface extends ObjectObject {
       "unsubscribeFromContext": this.unsubscribeFromContext,
       "getOwnContext": this.getOwnContext,
       "getSettings": this.getSettings,
+      "getBoundingClientRect": this.getBoundingClientRect,
+      "getIsVisible": this.getIsVisible,
+      "getScrollData": this.getScrollData,
     });
   }
 
@@ -1007,9 +1006,119 @@ export class JSXInstanceInterface extends ObjectObject {
   );
 
 
-  // TODO: Add more instance methods at some point, such as a method to get
-  // bounding box data, or a method to get a PromiseObject that resolves a
-  // short time after the bounding box data, and similar data, is ready.
+  // TODO: Extend the API of getBoundingClientRect() such that it can take a
+  // selector argument, in which case the first DOM node from this selection,
+  // filtered so that only elements within the current style scope is selected,
+  // is used instead. 
+  getBoundingClientRect = new DevFunction(
+    "getBoundingClientRect", {}, () => {
+      let domNode = this.jsxInstance.domNode;
+      if (!domNode.getBoundingClientRect) {
+        return undefined;
+      }
+      let {
+        x, y, width, height, top, right, bottom, left
+      } = domNode.getBoundingClientRect();
+      return {
+        x: x, y : y, width: width, height: height,
+        top: top, right: right, bottom: bottom, left: left,
+      };
+    }
+  );
+
+  getIsVisible = new DevFunction(
+    "getIsVisible", {}, () => {
+      let domNode = this.jsxInstance.domNode;
+      return getIsVisible(domNode);
+    }
+  );
+
+  // TODO: Do the same thing for getScrollData() as for getBoundingClientRect(),
+  // i.e. in terms of the above todo.
+  getScrollData = new DevFunction(
+    "getScrollData", {}, () => {
+      let domNode = this.jsxInstance.domNode;
+      let {scrollTop, scrollHeight, scrollLeft, scrollWidth} = domNode;
+      return {
+        scrollTop: scrollTop, scrollHeight: scrollHeight,
+        scrollLeft: scrollLeft, scrollWidth: scrollWidth
+      };
+    }
+  );
+
+  // TODO: Consider adding more instance methods at some point.
+}
+
+
+
+const MARGIN_OF_ALLOWED_OVERLAP = 0.01;
+const MARGIN_OF_BEING_OUT_OF_VIEWPORT = 0.10;
+
+// getIsVisible() that checks that the input DOM node is on screen and without
+// overlaps from its siblings, as well as any of its ancestors' siblings. 
+export function getIsVisible(domNode) {
+  if (!domNode.getBoundingClientRect) {
+    return undefined;
+  }
+  let {top, right, bottom, left} = domNode.getBoundingClientRect();
+
+  // Check that the node is not too much out of the viewport.
+  let {innerHeight, innerWidth} = window;
+  if (
+    top + top * MARGIN_OF_BEING_OUT_OF_VIEWPORT < 0 ||
+    left + left * MARGIN_OF_BEING_OUT_OF_VIEWPORT < 0 ||
+    right - right * MARGIN_OF_BEING_OUT_OF_VIEWPORT > innerWidth ||
+    bottom - bottom * MARGIN_OF_BEING_OUT_OF_VIEWPORT > innerHeight
+  ) {
+    return false;
+  }
+
+  // Then check that none of the siblings or ancestor siblings overlap too much
+  // with the node.
+  let effectiveTop = top + top * MARGIN_OF_ALLOWED_OVERLAP;
+  let effectiveLeft = left + left * MARGIN_OF_ALLOWED_OVERLAP;
+  let effectiveRight = right - right * MARGIN_OF_ALLOWED_OVERLAP;
+  let effectiveBottom = bottom - bottom * MARGIN_OF_ALLOWED_OVERLAP;
+  let curDOMNode = domNode;
+  let upRootNode = document.getElementById("up-app-root");
+  let ret = true;
+  while(ret && curDOMNode !== upRootNode) {
+    // Get curDOMNode's the siblings (and itself), and then go through each
+    // one and check that it does not overlap, as well as any of its
+    // descendants. However, we only check said descendants if the (computed)
+    // 'overflow:visible' style is set.
+    let siblingsAndSelf = curDOMNode.parentNode.childNodes;
+    ret = !siblingsAndSelf.some(sibling => {
+      if (sibling === curDOMNode || !sibling.getBoundingClientRect) {
+        return;
+      }
+
+      // Check that the sibling does not overlap.
+      let {top, right, bottom, left} = sibling.getBoundingClientRect();
+      let isClear =  top >= effectiveBottom || left >= effectiveRight ||
+        right <= effectiveLeft || bottom <= effectiveTop;
+      if (!isClear) {
+        return true;
+      }
+
+      // The check that the sibling does not have a computed overflow-x or -y
+      // style of 'visible,' and if it does, then check all its descendants as
+      // well.
+      let {overflowX, overflowY} = window.getComputedStyle(sibling);
+      if (overflowX === "visible" || overflowY === "visible") {
+        // TODO: Instead of just returning true here, loop through each
+        // child of the sibling and check their bounding box, as well as their
+        // overflow style properties, and if the overflow is visible, repeat
+        // the procedure until all descendants are indirectly or directly
+        // checked this way.
+        return true;
+      }
+    });
+
+    // In case ret is still true, change curDOMNode to its parent for the next
+    // iteration.
+    curDOMNode = curDOMNode.parentNode;
+  }
 }
 
 
