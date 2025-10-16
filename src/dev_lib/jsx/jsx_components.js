@@ -1032,6 +1032,8 @@ export class JSXInstanceInterface extends ObjectObject {
     }
   );
 
+  // TODO: Do the same thing for getIsVisible() as for getBoundingClientRect(),
+  // i.e. in terms of the above todo.
   getIsVisible = new DevFunction(
     "getIsVisible", {}, () => {
       let domNode = this.jsxInstance.domNode;
@@ -1085,12 +1087,18 @@ export function getIsVisible(domNode) {
   let upRootNode = document.getElementById("up-app-root");
   let ret = true;
   while(ret && curDOMNode !== upRootNode) {
-    // First check that domNode does not overflow its parent node.
+    // First check that curDOMNode does not overflow its parent node.
     let {parentNode} = curDOMNode;
     let {top, right, bottom, left} = parentNode.getBoundingClientRect();
     let doesOverflow =  top > effectiveTop || left > effectiveLeft ||
       right < effectiveRight || bottom < effectiveBottom;
     if (doesOverflow) {
+      ret = false;
+      break;
+    }
+
+    // Also check that the opacity of curDOMNode is 1.
+    if (window.getComputedStyle(curDOMNode).opacity != 1) {
       ret = false;
       break;
     }

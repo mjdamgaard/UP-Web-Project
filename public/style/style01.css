@@ -13,10 +13,19 @@ html, body, #up-app-root {
 
 
 /* This rule is important, as it makes it easier to prove that a style scope
- * component does not have any overlapping elements from other style scopes. */
-#up-app-root * {
+/* component does not have any overlapping elements from other style scopes. */
+:where(#up-app-root *) {
   overflow: hidden;
 }
+
+/* This targets all the style scope root elements and makes their background
+/* color white by default, which is also done for security reasons. (TODO:
+/* change this selector to something more solid and clear, perhaps by adding
+/* a class to each style scope element.) */
+:where(#up-app-root [style^='overflow:']) {
+  background-color: white;
+}
+
 
 /* Hide that error overlay for now */
 /* #webpack-dev-server-client-overlay {
