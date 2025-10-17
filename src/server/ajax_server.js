@@ -76,6 +76,17 @@ const stdPostReqGas = {
   mkdir: 1,
   mkTable: 0,
 };
+const stdElevatedPostReqGas = {
+  comp: 1000000,
+  import: 500,
+  fetch: 500,
+  time: 15000,
+  dbRead: 1000,
+  dbWrite: 100000,
+  conn: 200000,
+  mkdir: 1,
+  mkTable: 0,
+};
 const AUTO_REFILL_PERIOD = 604800; // ~= 1 week in seconds.
 const autoRefillGas = {
   comp: 10000000,
@@ -196,19 +207,29 @@ async function requestHandler(req, res, returnGasRef) {
   reqGas = {};  
 
 
+  // Call FlagTransmitter.receiveFlags(), with the optional reqFlags array
+  // determined by the client, to get the flags which are raised initially for
+  // when the main() function is executed.
+  let flags = FlagTransmitter.receiveFlags(reqFlags);
+
+
   // If the header includes an Authorization header, query the DB in order to
   // authenticate the user. We obtain the userID in this process as well, which
   // we use it to set the "user ID context" (which has this form due to
   // compatibility with the front-end interpreter). We also get the gas for the
   // interpretation in the same process.
   let userID, gas, returnGas;
+  let requestAdminPrivileges = flags.includes(REQUEST_ADMIN_PRIVILEGES_FLAG);
   let authHeader = req.headers["authorization"];
   if (authHeader) {
     let [ , authToken] = AUTH_TOKEN_REGEX.exec(authHeader) ?? [];
     if (!authToken) throw new ClientError(
       "Invalid or unrecognized authorization header"
     );
-    [userID, gas, returnGas] = await getUserIDAndGas(authToken, reqGas);
+    let stdGas = requestAdminPrivileges ? stdElevatedPostReqGas : stdPostReqGas;
+    [userID, gas, returnGas] = await getUserIDAndGas(
+      authToken, stdGas, reqGas
+    );
     if (!userID) {
       endWithUnauthenticatedError(res);
       return;
@@ -225,10 +246,6 @@ async function requestHandler(req, res, returnGasRef) {
   }
 
 
-  // Call FlagTransmitter.receiveFlags(), with the optional reqFlags array
-  // determined by the client, to get the flags which are raised initially for
-  // when the main() function is executed.
-  let flags = FlagTransmitter.receiveFlags(reqFlags);
 
   // Parse whether the route is a "locked" route (which can only be accessed by
   // the admin, if any, or by a server module function (SMF) of that directory).
@@ -238,7 +255,6 @@ async function requestHandler(req, res, returnGasRef) {
   // add the "elevated-privileges" flag to the 'flags' array.
   let isLocked = LOCKED_ROUTE_REGEX.test(route);
   if (isPost) flags.push(CAN_POST_FLAG);
-  let requestAdminPrivileges = flags.includes(REQUEST_ADMIN_PRIVILEGES_FLAG);
   if (isLocked || requestAdminPrivileges) {
     if (!userID || isLocked && !requestAdminPrivileges) {
       endWithUnauthorizedError(res);
@@ -344,7 +360,7 @@ function serialize(val) {
 // provided, to construct and return the gas object used for the interpreter as
 // well. Note that the reqGas's properties will overwrite those of the std. gas
 // object. The function also returns a callback function, returnGas().
-async function getUserIDAndGas(authToken, reqGas) {
+async function getUserIDAndGas(authToken, stdGas, reqGas) {
   // Get the userID and the user's gas reserve.
   let userDBConnection = new UserDBConnection();
   let [resultRow = []] = await userDBConnection.queryProcCall(
@@ -370,7 +386,7 @@ async function getUserIDAndGas(authToken, reqGas) {
   // result by the gas available in the user's reserve as well. Also
   // decrement the DB read gas by 1 o pay for looking up the gas reserve.
   let initGas = assignLeastPositiveOrUndefined(
-    Object.assign({}, stdPostReqGas, reqGas), gasReserve
+    Object.assign({}, stdGas, reqGas), gasReserve
   );
   let gas = Object.assign({}, initGas);
   gas.dbRead = (gas.dbRead ?? 0) - 1;

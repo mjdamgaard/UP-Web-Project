@@ -1,6 +1,7 @@
 
 import {
-  DevFunction, ObjectObject, RuntimeError, getString,
+  DevFunction, ObjectObject, RuntimeError, getString, OutOfGasError,
+  GAS_NAMES,
 } from "../../interpreting/ScriptInterpreter.js";
 import {MainDBConnection} from "../../server/db_io/DBConnection.js";
 import {ELEVATED_PRIVILEGES_FLAG} from "../query/src/flags.js";

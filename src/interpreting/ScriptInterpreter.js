@@ -19,7 +19,7 @@ export const TEXT_FILE_ROUTE_REGEX =
   /.+\.(jsx?|txt|json|html|xml|svg|md|css)$/;
 export const SCRIPT_ROUTE_REGEX = /.+\.jsx?$/;
 
-const GAS_NAMES = {
+export const GAS_NAMES = {
   comp: "computation",
   import: "import",
   fetch: "fetching",
@@ -2006,9 +2006,19 @@ export class ObjectObject {
     if (toStringMethod instanceof FunctionObject) {
       let ret, isInvalid; 
       try {
-        ret = interpreter.executeFunction(
-          toStringMethod, [], null, env, this, [CLEAR_FLAG]
-        );
+        // If this.class is an instance of the ExceptionClassObject, get the
+        // message directly in order to avoid spending further computation gas.
+        if (
+          this instanceof ObjectObject &&
+          this.class instanceof ExceptionClassObject
+        ) {
+          ret = this.#get("message");
+        }
+        else {
+          ret = interpreter.executeFunction(
+            toStringMethod, [], null, env, this, [CLEAR_FLAG]
+          );
+        }
       } catch (_) {
         isInvalid = true;
       }
@@ -2772,6 +2782,8 @@ class BrokenOptionalChainException {
 
 
 
+
+
 export const exceptionClass = new ClassObject(
   "Exception",
   new DevFunction(
@@ -2791,24 +2803,32 @@ export const exceptionClass = new ClassObject(
     )
   }
 );
-export const syntaxErrorClass = new ClassObject(
-  "SyntaxError", undefined, undefined, exceptionClass
-);
-export const runtimeErrorClass = new ClassObject(
-  "RuntimeError", undefined, undefined, exceptionClass
-);
-export const loadErrorClass = new ClassObject(
-  "LoadError", undefined, undefined, exceptionClass
-);
-export const networkErrorClass = new ClassObject(
-  "NetworkError", undefined, undefined, exceptionClass
-);
-export const outOfGasErrorClass = new ClassObject(
-  "OutOfGasError", undefined, undefined, exceptionClass
-);
-export const typeErrorClass = new ClassObject(
-  "TypeError", undefined, undefined, exceptionClass
-);
+
+export class ExceptionClassObject extends ClassObject {
+  constructor(className) {
+    super(className, undefined, undefined, exceptionClass);
+  }
+
+  // Alter the getNewInstance() method in order to avoid spending further
+  // computation gas.
+  getNewInstance([message], _callerNode, _callerEnv) {
+    let members = {message: message};
+    let newInst = new ObjectObject(
+      this.className, this, members, this.instanceProto,
+      this.instanceConstructor, this.instancesAreComparable, true,
+      this.instancesAreArrays, this.instancesAreMaps,
+    );
+    newInst.isMutable = this.instancesAreMutable;
+    return newInst;
+  }
+}
+
+export const syntaxErrorClass = new ExceptionClassObject("SyntaxError");
+export const runtimeErrorClass = new ExceptionClassObject("RuntimeError");
+export const loadErrorClass = new ExceptionClassObject("LoadError");
+export const networkErrorClass = new ExceptionClassObject("NetworkError");
+export const outOfGasErrorClass = new ExceptionClassObject("OutOfGasError");
+export const typeErrorClass = new ExceptionClassObject("TypeError");
 
 
 
