@@ -1289,7 +1289,13 @@ export class ScriptInterpreter {
             console.log("Declared variables:");
             varReadout.split("\n").forEach(str => console.log(str));
           }
-          log.entries.push(trace.map(str => [str]));
+          log.entries.push(
+            ["Trace:"],
+            ...trace.map(str => [str]),
+            [" "],
+            ["Declared variables:"],
+            ...varReadout.split("\n").map(str => [str]),
+          );
         }
         else if (expNode.subtype === "error") {
           if (!this.isServerSide && !isExiting) {

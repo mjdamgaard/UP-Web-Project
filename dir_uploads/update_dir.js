@@ -88,6 +88,7 @@ async function main() {
         }
         console.log("And log:");
         (log.entries ?? []).forEach(entry => console.log(...entry));
+        console.log(" ");
       }
       else {
         console.log("Post request returned with result:");

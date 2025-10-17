@@ -178,57 +178,57 @@ export function postScoresFromInitialModerators() {
         // Entities:
         postUserRelevancyScoreAndUpdateUserGroups(
           abs("./em1.js;get/entities"),
-          abs("./em1.js;get/members"),
+          undefined,
           abs("./em1.js;get/classes"),
           firstModID, 6
         ),
         postUserRelevancyScoreAndUpdateUserGroups(
           abs("./em1.js;get/entities"),
-          abs("./em1.js;get/members"),
+          undefined,
           abs("./em1.js;get/entities"),
           firstModID, 2
         ),
         postUserRelevancyScoreAndUpdateUserGroups(
           abs("./em1.js;get/entities"),
-          abs("./em1.js;get/members"),
+          undefined,
           "@" + firstModID,
           firstModID, 1
         ),
         // Classes:
         postUserRelevancyScoreAndUpdateUserGroups(
           abs("./em1.js;get/classes"),
-          abs("./em1.js;get/members"),
+          undefined,
           abs("./em1.js;get/entities"),
           firstModID, 6
         ),
         postUserRelevancyScoreAndUpdateUserGroups(
           abs("./em1.js;get/classes"),
-          abs("./em1.js;get/members"),
+          undefined,
           abs("./em1.js;get/classes"),
           firstModID, 6
         ),
         postUserRelevancyScoreAndUpdateUserGroups(
           abs("./em1.js;get/classes"),
-          abs("./em1.js;get/members"),
+          undefined,
           abs("./em1.js;get/users"),
           firstModID, 6
         ),
         postUserRelevancyScoreAndUpdateUserGroups(
           abs("./em1.js;get/classes"),
-          abs("./em1.js;get/members"),
+          undefined,
           abs("./em1.js;get/relations"),
           firstModID, 6
         ),
         // Users:
         postUserRelevancyScoreAndUpdateUserGroups(
           abs("./em1.js;get/users"),
-          abs("./em1.js;get/members"),
+          undefined,
           "@" + firstModID,
           firstModID, 8
         ),
         postUserRelevancyScoreAndUpdateUserGroups(
           abs("./em1.js;get/users"),
-          abs("./em1.js;get/members"),
+          undefined,
           "@" + initModArr[1],
           firstModID, 7
         ),
