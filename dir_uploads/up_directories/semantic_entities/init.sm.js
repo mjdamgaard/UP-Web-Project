@@ -142,8 +142,8 @@ export function postScoresFromInitialModerators() {
     },
 
     // Post some subclass scores.
-    () => {console.trace();
-      return getSequentialPromise([
+    () => {
+      return Promise.all([
         // Classes
         postUserRelevancyScoreAndUpdateUserGroups(
           abs("./em1.js;get/entities"),
@@ -174,7 +174,7 @@ export function postScoresFromInitialModerators() {
 
     // Post some member scores.
     () => {
-      return getSequentialPromise([
+      return Promise.all([
         // Entities:
         postUserRelevancyScoreAndUpdateUserGroups(
           abs("./em1.js;get/entities"),

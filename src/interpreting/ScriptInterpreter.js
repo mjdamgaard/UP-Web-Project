@@ -1862,7 +1862,7 @@ export class Environment {
 
   getVariableReadout() {
     let scopeReadout = "<" + this.scopeType + " scope>:\n" +
-      this.variables.entries().toArray().map(([ident, [val]]) => {
+      [...this.variables.entries()].map(([ident, [val]]) => {
         val = (val === UNDEFINED) ? "undefined" :
           typeof val === "string" ? JSON.stringify(val) :
             getString(val, this)
@@ -2246,7 +2246,7 @@ export function mapValues(value, node, env, callback) {
       return value.members.map((val, ind) => callback(val, ind, ind));
     }
     else if (value.isMap) {
-      return value.members.entries().toArray().map(
+      return [...value.members.entries()].map(
         ([key, val], ind) => callback(val, key, ind)
       );
     }
