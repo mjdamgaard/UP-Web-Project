@@ -90,6 +90,22 @@ export function fetchEntityDefinition(entKey) {
 
 
 
+export function fetchOrCreateEntityID(entKey) {
+  return new Promise((resolve) => {
+    fetchEntityID(entKey).then(entID => {
+      if (entID) {
+        resolve(entID);
+      }
+      else {
+        fetchEntityPath(entKey).then(entPath => {
+          postEntity(entPath).then(entID => resolve(entID));
+        });
+      }
+    });
+  });
+}
+
+
 
 
 export function fetchRelevancyQualityPath(classOrObjKey, relKey = undefined) {

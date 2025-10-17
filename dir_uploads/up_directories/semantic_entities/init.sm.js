@@ -9,13 +9,12 @@ import {map} from 'array';
 import {valueToHex, arrayToHex} from 'hex';
 import {getSequentialPromise} from 'promise';
 import {
-  fetchEntityID, postAllEntitiesFromModule, postRelevancyQuality,
+  fetchEntityID, postAllEntitiesFromModule, fetchRelevancyQualityPath
 } from "./entities.js";
 import {
   scoreHandler01, initialTrustedUserGroup, initialStandardUserGroup,
 } from "./score_handling/ScoreHandler01/em.js";
 
-const trustedQualKey = abs("./em1.js;get/trusted");
 
 
 
@@ -114,7 +113,7 @@ export function postScoresFromInitialModerators() {
 
   // We construct an array of promises to be executed in sequence, via a call
   // to getSequentialPromise() below.
-  let initModArr;
+  let initModArr, firstModID;
   let promiseCallbackArr = [
     // First "wait for" the initial moderator array, and then store it in the
     // initModArr variable such that we don't need to carry that around. (When
@@ -124,6 +123,7 @@ export function postScoresFromInitialModerators() {
     () => initModeratorIDArrProm,
     (initModeratorArr) => {
       initModArr = initModeratorArr;
+      firstModID = initModArr[0];
     },
 
     // Post some trust scores from the first moderator to the other ones, and
@@ -131,7 +131,7 @@ export function postScoresFromInitialModerators() {
     // does). TODO: Redirect to another function that also updates all user
     // groups in an array.
     () => {
-      let firstModID = initModArr[0];
+      let trustedQualKey = abs("./em1.js;get/trusted");
       let trustScoreArr = [9, 9, 9, 8, 8, 6, 6];
       return getSequentialPromise(map(initModArr, (modID, ind) => {
         let score = trustScoreArr[ind] ?? 5;
@@ -139,6 +139,100 @@ export function postScoresFromInitialModerators() {
           trustedQualKey, modID, firstModID, score
         );
       }));
+    },
+
+    // Post some subclass scores.
+    () => {console.trace();
+      return getSequentialPromise([
+        // Classes
+        postUserRelevancyScoreAndUpdateUserGroups(
+          abs("./em1.js;get/entities"),
+          abs("./em1.js;get/subclasses"),
+          abs("./em1.js;get/classes"),
+          firstModID, 6
+        ),
+        postUserRelevancyScoreAndUpdateUserGroups(
+          abs("./em1.js;get/entities"),
+          abs("./em1.js;get/subclasses"),
+          abs("./em1.js;get/users"),
+          firstModID, 6
+        ),
+        postUserRelevancyScoreAndUpdateUserGroups(
+          abs("./em1.js;get/entities"),
+          abs("./em1.js;get/subclasses"),
+          abs("./em1.js;get/relations"),
+          firstModID, 6
+        ),
+        postUserRelevancyScoreAndUpdateUserGroups(
+          abs("./em1.js;get/classes"),
+          abs("./em1.js;get/subclasses"),
+          abs("./em1.js;get/relationalClasses"),
+          firstModID, 6
+        ),
+      ]);
+    },
+
+    // Post some member scores.
+    () => {
+      return getSequentialPromise([
+        // Entities:
+        postUserRelevancyScoreAndUpdateUserGroups(
+          abs("./em1.js;get/entities"),
+          abs("./em1.js;get/members"),
+          abs("./em1.js;get/classes"),
+          firstModID, 6
+        ),
+        postUserRelevancyScoreAndUpdateUserGroups(
+          abs("./em1.js;get/entities"),
+          abs("./em1.js;get/members"),
+          abs("./em1.js;get/entities"),
+          firstModID, 2
+        ),
+        postUserRelevancyScoreAndUpdateUserGroups(
+          abs("./em1.js;get/entities"),
+          abs("./em1.js;get/members"),
+          "@" + firstModID,
+          firstModID, 1
+        ),
+        // Classes:
+        postUserRelevancyScoreAndUpdateUserGroups(
+          abs("./em1.js;get/classes"),
+          abs("./em1.js;get/members"),
+          abs("./em1.js;get/entities"),
+          firstModID, 6
+        ),
+        postUserRelevancyScoreAndUpdateUserGroups(
+          abs("./em1.js;get/classes"),
+          abs("./em1.js;get/members"),
+          abs("./em1.js;get/classes"),
+          firstModID, 6
+        ),
+        postUserRelevancyScoreAndUpdateUserGroups(
+          abs("./em1.js;get/classes"),
+          abs("./em1.js;get/members"),
+          abs("./em1.js;get/users"),
+          firstModID, 6
+        ),
+        postUserRelevancyScoreAndUpdateUserGroups(
+          abs("./em1.js;get/classes"),
+          abs("./em1.js;get/members"),
+          abs("./em1.js;get/relations"),
+          firstModID, 6
+        ),
+        // Users:
+        postUserRelevancyScoreAndUpdateUserGroups(
+          abs("./em1.js;get/users"),
+          abs("./em1.js;get/members"),
+          "@" + firstModID,
+          firstModID, 8
+        ),
+        postUserRelevancyScoreAndUpdateUserGroups(
+          abs("./em1.js;get/users"),
+          abs("./em1.js;get/members"),
+          "@" + initModArr[1],
+          firstModID, 7
+        ),
+      ]);
     },
 
     // TODO: Continue.
@@ -150,6 +244,8 @@ export function postScoresFromInitialModerators() {
 
 
 
+
+/* Do not export any of the following functions, obviously. */
 
 
 
@@ -181,6 +277,8 @@ function postUserScoreHex(
 
 
 
+/* Do not export any of the following functions, obviously. */
+
 
 function postUserPredicateScoreAndUpdateUserGroups(
   qualKey, subjKey, userKey, score, userGroupKeyArr = undefined
@@ -197,6 +295,21 @@ function postUserPredicateScoreAndUpdateUserGroups(
   });
 }
 
+
+function postUserRelevancyScoreAndUpdateUserGroups(
+  classOrObjKey, relKey = undefined, subjKey, userKey, score,
+  userGroupKeyArr = undefined
+) {
+  return new Promise(resolve => {
+    fetchRelevancyQualityPath(classOrObjKey, relKey).then(qualPath => {
+      postUserPredicateScoreAndUpdateUserGroups(
+        qualPath, subjKey, userKey, score, userGroupKeyArr
+      ).then(
+        wasUpdated => resolve(wasUpdated)
+      );
+    });
+  });
+}
 
 
 

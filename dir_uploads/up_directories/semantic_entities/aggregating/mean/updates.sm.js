@@ -4,7 +4,7 @@ import {
   fetchUserWeight, fetchUserScore, fetchScoreAndWeight, postScoreAndWeight,
   deleteScore, updateUserWeight,
 } from "../../scores.js";
-import {fetchEntityID} from "../../entities.js";
+import {fetchEntityID, fetchOrCreateEntityID} from "../../entities.js";
 
 const contributionsPath = abs("./contributions.bbt");
 const aggrPath = abs("./aggregates.bbt");
@@ -17,7 +17,7 @@ export function updateScoreForUser(
 ) {
   return new Promise(resolve => {
     let userGroupIDProm = fetchEntityID(userGroupKey);
-    let qualIDProm = fetchEntityID(qualKey);
+    let qualIDProm = fetchOrCreateEntityID(qualKey);
     let subjIDProm = fetchEntityID(subjKey);
     let userIDProm = fetchEntityID(userKey);
     updateUserWeight(userGroupKey, userKey).then(() => {
@@ -25,6 +25,11 @@ export function updateScoreForUser(
       Promise.all([
         userGroupIDProm, qualIDProm, subjIDProm, userIDProm
       ]).then(([userGroupID, qualID, subjID, userID]) => {
+        if (!userGroupIDProm || !qualIDProm || !subjIDProm || !userIDProm) {
+          resolve(false);
+          return;
+        }
+
         // Get a database connection, already started, and with a lock already
         // gotten lock with a name that contains after userGroupID, qualID, and
         // subjID.
