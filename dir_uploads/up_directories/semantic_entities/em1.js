@@ -6,23 +6,23 @@
 
 
 
-// Class of all things, all "entities." Entities are defined/represented by
+// Class of all things, all 'entities.' Entities are defined/represented by
 // objects of the kind you see below, namely with capitalized property names,
 // and always with a "Class" property. We will tend to refer to these defining
-// properties of entities as their "attributes."
-// It should be noted that all these "attributes" of an entity are not set in
-// stone. Any attribute can be overridden by what we can call "scored
-// properties," which are properties determined by the users when they score
-// the "relations" that are introduced below. So all the attributes that you
-// see below are in principle only the "initial" or "default" ones, possibly.
-// And their job is thus only to specify what thing or concept is being
-// referred to, as well as possibly to declare some metadata properties that
-// the app might use as default options.
-// Entities will often refer to a real-world things or concepts, or a things or
+// properties of entities as their 'attributes.'
+// It should be noted that all these 'attributes' of an entity are not set in
+// stone. Any attribute can be overridden by what we can call 'scored
+// properties,' which are properties determined by the users when they score
+// the 'relations' that are introduced below. So all the attributes that you
+// see below are in principle only the "initial" or "default" ones. And their
+// job is thus only to specify what thing or concept is being referred to, as
+// well as possibly to declare some metadata properties that the app might use
+// as default options.
+// Entities will often refer to a real-world things or concepts, or things/
 // concepts relating to this semantic and/or user-programmable system. But they
 // can also be self-contained objects that just refers to themselves. Such
-// objects will often carry "methods" as part of their attributes, the names for
-// which we will tend to use lower camel case (as in e.g. "fetchScoreData"),
+// objects will often carry 'methods' as part of their attributes, the names for
+// which we will tend to use lower camel case (as in e.g. 'fetchScoreData'),
 // making these entities able to be treated similarly to objects from an OOP
 // language.
 // The values of the attributes can be anything such as strings and numbers,
@@ -100,47 +100,51 @@ export const texts = {
 
 
 
-// A "quality" in this system refers to a property of an entity that can be
-// described by floating-point number within some range. And an important
-// subclass of "qualities" is the class of what we will refer to as "semantic
-// qualities," which are qualities that are described by a label and a
-// description, which users are supposed to score directly. One can think of
-// the well-known "tags" that you see in many places on the web, but where each
-// tag has a floating-point scale that you rate them on. For example, a movie
-// might be rated with respect to a quality of "scary," and the rating scale
-// of the quality would then (normally) represents how scary the movie is. And
-// that is just one example, qualities can be anything.
-// And outside of "semantic qualities," we also have 'derived qualities' which
-// are algorithmically computed from other qualities and/or other data in the
-// database.
+// A 'quality' in this system refers to a property of an entity that can be
+// described by floating-point number within some range. One can think of the
+// well-known "tags" that you normally see on the web, but where each tag is
+// rated on a floating-point scale. For example, a movie  might be rated with
+// respect to a quality of "Scary," and the rating scale of the quality would
+// thus represent how scary the movie is.
+// The scores given to the qualities can then to be aggregated into e.g. mean
+// or median estimators over larger user groups. Such user groups do not need
+// to include all users of the system, but can also be a limited list of users.
+// (And the users in the group might even have different weights, meaning that
+// the scores of some might count for more than others.)
+// Qualities have a "Label" attribute, which should be as brief as possible:
+// Instead of writing "Is scary," write "Scary." And instead of writing "Has
+// good acting," write "Good acting." Then for elaboration on these labels,
+// qualities also have a "Sentence function" attribute, which takes a sentence
+// subject as its argument, and returns a sentence as a string. For example,
+// the sentence function could be subj => subj + " is scary", or subj => subj +
+// " has good acting." And then we of course also have the "Description"
+// attribute for further elaboration. 
+// Apart from that, semantic qualities also each have a "Domain," which is a
+// class to which the subjects are supposed to belong. (It can also be a
+// quality, in which case it is implicitly understood to mean that set of all
+// entities with a positive score for that quality). They also have a "Metric,"
+// which defines the semantics of the range of the floating-point score, and
+// they can have a (default) "Area of concern" attribute, which, as described
+// below, helps the app choose the right user group to query for score
+// aggregates for the given quality.
+// Some qualities might also have the "Area of concern" attribute replaced with
+// a "Formula" attribute. In this case, we might refer to the quality as a
+// 'derived quality.' The "Formula" attribute takes the value of a function,
+// whose only argument is a so-called 'score handler' (see below), which in
+// short is an object that handles fetching (and posting) scores for the given
+// user, allowing the results to be dependent on the user's own preferences.
+// The returned value of the "Formula" function is then an object with the same
+// API (in terms of its methods) as the so-called "scored lists," which are
+// also introduced below.
 export const qualities = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Qualities",
   "Superclass": abs("./em1.js;get/entities"),
-  "Description": abs("./em1_aux1.js;get/qualitiesDesc"),
-};
-
-
-// This is the important subclass of so-called "semantic qualities."  The users
-// are meant to score these with respect to given subjects according to their
-// opinions, and these scores are also meant to be aggregated into e.g. mean or
-// median estimators over larger user groups. Such user groups do not need to
-// include all users of the system, but can also be a limited list of users.
-// (And the users in the group might even have different weights, meaning that
-// the scores of some might count for more than others.)
-// Each semantic quality has a domain, which is a class to which the subjects
-// are supposed to belong, and a metric, which defines the semantics of the
-// range of the floating-point score. And they can also have a (default) "area
-// of concern," which, as described below, helps the app choose the right user
-// group to query for score aggregates for the given quality.
-export const semanticQualities = {
-  "Class": abs("./em1.js;get/classes"),
-  "Name": "Semantic qualities",
-  "Superclass": abs("./em1.js;get/qualities"),
   "Common attributes": [
-    "Label", "Domain", "Metric", "Area of concern", "Description",
+    "Label", "Sentence function", "Domain", "Metric", "Area of concern",
+    "Formula", "Description",
   ],
-  "Description": abs("./em1_aux1.js;get/semanticQualitiesDesc"),
+  "Description": abs("./em1_aux1.js;get/qualitiesDesc"),
 };
 
 
@@ -158,18 +162,17 @@ export const metrics = {
 };
 
 
-// The so-called "areas of concern" are used for determining with user group
-// to query when looking for the scores of a given quality. Different users
-// might trust different user groups to deliver the best scores. But rather
-// than voting on the best user group to query for every single quality, we can
-// instead group qualities into "areas of concern," as we might call it, such
-// as e.g. "Taste in fictional media," "Science," "UI," "URL safety,"
+// The so-called 'areas of concern' (AoC) are used for determining with user
+// group to query when looking for the scores of a given quality. Different
+// users might trust different user groups to deliver the best scores. But
+// rather than voting on the best user group to query for every single quality,
+// we can instead group qualities into 'areas of concern,' as we might call it,
+// such as e.g. "Taste in fictional media," "Science," "UI," "URL safety,"
 // "Sensitive user safety" etc., and then the users only need to pick one user
 // group to use for each of these areas. Note that areas can change in time,
-// such as "Science" here being split into several subareas, and users might
-// not agree completely on which areas to use, and that's completely fine. Like
-// all attributes of entities, the "Area of concern" attribute of quality
-// entities are only guiding; it is by no means set in stone.  
+// such as "Science" here, which might be split into several subareas.
+// Like all attributes of entities, the "Area of concern" attribute of quality
+// entities are only guiding; it is not set in stone.
 export const areasOfConcern = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Areas of concern",
@@ -179,8 +182,9 @@ export const areasOfConcern = {
 };
 
 
+/* An inserted note about using AoCs to achieve anonymity for users: */
 // Areas of concern can furthermore also be used as a way to achieve almost
-// perfect user anonymity while at the same time being able to assign trust to
+// perfect user anonymity, while at the same time being able to assign trust to
 // anonymous users. Here's how that can work. The system is made open towards
 // creating several user profiles with the same e-mail address, and this is so
 // for a reason. We want users to create several profiles, namely for different
@@ -192,11 +196,11 @@ export const areasOfConcern = {
 // among the user network. But regardless of whether your "main" profile is
 // public or not, you don't necessarily want it connected to all your other
 // opinions about everything. Be it political opinions or opinions about
-// sensitive things like pornography and sexual matter. Or you might want a
+// sensitive things like pornography and sexual matters. Or you might want a
 // private account to share and discuss secrets and/or private experiences with
 // others. Or you even just might not want, say, your boss and your coworkers,
-// and everyone else that you know, to know all your tastes in movies, free-time
-// activities, and all other things.
+// and everyone else that you know, to know all your tastes in movies, free
+// time activities, and all other things.
 // But if you just create a new anonymous profile for this, how will people
 // know that you are not just a bot (a concern that is more relevant than ever
 // with AI bots taking over the web)? Well, they can if you connect the new
@@ -230,87 +234,80 @@ export const areasOfConcern = {
 // such as the data stored for connecting the profiles, now and in the future,
 // and even if they are somehow not able to sign such contracts, there are
 // still encryption schemes that you can implement to make sure that they also
-// can't read the data, namely where the user holds an encryption key to the
-// data.)
+// can't read the data, namely by using client-side encryption keys to encrypt
+// the data.)
 
 
 
 
-// Relevancy qualities is how we truly define whether or not a given entity
-// belongs to a given class. Entities does thus not just belong the class
-// that is used for their definition (i.e. the "Class" attribute), as well as
-// the superclasses of that class, of course, but can belong to any number of
-// classes. Relevancy qualities are defined either by a single "target class,"
-// or by a relation and an object, in which case the target class is assumed to
-// be the "relational class" (see below) formed from that pair. (When defining
-// a relevancy quality for a relational class, always use the two-argument
-// version of the constructor, rather than using the classID directly.)
-// (Let us shorten RelevancyQuality() to just RQ(), since it will be used quite
-// a lot in requests, namely when fetching entity IDs.)  
-export const RQ = (classOrObjID, relID = undefined) => ({
-  "Class": abs("./em1.js;get/relevancyQualities"),
-  "Target class": relID === undefined ? "#" + classOrObjID : undefined,
-  "Relation": relID === undefined ?  undefined : "#" + relID,
-  "Relational object": relID === undefined ?  undefined : "#" + classOrObjID,
-  "Label": "Relevant for " + (relID === undefined ?
-    "#" + classOrObjID :
-    "#" + classOrObjID + " → " + "#" + relID
-  ),
-  "Domain": abs("./em1.js;get/entities"),
-  "Default metric": abs("./em1.js;get/predicateMetric"),
-});
-export const relevancyQualities = {
-  "Class": abs("./em1.js;get/classes"),
-  "Name": "Relevancy qualities",
-  "Superclass": abs("./em1.js;get/qualities"),
-  "Constructor": RQ,
-  "Description": abs("./em1_aux1.js;get/relevancyQualitiesDesc"),
-};
 
-
-
-
-// "Relations" in this system are functions that take a sentence object (or
-// "relational object" as we call it here), and returns a new class, namely a
-// "relational class" (see below). One might naturally think that verbs would
-// be the preferred choice for describing relations, but here we generally much
-// prefer using nouns (including compound ones, of course). This first of all
-// allows us to write relational classes compactly as "<Object> → <Relation>"
-// (similarly to how properties are accessed in a program language (only using
-// '→' instead of '.' when comparing to JS)), and it also gives us the titles
-// for free if the relation is used for, say, a tab or a section header. For
-// instance, if the relation in question is "Parents" (with the object class
-// being e.g. a "Persons" class), we can use the title, "Parents," directly for
-// e.g. section headers, tab titles, table labels, etc.
-// (And note that like all entity attributes, the labels of "<Object> →
-// <Relation>" that we use here can always be overridden by the app, and be
-// made to depend on user preferences.)
+// 'Relations' in this system are entities that when combined with a sentence
+// object yields a quality. In practical terms, this is done by using the
+// constructor if the 'Relational qualities' class below, giving it the object
+// and the relation as its arguments.
+// Like qualities, relations also have a "Sentence function" attribute, but
+// where in this case, the function takes a sentence object as its first
+// argument, and a subject as its second argument. For instance, we could have
+// (obj, subj) => subj + " is a subclass of " + obj, which will indeed be the
+// sentence function of the "Subclasses" relation below.
+// And like qualities, relations also have a "Label attribute, where we in this
+// case prefer the labels to be nouns (including compound ones). This could for
+// example be "Subclasses" in the case that we just saw. When a relational
+// quality is created from an object and a relation, we can then give it a
+// short label of the form "<Object> → <Relation>". So for instance, the
+// quality of being a subclass of the "Texts" class will get the label of:
+// "Texts → Subclasses." By the way, plural nouns are often preferred for
+// relation labels, unless they are expected to only have one subject (such as
+// e.g. the the capital of a country, in which case the label ought to be
+// "Capitol".)
+// Relations also define the "Metric" and "Area of concern" of the relational
+// qualities that they produce, as well as the domain, only this is referred to
+// to as the "Subject domain" here, as we also similarly have an "Object
+// domain" for the intended objects of the relation. The can also be 'derived'
+// and use a "Formula" attribute rather than an "Area of concern." The only
+// difference is that these "Formula" functions, as opposed the those of
+// qualities, also take the object as their first argument, before the score
+// handler argument.
 export const relations = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Relations",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-    "Title", "Object class", "Subject class", "Area of concern",
-    "Description"
+    "Label", "Sentence function", "Object domain", "Subject domain",
+    "Metric", "Area of concern", "Description"
   ],
   "Description": abs("./em1_aux1.js;get/relationsDesc"),
 };
 
-// Relational classes are defined solely by a relation and a relational object.
-export const RelationalClass = (relID, objID) => ({
-  "Class": abs("./em1.js;get/classes"),
+
+// Relational qualities are always constructed from the constructor below,
+// which we have abbreviated to just 'RQ()' rather than 'RelationalQuality()'
+// (as it will be used very frequently).
+export const RQ = (objID, relID) => ({
+  "Class": abs("./em1.js;get/relationalQualities"),
+  "Object": "#" + objID,
   "Relation": "#" + relID,
-  "Relational object": "#" + objID,
-  "Name": "#" + objID + " → " + "#" + relID,
-  "Superclass": abs("./em1.js;get/relationalClasses"),
+  "Label": "#" + objID + " → " + "#" + relID,
 });
-export const relationalClasses = {
+export const relationalQualities = {
   "Class": abs("./em1.js;get/classes"),
-  "Name": "Relational classes",
-  "Superclass": abs("./em1.js;get/classes"),
-  "Constructor": RelationalClass,
-  "Description": abs("./em1_aux1.js;get/relationalClassesDesc"),
+  "Name": "Relational qualities",
+  "Superclass": abs("./em1.js;get/qualities"),
+  "Constructor": RQ,
+  "Description": abs("./em1_aux1.js;get/relationalQualitiesDesc"),
 };
+
+
+export const stdSentenceFunctionSingular = (subj) => (
+  "#" + subj + " is relevant as the " + "#" + relID + " of #" + objID
+);
+export const stdSentenceFunctionPlural = (subj) => (
+  "#" + subj + " is relevant as one of the " + "#" + relID + " of #" + objID
+);
+
+
+
+
 
 
 // Quality variables refers to the floating-point number scales that are scored
@@ -333,37 +330,6 @@ export const qualityVariables = {
 
 
 
-// Derived qualities are the algorithmically defined qualities that is the
-// compliment of the semantic qualities. For the latter, the scores are decided
-// by humans, and for the former, the scored are decided by algorithms. For
-// this 'Derived qualities' class, the "Common attributes" that you see can be
-// used to define one kind of derived quality, but note that users are free to
-// add subclasses of this class with completely different "Common attributes,"
-// and with different implementations for how the qualities are computed.
-// Note that 'derived qualities' differs from 'scored lists' as seen below in
-// the fact that derived qualities still leaves room for the scores to depend on
-// the user accessing them, in particular by leaving it open which user groups
-// are queried and how their scores are aggregated, as opposed to the scored
-// lists where the scores are user-independent.
-export const derivedQualities = {
-  "Class": abs("./em1.js;get/classes"),
-  "Name": "Scored lists",
-  "Superclass": abs("./em1.js;get/qualities"),
-  "Common attributes": [
-    "Dependencies", // An array of quality keys.
-    "getScoreData", // A method that receives an array of "score data" from
-    // each dependency quality and returns a set of score data. "Score data"
-    // here refers to a [score, weight, auxData?] array, where the score is
-    // the (possibly aggregated score), the weight is generally a measure of
-    // how many (trusted) users has scored the quality (summing their weights
-    // in the given user group), and auxData, if defined, is a plain object of
-    // additional data. (Note that method attributes like this are not
-    // capitalized.)
-  ],
-  "Description": abs("./em1_aux1.js;get/derivedQualitiesDesc"),
-};
-
-
 // Scored lists are similar to qualities in that they each associate a set of
 // subjects to a score for that subject, but while the list for the qualities
 // might depend on the user viewing them, as different users might choose
@@ -374,9 +340,9 @@ export const derivedQualities = {
 // are also referred to as 'scored lists,' but these are generally just
 // 'anonymous' ones. Scored lists can also be defined via a 'scored list'
 // entity of the following class. And while the anonymous scored lists might
-// only exist for a moment, the entity-defined scored lists are supposed to be
-// stored in a table on its own, which is why these entities do not only have
-// methods to fetch data from the list, but also methods to update it.
+// only exist for a moment, the entity-defined scored lists often have their
+// data stored separately in the database, which is why these entities do not
+// only have methods to fetch data from the list, but also methods to update it.
 export const scoredLists = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Scored lists",
@@ -646,7 +612,7 @@ export const probability = {
   "Class": abs("./em1.js;get/qualities"),
   "Label": "Probability",
   "Domain": abs("./em1.js;get/texts"),
-  "Default metric": abs("./em1.js;get/percentageMetric"),
+  "Metric": abs("./em1.js;get/percentageMetric"),
   "Description": abs("./em1_aux1.js;get/probabilityDesc"),
 };
 
@@ -661,7 +627,7 @@ export const truthfulness = {
   "Class": abs("./em1.js;get/qualities"),
   "Label": "Truthfulness",
   "Domain": abs("./em1.js;get/texts"),
-  "Default metric": abs("./em1.js;get/percentageMetric"),
+  "Metric": abs("./em1.js;get/percentageMetric"),
   "Description": abs("./em1_aux1.js;get/truthfulnessDesc"),
 };
 
@@ -673,7 +639,7 @@ export const agreement = {
   "Class": abs("./em1.js;get/qualities"),
   "Label": "Agreement",
   "Domain": abs("./em1.js;get/texts"),
-  "Default metric": abs("./em1.js;get/percentageMetric"),
+  "Metric": abs("./em1.js;get/percentageMetric"),
   "Description": abs("./em1_aux1.js;get/agreementDesc"),
 };
 
@@ -695,7 +661,7 @@ export const trusted = {
   "Class": abs("./em1.js;get/qualities"),
   "Label": "Trusted",
   "Domain": abs("./em1.js;get/users"),
-  "Default metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/predicateMetric"),
   "Description": abs("./em1_aux1.js;get/trustedDesc"),
 };
 
@@ -713,22 +679,23 @@ export const trusted = {
 export const SimplePredicate = (label) => ({
   "Class": abs("./em1.js;get/simplePredicates"),
   "Label": label,
-  "Default metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/predicateMetric"),
 });
 export const simplePredicates = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Simple predicates",
-  "Superclass": abs("./em1.js;get/qualities"),
+  "Superclass": abs("./em1.js;get/semanticQualities"),
   "Constructor": SimplePredicate,
   "Description": abs("./em1_aux1.js;get/simplePredicatesDesc"),
 };
 
-
+// TODO: Forget about simple predicates, and introduce at least 'Good' and
+// 'Funny', and 'Scary', below.
 // Some useful simple predicates are 'good', 'funny', 'witty', 'spoilers',
 // 'good acting', 'inspiring' and so on. But as all "derived entities" ( i.e.
 // ones constructed from a class's "Constructor"), these should not be defined
 // in the entity modules like this themselves, but are purely defined by
-// posting to ./entities.sm.js. 
+// posting to ./entities.sm.js.
 
 
 
@@ -738,7 +705,7 @@ export const price = {
   // The class of valuable things is so large and varied that we might as well
   // make All entities the domain:
   "Domain": abs("./em1.js;get/entities"),
-  "Default metric": abs("./em1.js;get/priceInUSDMetric"),
+  "Metric": abs("./em1.js;get/priceInUSDMetric"),
   // No description required for this quality.
 };
 
@@ -747,7 +714,7 @@ export const durability = {
   "Label": "durability",
   // The class is too wide and varied to try to use a more narrow domain.
   "Domain": abs("./em1.js;get/entities"),
-  "Default metric": abs("./em1.js;get/timeInYearsMetric"),
+  "Metric": abs("./em1.js;get/timeInYearsMetric"),
   // No description required for this quality.
 };
 
@@ -758,26 +725,35 @@ export const durability = {
 
 // Some useful relations.
 
+// The useful members to see when browsing a class.
+export const members = {
+  "Class": abs("./em1.js;get/relations"),
+  "Label": "Members",
+  "Object domain": abs("./em1.js;get/classes"),
+  "Subject domain": abs("./em1.js;get/entities"),
+  "Description": abs("./em1_aux1.js;get/membersDesc"),
+};
+
 // The useful subclasses when browsing a class and wanting to look for one or
 // more subcategories of it (or to see which subcategories there are).
 export const subclasses = {
   "Class": abs("./em1.js;get/relations"),
-  "Title": "Subclasses",
-  "Object class": abs("./em1.js;get/classes"),
-  "Subject class": abs("./em1.js;get/classes"),
+  "Label": "Subclasses",
+  "Object domain": abs("./em1.js;get/classes"),
+  "Subject domain": abs("./em1.js;get/classes"),
   "Description": abs("./em1_aux1.js;get/subclassesDesc"),
 };
 
 // The relevant relations of a given entity, i.e. all the relations (obviously
 // not counting this one), that are relevant to have as tabs when viewing the
-// entity's page, and/or the relevant section titles you would want to see in
+// entity's page, and/or the relevant section Labels you would want to see in
 // an information article about the entity, and/or relevant labels to see in an
 // information table about the entity.
 export const relevantRelations = {
   "Class": abs("./em1.js;get/relations"),
-  "Title": "Relations",
-  "Object class": abs("./em1.js;get/entities"),
-  "Subject class": abs("./em1.js;get/relations"),
+  "Label": "Relations",
+  "Object domain": abs("./em1.js;get/entities"),
+  "Subject domain": abs("./em1.js;get/relations"),
   "Description": abs("./em1_aux1.js;get/relevantRelationsDesc"),
 };
 
@@ -786,9 +762,9 @@ export const relevantRelations = {
 // relations for a whole class at once.
 export const relationsForMembers = {
   "Class": abs("./em1.js;get/relations"),
-  "Title": "Relations for members",
-  "Object class": abs("./em1.js;get/classes"),
-  "Subject class": abs("./em1.js;get/relations"),
+  "Label": "Relations for members",
+  "Object domain": abs("./em1.js;get/classes"),
+  "Subject domain": abs("./em1.js;get/relations"),
   "Description": abs("./em1_aux1.js;get/relationsForMembersDesc"),
 };
 
@@ -797,18 +773,18 @@ export const relationsForMembers = {
 // tab (which are then "sub-relations" of that relation).
 export const subRelations = {
   "Class": abs("./em1.js;get/relations"),
-  "Title": "Sub-relations",
-  "Object class": abs("./em1.js;get/relations"),
-  "Subject class": abs("./em1.js;get/relations"),
+  "Label": "Sub-relations",
+  "Object domain": abs("./em1.js;get/relations"),
+  "Subject domain": abs("./em1.js;get/relations"),
   "Description": abs("./em1_aux1.js;get/subRelationsDesc"),
 };
 
 // Relevant qualities for users to see, score, and search on for a given entity.
 export const relevantQualities = {
   "Class": abs("./em1.js;get/relations"),
-  "Title": "Qualities",
-  "Object class": abs("./em1.js;get/entities"),
-  "Subject class": abs("./em1.js;get/qualities"),
+  "Label": "Qualities",
+  "Object domain": abs("./em1.js;get/entities"),
+  "Subject domain": abs("./em1.js;get/qualities"),
   "Description": abs("./em1_aux1.js;get/relevantQualitiesDesc"),
 };
 
@@ -816,9 +792,9 @@ export const relevantQualities = {
 // entities of a given class.
 export const qualitiesForMembers = {
   "Class": abs("./em1.js;get/relations"),
-  "Title": "Qualities for members",
-  "Object class": abs("./em1.js;get/classes"),
-  "Subject class": abs("./em1.js;get/qualities"),
+  "Label": "Qualities for members",
+  "Object domain": abs("./em1.js;get/classes"),
+  "Subject domain": abs("./em1.js;get/qualities"),
   "Description": abs("./em1_aux1.js;get/qualitiesForMembersDesc"),
 };
 
@@ -830,9 +806,9 @@ export const qualitiesForMembers = {
 // you can also say the same thing about the "sub-relations" above.)
 export const subQualities = {
   "Class": abs("./em1.js;get/relations"),
-  "Title": "Sub-qualities",
-  "Object class": abs("./em1.js;get/qualities"),
-  "Subject class": abs("./em1.js;get/qualities"),
+  "Label": "Sub-qualities",
+  "Object domain": abs("./em1.js;get/qualities"),
+  "Subject domain": abs("./em1.js;get/qualities"),
   "Description": abs("./em1_aux1.js;get/subQualitiesDesc"),
 };
 
@@ -842,9 +818,9 @@ export const subQualities = {
 // (as scored by the users).
 export const entityPage = {
   "Class": abs("./em1.js;get/relations"),
-  "Title": "Entity page",
-  "Object class": abs("./em1.js;get/classes"),
-  "Subject class": abs("./em1.js;get/components"),
+  "Label": "Entity page",
+  "Object domain": abs("./em1.js;get/classes"),
+  "Subject domain": abs("./em1.js;get/components"),
   "Area of concern": "./em1.js;get/uiAoC",
   "Description": abs("./em1_aux1.js;get/entityPageDesc"),
 };
@@ -857,9 +833,9 @@ export const entityPage = {
 // in particular when viewing the members of a class.)
 export const entityElement = {
   "Class": abs("./em1.js;get/relations"),
-  "Title": "Entity element",
-  "Object class": abs("./em1.js;get/classes"),
-  "Subject class": abs("./em1.js;get/components"),
+  "Label": "Entity element",
+  "Object domain": abs("./em1.js;get/classes"),
+  "Subject domain": abs("./em1.js;get/components"),
   "Area of concern": "./em1.js;get/uiAoC",
   "Description": abs("./em1_aux1.js;get/entityElementDesc"),
 };

@@ -82,7 +82,7 @@ export const allUsersList = {
         (lo !== undefined ? "/lo=" + lo : "") +
         (hi !== undefined ? "/hi=" + hi : "") +
         (maxNum !== undefined ? "/n=" + maxNum : "") +
-        (offset !== undefined ? "/o=" + offest : "") +
+        (offset !== undefined ? "/o=" + offset : "") +
         (isAscending !== undefined ? "/a=" + isAscending : "")
       ).then(list => {
         resolve(map(list, ([userEntID]) => [userEntID, 1]));

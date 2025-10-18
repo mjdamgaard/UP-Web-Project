@@ -56,7 +56,7 @@ export function fetchMetric(qualKey) {
     fetchEntityDefinition(qualKey).then(entDef => {
       // TODO: Query a scored 'Metric' property, and certainly if there is no
       // default metric. 
-      let metricKey = entDef["Default metric"];
+      let metricKey = entDef["Metric"];
       fetchEntityDefinition(metricKey).then(
         metric => resolve(metric ?? undefined)
       );
