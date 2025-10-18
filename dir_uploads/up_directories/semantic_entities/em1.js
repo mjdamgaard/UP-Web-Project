@@ -45,7 +45,9 @@ export const entities = {
   "Name": "All entities",
   "Superclass": undefined,
   "Common attributes": [
-    "Name", "Title", "Label", "Description"
+    "Name", "Title", "Label",
+    "Full name", "Full title", "Full label",
+    "Description"
   ],
   "Description": abs("./em1_aux1.js;get/entitiesDesc"),
 };
@@ -114,11 +116,11 @@ export const texts = {
 // Qualities have a "Label" attribute, which should be as brief as possible:
 // Instead of writing "Is scary," write "Scary." And instead of writing "Has
 // good acting," write "Good acting." Then for elaboration on these labels,
-// qualities also have a "Sentence function" attribute, which takes a sentence
-// subject as its argument, and returns a sentence as a string. For example,
-// the sentence function could be subj => subj + " is scary", or subj => subj +
-// " has good acting." And then we of course also have the "Description"
-// attribute for further elaboration. 
+// qualities also have a "getFullLabel" attribute (a method), which takes a
+// the subject of the quality as its argument, and returns a more elaborative
+// label. For example, getFullLabel() could be subj => subj + " is scary", or
+// subj => subj + " has good acting." And then we of course also have the
+// "Description" attribute for further elaboration. 
 // Apart from that, semantic qualities also each have a "Domain," which is a
 // class to which the subjects are supposed to belong. (It can also be a
 // quality, in which case it is implicitly understood to mean that set of all
@@ -141,7 +143,7 @@ export const qualities = {
   "Name": "Qualities",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-    "Label", "Sentence function", "Domain", "Metric", "Area of concern",
+    "Label", "getFullLabel", "Domain", "Metric", "Area of concern",
     "Formula", "Description",
   ],
   "Description": abs("./em1_aux1.js;get/qualitiesDesc"),
@@ -241,23 +243,24 @@ export const areasOfConcern = {
 
 
 
-// 'Relations' in this system are entities that when combined with a sentence
-// object yields a quality. In practical terms, this is done by using the
-// constructor if the 'Relational qualities' class below, giving it the object
-// and the relation as its arguments.
-// Like qualities, relations also have a "Sentence function" attribute, but
-// where in this case, the function takes a sentence object as its first
-// argument, and a subject as its second argument. For instance, we could have
-// (obj, subj) => subj + " is a subclass of " + obj, which will indeed be the
-// sentence function of the "Subclasses" relation below.
+// 'Relations' in this system are entities that when combined with a relational
+// object yields a quality (usually as predicate, but in principle it could
+// also be other kinds of qualities). In practical terms, this is done by using
+// the constructor if the 'Relational qualities' class below, RQ(), giving it
+// the object and the relation as its arguments.
+// Like qualities, relations also have a "getFullLabel" attribute, but in this
+// case, the function takes both an object and a subject as its second argument.
+// For instance, we could have (obj, subj) => subj + " is a subclass of " + obj,
+// which will indeed be the getFullLabel() function of the "Subclasses"
+// relation below.
 // And like qualities, relations also have a "Label attribute, where we in this
 // case prefer the labels to be nouns (including compound ones). This could for
 // example be "Subclasses" in the case that we just saw. When a relational
 // quality is created from an object and a relation, we can then give it a
 // short label of the form "<Object> → <Relation>". So for instance, the
 // quality of being a subclass of the "Texts" class will get the label of:
-// "Texts → Subclasses." By the way, plural nouns are often preferred for
-// relation labels, unless they are expected to only have one subject (such as
+// "Texts → Subclasses." (By the way, plural nouns are often preferred for
+// relation labels, unless they are expected to only have one subject, such as
 // e.g. the the capital of a country, in which case the label ought to be
 // "Capitol".)
 // Relations also define the "Metric" and "Area of concern" of the relational
@@ -273,7 +276,7 @@ export const relations = {
   "Name": "Relations",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-    "Label", "Sentence function", "Object domain", "Subject domain",
+    "Label", "getFullLabel", "Object domain", "Subject domain",
     "Metric", "Area of concern", "Description"
   ],
   "Description": abs("./em1_aux1.js;get/relationsDesc"),
@@ -298,10 +301,10 @@ export const relationalQualities = {
 };
 
 
-export const stdSentenceFunctionSingular = (subj) => (
+export const getFullLabelOfStdSingularRelation = (objID, subj) => (
   "#" + subj + " is relevant as the " + "#" + relID + " of #" + objID
 );
-export const stdSentenceFunctionPlural = (subj) => (
+export const getFullLabelOfStdPluralRelation = (objID, subj) => (
   "#" + subj + " is relevant as one of the " + "#" + relID + " of #" + objID
 );
 
@@ -317,6 +320,8 @@ export const QualityVariable = (qualID, subjID) => ({
   "Quality": "#" + qualID,
   "Subject": "#" + subjID,
   "Label": "#" + subjID + " ⇒ " + "#" + qualID,
+  "Full Label": "Variable of how the quality, #" + qualID +
+    ", fits the subject, #" + subjID,
 });
 export const qualityVariables = {
   "Class": abs("./em1.js;get/classes"),
@@ -515,14 +520,19 @@ export const scoreHandlers = {
 // internal JSX components in the database/network, that can be imported into
 // scripts. A defining attribute is obviously the path (or "route," if you will)
 // to the given component's module. And then there are some optional metadata
-// attributes, including an URL to the GitHub repo from which the module stems.
+// attributes, including an URL to the GitHub repo from which the module stems,
+// and also not least an "Example component path", which leads to another,
+// props-independent component that showcases the given component (either be
+// "decorating" it with specific properties, or by showing different examples
+// on a page, possibly with accompanying text that explains each example, and
+// the intended usage of the component in general).
 export const components = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "App components",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
     "Name", "Component path", "GitHub repository", "Author(s)",
-    "Is free to use", "Description"
+    "Is free to use", "Example component path", "Description"
   ],
   "Description": abs("./em1_aux1.js;get/componentsDesc"),
 };
@@ -606,11 +616,13 @@ export const timeInSecondsMetric = {
 };
 
 
+
 // Some useful qualities.
 
 export const probability = {
   "Class": abs("./em1.js;get/qualities"),
   "Label": "Probability",
+  "getFullLabel": subj => "The probability that #" + subj + " is fully true.",
   "Domain": abs("./em1.js;get/texts"),
   "Metric": abs("./em1.js;get/percentageMetric"),
   "Description": abs("./em1_aux1.js;get/probabilityDesc"),
@@ -621,23 +633,30 @@ export const probability = {
 // average of probability of each individual statement made by the text, but
 // where more important statements might get more weight in this average. How
 // to divide the text up into individual statements and how to weight each one
-// is up to the users to decide. In short, this quality is meant to give a
-// measure of how much of this combined text is truthful and reliable.
+// is up to the users to decide. (So 'Truthfulness' is not a purely objective
+// quality.) In short, this quality is meant to give a measure of how much of
+// this combined text is truthful and reliable.
 export const truthfulness = {
   "Class": abs("./em1.js;get/qualities"),
   "Label": "Truthfulness",
+  "getFullLabel": subj => "The average probability that any given " +
+    "statement contained in #" + subj + " is true (where each " +
+    "statement is weighted after its perceived importance)",
   "Domain": abs("./em1.js;get/texts"),
   "Metric": abs("./em1.js;get/percentageMetric"),
   "Description": abs("./em1_aux1.js;get/truthfulnessDesc"),
 };
 
-// Agreement is not an objective quality: Qualities can depend on the user
+// 'Agreement' is not an objective quality: Qualities can depend on the user
 // scoring them. This quality is a measure of how much the user agrees with the
 // statement, and/or the sentiment of the statement (and the "or" here is
 // actually important, as some statements are made hyperbolic).
 export const agreement = {
   "Class": abs("./em1.js;get/qualities"),
   "Label": "Agreement",
+  "getFullLabel": subj => "How much the scoring user(s) agrees on average " +
+    "with the statement contained in #" + subj + " (where each " +
+    "statement is weighted after its perceived importance)",
   "Domain": abs("./em1.js;get/texts"),
   "Metric": abs("./em1.js;get/percentageMetric"),
   "Description": abs("./em1_aux1.js;get/agreementDesc"),
@@ -660,48 +679,45 @@ export const agreement = {
 export const trusted = {
   "Class": abs("./em1.js;get/qualities"),
   "Label": "Trusted",
+  "getFullLabel": subj => "How much #" + subj +" can be trusted to give " +
+    "honest and helpful scores and comments, etc., in this network",
   "Domain": abs("./em1.js;get/users"),
   "Metric": abs("./em1.js;get/predicateMetric"),
   "Description": abs("./em1_aux1.js;get/trustedDesc"),
 };
 
 
-// Some times, it's better to leave the description out of the qualities,
-// especially for predicate qualities, as it is better to just let users
-// interpret the qualities in their own ways, just based on the label of the
-// quality. These will by the way often be (compound) adjectives or
-// (compound) static verbs, but these can also be abbreviated (and often
-// should) when the meaning can be implicitly understood, such as using label
-// of 'spoilers' rather than 'has spoilers'. Here, we will by the way follow a
-// convention of not capitalizing the labels of all description-less qualities,
-// such that the users will have a way to know if a description is included or
-// not, without having to look for it. 
-export const SimplePredicate = (label) => ({
-  "Class": abs("./em1.js;get/simplePredicates"),
-  "Label": label,
+// Some simple predicates that doesn't need much explaining (and their
+// "Descriptions" should thus also be brief).
+export const good = {
+  "Class": abs("./em1.js;get/qualities"),
+  "Label": "Good",
+  "Domain": abs("./em1.js;get/entities"),
   "Metric": abs("./em1.js;get/predicateMetric"),
-});
-export const simplePredicates = {
-  "Class": abs("./em1.js;get/classes"),
-  "Name": "Simple predicates",
-  "Superclass": abs("./em1.js;get/semanticQualities"),
-  "Constructor": SimplePredicate,
-  "Description": abs("./em1_aux1.js;get/simplePredicatesDesc"),
+  "Description": abs("./em1_aux1.js;get/goodDesc"),
+};
+export const funny = {
+  "Class": abs("./em1.js;get/qualities"),
+  "Label": "Funny",
+  "Domain": abs("./em1.js;get/entities"),
+  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Description": abs("./em1_aux1.js;get/funnyDesc"),
+};
+export const scary = {
+  "Class": abs("./em1.js;get/qualities"),
+  "Label": "Scary",
+  "Domain": abs("./em1.js;get/entities"),
+  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Description": abs("./em1_aux1.js;get/scaryDesc"),
 };
 
-// TODO: Forget about simple predicates, and introduce at least 'Good' and
-// 'Funny', and 'Scary', below.
-// Some useful simple predicates are 'good', 'funny', 'witty', 'spoilers',
-// 'good acting', 'inspiring' and so on. But as all "derived entities" ( i.e.
-// ones constructed from a class's "Constructor"), these should not be defined
-// in the entity modules like this themselves, but are purely defined by
-// posting to ./entities.sm.js.
 
 
 
 export const price = {
   "Class": abs("./em1.js;get/qualities"),
   "Label": "price",
+  // TODO: Give this quality a "getFullLabel" method.
   // The class of valuable things is so large and varied that we might as well
   // make All entities the domain:
   "Domain": abs("./em1.js;get/entities"),
@@ -712,6 +728,7 @@ export const price = {
 export const durability = {
   "Class": abs("./em1.js;get/qualities"),
   "Label": "durability",
+  // TODO: Give this quality a "getFullLabel" method.
   // The class is too wide and varied to try to use a more narrow domain.
   "Domain": abs("./em1.js;get/entities"),
   "Metric": abs("./em1.js;get/timeInYearsMetric"),
@@ -729,8 +746,10 @@ export const durability = {
 export const members = {
   "Class": abs("./em1.js;get/relations"),
   "Label": "Members",
+  "getFullLabel": getFullLabelOfStdPluralRelation,
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/entities"),
+  "Metric": abs("./em1.js;get/predicateMetric"),
   "Description": abs("./em1_aux1.js;get/membersDesc"),
 };
 
@@ -739,8 +758,10 @@ export const members = {
 export const subclasses = {
   "Class": abs("./em1.js;get/relations"),
   "Label": "Subclasses",
+  "getFullLabel": getFullLabelOfStdPluralRelation,
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/classes"),
+  "Metric": abs("./em1.js;get/predicateMetric"),
   "Description": abs("./em1_aux1.js;get/subclassesDesc"),
 };
 
@@ -752,8 +773,10 @@ export const subclasses = {
 export const relevantRelations = {
   "Class": abs("./em1.js;get/relations"),
   "Label": "Relations",
+  "getFullLabel": getFullLabelOfStdPluralRelation,
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/relations"),
+  "Metric": abs("./em1.js;get/predicateMetric"),
   "Description": abs("./em1_aux1.js;get/relevantRelationsDesc"),
 };
 
@@ -763,8 +786,10 @@ export const relevantRelations = {
 export const relationsForMembers = {
   "Class": abs("./em1.js;get/relations"),
   "Label": "Relations for members",
+  "getFullLabel": getFullLabelOfStdPluralRelation,
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/relations"),
+  "Metric": abs("./em1.js;get/predicateMetric"),
   "Description": abs("./em1_aux1.js;get/relationsForMembersDesc"),
 };
 
@@ -774,8 +799,10 @@ export const relationsForMembers = {
 export const subRelations = {
   "Class": abs("./em1.js;get/relations"),
   "Label": "Sub-relations",
+  "getFullLabel": getFullLabelOfStdPluralRelation,
   "Object domain": abs("./em1.js;get/relations"),
   "Subject domain": abs("./em1.js;get/relations"),
+  "Metric": abs("./em1.js;get/predicateMetric"),
   "Description": abs("./em1_aux1.js;get/subRelationsDesc"),
 };
 
@@ -783,8 +810,10 @@ export const subRelations = {
 export const relevantQualities = {
   "Class": abs("./em1.js;get/relations"),
   "Label": "Qualities",
+  "getFullLabel": getFullLabelOfStdPluralRelation,
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/qualities"),
+  "Metric": abs("./em1.js;get/predicateMetric"),
   "Description": abs("./em1_aux1.js;get/relevantQualitiesDesc"),
 };
 
@@ -793,8 +822,10 @@ export const relevantQualities = {
 export const qualitiesForMembers = {
   "Class": abs("./em1.js;get/relations"),
   "Label": "Qualities for members",
+  "getFullLabel": getFullLabelOfStdPluralRelation,
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/qualities"),
+  "Metric": abs("./em1.js;get/predicateMetric"),
   "Description": abs("./em1_aux1.js;get/qualitiesForMembersDesc"),
 };
 
@@ -807,8 +838,10 @@ export const qualitiesForMembers = {
 export const subQualities = {
   "Class": abs("./em1.js;get/relations"),
   "Label": "Sub-qualities",
+  "getFullLabel": getFullLabelOfStdPluralRelation,
   "Object domain": abs("./em1.js;get/qualities"),
   "Subject domain": abs("./em1.js;get/qualities"),
+  "Metric": abs("./em1.js;get/predicateMetric"),
   "Description": abs("./em1_aux1.js;get/subQualitiesDesc"),
 };
 
@@ -819,9 +852,11 @@ export const subQualities = {
 export const entityPage = {
   "Class": abs("./em1.js;get/relations"),
   "Label": "Entity page",
+  "getFullLabel": getFullLabelOfStdSingularRelation,
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/components"),
   "Area of concern": "./em1.js;get/uiAoC",
+  "Metric": abs("./em1.js;get/predicateMetric"),
   "Description": abs("./em1_aux1.js;get/entityPageDesc"),
 };
 
@@ -834,9 +869,11 @@ export const entityPage = {
 export const entityElement = {
   "Class": abs("./em1.js;get/relations"),
   "Label": "Entity element",
+  "getFullLabel": getFullLabelOfStdSingularRelation,
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/components"),
   "Area of concern": "./em1.js;get/uiAoC",
+  "Metric": abs("./em1.js;get/predicateMetric"),
   "Description": abs("./em1_aux1.js;get/entityElementDesc"),
 };
 
