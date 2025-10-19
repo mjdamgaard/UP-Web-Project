@@ -15,7 +15,6 @@
 .game-square {
   width: 80px;
   height: 80px;
-  /* display: inline-block; */
   border: 2px solid black;
   background-color: white;
   -webkit-transition: background-color 100ms linear;

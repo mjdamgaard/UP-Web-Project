@@ -542,6 +542,14 @@ class JSXInstance {
               jsxNode, jsxDecEnv
             );
             break;
+          // TODO: Also add autofocus prop here, that grabs the focus only if
+          // allowed (by settings.isOutsideFocusedStyleScope()), and only does
+          // so once, at least until the autofocus prop is set and then unset..
+          // ..Well, or maybe we should not add this attribute/prop. But
+          // consider it, for sure.
+          case "autofocus":
+            // ...
+            break;
           case "onKeyDown":
             eventProperty ??= "onkeydown";
           case "onKeyUp":
