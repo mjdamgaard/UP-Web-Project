@@ -440,7 +440,7 @@ class JSXInstance {
       let childArr = [];
       let {node: jsxNode, decEnv: jsxDecEnv} = jsxElement;
       forEachValue(jsxElement.props, jsxNode, jsxDecEnv, (val, key) => {
-        let mouseEventProperty, canPost;
+        let eventProperty, canPost;
         switch (key) {
           case "children" : {
             if (tagName === "br" || tagName === "hr") throw new RuntimeError(
@@ -454,6 +454,7 @@ class JSXInstance {
             childArr = val ?? [];
             break;
           }
+
           case "className" : {
             let className = val.toString();
             if (!CLASS_NAME_REGEX.test(className)) throw new RuntimeError(
@@ -470,6 +471,8 @@ class JSXInstance {
             newDOMNode.setAttribute("class", className);
             break;
           }
+
+          /* Mouse events */
           // WARNING: In all documentations of this 'onClick prop, it should be
           // warned that one should not call a callback from the parent
           // instance (e.g. handed down through refs), unless one is okay with
@@ -483,35 +486,41 @@ class JSXInstance {
           // *so* simple, but doable..)
           // TODO: All click events should at some point get an event argument
           // where one can read off info about e.g. the position of the click,
-          // and also potentially other info about the source of the event.
+          // and also potentially other info about the source of the event. *I
+          // have added an event object (just a plain one), but we should add
+          // more properties to it.
           case "onClick":
-            mouseEventProperty ??= "onclick";
+            eventProperty ??= "onclick";
           case "onDBLClick":
-            mouseEventProperty ??= "ondblclick";
+            eventProperty ??= "ondblclick";
           case "onMouseDown":
-            mouseEventProperty ??= "onmousedown";
+            eventProperty ??= "onmousedown";
           case "onMouseUp":
-            mouseEventProperty ??= "onmouseup";
+            eventProperty ??= "onmouseup";
             canPost ??= true;
           case "onMouseEnter":
-            mouseEventProperty ??= "onmouseenter";
+            eventProperty ??= "onmouseenter";
           case "onMouseLeave":
-            mouseEventProperty ??= "onmouseleave";
+            eventProperty ??= "onmouseleave";
           case "onMouseMove":
-            mouseEventProperty ??= "onmousemove";
+            eventProperty ??= "onmousemove";
             canPost ??= false;
-            if (!(val instanceof FunctionObject)) {
-              break;
-            }
-            newDOMNode[mouseEventProperty] = (event) => {
+            if (!val) break;
+            else if (!(val instanceof FunctionObject)) throw new ArgTypeError(
+              key + " event received a non-function value",
+              jsxNode, jsxDecEnv
+            );
+
+            newDOMNode[eventProperty] = (event) => {
               // Execute the function object held in val, with elevated
               // privileges that allows the function to make POST-like
               // requests. Also pass some of the properties of event, as well
               // as an added canPost property. TODO: Add more properties.
-              let {which, ctrlKey} = event;
+              let {which, ctrlKey, altKey, shiftKey} = event;
               let e = {
                 canPost: canPost,
-                which: which, ctrlKey: ctrlKey,
+                which: which,
+                ctrlKey: ctrlKey, altKey: altKey, shiftKey: shiftKey,
               };
               interpreter.executeFunctionOffSync(
                 val, [e], callerNode, callerEnv,
@@ -519,10 +528,72 @@ class JSXInstance {
               );
             };
             break;
-          // TODO: Add keyboard events, more click events, and focus events and
-          // focus methods, like I have described it in my working notes (in my
-          // "23-xx" notes, which is currently located in my Notes/backup
-          // GitHub folder).
+
+          /* Keyboard events and the tabindex attribute */
+          case "tabIndex":
+            if (val == 0) {
+              newDOMNode.tabIndex = 0;
+            }
+            else if (val !== undefined && val !== null) throw new ArgTypeError(
+              "Only tab indices of 0 are allowed currently",
+              jsxNode, jsxDecEnv
+            );
+            break;
+          case "onKeyDown":
+            eventProperty ??= "onkeydown";
+          case "onKeyUp":
+            eventProperty ??= "onkeyup";
+            if (!val) break;
+            else if (!(val instanceof FunctionObject)) throw new ArgTypeError(
+              key + " event received a non-function value",
+              jsxNode, jsxDecEnv
+            );
+
+            // Apart from the event, also set a tabindex of 0, automatically.
+            newDOMNode.tabIndex = 0;
+            newDOMNode[eventProperty] = (event) => {
+              // Do not allow can-post privileges for keyboard events at this
+              // point. TODO: Consider allowing it specifically for the enter
+              // key at some point, though.
+              let {key, repeat, ctrlKey, altKey, shiftKey} = event;
+              let e = {
+                key: key, repeat: repeat,
+                ctrlKey: ctrlKey, altKey: altKey, shiftKey: shiftKey,
+              };
+              interpreter.executeFunctionOffSync(
+                val, [e], callerNode, callerEnv, new JSXInstanceInterface(this)
+              );
+            };
+            break;
+
+          /* Animation events */
+          case "onAnimationEnd":
+            eventProperty ??= "onanimationend";
+          case "onAnimationStart":
+            eventProperty ??= "onanimationstart";
+          case "onAnimationIteration":
+            eventProperty ??= "onanimationiteration";
+            if (!val) break;
+            else if (!(val instanceof FunctionObject)) throw new ArgTypeError(
+              key + " event received a non-function value",
+              jsxNode, jsxDecEnv
+            );
+
+            newDOMNode[eventProperty] = (event) => {
+              let {animationName, elapsedTime, pseudoElement} = event;
+              let e = {
+                animationName: animationName, elapsedTime: elapsedTime,
+                pseudoElement: pseudoElement
+              };
+              interpreter.executeFunctionOffSync(
+                val, [e], callerNode, callerEnv, new JSXInstanceInterface(this)
+              );
+            };
+            break;
+
+          // TODO: Add more events, and more element properties in general, if/
+          // when desired.
+
           default: throw new RuntimeError(
             `Invalid or not-yet-implemented attribute, "${key}" for ` +
             "non-component elements",
