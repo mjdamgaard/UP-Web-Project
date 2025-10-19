@@ -6,7 +6,8 @@ import * as ILink from 'ILink.jsx';
 
 
 export function render({
-  entKey, isLink = true, isFull = false, pushState = undefined
+  key, entKey = key, isLink = true, isFull = false, isElaboration = false,
+  pushState = undefined
 }) {
   let {entDef, entPath} = this.state;
   pushState ??= isLink ? (this.subscribeToContext("history") ?? {}).pushState :
@@ -61,15 +62,21 @@ export function render({
     // Get the title from the "Name" ?? "Title" ?? "Label" attribute, and if
     // none is found, render an empty component with a "missing" class.
     let title = entDef["Name"] ?? entDef["Title"] ?? entDef["Label"];
-    let fullTitle = entDef["Full name"] ?? entDef["Full title"] ??
-      entDef["Full label"] ?? title;
     if (typeof title !== "string") {
       content = <span className="missing">{"missing"}</span>;
     }
 
     // if isFull is true, use the full title instead.
+    let fullTitle = entDef["Full name"] ?? entDef["Full title"] ??
+      entDef["Full label"] ?? title;
     if (isFull) {
       title = fullTitle;
+    }
+
+    // Or if isElaboration is true, use the elaboration instead.
+    let elaboration = entDef["Elaboration"] ?? fullTitle;
+    if (isElaboration) {
+      title = elaboration;
     }
 
     // Else call replaceReferences in order to parse the title and substitute
