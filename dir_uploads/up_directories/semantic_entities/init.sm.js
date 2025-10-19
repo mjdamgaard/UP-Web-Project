@@ -191,7 +191,7 @@ export function postScoresFromInitialModerators() {
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/entities"),
           abs("./em1.js;get/members"),
-          "@" + firstModID,
+          "#" + firstModID,
           firstModID, 1
         ),
         // Classes:
@@ -223,13 +223,13 @@ export function postScoresFromInitialModerators() {
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/users"),
           abs("./em1.js;get/members"),
-          "@" + firstModID,
+          "#" + firstModID,
           firstModID, 8
         ),
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/users"),
           abs("./em1.js;get/members"),
-          "@" + initModArr[1],
+          "#" + initModArr[1],
           firstModID, 7
         ),
       ]);
@@ -297,11 +297,11 @@ function postUserPredicateScoreAndUpdateUserGroups(
 
 
 function postUserRelationalScoreAndUpdateUserGroups(
-  classOrObjKey, relKey = undefined, subjKey, userKey, score,
+  objKey, relKey = undefined, subjKey, userKey, score,
   userGroupKeyArr = undefined
 ) {
   return new Promise(resolve => {
-    fetchRelationalQualityPath(classOrObjKey, relKey).then(qualPath => {
+    fetchRelationalQualityPath(objKey, relKey).then(qualPath => {
       postUserPredicateScoreAndUpdateUserGroups(
         qualPath, subjKey, userKey, score, userGroupKeyArr
       ).then(

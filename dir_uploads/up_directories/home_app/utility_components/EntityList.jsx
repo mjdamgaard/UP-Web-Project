@@ -34,7 +34,7 @@ export function render({
   // If the qualKey prop is undefined, and qualPath has not yet been fetched,
   // do so.
   if (!qualKey && qualPath === undefined) {
-    fetchRelationalQualityPath(relKey ?? classKey, objKey).then(qualPath => {
+    fetchRelationalQualityPath(objKey ?? classKey, relKey).then(qualPath => {
       this.setState(state => ({...state, qualPath: qualPath ?? false}));
     });
     content = <div className="fetching">{"..."}</div>;

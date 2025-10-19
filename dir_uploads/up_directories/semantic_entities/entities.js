@@ -11,6 +11,7 @@ import {substring} from 'string';
 import {mapToArray} from 'object';
 import {forEach} from 'array';
 
+const membersRelationPath = "/1/1/em1.js;get/members";
 
 
 
@@ -33,7 +34,7 @@ export function fetchEntityID(entKey) {
       let entPath = homePath + "/em1.js;call/User/" + upNodeID + "/" + userID;
       let entPathHex = valueToHex(entPath, "string");
       fetch(homePath + "/entIDs.bt/entry/k=" + entPathHex).then(
-        entID=> resolve(entID)
+        entID => resolve(entID)
       );
     });
   }
@@ -109,7 +110,9 @@ export function fetchOrCreateEntityID(entKey) {
 
 
 
-export function fetchRelationalQualityPath(objKey, relKey) {
+export function fetchRelationalQualityPath(
+  objKey, relKey = membersRelationPath
+) {
   let objIDProm = fetchEntityID(objKey);
   let relIDProm = fetchEntityID(relKey);
   return new Promise(resolve => {
@@ -130,7 +133,7 @@ export function fetchRelationalQualityPath(objKey, relKey) {
 
 
 
-export function postRelationalQuality(objKey, relKey) {
+export function postRelationalQuality(objKey, relKey = membersRelationPath) {
   let objIDProm = fetchEntityID(objKey);
   let relIDProm = fetchEntityID(relKey);
   return new Promise(resolve => {

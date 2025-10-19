@@ -38,7 +38,9 @@ export function render(props) {
 
   // If the relational quality for the class has not been fetched yet, do so.
   if (relQualPath === undefined) {
-    fetchRelationalQualityPath(classKey, entityElementRelPath).then(qualPath => {
+    fetchRelationalQualityPath(
+      classKey, entityElementRelPath
+    ).then(qualPath => {
       this.setState(state => ({
         ...state, relQualPath: qualPath ?? false
       }));

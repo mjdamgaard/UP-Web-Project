@@ -25,9 +25,13 @@ export function updateScoreForUser(
       Promise.all([
         userGroupIDProm, qualIDProm, subjIDProm, userIDProm
       ]).then(([userGroupID, qualID, subjID, userID]) => {
-        if (!userGroupIDProm || !qualIDProm || !subjIDProm || !userIDProm) {
-          resolve(false);
-          return;
+        if (!userGroupID || !qualID || !subjID || !userID) {
+          throw "Missing " +(
+            !userGroupID ? "userGroupID at " + userGroupKey :
+            !qualID ? "qualID at " + qualKey :
+            !subjID ? "subjID at " + subjKey :
+            "userID at " + userKey
+          );
         }
 
         // Get a database connection, already started, and with a lock already
