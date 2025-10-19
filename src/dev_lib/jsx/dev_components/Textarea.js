@@ -28,7 +28,7 @@ export const render = new DevFunction(
     // Create the DOM node if it has no been so already.
     let jsxInstance = thisVal.jsxInstance;
     let domNode = jsxInstance.domNode;
-    if (!domNode || domNode.tagName !== "textarea") {
+    if (!domNode || domNode.tagName !== "TEXTAREA") {
       domNode = document.createElement("textarea");
       domNode.setAttribute("class", "textarea_0");
       if (placeholder !== undefined) {

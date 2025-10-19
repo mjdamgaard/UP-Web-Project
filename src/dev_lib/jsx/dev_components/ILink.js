@@ -37,7 +37,7 @@ export const render = new DevFunction(
     // Create the DOM node if it has no been so already.
     let jsxInstance = thisVal.jsxInstance;
     let domNode = jsxInstance.domNode;
-    if (!domNode || domNode.tagName !== "a") {
+    if (!domNode || domNode.tagName !== "A") {
       domNode = document.createElement("a");
       domNode.setAttribute("class", "i-link_0");
     }
@@ -88,7 +88,7 @@ export const render = new DevFunction(
       }
 
       if (pushState) {
-        if (event.ctrlKey || event.which == 2) {
+        if (event.ctrlKey || event.button == 1) {
           return true;
         }
         else {

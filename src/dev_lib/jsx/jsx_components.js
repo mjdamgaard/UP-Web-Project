@@ -374,7 +374,7 @@ class JSXInstance {
     // in which case we wrap it in a div element.
     else if (jsxElement.isFragment || isArray) {
       let childArr = isArray ? jsxElement : jsxElement.props["children"] ?? [];
-      newDOMNode = (curNode?.tagName === "div") ?
+      newDOMNode = (curNode?.tagName === "DIV") ?
         clearAttributes(curNode) :
         document.createElement("div");
       this.replaceChildren(
@@ -430,7 +430,7 @@ class JSXInstance {
     // attributes and/or append some content to it.
     else {
       let tagName = jsxElement.tagName;
-      newDOMNode = (curNode?.tagName === tagName) ?
+      newDOMNode = (curNode?.tagName === tagName.toUpperCase()) ?
         clearAttributes(curNode) :
         document.createElement(tagName);
 
@@ -515,12 +515,15 @@ class JSXInstance {
               // Execute the function object held in val, with elevated
               // privileges that allows the function to make POST-like
               // requests. Also pass some of the properties of event, as well
-              // as an added canPost property. TODO: Add more properties.
-              let {which, ctrlKey, altKey, shiftKey} = event;
+              // as an added canPost property.
+              let {
+                button, offsetX, offsetY, ctrlKey, altKey, shiftKey, metaKey
+              } = event;
               let e = {
                 canPost: canPost,
-                which: which,
+                button: button, offsetX: offsetX, offsetY: offsetY,
                 ctrlKey: ctrlKey, altKey: altKey, shiftKey: shiftKey,
+                metaKey: metaKey,
               };
               interpreter.executeFunctionOffSync(
                 val, [e], callerNode, callerEnv,
@@ -555,10 +558,10 @@ class JSXInstance {
               // Do not allow can-post privileges for keyboard events at this
               // point. TODO: Consider allowing it specifically for the enter
               // key at some point, though.
-              let {key, repeat, ctrlKey, altKey, shiftKey} = event;
+              let {key, repeat, ctrlKey, altKey, shiftKey, metaKey} = event;
               let e = {
-                key: key, repeat: repeat,
-                ctrlKey: ctrlKey, altKey: altKey, shiftKey: shiftKey,
+                key: key, repeat: repeat, ctrlKey: ctrlKey, altKey: altKey,
+                shiftKey: shiftKey, metaKey: metaKey,
               };
               interpreter.executeFunctionOffSync(
                 val, [e], callerNode, callerEnv, new JSXInstanceInterface(this)
@@ -1290,7 +1293,9 @@ export class SettingsObject extends ObjectObject {
 
 
 function clearAttributes(elementNode) {
-  let attributeNames = elementNode.attributes.map(attrNode => attrNode.name);
+  let attributeNames = [...elementNode.attributes].map(
+    attrNode => attrNode.name
+  );
   attributeNames.forEach(name => {
     elementNode.removeAttribute(name);
   });

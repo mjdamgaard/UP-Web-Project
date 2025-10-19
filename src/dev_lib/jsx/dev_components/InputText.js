@@ -34,7 +34,7 @@ export const render = new DevFunction(
     // Create the DOM node if it has no been so already.
     let jsxInstance = thisVal.jsxInstance;
     let domNode = jsxInstance.domNode;
-    if (!domNode || domNode.tagName !== "input") {
+    if (!domNode || domNode.tagName !== "INPUT") {
       domNode = document.createElement("input");
       domNode.setAttribute("type", "text");
       domNode.setAttribute("class", "input-text_0");
