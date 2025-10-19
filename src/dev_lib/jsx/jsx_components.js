@@ -1204,6 +1204,10 @@ export class SettingsObject extends ObjectObject {
   // current style scope.
   getStyleScopeRoot(jsxInstance, node, env) {}
 
+  // isOutsideFocusedStyleScope(jsxInstance) returns true iff there is an
+  // HTML element in focus outside of the current style scope.
+  isOutsideFocusedStyleScope(jsxInstance, node, env) {}
+
   // Note that these are just the minimal API needed for this module to
   // function. In practice the settings class will likely be extended with
   // other methods.

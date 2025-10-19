@@ -75,6 +75,10 @@ export class SettingsObject01 extends SettingsObject {
     return this.appStyler.getStyleScopeRoot(jsxInstance, node, env);
   }
 
+  isOutsideFocusedStyleScope(jsxInstance, node, env) {
+    return this.appStyler.isOutsideFocusedStyleScope(jsxInstance, node, env);
+  }
+
 
   async getStyleModule(componentModule, node, env) {
     let {interpreter} = env.scriptVars;

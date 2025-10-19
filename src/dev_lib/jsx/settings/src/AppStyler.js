@@ -614,9 +614,10 @@ export class AppStyler01 {
     ownDOMNodes.forEach(node => node.classList.remove("own-leaf"));
 
     // And in case of the outer component of a style scope, set the overflow
-    // style property as hidden.
+    // style property as hidden, and add a scope-root class.
     if (isScopeRoot) {
       domNode.style.overflow = "hidden";
+      domNode.classList.add("scope-root");
     }
   }
 
@@ -634,6 +635,17 @@ export class AppStyler01 {
     return jsxInstance.domNode;
   }
 
+
+  isOutsideFocusedStyleScope(jsxInstance, _node, _env) {
+    let ownNode = jsxInstance.domNode;
+    let focusedNode = document.activeElement;
+    if (focusedNode === document.body) {
+      return false;
+    }
+    let ownScopeRoot = ownNode.closest(".scope-root");
+    let focusedScopeRoot = focusedNode.closest(".scope-root");
+    return ownScopeRoot !== focusedScopeRoot;
+  }
 
 }
 

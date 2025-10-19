@@ -19,10 +19,8 @@ html, body, #up-app-root {
 }
 
 /* This targets all the style scope root elements and makes their background
-/* color white by default, which is also done for security reasons. (TODO:
-/* change this selector to something more solid and clear, perhaps by adding
-/* a class to each style scope element.) */
-:where(#up-app-root [style^='overflow:']) {
+/* color white by default, which is also done for security reasons. */
+:where(#up-app-root .scope-root) {
   background-color: white;
 }
 

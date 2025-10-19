@@ -113,13 +113,21 @@ export const actions = {
       domNode.dispatchEvent(new InputEvent("input"));
     }
   }),
-  // TODD: First check that the element is a child of the currently focused
-  // element before being able to grab the focus. *(Or maybe actually just that
-  // the currently focused element has the same style scope (/ component ID))
-  // as this one.
-  "focus": new DevFunction("focus", {}, function({thisVal}, []) {
-    thisVal.jsxInstance.domNode.focus();
-  }),
+  "focus": new DevFunction(
+    "focus", {}, function({thisVal, callerNode, execEnv}, []) {
+      let {jsxInstance} = thisVal;
+      let canGrabFocus = !jsxInstance.settings.isOutsideFocusedStyleScope(
+        jsxInstance, callerNode, execEnv
+      );
+      if (canGrabFocus) {
+        thisVal.jsxInstance.domNode.focus();
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+  ),
   "blur": new DevFunction("blur", {}, function({thisVal}, []) {
     thisVal.jsxInstance.domNode.blur();
   }),
