@@ -1,6 +1,6 @@
 
 import {
-  fetchEntityDefinition, fetchRelevancyQualityPath,
+  fetchEntityDefinition, fetchRelationalQualityPath,
 } from "/1/1/entities.js";
 
 // TODO: Change back to GeneralEntityPage again.
@@ -39,7 +39,7 @@ export function render(props) {
   // Else if the relational "Entity page" quality for the class has not been
   // fetched yet, do so.
   else if (entityPageQualPath === undefined) {
-    fetchRelevancyQualityPath(classKey, entityPageRel).then(qualPath => {
+    fetchRelationalQualityPath(classKey, entityPageRel).then(qualPath => {
       this.setState(state => ({
         ...state, entityPageQualPath: qualPath ?? false
       }));

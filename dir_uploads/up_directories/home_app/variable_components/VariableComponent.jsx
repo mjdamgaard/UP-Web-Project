@@ -1,5 +1,5 @@
 
-import {fetchRelevancyQualityPath} from "/1/1/entities.js";
+import {fetchRelationalQualityPath} from "/1/1/entities.js";
 
 import * as EntityReference from "../utility_components/EntityReference.jsx";
 import * as ComponentEntityComponent from "./ComponentEntityComponent.jsx";
@@ -9,14 +9,14 @@ import * as ComponentEntityComponent from "./ComponentEntityComponent.jsx";
 export function render(props) {
   let {classKey, scoreHandler} = props;
   scoreHandler = scoreHandler ?? this.subscribeToContext("scoreHandler");
-  let {relevancyQualPath, topEntry} = this.state;
+  let {relQualPath, topEntry} = this.state;
   let content;
 
-  // If the relevancy quality for the class has not been fetched yet, do so.
-  if (relevancyQualPath === undefined) {
-    fetchRelevancyQualityPath(classKey).then(qualPath => {
+  // If the relational quality for the class has not been fetched yet, do so.
+  if (relQualPath === undefined) {
+    fetchRelationalQualityPath(classKey).then(qualPath => {
       this.setState(state => ({
-        ...state, relevancyQualPath: qualPath ?? false
+        ...state, relQualPath: qualPath ?? false
       }));
     });
     content = <div className="fetching">{"..."}</div>;
@@ -25,7 +25,7 @@ export function render(props) {
   // Else if the quality path is ready, but the top entry has not yet been
   // fetched, do that.
   else if (topEntry === undefined) {
-    scoreHandler.fetchTopEntry(relevancyQualPath).then(topEntry => {
+    scoreHandler.fetchTopEntry(relQualPath).then(topEntry => {
       this.setState(state => ({...state, topEntry: topEntry ?? false}));
     });
     content = <div className="fetching">{"..."}</div>;

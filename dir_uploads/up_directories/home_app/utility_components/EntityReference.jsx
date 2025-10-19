@@ -1,31 +1,18 @@
 
 import {fetchEntityDefinition, fetchEntityPath} from "/1/1/entities.js";
 import {replaceReferences} from 'entities';
-
 import * as ILink from 'ILink.jsx';
-import * as EntityOrRouteReference from "./EntityOrRouteReference.jsx";
-
-
-// TODO: We should at some point probably change this component into something
-// more elaborate. But for now, we will just let it fetch the given entity's
-// definition,  look at the "Name" ?? "Title" ?? "Label" attribute, and the
-// render an ILink with that as its content, but also where we parse the
-// name/title/label and substitute any entity key with a nested EntityReference
-// (with isLink=false).
 
 
 
-export function render(props) {
-  let {entKey, isLink = true, pushState = undefined} = props;
-  let {entDef, entPath, curEntKey} = this.state;
+export function render({
+  entKey, isLink = true, isFull = false, pushState = undefined
+}) {
+  let {entDef, entPath} = this.state;
   pushState ??= isLink ? (this.subscribeToContext("history") ?? {}).pushState :
     undefined;
+  let EntityReference = this.component;
   let content = "", href = "./";
-
-  // If the entKey prop has changed, reset the state.
-  if (entKey !== curEntKey) {
-    this.setState(getInitState(props));
-  }
 
   // If the entity definition has not been fetched, do so. And if isLink is
   // true, also fetch the entity ID.
@@ -51,6 +38,13 @@ export function render(props) {
     content = <span className="missing">{"missing"}</span>;
   }
 
+  // Else check that entDef is indeed an entity definition, with a "Class"
+  // attribute, and if not, return and ILink to the file browser instead.
+  else if (typeof entDef !== "object" || !entDef.Class) {
+    content = entKey;
+    href = "/f" + entKey;
+  }
+
   // Else if still needing the entID to be fetched, wait for that.
   else if (isLink && entPath === undefined) {
     content = <span className="fetching">{"..."}</span>;
@@ -65,19 +59,26 @@ export function render(props) {
   // references.
   else {
     // Get the title from the "Name" ?? "Title" ?? "Label" attribute, and if
-    // none is found, render an empty component with a "missing" class. (TODO:
-    // Consider inserting a component that allows the user to post the entity
-    // if entKey is a path, but then again, this might not be what we want.)
+    // none is found, render an empty component with a "missing" class.
     let title = entDef["Name"] ?? entDef["Title"] ?? entDef["Label"];
+    let fullTitle = entDef["Full name"] ?? entDef["Full title"] ??
+      entDef["Full label"] ?? title;
     if (typeof title !== "string") {
       content = <span className="missing">{"missing"}</span>;
+    }
+
+    // if isFull is true, use the full title instead.
+    if (isFull) {
+      title = fullTitle;
     }
 
     // Else call replaceReferences in order to parse the title and substitute
     // any nested entity keys with EntityReferences.
     else {
-      let substitutedSegmentArr = replaceReferences(title, (refIdent, ind) => (
-        <EntityOrRouteReference key={ind} ident={refIdent} isLink={false} />
+      let substitutedSegmentArr = replaceReferences(title, (refEntKey, ind) => (
+        <EntityReference key={ind}
+          entKey={refEntKey} isLink={false} isFull={false}
+        />
       ));
       content = substitutedSegmentArr;
       href = "/e" + entPath;
@@ -92,10 +93,4 @@ export function render(props) {
       }</ILink>
     </span> :
     <span className={"entity-reference"}>{content}</span>;
-}
-
-
-
-export function getInitState({entKey}) {
-  return {curEntKey: entKey};
 }

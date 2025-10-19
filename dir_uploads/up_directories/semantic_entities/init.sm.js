@@ -9,7 +9,7 @@ import {map} from 'array';
 import {valueToHex, arrayToHex} from 'hex';
 import {getSequentialPromise} from 'promise';
 import {
-  fetchEntityID, postAllEntitiesFromModule, fetchRelevancyQualityPath
+  fetchEntityID, postAllEntitiesFromModule, fetchRelationalQualityPath
 } from "./entities.js";
 import {
   scoreHandler01, initialTrustedUserGroup, initialStandardUserGroup,
@@ -145,25 +145,25 @@ export function postScoresFromInitialModerators() {
     () => {
       return Promise.all([
         // Classes
-        postUserRelevancyScoreAndUpdateUserGroups(
+        postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/entities"),
           abs("./em1.js;get/subclasses"),
           abs("./em1.js;get/classes"),
           firstModID, 6
         ),
-        postUserRelevancyScoreAndUpdateUserGroups(
+        postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/entities"),
           abs("./em1.js;get/subclasses"),
           abs("./em1.js;get/users"),
           firstModID, 6
         ),
-        postUserRelevancyScoreAndUpdateUserGroups(
+        postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/entities"),
           abs("./em1.js;get/subclasses"),
           abs("./em1.js;get/relations"),
           firstModID, 6
         ),
-        postUserRelevancyScoreAndUpdateUserGroups(
+        postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/classes"),
           abs("./em1.js;get/subclasses"),
           abs("./em1.js;get/relationalClasses"),
@@ -176,57 +176,57 @@ export function postScoresFromInitialModerators() {
     () => {
       return Promise.all([
         // Entities:
-        postUserRelevancyScoreAndUpdateUserGroups(
+        postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/entities"),
           abs("./em1.js;get/members"),
           abs("./em1.js;get/classes"),
           firstModID, 6
         ),
-        postUserRelevancyScoreAndUpdateUserGroups(
+        postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/entities"),
           abs("./em1.js;get/members"),
           abs("./em1.js;get/entities"),
           firstModID, 2
         ),
-        postUserRelevancyScoreAndUpdateUserGroups(
+        postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/entities"),
           abs("./em1.js;get/members"),
           "@" + firstModID,
           firstModID, 1
         ),
         // Classes:
-        postUserRelevancyScoreAndUpdateUserGroups(
+        postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/classes"),
           abs("./em1.js;get/members"),
           abs("./em1.js;get/entities"),
           firstModID, 6
         ),
-        postUserRelevancyScoreAndUpdateUserGroups(
+        postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/classes"),
           abs("./em1.js;get/members"),
           abs("./em1.js;get/classes"),
           firstModID, 6
         ),
-        postUserRelevancyScoreAndUpdateUserGroups(
+        postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/classes"),
           abs("./em1.js;get/members"),
           abs("./em1.js;get/users"),
           firstModID, 6
         ),
-        postUserRelevancyScoreAndUpdateUserGroups(
+        postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/classes"),
           abs("./em1.js;get/members"),
           abs("./em1.js;get/relations"),
           firstModID, 6
         ),
         // Users:
-        postUserRelevancyScoreAndUpdateUserGroups(
+        postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/users"),
           abs("./em1.js;get/members"),
           "@" + firstModID,
           firstModID, 8
         ),
-        postUserRelevancyScoreAndUpdateUserGroups(
+        postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/users"),
           abs("./em1.js;get/members"),
           "@" + initModArr[1],
@@ -296,12 +296,12 @@ function postUserPredicateScoreAndUpdateUserGroups(
 }
 
 
-function postUserRelevancyScoreAndUpdateUserGroups(
+function postUserRelationalScoreAndUpdateUserGroups(
   classOrObjKey, relKey = undefined, subjKey, userKey, score,
   userGroupKeyArr = undefined
 ) {
   return new Promise(resolve => {
-    fetchRelevancyQualityPath(classOrObjKey, relKey).then(qualPath => {
+    fetchRelationalQualityPath(classOrObjKey, relKey).then(qualPath => {
       postUserPredicateScoreAndUpdateUserGroups(
         qualPath, subjKey, userKey, score, userGroupKeyArr
       ).then(

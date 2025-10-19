@@ -1,5 +1,5 @@
 
-import {fetchRelevancyQualityPath} from "/1/1/entities.js";
+import {fetchRelationalQualityPath} from "/1/1/entities.js";
 import {map} from 'array';
 
 import * as VariableEntityElement
@@ -20,7 +20,7 @@ from "../variable_components/VariableEntityElement.jsx";
 
 // This component takes either a quality, a relation--object pair, or a class,
 // and renders a list of entities fetched either from the provided quality, or
-// from the relevancy quality formed by either the relation--object pair, or
+// from the relational quality formed by either the relation--object pair, or
 // the class.
 export function render({
   qualKey, relKey, objKey, classKey, ElementComponent = VariableEntityElement,
@@ -34,7 +34,7 @@ export function render({
   // If the qualKey prop is undefined, and qualPath has not yet been fetched,
   // do so.
   if (!qualKey && qualPath === undefined) {
-    fetchRelevancyQualityPath(relKey ?? classKey, objKey).then(qualPath => {
+    fetchRelationalQualityPath(relKey ?? classKey, objKey).then(qualPath => {
       this.setState(state => ({...state, qualPath: qualPath ?? false}));
     });
     content = <div className="fetching">{"..."}</div>;

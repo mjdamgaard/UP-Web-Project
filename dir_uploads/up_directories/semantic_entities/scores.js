@@ -51,15 +51,30 @@ export function fetchUserScoreHex(
 }
 
 
+// TODO: At some point we probably want to query a 'Metric' relation instead of
+// always just taking the 'Metric' attribute.
+
+const relationalQualitiesPath = abs("./em1.js;get/relationalQualities");
+
 export function fetchMetric(qualKey) {
   return new Promise(resolve => {
-    fetchEntityDefinition(qualKey).then(entDef => {
-      // TODO: Query a scored 'Metric' property, and certainly if there is no
-      // default metric. 
-      let metricKey = entDef["Metric"];
-      fetchEntityDefinition(metricKey).then(
-        metric => resolve(metric ?? undefined)
-      );
+    fetchEntityDefinition(qualKey).then(qualDef => {
+      // If the quality is a relational one, get the metric from the relation
+      // instead.
+      if (qualDef["Class"] === relationalQualitiesPath) {
+        fetchEntityDefinition(qualDef["Relation"]).then(relDef => {
+          fetchEntityDefinition(relDef["Metric"]).then(
+            metric => resolve(metric)
+          );
+        });
+      }
+
+      // Else get the metric from the quality.
+      else {
+        fetchEntityDefinition(qualDef["Metric"]).then(
+          metric => resolve(metric ?? undefined)
+        );
+      }
     });
   });
 }

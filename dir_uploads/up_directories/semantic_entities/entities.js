@@ -109,24 +109,18 @@ export function fetchOrCreateEntityID(entKey) {
 
 
 
-export function fetchRelevancyQualityPath(classOrObjKey, relKey = undefined) {
-  // TODO: Reimplement such that the class's entity definition is fetched, or
-  // just its path, actually, and then it is checked if the class is a
-  // relational class, and if so, we return the path to the corresponding
-  // relational relevancy quality. 
-  let classOrObjIDProm = fetchEntityID(classOrObjKey);
-  let relIDProm = relKey ? fetchEntityID(relKey) :
-    new Promise(res => res(undefined));
+export function fetchRelationalQualityPath(objKey, relKey) {
+  let objIDProm = fetchEntityID(objKey);
+  let relIDProm = fetchEntityID(relKey);
   return new Promise(resolve => {
     Promise.all([
-      classOrObjIDProm, relIDProm
-    ]).then(([classOrObjID, relID]) => {
-      if (!classOrObjID || relKey && !relID) {
+      objIDProm, relIDProm
+    ]).then(([objID, relID]) => {
+      if (!objID || !relID) {
         resolve(undefined);
       }
       else {
-        let qualPath = homePath + "/em1.js;call/RQ/" +
-          classOrObjID + (relID ? "/" + relID : "");
+        let qualPath = homePath + "/em1.js;call/RQ/" + objID + "/" + relID;
         resolve(qualPath);
       }
     });
@@ -136,18 +130,22 @@ export function fetchRelevancyQualityPath(classOrObjKey, relKey = undefined) {
 
 
 
-export function postRelevancyQuality(classOrObjKey, relKey = undefined) {
-  let classOrObjIDProm = fetchEntityID(classOrObjKey);
-  let relIDProm = relKey ? fetchEntityID(relKey) : new Promise(res => res());
+export function postRelationalQuality(objKey, relKey) {
+  let objIDProm = fetchEntityID(objKey);
+  let relIDProm = fetchEntityID(relKey);
   return new Promise(resolve => {
     Promise.all([
-      classOrObjIDProm, relIDProm
-    ]).then(([classOrObjID, relID]) => {
-      let entPath = homePath + "/em1.js;call/RQ/" +
-        classOrObjID + (relID ? "/" + relID : "");
-      post(homePath + "/entities.sm.js/callSMF/postEntity", entPath).then(
-        entID => resolve(entID)
-      );
+      objIDProm, relIDProm
+    ]).then(([objID, relID]) => {
+      if (!objID || !relID) {
+        resolve(undefined);
+      }
+      else {
+        let qualPath = homePath + "/em1.js;call/RQ/" + objID + "/" + relID;
+        post(homePath + "/entities.sm.js/callSMF/postEntity", qualPath).then(
+          qualID => resolve(qualID)
+        );
+      }
     });
   });
 }
