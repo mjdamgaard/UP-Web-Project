@@ -2,7 +2,7 @@
 
 .tabbed-pages .tab-menu {
   border: 2px solid darkgray;
-  border-bottom: 1px solid lightgray;
+  border-bottom: 0px solid lightgray;
 }
 .tabbed-pages .tab-menu .tab {
   margin: 0.1em 0.1em 0;
