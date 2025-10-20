@@ -1,8 +1,11 @@
 
 import {
-  DevFunction, getString, ArgTypeError, ObjectObject, verifyTypes,
+  DevFunction, FunctionObject, getString, ArgTypeError, ObjectObject,
+  verifyTypes,
 } from "../../../interpreting/ScriptInterpreter.js";
-import {DOMNodeObject, JSXInstanceInterface} from "../jsx_components.js";
+import {
+  DOMNodeObject, JSXInstanceInterface, clearAttributes
+} from "../jsx_components.js";
 
 
 export const render = new DevFunction(
@@ -14,7 +17,7 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {placeholder, onChange} = props;
+    let {placeholder, onChange, onInput} = props;
     verifyTypes(
       [placeholder, onChange], ["string?", "function?"],
       callerNode, execEnv
@@ -30,43 +33,49 @@ export const render = new DevFunction(
     let domNode = jsxInstance.domNode;
     if (!domNode || domNode.tagName !== "TEXTAREA") {
       domNode = document.createElement("textarea");
-      domNode.setAttribute("class", "textarea_0");
-      if (placeholder !== undefined) {
-        domNode.setAttribute("placeholder", placeholder);
-      }
+    }
+    else {
+      clearAttributes(domNode);
+    }
+    domNode.setAttribute("class", "textarea_0");
+    if (placeholder !== undefined) {
+      domNode.setAttribute("placeholder", placeholder);
     }
 
-    // Set the onChange event if props.onChange is supplied.
+    // Set the onchange event if props.onChange is supplied.
     if (onChange) {
-      // Set an input event, but do it in a way that it is delayed for some
-      // milliseconds, and where a new oninput event fired in the meantime will
-      // essentially overwrite the existing one. Thus the input event will fire
-      // less frequently when the user types something.
-      let ref = [];
-      domNode.oninput = () => {
-        let eventID = ref[0] = {};
-        setTimeout(() => {
-          if (ref[0] !== eventID) return;
-          // TODO: Add event argument when implemented.
-          interpreter.executeFunctionOffSync(
-            onChange, [domNode.value], callerNode, execEnv, thisVal
-          );
-          // This prevents the loss of focus for but a brief moment if an
-          // ancestor component rerenders as a consequence of the input event.
-          setTimeout(() => {
-            domNode.focus();
-          }, 0);
-        }, 50);
+      if (!(onChange instanceof FunctionObject)) throw new ArgTypeError(
+        "onChange event received a non-function value",
+        callerNode, execEnv
+      );
+      domNode.onchange = (event) => {
+        let {value} = event.target;
+        let e = {value: value};
+        interpreter.executeFunctionOffSync(
+          onChange, [e], callerNode, execEnv, thisVal
+        );
       };
     }
 
-    // TODO: Confirm that letting the user be able to style the text field
-    // directly (i.e. by letting ownDOMNodes = [domNode] here), will not let
-    // them be able to trick the browser into auto-filling in text, and
-    // especially not a password. 
+    // Set the oninput event if props.oninput is supplied.
+    if (onInput) {
+      if (!(onInput instanceof FunctionObject)) throw new ArgTypeError(
+        "onInput event received a non-function value",
+        callerNode, execEnv
+      );
+      domNode.oninput = (event) => {
+        let {value} = event.target;
+        let e = {value: value};
+        interpreter.executeFunctionOffSync(
+          onInput, [e], callerNode, execEnv, thisVal
+        );
+      };
+    }
+
     return new DOMNodeObject(domNode, [domNode]);
   }
 );
+
 
 
 export const methods = [

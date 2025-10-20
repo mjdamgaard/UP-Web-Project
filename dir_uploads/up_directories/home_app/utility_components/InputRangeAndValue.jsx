@@ -2,6 +2,7 @@
 import * as InputRange from 'InputRange.jsx';
 import * as InputText from 'InputText.jsx';
 import {parseFloat, isNaN} from 'number';
+import {toString} from 'string';
 
 
 export function render({
@@ -10,20 +11,27 @@ export function render({
   return (
     <div className="input-range-and-value">
       <InputRange key="r"
-        min={min} max={max} value={value} step={step} onChange={val => {
-          this.call("t", "setValue", val);
+        min={min} max={max} value={value} step={step}
+        onInput={({value}) => {
+          this.call("t", "setValue", value);
           if (onChange) {
-            onChange(val);
+            onChange(value);
+          }
+        }}
+        onChange={({value}) => {
+          if (onChange) {
+            onChange(value);
           }
         }}
       />
       <InputText key="t"
-        size={size} value={value} placeholder={placeholder} onChange={val => {
-          val = parseFloat(val);
-          if (isNaN(val)) return;
-          this.call("r", "setValue", val);
+        size={size} value={value} placeholder={placeholder}
+        onInput={({value}) => {
+          let floatValue = parseFloat(value);
+          if (toString(floatValue) !== value) return;
+          this.call("r", "setValue", floatValue);
           if (onChange) {
-            onChange(val);
+            onChange(value);
           }
         }}
       />

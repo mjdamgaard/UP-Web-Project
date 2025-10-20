@@ -5,6 +5,7 @@ import {
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
   DOMNodeObject, JSXInstanceInterface, HREF_REGEX, HREF_CD_START_REGEX,
+  clearAttributes,
 } from "../jsx_components.js";
 
 
@@ -39,8 +40,11 @@ export const render = new DevFunction(
     let domNode = jsxInstance.domNode;
     if (!domNode || domNode.tagName !== "A") {
       domNode = document.createElement("a");
-      domNode.setAttribute("class", "i-link_0");
     }
+    else {
+      clearAttributes(domNode);
+    }
+    domNode.setAttribute("class", "i-link_0");
 
     // Add the relative href if provided.
     if (href !== undefined) {

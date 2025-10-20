@@ -1300,19 +1300,12 @@ export class SettingsObject extends ObjectObject {
 
 
 
-function clearAttributes(elementNode) {
+export function clearAttributes(elementNode) {
   let attributeNames = [...elementNode.attributes].map(
     attrNode => attrNode.name
   );
   attributeNames.forEach(name => {
     elementNode.removeAttribute(name);
-  });
-  return elementNode;
-}
-
-function removeChildren(elementNode) {
-  ([...elementNode.childNodes]).forEach(childNode => {
-    childNode.remove();
   });
   return elementNode;
 }

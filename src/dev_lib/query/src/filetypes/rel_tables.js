@@ -216,6 +216,9 @@ export async function query(
         callerNode, execEnv
       );
     }
+console.log(procName,
+      [homeDirID, filePath, listID, lo, hi, maxNum, numOffset, isAscending],
+      route, options, callerNode, execEnv,);
     payGas(callerNode, execEnv, {dbRead: maxNum / 100});
     return await dbQueryHandler.queryDBProc(
       procName,

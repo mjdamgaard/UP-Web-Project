@@ -1,8 +1,10 @@
 
 import {
-  DevFunction, ArgTypeError, ObjectObject, verifyTypes,
+  DevFunction, FunctionObject, ArgTypeError, ObjectObject, verifyTypes,
 } from "../../../interpreting/ScriptInterpreter.js";
-import {DOMNodeObject, JSXInstanceInterface} from "../jsx_components.js";
+import {
+  DOMNodeObject, JSXInstanceInterface, clearAttributes
+} from "../jsx_components.js";
 
 
 export const render = new DevFunction(
@@ -17,7 +19,7 @@ export const render = new DevFunction(
     // TODO: Add an oninput event as well (and make it so that components like
     // InputRangeAndValue.jsx can work without changing focus at the wrong
     // times.
-    let {min, max, value, step, onChange} = props;
+    let {min, max, value, step, onChange, onInput} = props;
     verifyTypes(
       [min, max, value, step, onChange],
       ["number?", "number?", "number?", "number?", "function?"],
@@ -34,37 +36,44 @@ export const render = new DevFunction(
     let domNode = jsxInstance.domNode;
     if (!domNode || domNode.tagName !== "INPUT") {
       domNode = document.createElement("input");
-      domNode.setAttribute("type", "range");
-      domNode.setAttribute("class", "input-range_0");
-      if (min !== undefined) domNode.setAttribute("min", min);
-      if (max !== undefined) domNode.setAttribute("max", max);
-      if (value !== undefined) domNode.setAttribute("value", value);
-      if (step !== undefined) domNode.setAttribute("step", step);
+    }
+    else {
+      clearAttributes(domNode);
+    }
+    domNode.setAttribute("type", "range");
+    domNode.setAttribute("class", "input-range_0");
+    if (min !== undefined) domNode.setAttribute("min", min);
+    if (max !== undefined) domNode.setAttribute("max", max);
+    if (value !== undefined) domNode.setAttribute("value", value);
+    if (step !== undefined) domNode.setAttribute("step", step);
+
+    // Set the onchange event if props.onChange is supplied.
+    if (onChange) {
+      if (!(onChange instanceof FunctionObject)) throw new ArgTypeError(
+        "onChange event received a non-function value",
+        callerNode, execEnv
+      );
+      domNode.onchange = (event) => {
+        let {value} = event.target;
+        let e = {value: value};
+        interpreter.executeFunctionOffSync(
+          onChange, [e], callerNode, execEnv, thisVal
+        );
+      };
     }
 
-    // Set the onChange event if props.onChange is supplied.
-    if (onChange) {
-      // Set an input event, but do it in a way that it is delayed for some
-      // milliseconds, and where a new oninput event fired in the meantime will
-      // essentially overwrite the existing one. Thus the input event will fire
-      // less frequently when the user types something.
-      let ref = [];
-      domNode.onchange = () => {
-        let eventID = ref[0] = {};
-        // TODO: THis setTimeout() thing might be redundant when using onchange
-        // rather than oninput, so consider removing it.
-        setTimeout(() => {
-          if (ref[0] !== eventID) return;
-          // TODO: Add event argument when implemented.
-          interpreter.executeFunctionOffSync(
-            onChange, [domNode.value], callerNode, execEnv, thisVal
-          );
-          // This prevents the loss of focus for but a brief moment if an
-          // ancestor component rerenders as a consequence of the input event.
-          setTimeout(() => {
-            domNode.focus();
-          }, 0);
-        }, 50);
+    // Set the oninput event if props.oninput is supplied.
+    if (onInput) {
+      if (!(onInput instanceof FunctionObject)) throw new ArgTypeError(
+        "onInput event received a non-function value",
+        callerNode, execEnv
+      );
+      domNode.oninput = (event) => {
+        let {value} = event.target;
+        let e = {value: value};
+        interpreter.executeFunctionOffSync(
+          onInput, [e], callerNode, execEnv, thisVal
+        );
       };
     }
 

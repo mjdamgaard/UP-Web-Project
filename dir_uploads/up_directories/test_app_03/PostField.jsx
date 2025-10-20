@@ -11,7 +11,7 @@ export function render({userID}) {
     <div>
       <CharCount key={1} />
       <div>
-        <Textarea key={0} onChange={dispatchCharCount}/>
+        <Textarea key={0} onInput={dispatchCharCount}/>
       </div>
       <button onClick={() => {
         if (!userID) {
@@ -59,8 +59,8 @@ export const actions = {
   }
 };
 
-function dispatchCharCount() {
-  let text = this.do("getValue");
+function dispatchCharCount(e) {
+  let text = e.value;
   let count = text.length;
   this.trigger("setCharCount", count);
 }

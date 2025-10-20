@@ -314,11 +314,15 @@ export class ScriptInterpreter {
     impStmt, curModulePath, callerModuleEnv
   ) {
     let submodulePath = getFullPath(curModulePath, impStmt.str);
-    return await this.import(submodulePath, impStmt, callerModuleEnv, true);
+    return await this.import(
+      submodulePath, impStmt, callerModuleEnv, false, true
+    );
   }
 
 
-  async import(route, callerNode, callerEnv, assertJSModule = false) {
+  async import(
+    route, callerNode, callerEnv, assertJSModule = false, assertModule = false
+  ) {
     decrCompGas(callerNode, callerEnv);
     decrGas(callerNode, callerEnv, "import");
 
@@ -334,6 +338,12 @@ export class ScriptInterpreter {
     let ret = await this.fetch(route, callerNode, callerEnv);
     if (assertJSModule && !(ret instanceof LiveJSModule)) throw new LoadError(
       `No script was found at ${route}`,
+      callerNode, callerEnv
+    );
+    else if (
+      assertModule && !(ret instanceof LiveJSModule || ret instanceof CSSModule)
+    ) throw new LoadError(
+      `No script or style sheet was found at ${route}`,
       callerNode, callerEnv
     );
     return ret;
