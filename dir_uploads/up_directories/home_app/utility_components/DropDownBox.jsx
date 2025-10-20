@@ -24,8 +24,8 @@ export function render({children, keepAlive}) {
 }
 
 
-export function getInitState({isOpenInitially}) {
-  return {isOpen: isOpenInitially ? true : false};
+export function getInitState({startOpen}) {
+  return {isOpen: startOpen ? true : false};
 }
 
 

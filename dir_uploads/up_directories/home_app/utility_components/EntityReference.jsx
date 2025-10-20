@@ -7,7 +7,7 @@ import * as ILink from 'ILink.jsx';
 
 export function render({
   key, entKey = key, isLink = true, isFull = false, isElaboration = false,
-  pushState = undefined
+  hasLinks = isElaboration && !isLink, pushState = undefined
 }) {
   let {entDef, entPath} = this.state;
   pushState ??= isLink ? (this.subscribeToContext("history") ?? {}).pushState :
@@ -84,7 +84,7 @@ export function render({
     else {
       let substitutedSegmentArr = replaceReferences(title, (refEntKey, ind) => (
         <EntityReference key={ind}
-          entKey={refEntKey} isLink={false} isFull={false}
+          entKey={refEntKey} isLink={hasLinks} isFull={false}
         />
       ));
       content = substitutedSegmentArr;

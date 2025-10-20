@@ -8,7 +8,10 @@ import * as AggregatedScoreDisplay from "../scoring/AggregatedScoreDisplay.jsx";
 
 
 
-export function render({entID, score, weight, qualKeyArr}) {
+export function render({
+  entID, qualKeyArr = [], score = undefined, weight = undefined,
+  startExpanded = false,
+}) {
   return <div className="entity-element">
     <div>
       <div className="main-content">
@@ -19,11 +22,12 @@ export function render({entID, score, weight, qualKeyArr}) {
       </div>
       <div className="score-display">
         <AggregatedScoreDisplay key="as"
-          score={toPrecision(score, 3)} weight={toPrecision(weight, 3)}
+          score={score ? toPrecision(score, 3) : "N/A"}
+          weight={weight ? toPrecision(weight, 3) : "N/A"}
         />
       </div>
     </div>
-    <DropDownBox key="ddb">
+    <DropDownBox key="ddb" startOpen={startExpanded}>
       <ScoringMenu key="_sm" subjKey={entID} qualKeyArr={qualKeyArr} />
     </DropDownBox>
   </div>;

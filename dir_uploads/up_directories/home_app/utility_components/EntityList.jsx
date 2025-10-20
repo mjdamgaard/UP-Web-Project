@@ -4,6 +4,7 @@ import {map} from 'array';
 
 import * as VariableEntityElement
 from "../variable_components/VariableEntityElement.jsx";
+import * as AddEntityMenu from "./AddEntityMenu.jsx";
 
 
 // TODO: This component should at some point be extended with a menu for
@@ -12,9 +13,6 @@ from "../variable_components/VariableEntityElement.jsx";
 // the currently focussed entity can be scrolled to automatically again when
 // the page reloads (after we have also implemented such scroll actions/methods
 // (unless wanting to implement it in another way)).. 
-
-// TODO: And a much more urgent todo is to add some button at the top to add
-// a new entry to the entity list.
 
 
 
@@ -28,7 +26,7 @@ export function render({
   paginationLength = 50, paginationIndex = 0,
 }) {
   scoreHandler = scoreHandler ?? this.subscribeToContext("scoreHandler");
-  let {qualPath, list} = this.state;
+  let {qualPath, list, menuExtension} = this.state;
   let content;
 
   // If the qualKey prop is undefined, and qualPath has not yet been fetched,
@@ -52,12 +50,27 @@ export function render({
   // And if the list is ready, render the elements. TODO: Only render some
   // elements, namely in a pagination.
   else {
-    content = map(list, ([entID, score, weight]) => (
-      <ElementComponent key={"_" + entID}
-        entID={entID} score={score} weight={weight}
-        qualKeyArr={[qualKey ?? qualPath]}
-      />
-    ));
+    content = [
+      <div className="entity-list-menu">
+        <button onClick={() => {
+          this.setState(state => ({
+            ...state, menuExtension: <AddEntityMenu key="add"
+              qualKeyArr={[qualKey ?? qualPath]}
+            />
+          }));
+        }}>{"Add entity"}</button>
+      </div>,
+      <div className="menu-extension">{menuExtension}</div>,
+      <hr/>,
+      <div className="list-container">{
+        map(list, ([entID, score, weight]) => (
+          <ElementComponent key={"_" + entID}
+            entID={entID} score={score} weight={weight}
+            qualKeyArr={[qualKey ?? qualPath]}
+          />
+        ))
+      }</div>,
+    ];
   }
 
   return (

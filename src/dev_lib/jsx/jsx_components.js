@@ -493,11 +493,11 @@ class JSXInstance {
             eventProperty ??= "onclick";
           case "onDBLClick":
             eventProperty ??= "ondblclick";
+            canPost ??= true;
           case "onMouseDown":
             eventProperty ??= "onmousedown";
           case "onMouseUp":
             eventProperty ??= "onmouseup";
-            canPost ??= true;
           case "onMouseEnter":
             eventProperty ??= "onmouseenter";
           case "onMouseLeave":
@@ -542,14 +542,9 @@ class JSXInstance {
               jsxNode, jsxDecEnv
             );
             break;
-          // TODO: Also add autofocus prop here, that grabs the focus only if
-          // allowed (by settings.isOutsideFocusedStyleScope()), and only does
-          // so once, at least until the autofocus prop is set and then unset..
-          // ..Well, or maybe we should not add this attribute/prop. But
-          // consider it, for sure.
-          case "autofocus":
-            // ...
-            break;
+          // TODO: Consider also adding an 'autofocus' prop here that grabs the
+          // focus, but only once, and only if allowed by 
+          // settings.isOutsideFocusedStyleScope().
           case "onKeyDown":
             eventProperty ??= "onkeydown";
           case "onKeyUp":
@@ -560,8 +555,13 @@ class JSXInstance {
               jsxNode, jsxDecEnv
             );
 
-            // Apart from the event, also set a tabindex of 0, automatically.
+            // Apart from the key event, also set a tabindex of 0,
+            // automatically, as well as an onclick event that grabs the focus,
+            // but only if the element has no other onclick event.
             newDOMNode.tabIndex = 0;
+            newDOMNode.onclick ??= () => {
+              newDOMNode.focus();
+            };
             newDOMNode[eventProperty] = (event) => {
               // Do not allow can-post privileges for keyboard events at this
               // point. TODO: Consider allowing it specifically for the enter
