@@ -1483,7 +1483,7 @@ function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
     }
   );
   const replaceState = new DevFunction(
-    "replaceState", {typeArr: ["string", "any?"]},
+    "replaceState", {typeArr: ["any?", "string"]},
     ({callerNode, execEnv}, [state = null, url]) => {
       let stateJSON = jsonStringify(state);
       validateAndUpdateURLContext(stateJSON, url, callerNode, execEnv);

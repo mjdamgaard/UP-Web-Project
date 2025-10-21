@@ -114,7 +114,7 @@ export function render({
         />
       ));
       content = substitutedSegmentArr;
-      href = "~/e" + entPath;
+      href = "~/entPath" + entPath;
     }
   }
 

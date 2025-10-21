@@ -1,5 +1,7 @@
 
-import {fetchEntityDefinition, fetchEntityPath} from "/1/1/entities.js";
+import {
+  fetchEntityDefinition, fetchEntityPath, fetchEntityID,
+} from "/1/1/entities.js";
 import {mapToArray} from 'object';
 import {stringify} from 'json';
 
@@ -9,7 +11,7 @@ import * as TextDisplay from "../utility_components/TextDisplay.jsx";
 
 
 export function render({entKey}) {
-  let {entPath, entDef, curEntKey} = this.state;
+  let {entPath, entDef, entID, isFetching, curEntKey} = this.state;
   let content;
 
   // If entKey changes reset the state.
@@ -17,23 +19,24 @@ export function render({entKey}) {
     this.setState(getInitialState(this.props));
   }
 
-  // If the entity path has not already been fetched, do so.
-  if (entPath === undefined) {
+  // If date hasn't begun fetching yet, start fetching.
+  if (!isFetching) {
+    this.setState(state => ({...state, isFetching: true}));
+
     fetchEntityPath(entKey).then(entPath => {
       this.setState(state => ({...state, entPath: entPath ?? false}));
     });
-    content = <div className="fetching">{"..."}</div>;
-  }
-
-  else if (!entPath) {
-    content = <div className="missing">{"missing"}</div>;
-  }
-
-  // Else if the entity definition has not already been fetched, do so.
-  if (entDef === undefined) {
     fetchEntityDefinition(entKey).then(entDef => {
       this.setState(state => ({...state, entDef: entDef ?? false}));
     });
+    fetchEntityID(entKey).then(entID => {
+      this.setState(state => ({...state, entID: entID ?? false}));
+    });
+
+    content = <div className="fetching">{"..."}</div>;
+  }
+
+  else if (entDef === undefined) {
     content = <div className="fetching">{"..."}</div>;
   }
 
@@ -48,6 +51,13 @@ export function render({entKey}) {
       <div className="ent-path">
         <ILink key="em" href={"~/f" + entPath}>{entPath}</ILink>
       </div>,
+      <hr/>,
+      <h3>{"Entity ID"}</h3>,
+      <div className="ent-id">{
+        entID === undefined ? <span className="fetching">{"..."}</span> :
+          entID ? "#" + entID :
+            <span className="missing">{"missing"}</span>
+      }</div>,
       <hr/>,
       <h3>{"Attributes"}</h3>,
       <table className="attribute-table">{

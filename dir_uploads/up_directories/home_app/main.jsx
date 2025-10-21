@@ -15,6 +15,19 @@ export function render({url, history, userID, homeURL = ""}) {
   this.provideContext("history", history);
   this.provideContext("userEntID", userEntID ? userEntID : undefined);
   this.provideContext("homeURL", homeURL);
+  // TODO Implement an item in the AppHeader for going to a score handler
+  // settings menu. And for this menu, first of all implement an 'Advanced
+  // settings sub-menu, extendable and with a stark warning when extended,
+  // where the user can actually just type in the entPath of their preferred
+  // score handler object (an instance, not a class). And as for the non-
+  // advanced part of this menu, it doesn't matter if this is empty to begin
+  // with, such that there is only the advanced menu. (But at some point.. Ah,
+  // maybe we could even just let the score handler object define the component
+  // used for the non-advanced menu, and maybe even a component for the
+  // advanced menu, which might then come before or after the score handler
+  // path submission field. That would make sense, indeed; then the score
+  // handler object gets to define how users interface with its settings
+  // itself.)
   this.provideContext("scoreHandler", scoreHandler01);
 
   if (userID && userEntID === undefined) {
@@ -25,13 +38,13 @@ export function render({url, history, userID, homeURL = ""}) {
     );
   }
 
-  // Subtract the homeURL from url before passing it to AppMain.
+  // Subtract the homeURL from url before passing it to AppMain and AppHeader.
   url = substring(url, homeURL.length);
 
   return (
     <div className="app">
-      <AppHeader key="h" />
-      <AppMain key="m" url={url} />
+      <AppHeader key="h" url={url} history={history} homeURL={homeURL} />
+      <AppMain key="m" url={url} history={history} homeURL={homeURL} />
     </div>
   );
 }
