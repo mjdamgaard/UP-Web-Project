@@ -92,7 +92,7 @@ export const initialModerators = [
 
 
 
-export function postScoresFromInitialModerators() {
+export function postInitialScores01() {
   // Only the admin can call this SMF.
   checkAdminPrivileges();
 
@@ -235,6 +235,8 @@ export function postScoresFromInitialModerators() {
       ]);
     },
 
+    // Post some entity page scores.
+
     // TODO: Continue.
   ];
 
@@ -245,8 +247,10 @@ export function postScoresFromInitialModerators() {
 
 
 
-/* Do not export any of the following functions, obviously. */
 
+
+
+/* DO NOT export any of the following functions, obviously. */
 
 
 // This function is essentially a copy of postUserScoreHex() from
@@ -277,7 +281,7 @@ function postUserScoreHex(
 
 
 
-/* Do not export any of the following functions, obviously. */
+/* DO NOT export any of the following functions, obviously. */
 
 
 function postUserPredicateScoreAndUpdateUserGroups(

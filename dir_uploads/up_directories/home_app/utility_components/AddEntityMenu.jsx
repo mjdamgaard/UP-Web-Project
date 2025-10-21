@@ -22,22 +22,35 @@ export function render({qualKeyArr}) {
     </div>
     <button onClick={() => {
       let entKey = this.call("i", "getValue");
-      postEntity(entKey).then(entID => {
-        if (!entID) {
+      this.trigger("postUserEntity").then((userEntID) => {
+        if (!userEntID) {
           this.setState(state => ({
-            ...state, response: "Invalid entity path",
+            ...state, response: <span className="warning">
+              {"User is not logged in"}
+            </span>,
             entityElement: undefined,
           }));
+          return;
         }
-        else {
-          this.setState(state => ({
-            ...state, response: "Entity has been assigned the ID of " +
-            entID + ". Now give it some relevant scores.",
-            entityElement: <GeneralEntityElement key={"_" + entID}
-              entID={entID} qualKeyArr={qualKeyArr} startExpanded={true}
-            />,
-          }));
-        }
+        postEntity(entKey).then(entID => {
+          if (!entID) {
+            this.setState(state => ({
+              ...state, response: <span className="warning">
+                {"Invalid entity path"}
+              </span>,
+              entityElement: undefined,
+            }));
+          }
+          else {
+            this.setState(state => ({
+              ...state, response: "Entity has been assigned the ID of " +
+              entID + ". Now give it some relevant scores.",
+              entityElement: <GeneralEntityElement key={"_" + entID}
+                entID={entID} qualKeyArr={qualKeyArr} startExpanded={true}
+              />,
+            }));
+          }
+        });
       });
     }}>{"Submit"}</button>
     <div className="response-display">{response}</div>

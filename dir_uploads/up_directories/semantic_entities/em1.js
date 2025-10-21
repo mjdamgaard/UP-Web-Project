@@ -50,7 +50,7 @@ export const entities = {
     "Elaboration",
     "Description"
   ],
-  "Description": abs("./em1_aux1.js;get/entitiesDesc"),
+  "Description": abs("./em1_aux.js;get/entitiesDesc"),
 };
 
 // Class of all classes.
@@ -62,7 +62,7 @@ export const classes = {
     "Name", "Superclass", "Common attributes", "Constructor", "Area of concern",
     "Description"
   ],
-  "Description": abs("./em1_aux1.js;get/classesDesc"),
+  "Description": abs("./em1_aux.js;get/classesDesc"),
 };
 
 
@@ -79,7 +79,7 @@ export const users = {
   "Name": "Users",
   "Superclass": abs("./em1.js;get/entities"),
   "Constructor": User,
-  "Description": abs("./em1_aux1.js;get/usersDesc"),
+  "Description": abs("./em1_aux.js;get/usersDesc"),
 };
 
 
@@ -98,7 +98,7 @@ export const texts = {
   "Name": "Texts",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": ["Title", "Path", "URL"],
-  "Description": abs("./em1_aux1.js;get/textsDesc"),
+  "Description": abs("./em1_aux.js;get/textsDesc"),
 };
 
 
@@ -147,7 +147,7 @@ export const qualities = {
     "Label", "getElaboration", "Domain", "Metric", "Area of concern",
     "Formula", "Description",
   ],
-  "Description": abs("./em1_aux1.js;get/qualitiesDesc"),
+  "Description": abs("./em1_aux.js;get/qualitiesDesc"),
 };
 
 
@@ -161,7 +161,7 @@ export const metrics = {
     "Name", "Unit", "Prepend unit", "Lower limit", "Upper limit",
     "Interval labels", "Description"
   ],
-  "Description": abs("./em1_aux1.js;get/metricsDesc"),
+  "Description": abs("./em1_aux.js;get/metricsDesc"),
 };
 
 
@@ -181,7 +181,7 @@ export const areasOfConcern = {
   "Name": "Areas of concern",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": ["Name", "Description"],
-  "Description": abs("./em1_aux1.js;get/areasOfConcernDesc"),
+  "Description": abs("./em1_aux.js;get/areasOfConcernDesc"),
 };
 
 
@@ -280,7 +280,7 @@ export const relations = {
     "Label", "getElaboration", "Object domain", "Subject domain",
     "Metric", "Area of concern", "Description"
   ],
-  "Description": abs("./em1_aux1.js;get/relationsDesc"),
+  "Description": abs("./em1_aux.js;get/relationsDesc"),
 };
 
 
@@ -298,7 +298,7 @@ export const relationalQualities = {
   "Name": "Relational qualities",
   "Superclass": abs("./em1.js;get/qualities"),
   "Constructor": RQ,
-  "Description": abs("./em1_aux1.js;get/relationalQualitiesDesc"),
+  "Description": abs("./em1_aux.js;get/relationalQualitiesDesc"),
 };
 
 
@@ -329,7 +329,7 @@ export const qualityVariables = {
   "Name": "Quality variables",
   "Superclass": abs("./em1.js;get/entities"),
   "Constructor": QualityVariable,
-  "Description": abs("./em1_aux1.js;get/qualityVariablesDesc"),
+  "Description": abs("./em1_aux.js;get/qualityVariablesDesc"),
 };
 
 
@@ -387,7 +387,7 @@ export const scoredLists = {
     // Documentation describing the scored list is generated.
     "Documentation",
   ],
-  "Description": abs("./em1_aux1.js;get/scoredListsDesc"),
+  "Description": abs("./em1_aux.js;get/scoredListsDesc"),
 };
 
 
@@ -405,7 +405,7 @@ export const userGroups = {
   "Common attributes": [
     "Name", "User list", "Description"
   ],
-  "Description": abs("./em1_aux1.js;get/userGroupsDesc"),
+  "Description": abs("./em1_aux.js;get/userGroupsDesc"),
 };
 
 
@@ -509,10 +509,16 @@ export const scoreHandlers = {
     // fields can be gotten from this method.
     "fetchDefaultOptions",
 
+    // getSettingsMenu() returns a component, or possibly a promise to one,
+    // that can be used by a user to change their preference settings for the
+    // score handler. (This component is also responsible for fetching and
+    // posting these settings itself.) 
+    "getSettingsMenu",
+
     // Documentation describing the given score handler works and its usage.
     "Documentation",
   ],
-  "Description": abs("./em1_aux1.js;get/scoreHandlersDesc"),
+  "Description": abs("./em1_aux.js;get/scoreHandlersDesc"),
 };
 
 
@@ -523,19 +529,27 @@ export const scoreHandlers = {
 // to the given component's module. And then there are some optional metadata
 // attributes, including an URL to the GitHub repo from which the module stems,
 // and also not least an "Example component path", which leads to another,
-// props-independent component that showcases the given component (either be
+// props-independent component that showcases the given component (either by
 // "decorating" it with specific properties, or by showing different examples
 // on a page, possibly with accompanying text that explains each example, and
-// the intended usage of the component in general).
+// the intended usage of the component in general). If the component is a self-
+// contained app, simply omit the "Example component path" attribute, which
+// means that the component itself will be rendered. And if it is almost self-
+// contained, but only need to example props to showcase, define the "Example 
+// props" attribute instead.
 export const components = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "App components",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-    "Name", "Component path", "GitHub repository", "Author(s)",
-    "Is free to use", "Example component path", "Description"
+    "Name", "Component path", "Example component path", "Example props",
+    // (These attributes obviously have to been checked by the user community,
+    // and the entity ought to be down-rated as a member of this class if they
+    // are not true:)
+    "GitHub repository", "Author(s)", "Is free to use", "Is free to modify",
+    "Description"
   ],
-  "Description": abs("./em1_aux1.js;get/componentsDesc"),
+  "Description": abs("./em1_aux.js;get/componentsDesc"),
 };
 
 
@@ -550,7 +564,7 @@ export const percentageMetric = {
   "Unit": "%",
   "Lower limit": 0,
   "Upper limit": 100,
-  "Description": abs("./em1_aux1.js;get/percentageMetricsDesc"),
+  "Description": abs("./em1_aux.js;get/percentageMetricsDesc"),
 };
 
 export const predicateMetric = {
@@ -570,20 +584,20 @@ export const predicateMetric = {
     [  6,  8,  "very much"],
     [  8, 10,  "extremely"],
   ],
-  "Description": abs("./em1_aux1.js;get/predicateMetricsDesc"),
+  "Description": abs("./em1_aux.js;get/predicateMetricsDesc"),
 };
 
 export const dimensionlessMetric = {
   "Class": abs("./em1.js;get/metrics"),
   "Name": "Dimensionless metric",
-  "Description": abs("./em1_aux1.js;get/dimensionlessDesc"),
+  "Description": abs("./em1_aux.js;get/dimensionlessDesc"),
 };
 
 export const positiveDimensionlessMetric = {
   "Class": abs("./em1.js;get/metrics"),
   "Name": "Positive dimensionless metric",
   "Lower limit": 0,
-  "Description": abs("./em1_aux1.js;get/positiveDimensionlessMetricDesc"),
+  "Description": abs("./em1_aux.js;get/positiveDimensionlessMetricDesc"),
 };
 
 export const priceInUSDMetric = {
@@ -591,7 +605,7 @@ export const priceInUSDMetric = {
   "Name": "Prince metric (USD)",
   "Unit": "$",
   "Prepend unit": true,
-  "Description": abs("./em1_aux1.js;get/priceInUSDMetricDesc"),
+  "Description": abs("./em1_aux.js;get/priceInUSDMetricDesc"),
 };
 
 export const timeInYearsMetric = {
@@ -599,21 +613,21 @@ export const timeInYearsMetric = {
   "Name": "Time metric (years)",
   "Unit": "yr",
   "Lower limit": 0,
-  "Description": abs("./em1_aux1.js;get/timeInYearsMetricDesc"),
+  "Description": abs("./em1_aux.js;get/timeInYearsMetricDesc"),
 };
 export const timeInDaysMetric = {
   "Class": abs("./em1.js;get/metrics"),
   "Name": "Time metric (days)",
   "Unit": "days",
   "Lower limit": 0,
-  "Description": abs("./em1_aux1.js;get/timeInDaysMetricDesc"),
+  "Description": abs("./em1_aux.js;get/timeInDaysMetricDesc"),
 };
 export const timeInSecondsMetric = {
   "Class": abs("./em1.js;get/metrics"),
   "Name": "Time metric (seconds)",
   "Unit": "s",
   "Lower limit": 0,
-  "Description": abs("./em1_aux1.js;get/timeInSecondsMetricDesc"),
+  "Description": abs("./em1_aux.js;get/timeInSecondsMetricDesc"),
 };
 
 
@@ -626,7 +640,7 @@ export const probability = {
   "getElaboration": subj => "The probability that #" + subj + " is fully true.",
   "Domain": abs("./em1.js;get/texts"),
   "Metric": abs("./em1.js;get/percentageMetric"),
-  "Description": abs("./em1_aux1.js;get/probabilityDesc"),
+  "Description": abs("./em1_aux.js;get/probabilityDesc"),
 };
 
 // "Truthfulness" is here taken as a measure, not of the probability that the
@@ -645,7 +659,7 @@ export const truthfulness = {
     "statement is weighted after its perceived importance)",
   "Domain": abs("./em1.js;get/texts"),
   "Metric": abs("./em1.js;get/percentageMetric"),
-  "Description": abs("./em1_aux1.js;get/truthfulnessDesc"),
+  "Description": abs("./em1_aux.js;get/truthfulnessDesc"),
 };
 
 // 'Agreement' is not an objective quality: Qualities can depend on the user
@@ -660,7 +674,7 @@ export const agreement = {
     "statement is weighted after its perceived importance)",
   "Domain": abs("./em1.js;get/texts"),
   "Metric": abs("./em1.js;get/percentageMetric"),
-  "Description": abs("./em1_aux1.js;get/agreementDesc"),
+  "Description": abs("./em1_aux.js;get/agreementDesc"),
 };
 
 
@@ -684,7 +698,7 @@ export const trusted = {
     "honest and helpful scores and comments, etc., in this network",
   "Domain": abs("./em1.js;get/users"),
   "Metric": abs("./em1.js;get/predicateMetric"),
-  "Description": abs("./em1_aux1.js;get/trustedDesc"),
+  "Description": abs("./em1_aux.js;get/trustedDesc"),
 };
 
 
@@ -695,21 +709,21 @@ export const good = {
   "Label": "Good",
   "Domain": abs("./em1.js;get/entities"),
   "Metric": abs("./em1.js;get/predicateMetric"),
-  "Description": abs("./em1_aux1.js;get/goodDesc"),
+  "Description": abs("./em1_aux.js;get/goodDesc"),
 };
 export const funny = {
   "Class": abs("./em1.js;get/qualities"),
   "Label": "Funny",
   "Domain": abs("./em1.js;get/entities"),
   "Metric": abs("./em1.js;get/predicateMetric"),
-  "Description": abs("./em1_aux1.js;get/funnyDesc"),
+  "Description": abs("./em1_aux.js;get/funnyDesc"),
 };
 export const scary = {
   "Class": abs("./em1.js;get/qualities"),
   "Label": "Scary",
   "Domain": abs("./em1.js;get/entities"),
   "Metric": abs("./em1.js;get/predicateMetric"),
-  "Description": abs("./em1_aux1.js;get/scaryDesc"),
+  "Description": abs("./em1_aux.js;get/scaryDesc"),
 };
 
 
@@ -751,7 +765,7 @@ export const members = {
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/entities"),
   "Metric": abs("./em1.js;get/predicateMetric"),
-  "Description": abs("./em1_aux1.js;get/membersDesc"),
+  "Description": abs("./em1_aux.js;get/membersDesc"),
 };
 
 // The useful subclasses when browsing a class and wanting to look for one or
@@ -763,7 +777,7 @@ export const subclasses = {
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/classes"),
   "Metric": abs("./em1.js;get/predicateMetric"),
-  "Description": abs("./em1_aux1.js;get/subclassesDesc"),
+  "Description": abs("./em1_aux.js;get/subclassesDesc"),
 };
 
 // The relevant relations of a given entity, i.e. all the relations (obviously
@@ -778,7 +792,7 @@ export const relevantRelations = {
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/relations"),
   "Metric": abs("./em1.js;get/predicateMetric"),
-  "Description": abs("./em1_aux1.js;get/relevantRelationsDesc"),
+  "Description": abs("./em1_aux.js;get/relevantRelationsDesc"),
 };
 
 // Same as the above, but where the object of the relation is not the entity
@@ -791,7 +805,7 @@ export const relationsForMembers = {
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/relations"),
   "Metric": abs("./em1.js;get/predicateMetric"),
-  "Description": abs("./em1_aux1.js;get/relationsForMembersDesc"),
+  "Description": abs("./em1_aux.js;get/relationsForMembersDesc"),
 };
 
 // This class is useful primarily if you want to have a tab menu where
@@ -804,7 +818,7 @@ export const subRelations = {
   "Object domain": abs("./em1.js;get/relations"),
   "Subject domain": abs("./em1.js;get/relations"),
   "Metric": abs("./em1.js;get/predicateMetric"),
-  "Description": abs("./em1_aux1.js;get/subRelationsDesc"),
+  "Description": abs("./em1_aux.js;get/subRelationsDesc"),
 };
 
 // Relevant qualities for users to see, score, and search on for a given entity.
@@ -815,7 +829,7 @@ export const relevantQualities = {
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/qualities"),
   "Metric": abs("./em1.js;get/predicateMetric"),
-  "Description": abs("./em1_aux1.js;get/relevantQualitiesDesc"),
+  "Description": abs("./em1_aux.js;get/relevantQualitiesDesc"),
 };
 
 // Relevant qualities for users to see, score, and search on in general for
@@ -827,7 +841,7 @@ export const qualitiesForMembers = {
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/qualities"),
   "Metric": abs("./em1.js;get/predicateMetric"),
-  "Description": abs("./em1_aux1.js;get/qualitiesForMembersDesc"),
+  "Description": abs("./em1_aux.js;get/qualitiesForMembersDesc"),
 };
 
 // "Sub-qualities" are essentially to qualities what subclasses are to classes.
@@ -843,7 +857,7 @@ export const subQualities = {
   "Object domain": abs("./em1.js;get/qualities"),
   "Subject domain": abs("./em1.js;get/qualities"),
   "Metric": abs("./em1.js;get/predicateMetric"),
-  "Description": abs("./em1_aux1.js;get/subQualitiesDesc"),
+  "Description": abs("./em1_aux.js;get/subQualitiesDesc"),
 };
 
 
@@ -858,7 +872,7 @@ export const entityPage = {
   "Subject domain": abs("./em1.js;get/components"),
   "Area of concern": "./em1.js;get/uiAoC",
   "Metric": abs("./em1.js;get/predicateMetric"),
-  "Description": abs("./em1_aux1.js;get/entityPageDesc"),
+  "Description": abs("./em1_aux.js;get/entityPageDesc"),
 };
 
 // Similar to the "Entity page" relation, but for entity components that is
@@ -875,14 +889,14 @@ export const entityElement = {
   "Subject domain": abs("./em1.js;get/components"),
   "Area of concern": "./em1.js;get/uiAoC",
   "Metric": abs("./em1.js;get/predicateMetric"),
-  "Description": abs("./em1_aux1.js;get/entityElementDesc"),
+  "Description": abs("./em1_aux.js;get/entityElementDesc"),
 };
 
 
 export const uiAoC = {
   "Class": abs("./em1.js;get/areasOfConcern"),
   "Name": "UI",
-  "Description": abs("./em1_aux1.js;get/uiAoCDesc"),
+  "Description": abs("./em1_aux.js;get/uiAoCDesc"),
 };
 
 
