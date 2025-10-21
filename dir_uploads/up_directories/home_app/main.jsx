@@ -12,6 +12,10 @@ import {scoreHandler01} from "/1/1/score_handling/ScoreHandler01/em.js";
 
 export function render({url, history, userID, homeURL = ""}) {
   let {userEntID} = this.state;
+  // TODO: Consider modifying the history object here such that the descendants
+  // who use pushState or replaceState doesn't have to prepend the homeURL
+  // themselves.. well, on the other hand, maybe this is not really worth the
+  // effort..
   this.provideContext("history", history);
   this.provideContext("userEntID", userEntID ? userEntID : undefined);
   this.provideContext("homeURL", homeURL);

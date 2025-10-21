@@ -61,7 +61,7 @@ export const render = new DevFunction(
           "Invalid home URL: " + homeURL,
           callerNode, execEnv
         );
-        href = (href === "~/") ? homeURL : homeURL + href.substring(1);
+        href = (href === "~/") ? homeURL || "/" : homeURL + href.substring(1);
       }
 
       // Validate href, and prepend './' to it if doesn't start with /.?.?\//.

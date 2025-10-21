@@ -15,14 +15,11 @@ export function render({url = "", history, homeURL}) {
     url = slice(url, 0, -1);
   }
 
-// TODO: Remove this:
-if (url === "") url = "/entPath/1/1/em1.js;get/entities";
-
   // If the url is equal to "", go to the home page.
   if (!url) {
     return (
       <main className="app-main">
-        <HomePage key="home" url={url} />
+        <HomePage key="home" url={url} history={history} homeURL={homeURL} />
       </main>
     );
   }

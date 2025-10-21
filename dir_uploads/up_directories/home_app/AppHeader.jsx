@@ -13,7 +13,7 @@ export function render() {
     <ILink key="tut" href="~/tutorials">
       <span className="tutorials">{"Tutorials"}</span>
     </ILink>
-    <ILink key="comp" href="~/c">
+    <ILink key="comp" href="~/entPath/1/1/em1.js;get/components">
       <span className="components">{"Components"}</span>
     </ILink>
   </header>;
