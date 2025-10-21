@@ -15,11 +15,11 @@ import * as TextDisplay from "../utility_components/TextDisplay.jsx";
 
 
 
-// getInitState() parses the input route, and in the special case where the
+// getInitialState() parses the input route, and in the special case where the
 // route includes only directories, it reinterprets the route by adding a ';'
 // right after the homeDirID, which casts the "/<upNodeID>/<homeDirID>" result
 // into a list of children of the specific subdirectory pointed to by route.
-export function getInitState({route: extRoute}) {
+export function getInitialState({route: extRoute}) {
   if (atStr(extRoute, -1) === "/") extRoute = sliceStr(extRoute, 0, -1);
   // Parse and the (extended) route.
   let [route, ...castingSegments] = split(extRoute, ";");
@@ -96,7 +96,7 @@ function getRouteJSXWithSubLinks(
   }
 
   // Initialize an accumulative path for the following ILinks.
-  let acc = "/f" + routeHomePath;
+  let acc = "~/f" + routeHomePath;
 
   // Create an ILink to the home directory.
   let homeILink = <ILink key="h" href={acc}>{routeHomePath}</ILink>;
@@ -153,7 +153,7 @@ export function render({route}) {
 
   // If the route changes (significantly), reset adminID, fileText, and result.
   if (route !== extRoute) {
-    this.setState(getInitState({route: route}));
+    this.setState(getInitialState(this.props));
   }
 
   if (isLocked || isInvalid || !routeHomePath) {
@@ -196,7 +196,7 @@ export function render({route}) {
       map((result ?? []), (child, ind) => {
         let isFile = (indexOf(child, ".") !== -1);
         return <div className={isFile ? "file-link" : "directory-link"}>
-          <ILink key={"child" + ind} href={"/f" + route + "/" + child}>
+          <ILink key={"child" + ind} href={"~/f" + route + "/" + child}>
             {child}
           </ILink> 
         </div>;

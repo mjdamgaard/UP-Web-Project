@@ -12,7 +12,7 @@ const entityPageRel = "/1/1/em1.js;get/entityPage";
 
 
 
-export function getInitState({entKey, classKey = undefined}) {
+export function getInitialState({entKey, classKey = undefined}) {
   return {classKey: classKey, curEntKey: entKey};
 }
 
@@ -25,7 +25,7 @@ export function render(props) {
 
   // If the entKey prop has changed, reset the state.
   if (entKey !== curEntKey) {
-    this.setState(getInitState(props));
+    this.setState(getInitialState(props));
   }
 
   // If the class key is not provided, and has not already been fetched, do so.

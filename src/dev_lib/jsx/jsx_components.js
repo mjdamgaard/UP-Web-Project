@@ -12,7 +12,8 @@ import {
 
 const CLASS_NAME_REGEX = /^ *([a-z][a-z0-9\-]* *)*$/;
 
-export const HREF_REGEX = /^(\.{0,2}\/)?[a-zA-Z0-9_\-./~!&$+=;]*$/;
+export const HREF_REGEX =
+  /^(\.{0,2}\/)?([a-zA-Z0-9_.~!&$+=;\-]+(\/[a-zA-Z0-9_.~!&$+=;\-]+)*)?$/;
 export const HREF_CD_START_REGEX = /^\.{0,2}\//;
 
 
@@ -140,13 +141,15 @@ class JSXInstance {
     let state;
     if (this.state === undefined) {
       // Get the initial state if the component module declares one, which is
-      // done either by exporting a 'getInitState()' function, or a constant
-      // object called 'initState'.
-      let getInitState = this.componentModule.get("getInitState");
-      if (getInitState) {
+      // done either by exporting a 'getInitialState()' function (or just
+      // 'getInitState()'), or a constant  object called 'initialState' or
+      // 'initState.'
+      let getInitialState = this.componentModule.get("getInitialState") ??
+        this.componentModule.get("getInitState");
+      if (getInitialState) {
         try {
           state = interpreter.executeFunction(
-            getInitState, [props], callerNode, callerEnv,
+            getInitialState, [props], callerNode, callerEnv,
             new JSXInstanceInterface(this), [CLEAR_FLAG],
           );
         }
@@ -154,7 +157,8 @@ class JSXInstance {
           return this.getFailedComponentDOMNode(err, replaceSelf);
         }
       } else {
-        state = this.componentModule.get("initState");
+        state = this.componentModule.get("initialState") ??
+          this.componentModule.get("initState");
       }
       this.state = state ?? {};
 

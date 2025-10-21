@@ -1,4 +1,5 @@
 
+import {substring} from 'string';
 import {
   fetchConstructedEntityID, postConstructedEntity,
 } from "/1/1/entities.js";
@@ -9,10 +10,11 @@ import * as AppMain from "./AppMain.jsx";
 import {scoreHandler01} from "/1/1/score_handling/ScoreHandler01/em.js";
 
 
-export function render({url, history, userID}) {
+export function render({url, history, userID, homeURL = ""}) {
   let {userEntID} = this.state;
   this.provideContext("history", history);
   this.provideContext("userEntID", userEntID ? userEntID : undefined);
+  this.provideContext("homeURL", homeURL);
   this.provideContext("scoreHandler", scoreHandler01);
 
   if (userID && userEntID === undefined) {
@@ -23,10 +25,13 @@ export function render({url, history, userID}) {
     );
   }
 
+  // Subtract the homeURL from url before passing it to AppMain.
+  url = substring(url, homeURL.length);
+
   return (
     <div className="app">
-      <AppHeader key="h" url={url} history={history} />
-      <AppMain key="m" url={url} history={history} />
+      <AppHeader key="h" />
+      <AppMain key="m" url={url} />
     </div>
   );
 }

@@ -1,36 +1,62 @@
 
-import {fetchEntityDefinition, fetchEntityPath} from "/1/1/entities.js";
+import {
+  fetchEntityDefinition, fetchEntityPath, fetchEntityID,
+} from "/1/1/entities.js";
 import {replaceReferences} from 'entities';
 import * as ILink from 'ILink.jsx';
 
 
 
+export function getInitialState({entKey}) {
+  return {curEntKey: entKey};
+}
+
+
 export function render({
   key, entKey = key, isLink = true, isFull = false, isElaboration = false,
-  hasLinks = isElaboration && !isLink, pushState = undefined
+  hasLinks = isElaboration && !isLink, recLevel = 0, pushState = undefined
 }) {
-  let {entDef, entPath} = this.state;
+  let {curEntKey, entDef, entPath, entID} = this.state;
   pushState ??= isLink ? (this.subscribeToContext("history") ?? {}).pushState :
     undefined;
   let EntityReference = this.component;
   let content = "", href = "./";
 
+  // If the entKey prop has changed, reset the state.
+  if (entKey !== curEntKey) {
+    this.setState(getInitialState(this.props));
+  }
+
   // If the entity definition has not been fetched, do so. And if isLink is
-  // true, also fetch the entity ID.
+  // true, also fetch the entity ID. And if recLevel is too high, fetch the
+  // entity ID.
   if (entDef === undefined) {
     fetchEntityDefinition(entKey).then(entDef => {
       this.setState(state => ({...state, entDef: entDef ?? false}));
     });
-  }
-  if (isLink && entPath === undefined) {
-    fetchEntityPath(entKey).then(entPath => {
-      this.setState(state => ({...state, entPath: entPath ?? false}));
-    });
+    if (isLink && entPath === undefined) {
+      fetchEntityPath(entKey).then(entPath => {
+        this.setState(state => ({...state, entPath: entPath ?? false}));
+      });
+    }
+    if (recLevel > 4) {
+      fetchEntityID(entKey).then(entID => {
+        this.setState(state => ({...state, entPath: entID ?? null}));
+      });
+    }
   }
 
-  // And if waiting for the entity definition, render an empty component with
-  // "fetching" class.
-  if (entDef === undefined) {
+  // If the recursion level is too high and entID is fetched, just render the
+  // entID (possibly null).
+  if (recLevel > 4) {
+    content = (entID === undefined) ?
+      <span className="fetching">{"..."}</span> :
+      <span className="entity-id">{entID}</span>;
+  }
+
+  // And else if waiting for the entity definition, render an empty component
+  // with "fetching" class.
+  else if (entDef === undefined) {
     content = <span className="fetching">{"..."}</span>;
   }
 
@@ -43,7 +69,7 @@ export function render({
   // attribute, and if not, return and ILink to the file browser instead.
   else if (typeof entDef !== "object" || !entDef.Class) {
     content = entKey;
-    href = "/f" + entKey;
+    href = "~/f" + entKey;
   }
 
   // Else if still needing the entID to be fetched, wait for that.
@@ -88,7 +114,7 @@ export function render({
         />
       ));
       content = substitutedSegmentArr;
-      href = "/e" + entPath;
+      href = "~/e" + entPath;
     }
   }
 

@@ -18,7 +18,7 @@ export function render({jsxElement = undefined, jsxLink = undefined}) {
 
   // If jsxLink changes reset the state.
   if (jsxLink !== curJSXLink) {
-    this.setState(getInitState({jsxLink: jsxLink}));
+    this.setState(getInitialState(this.props));
   }
 
   // If jsxElement has not already been fetched, do so.
@@ -41,7 +41,7 @@ export function render({jsxElement = undefined, jsxLink = undefined}) {
 }
 
 
-export function getInitState({jsxLink}) {
+export function getInitialState({jsxLink}) {
   return {curJSXLink: jsxLink};
 }
 

@@ -39,7 +39,7 @@ export function render({tabs, closeInactiveTabs = undefined}) {
 }
 
 
-export function getInitState({tabs, initTabKey}) {
+export function getInitialState({tabs, initTabKey}) {
   return {
     openTabKey: initTabKey,
     loadedPages: {[initTabKey]: tabs[initTabKey]},

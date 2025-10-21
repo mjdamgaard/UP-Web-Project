@@ -8,6 +8,8 @@ import {
   clearAttributes,
 } from "../jsx_components.js";
 
+export const URL_REGEX = /^(\/[a-zA-Z0-9_.~!&$+=;\-]+)*$/;
+
 
 
 export const render = new DevFunction(
@@ -19,13 +21,14 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {href, pushState, children, onClick} = props;
+    let {href, pushState, children, onClick, homeURL} = props;
     if (pushState === undefined) {
       let history = thisVal.jsxInstance.subscribeToContext("history");
       if (history) {
         pushState = getPropertyFromObject(history, "pushState");
       }
     }
+    homeURL ??= thisVal.jsxInstance.subscribeToContext("homeURL");
     verifyTypes(
       [pushState, onClick], ["function?", "function?"], callerNode, execEnv
     );
@@ -48,7 +51,18 @@ export const render = new DevFunction(
 
     // Add the relative href if provided.
     if (href !== undefined) {
-      href = getString(href, execEnv);
+      href = getString(href, execEnv); 
+
+      // If href starts with "~/", interpret it as relative to the homeURL,
+      // which is then parsed, and joined with href into an absolute path.
+      if (href.substring(0, 2) === "~/") {
+        homeURL = homeURL ? getString(homeURL, execEnv) : "";
+        if (!URL_REGEX.test(homeURL)) throw new ArgTypeError(
+          "Invalid home URL: " + homeURL,
+          callerNode, execEnv
+        );
+        href = (href === "~/") ? homeURL : homeURL + href.substring(1);
+      }
 
       // Validate href, and prepend './' to it if doesn't start with /.?.?\//.
       if (!HREF_REGEX.test(href)) throw new ArgTypeError(

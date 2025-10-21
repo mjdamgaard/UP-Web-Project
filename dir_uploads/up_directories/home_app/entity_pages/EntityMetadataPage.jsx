@@ -14,7 +14,7 @@ export function render({entKey}) {
 
   // If entKey changes reset the state.
   if (entKey !== curEntKey) {
-    this.setState(getInitState({entKey: entKey}));
+    this.setState(getInitialState(this.props));
   }
 
   // If the entity path has not already been fetched, do so.
@@ -46,7 +46,7 @@ export function render({entKey}) {
     content = [
       <h3>{"Entity path"}</h3>,
       <div className="ent-path">
-        <ILink key="em" href={"/f" + entPath}>{entPath}</ILink>
+        <ILink key="em" href={"~/f" + entPath}>{entPath}</ILink>
       </div>,
       <hr/>,
       <h3>{"Attributes"}</h3>,
@@ -84,6 +84,6 @@ export function render({entKey}) {
 
 
 
-export function getInitState({entKey}) {
+export function getInitialState({entKey}) {
   return {curEntKey: entKey};
 }

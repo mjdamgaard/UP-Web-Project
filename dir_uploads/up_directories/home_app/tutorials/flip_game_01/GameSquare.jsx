@@ -16,11 +16,11 @@ export function render({rowInd, colInd}) {
 
 
 
-// getInitState(props) defines the initial state of the component instance. It
-// is called only once in the lifetime of the instance, namely before the first
-// call to render(). This initial state, as well as any subsequent state, can
-// then be accessed by 'this.state' inside the render() function.
-export function getInitState() {
+// getInitialState(props) defines the initial state of the component instance.
+// It is called only once in the lifetime of the instance, namely before the
+// first call to render(). This initial state, as well as any subsequent state,
+// can then be accessed by 'this.state' inside the render() function.
+export function getInitialState() {
   return {isColored: round(random())};
 }
 

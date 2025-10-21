@@ -37,7 +37,7 @@ export function render({maxGuesses = 10}) {
   );
 }
 
-export function getInitState() {
+export function getInitialState() {
   return {
     secret: getSecret(),
     guesses: [{slots: createArray(4), curSlot: 0}],
@@ -109,7 +109,7 @@ export const actions = {
     this.setState(state => ({...state, guesses: newGuesses}));
   },
   "newGame": function() {
-    this.setState(getInitState());
+    this.setState(getInitialState(this.props));
   }
 };
 

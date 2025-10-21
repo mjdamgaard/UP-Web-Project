@@ -4,7 +4,7 @@ import {fetch} from 'query';
 import {map} from 'array';
 
 
-export function getInitState({isAscending = true}) {
+export function getInitialState({isAscending = true}) {
   return {isAscending: isAscending};
 }
 
