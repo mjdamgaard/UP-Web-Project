@@ -21,7 +21,7 @@ export function createPost(text) {
       // both userID and textID are already hexadecimal strings, so these don't
       // need to be converted for the following post route.)
       let timestamp = now();
-      let timestampHex = valueToHex(timestamp, "int(6)");
+      let timestampHex = valueToHex(timestamp, "uint(6)");
       post(
         abs("./_posts.bbt") + "/_insert/l=" + userID + "/k=" + textID +
         "/s=" + timestampHex
@@ -42,13 +42,12 @@ export function deletePost(textID) {
     // only if the first deletion succeeded. And do it all in one database
     // transaction such that we don't get dangling texts if the deletion fails
     // midway.
-    let lockName = abs("./") + "/" + userID + "/" + textID;
+    let lockName = abs("./") + "/deletePost/" + userID + "/" + textID;
     getConnection(5000, true, lockName).then(conn => {
       let options = {connection: conn};
       post(
         abs("./_posts.bbt") + "/_deleteEntry/l=" + userID + "/k=" + textID,
-        undefined,
-        options
+        undefined, options
       ).then(wasDeleted => {
         if (!wasDeleted) {
           // End the connection with a 'commit' argument of false. (It doesn't
@@ -58,8 +57,7 @@ export function deletePost(textID) {
         }
         post(
           abs("./_texts.att") + "/_deleteEntry/l=" + userID + "/k=" + textID,
-          undefined,
-          options
+          undefined, options
         ).then(wasDeleted => {
           if (!wasDeleted) {
             // End the connection with a 'commit' argument of false.
@@ -86,17 +84,14 @@ export function fetchPostList(
   offset = undefined, sortOldestToNewest = false
 ) {
   return new Promise(resolve => {
-    let reqUserID = getRequestingUserID();
-    if (!reqUserID) return resolve(false);
-
     // Query whether userID is a friend of the requesting user (or is the req.
     // user themselves), before granting access to the post wall.
     fetchIsFriendOrSelf(userID).then(hasAccess => {
       if (!hasAccess) return resolve(false);
       fetch(
         abs("./_posts.bbt") + "/skList/l=" + userID +
-        (minTime ? "/lo=" + valueToHex(minTime, "int(6)") : "") +
-        (maxTime ? "/hi=" + valueToHex(maxTime, "int(6)") : "") +
+        (minTime ? "/lo=" + valueToHex(minTime, "uint(6)") : "") +
+        (maxTime ? "/hi=" + valueToHex(maxTime, "uint(6)") : "") +
         (maxNumber ? "/n=" + maxNumber : "") +
         (offset ? "/n=" + offset : "") +
         (sortOldestToNewest ? "/a=1" : "/a=0") 
@@ -111,9 +106,6 @@ export function fetchPostList(
 
 export function fetchPostText(userID, textID) {
   return new Promise(resolve => {
-    let reqUserID = getRequestingUserID();
-    if (!reqUserID) return resolve(false);
-
     // Query whether userID is a friend of the requesting user (or is the req.
     // user themselves), before granting access to the post wall.
     fetchIsFriendOrSelf(userID).then(hasAccess => {
