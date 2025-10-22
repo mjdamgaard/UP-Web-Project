@@ -1,8 +1,9 @@
 
 import {post, fetch} from 'query';
 import {getRequestingUserID} from 'request';
-import {valueToHex} from 'hex';
+import {valueToHex, hexToValue} from 'hex';
 import {now} from 'date';
+import {map} from 'array';
 import {getConnection} from 'connection';
 import {fetchIsFriendOrSelf} from "../friends/friends.sm.js";
 
@@ -78,7 +79,7 @@ export function deletePost(textID) {
 
 
 // fetchPostList() returns false if access is denied, and else returns an
-// array of posts.
+// array of [textID, timestamp] paris.
 export function fetchPostList(
   userID, minTime = undefined, maxTime = undefined, maxNumber = undefined,
   offset = undefined, sortOldestToNewest = false
@@ -95,9 +96,12 @@ export function fetchPostList(
         (maxNumber ? "/n=" + maxNumber : "") +
         (offset ? "/n=" + offset : "") +
         (sortOldestToNewest ? "/a=1" : "/a=0") 
-      ).then(
-        list => resolve(list)
-      );
+      ).then(list => {
+        list = map(list, ([textID, timestampHex]) => (
+          [textID, hexToValue(timestampHex, "unit(6)")]
+        ));
+        resolve(list);
+      });
     });
   });
 }
@@ -107,7 +111,7 @@ export function fetchPostList(
 export function fetchPostText(userID, textID) {
   return new Promise(resolve => {
     // Query whether userID is a friend of the requesting user (or is the req.
-    // user themselves), before granting access to the post wall.
+    // user themselves), before granting access to the post text.
     fetchIsFriendOrSelf(userID).then(hasAccess => {
       if (!hasAccess) return resolve(false);
       fetch(

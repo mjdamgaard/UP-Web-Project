@@ -183,3 +183,61 @@ export function fetchIsFriendOrSelf(otherUserID) {
     );
   });
 }
+
+
+
+
+// fetchFriendList() returns false if access is denied, and else returns an
+// array of [friendUserID, timestamp] paris.
+export function fetchFriendList(
+  userID = undefined, maxNumber = undefined, offset = undefined,
+  sortOldestToNewest = false
+) {
+  return new Promise(resolve => {
+    let reqUserID = getRequestingUserID();
+    if (!reqUserID) return resolve(false);
+    userID ??= reqUserID;
+
+    // Query whether userID is a friend of the requesting user or is the req.
+    // user themselves, before granting access to the friend list.
+    fetchIsFriendOrSelf(userID).then(hasAccess => {
+      if (!hasAccess) return resolve(false);
+      fetch(
+        abs("./_friends.bbt") + "/skList/l=" + userID +
+        (maxNumber ? "/n=" + maxNumber : "") +
+        (offset ? "/n=" + offset : "") +
+        (sortOldestToNewest ? "/a=1" : "/a=0") 
+      ).then(list => {
+        list = map(list, ([friendUserID, timestampHex]) => (
+          [friendUserID, hexToValue(timestampHex, "unit(6)")]
+        ));
+        resolve(list);
+      });
+    });
+  });
+}
+
+// fetchFriendRequestList() returns false if access is denied, and else returns
+// an array of [otherUserID, timestamp, isDeclined] triples.
+export function fetchFriendRequestList(
+  maxNumber = undefined, offset = undefined, sortOldestToNewest = false
+) {
+  return new Promise(resolve => {
+    let reqUserID = getRequestingUserID();
+    if (!reqUserID) return resolve(false);
+
+    // Fetch the user's incoming friend requests. 
+    fetch(
+      abs("./_friend_requests.bbt") + "/skList/l=" + reqUserID +
+      (maxNumber ? "/n=" + maxNumber : "") +
+      (offset ? "/n=" + offset : "") +
+      (sortOldestToNewest ? "/a=1" : "/a=0") 
+    ).then(list => {
+      list = map(list, ([otherUserID, timestampHex, isDeclinedHex]) => [
+        otherUserID, hexToValue(timestampHex, "unit(6)"),
+        hexToValue(isDeclinedHex, "unit(1)")
+      ]);
+      resolve(list);
+    });
+  });
+}
