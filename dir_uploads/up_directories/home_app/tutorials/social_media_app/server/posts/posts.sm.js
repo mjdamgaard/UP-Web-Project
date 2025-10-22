@@ -89,13 +89,20 @@ export function fetchPostList(
     // user themselves), before granting access to the post wall.
     fetchIsFriendOrSelf(userID).then(hasAccess => {
       if (!hasAccess) return resolve(false);
+
+      // Note that we need to add an option of isPrivate = true when fetching
+      // data from a private route, which is a requirement in order to prevent
+      // the accidental fetching of private data from a route coming from an
+      // external source. 
+      let options = {isPrivate: true};
       fetch(
         abs("./_posts.bbt") + "/skList/l=" + userID +
         (minTime ? "/lo=" + valueToHex(minTime, "uint(6)") : "") +
         (maxTime ? "/hi=" + valueToHex(maxTime, "uint(6)") : "") +
         (maxNumber ? "/n=" + maxNumber : "") +
         (offset ? "/n=" + offset : "") +
-        (sortOldestToNewest ? "/a=1" : "/a=0") 
+        (sortOldestToNewest ? "/a=1" : "/a=0"),
+        options
       ).then(list => {
         list = map(list, ([textID, timestampHex]) => (
           [textID, hexToValue(timestampHex, "unit(6)")]
@@ -114,8 +121,10 @@ export function fetchPostText(userID, textID) {
     // user themselves), before granting access to the post text.
     fetchIsFriendOrSelf(userID).then(hasAccess => {
       if (!hasAccess) return resolve(false);
+      let options = {isPrivate: true};
       fetch(
-        abs("./_texts.att") + "/entry/l=" + userID + "/k=" + textID 
+        abs("./_texts.att") + "/entry/l=" + userID + "/k=" + textID,
+        options
       ).then(
         text => resolve(text)
       );
