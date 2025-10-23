@@ -63,7 +63,6 @@ export function requestNewUsername(username) {
 
 
 
-
 // Since user_ids.ct and user_names.bt are public tables (no underscore in
 // front, neither in their own file name or in any of their ancestor
 // directories' names), these two SMFs (server module functions) for fetching

@@ -54,8 +54,8 @@ export function render({
       <span className="entity-id">{entID}</span>;
   }
 
-  // And else if waiting for the entity definition, render an empty component
-  // with "fetching" class.
+  // And else if waiting for the entity definition, render a "fetching" span,
+  // which can be restyled at will.
   else if (entDef === undefined) {
     content = <span className="fetching">{"..."}</span>;
   }
@@ -118,7 +118,8 @@ export function render({
     }
   }
 
-  // Then return either an ILink or a span element, depending on isLink.
+  // And else return a span element either with or without an ILink, depending
+  // on the 'isLink' prop.
   return isLink ?
     <span className={"entity-reference"}>
       <ILink key="0" href={href} pushState={pushState} >{
