@@ -1,6 +1,6 @@
 
 import {fetchEntityDefinition} from "../../entities.js";
-import {noPost} from 'query';
+import {clearPermissions} from 'query';
 import {slice, map} from 'array';
 
 
@@ -12,13 +12,13 @@ export function fetchScoreData(listKey, subjKey) {
         userGroupKey, qualKey, scoreHandlerKey, convert
       } = listDef;
       fetchEntityDefinition(scoreHandlerKey).then(scoreHandler => {
-        noPost(() => scoreHandler.fetchScoreData(
+        clearPermissions(() => scoreHandler.fetchScoreData(
           qualKey, subjKey, {userGroup: userGroupKey}
         )).then(scoreData => {
           if (!convert) {
             resolve(scoreData);
           } else {
-            let convertedScore = noPost(() => convert(scoreData[0]));
+            let convertedScore = clearPermissions(() => convert(scoreData[0]));
             resolve([convertedScore, ...slice(scoreData, 1)]);
           }
         });
@@ -35,7 +35,7 @@ export function fetchList(listKey, loHex, hiHex, maxNum, offset, isAscending) {
         userGroupKey, qualKey, scoreHandlerKey, convert
       } = listDef;
       fetchEntityDefinition(scoreHandlerKey).then(scoreHandler => {
-        noPost(() => scoreHandler.fetchList(qualKey, {
+        clearPermissions(() => scoreHandler.fetchList(qualKey, {
           userGroup: userGroupKey,
           loHex: loHex,
           hiHex: hiHex,
@@ -47,7 +47,7 @@ export function fetchList(listKey, loHex, hiHex, maxNum, offset, isAscending) {
             resolve(list);
           } else {
             resolve(map(list, entry => {
-              let convertedScore = noPost(() => convert(entry[0]));
+              let convertedScore = clearPermissions(() => convert(entry[0]));
               resolve([convertedScore, ...slice(entry, 1)]);
             }));
           }

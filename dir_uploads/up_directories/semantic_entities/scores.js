@@ -2,7 +2,7 @@
 
 
 import homePath from "./.id.js";
-import {fetch, post, noPost} from 'query';
+import {fetch, post, clearPermissions} from 'query';
 import {map, join} from 'array';
 import {min} from 'math';
 import {hexToArray, valueToHex, arrayToHex} from 'hex';
@@ -435,7 +435,7 @@ export function updateUserWeight(userGroupKey, userKey) {
 export function fetchScoreDataFromScoredList(listKey, subjKey) {
   return new Promise(resolve => {
     fetchEntityDefinition(listKey).then(listDef => {
-      noPost(() => {
+      clearPermissions(() => {
         listDef.fetchScoreData(subjKey).then(
           scoreData => resolve(scoreData)
         );

@@ -4,7 +4,7 @@ import {
 } from "../../scores.js";
 import {fetchEntityDefinition, fetchEntityID} from "../../entities.js";
 import {map, reduce} from 'array';
-import {noPost, clearPrivileges} from 'query';
+import {clearPermissions} from 'query';
 
 
 
@@ -48,13 +48,13 @@ export function updateScore(listKey, subjKey) {
       listDefArrProm.then(listDefArr => {
         // Update the underlying lists before fetching the scores from them.
         Promise.all(map(listDefArr, listDef => (
-          clearPrivileges(() => (
+          clearPermissions(() => (
             listDef.updateScore ? listDef.updateScore(subjKey) :
               new Promise(res => res())
           ))
         ))).then(() => {
           let scoreDataArrProm = Promise.all(map(listDefArr, listDef => (
-            noPost(() => listDef.fetchScoreData(subjKey))
+            clearPermissions(() => listDef.fetchScoreData(subjKey))
           )));
           scoreDataArrProm.then(scoreDataArr => {
             // Aggregate the score and weight into one combined pair (ignoring

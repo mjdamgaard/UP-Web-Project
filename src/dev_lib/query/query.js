@@ -4,7 +4,7 @@ import {
   getPrototypeOf, OBJECT_PROTOTYPE, ARRAY_PROTOTYPE, FunctionObject,
   CLEAR_FLAG, PromiseObject, Environment, LiveJSModule, parseString,
   TEXT_FILE_ROUTE_REGEX, SCRIPT_ROUTE_REGEX, CSSModule, getString,
-  getPropertyFromObject,
+  getPropertyFromObject, ArgTypeError,
 } from '../../interpreting/ScriptInterpreter.js';
 import {scriptParser} from "../../interpreting/parsing/ScriptParser.js";
 import {parseRoute} from './src/parseRoute.js';
@@ -54,6 +54,14 @@ export const queryRoute = new DevFunction(
     catch(errMsg) {
       throw new RuntimeError(errMsg, callerNode, execEnv);
     }
+
+    // Check against querying a locked route without the isPrivate option being
+    // true, or without it being a post request.
+    let isPrivate = isPost || getPropertyFromObject(options, "isPrivate");
+    if (isLocked && !isPrivate) ArgTypeError(
+      "Fetching from a locked route without the 'isPrivate' option set",
+      callerNode, execEnv
+    );
 
     // Also make sure to deep-copy the postData if it is an object, and do it
     // via a JSON conversion back and forth such that the object is turned into
@@ -464,6 +472,13 @@ export const clearPermissions = new DevFunction(
     );
   }
 );
+
+// Alias for clearPermissions(), which ought to be used in most contexts,
+// rather than the following two functions.
+export const clear = new DevFunction(
+  "clear", {}, clearPermissions.fun
+);
+
 
 export const noPost = new DevFunction(
   "noPost", {typeArr: ["function"]},
