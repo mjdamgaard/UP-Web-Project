@@ -41,8 +41,7 @@ export const actions = {
       this.setState(state => ({...state, response: "Submitting..."}));
       post(
         abs("./server/users/usernames.sm.js") + "/callSMF/requestNewUsername",
-        username,
-        {returnLog: true}
+        username
       ).then(wasUpdated => {
         if (wasUpdated) {
           this.setState(state => ({

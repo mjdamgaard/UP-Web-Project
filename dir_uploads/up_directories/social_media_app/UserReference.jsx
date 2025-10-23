@@ -46,7 +46,12 @@ export function render({userID, isLink = true, pushState = undefined}) {
     content = <span className="missing-name">{"User " + userID}</span>;
   }
 
-  // And else return a span element either with or without an ILink, depending
+  // And else render the username.
+  else {
+    content = <span>{username}</span>;
+  }
+
+  // FInally return a span element either with or without an ILink, depending
   // on the 'isLink' prop.
   return isLink ?
     <span className={"user-reference"}>
