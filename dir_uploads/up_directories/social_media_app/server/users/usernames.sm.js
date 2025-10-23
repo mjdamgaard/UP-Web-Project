@@ -37,7 +37,7 @@ export function requestNewUsername(username) {
             undefined, options
           );
           let addUserNameProm = post(
-            abs("./user_names.bt") + "/_insert/k=" + userID,
+            abs("./usernames.bt") + "/_insert/k=" + userID,
             "/p=" + usernameHex,
             undefined, options
           );
@@ -63,7 +63,7 @@ export function requestNewUsername(username) {
 
 
 
-// Since user_ids.ct and user_names.bt are public tables (no underscore in
+// Since user_ids.ct and usernames.bt are public tables (no underscore in
 // front, neither in their own file name or in any of their ancestor
 // directories' names), these two SMFs (server module functions) for fetching
 // username or userID is not strictly necessary, but they might still be
@@ -73,7 +73,7 @@ export function fetchUsername(userID) {
   verifyType(userID, "hex-string");
   return new Promise(resolve => {
     fetch(
-      abs("./user_names.bt") + "/entry/k=" + userID
+      abs("./usernames.bt") + "/entry/k=" + userID
     ).then(usernameHex => {
       let username = usernameHex ?
         hexToValue(usernameHex, "string") : undefined;

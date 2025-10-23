@@ -28,7 +28,7 @@ export function render({userID, isLink = true, pushState = undefined}) {
   if (!isFetching) {
     this.setState(state => ({...state, isFetching: true}));
     fetch(
-      abs("./server/users/user_names.sm.js") + "/callSMF/fetchUsername/" +
+      abs("./server/users/usernames.sm.js") + "/callSMF/fetchUsername/" +
       userID
     ).then(username => {
       this.setState(state => ({...state, username: username ?? false}));
