@@ -23,7 +23,7 @@ export function requestNewUsername(username) {
     getConnection(8000, true, lockName).then(conn => {
       let options = {connection: conn, isPrivate: true};
       fetch(
-        abs("./_user_ids.ct") + "/entry/k=" + usernameHex,
+        abs("./user_ids.ct") + "/entry/k=" + usernameHex,
         options
       ).then(existingUserID => {
         if (!existingUserID) {
@@ -32,16 +32,29 @@ export function requestNewUsername(username) {
         }
         else {
           let addUserIDProm = post(
-            abs("./_user_ids.ct") + "/_insert/k=" + usernameHex +
+            abs("./user_ids.ct") + "/_insert/k=" + usernameHex +
             "/p=" + userID,
             undefined, options
           );
           let addUserNameProm = post(
-            abs("./_user_names.bt") + "/_insert/k=" + userID,
+            abs("./user_names.bt") + "/_insert/k=" + userID,
             "/p=" + usernameHex,
             undefined, options
           );
-          // ...
+          Promise.all([
+            addUserIDProm, addUserNameProm
+          ]).then(([
+            userIDIsAdded, usernameIsAdded 
+          ]) => {
+            if (userIDIsAdded && usernameIsAdded) {
+              conn.end();
+              resolve(true);
+            }
+            else {
+              conn.end(false);
+              resolve(false);
+            }
+          });
         }
       });
     });
@@ -51,6 +64,31 @@ export function requestNewUsername(username) {
 
 
 
-export function requestNewUserName(userName) {
-  return requestNewUsername(userName);
+// Since user_ids.ct and user_names.bt are public tables (no underscore in
+// front, neither in their own file name or in any of their ancestor
+// directories' names), these two SMFs (server module functions) for fetching
+// username or userID is not strictly necessary, but they might still be
+// considered handy, and it's nice to complete the API of the SM this way.
+
+export function fetchUsername(userID) {
+  verifyType(userID, "hex-string");
+  return new Promise(resolve => {
+    fetch(
+      abs("./user_names.bt") + "/entry/k=" + userID
+    ).then(usernameHex => {
+      let username = hexToValue(usernameHex, "string");
+      resolve(username);
+    });
+  });
+}
+
+export function fetchUserID(username) {
+  let usernameHex = valueToHex(username, "string");
+  return new Promise(resolve => {
+    fetch(
+      abs("./user_ids.ct") + "/entry/k=" + usernameHex
+    ).then(
+      userID => resolve(userID)
+    );
+  });
 }
