@@ -157,7 +157,8 @@ async function createAccount(username, password, emailAddr) {
   let [resultRow = []] = await userDBConnection.queryProcCall(
     "createUserAccount", [username, pwHash, emailAddr ?? "", initGasJSON],
   ) ?? [];
-  let [userID] = resultRow;
+  let [userID = ""] = resultRow;
+  userID = userID.toString();
 
   // If the creation failed, due to the username already existing, return an
   // empty array.
@@ -186,6 +187,7 @@ async function login(username, password) {
     "selectPWHashAndUserID", [username],
   ) ?? [];
   let [pwHash = "", userID = ""] = resultRow;
+  userID = userID.toString();
 
   userDBConnection.end();
 
@@ -259,7 +261,8 @@ async function readUserIDGas(authToken) {
   let [resultRow = []] = await userDBConnection.queryProcCall(
     "selectAuthenticatedUserIDAndGas", [authToken, 0],
   ) ?? [];
-  let [userID, gas] = resultRow;
+  let [userID = "", gas] = resultRow;
+  userID = userID.toString();
 
   userDBConnection.end();
   return [userID, gas];
