@@ -12,7 +12,7 @@ import {getConnection} from 'connection';
 export function requestNewUsername(username) {
   verifyType(username, "string");
   return new Promise(resolve => {
-    let userID = getRequestingUserID();
+    let userID = getRequestingUserID();console.log("userID=", userID);
     if (!userID) return resolve(false);
 
     // Start a connection with a transaction open, and fetch to see if there
@@ -27,7 +27,7 @@ export function requestNewUsername(username) {
         options
       ).then(existingUserID => {
         if (!existingUserID) {
-          conn.end(false);
+          conn.end(false);console.log("existingUserID=", existingUserID);
           return resolve(false);
         }
         else {
@@ -50,7 +50,7 @@ export function requestNewUsername(username) {
               conn.end();
               resolve(true);
             }
-            else {
+            else {console.log("userIDIsAdded=", userIDIsAdded, "usernameIsAdded=", usernameIsAdded);
               conn.end(false);
               resolve(false);
             }

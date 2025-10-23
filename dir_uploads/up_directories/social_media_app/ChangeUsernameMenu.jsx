@@ -1,4 +1,6 @@
 
+import {post} from 'query';
+
 import * as InputText from 'InputText.jsx';
 
 
@@ -9,7 +11,7 @@ export function render({userID}) {
     <div className="change-username-menu">
       <button className={expandChangeUsernameMenu ? " hidden" : ""}
         onClick={() => {
-
+          this.setState(state => ({...state, expandChangeUsernameMenu: true}));
         }
       }>{"Change username?"}</button>
       <div className={expandChangeUsernameMenu ? "" : " hidden"}>
@@ -39,7 +41,8 @@ export const actions = {
       this.setState(state => ({...state, response: "Submitting..."}));
       post(
         abs("./server/users/usernames.sm.js") + "/callSMF/requestNewUsername",
-        username
+        username,
+        {returnLog: true}
       ).then(wasUpdated => {
         if (wasUpdated) {
           this.setState(state => ({

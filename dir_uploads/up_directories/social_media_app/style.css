@@ -72,3 +72,9 @@ code.command {
   background-color: #303030;
   color: white;
 }
+
+
+
+.hidden {
+  display: none;
+}
