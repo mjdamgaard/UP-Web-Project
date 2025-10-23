@@ -23,6 +23,8 @@ export class SettingsObject01 extends SettingsObject {
   async initiate(userID, appComponent, node, env) {
     this.userID = userID;
     this.appComponent = appComponent;
+    this.initNode = node;
+    this.initEnv = env;
     this.styleModules = new Map();
     
     this.appStyler = appStyler;
@@ -35,7 +37,7 @@ export class SettingsObject01 extends SettingsObject {
   }
 
 
-  changeUser(userID, node, env) {
+  changeUser(userID, node = this.initNode, env = this.initEnv) {
     if (this.appComponent) {
       this.initiate(userID, this.appComponent, node, env);
     }
