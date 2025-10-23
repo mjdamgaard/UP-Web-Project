@@ -64,7 +64,7 @@ const stdGetReqGas = {
   comp: 10000,
   import: 100,
   fetch: 100,
-  time: 2000,
+  time: 6000,
   dbRead: 100,
 };
 const stdPostReqGas = {

@@ -4,7 +4,7 @@ import {
   forEachValue, CLEAR_FLAG, PromiseObject, logExtendedErrorAndTrace,
   OBJECT_PROTOTYPE, Environment, ARRAY_PROTOTYPE, FunctionObject, Exception,
   getStringOrSymbol, getPropertyFromObject, getPropertyFromPlainObject,
-  jsonStringify, ArgTypeError, LoadError,
+  jsonStringify, ArgTypeError, decrCompGas,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
@@ -120,6 +120,7 @@ class JSXInstance {
     props = {}, isDecorated, interpreter, callerNode, callerEnv,
     replaceSelf = true, force = false,
   ) {
+    decrCompGas(callerNode, callerEnv, 5);
     this.isDecorated = isDecorated;
     this.callerNode = callerNode;
     this.callerEnv = callerEnv;

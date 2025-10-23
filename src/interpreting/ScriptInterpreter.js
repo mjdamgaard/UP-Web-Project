@@ -3044,10 +3044,11 @@ export function payGas(node, environment, gasCost) {
   });
 }
 
-export function decrCompGas(node, environment) {
+export function decrCompGas(node, environment, amount = 1) {
   let {gas} = environment.scriptVars;
+  gas.comp = gas.comp - amount;
   if (0 > --gas.comp) {
-    gas.comp++;
+    gas.comp = gas.comp + amount;
     throw new OutOfGasError(
       "Ran out of " + GAS_NAMES.comp + " gas",
       node, environment,

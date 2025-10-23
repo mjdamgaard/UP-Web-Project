@@ -13,7 +13,9 @@ export function render({userID}) {
     </ILink>
     <span className="separator"></span>
     <ILink key="user" href={"~/u/" + userID}>
-      <UserReference userID={userID} />
+      <span className="menu-item">
+        <UserReference key="ref" userID={userID} isLink={false} />
+      </span>
     </ILink>
   </header>;
 }

@@ -22,7 +22,7 @@ export function render({url = "", userID}) {
 
   // Else if url is of the form "/u/" + userID, go to the UserPage.
   let urlStart = slice(url, 0, 3);
-  if (urlStart === "/e/") {
+  if (urlStart === "/u/") {
     let indOfThirdSlash = indexOf(url, "/", 3);
     let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
     let urlUserID = slice(url, 3, endOfID);
@@ -31,7 +31,7 @@ export function render({url = "", userID}) {
       <main className="app-main">
         <UserPage key="u"
           userID={urlUserID} ownUserID={userID}
-          url={urlRemainder} pageURL={"~/e/" + urlUserID}
+          url={urlRemainder} pageURL={"~/u/" + urlUserID}
         />
       </main>
     );

@@ -1,4 +1,6 @@
 
+import {fetch} from 'query';
+
 import * as ILink from 'ILink.jsx';
 
 
@@ -6,11 +8,11 @@ export function getInitialState({userID}) {
   return {curUserID: userID};
 }
 
-export function render({userID, isLink = true}) {
+export function render({userID, isLink = true, pushState = undefined}) {
   let {curUserID, isFetching, username} = this.state;
   pushState ??= isLink ? (this.subscribeToContext("history") ?? {}).pushState :
     undefined;
-  let content = "", href = "./";
+  let content = "", href = "~/u/" + userID;
 
   // If the userID prop has changed, reset the state.
   if (userID !== curUserID) {
@@ -24,8 +26,10 @@ export function render({userID, isLink = true}) {
   
   // Else ff fetch request has not been sent off yet, do so.
   if (!isFetching) {
+    this.setState(state => ({...state, isFetching: true}));
     fetch(
-      abs("./server/users/user_names.sm.js") + "/callSMF/fetchUsername/"
+      abs("./server/users/user_names.sm.js") + "/callSMF/fetchUsername/" +
+      userID
     ).then(username => {
       this.setState(state => ({...state, username: username ?? false}));
     });

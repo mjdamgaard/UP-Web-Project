@@ -75,7 +75,8 @@ export function fetchUsername(userID) {
     fetch(
       abs("./user_names.bt") + "/entry/k=" + userID
     ).then(usernameHex => {
-      let username = hexToValue(usernameHex, "string");
+      let username = usernameHex ?
+        hexToValue(usernameHex, "string") : undefined;
       resolve(username);
     });
   });

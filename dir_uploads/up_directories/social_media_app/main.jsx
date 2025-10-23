@@ -20,3 +20,10 @@ export function render({url, history, userID, homeURL = ""}) {
     </div>
   );
 }
+
+
+
+
+export const styleSheetPaths = [
+  abs("./style.css"),
+];
