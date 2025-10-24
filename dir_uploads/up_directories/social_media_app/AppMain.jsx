@@ -3,7 +3,7 @@ import {slice, substring, at, indexOf} from 'string';
 
 import * as HomePage from "./Homepage.jsx";
 import * as UserPage from "./UserPage.jsx";
-import * as FriendsPage from "./FriendsPage.jsx";
+import * as FriendsPage from "./friend_page/FriendsPage.jsx";
 
 
 export function render({url = "", userID}) {

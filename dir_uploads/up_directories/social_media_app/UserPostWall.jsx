@@ -36,7 +36,7 @@ export function render({userID, ownUserID}) {
     content = <span className="fetching">{"..."}</span>;
   }
 
-  // Else if postList did not return correctly render an error message.
+  // Else if postList did not return correctly, render an error message.
   else if (!postList) {
     content = <span className="error">{
       "Something went wrong when fetching the post list"
