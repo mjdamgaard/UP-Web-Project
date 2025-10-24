@@ -82,8 +82,7 @@ export function fetchUsername(userID) {
   });
 }
 
-export function fetchUserID(username) {
-  let usernameHex = valueToHex(username, "string");
+export function fetchUserID(usernameHex) {
   return new Promise(resolve => {
     fetch(
       abs("./user_ids.ct") + "/entry/k=" + usernameHex

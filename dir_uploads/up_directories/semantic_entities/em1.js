@@ -546,7 +546,10 @@ export const components = {
     // (These attributes obviously have to been checked by the user community,
     // and the entity ought to be down-rated as a member of this class if they
     // are not true:)
-    "GitHub repository", "Author(s)", "Is free to use", "Is free to modify",
+    "GitHub repository", "Author(s)",
+    // Let's remove these two, and expect them to be purely "scored properties"
+    // instead:
+    // "Is free to use", "Is free to modify",
     "Description"
   ],
   "Description": abs("./em1_aux.js;get/componentsDesc"),

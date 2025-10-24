@@ -1,6 +1,6 @@
 
 import {fetch} from 'query';
-import * as UserReference from "./UserReference.jsx";
+import * as UserReference from "../UserReference.jsx";
 
 
 export function render({textID, userID, ownUserID, timestamp}) {
@@ -12,7 +12,7 @@ export function render({textID, userID, ownUserID, timestamp}) {
     this.setState(state => ({...state, isFetching: true}));
     let options = {isPrivate: true};
     fetch(
-      abs("./server/posts/posts.sm.js") + "/callSMF/fetchPostText/" +
+      abs("../server/posts/posts.sm.js") + "/callSMF/fetchPostText/" +
       userID + "/" + textID,
       options
     ).then(text => {

@@ -10,8 +10,8 @@ export const homeApp = {
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/home_app",
   "Author(s)": "@1",
-  "Is free to use": true,
-  "Is free to modify": true,
+  // "Is free to use": true,
+  // "Is free to modify": true,
   "Description": undefined,
 };
 
@@ -26,7 +26,7 @@ export const classEntityPage = {
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/home_app/entity_pages",
   "Author(s)": "@1",
-  "Is free to use": true,
-  "Is free to modify": true,
+  // "Is free to use": true,
+  // "Is free to modify": true,
   "Description": undefined,
 };

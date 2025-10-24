@@ -1,5 +1,5 @@
 
-import * as UserReference from "./UserReference.jsx";
+import * as UserReference from "../UserReference.jsx";
 import * as ChangeUsernameMenu from "./ChangeUsernameMenu.jsx";
 import * as NewPostField from "./NewPostField.jsx";
 import * as UserPostWall from "./UserPostWall.jsx";
