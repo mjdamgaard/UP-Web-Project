@@ -1,6 +1,8 @@
 
 import * as UserReference from "./UserReference.jsx";
 import * as ChangeUsernameMenu from "./ChangeUsernameMenu.jsx";
+import * as NewPostField from "./NewPostField.jsx";
+import * as UserPostWall from "./UserPostWall.jsx";
 
 
 export function render({userID, ownUserID}) {
@@ -11,11 +13,11 @@ export function render({userID, ownUserID}) {
         (userID && ownUserID === userID) ? <>
           <ChangeUsernameMenu key={"ch-uname-" + userID} userID={userID} />
           <hr/>
-          <div>{"TODO: Insert a section for making a new post."}</div>
+          <NewPostField key="post" userID={userID} />
           <hr/>
         </> : undefined
       }
-      <div>{"TODO: Insert a section with the user's post wall."}</div>
+      <UserPostWall key="wall" userID={userID} ownUserID={ownUserID} />
     </div>
   );
 }

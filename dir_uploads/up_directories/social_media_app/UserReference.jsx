@@ -24,7 +24,7 @@ export function render({userID, isLink = true, pushState = undefined}) {
     return <span className={"user-reference no-id"}>{"no user"}</span>;
   }
   
-  // Else ff fetch request has not been sent off yet, do so.
+  // Else if fetch the request has not yet been sent, do so.
   if (!isFetching) {
     this.setState(state => ({...state, isFetching: true}));
     fetch(

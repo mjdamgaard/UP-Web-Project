@@ -36,6 +36,7 @@ export const render = new DevFunction(
     let domNode = jsxInstance.domNode;
     if (!domNode || domNode.tagName !== "INPUT") {
       domNode = document.createElement("input");
+      if (value !== undefined) domNode.value = value;
     }
     else {
       clearAttributes(domNode);

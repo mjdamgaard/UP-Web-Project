@@ -1,6 +1,6 @@
 
 import {post, fetch} from 'query';
-import {getRequestingUserID} from 'request';
+import {getRequestingUserID, checkRequestOrigin} from 'request';
 import {valueToHex, hexToValue} from 'hex';
 import {verifyType} from 'type';
 import {now} from 'date';
@@ -12,6 +12,9 @@ import {getConnection} from 'connection';
 
 
 export function requestFriend(otherUserID) {
+  checkRequestOrigin(true, [
+    "/1/7/main.jsx",
+  ]);
   verifyType(otherUserID, "hex-string");
   return new Promise(resolve => {
     let reqUserID = getRequestingUserID();
@@ -36,6 +39,9 @@ export function requestFriend(otherUserID) {
 
 
 export function rescindFriendRequest(otherUserID) {
+  checkRequestOrigin(true, [
+    "/1/7/main.jsx",
+  ]);
   verifyType(otherUserID, "hex-string");
   return new Promise(resolve => {
     let reqUserID = getRequestingUserID();
@@ -54,6 +60,9 @@ export function rescindFriendRequest(otherUserID) {
 
 
 export function declineFriendRequest(otherUserID) {
+  checkRequestOrigin(true, [
+    "/1/7/main.jsx",
+  ]);
   verifyType(otherUserID, "hex-string");
   return new Promise(resolve => {
     let reqUserID = getRequestingUserID();
@@ -74,6 +83,9 @@ export function declineFriendRequest(otherUserID) {
 
 
 export function acceptFriendRequest(otherUserID) {
+  checkRequestOrigin(true, [
+    "/1/7/main.jsx",
+  ]);
   verifyType(otherUserID, "hex-string");
   return new Promise(resolve => {
     let reqUserID = getRequestingUserID();
@@ -136,6 +148,9 @@ export function acceptFriendRequest(otherUserID) {
 
 
 export function removeFriend(otherUserID) {
+  checkRequestOrigin(true, [
+    "/1/7/main.jsx",
+  ]);
   verifyType(otherUserID, "hex-string");
   return new Promise(resolve => {
     let reqUserID = getRequestingUserID();
@@ -171,6 +186,9 @@ export function removeFriend(otherUserID) {
 
 
 export function fetchIsFriendOrSelf(otherUserID) {
+  checkRequestOrigin(true, [
+    "/1/7/main.jsx",
+  ]);
   verifyType(otherUserID, "hex-string");
   return new Promise(resolve => {
     let reqUserID = getRequestingUserID();
@@ -198,6 +216,9 @@ export function fetchFriendList(
   userID = undefined, maxNumber = undefined, offset = undefined,
   sortOldestToNewest = false
 ) {
+  checkRequestOrigin(true, [
+    "/1/7/main.jsx",
+  ]);
   return new Promise(resolve => {
     let reqUserID = getRequestingUserID();
     if (!reqUserID) return resolve(false);
@@ -216,7 +237,7 @@ export function fetchFriendList(
         options
       ).then(list => {
         list = map(list, ([friendUserID, timestampHex]) => (
-          [friendUserID, hexToValue(timestampHex, "unit(6)")]
+          [friendUserID, hexToValue(timestampHex, "uint(6)")]
         ));
         resolve(list);
       });
@@ -229,6 +250,9 @@ export function fetchFriendList(
 export function fetchFriendRequestList(
   maxNumber = undefined, offset = undefined, sortOldestToNewest = false
 ) {
+  checkRequestOrigin(true, [
+    "/1/7/main.jsx",
+  ]);
   return new Promise(resolve => {
     let reqUserID = getRequestingUserID();
     if (!reqUserID) return resolve(false);
@@ -243,8 +267,8 @@ export function fetchFriendRequestList(
       options
     ).then(list => {
       list = map(list, ([otherUserID, timestampHex, isDeclinedHex]) => [
-        otherUserID, hexToValue(timestampHex, "unit(6)"),
-        hexToValue(isDeclinedHex, "unit(1)")
+        otherUserID, hexToValue(timestampHex, "uint(6)"),
+        hexToValue(isDeclinedHex, "uint(1)")
       ]);
       resolve(list);
     });

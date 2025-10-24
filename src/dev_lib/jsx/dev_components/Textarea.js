@@ -33,6 +33,7 @@ export const render = new DevFunction(
     let domNode = jsxInstance.domNode;
     if (!domNode || domNode.tagName !== "TEXTAREA") {
       domNode = document.createElement("textarea");
+      domNode.value = "";
     }
     else {
       clearAttributes(domNode);

@@ -1,6 +1,6 @@
 
 import {post, fetch} from 'query';
-import {getRequestingUserID} from 'request';
+import {getRequestingUserID, checkRequestOrigin} from 'request';
 import {valueToHex, hexToValue} from 'hex';
 import {now} from 'date';
 import {map} from 'array';
@@ -10,6 +10,11 @@ import {fetchIsFriendOrSelf} from "../friends/friends.sm.js";
 
 
 export function createPost(text) {
+  // Check that the post comes from the right app(s) before continuing.
+  // TODO: Change the homeDirID here from '7' to whatever it ends up being.
+  checkRequestOrigin(true, [
+    "/1/7/main.jsx",
+  ]);
   return new Promise(resolve => {
     let userID = getRequestingUserID();
     if (!userID) return resolve(false);
@@ -17,7 +22,7 @@ export function createPost(text) {
     // Add the post to the user's own post wall, by first inserting the text in
     // texts.att (auto-generating an ID for the text in the process), and then
     // inserting the textID into posts.btt, along with the userID and timestamp.  
-    post(abs("./_texts.att)") + "/_insert/l=" + userID, text).then(textID => {
+    post(abs("./_texts.att") + "/_insert/l=" + userID, text).then(textID => {
       // Get the timestamp, and convert it to a hexadecimal string. (Note that
       // both userID and textID are already hexadecimal strings, so these don't
       // need to be converted for the following post route.)
@@ -35,6 +40,9 @@ export function createPost(text) {
 
 
 export function deletePost(textID) {
+  checkRequestOrigin(true, [
+    "/1/7/main.jsx",
+  ]);
   return new Promise(resolve => {
     let userID = getRequestingUserID();
     if (!userID) return resolve(false);
@@ -81,9 +89,12 @@ export function deletePost(textID) {
 // fetchPostList() returns false if access is denied, and else returns an
 // array of [textID, timestamp] paris.
 export function fetchPostList(
-  userID, minTime = undefined, maxTime = undefined, maxNumber = undefined,
-  offset = undefined, sortOldestToNewest = false
+  userID, maxNumber = undefined, offset = undefined,
+  minTime = undefined, maxTime = undefined, sortOldestToNewest = false
 ) {
+  checkRequestOrigin(true, [
+    "/1/7/main.jsx",
+  ]);
   return new Promise(resolve => {
     // Query whether userID is a friend of the requesting user (or is the req.
     // user themselves), before granting access to the post wall.
@@ -105,7 +116,7 @@ export function fetchPostList(
         options
       ).then(list => {
         list = map(list, ([textID, timestampHex]) => (
-          [textID, hexToValue(timestampHex, "unit(6)")]
+          [textID, hexToValue(timestampHex, "uint(6)")]
         ));
         resolve(list);
       });
@@ -116,6 +127,9 @@ export function fetchPostList(
 
 
 export function fetchPostText(userID, textID) {
+  checkRequestOrigin(true, [
+    "/1/7/main.jsx",
+  ]);
   return new Promise(resolve => {
     // Query whether userID is a friend of the requesting user (or is the req.
     // user themselves), before granting access to the post text.

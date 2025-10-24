@@ -4,7 +4,7 @@ import {post} from 'query';
 import * as InputText from 'InputText.jsx';
 
 
-export function render({userID}) {
+export function render() {
   let {expandChangeUsernameMenu, response} = this.state;
 
   return (
@@ -49,6 +49,9 @@ export const actions = {
               "Username changed!"
             }</span>
           }));
+          this.trigger("username-changed");
+          // TODO: Catch this event in main.jsx and use it to force a rerender
+          // of itself and all its descendants.
         }
         else {
           this.setState(state => ({
