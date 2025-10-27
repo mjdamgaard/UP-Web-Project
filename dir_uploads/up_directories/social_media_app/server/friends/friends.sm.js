@@ -1,5 +1,5 @@
 
-import {post, fetch} from 'query';
+import {post, fetchPrivate} from 'query';
 import {getRequestingUserID, checkRequestOrigin} from 'request';
 import {valueToHex, hexToValue} from 'hex';
 import {verifyType} from 'type';
@@ -25,10 +25,9 @@ export function requestFriend(otherUserID) {
     fetchIsFriendOrSelf(otherUserID).then(isFriendOrSelf => {
       if (isFriendOrSelf) return resolve(false);
       let timestampHex = valueToHex(now(), "uint(6)");
-      let isDeclinedHex = valueToHex(0, "uint(1)");
       post(
         abs("./_friend_requests.bbt") + "/_insert/l=" + otherUserID +
-        "/k=" + reqUserID + "/s=" + timestampHex + "/p=" + isDeclinedHex +
+        "/k=" + reqUserID + "/s=" + timestampHex +
         "/i=1" // Ignore if the friend request exists already. 
       ).then(
         wasUpdated => resolve(wasUpdated)
@@ -68,13 +67,10 @@ export function declineFriendRequest(otherUserID) {
     let reqUserID = getRequestingUserID();
     if (!reqUserID) return resolve(false);
 
-    // Insert a declined friend request (regardless of whether there even was a
-    // request there to begin with).
-    let timestampHex = valueToHex(now(), "uint(6)");
-    let isDeclinedHex = valueToHex(1, "uint(1)");
+    // Delete the user's friend request.
     post(
-      abs("./_friend_requests.bbt") + "/_insert/l=" + reqUserID +
-      "/k=" + otherUserID + "/s=" + timestampHex + "/p=" + isDeclinedHex
+      abs("./_friend_requests.bbt") + "/_deleteEntry/l=" + reqUserID +
+      "/k=" + otherUserID
     ).then(
       wasUpdated => resolve(wasUpdated)
     );
@@ -93,11 +89,9 @@ export function acceptFriendRequest(otherUserID) {
     
     // Look for the given friend request, and if it's there, add each of the
     // two users to the other's friend list.
-    let options = {isPrivate: true};
-    fetch(
+    fetchPrivate(
       abs("./_friend_requests.bbt") + "/entry/l=" + reqUserID +
-      "/k=" + otherUserID,
-      options
+      "/k=" + otherUserID
     ).then(entry => {
       if (!entry) return resolve(false);
 
@@ -197,10 +191,8 @@ export function fetchIsFriendOrSelf(otherUserID) {
 
     // Fetch the relevant entry on the reqUser's friend list, and if the entry
     // is defined, resolve with true.
-    let options = {isPrivate: true};
-    fetch(
-      abs("./_friends.bbt") + "/entry/l=" + reqUserID + "/k=" + otherUserID,
-      options
+    fetchPrivate(
+      abs("./_friends.bbt") + "/entry/l=" + reqUserID + "/k=" + otherUserID
     ).then(
       entry => resolve(entry ? true : false)
     );
@@ -228,13 +220,11 @@ export function fetchFriendList(
     // user themselves, before granting access to the friend list.
     fetchIsFriendOrSelf(userID).then(hasAccess => {
       if (!hasAccess) return resolve(false);
-      let options = {isPrivate: true};
-      fetch(
+      fetchPrivate(
         abs("./_friends.bbt") + "/skList/l=" + userID +
         (maxNumber ? "/n=" + maxNumber : "") +
         (offset ? "/n=" + offset : "") +
-        (sortOldestToNewest ? "/a=1" : "/a=0"),
-        options
+        (sortOldestToNewest ? "/a=1" : "/a=0")
       ).then(list => {
         list = map(list, ([friendUserID, timestampHex]) => (
           [friendUserID, hexToValue(timestampHex, "uint(6)")]
@@ -246,7 +236,7 @@ export function fetchFriendList(
 }
 
 // fetchFriendRequestList() returns false if access is denied, and else returns
-// an array of [otherUserID, timestamp, isDeclined] triples.
+// an array of [otherUserID, timestamp] pairs.
 export function fetchFriendRequestList(
   maxNumber = undefined, offset = undefined, sortOldestToNewest = false
 ) {
@@ -258,17 +248,14 @@ export function fetchFriendRequestList(
     if (!reqUserID) return resolve(false);
 
     // Fetch the user's incoming friend requests.
-    let options = {isPrivate: true};
-    fetch(
+    fetchPrivate(
       abs("./_friend_requests.bbt") + "/skList/l=" + reqUserID +
       (maxNumber ? "/n=" + maxNumber : "") +
       (offset ? "/n=" + offset : "") +
-      (sortOldestToNewest ? "/a=1" : "/a=0"),
-      options
+      (sortOldestToNewest ? "/a=1" : "/a=0")
     ).then(list => {
-      list = map(list, ([otherUserID, timestampHex, isDeclinedHex]) => [
-        otherUserID, hexToValue(timestampHex, "uint(6)"),
-        hexToValue(isDeclinedHex, "uint(1)")
+      list = map(list, ([otherUserID, timestampHex]) => [
+        otherUserID, hexToValue(timestampHex, "uint(6)")
       ]);
       resolve(list);
     });

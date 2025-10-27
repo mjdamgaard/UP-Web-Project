@@ -1,5 +1,5 @@
 
-import {fetch} from 'query';
+import {fetchPrivate} from 'query';
 import {map} from 'array';
 import * as Post from "./Post.jsx";
 
@@ -20,11 +20,8 @@ export function render({userID, ownUserID}) {
   // And if fetch the request has not yet been sent, do so.
   if (!isFetching) {
     this.setState(state => ({...state, isFetching: true}));
-    let options = {isPrivate: true};
-    fetch(
-      abs("../server/posts/posts.sm.js") + "/callSMF/fetchPostList/" +
-      userID,
-      options
+    fetchPrivate(
+      abs("../server/posts/posts.sm.js") + "/callSMF/fetchPostList/" + userID
     ).then(postList => {
       this.setState(state => ({...state, postList: postList ?? false}));
     });

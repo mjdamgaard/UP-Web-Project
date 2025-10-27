@@ -1,5 +1,5 @@
 
-import {fetch} from 'query';
+import {fetchPrivate} from 'query';
 import * as UserReference from "../UserReference.jsx";
 
 
@@ -10,11 +10,9 @@ export function render({textID, userID, ownUserID, timestamp}) {
   // And if fetch the request has not yet been sent, do so.
   if (!isFetching) {
     this.setState(state => ({...state, isFetching: true}));
-    let options = {isPrivate: true};
-    fetch(
+    fetchPrivate(
       abs("../server/posts/posts.sm.js") + "/callSMF/fetchPostText/" +
-      userID + "/" + textID,
-      options
+      userID + "/" + textID
     ).then(text => {
       this.setState(state => ({...state, text: text ?? false}));
     });

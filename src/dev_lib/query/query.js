@@ -4,7 +4,7 @@ import {
   getPrototypeOf, OBJECT_PROTOTYPE, ARRAY_PROTOTYPE, FunctionObject,
   CLEAR_FLAG, PromiseObject, Environment, LiveJSModule, parseString,
   TEXT_FILE_ROUTE_REGEX, SCRIPT_ROUTE_REGEX, CSSModule, getString,
-  getPropertyFromObject, ArgTypeError,
+  getPropertyFromObject, ArgTypeError, forEachValue,
 } from '../../interpreting/ScriptInterpreter.js';
 import {scriptParser} from "../../interpreting/parsing/ScriptParser.js";
 import {parseRoute} from './src/parseRoute.js';
@@ -421,11 +421,21 @@ export const query = new DevFunction(
 
 
 export const fetch = new DevFunction(
-  "fetch", {isAsync: true, typeArr: ["string", "any?"]},
+  "fetch", {isAsync: true, typeArr: ["string", "object?"]},
   async function(
     {callerNode, execEnv, interpreter},
     [extendedRoute, options]
   ) {
+    // If returnLog is true, also automatically set isPrivate: true, before
+    // calling query.fun().
+    if (options && getPropertyFromObject(options, "returnLog")) {
+      let modifiedOptions = {};
+      forEachValue(options, callerNode, execEnv, (val, key) => {
+        modifiedOptions[key] = val;
+      });
+      modifiedOptions.isPrivate = true;
+      options = modifiedOptions;
+    }
     let result = await query.fun(
       {callerNode, execEnv, interpreter},
       [extendedRoute, false, undefined, options],
@@ -434,9 +444,30 @@ export const fetch = new DevFunction(
   }
 );
 
+export const fetchPrivate = new DevFunction(
+  "fetchPrivate", {isAsync: true, typeArr: ["string", "object?"]},
+  async function(
+    {callerNode, execEnv, interpreter},
+    [extendedRoute, options = {}]
+  ) {
+    // Add isPrivate: true to the options object before calling fetch.fun().
+    let modifiedOptions = {};
+    forEachValue(options, callerNode, execEnv, (val, key) => {
+      modifiedOptions[key] = val;
+    });
+    modifiedOptions.isPrivate = true;
+    options = modifiedOptions;
+    let result = await fetch.fun(
+      {callerNode, execEnv, interpreter},
+      [extendedRoute, options],
+    );
+    return result;
+  }
+);
+
 
 export const post = new DevFunction(
-  "post", {isAsync: true, typeArr: ["string", "any?", "any?"]},
+  "post", {isAsync: true, typeArr: ["string", "any?", "object?"]},
   async function(
     {callerNode, execEnv, interpreter},
     [route, postData, options]

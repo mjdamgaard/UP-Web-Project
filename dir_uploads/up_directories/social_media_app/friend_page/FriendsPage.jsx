@@ -1,5 +1,5 @@
 
-import {fetch} from 'query';
+import {fetchPrivate} from 'query';
 import {map} from 'array';
 import * as FriendDisplay from "./FriendDisplay.jsx";
 import * as FriendRequestDisplay from "./FriendRequestDisplay.jsx";
@@ -23,18 +23,15 @@ export function render({userID}) {
   // And if fetch the request has not yet been sent, do so.
   if (!isFetching) {
     this.setState(state => ({...state, isFetching: true}));
-    let options = {isPrivate: true};
-    fetch(
+    fetchPrivate(
       abs("../server/friends/friends.sm.js") +
-      "/callSMF/fetchFriendList/" + userID,
-      options
+      "/callSMF/fetchFriendList/" + userID
     ).then(friendList => {
       this.setState(state => ({...state, friendList: friendList ?? false}));
     });
-    fetch(
+    fetchPrivate(
       abs("../server/friends/friends.sm.js") +
-      "/callSMF/fetchFriendRequestList",
-      options
+      "/callSMF/fetchFriendRequestList"
     ).then(friendRequestList => {
       this.setState(state => ({
         ...state, friendRequestList: friendRequestList ?? false

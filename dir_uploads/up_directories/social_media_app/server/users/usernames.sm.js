@@ -1,5 +1,5 @@
 
-import {post, fetch} from 'query';
+import {post, fetch, fetchPrivate} from 'query';
 import {getRequestingUserID} from 'request';
 import {valueToHex, hexToValue} from 'hex';
 import {verifyType} from 'type';
@@ -21,8 +21,8 @@ export function requestNewUsername(username) {
     let usernameHex = valueToHex(username, "string");
     let lockName = abs("./") + "/username/" + usernameHex;
     getConnection(8000, true, lockName).then(conn => {
-      let options = {connection: conn, isPrivate: true};
-      fetch(
+      let options = {connection: conn};
+      fetchPrivate(
         abs("./user_ids.ct") + "/entry/k=" + usernameHex,
         options
       ).then(existingUserID => {

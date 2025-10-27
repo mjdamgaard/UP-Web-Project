@@ -14,8 +14,8 @@ export function render() {
     <div className="friend-request-display">
       <h3>{"Add new friend"}</h3>
       <div>{
-        "Type in the current username of friend you wish to add, or type " +
-        "in their user ID preceded by a '#' (as in '#123a')"
+        "Type in the current username of the friend you wish to add, or type " +
+        "in their user ID preceded by a '#' (as in '#123ab')"
       }</div>
       <InputText key="it" size={50} />
       <button onClick={() => {
