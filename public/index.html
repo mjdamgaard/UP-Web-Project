@@ -17,12 +17,32 @@
 
 <div id="overlay-page-container"></div>
 
+<!--
+  TODO: Make a warning about not using your password anywhere outside of the
+  account menu, and let it show at the start until the user clicks, 'Ok, don't
+  remind me again (on this device),' in which case a boolean is set in
+  localStorage. ..The warning could maybe look something like this (out-
+  commented for now):
+-->
+<!-- <div id="no-password-warning">
+  Everything you see on this website is user-made, except the account menu
+  accessed by the icon at the top right of the page.
+  <br/>
+  Never give your password, credit card information, or any such sensitive
+  information outside of that account menu.
+  <br/>
+  And if you are ever asked to do so, please report it, and do not fall for it.
+  <br/>
+  Also, if you are ever asked to copy and paste an URL into you browser, do not
+  do so unless you trust the domain of that URL.
+
+  <div className="accept-buttons">
+    <input type="radio">Do not remind me again on ths device</input>
+    <button>OK</button>
+  </div>
+</div> -->
+
 <div id="account-menu">
-  <!--
-    TODO: I imagine an account icon floating in the top right corner, with the
-    user's own icon if logged in, where if you press it, a menu will come down,
-    with all the items.
-  -->
   <div id="account-menu-header">
     <div id="user-name-display"></div>
     <div id="user-icon">

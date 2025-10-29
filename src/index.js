@@ -111,6 +111,9 @@ window.addEventListener("popstate", (event) => {
 // preferences.
 constructAccountMenu(settingsContext);
 
+// TODO: Set up the warning message here (about not giving up passwords
+// anywhere outside of the account menu), when implemented.
+
 
 // Initialize the interpreter.
 const scriptInterpreter = new ScriptInterpreter(
@@ -132,7 +135,7 @@ setInterval(
 );
 
 // The script the initializes the UP app.
-const TEST_APP_ID = "7";
+const TEST_APP_ID = "2";
 const mainScript = `
   import {createJSXApp} from 'jsx';
   import {settings} from 'settings1';

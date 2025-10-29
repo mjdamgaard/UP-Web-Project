@@ -6,11 +6,21 @@ import * as ComponentEntityComponent from "./ComponentEntityComponent.jsx";
 
 
 
+export function getInitialState({classKey}) {
+  return {curClassKey: classKey};
+}
+
+
 export function render(props) {
   let {classKey, scoreHandler} = props;
   scoreHandler = scoreHandler ?? this.subscribeToContext("scoreHandler");
-  let {relQualPath, topEntry} = this.state;
+  let {curClassKey, relQualPath, topEntry} = this.state;
   let content;
+
+  // If the classKey prop has changed, reset the state.
+  if (classKey !== curClassKey) {
+    this.setState(getInitialState(props));
+  }
 
   // If the relational quality for the class has not been fetched yet, do so.
   if (relQualPath === undefined) {
