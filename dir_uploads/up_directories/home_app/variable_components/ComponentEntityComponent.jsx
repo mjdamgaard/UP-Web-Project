@@ -19,6 +19,7 @@ export function render(props) {
   // already imported, do so.
   else if (Component === undefined) {
     let componentPath = componentDef["Component path"];
+    // TODO: This should be this.import() instead...?
     import(componentPath).then(Component => {
       this.setState(state => ({...state, Component: Component}));
     });
@@ -28,6 +29,6 @@ export function render(props) {
   // Finally, if the component is ready, render it, passing it the same props
   // is this component.
   else {
-    return <Component key="0" {...props} />;
+    return <Component {...props} key="_0" />;
   }
 }
