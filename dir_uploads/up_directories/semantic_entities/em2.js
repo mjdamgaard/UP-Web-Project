@@ -67,8 +67,8 @@ export const indexPagesDesc = <div>
       "programmed page/app that fits that URL." 
     }</p>
     <p>{
-      "Such components thus serves as the index into what we can call an " +
-      '"Everything Website." The concept of an "Everything Website" is ' +
+      "This kind of component thus serves as the index into what we can call " +
+      'an "Everything Website." The concept of an "Everything Website" is ' +
       "described in the readme of the project's GitHub folder, at " +
       "https://github.com/mjdamgaard/UP-Web-Project."
     }</p>

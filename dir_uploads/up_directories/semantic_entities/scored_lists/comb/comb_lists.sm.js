@@ -4,7 +4,7 @@ import {
 } from "../../scores.js";
 import {fetchEntityDefinition, fetchEntityID} from "../../entities.js";
 import {map, reduce} from 'array';
-import {clearPermissions} from 'query';
+import {clearPermissions, clearPrivileges} from 'query';
 
 
 
@@ -48,7 +48,7 @@ export function updateScore(listKey, subjKey) {
       listDefArrProm.then(listDefArr => {
         // Update the underlying lists before fetching the scores from them.
         Promise.all(map(listDefArr, listDef => (
-          clearPermissions(() => (
+          clearPrivileges(() => (
             listDef.updateScore ? listDef.updateScore(subjKey) :
               new Promise(res => res())
           ))

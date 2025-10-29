@@ -45,7 +45,7 @@ export function updateScoreForUser(
           // Get the current user score from the userScores.bbt table, and the
           // previous score contributed to this aggregate, if any.
           let curUserScoreProm = fetchUserScore(
-            qualID, subjID, userID, true, options
+            qualID, subjID, userID, options
           );
           let prevUserScoreAndWeightProm = fetchScoreAndWeight(
             contributionsPath, [qualID, userGroupID, subjID], userID,

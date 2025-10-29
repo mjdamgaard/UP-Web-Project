@@ -504,11 +504,6 @@ export const clearPermissions = new DevFunction(
   }
 );
 
-// Alias for clearPermissions(), which ought to be used in most contexts,
-// rather than the following two functions.
-export const clear = new DevFunction(
-  "clear", {}, clearPermissions.fun
-);
 
 
 export const noPost = new DevFunction(

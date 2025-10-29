@@ -29,6 +29,7 @@ export function uploadInitialEntities() {
     postAllEntitiesFromModule(
       homePath + "/score_handling/ScoreHandler01/em.js"
     ),
+    postAllEntitiesFromModule(homePath + "/em2.js"),
   ]);
 }
 
@@ -235,7 +236,29 @@ export function postInitialScores01() {
       ]);
     },
 
-    // Post some entity page scores.
+    // Post some scores for index pages, entity pages and entity elements.
+    () => {
+      return Promise.all([
+        postUserRelationalScoreAndUpdateUserGroups(
+          abs("./em2.js;get/webApps"),
+          abs("./em1.js;get/members"),
+          abs("./em2.js;get/homeApp"),
+          firstModID, 7
+        ),
+        postUserRelationalScoreAndUpdateUserGroups(
+          abs("./em2.js;get/indexPages"),
+          abs("./em1.js;get/members"),
+          abs("./em2.js;get/upIndexPage01"),
+          firstModID, 6
+        ),
+        postUserRelationalScoreAndUpdateUserGroups(
+          abs("./em2.js;get/indexPages"),
+          abs("./em1.js;get/members"),
+          abs("./em2.js;get/upIndexPage02"),
+          firstModID, 0.1
+        ),
+      ]);
+    },
 
     // TODO: Continue.
   ];
