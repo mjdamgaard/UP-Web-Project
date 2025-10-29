@@ -1,26 +1,11 @@
 
-// import * as EntityPage from "./EntityPage.jsx";
-import * as EntityList from "./utility_components/EntityList.jsx";
-import * as GeneralEntityElement
-from "./entity_elements/GeneralEntityElement.jsx";
-import {scoreHandler01} from "/1/1/score_handling/ScoreHandler01/em.js";
-import {fetchEntityDefinition} from "/1/1/entities.js";
-
-const trustedQualKey = "/1/1/em1.js;get/trusted";
+import * as VariableComponent 
+from "./variable_components/VariableComponent.jsx";
 
 
-export function render({history, homeURL}) {
-  history.replaceState(
-    history.state,
-    homeURL + "/entPath/1/1/em1.js;get/entities"
-  );
-  return (
-    <div className="fetching">{"..."}</div>
-  );
 
-  // return (
-  //   <EntityList key="0" qualKey={trustedQualKey}
-  //     scoreHandler={scoreHandler01} ElementComponent={GeneralEntityElement}
-  //   />
-  // );
+export function render(props) {
+  return <VariableComponent {...props} key="0"
+    classKey={"/1/1/em2.js;get/indexPages"}
+  />;
 }

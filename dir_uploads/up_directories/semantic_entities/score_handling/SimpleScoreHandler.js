@@ -176,7 +176,7 @@ export class SimpleScoreHandler {
   getSettingsMenu() {
     return <div>
       {"No settings menu implemented yet for the current score handler."}
-    </div>
+    </div>;
   }
 
 }

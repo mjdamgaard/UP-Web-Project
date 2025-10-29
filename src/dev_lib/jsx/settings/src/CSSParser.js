@@ -16,7 +16,9 @@ const ATOMIC_PSEUDO_CLASS_PATTERN =
 
 const SELECTOR_DEFINED_PSEUDO_CLASS_PATTERN =
   "(is|where|not)";
-// TODO: Continue this list.
+
+const RELATIVE_SELECTOR_DEFINED_PSEUDO_CLASS_PATTERN =
+  "(has)";
 
 const INTEGER_DEFINED_PSEUDO_CLASS_PATTERN =
   "(nth-child)";
@@ -95,6 +97,25 @@ export const cssGrammar = {
     process: processPolyadicInfixOperation,
     params: ["complex-selector", 2]
   },
+  "relative-selector-list": {
+    rules: [
+      ["relative-selector", "/,/", "S*", "relative-selector-list!1"],
+      ["relative-selector"],
+    ],
+    process: straightenListSyntaxTree,
+    params: ["relative-selector-list"],
+  },
+  "relative-selector": {
+    rules: [
+      ["non-space-combinator", "selector!"],
+      ["selector"],
+    ],
+    process: (children, ruleInd) => ({
+      type: "relative-selector",
+      combinator: (ruleInd === 0) ? children[0] : undefined,
+      selector: (ruleInd === 0) ? children[1] : children[0],
+    }),
+  },
   "non-space-combinator": {
     rules: [
       ["S*", />|\+|~/, "S*"],
@@ -159,6 +180,10 @@ export const cssGrammar = {
       [
         "/:/", "/" + SELECTOR_DEFINED_PSEUDO_CLASS_PATTERN + "/",
         /\(/, "S*", "selector-list", /\)/
+      ],
+      [
+        "/:/", "/" + RELATIVE_SELECTOR_DEFINED_PSEUDO_CLASS_PATTERN + "/",
+        /\(/, "S*", "relative-selector-list", /\)/
       ],
       [
         "/:/", "/" + INTEGER_DEFINED_PSEUDO_CLASS_PATTERN + "/",

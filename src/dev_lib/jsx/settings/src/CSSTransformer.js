@@ -109,6 +109,12 @@ export class CSSTransformer {
     )).join(", ");
   }
 
+  transformRelativeSelectorList(relativeSelectorList) {
+    return relativeSelectorList.children.map(relativeSelector => (
+      this.transformRelativeSelector(relativeSelector)
+    )).join(", ");
+  }
+
 
   transformSelector(selector) {
     if (selector.type === "compound-selector") {
@@ -131,6 +137,15 @@ export class CSSTransformer {
       }
     }).join("");
   }
+
+  transformRelativeSelector(relativeSelector) {
+    let {selector, combinator} = relativeSelector;
+    let transformedSelector = this.transformSelector(selector);
+    return (combinator) ?
+      combinator.lexeme + " " + transformedSelector :
+      transformedSelector;
+  }
+
 
   transformCompoundSelector(selector) {
     // First transform the "main children,"" i.e. all simple selectors but the
@@ -180,6 +195,9 @@ export class CSSTransformer {
       let tuple;
       if (argType === "selector-list") {
         tuple = "(" + this.transformSelectorList(argument) + ")";
+      }
+      if (argType === "relative-selector-list") {
+        tuple = "(" + this.transformRelativeSelectorList(argument) + ")";
       }
       else if (argType === "integer") {
         tuple = "(" + argument.lexeme + ")";

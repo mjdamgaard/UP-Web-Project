@@ -32,6 +32,12 @@ export function render(props) {
     content = <div className="fetching">{"..."}</div>;
   }
 
+  // And if the quality path cannot be formed, return a "missing" content
+  // (which can be restyled).
+  else if (!relQualPath) {
+    content = <div className="missing">{"missing quality path"}</div>;
+  }
+
   // Else if the quality path is ready, but the top entry has not yet been
   // fetched, do that.
   else if (topEntry === undefined) {
@@ -41,8 +47,8 @@ export function render(props) {
     content = <div className="fetching">{"..."}</div>;
   }
 
-  // And if it has, but is undefined (in the case of an empty list), also
-  // render an empty component (possibly with some ::after content).
+  // And if it has been fetched, but is undefined (in the case of an empty
+  // list), also return "missing" content.
   else if (!topEntry) {
     content = <div className="missing">{"missing"}</div>;
   }

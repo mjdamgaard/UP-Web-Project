@@ -76,4 +76,5 @@ export const events = [
 
 export const styleSheetPaths = [
   abs("./style.css"),
+  abs("./variable_components/VariableComponent.css"),
 ];
