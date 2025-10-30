@@ -1,9 +1,0 @@
-
-
-.variable-component > .class-link {
-  display: none;
-}
-
-.variable-component:has(> .missing) > .class-link {
-  display: block;
-}

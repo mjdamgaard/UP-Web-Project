@@ -5,7 +5,7 @@ import {fetchEntityID} from "/1/1/entities.js";
 import * as UPIndexPage from "./UPIndexPage.jsx";
 import * as EntityPage from "./variable_components/EntityPage.jsx";
 import * as FileBrowser from "./file_browsing/FileBrowser.jsx";
-import * as TutorialIndexPage from "./tutorials/TutorialIndexPage.jsx";
+import * as TutorialIndexPage from "./tutorials/index.jsx";
 
 
 export function render({url = "", history, homeURL}) {
