@@ -5,78 +5,62 @@
 export function render() {
   return (
     <div>
-      <h1>{"Tutorial: Basics"}</h1>
+      <h1>{"Tutorial: Getting started!"}</h1>
       <section>
         <h2>{"About this tutorial"}</h2>
         <p>{
-          "This tutorial shows how to get started with " +
-          "the User-Programmable Web (UP Web), and explains the core basics " +
-          "of the using the system."
-        }</p>
-        <p>{
-          "For a brief overview of what the UP Web is, see the first section " +
-          "of the "}
-          <span className="link" onClick={() => {
-            this.trigger("goToAboutPage");
-          }}>{"about page"}</span>{"."
-        }</p>
-        <p>{
-          "To get the most out of this tutorial, it is recommended that " +
-          "the you create a user account (no e-mail " +
-          "required for now), and " +
-          "also make sure to have Node.js installed, which you will need " +
-          "in order to upload and edit your first UP web app."
-        }</p>
-        <p>{
-          "However, if not wanting to do this at first, the tutorial can " +
-          "also be followed regardless, as there are hints throughout the " +
-          "tutorial in the form of " +
-          "images which shows the expected outcomes to the tasks."
+          "This tutorial shows you how to create your first user-programmed " +
+          "(UP) app and upload it to this website."
         }</p>
       </section>
 
       <section>
-        <h2>{"Installation"}</h2>
+        <h2>{"Requirements"}</h2>
         <p>{
-          "To carry out the tasks of this tutorial, you need to first of " +
-          "need to install Node.js, if this is not currently installed on " +
-          "your computer. You will need this to execute a Node.js program " +
-          "that lets you upload and and edit the source code that this " +
-          "tutorial asks you to. " +
-          "(Again, you can also choose to follow the tutorial without doing " +
-          "this.) "
+          "If your computer is already set up for building React apps, " +
+          "you should be fine. Otherwise do the following two things."
         }</p>
+        <ul>
+          <li>{
+            // TODO: Make these and all the following links ELinks instead,
+            // after having made that dev component.
+            "Install Node.js. (See https://nodejs.org/en/download or " +
+            "https://docs.npmjs.com/downloading-and-installing-node-js-" +
+            "and-npm for how to do this.)"
+          }</li>
+          <li>{
+            "(Recommended) Make sure to use an editor or IDE with syntax " +
+            "highlighting for JSX. (Visual Studio Code has this, at least if " +
+            "you install a package for it.)"
+          }</li>
+        </ul>
         <p>{
-          "If Node.js is not yet installed on your computer, you can do so " +
-          "following this instruction: "}<i>{"[TODO: Insert link]"}</i>{"."
+          "And apart from this you also need to:"
         }</p>
-        <p>{
-          "And then you also need to clone the following GitHub repository: "
-          }<i>{"[TODO: Insert link]"}</i>{
-          ". If you don't know how to do that, here's a quick guide: " +
-          ""}<i>{"[TODO: Insert link]"}</i>{"."
-        }</p>
-        <p>{
-          "And finally, you also need to create a user account if you have " +
-          "not " +
-          "created one already ("}<b>{"no e-mail required"}</b>{" at this " +
-          "point). " +
-          "This should be straightforward to do. Just click on the " +
-          "top-right user icon, and then click \"Sign up.\""
-        }</p>
+        <ul>
+          <li>{
+            "Download/clone the GitHub repository for this project, " +
+            "found at https://github.com/mjdamgaard/UP-Web-Project."
+            // TODO: Make a leaner repository for the specific purpose of
+            // creating and uploading UP apps.
+          }</li>
+          <li>{
+            "Create a user account on this website. (No e-mail required.)"
+          }</li>
+        </ul>
       </section>
 
       <section>
-        <h2>{"Creating your first web app with this framework"}</h2>
+        <h2>{"Creating your first UP web"}</h2>
         <p>{
-          "No you are ready to create your first web app with the UP Web " +
-          "framework. To do this, go open a terminal and cd to the GitHub " +
+          "No you are ready to create your first web UP app. " +
+          "To do this, go open a terminal and cd to the GitHub " +
           "repository that you just downloaded. Then run the following command."
         }</p>
         <p><code className="command">{
           // TODO: This leads nowhere yet. Make it lead to an app with the
           // tasks of this tutorial (that the reader will be tasked to edit). 
-          "$ node ./dir_uploads/upload_dir.js ./up_directories/tutorials/intro"
+          "$ node ./upload_dir.js ./up_directories/tutorial_apps/hello_world"
         }</code></p>
         <p>{
           "This will now prompt you for the username and password of your " +

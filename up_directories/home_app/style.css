@@ -73,6 +73,9 @@ code.command {
   color: white;
 }
 
+ul, ol, li {
+  overflow: visible;
+}
 
 .tutorial-list {
   font-size: 25px;
