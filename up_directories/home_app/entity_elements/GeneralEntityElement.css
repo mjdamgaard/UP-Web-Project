@@ -1,0 +1,35 @@
+
+
+.entity-element {
+  width: 100%;
+}
+
+
+.entity-element > :first-child {
+  height: 60px;
+  display: grid;
+  grid-template-columns: 4fr 1fr;
+}
+
+
+.entity-element > :first-child > .main-content {
+  display: grid;
+  grid-template-columns: 20px auto;
+}
+
+.entity-element > :first-child > .main-content > .entity-id {
+  margin: auto;
+  font-size: 10pt;
+}
+
+
+.entity-element > :first-child > .main-content .entity-display {
+  display: flex;
+  align-items: center;
+  margin: auto 20px;
+  font-size: 18pt;
+}
+
+.entity-reference.fetching::after {
+  content: "...";
+}

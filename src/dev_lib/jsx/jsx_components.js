@@ -961,7 +961,7 @@ export class JSXInstanceInterface extends ObjectObject {
       "call": this.call,
       "setState": this.setState,
       "rerender": this.rerender,
-      "import": this.import,
+      // "import": this.import,
       "provideContext": this.provideContext,
       "subscribeToContext": this.subscribeToContext,
       "unsubscribeFromContext": this.unsubscribeFromContext,

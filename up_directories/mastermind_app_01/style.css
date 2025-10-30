@@ -1,0 +1,86 @@
+
+.app {
+  margin: 10px;
+  width: 300px;
+  height: 500px;
+}
+
+.game-area {
+  width: 300px;
+  height: 400px;
+  display: grid;
+  grid-template-columns: 1.5fr 6fr;
+  background-color: #e7e7e7;
+}
+
+
+.peg-selection {
+  display: grid;
+  border: 1px solid #00000080;
+}
+
+.rows {
+  display: grid;
+  border: 1px solid #00000080;
+}
+
+.rows > * {
+  display: grid;
+  grid-template-columns: 4fr 1fr;
+  gap: 1fr;
+  border: 1px solid #00000080;
+}
+
+.guess-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  border: 1px solid #00000080;
+  background-color: white;
+}
+.guess-row > * {
+  border: solid #00000050;
+  border-width: 0px 1px;
+}
+.active > .guess-row > .selected {
+  border: 2px solid blue;
+}
+.active > .guess-row > :hover {
+  cursor: pointer;
+}
+
+.answer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  border: 1px solid #00000080;
+}
+
+.peg {
+  height: 85%;
+  width: auto;
+  aspect-ratio: 1 / 1;
+  border: 1px solid #00000050;
+  border-radius: 50%;
+  margin: auto;
+}
+.peg-selection .peg:hover {
+  cursor: pointer;
+}
+
+
+.prompt.inactive {
+  display: none;
+}
+.prompt {
+  display: grid;
+  grid-template-rows: 2fr 1fr;
+  background-color: #ffffffa0;
+}
+.prompt > div:last-child {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.prompt > div:first-child {
+  text-align: center;
+  margin: auto;
+}

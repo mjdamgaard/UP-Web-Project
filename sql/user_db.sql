@@ -103,14 +103,15 @@ CREATE TABLE UserGas (
 
 
 
--- TODO: Remove this and implement account creation and login/logout.
-INSERT INTO UserCredentials (user_name, password_hash_salted)
-VALUES ("test_user", REPEAT("0", 60));
+-- INSERT INTO UserCredentials (user_name, password_hash_salted)
+-- VALUES ("test_user", REPEAT("0", 60));
 
-INSERT INTO AuthenticationTokens (user_id, auth_token, expiration_time)
-VALUES (1, "test_token", 4294967295);
+-- INSERT INTO AuthenticationTokens (user_id, auth_token, expiration_time)
+-- VALUES (1, "test_token", 4294967295);
 
 
+-- If a developer runs out of gas, an insert statement like the following is
+-- a quick way to replenish that gas.
 INSERT INTO UserGas (user_id, gas_json)
 VALUES (1, CONCAT('{',
     '"comp":100000000,',

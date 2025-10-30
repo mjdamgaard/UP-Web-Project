@@ -1,0 +1,23 @@
+
+
+
+.drop-down-box > .collapse-expand-button {
+  text-align: center;
+  height: 15px;
+}
+.drop-down-box > .collapse-expand-button:hover {
+  cursor: pointer;
+  background-color: #dddddd;
+}
+
+.drop-down-box > .collapse-expand-button.collapsed::after {
+  content: "⌄";
+  position: relative;
+  bottom: 0.5em;
+}
+
+.drop-down-box > .collapse-expand-button.expanded::after {
+  content: "⌃";
+  position: relative;
+  top: 0.1em;
+}
