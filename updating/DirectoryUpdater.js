@@ -14,7 +14,6 @@ export class DirectoryUpdater {
 
 
 
-  // TODO: Document:
   async login(username, password) {
     let [userID, authToken] = await requestLoginServer(
       "login", undefined, {username: username, password: password}
@@ -126,10 +125,6 @@ export class DirectoryUpdater {
         );
       }
       else if (/\.(att|bt|ct|bbt|ftt)$/.test(name)) {
-        // TODO: Also implement reading the content of the file, expecting
-        // a JSON array (unless empty or whitespace-filled), and then check if
-        // the table file already exists, and if not, then make an /_insertList
-        // request after the /_touch request. 
         uploadPromises.push(
           serverQueryHandler.postAsAdmin(`/1/${childRelPath}/_touch`)
         );
@@ -201,7 +196,6 @@ export class DirectoryUpdater {
   // lib), the check will succeed and the execution of the SMF will continue
   // from there.
   // TODO: Implement postDataFilePath to read the postData from a file.
-  // TODO: Implement setting returnLog = true for the request.
   async post(dirID, relativeRoute, returnLog, dirPath, postDataFilePath) {
     let postData = undefined;
 
@@ -228,7 +222,8 @@ export class DirectoryUpdater {
 
   // fetch() sends a fetch request as the admin, able in particular to read
   // data at locked routes directly.
-  // TODO: Implement setting returnLog = true for the request.
+  // TODO: Implement setting returnLog = true for the request, if I haven't
+  // already.
   async fetch(dirID, relativeRoute, returnLog) {
     // Initialize the serverQueryHandler with the provided authToken.
     let serverQueryHandler = new ServerQueryHandler(
@@ -247,8 +242,7 @@ export class DirectoryUpdater {
   // TODO: Implement a bundler method, and an associated command in the command
   // line, which can then either be called automatically for before each
   // upload, or manually so, perhaps depending on whether a bundle flag is
-  // present or not (similar to the current DELETE_DATA flag, but perhaps where
-  // we want to use a less loud flag (so using lower case instead)).
+  // present or not.
   bundle() {
 
   }

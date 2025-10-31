@@ -4,15 +4,12 @@ import {
   straightenListSyntaxTree, copyFromChild, copyLexemeFromChild,
   processPolyadicInfixOperation,
 } from "../../../../interpreting/parsing/processing.js";
-// import {HTML_ELEMENT_TYPE_REGEX}
-// from "../../../../interpreting/parsing/ScriptParser.js";
+
 
 
 const ELEMENT_TYPE_PATTERN = "[a-z]+";
 
-const ATOMIC_PSEUDO_CLASS_PATTERN =
-  "(scope|hover|first-child|last-child|first-of-type|last-of-type)";
-// TODO: Continue this list.
+const ATOMIC_PSEUDO_CLASS_PATTERN = "[a-z][a-z\\-]*";
 
 const SELECTOR_DEFINED_PSEUDO_CLASS_PATTERN =
   "(is|where|not)";
@@ -20,13 +17,9 @@ const SELECTOR_DEFINED_PSEUDO_CLASS_PATTERN =
 const RELATIVE_SELECTOR_DEFINED_PSEUDO_CLASS_PATTERN =
   "(has)";
 
-const INTEGER_DEFINED_PSEUDO_CLASS_PATTERN =
-  "(nth-child)";
-// TODO: Continue this list.
+const INTEGER_DEFINED_PSEUDO_CLASS_PATTERN = "nth-(last-)?(child|of-type)";
 
-const PSEUDO_ELEMENT_PATTERN =
-  "(before|after|first-line)";
-// TODO: Continue this list.
+const PSEUDO_ELEMENT_PATTERN = "[a-z][a-z\\-]*";
 
 const FLAG_PATTERN =
   "([^\\s\\S])";

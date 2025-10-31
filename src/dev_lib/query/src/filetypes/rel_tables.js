@@ -1,7 +1,7 @@
 
 
 import {
-  RuntimeError, payGas, ObjectObject,
+  RuntimeError, payGas,
 } from "../../../../interpreting/ScriptInterpreter.js";
 import {DBQueryHandler} from "../../../../server/db_io/DBQueryHandler.js";
 

@@ -96,7 +96,7 @@ export const render = new DevFunction(
     // false, we prevent the normal behavior.
     domNode.onclick = (event) => {
       if (onClick) {
-        // TODO: Add event argument when implemented.
+        // TODO: Add event argument.
         let shouldFollowLink = interpreter.executeFunctionOffSync(
           onClick, [], callerNode, execEnv, thisVal
         ) ?? true;

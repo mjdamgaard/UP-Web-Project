@@ -30,13 +30,10 @@ const minInts = [
 ];
 
 
-// TODO: Apparently the methods of Uint8Array isn't widely supported in
-// browsers, so see about how to use another library. ...Well, apparently it's
-// an experimental feature in Chrome, so maybe it'll be fine.. ..Oh, Node.js
-// doesn't support it natively.. ..But maybe it works with the uint8arrays
-// package, I'll see.. ... Oh, and since you can also provide the inputArr with
-// the postData for callSMF routes, it won't be too critical to have this
-// library on the client side..
+// This dev lib is currently not in use, as I'm not sure it works on all
+// browsers. And we are instead now relying on hexadecimal encoding for most
+// things, including all the way down at the database's SP API, so we might not
+// really need this dev lib at all. 
 
 
 

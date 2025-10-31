@@ -127,11 +127,6 @@ async function main() {
       }
     }
     else if (/^delete$/.test(command)) {
-      // TODO: Implement a 'reset' flag (or perhaps a 'reset'(/'r') option),
-      // which inserts the JSON array stored in the client-side table file
-      // right after the data has been deleted, thus resetting the table to its
-      // normal initial state. (Do this after such list insertions have been
-      // implemented for the 'upload' option in the first place.)
       let relativePath = await read({prompt: `Path of file(s) to delete: `});
       await directoryUpdater.deleteData(dirID, relativePath, read);
     }

@@ -84,20 +84,6 @@ export function render({url = "", history, homeURL}) {
     );
   }
 
-// Oh, maybe I'll drop these "/c" pages, and instead just give the entity pages
-// a way to enhance a nested component up to fullscreen.. either starting from
-// just under the AppHeader, or with.. yeah, no, starting from under the
-// AppHeader, let's say..
-  // // Else if url is of the form "/c" + entPath go to the component showcasing
-  // // app and open the given component entity pointed to by entPath.
-  // if (urlStart === "/c/") {
-  //   let entPath = slice(url, 2);
-  //   return (
-  //     <main className="app-main">
-  //       {"TODO: Insert component showcasing app component here."}
-  //     </main>
-  //   );
-  // }
 
   // Else if relURL = "/about", go to the about page.
   if (relURL === "/about") {

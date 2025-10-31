@@ -22,6 +22,9 @@ import {
   REQUEST_ADMIN_PRIVILEGES_FLAG, GRANT_ADMIN_PRIVILEGES_FLAG,
 } from "../dev_lib/query/src/flags.js";
 
+
+/* Static developer libraries */
+
 import * as queryMod from "../dev_lib/query/query.js";
 import * as connMod from "../dev_lib/db_connection/connection.js";
 import * as jsonMod from "../dev_lib/fundamentals/json.js";
@@ -338,19 +341,6 @@ function serialize(val) {
   }
   // TODO: Implement other MIME types if and when needed. 
 }
-
-
-// function toMIMEType(val) {
-//   if (mimeType === "text/plain") {
-//     return val.toString();
-//   }
-//   else if (mimeType === "application/json") {
-//     return jsonStringify(val);
-//   }
-//   else {
-//       throw `toMIMEType(): Unrecognized/un-implemented MIME type: ${mimeType}`;
-//   }
-// }
 
 
 

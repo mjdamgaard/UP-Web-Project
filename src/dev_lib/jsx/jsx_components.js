@@ -19,8 +19,6 @@ export const HREF_CD_START_REGEX = /^\.{0,2}\//;
 
 export const CAN_CREATE_APP_FLAG = Symbol("can-create-app");
 
-// export const APP_COMPONENT_PATH_FLAG = Symbol("app-component-path");
-// export const COMPONENT_INSTANCE_FLAG = Symbol("component-instance");
 
 
 
@@ -45,9 +43,9 @@ export const createJSXApp = new DevFunction(
     let appEnv = new Environment(execEnv, undefined, {flags: [CLEAR_FLAG]});
 
     // Get the userID if the user is logged in and call settings.initiate() in
-    // order to make any initial user-dependent preparations fro the settings
-    // object from getSettings(). Note that the settings object extend the
-    // (abstract) SettingsObject class declared below.
+    // order to make any initial user-dependent preparations for the 'settings'
+    // object. Note that the settings object extend the (abstract)
+    // SettingsObject class declared below.
     let userID = getUserID();
     await settings.initiate(userID, appComponent, callerNode, appEnv);
 
@@ -352,9 +350,7 @@ class JSXInstance {
 
 
 
-  // TODO: Reimplement getDOMNode(), together with render(), such that the
-  // components reuse elements whenever possible when they rerender, resetting
-  // the attributes of those elements.
+
 
   getDOMNode(
     jsxElement, curNode, marks, interpreter, callerNode, callerEnv, props,
@@ -489,11 +485,6 @@ class JSXInstance {
           // produces a vulnerability where other components can corrupt the
           // data that the component in question is able to affect. (Okay, not
           // *so* simple, but doable..)
-          // TODO: All click events should at some point get an event argument
-          // where one can read off info about e.g. the position of the click,
-          // and also potentially other info about the source of the event. *I
-          // have added an event object (just a plain one), but we should add
-          // more properties to it.
           case "onClick":
             eventProperty ??= "onclick";
           case "onDBLClick":
@@ -1033,6 +1024,8 @@ export class JSXInstanceInterface extends ObjectObject {
   // the app call settings.prepareComponent() in order to prepare e.g. the
   // style of the component before it is used (which might be helpful in order
   // to prevent UI flickering in some instances).
+  // TODO: Debug this dev method, or better yet, see if I can't just make
+  // the regular import() work just as well (if it doesn't already..).
   import = new DevFunction(
     "import", {isAsync: true, typeArr: ["string"]},
     async ({callerNode, execEnv, interpreter}, [route]) => {

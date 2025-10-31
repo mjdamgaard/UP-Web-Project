@@ -77,11 +77,6 @@ export class CSSTransformer {
 
 
   transformDeclaration(dec, indentSpace) {
-    // TODO: Convert aný large numerical value to a maximal one, and let that
-    // value be significantly less than the actual maximal value for CSS, which
-    // will then in particular allow the web page that shows the UP app (the
-    // "app frame," as I've often called it) to use larger z-indices then the
-    // UP app can. ..(And let us also similarly limit negative values.)
     return indentSpace + dec.propName + ": " + dec.valueArr.map(
       valueNode => this.transformValue(valueNode)
     ).join(" ") + ";\n";

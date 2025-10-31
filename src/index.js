@@ -9,10 +9,6 @@ import {main as constructAccountMenu} from "./account_menu/account_menu.js"
 
 import {settings} from "./dev_lib/jsx/settings/SettingsObject.js";
 
-/* Tests */
-
-// import {runTests} from "./testing/parsing_interpreting_tests.js";
-
 
 /* Static developer libraries */
 
@@ -145,7 +141,6 @@ const mainScript = `
 
 const flags = [CAN_CREATE_APP_FLAG];
 
-// runTests();
 
 // Run the main script to create the app.
 scriptInterpreter.interpretScript(
@@ -162,35 +157,3 @@ scriptInterpreter.interpretScript(
   }
 ).catch(err => console.error(err));
 
-
-
-
-
-
-
-
-
-
-// import React from 'react';
-// import ReactDOM from 'react-dom/client';
-
-// // import {
-// //   BrowserRouter, Routes,
-// //   createBrowserRouter,
-// //   RouterProvider,
-// // } from "react-router-dom";
-
-
-// import {App} from './components/App.js';
-
-
-// const myElement = (
-//   <React.StrictMode>
-//     <App />
-//   </React.StrictMode>
-// );
-
-// const root = ReactDOM.createRoot(document.getElementById('root'), {
-//   // identifierPrefix: '',
-// });
-// root.render(myElement);

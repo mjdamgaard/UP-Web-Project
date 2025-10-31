@@ -327,8 +327,6 @@ export async function request(url, isPost, reqBody, headers) {
 
 
     if (!response.ok) {
-      // TODO: Consider changing the name of LoadError, and/or making a new
-      // error type for server request errors.
       throw new NetworkError(
         "HTTP error " + response.status +
         (responseText ? ": " + responseText : ""),
@@ -372,11 +370,6 @@ export async function request(url, isPost, reqBody, headers) {
 
 
 
-
-// TODO: This is repeated from login_server.js, so combine and move both these
-// declarations into their own module. ..Well, except that I'm implementing
-// them slightly but I guess the server-side one could just use this one as a
-// helper function. ..Oh, but they also differ in other ways, never mind..
 
 export function validateUsernamePWAndEmailFormats(
   username, password, emailAddr = ""

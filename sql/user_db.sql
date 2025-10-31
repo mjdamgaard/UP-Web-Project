@@ -8,11 +8,6 @@ DROP TABLE AuthenticationTokens;
 DROP TABLE UserGas;
 
 
--- TODO: At some point split this userDB in two, one with the password hashes
--- and emails and such, and one with the auth. tokens, and use this to make
--- sure that the main server (which is also currently called "ajax_server")
--- doesn't even have access to the config file, and thus the password, to the
--- DB with the password hashes and such.
 
 
 
@@ -89,13 +84,6 @@ CREATE TABLE UserGas (
     gas_json JSON NOT NULL,
 
     auto_refilled_at BIGINT UNSIGNED NOT NULL DEFAULT (UNIX_TIMESTAMP())
-
-    -- comp_gas     FLOAT NOT NULL DEFAULT 0,
-    -- db_read_gas  FLOAT NOT NULL DEFAULT 10000000,-- bytes (roughly).
-    -- db_write_gas FLOAT NOT NULL DEFAULT 10000000,-- bytes (roughly).
-    -- time_gas     FLOAT NOT NULL DEFAULT 500000,-- ms.
-    -- conn_gas     FLOAT NOT NULL DEFAULT 500000,-- ms (for open db connections).
-    -- mkdir_gas    FLOAT NOT NULL DEFAULT 20 -- number of new home directories.
 );
 
 
@@ -103,11 +91,6 @@ CREATE TABLE UserGas (
 
 
 
--- INSERT INTO UserCredentials (user_name, password_hash_salted)
--- VALUES ("test_user", REPEAT("0", 60));
-
--- INSERT INTO AuthenticationTokens (user_id, auth_token, expiration_time)
--- VALUES (1, "test_token", 4294967295);
 
 
 -- If a developer runs out of gas, an insert statement like the following is

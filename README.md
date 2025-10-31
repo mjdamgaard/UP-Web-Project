@@ -286,6 +286,6 @@ We will also set an initial investment threshold that needs to be reached before
 
 
 
-### More information
+<!-- ### More information
 
-*TODO: Reference a text that goes through the business plan in more chronological order, and with some additional details added.*
+*TODO: Reference a text that goes through the business plan in more chronological order, and with some additional details added.* -->

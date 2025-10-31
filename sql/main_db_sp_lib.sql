@@ -5,8 +5,7 @@ SET GLOBAL connect_timeout = 600;
 SET GLOBAL innodb_lock_wait_timeout = 600;
 SET GLOBAL lock_wait_timeout = 600;
 
--- DROP FUNCTION toBase64;
--- DROP FUNCTION fromBase64;
+
 DROP FUNCTION binToHex;
 DROP FUNCTION hexToBin;
 DROP FUNCTION numToHex;
@@ -71,13 +70,6 @@ DROP PROCEDURE insertBBTList;
 
 
 
--- CREATE FUNCTION toBase64 (rawStr VARBINARY(255))
--- RETURNS VARCHAR(510) DETERMINISTIC
--- RETURN REPLACE(REPLACE(TO_BASE64(rawStr), "+", "-"), "/", "_");
-
--- CREATE FUNCTION fromBase64 (encodedStr VARCHAR(510))
--- RETURNS VARBINARY(255) DETERMINISTIC
--- RETURN FROM_BASE64(REPLACE(REPLACE(encodedStr, "_", "/"), "-", "+"));
 
 
 CREATE FUNCTION binToHex (rawStr VARBINARY(255))

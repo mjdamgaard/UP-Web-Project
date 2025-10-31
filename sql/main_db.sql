@@ -195,9 +195,9 @@ CREATE TABLE BinaryKeyBinaryScoreTables (
 
 /* Fulltext indexes */
 
--- TODO: Fulltext indexed tables should actually instead be created and
--- updated on demand from user groups that has pooled enough "storage gas" to
--- do so, as described in my notes.
+-- TODO: Fulltext indexed tables should actually instead be created on demand,
+-- but only if the user has some 'mkTable' gas, which is not for everyone to
+-- have.
 
 CREATE TABLE FulltextIndexEntries (
 
