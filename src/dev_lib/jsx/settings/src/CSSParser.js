@@ -169,7 +169,6 @@ export const cssGrammar = {
   },
   "pseudo-class-selector": {
     rules: [
-      ["/:/", "/" + ATOMIC_PSEUDO_CLASS_PATTERN + "/"],
       [
         "/:/", "/" + SELECTOR_DEFINED_PSEUDO_CLASS_PATTERN + "/",
         /\(/, "S*", "selector-list", /\)/
@@ -182,6 +181,7 @@ export const cssGrammar = {
         "/:/", "/" + INTEGER_DEFINED_PSEUDO_CLASS_PATTERN + "/",
         /\(/, "S*", "integer", /\)/
       ],
+      ["/:/", "/" + ATOMIC_PSEUDO_CLASS_PATTERN + "/"],
     ],
     process: (children) => ({
       type: "pseudo-class-selector",
