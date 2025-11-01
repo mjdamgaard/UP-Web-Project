@@ -8,8 +8,8 @@ If you want to install this system as a server on your localhost, you need to:
 2. Go to the ./sql directory and follow the install.md instructions there.
 
 3. Create a file of the name 'db_config.js' in the ./src directory (such that the filepath becomes ./src/db_config.js), and add the following two lines in it: 
-  - `export const user = YOUR_MYSQL_USERNAME`,
-  - `export const password = YOUR_MYSQL_PASSWORD`,
+    - `export const user = YOUR_MYSQL_USERNAME`,
+    - `export const password = YOUR_MYSQL_PASSWORD`,
 where YOUR_MYSQL_USERNAME and YOUR_MYSQL_PASSWORD are replaced with the username and password of a user to your MySQL databases that you created as part of Step 2.
 
 4. Open this directory in four separate terminals on your computer. (If using VS Code, a quick way of doing this is to open up this directory with VS Code, and then press Ctrl + Shift + C four times in quick succession).
