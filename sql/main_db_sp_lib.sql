@@ -1,9 +1,12 @@
 
 USE mainDB;
 
-SET GLOBAL connect_timeout = 600;
-SET GLOBAL innodb_lock_wait_timeout = 600;
-SET GLOBAL lock_wait_timeout = 600;
+-- Apparently these don't seem to work, and I also don't know how I would get
+-- the super privileges needed to change them in the web server (I also haven't
+-- looked into it, though), so let me just out-comment them:
+-- SET GLOBAL connect_timeout = 600;
+-- SET GLOBAL innodb_lock_wait_timeout = 600;
+-- SET GLOBAL lock_wait_timeout = 600;
 
 
 DROP FUNCTION binToHex;
