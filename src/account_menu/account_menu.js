@@ -1,5 +1,5 @@
 
-import {loginServerDomainURL} from "../server/config.js";
+import {loginServerDomainURL} from "../server/server_urls.js";
 
 
 export function main(settingsContext) {

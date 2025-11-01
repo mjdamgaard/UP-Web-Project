@@ -1,5 +1,5 @@
 
-import {ajaxServerDomainURL} from "../config.js";
+import {ajaxServerDomainURL} from "../server_urls.js";
 
 const OWN_UP_NODE_ID = "1";
 
