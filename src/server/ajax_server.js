@@ -1,7 +1,5 @@
 
 import * as http from 'http';
-import fs from 'fs';
-import path from 'path';
 // import * as process from 'process';
 
 import {
@@ -108,11 +106,17 @@ const autoRefillGas = {
 // const TOKEN_EXP_PERIOD = 7948800; // ~= 3 months in seconds.
 
 
-const [ , curPath] = process.argv;
-const mainScriptPath = path.normalize(
-  path.dirname(curPath) + "/main_script/main.js"
-);
-const mainScript = fs.readFileSync(mainScriptPath, "utf8");
+const mainScript = `
+  import {queryRoute} from 'query';
+
+  export function main(
+    route, isPost, postData, options, resolve
+  ) {
+    queryRoute(route, isPost, postData, options).then(
+      output => resolve(output)
+    );
+  }
+`;
 
 const [syntaxTree, lexArr, strPosArr] = scriptParser.parse(mainScript);
 const parsedMainScript = syntaxTree.res;
