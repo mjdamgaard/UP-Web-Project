@@ -2,7 +2,7 @@
 
 
 export function render() {
-  return "IndexPage01.jsx";
+  return "An index page of this website is under way.";
 }
 
 
