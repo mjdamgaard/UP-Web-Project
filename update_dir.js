@@ -9,15 +9,22 @@ let directoryUpdater = new DirectoryUpdater();
 
 let hasExited = false;
 
-// Get the directory path from the arguments, and combine it with __dirname if
-// it is a relative path.
-let [ , curPath, dirPath, ...options] = process.argv;
+// Get the current path and the path to the UP directory from the arguments,
+// and combine them if the latter is a relative path. Also get a third 'domain'
+// argument, which determines to where the data is uploaded. If wanting to
+// upload to a server on your localhost, install following the ./install.md
+// instructions, then domain should be "localhost" (or undefined, as this is
+// the also default), and if wanting to upload to e.g. up-web.org, domain
+// should be set as "up-web.org".
+let [ , curPath, dirPath, domain = "localhost"] = process.argv;
 if (!dirPath) throw (
   "Specify dirPath in '$ node <program path> <dirPath>'"
 );
 if (dirPath[0] === ".") {
   dirPath = path.normalize(path.dirname(curPath) + "/" + dirPath);
 }
+directoryUpdater.setDomain(domain);
+
 
 async function main() {
   // Prompt for the user's username and password, then try to log in, and on

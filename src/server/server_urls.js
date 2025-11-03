@@ -3,6 +3,8 @@ const urlRoot = (typeof window === "undefined") ? "http://localhost" :
   window.location.href.match(/^https?:\/\/[^:/]*/)[0];
 
 
-export const ajaxServerDomainURL = urlRoot + ":8080";
+export const ajaxServerDomainURL = (urlRoot === "http://localhost") ?
+  "http://localhost:8080" : urlRoot + "/ajax";
 
-export const loginServerDomainURL = urlRoot + ":8081";
+export const loginServerDomainURL = (urlRoot === "http://localhost") ?
+  "http://localhost:8081" : urlRoot + "/login";

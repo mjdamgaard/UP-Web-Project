@@ -1,6 +1,5 @@
 
 import {ServerQueryHandler} from '../src/server/ajax_io/ServerQueryHandler.js';
-import {requestLoginServer} from '../src/account_menu/account_menu.js';
 
 import fs from 'fs';
 import path from 'path';
@@ -8,14 +7,21 @@ import fetch from 'node-fetch';
 
 
 export class DirectoryUpdater {
-  constructor(authToken) {
+  constructor(authToken = undefined, domain = undefined) {
     this.authToken = authToken;
+    this.domain = domain;
+  }
+
+  setDomain(domain) {
+    this.domain = domain;
   }
 
 
-
   async login(username, password) {
-    let [userID, authToken] = await requestLoginServer(
+    let serverQueryHandler = new ServerQueryHandler(
+      this.authToken, Infinity, fetch, this.domain
+    );
+    let [userID, authToken] = await serverQueryHandler.queryLoginServer(
       "login", undefined, {username: username, password: password}
     );
     this.authToken = authToken;
@@ -44,9 +50,8 @@ export class DirectoryUpdater {
   // one or several relational DB tables), for which the file content, if any,
   // will have to conform to a specific format.
   async uploadDir(userID, dirPath, dirID) {
-    // Initialize the serverQueryHandler with the provided authToken.
     let serverQueryHandler = new ServerQueryHandler(
-      this.authToken, Infinity, fetch
+      this.authToken, Infinity, fetch, this.domain
     );
 
     // If no dirID was provided, request the server to create a new directory
@@ -139,9 +144,8 @@ export class DirectoryUpdater {
   // "/<upNodeID>/<homeDirID>/<relativePath>", or extends this path if
   // relativePath ends in a '*' wildcard.
   async deleteData(dirID, relativePath, read) {
-    // Initialize the serverQueryHandler with the provided authToken.
     let serverQueryHandler = new ServerQueryHandler(
-      this.authToken, Infinity, fetch
+      this.authToken, Infinity, fetch, this.domain
     );
 
     // If no dirID was provided, fail.
@@ -201,7 +205,7 @@ export class DirectoryUpdater {
 
     // Initialize the serverQueryHandler with the provided authToken.
     let serverQueryHandler = new ServerQueryHandler(
-      this.authToken, Infinity, fetch
+      this.authToken, Infinity, fetch, this.domain
     );
 
     // Construct the full route, then query the server. If the route still
@@ -225,9 +229,8 @@ export class DirectoryUpdater {
   // TODO: Implement setting returnLog = true for the request, if I haven't
   // already.
   async fetch(dirID, relativeRoute, returnLog) {
-    // Initialize the serverQueryHandler with the provided authToken.
     let serverQueryHandler = new ServerQueryHandler(
-      this.authToken, Infinity, fetch
+      this.authToken, Infinity, fetch, this.domain
     );
 
     // Construct the full route, then query the server.

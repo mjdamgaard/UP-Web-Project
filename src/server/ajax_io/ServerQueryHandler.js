@@ -1,17 +1,21 @@
 
-import {ajaxServerDomainURL} from "../server_urls.js";
+export const curDomain = (typeof window === "undefined") ? "localhost" :
+  /^https?:\/\/([^:/]*)/.exec(window.location.href)[1];
 
-const OWN_UP_NODE_ID = "1";
+export const OWN_UP_NODE_ID = "1";
+
 
 
 
 export class ServerQueryHandler {
 
   constructor(
-    authToken = undefined, expTime = undefined, fetchFun = undefined
+    authToken = undefined, expTime = undefined, fetchFun = fetch,
+    domain = curDomain
   ) {
     this.tokenData = {authToken: authToken, expTime: expTime};
-    this.fetch = fetchFun ?? fetch;
+    this.fetch = fetchFun;
+    this.domain = domain;
   }
 
   getTokenData() {
@@ -24,7 +28,7 @@ export class ServerQueryHandler {
   }
 
 
-  async queryServer(
+  async queryAJAXServer(
     isPrivate, route, isPost, postData, options, upNodeID, flags
   ) {
     if (upNodeID !== OWN_UP_NODE_ID) throw new NetworkError(
@@ -58,8 +62,22 @@ export class ServerQueryHandler {
       if (postData !== undefined) reqData.data = postData;
     }
 
+    let reqBody = JSON.stringify(reqData);
+    return await this.request("ajax", route, !isPrivate, reqBody, headers);
+  }
 
-    return await this.request(route, !isPrivate, reqData, headers);
+
+
+  async queryLoginServer(reqType, reqBody, authOptions) {
+    let route = "/" + reqType;
+    let headers = authOptions?.authToken ? {
+      Authorization: `Bearer ${authOptions.authToken}`
+    } : authOptions?.username ? {
+      Authorization:
+        `Basic ${btoa(`${authOptions.username}:${authOptions.password}`)}`
+    } : {};
+
+    return await this.request("login", route, false, reqBody, headers);
   }
 
 
@@ -67,8 +85,10 @@ export class ServerQueryHandler {
   #requestBuffer = new Map();
 
 
-  async request(route, isGET = true, reqData = {}, headers = {}) {
-    let reqKey = JSON.stringify([route, isGET, reqData, headers]);
+  async request(
+    serverIdent, route, isGET = true, reqBody = undefined, headers = {}
+  ) {
+    let reqKey = JSON.stringify([serverIdent, route, isGET, reqBody, headers]);
 
     // If there is already an ongoing request with this reqData object,
     // simply return the promise of that.
@@ -78,7 +98,9 @@ export class ServerQueryHandler {
     }
 
     // Send the request.
-    responsePromise = this.#requestHelper(route, isGET, reqData, headers);
+    responsePromise = this.#requestHelper(
+      serverIdent, route, isGET, reqBody, headers
+    );
 
     // Then add it to requestBuffer, and also give it a then-callback to remove
     // itself from said buffer, before return ing the promise.
@@ -89,19 +111,20 @@ export class ServerQueryHandler {
   }
 
 
-  async #requestHelper(route, isGET, reqData, headers) {
+  async #requestHelper(serverIdent, route, isGET, reqBody, headers) {
     // Send the request.
     let options = isGET ? {
       headers: headers,
     } : {
       method: "POST",
       headers: headers,
-      body: JSON.stringify(reqData),
+      body: reqBody,
     };
     let fetch = this.fetch;
     let response;
     try {
-      response = await fetch(ajaxServerDomainURL + route, options);
+      let url = this.#getURL(serverIdent, route);
+      response = await fetch(url, options);
     } catch (err) {
       if (err instanceof TypeError) {
         throw new NetworkError(err.message);
@@ -125,22 +148,38 @@ export class ServerQueryHandler {
 
 
 
+  #getURL(serverIdent, path) {
+    let isLocalhost = this.domain === "localhost";
+    let urlRoot = isLocalhost ? "http://localhost" : "https://" + this.domain;
+    let serverPath;
+    if (serverIdent === "ajax") {
+      serverPath = isLocalhost ? ":8080" : "/ajax";
+    }
+    else if (serverIdent === "login") {
+      serverPath = isLocalhost ? ":8081" : "/login";
+    }
+    let url = urlRoot + serverPath + path;
+    return url;
+  }
+
+
+
 
   fetch(route, options) {
-    return this.queryServer(
+    return this.queryAJAXServer(
       false, route, false, undefined, options, OWN_UP_NODE_ID
     );
   }
 
   fetchAsAdmin(route, options) {
-    return this.queryServer(
+    return this.queryAJAXServer(
       true, route, false, undefined, options, OWN_UP_NODE_ID,
       {["request-admin-privileges"]: true}
     );
   }
 
   post(route, postData, options, flags) {
-    return this.queryServer(
+    return this.queryAJAXServer(
       true, route, true, postData, options, OWN_UP_NODE_ID, flags
     );
   }
@@ -152,8 +191,6 @@ export class ServerQueryHandler {
   }
 
 }
-
-
 
 
 
@@ -182,6 +219,9 @@ function unSerialize(val, mimeType) {
 export class NetworkError {
   constructor(msg) {
     this.msg = msg;
+  }
+  toString() {
+    return this.msg; 
   }
 }
 

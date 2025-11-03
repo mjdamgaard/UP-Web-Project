@@ -1,5 +1,8 @@
 
-import {loginServerDomainURL} from "../server/server_urls.js";
+import {ServerQueryHandler} from "../server/ajax_io/ServerQueryHandler.js";
+
+const serverQueryHandler = new ServerQueryHandler();
+
 
 
 export function main(settingsContext) {
@@ -23,7 +26,7 @@ export function main(settingsContext) {
     if (expTime * 1000 < Date.now() + 2678400000) {
       let {authToken, userID} =
         JSON.parse(localStorage.getItem("userData") ?? "{}");
-      requestLoginServer(
+      queryLoginServer(
         "replaceToken", undefined, {authToken: authToken}
       ).then(res => {
         let [newAuthToken, expTime] = res;
@@ -70,7 +73,7 @@ function logout(settingsContext) {
   let {userID, authToken} = JSON.parse(
     localStorage.getItem("userData") ?? "{}"
   );
-  requestLoginServer(
+  queryLoginServer(
     "logout", userID, {authToken: authToken}
   ).then(() => {
     localStorage.removeItem("userData");
@@ -128,7 +131,7 @@ function openLoginPage(settingsContext) {
       responseDisplay.replaceChildren(errMsg);
       return;
     }
-    requestLoginServer(
+    queryLoginServer(
       "login", undefined, {username: username, password: password}
     ).then(res => {
       let [userID, authToken, expTime] = res;
@@ -201,7 +204,7 @@ function openCreateAccountPage(settingsContext) {
       responseDisplay.replaceChildren(errMsg);
       return;
     }
-    requestLoginServer(
+    queryLoginServer(
       "createAccount", email, {username: username, password: password}
     ).then(res => {
       let [userID, authToken, expTime] = res;
@@ -264,7 +267,7 @@ function goToAccountPage(settingsContext) {
   let userInfoList = overlayPageContainer.querySelector(".user-info-list");
   userInfoList.querySelector("dd:nth-of-type(1)").replaceChildren(username);
   userInfoList.querySelector("dd:nth-of-type(2)").replaceChildren(userID);
-  requestLoginServer(
+  queryLoginServer(
     "userIDAndGas", undefined, {authToken: authToken}
   ).then(res => {
     let [ , gas] = res;
@@ -292,79 +295,11 @@ function goToAccountPage(settingsContext) {
 
 
 
-export async function requestLoginServer(reqType, reqBody, authOptions) {
-  let url = loginServerDomainURL + "/" + reqType;
-  let headers = authOptions?.authToken ? {
-    Authorization: `Bearer ${authOptions.authToken}`
-  } : authOptions?.username ? {
-    Authorization:
-      `Basic ${btoa(`${authOptions.username}:${authOptions.password}`)}`
-  } : {};
-  return await request(url, true, reqBody, headers);
+async function queryLoginServer(reqType, reqBody, authOptions) {
+  return await serverQueryHandler.queryLoginServer(
+    reqType, reqBody, authOptions
+  );
 }
-
-
-
-export async function request(url, isPost, reqBody, headers) {
-    // Send the request.
-    let options = isPost ? {
-      method: "POST",
-      headers: headers,
-      body: reqBody,
-    } : {
-      headers: headers,
-    };
-    let response;
-    try {
-      response = await fetch(url, options);
-    } catch (err) {
-      if (err instanceof TypeError) {
-        throw new err.message;
-      }
-      else throw err;
-    }
-    let responseText = await response.text();
-
-
-    if (!response.ok) {
-      throw new NetworkError(
-        "HTTP error " + response.status +
-        (responseText ? ": " + responseText : ""),
-      );
-    }
-    else {
-      let mimeType = response.headers.get("Content-Type");
-      return fromMIMEType(responseText, mimeType);
-    }
-  }
-
-
-  export class NetworkError {
-    constructor(msg) {
-      this.msg = msg;
-    }
-    toString() {
-      return this.msg; 
-    }
-  }
-
-
-  function fromMIMEType(val, mimeType) {
-    if (mimeType === "text/plain") {
-      return val;
-    }
-    else if (mimeType === "application/json") {
-      try {
-        return JSON.parse(val);
-      } catch(err) {
-        throw "Invalid application/json data received from server";
-      }
-    }
-    else throw (
-      `fromMIMEType(): Unrecognized/un-implemented MIME type: ${mimeType}`
-    );
-  }
-
 
 
 

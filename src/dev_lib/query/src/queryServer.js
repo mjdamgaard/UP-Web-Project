@@ -18,7 +18,7 @@ export async function queryServer(
   let flags = isPrivate ? FlagTransmitter.getTransmittedFlags(env) : undefined;
   options ||= JSON.parse(jsonStringify(options));
   try {
-    return await serverQueryHandler.queryServer(
+    return await serverQueryHandler.queryAJAXServer(
       isPrivate, route, isPost, postData, options, upNodeID, flags
     );
   }

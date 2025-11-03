@@ -20,7 +20,10 @@ If you want to install this system as a server on your localhost, you need to:
 
 7. Now go to a third terminal and run 'npm start'. After a short while, this will open your browser with the website running. However, since the database is currently empty, you will get some errors. But you should still be able to access the account menu at the top right and create a new user. Do so.
 
-8. Then go to the fourth terminal and run 'node ./update_dir.js ./up_directories/semantic_entities' and log in with the username and password of the account that you just created.
+8. Then go to the fourth terminal and run
+        node ./update_dir.js ./up_directories/semantic_entities
+        
+    and log in with the username and password of the account that you just created.
 
 9. When logged in type in 'u' (for 'upload') and press Enter. This uploads the 'semantic_entities' UP directory to your database. After you have done this, also check that the prompt has now turned into 'dir #1>', which means that your new UP directory has the ID of '1' in the database.
 
@@ -37,7 +40,14 @@ If you want to install this system as a server on your localhost, you need to:
 If you want to restart the server as localhost, possibly after having restarted your computer, you then just need to go through Steps 4–6 again above, needing only three terminals this time. This is of course unless you also want to make updates to a UP directory, in which case you should also run the 'node ./update_dir.js ./up_directories/YOUR_DIRECTORY' command as well in a separate terminal.
 
 
+## Uploading to the web instead of your localhost
 
-## Trouble shooting
+If wanting to upload to e.g. up-web.org (or another website with the same API), instead running the command as in Step 8 above, add 'up-web.org' as a third argument above, such that the full command instead becomes:
+
+        node ./update_dir.js ./up_directories/YOUR_UP_DIRECTORY up-web.org
+
+
+
+## Troubleshooting
 
 If you run into trouble with any of this, please don't hesitate to contact me (see ./contact_info.md).
