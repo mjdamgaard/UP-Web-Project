@@ -1,18 +1,6 @@
 
 import mysql from 'mysql2/promise';
-import {user, password} from "../../db_config.js";
-
-const mainDBConnectionOptions = {
-  host: "localhost",
-  database: "mainDB",
-  user: user,
-  password: password,
-} 
-
-const userDBConnectionOptions = {
-  ...mainDBConnectionOptions,
-  database: "userDB",
-};
+import {mainDBConnectionOptions, userDBConnectionOptions} from "./config.js";
 
 
 

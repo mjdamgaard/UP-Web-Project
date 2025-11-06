@@ -86,9 +86,9 @@ export class ServerQueryHandler {
 
 
   async request(
-    serverIdent, route, isGET = true, reqBody = undefined, headers = {}
+    serverKey, route, isGET = true, reqBody = undefined, headers = {}
   ) {
-    let reqKey = JSON.stringify([serverIdent, route, isGET, reqBody, headers]);
+    let reqKey = JSON.stringify([serverKey, route, isGET, reqBody, headers]);
 
     // If there is already an ongoing request with this reqData object,
     // simply return the promise of that.
@@ -99,7 +99,7 @@ export class ServerQueryHandler {
 
     // Send the request.
     responsePromise = this.#requestHelper(
-      serverIdent, route, isGET, reqBody, headers
+      serverKey, route, isGET, reqBody, headers
     );
 
     // Then add it to requestBuffer, and also give it a then-callback to remove
@@ -111,7 +111,7 @@ export class ServerQueryHandler {
   }
 
 
-  async #requestHelper(serverIdent, route, isGET, reqBody, headers) {
+  async #requestHelper(serverKey, route, isGET, reqBody, headers) {
     // Send the request.
     let options = isGET ? {
       headers: headers,
@@ -123,7 +123,7 @@ export class ServerQueryHandler {
     let fetch = this.fetch;
     let response;
     try {
-      let url = this.#getURL(serverIdent, route);
+      let url = this.#getURL(serverKey, route);
       response = await fetch(url, options);
     } catch (err) {
       if (err instanceof TypeError) {
@@ -148,14 +148,14 @@ export class ServerQueryHandler {
 
 
 
-  #getURL(serverIdent, path) {
+  #getURL(serverKey, path) {
     let isLocalhost = this.domain === "localhost";
     let urlRoot = isLocalhost ? "http://localhost" : "https://" + this.domain;
     let serverPath;
-    if (serverIdent === "ajax") {
+    if (serverKey === "ajax") {
       serverPath = isLocalhost ? ":8080" : "/ajax";
     }
-    else if (serverIdent === "login") {
+    else if (serverKey === "login") {
       serverPath = isLocalhost ? ":8081" : "/login";
     }
     let url = urlRoot + serverPath + path;
