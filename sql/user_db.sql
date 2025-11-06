@@ -1,5 +1,5 @@
 
-USE userDB;
+-- USE userDB;
 
 /* Private user data */
 DROP TABLE UserCredentials;

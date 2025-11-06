@@ -1,5 +1,5 @@
 
-USE userDB;
+-- USE userDB;
 
 DROP FUNCTION toBase64;
 

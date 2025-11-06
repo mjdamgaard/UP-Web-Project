@@ -1,5 +1,5 @@
 
-USE mainDB;
+-- USE mainDB;
 
 -- Apparently these don't seem to work, and I also don't know how I would get
 -- the super privileges needed to change them in the web server (I also haven't

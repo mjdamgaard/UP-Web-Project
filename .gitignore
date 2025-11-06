@@ -1,6 +1,9 @@
 
-# Security-related config files
-/src/db_config.js
+# Config files and system-dependent files used for installation
+/src/server/db_io/config.js
+/sql/install.sql
+
+# Ignore all dot-files in the UP directories (in particular the .id.js files)
 /up_directories/**/.*
 
 
