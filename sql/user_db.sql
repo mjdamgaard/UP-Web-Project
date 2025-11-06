@@ -94,16 +94,17 @@ CREATE TABLE UserGas (
 
 
 -- If a developer runs out of gas, an insert statement like the following is
--- a quick way to replenish that gas.
-INSERT INTO UserGas (user_id, gas_json)
-VALUES (1, CONCAT('{',
-    '"comp":100000000,',
-    '"import":500000,',
-    '"fetch":500000,',
-    '"time":10000000,',
-    '"dbRead":10000000,',
-    '"dbWrite":100000000,',
-    '"conn":3000000,',
-    '"mkdir":1000,',
-    '"mkTable":10',
-'}'));
+-- a quick way to replenish that gas:
+
+-- INSERT INTO UserGas (user_id, gas_json)
+-- VALUES (1, CONCAT('{',
+--     '"comp":100000000,',
+--     '"import":500000,',
+--     '"fetch":500000,',
+--     '"time":10000000,',
+--     '"dbRead":10000000,',
+--     '"dbWrite":100000000,',
+--     '"conn":3000000,',
+--     '"mkdir":1000,',
+--     '"mkTable":10',
+-- '}'));
