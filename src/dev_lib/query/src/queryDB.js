@@ -10,8 +10,9 @@ import * as fullTextTableFilesMod from "../src/filetypes/full_text_tables.js";
 
 
 export async function queryDB(
-  route, isPost, postData, options, homeDirID, filePath, fileExt, queryPathArr,
-  node, env, interpreter
+  route, isPost, postData, options,
+  homeDirID, localPath, dirSegments, fileName, fileExt, queryPathSegments,
+  callerNode, execEnv, interpreter
 ) {
   payGas(node, env, {dbRead: 1});
 
@@ -53,7 +54,7 @@ export async function queryDB(
   let result = await filetypeModule.query(
     {callerNode: node, execEnv: env, interpreter: interpreter},
     route, isPost, postData, options,
-    homeDirID, filePath, fileExt, queryPathArr,
+    homeDirID, localPath, dirSegments, fileName, fileExt, queryPathSegments,
   );
   return result;
 }

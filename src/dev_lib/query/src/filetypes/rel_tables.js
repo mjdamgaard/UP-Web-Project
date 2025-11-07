@@ -4,6 +4,7 @@ import {
   RuntimeError, payGas,
 } from "../../../../interpreting/ScriptInterpreter.js";
 import {DBQueryHandler} from "../../../../server/db_io/DBQueryHandler.js";
+import {getQueryObject} from "../route_parsing.js";
 
 const dbQueryHandler = new DBQueryHandler();
 
@@ -11,17 +12,17 @@ const dbQueryHandler = new DBQueryHandler();
 export async function query(
   {callerNode, execEnv},
   route, isPost, postData, options,
-  homeDirID, filePath, fileExt, queryPathArr,
+  homeDirID, localPath, _dirSegments, _fileName, fileExt, queryPathSegments,
 ) {
 
   // If route equals just ".../<homeDirID>/<filePath>", without any query
   // path, throw.
-  if (!queryPathArr) throw new RuntimeError(
+  if (queryPathSegments.length === 0) throw new RuntimeError(
     `Unrecognized route: ${route}`,
     callerNode, execEnv
   );
 
-  let queryType = queryPathArr[0];
+  let queryType = queryPathSegments[0];
 
   // If route equals ".../<homeDirID>/<filepath>/_touch" create a table file
   // if not already there, but do not delete its content if there.
@@ -32,7 +33,7 @@ export async function query(
     );
     payGas(callerNode, execEnv, {dbWrite: 1});
     let [[wasCreated] = []] = await dbQueryHandler.queryDBProc(
-      "touchTableFile", [homeDirID, filePath],
+      "touchTableFile", [homeDirID, localPath],
       route, options, callerNode, execEnv,
     ) ?? [];
     return wasCreated;
@@ -53,7 +54,7 @@ export async function query(
       (fileExt === "bbt") ? "putBBT" :
       undefined;
     let [[wasCreated] = []] = await dbQueryHandler.queryDBProc(
-      procName, [homeDirID, filePath],
+      procName, [homeDirID, localPath],
       route, options, callerNode, execEnv,
     ) ?? [];
     return wasCreated;
@@ -74,15 +75,15 @@ export async function query(
       (fileExt === "bbt") ? "deleteBBT" :
       undefined;
     let [[wasDeleted] = []] = await dbQueryHandler.queryDBProc(
-      procName, [homeDirID, filePath],
+      procName, [homeDirID, localPath],
       route, options, callerNode, execEnv,
     ) ?? [];
     return wasDeleted;
   }
 
 
-  // If route equals ".../<homeDirID>/<filepath>/_deleteEntry[/l=<listID>]" +
-  // "/k=<elemKey>", delete a single table entry with that primary key, where
+  // If route equals ".../<homeDirID>/<filepath>/_deleteEntry[/l/<listID>]" +
+  // "/k/<elemKey>", delete a single table entry with that primary key, where
   // the default value for listID is "".
   if (queryType === "_deleteEntry") {
     if (!isPost) throw new RuntimeError(
@@ -97,7 +98,7 @@ export async function query(
       undefined;
     let paramObj;
     try {
-      paramObj = Object.fromEntries(queryPathArr.slice(1));
+      paramObj = getQueryObject(queryPathSegments.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
@@ -107,14 +108,14 @@ export async function query(
     }
     let {l: listID = "", k: elemKey = ""} = paramObj;
     let [[wasDeleted] = []] = await dbQueryHandler.queryDBProc(
-      procName, [homeDirID, filePath, listID, elemKey],
+      procName, [homeDirID, localPath, listID, elemKey],
       route, options, callerNode, execEnv,
     ) ?? [];
     return wasDeleted;
   }
 
-  // If route equals ".../<homeDirID>/<filepath>/_deleteList[/l=<listID>]" +
-  // "[/lo=<loElemKey>]"[/hi=<hiElemKey>]", delete all entries with elemKeys
+  // If route equals ".../<homeDirID>/<filepath>/_deleteList[/l/<listID>]" +
+  // "[/lo/<loElemKey>]"[/hi/<hiElemKey>]", delete all entries with elemKeys
   // between lo and hi. The default value for lo is "", and if hi is missing,
   // all entries are deleted with an elemKey >= lo.
   if (queryType === "_deleteList") {
@@ -130,7 +131,7 @@ export async function query(
       undefined;
     let paramObj;
     try {
-      paramObj = Object.fromEntries(queryPathArr.slice(1));
+      paramObj = getQueryObject(queryPathSegments.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
@@ -142,14 +143,14 @@ export async function query(
     // SQL (and otherwise perhaps use a hack of using a non-hex string).
     let {l: listID = "", lo: lo = "", hi: hi} = paramObj;
     let [[wasDeleted] = []] = await dbQueryHandler.queryDBProc(
-      procName, [homeDirID, filePath, listID, lo, hi],
+      procName, [homeDirID, localPath, listID, lo, hi],
       route, options, callerNode, execEnv,
     ) ?? [];
     return wasDeleted;
   }
 
-  // If route equals ".../<homeDirID>/<filepath>/entry[/l=<listID>]" +
-  // "/k=<elemKey>", read and return the table entry with the given list ID and
+  // If route equals ".../<homeDirID>/<filepath>/entry[/l/<listID>]" +
+  // "/k/<elemKey>", read and return the table entry with the given list ID and
   // element key. Note that for binary and UTF-8 keys, listID and elemKey
   // should be hex-encoded.
   if (queryType === "entry") {
@@ -162,7 +163,7 @@ export async function query(
       undefined;
     let paramObj;
     try {
-      paramObj = Object.fromEntries(queryPathArr.slice(1));
+      paramObj = getQueryObject(queryPathSegments.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
@@ -172,7 +173,7 @@ export async function query(
     }
     let {l: listID = "", k: elemKey = ""} = paramObj;
     let [resultRow] = await dbQueryHandler.queryDBProc(
-      procName, [homeDirID, filePath, listID, elemKey],
+      procName, [homeDirID, localPath, listID, elemKey],
       route, options, callerNode, execEnv,
     ) ?? [];
     if (fileExt === "bbt") {
@@ -182,8 +183,8 @@ export async function query(
     }
   }
 
-  // If route equals ".../<homeDirID>/<filepath>/list[/l=<listID][/lo=<lo>]" +
-  // "[/hi=<hi>][/o=<numOffset>]/n=<maxNum>/a=<isAscending>", read and return
+  // If route equals ".../<homeDirID>/<filepath>/list[/l/<listID][/lo/<lo>]" +
+  // "[/hi/<hi>][/o/<numOffset>]/n/<maxNum>/a/<isAscending>", read and return
   // the primary-key-indexed list where the elemKey is limited by lo and hi if
   // any of them are provided, and limited by a maximum number of naxNum
   // entries, and offset by numOffset.
@@ -196,7 +197,7 @@ export async function query(
       undefined;
     let paramObj;
     try {
-      paramObj = Object.fromEntries(queryPathArr.slice(1));
+      paramObj = getQueryObject(queryPathSegments.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
@@ -219,13 +220,13 @@ export async function query(
     payGas(callerNode, execEnv, {dbRead: maxNum / 100});
     return await dbQueryHandler.queryDBProc(
       procName,
-      [homeDirID, filePath, listID, lo, hi, maxNum, numOffset, isAscending],
+      [homeDirID, localPath, listID, lo, hi, maxNum, numOffset, isAscending],
       route, options, callerNode, execEnv,
     );
   }
 
-  // If route equals ".../<homeDirID>/<filepath>/skList[/lo=<lo>][/hi=<hi>]" +
-  // "[/o=<numOffset>]n=<maxNum>[/a=<isAscending>]", verify the the file type
+  // If route equals ".../<homeDirID>/<filepath>/skList[/lo/<lo>][/hi/<hi>]" +
+  // "[/o/<numOffset>]n=<maxNum>[/a/<isAscending>]", verify the the file type
   // is a '.bbt' file, and then read and return a list where entries are
   // ordered by their elemScore instead, i.e. by their secondary key (SK).
   if (queryType === "skList") {
@@ -236,7 +237,7 @@ export async function query(
     let procName = "readBBTScoreOrderedList";
     let paramObj;
     try {
-      paramObj = Object.fromEntries(queryPathArr.slice(1));
+      paramObj = getQueryObject(queryPathSegments.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
@@ -259,13 +260,13 @@ export async function query(
     payGas(callerNode, execEnv, {dbRead: maxNum / 100});
     return await dbQueryHandler.queryDBProc(
       procName,
-      [homeDirID, filePath, listID, lo, hi, maxNum, numOffset, isAscending],
+      [homeDirID, localPath, listID, lo, hi, maxNum, numOffset, isAscending],
       route, options, callerNode, execEnv,
     );
   }
 
-  // If route equals ".../<homeDirID>/<filepath>/_insert/[/l=<listID>]" +
-  // "[/k=<elemKey>][/s=<elemScore>][/p=<elemPayload>][/i=<ignore>]", insert
+  // If route equals ".../<homeDirID>/<filepath>/_insert/[/l/<listID>]" +
+  // "[/k/<elemKey>][/s/<elemScore>][/p/<elemPayload>][/i/<ignore>]", insert
   // a single table entry with those row values, overwriting any existing entry
   // of the same key, unless the ignore parameter (i) is defined and truthy.
   // This does not apply .att files, but for these, if elemKey is defined and
@@ -283,7 +284,7 @@ export async function query(
       undefined;
     let paramObj;
     try {
-      paramObj = Object.fromEntries(queryPathArr.slice(1));
+      paramObj = getQueryObject(queryPathSegments.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
@@ -303,18 +304,18 @@ export async function query(
       elemPayload.length;
     payGas(callerNode, execEnv, {dbWrite: rowLen});
     let paramValArr = (fileExt === "bbt") ?
-      [homeDirID, filePath, listID, elemKey, elemScore, elemPayload, ignore]
+      [homeDirID, localPath, listID, elemKey, elemScore, elemPayload, ignore]
       : (fileExt === "att") ?
-        [homeDirID, filePath, listID, elemKey, elemPayload] :
-        [homeDirID, filePath, listID, elemKey, elemPayload, ignore];
+        [homeDirID, localPath, listID, elemKey, elemPayload] :
+        [homeDirID, localPath, listID, elemKey, elemPayload, ignore];
     let [[wasUpdatedOrNewID] = []] = await dbQueryHandler.queryDBProc(
       procName, paramValArr, route, options, callerNode, execEnv,
     ) ?? [];
     return wasUpdatedOrNewID;
   }
 
-  // If route equals ".../<homeDirID>/<filepath>/_insertList[/l=<listID>]" +
-  // "[/i=<ignore>]", treat postData as an array of rows to insert into the
+  // If route equals ".../<homeDirID>/<filepath>/_insertList[/l/<listID>]" +
+  // "[/i/<ignore>]", treat postData as an array of rows to insert into the
   // table. The ignore parameter also determines whether to ignore on
   // duplicate keys or to overwrite. For .att files, if ignore is falsy, the
   // the rows of rowArr should have the form '\[<textID>,<textJSONStr>\]'. And
@@ -358,7 +359,7 @@ export async function query(
       undefined;
     let paramObj;
     try {
-      paramObj = Object.fromEntries(queryPathArr.slice(1));
+      paramObj = getQueryObject(queryPathSegments.slice(1));
     }
     catch (err) {
       throw new RuntimeError(
@@ -369,7 +370,7 @@ export async function query(
     let {l: listID = "", i: ignore} = paramObj;
     ignore = ignore ? 1 : 0;
     payGas(callerNode, execEnv, {dbWrite: postData.length});
-    let paramValArr = [homeDirID, filePath, listID, postData, ignore];
+    let paramValArr = [homeDirID, localPath, listID, postData, ignore];
     let [[rowCount] = []] = await dbQueryHandler.queryDBProc(
       procName, paramValArr, route, options, callerNode, execEnv,
     ) ?? [];

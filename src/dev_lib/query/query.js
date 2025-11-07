@@ -7,7 +7,7 @@ import {
   getPropertyFromObject, ArgTypeError, forEachValue,
 } from '../../interpreting/ScriptInterpreter.js';
 import {scriptParser} from "../../interpreting/parsing/ScriptParser.js";
-import {parseRoute} from './src/parseRoute.js';
+import {parseRoute} from './src/route_parsing.js';
 
 import {CAN_POST_FLAG, ELEVATED_PRIVILEGES_FLAG} from "./src/flags.js";
 
@@ -45,10 +45,12 @@ export const queryRoute = new DevFunction(
     }
 
     // Parse the route, extracting parameters and qualities from it.
-    let isLocked, upNodeID, homeDirID, filePath, fileExt, queryPathArr;
+    let isLocked, upNodeID, homeDirID, localPath, dirSegments, fileName,
+      fileExt, queryPathSegments;
     try {
     [
-      isLocked, upNodeID, homeDirID, filePath, fileExt, queryPathArr
+      isLocked, upNodeID, homeDirID, localPath, dirSegments, fileName,
+      fileExt, queryPathSegments
     ] = parseRoute(route);
     }
     catch(errMsg) {
@@ -85,7 +87,7 @@ export const queryRoute = new DevFunction(
       }
       result = await interpreter.queryDB(
         route, isPost, postData, options,
-        homeDirID, filePath, fileExt, queryPathArr,
+        homeDirID, localPath, dirSegments, fileName, fileExt, queryPathSegments,
         callerNode, execEnv, interpreter
       );
     }
@@ -494,6 +496,68 @@ export const getCurrentHomePath = new DevFunction(
 
 
 
+export const encodeURIComponent = new DevFunction(
+  "encodeURIComponent", {typeArr: ["string"]}, 
+  ({callerNode, execEnv}, [str]) => {
+    try {
+      return encodeURIComponent(str);
+    }
+    catch (err) {
+      throw new ArgTypeError(
+        err.message,
+        callerNode, execEnv
+      );
+    }
+  }
+);
+
+export const decodeURIComponent = new DevFunction(
+  "decodeURIComponent", {typeArr: ["string"]}, 
+  ({callerNode, execEnv}, [str]) => {
+    try {
+      return decodeURIComponent(str);
+    }
+    catch (err) {
+      throw new ArgTypeError(
+        err.message,
+        callerNode, execEnv
+      );
+    }
+  }
+);
+
+export const encodeURI = new DevFunction(
+  "encodeURI", {typeArr: ["string"]}, 
+  ({callerNode, execEnv}, [str]) => {
+    try {
+      return encodeURI(str);
+    }
+    catch (err) {
+      throw new ArgTypeError(
+        err.message,
+        callerNode, execEnv
+      );
+    }
+  }
+);
+
+export const decodeURI = new DevFunction(
+  "decodeURI", {typeArr: ["string"]}, 
+  ({callerNode, execEnv}, [str]) => {
+    try {
+      return decodeURI(str);
+    }
+    catch (err) {
+      throw new ArgTypeError(
+        err.message,
+        callerNode, execEnv
+      );
+    }
+  }
+);
+
+
+
 
 export const clearPermissions = new DevFunction(
   "clearPermissions", {},
@@ -503,7 +567,6 @@ export const clearPermissions = new DevFunction(
     );
   }
 );
-
 
 
 export const noPost = new DevFunction(

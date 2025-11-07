@@ -44,7 +44,7 @@ export const actions = {
 
 function fetchPostListAndUpdate(inst) {
   fetch(
-    homePath + "/posts.att/list/n=50/a=" + (inst.state.isAscending ? 1 : 0)
+    homePath + "/posts.att/list/n/50/a/" + (inst.state.isAscending ? 1 : 0)
   ).then(res => {
     if (res) {
       inst.setState({...inst.state, postList: res});

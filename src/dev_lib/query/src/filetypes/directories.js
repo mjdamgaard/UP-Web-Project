@@ -12,18 +12,20 @@ const LOCKED_ROUTE_REGEX = /\/_/;
 export async function query(
   {callerNode, execEnv},
   route, isPost, _postData, options,
-  homeDirID, filePath, _fileExt, queryPathArr
+  homeDirID, localPath, _dirSegments, _fileName, _fileExt, queryPathSegments,
 ) {
+  let queryType = queryPathSegments[0];
+
   if (!homeDirID) {
-    // If route equals ".../mkdir/a=<adminID>", create a new home directory
+    // If route equals ".../mkdir/a/<adminID>", create a new home directory
     // with the requested adminID as the admin, or with the requesting user as
     // the admin if n adminID is provided.
-    if (queryPathArr[0] === "mkdir") {
+    if (queryType === "mkdir") {
       if (!isPost) throw new RuntimeError(
         `Unrecognized route for GET-like requests: "${route}"`,
         callerNode, execEnv
       );
-      let [a, adminID] = (queryPathArr[1] ?? []);
+      let [ , a, adminID] = queryPathSegments;
       if (a !== "a" || !adminID) throw new RuntimeError(
         "No admin ID was provided",
         callerNode, execEnv
@@ -36,11 +38,12 @@ export async function query(
       return dirID;
     }
 
-    // If route equals ".../directories/a=<adminID>[/...]...", ...
-    else if (queryPathArr[0] === "directories") {
+    // If route equals ".../directories/a/<adminID>[/...]...", ...
+    else if (queryType === "directories") {
       // TODO: Implement.
       return [];
     }
+
     else throw new RuntimeError(
       `Unrecognized route: ${route}`,
       callerNode, execEnv
@@ -48,7 +51,7 @@ export async function query(
   }
 
   // No requests targeting subdirectories are implemented at this point.
-  if (filePath) throw new RuntimeError(
+  if (localPath) throw new RuntimeError(
     `Unrecognized route: ${route}`,
     callerNode, execEnv
   );
@@ -56,7 +59,7 @@ export async function query(
   // If route equals ".../<homeDirID>/all", without any query path, return
   // a list of all nested file paths of the home directory, except paths of
   // files nested inside locked subdirectories (with any leading underscores).
-  if (!queryPathArr) {
+  if (queryPathSegments.length === 0) {
     let filePathTable = await dbQueryHandler.queryDBProc(
       "readAllHomeDirDescendants", [homeDirID, 4000, 0],
       route, options, callerNode, execEnv,
@@ -64,8 +67,6 @@ export async function query(
     return filePathTable.map(([filePath]) => filePath)
       .filter((filePath) => (!LOCKED_ROUTE_REGEX.test(filePath)));
   }
-
-  let queryType = queryPathArr[0];
 
   // If route equals just ".../<homeDirID>/_all", return a list of all nested
   // file paths of the home directory.
@@ -87,14 +88,14 @@ export async function query(
     return adminID;
   }
 
-  // If route equals ".../<homeDirID>/_setAdmin/a=<adminID>", set a new admin
+  // If route equals ".../<homeDirID>/_setAdmin/a/<adminID>", set a new admin
   // of the home directory.
   if (queryType === "_setAdmin") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
     );
-    let [a, adminID] = (queryPathArr[1] ?? []);
+    let [ , a, adminID] = queryPathSegments;
     if (a !== "a" || !adminID) throw new RuntimeError(
       "No admin ID was provided",
       callerNode, execEnv

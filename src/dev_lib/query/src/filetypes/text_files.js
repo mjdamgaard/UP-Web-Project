@@ -18,20 +18,20 @@ const ownUPNodeID = "1";
 export async function query(
   {callerNode, execEnv, interpreter},
   route, isPost, postData, options = {},
-  homeDirID, filePath, fileExt, queryPathArr
+  homeDirID, localPath, _dirSegments, _fileName, fileExt, queryPathSegments,
 ) {
 
   // If route equals just ".../<homeDirID>/<filePath>", without any query
   // path, return the text stored in the file.
-  if (!queryPathArr) {
+  if (queryPathSegments.length === 0) {
     let [[text] = []] = await dbQueryHandler.queryDBProc(
-      "readTextFile", [homeDirID, filePath],
+      "readTextFile", [homeDirID, localPath],
       route, options, callerNode, execEnv,
     ) ?? [];
     return text;
   }
 
-  let queryType = queryPathArr[0];
+  let queryType = queryPathSegments[0];
 
   // If route equals ".../<homeDirID>/_put" with a text stored in the postData,
   // overwrite the existing file with contentText, if any, or create a new file
@@ -44,7 +44,7 @@ export async function query(
     let text = getString(postData, execEnv);
     payGas(callerNode, execEnv, {dbWrite: text.length});
     let [[wasCreated] = []] = await dbQueryHandler.queryDBProc(
-      "putTextFile", [homeDirID, filePath, text],
+      "putTextFile", [homeDirID, localPath, text],
       route, options, callerNode, execEnv,
     ) ?? [];
     return wasCreated;
@@ -57,7 +57,7 @@ export async function query(
       callerNode, execEnv
     );
     let [[wasDeleted] = []] = await dbQueryHandler.queryDBProc(
-      "deleteTextFile", [homeDirID, filePath],
+      "deleteTextFile", [homeDirID, localPath],
       route, options, callerNode, execEnv,
     ) ?? [];
     return wasDeleted;
@@ -71,7 +71,7 @@ export async function query(
       `Invalid route: ${route}`,
       callerNode, execEnv
     );
-    let [ , alias] = queryPathArr;
+    let [ , alias] = queryPathSegments;
     if (typeof alias !== "string") throw new RuntimeError(
       "No variable name provided",
       callerNode, execEnv
@@ -80,7 +80,7 @@ export async function query(
     // Import and execute the given JS module using interpreter.import(),
     // then return the export of the given alias.
     let liveModule = await interpreter.import(
-      `/${ownUPNodeID}/${homeDirID}/${filePath}`, callerNode, execEnv, true
+      `/${ownUPNodeID}/${homeDirID}/${localPath}`, callerNode, execEnv, true
     );
     return liveModule.get(alias);
   }
@@ -98,7 +98,7 @@ export async function query(
       `Invalid route: ${route}`,
       callerNode, execEnv
     );
-    let [ , alias, ...inputArr] = queryPathArr;
+    let [ , alias, ...inputArr] = queryPathSegments;
     if (!alias) throw new RuntimeError(
       "No function name provided",
       callerNode, execEnv
@@ -118,7 +118,7 @@ export async function query(
     // when the liveModule is gotten, get and execute the function, also within
     // the same enclosed execution environment.
     let liveModule = await interpreter.import(
-      `/${ownUPNodeID}/${homeDirID}/${filePath}`, callerNode, execEnv, true
+      `/${ownUPNodeID}/${homeDirID}/${localPath}`, callerNode, execEnv, true
     );
     let fun = liveModule.get(alias);
     if (!(fun instanceof FunctionObject)) throw new RuntimeError(
@@ -140,11 +140,11 @@ export async function query(
   // optional last segment of the route (JSON-then-hex-encoded) or from the
   // postData (only JSON-encoded).
   if (queryType === "callSMF") {
-    if (filePath.slice(-6) !== ".sm.js") throw new RuntimeError(
+    if (localPath.slice(-6) !== ".sm.js") throw new RuntimeError(
       `Invalid route: ${route}`,
       callerNode, execEnv
     );
-    let [ , alias, ...inputArr] = queryPathArr;
+    let [ , alias, ...inputArr] = queryPathSegments;
     if (!alias) throw new RuntimeError(
       "No function name provided",
       callerNode, execEnv
@@ -172,7 +172,7 @@ export async function query(
     // recommended for all SMFs that can alter the state of the database. And
     // they can also be used to limit access to private data.)
     let liveModule = await interpreter.import(
-      `/${ownUPNodeID}/${homeDirID}/${filePath}`, callerNode, execEnv, true
+      `/${ownUPNodeID}/${homeDirID}/${localPath}`, callerNode, execEnv, true
     );
     let fun = liveModule.get(alias);
     if (!(fun instanceof FunctionObject)) throw new RuntimeError(
@@ -185,7 +185,7 @@ export async function query(
     // via postData, we just append the JSON array to the route for the "SMF
     // route".
     let currentSMFRoute = !postData ? route :
-      `/${ownUPNodeID}/${homeDirID}/${filePath}/` +
+      `/${ownUPNodeID}/${homeDirID}/${localPath}/` +
         "callSMF/" + JSON.stringify(inputArr);
     let requestingSMFRoute = execEnv.getFlag(CURRENT_SMF_ROUTE_FLAG);
     let grantAdminPrivileges = execEnv.getFlag(GRANT_ADMIN_PRIVILEGES_FLAG);
@@ -218,7 +218,7 @@ export async function query(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
     );
-    if (filePath.slice(-6) !== ".sm.js") throw new RuntimeError(
+    if (localPath.slice(-6) !== ".sm.js") throw new RuntimeError(
       `Invalid route: ${route}`,
       callerNode, execEnv
     );
@@ -251,7 +251,7 @@ export async function query(
       releaseAfter = true;
     }
     let [resultRow = []] = await dbQueryHandler.queryDBProc(
-      "selectSMGas", [homeDirID, filePath, 1],
+      "selectSMGas", [homeDirID, localPath, 1],
       route, options, callerNode, execEnv,
     ) ?? [];
     let [gasReserve = {}] = resultRow;
@@ -265,7 +265,7 @@ export async function query(
     payGas(callerNode, execEnv, reqGas);
     addTo(gasReserve, reqGas);
     await dbQueryHandler.queryDBProc(
-      "updateSMGas", [homeDirID, filePath, JSON.stringify(gasReserve), 1],
+      "updateSMGas", [homeDirID, localPath, JSON.stringify(gasReserve), 1],
       route, options, callerNode, execEnv,
     );
     if (releaseAfter) {
@@ -289,7 +289,7 @@ export async function query(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
     );
-    if (filePath.slice(-6) !== ".sm.js") throw new RuntimeError(
+    if (localPath.slice(-6) !== ".sm.js") throw new RuntimeError(
       `Invalid route: ${route}`,
       callerNode, execEnv
     );
@@ -322,7 +322,7 @@ export async function query(
       releaseAfter = true;
     }
     let [resultRow = []] = await dbQueryHandler.queryDBProc(
-      "selectSMGas", [homeDirID, filePath, 1],
+      "selectSMGas", [homeDirID, localPath, 1],
       route, options, callerNode, execEnv,
     ) ?? [];
     let [gasJSON = '{}'] = resultRow;
@@ -335,7 +335,7 @@ export async function query(
     addTo(gas, reqGas);
     subtractFrom(gasReserve, reqGas);
     await dbQueryHandler.queryDBProc(
-      "updateSMGas", [homeDirID, filePath, JSON.stringify(gasReserve), 1],
+      "updateSMGas", [homeDirID, localPath, JSON.stringify(gasReserve), 1],
       route, options, callerNode, execEnv,
     );
     if (releaseAfter) {
@@ -349,12 +349,12 @@ export async function query(
   // If route equals ".../<homeDirID>/<filePath>/gas", read how much gas is
   // stored on the server module (assuming that it is one).
   if (queryType === "gas") {
-    if (filePath.slice(-6) !== ".sm.js") throw new RuntimeError(
+    if (localPath.slice(-6) !== ".sm.js") throw new RuntimeError(
       `Invalid route: ${route}`,
       callerNode, execEnv
     );
     return await dbQueryHandler.queryDBProc(
-      "selectSMGas", [homeDirID, filePath, 0],
+      "selectSMGas", [homeDirID, localPath, 0],
       route, options, callerNode, execEnv,
     );
   }

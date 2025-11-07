@@ -233,8 +233,7 @@ export class ScriptInterpreter {
 // TODO: Maybe remove the parseScripts buffer; it should be redundant when we
 // also have the liveModules buffer, and already make sure that we never
 // execute a module more than once. *(But only remove it if we still keep a way
-// for the server not having the parse the "main script" (that redirects to
-// parseRoute()) for each request.)
+// for the server not having the parse the "main script" for each request.)
 
   async fetchParsedScript(
     scriptPath, parsedScripts, callerNode, callerEnv

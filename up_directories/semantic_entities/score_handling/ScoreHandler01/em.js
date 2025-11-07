@@ -79,11 +79,11 @@ export const allUsersList = {
     return new Promise(resolve => {
       fetch(
         abs("../.././users.bt/skList") +
-        (lo !== undefined ? "/lo=" + lo : "") +
-        (hi !== undefined ? "/hi=" + hi : "") +
-        (maxNum !== undefined ? "/n=" + maxNum : "") +
-        (offset !== undefined ? "/o=" + offset : "") +
-        (isAscending !== undefined ? "/a=" + isAscending : "")
+        (lo !== undefined ? "/lo/" + lo : "") +
+        (hi !== undefined ? "/hi/" + hi : "") +
+        (maxNum !== undefined ? "/n/" + maxNum : "") +
+        (offset !== undefined ? "/o/" + offset : "") +
+        (isAscending !== undefined ? "/a/" + isAscending : "")
       ).then(list => {
         resolve(map(list, ([userEntID]) => [userEntID, 1]));
       });

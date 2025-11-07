@@ -23,10 +23,12 @@ export function getInitialState({route: extRoute}) {
   if (atStr(extRoute, -1) === "/") extRoute = sliceStr(extRoute, 0, -1);
   // Parse and the (extended) route.
   let [route, ...castingSegments] = split(extRoute, ";");
-  let isLocked, upNodeID, homeDirID, filePath, fileExt, queryPathArr;
+  let isLocked, upNodeID, homeDirID, localPath, dirSegments, fileName,
+    fileExt, queryPathSegments;
   try {
     [
-      isLocked, upNodeID, homeDirID, filePath, fileExt, queryPathArr = []
+      isLocked, upNodeID, homeDirID, localPath, dirSegments, fileName, fileExt,
+      queryPathSegments
     ] = parseRoute(route);
   }
   catch (_) {
@@ -38,29 +40,29 @@ export function getInitialState({route: extRoute}) {
 
   // If there is no filePath or casting segments, record that route is a
   // "directory path."
-  let isDirectoryPath = (!filePath && castingSegments.length === 0);
+  let isDirectoryPath = (!localPath && castingSegments.length === 0);
 
   // If if it is a directory path, reinterpret the route by putting a ';' after
   // the homeDirID, which means that the route becomes a casted as a
   // subdirectory route.
   let transformedRoute = extRoute;
   if (isDirectoryPath) {
-    let subdirectoryPath = join(queryPathArr, "/");
+    let subdirectoryPath = join(queryPathSegments, "/");
     transformedRoute = routeHomePath + ";/" + subdirectoryPath;
   }
 
   // Also record if the route is a text file, and whether is has a query path,
   // e.g. a "/call" or "/get" query path.
   let isTextFile = fileExt && isTextFileExtension(fileExt);
-  let isTextFileQuery = isTextFile && queryPathArr.length > 0;
+  let isTextFileQuery = isTextFile && queryPathSegments.length > 0;
 
   // Then call getRouteJSXWithSubLinks() to get a <span> element with the route
   // where every single queryable segment is an individual ILink, meaning that
   // the user can navigate to ancestor directories, or to pre-casted versions
   // of a casted route.
   let routeJSXWithSubLinks = getRouteJSXWithSubLinks(
-    castingSegments, routeHomePath, filePath, isDirectoryPath, isTextFileQuery,
-    queryPathArr
+    castingSegments, routeHomePath, localPath, isDirectoryPath, isTextFileQuery,
+    queryPathSegments
   );
 
   // Record wether a separate query for the text file should be made.
@@ -68,7 +70,7 @@ export function getInitialState({route: extRoute}) {
 
   return {
     extRoute: extRoute, isLocked: isLocked, routeHomePath: routeHomePath,
-    filePath: filePath,
+    filePath: localPath,
     transformedRoute: transformedRoute, isDirectoryPath: isDirectoryPath,
     fetchFile: fetchFile, isTextFile: isTextFile,
     routeJSXWithSubLinks: routeJSXWithSubLinks,
@@ -80,14 +82,14 @@ export function getInitialState({route: extRoute}) {
 
 function getRouteJSXWithSubLinks(
   castingSegments, routeHomePath, filePath, isDirectoryPath, isTextFileQuery,
-  queryPathArr = []
+  queryPathSegments = []
 ) {
-  // If there is no filePath, interpret queryPathArr as an array of
+  // If there is no filePath, interpret queryPathSegments as an array of
   // subdirectories, and else parse the subdirectories and file name from
   // filePath.
   let directorySegments, fileName;
   if (isDirectoryPath) {
-    directorySegments = queryPathArr;
+    directorySegments = queryPathSegments;
   }
   else {
     let pathSegments = split(filePath, "/");
@@ -108,14 +110,14 @@ function getRouteJSXWithSubLinks(
   });
 
   // Also create an ILinks to the file if the file is a text file and the
-  // queryPathArr is nonempty.
+  // queryPathSegments array is nonempty.
   let fileLink = isTextFileQuery ?
     <ILink key={"f"} href={acc + "/" + fileName}>{fileName}</ILink> :
     undefined;
   
   // Then create an ILink to the result as it is before any casting.
   let resultSegment = fileName ? fileName + (
-    queryPathArr.length === 0 ? "" : join(queryPathArr, "/")
+    queryPathSegments.length === 0 ? "" : join(queryPathSegments, "/")
   ) : undefined;
   acc += "/" + resultSegment;
   let resultLink = <ILink key={"r"} href={acc}>{resultSegment}</ILink>;

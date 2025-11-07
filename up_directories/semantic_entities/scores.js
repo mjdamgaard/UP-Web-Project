@@ -38,9 +38,9 @@ export function fetchUserScoreHex(
     Promise.all([
       qualIDProm, subjIDProm, userIDProm
     ]).then(([qualID, subjID, userID]) => {
-      let listIDHex = valueToHex(qualID + "+" + userID, "string");
+      let listIDHex = valueToHex(qualID + "-" + userID, "string");
       fetch(
-        homePath + "/userScores.bbt/entry/l=" + listIDHex + "/k=" + subjID,
+        homePath + "/userScores.bbt/entry/l/" + listIDHex + "/k/" + subjID,
         options
       ).then(entry => {
         let [userScoreHex] = entry ?? [];
@@ -126,14 +126,14 @@ export function fetchUserScoreHexList(
   let userIDProm = fetchEntityID(userKey);
   return new Promise(resolve => {
     Promise.all([qualIDProm, userIDProm]).then(([qualID, userID]) => {
-      let listIDHex = valueToHex(qualID + "+" + userID, "string");
+      let listIDHex = valueToHex(qualID + "-" + userID, "string");
       fetch(
-        homePath + "/userScores.bbt/skList/l=" + listIDHex +
-        (!loHex ? "" : "/lo=" + loHex) +
-        (!hiHex ? "" : "/hi=" + hiHex) +
-        (maxNum === undefined ? "" : "/n=" + maxNum) +
-        (offset === undefined ? "" : "/o=" + offset) +
-        (isAscending === undefined ? "" : "/a=" + isAscending ? "1" : "0"),
+        homePath + "/userScores.bbt/skList/l/" + listIDHex +
+        (!loHex ? "" : "/lo/" + loHex) +
+        (!hiHex ? "" : "/hi/" + hiHex) +
+        (maxNum === undefined ? "" : "/n/" + maxNum) +
+        (offset === undefined ? "" : "/o/" + offset) +
+        (isAscending === undefined ? "" : "/a/" + isAscending ? "1" : "0"),
         options
       ).then(userScoreHexList => {
         userScoreHexList ??= [];
@@ -182,10 +182,10 @@ export function fetchScoreHex(
     Promise.all([
       keyIDProm, ...listIDPartsPromArr
     ]).then(([keyID, ...listIDParts]) => {
-      let listID = join(listIDParts, "+");
-      let listIDSegment = listID ? "/l=" + valueToHex(listID, "string") : "";
+      let listID = join(listIDParts, "-");
+      let listIDSegment = listID ? "/l/" + valueToHex(listID, "string") : "";
       fetch(
-        tableFilePath + "/entry" + listIDSegment + "/k=" + keyID, options
+        tableFilePath + "/entry" + listIDSegment + "/k/" + keyID, options
       ).then(entry => {
         let [scoreAndWeightHex] = entry ?? [];
         resolve(scoreAndWeightHex ?? undefined);
@@ -230,15 +230,15 @@ export function fetchScoreHexList(
     Promise.all(
       listIDPartsPromArr
     ).then(listIDParts => {
-      let listID = join(listIDParts, "+");
-      let listIDSegment = listID ? "/l=" + valueToHex(listID, "string") : "";
+      let listID = join(listIDParts, "-");
+      let listIDSegment = listID ? "/l/" + valueToHex(listID, "string") : "";
       fetch(
         tableFilePath + "/skList" + listIDSegment +
-        (!loHex ? "" : "/lo=" + loHex) +
-        (!hiHex ? "" : "/hi=" + hiHex) +
-        (maxNum === undefined ? "" : "/n=" + maxNum) +
-        (offset === undefined ? "" : "/o=" + offset) +
-        (isAscending === undefined ? "" : "/a=" + isAscending ? "1" : "0"),
+        (!loHex ? "" : "/lo/" + loHex) +
+        (!hiHex ? "" : "/hi/" + hiHex) +
+        (maxNum === undefined ? "" : "/n/" + maxNum) +
+        (offset === undefined ? "" : "/o/" + offset) +
+        (isAscending === undefined ? "" : "/a/" + isAscending ? "1" : "0"),
         options
       ).then(
         list => resolve(list)
@@ -281,11 +281,11 @@ export function postScoreAndWeightHex(
     Promise.all([
       keyIDProm, ...listIDPartsPromArr
     ]).then(([keyID, ...listIDParts]) => {
-      let listID = join(listIDParts, "+");
-      let listIDSegment = listID ? "/l=" + valueToHex(listID, "string") : "";
+      let listID = join(listIDParts, "-");
+      let listIDSegment = listID ? "/l/" + valueToHex(listID, "string") : "";
       post(
-        tableFilePath + "/_insert" + listIDSegment + "/k=" + keyID +
-        "/s=" + scoreAndWeightHex,
+        tableFilePath + "/_insert" + listIDSegment + "/k/" + keyID +
+        "/s/" + scoreAndWeightHex,
         undefined, options
       ).then(
         wasUpdated => resolve(wasUpdated)
@@ -309,10 +309,10 @@ export function deleteScore(
     Promise.all([
       keyIDProm, ...listIDPartsPromArr
     ]).then(([keyID, ...listIDParts]) => {
-      let listID = join(listIDParts, "+");
-      let listIDSegment = listID ? "/l=" + valueToHex(listID, "string") : "";
+      let listID = join(listIDParts, "-");
+      let listIDSegment = listID ? "/l/" + valueToHex(listID, "string") : "";
       post(
-        tableFilePath + "/_deleteEntry" + listIDSegment + "/k=" + keyID,
+        tableFilePath + "/_deleteEntry" + listIDSegment + "/k/" + keyID,
         undefined, options
       ).then(
         wasDeleted => resolve(wasDeleted)

@@ -60,7 +60,7 @@ export class DirectoryUpdater {
     if (!dirID) {
       dirID = this.readDirID(dirPath) ?? "";
       if (!dirID) {
-        dirID = await serverQueryHandler.post(`/1/mkdir/a=${userID}`);
+        dirID = await serverQueryHandler.post(`/1/mkdir/a/${userID}`);
         if (!dirID) throw "mkdir error";
         fs.writeFileSync(idFilePath, `export default "/1/${dirID}";`);
       }

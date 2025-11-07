@@ -290,11 +290,11 @@ function postUserScoreHex(
     Promise.all([
       qualIDProm, subjIDProm, userEntIDProm
     ]).then(([qualID, subjID, userEntID]) => {
-      let listIDHex = valueToHex(qualID + "+" + userEntID, "string");
-      post(homePath + "/users.bt/_insert/k=" + userEntID);
+      let listIDHex = valueToHex(qualID + "-" + userEntID, "string");
+      post(homePath + "/users.bt/_insert/k/" + userEntID);
       post(
-        homePath + "/userScores.bbt/_insert/l=" + listIDHex + "/k=" + subjID +
-        "/s=" + scoreHex + (payloadHex ? "/p=" + payloadHex : "")
+        homePath + "/userScores.bbt/_insert/l/" + listIDHex + "/k/" + subjID +
+        "/s/" + scoreHex + (payloadHex ? "/p/" + payloadHex : "")
       ).then(
         wasUpdated => resolve(wasUpdated)
       );

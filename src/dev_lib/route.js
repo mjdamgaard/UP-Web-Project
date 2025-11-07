@@ -1,8 +1,6 @@
 
-import {parseRoute as _parseRoute} from './query/src/parseRoute.js';
-import {
-  DevFunction, ArgTypeError,
-} from '../interpreting/ScriptInterpreter.js';
+import {parseRoute as _parseRoute} from './query/src/route_parsing.js';
+import {DevFunction, ArgTypeError} from '../interpreting/ScriptInterpreter.js';
 
 
 

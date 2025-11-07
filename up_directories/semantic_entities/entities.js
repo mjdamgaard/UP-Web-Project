@@ -20,7 +20,7 @@ export function fetchEntityID(entKey) {
   if (entKey[0] === "/") {
     return new Promise(resolve => {
       let entPathHex = valueToHex(entKey, "string");
-      fetch(homePath + "/entIDs.bt/entry/k=" + entPathHex).then(
+      fetch(homePath + "/entIDs.bt/entry/k/" + entPathHex).then(
         entID => resolve(entID)
       );
     });
@@ -33,7 +33,7 @@ export function fetchEntityID(entKey) {
     return new Promise(resolve => {
       let entPath = homePath + "/em1.js;call/User/" + upNodeID + "/" + userID;
       let entPathHex = valueToHex(entPath, "string");
-      fetch(homePath + "/entIDs.bt/entry/k=" + entPathHex).then(
+      fetch(homePath + "/entIDs.bt/entry/k/" + entPathHex).then(
         entID => resolve(entID)
       );
     });
@@ -74,7 +74,7 @@ export function fetchEntityPath(entKey) {
   }
   verifyType(entKey, "hex-string");
   return new Promise(resolve => {
-    fetch(homePath + "/entPaths.att/entry/k=" + entKey).then(
+    fetch(homePath + "/entPaths.att/entry/k/" + entKey).then(
       entPath => resolve(entPath)
     );
   });
