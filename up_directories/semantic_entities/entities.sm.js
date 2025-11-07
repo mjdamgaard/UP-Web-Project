@@ -6,7 +6,7 @@
 // entID searchable as well.
 
 import homePath from "./.id.js";
-import {post, fetch} from 'query';
+import {post, fetch, decodeURIComponent} from 'query';
 import {valueToHex} from 'hex';
 import {verifyType} from 'type';
 
@@ -78,4 +78,44 @@ export function addSecondaryIndex(entID) {
       });
     });
   });
+}
+
+
+
+
+
+export function fetchEntityID(entKey) {
+  // If entKey is a path, fetch the entID from ./entIDs.bt.
+  if (entKey[0] === "/") {
+    let entPath = decodeURIComponent(entKey);
+    return new Promise(resolve => {
+      let entPathHex = valueToHex(entPath, "string");
+      fetch(homePath + "/entIDs.bt/entry/k/" + entPathHex).then(
+        entID => resolve(entID)
+      );
+    });
+  }
+
+  // Else if it is a user key, of the form '@<userID>', fetch the ID of
+  // the user entity (assuming that this has been uploaded).
+  else if (entKey[0] === "@") {
+    let userID = substring(entKey, 1);
+    return new Promise(resolve => {
+      let entPath = homePath + "/em1.js;call/User/" + upNodeID + "/" + userID;
+      let entPathHex = valueToHex(entPath, "string");
+      fetch(homePath + "/entIDs.bt/entry/k/" + entPathHex).then(
+        entID => resolve(entID)
+      );
+    });
+  }
+
+  // Else if of the form '#<entID>' or '<entID>', return a trivial promise to
+  // that entID.
+  else {
+    if (entKey[0] === "#") {
+      entKey = substring(entKey, 1);
+    }
+    verifyType(entKey, "hex-string");
+    return new Promise(resolve => resolve(entKey));
+  }
 }

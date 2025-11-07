@@ -1,5 +1,6 @@
 
 import {slice, substring, at, indexOf} from 'string';
+import {decodeURIComponent} from 'query';
 import {fetchEntityID} from "/1/1/entities.js";
 
 import * as UPIndexPage from "./UPIndexPage.jsx";
@@ -29,7 +30,7 @@ export function render({url = "", history, homeURL}) {
   // further to page/app that fits the subsequent part of the url.
   let indOfSecondSlash = indexOf(relURL, "/", 1);
   let firstSegment = (indOfSecondSlash === -1) ?
-    substring(relURL, 1) : slice(relURL, 1, indOfSecondSlash);
+    substring(relURL, 1) : substring(relURL, 1, indOfSecondSlash);
   if (firstSegment === "up") {
     return (
       <main className="app-main">
@@ -41,7 +42,7 @@ export function render({url = "", history, homeURL}) {
   // Else if relURL is of the form "/entPath" + entPath, fetch the entity ID and
   // then redirect to the "/e/" + entID relURL (using replaceState()).
   if (firstSegment === "entPath") {
-    let entPath = slice(url, 8);
+    let entPath = substring(url, 8);
     fetchEntityID(entPath).then(entID => {
       if (entID) {
         history.replaceState(history.state, homeURL + "/e/" + entID);
@@ -62,7 +63,7 @@ export function render({url = "", history, homeURL}) {
   if (firstSegment === "e") {
     let indOfThirdSlash = indexOf(relURL, "/", 3);
     let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
-    let entID = slice(relURL, 3, endOfID);
+    let entID = substring(relURL, 3, endOfID);
     let urlRemainder = substring(relURL, 3 + entID.length);
     return (
       <main className="app-main">
@@ -73,10 +74,11 @@ export function render({url = "", history, homeURL}) {
     );
   } 
 
-  // Else if relURL is of the form "/f" + route (where 'f' might stand for
-  // 'file' or 'fetch' if you will), go to the file browser app with that route.
+  // Else if relURL is of the form "/f" + uriEncodedRoute (where 'f' might
+  // stand for 'file' or 'fetch' if you will), go to the file browser app with
+  // that route.
   if (firstSegment === "f") {
-    let route = slice(relURL, 2);
+    let route = decodeURIComponent(substring(relURL, 2));
     return (
       <main className="app-main">
         <FileBrowser key="f" route={route} />

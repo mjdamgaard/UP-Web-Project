@@ -13,6 +13,8 @@ import * as TextDisplay from "../utility_components/TextDisplay.jsx";
 
 
 
+// TODO: Refactor this component now that parseRoute() produces dirSegments and
+// fileName as well.
 
 
 // getInitialState() parses the input route, and in the special case where the
