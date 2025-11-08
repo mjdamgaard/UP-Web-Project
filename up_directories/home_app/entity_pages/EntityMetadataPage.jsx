@@ -50,7 +50,7 @@ export function render({entKey}) {
     content = [
       <h3>{"Entity path"}</h3>,
       <div className="ent-path">
-        <ILink key="em"href={"~/f" + encodeURIComponent(entPath)}>
+        <ILink key="em"href={"~/f/" + encodeURIComponent(entPath)}>
           {entPath}
         </ILink>
       </div>,

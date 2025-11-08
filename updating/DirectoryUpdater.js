@@ -254,18 +254,18 @@ export class DirectoryUpdater {
 
 
 
-const SEGMENT_TO_REMOVE_REGEX = /(\/\.\/|[^/]+\/\.\.\/)/g;
+const SEGMENT_TO_REPLACE_REGEX = /(\/\.\/|\/[^/]+\/\.\.\/)/g;
 
 export function normalizePath(path) {
   // Then replace any occurrences of "/./", and "<dirName>/../" with "/".
   let ret = path, prevPath;
   do {
     prevPath = ret
-    ret = ret.replaceAll(SEGMENT_TO_REMOVE_REGEX, "/");
+    ret = ret.replaceAll(SEGMENT_TO_REPLACE_REGEX, "/");
   }
   while (ret !== prevPath);
 
-  if (ret.substring(0, 4) === "/../") throw (
+  if (ret.includes("/../")) throw (
     `Ill-formed path: "${path}"`
   );
 

@@ -2984,7 +2984,7 @@ export function logExtendedErrorAndTrace(err) {
 
 
 const FILENAME_REGEX = /\/[^./]+\.[^/]+$/;
-const SEGMENT_TO_REMOVE_REGEX = /(\/\.\/|[^/]+\/\.\.\/)/g;
+const SEGMENT_TO_REPLACE_REGEX = /(\/\.\/|\/[^/]+\/\.\.\/)/g;
 
 
 export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
@@ -3013,11 +3013,11 @@ export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
   let prevFullPath;
   do {
     prevFullPath = fullPath
-    fullPath = fullPath.replaceAll(SEGMENT_TO_REMOVE_REGEX, "/");
+    fullPath = fullPath.replaceAll(SEGMENT_TO_REPLACE_REGEX, "/");
   }
   while (fullPath !== prevFullPath);
 
-  if (fullPath.substring(0, 4) === "/../") throw new LoadError(
+  if (fullPath.includes("/../")) throw new LoadError(
     `Ill-formed path: "${path}"`, callerNode, callerEnv
   );
 

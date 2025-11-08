@@ -500,7 +500,7 @@ export const encodeURIComponent = new DevFunction(
   "encodeURIComponent", {typeArr: ["string"]}, 
   ({callerNode, execEnv}, [str]) => {
     try {
-      return encodeURIComponent(str);
+      return window.encodeURIComponent(str);
     }
     catch (err) {
       throw new ArgTypeError(
@@ -515,7 +515,7 @@ export const decodeURIComponent = new DevFunction(
   "decodeURIComponent", {typeArr: ["string"]}, 
   ({callerNode, execEnv}, [str]) => {
     try {
-      return decodeURIComponent(str);
+      return window.decodeURIComponent(str);
     }
     catch (err) {
       throw new ArgTypeError(
@@ -530,7 +530,7 @@ export const encodeURI = new DevFunction(
   "encodeURI", {typeArr: ["string"]}, 
   ({callerNode, execEnv}, [str]) => {
     try {
-      return encodeURI(str);
+      return window.encodeURI(str);
     }
     catch (err) {
       throw new ArgTypeError(
@@ -545,7 +545,7 @@ export const decodeURI = new DevFunction(
   "decodeURI", {typeArr: ["string"]}, 
   ({callerNode, execEnv}, [str]) => {
     try {
-      return decodeURI(str);
+      return window.decodeURI(str);
     }
     catch (err) {
       throw new ArgTypeError(

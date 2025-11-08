@@ -39,10 +39,10 @@ export function render({url = "", history, homeURL}) {
     );
   }
 
-  // Else if relURL is of the form "/entPath" + entPath, fetch the entity ID and
-  // then redirect to the "/e/" + entID relURL (using replaceState()).
+  // Else if relURL is of the form "/entPath/<encoded entPath>"", fetch the
+  // entity ID and then redirect to the "/e/" + entID relURL.
   if (firstSegment === "entPath") {
-    let entPath = substring(url, 8);
+    let entPath = decodeURIComponent(substring(url, 9));
     fetchEntityID(entPath).then(entID => {
       if (entID) {
         history.replaceState(history.state, homeURL + "/e/" + entID);
