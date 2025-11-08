@@ -8,7 +8,7 @@ import {
 
 export const filterScoredListWRTWeight = new DevFunction(
   "filterScoredListWRTWeight", {typeArr: ["array", "number?"]},
-  ({callerNode, execEnv, interpreter}, [list, minWeight = 10]) => {
+  ({}, [list, minWeight = 10]) => {
     // Deep-copy list, also turning it, and its nested array objects into a
     // plain JS array if they are not already.
     list = extractArray(list);

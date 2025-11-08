@@ -6,7 +6,7 @@ import {slice as sliceArr, at as atArr, join, map} from 'array';
 import {parseRoute, isTextFileExtension} from 'route';
 import {hasType} from 'type';
 
-import {fetch} from 'query';
+import {fetch, encodeURIComponent} from 'query';
 import * as ILink from 'ILink.jsx';
 import * as EntityReference from "../utility_components/EntityReference.jsx";
 import * as TextDisplay from "../utility_components/TextDisplay.jsx";
@@ -100,15 +100,17 @@ function getRouteJSXWithSubLinks(
   }
 
   // Initialize an accumulative path for the following ILinks.
-  let acc = "~/f" + routeHomePath;
+  let href, acc = "~/f" + routeHomePath;
 
   // Create an ILink to the home directory.
-  let homeILink = <ILink key="h" href={acc}>{routeHomePath}</ILink>;
+  href = acc;
+  let homeILink = <ILink key="h" href={href}>{routeHomePath}</ILink>;
 
   // Then create an array of ILinks to each additional subdirectory, if any.
   let subdirectoryLinks = map(directorySegments, (val, ind) => {
     acc += "/" + val;
-    return <ILink key={"s" + ind} href={acc}>{val}</ILink>;
+    href = acc;
+    return <ILink key={"s" + ind} href={href}>{val}</ILink>;
   });
 
   // Also create an ILinks to the file if the file is a text file and the
@@ -122,12 +124,14 @@ function getRouteJSXWithSubLinks(
     queryPathSegments.length === 0 ? "" : join(queryPathSegments, "/")
   ) : undefined;
   acc += "/" + resultSegment;
-  let resultLink = <ILink key={"r"} href={acc}>{resultSegment}</ILink>;
+  href = encodeURIComponent(acc);
+  let resultLink = <ILink key={"r"} href={href}>{resultSegment}</ILink>;
 
   // Then create an ILink for each casting segment.
   let castingLinks = map(castingSegments, (segment, ind) => {
     acc += ";" + segment;
-    return <ILink key={"cast" + ind} href={acc}>{segment}</ILink>;
+    href = encodeURIComponent(acc);
+    return <ILink key={"cast" + ind} href={href}>{segment}</ILink>;
   });
 
   // Then gather all these links into an array that also includes "/"
@@ -200,7 +204,9 @@ export function render({route}) {
       map((result ?? []), (child, ind) => {
         let isFile = (indexOf(child, ".") !== -1);
         return <div className={isFile ? "file-link" : "directory-link"}>
-          <ILink key={"child" + ind} href={"~/f" + route + "/" + child}>
+          <ILink key={"child" + ind} href={
+            "~/f/" + encodeURIComponent(route + "/" + child)
+          }>
             {child}
           </ILink> 
         </div>;

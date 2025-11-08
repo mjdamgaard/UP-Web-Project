@@ -12,7 +12,7 @@ export const replaceReferences = new DevFunction(
     // Use String.match() to split the string into an array where each entity
     // key or file route is put into its own array entry.
     let segmentArr = str.match(
-      /#[0-9a-f]*|\/[^\s\\#]*|\\([\s\S]|$)|[^#/\\]+/g
+      /#[0-9a-f]*|\/[^\s\\#]*|\\([\s\S]|$)|([^#/\\]|(?<=\S)[#/])+/g
     ) ?? [];
     
     // Go through each segment, and if it is an entity key or route, replace it
