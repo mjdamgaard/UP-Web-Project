@@ -2,7 +2,6 @@
 import {ServerQueryHandler} from '../src/server/ajax_io/ServerQueryHandler.js';
 
 import fs from 'fs';
-import path from 'path';
 import fetch from 'node-fetch';
 
 
@@ -31,7 +30,7 @@ export class DirectoryUpdater {
 
   readDirID(dirPath) {
     // Read the dirID.
-    let idFilePath = path.normalize(dirPath + "/.id.js");
+    let idFilePath = dirPath + "/.id.js";
     let dirID;
     try {
       let contents = fs.readFileSync(idFilePath, 'utf8');
@@ -56,11 +55,11 @@ export class DirectoryUpdater {
 
     // If no dirID was provided, request the server to create a new directory
     // and get the new dirID.
-    let idFilePath = path.normalize(dirPath + "/.id.js");
+    let idFilePath = dirPath + "/.id.js";
     if (!dirID) {
       dirID = this.readDirID(dirPath) ?? "";
       if (!dirID) {
-        dirID = await serverQueryHandler.post(`/1/mkdir/a/${userID}`);
+        dirID = await serverQueryHandler.post(`/1//mkdir/a/${userID}`);
         if (!dirID) throw "mkdir error";
         fs.writeFileSync(idFilePath, `export default "/1/${dirID}";`);
       }
@@ -71,15 +70,15 @@ export class DirectoryUpdater {
     // side directory, and for each one that doesn't, request deletion of that
     // file server-side.
     let filePaths = await serverQueryHandler.fetchAsAdmin(
-      `/1/${dirID}/_all`
+      `/1/${dirID}//_all`
     );
     let deletionPromises = [];
     filePaths.forEach((relPath) => {
-      let clientFilePath = path.normalize(dirPath + "/" + relPath);
-      let serverFilePath = path.normalize(`/1/${dirID}/${relPath}`);
+      let clientFilePath = dirPath + "/" + relPath;
+      let serverFilePath = normalizePath(`/1/${dirID}/${relPath}`);
       if (!fs.existsSync(clientFilePath)) {
         deletionPromises.push(
-          serverQueryHandler.postAsAdmin(serverFilePath + "/_rm")
+          serverQueryHandler.postAsAdmin(serverFilePath + "//_rm")
         );
       }
     });
@@ -124,14 +123,14 @@ export class DirectoryUpdater {
         let contentText = fs.readFileSync(childAbsPath, 'utf8');
         uploadPromises.push(
           serverQueryHandler.postAsAdmin(
-            `/1/${childRelPath}/_put`,
+            `/1/${childRelPath}//_put`,
             contentText,
           )
         );
       }
       else if (/\.(att|bt|ct|bbt|ftt)$/.test(name)) {
         uploadPromises.push(
-          serverQueryHandler.postAsAdmin(`/1/${childRelPath}/_touch`)
+          serverQueryHandler.postAsAdmin(`/1/${childRelPath}//_touch`)
         );
       }
     });
@@ -159,7 +158,7 @@ export class DirectoryUpdater {
     // table files (nothing happens to matched text files), and if so add them
     // to an array of serverFilePaths for data deletion.
     let filePaths = await serverQueryHandler.fetchAsAdmin(
-      `/1/${dirID}/_all`
+      `/1/${dirID}//_all`
     );
     let serverFilePaths = [];
     let hasWildCard = relativePath.at(-1) === "*";
@@ -171,7 +170,7 @@ export class DirectoryUpdater {
           relPath.substring(0, relativePathLen) === relativePath :
           relPath === relativePath;
         if (isMatch) {
-          serverFilePaths.push(path.normalize(`/1/${dirID}/${relPath}`));
+          serverFilePaths.push(normalizePath(`/1/${dirID}/${relPath}`));
         }
       }
     });
@@ -184,7 +183,7 @@ export class DirectoryUpdater {
     });
     if (/^[yY]$/.test(confResponse)) {
       await Promise.all(serverFilePaths.map(serverFilePath => (
-        serverQueryHandler.postAsAdmin(serverFilePath + "/_put")
+        serverQueryHandler.postAsAdmin(serverFilePath + "//_put")
       )));
       console.log("Filed successfully deleted.");
     }
@@ -211,7 +210,7 @@ export class DirectoryUpdater {
     // Construct the full route, then query the server. If the route still
     // starts with "/1/<dirID>/", post as admin, and else just post regularly,
     // without requesting admin privileges.
-    let route = path.normalize("/1/" + dirID + "/" + relativeRoute);
+    let route = normalizePath("/1/" + dirID + "/" + relativeRoute);
     if (route.substring(0, dirID.length + 3) === "/1/" + dirID) {
       return await serverQueryHandler.postAsAdmin(
         route, postData, {returnLog: returnLog}
@@ -234,7 +233,7 @@ export class DirectoryUpdater {
     );
 
     // Construct the full route, then query the server.
-    let route = path.normalize("/1/" + dirID + "/" + relativeRoute);
+    let route = normalizePath("/1/" + dirID + "/" + relativeRoute);
     return await serverQueryHandler.fetchAsAdmin(
       route, {returnLog: returnLog}
     );
@@ -250,4 +249,25 @@ export class DirectoryUpdater {
 
   }
 
+}
+
+
+
+
+const SEGMENT_TO_REMOVE_REGEX = /(\/\.\/|[^/]+\/\.\.\/)/g;
+
+export function normalizePath(path) {
+  // Then replace any occurrences of "/./", and "<dirName>/../" with "/".
+  let ret = path, prevPath;
+  do {
+    prevPath = ret
+    ret = ret.replaceAll(SEGMENT_TO_REMOVE_REGEX, "/");
+  }
+  while (ret !== prevPath);
+
+  if (ret.substring(0, 4) === "/../") throw (
+    `Ill-formed path: "${path}"`
+  );
+
+  return ret.replace(/\/$/, "");
 }

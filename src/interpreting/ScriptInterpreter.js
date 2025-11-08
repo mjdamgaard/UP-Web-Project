@@ -314,7 +314,7 @@ export class ScriptInterpreter {
   async executeSubmoduleOfImportStatement(
     impStmt, curModulePath, callerModuleEnv
   ) {
-    let submodulePath = getFullPath(curModulePath, impStmt.str);
+    let submodulePath = getAbsolutePath(curModulePath, impStmt.str);
     return await this.import(
       submodulePath, impStmt, callerModuleEnv, false, true
     );
@@ -331,7 +331,7 @@ export class ScriptInterpreter {
     // compute the full path.
     if (/^\.\.?\//.test(route)) {
       let curPath = callerNode.getModuleEnv().modulePath;
-      route = getFullPath(curPath, route, callerNode, callerEnv);
+      route = getAbsolutePath(curPath, route, callerNode, callerEnv);
     }
 
     // Then simple redirect to this.fetch(), and if assertJSModule is true,
@@ -1344,7 +1344,7 @@ export class ScriptInterpreter {
         let expType = typeof expVal;
         if (expType === "string") {
           let curPath = environment.getModuleEnv().modulePath;
-          return getFullPath(curPath, expVal, expNode.exp, environment);
+          return getAbsolutePath(curPath, expVal, expNode.exp, environment);
         }
         else if (expType === "number") {
           return Math.abs(expVal);
@@ -2982,12 +2982,12 @@ export function logExtendedErrorAndTrace(err) {
 
 
 
-// const PATH_REGEX = /^([^/]+)?(\/[^/]+)*$/;
+
 const FILENAME_REGEX = /\/[^./]+\.[^/]+$/;
-const SEGMENT_TO_REMOVE_REGEX = /(\/\.?\/|[^/]+\/\.\.\/)/g;
+const SEGMENT_TO_REMOVE_REGEX = /(\/\.\/|[^/]+\/\.\.\/)/g;
 
 
-export function getFullPath(curPath, path, callerNode, callerEnv) {
+export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
   if (!curPath) curPath = "/";
 
   if (!path) throw new LoadError(
@@ -3009,7 +3009,7 @@ export function getFullPath(curPath, path, callerNode, callerEnv) {
   let fullPath = (curPath.at(-1) === "/") ? moddedCurPath + path :
     moddedCurPath + "/" + path;
 
-  // Then replace any occurrences of "//", "/./", and "<dirName>/../" with "/".
+  // Then replace any occurrences of "/./", and "<dirName>/../" with "/".
   let prevFullPath;
   do {
     prevFullPath = fullPath

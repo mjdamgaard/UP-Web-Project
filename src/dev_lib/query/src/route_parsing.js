@@ -4,8 +4,8 @@ const lockedRouteRegex = /\/_/;
 const hexIDRegEx = /^[0-9a-f]+$/;
 const dirSegmentRegEx = /^\.*[a-zA-Z0-9_\-]+$/;
 const fileNameRegEx =
-  /^\.*[a-zA-Z0-9_\-]+\.(([a-zA-Z0-9_\-]+\.)*)([a-zA-Z0-9_\-]+)$/;
-const queryPathSegmentRegEx = /^([.~a-zA-Z0-9_\-]+|%[0-9A-F]{2})*$/;
+  /^\.*[a-zA-Z0-9_\-]+\.([a-zA-Z0-9_\-]+\.)*([a-zA-Z0-9_\-]+)$/;
+const queryPathSegmentRegEx = /^([.~a-zA-Z0-9_\-]|%[0-9A-F]{2})*$/;
 
 
 
@@ -27,8 +27,11 @@ export function parseRoute(route) {
   }
 
   // And split these two parts further along all occurrences of "/".
-  let pathSegments = path.split("/");
-  let queryPathSegments = queryPath.split("/");
+  if (path && path[0] !== "/") throw (
+    `Invalid route: ${route}`
+  );
+  let pathSegments = path ? path.substring(1).split("/") : [];
+  let queryPathSegments = queryPath ? queryPath.split("/") : [];
 
   // Parse and validate the upNodeID and homeDirID, if any, from path.
   let upNodeID = pathSegments[0];
@@ -64,7 +67,9 @@ export function parseRoute(route) {
 
   // And finally, on success, return the parsed values and arrays, including a
   // localPath value constructed from the dirSegments and the fileName.
-  let localPath = dirSegments.join("/") + (isFilePath ? "/" + fileName : ""); 
+  let localPath = dirSegments.join("/");
+  localPath = localPath ? localPath + (isFilePath ? "/" + fileName : "") :
+    (isFilePath ? fileName : "");
   return [
     isLocked, upNodeID, homeDirID, localPath, dirSegments, fileName, fileExt,
     queryPathSegments

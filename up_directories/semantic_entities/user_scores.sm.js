@@ -42,9 +42,9 @@ export function postUserScoreHex(
       }
       else {
         let listIDHex = valueToHex(qualID + "-" + userEntID, "string");
-        post(homePath + "/users.bt/_insert/k/" + userEntID);
+        post(homePath + "/users.bt//_insert/k/" + userEntID);
         post(
-          homePath + "/userScores.bbt/_insert/l/" + listIDHex + "/k/" + subjID +
+          homePath + "/userScores.bbt//_insert/l/" + listIDHex + "/k/" + subjID +
           "/s/" + scoreHex + (payloadHex ? "/p/" + payloadHex : "")
         ).then(
           wasUpdated => resolve(wasUpdated)
@@ -77,7 +77,7 @@ export function deleteUserScore(qualKey, subjKey, userKey) {
       else {
         let listIDHex = valueToHex(qualID + "-" + userEntID, "string");
         post(
-          homePath + "/userScores.bbt/_deleteEntry/l/" + listIDHex +
+          homePath + "/userScores.bbt//_deleteEntry/l/" + listIDHex +
           "/k/" + subjID
         ).then(
           wasDeleted => resolve(wasDeleted)

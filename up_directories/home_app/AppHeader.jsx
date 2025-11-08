@@ -1,4 +1,5 @@
 
+import {encodeURIComponent} from 'query';
 import * as ILink from 'ILink.jsx';
 
 
@@ -13,7 +14,9 @@ export function render() {
     <ILink key="tut" href="~/tutorials">
       <span className="menu-item">{"Tutorials"}</span>
     </ILink>
-    <ILink key="comp" href="~/entPath/1/1/em1.js;get/components">
+    <ILink key="comp" href={
+      "~/entPath/" + encodeURIComponent("/1/1/em1.js;get/components")
+    }>
       <span className="menu-item">{"Components"}</span>
     </ILink>
   </header>;

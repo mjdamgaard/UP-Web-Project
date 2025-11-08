@@ -49,7 +49,7 @@ export function insertInitialModerators() {
             [weight, weightWeight], ["float(,,3)", "float(,,3)"]
           );
           post(
-            homePath + "/entities.sm.js/callSMF/postEntity", userEntPath
+            homePath + "/entities.sm.js//callSMF/postEntity", userEntPath
           ).then(
             userEntID => resolve([userEntID, scoreHex])
           );
@@ -58,11 +58,11 @@ export function insertInitialModerators() {
     );
     transformedInitialModeratorListProm.then(initModList => {
       post(
-        homePath + "/score_handling/ScoreHandler01/init_mods.bbt/_put"
+        homePath + "/score_handling/ScoreHandler01/init_mods.bbt//_put"
       ).then(() => {
         post(
           homePath + "/score_handling/ScoreHandler01/init_mods.bbt" +
-            "/_insertList",
+            "//_insertList",
           initModList
         ).then(
           wasUpdated => resolve(wasUpdated)
@@ -104,7 +104,7 @@ export function postInitialScores01() {
         let userEntPath = homePath + "/em1.js;call/User/" + upNodeID +
           "/" + userID;
         post(
-          homePath + "/entities.sm.js/callSMF/postEntity", userEntPath
+          homePath + "/entities.sm.js//callSMF/postEntity", userEntPath
         ).then(
           userEntID => res(userEntID)
         );
@@ -291,9 +291,9 @@ function postUserScoreHex(
       qualIDProm, subjIDProm, userEntIDProm
     ]).then(([qualID, subjID, userEntID]) => {
       let listIDHex = valueToHex(qualID + "-" + userEntID, "string");
-      post(homePath + "/users.bt/_insert/k/" + userEntID);
+      post(homePath + "/users.bt//_insert/k/" + userEntID);
       post(
-        homePath + "/userScores.bbt/_insert/l/" + listIDHex + "/k/" + subjID +
+        homePath + "/userScores.bbt//_insert/l/" + listIDHex + "/k/" + subjID +
         "/s/" + scoreHex + (payloadHex ? "/p/" + payloadHex : "")
       ).then(
         wasUpdated => resolve(wasUpdated)

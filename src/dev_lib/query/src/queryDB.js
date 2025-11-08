@@ -12,7 +12,7 @@ import * as fullTextTableFilesMod from "../src/filetypes/full_text_tables.js";
 export async function queryDB(
   route, isPost, postData, options,
   homeDirID, localPath, dirSegments, fileName, fileExt, queryPathSegments,
-  callerNode, execEnv, interpreter
+  node, env, interpreter
 ) {
   payGas(node, env, {dbRead: 1});
 

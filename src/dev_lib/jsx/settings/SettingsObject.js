@@ -1,6 +1,6 @@
 import {
   DevFunction, forEachValue, LiveJSModule, PromiseObject, RuntimeError,
-  LiveJSModule as SCSSModule, getFullPath, mapValues,
+  LiveJSModule as SCSSModule, getAbsolutePath, mapValues,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {SettingsObject} from "../jsx_components.js";
 import {appStyler} from "./src/AppStyler.js";
@@ -125,7 +125,7 @@ export class SettingsObject01 extends SettingsObject {
     }
     else {
       let stylePath = componentModule.get("stylePath") || componentPath;
-      stylePath = getFullPath(componentPath, stylePath, node, env);
+      stylePath = getAbsolutePath(componentPath, stylePath, node, env);
       styleModulePromise = interpreter.import(stylePath, node, env);
     }
 

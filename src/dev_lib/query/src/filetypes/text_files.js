@@ -33,7 +33,7 @@ export async function query(
 
   let queryType = queryPathSegments[0];
 
-  // If route equals ".../<homeDirID>/_put" with a text stored in the postData,
+  // If route equals ".../<homeDirID>//_put" with a text stored in the postData,
   // overwrite the existing file with contentText, if any, or create a new file
   // with that content.
   if (queryType === "_put") {
@@ -50,7 +50,7 @@ export async function query(
     return wasCreated;
   }
 
-  // If route equals ".../<homeDirID>/<filePath>/_rm", delete the text file.
+  // If route equals ".../<homeDirID>/<filePath>//_rm", delete the text file.
   if (queryType === "_rm") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
@@ -63,7 +63,7 @@ export async function query(
     return wasDeleted;
   }
 
-  // If route equals ".../<homeDirID>/<filePath>/get/<alias>", verify that
+  // If route equals ".../<homeDirID>/<filePath>//get/<alias>", verify that
   // fileExt equals "js" or "jsx", and if so, execute the module and return the
   // variables exported as <alias>. 
   if (queryType === "get") {
@@ -85,8 +85,8 @@ export async function query(
     return liveModule.get(alias);
   }
 
-  // If route equals ".../<homeDirID>/<filePath>/call/<alias>[/"<input>]*",
-  // execute the module similarly to the /get routes just above, and then
+  // If route equals ".../<homeDirID>/<filePath>//call/<alias>[/"<input>]*",
+  // execute the module similarly to the //get routes just above, and then
   // execute the gotten function with the decoded inputArr and return its
   // returned value.
   if (queryType === "call") {
@@ -133,7 +133,7 @@ export async function query(
     return result;
   }
 
-  // If route equals ".../<homeDirID>/<filePath>/callSMF/<alias>" +
+  // If route equals ".../<homeDirID>/<filePath>//callSMF/<alias>" +
   // "[/<inputArrHex>]", verify that filePath ends in '.sm.js', and if so,
   // execute the module and get the function exported as <alias>, then call it
   // on the inputArr and return its output. inputArr can either come from the
@@ -205,7 +205,7 @@ export async function query(
   }
 
 
-  // If route equals ".../<homeDirID>/<filePath>/depositGas" with postData = 
+  // If route equals ".../<homeDirID>/<filePath>//depositGas" with postData = 
   // "<gasJSON>" verify that filePath ends in '.sm.js', and if so, deposit the
   // requested amount of gas (from the current execution environment) there,
   // which can be unlocked by the locked "/_withdrawGas" route type below.
@@ -276,7 +276,7 @@ export async function query(
     return [[reqGas, gasReserve]];
   }
 
-  // If route equals ".../<homeDirID>/<filePath>/_withdrawGas" with postData = 
+  // If route equals ".../<homeDirID>/<filePath>//_withdrawGas" with postData = 
   // "<gasJSON>" verify that filePath ends in '.sm.js', and if so, withdraw the
   // requested amount of gas (adding it to the gas object of the current
   // execution environment).
@@ -346,7 +346,7 @@ export async function query(
     return [[reqGas, gasReserve]];
   }
 
-  // If route equals ".../<homeDirID>/<filePath>/gas", read how much gas is
+  // If route equals ".../<homeDirID>/<filePath>//gas", read how much gas is
   // stored on the server module (assuming that it is one).
   if (queryType === "gas") {
     if (localPath.slice(-6) !== ".sm.js") throw new RuntimeError(

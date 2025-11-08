@@ -54,7 +54,7 @@ export function getInitialState({route: extRoute}) {
   }
 
   // Also record if the route is a text file, and whether is has a query path,
-  // e.g. a "/call" or "/get" query path.
+  // e.g. a "//call" or "//get" query path.
   let isTextFile = fileExt && isTextFileExtension(fileExt);
   let isTextFileQuery = isTextFile && queryPathSegments.length > 0;
 
@@ -172,7 +172,7 @@ export function render({route}) {
   // route is a path to a text file plus a query path.
   else if (adminID === undefined) {
     this.setState(state => ({...state, adminID: false}));
-    fetch(routeHomePath + "/admin").then(adminID => {
+    fetch(routeHomePath + "//admin").then(adminID => {
       this.setState(state => ({...state, adminID: adminID ? adminID : "None"}));
     });
     fetch(transformedRoute).then(result => {

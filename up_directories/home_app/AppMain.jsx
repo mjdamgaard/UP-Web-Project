@@ -1,6 +1,6 @@
 
 import {slice, substring, at, indexOf} from 'string';
-import {decodeURIComponent} from 'query';
+import {decodeURIComponent, encodeURIComponent} from 'query';
 import {fetchEntityID} from "/1/1/entities.js";
 
 import * as UPIndexPage from "./UPIndexPage.jsx";
@@ -48,7 +48,8 @@ export function render({url = "", history, homeURL}) {
         history.replaceState(history.state, homeURL + "/e/" + entID);
       }
       else {
-        history.replaceState(history.state, homeURL + "/f" + entPath);
+        let encEntPath = encodeURIComponent(entPath);
+        history.replaceState(history.state, homeURL + "/f/" + encEntPath);
       }
     });
     return (
@@ -78,7 +79,7 @@ export function render({url = "", history, homeURL}) {
   // stand for 'file' or 'fetch' if you will), go to the file browser app with
   // that route.
   if (firstSegment === "f") {
-    let route = decodeURIComponent(substring(relURL, 2));
+    let route = decodeURIComponent(substring(relURL, 3));
     return (
       <main className="app-main">
         <FileBrowser key="f" route={route} />

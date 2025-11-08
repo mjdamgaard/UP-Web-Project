@@ -22,14 +22,14 @@ export function createPost(text) {
     // Add the post to the user's own post wall, by first inserting the text in
     // texts.att (auto-generating an ID for the text in the process), and then
     // inserting the textID into posts.btt, along with the userID and timestamp.  
-    post(abs("./_texts.att") + "/_insert/l/" + userID, text).then(textID => {
+    post(abs("./_texts.att") + "//_insert/l/" + userID, text).then(textID => {
       // Get the timestamp, and convert it to a hexadecimal string. (Note that
       // both userID and textID are already hexadecimal strings, so these don't
       // need to be converted for the following post route.)
       let timestamp = now();
       let timestampHex = valueToHex(timestamp, "uint(6)");
       post(
-        abs("./_posts.bbt") + "/_insert/l/" + userID + "/k/" + textID +
+        abs("./_posts.bbt") + "//_insert/l/" + userID + "/k/" + textID +
         "/s/" + timestampHex
       ).then((wasUpdated) => {
         resolve(wasUpdated);
@@ -55,7 +55,7 @@ export function deletePost(textID) {
     getConnection(5000, true, lockName).then(conn => {
       let options = {connection: conn};
       post(
-        abs("./_posts.bbt") + "/_deleteEntry/l/" + userID + "/k/" + textID,
+        abs("./_posts.bbt") + "//_deleteEntry/l/" + userID + "/k/" + textID,
         undefined, options
       ).then(wasDeleted => {
         if (!wasDeleted) {
@@ -65,7 +65,7 @@ export function deletePost(textID) {
           return resolve(false);
         }
         post(
-          abs("./_texts.att") + "/_deleteEntry/l/" + userID + "/k/" + textID,
+          abs("./_texts.att") + "//_deleteEntry/l/" + userID + "/k/" + textID,
           undefined, options
         ).then(wasDeleted => {
           if (!wasDeleted) {
@@ -102,7 +102,7 @@ export function fetchPostList(
       if (!hasAccess) return resolve(false);
 
       fetchPrivate(
-        abs("./_posts.bbt") + "/skList/l/" + userID +
+        abs("./_posts.bbt") + "//skList/l/" + userID +
         (minTime ? "/lo/" + valueToHex(minTime, "uint(6)") : "") +
         (maxTime ? "/hi/" + valueToHex(maxTime, "uint(6)") : "") +
         (maxNumber ? "/n/" + maxNumber : "") +
@@ -130,7 +130,7 @@ export function fetchPostText(userID, textID) {
     fetchIsFriendOrSelf(userID).then(hasAccess => {
       if (!hasAccess) return resolve(false);
       fetchPrivate(
-        abs("./_texts.att") + "/entry/l/" + userID + "/k/" + textID
+        abs("./_texts.att") + "//entry/l/" + userID + "/k/" + textID
       ).then(
         text => resolve(text)
       );

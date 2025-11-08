@@ -21,7 +21,7 @@ export function render({userID, ownUserID}) {
   if (!isFetching) {
     this.setState(state => ({...state, isFetching: true}));
     fetchPrivate(
-      abs("../server/posts/posts.sm.js") + "/callSMF/fetchPostList/" + userID
+      abs("../server/posts/posts.sm.js") + "//callSMF/fetchPostList/" + userID
     ).then(postList => {
       this.setState(state => ({...state, postList: postList ?? false}));
     });

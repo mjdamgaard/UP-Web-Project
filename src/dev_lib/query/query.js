@@ -45,11 +45,11 @@ export const queryRoute = new DevFunction(
     }
 
     // Parse the route, extracting parameters and qualities from it.
-    let isLocked, upNodeID, homeDirID, localPath, dirSegments, fileName,
+    let isLocked, routeUPNodeID, homeDirID, localPath, dirSegments, fileName,
       fileExt, queryPathSegments;
     try {
     [
-      isLocked, upNodeID, homeDirID, localPath, dirSegments, fileName,
+      isLocked, routeUPNodeID, homeDirID, localPath, dirSegments, fileName,
       fileExt, queryPathSegments
     ] = parseRoute(route);
     }
@@ -77,7 +77,7 @@ export const queryRoute = new DevFunction(
     // privileges are elevated for the given home directory if the route is
     // locked.
     let result;
-    if (interpreter.isServerSide && upNodeID === upNodeID) {
+    if (interpreter.isServerSide && routeUPNodeID === upNodeID) {
       if (isLocked) {
         let curHomeDirID = execEnv.getFlag(ELEVATED_PRIVILEGES_FLAG);
         if (!curHomeDirID || curHomeDirID !== homeDirID) throw new RuntimeError(
@@ -96,7 +96,7 @@ export const queryRoute = new DevFunction(
     else {
       let isPrivate = isPost || getPropertyFromObject(options, "isPrivate");
       result = await interpreter.queryServer(
-        isPrivate, route, isPost, postData, options, upNodeID,
+        isPrivate, route, isPost, postData, options, routeUPNodeID,
         callerNode, execEnv
       );
     }
@@ -330,9 +330,9 @@ export const query = new DevFunction(
       }
 
       // And then we have the ';get' and ';call' casting segments, which work
-      // similarly to '/get' and '/call' routes, except the casting happens on
+      // similarly to '//get' and '//call' routes, except the casting happens on
       // the current machine, and not on the server that is queried. ';get' and
-      // ';call' routes are thus often preferred over '/get' and '/call',
+      // ';call' routes are thus often preferred over '//get' and '//call',
       // as they allow for more efficient use of HTTP caching.
       else if (/^(get|call)\//.test(castingSegment)) {
         let [queryType, alias, ...inputArr] = castingSegment.split("/");

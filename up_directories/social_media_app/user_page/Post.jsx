@@ -11,7 +11,7 @@ export function render({textID, userID, ownUserID, timestamp}) {
   if (!isFetching) {
     this.setState(state => ({...state, isFetching: true}));
     fetchPrivate(
-      abs("../server/posts/posts.sm.js") + "/callSMF/fetchPostText/" +
+      abs("../server/posts/posts.sm.js") + "//callSMF/fetchPostText/" +
       userID + "/" + textID
     ).then(text => {
       this.setState(state => ({...state, text: text ?? false}));

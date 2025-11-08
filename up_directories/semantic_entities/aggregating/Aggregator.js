@@ -52,7 +52,7 @@ export class Aggregator {
   updateScoreForUser(userGroupKey, qualKey, subjKey, userKey) {
     return new Promise(resolve => {
       post(
-        this.updateSMPath + "/callSMF/updateScoreForUser",
+        this.updateSMPath + "//callSMF/updateScoreForUser",
         [userGroupKey, qualKey, subjKey, userKey],
       ).then(
         wasUpdated => resolve(wasUpdated)
@@ -64,7 +64,7 @@ export class Aggregator {
   updateScoreForGroup(userGroupKey, qualKey, subjKey) {
     return new Promise(resolve => {
       post(
-        this.updateSMPath + "/callSMF/updateScoreForGroup",
+        this.updateSMPath + "//callSMF/updateScoreForGroup",
         [userGroupKey, qualKey, subjKey],
       ).then(
         wasUpdated => resolve(wasUpdated)
@@ -75,7 +75,7 @@ export class Aggregator {
   updateList(userGroupKey, qualKey) {
     return new Promise(resolve => {
       post(
-        this.updateSMPath + "/callSMF/updateList",
+        this.updateSMPath + "//callSMF/updateList",
         [userGroupKey, qualKey],
       ).then(
         wasUpdated => resolve(wasUpdated)
