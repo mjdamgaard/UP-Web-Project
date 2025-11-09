@@ -123,8 +123,8 @@ export class ServerQueryHandler {
     let fetch = this.fetch;
     let response;
     try {
-      let url = this.#getURL(serverKey, route);
-      response = await fetch(encodeDoubleSlashes(url), options);
+      let url = this.#getURL(serverKey, encodeDoubleSlashes(route));
+      response = await fetch(url, options);
     } catch (err) {
       if (err instanceof TypeError) {
         throw new NetworkError(err.message);
