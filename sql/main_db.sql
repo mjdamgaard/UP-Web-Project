@@ -32,7 +32,7 @@ CREATE TABLE HomeDirectories (
         dir_id
     )
 
-) ROW_FORMAT = COMPRESSED;
+) ENGINE = InnoDB, ENGINE = InnoDB, ROW_FORMAT = COMPRESSED;
 
 
 
@@ -53,14 +53,14 @@ CREATE TABLE Files (
         file_path
     )
 
-) ROW_FORMAT = COMPRESSED;
+) ENGINE = InnoDB, ROW_FORMAT = COMPRESSED;
 
 
 CREATE TABLE FileIDs (
 
     file_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY
 
-); -- ROW_FORMAT = COMPRESSED;
+); ENGINE = InnoDB;
 
 
 
@@ -72,7 +72,7 @@ CREATE TABLE ServerModuleGas (
 
     gas_json JSON NOT NULL
 
-) ROW_FORMAT = COMPRESSED;
+) ENGINE = InnoDB, ROW_FORMAT = COMPRESSED;
 
 
 
@@ -89,7 +89,7 @@ CREATE TABLE TextFiles (
 
     content_text TEXT CHARACTER SET utf8mb4
 
-); -- ROW_FORMAT = COMPRESSED;
+); ENGINE = InnoDB;
 
 
 
@@ -114,7 +114,7 @@ CREATE TABLE AutoKeyTextTables (
         text_id
     )
 
-) ROW_FORMAT = COMPRESSED;
+) ENGINE = InnoDB, ROW_FORMAT = COMPRESSED;
 
 
 
@@ -134,7 +134,7 @@ CREATE TABLE BinaryKeyTables (
         elem_key
     )
 
-) ROW_FORMAT = COMPRESSED;
+) ENGINE = InnoDB, ROW_FORMAT = COMPRESSED;
 
 
 CREATE TABLE CharKeyTables (
@@ -153,7 +153,7 @@ CREATE TABLE CharKeyTables (
         elem_key
     )
 
-) ROW_FORMAT = COMPRESSED;
+) ENGINE = InnoDB, ROW_FORMAT = COMPRESSED;
 
 
 
@@ -184,7 +184,7 @@ CREATE TABLE BinaryKeyBinaryScoreTables (
         elem_key
     )
 
-) ROW_FORMAT = COMPRESSED;
+) ENGINE = InnoDB, ROW_FORMAT = COMPRESSED;
 
 
 

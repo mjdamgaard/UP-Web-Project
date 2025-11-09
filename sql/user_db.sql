@@ -25,7 +25,8 @@ CREATE TABLE UserCredentials (
     UNIQUE INDEX sec_idx (
         user_name
     )
-);
+
+) ENGINE = InnoDB;
 
 
 
@@ -46,7 +47,8 @@ CREATE TABLE EmailAddresses (
         email_addr,
         user_name
     )
-);
+
+) ENGINE = InnoDB;
 
 
 
@@ -69,7 +71,8 @@ CREATE TABLE AuthenticationTokens (
     UNIQUE INDEX sec_idx (
         auth_token
     )
-);
+
+) ENGINE = InnoDB;
 
 
 
@@ -84,7 +87,8 @@ CREATE TABLE UserGas (
     gas_json JSON NOT NULL,
 
     auto_refilled_at BIGINT UNSIGNED NOT NULL DEFAULT (UNIX_TIMESTAMP())
-);
+
+) ENGINE = InnoDB;
 
 
 

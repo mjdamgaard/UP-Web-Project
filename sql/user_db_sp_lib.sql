@@ -268,7 +268,7 @@ BEGIN
     END IF;
 
     IF (doUnlock) THEN
-        DO RELEASE_LOCK(CONCAT("Gas.", userID));
+        DO RELEASE_LOCK(CONCAT("UserGas.", userID));
     END IF;
 END //
 DELIMITER ;
