@@ -123,8 +123,8 @@ export class ServerQueryHandler {
     let fetch = this.fetch;
     let response;
     try {
-      let url = this.#getURL(serverKey, route);debugger;
-      response = await fetch(url, options);
+      let url = this.#getURL(serverKey, route);
+      response = await fetch(encodeDoubleSlashes(url), options);
     } catch (err) {
       if (err instanceof TypeError) {
         throw new NetworkError(err.message);
@@ -196,6 +196,17 @@ export class ServerQueryHandler {
 
 
 
+export class NetworkError {
+  constructor(msg) {
+    this.msg = msg;
+  }
+  toString() {
+    return this.msg; 
+  }
+}
+
+
+
 function unSerialize(val, mimeType) {
   if (mimeType === "text/plain") {
     return val;
@@ -215,13 +226,16 @@ function unSerialize(val, mimeType) {
 
 
 
+// There seems to be an issue with using double slashes in URLs, so to solve
+// this, we will assume that "%00" will never be used (if a string contains
+// non-printable characters, you should hex-encode it, not URI-encode it), and
+// then we will substitute "//" with "/%00", and back again on the server side.
 
-export class NetworkError {
-  constructor(msg) {
-    this.msg = msg;
-  }
-  toString() {
-    return this.msg; 
-  }
+export function encodeDoubleSlashes(url) {
+  return url.replaceAll("//", "/%00");
+}
+
+export function decodeDoubleSlashes(url) {
+  return url.replaceAll("/%00", "//");
 }
 

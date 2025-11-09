@@ -226,7 +226,7 @@ proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     WHERE dir_id = dirID AND file_path = filePath;
 
     IF (doLock) THEN
-        IF NOT GET_LOCK(CONCAT("SMGas.", fileID), 600) THEN
+        IF NOT GET_LOCK(CONCAT("SMGas.", fileID), 10) THEN
             SELECT NULL;
             LEAVE proc;
         END IF;
