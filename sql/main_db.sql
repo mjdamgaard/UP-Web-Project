@@ -32,7 +32,7 @@ CREATE TABLE HomeDirectories (
         dir_id
     )
 
-) ENGINE = InnoDB, ENGINE = InnoDB, ROW_FORMAT = COMPRESSED;
+) ENGINE = InnoDB;
 
 
 
@@ -60,7 +60,7 @@ CREATE TABLE FileIDs (
 
     file_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY
 
-); ENGINE = InnoDB;
+) ENGINE = InnoDB;
 
 
 
@@ -89,7 +89,7 @@ CREATE TABLE TextFiles (
 
     content_text TEXT CHARACTER SET utf8mb4
 
-); ENGINE = InnoDB;
+) ENGINE = InnoDB;
 
 
 
