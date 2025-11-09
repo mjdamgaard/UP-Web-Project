@@ -23,7 +23,7 @@ export function requestNewUsername(username) {
     getConnection(8000, true, lockName).then(conn => {
       let options = {connection: conn};
       fetchPrivate(
-        abs("./user_ids.ct") + "//entry/k/" + usernameHex,
+        abs("./user_ids.ct") + "./entry/k/" + usernameHex,
         options
       ).then(existingUserID => {
         if (existingUserID) {console.log("existingUserID=", existingUserID);
@@ -32,12 +32,12 @@ export function requestNewUsername(username) {
         }
         else {
           let addUserIDProm = post(
-            abs("./user_ids.ct") + "//_insert/k/" + usernameHex +
+            abs("./user_ids.ct") + "./_insert/k/" + usernameHex +
             "/p/" + userID,
             undefined, options
           );
           let addUsernameProm = post(
-            abs("./usernames.bt") + "//_insert/k/" + userID +
+            abs("./usernames.bt") + "./_insert/k/" + userID +
             "/p/" + usernameHex,
             undefined, options
           );
@@ -73,7 +73,7 @@ export function fetchUsername(userID) {
   verifyType(userID, "hex-string");
   return new Promise(resolve => {
     fetch(
-      abs("./usernames.bt") + "//entry/k/" + userID
+      abs("./usernames.bt") + "./entry/k/" + userID
     ).then(usernameHex => {
       let username = usernameHex ?
         hexToValue(usernameHex, "string") : undefined;
@@ -85,7 +85,7 @@ export function fetchUsername(userID) {
 export function fetchUserID(usernameHex) {
   return new Promise(resolve => {
     fetch(
-      abs("./user_ids.ct") + "//entry/k/" + usernameHex
+      abs("./user_ids.ct") + "./entry/k/" + usernameHex
     ).then(
       userID => resolve(userID)
     );

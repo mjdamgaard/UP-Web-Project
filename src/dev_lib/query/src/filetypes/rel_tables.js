@@ -24,7 +24,7 @@ export async function query(
 
   let queryType = queryPathSegments[0];
 
-  // If route equals ".../<homeDirID>/<filepath>//_touch" create a table file
+  // If route equals ".../<homeDirID>/<filepath>./_touch" create a table file
   // if not already there, but do not delete its content if there.
   if (queryType === "_touch") {
     if (!isPost) throw new RuntimeError(
@@ -39,7 +39,7 @@ export async function query(
     return wasCreated;
   }
 
-  // If route equals ".../<homeDirID>/<filepath>//_put" create a table file
+  // If route equals ".../<homeDirID>/<filepath>./_put" create a table file
   // if not already there, and delete its content if it does exist already.
   if (queryType === "_put") {
     if (!isPost) throw new RuntimeError(
@@ -61,7 +61,7 @@ export async function query(
   }
 
 
-  // If route equals ".../<homeDirID>/<filepath>//_rm", delete the table file
+  // If route equals ".../<homeDirID>/<filepath>./_rm", delete the table file
   // (and its content) if its there.
   if (queryType === "_rm") {
     if (!isPost) throw new RuntimeError(
@@ -82,7 +82,7 @@ export async function query(
   }
 
 
-  // If route equals ".../<homeDirID>/<filepath>//_deleteEntry[/l/<listID>]" +
+  // If route equals ".../<homeDirID>/<filepath>./_deleteEntry[/l/<listID>]" +
   // "/k/<elemKey>", delete a single table entry with that primary key, where
   // the default value for listID is "".
   if (queryType === "_deleteEntry") {
@@ -114,7 +114,7 @@ export async function query(
     return wasDeleted;
   }
 
-  // If route equals ".../<homeDirID>/<filepath>//_deleteList[/l/<listID>]" +
+  // If route equals ".../<homeDirID>/<filepath>./_deleteList[/l/<listID>]" +
   // "[/lo/<loElemKey>]"[/hi/<hiElemKey>]", delete all entries with elemKeys
   // between lo and hi. The default value for lo is "", and if hi is missing,
   // all entries are deleted with an elemKey >= lo.
@@ -149,7 +149,7 @@ export async function query(
     return wasDeleted;
   }
 
-  // If route equals ".../<homeDirID>/<filepath>//entry[/l/<listID>]" +
+  // If route equals ".../<homeDirID>/<filepath>./entry[/l/<listID>]" +
   // "/k/<elemKey>", read and return the table entry with the given list ID and
   // element key. Note that for binary and UTF-8 keys, listID and elemKey
   // should be hex-encoded.
@@ -183,7 +183,7 @@ export async function query(
     }
   }
 
-  // If route equals ".../<homeDirID>/<filepath>//list[/l/<listID][/lo/<lo>]" +
+  // If route equals ".../<homeDirID>/<filepath>./list[/l/<listID][/lo/<lo>]" +
   // "[/hi/<hi>][/o/<numOffset>]/n/<maxNum>/a/<isAscending>", read and return
   // the primary-key-indexed list where the elemKey is limited by lo and hi if
   // any of them are provided, and limited by a maximum number of naxNum
@@ -225,7 +225,7 @@ export async function query(
     );
   }
 
-  // If route equals ".../<homeDirID>/<filepath>//skList[/lo/<lo>][/hi/<hi>]" +
+  // If route equals ".../<homeDirID>/<filepath>./skList[/lo/<lo>][/hi/<hi>]" +
   // "[/o/<numOffset>]n=<maxNum>[/a/<isAscending>]", verify the the file type
   // is a '.bbt' file, and then read and return a list where entries are
   // ordered by their elemScore instead, i.e. by their secondary key (SK).
@@ -265,7 +265,7 @@ export async function query(
     );
   }
 
-  // If route equals ".../<homeDirID>/<filepath>//_insert/[/l/<listID>]" +
+  // If route equals ".../<homeDirID>/<filepath>./_insert/[/l/<listID>]" +
   // "[/k/<elemKey>][/s/<elemScore>][/p/<elemPayload>][/i/<ignore>]", insert
   // a single table entry with those row values, overwriting any existing entry
   // of the same key, unless the ignore parameter (i) is defined and truthy.
@@ -314,7 +314,7 @@ export async function query(
     return wasUpdatedOrNewID;
   }
 
-  // If route equals ".../<homeDirID>/<filepath>//_insertList[/l/<listID>]" +
+  // If route equals ".../<homeDirID>/<filepath>./_insertList[/l/<listID>]" +
   // "[/i/<ignore>]", treat postData as an array of rows to insert into the
   // table. The ignore parameter also determines whether to ignore on
   // duplicate keys or to overwrite. For .att files, if ignore is falsy, the

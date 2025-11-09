@@ -78,7 +78,7 @@ export const allUsersList = {
   fetchList: (lo, hi, maxNum, offset, isAscending) => {
     return new Promise(resolve => {
       fetch(
-        abs("../.././users.bt//skList") +
+        abs("../.././users.bt./skList") +
         (lo !== undefined ? "/lo/" + lo : "") +
         (hi !== undefined ? "/hi/" + hi : "") +
         (maxNum !== undefined ? "/n/" + maxNum : "") +

@@ -14,7 +14,6 @@ import {queryDB} from '../dev_lib/query/src/queryDB.js';
 import {UserDBConnection, MainDBConnection} from './db_io/DBConnection.js';
 import {FlagTransmitter} from "../interpreting/FlagTransmitter.js";
 import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
-import {decodeDoubleSlashes} from './ajax_io/ServerQueryHandler.js';
 
 import {
   ELEVATED_PRIVILEGES_FLAG, CAN_POST_FLAG, USER_ID_FLAG,
@@ -170,7 +169,7 @@ async function requestHandler(req, res, returnGasRef) {
 
   // The server only implements GET and POST requests, where for the POST 
   // requests the request body is a JSON object.
-  let route = decodeDoubleSlashes(req.url);
+  let route = req.url;
   let reqParams = {};
   let isPrivate = false;
   if (req.method === "POST") {

@@ -35,6 +35,10 @@ export class ServerQueryHandler {
       `Unrecognized UP node ID: "${upNodeID}" (queries to routes of foreign ` +
       "UP nodes are not implemented yet)"
     );
+    if (route.includes("//")) throw new NetworkError(
+      "A route must not contain empty segments (repeated slashes). Received: " +
+      route + "."
+    );
 
     // Construct the reqBody.
     let reqData = {};
@@ -123,7 +127,7 @@ export class ServerQueryHandler {
     let fetch = this.fetch;
     let response;
     try {
-      let url = this.#getURL(serverKey, encodeDoubleSlashes(route));
+      let url = this.#getURL(serverKey, route);
       response = await fetch(url, options);
     } catch (err) {
       if (err instanceof TypeError) {
@@ -221,21 +225,5 @@ function unSerialize(val, mimeType) {
   else throw (
     `unSerialize(): Unrecognized/un-implemented MIME type: ${mimeType}`
   );
-}
-
-
-
-
-// There seems to be an issue with using double slashes in URLs, so to solve
-// this, we will assume that "%00" will never be used (if a string contains
-// non-printable characters, you should hex-encode it, not URI-encode it), and
-// then we will substitute "//" with "/%00", and back again on the server side.
-
-export function encodeDoubleSlashes(url) {
-  return url.replaceAll("//", "/%00");
-}
-
-export function decodeDoubleSlashes(url) {
-  return url.replaceAll("/%00", "//");
 }
 

@@ -54,7 +54,7 @@ export function getInitialState({route: extRoute}) {
   }
 
   // Also record if the route is a text file, and whether is has a query path,
-  // e.g. a "//call" or "//get" query path.
+  // e.g. a "./call" or "./get" query path.
   let isTextFile = fileExt && isTextFileExtension(fileExt);
   let isTextFileQuery = isTextFile && queryPathSegments.length > 0;
 

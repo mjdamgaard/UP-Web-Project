@@ -40,7 +40,7 @@ export function fetchUserScoreHex(
     ]).then(([qualID, subjID, userID]) => {
       let listIDHex = valueToHex(qualID + "-" + userID, "string");
       fetch(
-        homePath + "/userScores.bbt//entry/l/" + listIDHex + "/k/" + subjID,
+        homePath + "/userScores.bbt./entry/l/" + listIDHex + "/k/" + subjID,
         options
       ).then(entry => {
         let [userScoreHex] = entry ?? [];
@@ -128,7 +128,7 @@ export function fetchUserScoreHexList(
     Promise.all([qualIDProm, userIDProm]).then(([qualID, userID]) => {
       let listIDHex = valueToHex(qualID + "-" + userID, "string");
       fetch(
-        homePath + "/userScores.bbt//skList/l/" + listIDHex +
+        homePath + "/userScores.bbt./skList/l/" + listIDHex +
         (!loHex ? "" : "/lo/" + loHex) +
         (!hiHex ? "" : "/hi/" + hiHex) +
         (maxNum === undefined ? "" : "/n/" + maxNum) +
@@ -185,7 +185,7 @@ export function fetchScoreHex(
       let listID = join(listIDParts, "-");
       let listIDSegment = listID ? "/l/" + valueToHex(listID, "string") : "";
       fetch(
-        tableFilePath + "//entry" + listIDSegment + "/k/" + keyID, options
+        tableFilePath + "./entry" + listIDSegment + "/k/" + keyID, options
       ).then(entry => {
         let [scoreAndWeightHex] = entry ?? [];
         resolve(scoreAndWeightHex ?? undefined);
@@ -233,7 +233,7 @@ export function fetchScoreHexList(
       let listID = join(listIDParts, "-");
       let listIDSegment = listID ? "/l/" + valueToHex(listID, "string") : "";
       fetch(
-        tableFilePath + "//skList" + listIDSegment +
+        tableFilePath + "./skList" + listIDSegment +
         (!loHex ? "" : "/lo/" + loHex) +
         (!hiHex ? "" : "/hi/" + hiHex) +
         (maxNum === undefined ? "" : "/n/" + maxNum) +
@@ -284,7 +284,7 @@ export function postScoreAndWeightHex(
       let listID = join(listIDParts, "-");
       let listIDSegment = listID ? "/l/" + valueToHex(listID, "string") : "";
       post(
-        tableFilePath + "//_insert" + listIDSegment + "/k/" + keyID +
+        tableFilePath + "./_insert" + listIDSegment + "/k/" + keyID +
         "/s/" + scoreAndWeightHex,
         undefined, options
       ).then(
@@ -312,7 +312,7 @@ export function deleteScore(
       let listID = join(listIDParts, "-");
       let listIDSegment = listID ? "/l/" + valueToHex(listID, "string") : "";
       post(
-        tableFilePath + "//_deleteEntry" + listIDSegment + "/k/" + keyID,
+        tableFilePath + "./_deleteEntry" + listIDSegment + "/k/" + keyID,
         undefined, options
       ).then(
         wasDeleted => resolve(wasDeleted)
@@ -343,7 +343,7 @@ export function postUserScore(
       // TODO: Verify hex-string types of the IDs here. 
       let scoreHex = getScoreHex(score, metric);
       post(
-        homePath + "/user_scores.sm.js//callSMF/postUserScoreHex",
+        homePath + "/user_scores.sm.js./callSMF/postUserScoreHex",
         [qualID, subjID, userID, scoreHex, payloadHex], options
       ).then(
         wasUpdated => resolve(wasUpdated)
@@ -364,7 +364,7 @@ export function deleteUserScore(
     ]).then(([qualID, subjID, userID]) => {
       // TODO: Verify hex-string types of the IDs here. 
       post(
-        homePath + "/user_scores.sm.js//callSMF/deleteUserScore",
+        homePath + "/user_scores.sm.js./callSMF/deleteUserScore",
         [qualID, subjID, userID], options
       ).then(
         wasUpdated => resolve(wasUpdated)

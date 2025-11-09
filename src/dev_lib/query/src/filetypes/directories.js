@@ -17,9 +17,9 @@ export async function query(
   let queryType = queryPathSegments[0];
 
   if (!homeDirID) {
-    // If route equals "...//mkdir/a/<adminID>", create a new home directory
-    // with the requested adminID as the admin, or with the requesting user as
-    // the admin if n adminID is provided.
+    // If route equals "<upNodeID>./mkdir/a/<adminID>", create a new home
+    // directory with the requested adminID as the admin, or with the
+    // requesting user as the admin if n adminID is provided.
     if (queryType === "mkdir") {
       if (!isPost) throw new RuntimeError(
         `Unrecognized route for GET-like requests: "${route}"`,
@@ -38,7 +38,7 @@ export async function query(
       return dirID;
     }
 
-    // If route equals ".../directories/a/<adminID>[/...]...", ...
+    // If route equals "<upNodeID>./directories/a/<adminID>[/...]...", ...
     else if (queryType === "directories") {
       // TODO: Implement.
       return [];
@@ -56,7 +56,7 @@ export async function query(
     callerNode, execEnv
   );
 
-  // If route equals ".../<homeDirID>//all", without any query path, return
+  // If route equals ".../<homeDirID>", without any query path, return
   // a list of all nested file paths of the home directory, except paths of
   // files nested inside locked subdirectories (with any leading underscores).
   if (queryPathSegments.length === 0) {
@@ -68,7 +68,7 @@ export async function query(
       .filter((filePath) => (!LOCKED_ROUTE_REGEX.test(filePath)));
   }
 
-  // If route equals just ".../<homeDirID>//_all", return a list of all nested
+  // If route equals just ".../<homeDirID>./_all", return a list of all nested
   // file paths of the home directory.
   if (queryType === "_all") {
     let filePathTable = await dbQueryHandler.queryDBProc(
@@ -78,7 +78,7 @@ export async function query(
     return filePathTable.map(([filePath]) => filePath);
   }
 
-  // If route equals just ".../<homeDirID>//admin", return the adminID of the
+  // If route equals just ".../<homeDirID>./admin", return the adminID of the
   // home directory.
   if (queryType === "admin") {
     let [[adminID] = []] = await dbQueryHandler.queryDBProc(
@@ -88,7 +88,7 @@ export async function query(
     return adminID;
   }
 
-  // If route equals ".../<homeDirID>//_setAdmin/a/<adminID>", set a new admin
+  // If route equals ".../<homeDirID>./_setAdmin/a/<adminID>", set a new admin
   // of the home directory.
   if (queryType === "_setAdmin") {
     if (!isPost) throw new RuntimeError(
@@ -107,7 +107,7 @@ export async function query(
     return wasEdited;
   }
 
-  // If route equals ".../<homeDirID>//_rm", request a deletion of the
+  // If route equals ".../<homeDirID>./_rm", request a deletion of the
   // directory, but note that directories can only be deleted after each nested
   // file in it has been deleted (as this query does not delete the files).
   if (queryType === "_rm") {

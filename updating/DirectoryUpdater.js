@@ -59,7 +59,7 @@ export class DirectoryUpdater {
     if (!dirID) {
       dirID = this.readDirID(dirPath) ?? "";
       if (!dirID) {
-        dirID = await serverQueryHandler.post(`/1//mkdir/a/${userID}`);
+        dirID = await serverQueryHandler.post(`/1./mkdir/a/${userID}`);
         if (!dirID) throw "mkdir error";
         fs.writeFileSync(idFilePath, `export default "/1/${dirID}";`);
       }
@@ -70,7 +70,7 @@ export class DirectoryUpdater {
     // side directory, and for each one that doesn't, request deletion of that
     // file server-side.
     let filePaths = await serverQueryHandler.fetchAsAdmin(
-      `/1/${dirID}//_all`
+      `/1/${dirID}./_all`
     );
     let deletionPromises = [];
     filePaths.forEach((relPath) => {
@@ -78,7 +78,7 @@ export class DirectoryUpdater {
       let serverFilePath = normalizePath(`/1/${dirID}/${relPath}`);
       if (!fs.existsSync(clientFilePath)) {
         deletionPromises.push(
-          serverQueryHandler.postAsAdmin(serverFilePath + "//_rm")
+          serverQueryHandler.postAsAdmin(serverFilePath + "./_rm")
         );
       }
     });
@@ -123,14 +123,14 @@ export class DirectoryUpdater {
         let contentText = fs.readFileSync(childAbsPath, 'utf8');
         uploadPromises.push(
           serverQueryHandler.postAsAdmin(
-            `/1/${childRelPath}//_put`,
+            `/1/${childRelPath}./_put`,
             contentText,
           )
         );
       }
       else if (/\.(att|bt|ct|bbt|ftt)$/.test(name)) {
         uploadPromises.push(
-          serverQueryHandler.postAsAdmin(`/1/${childRelPath}//_touch`)
+          serverQueryHandler.postAsAdmin(`/1/${childRelPath}./_touch`)
         );
       }
     });
@@ -158,7 +158,7 @@ export class DirectoryUpdater {
     // table files (nothing happens to matched text files), and if so add them
     // to an array of serverFilePaths for data deletion.
     let filePaths = await serverQueryHandler.fetchAsAdmin(
-      `/1/${dirID}//_all`
+      `/1/${dirID}./_all`
     );
     let serverFilePaths = [];
     let hasWildCard = relativePath.at(-1) === "*";
@@ -183,7 +183,7 @@ export class DirectoryUpdater {
     });
     if (/^[yY]$/.test(confResponse)) {
       await Promise.all(serverFilePaths.map(serverFilePath => (
-        serverQueryHandler.postAsAdmin(serverFilePath + "//_put")
+        serverQueryHandler.postAsAdmin(serverFilePath + "./_put")
       )));
       console.log("Filed successfully deleted.");
     }

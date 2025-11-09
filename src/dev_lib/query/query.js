@@ -330,9 +330,9 @@ export const query = new DevFunction(
       }
 
       // And then we have the ';get' and ';call' casting segments, which work
-      // similarly to '//get' and '//call' routes, except the casting happens on
+      // similarly to './get' and './call' routes, except the casting happens on
       // the current machine, and not on the server that is queried. ';get' and
-      // ';call' routes are thus often preferred over '//get' and '//call',
+      // ';call' routes are thus often preferred over './get' and './call',
       // as they allow for more efficient use of HTTP caching.
       else if (/^(get|call)\//.test(castingSegment)) {
         let [queryType, alias, ...inputArr] = castingSegment.split("/");
