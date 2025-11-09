@@ -425,7 +425,7 @@ function assignLeastPositiveOrUndefined(target, ...sourceArr) {
   return target;
 }
 
-function subtractAbs(minuendObj, subtrahendObj) {
+function subtractAbs(minuendObj, subtrahendObj) {console.log("minuendObj=", minuendObj);
   let ret = {};
   Object.entries(minuendObj).forEach(([key, val]) => {
     ret[key] = val - Math.abs(subtrahendObj[key]);

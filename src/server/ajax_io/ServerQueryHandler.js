@@ -123,7 +123,7 @@ export class ServerQueryHandler {
     let fetch = this.fetch;
     let response;
     try {
-      let url = this.#getURL(serverKey, route);
+      let url = this.#getURL(serverKey, route);debugger;
       response = await fetch(url, options);
     } catch (err) {
       if (err instanceof TypeError) {
