@@ -2,7 +2,7 @@
 import {DevFunction} from "../../interpreting/ScriptInterpreter.js";
 
 const segmentRegEx =
-  /#[0-9a-f]*|\/([^\s]*[~a-zA-Z0-9_\-])?|\\([\s\S]|$)([^#/\\]|(?<=\S)[#/])+/g;
+  /#[0-9a-f]*|\/([^\s]*[~a-zA-Z0-9_\-])?|\\([\s\S]|$)|([^#/\\]|(?<=\S)[#/])+/g;
 
 
 // replaceReferences() parses a string and returns an array of segments, where

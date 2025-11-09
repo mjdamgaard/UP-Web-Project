@@ -16,14 +16,14 @@ const entityElementRelPath = "/1/1/em1.js;get/entityElement";
 
 
 export function render(props) {
-  let {entKey, scoreHandler} = props;
+  let {entID, scoreHandler} = props;
   scoreHandler = scoreHandler ?? this.subscribeToContext("scoreHandler");
   let {classKey, relQualPath, topEntry} = this.state;
   let content;
 
   // If the classKey for the entity has not been gotten yet, fetch it.
   if (classKey === undefined) {
-    fetchEntityDefinition(entKey).then(entDef => {
+    fetchEntityDefinition(entID).then(entDef => {
       let classKey = entDef.Class;
       this.setState(state => ({...state, classKey: classKey ?? false}));
     });
@@ -37,7 +37,7 @@ export function render(props) {
   }
 
   // If the relational predicate for the class has not been fetched yet, do so.
-  if (relQualPath === undefined) {
+  else if (relQualPath === undefined) {
     fetchRelationalPredicatePath(
       classKey, entityElementRelPath
     ).then(qualPath => {
@@ -85,9 +85,12 @@ export function render(props) {
   // themselves.
   return (
     <div className="variable-entity-element">
-      <div className="class-link">
-        <EntityReference key="class" entKey={classKey} />
-      </div>
+      {classKey ?
+        <div className="class-link">
+          <EntityReference key="class" entKey={classKey} />
+        </div> :
+        undefined
+      }
       {content}
     </div>
   );

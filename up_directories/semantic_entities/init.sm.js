@@ -164,12 +164,6 @@ export function postInitialScores01() {
           abs("./em1.js;get/relations"),
           firstModID, 6
         ),
-        postUserRelationalScoreAndUpdateUserGroups(
-          abs("./em1.js;get/classes"),
-          abs("./em1.js;get/subclasses"),
-          abs("./em1.js;get/relationalClasses"),
-          firstModID, 6
-        ),
       ]);
     },
 
