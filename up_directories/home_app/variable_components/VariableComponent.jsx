@@ -1,5 +1,5 @@
 
-import {fetchRelationalQualityPath} from "/1/1/entities.js";
+import {fetchRelationalPredicatePath} from "/1/1/entities.js";
 
 import * as EntityReference from "../utility_components/EntityReference.jsx";
 import * as ComponentEntityComponent from "./ComponentEntityComponent.jsx";
@@ -22,9 +22,9 @@ export function render(props) {
     this.setState(getInitialState(props));
   }
 
-  // If the relational quality for the class has not been fetched yet, do so.
+  // If the relational predicate for the class has not been fetched yet, do so.
   if (relQualPath === undefined) {
-    fetchRelationalQualityPath(classKey).then(qualPath => {
+    fetchRelationalPredicatePath(classKey).then(qualPath => {
       this.setState(state => ({
         ...state, relQualPath: qualPath ?? false
       }));

@@ -1,6 +1,6 @@
 
 import {
-  fetchRelationalQualityPath, fetchEntityDefinition
+  fetchRelationalPredicatePath, fetchEntityDefinition
 } from "/1/1/entities.js";
 
 import * as EntityReference from "../utility_components/EntityReference.jsx";
@@ -36,9 +36,9 @@ export function render(props) {
     return <MissingEntityElement {...props} key="0" />;
   }
 
-  // If the relational quality for the class has not been fetched yet, do so.
+  // If the relational predicate for the class has not been fetched yet, do so.
   if (relQualPath === undefined) {
-    fetchRelationalQualityPath(
+    fetchRelationalPredicatePath(
       classKey, entityElementRelPath
     ).then(qualPath => {
       this.setState(state => ({

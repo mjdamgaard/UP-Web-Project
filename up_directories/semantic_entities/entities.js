@@ -110,7 +110,7 @@ export function fetchOrCreateEntityID(entKey) {
 
 
 
-export function fetchRelationalQualityPath(
+export function fetchRelationalPredicatePath(
   objKey, relKey = membersRelationPath
 ) {
   let objIDProm = fetchEntityID(objKey);
@@ -123,7 +123,7 @@ export function fetchRelationalQualityPath(
         resolve(undefined);
       }
       else {
-        let qualPath = homePath + "/em1.js;call/RQ/" + objID + "/" + relID;
+        let qualPath = homePath + "/em1.js;call/RP/" + objID + "/" + relID;
         resolve(qualPath);
       }
     });
@@ -133,7 +133,7 @@ export function fetchRelationalQualityPath(
 
 
 
-export function postRelationalQuality(objKey, relKey = membersRelationPath) {
+export function postRelationalPredicate(objKey, relKey = membersRelationPath) {
   let objIDProm = fetchEntityID(objKey);
   let relIDProm = fetchEntityID(relKey);
   return new Promise(resolve => {
@@ -144,7 +144,7 @@ export function postRelationalQuality(objKey, relKey = membersRelationPath) {
         resolve(undefined);
       }
       else {
-        let qualPath = homePath + "/em1.js;call/RQ/" + objID + "/" + relID;
+        let qualPath = homePath + "/em1.js;call/RP/" + objID + "/" + relID;
         post(homePath + "/entities.sm.js//callSMF/postEntity", qualPath).then(
           qualID => resolve(qualID)
         );

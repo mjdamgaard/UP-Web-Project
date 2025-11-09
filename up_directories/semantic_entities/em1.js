@@ -245,9 +245,8 @@ export const areasOfConcern = {
 
 
 // 'Relations' in this system are entities that when combined with a relational
-// object yields a quality (usually as predicate, but in principle it could
-// also be other kinds of qualities). In practical terms, this is done by using
-// the constructor if the 'Relational qualities' class below, RQ(), giving it
+// object yields a predicate. In practical terms, this is done by using
+// the constructor if the 'Relational predicates' class below, RP(), giving it
 // the object and the relation as its arguments.
 // Like qualities, relations also have a "getElaboration" attribute, but in this
 // case, the function takes both an object and a subject as its second argument.
@@ -284,21 +283,21 @@ export const relations = {
 };
 
 
-// Relational qualities are always constructed from the constructor below,
-// which we have abbreviated to just 'RQ()' rather than 'RelationalQuality()'
+// Relational predicates are always constructed from the constructor below,
+// which we have abbreviated to just 'RP()' rather than 'RelationalPredicate()'
 // (as it will be used very frequently).
-export const RQ = (objID, relID) => ({
-  "Class": abs("./em1.js;get/relationalQualities"),
+export const RP = (objID, relID) => ({
+  "Class": abs("./em1.js;get/relationalPredicates"),
   "Object": "#" + objID,
   "Relation": "#" + relID,
-  "Label": "#" + objID + " → " + "#" + relID,
+  "Label": "∈ #" + objID + " → " + "#" + relID,
 });
-export const relationalQualities = {
+export const relationalPredicates = {
   "Class": abs("./em1.js;get/classes"),
-  "Name": "Relational qualities",
+  "Name": "Relational predicates",
   "Superclass": abs("./em1.js;get/qualities"),
-  "Constructor": RQ,
-  "Description": abs("./em1_aux.js;get/relationalQualitiesDesc"),
+  "Constructor": RP,
+  "Description": abs("./em1_aux.js;get/relationalPredicatesDesc"),
 };
 
 
