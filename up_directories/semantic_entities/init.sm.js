@@ -263,6 +263,13 @@ export function postInitialScores01() {
 
 
 
+// There's a bug where postInitialScores01() actually needs to be executed two
+// times before the scores of the user groups are fully updated. TODO: Fix this
+// bug, and in the meantime just run it again:
+export function postInitialScores02() {
+  return postInitialScores01();
+}
+
 
 
 

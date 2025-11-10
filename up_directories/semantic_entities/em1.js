@@ -290,7 +290,7 @@ export const RP = (objID, relID) => ({
   "Class": abs("./em1.js;get/relationalPredicates"),
   "Object": "#" + objID,
   "Relation": "#" + relID,
-  "Label": "∈ #" + objID + " → " + "#" + relID,
+  "Label": "Relevant w.r.t. #" + objID + " → " + "#" + relID,
 });
 export const relationalPredicates = {
   "Class": abs("./em1.js;get/classes"),

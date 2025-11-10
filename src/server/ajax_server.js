@@ -130,7 +130,7 @@ const scriptInterpreter = new ScriptInterpreter(
 const LOCKED_ROUTE_REGEX = /\/_/;
 
 const AUTH_TOKEN_REGEX = /^Bearer (.+)$/;
-const HOME_DIR_ID_REGEX = /^\/[^/]*\/([^/]+)/;
+const HOME_DIR_ID_REGEX = /^\/[0-9a-f]+\/([0-9a-f]+)/;
 
 
 

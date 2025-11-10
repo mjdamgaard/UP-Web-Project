@@ -78,7 +78,7 @@ export const queryRoute = new DevFunction(
     // locked.
     let result;
     if (interpreter.isServerSide && routeUPNodeID === upNodeID) {
-      if (isLocked) {
+      if (isLocked) {debugger;
         let curHomeDirID = execEnv.getFlag(ELEVATED_PRIVILEGES_FLAG);
         if (!curHomeDirID || curHomeDirID !== homeDirID) throw new RuntimeError(
           `Requested elevated privileges on Directory ${homeDirID} not granted`,
