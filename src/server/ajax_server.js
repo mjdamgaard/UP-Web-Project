@@ -136,6 +136,11 @@ const HOME_DIR_ID_REGEX = /^\/[0-9a-f]+\/([0-9a-f]+)/;
 
 
 
+
+let [ , , port] = process.argv;
+port = port ? parseInt(port) : 8080;
+
+
 http.createServer(async function(req, res) {
   let returnGasRef = [];
   try {
@@ -153,7 +158,7 @@ http.createServer(async function(req, res) {
   if (returnGas) {
     returnGas().catch(err => console.error(err));
   }
-}).listen(8080);
+}).listen(port);
 
 
 
@@ -362,7 +367,8 @@ async function getUserIDAndGas(authToken, stdGas, reqGas) {
   let [resultRow = []] = await userDBConnection.queryProcCall(
     "selectAuthenticatedUserIDAndGas", [authToken, 1],
   ) ?? [];
-  let [userID, gasReserve = {}, autoRefilledAt = 0] = resultRow;
+  let [userID, gasReserveJSON = '{}', autoRefilledAt = 0] = resultRow;
+  let gasReserve = JSON.parse(gasReserveJSON);
 
   if (!userID) {
     return [];

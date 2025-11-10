@@ -84,7 +84,7 @@ CREATE TABLE UserGas (
 
     user_id BIGINT UNSIGNED PRIMARY KEY,
 
-    gas_json JSON NOT NULL,
+    gas_json TEXT NOT NULL,
 
     auto_refilled_at BIGINT UNSIGNED NOT NULL DEFAULT (UNIX_TIMESTAMP())
 
@@ -98,10 +98,11 @@ CREATE TABLE UserGas (
 
 
 -- If a developer runs out of gas, an insert statement like the following is
--- a quick way to replenish that gas:
+-- a quick way to replenish that gas (changing "1" in "user_id = 1" to the
+-- right user ID first, and also possibly changing the gas values):
 
--- INSERT INTO UserGas (user_id, gas_json)
--- VALUES (1, CONCAT('{',
+-- UPDATE UserGas
+-- SET gas_json = CONCAT('{',
 --     '"comp":100000000,',
 --     '"import":500000,',
 --     '"fetch":500000,',
@@ -111,4 +112,5 @@ CREATE TABLE UserGas (
 --     '"conn":3000000,',
 --     '"mkdir":1000,',
 --     '"mkTable":10',
--- '}'));
+-- '}')
+-- WHERE user_id = 1;

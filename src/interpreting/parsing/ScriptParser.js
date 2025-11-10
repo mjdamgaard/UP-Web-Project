@@ -1063,7 +1063,7 @@ export const scriptGrammar = {
       }
       try {
         str = JSON.parse(stringLiteral);
-      } catch (error) {debugger;
+      } catch (error) {
         return `Invalid string: ${stringLiteral}`;
       }
       return {type: "string", str: str};

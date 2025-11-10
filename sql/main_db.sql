@@ -70,7 +70,7 @@ CREATE TABLE ServerModuleGas (
 
     file_id BIGINT UNSIGNED PRIMARY KEY,
 
-    gas_json JSON NOT NULL
+    gas_json TEXT NOT NULL
 
 ) ENGINE = InnoDB, ROW_FORMAT = COMPRESSED;
 

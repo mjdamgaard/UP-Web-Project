@@ -36,6 +36,11 @@ const TIME_GRAIN = 17; // Means round down the current token timestamp by 2^27
 // ~= 1.5 days.
 
 
+
+let [ , , port] = process.argv;
+port = port ? parseInt(port) : 8081;
+
+
 http.createServer(async function(req, res) {
   try {
     await requestHandler(req, res);
@@ -48,7 +53,7 @@ http.createServer(async function(req, res) {
       endWithInternalError(res, err);
     }
   }
-}).listen(8081);
+}).listen(port);
 
 
 
@@ -261,7 +266,8 @@ async function readUserIDGas(authToken) {
   let [resultRow = []] = await userDBConnection.queryProcCall(
     "selectAuthenticatedUserIDAndGas", [authToken, 0],
   ) ?? [];
-  let [userID = "", gas] = resultRow;
+  let [userID = "", gasJSON = '{}'] = resultRow;
+  let gas = JSON.parse(gasJSON);
   userID = userID.toString();
 
   userDBConnection.end();
