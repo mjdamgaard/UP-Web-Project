@@ -68,35 +68,55 @@ export class DirectoryUpdater {
     // Request a list of all the files in the server-side directory, and then
     // go through each one and check that it also exist nested in the client-
     // side directory, and for each one that doesn't, request deletion of that
-    // file server-side.
+    // file server-side. We do this be first constructing an array of functions
+    // that generates a promise, and then we generate and wait for each promise
+    // in sequence.  
     let filePaths = await serverQueryHandler.fetchAsAdmin(
       `/1/${dirID}./_all`
     );
-    let deletionPromises = [];
+    let deletionPromiseGenerators = [];
+    let serverFilePaths = [];
     filePaths.forEach((relPath) => {
       let clientFilePath = dirPath + "/" + relPath;
       let serverFilePath = normalizePath(`/1/${dirID}/${relPath}`);
       if (!fs.existsSync(clientFilePath)) {
-        deletionPromises.push(
-          serverQueryHandler.postAsAdmin(serverFilePath + "./_rm")
+        deletionPromiseGenerators.push(
+          () => serverQueryHandler.postAsAdmin(serverFilePath + "./_rm")
         );
+        serverFilePaths.push(serverFilePath);
       }
     });
-    await Promise.all(deletionPromises);
+    let len = deletionPromiseGenerators.length;
+    for (let i = 0; i < len; i++) {
+       await deletionPromiseGenerators[i]();
+       console.log("Deleted " + serverFilePaths[i]);
+    }
 
     // Then call a helper method to recursively loop through all files in the
     // directory itself or any of its nested directories and uploads them,
-    // pushing a promise for the response of each one to uploadPromises.
-    let uploadPromises = [];
-    this.#uploadDirHelper(dirPath, dirID, uploadPromises, serverQueryHandler);
-    await Promise.all(uploadPromises);
+    // pushing a promise for the response of each one to a
+    // uploadPromiseGenerators array, which is then used to generate and wait
+    // for each upload promise in sequence.
+    let uploadPromiseGenerators = [];
+    serverFilePaths = [];
+    this.#uploadDirHelper(
+      dirPath, dirID, uploadPromiseGenerators, serverFilePaths,
+      serverQueryHandler
+    );
+    len = uploadPromiseGenerators.length;
+    for (let i = 0; i < len; i++) {
+      await uploadPromiseGenerators[i]();
+      let [serverFilePath, isTableFile] = serverFilePaths[i];
+      console.log((isTableFile ? "Touched " : "Uploaded ") + serverFilePath);
+    }
 
     return dirID;
   }
 
 
   async #uploadDirHelper(
-    dirPath, relPath, uploadPromises, serverQueryHandler
+    dirPath, relPath, uploadPromiseGenerators, serverFilePaths,
+    serverQueryHandler
   ) {
     // Get each file in the directory at path, and loop through and handle each
     // one according to its extension (or lack thereof).
@@ -114,24 +134,27 @@ export class DirectoryUpdater {
       // helper method recursively.
       if (/^\.*[^.]+$/.test(name)) {
         this.#uploadDirHelper(
-          childAbsPath, childRelPath, uploadPromises, serverQueryHandler
+          childAbsPath, childRelPath, uploadPromiseGenerators,
+          serverQueryHandler
         );
       }
 
       // Else if the file is a text file, upload it as is to the server.
       else if (/\.(jsx?|txt|json|html|xml|svg|css|md)$/.test(name)) {
         let contentText = fs.readFileSync(childAbsPath, 'utf8');
-        uploadPromises.push(
-          serverQueryHandler.postAsAdmin(
+        uploadPromiseGenerators.push(
+          () => serverQueryHandler.postAsAdmin(
             `/1/${childRelPath}./_put`,
             contentText,
           )
         );
+        serverFilePaths.push([`/1/${childRelPath}`, false]);
       }
       else if (/\.(att|bt|ct|bbt|ftt)$/.test(name)) {
-        uploadPromises.push(
-          serverQueryHandler.postAsAdmin(`/1/${childRelPath}./_touch`)
+        uploadPromiseGenerators.push(
+          () => serverQueryHandler.postAsAdmin(`/1/${childRelPath}./_touch`)
         );
+        serverFilePaths.push([`/1/${childRelPath}`, true]);
       }
     });
   }
@@ -182,10 +205,15 @@ export class DirectoryUpdater {
       prompt: 'Do you want to delete all data held in these tables? [y/n] '
     });
     if (/^[yY]$/.test(confResponse)) {
-      await Promise.all(serverFilePaths.map(serverFilePath => (
-        serverQueryHandler.postAsAdmin(serverFilePath + "./_put")
-      )));
-      console.log("Filed successfully deleted.");
+      let deletionPromiseGenerators = serverFilePaths.map(serverFilePath => (
+        () => serverQueryHandler.postAsAdmin(serverFilePath + "./_put")
+      ));
+      let len = deletionPromiseGenerators.length;
+      for (let i = 0; i < len; i++) {
+        await deletionPromiseGenerators[i]();
+        console.log("Deleted data of " + serverFilePaths[i]);
+      }
+      console.log("Data successfully deleted.");
     }
     else {
       console.log("Aborted.");

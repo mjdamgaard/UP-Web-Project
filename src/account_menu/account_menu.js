@@ -173,7 +173,7 @@ function openCreateAccountPage(settingsContext) {
           <input type="password" class="form-control password"></input>
         </div>
         <div class="form-group">
-          <label>E-mail</label>
+          <label>E-mail (Not required)</label>
           <input type="email" class="form-control email"></input>
         </div>
         <button type="submit" class="btn btn-primary">

@@ -49,6 +49,9 @@ async function main() {
   let hasExited = false;
   while(!hasExited) {
     let command = await read({prompt: `dir #${dirID}> `});
+    // TODO: Add an optional path argument (where wildcards can be used) after
+    // the 'u' in this command. And if provided, only upload and delete files
+    // that match that path. 
     if (/^([uU]|upload)$/.test(command)) {
       console.log("Uploading...");
       try {
