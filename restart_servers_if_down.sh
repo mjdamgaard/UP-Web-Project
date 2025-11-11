@@ -4,7 +4,9 @@
 # the servers using pm2 if any of them are down (possibly due to a server
 # reboot). Prerequisites for this script to work is to first of all have pm2
 # installed, and also to have run 'npm run build' beforehand (with the latest
-# version of the app).  
+# version of the app).
+
+SCRIPT_DIR=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 
 login_server_pid_str="$(pgrep -f 'login_server')"
 ajax_server_pid_str="$(pgrep -f 'ajax_server')"
@@ -12,13 +14,13 @@ app_pid_str="$(pgrep -f 'Serve.js')"
 
 if [[ "$login_server_pid_str" < "1" ]]; then
   echo "Restarting login server..."
-  pm2 start ./src/server/login_server.js
+  pm2 start "$SCRIPT_DIR/src/server/login_server.js"
 fi
 if [[ "$ajax_server_pid_str" < "1" ]]; then
   echo "Restarting main AJAX server..."
-  pm2 start ./src/server/ajax_server.js
+  pm2 start "$SCRIPT_DIR/src/server/ajax_server.js"
 fi
 if [[ "$app_pid_str" < "1" ]]; then
   echo "Restarting app server..."
-  pm2 serve build 3000 --name "app" --spa
+  pm2 serve "$SCRIPT_DIR/build" 3000 --name "app" --spa
 fi
