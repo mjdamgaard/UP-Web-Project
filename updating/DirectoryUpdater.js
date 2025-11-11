@@ -134,7 +134,7 @@ export class DirectoryUpdater {
       // helper method recursively.
       if (/^\.*[^.]+$/.test(name)) {
         this.#uploadDirHelper(
-          childAbsPath, childRelPath, uploadPromiseGenerators,
+          childAbsPath, childRelPath, uploadPromiseGenerators, serverFilePaths,
           serverQueryHandler
         );
       }
