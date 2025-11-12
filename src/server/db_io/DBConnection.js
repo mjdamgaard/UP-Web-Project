@@ -5,13 +5,16 @@ import {mainDBConnectionOptions, userDBConnectionOptions} from "./config.js";
 const mainDBConnectionPool  = new ConnectionPool({
   ...mainDBConnectionOptions,
   waitForConnections: true,
-  connectionLimit: 350,
+  connectionLimit: 30,
 });
 const userDBConnectionPool  = new ConnectionPool({
   ...userDBConnectionOptions,
   waitForConnections: true,
-  connectionLimit: 140,
+  connectionLimit: 30,
 });
+// (We can hopefully increase the connectionLimits above at some point, but for
+// now, I keep them low as to not risk the "ER_TOO_MANY_USER_CONNECTIONS"
+// errors that I've otherwise gotten.)
 
 
 
@@ -25,7 +28,7 @@ export class DBConnection {
   async end() {
     // Get the connection, then close it.
     let conn = await this.connPromise;
-    this.connectionPool.releaseConnection(conn);
+    await this.connectionPool.releaseConnection(conn);
   }
 
 
