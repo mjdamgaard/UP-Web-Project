@@ -51,7 +51,11 @@ async function main() {
     let command = await read({prompt: `dir #${dirID}> `});
     // TODO: Add an optional path argument (where wildcards can be used) after
     // the 'u' in this command. And if provided, only upload and delete files
-    // that match that path. 
+    // that match that path.
+    // Actually, scratch that. We should instead just create and write to a
+    // '.checksums' file that stores a checksum/hash for each successfully
+    // uploaded file (including table files, why not), and then only re-upload
+    // the given file if the checksum has changed.
     if (/^([uU]|upload)$/.test(command)) {
       console.log("Uploading...");
       try {
