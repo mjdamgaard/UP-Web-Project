@@ -2,18 +2,36 @@
 import mysql from 'mysql2/promise';
 import {mainDBConnectionOptions, userDBConnectionOptions} from "./config.js";
 
+const mainDBConnectionPool  = mysql.createPool({
+  ...mainDBConnectionOptions,
+  waitForConnections: true,
+  connectionLimit: 350,
+});
+const userDBConnectionPool  = mysql.createPool({
+  ...userDBConnectionOptions,
+  waitForConnections: true,
+  connectionLimit: 150,
+});
+
 
 
 export class DBConnection {
 
-  constructor(connectionOptions) {
-    this.connPromise = mysql.createConnection(connectionOptions);
+  constructor(connectionPool) {
+    this.connPromise = connectionPool.getConnection();
+    this.hasOngoingTransaction = false;
+    this.hasAcquiredLocks = false;
+    this.hasEnded = false;
   }
 
   async end() {
-    // Get the connection, then close it.
+    // Get the connection, then close it, also making sure to roll back any
+    // ongoing transaction, and releasing all locks held by the connection.
+    this.hasEnded = true;
     let conn = await this.connPromise;
-    conn.end();
+    if (this.hasOngoingTransaction) await this.rollback(true);
+    if (this.hasAcquiredLocks) await this.releaseAllLocks(true);
+    conn.release();
   }
 
 
@@ -36,42 +54,54 @@ export class DBConnection {
 
 
 
-  // async queryRow(procName, paramValArr) {
-  //   let [row = []] = await this.queryList(procName, paramValArr);
-  //   return row;
-  // }
-
-  // async queryValue(procName, paramValArr) {
-  //   let [val = null] = await this.queryRow(procName, paramValArr);
-  //   return val;
-  // }
-
-
-
   async startTransaction() {
+    if (this.hasEnded) return;
+    this.hasOngoingTransaction = true;
     let conn = await this.connPromise;
     await conn.query({sql: "START TRANSACTION"});
+    this.hasOngoingTransaction = true;
   }
+
   async commit() {
+    if (this.hasEnded) return;
+    this.hasOngoingTransaction = false;
     let conn = await this.connPromise;
     await conn.query({sql: "COMMIT"});
   }
-  async rollback() {
+
+  async rollback(calledByEnd = false) {
+    if (this.hasEnded && !calledByEnd) return;
+    this.hasOngoingTransaction = false;
     let conn = await this.connPromise;
     await conn.query({sql: "ROLLBACK"});
   }
 
   async getLock(name, time = 10) {
+    if (this.hasEnded) return;
+    this.hasAcquiredLocks = true;
     let conn = await this.connPromise;
     let [[rowArr = []]] = await conn.query(
       {sql: "SELECT GET_LOCK(?, ?)", rowsAsArray: true}, [name, time]
     );
+    this.hasAcquiredLocks = true;
     return rowArr[0];
   }
+
   async releaseLock(name) {
+    if (this.hasEnded) return;
     let conn = await this.connPromise;
     let [[rowArr = []]] = await conn.query(
       {sql: "SELECT RELEASE_LOCK(?)", rowsAsArray: true}, [name]
+    );
+    return rowArr[0];
+  }
+
+  async releaseAllLocks(calledByEnd = false) {
+    if (this.hasEnded && !calledByEnd) return;
+    this.hasAcquiredLocks = false;
+    let conn = await this.connPromise;
+    let [[rowArr = []]] = await conn.query(
+      {sql: "SELECT RELEASE_ALL_LOCKS()", rowsAsArray: true}, []
     );
     return rowArr[0];
   }
@@ -93,12 +123,12 @@ export function getProcCallSQL(procName, paramNum = 0) {
 
 export class MainDBConnection extends DBConnection {
   constructor() {
-    super(mainDBConnectionOptions);
+    super(mainDBConnectionPool);
   }
 }
 
 export class UserDBConnection extends DBConnection {
   constructor() {
-    super(userDBConnectionOptions);
+    super(userDBConnectionPool);
   }
 }

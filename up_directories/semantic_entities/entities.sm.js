@@ -9,6 +9,7 @@ import homePath from "./.id.js";
 import {post, fetch, decodeURIComponent} from 'query';
 import {valueToHex} from 'hex';
 import {verifyType} from 'type';
+import {substring} from 'string';
 
 
 
@@ -33,6 +34,7 @@ export function postEntity(entPath, useSecIdx = true) {
       ).then(entID => {
         // If the entPath already has an entID, resolve with that.
         if (entID) {
+          if (entID[0] === "0") entID = substring(entID, 1);
           return resolve(entID);
         }
         

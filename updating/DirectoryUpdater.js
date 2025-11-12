@@ -89,7 +89,7 @@ export class DirectoryUpdater {
     let len = deletionPromiseGenerators.length;
     for (let i = 0; i < len; i++) {
        await deletionPromiseGenerators[i]();
-       console.log("Deleted " + serverFilePaths[i]);
+       console.log("Removed " + serverFilePaths[i]);
     }
 
     // Then call a helper method to recursively loop through all files in the

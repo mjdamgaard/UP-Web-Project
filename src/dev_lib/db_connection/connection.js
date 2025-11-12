@@ -201,6 +201,17 @@ export class Connection extends ObjectObject {
       return await this.conn.releaseLock(homeDirID + "." + name);
     }
   );
+  releaseAllLocks = new DevFunction(
+    "releaseAllLocks", {isAsync: true},
+    async ({callerNode, execEnv}, []) => {
+      if (!this.conn) throw new RuntimeError(
+        "Connection was not started before being used",
+        callerNode, execEnv
+      );
+
+      return await this.conn.releaseAllLocks();
+    }
+  );
 
 }
 

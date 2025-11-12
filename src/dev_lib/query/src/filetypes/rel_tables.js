@@ -1,7 +1,7 @@
 
 
 import {
-  RuntimeError, payGas,
+  RuntimeError, ArgTypeError, payGas,
 } from "../../../../interpreting/ScriptInterpreter.js";
 import {DBQueryHandler} from "../../../../server/db_io/DBQueryHandler.js";
 import {getQueryObject} from "../route_parsing.js";
@@ -371,9 +371,18 @@ export async function query(
     ignore = ignore ? 1 : 0;
     payGas(callerNode, execEnv, {dbWrite: postData.length});
     let paramValArr = [homeDirID, localPath, listID, postData, ignore];
-    let [[rowCount] = []] = await dbQueryHandler.queryDBProc(
-      procName, paramValArr, route, options, callerNode, execEnv,
-    ) ?? [];
+    let rowCount;
+    try {
+      [[rowCount] = []] = await dbQueryHandler.queryDBProc(
+        procName, paramValArr, route, options, callerNode, execEnv,
+      ) ?? [];
+    }
+    catch (err) {
+      throw new ArgTypeError(
+        "Ill-formed list entries",
+        callerNode, execEnv
+      );
+    }
     return rowCount
   }
 
