@@ -5,12 +5,12 @@ import {mainDBConnectionOptions, userDBConnectionOptions} from "./config.js";
 const mainDBConnectionPool  = new ConnectionPool({
   ...mainDBConnectionOptions,
   waitForConnections: true,
-  connectionLimit: 20,
+  connectionLimit: 10,
 });
 const userDBConnectionPool  = new ConnectionPool({
   ...userDBConnectionOptions,
   waitForConnections: true,
-  connectionLimit: 20,
+  connectionLimit: 10,
 });
 // (We can hopefully increase the connectionLimits above at some point, but for
 // now, I keep them low as to not risk the "ER_TOO_MANY_USER_CONNECTIONS"

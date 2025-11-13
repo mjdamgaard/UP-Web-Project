@@ -211,7 +211,7 @@ export class DirectoryUpdater {
       let len = deletionPromiseGenerators.length;
       for (let i = 0; i < len; i++) {
         await deletionPromiseGenerators[i]();
-        console.log("Deleted data of " + serverFilePaths[i]);
+        console.log("Deleted data from " + serverFilePaths[i]);
       }
       console.log("Data successfully deleted.");
     }

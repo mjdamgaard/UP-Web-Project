@@ -20,7 +20,7 @@ export class ConnectionPool {
     this.options = options;
     this.requestResolveQueue = new Queue();
     this.connectionLimit = options.connectionLimit;
-    this.curConnNum = 0; 
+    this.curConnNum = 0;
   }
 
   async getConnection() {
@@ -42,7 +42,7 @@ export class ConnectionPool {
       let resolve = this.requestResolveQueue.dequeue();
       if (!resolve) break;
       this.curConnNum++;
-      let conn = await mysql.createConnection(this.options)
+      let conn = await mysql.createConnection(this.options);
       resolve(conn);
     }
   }
