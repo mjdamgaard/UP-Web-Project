@@ -110,10 +110,13 @@ export const entities = {
   "Name": "All entities",
   "Superclass": undefined,
   "Common attributes": [
+    // "Class" is a required attribute for all referential entities.
+    "Class",
+
     // The "Name" attribute is understood in a very broad sense of the word.
     // It is a string, preferably as brief as possibly, that is used to label
     // the given entity when it is referred to. So in a sense, "Name" here is
-    // used synonymously with "Label." 
+    // used synonymously with "Label."
     "Name",
 
     // The "Elaboration" is a slightly longer string that can be shown
@@ -139,9 +142,6 @@ export const classes = {
   "Name": "Classes",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-    "Name",
-    "Elaboration",
-
     // A superclass (i.e. the opposite of "subclass") that helps define the
     // class.
     "Superclass",
@@ -150,7 +150,12 @@ export const classes = {
     // expect the members of this class to be defined by. (This list is only
     // guiding). Note that any subclass of the given class generally does not
     // have to use the same set of "Common attributes" (even though this is
-    // sometimes preferred).
+    // sometimes preferred). Generally, a subclass thus ought to repeat all the
+    // "Common attributes" it has in common with its superclass. An exception
+    // to this rule, however, is the set of attributes: "Class", "Name",
+    // "Elaboration", and "Description", which all might be relevant for any
+    // given type of of entity, and which can therefore always be omitted from
+    // a class's "Common attributes".
     "Common attributes",
 
     // Rather than a "Common attributes" attribute, a class might also have a
@@ -174,8 +179,6 @@ export const classes = {
     // the members of the given class, among other things. See below for more
     // details. 
     "Area of concern",
-
-    "Description",
   ],
   "Description": abs("./em1_aux.js;get/classesDesc"),
 };
@@ -204,12 +207,15 @@ export const users = {
 
 
 
-// Class of all texts. Texts can be defined in many ways.
+// Class of all texts. Texts can be defined in many ways; they can be defined
+// by a path or an external URL, and/or by a "Content" string or reference. Or
+// the text entity can be a so-called "value entity", either in the form of a
+// string or a JSX element.
 export const texts = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Texts",
   "Superclass": abs("./em1.js;get/entities"),
-  "Common attributes": ["Name", "Path", "URL", "Content"],
+  "Common attributes": ["Path", "URL", "Content"],
   "Member type(s": ["string", "jsx"],
   "Description": abs("./em1_aux.js;get/textsDesc"),
 };
@@ -218,7 +224,7 @@ export const texts = {
 
 // A 'quality' in this system refers to a property of an entity that can be
 // described by floating-point number within some range. One can think of the
-// well-known "tags" that you normally see on the web, but where each tag is
+// well-known "tags" that you normally see on the Web, but where each tag is
 // rated on a floating-point scale. For example, a movie  might be rated with
 // respect to a quality of "Scary," and the rating scale of the quality would
 // thus represent how scary the movie is.
@@ -227,57 +233,179 @@ export const texts = {
 // to include all users of the system, but can also be a limited list of users.
 // (And the users in the group might even have different weights, meaning that
 // the scores of some users might count for more than others.)
-// Qualities have a "Label" attribute, which should be as brief as possible:
-// Instead of writing "Is scary," write "Scary." And instead of writing "Has
-// good acting," write "Good acting." Then for elaboration on these labels,
-// qualities also have an "Elaboration" attribute, which is a short text that
-// can be shown e.g. when hovering over a display/reference of the quality. For
-// these texts, one can use the word 'Subject,' always with a capital 'S,' to
-// refer to the subject that the quality is about, such as e.g. in a sentence
-// like "Subject is scary." And then for further elaboration on the quality,
-// we of course also have the "Description" attribute. 
-// Apart from that, semantic qualities also each have a "Domain," which is a
-// class to which the subjects are supposed to belong. (It can also be a
-// quality, in which case it is implicitly understood to mean that set of all
-// entities with a positive score for that quality). They also have a "Metric,"
-// which defines the semantics of the range of the floating-point score, and
-// they can have a (default) "Area of concern" attribute, which, as described
-// below, helps the app choose the right user group to query for score
-// aggregates for the given quality.
-// Some qualities might also have the "Area of concern" attribute replaced with
-// a "Formula" attribute. In this case, we might refer to the quality as a
-// 'derived quality.' The "Formula" attribute takes the value of a function,
-// whose only argument is a so-called 'score handler' (see below), which in
-// short is an object that handles fetching (and posting) scores for the given
-// user, allowing the results to be dependent on the user's own preferences.
-// The returned value of the "Formula" function is then an object with the same
-// API (in terms of its methods) as the so-called "scored lists," which are
-// also introduced below.
+// We will tend to refer to the entities that the quality is about as the
+// "subjects" of the quality. And when a quality and a subject is put together,
+// they form what we will refer to as a 'scored parameter,' or simply
+// 'parameter,' whenever it is clear from context what we are talking about
+// (which is most of the time).
 export const qualities = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Qualities",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-    "Name",
-    "Elaboration", "Domain", "Metric", "Area of concern",
-    "Formula", "Description",
+  // The "Name" attribute of qualities should be as brief as possible: Instead
+  // of writing "Is scary", write "Scary." And instead of writing "Has good
+  // acting", write "Good acting". And instead of writing "Is a fantasy movie",
+  // write "Fantasy movie", or preferably even just "Fantasy" if the "Domain"
+  // (see below) of the quality is already a 'Movies' class.
+
+  // The "getParameterName()" method is used to generate the "Name" attribute
+  // whenever the quality is combined with a subject to form a 'parameter' (see
+  // below).
+  "getParameterName",
+
+  // The "Domain" of a quality is a class to which the subjects are supposed to
+  // belong. Or it can also be a quality, in which case it is implicitly
+  // understood to mean that set of all entities with a positive score for that
+  // quality.
+  "Domain",
+
+  // The "Metric" of a quality defines the semantics of the range of the
+  // floating-point score, can also help to define the unit of the quality, if
+  // any, and to give labels to the intervals of the range. Since most
+  // qualities is expected to be "predicates," i.e. a quality measuring the
+  // correctness of a statement (either a subjective or an objective one), we
+  // will take the 'Predicate metric' introduced below to be the default metric
+  // whenever the "Metric" attribute is undefined.
+  "Metric",
+
+  // The "Area of concern" attribute helps determine which users are more
+  // qualified than others to score the quality. (This is determined in a
+  // completely decentralized way, however.) For more details see below.
+  "Area of concern",
+
+  // Some qualities might also have the "Area of concern" attribute replaced
+  // with a "getScoredList()" method. In such cases, we might refer to the
+  // quality as being a 'derived quality.' The "getScoredList()" method takes
+  // a so-called 'score handler' (see below) as its argument, which in short is
+  // an object that handles fetching (and posting) scores for the given user,
+  // allowing the results to be dependent on the user's own preferences.
+  // The returned value of the "getScoredList()" method is then an object with
+  // the same API (in terms of its methods) as the so-called "scored lists,"
+  // which are introduced below. Note that 'derived qualities' are thus not
+  // meant to be scored directly by the users, as is the case for their
+  // counterparts, which we might refer to as 'user-scored qualities.'
+    "getScoredList",
   ],
   "Description": abs("./em1_aux.js;get/qualitiesDesc"),
 };
 
 
-// A metric is used to describe the semantics of the range of the floating-
-// point parameters returned by qualities.
-export const metrics = {
+
+
+// Relations in this system are entities that when combined with a relational
+// object yields a quality (and most often a predicate in particular). In
+// practical terms, this is done by using the constructor if the 'Relational
+// qualities' class below, RG(), giving it the object and the relation as its
+// arguments.
+// Like qualities, relations also have a "getElaboration" attribute, but in this
+// case, the function takes both an object and a subject as its second argument.
+// For instance, we could have (obj, subj) => subj + " is a subclass of " + obj,
+// which will indeed be the getElaboration() function of the "Subclasses"
+// relation below.
+// And like qualities, relations also have a "Label attribute, where we in this
+// case prefer the labels to be nouns (including compound ones). This could for
+// example be "Subclasses" in the case that we just saw. When a relational
+// quality is created from an object and a relation, we can then give it a
+// short label of the form "<Object> → <Relation>". So for instance, the
+// quality of being a subclass of the "Texts" class will get the label of:
+// "Texts → Subclasses." (By the way, plural nouns are often preferred for
+// relation labels, unless they are expected to only have one subject, such as
+// e.g. the the capital of a country, in which case the label ought to be
+// "Capitol".)
+// Relations also define the "Metric" and "Area of concern" of the relational
+// qualities that they produce, as well as the domain, only this is referred to
+// to as the "Subject domain" here, as we also similarly have an "Object
+// domain" for the intended objects of the relation. The can also be 'derived'
+// and use a "Formula" attribute rather than an "Area of concern." The only
+// difference is that these "Formula" functions, as opposed the those of
+// qualities, also take the object as their first argument, before the score
+// handler argument.
+export const relations = {
   "Class": abs("./em1.js;get/classes"),
-  "Name": "Metrics",
+  "Name": "Relations",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-    "Name", "Unit", "Prepend unit", "Lower limit", "Upper limit",
-    "Interval labels", "Description"
+    // For the "Name" attribute of relations, try if at all possible to select
+    // a noun (possibly a compound one) that labels the subjects of the
+    // relations. For instance, the relation that connects a class (object) to
+    // its subclasses (subjects) ought to be called simply "Subclasses" (which
+    // we indeed do below). Also, please use plural nouns whenever you might
+    // often expect relation to be one-to-many (such as e.g. is the case for
+    // 'Subclasses,' as a class can have several of those), and select singular
+    // nouns only when expect only one subject per object most of the time for
+    // the relation.
+
+    // What do we call the method that takes the relational object as its
+    // input and returns the "getParameterName()" method that should be given
+    // to the resulting quality? Why, "getGetParameterName()", of course.
+    "getGetParameterName",
+
+    // A relation doesn't just have a "Domain" attribute, but both an "Object
+    // domain" and a "Subject domain".
+    "Object domain",
+    "Subject domain",
+
+    // The "Metric" of a relation is copied onto all the qualities that are
+    // generated from it, and the same goes for the "Area of concern" attribute.
+    "Metric",
+    "Area of concern",
   ],
-  "Description": abs("./em1_aux.js;get/metricsDesc"),
+  "Description": abs("./em1_aux.js;get/relationsDesc"),
 };
+
+
+// Relational qualities are always constructed from the constructor below,
+// which we have abbreviated to just 'RQ()' rather than 'RelationalPredicate()'
+// (as it will be used very frequently).
+export const RQ = (objID, relID) => ({
+  "Class": abs("./em1.js;get/relationalPredicates"),
+  "Name": "...", // "Relevant w.r.t. #" + objID + " → " + "#" + relID,
+  "getParameterName": "...",
+  "Object": "#" + objID,
+  "Relation": "#" + relID,
+});
+export const relationalPredicates = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "Relational predicates",
+  "Superclass": abs("./em1.js;get/qualities"),
+  "constructor": RQ,
+  "Description": abs("./em1_aux.js;get/relationalPredicatesDesc"),
+};
+
+
+export const getElaborationOfStdSingularRelation = (objID, subj) => (
+  "#" + subj + " is relevant as the " + "#" + relID + " of #" + objID
+);
+export const getElaborationOfStdPluralRelation = (objID, subj) => (
+  "#" + subj + " is relevant as one of the " + "#" + relID + " of #" + objID
+);
+
+
+
+
+
+// 'Parameters' in the context of the semantic system refers to the floating-
+// point number scales that are scored by the users, and/or aggregated
+// algorithmically. If ever needing to disambiguate from other kinds of
+// 'parameters,' we can refer to them as 'Quality parameters,' but let's use
+// the abbreviated form, 'Parameters,' as much as possible.
+export const Parameter = (qualID, subjID) => ({
+  "Class": abs("./em1.js;get/qualityVariables"),
+  "Quality": "#" + qualID,
+  "Subject": "#" + subjID,
+  "Label": "#" + subjID + " ⇒ " + "#" + qualID,
+});
+export const parameters = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "Parameters",
+  "Superclass": abs("./em1.js;get/entities"),
+  "constructor": Parameter,
+  "Description": abs("./em1_aux.js;get/qualityVariablesDesc"),
+};
+
+
+
 
 
 // The so-called 'areas of concern' (AoC) are used for determining with user
@@ -286,11 +414,12 @@ export const metrics = {
 // rather than voting on the best user group to query for every single quality,
 // we can instead group qualities into 'areas of concern,' as we might call it,
 // such as e.g. "Taste in fictional media," "Science," "UI," "URL safety,"
-// "Sensitive user safety" etc., and then the users only need to pick one user
-// group to use for each of these areas. Note that areas can change in time,
-// such as "Science" here, which might be split into several subareas.
-// Like all attributes of entities, the "Area of concern" attribute of quality
-// entities are only guiding; it is not set in stone.
+// "Sensitive user safety" etc. Then, users only need to pick one user group to
+// use for each of these areas. Note that areas can change in time, such as
+// "Science" here, which might be split into several subareas. And as the case
+// for all attributes of entities, note that these "Areas of concern" are not
+// set in stone, and can be changed over time, and even be changed to something
+// different for different groups of users.
 export const areasOfConcern = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Areas of concern",
@@ -355,97 +484,6 @@ export const areasOfConcern = {
 // can't read the data, namely by using client-side encryption keys to encrypt
 // the data.)
 
-
-
-
-
-// 'Relations' in this system are entities that when combined with a relational
-// object yields a predicate. In practical terms, this is done by using
-// the constructor if the 'Relational predicates' class below, RP(), giving it
-// the object and the relation as its arguments.
-// Like qualities, relations also have a "getElaboration" attribute, but in this
-// case, the function takes both an object and a subject as its second argument.
-// For instance, we could have (obj, subj) => subj + " is a subclass of " + obj,
-// which will indeed be the getElaboration() function of the "Subclasses"
-// relation below.
-// And like qualities, relations also have a "Label attribute, where we in this
-// case prefer the labels to be nouns (including compound ones). This could for
-// example be "Subclasses" in the case that we just saw. When a relational
-// quality is created from an object and a relation, we can then give it a
-// short label of the form "<Object> → <Relation>". So for instance, the
-// quality of being a subclass of the "Texts" class will get the label of:
-// "Texts → Subclasses." (By the way, plural nouns are often preferred for
-// relation labels, unless they are expected to only have one subject, such as
-// e.g. the the capital of a country, in which case the label ought to be
-// "Capitol".)
-// Relations also define the "Metric" and "Area of concern" of the relational
-// qualities that they produce, as well as the domain, only this is referred to
-// to as the "Subject domain" here, as we also similarly have an "Object
-// domain" for the intended objects of the relation. The can also be 'derived'
-// and use a "Formula" attribute rather than an "Area of concern." The only
-// difference is that these "Formula" functions, as opposed the those of
-// qualities, also take the object as their first argument, before the score
-// handler argument.
-export const relations = {
-  "Class": abs("./em1.js;get/classes"),
-  "Name": "Relations",
-  "Superclass": abs("./em1.js;get/entities"),
-  "Common attributes": [
-    "Label", "getElaboration", "Object domain", "Subject domain",
-    "Metric", "Area of concern", "Description"
-  ],
-  "Description": abs("./em1_aux.js;get/relationsDesc"),
-};
-
-
-// Relational predicates are always constructed from the constructor below,
-// which we have abbreviated to just 'RP()' rather than 'RelationalPredicate()'
-// (as it will be used very frequently).
-export const RP = (objID, relID) => ({
-  "Class": abs("./em1.js;get/relationalPredicates"),
-  "Object": "#" + objID,
-  "Relation": "#" + relID,
-  "Label": "Relevant w.r.t. #" + objID + " → " + "#" + relID,
-});
-export const relationalPredicates = {
-  "Class": abs("./em1.js;get/classes"),
-  "Name": "Relational predicates",
-  "Superclass": abs("./em1.js;get/qualities"),
-  "constructor": RP,
-  "Description": abs("./em1_aux.js;get/relationalPredicatesDesc"),
-};
-
-
-export const getElaborationOfStdSingularRelation = (objID, subj) => (
-  "#" + subj + " is relevant as the " + "#" + relID + " of #" + objID
-);
-export const getElaborationOfStdPluralRelation = (objID, subj) => (
-  "#" + subj + " is relevant as one of the " + "#" + relID + " of #" + objID
-);
-
-
-
-
-
-
-// 'Parameters' in the context of the semantic system refers to the floating-
-// point number scales that are scored by the users, and/or aggregated
-// algorithmically. If ever needing to disambiguate from other kinds of
-// 'parameters,' we can refer to them as 'Quality parameters,' but let's use
-// the abbreviated form, 'Parameters,' as much as possible.
-export const Parameter = (qualID, subjID) => ({
-  "Class": abs("./em1.js;get/qualityVariables"),
-  "Quality": "#" + qualID,
-  "Subject": "#" + subjID,
-  "Label": "#" + subjID + " ⇒ " + "#" + qualID,
-});
-export const parameters = {
-  "Class": abs("./em1.js;get/classes"),
-  "Name": "Parameters",
-  "Superclass": abs("./em1.js;get/entities"),
-  "constructor": Parameter,
-  "Description": abs("./em1_aux.js;get/qualityVariablesDesc"),
-};
 
 
 
@@ -674,17 +712,28 @@ export const components = {
 
 
 
-// Some useful metrics for qualities.
 
-export const percentageMetric = {
-  "Class": abs("./em1.js;get/metrics"),
-  "Name": "Percentage metric",
-  "Unit": "%",
-  "Lower limit": 0,
-  "Upper limit": 100,
-  "Description": abs("./em1_aux.js;get/percentageMetricsDesc"),
+
+// A metric is used to describe the semantics of the range of the floating-
+// point parameters returned by qualities.
+export const metrics = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "Metrics",
+  "Superclass": abs("./em1.js;get/entities"),
+  "Common attributes": [
+    "Unit", "Prepend unit", "Lower limit", "Upper limit",
+    "Interval labels",
+  ],
+  "Description": abs("./em1_aux.js;get/metricsDesc"),
 };
 
+
+
+
+// Some useful metrics for qualities.
+
+// The 'Predicate metric' is the default metric if the "Metric" attribute is
+// undefined for the quality (or the relation).
 export const predicateMetric = {
   "Class": abs("./em1.js;get/metrics"),
   "Name": "Predicate metric",
@@ -703,6 +752,15 @@ export const predicateMetric = {
     [  8, 10,  "extremely"],
   ],
   "Description": abs("./em1_aux.js;get/predicateMetricsDesc"),
+};
+
+export const percentageMetric = {
+  "Class": abs("./em1.js;get/metrics"),
+  "Name": "Percentage metric",
+  "Unit": "%",
+  "Lower limit": 0,
+  "Upper limit": 100,
+  "Description": abs("./em1_aux.js;get/percentageMetricsDesc"),
 };
 
 export const dimensionlessMetric = {

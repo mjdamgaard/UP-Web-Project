@@ -104,7 +104,7 @@ export function fetchRelationalPredicatePath(
         resolve(undefined);
       }
       else {
-        let qualPath = homePath + "/em1.js;call/RP/" + objID + "/" + relID;
+        let qualPath = homePath + "/em1.js;call/RQ/" + objID + "/" + relID;
         resolve(qualPath);
       }
     });
@@ -125,7 +125,7 @@ export function postRelationalPredicate(objKey, relKey = membersRelationPath) {
         resolve(undefined);
       }
       else {
-        let qualPath = homePath + "/em1.js;call/RP/" + objID + "/" + relID;
+        let qualPath = homePath + "/em1.js;call/RQ/" + objID + "/" + relID;
         post(homePath + "/entities.sm.js./callSMF/postEntity", qualPath).then(
           qualID => resolve(qualID)
         );
