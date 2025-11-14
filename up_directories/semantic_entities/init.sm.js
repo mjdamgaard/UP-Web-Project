@@ -78,12 +78,7 @@ export const initialModerators = [
   // Some initial "test moderators":
   ["1", 20, 20],
   ["2", 15, 20],
-  ["3", 10, 20],
-  ["4", 10, 20],
-  ["5", 5, 20],
-  ["6", 5, 20],
-  ["7", 5, 20],
-  ["8", 5, 20],
+  ["3", 11, 20],
 
   // TODO: Add some actual moderators when there are some.
 ];

@@ -1,4 +1,5 @@
 
+import {getUserEntPath} from "./entities.js";
 
 
 export const webApps = {
@@ -38,7 +39,7 @@ export const homeApp = {
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/home_app",
-  "Author(s)": "@1",
+  "Author(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
 
@@ -84,7 +85,7 @@ export const upIndexPage01 = {
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/home_app/index_pages",
-  "Author(s)": "@1",
+  "Author(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
 
@@ -96,7 +97,7 @@ export const upIndexPage02 = {
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/home_app/index_pages",
-  "Author(s)": "@1",
+  "Author(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
 
@@ -115,7 +116,7 @@ export const classEntityPage = {
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/home_app/entity_pages",
-  "Author(s)": "@1",
+  "Author(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
 

@@ -103,6 +103,7 @@ class JSXInstance {
     this.callerNode = callerNode;
     this.callerEnv = callerEnv;
     this.isDiscarded = undefined;
+    this.isFailed = undefined;
     this.rerenderPromise = undefined;
     this.actions = {};
     this.methods = {};
@@ -123,10 +124,10 @@ class JSXInstance {
     this.callerNode = callerNode;
     this.callerEnv = callerEnv;
 
-    // Return early if the props are the same as on the last render, and if the
-    // instance is not forced to rerender.
+    // Return early if the props are the same as on the last render, and the
+    // instance is not forced to rerender, or if the instance has failed before.
     if (
-      !force && this.props !== undefined &&
+      this.isFailed || !force && this.props !== undefined &&
       deepCompareExceptMutableAndRefs(props, this.props)
     ) {
       return this.domNode;
@@ -311,6 +312,7 @@ class JSXInstance {
 
 
   getFailedComponentDOMNode(error, replaceSelf) {
+    this.isFailed = true;
     if (error instanceof Exception) {
       logExtendedErrorAndTrace(error);
       let newDOMNode = document.createElement("span");

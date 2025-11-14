@@ -5,8 +5,9 @@ import {
 import {slice as sliceArr, at as atArr, join, map} from 'array';
 import {parseRoute, isTextFileExtension} from 'route';
 import {hasType} from 'type';
-
 import {fetch, encodeURIComponent} from 'query';
+import {getUserEntPath} from "/1/1/entities.js";
+
 import * as ILink from 'ILink.jsx';
 import * as EntityReference from "../utility_components/EntityReference.jsx";
 import * as TextDisplay from "../utility_components/TextDisplay.jsx";
@@ -229,8 +230,9 @@ export function render({route}) {
     content = [
       <hr/>,
       <div className="admin">{"Admin: "}{
-        adminID ? <EntityReference key="admin" entKey={"@" + adminID} /> :
-          "None"
+        adminID ? <EntityReference key="admin"
+          entKey={getUserEntPath("1", adminID)}
+        /> : "None"
       }</div>,
       <hr/>,
       <div className="result">{

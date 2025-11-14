@@ -2565,6 +2565,16 @@ export function verifyType(val, type, isOptional, node, env) {
         );
       }
       break;
+    // (This type might type check might not see any use in practice:)
+    case "jsx":
+      if (!(val instanceof JSXElement)) {
+        throw new ArgTypeError(
+          "Value is not a JSX element directly (although it might still be " +
+          "a valid string or array which can be rendered like a JSX element)",
+          node, env
+        );
+      }
+      break;
     case "class":
       if (!(val instanceof ClassObject)) {
         throw new ArgTypeError(
