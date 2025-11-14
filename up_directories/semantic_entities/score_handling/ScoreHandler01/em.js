@@ -213,7 +213,7 @@ function fetchUserGroup(qualKey, options = {}) {
     }
     else {
       fetchEntityPath(qualKey).then(qualPath => {
-        // TODO: Change such that for relational predicates, we also fetch the
+        // TODO: Change such that for relational qualities, we also fetch the
         // class or the relation and use their AoC attribute as a fallback. Oh,
         // and for regular qualities, we should also use the AoC attribute as
         // a fallback.

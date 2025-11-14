@@ -1,5 +1,5 @@
 
-import {fetchRelationalPredicatePath} from "/1/1/entities.js";
+import {fetchRelationalQualityPath} from "/1/1/entities.js";
 import {map} from 'array';
 
 import * as VariableEntityElement
@@ -33,7 +33,7 @@ import * as AddEntityMenu from "./AddEntityMenu.jsx";
 
 // This component takes either a quality, a relation--object pair, or a class,
 // and renders a list of entities fetched either from the provided quality, or
-// from the relational predicate formed by either the relation--object pair, or
+// from the relational quality formed by either the relation--object pair, or
 // the class.
 export function render({
   qualKey, relKey, objKey, classKey, ElementComponent = VariableEntityElement,
@@ -47,7 +47,7 @@ export function render({
   // If the qualKey prop is undefined, and qualPath has not yet been fetched,
   // do so.
   if (!qualKey && qualPath === undefined) {
-    fetchRelationalPredicatePath(objKey ?? classKey, relKey).then(qualPath => {
+    fetchRelationalQualityPath(objKey ?? classKey, relKey).then(qualPath => {
       this.setState(state => ({...state, qualPath: qualPath ?? false}));
     });
     content = <div className="fetching">{"..."}</div>;

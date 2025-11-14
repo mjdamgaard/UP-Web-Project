@@ -9,7 +9,7 @@ import {map} from 'array';
 import {valueToHex, arrayToHex} from 'hex';
 import {getSequentialPromise} from 'promise';
 import {
-  fetchEntityID, postAllEntitiesFromModule, fetchRelationalPredicatePath
+  fetchEntityID, postAllEntitiesFromModule, fetchRelationalQualityPath
 } from "./entities.js";
 import {
   scoreHandler01, initialTrustedUserGroup, initialStandardUserGroup,
@@ -324,7 +324,7 @@ function postUserRelationalScoreAndUpdateUserGroups(
   userGroupKeyArr = undefined
 ) {
   return new Promise(resolve => {
-    fetchRelationalPredicatePath(objKey, relKey).then(qualPath => {
+    fetchRelationalQualityPath(objKey, relKey).then(qualPath => {
       postUserPredicateScoreAndUpdateUserGroups(
         qualPath, subjKey, userKey, score, userGroupKeyArr
       ).then(

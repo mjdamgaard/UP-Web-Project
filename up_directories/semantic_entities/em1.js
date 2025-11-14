@@ -3,6 +3,8 @@
 // 'Entities' class and the 'Classes' class which are fundamental to the
 // whole semantic system.
 
+import {fetchEntityProperty} from "./entities.js";
+
 
 
 // 'Semantic entities,' or just 'entities' for short, are objects with a human-
@@ -292,7 +294,7 @@ export const qualities = {
 
 
 
-
+// TODO: Change this text:
 // Relations in this system are entities that when combined with a relational
 // object yields a quality (and most often a predicate in particular). In
 // practical terms, this is done by using the constructor if the 'Relational
@@ -336,10 +338,16 @@ export const relations = {
     // nouns only when expect only one subject per object most of the time for
     // the relation.
 
-    // What do we call the method that takes the relational object as its
-    // input and returns the "getParameterName()" method that should be given
-    // to the resulting quality? Why, "getGetParameterName()", of course.
+    // The "getParameterName()" method of relations is different from the one
+    // for qualities, namely since it here takes two arguments, objKey and
+    // subjKey, instead of just the subjKey. Thus, the getParameterName()
+    // method for relational qualities is constructed the way you see here
+    // below.
     "getGetParameterName",
+
+    // And the "getQualityName()" similarly takes an objKey argument and
+    // generates the name of the relational quality.
+    "getQualityName",
 
     // A relation doesn't just have a "Domain" attribute, but both an "Object
     // domain" and a "Subject domain".
@@ -356,21 +364,48 @@ export const relations = {
 
 
 // Relational qualities are always constructed from the constructor below,
-// which we have abbreviated to just 'RQ()' rather than 'RelationalPredicate()'
+// which we have abbreviated to just 'RQ()' rather than 'RelationalQuality()'
 // (as it will be used very frequently).
 export const RQ = (objID, relID) => ({
-  "Class": abs("./em1.js;get/relationalPredicates"),
-  "Name": "...", // "Relevant w.r.t. #" + objID + " → " + "#" + relID,
-  "getParameterName": "...",
-  "Object": "#" + objID,
-  "Relation": "#" + relID,
+  "Class": abs("./em1.js;get/relationalQualities"),
+  "Object": "${" + objID + "}",
+  "Relation": "${" + relID + "}",
+  "Name": () => new Promise(resolve => {
+    fetchEntityProperty(relID, "getQualityName").then(
+      getQualityName => getQualityName(objID).then(
+        qualityName => resolve(qualityName)
+      )
+    );
+  }),
+  "getParameterName": subjKey => new Promise(resolve => {
+    fetchEntityProperty(relID, "getGetParameterName").then(
+      getParameterName => getParameterName(objID, subjKey).then(
+        parameterName => resolve(parameterName)
+      )
+    );
+  }),
+  "Domain": () => new Promise(resolve => {
+    fetchEntityProperty(relID, "Subject domain").then(
+      domain => resolve(domain)
+    );
+  }),
+  "Metric": () => new Promise(resolve => {
+    fetchEntityProperty(relID, "Metric").then(
+      metric => resolve(metric)
+    );
+  }),
+  "Area of concern": () => new Promise(resolve => {
+    fetchEntityProperty(relID, "Area of concern").then(
+      areaOfConcern => resolve(areaOfConcern)
+    );
+  }),
 });
-export const relationalPredicates = {
+export const relationalQualities = {
   "Class": abs("./em1.js;get/classes"),
-  "Name": "Relational predicates",
+  "Name": "Relational qualities",
   "Superclass": abs("./em1.js;get/qualities"),
   "constructor": RQ,
-  "Description": abs("./em1_aux.js;get/relationalPredicatesDesc"),
+  "Description": abs("./em1_aux.js;get/relationalQualitiesDesc"),
 };
 
 

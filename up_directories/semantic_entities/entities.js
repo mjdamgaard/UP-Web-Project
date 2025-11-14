@@ -91,7 +91,7 @@ export function fetchOrCreateEntityID(entKey) {
 
 
 
-export function fetchRelationalPredicatePath(
+export function fetchRelationalQualityPath(
   objKey, relKey = membersRelationPath
 ) {
   let objIDProm = fetchEntityID(objKey);
@@ -114,7 +114,7 @@ export function fetchRelationalPredicatePath(
 
 
 
-export function postRelationalPredicate(objKey, relKey = membersRelationPath) {
+export function postRelationalQuality(objKey, relKey = membersRelationPath) {
   let objIDProm = fetchEntityID(objKey);
   let relIDProm = fetchEntityID(relKey);
   return new Promise(resolve => {
