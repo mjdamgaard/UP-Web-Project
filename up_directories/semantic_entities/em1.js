@@ -119,7 +119,7 @@ export const entities = {
     // The "Name" attribute is understood in a very broad sense of the word.
     // It is a string, preferably as brief as possibly, that is used to label
     // the given entity when it is referred to. So in a sense, "Name" here is
-    // used synonymously with "Label."
+    // used synonymously with a "label."
     "Name",
 
     // The "Elaboration" is a slightly longer string that can be shown
@@ -178,6 +178,12 @@ export const classes = {
     // in case its members can be both value entities as well as referential
     // entities.
     "Member value type(s)",
+
+  // A class might also include an "Area of concern" attribute (see below
+  // for more details), but as mentioned below, such properties will often be
+  // defined as "scored properties" instead, namely by scoring an 'Area of
+  // concern' relation for the given class.
+  "Area of concern",
   ],
   "Description": abs("./em1_aux.js;get/classesDesc"),
 };
@@ -283,6 +289,12 @@ export const qualities = {
   // 'user-scored qualities.'
   "Is derived",
   "getScoredList",
+
+  // A quality might also include an "Area of concern" attribute (see below
+  // for more details), but as mentioned below, such properties will often be
+  // defined as "scored properties" instead, namely by scoring an 'Area of
+  // concern' relation for the given quality.
+  "Area of concern",
   ],
   "Description": abs("./em1_aux.js;get/qualitiesDesc"),
 };
@@ -340,6 +352,11 @@ export const relations = {
     // the object as its first argument, before the score handler argument.
     "Is derived",
     "getScoredList",
+
+    // If a relation has an "Area of concern" attribute (or scored property),
+    // all the relational qualities formed from it will adopt that "Area of
+    // concern." (See below for more on these so-called 'areas of concern.')
+    "Area of concern",
   ],
   "Description": abs("./em1_aux.js;get/relationsDesc"),
 };
@@ -453,12 +470,11 @@ export const parameters = {
 // "Sensitive user safety" etc. Then, users only need to pick one user group to
 // use for each of these areas. Note that areas can change in time, such as
 // "Science" here, which might be split into several subareas.
-// Note that the "Area of concern" is not part of the "Common attributes" of
-// the quality class above, even though it is meant to be a property used for
-// all qualities eventually. But since which AoCs to use where is highly
-// dependent on user opinions, and will very likely change a lot over time, it
-// makes more sense to say that the "Area of concern" property is purely a
-// 'score property,' defined solely via the 'Area of concern' relation below.
+// Note that even though "Area of concern" is mentioned above part of the
+// "Common attributes" of the quality class, AoCs will likely be determined by
+// scored properties instead most of the time, as they are often highly
+// dependent on user opinions, and will also very likely change a lot over
+// time.
 // Qualities are furthermore not the only class of entities for which the
 // "Area of concern" property might be relevant. Another good example is text
 // entities, where an AoC can help determine which users are more qualified
@@ -864,37 +880,31 @@ export const timeInSecondsMetric = {
 // The fact that we have both a 'Probability' and a 'Correctness' quality also
 // means that we allow the 'Correctness' quality to reflect the scoring users'
 // immediate opinions about the text. And then for the 'Probability' we can be
-// more strict about how and whose scores are sampled, using... TODO: Continue.
-// 
-// here taken as a measure, not of the probability that the
-// whole texts, as a combined statement, is true, but instead more of a sort of 
-// average of probability of each individual statement made by the text, but
-// where more important statements might get more weight in this average. How
-// to divide the text up into individual statements and how to weight each one
-// is up to the users to decide. (So 'Truthfulness' is not a purely objective
-// quality.) In short, this quality is meant to give a measure of how much of
-// this combined text is truthful and reliable.
-export const truthfulness = {
+// more strict about how and whose scores are aggregated, such that the
+// 'Probability' quality ends up reflecting a more thorough analysis of the
+// statement, looking at its whole discussion graph and propagating the
+// probabilities from bottom to top.
+// Lastly, note also that when it comes to single-statement texts, whether that
+// statement is phrases as a question or not should not matter, neither in
+// terms of the 'Correct' quality nor the 'Probability' quality. This thus
+// gives users a good way for a user to comment an argument for a discussing
+// without claiming this argument to be true themselves. 
+export const correct = {
   "Class": abs("./em1.js;get/qualities"),
   "Name": "Correct",
-  "getElaboration": subj => "The average probability that any given " +
-    "statement contained in #" + subj + " is true (where each " +
-    "statement is weighted after its perceived importance)",
+  "getParameterName": subjKey => "${" + subjKey + "} is correct",
   "Domain": abs("./em1.js;get/texts"),
-  "Metric": abs("./em1.js;get/percentageMetric"),
-  "Description": abs("./em1_aux.js;get/truthfulnessDesc"),
+  "Metric": abs("./em1.js;get/predicateMetric"), // (This is also the default
+  // value when the "Metric" attribute is undefined.)
+  "Description": abs("./em1_aux.js;get/correctDesc"),
 };
 
-// 'Agreement' is not an objective quality: Qualities can depend on the user
-// scoring them. This quality is a measure of how much the user agrees with the
-// statement, and/or the sentiment of the statement (and the "or" here is
-// actually important, as some statements are made hyperbolic).
+// See the comment for the 'Correct' quality just above for details about this
+// 'Probability' quality.
 export const probability = {
   "Class": abs("./em1.js;get/qualities"),
   "Name": "Probability",
-  "getElaboration": subj => "How much the scoring user(s) agrees on average " +
-    "with the statement contained in #" + subj + " (where each " +
-    "statement is weighted after its perceived importance)",
+  "getParameterName": subjKey => "probability of ${" + subjKey + "} being true",
   "Domain": abs("./em1.js;get/texts"),
   "Metric": abs("./em1.js;get/percentageMetric"),
   "Description": abs("./em1_aux.js;get/probabilityDesc"),
@@ -902,75 +912,82 @@ export const probability = {
 
 
 
-// This "Trusted" quality is meant as a standard way to obtain the weighted
+// This 'Trusted' quality is meant as a standard way to obtain the weighted
 // user lists that are used for user groups, namely by having a "moderator
 // group" that scores other users, and themselves, with respect to this
-// "Trusted" quality. The quality uses the predicate metric, with the range
+// 'Trusted' quality. The quality uses the predicate metric, with the range
 // from -10 to 10, and how this range is converted to a (non-negative) weight
-// is up to who defines the user list. 
+// is up to whoever defines the user list.
 // Now, as things progress, it is likely that users will create more specific
-// sub- qualities of this one, which will define the sought-for qualities of
+// sub-qualities of this one, which will define the sought-for qualities of
 // the new user group in more detail. (For instance, one might make sub-
 // qualities of "Trusted w.r.t. URL safety" or "Trusted w.r.t. (the field of)
 // Chemistry", etc.) But initially, this more vague "Trusted" quality will
 // probably do.
 export const trusted = {
   "Class": abs("./em1.js;get/qualities"),
-  "Label": "Trusted",
-  "getElaboration": subj => "How much #" + subj +" can be trusted to give " +
-    "honest and helpful scores and comments, etc., in this network",
+  "Name": "Trusted",
+  "Elaboration": "User can be trusted to give honest and helpful scores " +
+    "and comments, etc., in this network",
+  "getParameterName": subjKey => "${" + subjKey +"} can be trusted",
   "Domain": abs("./em1.js;get/users"),
   "Metric": abs("./em1.js;get/predicateMetric"),
   "Description": abs("./em1_aux.js;get/trustedDesc"),
 };
 
 
-// Some simple predicates that doesn't need much explaining (and their
-// "Descriptions" should thus also be brief).
+// Some simple predicates that don't need much explaining (and their
+// "Descriptions" should thus also be brief). These are included here mostly
+// to give some examples of some non-relational qualities, and both a few
+// predicates and a few non-predicate qualities.
 export const good = {
   "Class": abs("./em1.js;get/qualities"),
-  "Label": "Good",
+  "Name": "Good",
+  "getParameterName": subjKey => "${" + subjKey + "} is good",
   "Domain": abs("./em1.js;get/entities"),
   "Metric": abs("./em1.js;get/predicateMetric"),
   "Description": abs("./em1_aux.js;get/goodDesc"),
 };
 export const funny = {
   "Class": abs("./em1.js;get/qualities"),
-  "Label": "Funny",
+  "Name": "Funny",
+  "getParameterName": subjKey => "${" + subjKey + "} is funny",
   "Domain": abs("./em1.js;get/entities"),
   "Metric": abs("./em1.js;get/predicateMetric"),
   "Description": abs("./em1_aux.js;get/funnyDesc"),
 };
 export const scary = {
   "Class": abs("./em1.js;get/qualities"),
-  "Label": "Scary",
+  "Name": "Scary",
+  "getParameterName": subjKey => "${" + subjKey + "} is scary",
   "Domain": abs("./em1.js;get/entities"),
   "Metric": abs("./em1.js;get/predicateMetric"),
   "Description": abs("./em1_aux.js;get/scaryDesc"),
 };
 
 
-
-
 export const price = {
   "Class": abs("./em1.js;get/qualities"),
-  "Label": "price",
-  // TODO: Give this quality a "getElaboration" method.
+  "Name": "Price",
+  "Elaboration": "Price (in USD)",
+  "getParameterName": subjKey => "The price of ${" + subjKey + "} (in USD)",
   // The class of valuable things is so large and varied that we might as well
-  // make All entities the domain:
+  // take the 'All entities' class as the domain:
   "Domain": abs("./em1.js;get/entities"),
   "Metric": abs("./em1.js;get/priceInUSDMetric"),
-  // No description required for this quality.
+  "Description": abs("./em1_aux.js;get/priceDesc"),
 };
 
 export const durability = {
   "Class": abs("./em1.js;get/qualities"),
-  "Label": "durability",
-  // TODO: Give this quality a "getElaboration" method.
-  // The class is too wide and varied to try to use a more narrow domain.
+  "Name": "Durability",
+  "Elaboration": "Durability (in years)",
+  "getParameterName": subjKey => "The durability of ${" + subjKey + "} " +
+    "(in years)",
+  // The domain here is also too wide and varied to try narrow it down.
   "Domain": abs("./em1.js;get/entities"),
   "Metric": abs("./em1.js;get/timeInYearsMetric"),
-  // No description required for this quality.
+  "Description": abs("./em1_aux.js;get/durabilityDesc"),
 };
 
 
@@ -983,8 +1000,10 @@ export const durability = {
 // The useful members to see when browsing a class.
 export const members = {
   "Class": abs("./em1.js;get/relations"),
-  "Label": "Members",
-  "getElaboration": getElaborationOfStdPluralRelation,
+  "Name": "Members",
+  "getQualityName": objKey => "Belongs to ${" + objKey + "}",
+  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} belongs to " +
+    "the class of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/entities"),
   "Metric": abs("./em1.js;get/predicateMetric"),
@@ -995,8 +1014,10 @@ export const members = {
 // more subcategories of it (or to see which subcategories there are).
 export const subclasses = {
   "Class": abs("./em1.js;get/relations"),
-  "Label": "Subclasses",
-  "getElaboration": getElaborationOfStdPluralRelation,
+  "Name": "Subclasses",
+  "getQualityName": objKey => "Subclass of ${" + objKey + "}",
+  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a subclass " +
+    "of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/classes"),
   "Metric": abs("./em1.js;get/predicateMetric"),
@@ -1005,13 +1026,15 @@ export const subclasses = {
 
 // The relevant relations of a given entity, i.e. all the relations (obviously
 // not counting this one), that are relevant to have as tabs when viewing the
-// entity's page, and/or the relevant section Labels you would want to see in
+// entity's page, and/or the relevant section headers you would want to see in
 // an information article about the entity, and/or relevant labels to see in an
 // information table about the entity.
 export const relevantRelations = {
   "Class": abs("./em1.js;get/relations"),
-  "Label": "Relations",
-  "getElaboration": getElaborationOfStdPluralRelation,
+  "Name": "Relations",
+  "getQualityName": objKey => "Relevant relation for ${" + objKey + "}",
+  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
+    "relation for ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/relations"),
   "Metric": abs("./em1.js;get/predicateMetric"),
@@ -1023,21 +1046,27 @@ export const relevantRelations = {
 // relations for a whole class at once.
 export const relationsForMembers = {
   "Class": abs("./em1.js;get/relations"),
-  "Label": "Relations for members",
-  "getElaboration": getElaborationOfStdPluralRelation,
+  "Name": "Relations for members",
+  "getQualityName": objKey => "Relevant relation for members of ${" + objKey +
+    "}",
+  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
+    "relation for the members of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/relations"),
   "Metric": abs("./em1.js;get/predicateMetric"),
   "Description": abs("./em1_aux.js;get/relationsForMembersDesc"),
 };
 
-// This class is useful primarily if you want to have a tab menu where
-// selecting a tab (based on a given relation) will spawn "sub-tabs" of that
-// tab (which are then "sub-relations" of that relation).
+// This class is useful e.g. if you want to have a tab menu where selecting a
+// tab (based on a given relation) will spawn "sub-tabs" of that tab (which are
+// then "sub-relations" of that relation).
 export const subRelations = {
   "Class": abs("./em1.js;get/relations"),
-  "Label": "Sub-relations",
-  "getElaboration": getElaborationOfStdPluralRelation,
+  "Name": "Sub-relations",
+  "getQualityName": objKey => "Relevant sub-relation of ${" + objKey +
+    "}",
+  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
+    "sub-relation of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/relations"),
   "Subject domain": abs("./em1.js;get/relations"),
   "Metric": abs("./em1.js;get/predicateMetric"),
@@ -1047,8 +1076,10 @@ export const subRelations = {
 // Relevant qualities for users to see, score, and search on for a given entity.
 export const relevantQualities = {
   "Class": abs("./em1.js;get/relations"),
-  "Label": "Qualities",
-  "getElaboration": getElaborationOfStdPluralRelation,
+  "Name": "Qualities",
+  "getQualityName": objKey => "Relevant quality for ${" + objKey + "}",
+  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
+    "quality for ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/qualities"),
   "Metric": abs("./em1.js;get/predicateMetric"),
@@ -1059,8 +1090,11 @@ export const relevantQualities = {
 // entities of a given class.
 export const qualitiesForMembers = {
   "Class": abs("./em1.js;get/relations"),
-  "Label": "Qualities for members",
-  "getElaboration": getElaborationOfStdPluralRelation,
+  "Name": "Qualities for members",
+  "getQualityName": objKey => "Relevant quality for members of ${" + objKey +
+    "}",
+  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
+    "quality for the members of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/qualities"),
   "Metric": abs("./em1.js;get/predicateMetric"),
@@ -1075,8 +1109,11 @@ export const qualitiesForMembers = {
 // you can also say the same thing about the "sub-relations" above.)
 export const subQualities = {
   "Class": abs("./em1.js;get/relations"),
-  "Label": "Sub-qualities",
-  "getElaboration": getElaborationOfStdPluralRelation,
+  "Name": "Sub-qualities",
+  "getQualityName": objKey => "Relevant sub-quality of ${" + objKey +
+    "}",
+  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
+    "sub-quality of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/qualities"),
   "Subject domain": abs("./em1.js;get/qualities"),
   "Metric": abs("./em1.js;get/predicateMetric"),
@@ -1085,12 +1122,37 @@ export const subQualities = {
 
 
 
+// Some useful one-to-one relations (we we might also refer to as 'property
+// relations').
+
+// This is the 'Areas of concern' relation that was mentioned above, which can
+// be used to determine the "Area of concern" property of qualities, classes,
+// and other entities, instead of relying solely on the corresponding
+// attribute (which, as one can clearly see in this document, is not always
+// defined).
+export const areaOfConcern = {
+  "Class": abs("./em1.js;get/relations"),
+  "Name": "Area of concern",
+  "getQualityName": objKey => "A fitting Area of concern for ${" + objKey + "}",
+  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a fitting " +
+    "area of concern for ${" + objKey + "}",
+  "Object domain": abs("./em1.js;get/entities"),
+  "Subject domain": abs("./em1.js;get/areasOfConcern"),
+  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Description": abs("./em1_aux.js;get/areaOfConcernDesc"),
+};
+
+
+
 // A relation that points to the best entity page component for the given class
 // (as scored by the users).
 export const entityPage = {
   "Class": abs("./em1.js;get/relations"),
-  "Label": "Entity page",
-  "getElaboration": getElaborationOfStdSingularRelation,
+  "Name": "Entity page",
+  "getQualityName": objKey => "Good entity page component for members of ${" +
+    objKey + "}",
+  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a good " +
+    "entity page component for members of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/components"),
   "Area of concern": "./em1.js;get/uiAoC",
@@ -1102,12 +1164,15 @@ export const entityPage = {
 // supposed to be shown in a list. (Obviously, the ideal component here might
 // very well depend on the list and on the context, which is why users might
 // want to add sub-relations to this one, but this "Entity element" relation
-// is supposed to point to components that can be used in general cases, and
-// in particular when viewing the members of a class.)
+// is supposed to point to components that can be used in general cases, such
+// as e.g. when viewing the members of a class, etc.)
 export const entityElement = {
   "Class": abs("./em1.js;get/relations"),
-  "Label": "Entity element",
-  "getElaboration": getElaborationOfStdSingularRelation,
+  "Name": "Entity element",
+  "getQualityName": objKey => "Good entity element component for members of " +
+   "${" + objKey + "}",
+  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a good " +
+    "entity element component for members of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/components"),
   "Area of concern": "./em1.js;get/uiAoC",
