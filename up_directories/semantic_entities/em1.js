@@ -225,6 +225,18 @@ export const texts = {
   "Description": abs("./em1_aux.js;get/textsDesc"),
 };
 
+// 'Comments' is a subclass of text entities whose members generally have a
+// user-written "Content," and who generally is about a specific "Target
+// entity". And comments also generally have a specific user attached, which is
+// the "Author" of the comment.
+export const commentClass = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "Comments",
+  "Superclass": abs("./em1.js;get/texts"),
+  "Common attributes": ["Target entity", "Author", "Content"],
+  "Description": abs("./em1_aux.js;get/commentClassDesc"),
+};
+
 
 
 // A 'quality' in this system refers to a property of an entity that can be
@@ -864,7 +876,7 @@ export const timeInSecondsMetric = {
 
 
 
-// Some useful qualities.
+/* Some useful qualities */
 
 // The 'Correct' quality is meant to be used for text entities (which is a
 // very broad class; "texts" can be a lot of things) to describe the overall
@@ -995,7 +1007,8 @@ export const durability = {
 
 
 
-// Some useful relations.
+/* Some useful one-to-many relations */
+
 
 // The useful members to see when browsing a class.
 export const members = {
@@ -1122,8 +1135,134 @@ export const subQualities = {
 
 
 
-// Some useful one-to-one relations (we we might also refer to as 'property
-// relations').
+/* Some comment and discussion-related relations */
+
+// All entities can be commented on by users, at least in principle, including
+// not least text entities. And since comments are themselves text entities,
+// it means that each comment can get its own set of comments, on so on. 
+export const commentsRelation = {
+  "Class": abs("./em1.js;get/relations"),
+  "Name": "Comments",
+  "getQualityName": objKey => "Relevant comment about ${" + objKey + "}",
+  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
+    "comment about ${" + objKey + "}",
+  "Object domain": abs("./em1.js;get/entities"),
+  "Subject domain": abs("./em1.js;get/comments"),
+  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Description": abs("./em1_aux.js;get/commentsRelationDesc"),
+};
+
+// 'Questions and facts,' or 'Q&F' for short, is meant to include texts (not
+// just comments targeted at the specific object in question) that contain
+// either a relevant fact or a relevant question about the object. 
+export const questionsAndFacts = {
+  "Class": abs("./em1.js;get/relations"),
+  "Name": "Q&F",
+  "Elaboration": "Questions and facts",
+  "getQualityName": objKey => "Relevant question or fact relating to ${" +
+    objKey + "}",
+  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a " +
+    "relevant question or fact relating to ${" + objKey + "}",
+  "Object domain": abs("./em1.js;get/entities"),
+  "Subject domain": abs("./em1.js;get/texts"),
+  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Description": abs("./em1_aux.js;get/questionsAndFactsDesc"),
+};
+
+// A relation for relevant discussions relating to the specific entity in
+// question some way of another. (If the object is a text, 'Discussions' don't
+// have to be limited to arguments *specifically* about that text, but any
+// relevant relation to the text is allowed.) The subjects of this relation,
+// i.e. the "discussions," are meant to come in the form of a text which states
+// the topic of the discussion, possibly phrased as a direct statement, but
+// it can also be phrased as a question, of course.
+export const discussions = {
+  "Class": abs("./em1.js;get/relations"),
+  "Name": "Discussions",
+  "getQualityName": objKey => "Relevant discussion relating to ${" +
+    objKey + "}",
+  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a " +
+    "relevant discussion relating to ${" + objKey + "} in some way",
+  "Object domain": abs("./em1.js;get/entities"),
+  "Subject domain": abs("./em1.js;get/texts"),
+  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Description": abs("./em1_aux.js;get/commentsRelationDesc"),
+};
+
+// 'Reactions' are a subclass of comments that expresses some immediate
+// reaction by the author to the object of the relation. This is the type of
+// comments that often dominates the comments sections that is normally found
+// on the Web. And although abundance of these kinds of comments can sometimes
+// be a hindrance if you are e.g. looking for a specific question/discussion,
+// often times, reaction comments are exactly what you look for when you go to
+// a comment section. So this relation is definitely a relevant and useful one.
+// And if you are instead looking for a specific question or discussion, well,
+// that is exactly what the 'Discussion' and 'Q&F' tabs are for. (Relations
+// will often be used to define tabs in the app.)
+// By the way, note that 'Reactions' is a perfect example of a "sub-relation"
+// (see above), namely of the 'Comments' relation. And although we won't
+// introduce them here, some potentially relevant sub-relations of the
+// 'Reactions' relation could further be: 'Positive reactions' and 'Negative
+// reactions,' allowing the users easily select which ones there are interested
+// in, and filter out all others.
+export const reactions = {
+  "Class": abs("./em1.js;get/relations"),
+  "Name": "Reactions",
+  "getQualityName": objKey => "Relevant reaction comment for ${" + objKey + "}",
+  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a " +
+    "relevant reaction comment for ${" + objKey + "}",
+  "Object domain": abs("./em1.js;get/entities"),
+  "Subject domain": abs("./em1.js;get/comments"),
+  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Description": abs("./em1_aux.js;get/reactionsDesc"),
+};
+
+// The 'Arguments' relation. This is where is gets a bit tricky, so hold on.
+// We first of all here take 'Arguments' to refer to both arguments for and
+// against the statement that is the object of the relation. In other words,
+// a counter-argument is also considered an 'argument' in when it comes to
+// the subjects of this relation. That's the first thing to keep in mind about
+// this relation.
+// Now, the "Subject domain" of this 'Arguments' relation are texts. And these
+// texts, typically including only a single statement that is an argument
+// either for or against the object statement. And what is the "Object domain"?
+// One might also guess that this would be texts, but no. Here we instead use
+// parameters. This means that whenever you have a quality and a subject,
+// together forming a so-called 'parameter' (also referred to as a 'quality
+// parameter' if wanting to be more precise), then parameter will have an
+// 'Arguments' tab which shows the arguments for what the parameter should be
+// scored as.
+// And in particular when it comes to texts that consists of a singular
+// statement, such as the subjects of this relation, the 'Correct' quality
+// will thus (TODO: Rewrite this when I'm not tired) be a way to get to the
+// 'Arguments' of the statement. ...I give up, I'm too tired rn. The last part
+// might go something like: "Instead of having two parameters with the same
+// meaning, we use the 'Correct' relation as the object of the 'Arguments' tab
+// for a given statement text, rather than using the text itself as the object,
+// which is the normal thing to do, and is what we do for nearly all other tabs
+// in the app"... I'm rambling now, I feel like. So:
+// TODO: I should rewrite this whole comment when I'm not tired.  
+export const argumentsRelation = {
+  "Class": abs("./em1.js;get/relations"),
+  "Name": "Arguments",
+  // TODO: Consider extracting the subject of the parameter for these two
+  // attributes. Hm, or some to think of it, maybe I shouldn't do this after
+  // all. Maybe I should just use 'Texts' as the "Object domain" after all..
+  "getQualityName": objKey => "Relevant argument for ${" + objKey + "}",
+  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a " +
+    "relevant argument for ${" + objKey + "}",
+  "Object domain": abs("./em1.js;get/parameters"),
+  "Subject domain": abs("./em1.js;get/texts"),
+  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Description": abs("./em1_aux.js;get/argumentsRelationDesc"),
+}; 
+
+
+
+
+/* Some useful one-to-one relations (we we might also refer to as 'property
+ * relations'). */
+
 
 // This is the 'Areas of concern' relation that was mentioned above, which can
 // be used to determine the "Area of concern" property of qualities, classes,
@@ -1143,6 +1282,7 @@ export const areaOfConcern = {
 };
 
 
+/* Some UI-related relations */
 
 // A relation that points to the best entity page component for the given class
 // (as scored by the users).
@@ -1158,6 +1298,12 @@ export const entityPage = {
   "Area of concern": "./em1.js;get/uiAoC",
   "Metric": abs("./em1.js;get/predicateMetric"),
   "Description": abs("./em1_aux.js;get/entityPageDesc"),
+};
+
+export const uiAoC = {
+  "Class": abs("./em1.js;get/areasOfConcern"),
+  "Name": "UI",
+  "Description": abs("./em1_aux.js;get/uiAoCDesc"),
 };
 
 // Similar to the "Entity page" relation, but for entity components that is
@@ -1181,11 +1327,5 @@ export const entityElement = {
 };
 
 
-export const uiAoC = {
-  "Class": abs("./em1.js;get/areasOfConcern"),
-  "Name": "UI",
-  "Description": abs("./em1_aux.js;get/uiAoCDesc"),
-};
 
 
-// TODO: Continue.
