@@ -12,11 +12,11 @@ import {getSequentialPromise} from 'promise';
 // A class to generate a list combined of several other scored lists. 
 export class SimpleScoreHandler {
   
-  constructor(aggregator, fetchUserGroup, fetchUserGroupsForUpdate, doc) {
+  constructor(aggregator, fetchUserGroup, fetchUserGroupsForUpdate, desc) {
     this.aggregator = aggregator;
     this.fetchUserGroup = fetchUserGroup;
     this.fetchUserGroupsForUpdate = fetchUserGroupsForUpdate;
-    this["Documentation"] = doc;
+    this["Description"] = desc;
   }
 
   Class = abs("../em1.js;get/scoreHandlers");

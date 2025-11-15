@@ -17,7 +17,7 @@ export class CombinedList extends ScoredList {
     this.listKeyArr = listKeyArr;
     this.weightFactorArr = weightFactorArr;
 
-    this["Documentation"] = <div>
+    this["Description"] = <div>
       <h1>{"Combined list"}</h1>
       <p>{
         "This scored list is combined from merging the lists: " +

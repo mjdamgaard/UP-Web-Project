@@ -20,7 +20,7 @@ export class ModeratedList extends ScoredList {
     this.scoreHandlerKey = scoreHandlerKey;
     this.convert = convert;
 
-    this["Documentation"] = <div>
+    this["Description"] = <div>
       <h1>{"Moderated list"}</h1>
       <p>{
         "A user group moderated by another user group, " + userGroupKey +

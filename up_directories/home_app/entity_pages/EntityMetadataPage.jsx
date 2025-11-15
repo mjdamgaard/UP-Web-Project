@@ -46,7 +46,7 @@ export function render({entKey}) {
   }
 
   else {
-    let descAttr = entDef.Documentation ?? entDef.Description;
+    let descAttr = entDef.Description;
     content = [
       <h3>{"Entity path"}</h3>,
       <div className="ent-path">
@@ -79,7 +79,7 @@ export function render({entKey}) {
         ))
       }</table>,
       <hr/>,
-      <h3>{entDef.Documentation ? "Documentation" : "Description"}</h3>,
+      <h3>{"Description"}</h3>,
       descAttr ? (
         descAttr[0] === "/" ?
           <TextDisplay key="_desc" jsxLink={descAttr} /> :

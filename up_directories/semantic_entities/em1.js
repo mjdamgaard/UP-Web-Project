@@ -30,7 +30,8 @@ import {fetchEntityProperty} from "./entities.js";
 // these functions first need to be substituted with their return value (called
 // with no arguments) before the entity definition is interpreted. And
 // importantly, if the function returns a promise, the result of that promise
-// when it result is what should substitute the attribute. Below can be seen
+// when it result is what should substitute the attribute. And if it returns a
+// function, then the whole process is repeated recursively. Below can be seen
 // some examples of how this can be useful, in particular when it comes to
 // getting the "Name" attributes for 'Relational qualities' (see below).
 //
@@ -167,20 +168,16 @@ export const classes = {
     // the "Users" class or the "Relational qualities" class below.)
     "constructor",
 
-    // And as a third alternative, a class have a "Member type(s)" in case its
-    // members are 'value entities' (see above). Examples of this attribute
-    // are: "string", "jsx", "function", and "integer unsigned", etc. using the
-    // same convention as verifyType() (in ScriptInterpreter.js). Or the value
-    // can also be an array of such type strings, which means the type is a
-    // disjunction of all the contained types. A class might also have both a
-    // "Common attributes" and a "Member type(s)" attribute in case its members
-    // can be both value entities as well as referential entities.
-    "Member type(s)",
-
-    // An entity used to specify which users are qualified to help determine
-    // the members of the given class, among other things. See below for more
-    // details. 
-    "Area of concern",
+    // And as a third alternative, a class have a "Member value type(s)" in
+    // case its members are 'value entities' (see above). Examples of this
+    // attribute are: "string", "jsx", "function", and "integer unsigned", etc.,
+    // using the same convention as verifyType() (in ScriptInterpreter.js). Or
+    // the value can also be an array of such type strings, which means the
+    // type is a disjunction of all the contained types. A class might also
+    // have both a "Common attributes" and a "Member value type(s)" attribute
+    // in case its members can be both value entities as well as referential
+    // entities.
+    "Member value type(s)",
   ],
   "Description": abs("./em1_aux.js;get/classesDesc"),
 };
@@ -218,7 +215,7 @@ export const texts = {
   "Name": "Texts",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": ["Path", "URL", "Content"],
-  "Member type(s": ["string", "jsx"],
+  "Member value type(s": ["string", "jsx"],
   "Description": abs("./em1_aux.js;get/textsDesc"),
 };
 
@@ -271,58 +268,33 @@ export const qualities = {
   // whenever the "Metric" attribute is undefined.
   "Metric",
 
-  // The "Area of concern" attribute helps determine which users are more
-  // qualified than others to score the quality. (This is determined in a
-  // completely decentralized way, however.) For more details see below.
-  "Area of concern",
-
-  // Some qualities might also have the "Area of concern" attribute replaced
-  // with a "getScoredList()" method. In such cases, we might refer to the
-  // quality as being a 'derived quality.' The "getScoredList()" method takes
-  // a so-called 'score handler' (see below) as its argument, which in short is
-  // an object that handles fetching (and posting) scores for the given user,
-  // allowing the results to be dependent on the user's own preferences.
-  // The returned value of the "getScoredList()" method is then an object with
-  // the same API (in terms of its methods) as the so-called "scored lists,"
-  // which are introduced below. Note that 'derived qualities' are thus not
-  // meant to be scored directly by the users, as is the case for their
-  // counterparts, which we might refer to as 'user-scored qualities.'
-    "getScoredList",
+  // Some qualities might also have a "getScoredList()" method. In such cases,
+  // we might refer to the quality as being a 'derived quality.' And to make it
+  // even more clear, we also include an "Is derived" quality that should be
+  // set as true in such cases.
+  // The "getScoredList()" method takes a so-called 'score handler' (see below)
+  // as its argument, which in short is an object that handles fetching (and
+  // posting) scores for the given user, allowing the results to be dependent
+  // on the user's own preferences. The returned value of the "getScoredList()"
+  // method is then an object with the same API (in terms of its methods) as
+  // the so-called 'scored list' entities, which are introduced below. Note
+  // that 'derived qualities' are thus not meant to be scored directly by the
+  // users, as is the case for their counterparts, which we might refer to as
+  // 'user-scored qualities.'
+  "Is derived",
+  "getScoredList",
   ],
   "Description": abs("./em1_aux.js;get/qualitiesDesc"),
 };
 
 
 
-// TODO: Change this text:
+
 // Relations in this system are entities that when combined with a relational
 // object yields a quality (and most often a predicate in particular). In
-// practical terms, this is done by using the constructor if the 'Relational
+// practical terms, this is done by using the constructor of the 'Relational
 // qualities' class below, RG(), giving it the object and the relation as its
 // arguments.
-// Like qualities, relations also have a "getElaboration" attribute, but in this
-// case, the function takes both an object and a subject as its second argument.
-// For instance, we could have (obj, subj) => subj + " is a subclass of " + obj,
-// which will indeed be the getElaboration() function of the "Subclasses"
-// relation below.
-// And like qualities, relations also have a "Label attribute, where we in this
-// case prefer the labels to be nouns (including compound ones). This could for
-// example be "Subclasses" in the case that we just saw. When a relational
-// quality is created from an object and a relation, we can then give it a
-// short label of the form "<Object> → <Relation>". So for instance, the
-// quality of being a subclass of the "Texts" class will get the label of:
-// "Texts → Subclasses." (By the way, plural nouns are often preferred for
-// relation labels, unless they are expected to only have one subject, such as
-// e.g. the the capital of a country, in which case the label ought to be
-// "Capitol".)
-// Relations also define the "Metric" and "Area of concern" of the relational
-// qualities that they produce, as well as the domain, only this is referred to
-// to as the "Subject domain" here, as we also similarly have an "Object
-// domain" for the intended objects of the relation. The can also be 'derived'
-// and use a "Formula" attribute rather than an "Area of concern." The only
-// difference is that these "Formula" functions, as opposed the those of
-// qualities, also take the object as their first argument, before the score
-// handler argument.
 export const relations = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Relations",
@@ -336,14 +308,18 @@ export const relations = {
     // often expect relation to be one-to-many (such as e.g. is the case for
     // 'Subclasses,' as a class can have several of those), and select singular
     // nouns only when expect only one subject per object most of the time for
-    // the relation.
+    // the relation. One can also choose parenthesize the pluralization in such
+    // cases, especially when having more than one member isn't that rare, like
+    // we have done above for the "Member value type(s)" attribute (and indeed,
+    // the convention used for attributes is the same as the one for relation
+    // "Names").
 
     // The "getParameterName()" method of relations is different from the one
     // for qualities, namely since it here takes two arguments, objKey and
     // subjKey, instead of just the subjKey. Thus, the getParameterName()
     // method for relational qualities is constructed the way you see here
     // below.
-    "getGetParameterName",
+    "getParameterName",
 
     // And the "getQualityName()" similarly takes an objKey argument and
     // generates the name of the relational quality.
@@ -355,9 +331,15 @@ export const relations = {
     "Subject domain",
 
     // The "Metric" of a relation is copied onto all the qualities that are
-    // generated from it, and the same goes for the "Area of concern" attribute.
+    // generated from it.
     "Metric",
-    "Area of concern",
+  
+    // Like qualities, relations can also potentially be 'derived' and use a
+    // "getScoredList()" method. The only difference is that this
+    // "getScoredList()" method, as opposed the that of qualities, also takes
+    // the object as its first argument, before the score handler argument.
+    "Is derived",
+    "getScoredList",
   ],
   "Description": abs("./em1_aux.js;get/relationsDesc"),
 };
@@ -372,16 +354,12 @@ export const RQ = (objID, relID) => ({
   "Relation": "${" + relID + "}",
   "Name": () => new Promise(resolve => {
     fetchEntityProperty(relID, "getQualityName").then(
-      getQualityName => getQualityName(objID).then(
-        qualityName => resolve(qualityName)
-      )
+      getQualityName => resolve(getQualityName(objID))
     );
   }),
   "getParameterName": subjKey => new Promise(resolve => {
-    fetchEntityProperty(relID, "getGetParameterName").then(
-      getParameterName => getParameterName(objID, subjKey).then(
-        parameterName => resolve(parameterName)
-      )
+    fetchEntityProperty(relID, "getParameterName").then(
+      getParameterName => resolve(getParameterName(objID, subjKey))
     );
   }),
   "Domain": () => new Promise(resolve => {
@@ -394,9 +372,15 @@ export const RQ = (objID, relID) => ({
       metric => resolve(metric)
     );
   }),
-  "Area of concern": () => new Promise(resolve => {
-    fetchEntityProperty(relID, "Area of concern").then(
-      areaOfConcern => resolve(areaOfConcern)
+  "Is derived": () => new Promise(resolve => {
+    fetchEntityProperty(relID, "Is derived").then(
+      isDerived => resolve(isDerived)
+    );
+  }),
+  "getScoredList": scoreHandler => new Promise(resolve => {
+    fetchEntityProperty(relID, "getScoredList").then(
+      getScoredList => getScoredList ?
+        resolve(getScoredList(objID, scoreHandler)) : undefined
     );
   }),
 });
@@ -409,14 +393,6 @@ export const relationalQualities = {
 };
 
 
-export const getElaborationOfStdSingularRelation = (objID, subj) => (
-  "#" + subj + " is relevant as the " + "#" + relID + " of #" + objID
-);
-export const getElaborationOfStdPluralRelation = (objID, subj) => (
-  "#" + subj + " is relevant as one of the " + "#" + relID + " of #" + objID
-);
-
-
 
 
 
@@ -424,19 +400,44 @@ export const getElaborationOfStdPluralRelation = (objID, subj) => (
 // point number scales that are scored by the users, and/or aggregated
 // algorithmically. If ever needing to disambiguate from other kinds of
 // 'parameters,' we can refer to them as 'Quality parameters,' but let's use
-// the abbreviated form, 'Parameters,' as much as possible.
+// the abbreviated form, 'parameters,' whenever such disambiguation isn't
+// needed.
 export const Parameter = (qualID, subjID) => ({
   "Class": abs("./em1.js;get/qualityVariables"),
-  "Quality": "#" + qualID,
-  "Subject": "#" + subjID,
-  "Label": "#" + subjID + " ⇒ " + "#" + qualID,
+  "Quality": "${" + qualID + "}",
+  "Subject": "${" + subjID + "}",
+  "Name": () => new Promise(resolve => {
+    fetchEntityProperty(qualID, "getParameterName").then(
+      getParameterName => resolve(getParameterName(subjID))
+    );
+  }),
+  "Metric": () => new Promise(resolve => {
+    fetchEntityProperty(qualID, "Metric").then(
+      metric => resolve(metric)
+    );
+  }),
+  "Is derived": () => new Promise(resolve => {
+    fetchEntityProperty(relID, "Is derived").then(
+      isDerived => resolve(isDerived)
+    );
+  }),
+  "getScoreData": scoreHandler => new Promise(resolve => {
+    fetchEntityProperty(qualID, "getScoredList").then(getScoredList => {
+      if (!getScoredList) return resolve(undefined);
+      getScoredList(scoreHandler).then(scoredList => {
+        scoredList.getScoreData().then(
+          scoreData => resolve(scoreData)
+        );
+      });
+    });
+  }),
 });
 export const parameters = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Parameters",
   "Superclass": abs("./em1.js;get/entities"),
   "constructor": Parameter,
-  "Description": abs("./em1_aux.js;get/qualityVariablesDesc"),
+  "Description": abs("./em1_aux.js;get/parametersDesc"),
 };
 
 
@@ -451,10 +452,26 @@ export const parameters = {
 // such as e.g. "Taste in fictional media," "Science," "UI," "URL safety,"
 // "Sensitive user safety" etc. Then, users only need to pick one user group to
 // use for each of these areas. Note that areas can change in time, such as
-// "Science" here, which might be split into several subareas. And as the case
-// for all attributes of entities, note that these "Areas of concern" are not
-// set in stone, and can be changed over time, and even be changed to something
-// different for different groups of users.
+// "Science" here, which might be split into several subareas.
+// Note that the "Area of concern" is not part of the "Common attributes" of
+// the quality class above, even though it is meant to be a property used for
+// all qualities eventually. But since which AoCs to use where is highly
+// dependent on user opinions, and will very likely change a lot over time, it
+// makes more sense to say that the "Area of concern" property is purely a
+// 'score property,' defined solely via the 'Area of concern' relation below.
+// Qualities are furthermore not the only class of entities for which the
+// "Area of concern" property might be relevant. Another good example is text
+// entities, where an AoC can help determine which users are more qualified
+// than others for estimating the correctness or probability of the given text.
+// And class entities are another obvious example, where they might help
+// determine which users or more qualified to score qualities regarding the
+// entities of that class (including what its members are).
+// Note that this means that when it comes to aggregating the scores for a
+// given parameter, there might be several AoC properties involved, such as
+// from the quality involved, and from the subject, and/or from its class. And
+// when several different AoCs are present in this way, the natural thing to do
+// is try to look the "conjunction" of all these areas, meaning to take the
+// subset of things that belong to all the given AoCs at the same time.  
 export const areasOfConcern = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Areas of concern",
@@ -525,11 +542,11 @@ export const areasOfConcern = {
 
 
 // Scored lists are similar to qualities in that they each associate a set of
-// subjects to a score for that subject, but while the list for the qualities
-// might depend on the user viewing them, as different users might choose
-// different user groups to query, and/or different algorithms to aggregate the
-// scores, the scored lists are supposed to be objectively defined and thus
-// independent of the user viewing or accessing the list.
+// subjects to a set of scores for those subject. But while the list for the
+// qualities might depend on the user viewing them, as different users might
+// choose different user groups to query, and/or different algorithms to
+// aggregate the scores, the scored lists are supposed to be objectively
+// defined and thus independent of the user viewing or accessing the list.
 // The lists that the app shows the users whenever they e.g. browse a quality
 // are also referred to as 'scored lists,' but these are generally just
 // 'anonymous' ones. Scored lists can also be defined via a 'scored list'
@@ -542,7 +559,7 @@ export const scoredLists = {
   "Name": "Scored lists",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-    // fetchScoreData(subjKey fetches the score data for the given "subject,"
+    // fetchScoreData(subjKey) fetches the score data for the given "subject,"
     // i.e. the given entity on the list. "Score data" refers here to a [score,
     // weight, auxData?] array, as described above. Note that an "key" here can
     // be either an absolute entity path, a user ID prefixed by "@", an entity
@@ -571,9 +588,6 @@ export const scoredLists = {
 
     // updateList() (optional) updates the whole list.
     "updateList",
-
-    // Documentation describing the scored list is generated.
-    "Documentation",
   ],
   "Description": abs("./em1_aux.js;get/scoredListsDesc"),
 };
@@ -702,9 +716,6 @@ export const scoreHandlers = {
     // score handler. (This component is also responsible for fetching and
     // posting these settings itself.) 
     "getSettingsMenu",
-
-    // Documentation describing the given score handler works and its usage.
-    "Documentation",
   ],
   "Description": abs("./em1_aux.js;get/scoreHandlersDesc"),
 };
@@ -735,10 +746,6 @@ export const components = {
     // and the entity ought to be down-rated as a member of this class if they
     // are not true:)
     "GitHub repository", "Author(s)",
-    // Let's remove these two, and expect them to be purely "scored properties"
-    // instead:
-    // "Is free to use", "Is free to modify",
-    "Description"
   ],
   "Description": abs("./em1_aux.js;get/componentsDesc"),
 };
@@ -763,12 +770,10 @@ export const metrics = {
 };
 
 
-
-
 // Some useful metrics for qualities.
 
 // The 'Predicate metric' is the default metric if the "Metric" attribute is
-// undefined for the quality (or the relation).
+// undefined for a quality (or a relation).
 export const predicateMetric = {
   "Class": abs("./em1.js;get/metrics"),
   "Name": "Predicate metric",
@@ -845,16 +850,23 @@ export const timeInSecondsMetric = {
 
 // Some useful qualities.
 
-export const probability = {
-  "Class": abs("./em1.js;get/qualities"),
-  "Label": "Probability",
-  "getElaboration": subj => "The probability that #" + subj + " is fully true.",
-  "Domain": abs("./em1.js;get/texts"),
-  "Metric": abs("./em1.js;get/percentageMetric"),
-  "Description": abs("./em1_aux.js;get/probabilityDesc"),
-};
-
-// "Truthfulness" is here taken as a measure, not of the probability that the
+// The 'Correct' quality is meant to be used for text entities (which is a
+// very broad class; "texts" can be a lot of things) to describe the overall
+// "correctness" of a text. And if the statements in the text are fully or
+// partly subjective, then the "correctness" is just taken to subjective as
+// well, meaning that the quality depends on the user scoring it. "Correctness"
+// is not meant as measuring the probability of the text being true, in its
+// entirety, but more a statement about the overall correctness of the text
+// on average, you might say. And the quality therefore also used the predicate
+// metric rather than the percentage metric. Then if wanting to talk about the
+// probability of a particular statement being true, use the 'Probability'
+// quality just below instead.
+// The fact that we have both a 'Probability' and a 'Correctness' quality also
+// means that we allow the 'Correctness' quality to reflect the scoring users'
+// immediate opinions about the text. And then for the 'Probability' we can be
+// more strict about how and whose scores are sampled, using... TODO: Continue.
+// 
+// here taken as a measure, not of the probability that the
 // whole texts, as a combined statement, is true, but instead more of a sort of 
 // average of probability of each individual statement made by the text, but
 // where more important statements might get more weight in this average. How
@@ -864,7 +876,7 @@ export const probability = {
 // this combined text is truthful and reliable.
 export const truthfulness = {
   "Class": abs("./em1.js;get/qualities"),
-  "Label": "Truthfulness",
+  "Name": "Correct",
   "getElaboration": subj => "The average probability that any given " +
     "statement contained in #" + subj + " is true (where each " +
     "statement is weighted after its perceived importance)",
@@ -877,15 +889,15 @@ export const truthfulness = {
 // scoring them. This quality is a measure of how much the user agrees with the
 // statement, and/or the sentiment of the statement (and the "or" here is
 // actually important, as some statements are made hyperbolic).
-export const agreement = {
+export const probability = {
   "Class": abs("./em1.js;get/qualities"),
-  "Label": "Agreement",
+  "Name": "Probability",
   "getElaboration": subj => "How much the scoring user(s) agrees on average " +
     "with the statement contained in #" + subj + " (where each " +
     "statement is weighted after its perceived importance)",
   "Domain": abs("./em1.js;get/texts"),
   "Metric": abs("./em1.js;get/percentageMetric"),
-  "Description": abs("./em1_aux.js;get/agreementDesc"),
+  "Description": abs("./em1_aux.js;get/probabilityDesc"),
 };
 
 

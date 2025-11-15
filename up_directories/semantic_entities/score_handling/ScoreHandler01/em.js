@@ -37,7 +37,7 @@ export const initialModeratorList = {
     });
   },
 
-  "Documentation": <div>
+  "Description": <div>
     <h1>{"Initial moderator list"}</h1>
     <p>{
       "A list of initial developers/moderators that is trusted to govern " +
@@ -90,7 +90,7 @@ export const allUsersList = {
     });
   },
 
-  "Documentation": <div>
+  "Description": <div>
     <h1>{"All users"}</h1>
     <p>{
       "A list of all users with equal weights, all of 1. The " +
