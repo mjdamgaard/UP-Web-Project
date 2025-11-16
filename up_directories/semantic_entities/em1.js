@@ -1217,6 +1217,32 @@ export const reactions = {
   "Description": abs("./em1_aux.js;get/reactionsDesc"),
 };
 
+
+// We here take 'Arguments' to refer both the arguments for and against a
+// statement. So a counterargument is thus also considered an 'argument.' And
+// in order to see which argument are for and which are against the statement
+// at hand, we can utilize the 'Correlation' relation introduced below, which
+// is meant to (loosely) measure the correlation between a growth in the
+// argument's correctness parameter, and that of the statement at hand. So in
+// short, a positive correlation means that is is an argument for the given
+// statement, and a negative correlation means that it is an argument against.
+// And the magnitude of the score then says something about how important the
+// argument is, or more precisely how much the correctness of one affects the
+// other.
+// Now, one might think that the "Object domain" of this 'Arguments' relation
+// should be 'Texts,' but we will actually use 'Parameters' here instead for
+// this domain. If looking for arguments for and against for a given text, the
+// app might then afford you with a 'Correctness' tab rather than an 'Arguments'
+// tab. (And this might be one that's open be default for 'Texts,' by the way.)
+// And under this tab, you first see the 'Correct' parameter of the text, which
+// you can then see the score of and potentially score yourself. And underneath
+// this parameter display, you then get your list of 'Arguments' which is thus
+// formed from the 'Arguments' relation with the same 'Correct' parameter as
+// the object. (Of course, users can choose whatever design of these app
+// components that they like, so this is only meant as a suggestion as to how
+// things could be.)
+// Since 
+
 // The 'Arguments' relation. This is where is gets a bit tricky, so hold on.
 // We first of all here take 'Arguments' to refer to both arguments for and
 // against the statement that is the object of the relation. In other words,
