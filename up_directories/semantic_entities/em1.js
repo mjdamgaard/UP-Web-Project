@@ -90,13 +90,13 @@ import {fetchEntityProperty} from "./entities.js";
 // about below. And in fact, such relational properties might even be used to
 // overwrite some of the defining properties. This could for instance happen
 // if the facts change. For instance, a person or an organization, might
-// change their/its, just to give one example. It should thus be noted that the
-// attributes are never final. They might change over time. And they can even
-// be made to depend on the user viewing them, in fact (since relational
-// properties can be user-dependent). This means that we can even do things
-// like change the language of the entire entity to a user's preferred one,
-// meaning that different users will ultimately be able to see entities in
-// their own preferred languages.
+// change their name, just to give one example. The attributes of an entity are
+// thus never final. They might change over time. And they can even be made to
+// depend on the user viewing them, in fact (since relational properties can be
+// user-dependent). This means that we can even do things like change the
+// language of the entire entity to a user's preferred one, meaning that
+// different users will ultimately be able to see entities in their own
+// preferred languages.
 //
 // That covers the basics of the 'semantic entities,' and in this module below,
 // we introduce some of the most important entities that are used in this whole
@@ -213,14 +213,37 @@ export const users = {
 
 
 // Class of all texts. Texts can be defined in many ways; they can be defined
-// by a path or an external URL, and/or by a "Content" string or reference. Or
-// the text entity can be a so-called "value entity", either in the form of a
-// string or a JSX element.
+// via a "Content" text, or an external URL. Or the text entity can be a so-
+// called "value entity", either in the form of a string or a JSX element.
 export const texts = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Texts",
   "Superclass": abs("./em1.js;get/entities"),
-  "Common attributes": ["Path", "URL", "Content"],
+  "Common attributes": [
+    // The "Content" of the text. Note that this attribute might to the form of
+    // an absolute path to the text which references the text, rather than
+    // letting the attribute hold the text directly.
+    "Content",
+
+    // If the text is an external text on the internet, with an associated URL,
+    // use the URL. (And if it doesn't have an URL but still has some URI of
+    // another kind, you can also reference it via that, although this is not
+    // as desired as a URL)
+    "URL",
+    "URI",
+
+    // The "Is a singular statement" predicate attribute tells if the text is a
+    // singular statement that can be assigned a probability in a meaningful
+    // and straightforward way. The default value of this attribute is false
+    // (as is generally the case unless otherwise specified). The attribute is
+    // meant primarily as as way to help the app decide whether to direct to
+    // the 'Is correct' predicate or the 'Probability' quality (see below) when
+    // a user wants to score the text, and/or see its arguments (pros and cons).
+    // If the statement is not singular (but is compound of several statements,
+    // explicitly and/or implicitly), the 'Is correct' predicate should always
+    // be used rather than the 'Probability' quality.
+    "Is a singular statement"
+  ],
   "Member value type(s": ["string", "jsx"],
   "Description": abs("./em1_aux.js;get/textsDesc"),
 };
@@ -260,11 +283,13 @@ export const qualities = {
   "Name": "Qualities",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-  // The "Name" attribute of qualities should be as brief as possible: Instead
-  // of writing "Is scary", write "Scary." And instead of writing "Has good
-  // acting", write "Good acting". And instead of writing "Is a fantasy movie",
-  // write "Fantasy movie", or preferably even just "Fantasy" if the "Domain"
-  // (see below) of the quality is already a 'Movies' class.
+  // The "Name" attribute of qualities should either be a (compound) verb or
+  // a (compound) noun, depending of whether it is a 'predicate' or not. A
+  // quality is a predicate if its "Metric" (see below) is the 'Predicate
+  // metric' (see further below). For instance, "Is funny" is an example of a
+  // good name for a predicate, whereas other kinds of metrics that measures
+  // a some specific quantity such as "Probability" or "Price" ought to be
+  // called exactly that, using a (compound) noun as their name.
 
   // The "getParameterName()" method is used to generate the "Name" attribute
   // whenever the quality is combined with a subject to form a 'parameter' (see
@@ -769,7 +794,7 @@ export const components = {
   "Name": "App components",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
-    "Name", "Component path", "Example component path", "Example props",
+    "Component path", "Example component path", "Example props",
     // (These attributes obviously have to been checked by the user community,
     // and the entity ought to be down-rated as a member of this class if they
     // are not true:)
@@ -878,41 +903,38 @@ export const timeInSecondsMetric = {
 
 /* Some useful qualities */
 
-// The 'Correct' quality is meant to be used for text entities (which is a
+// The 'Is correct' quality is meant to be used for text entities (which is a
 // very broad class; "texts" can be a lot of things) to describe the overall
 // "correctness" of a text. And if the statements in the text are fully or
 // partly subjective, then the "correctness" is just taken to subjective as
 // well, meaning that the quality depends on the user scoring it. "Correctness"
-// is not meant as measuring the probability of the text being true, in its
-// entirety, but more a statement about the overall correctness of the text
-// on average, you might say. And the quality therefore also used the predicate
+// is not meant to measure the probability of the text being true, in its
+// entirety, but is to represent the overall correctness of the text, "on
+// average," you might say. And the quality therefore also uses the predicate
 // metric rather than the percentage metric. Then if wanting to talk about the
 // probability of a particular statement being true, use the 'Probability'
 // quality just below instead.
-// The fact that we have both a 'Probability' and a 'Correctness' quality also
-// means that we allow the 'Correctness' quality to reflect the scoring users'
-// immediate opinions about the text. And then for the 'Probability' we can be
-// more strict about how and whose scores are aggregated, such that the
-// 'Probability' quality ends up reflecting a more thorough analysis of the
-// statement, looking at its whole discussion graph and propagating the
-// probabilities from bottom to top.
-// Lastly, note also that when it comes to single-statement texts, whether that
-// statement is phrases as a question or not should not matter, neither in
-// terms of the 'Correct' quality nor the 'Probability' quality. This thus
-// gives users a good way for a user to comment an argument for a discussing
-// without claiming this argument to be true themselves. 
-export const correct = {
+// Whether the statement is phrased as a question or as a direct statement
+// should not matter when it comes to the 'Is Correct' predicate (nor the
+// 'Probability' quality below, for that matter). This thus gives users a good
+// way for them to contribute a potential argument to a discussion without
+// claiming anything about that argument themselves, namely by posing it as a
+// question instead of a direct statement.
+export const isCorrect = {
   "Class": abs("./em1.js;get/qualities"),
-  "Name": "Correct",
+  "Name": "Is correct",
   "getParameterName": subjKey => "${" + subjKey + "} is correct",
   "Domain": abs("./em1.js;get/texts"),
   "Metric": abs("./em1.js;get/predicateMetric"), // (This is also the default
   // value when the "Metric" attribute is undefined.)
-  "Description": abs("./em1_aux.js;get/correctDesc"),
+  "Description": abs("./em1_aux.js;get/isCorrectDesc"),
 };
 
-// See the comment for the 'Correct' quality just above for details about this
-// 'Probability' quality.
+// Unlike the 'Is Correct' predicate above, the 'Probability' quality should
+// only be used for "singular" statements that can be assigned a probability
+// in a straightforward way (in terms of what that probability means, not in
+// terms of *computing* the probability; that might not be straightforward at
+// all). 
 export const probability = {
   "Class": abs("./em1.js;get/qualities"),
   "Name": "Probability",
@@ -924,57 +946,57 @@ export const probability = {
 
 
 
-// This 'Trusted' quality is meant as a standard way to obtain the weighted
+// This 'Is trusted' quality is meant as a standard way to obtain the weighted
 // user lists that are used for user groups, namely by having a "moderator
-// group" that scores other users, and themselves, with respect to this
-// 'Trusted' quality. The quality uses the predicate metric, with the range
+// group" that scores other users, and themselves, with respect to this 'Is
+// trusted' predicate. The quality uses the predicate metric, with the range
 // from -10 to 10, and how this range is converted to a (non-negative) weight
 // is up to whoever defines the user list.
 // Now, as things progress, it is likely that users will create more specific
 // sub-qualities of this one, which will define the sought-for qualities of
-// the new user group in more detail. (For instance, one might make sub-
-// qualities of "Trusted w.r.t. URL safety" or "Trusted w.r.t. (the field of)
-// Chemistry", etc.) But initially, this more vague "Trusted" quality will
-// probably do.
-export const trusted = {
+// the new user group in more detail. For instance, one might make sub-
+// qualities of "Is trusted w.r.t. URL safety" or "Is trusted w.r.t. (the field
+// of) Chemistry", etc. But initially, this more simple and vague "Is trusted"
+// predicate will probably do.
+export const isTrusted = {
   "Class": abs("./em1.js;get/qualities"),
-  "Name": "Trusted",
+  "Name": "Is trusted",
   "Elaboration": "User can be trusted to give honest and helpful scores " +
     "and comments, etc., in this network",
   "getParameterName": subjKey => "${" + subjKey +"} can be trusted",
   "Domain": abs("./em1.js;get/users"),
   "Metric": abs("./em1.js;get/predicateMetric"),
-  "Description": abs("./em1_aux.js;get/trustedDesc"),
+  "Description": abs("./em1_aux.js;get/isTrustedDesc"),
 };
 
 
 // Some simple predicates that don't need much explaining (and their
 // "Descriptions" should thus also be brief). These are included here mostly
-// to give some examples of some non-relational qualities, and both a few
-// predicates and a few non-predicate qualities.
-export const good = {
+// to give some examples of some non-relational qualities, and including both
+// a few predicates and a few non-predicate qualities.
+export const isGood = {
   "Class": abs("./em1.js;get/qualities"),
-  "Name": "Good",
+  "Name": "Is good",
   "getParameterName": subjKey => "${" + subjKey + "} is good",
   "Domain": abs("./em1.js;get/entities"),
   "Metric": abs("./em1.js;get/predicateMetric"),
-  "Description": abs("./em1_aux.js;get/goodDesc"),
+  "Description": abs("./em1_aux.js;get/isGoodDesc"),
 };
-export const funny = {
+export const isFunny = {
   "Class": abs("./em1.js;get/qualities"),
-  "Name": "Funny",
+  "Name": "Is funny",
   "getParameterName": subjKey => "${" + subjKey + "} is funny",
   "Domain": abs("./em1.js;get/entities"),
   "Metric": abs("./em1.js;get/predicateMetric"),
-  "Description": abs("./em1_aux.js;get/funnyDesc"),
+  "Description": abs("./em1_aux.js;get/isFunnyDesc"),
 };
-export const scary = {
+export const isScary = {
   "Class": abs("./em1.js;get/qualities"),
-  "Name": "Scary",
+  "Name": "Is scary",
   "getParameterName": subjKey => "${" + subjKey + "} is scary",
   "Domain": abs("./em1.js;get/entities"),
   "Metric": abs("./em1.js;get/predicateMetric"),
-  "Description": abs("./em1_aux.js;get/scaryDesc"),
+  "Description": abs("./em1_aux.js;get/isScaryDesc"),
 };
 
 
@@ -1003,6 +1025,19 @@ export const durability = {
 };
 
 
+// This predicate can be used to override the "Is singular statement" attribute
+// of a text, set by the author (or rather the creator of the entity). And
+// using predicates like this is indeed the correct way to override (or create
+// new) boolean properties of entities, rather than using relations. 
+export const isASingularStatement = {
+  "Class": abs("./em1.js;get/qualities"),
+  "Name": "Is a singular statement",
+  "getParameterName": subjKey => "${" + subjKey + "} is a singular statement",
+  "Domain": abs("./em1.js;get/entities"),
+  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Description": abs("./em1_aux.js;get/isASingularStatementDesc"),
+};
+
 
 
 
@@ -1028,7 +1063,7 @@ export const members = {
 export const subclasses = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Subclasses",
-  "getQualityName": objKey => "Subclass of ${" + objKey + "}",
+  "getQualityName": objKey => "Is a subclass of ${" + objKey + "}",
   "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a subclass " +
     "of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
@@ -1045,7 +1080,7 @@ export const subclasses = {
 export const relevantRelations = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Relations",
-  "getQualityName": objKey => "Relevant relation for ${" + objKey + "}",
+  "getQualityName": objKey => "Is a relevant relation for ${" + objKey + "}",
   "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "relation for ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/entities"),
@@ -1060,8 +1095,8 @@ export const relevantRelations = {
 export const relationsForMembers = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Relations for members",
-  "getQualityName": objKey => "Relevant relation for members of ${" + objKey +
-    "}",
+  "getQualityName": objKey => "Is a relevant relation for members of ${" +
+    objKey + "}",
   "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "relation for the members of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
@@ -1076,7 +1111,7 @@ export const relationsForMembers = {
 export const subRelations = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Sub-relations",
-  "getQualityName": objKey => "Relevant sub-relation of ${" + objKey +
+  "getQualityName": objKey => "Is a relevant sub-relation of ${" + objKey +
     "}",
   "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "sub-relation of ${" + objKey + "}",
@@ -1090,7 +1125,7 @@ export const subRelations = {
 export const relevantQualities = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Qualities",
-  "getQualityName": objKey => "Relevant quality for ${" + objKey + "}",
+  "getQualityName": objKey => "Is a relevant quality for ${" + objKey + "}",
   "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "quality for ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/entities"),
@@ -1104,8 +1139,8 @@ export const relevantQualities = {
 export const qualitiesForMembers = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Qualities for members",
-  "getQualityName": objKey => "Relevant quality for members of ${" + objKey +
-    "}",
+  "getQualityName": objKey => "Is a relevant quality for members of ${" +
+    objKey + "}",
   "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "quality for the members of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
@@ -1123,8 +1158,7 @@ export const qualitiesForMembers = {
 export const subQualities = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Sub-qualities",
-  "getQualityName": objKey => "Relevant sub-quality of ${" + objKey +
-    "}",
+  "getQualityName": objKey => "Is a relevant sub-quality of ${" + objKey + "}",
   "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "sub-quality of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/qualities"),
@@ -1143,7 +1177,7 @@ export const subQualities = {
 export const commentsRelation = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Comments",
-  "getQualityName": objKey => "Relevant comment about ${" + objKey + "}",
+  "getQualityName": objKey => "Is a relevant comment about ${" + objKey + "}",
   "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "comment about ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/entities"),
@@ -1159,7 +1193,7 @@ export const questionsAndFacts = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Q&F",
   "Elaboration": "Questions and facts",
-  "getQualityName": objKey => "Relevant question or fact relating to ${" +
+  "getQualityName": objKey => "Is a relevant question or fact relating to ${" +
     objKey + "}",
   "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a " +
     "relevant question or fact relating to ${" + objKey + "}",
@@ -1179,10 +1213,10 @@ export const questionsAndFacts = {
 export const discussions = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Discussions",
-  "getQualityName": objKey => "Relevant discussion relating to ${" +
+  "getQualityName": objKey => "Is a relevant discussion relating to ${" +
     objKey + "}",
   "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a " +
-    "relevant discussion relating to ${" + objKey + "} in some way",
+    "relevant discussion relating to ${" + objKey + "} (somehow)",
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/texts"),
   "Metric": abs("./em1.js;get/predicateMetric"),
@@ -1208,7 +1242,8 @@ export const discussions = {
 export const reactions = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Reactions",
-  "getQualityName": objKey => "Relevant reaction comment for ${" + objKey + "}",
+  "getQualityName": objKey => "Is a relevant reaction comment for ${" +
+    objKey + "}",
   "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a " +
     "relevant reaction comment for ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/entities"),
@@ -1217,6 +1252,11 @@ export const reactions = {
   "Description": abs("./em1_aux.js;get/reactionsDesc"),
 };
 
+
+// If you have a text that consist of a singular statement (possibly phrased as
+// a question), then you might be interested to see a list of arguments. And
+// that is part of what the following relation is for, however, we here also
+// extend the ... TODO: Continue/rewrite. 
 
 // We here take 'Arguments' to refer both the arguments for and against a
 // statement. So a counterargument is thus also considered an 'argument.' And
@@ -1283,6 +1323,9 @@ export const argumentsRelation = {
   "Description": abs("./em1_aux.js;get/argumentsRelationDesc"),
 }; 
 
+
+// TODO: Also introduce a 'Correlated statements' relation here.
+ 
 
 
 
