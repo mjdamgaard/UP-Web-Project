@@ -2565,16 +2565,6 @@ export function verifyType(val, type, isOptional, node, env) {
         );
       }
       break;
-    // (This type might type check might not see any use in practice:)
-    case "jsx":
-      if (!(val instanceof JSXElement)) {
-        throw new ArgTypeError(
-          "Value is not a JSX element directly (although it might still be " +
-          "a valid string or array which can be rendered like a JSX element)",
-          node, env
-        );
-      }
-      break;
     case "class":
       if (!(val instanceof ClassObject)) {
         throw new ArgTypeError(
@@ -2584,7 +2574,7 @@ export function verifyType(val, type, isOptional, node, env) {
       }
       break;
     case "any":
-      return;
+      break;
     case (type instanceof ClassObject):
       if (!type.isInstanceOfThis(val)) {
         throw new ArgTypeError(
@@ -2592,7 +2582,9 @@ export function verifyType(val, type, isOptional, node, env) {
           node, env
         );
       }
-      return;
+      break;
+    case "promise":
+      type = "Promise";
     default:
       if (typeof type === "symbol") {
         if (!(val instanceof ObjectObject) || val.className !== type) {

@@ -44,6 +44,20 @@ export const split = new DevFunction(
   }
 );
 
+
+export const toUpperCase = new DevFunction(
+  "toUpperCase", {typeArr: ["string"]}, ({}, [str]) => {
+    return str.toUpperCase();
+  }
+);
+
+export const toLowerCase = new DevFunction(
+  "toLowerCase", {typeArr: ["string"]}, ({}, [str]) => {
+    return str.toLowerCase();
+  }
+);
+
+
 // TODO: Continue implementing all other standard String methods, except RegEx-
 // related ones, since RegExes should only be implemented at a later point and
 // in another dev lib, where we then need to make sure to prevent exponential

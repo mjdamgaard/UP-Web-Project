@@ -170,10 +170,10 @@ export const classes = {
 
     // And as a third alternative, a class have a "Member value type(s)" in
     // case its members are 'value entities' (see above). Examples of this
-    // attribute are: "string", "jsx", "function", and "integer unsigned", etc.,
-    // using the same convention as verifyType() (in ScriptInterpreter.js). Or
-    // the value can also be an array of such type strings, which means the
-    // type is a disjunction of all the contained types. A class might also
+    // attribute are: "string", "JSXElement", "integer unsigned", "function",
+    // etc., using the same convention as verifyType() in ScriptInterpreter.js.
+    // Or the value can also be an array of such type strings, which means that
+    // the type is a disjunction of all the contained types. A class might also
     // have both a "Common attributes" and a "Member value type(s)" attribute
     // in case its members can be both value entities as well as referential
     // entities.
@@ -244,7 +244,7 @@ export const texts = {
     // be used rather than the 'Probability' quality.
     "Is a singular statement"
   ],
-  "Member value type(s": ["string", "jsx"],
+  "Member value type(s": ["string", "JSXElement"],
   "Description": abs("./em1_aux.js;get/textsDesc"),
 };
 
@@ -1325,7 +1325,7 @@ export const argumentsRelation = {
 
 
 // TODO: Also introduce a 'Correlated statements' relation here.
- 
+
 
 
 
