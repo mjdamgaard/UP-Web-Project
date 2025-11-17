@@ -3,7 +3,7 @@
 // 'Entities' class and the 'Classes' class which are fundamental to the
 // whole semantic system.
 
-import {fetchEntityProperty} from "./entities.js";
+import {fetchAttribute} from "./entities.js";
 
 
 
@@ -22,7 +22,7 @@ import {fetchEntityProperty} from "./entities.js";
 //
 // We will refer to the JS object that defines an entity as the entity's
 // 'definition.' And we will refer to all the defining properties like the ones
-// we've seen so far, with capitalized first letters, as the entity's
+// we've seen so far, with capitalized first letters, as the entity's defining
 // 'attributes.' The attributes can either be plain strings, such as
 // "Pulp Fiction" in our example above, or they can be absolute paths to other
 // entities (see all the attributes below using the built-in abs() function),
@@ -30,9 +30,9 @@ import {fetchEntityProperty} from "./entities.js";
 // these functions first need to be substituted with their return value (called
 // with no arguments) before the entity definition is interpreted. And
 // importantly, if the function returns a promise, the result of that promise
-// when it result is what should substitute the attribute. And if it returns a
-// function, then the whole process is repeated recursively. Below can be seen
-// some examples of how this can be useful, in particular when it comes to
+// when it resolves is what should substitute the attribute. And if it returns
+// a function, then the whole process is repeated recursively. Below can be
+// seen some examples of how this can be useful, in particular when it comes to
 // getting the "Name" attributes for 'Relational qualities' (see below).
 //
 // After all the function-valued attributes have been substituted, there are
@@ -232,15 +232,15 @@ export const texts = {
     "URL",
     "URI",
 
-    // The "Is a singular statement" predicate attribute tells if the text is a
-    // singular statement that can be assigned a probability in a meaningful
-    // and straightforward way. The default value of this attribute is false
-    // (as is generally the case unless otherwise specified). The attribute is
-    // meant primarily as as way to help the app decide whether to direct to
-    // the 'Is correct' predicate or the 'Probability' quality (see below) when
-    // a user wants to score the text, and/or see its arguments (pros and cons).
+    // The "Is a singular statement" attribute tells if the text is a singular
+    // statement that can be assigned a probability in a meaningful and
+    // straightforward way. The default value of this attribute is false (as is
+    // generally the case unless otherwise specified). The attribute is meant
+    // primarily as as way to help the app decide whether to direct to the
+    // 'Is correct' quality or the 'Probability' quality (see below) when a
+    // user wants to score the text, and/or see its arguments (pros and cons).
     // If the statement is not singular (but is compound of several statements,
-    // explicitly and/or implicitly), the 'Is correct' predicate should always
+    // explicitly and/or implicitly), the 'Is correct' quality should always
     // be used rather than the 'Probability' quality.
     "Is a singular statement"
   ],
@@ -262,12 +262,12 @@ export const commentClass = {
 
 
 
-// A 'quality' in this system refers to a property of an entity that can be
-// described by floating-point number within some range. One can think of the
-// well-known "tags" that you normally see on the Web, but where each tag is
-// rated on a floating-point scale. For example, a movie  might be rated with
-// respect to a quality of "Scary," and the rating scale of the quality would
-// thus represent how scary the movie is.
+// A 'quality' in this system refers to a scalar predicate, i.e. a property of
+// an entity that can be described by floating-point number within some range.
+// One can think of the well-known "tags" that you normally see on the Web, but
+// where each tag is rated on a floating-point scale. For example, a movie
+// might be rated with respect to a quality of 'Scary,' and the rating scale of
+// the quality would thus represent *how* scary the movie is.
 // The scores given to the qualities can then to be aggregated into e.g. mean
 // or median estimators over larger user groups. Such user groups do not need
 // to include all users of the system, but can also be a limited list of users.
@@ -275,26 +275,32 @@ export const commentClass = {
 // the scores of some users might count for more than others.)
 // We will tend to refer to the entities that the quality is about as the
 // "subjects" of the quality. And when a quality and a subject is put together,
-// they form what we will refer to as a 'scored parameter,' or simply
-// 'parameter,' whenever it is clear from context what we are talking about
-// (which is most of the time).
+// they form what can be called a 'scalar proposition,' or simply just 'scalar'
+// (see below).
 export const qualities = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Qualities",
+  "Elaboration": "Scalar predicates, a.k.a. qualities",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
   // The "Name" attribute of qualities should either be a (compound) verb or
-  // a (compound) noun, depending of whether it is a 'predicate' or not. A
-  // quality is a predicate if its "Metric" (see below) is the 'Predicate
-  // metric' (see further below). For instance, "Is funny" is an example of a
-  // good name for a predicate, whereas other kinds of metrics that measures
-  // a some specific quantity such as "Probability" or "Price" ought to be
-  // called exactly that, using a (compound) noun as their name.
+  // a (compound) noun, depending of whether it is a 'gradable predicate' or
+  // not. A so-called 'gradable predicate' is when a scalar predicate, a.k.a.
+  // a quality, is formed from a seemingly constant predicate, such as e.g.
+  // 'Is funny' or 'Is scary,' which is however meant to be graded on a scale
+  // (see the 'Grading metric' below). 
+  // For gradable predicates, the convention here is to use a (compound) verb
+  // for the "Name" attribute, as in for instance "Is funny," or "Has good
+  // acting," or "Belongs to the class of Movies," etc. And for other kinds of
+  // qualities, which typically measure some sort of quantity, such as
+  // 'Probability' or 'Price' (which are both qualities that are introduced
+  // below), these should indeed preferably be named using (compound) nouns
+  // instead.
 
-  // The "getParameterName()" method is used to generate the "Name" attribute
-  // whenever the quality is combined with a subject to form a 'parameter' (see
+  // The "getScalarName()" method is used to generate the "Name" attribute
+  // whenever the quality is combined with a subject to form a 'scalar' (see
   // below).
-  "getParameterName",
+  "getScalarName",
 
   // The "Domain" of a quality is a class to which the subjects are supposed to
   // belong. Or it can also be a quality, in which case it is implicitly
@@ -303,12 +309,9 @@ export const qualities = {
   "Domain",
 
   // The "Metric" of a quality defines the semantics of the range of the
-  // floating-point score, can also help to define the unit of the quality, if
-  // any, and to give labels to the intervals of the range. Since most
-  // qualities is expected to be "predicates," i.e. a quality measuring the
-  // correctness of a statement (either a subjective or an objective one), we
-  // will take the 'Predicate metric' introduced below to be the default metric
-  // whenever the "Metric" attribute is undefined.
+  // floating-point score, as well as unit of the scale, if it has one. It can
+  // also specify some appropriate labels for the intervals of the range, as
+  // can be seen for the 'Grading metric' below.
   "Metric",
 
   // Some qualities might also have a "getScoredList()" method. In such cases,
@@ -339,14 +342,15 @@ export const qualities = {
 
 
 
-// Relations in this system are entities that when combined with a relational
-// object yields a quality (and most often a predicate in particular). In
-// practical terms, this is done by using the constructor of the 'Relational
-// qualities' class below, RG(), giving it the object and the relation as its
-// arguments.
+// Scalar relations, which we will generally simply refer to as 'relations,'
+// are entities that when combined with a relational object yields a scalar
+// predicate, a.k.a. a quality. In practical terms, this is done by using the
+// constructor of the 'Relational qualities' class below, RG(), giving it the
+// object and the relation as its arguments.
 export const relations = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Relations",
+  "Elaboration": "Scalar relations",
   "Superclass": abs("./em1.js;get/entities"),
   "Common attributes": [
     // For the "Name" attribute of relations, try if at all possible to select
@@ -363,12 +367,11 @@ export const relations = {
     // the convention used for attributes is the same as the one for relation
     // "Names").
 
-    // The "getParameterName()" method of relations is different from the one
-    // for qualities, namely since it here takes two arguments, objKey and
-    // subjKey, instead of just the subjKey. Thus, the getParameterName()
-    // method for relational qualities is constructed the way you see here
-    // below.
-    "getParameterName",
+    // The "getScalarName()" method of relations is different from the one for
+    // qualities, namely since it here takes two arguments, objKey and subjKey,
+    // instead of just the subjKey. Thus, the getScalarName() method for
+    // relational qualities is constructed the way you see here below.
+    "getScalarName",
 
     // And the "getQualityName()" similarly takes an objKey argument and
     // generates the name of the relational quality.
@@ -407,32 +410,32 @@ export const RQ = (objID, relID) => ({
   "Object": "${" + objID + "}",
   "Relation": "${" + relID + "}",
   "Name": () => new Promise(resolve => {
-    fetchEntityProperty(relID, "getQualityName").then(
+    fetchAttribute(relID, "getQualityName").then(
       getQualityName => resolve(getQualityName(objID))
     );
   }),
-  "getParameterName": subjKey => new Promise(resolve => {
-    fetchEntityProperty(relID, "getParameterName").then(
-      getParameterName => resolve(getParameterName(objID, subjKey))
+  "getScalarName": subjKey => new Promise(resolve => {
+    fetchAttribute(relID, "getScalarName").then(
+      getScalarName => resolve(getScalarName(objID, subjKey))
     );
   }),
   "Domain": () => new Promise(resolve => {
-    fetchEntityProperty(relID, "Subject domain").then(
+    fetchAttribute(relID, "Subject domain").then(
       domain => resolve(domain)
     );
   }),
   "Metric": () => new Promise(resolve => {
-    fetchEntityProperty(relID, "Metric").then(
+    fetchAttribute(relID, "Metric").then(
       metric => resolve(metric)
     );
   }),
   "Is derived": () => new Promise(resolve => {
-    fetchEntityProperty(relID, "Is derived").then(
+    fetchAttribute(relID, "Is derived").then(
       isDerived => resolve(isDerived)
     );
   }),
   "getScoredList": scoreHandler => new Promise(resolve => {
-    fetchEntityProperty(relID, "getScoredList").then(
+    fetchAttribute(relID, "getScoredList").then(
       getScoredList => getScoredList ?
         resolve(getScoredList(objID, scoreHandler)) : undefined
     );
@@ -450,33 +453,31 @@ export const relationalQualities = {
 
 
 
-// 'Parameters' in the context of the semantic system refers to the floating-
-// point number scales that are scored by the users, and/or aggregated
-// algorithmically. If ever needing to disambiguate from other kinds of
-// 'parameters,' we can refer to them as 'Quality parameters,' but let's use
-// the abbreviated form, 'parameters,' whenever such disambiguation isn't
-// needed.
-export const Parameter = (qualID, subjID) => ({
-  "Class": abs("./em1.js;get/qualityVariables"),
+// 'Scalars' are the scalar propositions formed for combing a scalar predicate,
+// a.k.a. a quality, with a subject entity. They thus represent all the the
+// floating-point number scales that are scored by the users, and/or aggregated
+// algorithmically.
+export const Scalar = (qualID, subjID) => ({
+  "Class": abs("./em1.js;get/scalars"),
   "Quality": "${" + qualID + "}",
   "Subject": "${" + subjID + "}",
   "Name": () => new Promise(resolve => {
-    fetchEntityProperty(qualID, "getParameterName").then(
-      getParameterName => resolve(getParameterName(subjID))
+    fetchAttribute(qualID, "getScalarName").then(
+      getScalarName => resolve(getScalarName(subjID))
     );
   }),
   "Metric": () => new Promise(resolve => {
-    fetchEntityProperty(qualID, "Metric").then(
+    fetchAttribute(qualID, "Metric").then(
       metric => resolve(metric)
     );
   }),
   "Is derived": () => new Promise(resolve => {
-    fetchEntityProperty(relID, "Is derived").then(
+    fetchAttribute(relID, "Is derived").then(
       isDerived => resolve(isDerived)
     );
   }),
   "getScoreData": scoreHandler => new Promise(resolve => {
-    fetchEntityProperty(qualID, "getScoredList").then(getScoredList => {
+    fetchAttribute(qualID, "getScoredList").then(getScoredList => {
       if (!getScoredList) return resolve(undefined);
       getScoredList(scoreHandler).then(scoredList => {
         scoredList.getScoreData().then(
@@ -486,12 +487,13 @@ export const Parameter = (qualID, subjID) => ({
     });
   }),
 });
-export const parameters = {
+export const scalars = {
   "Class": abs("./em1.js;get/classes"),
-  "Name": "Parameters",
+  "Name": "Scalars",
+  "Elaboration": "Scalar propositions, a.k.a. scalars",
   "Superclass": abs("./em1.js;get/entities"),
-  "constructor": Parameter,
-  "Description": abs("./em1_aux.js;get/parametersDesc"),
+  "constructor": Scalar,
+  "Description": abs("./em1_aux.js;get/scalarsDesc"),
 };
 
 
@@ -520,11 +522,11 @@ export const parameters = {
 // determine which users or more qualified to score qualities regarding the
 // entities of that class (including what its members are).
 // Note that this means that when it comes to aggregating the scores for a
-// given parameter, there might be several AoC properties involved, such as
-// from the quality involved, and from the subject, and/or from its class. And
-// when several different AoCs are present in this way, the natural thing to do
-// is try to look the "conjunction" of all these areas, meaning to take the
-// subset of things that belong to all the given AoCs at the same time.  
+// given scalar, there might be several AoC properties involved, such as from
+// the quality involved, and from the subject, and/or from its class. And when
+// several different AoCs are present in this way, the natural thing to do is
+// try to look the "conjunction" of all these areas, meaning to take the subset
+// of things that belong to all the given AoCs at the same time.  
 export const areasOfConcern = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Areas of concern",
@@ -810,7 +812,7 @@ export const components = {
 
 
 // A metric is used to describe the semantics of the range of the floating-
-// point parameters returned by qualities.
+// point numbers that are used for the scalar propositions, a.k.a. the scalars.
 export const metrics = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Metrics",
@@ -825,11 +827,15 @@ export const metrics = {
 
 // Some useful metrics for qualities.
 
-// The 'Predicate metric' is the default metric if the "Metric" attribute is
-// undefined for a quality (or a relation).
-export const predicateMetric = {
+// The 'Grading metric' is the standard metric to use for all the so-called
+// 'gradable predicates,' which are scalar predicates formed from a constant
+// one, such as 'Is scary' or 'Is funny,' etc., which is then re-contextualized
+// into a scalar predicate, a.k.a. a quality, by grading that predicate on the
+// scale from -10 to 10 that you see below (see the "Interval labels"
+// attribute).
+export const gradingMetric = {
   "Class": abs("./em1.js;get/metrics"),
-  "Name": "Predicate metric",
+  "Name": "Grading metric",
   "Lower limit": -10,
   "Upper limit": 10,
   "Interval labels": [
@@ -844,7 +850,7 @@ export const predicateMetric = {
     [  6,  8,  "very much"],
     [  8, 10,  "extremely"],
   ],
-  "Description": abs("./em1_aux.js;get/predicateMetricsDesc"),
+  "Description": abs("./em1_aux.js;get/gradingMetricsDesc"),
 };
 
 export const percentageMetric = {
@@ -859,7 +865,7 @@ export const percentageMetric = {
 export const dimensionlessMetric = {
   "Class": abs("./em1.js;get/metrics"),
   "Name": "Dimensionless metric",
-  "Description": abs("./em1_aux.js;get/dimensionlessDesc"),
+  "Description": abs("./em1_aux.js;get/dimensionlessMetricDesc"),
 };
 
 export const positiveDimensionlessMetric = {
@@ -910,12 +916,12 @@ export const timeInSecondsMetric = {
 // well, meaning that the quality depends on the user scoring it. "Correctness"
 // is not meant to measure the probability of the text being true, in its
 // entirety, but is to represent the overall correctness of the text, "on
-// average," you might say. And the quality therefore also uses the predicate
-// metric rather than the percentage metric. Then if wanting to talk about the
-// probability of a particular statement being true, use the 'Probability'
+// average," you might say. And the quality therefore also uses the 'Grading
+// metric' rather than the 'Percentage metric.' Then if wanting to talk about
+// the probability of a particular statement being true, use the 'Probability'
 // quality just below instead.
 // Whether the statement is phrased as a question or as a direct statement
-// should not matter when it comes to the 'Is Correct' predicate (nor the
+// should not matter when it comes to the 'Is Correct' quality (nor the
 // 'Probability' quality below, for that matter). This thus gives users a good
 // way for them to contribute a potential argument to a discussion without
 // claiming anything about that argument themselves, namely by posing it as a
@@ -923,14 +929,13 @@ export const timeInSecondsMetric = {
 export const isCorrect = {
   "Class": abs("./em1.js;get/qualities"),
   "Name": "Is correct",
-  "getParameterName": subjKey => "${" + subjKey + "} is correct",
+  "getScalarName": subjKey => "${" + subjKey + "} is correct",
   "Domain": abs("./em1.js;get/texts"),
-  "Metric": abs("./em1.js;get/predicateMetric"), // (This is also the default
-  // value when the "Metric" attribute is undefined.)
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/isCorrectDesc"),
 };
 
-// Unlike the 'Is Correct' predicate above, the 'Probability' quality should
+// Unlike the 'Is Correct' quality above, the 'Probability' quality should
 // only be used for "singular" statements that can be assigned a probability
 // in a straightforward way (in terms of what that probability means, not in
 // terms of *computing* the probability; that might not be straightforward at
@@ -938,7 +943,7 @@ export const isCorrect = {
 export const probability = {
   "Class": abs("./em1.js;get/qualities"),
   "Name": "Probability",
-  "getParameterName": subjKey => "probability of ${" + subjKey + "} being true",
+  "getScalarName": subjKey => "probability of ${" + subjKey + "} being true",
   "Domain": abs("./em1.js;get/texts"),
   "Metric": abs("./em1.js;get/percentageMetric"),
   "Description": abs("./em1_aux.js;get/probabilityDesc"),
@@ -949,53 +954,54 @@ export const probability = {
 // This 'Is trusted' quality is meant as a standard way to obtain the weighted
 // user lists that are used for user groups, namely by having a "moderator
 // group" that scores other users, and themselves, with respect to this 'Is
-// trusted' predicate. The quality uses the predicate metric, with the range
-// from -10 to 10, and how this range is converted to a (non-negative) weight
-// is up to whoever defines the user list.
+// trusted' quality. The quality uses the 'Grading metric,' with its range from
+// -10 to 10. And how this range is converted to a (non-negative) weight is up
+// to whoever defines the user list.
 // Now, as things progress, it is likely that users will create more specific
 // sub-qualities of this one, which will define the sought-for qualities of
 // the new user group in more detail. For instance, one might make sub-
 // qualities of "Is trusted w.r.t. URL safety" or "Is trusted w.r.t. (the field
 // of) Chemistry", etc. But initially, this more simple and vague "Is trusted"
-// predicate will probably do.
+// quality will probably do.
 export const isTrusted = {
   "Class": abs("./em1.js;get/qualities"),
   "Name": "Is trusted",
   "Elaboration": "User can be trusted to give honest and helpful scores " +
     "and comments, etc., in this network",
-  "getParameterName": subjKey => "${" + subjKey +"} can be trusted",
+  "getScalarName": subjKey => "${" + subjKey +"} can be trusted",
   "Domain": abs("./em1.js;get/users"),
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/isTrustedDesc"),
 };
 
 
-// Some simple predicates that don't need much explaining (and their
+// Some simple qualities that don't need much explaining (and their
 // "Descriptions" should thus also be brief). These are included here mostly
 // to give some examples of some non-relational qualities, and including both
-// a few predicates and a few non-predicate qualities.
+// a few "gradable predicates" and a few "quantitative qualities," as we might
+// call them.
 export const isGood = {
   "Class": abs("./em1.js;get/qualities"),
   "Name": "Is good",
-  "getParameterName": subjKey => "${" + subjKey + "} is good",
+  "getScalarName": subjKey => "${" + subjKey + "} is good",
   "Domain": abs("./em1.js;get/entities"),
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/isGoodDesc"),
 };
 export const isFunny = {
   "Class": abs("./em1.js;get/qualities"),
   "Name": "Is funny",
-  "getParameterName": subjKey => "${" + subjKey + "} is funny",
+  "getScalarName": subjKey => "${" + subjKey + "} is funny",
   "Domain": abs("./em1.js;get/entities"),
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/isFunnyDesc"),
 };
 export const isScary = {
   "Class": abs("./em1.js;get/qualities"),
   "Name": "Is scary",
-  "getParameterName": subjKey => "${" + subjKey + "} is scary",
+  "getScalarName": subjKey => "${" + subjKey + "} is scary",
   "Domain": abs("./em1.js;get/entities"),
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/isScaryDesc"),
 };
 
@@ -1004,7 +1010,7 @@ export const price = {
   "Class": abs("./em1.js;get/qualities"),
   "Name": "Price",
   "Elaboration": "Price (in USD)",
-  "getParameterName": subjKey => "The price of ${" + subjKey + "} (in USD)",
+  "getScalarName": subjKey => "The price of ${" + subjKey + "} (in USD)",
   // The class of valuable things is so large and varied that we might as well
   // take the 'All entities' class as the domain:
   "Domain": abs("./em1.js;get/entities"),
@@ -1016,7 +1022,7 @@ export const durability = {
   "Class": abs("./em1.js;get/qualities"),
   "Name": "Durability",
   "Elaboration": "Durability (in years)",
-  "getParameterName": subjKey => "The durability of ${" + subjKey + "} " +
+  "getScalarName": subjKey => "The durability of ${" + subjKey + "} " +
     "(in years)",
   // The domain here is also too wide and varied to try narrow it down.
   "Domain": abs("./em1.js;get/entities"),
@@ -1025,16 +1031,16 @@ export const durability = {
 };
 
 
-// This predicate can be used to override the "Is singular statement" attribute
+// This quality can be used to override the "Is singular statement" attribute
 // of a text, set by the author (or rather the creator of the entity). And
-// using predicates like this is indeed the correct way to override (or create
+// using qualities like this is indeed the correct way to override (or create
 // new) boolean properties of entities, rather than using relations. 
 export const isASingularStatement = {
   "Class": abs("./em1.js;get/qualities"),
   "Name": "Is a singular statement",
-  "getParameterName": subjKey => "${" + subjKey + "} is a singular statement",
-  "Domain": abs("./em1.js;get/entities"),
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "getScalarName": subjKey => "${" + subjKey + "} is a singular statement",
+  "Domain": abs("./em1.js;get/texts"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/isASingularStatementDesc"),
 };
 
@@ -1050,11 +1056,11 @@ export const members = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Members",
   "getQualityName": objKey => "Belongs to ${" + objKey + "}",
-  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} belongs to " +
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} belongs to " +
     "the class of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/entities"),
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/membersDesc"),
 };
 
@@ -1064,11 +1070,11 @@ export const subclasses = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Subclasses",
   "getQualityName": objKey => "Is a subclass of ${" + objKey + "}",
-  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a subclass " +
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a subclass " +
     "of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/classes"),
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/subclassesDesc"),
 };
 
@@ -1081,11 +1087,11 @@ export const relevantRelations = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Relations",
   "getQualityName": objKey => "Is a relevant relation for ${" + objKey + "}",
-  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "relation for ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/relations"),
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/relevantRelationsDesc"),
 };
 
@@ -1097,11 +1103,11 @@ export const relationsForMembers = {
   "Name": "Relations for members",
   "getQualityName": objKey => "Is a relevant relation for members of ${" +
     objKey + "}",
-  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "relation for the members of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/relations"),
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/relationsForMembersDesc"),
 };
 
@@ -1113,11 +1119,11 @@ export const subRelations = {
   "Name": "Sub-relations",
   "getQualityName": objKey => "Is a relevant sub-relation of ${" + objKey +
     "}",
-  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "sub-relation of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/relations"),
   "Subject domain": abs("./em1.js;get/relations"),
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/subRelationsDesc"),
 };
 
@@ -1126,11 +1132,11 @@ export const relevantQualities = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Qualities",
   "getQualityName": objKey => "Is a relevant quality for ${" + objKey + "}",
-  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "quality for ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/qualities"),
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/relevantQualitiesDesc"),
 };
 
@@ -1141,11 +1147,11 @@ export const qualitiesForMembers = {
   "Name": "Qualities for members",
   "getQualityName": objKey => "Is a relevant quality for members of ${" +
     objKey + "}",
-  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "quality for the members of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/qualities"),
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/qualitiesForMembersDesc"),
 };
 
@@ -1159,11 +1165,11 @@ export const subQualities = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Sub-qualities",
   "getQualityName": objKey => "Is a relevant sub-quality of ${" + objKey + "}",
-  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "sub-quality of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/qualities"),
   "Subject domain": abs("./em1.js;get/qualities"),
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/subQualitiesDesc"),
 };
 
@@ -1178,11 +1184,11 @@ export const commentsRelation = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Comments",
   "getQualityName": objKey => "Is a relevant comment about ${" + objKey + "}",
-  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "comment about ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/comments"),
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/commentsRelationDesc"),
 };
 
@@ -1195,11 +1201,11 @@ export const questionsAndFacts = {
   "Elaboration": "Questions and facts",
   "getQualityName": objKey => "Is a relevant question or fact relating to ${" +
     objKey + "}",
-  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a " +
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a " +
     "relevant question or fact relating to ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/texts"),
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/questionsAndFactsDesc"),
 };
 
@@ -1215,11 +1221,11 @@ export const discussions = {
   "Name": "Discussions",
   "getQualityName": objKey => "Is a relevant discussion relating to ${" +
     objKey + "}",
-  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a " +
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a " +
     "relevant discussion relating to ${" + objKey + "} (somehow)",
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/texts"),
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/commentsRelationDesc"),
 };
 
@@ -1244,87 +1250,97 @@ export const reactions = {
   "Name": "Reactions",
   "getQualityName": objKey => "Is a relevant reaction comment for ${" +
     objKey + "}",
-  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a " +
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a " +
     "relevant reaction comment for ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/comments"),
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/reactionsDesc"),
 };
 
 
-// If you have a text that consist of a singular statement (possibly phrased as
-// a question), then you might be interested to see a list of arguments. And
-// that is part of what the following relation is for, however, we here also
-// extend the ... TODO: Continue/rewrite. 
 
-// We here take 'Arguments' to refer both the arguments for and against a
-// statement. So a counterargument is thus also considered an 'argument.' And
-// in order to see which argument are for and which are against the statement
-// at hand, we can utilize the 'Correlation' relation introduced below, which
-// is meant to (loosely) measure the correlation between a growth in the
-// argument's correctness parameter, and that of the statement at hand. So in
-// short, a positive correlation means that is is an argument for the given
-// statement, and a negative correlation means that it is an argument against.
-// And the magnitude of the score then says something about how important the
-// argument is, or more precisely how much the correctness of one affects the
-// other.
-// Now, one might think that the "Object domain" of this 'Arguments' relation
-// should be 'Texts,' but we will actually use 'Parameters' here instead for
-// this domain. If looking for arguments for and against for a given text, the
-// app might then afford you with a 'Correctness' tab rather than an 'Arguments'
-// tab. (And this might be one that's open be default for 'Texts,' by the way.)
-// And under this tab, you first see the 'Correct' parameter of the text, which
-// you can then see the score of and potentially score yourself. And underneath
-// this parameter display, you then get your list of 'Arguments' which is thus
-// formed from the 'Arguments' relation with the same 'Correct' parameter as
-// the object. (Of course, users can choose whatever design of these app
-// components that they like, so this is only meant as a suggestion as to how
-// things could be.)
-// Since 
 
-// The 'Arguments' relation. This is where is gets a bit tricky, so hold on.
-// We first of all here take 'Arguments' to refer to both arguments for and
-// against the statement that is the object of the relation. In other words,
-// a counter-argument is also considered an 'argument' in when it comes to
-// the subjects of this relation. That's the first thing to keep in mind about
-// this relation.
-// Now, the "Subject domain" of this 'Arguments' relation are texts. And these
-// texts, typically including only a single statement that is an argument
-// either for or against the object statement. And what is the "Object domain"?
-// One might also guess that this would be texts, but no. Here we instead use
-// parameters. This means that whenever you have a quality and a subject,
-// together forming a so-called 'parameter' (also referred to as a 'quality
-// parameter' if wanting to be more precise), then parameter will have an
-// 'Arguments' tab which shows the arguments for what the parameter should be
-// scored as.
-// And in particular when it comes to texts that consists of a singular
-// statement, such as the subjects of this relation, the 'Correct' quality
-// will thus (TODO: Rewrite this when I'm not tired) be a way to get to the
-// 'Arguments' of the statement. ...I give up, I'm too tired rn. The last part
-// might go something like: "Instead of having two parameters with the same
-// meaning, we use the 'Correct' relation as the object of the 'Arguments' tab
-// for a given statement text, rather than using the text itself as the object,
-// which is the normal thing to do, and is what we do for nearly all other tabs
-// in the app"... I'm rambling now, I feel like. So:
-// TODO: I should rewrite this whole comment when I'm not tired.  
+// It will often be worth to be able to argue about either the "correctness" or
+// the "probability" of a given text, depending on whether it is a "singular
+// statement" or a compound one. Therefore, when an entity is displayed in the
+// app, either on its own "entity page," as we call it here, or among other
+// entities in a list (displayed as what we here call "entity elements"), it
+// might be worthwhile to show a tab of 'Arguments,' which is what the following
+// relation is for.
+// A possible layout for this "tabbed page" could be to have the "correctness"
+// or the "probability" scalar displayed at the top of the page, depending of
+// course on whether the text is a "singular statement" or not. The user can
+// then see the score of the given scalar here, and potentially submit their
+// own score. And underneath this display, we could have the actual section of 
+// "Arguments" for this scalar.
+// Now, as can be seen below, we actually take 'Scalars' to be the "Subject
+// domain" of this 'Arguments' relation, meaning that the relation is purely
+// between scalars, namely with the correctness or probability scalar of the
+// text entity as the object, and with other scalars as the subjects. But when
+// any one of these "arguments" is itself a correctness or probability scalar,
+// with another text as the subject of this scalar, we should make sure to show
+// that text directly in the list, such that it can be read immediately without
+// having to click on it first (or at least the first part can be read, if it's
+// a longer text). So while 'Arguments' relation is purely between scalars, it
+// can thus also still be used to relate texts to texts.
+// The advantage of using 'Scalars' for the domains of the relation instead of
+// just 'Texts,' however, is first of all that it means that other kinds of
+// qualities can also be used directly as arguments. For instance, if the text
+// discusses whether some product is worth buying or not, a relevant argument
+// might simply be the 'Price' scalar directly, just to give one example. And
+// more importantly, since the "Object domain" consists of all 'Scalars,' it
+// means that all scalars can be discussed in the same way. So if we e.g. have
+// the 'Is good' quality in relation to some movie, we can also allow the users
+// to go to an 'Arguments' tab here, and see what kinds of arguments users have
+// proposed for why the movie is good, be it textual arguments or other kinds
+// scalars, such as e.g. 'Is funny,' or 'Has good acting,' and so on. 
+// It should also be noted that we don't distinguish between pros and cons here
+// when it comes to the relevant subjects of the 'Arguments' relation. So a
+// counterargument is thus also considered an 'argument' here. So in order to
+// distinguish what arguments are pros and what are cons in the list, we will
+// instead use a "correlation" relation, which is introduced below. And since
+// this correlation relation is a scalar one, like relations in this semantic
+// system, it means that we can also use its scores to show *how much* a given
+// argument is regarded as impacting the object of the discussion, namely the
+// object scalar. For instance, if the correlation has a high positive score,
+// it means that an increment in the argument scalar (either due to being
+// evaluated by more users, or if a new "sub-argument" has come to light,
+// making users change their opinions) should be correlated with a relatively
+// large increment in score for the object scalar as well. And if the
+// correlation is a negative number of a large absolute value, an increment
+// in the argument's score should correlate with a relatively large decrement
+// in the score of the object scalar. You get the picture (hopefully).
+// So when showing the list of "arguments" for a given scalar, it is thus
+// important to also show these correlation scores as well, along with the
+// scores of the argument scalars themselves.
 export const argumentsRelation = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Arguments",
-  // TODO: Consider extracting the subject of the parameter for these two
-  // attributes. Hm, or some to think of it, maybe I shouldn't do this after
-  // all. Maybe I should just use 'Texts' as the "Object domain" after all..
-  "getQualityName": objKey => "Relevant argument for ${" + objKey + "}",
-  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a " +
+  "getQualityName": objKey => "Is a relevant argument for ${" + objKey + "}",
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a " +
     "relevant argument for ${" + objKey + "}",
-  "Object domain": abs("./em1.js;get/parameters"),
-  "Subject domain": abs("./em1.js;get/texts"),
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Object domain": abs("./em1.js;get/scalars"),
+  "Subject domain": abs("./em1.js;get/scalars"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/argumentsRelationDesc"),
 }; 
 
 
-// TODO: Also introduce a 'Correlated statements' relation here.
+
+// This "correlation" relation was introduced above in the comment for the
+// 'Arguments' relation.
+export const correlation = {
+  "Class": abs("./em1.js;get/relations"),
+  "Name": "Correlated scalars",
+  "getQualityName": objKey => "Correlation with ${" + objKey + "}",
+  "getScalarName": (objKey, subjKey) => "Correlation between ${" + subjKey +
+    "} and ${" + objKey + "}",
+  "Object domain": abs("./em1.js;get/scalars"),
+  "Subject domain": abs("./em1.js;get/scalars"),
+  "Metric": abs("./em1.js;get/dimensionlessMetric"),
+  "Description": abs("./em1_aux.js;get/correlationDesc"),
+}; 
 
 
 
@@ -1342,11 +1358,11 @@ export const areaOfConcern = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Area of concern",
   "getQualityName": objKey => "A fitting Area of concern for ${" + objKey + "}",
-  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a fitting " +
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a fitting " +
     "area of concern for ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/areasOfConcern"),
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/areaOfConcernDesc"),
 };
 
@@ -1360,12 +1376,12 @@ export const entityPage = {
   "Name": "Entity page",
   "getQualityName": objKey => "Good entity page component for members of ${" +
     objKey + "}",
-  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a good " +
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a good " +
     "entity page component for members of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/components"),
   "Area of concern": "./em1.js;get/uiAoC",
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/entityPageDesc"),
 };
 
@@ -1386,12 +1402,12 @@ export const entityElement = {
   "Name": "Entity element",
   "getQualityName": objKey => "Good entity element component for members of " +
    "${" + objKey + "}",
-  "getParameterName": (objKey, subjKey) => "${" + subjKey + "} is a good " +
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a good " +
     "entity element component for members of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/components"),
   "Area of concern": "./em1.js;get/uiAoC",
-  "Metric": abs("./em1.js;get/predicateMetric"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/entityElementDesc"),
 };
 
