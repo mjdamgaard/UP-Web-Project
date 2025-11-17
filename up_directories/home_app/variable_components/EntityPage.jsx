@@ -1,6 +1,6 @@
 
 import {
-  fetchEntityDefinition, fetchRelationalQualityPath,
+  fetchEntityProperty, fetchRelationalQualityPath,
 } from "/1/1/entities.js";
 
 // TODO: Change back to GeneralEntityPage again.
@@ -30,8 +30,8 @@ export function render(props) {
 
   // If the class key is not provided, and has not already been fetched, do so.
   if (classKey === undefined) {
-    fetchEntityDefinition(entKey).then(entDef => {
-      this.setState(state => ({...state, classKey: entDef["Class"]}));
+    fetchEntityProperty(entKey, "Class").then(classKey => {
+      this.setState(state => ({...state, classKey: classKey ?? false}));
     });
     content = <div className="fetching">{"..."}</div>;
   }

@@ -27,7 +27,7 @@ export function render({entKey}) {
     fetchEntityPath(entKey).then(entPath => {
       this.setState(state => ({...state, entPath: entPath ?? false}));
     });
-    fetchEntityDefinition(entKey).then(entDef => {
+    fetchEntityDefinition(entKey, true).then(entDef => {
       this.setState(state => ({...state, entDef: entDef ?? false}));
     });
     fetchEntityID(entKey).then(entID => {

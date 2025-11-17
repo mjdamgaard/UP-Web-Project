@@ -3,7 +3,7 @@
 // 'Entities' class and the 'Classes' class which are fundamental to the
 // whole semantic system.
 
-import {fetchAttribute} from "./entities.js";
+import {fetchEntityProperty} from "./entities.js";
 
 
 
@@ -410,32 +410,32 @@ export const RQ = (objID, relID) => ({
   "Object": "${" + objID + "}",
   "Relation": "${" + relID + "}",
   "Name": () => new Promise(resolve => {
-    fetchAttribute(relID, "getQualityName").then(
+    fetchEntityProperty(relID, "getQualityName").then(
       getQualityName => resolve(getQualityName(objID))
     );
   }),
   "getScalarName": subjKey => new Promise(resolve => {
-    fetchAttribute(relID, "getScalarName").then(
+    fetchEntityProperty(relID, "getScalarName").then(
       getScalarName => resolve(getScalarName(objID, subjKey))
     );
   }),
   "Domain": () => new Promise(resolve => {
-    fetchAttribute(relID, "Subject domain").then(
+    fetchEntityProperty(relID, "Subject domain").then(
       domain => resolve(domain)
     );
   }),
   "Metric": () => new Promise(resolve => {
-    fetchAttribute(relID, "Metric").then(
+    fetchEntityProperty(relID, "Metric").then(
       metric => resolve(metric)
     );
   }),
   "Is derived": () => new Promise(resolve => {
-    fetchAttribute(relID, "Is derived").then(
+    fetchEntityProperty(relID, "Is derived").then(
       isDerived => resolve(isDerived)
     );
   }),
   "getScoredList": scoreHandler => new Promise(resolve => {
-    fetchAttribute(relID, "getScoredList").then(
+    fetchEntityProperty(relID, "getScoredList").then(
       getScoredList => getScoredList ?
         resolve(getScoredList(objID, scoreHandler)) : undefined
     );
@@ -462,22 +462,22 @@ export const Scalar = (qualID, subjID) => ({
   "Quality": "${" + qualID + "}",
   "Subject": "${" + subjID + "}",
   "Name": () => new Promise(resolve => {
-    fetchAttribute(qualID, "getScalarName").then(
+    fetchEntityProperty(qualID, "getScalarName").then(
       getScalarName => resolve(getScalarName(subjID))
     );
   }),
   "Metric": () => new Promise(resolve => {
-    fetchAttribute(qualID, "Metric").then(
+    fetchEntityProperty(qualID, "Metric").then(
       metric => resolve(metric)
     );
   }),
   "Is derived": () => new Promise(resolve => {
-    fetchAttribute(relID, "Is derived").then(
+    fetchEntityProperty(relID, "Is derived").then(
       isDerived => resolve(isDerived)
     );
   }),
   "getScoreData": scoreHandler => new Promise(resolve => {
-    fetchAttribute(qualID, "getScoredList").then(getScoredList => {
+    fetchEntityProperty(qualID, "getScoredList").then(getScoredList => {
       if (!getScoredList) return resolve(undefined);
       getScoredList(scoreHandler).then(scoredList => {
         scoredList.getScoreData().then(
@@ -617,9 +617,7 @@ export const scoredLists = {
     // fetchScoreData(subjKey) fetches the score data for the given "subject,"
     // i.e. the given entity on the list. "Score data" refers here to a [score,
     // weight, auxData?] array, as described above. Note that an "key" here can
-    // be either an absolute entity path, a user ID prefixed by "@", an entity
-    // ID prefixed with "#", or can also just be the entity ID without the
-    // leading "#".
+    // be either an absolute entity path or a hexadecimal entity ID.
     "fetchScoreData",
 
     // fetchList(loHex, hiHex, maxNum, offset, isAscending) fetches a section

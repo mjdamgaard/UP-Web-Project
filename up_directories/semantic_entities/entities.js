@@ -8,7 +8,7 @@ import {post, fetch} from 'query';
 import {valueToHex} from 'hex';
 import {verifyType, hasType} from 'type';
 import {toUpperCase} from 'string';
-import {mapToArray} from 'object';
+import {mapToArray, keys} from 'object';
 import {forEach, map} from 'array';
 
 const membersRelationPath = "/1/1/em1.js;get/members";
@@ -76,41 +76,48 @@ export function getUserEntPath(upNodeID, userID) {
 
 
 
-// fetch(entKey, attrArr) fetches the given entity's definition object, and if
-// attrArr is defined and contains any property names (in the form of strings),
-// these attributes will be fetched via fetchAttribute(), which will
-// automatically substitute any function-valued attribute with its result
-// (either returned directly from the function, or being the result of a
-// returned promise).
-// In a future implementation of fetchEntityDefinition(), the third 'useScores'
-// argument can also be used to signal that the function should search for
-// the corresponding "scored attributes," as we call them, to see if such can
-// be found, and with a high enough score (and weight) to merit overriding the
-// defining attribute.
+// fetch(entKey, propArr, useScores) fetches the given entity's definition
+// object, and if propArr is defined and contains any property names, these
+// properties will be fetched via substituteIfGetterAttribute(). This means
+// that "attributes," which we in this semantic system take to denote the
+// non-method properties of the entities, can be substituted (recursively) if
+// they are functions or promises. The propArr argument can also simply take
+// the value of true, which has the same semantics as letting propArr consist
+// of all the defining properties of the entity.
+// And in a future implementation, passing the third argument,'useScores,' as
+// true might also mean that the so-called "scored properties" will be checked
+// as well, namely to see if a defining property has been overwritten by a
+// scored one.
 export function fetchEntityDefinition(
-  entKey, attrArr = undefined, useScores = false
+  entKey, propArr = undefined, useScores = false
 ) {
   // useScores is not implemented yet, meaning that so far, the properties of
-  // the returned entity definition will always come from the attributes
-  // themselves, and not from so-called 'scored properties' (yet).
+  // the returned entity definition will always come from the defining
+  // properties themselves, and not from so-called 'scored properties' (yet).
   useScores = useScores;
 
   return new Promise(resolve => {
     fetchEntityPath(entKey).then(entPath => {
       fetch(entPath).then(entDef => {
-        // If attrArr is falsy, just resolve with the entDef as is.
-        if (!attrArr) return resolve(entDef);
+        // If propArr is falsy, just resolve with the entDef as is.
+        if (!propArr) return resolve(entDef);
 
-        // And if attrArr is equal to true, treat it as being...
-        // TODO: Treat cases where attrArr === true.
+        // And if propArr is equal to true, treat it as being equal to the
+        // array of all the keys in entDef.
+        if (propArr === true) {
+          propArr = keys(entDef);
+        }
 
-        let attributePromiseArr = map(
-          attrArr, attrName => substituteIfFunction(entDef[attrName])
-        );
-        Promise.all(attributePromiseArr).then(subbedAttrArr => {
+        // Then call substituteIfGetterAttribute on all the properties, wait
+        // for the resulting promises in parallel, and use substitute the
+        // obtained properties in entDef before returning it.
+        let propValuePromiseArr = map(propArr, propName => (
+          substituteIfGetterAttribute(propName, entDef[propName])
+        ));
+        Promise.all(propValuePromiseArr).then(subbedPropArr => {
           let partialSubbedEntDef = new MutableObject();
-          forEach(subbedAttrArr, (subbedAttr, ind) => {
-            partialSubbedEntDef[attrArr[ind]] = subbedAttr;
+          forEach(subbedPropArr, (subbedProp, ind) => {
+            partialSubbedEntDef[propArr[ind]] = subbedProp;
           });
           let subbedEntDef = {...entDef, ...partialSubbedEntDef};
           resolve(subbedEntDef);
@@ -122,42 +129,54 @@ export function fetchEntityDefinition(
 
 
 
-export function substituteIfFunction(attrValue) {
+export function substituteIfGetterAttribute(propName, propValue) {
+  // If the property is a so-called attribute, which means that it starts with
+  // an upper-case letter, simply resolve with propValue, and else call
+  // substituteIfGetterAttributeHelper().
   return new Promise(resolve => {
-    substituteIfFunctionHelper(attrValue, resolve);
+    let startChar = propName[0];
+    if (startChar === toUpperCase(startChar)) {
+      resolve(propValue);
+    }
+    else {
+      substituteIfGetterAttributeHelper(propValue, resolve);
+    }
   });
 }
 
-export function substituteIfFunctionHelper(attrValue, resolve) {
-  // If attrValue is a function, call it to get its return value, and then call
+export function substituteIfGetterAttributeHelper(propValue, resolve) {
+  // If propValue is a function, call it to get its return value, and then call
   // this function recursively on that return value.
-  if (hasType(attrValue, "function")) {
-    substituteIfFunctionHelper(attrValue(), resolve);
+  if (hasType(propValue, "function")) {
+    propValue = propValue();
+    substituteIfGetterAttributeHelper(propValue, resolve);
   }
 
   // Else if it is a promise, wait for the result of that promise, and call
   // this function recursively on that result.
-  else if (hasType(attrValue, "Promise")) {
-    attrValue.then(result => substituteIfFunctionHelper(result, resolve));
+  else if (hasType(propValue, "Promise")) {
+    propValue.then(
+      result => substituteIfGetterAttributeHelper(result, resolve)
+    );
   }
 
   // Else if it is neither of those, resolve with the value as it is.
   else {
-    resolve(attrValue);
+    resolve(propValue);
   }
 }
 
 
 
-// fetchAttribute() is similar to fetchEntityDefinition(), except it only
-// fetches and substitutes one attribute in particular, and only resolves to
-// that attribute's value in particular, rather than the full entDef.
-export function fetchAttribute(
-  entKey, attrName, useScores = false
+// fetchEntityProperty() is similar to fetchEntityDefinition(), except it only
+// fetches and substitutes one property in particular, and only resolves to
+// that property's value in particular, rather than the full entDef.
+export function fetchEntityProperty(
+  entKey, propName, useScores = false
 ) {
   return new Promise(resolve => {
-    fetchEntityDefinition(entKey, [attrName], useScores).then(
-      subbedEntDef => resolve(subbedEntDef[attrName])
+    fetchEntityDefinition(entKey, [propName], useScores).then(
+      subbedEntDef => resolve(subbedEntDef[propName])
     );
   });
 }

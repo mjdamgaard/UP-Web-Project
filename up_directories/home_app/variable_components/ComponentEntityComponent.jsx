@@ -9,7 +9,7 @@ export function render(props) {
   // If this component's definition object is not already gotten, fetch it.
   // contain it.
   if (componentDef === undefined) {
-    fetchEntityDefinition(compEntID).then(compDef => {
+    fetchEntityDefinition(compEntID, true).then(compDef => {
       this.setState(state => ({...state, componentDef: compDef}));
     });
     return <div className="fetching"></div>;

@@ -14,8 +14,8 @@ export function getInitialState({entKey}) {
 
 
 export function render({
-  key, entKey = key, isLink = true, isFull = false, isElaboration = false,
-  hasLinks = isElaboration && !isLink, recLevel = 0, pushState = undefined
+  key, entKey = key, isLink = true, hasLinks = false,
+  recLevel = 0, pushState = undefined
 }) {
   let {curEntKey, entDef, entPath, entID} = this.state;
   pushState ??= isLink ? (this.subscribeToContext("history") ?? {}).pushState :
@@ -32,7 +32,7 @@ export function render({
   // true, also fetch the entity ID. And if recLevel is too high, fetch the
   // entity ID.
   if (entDef === undefined) {
-    fetchEntityDefinition(entKey).then(entDef => {
+    fetchEntityDefinition(entKey, true).then(entDef => {
       this.setState(state => ({...state, entDef: entDef ?? false}));
     });
     if (isLink && entPath === undefined) {
@@ -86,32 +86,19 @@ export function render({
   // Else, finally, render the entity reference, possibly with nested entity
   // references.
   else {
-    // Get the title from the "Name" ?? "Title" ?? "Label" attribute, and if
-    // none is found, render an empty component with a "missing" class.
-    let title = entDef["Name"] ?? entDef["Title"] ?? entDef["Label"];
-    if (typeof title !== "string") {
+    // Get the "Name" attribute, and if none is found, render an empty
+    // component with a "missing" class.
+    let name = entDef["Name"];
+    if (typeof name !== "string") {
       content = <span className="missing">{"missing"}</span>;
-    }
-
-    // if isFull is true, use the full title instead.
-    let fullTitle = entDef["Full name"] ?? entDef["Full title"] ??
-      entDef["Full label"] ?? title;
-    if (isFull) {
-      title = fullTitle;
-    }
-
-    // Or if isElaboration is true, use the elaboration instead.
-    let elaboration = entDef["Elaboration"] ?? fullTitle;
-    if (isElaboration) {
-      title = elaboration;
     }
 
     // Else call replaceReferences in order to parse the title and substitute
     // any nested entity keys with EntityReferences.
     else {
-      let substitutedSegmentArr = replaceReferences(title, (refEntKey, ind) => (
-        <EntityReference key={ind}
-          entKey={refEntKey} isLink={hasLinks} isFull={false}
+      let substitutedSegmentArr = replaceReferences(name, (refEntKey, ind) => (
+        <EntityReference key={ind} entKey={refEntKey} isLink={hasLinks}
+          recLevel={recLevel + 1} pushState={pushState}
         />
       ));
       content = substitutedSegmentArr;

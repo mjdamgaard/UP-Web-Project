@@ -28,6 +28,30 @@ export const entries = new DevFunction(
   }
 );
 
+export const keys = new DevFunction(
+  "keys", {typeArr: ["any"]}, ({callerNode, execEnv}, [obj]) => {
+    let ret = [];
+    let ind = 0;
+    forEachValue(obj, callerNode, execEnv, (_val, key) => {
+      ret[ind] = key;
+      ind++;
+    });
+    return ret;
+  }
+);
+
+export const values = new DevFunction(
+  "values", {typeArr: ["any"]}, ({callerNode, execEnv}, [obj]) => {
+    let ret = [];
+    let ind = 0;
+    forEachValue(obj, callerNode, execEnv, val => {
+      ret[ind] = val;
+      ind++;
+    });
+    return ret;
+  }
+);
+
 
 export const mapToArray = new DevFunction(
   "mapToArray", {typeArr: ["any", "function"]},

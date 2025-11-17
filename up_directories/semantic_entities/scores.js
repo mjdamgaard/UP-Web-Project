@@ -6,7 +6,9 @@ import {fetch, post, clearPermissions} from 'query';
 import {map, join} from 'array';
 import {min} from 'math';
 import {hexToArray, valueToHex, arrayToHex} from 'hex';
-import {fetchEntityID, fetchEntityDefinition} from "./entities.js";
+import {
+  fetchEntityID, fetchEntityDefinition, fetchEntityProperty
+} from "./entities.js";
 
 
 
@@ -58,23 +60,11 @@ const relationalQualitiesPath = abs("./em1.js;get/relationalQualities");
 
 export function fetchMetric(qualKey) {
   return new Promise(resolve => {
-    fetchEntityDefinition(qualKey).then(qualDef => {
-      // If the quality is a relational one, get the metric from the relation
-      // instead.
-      if (qualDef["Class"] === relationalQualitiesPath) {
-        fetchEntityDefinition(qualDef["Relation"]).then(relDef => {
-          fetchEntityDefinition(relDef["Metric"]).then(
-            metric => resolve(metric)
-          );
-        });
-      }
-
-      // Else get the metric from the quality.
-      else {
-        fetchEntityDefinition(qualDef["Metric"]).then(
-          metric => resolve(metric ?? undefined)
-        );
-      }
+    fetchEntityProperty(qualKey, "Metric").then(metricKey => {
+      metricKey ??= abs("./em1.js;get/gradingMetric");
+      fetchEntityDefinition(metricKey, true).then(
+        metric => resolve(metric)
+      );
     });
   });
 }
@@ -403,7 +393,7 @@ export function fetchUserWeightData(userGroupKey, userKey) {
 
 export function fetchUserListKey(userGroupKey) {
   return new Promise(resolve => {
-    fetchEntityDefinition(userGroupKey).then(userGroupDef => {
+    fetchEntityDefinition(userGroupKey, ["User list"]).then(userGroupDef => {
       let userListKey = userGroupDef["User list"];
       if (!userListKey) throw (
         "No user list found for User group " + userGroupKey
@@ -417,9 +407,9 @@ export function fetchUserListKey(userGroupKey) {
 export function updateUserWeight(userGroupKey, userKey) {
   return new Promise(resolve => {
     fetchUserListKey(userGroupKey).then(userListKey => {
-      fetchEntityDefinition(userListKey).then(userListDef => {
-        if (userListDef.updateScore) {
-          userListDef.updateScore(userKey).then(
+      fetchEntityProperty(userListKey, "updateScore").then(updateScore => {
+        if (updateScore) {
+          updateScore(userKey).then(
             wasUpdated => resolve(wasUpdated)
           );
         } else {
@@ -434,9 +424,9 @@ export function updateUserWeight(userGroupKey, userKey) {
 
 export function fetchScoreDataFromScoredList(listKey, subjKey) {
   return new Promise(resolve => {
-    fetchEntityDefinition(listKey).then(listDef => {
+    fetchEntityProperty(listKey, "fetchScoreData").then(fetchScoreData => {
       clearPermissions(() => {
-        listDef.fetchScoreData(subjKey).then(
+        fetchScoreData(subjKey).then(
           scoreData => resolve(scoreData)
         );
       });

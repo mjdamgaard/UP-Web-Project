@@ -82,29 +82,3 @@ export function addSecondaryIndex(entID) {
   });
 }
 
-
-
-
-
-export function fetchEntityID(entKey) {
-  // If entKey is a path, fetch the entID from ./entIDs.bt.
-  if (entKey[0] === "/") {
-    let entPath = decodeURIComponent(entKey);
-    return new Promise(resolve => {
-      let entPathHex = valueToHex(entPath, "string");
-      fetch(homePath + "/entIDs.bt./entry/k/" + entPathHex).then(
-        entID => resolve(entID)
-      );
-    });
-  }
-
-  // Else if of the form '#<entID>' or '<entID>', return a trivial promise to
-  // that entID.
-  else {
-    if (entKey[0] === "#") {
-      entKey = substring(entKey, 1);
-    }
-    verifyType(entKey, "hex-string");
-    return new Promise(resolve => resolve(entKey));
-  }
-}
