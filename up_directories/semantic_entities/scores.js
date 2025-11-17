@@ -2,7 +2,7 @@
 
 
 import homePath from "./.id.js";
-import {fetch, post, clearPermissions} from 'query';
+import {fetch, post, clearPermissions, clearPrivileges} from 'query';
 import {map, join} from 'array';
 import {min} from 'math';
 import {hexToArray, valueToHex, arrayToHex} from 'hex';
@@ -53,10 +53,7 @@ export function fetchUserScoreHex(
 }
 
 
-// TODO: At some point we probably want to query a 'Metric' relation instead of
-// always just taking the 'Metric' attribute.
 
-const relationalQualitiesPath = abs("./em1.js;get/relationalQualities");
 
 export function fetchMetric(qualKey) {
   return new Promise(resolve => {
@@ -409,9 +406,9 @@ export function updateUserWeight(userGroupKey, userKey) {
     fetchUserListKey(userGroupKey).then(userListKey => {
       fetchEntityProperty(userListKey, "updateScore").then(updateScore => {
         if (updateScore) {
-          updateScore(userKey).then(
+          clearPrivileges(() => updateScore(userKey).then(
             wasUpdated => resolve(wasUpdated)
-          );
+          ));
         } else {
           resolve(true);
         }

@@ -6,7 +6,7 @@
 // entID searchable as well.
 
 import homePath from "./.id.js";
-import {post, fetch, decodeURIComponent} from 'query';
+import {post, fetch} from 'query';
 import {valueToHex} from 'hex';
 import {verifyType} from 'type';
 import {substring} from 'string';

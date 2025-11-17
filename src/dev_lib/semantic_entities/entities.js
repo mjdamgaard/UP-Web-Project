@@ -1,8 +1,9 @@
 
 import {DevFunction} from "../../interpreting/ScriptInterpreter.js";
 
-const segmentRegEx =
-  /#[0-9a-f]*|\/([^\s]*[~a-zA-Z0-9_\-])?|\\([\s\S]|$)|([^#/\\]|(?<=\S)[#/])+/g;
+const onlyEntPathRegEx = /^\/[/~.a-zA-Z0-9_\-]+$/;
+const segmentRegEx = /\$\{[/~.a-zA-Z0-9_\-]+\}|\\([\s\S]|$)|[^\\$]+|[\s\S]/g;
+const internalReferenceRegEx = /^\$\{([/~.a-zA-Z0-9_\-]+)\}$/;
 
 
 // replaceReferences() parses a string and returns an array of segments, where
@@ -11,21 +12,31 @@ const segmentRegEx =
 export const replaceReferences = new DevFunction(
   "replaceReferences", {typeArr: ["string", "function"]},
   ({callerNode, execEnv, interpreter}, [str, callback]) => {
-    // Use String.match() to split the string into an array where each entity
-    // key or file route is put into its own array entry.
+    // If the string appears to be an absolute path and nothing else, treat the
+    // whole string as an entity reference.
+    if (onlyEntPathRegEx.test(str)) {
+      return [
+        interpreter.executeFunction(
+          callback, [str, 0], callerNode, execEnv
+        )
+      ];
+    }
+
+    // Else, first use String.match() to split the string into an array where
+    // each entity key or file route is put into its own array entry.
     let segmentArr = str.match(segmentRegEx) ?? [];
     
-    // Go through each segment, and if it is an entity key or route, replace it
-    // in the array with the return value of callback, called on the segment
-    // and on the segment index.
+    // Then go through each segment, and if it is an entity key or route,
+    // replace it in the array with the return value of callback, called on the
+    // segment and on the segment index.
     let substitutedSegmentArr = segmentArr.map((segment, ind) => {
-      let startChar = segment[0];
-      if (startChar === "#" || startChar === "/") {
+      let [match, entKey] = internalReferenceRegEx.exec(segment) ?? [];
+      if (match) {
         return interpreter.executeFunction(
-          callback, [segment, ind], callerNode, execEnv
+          callback, [entKey, ind], callerNode, execEnv
         );
       }
-      else if (startChar === "\\") {
+      else if (segment[0] === "\\" && segment.length > 1) {
         return segment.substring(1);
       }
       else {
@@ -34,7 +45,7 @@ export const replaceReferences = new DevFunction(
     });
 
     // Then return the array of segments (as the replacements might be JSX
-    // elements, and thus the user might not wish them .join()'ed).
+    // elements, and thus the user might not wish them to be concatenated).
     return substitutedSegmentArr;
   }
 );

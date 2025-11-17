@@ -2565,6 +2565,14 @@ export function verifyType(val, type, isOptional, node, env) {
         );
       }
       break;
+    case "promise":
+        if (!(val instanceof PromiseObject)) {
+          throw new ArgTypeError(
+            `Value is not a promise object: ${getString(val, env)}`,
+            node, env
+          );
+        }
+        break;
     case "class":
       if (!(val instanceof ClassObject)) {
         throw new ArgTypeError(
@@ -2583,8 +2591,6 @@ export function verifyType(val, type, isOptional, node, env) {
         );
       }
       break;
-    case "promise":
-      type = "Promise";
     default:
       if (typeof type === "symbol") {
         if (!(val instanceof ObjectObject) || val.className !== type) {

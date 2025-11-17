@@ -4,7 +4,7 @@
 // well as functions to fetch entity definitions, and such.
 
 import homePath from "./.id.js";
-import {post, fetch} from 'query';
+import {post, fetch, clearPermissions} from 'query';
 import {valueToHex} from 'hex';
 import {verifyType, hasType} from 'type';
 import {toUpperCase} from 'string';
@@ -145,16 +145,16 @@ export function substituteIfGetterAttribute(propName, propValue) {
 }
 
 export function substituteIfGetterAttributeHelper(propValue, resolve) {
-  // If propValue is a function, call it to get its return value, and then call
-  // this function recursively on that return value.
+  // If propValue is a function, call it (with all permission cleared) to get
+  // its return value, and then call this function recursively on that value.
   if (hasType(propValue, "function")) {
-    propValue = propValue();
+    propValue = clearPermissions(() => propValue());
     substituteIfGetterAttributeHelper(propValue, resolve);
   }
 
   // Else if it is a promise, wait for the result of that promise, and call
   // this function recursively on that result.
-  else if (hasType(propValue, "Promise")) {
+  else if (hasType(propValue, "promise")) {
     propValue.then(
       result => substituteIfGetterAttributeHelper(result, resolve)
     );
