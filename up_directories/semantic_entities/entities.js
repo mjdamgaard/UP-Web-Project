@@ -78,8 +78,8 @@ export function getUserEntPath(upNodeID, userID) {
 
 // fetch(entKey, propArr, useScores) fetches the given entity's definition
 // object, and if propArr is defined and contains any property names, these
-// properties will be fetched via substituteIfGetterAttribute(). This means
-// that "attributes," which we in this semantic system take to denote the
+// properties will be fetched via substituteIfGetterProperty(). This means
+// that "properties," which we in this semantic system take to denote the
 // non-method properties of the entities, can be substituted (recursively) if
 // they are functions or promises. The propArr argument can also simply take
 // the value of true, which has the same semantics as letting propArr consist
@@ -108,11 +108,11 @@ export function fetchEntityDefinition(
           propArr = keys(entDef);
         }
 
-        // Then call substituteIfGetterAttribute on all the properties, wait
+        // Then call substituteIfGetterProperty on all the properties, wait
         // for the resulting promises in parallel, and use substitute the
         // obtained properties in entDef before returning it.
         let propValuePromiseArr = map(propArr, propName => (
-          substituteIfGetterAttribute(propName, entDef[propName])
+          substituteIfGetterProperty(propName, entDef[propName])
         ));
         Promise.all(propValuePromiseArr).then(subbedPropArr => {
           let partialSubbedEntDef = new MutableObject();
@@ -129,34 +129,33 @@ export function fetchEntityDefinition(
 
 
 
-export function substituteIfGetterAttribute(propName, propValue) {
-  // If the property is a so-called attribute, which means that it starts with
-  // an upper-case letter, simply resolve with propValue, and else call
-  // substituteIfGetterAttributeHelper().
+export function substituteIfGetterProperty(propName, propValue) {
+  // If the property does not start with an upper-case letter, simply resolve
+  // with propValue, and else call substituteIfGetterPropertyHelper().
   return new Promise(resolve => {
     let startChar = propName[0];
     if (startChar === toUpperCase(startChar)) {
       resolve(propValue);
     }
     else {
-      substituteIfGetterAttributeHelper(propValue, resolve);
+      substituteIfGetterPropertyHelper(propValue, resolve);
     }
   });
 }
 
-export function substituteIfGetterAttributeHelper(propValue, resolve) {
+export function substituteIfGetterPropertyHelper(propValue, resolve) {
   // If propValue is a function, call it (with all permission cleared) to get
   // its return value, and then call this function recursively on that value.
   if (hasType(propValue, "function")) {
     propValue = clearPermissions(() => propValue());
-    substituteIfGetterAttributeHelper(propValue, resolve);
+    substituteIfGetterPropertyHelper(propValue, resolve);
   }
 
   // Else if it is a promise, wait for the result of that promise, and call
   // this function recursively on that result.
   else if (hasType(propValue, "promise")) {
     propValue.then(
-      result => substituteIfGetterAttributeHelper(result, resolve)
+      result => substituteIfGetterPropertyHelper(result, resolve)
     );
   }
 

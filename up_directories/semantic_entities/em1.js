@@ -9,65 +9,68 @@ import {fetchEntityProperty} from "./entities.js";
 
 // 'Semantic entities,' or just 'entities' for short, are objects with a human-
 // understandable meaning attached to them. They most often take the form of
-// JS objects whose properties combines to describe the thing in question.
-// These objects alway starts with a "Class" property that determines what type
-// of thing we are talking about, followed by a "Name" property, which labels
-// the entity. For instance, if the entity is the movie, Pulp Fiction, the
-// object in question would have a reference to a "Movies" class as its "Class"
-// property, followed by a "Name" property of "Pulp Fiction". These two initial
-// properties can then potentially be followed by other defining properties if
-// needed, and finally there's always the potential to include a "Description"
-// property with a reference to text that describes the thing in question, and
-// clears up any unintended ambiguities as to what the entity refers to.
+// JS objects, which we will refer to as the entities' 'definitions,' whose
+// properties combine to describe the thing in question. These objects alway
+// starts with a "Class" property that determines the type of the thing that
+// the entity references. And this is then typically followed by a "Name"
+// property, which labels the entity. For instance, if the entity is the movie,
+// Pulp Fiction, the object in question would have a reference to a "Movies"
+// class as its "Class" property, followed by a "Name" property of "Pulp
+// Fiction". These two initial properties can then potentially be followed by
+// other defining properties if needed, and lastly, there's always the
+// potential to include a "Description" property with a reference to text that
+// describes the thing in question in however great detail that one wants,
+// clearing up any unintended ambiguities.
 //
-// We will refer to the JS object that defines an entity as the entity's
-// 'definition.' And we will refer to all the defining properties like the ones
-// we've seen so far, with capitalized first letters, as the entity's defining
-// 'attributes.' The attributes can either be plain strings, such as
-// "Pulp Fiction" in our example above, or they can be absolute paths to other
-// entities (see all the attributes below using the built-in abs() function),
-// or they can also be functions. If they are functions, the convention is that
-// these functions first need to be substituted with their return value (called
-// with no arguments) before the entity definition is interpreted. And
-// importantly, if the function returns a promise, the result of that promise
-// when it resolves is what should substitute the attribute. And if it returns
-// a function, then the whole process is repeated recursively. Below can be
-// seen some examples of how this can be useful, in particular when it comes to
-// getting the "Name" attributes for 'Relational qualities' (see below).
+// The properties of entities be self-explanatory string like "Pulp Fiction",
+// but they will also often be references to other entities. This is achieved
+// by using strings that consists purely of a single absolute path, starting
+// with "/", to the given entity. For instance, if we look at the first entity
+// introduced below, namely the 'All entities' class entity, we see that it's
+// "Class" property is abs("./em1.js;get/classes"), which is an absolute path
+// to the second entity introduced below, namely the 'Classes' class entity.
+// And this is of course meant to say that the 'Classes' entity is the class of
+// the 'All entities' entity. The entity properties can furthermore also
+// include entity references within a string. And this is done formally by
+// wrapping the reference in the '${...}' syntax, known e.g. from the template
+// literals or regular JS. (Examples of this can also be seen below, e.g. down
+// towards the end of this module.) More precisely, the syntax for these
+// 'internal references,' as we might call them, is '${<entity key>}', where
+// <entity key> can be either an absolute path to the entity, like before, or
+// a hexadecimal number representing the ID of the entity, which we will
+// introduce in a moment. And if wanting to escape any of these two reference
+// syntaxes, simply use a backslash before the "/" or the "$".
 //
-// After all the function-valued attributes have been substituted, there are
-// also one more layer of reinterpretation, if you will, namely since any
-// entity reference that appears inside the string needs to be reinterpreted
-// as that entity. Thus, when we e.g. say that abs("./em1.js;get/classes") is
-// the class of the 'All entities' class entity below, we don't say that the
-// string, abs("./em1.js;get/classes"), itself is the class, but rather the
-// entity it points to. The syntax for referencing entities in attributes is as
-// follows. All attributes containing nothing but an absolute path starting
-// with "/" is interpreted as an entity reference. So if you ever want an
-// attribute with a leading slash (for whatever weird reason), we might have to
-// escape the leading slash with a backslash. Furthermore, all appearances of
-// "${<entity key>}", where "$" has not been escaped by a preceding backslash,
-// is interpreted as an entity reference. And here, <entity key> can either
-// be the entity's path or the entity's ID, which we will talk more about in a
-// moment.
+// The properties of entities can also use functions as their values. And here
+// the format of the property name actually matters. If the property name is
+// the ones we have talked about so far, namely with a capital first letter
+// (and also with spaces between each word), the function is actually
+// interpreted to only be a placeholder for the actual property value. In such
+// cases, the actual property value is obtained from calling the function (with
+// no arguments), and taking the return value of that function, and if the
+// return value is a promise, then that promise is also waited for, and the
+// result of the promise is what substitutes the property. That is unless the
+// promise itself returns a function (or another promise), in which case the
+// same procedure is called recursively until a non-function, non-promise value
+// is reached. (See substituteIfGetterProperty() in ./entities.js for the
+// exact substitution process.)
 // 
-// Apart from the 'attributes,' an entity definition might also include what
-// we refer to as 'methods,' which function-valued properties with lower camel
-// case names (such as in e.g. "fetchScoreData()"). And unlike the 'attributes,'
-// the methods are not substituted. The convention of using capital first
-// letters for the attributes thus serves more than just aesthetical purposes,
-// as it also helps to distinguish 'methods' from 'attributes,' in terms of
-// what needs substitution and what doesn't.
+// Entities can also have function-valued properties that are 'methods,'
+// however, which should not be substituted. So in order to prevent this
+// substitution, make sure to always use lower camel case (such as in e.g.
+// "fetchScoreData()") for the property names of methods. For without the
+// capital first letter, the property will not be substituted automatically,
+// even if it's a function.
 //
 // With the convention described above, we are able to define entities
 // representing anything in the world. However, if you want to talk about
 // something like a simple JS string, a JSX element, or a function, it is
-// somewhat redundant to wrap that in a whole object, with a "Class" attribute
+// somewhat redundant to wrap that in a whole object, with a "Class" property
 // and "Name," etc., when the thing at hand really describes itself. And that's
 // why entities can also just be what we might refer to as 'value entities,'
 // which can any kind of JS value that you want, also including JSX elements,
 // and whish thus simply "refers" to themselves. And thus whenever an entity's
-// definition is not an object that includes a "Class" attribute, the entity
+// definition is not an object that includes a "Class" property, the entity
 // should be interpreted as such a self-referring value entity.
 //
 // And how are entities stored in the back end? Well, all the entities'
@@ -82,28 +85,29 @@ import {fetchEntityProperty} from "./entities.js";
 // entID index as well for when you have the path to an entity and want to
 // query for its ID.
 //
-// Lastly, let's discuss the fact that the attributes are of course only a
-// subset of all the properties of an entity, of which there generally are
-// infinitely many. For instance, a movie might also have an "Editor(s)"
-// property, even though "Editor(s)" was not part of the defining attributes.
-// Such properties are instead defined via the "Relations" that can be read
-// about below. And in fact, such relational properties might even be used to
-// overwrite some of the defining properties. This could for instance happen
-// if the facts change. For instance, a person or an organization, might
-// change their name, just to give one example. The attributes of an entity are
-// thus never final. They might change over time. And they can even be made to
-// depend on the user viewing them, in fact (since relational properties can be
-// user-dependent). This means that we can even do things like change the
-// language of the entire entity to a user's preferred one, meaning that
-// different users will ultimately be able to see entities in their own
-// preferred languages.
+// Lastly, let's discuss the fact that all the so-called 'defining properties,'
+// which are the ones introduced in 'definition' object of the entity, are of
+// course only a subset of all the properties of an entity, of which there
+// generally are infinitely many. For instance, a movie might also have an
+// "Editor(s)" property, even though "Editor(s)" was not part of the defining
+// properties. Such properties are instead defined via the "Relations" that can
+// be read about below. And in fact, these 'scored properties,' as we will call
+// them, might even be used to overwrite some of the defining properties. This
+// could e.g. happen if the facts simply change over time. For instance, a
+// person or an organization might change their name. So properties of entities
+// should thus never be considered final. Furthermore, properties might even
+// be made to depend on the user viewing them. This is possible since the
+// 'scored properties' can actually be made to be user-dependent. And this
+// means that we can even do things like change the language of the entire
+// entity to a user's preferred one, meaning that different users will
+// ultimately be able to see entities in their own preferred languages.
 //
 // That covers the basics of the 'semantic entities,' and in this module below,
 // we introduce some of the most important entities that are used in this whole
-// "semantic system," as we might call it, starting of course with some of the
-// most imported class entities, and in particular the class of all entities,
-// as well as the class of all class entities (both of which have themselves as
-// part of their members). 
+// semantic system, starting of course with some of the most important class
+// entities, and in particular the class of all entities, as well as the class
+// of all class entities (both of which have themselves as part of their
+// members). 
 
 
 
@@ -112,11 +116,11 @@ export const entities = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "All entities",
   "Superclass": undefined,
-  "Common attributes": [
-    // "Class" is a required attribute for all referential entities.
+  "Common properties": [
+    // "Class" is a required property for all referential entities.
     "Class",
 
-    // The "Name" attribute is understood in a very broad sense of the word.
+    // The "Name" property is understood in a very broad sense of the word.
     // It is a string, preferably as brief as possibly, that is used to label
     // the given entity when it is referred to. So in a sense, "Name" here is
     // used synonymously with a "label."
@@ -124,7 +128,7 @@ export const entities = {
 
     // The "Elaboration" is a slightly longer string that can be shown
     // underneath the "Name," either as a kind of subtitle, or as a mouseover
-    // text, etc., elaborating on the generally very brief "Name" attribute. 
+    // text, etc., elaborating on the generally very brief "Name" property. 
     "Elaboration",
 
     // The "Description" is a longer text, typically formatted as a HTML text
@@ -144,24 +148,24 @@ export const classes = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Classes",
   "Superclass": abs("./em1.js;get/entities"),
-  "Common attributes": [
+  "Common properties": [
     // A superclass (i.e. the opposite of "subclass") that helps define the
     // class.
     "Superclass",
 
-    // An array of names of the potential attributes and methods you might
+    // An array of names of the potential properties and methods you might
     // expect the members of this class to be defined by. (This list is only
     // guiding). Note that any subclass of the given class generally does not
-    // have to use the same set of "Common attributes" (even though this is
+    // have to use the same set of "Common properties" (even though this is
     // sometimes preferred). Generally, a subclass thus ought to repeat all the
-    // "Common attributes" it has in common with its superclass. An exception
-    // to this rule, however, is the set of attributes: "Class", "Name",
+    // "Common properties" it has in common with its superclass. An exception
+    // to this rule, however, is the set of properties: "Class", "Name",
     // "Elaboration", and "Description", which all might be relevant for any
     // given type of of entity, and which can therefore always be omitted from
-    // a class's "Common attributes".
-    "Common attributes",
+    // a class's "Common properties".
+    "Common properties",
 
-    // Rather than a "Common attributes" attribute, a class might also have a
+    // Rather than a "Common properties" property, a class might also have a
     // "constructor" method instead which is generally used to define its
     // members. This is particularly useful for compound entities that you want
     // to be able to search for given its constituents. (For an example, see
@@ -170,16 +174,16 @@ export const classes = {
 
     // And as a third alternative, a class have a "Member value type(s)" in
     // case its members are 'value entities' (see above). Examples of this
-    // attribute are: "string", "JSXElement", "integer unsigned", "function",
+    // property are: "string", "JSXElement", "integer unsigned", "function",
     // etc., using the same convention as verifyType() in ScriptInterpreter.js.
     // Or the value can also be an array of such type strings, which means that
     // the type is a disjunction of all the contained types. A class might also
-    // have both a "Common attributes" and a "Member value type(s)" attribute
+    // have both a "Common properties" and a "Member value type(s)" property
     // in case its members can be both value entities as well as referential
     // entities.
     "Member value type(s)",
 
-  // A class might also include an "Area of concern" attribute (see below
+  // A class might also include an "Area of concern" property (see below
   // for more details), but as mentioned below, such properties will often be
   // defined as "scored properties" instead, namely by scoring an 'Area of
   // concern' relation for the given class.
@@ -194,7 +198,7 @@ export const classes = {
 export const User = (upNodeID, userID) => ({
   "Class": abs("./em1.js;get/users"),
 
-  // (This "Name" attribute is only meant to be temporary, as we will also
+  // (This "Name" property is only meant to be temporary, as we will also
   // implement a system for allowing users to choose their own user name/tag
   // at will.)
   "Name": "User " + userID,
@@ -219,10 +223,10 @@ export const texts = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Texts",
   "Superclass": abs("./em1.js;get/entities"),
-  "Common attributes": [
-    // The "Content" of the text. Note that this attribute might to the form of
+  "Common properties": [
+    // The "Content" of the text. Note that this property might to the form of
     // an absolute path to the text which references the text, rather than
-    // letting the attribute hold the text directly.
+    // letting the property hold the text directly.
     "Content",
 
     // If the text is an external text on the internet, with an associated URL,
@@ -232,10 +236,10 @@ export const texts = {
     "URL",
     "URI",
 
-    // The "Is a singular statement" attribute tells if the text is a singular
+    // The "Is a singular statement" property tells if the text is a singular
     // statement that can be assigned a probability in a meaningful and
-    // straightforward way. The default value of this attribute is false (as is
-    // generally the case unless otherwise specified). The attribute is meant
+    // straightforward way. The default value of this property is false (as is
+    // generally the case unless otherwise specified). The property is meant
     // primarily as as way to help the app decide whether to direct to the
     // 'Is correct' quality or the 'Probability' quality (see below) when a
     // user wants to score the text, and/or see its arguments (pros and cons).
@@ -256,7 +260,7 @@ export const commentClass = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Comments",
   "Superclass": abs("./em1.js;get/texts"),
-  "Common attributes": ["Target entity", "Author", "Content"],
+  "Common properties": ["Target entity", "Author", "Content"],
   "Description": abs("./em1_aux.js;get/commentClassDesc"),
 };
 
@@ -282,22 +286,22 @@ export const qualities = {
   "Name": "Qualities",
   "Elaboration": "Scalar predicates, a.k.a. qualities",
   "Superclass": abs("./em1.js;get/entities"),
-  "Common attributes": [
-  // The "Name" attribute of qualities should either be a (compound) verb or
+  "Common properties": [
+  // The "Name" property of qualities should either be a (compound) verb or
   // a (compound) noun, depending of whether it is a 'gradable predicate' or
   // not. A so-called 'gradable predicate' is when a scalar predicate, a.k.a.
   // a quality, is formed from a seemingly constant predicate, such as e.g.
   // 'Is funny' or 'Is scary,' which is however meant to be graded on a scale
   // (see the 'Grading metric' below). 
   // For gradable predicates, the convention here is to use a (compound) verb
-  // for the "Name" attribute, as in for instance "Is funny," or "Has good
+  // for the "Name" property, as in for instance "Is funny," or "Has good
   // acting," or "Belongs to the class of Movies," etc. And for other kinds of
   // qualities, which typically measure some sort of quantity, such as
   // 'Probability' or 'Price' (which are both qualities that are introduced
   // below), these should indeed preferably be named using (compound) nouns
   // instead.
 
-  // The "getScalarName()" method is used to generate the "Name" attribute
+  // The "getScalarName()" method is used to generate the "Name" property
   // whenever the quality is combined with a subject to form a 'scalar' (see
   // below).
   "getScalarName",
@@ -330,7 +334,7 @@ export const qualities = {
   "Is derived",
   "getScoredList",
 
-  // A quality might also include an "Area of concern" attribute (see below
+  // A quality might also include an "Area of concern" property (see below
   // for more details), but as mentioned below, such properties will often be
   // defined as "scored properties" instead, namely by scoring an 'Area of
   // concern' relation for the given quality.
@@ -352,8 +356,8 @@ export const relations = {
   "Name": "Relations",
   "Elaboration": "Scalar relations",
   "Superclass": abs("./em1.js;get/entities"),
-  "Common attributes": [
-    // For the "Name" attribute of relations, try if at all possible to select
+  "Common properties": [
+    // For the "Name" property of relations, try if at all possible to select
     // a noun (possibly a compound one) that labels the subjects of the
     // relations. For instance, the relation that connects a class (object) to
     // its subclasses (subjects) ought to be called simply "Subclasses" (which
@@ -363,9 +367,9 @@ export const relations = {
     // nouns only when expect only one subject per object most of the time for
     // the relation. One can also choose parenthesize the pluralization in such
     // cases, especially when having more than one member isn't that rare, like
-    // we have done above for the "Member value type(s)" attribute (and indeed,
-    // the convention used for attributes is the same as the one for relation
-    // "Names").
+    // we have done above for the "Member value type(s)" property (and indeed,
+    // the convention used for the so-called 'semantic properties' is the same
+    // as the one for the "Name" properties of relations).
 
     // The "getScalarName()" method of relations is different from the one for
     // qualities, namely since it here takes two arguments, objKey and subjKey,
@@ -377,7 +381,7 @@ export const relations = {
     // generates the name of the relational quality.
     "getQualityName",
 
-    // A relation doesn't just have a "Domain" attribute, but both an "Object
+    // A relation doesn't just have a "Domain" property, but both an "Object
     // domain" and a "Subject domain".
     "Object domain",
     "Subject domain",
@@ -393,7 +397,7 @@ export const relations = {
     "Is derived",
     "getScoredList",
 
-    // If a relation has an "Area of concern" attribute (or scored property),
+    // If a relation has an "Area of concern" property (or scored property),
     // all the relational qualities formed from it will adopt that "Area of
     // concern." (See below for more on these so-called 'areas of concern.')
     "Area of concern",
@@ -510,7 +514,7 @@ export const scalars = {
 // use for each of these areas. Note that areas can change in time, such as
 // "Science" here, which might be split into several subareas.
 // Note that even though "Area of concern" is mentioned above part of the
-// "Common attributes" of the quality class, AoCs will likely be determined by
+// "Common properties" of the quality class, AoCs will likely be determined by
 // scored properties instead most of the time, as they are often highly
 // dependent on user opinions, and will also very likely change a lot over
 // time.
@@ -531,7 +535,7 @@ export const areasOfConcern = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Areas of concern",
   "Superclass": abs("./em1.js;get/entities"),
-  "Common attributes": ["Name", "Description"],
+  "Common properties": ["Name", "Description"],
   "Description": abs("./em1_aux.js;get/areasOfConcernDesc"),
 };
 
@@ -613,7 +617,7 @@ export const scoredLists = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Scored lists",
   "Superclass": abs("./em1.js;get/entities"),
-  "Common attributes": [
+  "Common properties": [
     // fetchScoreData(subjKey) fetches the score data for the given "subject,"
     // i.e. the given entity on the list. "Score data" refers here to a [score,
     // weight, auxData?] array, as described above. Note that an "key" here can
@@ -657,7 +661,7 @@ export const userGroups = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "User groups",
   "Superclass": abs("./em1.js;get/entities"),
-  "Common attributes": [
+  "Common properties": [
     "Name", "User list", "Description"
   ],
   "Description": abs("./em1_aux.js;get/userGroupsDesc"),
@@ -682,7 +686,7 @@ export const scoreHandlers = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Score handlers",
   "Superclass": abs("./em1.js;get/entities"),
-  "Common attributes": [
+  "Common properties": [
     // fetchScoreData(qualKey, subjKey, options) is similar to
     // fetchScoreData() of the scored lists, except that you need to specify
     // the quality that the scores concern.
@@ -717,7 +721,7 @@ export const scoreHandlers = {
 
     // fetchTopEntry(qualKey, options) fetches and returns only the top entity
     // of the list. This is useful for fetching e.g. "scored properties" of an
-    // entity (not all properties of an entity is defined by its attributes; in
+    // entity (not all properties of an entity is defined by its properties; in
     // principle an entity has infinitely many properties, which can be defined
     // via relations, scored by the users). 
     "fetchTopEntry",
@@ -777,25 +781,25 @@ export const scoreHandlers = {
 
 // Component entities (short for 'JSX components' or 'App components) represent
 // internal JSX components in the database/network, that can be imported into
-// scripts. A defining attribute is obviously the path (or "route," if you will)
+// scripts. A defining property is obviously the path (or "route," if you will)
 // to the given component's module. And then there are some optional metadata
-// attributes, including an URL to the GitHub repo from which the module stems,
+// properties, including an URL to the GitHub repo from which the module stems,
 // and also not least an "Example component path", which leads to another,
 // props-independent component that showcases the given component (either by
 // "decorating" it with specific properties, or by showing different examples
 // on a page, possibly with accompanying text that explains each example, and
 // the intended usage of the component in general). If the component is a self-
-// contained app, simply omit the "Example component path" attribute, which
+// contained app, simply omit the "Example component path" property, which
 // means that the component itself will be rendered. And if it is almost self-
 // contained, but only need to example props to showcase, define the "Example 
-// props" attribute instead.
+// props" property instead.
 export const components = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "App components",
   "Superclass": abs("./em1.js;get/entities"),
-  "Common attributes": [
+  "Common properties": [
     "Component path", "Example component path", "Example props",
-    // (These attributes obviously have to been checked by the user community,
+    // (These properties obviously have to been checked by the user community,
     // and the entity ought to be down-rated as a member of this class if they
     // are not true:)
     "GitHub repository", "Author(s)",
@@ -815,7 +819,7 @@ export const metrics = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Metrics",
   "Superclass": abs("./em1.js;get/entities"),
-  "Common attributes": [
+  "Common properties": [
     "Unit", "Prepend unit", "Lower limit", "Upper limit",
     "Interval labels",
   ],
@@ -830,7 +834,7 @@ export const metrics = {
 // one, such as 'Is scary' or 'Is funny,' etc., which is then re-contextualized
 // into a scalar predicate, a.k.a. a quality, by grading that predicate on the
 // scale from -10 to 10 that you see below (see the "Interval labels"
-// attribute).
+// property).
 export const gradingMetric = {
   "Class": abs("./em1.js;get/metrics"),
   "Name": "Grading metric",
@@ -1029,7 +1033,7 @@ export const durability = {
 };
 
 
-// This quality can be used to override the "Is singular statement" attribute
+// This quality can be used to override the "Is singular statement" property
 // of a text, set by the author (or rather the creator of the entity). And
 // using qualities like this is indeed the correct way to override (or create
 // new) boolean properties of entities, rather than using relations. 
@@ -1350,7 +1354,7 @@ export const correlation = {
 // This is the 'Areas of concern' relation that was mentioned above, which can
 // be used to determine the "Area of concern" property of qualities, classes,
 // and other entities, instead of relying solely on the corresponding
-// attribute (which, as one can clearly see in this document, is not always
+// property (which, as one can clearly see in this document, is not always
 // defined).
 export const areaOfConcern = {
   "Class": abs("./em1.js;get/relations"),
