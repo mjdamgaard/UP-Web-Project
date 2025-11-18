@@ -2966,7 +2966,7 @@ export function getNodeString(node, env, appendModuleLocation = false) {
   let ret = script.substring(strPos, finStrPos);
   if (appendModuleLocation) {
     let [ln, col] = getLnAndCol(script.substring(0, strPos));
-    ret = ret + ` in ${modulePath ?? "root script"}, Ln ${ln}, Col ${col}`
+    ret = ret + ` \nin ${modulePath ?? "root script"}, Ln ${ln}, Col ${col}`
   }
   return ret;
 }

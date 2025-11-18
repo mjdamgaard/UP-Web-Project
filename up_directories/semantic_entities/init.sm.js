@@ -127,7 +127,7 @@ export function postInitialScores01() {
     // does). TODO: Redirect to another function that also updates all user
     // groups in an array.
     () => {
-      let trustedQualKey = abs("./em1.js;get/trusted");
+      let trustedQualKey = abs("./em1.js;get/isTrusted");
       let trustScoreArr = [9, 9, 9, 8, 8, 6, 6];
       return getSequentialPromise(map(initModArr, (modID, ind) => {
         let score = trustScoreArr[ind] ?? 5;
@@ -181,7 +181,7 @@ export function postInitialScores01() {
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/entities"),
           abs("./em1.js;get/members"),
-          "#" + firstModID,
+          firstModID,
           firstModID, 1
         ),
         // Classes:
@@ -213,13 +213,13 @@ export function postInitialScores01() {
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/users"),
           abs("./em1.js;get/members"),
-          "#" + firstModID,
+          firstModID,
           firstModID, 8
         ),
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/users"),
           abs("./em1.js;get/members"),
-          "#" + initModArr[1],
+          initModArr[1],
           firstModID, 7
         ),
       ]);

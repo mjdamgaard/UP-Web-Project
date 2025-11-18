@@ -7,7 +7,7 @@ import {
 
 
 export const verifyType = new DevFunction(
-  "verifyType", {typeArr: ["any", "string", "boolean?"]},
+  "verifyType", {typeArr: ["any?", "string", "boolean?"]},
   ({callerNode, execEnv}, [val, type, isOptional]) => {
     return _verifyType(val, type, isOptional, callerNode, execEnv);
   },
@@ -25,7 +25,7 @@ export const verifyTypes = new DevFunction(
 
 
 export const hasType = new DevFunction(
-  "hasType", {typeArr: ["any", "string", "boolean?"]},
+  "hasType", {typeArr: ["any?", "string", "boolean?"]},
   ({callerNode, execEnv}, [val, type, isOptional]) => {
     try {
       _verifyType(val, type, isOptional, callerNode, execEnv);

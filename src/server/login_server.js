@@ -26,7 +26,7 @@ const initGasJSON = JSON.stringify({
   fetch: 50000,
   time: 1000000,
   dbRead: 100000,
-  dbWrite: 1000000,
+  dbWrite: 10000000,
   conn: 300000,
   mkdir: 100,
   mkTable: 0,

@@ -404,9 +404,9 @@ export function fetchUserListKey(userGroupKey) {
 export function updateUserWeight(userGroupKey, userKey) {
   return new Promise(resolve => {
     fetchUserListKey(userGroupKey).then(userListKey => {
-      fetchEntityProperty(userListKey, "updateScore").then(updateScore => {
-        if (updateScore) {
-          clearPrivileges(() => updateScore(userKey).then(
+      fetchEntityDefinition(userListKey).then(userList => {
+        if (userList?.updateScore) {
+          clearPrivileges(() => userList.updateScore(userKey).then(
             wasUpdated => resolve(wasUpdated)
           ));
         } else {
@@ -421,9 +421,9 @@ export function updateUserWeight(userGroupKey, userKey) {
 
 export function fetchScoreDataFromScoredList(listKey, subjKey) {
   return new Promise(resolve => {
-    fetchEntityProperty(listKey, "fetchScoreData").then(fetchScoreData => {
+    fetchEntityDefinition(listKey).then(scoredList => {
       clearPermissions(() => {
-        fetchScoreData(subjKey).then(
+        scoredList.fetchScoreData(subjKey).then(
           scoreData => resolve(scoreData)
         );
       });

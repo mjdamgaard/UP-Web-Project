@@ -134,7 +134,7 @@ export function substituteIfGetterProperty(propName, propValue) {
   // with propValue, and else call substituteIfGetterPropertyHelper().
   return new Promise(resolve => {
     let startChar = propName[0];
-    if (startChar === toUpperCase(startChar)) {
+    if (startChar !== toUpperCase(startChar)) {
       resolve(propValue);
     }
     else {

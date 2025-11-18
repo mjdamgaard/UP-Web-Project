@@ -87,7 +87,7 @@ CREATE TABLE TextFiles (
 
     file_id BIGINT UNSIGNED PRIMARY KEY,
 
-    content_text TEXT CHARACTER SET utf8mb4
+    content_text MEDIUMTEXT CHARACTER SET utf8mb4
 
 ) ENGINE = InnoDB;
 

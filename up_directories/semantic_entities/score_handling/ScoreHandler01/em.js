@@ -7,7 +7,7 @@ import CombinedList from "../../scored_lists/comb/CombinedList.js";
 import SimpleScoreHandler from "../SimpleScoreHandler.js";
 import {MeanAggregator} from "../../aggregating/mean/MeanAggregator.js";
 
-const trustedQualPath = abs("../../em1.js;get/trusted");
+const trustedQualPath = abs("../../em1.js;get/isTrusted");
 
 const meanAggregator = new MeanAggregator();
 
