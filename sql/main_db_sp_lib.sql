@@ -336,6 +336,7 @@ proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum(dirIDHex);
     DECLARE fileID BIGINT UNSIGNED;
     DECLARE fileCount INT UNSIGNED;
+    DECLARE prevTextLen BIGINT UNSIGNED;
     IF (dirID IS NULL OR filePath IS NULL OR contentText IS NULL) THEN
         SELECT NULL;
         LEAVE proc;
@@ -345,10 +346,16 @@ proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     WHERE dir_id = dirID AND file_path = filePath;
 
     IF (fileID IS NOT NULL) THEN
+        -- Get the length of the previous text, then update it, and turn the
+        -- previous length plus one, such that the value is always truthy, and
+        -- still tells what the length of the text was previously.
+        SELECT LENGTH(content_text) INTO prevTextLen
+        FROM TextFiles FORCE INDEX (PRIMARY)
+        WHERE file_id = fileID;
         UPDATE TextFiles
         SET content_text = contentText
         WHERE file_id = fileID;
-        SELECT 0 AS wasCreated;
+        SELECT prevTextLen + 1 AS wasCreated;
     ELSE
         IF NOT GET_LOCK(CONCAT("Touch.", dirID), 10) THEN
             SELECT NULL;
@@ -388,16 +395,22 @@ CREATE PROCEDURE deleteTextFile (
 BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum(dirIDHex);
     DECLARE fileID BIGINT UNSIGNED;
+    DECLARE prevTextLen BIGINT UNSIGNED;
 
     SELECT file_id INTO fileID
     FROM Files FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID AND file_path = filePath;
 
+    SELECT IFNULL(LENGTH(content_text), 0) INTO prevTextLen
+    FROM TextFiles FORCE INDEX (PRIMARY)
+    WHERE file_id = fileID;
+
     DELETE FROM TextFiles
     WHERE file_id = fileID;
     DELETE FROM Files
     WHERE dir_id = dirID AND file_path = filePath;
-    SELECT ROW_COUNT() AS wasDeleted;
+
+    SELECT prevTextLen + 1 AS wasDeleted;
 END; END //
 DELIMITER ;
 

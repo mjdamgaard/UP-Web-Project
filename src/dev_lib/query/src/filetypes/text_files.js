@@ -47,7 +47,15 @@ export async function query(
       "putTextFile", [homeDirID, localPath, text],
       route, options, callerNode, execEnv,
     ) ?? [];
-    return wasCreated;
+
+    // Extract the length from wasCreated, and if it is positive, add the
+    // dbWrite gas back to the gas object.
+    let prevTextLen = wasCreated ? wasCreated - 1 : 0;
+    if (prevTextLen > 0) {
+      payGas(callerNode, execEnv, {dbWrite: -prevTextLen});
+    }
+
+    return wasCreated ? true : false;
   }
 
   // If route equals ".../<homeDirID>/<filePath>./_rm", delete the text file.
@@ -60,7 +68,15 @@ export async function query(
       "deleteTextFile", [homeDirID, localPath],
       route, options, callerNode, execEnv,
     ) ?? [];
-    return wasDeleted;
+
+    // Extract the length from wasDeleted, and if it is positive, add the
+    // dbWrite gas back to the gas object.
+    let prevTextLen = wasDeleted ? wasDeleted - 1 : 0;
+    if (prevTextLen > 0) {
+      payGas(callerNode, execEnv, {dbWrite: -prevTextLen});
+    }
+
+    return wasDeleted ? true : false;
   }
 
   // If route equals ".../<homeDirID>/<filePath>./get/<alias>", verify that
