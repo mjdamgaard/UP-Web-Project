@@ -170,15 +170,15 @@ export const cssGrammar = {
   "pseudo-class-selector": {
     rules: [
       [
-        "/:/", "/" + SELECTOR_DEFINED_PSEUDO_CLASS_PATTERN + "/",
+        "/:/", "/" + SELECTOR_DEFINED_PSEUDO_CLASS_PATTERN + "/!1",
         /\(/, "S*", "selector-list", /\)/
       ],
       [
-        "/:/", "/" + RELATIVE_SELECTOR_DEFINED_PSEUDO_CLASS_PATTERN + "/",
+        "/:/", "/" + RELATIVE_SELECTOR_DEFINED_PSEUDO_CLASS_PATTERN + "/!1",
         /\(/, "S*", "relative-selector-list", /\)/
       ],
       [
-        "/:/", "/" + INTEGER_DEFINED_PSEUDO_CLASS_PATTERN + "/",
+        "/:/", "/" + INTEGER_DEFINED_PSEUDO_CLASS_PATTERN + "/!1",
         /\(/, "S*", "integer", /\)/
       ],
       ["/:/", "/" + ATOMIC_PSEUDO_CLASS_PATTERN + "/"],

@@ -799,7 +799,7 @@ export const components = {
   "Superclass": abs("./em1.js;get/entities"),
   "Common properties": [
     "Component path", "Example component path", "Example props",
-    "getExampleProps",
+    "getExampleProps", "Use full screen",
     // (These properties obviously have to been checked by the user community,
     // and the entity ought to be down-rated as a member of this class if they
     // are not true:)

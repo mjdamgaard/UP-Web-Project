@@ -3,7 +3,9 @@ import {fetchEntityDefinition} from "/1/1/entities.js";
 
 
 export function render({entKey, url, pageURL}) {
-  let {componentDef, Component, props, isFetching} = this.state;
+  let userID = this.subscribeToContext("userID");
+  let history = this.subscribeToContext("history");
+  let {componentDef, Component, props, isFetching, useFullScreen} = this.state;
 
   // If this component's definition object is not already gotten, fetch it.
   if (componentDef === undefined) {
@@ -22,6 +24,11 @@ export function render({entKey, url, pageURL}) {
     let exampleComponentPath = componentDef["Example component path"];
     let exampleProps = componentDef["Example props"];
     let getExampleProps = componentDef["getExampleProps"];
+    let useFullScreen = componentDef["Use full screen"];
+
+    if (useFullScreen) {
+      this.setState(state => ({...state, useFullScreen: useFullScreen}));
+    }
 
     // Create the default set of props to pass to component entity components
     // if the "Example props" property.
@@ -62,7 +69,8 @@ export function render({entKey, url, pageURL}) {
   // Finally, if the component is ready, render it, passing it the same props
   // is this component.
   else {
-    return <div>
+    let className = "component-page" + (useFullScreen ? " full-screen" : "");
+    return <div className={className}>
       {/* TODO: Also fetch some 'Is Trusted' score for the component entity,
         * and only show the warning if the component is not sufficiently
         * trusted (looking at both the score itself and its weight, of course).

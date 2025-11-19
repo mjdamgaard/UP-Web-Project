@@ -16,6 +16,7 @@ export function render({url, history, userID, homeURL = ""}) {
   // who use pushState() or replaceState() doesn't have to prepend the homeURL
   // themselves.
   this.provideContext("history", history);
+  this.provideContext("userID", userID);
   this.provideContext("userEntID", userEntID ? userEntID : undefined);
   this.provideContext("homeURL", homeURL);
   // TODO Implement an item in the AppHeader for going to a score handler

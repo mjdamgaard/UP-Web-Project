@@ -39,7 +39,7 @@
   margin: 0px 20%;
   padding: 20px 50px;
 }
-.app-main.full-screen {
+.app-main.full-screen, .app-main:has(> .full-screen) {
   margin: 0 0;
   padding: 0 0;
 }
