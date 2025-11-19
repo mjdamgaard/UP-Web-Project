@@ -14,11 +14,10 @@ export function render(props) {
     return <div className="fetching"></div>;
   }
 
-  // And if the component, held in the "Component path" attribute, is not
+  // And if the component, held in the "Component path" property, is not
   // already imported, do so.
   else if (Component === undefined) {
     let componentPath = componentDef["Component path"];
-    // TODO: This should be this.import() instead...?
     import(componentPath).then(Component => {
       this.setState(state => ({...state, Component: Component}));
     });

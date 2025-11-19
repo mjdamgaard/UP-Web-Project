@@ -67,7 +67,7 @@ export function render({
   }
 
   // Else check that entDef is indeed an entity definition, with a "Class"
-  // attribute, and if not, return and ILink to the file browser instead.
+  // property, and if not, return and ILink to the file browser instead.
   else if (typeof entDef !== "object" || !entDef.Class) {
     content = entKey;
     href = "~/f/" + encodeURIComponent(entKey);
@@ -86,7 +86,7 @@ export function render({
   // Else, finally, render the entity reference, possibly with nested entity
   // references.
   else {
-    // Get the "Name" attribute, and if none is found, render an empty
+    // Get the "Name" property, and if none is found, render an empty
     // component with a "missing" class.
     let name = entDef["Name"];
     if (typeof name !== "string") {

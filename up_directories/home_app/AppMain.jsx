@@ -85,7 +85,7 @@ export function render({url = "", history, homeURL}) {
     let entID = substring(relURL, 3, endOfID);
     let urlRemainder = substring(relURL, 3 + entID.length);
     return (
-      <main className="app-main">
+      <main className="app-main full-screen">
         <ComponentEntityPage key={"c-" + entID}
           entKey={entID} url={urlRemainder} pageURL={"~/c/" + entID}
         />

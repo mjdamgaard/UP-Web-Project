@@ -62,8 +62,8 @@ export function render({entKey}) {
             <span className="missing">{"missing"}</span>
       }</div>,
       <hr/>,
-      <h3>{"Attributes"}</h3>,
-      <table className="attribute-table">{
+      <h3>{"Defining properties"}</h3>,
+      <table className="def-props-table">{
         mapToArray(entDef, (val, key, ind) => (
           <tr>
             <th>{key}</th>

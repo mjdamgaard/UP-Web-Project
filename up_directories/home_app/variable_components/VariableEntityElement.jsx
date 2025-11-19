@@ -29,8 +29,9 @@ export function render(props) {
     content = <div className="fetching">{"..."}</div>;
   }
 
-  // If the entity definition is missing, or is ill-formed (without a "Class"
-  // attribute) render a missing entity element.
+  // TODO: Should value entities also be implemented here?
+  // If the entity definition is missing, or is not a referential entity (with
+  // a "Class" property) render a missing entity element.
   else if (!classKey) {
     return <MissingEntityElement {...props} key="0" />;
   }
@@ -63,7 +64,7 @@ export function render(props) {
   }
 
   // Else if the top entry is ready, expect it to be an entity of the "App
-  // component" class, with a "Component path" attribute, and render this via
+  // component" class, with a "Component path" property, and render this via
   // the ComponentEntityComponent.
   else {
     let [compEntID, score] = topEntry;

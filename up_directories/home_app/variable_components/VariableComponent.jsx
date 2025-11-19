@@ -54,7 +54,7 @@ export function render(props) {
   }
 
   // Else if the top entry is ready, expect it to be an entity of the "App
-  // component" class, with a "Component path" attribute, and render this via
+  // component" class, with a "Component path" property, and render this via
   // the ComponentEntityComponent.
   else {
     let [compEntID, score] = topEntry;

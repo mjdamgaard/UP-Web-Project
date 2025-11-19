@@ -214,8 +214,8 @@ function fetchUserGroup(qualKey, options = {}) {
     else {
       fetchEntityPath(qualKey).then(qualPath => {
         // TODO: Change such that for relational qualities, we also fetch the
-        // class or the relation and use their AoC attribute as a fallback. Oh,
-        // and for regular qualities, we should also use the AoC attribute as
+        // class or the relation and use their AoC property as a fallback. Oh,
+        // and for regular qualities, we should also use the AoC property as
         // a fallback.
         let userGroupKey = sensitiveQualities[qualPath] ||
           abs("./em.js;get/initialStandardUserGroup");
