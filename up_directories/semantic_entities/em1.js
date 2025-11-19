@@ -1229,7 +1229,7 @@ export const discussions = {
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/texts"),
   "Metric": abs("./em1.js;get/gradingMetric"),
-  "Description": abs("./em1_aux.js;get/commentsRelationDesc"),
+  "Description": abs("./em1_aux.js;get/discussionDesc"),
 };
 
 // 'Reactions' are a subclass of comments that expresses some immediate

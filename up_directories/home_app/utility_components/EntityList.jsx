@@ -24,7 +24,7 @@ import * as AddEntityMenu from "./AddEntityMenu.jsx";
 // a more carefully governed user group for UI safety (used to prevent
 // phishing attempts, and such).
 
-// TODO: The "Add entity" menu should be changed for all lists where the
+// TODO: The "Add new" menu should be changed for all lists where the
 // "Subject class" of the relation is or is a subset of the 'Texts' class, such
 // that for these lists, the user can add a comment directly.
 

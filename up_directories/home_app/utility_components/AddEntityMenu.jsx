@@ -12,12 +12,11 @@ export function render({qualKeyArr}) {
 
   return <div className="add-entity-menu">
     <div>{
-      "Add entity to the current list by first submitting its (absolute) " +
-      "path in the following field, or its hexadecimal entity ID, " +
-      "and then score it according the the relevant qualities."
+      "Submit the ID or the path of the entity to insert, then score it " +
+      "with respect to the relevant qualities."
     }</div>
     <div>
-      <span>{"Entity path or ID: "}</span>
+      <span>{"Entity ID or path: "}</span>
       <InputText key="i" size={60} />
     </div>
     <button onClick={() => {
