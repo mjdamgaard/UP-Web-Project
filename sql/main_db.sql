@@ -27,8 +27,15 @@ CREATE TABLE HomeDirectories (
 
     admin_id BIGINT UNSIGNED,
 
-    UNIQUE INDEX sec_idx (
+    creator_id BIGINT UNSIGNED,
+
+    UNIQUE INDEX admin_idx (
         admin_id,
+        dir_id
+    ),
+
+    UNIQUE INDEX creator_idx (
+        creator_id,
         dir_id
     )
 

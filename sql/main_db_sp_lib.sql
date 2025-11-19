@@ -8,6 +8,7 @@ DROP FUNCTION hexToNum;
 
 DROP PROCEDURE readHomeDirAdminID;
 DROP PROCEDURE readDirectoriesOfAdmin;
+DROP PROCEDURE readDirectoriesOfCreator;
 DROP PROCEDURE readAllHomeDirDescendants;
 DROP PROCEDURE createHomeDir;
 DROP PROCEDURE editHomeDir;
@@ -110,8 +111,25 @@ BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     DECLARE adminID BIGINT UNSIGNED DEFAULT hexToNum(adminIDHex);
 
     SELECT numToHex(dir_id) AS dirID
-    FROM HomeDirectories FORCE INDEX (sec_idx)
+    FROM HomeDirectories FORCE INDEX (admin_idx)
     WHERE admin_id <=> adminID
+    ORDER BY dir_id ASC
+    LIMIT numOffset, maxNum;
+END; END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE readDirectoriesOfCreator (
+    IN creatorIDHex VARCHAR(16),
+    IN maxNum INT UNSIGNED,
+    IN numOffset INT UNSIGNED
+)
+BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
+    DECLARE creatorID BIGINT UNSIGNED DEFAULT hexToNum(creatorIDHex);
+
+    SELECT numToHex(dir_id) AS dirID
+    FROM HomeDirectories FORCE INDEX (creator_idx)
+    WHERE creator_id <=> creatorID
     ORDER BY dir_id ASC
     LIMIT numOffset, maxNum;
 END; END //
@@ -147,8 +165,8 @@ proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
         SELECT NULL;
         LEAVE proc;
     END IF;
-    INSERT INTO HomeDirectories (admin_id)
-    VALUES (adminID);
+    INSERT INTO HomeDirectories (admin_id, creator_id)
+    VALUES (adminID, adminID);
     SELECT numToHex(LAST_INSERT_ID()) AS dirID;
 END; END proc //
 DELIMITER ;

@@ -61,6 +61,9 @@ export const createJSXApp = new DevFunction(
     props = addURLRelatedProps(
       props, rootInstance, interpreter, callerNode, appEnv
     );
+    props = addStorageRelatedProps(
+      props, rootInstance, interpreter, callerNode, appEnv
+    );
 
     // Then render the root instance and insert it into the document.
     let rootParent = document.getElementById("up-app-root");
@@ -767,7 +770,10 @@ class JSXInstance {
   // module, which is an array of action keys or [eventKey, actionKey] pair
   // arrays (or a mix). If no ancestors has an event of a matching key, then
   // trigger() just fails silently.
-  trigger(eventKey, input, interpreter, node, env) {
+  trigger(
+    eventKey, input, interpreter, node, env, eventTargetScope = undefined
+  ) {
+    eventTargetScope ??= env.getFlag(REQUESTING_COMPONENT_FLAG);
     if (!this.parentInstance) return;
     let events = this.parentInstance.events;
     eventKey = getStringOrSymbol(eventKey, env);
@@ -780,14 +786,14 @@ class JSXInstance {
       // loosen restrictions in the future, rather than imposing new ones.
       let canPost = env.getFlag(CAN_POST_FLAG);
       return interpreter.executeFunction(
-        eventFun, [input], node, env,
+        eventFun, [input, eventTargetScope], node, env,
         new JSXInstanceInterface(this.parentInstance),
         [CLEAR_FLAG, [CAN_POST_FLAG, canPost]],
       );
     }
     else {
       return this.parentInstance.trigger(
-        eventKey, input, interpreter, node, env
+        eventKey, input, interpreter, node, env, eventTargetScope
       );
     }
 
@@ -1442,6 +1448,7 @@ export function getUserID() {
 }
 
 
+
 function addUserRelatedProps(props, jsxInstance, interpreter, node, env) {
   let {contexts: {settingsContext}} = env.scriptVars;
   let userID = settingsContext.getVal().getUserID(node, env);
@@ -1452,6 +1459,7 @@ function addUserRelatedProps(props, jsxInstance, interpreter, node, env) {
   });
   return {...props, userID: userID};
 }
+
 
 
 function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
@@ -1529,5 +1537,68 @@ function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
       pushState: pushState, replaceState: replaceState,
       back: back, forward: forward, go: go,
     },
+  };
+}
+
+
+
+
+const sessionStorageObject = {
+  setItem: new DevFunction(
+    "setItem", {typeArr: ["string", "any"]},
+    ({}, [key, value]) => {
+      let actualKey = "up-" + key;
+      let jsonValue = jsonStringify(value);
+      window.sessionStorage.setItem(actualKey, jsonValue);
+    }
+  ),
+  getItem: new DevFunction(
+    "setItem", {typeArr: ["string"]},
+    ({}, [key]) => {
+      let actualKey = "up-" + key;
+      let jsonValue = window.sessionStorage.getItem(actualKey);
+      return JSON.parse(jsonValue);
+    }
+  ),
+  removeItem: new DevFunction(
+    "setItem", {typeArr: ["string"]},
+    ({}, [key]) => {
+      let actualKey = "up-" + key;
+      window.sessionStorage.removeItem(actualKey);
+    }
+  ),
+};
+
+const localStorageObject = {
+  setItem: new DevFunction(
+    "setItem", {typeArr: ["string", "any"]},
+    ({}, [key, value]) => {
+      let actualKey = "up-" + key;
+      let jsonValue = jsonStringify(value);
+      window.localStorage.setItem(actualKey, jsonValue);
+    }
+  ),
+  getItem: new DevFunction(
+    "setItem", {typeArr: ["string"]},
+    ({}, [key]) => {
+      let actualKey = "up-" + key;
+      let jsonValue = window.localStorage.getItem(actualKey);
+      return JSON.parse(jsonValue);
+    }
+  ),
+  removeItem: new DevFunction(
+    "setItem", {typeArr: ["string"]},
+    ({}, [key]) => {
+      let actualKey = "up-" + key;
+      window.localStorage.removeItem(actualKey);
+    }
+  ),
+};
+
+function addStorageRelatedProps(props) {
+  return {
+    ...props,
+    sessionStorage: sessionStorageObject,
+    localStorage: localStorageObject,
   };
 }
