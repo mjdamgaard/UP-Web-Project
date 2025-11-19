@@ -18,8 +18,8 @@ export const render = new DevFunction(
     }
     let {min, max, value, step, onChange, onInput} = props;
     verifyTypes(
-      [min, max, value, step, onChange],
-      ["number?", "number?", "number?", "number?", "function?"],
+      [min, max, value, step, onChange, onInput],
+      ["number?", "number?", "number?", "number?", "function?", "function?"],
       callerNode, execEnv
     );
 

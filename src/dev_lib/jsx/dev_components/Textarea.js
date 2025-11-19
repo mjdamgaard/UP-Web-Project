@@ -19,7 +19,7 @@ export const render = new DevFunction(
     }
     let {placeholder, onChange, onInput} = props;
     verifyTypes(
-      [placeholder, onChange], ["string?", "function?"],
+      [placeholder, onChange, onInput], ["string?", "function?", "function?"],
       callerNode, execEnv
     );
 

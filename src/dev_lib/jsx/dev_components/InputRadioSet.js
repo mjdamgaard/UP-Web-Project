@@ -1,15 +1,18 @@
 
 import {
-  DevFunction, FunctionObject, getString, ArgTypeError, ObjectObject,
-  verifyTypes,
+  DevFunction, FunctionObject, ArgTypeError, ObjectObject, verifyTypes,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
   DOMNodeObject, JSXInstanceInterface, clearAttributes
 } from "../jsx_components.js";
 
 
+// TODO: Actually, make this dev component a radio button *set* instead, such
+// that getValue() returns the value of the button that is selected, and
+// setValue() also takes a value string and checks the corresponding button.
+
 export const render = new DevFunction(
-  "InputText.render", {typeArr: ["object?"]},
+  "InputRadioSet.render", {typeArr: ["object?"]},
   function(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
@@ -17,21 +20,15 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {size, value, placeholder, onChange, onInput} = props;
+    let {name, value, checked, onChange, onInput} = props;
     verifyTypes(
-      [size, onChange, onInput],
-      ["integer positive?", "function?", "function?"],
+      [name, value, onChange, onInput],
+      ["string?", "string?", "function?", "function?"],
       callerNode, execEnv
     );
-    if (placeholder !== undefined) {
-      placeholder = getString(placeholder, execEnv);
-    }
-    if (value !== undefined) {
-      value = getString(value, execEnv);
-    }
 
     if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
-      "InputText.render(): 'this' is not a JSXInstance",
+      "InputRange.render(): 'this' is not a JSXInstance",
       callerNode, execEnv
     );
 
@@ -40,18 +37,14 @@ export const render = new DevFunction(
     let domNode = jsxInstance.domNode;
     if (!domNode || domNode.tagName !== "INPUT") {
       domNode = document.createElement("input");
-      domNode.value = "";
     }
     else {
       clearAttributes(domNode);
     }
-    domNode.setAttribute("type", "text");
-    domNode.setAttribute("class", "input-text_0");
-    if (size !== undefined) domNode.setAttribute("size", size);
-    if (value !== undefined) domNode.value = value;
-    if (placeholder !== undefined) {
-      domNode.setAttribute("placeholder", placeholder);
-    }
+    domNode.setAttribute("type", "radio");
+    domNode.setAttribute("class", "input-radio_0");
+    if (name !== undefined) domNode.setAttribute("name", value);
+    if (value !== undefined) domNode.setAttribute("value", value);
 
     // Set the onchange event if props.onChange is supplied.
     if (onChange) {
@@ -89,8 +82,8 @@ export const render = new DevFunction(
 
 
 export const methods = [
-  "getValue",
-  "setValue",
+  "getIsChecked",
+  "setIsChecked",
   "clear",
   "focus",
   "blur",
@@ -101,23 +94,25 @@ export const actions = {
     return thisVal.jsxInstance.domNode.value;
   }),
   "setValue": new DevFunction(
-    "setValue", {}, function({thisVal, callerNode, execEnv}, [val]) {
-      val = getString(val, execEnv);
+    "setValue", {typeArr: ["number"]},
+    function({thisVal}, [val]) {
       let domNode = thisVal.jsxInstance.domNode;
       let prevVal = domNode.value;
-      let activeElement = document.activeElement;
+      // let activeElement = document.activeElement;
       domNode.value = val;
       // activeElement.focus();
       if (prevVal !== val) {
-        // domNode.dispatchEvent(new InputEvent("input"));
+        domNode.dispatchEvent(new InputEvent("input"));
       }
     }
   ),
   "clear": new DevFunction("clear", {}, function({thisVal}, []) {
     let domNode = thisVal.jsxInstance.domNode;
     let prevVal = domNode.value;
-    domNode.value = "";
-    if (prevVal !== "") {
+    let initVal = parseFloat(domNode.getAttribute("value"));
+    if (Number.isNaN(initVal)) return;
+    domNode.value = initVal;
+    if (prevVal !== initVal) {
       domNode.dispatchEvent(new InputEvent("input"));
     }
   }),
