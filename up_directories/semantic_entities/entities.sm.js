@@ -10,6 +10,9 @@ import {post, fetch} from 'query';
 import {valueToHex} from 'hex';
 import {verifyType} from 'type';
 import {substring} from 'string';
+import {
+  postAllEntitiesFromModule as _postAllEntitiesFromModule
+} from "./entities.js";
 
 
 
@@ -82,3 +85,10 @@ export function addSecondaryIndex(entID) {
   });
 }
 
+
+
+// TODO: Reimplement this more efficiently such that doesn't just redirect to
+// postAllEntitiesFromModule() from ./entities.js.
+export function postAllEntitiesFromModule(modulePath) {
+  return _postAllEntitiesFromModule(modulePath);
+}

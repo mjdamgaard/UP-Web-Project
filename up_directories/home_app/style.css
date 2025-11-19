@@ -39,6 +39,10 @@
   margin: 0px 20%;
   padding: 20px 50px;
 }
+.app-main.full-screen {
+  margin: 0 0;
+  padding: 0 0;
+}
 
 .app-main section {
   margin-top: 2em;

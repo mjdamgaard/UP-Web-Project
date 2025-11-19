@@ -2,8 +2,7 @@
 import {fetchEntityDefinition} from "/1/1/entities.js";
 
 
-export function render(props) {
-  let {entKey} = props;
+export function render(entKey, url, pageURL) {
   let {componentDef, Component} = this.state;
 
   // If this component's definition object is not already gotten, fetch it.

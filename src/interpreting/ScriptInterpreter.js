@@ -71,6 +71,7 @@ export class ScriptInterpreter {
       flags: flags, contexts: contexts, globalEnv: undefined, interpreter: this,
       isExiting: false, resolveScript: undefined, exitPromise: undefined,
       parsedScripts: parsedScripts, liveModules: liveModules,
+      appSettings: undefined,
     };
 
     // First create a global environment, which is used as a parent environment
@@ -347,6 +348,17 @@ export class ScriptInterpreter {
       `No script or style sheet was found at ${route}`,
       callerNode, callerEnv
     );
+
+    // If the scriptVars.appSettings has been set (meaning that createJSXApp()
+    // has been called), also prepare the component's style in case of a 
+    // LiveJSModule where the route ends in ".jsx".
+    let {appSettings} = callerEnv.scriptVars;
+    if (
+      appSettings && ret instanceof LiveJSModule && route.slice(-4) === ".jsx"
+    ) {
+      await appSettings.prepareComponent(ret, callerNode, callerEnv);
+    }
+
     return ret;
   }
 

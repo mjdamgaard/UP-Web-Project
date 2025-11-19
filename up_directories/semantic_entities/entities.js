@@ -261,7 +261,7 @@ export function postEntity(moduleOrEntPath, alias = undefined) {
   let entPath = alias ? moduleOrEntPath + ";get/" + alias : moduleOrEntPath;
   return new Promise(resolve => {
     fetch(entPath).then(entDef => {
-      if (!entDef || !entDef.Class) {
+      if (entDef === undefined) {
         resolve(false);
       }
       else {
@@ -280,6 +280,8 @@ export function postAllEntitiesFromModule(modulePath) {
       // Post all the entities simultaneously, then wait for all these post
       // requests before resolving.
       let postPromArr = mapToArray(entityModule, (val, alias) => {
+        // Only post so-called referential entities, namely with a defined
+        // "Class" property.
         if (val.Class !== undefined) {
           return postEntity(modulePath, alias);
         }

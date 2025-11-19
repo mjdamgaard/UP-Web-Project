@@ -7,6 +7,8 @@ import * as UPIndexPage from "./UPIndexPage.jsx";
 import * as EntityPage from "./variable_components/EntityPage.jsx";
 import * as FileBrowser from "./file_browsing/FileBrowser.jsx";
 import * as TutorialIndexPage from "./tutorials/index.jsx";
+import * as ComponentEntityPage
+from "./variable_components/ComponentEntityPage.jsx";
 
 
 export function render({url = "", history, homeURL}) {
@@ -68,8 +70,24 @@ export function render({url = "", history, homeURL}) {
     let urlRemainder = substring(relURL, 3 + entID.length);
     return (
       <main className="app-main">
-        <EntityPage key="e"
+        <EntityPage key={"e-" + entID}
           entKey={entID} url={urlRemainder} pageURL={"~/e/" + entID}
+        />
+      </main>
+    );
+  }
+
+  // Else if relURL is of the form "/c/<entID>[/<name>/...]", go to the
+  // componentPage of the given entity, expecting it to be a component entity.
+  if (firstSegment === "c") {
+    let indOfThirdSlash = indexOf(relURL, "/", 3);
+    let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
+    let entID = substring(relURL, 3, endOfID);
+    let urlRemainder = substring(relURL, 3 + entID.length);
+    return (
+      <main className="app-main">
+        <ComponentEntityPage key={"c-" + entID}
+          entKey={entID} url={urlRemainder} pageURL={"~/c/" + entID}
         />
       </main>
     );

@@ -246,6 +246,18 @@ export function postInitialScores01() {
           abs("./em2.js;get/upIndexPage02"),
           firstModID, 0.1
         ),
+        postUserRelationalScoreAndUpdateUserGroups(
+          abs("./em1.js;get/components"),
+          abs("./em1.js;get/members"),
+          abs("./em2.js;get/homeApp"),
+          firstModID, 6
+        ),
+        postUserRelationalScoreAndUpdateUserGroups(
+          abs("./em1.js;get/components"),
+          abs("./em1.js;get/members"),
+          abs("./em2.js;get/flipGame"),
+          firstModID, 2
+        ),
       ]);
     },
 

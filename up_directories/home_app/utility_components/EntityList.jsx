@@ -73,7 +73,7 @@ export function render({
               qualKeyArr={[qualKey ?? qualPath]}
             />
           }));
-        }}>{"Add entity"}</button>
+        }}>{"Add new"}</button>
       </div>,
       <div className="menu-extension">{menuExtension}</div>,
       <hr/>,

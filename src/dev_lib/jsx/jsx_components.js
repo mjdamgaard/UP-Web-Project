@@ -48,6 +48,11 @@ export const createJSXApp = new DevFunction(
     // SettingsObject class declared below.
     let userID = getUserID();
     await settings.initiate(userID, appComponent, callerNode, appEnv);
+  
+    // Set the appSettings property of the scriptVars object, which changes the
+    // behavior of import() going forward such that it also prepares the
+    // component's style in the case of a .jsx import.
+    execEnv.scriptVars.appSettings = settings;
 
     // Then create the app's root component instance, and before rendering it,
     // add some props for getting user data and URL data, and pushing/replacing
@@ -960,7 +965,6 @@ export class JSXInstanceInterface extends ObjectObject {
       "call": this.call,
       "setState": this.setState,
       "rerender": this.rerender,
-      // "import": this.import,
       "provideContext": this.provideContext,
       "subscribeToContext": this.subscribeToContext,
       "unsubscribeFromContext": this.unsubscribeFromContext,
@@ -1028,23 +1032,6 @@ export class JSXInstanceInterface extends ObjectObject {
     this.jsxInstance.queueRerender(interpreter);
   });
 
-  // import() is similar to the regular import function, except it also makes
-  // the app call settings.prepareComponent() in order to prepare e.g. the
-  // style of the component before it is used (which might be helpful in order
-  // to prevent UI flickering in some instances).
-  // TODO: Debug this dev method, or better yet, see if I can't just make
-  // the regular import() work just as well (if it doesn't already..).
-  import = new DevFunction(
-    "import", {isAsync: true, typeArr: ["string"]},
-    async ({callerNode, execEnv, interpreter}, [route]) => {
-      let liveModule = interpreter.import(route, callerNode, execEnv, true);
-      let settings = this.jsxInstance.settings;
-      if (route.slice(-4) === ".jsx") {
-        await settings.prepareComponent(liveModule, callerNode, execEnv);
-      }
-      return liveModule;
-    }
-  );
 
   // provideContext(key, context) provides a context identified by key for all
   // its descendants, meaning that they can subscribe to it an get the context
