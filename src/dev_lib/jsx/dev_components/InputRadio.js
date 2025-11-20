@@ -1,36 +1,45 @@
 
 import {
-  DevFunction, FunctionObject, ArgTypeError, ObjectObject, verifyTypes,
+  DevFunction, ArgTypeError, ObjectObject, verifyTypes,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
   DOMNodeObject, JSXInstanceInterface, clearAttributes
 } from "../jsx_components.js";
 
 
-// TODO: Actually, make this dev component a radio button *set* instead, such
-// that getValue() returns the value of the button that is selected, and
-// setValue() also takes a value string and checks the corresponding button.
+const nameMap = new Map();
+let nonce = 1;
+
+function convertName(name) {
+  let ret = nameMap.get(name);
+  if (ret === undefined) {
+    ret = (nonce++).toString();
+    nameMap.set(name, ret);
+  }
+  return ret;
+}
+
 
 export const render = new DevFunction(
-  "InputRadioSet.render", {typeArr: ["object?"]},
+  "InputRadio.render", {typeArr: ["object?"]},
   function(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    if (props instanceof ObjectObject) {
-      props = props.members;
-    }
-    let {name, value, checked, onChange, onInput} = props;
-    verifyTypes(
-      [name, value, onChange, onInput],
-      ["string?", "string?", "function?", "function?"],
+    if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
+      "InputRadio.render(): 'this' is not a JSXInstance",
       callerNode, execEnv
     );
 
-    if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
-      "InputRange.render(): 'this' is not a JSXInstance",
+    if (props instanceof ObjectObject) {
+      props = props.members;
+    }
+    let {name = new Symbol("name"), value, checked, onChange, onInput} = props;
+    verifyTypes(
+      [value, onChange, onInput], ["string?", "function?", "function?"],
       callerNode, execEnv
     );
+    name = convertName(name);
 
     // Create the DOM node if it has no been so already.
     let jsxInstance = thisVal.jsxInstance;
@@ -43,15 +52,12 @@ export const render = new DevFunction(
     }
     domNode.setAttribute("type", "radio");
     domNode.setAttribute("class", "input-radio_0");
-    if (name !== undefined) domNode.setAttribute("name", value);
+    if (name !== undefined) domNode.setAttribute("name", name);
     if (value !== undefined) domNode.setAttribute("value", value);
+    if (checked) domNode.setAttribute("checked", true);
 
     // Set the onchange event if props.onChange is supplied.
     if (onChange) {
-      if (!(onChange instanceof FunctionObject)) throw new ArgTypeError(
-        "onChange event received a non-function value",
-        callerNode, execEnv
-      );
       domNode.onchange = (event) => {
         let {value} = event.target;
         let e = {value: value};
@@ -63,10 +69,6 @@ export const render = new DevFunction(
 
     // Set the oninput event if props.oninput is supplied.
     if (onInput) {
-      if (!(onInput instanceof FunctionObject)) throw new ArgTypeError(
-        "onInput event received a non-function value",
-        callerNode, execEnv
-      );
       domNode.oninput = (event) => {
         let {value} = event.target;
         let e = {value: value};
@@ -90,28 +92,25 @@ export const methods = [
 ];
 
 export const actions = {
-  "getValue": new DevFunction("getValue", {}, function({thisVal}, []) {
-    return thisVal.jsxInstance.domNode.value;
+  "getIsChecked": new DevFunction("getValue", {}, function({thisVal}, []) {
+    return thisVal.jsxInstance.domNode.checked;
   }),
-  "setValue": new DevFunction(
-    "setValue", {typeArr: ["number"]},
-    function({thisVal}, [val]) {
-      let domNode = thisVal.jsxInstance.domNode;
-      let prevVal = domNode.value;
-      // let activeElement = document.activeElement;
-      domNode.value = val;
-      // activeElement.focus();
+  "setIsChecked": new DevFunction(
+    "setValue", {}, function({thisVal}, [val]) {
+      val = val ? true : false;
+      let {domNode} = thisVal.jsxInstance;
+      let prevVal = domNode.checked;
+      domNode.checked = val;
       if (prevVal !== val) {
         domNode.dispatchEvent(new InputEvent("input"));
       }
     }
   ),
   "clear": new DevFunction("clear", {}, function({thisVal}, []) {
-    let domNode = thisVal.jsxInstance.domNode;
-    let prevVal = domNode.value;
-    let initVal = parseFloat(domNode.getAttribute("value"));
-    if (Number.isNaN(initVal)) return;
-    domNode.value = initVal;
+    let {domNode, props} = thisVal.jsxInstance;
+    let {checked: initVal} = props;
+    let prevVal = domNode.checked;
+    domNode.checked = initVal ? true : false;
     if (prevVal !== initVal) {
       domNode.dispatchEvent(new InputEvent("input"));
     }

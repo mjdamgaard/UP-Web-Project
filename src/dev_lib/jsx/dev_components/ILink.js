@@ -16,6 +16,11 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
+    if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
+      "ILink.render(): 'this' is not a JSXInstance",
+      callerNode, execEnv
+    );
+
     if (props instanceof ObjectObject) {
       props = props.members;
     }
@@ -29,11 +34,6 @@ export const render = new DevFunction(
     homeURL ??= thisVal.jsxInstance.subscribeToContext("homeURL");
     verifyTypes(
       [pushState, onClick], ["function?", "function?"], callerNode, execEnv
-    );
-
-    if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
-      "ILink.render(): 'this' is not a JSXInstance",
-      callerNode, execEnv
     );
 
     // Create the DOM node if it has no been so already.

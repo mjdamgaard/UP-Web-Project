@@ -1,6 +1,6 @@
 
 import {
-  DevFunction, FunctionObject, getString, ArgTypeError, ObjectObject,
+  DevFunction, getString, ArgTypeError, ObjectObject,
   verifyTypes,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
@@ -14,6 +14,11 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
+    if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
+      "InputText.render(): 'this' is not a JSXInstance",
+      callerNode, execEnv
+    );
+
     if (props instanceof ObjectObject) {
       props = props.members;
     }
@@ -29,11 +34,6 @@ export const render = new DevFunction(
     if (value !== undefined) {
       value = getString(value, execEnv);
     }
-
-    if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
-      "InputText.render(): 'this' is not a JSXInstance",
-      callerNode, execEnv
-    );
 
     // Create the DOM node if it has no been so already.
     let jsxInstance = thisVal.jsxInstance;
@@ -55,10 +55,6 @@ export const render = new DevFunction(
 
     // Set the onchange event if props.onChange is supplied.
     if (onChange) {
-      if (!(onChange instanceof FunctionObject)) throw new ArgTypeError(
-        "onChange event received a non-function value",
-        callerNode, execEnv
-      );
       domNode.onchange = (event) => {
         let {value} = event.target;
         let e = {value: value};
@@ -70,10 +66,6 @@ export const render = new DevFunction(
 
     // Set the oninput event if props.oninput is supplied.
     if (onInput) {
-      if (!(onInput instanceof FunctionObject)) throw new ArgTypeError(
-        "onInput event received a non-function value",
-        callerNode, execEnv
-      );
       domNode.oninput = (event) => {
         let {value} = event.target;
         let e = {value: value};
