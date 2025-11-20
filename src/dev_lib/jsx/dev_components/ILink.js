@@ -8,8 +8,6 @@ import {
   clearAttributes,
 } from "../jsx_components.js";
 
-export const URL_REGEX = /^(\/[a-zA-Z0-9_.~!&$+=;\-]+)*$/;
-
 
 
 export const render = new DevFunction(
@@ -57,10 +55,12 @@ export const render = new DevFunction(
       // which is then parsed, and joined with href into an absolute path.
       if (href.substring(0, 2) === "~/") {
         homeURL = homeURL ? getString(homeURL, execEnv) : "";
-        if (!URL_REGEX.test(homeURL)) throw new ArgTypeError(
-          "Invalid home URL: " + homeURL,
-          callerNode, execEnv
-        );
+        if (!HREF_REGEX.test(homeURL) || (homeURL && homeURL[0] !== "/")) {
+          throw new ArgTypeError(
+            "Invalid home URL: " + homeURL,
+            callerNode, execEnv
+          );
+        }
         href = (href === "~/") ? homeURL || "/" : homeURL + href.substring(1);
       }
 

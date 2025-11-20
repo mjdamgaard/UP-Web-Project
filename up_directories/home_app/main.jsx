@@ -34,9 +34,6 @@ export function render({url, history, userID, homeURL = ""}) {
     );
   }
 
-  // Subtract the homeURL from url before passing it to AppMain and AppHeader.
-  url = substring(url, homeURL.length);
-
   return (
     <div className="app">
       <AppHeader key="h" url={url} history={history} homeURL={homeURL} />
