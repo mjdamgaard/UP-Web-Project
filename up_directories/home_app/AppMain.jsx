@@ -12,11 +12,11 @@ from "./variable_components/ComponentEntityPage.jsx";
 
 
 export function render({url = "", history, homeURL}) {
-  let relURL = substring(url, homeURL.length);
+  let tailURL = substring(url, homeURL.length);
 
   // If the relURL is empty, replace it with "up" ('up' for 'user-programmed'),
   // taking the user to the user-defined home page.
-  if (!relURL) {
+  if (!tailURL) {
     history.replaceState(
       history.state,
       homeURL + "/up"
@@ -27,9 +27,9 @@ export function render({url = "", history, homeURL}) {
   // If the relURL is of the form "/up[/...]", go to a page with the current
   // top-rated user-programmed page component for redirecting the the user
   // further to page/app that fits the subsequent part of the url.
-  let indOfSecondSlash = indexOf(relURL, "/", 1);
+  let indOfSecondSlash = indexOf(tailURL, "/", 1);
   let firstSegment = (indOfSecondSlash === -1) ?
-    substring(relURL, 1) : substring(relURL, 1, indOfSecondSlash);
+    substring(tailURL, 1) : substring(tailURL, 1, indOfSecondSlash);
   if (firstSegment === "up") {
     return (
       <main className="app-main">
@@ -41,7 +41,7 @@ export function render({url = "", history, homeURL}) {
   // Else if relURL is of the form "/entPath/<encoded entPath>"", fetch the
   // entity ID and then redirect to the "/e/" + entID relURL.
   if (firstSegment === "entPath") {
-    let entPath = decodeURIComponent(substring(url, 9));
+    let entPath = decodeURIComponent(substring(tailURL, 9));
     fetchEntityID(entPath).then(entID => {
       if (entID) {
         history.replaceState(history.state, homeURL + "/e/" + entID);
@@ -61,10 +61,10 @@ export function render({url = "", history, homeURL}) {
   // Else if relURL is of the form "/e/<entID>", go to the EntityPage of the
   // given entity.
   if (firstSegment === "e") {
-    let indOfThirdSlash = indexOf(relURL, "/", 3);
+    let indOfThirdSlash = indexOf(tailURL, "/", 3);
     let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
-    let entID = substring(relURL, 3, endOfID);
-    let tailURL = substring(relURL, 3 + entID.length);
+    let entID = substring(tailURL, 3, endOfID);
+    let tailURL = substring(tailURL, 3 + entID.length);
     return (
       <main className="app-main">
         <EntityPage key={"e-" + entID}
@@ -77,10 +77,10 @@ export function render({url = "", history, homeURL}) {
   // Else if relURL is of the form "/c/<entID>[/<name>/...]", go to the
   // componentPage of the given entity, expecting it to be a component entity.
   if (firstSegment === "c") {
-    let indOfThirdSlash = indexOf(relURL, "/", 3);
+    let indOfThirdSlash = indexOf(tailURL, "/", 3);
     let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
-    let entID = substring(relURL, 3, endOfID);
-    let tailURL = substring(relURL, 3 + entID.length);
+    let entID = substring(tailURL, 3, endOfID);
+    let tailURL = substring(tailURL, 3 + entID.length);
     return (
       <main className="app-main">
         <ComponentEntityPage key={"c-" + entID}
@@ -94,7 +94,7 @@ export function render({url = "", history, homeURL}) {
   // stand for 'file' or 'fetch' if you will), go to the file browser app with
   // that route.
   if (firstSegment === "f") {
-    let route = decodeURIComponent(substring(relURL, 3));
+    let route = decodeURIComponent(substring(tailURL, 3));
     return (
       <main className="app-main">
         <FileBrowser key="f" route={route} />
@@ -104,7 +104,7 @@ export function render({url = "", history, homeURL}) {
 
 
   // Else if relURL = "/about", go to the about page.
-  if (relURL === "/about") {
+  if (tailURL === "/about") {
     return (
       <main className="app-main">
         {"TODO: Insert 'About' page component here."}
@@ -115,7 +115,7 @@ export function render({url = "", history, homeURL}) {
   // Else if relURL = "/tutorials", go to a tutorial index page, which
   // similarly to the home page is also supposed to be a variable, user-
   // determined page some point. TODO: Implement that.
-  if (relURL === "/tutorials") {
+  if (tailURL === "/tutorials") {
     return (
       <main className="app-main">
         <TutorialIndexPage key="tut"/>
@@ -124,7 +124,7 @@ export function render({url = "", history, homeURL}) {
   }
 
   // Else if relURL = "/donations", go to the about page.
-  if (relURL === "/donations") {
+  if (tailURL === "/donations") {
     return (
       <main className="app-main">
         {"TODO: Insert 'Donations' page component here."}
@@ -133,7 +133,7 @@ export function render({url = "", history, homeURL}) {
   }
 
   // Else if relURL = "/sponsors", go to the about page.
-  if (relURL === "/sponsors") {
+  if (tailURL === "/sponsors") {
     return (
       <main className="app-main">
         {"TODO: Insert 'Sponsors' page component here."}

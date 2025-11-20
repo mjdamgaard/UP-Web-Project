@@ -177,7 +177,7 @@ export function render({route}) {
   // route is a path to a text file plus a query path.
   else if (adminID === undefined) {
     this.setState(state => ({...state, adminID: false}));
-    fetch(routeHomePath + "//admin").then(adminID => {
+    fetch(routeHomePath + "./admin").then(adminID => {
       this.setState(state => ({...state, adminID: adminID ? adminID : "None"}));
     });
     fetch(transformedRoute).then(result => {
