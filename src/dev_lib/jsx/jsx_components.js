@@ -4,7 +4,7 @@ import {
   forEachValue, CLEAR_FLAG, PromiseObject, logExtendedErrorAndTrace,
   OBJECT_PROTOTYPE, Environment, ARRAY_PROTOTYPE, FunctionObject, Exception,
   getStringOrSymbol, getPropertyFromObject, getPropertyFromPlainObject,
-  jsonStringify, ArgTypeError, decrCompGas,
+  jsonStringify, ArgTypeError, decrCompGas, getAbsolutePath,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
@@ -1461,8 +1461,13 @@ function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
     );
     if (!HREF_CD_START_REGEX.test(url)) url = './' + url;
 
+    // Then construct the full URL (or actually the full pathname).
+    let curURL = window.location.pathname;
+    url = getAbsolutePath(curURL, url, callerNode, execEnv);
+
     let urlData = {url: url, stateJSON: stateJSON};
     urlContext.setVal(urlData);
+    return url;
   };
 
   // Define the methods of the history object.
@@ -1470,7 +1475,7 @@ function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
     "pushState", {typeArr: ["any?", "string"]},
     ({callerNode, execEnv}, [state = null, url]) => {
       let stateJSON = jsonStringify(state);
-      validateAndUpdateURLContext(stateJSON, url, callerNode, execEnv);
+      url = validateAndUpdateURLContext(stateJSON, url, callerNode, execEnv);
       window.history.pushState(stateJSON, "", url);
     }
   );
@@ -1478,7 +1483,7 @@ function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
     "replaceState", {typeArr: ["any?", "string"]},
     ({callerNode, execEnv}, [state = null, url]) => {
       let stateJSON = jsonStringify(state);
-      validateAndUpdateURLContext(stateJSON, url, callerNode, execEnv);
+      url = validateAndUpdateURLContext(stateJSON, url, callerNode, execEnv);
       window.history.replaceState(stateJSON, "", url);
     }
   );
@@ -1496,7 +1501,6 @@ function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
   // state JSON.
   let {url, stateJSON} = urlContext.getVal();
 
-
   // Then subscribe the app component's jsxInstance to the urlContext.
   urlContext.addSubscriberCallback((urlData) => {
     jsxInstance.changePropsAndQueueRerender({
@@ -1511,8 +1515,8 @@ function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
 
   // And note that the following popstate event listener is added in index.js:
   // window.addEventListener("popstate", (event) => {
-  //   let urlData = {url: window.location.pathname, stateJSON: event.state};
-  //   urlContext.setVal(urlData);
+  //   let url = window.location.pathname.replace(/\/$/, "");
+  //   let urlData = {url: url, stateJSON: event.state};
   // });
 
   // Then return the initial URL-related props. 

@@ -26,12 +26,12 @@ export function render({url = "", userID}) {
     let indOfThirdSlash = indexOf(url, "/", 3);
     let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
     let urlUserID = slice(url, 3, endOfID);
-    let urlRemainder = substring(url, 3 + urlUserID.length);
+    let tailURL = substring(url, 3 + urlUserID.length);
     return (
       <main className="app-main">
         <UserPage key="u"
           userID={urlUserID} ownUserID={userID}
-          url={urlRemainder} pageURL={"~/u/" + urlUserID}
+          url={tailURL} relURL={"~/u/" + urlUserID}
         />
       </main>
     );

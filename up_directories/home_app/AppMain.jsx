@@ -1,5 +1,5 @@
 
-import {slice, substring, at, indexOf} from 'string';
+import {substring, indexOf} from 'string';
 import {decodeURIComponent, encodeURIComponent} from 'query';
 import {fetchEntityID} from "/1/1/entities.js";
 
@@ -12,9 +12,6 @@ from "./variable_components/ComponentEntityPage.jsx";
 
 
 export function render({url = "", history, homeURL}) {
-  if (at(url, -1) === "/") {
-    url = slice(url, 0, -1);
-  }
   let relURL = substring(url, homeURL.length);
 
   // If the relURL is empty, replace it with "up" ('up' for 'user-programmed'),
@@ -67,11 +64,11 @@ export function render({url = "", history, homeURL}) {
     let indOfThirdSlash = indexOf(relURL, "/", 3);
     let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
     let entID = substring(relURL, 3, endOfID);
-    let urlRemainder = substring(relURL, 3 + entID.length);
+    let tailURL = substring(relURL, 3 + entID.length);
     return (
       <main className="app-main">
         <EntityPage key={"e-" + entID}
-          entKey={entID} url={urlRemainder} pageURL={"~/e/" + entID}
+          entKey={entID} url={url} homeURL={homeURL} tailURL={tailURL}
         />
       </main>
     );
@@ -83,11 +80,11 @@ export function render({url = "", history, homeURL}) {
     let indOfThirdSlash = indexOf(relURL, "/", 3);
     let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
     let entID = substring(relURL, 3, endOfID);
-    let urlRemainder = substring(relURL, 3 + entID.length);
+    let tailURL = substring(relURL, 3 + entID.length);
     return (
       <main className="app-main">
         <ComponentEntityPage key={"c-" + entID}
-          entKey={entID} url={urlRemainder} pageURL={"~/c/" + entID}
+          entKey={entID} url={url} homeURL={homeURL} tailURL={tailURL}
         />
       </main>
     );

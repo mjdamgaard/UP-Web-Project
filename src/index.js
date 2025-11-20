@@ -93,12 +93,13 @@ class AppContext {
 
 const settingsContext = new AppContext(settings);
 const urlContext = new AppContext({
-  url: window.location.pathname, stateJSON: "null"
+  url: window.location.pathname.replace(/\/$/, ""), stateJSON: "null"
 });
 
 // Create a popstate event that updates the urlContext.
 window.addEventListener("popstate", (event) => {
-  let urlData = {url:  window.location.pathname, stateJSON: event.state};
+  let url = window.location.pathname.replace(/\/$/, "");
+  let urlData = {url: url, stateJSON: event.state};
   urlContext.setVal(urlData);
 });
 

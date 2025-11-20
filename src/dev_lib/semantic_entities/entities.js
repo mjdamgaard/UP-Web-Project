@@ -1,8 +1,8 @@
 
 import {DevFunction} from "../../interpreting/ScriptInterpreter.js";
 
-const onlyEntPathRegEx = /^\/[/~.a-zA-Z0-9_\-]+$/;
-const segmentRegEx = /\$\{[/~.a-zA-Z0-9_\-]+\}|\\([\s\S]|$)|[^\\$]+|[\s\S]/g;
+const onlyEntPathRegEx = /^\/\S+$/;
+const segmentRegEx = /\$\{[^\s}]+\}|\\([\s\S]|$)|[^\\$]+|[\s\S]/g;
 const internalReferenceRegEx = /^\$\{([/~.a-zA-Z0-9_\-]+)\}$/;
 
 
