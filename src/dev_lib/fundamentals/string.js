@@ -57,6 +57,12 @@ export const toLowerCase = new DevFunction(
   }
 );
 
+export const trim = new DevFunction(
+  "trim", {typeArr: ["string"]}, ({}, [str]) => {
+    return str.trim();
+  }
+);
+
 
 // TODO: Continue implementing all other standard String methods, except RegEx-
 // related ones, since RegExes should only be implemented at a later point and

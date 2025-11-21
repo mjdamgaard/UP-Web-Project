@@ -10,7 +10,9 @@ import * as AppMain from "./AppMain.jsx";
 import {scoreHandler01} from "/1/1/score_handling/ScoreHandler01/em.js";
 
 
-export function render({url, history, userID, homeURL = ""}) {
+export function render({
+  url, history, userID, homeURL = "", localStorage, sessionStorage
+}) {
   let {userEntID} = this.state;
   // TODO: Consider modifying the history object here such that the descendants
   // who use pushState() or replaceState() doesn't have to prepend the homeURL
@@ -37,7 +39,9 @@ export function render({url, history, userID, homeURL = ""}) {
   return (
     <div className="app">
       <AppHeader key="h" url={url} history={history} homeURL={homeURL} />
-      <AppMain key="m" url={url} history={history} homeURL={homeURL} />
+      <AppMain key="m" url={url} history={history} homeURL={homeURL}
+        localStorage={localStorage} sessionStorage={sessionStorage}
+      />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import {map} from 'array';
 
 import * as VariableEntityElement
 from "../variable_components/VariableEntityElement.jsx";
-import * as AddEntityMenu from "./AddEntityMenu.jsx";
+import * as EntityListMenu from "./EntityListMenu.jsx";
 
 
 // TODO: This component should at some point be extended with a menu for
@@ -37,7 +37,7 @@ import * as AddEntityMenu from "./AddEntityMenu.jsx";
 // the class.
 export function render({
   qualKey, relKey, objKey, classKey, ElementComponent = VariableEntityElement,
-  scoreHandler = undefined, options = undefined,
+  hideMenu = false, scoreHandler = undefined, options = undefined,
   paginationLength = 50, paginationIndex = 0,
 }) {
   scoreHandler = scoreHandler ?? this.subscribeToContext("scoreHandler");
@@ -66,16 +66,9 @@ export function render({
   // elements, namely in a pagination.
   else {
     content = [
-      <div className="entity-list-menu">
-        <button onClick={() => {
-          this.setState(state => ({
-            ...state, menuExtension: <AddEntityMenu key="add"
-              qualKeyArr={[qualKey ?? qualPath]}
-            />
-          }));
-        }}>{"Add new"}</button>
-      </div>,
-      <div className="menu-extension">{menuExtension}</div>,
+      hideMenu ? undefined : <EntityListMenu
+        qualKeyArr={[qualKey ?? qualPath]}
+      />,
       <hr/>,
       <div className="list-container">{
         map(list, ([entID, score, weight]) => (
@@ -92,3 +85,17 @@ export function render({
     <div className="entity-list">{content}</div>
   );
 }
+
+
+
+
+export const events = [
+  "updateListLimits",
+];
+
+
+export const actions = {
+  "updateListLimits": function(minScore, minWeight) {
+    
+  }
+};

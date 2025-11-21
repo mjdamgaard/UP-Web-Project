@@ -2,9 +2,10 @@
 import {slice, indexOf} from 'string';
 import {encodeURIComponent} from 'query';
 import {fetchEntityDefinition} from "/1/1/entities.js";
+import * as PhishingWarning from "./PhishingWarning.jsx";
 
 
-export function render({entKey, url, tailURL}) {
+export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
   let history = this.subscribeToContext("history");
   let userID = this.subscribeToContext("userID");
   let {componentDef, Component, useFullScreen} = this.state;
@@ -91,13 +92,9 @@ export function render({entKey, url, tailURL}) {
     // Then return the component page.
     let className = "component-page" + (useFullScreen ? " full-screen" : "");
     return <div className={className}>
-      {/* TODO: Also fetch some 'Is Trusted' score for the component entity,
-        * and only show the warning if the component is not sufficiently
-        * trusted (looking at both the score itself and its weight, of course).
-      */}
-      <div className="warning">{
-        "Insert phishing warning here, and button (and checkbox) to dismiss."
-      }</div>
+      <PhishingWarning key="w" entKey={entKey}
+        sessionStorage={sessionStorage} localStorage={localStorage}
+      />
       <div className="component">
         <Component {...props} key="_0" />
       </div>

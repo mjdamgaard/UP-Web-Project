@@ -2,7 +2,7 @@
 import * as EntityReference from "../utility_components/EntityReference.jsx";
 import * as TabbedPages from "../utility_components/TabbedPages.jsx";
 import * as EntityMetadataPage from "./EntityMetadataPage.jsx";
-import * as EntityList from "../utility_components/EntityList.jsx";
+import * as EntityList from "../entity_lists/EntityList.jsx";
 import * as GeneralEntityElement 
 from "../entity_elements/GeneralEntityElement.jsx";
 
@@ -34,13 +34,6 @@ export function render({entKey}) {
           objKey: entKey,
           ElementComponent: GeneralEntityElement,
         },
-      },
-      test: {
-        title: "Test",
-        Component: EntityReference,
-        props: {
-          entKey: entKey,
-        }
       },
     }}/>
   </div>;

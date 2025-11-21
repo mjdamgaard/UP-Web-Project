@@ -11,7 +11,9 @@ import * as ComponentEntityPage
 from "./variable_components/ComponentEntityPage.jsx";
 
 
-export function render({url = "", history, homeURL}) {
+export function render({
+  url = "", history, homeURL, localStorage, sessionStorage
+}) {
   let tailURL = substring(url, homeURL.length);
 
   // If the relURL is empty, replace it with "up" ('up' for 'user-programmed'),
@@ -85,6 +87,7 @@ export function render({url = "", history, homeURL}) {
       <main className="app-main">
         <ComponentEntityPage key={"c-" + entID}
           entKey={entID} url={url} homeURL={homeURL} tailURL={tailURL}
+          localStorage={localStorage} sessionStorage={sessionStorage}
         />
       </main>
     );
