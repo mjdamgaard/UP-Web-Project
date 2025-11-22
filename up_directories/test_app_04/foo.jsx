@@ -7,7 +7,7 @@ export function render() {
       </p>
       <p className="alternative-paragraph">
         {"I am a nested component instance styled by my parent, and thus " +
-        "belonging to the same style scope as my parent."}
+        "belong to the same app scope as my parent."}
       </p>
     </div>
   );

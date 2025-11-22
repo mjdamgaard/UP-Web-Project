@@ -45,7 +45,7 @@ const TRANSFORM_KEYWORD_REGEX = /^(copy|inherit)$/;
 // childRules := *same as above*.
 //
 // Furthermore, the settingsData props used are:
-// componentID?: <the ID of root component of the current style scope>,
+// componentID?: <the ID of root component of the current app scope>,
 // transform?: <prepared transform>,
 // transformProps?: <an object passed as input to functions in the transform>.
 
@@ -136,7 +136,7 @@ export class AppStyler01 {
     // where the given style sheet will simply target the component and all
     // its descendants that does not have keys the begin with "_". And if a
     // descendant is reached with a key starting with "_", it will then get
-    // its own style scope.
+    // its own app scope.
     let transform, transformProps;
     if (styleModule instanceof CSSModule) {
       transform = {
@@ -468,7 +468,7 @@ export class AppStyler01 {
     // If the transform is still falsy at this point, it means that the
     // instance should be the root instance of a new scope.
     if (!transform) {
-      // First record that the instance is the root of a style scope.
+      // First record that the instance is the root of an app scope.
       settingsData.isScopeRoot = true;
 
       // Then get the componentID.
@@ -613,7 +613,7 @@ export class AppStyler01 {
     // Finally, remove the "own-leaf" classes again.
     ownDOMNodes.forEach(node => node.classList.remove("own-leaf"));
 
-    // And in case of the outer component of a style scope, set the overflow
+    // And in case of the outer component of an app scope, set the overflow
     // style property as hidden, and add a scope-root class.
     if (isScopeRoot) {
       domNode.style.overflow = "hidden";
@@ -623,7 +623,7 @@ export class AppStyler01 {
 
 
 
-  getStyleScopeRoot(jsxInstance, _node, _env) {
+  getAppScopeRoot(jsxInstance, _node, _env) {
     let {componentID} = jsxInstance.settingsData;
     let parentInstance = jsxInstance.parentInstance;
     while(
@@ -636,7 +636,7 @@ export class AppStyler01 {
   }
 
 
-  isOutsideFocusedStyleScope(jsxInstance, _node, _env) {
+  isOutsideFocusedAppScope(jsxInstance, _node, _env) {
     let ownNode = jsxInstance.domNode;
     let focusedNode = document.activeElement;
     if (focusedNode === document.body) {

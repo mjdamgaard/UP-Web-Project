@@ -12,7 +12,7 @@ export class CSSTransformer {
 
   // instantiateStyleSheetTemplate() takes a template as returned from
   // transformStyleSheet() below, as well as a component ID (of the root
-  // component of the current style scope) and a style sheet ID, and creates
+  // component of the current app scope) and a style sheet ID, and creates
   // an instance of that template, which is a valid CSS string ready to be
   // inserted in the document head.
   instantiateStyleSheetTemplate(
@@ -29,7 +29,7 @@ export class CSSTransformer {
   // transformStyleSheet() parses and transforms the input styleSheet into a
   // style sheet template with "\sid" and "\cid" placeholders, which are
   // substituted respectively with the style sheet ID and a component ID for
-  // the relevant style scope component before the style sheet is ready to be
+  // the relevant app scope component before the style sheet is ready to be
   // inserted in the document head.
   transformStyleSheet(styleSheet, node, env) {
     styleSheet = getString(styleSheet, env);

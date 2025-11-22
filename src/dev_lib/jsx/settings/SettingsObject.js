@@ -73,12 +73,12 @@ export class SettingsObject01 extends SettingsObject {
     );
   }
 
-  getStyleScopeRoot(jsxInstance, node, env) {
-    return this.appStyler.getStyleScopeRoot(jsxInstance, node, env);
+  getAppScopeRoot(jsxInstance, node, env) {
+    return this.appStyler.getAppScopeRoot(jsxInstance, node, env);
   }
 
-  isOutsideFocusedStyleScope(jsxInstance, node, env) {
-    return this.appStyler.isOutsideFocusedStyleScope(jsxInstance, node, env);
+  isOutsideFocusedAppScope(jsxInstance, node, env) {
+    return this.appStyler.isOutsideFocusedAppScope(jsxInstance, node, env);
   }
 
 

@@ -119,7 +119,7 @@ export const actions = {
   "focus": new DevFunction(
     "focus", {}, function({thisVal, callerNode, execEnv}, []) {
       let {jsxInstance} = thisVal;
-      let canGrabFocus = !jsxInstance.settings.isOutsideFocusedStyleScope(
+      let canGrabFocus = !jsxInstance.settings.isOutsideFocusedAppScope(
         jsxInstance, callerNode, execEnv
       );
       if (canGrabFocus) {

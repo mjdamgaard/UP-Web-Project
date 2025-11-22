@@ -550,7 +550,7 @@ class JSXInstance {
             break;
           // TODO: Consider also adding an 'autofocus' prop here that grabs the
           // focus, but only once, and only if allowed by 
-          // settings.isOutsideFocusedStyleScope().
+          // settings.isOutsideFocusedAppScope().
           case "onKeyDown":
             eventProperty ??= "onkeydown";
           case "onKeyUp":
@@ -1090,7 +1090,7 @@ export class JSXInstanceInterface extends ObjectObject {
 
   // TODO: Extend the API of getBoundingClientRect() such that it can take a
   // selector argument, in which case the first DOM node from this selection,
-  // filtered so that only elements within the current style scope is selected,
+  // filtered so that only elements within the current app scope is selected,
   // is used instead. 
   getBoundingClientRect = new DevFunction(
     "getBoundingClientRect", {}, () => {
@@ -1276,13 +1276,13 @@ export class SettingsObject extends ObjectObject {
     jsxInstance, domNode, ownDOMNodes, node, env
   ) {}
 
-  // getStyleScopeRoot(jsxInstance) gets the DOM node at the root of the
-  // current style scope.
-  getStyleScopeRoot(jsxInstance, node, env) {}
+  // getAppScopeRoot(jsxInstance) gets the DOM node at the root of the
+  // current app scope.
+  getAppScopeRoot(jsxInstance, node, env) {}
 
-  // isOutsideFocusedStyleScope(jsxInstance) returns true iff there is an
-  // HTML element in focus outside of the current style scope.
-  isOutsideFocusedStyleScope(jsxInstance, node, env) {}
+  // isOutsideFocusedAppScope(jsxInstance) returns true iff there is an
+  // HTML element in focus outside of the current app scope.
+  isOutsideFocusedAppScope(jsxInstance, node, env) {}
 
   // Note that these are just the minimal API needed for this module to
   // function. In practice the settings class will likely be extended with

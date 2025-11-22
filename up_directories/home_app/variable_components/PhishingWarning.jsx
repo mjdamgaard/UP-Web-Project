@@ -6,7 +6,9 @@ import * as Label from 'Label.jsx';
 // and only show the warning if the component is not sufficiently
 // trusted (looking at both the score itself and its weight, of course).
 
-export function render({entKey, localStorage, sessionStorage}) {
+export function render({
+  entKey, localStorage = undefined, sessionStorage = undefined
+}) {
   let {idKey} = this.state;
   let hasBeenDismissed;
   if (localStorage) {
@@ -28,7 +30,7 @@ export function render({entKey, localStorage, sessionStorage}) {
         <Label key="l" forKey={idKey}>{
         "Do not warn against this component again"
         }</Label>
-        <InputCheckbox key="c" id={idKey}/>
+        <InputCheckbox key="c" idKey={idKey} />
       </div>
       <button onClick={() => this.do("dismissWarning")}>{"Accept"}</button>
     </div>
