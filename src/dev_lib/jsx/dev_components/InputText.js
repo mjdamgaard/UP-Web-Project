@@ -6,6 +6,7 @@ import {
 import {
   DOMNodeObject, JSXInstanceInterface, clearAttributes
 } from "../jsx_components.js";
+import {getID} from "./getID.js";
 
 
 export const render = new DevFunction(
@@ -22,12 +23,13 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {size, value, placeholder, onChange, onInput} = props;
+    let {idKey, size, value, placeholder, onChange, onInput} = props;
     verifyTypes(
       [size, onChange, onInput],
       ["integer positive?", "function?", "function?"],
       callerNode, execEnv
     );
+    let id = idKey === undefined ? undefined : getID(idKey);
     if (placeholder !== undefined) {
       placeholder = getString(placeholder, execEnv);
     }
@@ -47,6 +49,7 @@ export const render = new DevFunction(
     }
     domNode.setAttribute("type", "text");
     domNode.setAttribute("class", "input-text_0");
+    if (id !== undefined) domNode.setAttribute("id", id);
     if (size !== undefined) domNode.setAttribute("size", size);
     if (value !== undefined) domNode.value = value;
     if (placeholder !== undefined) {

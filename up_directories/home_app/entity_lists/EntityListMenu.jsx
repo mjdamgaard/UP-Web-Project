@@ -7,6 +7,8 @@ import * as InputText from 'InputText.jsx';
 
 
 export function render({qualKeyArr}) {
+  let {menuExtension} = this.state;
+
   return (
     <div className="entity-list-menu">
       <div>

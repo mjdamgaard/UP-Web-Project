@@ -848,6 +848,7 @@ export const scriptGrammar = {
       ["console-call!1"],
       ["super-call-or-access!1"],
       ["promise-call"],
+      ["symbol-call"],
       ["abs-call!1"],
       ["this-keyword"],
       ["identifier"],
@@ -1135,6 +1136,18 @@ export const scriptGrammar = {
       } : {
         type: "promise-call",
         exp: children[3],
+      };
+    },
+  },
+  "symbol-call": {
+    rules: [
+      ["/Symbol/", /\(/, "expression", /\)/],
+      ["/Symbol/", /\(/, /\)/],
+    ],
+    process: (children, ruleInd) => {
+      return {
+        type: "symbol-call",
+        exp: (ruleInd === 0) ? children[2] : undefined,
       };
     },
   },

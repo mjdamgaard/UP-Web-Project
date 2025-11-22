@@ -5,6 +5,7 @@ import {
 import {
   DOMNodeObject, JSXInstanceInterface, clearAttributes
 } from "../jsx_components.js";
+import {getID} from "./getID.js";
 
 
 export const render = new DevFunction(
@@ -21,11 +22,12 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {placeholder, onChange, onInput} = props;
+    let {idKey, placeholder, onChange, onInput} = props;
     verifyTypes(
       [placeholder, onChange, onInput], ["string?", "function?", "function?"],
       callerNode, execEnv
     );
+    let id = idKey === undefined ? undefined : getID(idKey);
 
     // Create the DOM node if it has no been so already.
     let jsxInstance = thisVal.jsxInstance;
@@ -38,6 +40,7 @@ export const render = new DevFunction(
       clearAttributes(domNode);
     }
     domNode.setAttribute("class", "textarea_0");
+    if (id !== undefined) domNode.setAttribute("id", id);
     if (placeholder !== undefined) {
       domNode.setAttribute("placeholder", placeholder);
     }

@@ -1266,6 +1266,12 @@ export class ScriptInterpreter {
         );
         return ret;
       }
+      case "symbol-call": {
+        let expVal = (expNode.exp === undefined) ? undefined : getString(
+          this.evaluateExpression(expNode.exp, environment), environment
+        );
+        return Symbol(expVal);
+      }
       case "import-call": {
         let path = this.evaluateExpression(expNode.pathExp, environment);
         let ret;

@@ -5,19 +5,7 @@ import {
 import {
   DOMNodeObject, JSXInstanceInterface, clearAttributes
 } from "../jsx_components.js";
-
-
-const nameMap = new Map();
-let nonce = 1;
-
-function convertName(name) {
-  let ret = nameMap.get(name);
-  if (ret === undefined) {
-    ret = (nonce++).toString();
-    nameMap.set(name, ret);
-  }
-  return ret;
-}
+import {getID} from "./getID.js";
 
 
 export const render = new DevFunction(
@@ -34,12 +22,12 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {name = new Symbol("name"), value, checked, onChange, onInput} = props;
+    let {idKey, name, checked, onChange, onInput} = props;
     verifyTypes(
-      [value, onChange, onInput], ["string?", "function?", "function?"],
+      [name, onChange, onInput], ["string?", "function?", "function?"],
       callerNode, execEnv
     );
-    name = convertName(name);
+    let id = idKey === undefined ? undefined : getID(idKey);
 
     // Create the DOM node if it has no been so already.
     let jsxInstance = thisVal.jsxInstance;
@@ -52,15 +40,15 @@ export const render = new DevFunction(
     }
     domNode.setAttribute("type", "radio");
     domNode.setAttribute("class", "input-radio_0");
+    if (id !== undefined) domNode.setAttribute("id", id);
     if (name !== undefined) domNode.setAttribute("name", name);
-    if (value !== undefined) domNode.setAttribute("value", value);
     if (checked) domNode.setAttribute("checked", true);
 
     // Set the onchange event if props.onChange is supplied.
     if (onChange) {
       domNode.onchange = (event) => {
-        let {value} = event.target;
-        let e = {value: value};
+        let {checked} = event.target;
+        let e = {value: checked};
         interpreter.executeFunctionOffSync(
           onChange, [e], callerNode, execEnv, thisVal
         );
@@ -70,8 +58,8 @@ export const render = new DevFunction(
     // Set the oninput event if props.oninput is supplied.
     if (onInput) {
       domNode.oninput = (event) => {
-        let {value} = event.target;
-        let e = {value: value};
+        let {checked} = event.target;
+        let e = {value: checked};
         interpreter.executeFunctionOffSync(
           onInput, [e], callerNode, execEnv, thisVal
         );
@@ -92,11 +80,11 @@ export const methods = [
 ];
 
 export const actions = {
-  "getIsChecked": new DevFunction("getValue", {}, function({thisVal}, []) {
+  "getIsChecked": new DevFunction("getIsChecked", {}, function({thisVal}, []) {
     return thisVal.jsxInstance.domNode.checked;
   }),
   "setIsChecked": new DevFunction(
-    "setValue", {}, function({thisVal}, [val]) {
+    "setIsChecked", {}, function({thisVal}, [val]) {
       val = val ? true : false;
       let {domNode} = thisVal.jsxInstance;
       let prevVal = domNode.checked;

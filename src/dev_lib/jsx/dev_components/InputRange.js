@@ -5,6 +5,7 @@ import {
 import {
   DOMNodeObject, JSXInstanceInterface, clearAttributes
 } from "../jsx_components.js";
+import {getID} from "./getID.js";
 
 
 export const render = new DevFunction(
@@ -21,12 +22,13 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {min, max, value, step, onChange, onInput} = props;
+    let {idKey, min, max, value, step, onChange, onInput} = props;
     verifyTypes(
       [min, max, value, step, onChange, onInput],
       ["number?", "number?", "number?", "number?", "function?", "function?"],
       callerNode, execEnv
     );
+    let id = idKey === undefined ? undefined : getID(idKey);
 
     // Create the DOM node if it has no been so already.
     let jsxInstance = thisVal.jsxInstance;
@@ -40,6 +42,7 @@ export const render = new DevFunction(
     }
     domNode.setAttribute("type", "range");
     domNode.setAttribute("class", "input-range_0");
+    if (id !== undefined) domNode.setAttribute("id", id);
     if (min !== undefined) domNode.setAttribute("min", min);
     if (max !== undefined) domNode.setAttribute("max", max);
     if (value !== undefined) domNode.setAttribute("value", value);

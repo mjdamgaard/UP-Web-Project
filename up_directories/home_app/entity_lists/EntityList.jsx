@@ -41,7 +41,7 @@ export function render({
   paginationLength = 50, paginationIndex = 0,
 }) {
   scoreHandler = scoreHandler ?? this.subscribeToContext("scoreHandler");
-  let {qualPath, list, menuExtension} = this.state;
+  let {qualPath, list} = this.state;
   let content;
 
   // If the qualKey prop is undefined, and qualPath has not yet been fetched,
@@ -66,7 +66,7 @@ export function render({
   // elements, namely in a pagination.
   else {
     content = [
-      hideMenu ? undefined : <EntityListMenu
+      hideMenu ? undefined : <EntityListMenu key="menu"
         qualKeyArr={[qualKey ?? qualPath]}
       />,
       <hr/>,
