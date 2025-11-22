@@ -38,10 +38,11 @@ import * as EntityListMenu from "./EntityListMenu.jsx";
 export function render({
   qualKey, relKey, objKey, classKey, ElementComponent = VariableEntityElement,
   hideMenu = false, scoreHandler = undefined, options = undefined,
+  minScore = undefined, minWeight = 10,
   paginationLength = 50, paginationIndex = 0,
 }) {
   scoreHandler = scoreHandler ?? this.subscribeToContext("scoreHandler");
-  let {qualPath, list} = this.state;
+  let {qualPath, list, curMinScore, curMinWeight} = this.state;
   let content;
 
   // If the qualKey prop is undefined, and qualPath has not yet been fetched,
@@ -68,14 +69,19 @@ export function render({
     content = [
       hideMenu ? undefined : <EntityListMenu key="menu"
         qualKeyArr={[qualKey ?? qualPath]}
+        minScore={minScore} minWeight={minWeight}
       />,
       <hr/>,
       <div className="list-container">{
         map(list, ([entID, score, weight]) => (
-          <ElementComponent key={"_" + entID}
-            entID={entID} score={score} weight={weight}
-            qualKeyArr={[qualKey ?? qualPath]}
-          />
+          (
+            curMinScore !== undefined && score < curMinScore ||
+            curMinWeight !== undefined && weight < curMinWeight
+          ) ? undefined :
+            <ElementComponent key={"_" + entID}
+              entID={entID} score={score} weight={weight}
+              qualKeyArr={[qualKey ?? qualPath]}
+            />
         ))
       }</div>,
     ];
@@ -87,6 +93,14 @@ export function render({
 }
 
 
+export function getInitialState({options, minScore, minWeight}) {
+  minScore ??= options?.lo;
+  minWeight ??= 10;
+  return {
+    curMinScore: minScore, curMinWeight: minWeight,
+  }; 
+}
+
 
 
 export const events = [
@@ -95,7 +109,15 @@ export const events = [
 
 
 export const actions = {
-  "updateListLimits": function(minScore, minWeight) {
-    
+  "updateListLimits": function([minScore, minWeight]) {
+    this.setState(state => ({
+      ...state, curMinScore: minScore, curMinWeight: minWeight,
+    }));
   }
 };
+
+
+
+export const styleSheetPaths = [
+  abs("./EntityList.css"),
+];

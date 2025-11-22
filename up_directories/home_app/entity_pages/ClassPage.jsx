@@ -43,4 +43,5 @@ export function render({entKey}) {
 
 export const styleSheetPaths = [
   abs("../utility_components/TabbedPages.css"),
+  abs("../entity_lists/EntityList.css"),
 ];

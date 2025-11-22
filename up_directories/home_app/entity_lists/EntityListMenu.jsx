@@ -6,7 +6,7 @@ import * as InputText from 'InputText.jsx';
 
 
 
-export function render({qualKeyArr}) {
+export function render({qualKeyArr, minScore, minWeight}) {
   let {menuExtension} = this.state;
 
   return (
@@ -21,11 +21,15 @@ export function render({qualKeyArr}) {
         }}>{"Add new"}</button>
         <div>
           <span>{"Minimum score:"}</span>
-          <InputText key="msi" onChange={() => this.do("updateListLimits")} />
+          <InputText key="msi" value={minScore} size={2}
+            onChange={() => this.do("updateListLimits")}
+          />
         </div>
         <div>
           <span>{"Minimum weight:"}</span>
-          <InputText key="mwi" onChange={() => this.do("updateListLimits")} />
+          <InputText key="mwi" value={minWeight} size={2}
+            onChange={() => this.do("updateListLimits")}
+          />
         </div>
       </div>
       <div className="menu-extension">{menuExtension}</div>
@@ -42,19 +46,21 @@ export const actions = {
       parseFloat(minScoreTextVal) : undefined;
     let minWeight = (minScoreTextVal !== undefined) ?
       parseFloat(minWeightTextVal) : undefined;
+    minScore = isNaN(minScore) ? undefined : minScore;
+    minWeight = isNaN(minWeight) ? undefined : minWeight;
     
     // Do nothing if neither texts are defined, or if one of them is defined
     // but ill-formed as a number.
     if (
-      minScore === undefined && minWeight === undefined ||
-      minScore !== undefined &&
-        (isNaN(minScore) || minScore != trim(minScoreTextVal)) ||
-      minWeight !== undefined &&
-        (isNaN(minWeight) || minWeight != trim(minWeightTextVal))
+      !minScoreTextVal && !minWeightTextVal ||
+      minScoreTextVal &&
+        (minScore === undefined || minScore != trim(minScoreTextVal)) ||
+      minWeightTextVal &&
+        (minWeight === undefined || minWeight != trim(minWeightTextVal))
     ) {
       return;
     }
-    
+
     // Else trigger 'updateListLimits' in the parent EntityList.
     this.trigger("updateListLimits", [minScore, minWeight]);
   }
