@@ -65,6 +65,11 @@
 }
 
 
+.hidden {
+  display: none;
+}
+
+
 code {
   white-space: pre;
   color: rgb(15, 29, 29);
