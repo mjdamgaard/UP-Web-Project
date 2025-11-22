@@ -40,7 +40,7 @@ const FUNCTION_NAME_PATTERN =
   "invert|lab|lch|light-dark|linear-gradient|linear|log|matrix|matrix3d|" +
   "max|min|minmax|mod|oklab|oklch|opacity|path|perspective|polygon|pow|" +
   "radial-gradient|ray|rect|rem|repeat|" +
-  "repeating-(conic|linear|radial)-gradient|rgb|" +
+  "repeating-(conic|linear|radial)-gradient|rgba?|" +
   "rotate(3d|X|Y|Z)?|scale(3d|X|Y|Z)?|skew[XYZ]?|translate(3d|X|Y|Z)?|" +
   "round|saturate|scroll|sepia|shape|sign|sin|sqrt|steps|tan|view|xywh)";
 

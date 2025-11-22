@@ -1,6 +1,7 @@
 
 import {slice, indexOf} from 'string';
 import {encodeURIComponent} from 'query';
+import {includes} from 'array';
 import {fetchEntityDefinition} from "/1/1/entities.js";
 import * as PhishingWarning from "./PhishingWarning.jsx";
 
@@ -8,7 +9,7 @@ import * as PhishingWarning from "./PhishingWarning.jsx";
 export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
   let history = this.subscribeToContext("history");
   let userID = this.subscribeToContext("userID");
-  let {componentDef, Component, useFullScreen} = this.state;
+  let {componentDef, Component, useFullScreen, hasBeenDismissed} = this.state;
 
   // If this component's definition object is not already gotten, fetch it.
   if (componentDef === undefined) {
@@ -92,12 +93,60 @@ export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
     // Then return the component page.
     let className = "component-page" + (useFullScreen ? " full-screen" : "");
     return <div className={className}>
-      <PhishingWarning key="w" entKey={entKey}
-        sessionStorage={sessionStorage} localStorage={localStorage}
-      />
+      {hasBeenDismissed ? undefined :
+        <PhishingWarning key="w" entKey={entKey}
+          sessionStorage={sessionStorage} localStorage={localStorage}
+        />
+      }
       <div className="component">
         <Component {...props} key="_0" />
       </div>
     </div>;
   }
 }
+
+
+
+export function getInitialState({
+  entKey, localStorage = undefined, sessionStorage = undefined
+}) {
+  let hasBeenDismissed;
+  if (sessionStorage) {
+    let acceptedComponents = sessionStorage.getItem("acceptedComponents") ?? [];
+    if (includes(acceptedComponents, entKey)) {
+      hasBeenDismissed = true;
+    }
+  }
+  if (localStorage && !hasBeenDismissed) {
+    let acceptedComponents = localStorage.getItem("acceptedComponents") ?? [];
+    if (includes(acceptedComponents, entKey)) {
+      hasBeenDismissed = true;
+    }
+  }
+  return {hasBeenDismissed: hasBeenDismissed};
+}
+
+
+
+export const events = [
+  "dismissWarning",
+];
+
+export const actions = {
+  "dismissWarning": function(doNotWarnAgain) {
+    let {entKey, sessionStorage, localStorage} = this.props;
+    if (sessionStorage) {
+      let newAcceptedComponents = [
+        ...(sessionStorage.getItem("acceptedComponents") ?? []), entKey
+      ];
+      sessionStorage.setItem("acceptedComponents", newAcceptedComponents);
+    }
+    if (doNotWarnAgain && localStorage) {
+      let newAcceptedComponents = [
+        ...(localStorage.getItem("acceptedComponents") ?? []), entKey
+      ];
+      localStorage.setItem("acceptedComponents", newAcceptedComponents);
+    }
+    this.setState(state => ({...state, hasBeenDismissed: true}));
+  },
+};

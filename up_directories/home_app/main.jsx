@@ -79,5 +79,6 @@ export const events = [
 export const styleSheetPaths = [
   abs("./style.css"),
   abs("./variable_components/VariableComponent.css"),
+  abs("./variable_components/ComponentEntityPage.css"),
   abs("./entity_lists/EntityList.css"),
 ];

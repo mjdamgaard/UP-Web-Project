@@ -1,2 +1,12 @@
 
 
+
+.phishing-warning {
+  background-color: rgba(255, 238, 0, 0.411);
+  border-bottom: 3px ridge rgb(45, 42, 0);
+}
+
+.phishing-warning > .dismissal-option > * {
+  display: inline-block;
+  margin: 0 1em;
+}

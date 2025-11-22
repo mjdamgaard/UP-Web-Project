@@ -89,12 +89,21 @@ export const concat = new DevFunction(
   }
 );
 
+export const includes = new DevFunction(
+  "includes", {typeArr: ["array", "any?", "integer unsigned?"]},
+  ({}, [arr, searchElement, fromIndex]) => {
+    if (arr instanceof ObjectObject) arr = arr.members;
+    return arr.includes(searchElement, fromIndex);
+  }
+);
 
-// export const indexOf = new DevFunction(
-//   "indexOf", {typeArr: ["string", "string"]}, ({}, [str, needle]) => {
-//     return str.indexOf(needle);
-//   }
-// );
+export const indexOf = new DevFunction(
+  "indexOf", {typeArr: ["array", "any?", "integer unsigned?"]},
+  ({}, [arr, searchElement, fromIndex]) => {
+    if (arr instanceof ObjectObject) arr = arr.members;
+    return arr.indexOf(searchElement, fromIndex);
+  }
+);
 
 // TODO: Continue.
 
