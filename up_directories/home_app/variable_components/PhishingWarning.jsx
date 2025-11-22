@@ -16,15 +16,15 @@ export function render() {
         "by the user community, or is still under development."
       }</p>
       <p>{
-        "UP-Web.org therefore does not guarantee that it doesn't contain " +
+        "UP-Web.org therefore does not guarantee that it does not contain " +
         "phishing attempts, or other mischievous content."
       }</p>
       <p>{
         "No not give up any sensitive " +
-        "information to the component, unless you trust its creators."
+        "information to the component, unless you really trust its creators."
       }</p>
       <p>{
-        "And be aware that the content might be inappropriate for sensitive " +
+        "Also be aware that the content might be inappropriate for sensitive " +
         "users."
       }</p>
     </div>

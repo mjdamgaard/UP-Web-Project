@@ -98,7 +98,7 @@ export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
           sessionStorage={sessionStorage} localStorage={localStorage}
         />
       }
-      <div className="component">
+      <div className={"component" + (hasBeenDismissed ? "" : " blurred")}>
         <Component {...props} key="_0" />
       </div>
     </div>;

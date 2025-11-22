@@ -10,3 +10,8 @@
   display: inline-block;
   margin: 0 1em;
 }
+
+.component-page > .component.blurred {
+  pointer-events: none;
+  filter: blur(6px);
+}
