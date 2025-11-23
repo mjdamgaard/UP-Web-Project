@@ -1,12 +1,12 @@
 
 import {
-  DevFunction, getString, ArgTypeError, ObjectObject, verifyTypes,
-  getPropertyFromObject,
+  DevFunction, ArgTypeError, ObjectObject, verifyTypes, getPropertyFromObject,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
   DOMNodeObject, JSXInstanceInterface, HREF_REGEX, HREF_CD_START_REGEX,
-  clearAttributes,
+  clearAttributes, validateThisValJSXInstance,
 } from "../jsx_components.js";
+import {CAN_POST_FLAG} from "../../query/src/flags.js";
 
 
 
@@ -33,7 +33,9 @@ export const render = new DevFunction(
     }
     homeURL ??= thisVal.jsxInstance.subscribeToContext("homeURL");
     verifyTypes(
-      [pushState, onClick], ["function?", "function?"], callerNode, execEnv
+      [href, homeURL, pushState, onClick],
+      ["string?", "string?", "function?", "function?"],
+      callerNode, execEnv
     );
 
     // Create the DOM node if it has no been so already.
@@ -49,12 +51,10 @@ export const render = new DevFunction(
 
     // Add the relative href if provided.
     if (href !== undefined) {
-      href = getString(href, execEnv); 
-
       // If href starts with "~/", interpret it as relative to the homeURL,
       // which is then parsed, and joined with href into an absolute path.
       if (href.substring(0, 2) === "~/") {
-        homeURL = homeURL ? getString(homeURL, execEnv) : "";
+        homeURL ||= "";
         if (!HREF_REGEX.test(homeURL) || (homeURL && homeURL[0] !== "/")) {
           throw new ArgTypeError(
             "Invalid home URL: " + homeURL,
@@ -96,12 +96,20 @@ export const render = new DevFunction(
     // false, we prevent the normal behavior.
     domNode.onclick = (event) => {
       if (onClick) {
-        // TODO: Add event argument.
+        let {
+          button, offsetX, offsetY, ctrlKey, altKey, shiftKey, metaKey
+        } = event;
+        let e = {
+          canPost: true,
+          button: button, offsetX: offsetX, offsetY: offsetY,
+          ctrlKey: ctrlKey, altKey: altKey, shiftKey: shiftKey,
+          metaKey: metaKey,
+        };
         let shouldFollowLink = interpreter.executeFunctionOffSync(
-          onClick, [], callerNode, execEnv, thisVal
+          onClick, [e], callerNode, execEnv, thisVal, [[CAN_POST_FLAG, true]]
         ) ?? true;
         if (!shouldFollowLink) {
-          return;
+          return false; // Prevents default event propagation.
         }
       }
 
@@ -124,3 +132,34 @@ export const render = new DevFunction(
   }
 );
 
+
+
+export const methods = [
+  "focus",
+  "blur",
+];
+
+export const actions = {
+  "focus": new DevFunction(
+    "focus", {}, function({thisVal, callerNode, execEnv}, []) {
+      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      let {jsxInstance} = thisVal;
+      let canGrabFocus = !jsxInstance.settings.isOutsideFocusedAppScope(
+        jsxInstance, callerNode, execEnv
+      );
+      if (canGrabFocus) {
+        thisVal.jsxInstance.domNode.focus();
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+  ),
+  "blur": new DevFunction(
+    "blur", {}, function({thisVal, callerNode, execEnv}, []) {
+      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      thisVal.jsxInstance.domNode.blur();
+    }
+  ),
+};

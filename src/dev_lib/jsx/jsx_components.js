@@ -1593,3 +1593,13 @@ function addStorageRelatedProps(props) {
     localStorage: localStorageObject,
   };
 }
+
+
+
+
+export function validateThisValJSXInstance(thisVal, callerNode, execEnv) {
+  if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
+    "'this' is not a JSXInstance",
+    callerNode, execEnv
+  );
+}

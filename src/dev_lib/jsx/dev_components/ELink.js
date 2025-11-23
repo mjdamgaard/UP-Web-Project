@@ -1,17 +1,35 @@
 
 import {
-  DevFunction, getString, ArgTypeError, ObjectObject, verifyTypes,
-  getPropertyFromObject,
+  DevFunction, ArgTypeError, ObjectObject, verifyTypes,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, JSXInstanceInterface, HREF_REGEX, HREF_CD_START_REGEX,
-  clearAttributes,
+  DOMNodeObject, JSXInstanceInterface, clearAttributes,
+  validateThisValJSXInstance,
 } from "../jsx_components.js";
+import {CAN_POST_FLAG} from "../../query/src/flags.js";
 
+
+// TODO: Call a method from the SettingsObject instead in order to get the
+// URL whitelist, which then allows it to be user-dependent.
+
+const URL_VALID_CHARACTERS_REGEX =
+  /^https:\/(\/([.~a-zA-Z0-9_\-?=:]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+)+$/;
 
 const urlWhitelist = [
-  
+  /^https:\/\/en\.wikipedia\.org($|\/)/,
+  /^https:\/\/github\.com($|\/)/,
 ];
+
+function getIsWhitelisted(href) {
+  return !href || (
+    URL_VALID_CHARACTERS_REGEX.test(href) &&
+    urlWhitelist.reduce(
+      (acc, val) => acc || val.test(href),
+      false
+    )
+  );
+}
+
 
 
 export const render = new DevFunction(
@@ -28,17 +46,13 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {href, pushState, children, onClick, homeURL} = props;
-    if (pushState === undefined) {
-      let history = thisVal.jsxInstance.subscribeToContext("history");
-      if (history) {
-        pushState = getPropertyFromObject(history, "pushState");
-      }
-    }
-    homeURL ??= thisVal.jsxInstance.subscribeToContext("homeURL");
+    let {href = "", children, onClick} = props;
     verifyTypes(
-      [pushState, onClick], ["function?", "function?"], callerNode, execEnv
+      [href, onClick], ["string", "function?"], callerNode, execEnv
     );
+
+    // Check whether the href is whitelisted.
+    let isWhiteListed = getIsWhitelisted(href);
 
     // Create the DOM node if it has no been so already.
     let jsxInstance = thisVal.jsxInstance;
@@ -49,34 +63,12 @@ export const render = new DevFunction(
     else {
       clearAttributes(domNode);
     }
-    domNode.setAttribute("class", "i-link_0");
-
-    // Add the relative href if provided.
-    if (href !== undefined) {
-      href = getString(href, execEnv); 
-
-      // If href starts with "~/", interpret it as relative to the homeURL,
-      // which is then parsed, and joined with href into an absolute path.
-      if (href.substring(0, 2) === "~/") {
-        homeURL = homeURL ? getString(homeURL, execEnv) : "";
-        if (!HREF_REGEX.test(homeURL) || (homeURL && homeURL[0] !== "/")) {
-          throw new ArgTypeError(
-            "Invalid home URL: " + homeURL,
-            callerNode, execEnv
-          );
-        }
-        href = (href === "~/") ? homeURL || "/" : homeURL + href.substring(1);
-      }
-
-      // Validate href, and prepend './' to it if doesn't start with /.?.?\//.
-      if (!HREF_REGEX.test(href)) throw new ArgTypeError(
-        "Invalid href: " + href,
-        callerNode, execEnv
-      );
-      if (!HREF_CD_START_REGEX.test(href)) href = './' + href;
-
-      // Add the href attribute.
-      domNode.setAttribute("href", href);
+    domNode.setAttribute(
+      "class", "e-link_0" + (isWhiteListed ? "" : " invalid_0")
+    );
+    if (href) {
+      if (isWhiteListed) domNode.setAttribute("href", href);
+      else domNode.setAttribute("data-href", href);
     }
 
     // If the children prop is defined, use thisVal.getDOMNode() to render and
@@ -92,39 +84,65 @@ export const render = new DevFunction(
     }
     ownDOMNodes = [domNode, ...ownDOMNodes];
 
-    // If pushState is defined we put an onclick event on the <a> element,
-    // in order to redirect to pushState() rather than following the href
-    // directly and reloading the page. (If the user control/middle-clicks the
-    // link, it should still open a new tab in the browser, however.) But if
-    // the onClick prop is defined, we first execute that, and if that returns
-    // false, we prevent the normal behavior.
-    domNode.onclick = (event) => {
-      if (onClick) {
-        // TODO: Add event argument.
+    if (onClick) {
+      domNode.onclick = (event) => {
+        let {
+          button, offsetX, offsetY, ctrlKey, altKey, shiftKey, metaKey
+        } = event;
+        let e = {
+          canPost: true,
+          button: button, offsetX: offsetX, offsetY: offsetY,
+          ctrlKey: ctrlKey, altKey: altKey, shiftKey: shiftKey,
+          metaKey: metaKey,
+        };
         let shouldFollowLink = interpreter.executeFunctionOffSync(
-          onClick, [], callerNode, execEnv, thisVal
+          onClick, [e], callerNode, execEnv, thisVal, [[CAN_POST_FLAG, true]]
         ) ?? true;
-        if (!shouldFollowLink) {
-          return;
-        }
-      }
-
-      if (pushState) {
-        if (event.ctrlKey || event.button == 1) {
-          return true;
-        }
-        else {
-          interpreter.executeFunctionOffSync(
-            pushState, [undefined, href], callerNode, execEnv, thisVal
-          );
-          return false; // Prevents default event propagation.
-        }
-      }
-
-      return true;
-    };
+        return shouldFollowLink; // Prevents default event propagation if false.
+      };
+    }
 
     return new DOMNodeObject(domNode, ownDOMNodes, marks);
   }
 );
 
+
+
+
+export const methods = [
+  "getIsValid",
+  "focus",
+  "blur",
+];
+
+export const actions = {
+  "getIsValid": new DevFunction(
+    "getIsValid", {}, function({thisVal, callerNode, execEnv}, []) {
+      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      let {href} = thisVal.jsxInstance.props;
+      return getIsWhitelisted(href);
+    }
+  ),
+  "focus": new DevFunction(
+    "focus", {}, function({thisVal, callerNode, execEnv}, []) {
+      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      let {jsxInstance} = thisVal;
+      let canGrabFocus = !jsxInstance.settings.isOutsideFocusedAppScope(
+        jsxInstance, callerNode, execEnv
+      );
+      if (canGrabFocus) {
+        thisVal.jsxInstance.domNode.focus();
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+  ),
+  "blur": new DevFunction(
+    "blur", {}, function({thisVal, callerNode, execEnv}, []) {
+      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      thisVal.jsxInstance.domNode.blur();
+    }
+  ),
+};

@@ -76,7 +76,7 @@ function logout(settingsContext) {
   queryLoginServer(
     "logout", userID, {authToken: authToken}
   ).then(() => {
-    localStorage.removeItem("userData");
+    localStorage.clear();
     settingsContext.update(settings => settings.changeUser(undefined));
     document.getElementById("user-name-display").replaceChildren("");
     let accountMenu = document.getElementById("account-menu");

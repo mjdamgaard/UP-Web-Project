@@ -3,7 +3,8 @@ import {
   DevFunction, getString, ArgTypeError, ObjectObject, verifyTypes,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, JSXInstanceInterface, clearAttributes
+  DOMNodeObject, JSXInstanceInterface, clearAttributes,
+  validateThisValJSXInstance,
 } from "../jsx_components.js";
 import {getID} from "./getID.js";
 
@@ -82,11 +83,15 @@ export const methods = [
 ];
 
 export const actions = {
-  "getValue": new DevFunction("getValue", {}, function({thisVal}, []) {
-    return thisVal.jsxInstance.domNode.value;
-  }),
+  "getValue": new DevFunction(
+    "getValue", {}, function({thisVal, callerNode, execEnv}, []) {
+      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      return thisVal.jsxInstance.domNode.value;
+    }
+  ),
   "setValue": new DevFunction(
     "setValue", {}, function({thisVal, callerNode, execEnv}, [val]) {
+      validateThisValJSXInstance(thisVal, callerNode, execEnv);
       val = getString(val, execEnv);
       let domNode = thisVal.jsxInstance.domNode;
       let prevVal = domNode.value;
@@ -96,16 +101,20 @@ export const actions = {
       }
     }
   ),
-  "clear": new DevFunction("clear", {}, function({thisVal}, []) {
-    let domNode = thisVal.jsxInstance.domNode;
-    let prevVal = domNode.value;
-    domNode.value = "";
-    if (prevVal !== "") {
-      domNode.dispatchEvent(new InputEvent("input"));
+  "clear": new DevFunction(
+    "clear", {}, function({thisVal, callerNode, execEnv}, []) {
+      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      let domNode = thisVal.jsxInstance.domNode;
+      let prevVal = domNode.value;
+      domNode.value = "";
+      if (prevVal !== "") {
+        domNode.dispatchEvent(new InputEvent("input"));
+      }
     }
-  }),
+  ),
   "focus": new DevFunction(
     "focus", {}, function({thisVal, callerNode, execEnv}, []) {
+      validateThisValJSXInstance(thisVal, callerNode, execEnv);
       let {jsxInstance} = thisVal;
       let canGrabFocus = !jsxInstance.settings.isOutsideFocusedAppScope(
         jsxInstance, callerNode, execEnv
@@ -119,7 +128,10 @@ export const actions = {
       }
     }
   ),
-  "blur": new DevFunction("blur", {}, function({thisVal}, []) {
-    thisVal.jsxInstance.domNode.blur();
-  }),
+  "blur": new DevFunction(
+    "blur", {}, function({thisVal, callerNode, execEnv}, []) {
+      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      thisVal.jsxInstance.domNode.blur();
+    }
+  ),
 };
