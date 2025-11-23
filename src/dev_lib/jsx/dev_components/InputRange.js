@@ -1,10 +1,9 @@
 
 import {
-  DevFunction, ArgTypeError, ObjectObject, verifyTypes,
+  DevFunction, ObjectObject, verifyTypes,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, JSXInstanceInterface, clearAttributes,
-  validateThisValJSXInstance,
+  DOMNodeObject, clearAttributes, validateThisValJSXInstance,
 } from "../jsx_components.js";
 import {getID} from "./getID.js";
 
@@ -15,11 +14,7 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
-      "InputRange.render(): 'this' is not a JSXInstance",
-      callerNode, execEnv
-    );
-
+    validateThisValJSXInstance(thisVal, callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }
@@ -96,26 +91,16 @@ export const actions = {
     function({thisVal, callerNode, execEnv}, [val]) {
       validateThisValJSXInstance(thisVal, callerNode, execEnv);
       let domNode = thisVal.jsxInstance.domNode;
-      let prevVal = domNode.value;
-      // let activeElement = document.activeElement;
       domNode.value = val;
-      // activeElement.focus();
-      if (prevVal !== val) {
-        domNode.dispatchEvent(new InputEvent("input"));
-      }
     }
   ),
   "clear": new DevFunction(
     "clear", {}, function({thisVal, callerNode, execEnv}, []) {
       validateThisValJSXInstance(thisVal, callerNode, execEnv);
       let domNode = thisVal.jsxInstance.domNode;
-      let prevVal = domNode.value;
       let initVal = parseFloat(domNode.getAttribute("value"));
       if (Number.isNaN(initVal)) return;
       domNode.value = initVal;
-      if (prevVal !== initVal) {
-        domNode.dispatchEvent(new InputEvent("input"));
-      }
     }
   ),
   "focus": new DevFunction(

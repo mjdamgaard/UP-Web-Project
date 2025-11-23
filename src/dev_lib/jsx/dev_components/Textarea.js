@@ -1,10 +1,9 @@
 
 import {
-  DevFunction, getString, ArgTypeError, ObjectObject, verifyTypes,
+  DevFunction, getString, ObjectObject, verifyTypes,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, JSXInstanceInterface, clearAttributes,
-  validateThisValJSXInstance,
+  DOMNodeObject, clearAttributes, validateThisValJSXInstance,
 } from "../jsx_components.js";
 import {getID} from "./getID.js";
 
@@ -15,11 +14,7 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
-      "Textarea.render(): 'this' is not a JSXInstance",
-      callerNode, execEnv
-    );
-
+    validateThisValJSXInstance(thisVal, callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }
@@ -94,22 +89,14 @@ export const actions = {
       validateThisValJSXInstance(thisVal, callerNode, execEnv);
       val = getString(val, execEnv);
       let domNode = thisVal.jsxInstance.domNode;
-      let prevVal = domNode.value;
       domNode.value = val;
-      if (prevVal !== val) {
-        domNode.dispatchEvent(new InputEvent("input"));
-      }
     }
   ),
   "clear": new DevFunction(
     "clear", {}, function({thisVal, callerNode, execEnv}, []) {
       validateThisValJSXInstance(thisVal, callerNode, execEnv);
       let domNode = thisVal.jsxInstance.domNode;
-      let prevVal = domNode.value;
       domNode.value = "";
-      if (prevVal !== "") {
-        domNode.dispatchEvent(new InputEvent("input"));
-      }
     }
   ),
   "focus": new DevFunction(

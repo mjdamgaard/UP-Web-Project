@@ -15,11 +15,7 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
-      "InputText.render(): 'this' is not a JSXInstance",
-      callerNode, execEnv
-    );
-
+    validateThisValJSXInstance(thisVal, callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }
@@ -101,28 +97,16 @@ export const actions = {
   "setValue": new DevFunction(
     "setValue", {}, function({thisVal, callerNode, execEnv}, [val]) {
       validateThisValJSXInstance(thisVal, callerNode, execEnv);
-
-      // TODO: Fix:
       val = getString(val, execEnv);
       let domNode = thisVal.jsxInstance.domNode;
-      let prevVal = domNode.value;
-      let activeElement = document.activeElement;
       domNode.value = val;
-      // activeElement.focus();
-      if (prevVal !== val) {
-        // domNode.dispatchEvent(new InputEvent("input"));
-      }
     }
   ),
   "clear": new DevFunction(
     "clear", {}, function({thisVal, callerNode, execEnv}, []) {
       validateThisValJSXInstance(thisVal, callerNode, execEnv);
       let domNode = thisVal.jsxInstance.domNode;
-      let prevVal = domNode.value;
       domNode.value = "";
-      if (prevVal !== "") {
-        domNode.dispatchEvent(new InputEvent("input"));
-      }
     }
   ),
   "focus": new DevFunction(

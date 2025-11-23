@@ -1,10 +1,9 @@
 
 import {
-  DevFunction, ArgTypeError, ObjectObject, verifyTypes,
+  DevFunction, ObjectObject, verifyTypes,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, JSXInstanceInterface, clearAttributes,
-  validateThisValJSXInstance,
+  DOMNodeObject, clearAttributes, validateThisValJSXInstance,
 } from "../jsx_components.js";
 import {getID} from "./getID.js";
 
@@ -15,11 +14,7 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
-      "InputRadio.render(): 'this' is not a JSXInstance",
-      callerNode, execEnv
-    );
-
+    validateThisValJSXInstance(thisVal, callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }
@@ -92,11 +87,7 @@ export const actions = {
       validateThisValJSXInstance(thisVal, callerNode, execEnv);
       val = val ? true : false;
       let {domNode} = thisVal.jsxInstance;
-      let prevVal = domNode.checked;
       domNode.checked = val;
-      if (prevVal !== val) {
-        domNode.dispatchEvent(new InputEvent("input"));
-      }
     }
   ),
   "clear": new DevFunction(
@@ -104,11 +95,7 @@ export const actions = {
       validateThisValJSXInstance(thisVal, callerNode, execEnv);
       let {domNode, props} = thisVal.jsxInstance;
       let {checked: initVal} = props;
-      let prevVal = domNode.checked;
       domNode.checked = initVal ? true : false;
-      if (prevVal !== initVal) {
-        domNode.dispatchEvent(new InputEvent("input"));
-      }
     }
   ),
   "focus": new DevFunction(

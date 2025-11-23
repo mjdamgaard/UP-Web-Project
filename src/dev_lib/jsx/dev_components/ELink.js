@@ -1,10 +1,9 @@
 
 import {
-  DevFunction, ArgTypeError, ObjectObject, verifyTypes,
+  DevFunction, ObjectObject, verifyTypes,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, JSXInstanceInterface, clearAttributes,
-  validateThisValJSXInstance,
+  DOMNodeObject, clearAttributes, validateThisValJSXInstance,
 } from "../jsx_components.js";
 import {CAN_POST_FLAG} from "../../query/src/flags.js";
 
@@ -38,11 +37,7 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
-      "ELink.render(): 'this' is not a JSXInstance",
-      callerNode, execEnv
-    );
-
+    validateThisValJSXInstance(thisVal, callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }
