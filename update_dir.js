@@ -20,6 +20,9 @@ let [ , curPath, dirPath, domain = "localhost"] = process.argv;
 if (!dirPath) throw (
   "Specify dirPath in '$ node <program path> <dirPath>'"
 );
+if (domain !== "localhost" && domain !== "up-web.org") throw (
+  "Unrecognized domain: " + domain
+);
 if (dirPath[0] === ".") {
   dirPath = path.normalize(path.dirname(curPath) + "/" + dirPath);
   if (dirPath.at(-1) === "/") dirPath = dirPath.slice(0, -1);

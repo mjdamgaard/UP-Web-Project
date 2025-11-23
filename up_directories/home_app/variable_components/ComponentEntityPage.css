@@ -13,5 +13,5 @@
 
 .component-page > .component.blurred {
   pointer-events: none;
-  filter: blur(6px);
+  filter: blur(3px);
 }
