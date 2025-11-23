@@ -4,7 +4,7 @@ import {
   getPrototypeOf, OBJECT_PROTOTYPE, ARRAY_PROTOTYPE, FunctionObject,
   CLEAR_FLAG, PromiseObject, Environment, LiveJSModule, parseString,
   TEXT_FILE_ROUTE_REGEX, SCRIPT_ROUTE_REGEX, CSSModule, getString,
-  getPropertyFromObject, ArgTypeError, forEachValue,
+  getPropertyFromObject, ArgTypeError, forEachValue, ObjectObject,
 } from '../../interpreting/ScriptInterpreter.js';
 import {scriptParser} from "../../interpreting/parsing/ScriptParser.js";
 import {parseRoute} from './src/route_parsing.js';
@@ -112,11 +112,13 @@ export const queryRoute = new DevFunction(
 export const query = new DevFunction(
   "query", {
     isAsync: true,
-    typeArr: ["string", "boolean?", "any?", "object?"],
+    typeArr: ["string", "boolean?", "any?", "object?", "array?"],
   },
   async function(
-    {callerNode, execEnv, interpreter},
-    [extendedRoute, isPost = false, postData, options = {}]
+    {callerNode, execEnv, interpreter}, [
+      extendedRoute, isPost = false, postData, options = {},
+      ancestorModules = []
+    ],
   ) {
     let isPrivate = isPost || getPropertyFromObject(options, "isPrivate");
 
@@ -126,6 +128,18 @@ export const query = new DevFunction(
     // which reinterprets/casts the queried result into something else.
     let route, castingSegmentArr;
     [route, ...castingSegmentArr] = extendedRoute.split(';');
+
+    // Check against infinite import recursion.
+    if (ancestorModules instanceof ObjectObject) {
+      ancestorModules = ancestorModules.members;
+    }
+    if (
+      ancestorModules.includes(extendedRoute) ||
+      ancestorModules.includes(route)
+    ) throw new LoadError(
+      "Infinite recursion: Module " + route + " imports itself.",
+      callerNode, execEnv
+    );
 
     // If the route is a module that has already been executed, get it from the
     // liveModules cache instead.
@@ -219,7 +233,8 @@ export const query = new DevFunction(
         let globalEnv = execEnv.getGlobalEnv();
         let liveModulePromise = new Promise((resolve, reject) => {
           interpreter.executeModule(
-            parsedScript, lexArr, strPosArr, script, route, globalEnv
+            parsedScript, lexArr, strPosArr, script, route, globalEnv,
+            ancestorModules,
           ).then(
             ([liveModule]) => resolve(liveModule)
           ).catch(
@@ -423,10 +438,10 @@ export const query = new DevFunction(
 
 
 export const fetch = new DevFunction(
-  "fetch", {isAsync: true, typeArr: ["string", "object?"]},
+  "fetch", {isAsync: true, typeArr: ["string", "object?", "array?"]},
   async function(
     {callerNode, execEnv, interpreter},
-    [extendedRoute, options]
+    [extendedRoute, options, ancestorModules = []],
   ) {
     // If returnLog is true, also automatically set isPrivate: true, before
     // calling query.fun().
@@ -440,17 +455,17 @@ export const fetch = new DevFunction(
     }
     let result = await query.fun(
       {callerNode, execEnv, interpreter},
-      [extendedRoute, false, undefined, options],
+      [extendedRoute, false, undefined, options, ancestorModules],
     );
     return result;
   }
 );
 
 export const fetchPrivate = new DevFunction(
-  "fetchPrivate", {isAsync: true, typeArr: ["string", "object?"]},
+  "fetchPrivate", {isAsync: true, typeArr: ["string", "object?", "array?"]},
   async function(
     {callerNode, execEnv, interpreter},
-    [extendedRoute, options = {}]
+    [extendedRoute, options = {}, ancestorModules = []],
   ) {
     // Add isPrivate: true to the options object before calling fetch.fun().
     let modifiedOptions = {};
@@ -461,7 +476,7 @@ export const fetchPrivate = new DevFunction(
     options = modifiedOptions;
     let result = await fetch.fun(
       {callerNode, execEnv, interpreter},
-      [extendedRoute, options],
+      [extendedRoute, options, ancestorModules],
     );
     return result;
   }
@@ -469,14 +484,14 @@ export const fetchPrivate = new DevFunction(
 
 
 export const post = new DevFunction(
-  "post", {isAsync: true, typeArr: ["string", "any?", "object?"]},
+  "post", {isAsync: true, typeArr: ["string", "any?", "object?", "array?"]},
   async function(
     {callerNode, execEnv, interpreter},
-    [route, postData, options]
+    [route, postData, options, ancestorModules = []],
   ) {
     let result = await query.fun(
       {callerNode, execEnv, interpreter},
-      [route, true, postData, options],
+      [route, true, postData, options, ancestorModules],
     );
     return result;
   }

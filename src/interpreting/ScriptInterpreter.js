@@ -258,10 +258,10 @@ export class ScriptInterpreter {
   }
 
 
-  async fetch(route, callerNode, callerEnv) {
+  async fetch(route, callerNode, callerEnv, ancestorModules) {
     let fetchFun = callerEnv.scriptVars.liveModules.get("query").get("fetch");
     return await this.executeFunction(
-      fetchFun, [route], callerNode, callerEnv
+      fetchFun, [route, undefined, ancestorModules], callerNode, callerEnv
     ).promise;
   }
 
@@ -270,7 +270,8 @@ export class ScriptInterpreter {
 
 
   async executeModule(
-    moduleNode, lexArr, strPosArr, script, modulePath, globalEnv
+    moduleNode, lexArr, strPosArr, script, modulePath, globalEnv,
+    ancestorModules = [],
   ) {
     decrCompGas(moduleNode, globalEnv);
 
@@ -286,7 +287,8 @@ export class ScriptInterpreter {
     // environments, but without making any changes to moduleEnv yet.
     let liveSubmoduleArr = await Promise.all(
       moduleNode.importStmtArr.map(impStmt => (
-        this.executeSubmoduleOfImportStatement(impStmt, modulePath, moduleEnv)
+        this.executeSubmoduleOfImportStatement(
+          impStmt, modulePath, moduleEnv, [...ancestorModules, modulePath])
       ))
     );
 
@@ -313,17 +315,18 @@ export class ScriptInterpreter {
 
 
   async executeSubmoduleOfImportStatement(
-    impStmt, curModulePath, callerModuleEnv
+    impStmt, curModulePath, callerModuleEnv, ancestorModules
   ) {
     let submodulePath = getAbsolutePath(curModulePath, impStmt.str);
     return await this.import(
-      submodulePath, impStmt, callerModuleEnv, false, true
+      submodulePath, impStmt, callerModuleEnv, false, true, ancestorModules
     );
   }
 
 
   async import(
-    route, callerNode, callerEnv, assertJSModule = false, assertModule = false
+    route, callerNode, callerEnv, assertJSModule = false, assertModule = false,
+    ancestorModules = [],
   ) {
     decrCompGas(callerNode, callerEnv);
     decrGas(callerNode, callerEnv, "import");
@@ -337,7 +340,7 @@ export class ScriptInterpreter {
 
     // Then simple redirect to this.fetch(), and if assertJSModule is true,
     // assert that the returned value is a LiveJSModule instance.
-    let ret = await this.fetch(route, callerNode, callerEnv);
+    let ret = await this.fetch(route, callerNode, callerEnv, ancestorModules);
     if (assertJSModule && !(ret instanceof LiveJSModule)) throw new LoadError(
       `No script was found at ${route}`,
       callerNode, callerEnv

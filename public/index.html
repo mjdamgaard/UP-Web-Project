@@ -17,44 +17,6 @@
 
 <div id="overlay-page-container"></div>
 
-<!--
-  TODO: Make a warning about not using your password anywhere outside of the
-  account menu, and let it show at the start until the user clicks, 'Ok, don't
-  remind me again (on this device),' in which case a boolean is set in
-  localStorage. ..The warning could maybe look something like this (out-
-  commented for now):
--->
-<!-- <div id="no-password-warning">
-  Everything you see on this website is user-made, except the account menu
-  accessed by the icon at the top right of the page.
-  <br/>
-  Never give your password, credit card information, or any such sensitive
-  information outside of that account menu.
-  <br/>
-  And if you are ever asked to do so, please report it, and do not fall for it.
-  <br/>
-  Also, if you are ever asked to copy and paste an URL into you browser, do not
-  do so unless you trust the domain of that URL.
-
-  <div className="accept-buttons">
-    <input type="radio">Do not remind me again on ths device</input>
-    <button>OK</button>
-  </div>
-</div> -->
-<!--
-  Actually, no. This warning should instead just be made if browsing an entity
-  that hasn't been rated as trusted with a high enough weight. And the warning
-  should just always be there when doing so. And for VariableComponents, etc.,
-  these should just not show the components if it isn't trusted enough.
--->
-<!--
-  Ah, but for the beta version/prototype, at the initial stage, I should still
-  include this warning, but just let it start with: 'This is a beta version,
-  so...', and then go on to explain that because of that, you can't trust
-  anything you see, so don't give up your password, etc. (And that is still
-  true after the beta version, but here we can make sure that this warning is
-  displayed before the user enters any untrusted grounds.)
--->
 
 <div id="account-menu">
   <div id="account-menu-header">
