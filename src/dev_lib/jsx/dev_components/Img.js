@@ -66,7 +66,7 @@ export const render = new DevFunction(
     }
     if (alt !== undefined) domNode.setAttribute("alt", alt);
 
-    return new DOMNodeObject(domNode, ownDOMNodes, marks);
+    return new DOMNodeObject(domNode, [domNode]);
   }
 );
 
