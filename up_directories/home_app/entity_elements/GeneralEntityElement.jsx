@@ -1,9 +1,9 @@
 
 import {toPrecision} from 'number';
 
-import * as EntityReference from "../utility_components/EntityReference.jsx";
+import * as EntityReference from "../misc/EntityReference.jsx";
 import * as ExpandableElement
-from "../utility_components/ExpandableElement.jsx";
+from "../misc/ExpandableElement.jsx";
 // import * as EntityPage from "../variable_components/EntityPage.jsx";
 
 import * as AggregatedScoreDisplay from "../scoring/AggregatedScoreDisplay.jsx";
@@ -35,5 +35,5 @@ export function render({
 export const styleSheetPaths = [
   ...ExpandableElement.styleSheetPaths,
   abs("./GeneralEntityElement.css"),
-  abs("../utility_components/ExpandableElement.css"),
+  abs("../misc/ExpandableElement.css"),
 ];

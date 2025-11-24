@@ -1,5 +1,5 @@
 
-import * as EntityReference from "../utility_components/EntityReference.jsx";
+import * as EntityReference from "../misc/EntityReference.jsx";
 
 
 export function render({qualKey, subjKey}) {

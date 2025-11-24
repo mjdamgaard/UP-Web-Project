@@ -1,6 +1,5 @@
 
-import * as EntityReference from "../utility_components/EntityReference.jsx";
-import * as TabbedPages from "../utility_components/TabbedPages.jsx";
+import * as EntityPageWithTabs from "../misc/EntityPageWithTabs.jsx";
 import * as EntityMetadataPage from "./EntityMetadataPage.jsx";
 import * as EntityList from "../entity_lists/EntityList.jsx";
 import * as GeneralEntityElement 
@@ -9,14 +8,14 @@ from "../entity_elements/GeneralEntityElement.jsx";
 const subclassesRel = "/1/1/em1.js;get/subclasses";
 
 
-export function render({entKey}) {
-  return <div className="entity-page">
-    <h1>
-      <EntityReference key={"title"} entKey={entKey} isLink={false} />
-    </h1>
-    <TabbedPages key={"tp-" + entKey} initTabKey="members" tabs={{
+export function render({entKey, isNested}) {
+  return <EntityPageWithTabs key="0"
+    entKey={entKey} initTabKey={isNested ? "subclasses" : "members"}
+    isNested={isNested} tabs={{
       about: {
-        title: "About", Component: EntityMetadataPage, props: {entKey: entKey}
+        title: "About",
+        Component: EntityMetadataPage,
+        props: {entKey: entKey}
       },
       members: {
         title: "Members",
@@ -35,13 +34,13 @@ export function render({entKey}) {
           ElementComponent: GeneralEntityElement,
         },
       },
-    }}/>
-  </div>;
+    }}
+  />;
 }
 
 
 
 export const styleSheetPaths = [
-  abs("../utility_components/TabbedPages.css"),
+  abs("../misc/TabbedPages.css"),
   abs("../entity_lists/EntityList.css"),
 ];

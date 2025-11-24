@@ -334,7 +334,7 @@ export class ScriptInterpreter {
     // If modulePath is a relative path, get the current modulePath and
     // compute the full path.
     if (/^\.\.?\//.test(route)) {
-      let curPath = callerNode.getModuleEnv().modulePath;
+      let curPath = callerEnv.getModuleEnv().modulePath;
       route = getAbsolutePath(curPath, route, callerNode, callerEnv);
     }
 

@@ -4,7 +4,7 @@ import {fetchMetric, fetchUserScore} from "/1/1/scores.js";
 import {scoreHandler01} from "/1/1/score_handling/ScoreHandler01/em.js";
 
 import * as InputRangeAndValue
-from "../utility_components/InputRangeAndValue.jsx";
+from "../misc/InputRangeAndValue.jsx";
 import * as QualityVariableReference from "./QualityVariableReference.jsx";
 import * as AggregatedScoreDisplay from "./AggregatedScoreDisplay.jsx";
 

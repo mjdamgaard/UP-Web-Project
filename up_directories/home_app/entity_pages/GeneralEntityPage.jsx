@@ -1,25 +1,27 @@
 
+import * as EntityPageWithTabs
+from "../misc/EntityPageWithTabs.jsx";
 import * as EntityMetadataPage from "./EntityMetadataPage.jsx";
-import * as EntityReference from "../utility_components/EntityReference.jsx";
-import * as TabbedPages from "../utility_components/TabbedPages.jsx";
 
 
-
-export function render({entKey}) {
-  return <div className="entity-page">
-    <h1>
-      <EntityReference key={"title"} entKey={entKey} isLink={false} />
-    </h1>
-    <TabbedPages key={"tp-" + entKey} initTabKey="about" tabs={{
+export function render({entKey, isNested}) {
+  return <EntityPageWithTabs key="0"
+    entKey={entKey} initTabKey={"qualities"} isNested={isNested} tabs={{
       about: {
-        title: "About", Component: EntityMetadataPage, props: {entKey: entKey}
+        title: "About",
+        Component: EntityMetadataPage,
+        props: {entKey: entKey}
       },
-    }}/>
-  </div>;
+      qualities: {
+        title: "Qualities",
+        Component: EntityMetadataPage,
+        props: {entKey: entKey}
+      },
+    }}
+  />;
 }
 
 
-
 export const styleSheetPaths = [
-  abs("../utility_components/TabbedPages.css"),
+  abs("../misc/TabbedPages.css"),
 ];

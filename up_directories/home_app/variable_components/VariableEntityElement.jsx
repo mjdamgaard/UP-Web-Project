@@ -3,7 +3,7 @@ import {
   fetchRelationalQualityPath, fetchEntityProperty
 } from "/1/1/entities.js";
 
-import * as EntityReference from "../utility_components/EntityReference.jsx";
+import * as EntityReference from "../misc/EntityReference.jsx";
 import * as GeneralEntityElement
 from "../entity_elements/GeneralEntityElement.jsx";
 import * as MissingEntityElement

@@ -1,7 +1,7 @@
 
 import {fetchRelationalQualityPath} from "/1/1/entities.js";
 
-import * as EntityReference from "../utility_components/EntityReference.jsx";
+import * as EntityReference from "../misc/EntityReference.jsx";
 import * as ComponentEntityComponent from "./ComponentEntityComponent.jsx";
 
 

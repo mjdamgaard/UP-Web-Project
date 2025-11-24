@@ -1,7 +1,7 @@
 
 
 export function render(props) {
-  let {children, ExpandedComponent} = props;
+  let {children, ExpandedComponent, expCompProps = {}} = props;
   let {isOpen, isLoaded} = this.state;
   return <div className="expandable-element">
     <div
@@ -15,7 +15,8 @@ export function render(props) {
         children
       }</div>
       <div className={"expanded-content" + (isOpen ? "" : " hidden")}>{
-        isLoaded ? <ExpandedComponent {...props} key="expanded" /> : undefined
+        isLoaded ? <ExpandedComponent {...expCompProps} key="expanded" /> :
+          undefined
       }</div>
     </div>
   </div>;

@@ -8,7 +8,7 @@ import {encodeURIComponent} from 'query';
 
 import * as ILink from 'ILink.jsx';
 import * as TextWithSubstitutedLinks from "./TextWithSubstitutedLinks.jsx";
-import * as TextDisplay from "../utility_components/TextDisplay.jsx";
+import * as TextDisplay from "../misc/TextDisplay.jsx";
 
 
 export function render({entKey}) {

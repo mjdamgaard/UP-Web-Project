@@ -1,11 +1,15 @@
 
 import {fetchRelationalQualityPath} from "/1/1/entities.js";
 import {map} from 'array';
+import {hasType} from 'type';
 
 import * as VariableEntityElement
 from "../variable_components/VariableEntityElement.jsx";
 import * as EntityListMenu from "./EntityListMenu.jsx";
 
+const VariableEntityElementPromise = import(
+  "../variable_components/VariableEntityElement.jsx"
+);
 
 // TODO: This component should at some point be extended with a menu for
 // changing the sorting and filtering options. And it should maybe also at some
@@ -36,13 +40,15 @@ import * as EntityListMenu from "./EntityListMenu.jsx";
 // from the relational quality formed by either the relation--object pair, or
 // the class.
 export function render({
-  qualKey, relKey, objKey, classKey, ElementComponent = VariableEntityElement,
-  hideMenu = false, scoreHandler = undefined, options = undefined,
+  qualKey, relKey, objKey, classKey, hideMenu = false,
+  scoreHandler = undefined, options = undefined,
   minScore = undefined, minWeight = 10,
   paginationLength = 50, paginationIndex = 0,
 }) {
   scoreHandler = scoreHandler ?? this.subscribeToContext("scoreHandler");
-  let {qualPath, list, curMinScore, curMinWeight} = this.state;
+  let {
+    ElementComponent, qualPath, list, curMinScore, curMinWeight
+  } = this.state;
   let content;
 
   // If the qualKey prop is undefined, and qualPath has not yet been fetched,
@@ -63,7 +69,16 @@ export function render({
     content = <div className="fetching">{"..."}</div>;
   }
 
-  // And if the list is ready, render the elements. TODO: Only render some
+  // Also, if ElementComponent is a promise, wait for it and replace it with
+  // its result. 
+  else if (hasType(ElementComponent, "promise")) {
+    ElementComponent.then(result => {
+      this.setState(state => ({...state, ElementComponent: result}));
+    });
+    content = <div className="fetching">{"..."}</div>;
+  }
+
+  // And if everything is ready, render the elements. TODO: Only render some
   // elements, namely in a pagination.
   else {
     content = [
@@ -93,10 +108,13 @@ export function render({
 }
 
 
-export function getInitialState({options, minScore, minWeight}) {
+export function getInitialState({
+  ElementComponent, options, minScore, minWeight, 
+}) {
   minScore ??= options?.lo;
   minWeight ??= 10;
   return {
+    ElementComponent: ElementComponent,
     curMinScore: minScore, curMinWeight: minWeight,
   }; 
 }

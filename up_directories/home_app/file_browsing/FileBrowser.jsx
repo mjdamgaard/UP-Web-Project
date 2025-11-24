@@ -9,8 +9,8 @@ import {fetch, encodeURIComponent} from 'query';
 import {getUserEntPath} from "/1/1/entities.js";
 
 import * as ILink from 'ILink.jsx';
-import * as EntityReference from "../utility_components/EntityReference.jsx";
-import * as TextDisplay from "../utility_components/TextDisplay.jsx";
+import * as EntityReference from "../misc/EntityReference.jsx";
+import * as TextDisplay from "../misc/TextDisplay.jsx";
 
 
 
