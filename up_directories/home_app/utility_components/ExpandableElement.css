@@ -1,2 +1,23 @@
 
 
+
+.expandable-element {
+  display: grid;
+  grid-template-columns: 20px auto;
+}
+
+.expandable-element .collapse-expand-button {
+  width: 20px;
+  display: grid;
+  align-items: center;
+}
+.expandable-element .collapse-expand-button.collapsed > .symbol::after {
+  content: "⌄";
+  position: relative;
+  bottom: 0.5em;
+}
+.expandable-element .collapse-expand-button.expanded > .symbol::after {
+  content: "⌃";
+  position: relative;
+  top: 0.1em;
+}

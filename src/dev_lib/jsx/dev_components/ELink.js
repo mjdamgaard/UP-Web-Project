@@ -3,7 +3,7 @@ import {
   DevFunction, ObjectObject, verifyTypes,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, clearAttributes, validateThisValJSXInstance,
+  DOMNodeObject, clearAttributes, validateJSXInstance,
 } from "../jsx_components.js";
 import {CAN_POST_FLAG} from "../../query/src/flags.js";
 
@@ -38,7 +38,7 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    validateThisValJSXInstance(thisVal, callerNode, execEnv);
+    validateJSXInstance(thisVal, "ELink.jsx", callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }
@@ -114,14 +114,14 @@ export const methods = [
 export const actions = {
   "getIsValid": new DevFunction(
     "getIsValid", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      validateJSXInstance(thisVal, "ELink.jsx", callerNode, execEnv);
       let {href} = thisVal.jsxInstance.props;
       return getIsWhitelisted(href);
     }
   ),
   "focus": new DevFunction(
     "focus", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      validateJSXInstance(thisVal, "ELink.jsx", callerNode, execEnv);
       let {jsxInstance} = thisVal;
       let canGrabFocus = !jsxInstance.settings.isOutsideFocusedAppScope(
         jsxInstance, callerNode, execEnv
@@ -137,7 +137,7 @@ export const actions = {
   ),
   "blur": new DevFunction(
     "blur", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      validateJSXInstance(thisVal, "ELink.jsx", callerNode, execEnv);
       thisVal.jsxInstance.domNode.blur();
     }
   ),

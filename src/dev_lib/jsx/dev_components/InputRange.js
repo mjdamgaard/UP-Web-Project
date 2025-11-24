@@ -3,7 +3,7 @@ import {
   DevFunction, ObjectObject, verifyTypes,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, clearAttributes, validateThisValJSXInstance,
+  DOMNodeObject, clearAttributes, validateJSXInstance,
 } from "../jsx_components.js";
 import {getID} from "./getID.js";
 
@@ -14,7 +14,7 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    validateThisValJSXInstance(thisVal, callerNode, execEnv);
+    validateJSXInstance(thisVal, "InputRange.jsx", callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }
@@ -82,21 +82,21 @@ export const methods = [
 export const actions = {
   "getValue": new DevFunction(
     "getValue", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      validateJSXInstance(thisVal, "InputRange.jsx", callerNode, execEnv);
       return thisVal.jsxInstance.domNode.value;
     }
   ),
   "setValue": new DevFunction(
     "setValue", {typeArr: ["number"]},
     function({thisVal, callerNode, execEnv}, [val]) {
-      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      validateJSXInstance(thisVal, "InputRange.jsx", callerNode, execEnv);
       let domNode = thisVal.jsxInstance.domNode;
       domNode.value = val;
     }
   ),
   "clear": new DevFunction(
     "clear", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      validateJSXInstance(thisVal, "InputRange.jsx", callerNode, execEnv);
       let domNode = thisVal.jsxInstance.domNode;
       let initVal = parseFloat(domNode.getAttribute("value"));
       if (Number.isNaN(initVal)) return;
@@ -105,7 +105,7 @@ export const actions = {
   ),
   "focus": new DevFunction(
     "focus", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      validateJSXInstance(thisVal, "InputRange.jsx", callerNode, execEnv);
       let {jsxInstance} = thisVal;
       let canGrabFocus = !jsxInstance.settings.isOutsideFocusedAppScope(
         jsxInstance, callerNode, execEnv
@@ -121,7 +121,7 @@ export const actions = {
   ),
   "blur": new DevFunction(
     "blur", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      validateJSXInstance(thisVal, "InputRange.jsx", callerNode, execEnv);
       thisVal.jsxInstance.domNode.blur();
     }
   ),

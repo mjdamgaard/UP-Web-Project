@@ -12,18 +12,20 @@ import * as AggregatedScoreDisplay from "../scoring/AggregatedScoreDisplay.jsx";
 
 export function render({
   entID, qualKeyArr = [], score = undefined, weight = undefined,
-}) {console.log("render");
+}) {
   return <div className="entity-element">
-    <ExpandableElement key="0" ExpandedComponent={
+    <ExpandableElement key="ee" ExpandedComponent={
       "..."
     }>
-      <div className="entity-display">
-        <EntityReference key="er" entKey={entID} />
+      <div onClick={() => this.call("ee", "expand")}>
+        <div className="entity-display">
+          <EntityReference key="er" entKey={entID} isLink={false} />
+        </div>
+        <AggregatedScoreDisplay key="as"
+          score={score ? toPrecision(score, 3) : "N/A"}
+          weight={weight ? toPrecision(weight, 3) : "N/A"}
+        />
       </div>
-      <AggregatedScoreDisplay key="as"
-        score={score ? toPrecision(score, 3) : "N/A"}
-        weight={weight ? toPrecision(weight, 3) : "N/A"}
-      />
     </ExpandableElement>
   </div>;
 }
@@ -33,4 +35,5 @@ export function render({
 export const styleSheetPaths = [
   ...ExpandableElement.styleSheetPaths,
   abs("./GeneralEntityElement.css"),
+  abs("../utility_components/ExpandableElement.css"),
 ];

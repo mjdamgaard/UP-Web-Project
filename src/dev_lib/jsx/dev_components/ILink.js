@@ -4,7 +4,7 @@ import {
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
   DOMNodeObject, HREF_REGEX, HREF_CD_START_REGEX, clearAttributes,
-  validateThisValJSXInstance,
+  validateJSXInstance,
 } from "../jsx_components.js";
 import {CAN_POST_FLAG} from "../../query/src/flags.js";
 
@@ -16,7 +16,7 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    validateThisValJSXInstance(thisVal, callerNode, execEnv);
+    validateJSXInstance(thisVal, "ILink.jsx", callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }
@@ -138,7 +138,7 @@ export const methods = [
 export const actions = {
   "focus": new DevFunction(
     "focus", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      validateJSXInstance(thisVal, "ILink.jsx", callerNode, execEnv);
       let {jsxInstance} = thisVal;
       let canGrabFocus = !jsxInstance.settings.isOutsideFocusedAppScope(
         jsxInstance, callerNode, execEnv
@@ -154,7 +154,7 @@ export const actions = {
   ),
   "blur": new DevFunction(
     "blur", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      validateJSXInstance(thisVal, "ILink.jsx", callerNode, execEnv);
       thisVal.jsxInstance.domNode.blur();
     }
   ),

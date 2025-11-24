@@ -1597,9 +1597,18 @@ function addStorageRelatedProps(props) {
 
 
 
-export function validateThisValJSXInstance(thisVal, callerNode, execEnv) {
+export function validateJSXInstance(
+  thisVal, expectedModulePath, callerNode, execEnv
+) {
   if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
     "'this' is not a JSXInstance",
     callerNode, execEnv
   );
+  if (thisVal.jsxInstance.componentPath !== expectedModulePath) {
+    throw new ArgTypeError(
+      "'this' is not a JSXInstance of the right module path, \"" +
+      expectedModulePath + '"',
+      callerNode, execEnv
+    );
+  }
 }

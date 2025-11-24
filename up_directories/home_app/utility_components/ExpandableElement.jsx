@@ -8,10 +8,8 @@ export function render(props) {
       className={
         "collapse-expand-button " + (isOpen ? "expanded" : "collapsed")
       }
-      onClick={() => {
-        this.setState(state => ({...state, isOpen: !isOpen, isLoaded: true}));
-      }}
-    ></div>
+      onClick={() => this.do("toggle")}
+    ><span className="symbol"></span></div>
     <div className="content">
       <div className={"initial-content" + (isOpen ? " hidden" : "")}>{
         children
@@ -28,6 +26,27 @@ export function getInitialState({startOpen}) {
   return {isOpen: startOpen ? true : false};
 }
 
+
+export const events = [
+  "expand",
+  "collapse",
+  "toggle",
+];
+
+export const methods = events;
+
+export const actions = {
+  "expand": function() {
+    this.setState(state => ({...state, isOpen: true, isLoaded: true}));
+  },
+  "collapse": function() {
+    this.setState(state => ({...state, isOpen: false}));
+  },
+  "toggle": function() {
+    let {isOpen} = this.state;
+    this.setState(state => ({...state, isOpen: !isOpen, isLoaded: true}));
+  },
+};
 
 
 export const styleSheetPaths = [

@@ -3,7 +3,7 @@ import {
   DevFunction, ObjectObject, verifyTypes,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, clearAttributes, validateThisValJSXInstance,
+  DOMNodeObject, clearAttributes, validateJSXInstance,
 } from "../jsx_components.js";
 
 
@@ -36,7 +36,7 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    validateThisValJSXInstance(thisVal, callerNode, execEnv);
+    validateJSXInstance(thisVal, "Img.jsx", callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }

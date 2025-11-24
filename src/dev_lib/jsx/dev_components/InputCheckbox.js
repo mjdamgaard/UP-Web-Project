@@ -3,7 +3,7 @@ import {
   DevFunction, ObjectObject, verifyTypes,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, clearAttributes, validateThisValJSXInstance,
+  DOMNodeObject, clearAttributes, validateJSXInstance,
 } from "../jsx_components.js";
 import {getID} from "./getID.js";
 
@@ -14,7 +14,7 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    validateThisValJSXInstance(thisVal, callerNode, execEnv);
+    validateJSXInstance(thisVal, "InputCheckbox.jsx", callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }
@@ -77,13 +77,13 @@ export const methods = [
 export const actions = {
   "getIsChecked": new DevFunction(
     "getIsChecked", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      validateJSXInstance(thisVal, "InputCheckbox.jsx", callerNode, execEnv);
       return thisVal.jsxInstance.domNode.checked;
     }
   ),
   "setIsChecked": new DevFunction(
     "setIsChecked", {}, function({thisVal, callerNode, execEnv}, [val]) {
-      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      validateJSXInstance(thisVal, "InputCheckbox.jsx", callerNode, execEnv);
       val = val ? true : false;
       let {domNode} = thisVal.jsxInstance;
       domNode.checked = val;
@@ -91,7 +91,7 @@ export const actions = {
   ),
   "clear": new DevFunction(
     "clear", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      validateJSXInstance(thisVal, "InputCheckbox.jsx", callerNode, execEnv);
       let {domNode, props} = thisVal.jsxInstance;
       let {checked: initVal} = props;
       domNode.checked = initVal ? true : false;
@@ -99,7 +99,7 @@ export const actions = {
   ),
   "focus": new DevFunction(
     "focus", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      validateJSXInstance(thisVal, "InputCheckbox.jsx", callerNode, execEnv);
       let {jsxInstance} = thisVal;
       let canGrabFocus = !jsxInstance.settings.isOutsideFocusedAppScope(
         jsxInstance, callerNode, execEnv
@@ -115,7 +115,7 @@ export const actions = {
   ),
   "blur": new DevFunction(
     "blur", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateThisValJSXInstance(thisVal, callerNode, execEnv);
+      validateJSXInstance(thisVal, "InputCheckbox.jsx", callerNode, execEnv);
       thisVal.jsxInstance.domNode.blur();
     }
   ),

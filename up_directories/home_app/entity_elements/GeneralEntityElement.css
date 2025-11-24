@@ -4,31 +4,41 @@
   width: 100%;
 }
 
-
-.entity-element > :first-child {
+.entity-element .initial-content {
   height: 60px;
   display: grid;
   grid-template-columns: 4fr 1fr;
 }
 
 
-.entity-element > :first-child > .main-content {
+.entity-element .initial-content > :first-child {
   display: grid;
-  grid-template-columns: 20px auto;
-}
-
-.entity-element > :first-child > .main-content > .entity-id {
-  margin: auto;
-  font-size: 10pt;
+  grid-template-columns: auto 120px;
 }
 
 
-.entity-element > :first-child > .main-content .entity-display {
+.entity-element .initial-content > :first-child > .entity-display {
   display: flex;
   align-items: center;
   margin: auto 20px;
   font-size: 18pt;
 }
+
+.entity-element .initial-content > :first-child > .aggregated-score {
+  display: grid;
+  padding: 10px 0;
+  grid-template-rows: auto auto;
+}
+.entity-element .initial-content .score::before {
+  content: "score: ";
+}
+.entity-element .initial-content .weight::before {
+  content: "(weight: ";
+}
+.entity-element .initial-content .weight::after {
+  content: ")";
+}
+
 
 .entity-reference.fetching::after {
   content: "...";
