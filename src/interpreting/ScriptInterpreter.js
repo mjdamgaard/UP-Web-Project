@@ -318,9 +318,11 @@ export class ScriptInterpreter {
     impStmt, curModulePath, callerModuleEnv, ancestorModules
   ) {
     let submodulePath = getAbsolutePath(curModulePath, impStmt.str);
-    return await this.import(
+if (curModulePath == "/1/2/entity_pages/ClassPage.jsx")console.log("before " + submodulePath);
+    let ret = await this.import(
       submodulePath, impStmt, callerModuleEnv, false, true, ancestorModules
-    );
+    );if (curModulePath == "/1/2/entity_pages/ClassPage.jsx")console.log("after " + submodulePath);
+    return ret;
   }
 
 

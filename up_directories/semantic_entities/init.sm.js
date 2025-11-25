@@ -9,7 +9,7 @@ import {map} from 'array';
 import {valueToHex, arrayToHex} from 'hex';
 import {getSequentialPromise} from 'promise';
 import {
-  fetchEntityID, postAllEntitiesFromModule, fetchRelationalQualityPath
+  fetchOrCreateEntityID, postAllEntitiesFromModule, fetchRelationalQualityPath
 } from "./entities.js";
 import {
   scoreHandler01, initialTrustedUserGroup, initialStandardUserGroup,
@@ -258,6 +258,12 @@ export function postInitialScores01() {
           abs("./em2.js;get/flipGame"),
           firstModID, 2
         ),
+        postUserRelationalScoreAndUpdateUserGroups(
+          abs("./em1.js;get/classes"),
+          abs("./em1.js;get/entityPage"),
+          abs("./em2.js;get/classEntityPage"),
+          firstModID, 6
+        ),
       ]);
     },
 
@@ -291,9 +297,9 @@ export function postInitialScores02() {
 function postUserScoreHex(
   qualKey, subjKey, userKey, scoreHex, payloadHex = undefined
 ) {
-  let qualIDProm = fetchEntityID(qualKey);
-  let subjIDProm = fetchEntityID(subjKey);
-  let userEntIDProm = fetchEntityID(userKey);
+  let qualIDProm = fetchOrCreateEntityID(qualKey);
+  let subjIDProm = fetchOrCreateEntityID(subjKey);
+  let userEntIDProm = fetchOrCreateEntityID(userKey);
   return new Promise(resolve => {
     Promise.all([
       qualIDProm, subjIDProm, userEntIDProm

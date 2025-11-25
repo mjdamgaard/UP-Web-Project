@@ -331,8 +331,13 @@ export const qualities = {
   // that 'derived qualities' are thus not meant to be scored directly by the
   // users, as is the case for their counterparts, which we might refer to as
   // 'user-scored qualities.'
+  // Derived qualities also ought to define a "Dependencies" property with an
+  // array of all the non-derived, user-scored qualities on which it depends.
+  // This allows the app to link to these if the user wants to give their own
+  // scores to them.
   "Is derived",
   "getScoredList",
+  "Dependencies",
 
   // A quality might also include an "Area of concern" property (see below
   // for more details), but as mentioned below, such properties will often be

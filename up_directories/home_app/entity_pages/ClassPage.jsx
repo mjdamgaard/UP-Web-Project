@@ -8,7 +8,7 @@ from "../entity_elements/GeneralEntityElement.jsx";
 const subclassesRel = "/1/1/em1.js;get/subclasses";
 
 
-export function render({entKey, isNested}) {
+export function render({entKey, qualKeyArr, isNested}) {
   return <EntityPageWithTabs key="0"
     entKey={entKey} initTabKey={isNested ? "subclasses" : "members"}
     isNested={isNested} tabs={{
@@ -33,6 +33,14 @@ export function render({entKey, isNested}) {
           objKey: entKey,
           ElementComponent: GeneralEntityElement,
         },
+      },
+      qualities: {
+        title: "Qualities",
+        Component: EntityMetadataPage,
+        props: {
+          entKey: entKey,
+          qualKeyArr: qualKeyArr,
+        }
       },
     }}
   />;

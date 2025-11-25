@@ -1,6 +1,4 @@
 
-
-
 import homePath from "./.id.js";
 import {fetch, post, clearPermissions, clearPrivileges} from 'query';
 import {map, join} from 'array';
@@ -9,6 +7,15 @@ import {hexToArray, valueToHex, arrayToHex} from 'hex';
 import {
   fetchEntityID, fetchEntityDefinition, fetchEntityProperty
 } from "./entities.js";
+
+
+// TODO: The 'async' and 'await' keywords have not been implemented yet by
+// the ScriptInterpreter, but when it is, this module, and others like it,
+// ought to be reimplemented using async functions for better clarity. (We also
+// even might want to reimplement some of the front-end components that
+// fetches data to use async functions instead of running the render() function
+// from the top at each step of the process, which would likely also increase
+// the clarity of such components significantly.)
 
 
 

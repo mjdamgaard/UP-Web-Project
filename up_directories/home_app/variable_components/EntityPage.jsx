@@ -3,9 +3,8 @@ import {
   fetchEntityProperty, fetchRelationalQualityPath,
 } from "/1/1/entities.js";
 
-// TODO: Change back to GeneralEntityPage again.
-import * as GeneralEntityPage //from "../entity_pages/GeneralEntityPage.jsx";
-  from "../entity_pages/ClassPage.jsx";
+import * as GeneralEntityPage from "../entity_pages/GeneralEntityPage.jsx";
+import * as ComponentEntityComponent from "./ComponentEntityComponent.jsx";
 
 const entityPageRel = "/1/1/em1.js;get/entityPage";
 
@@ -20,7 +19,9 @@ export function getInitialState({entKey, classKey = undefined}) {
 export function render(props) {
   let {entKey, scoreHandler = undefined} = props;
   scoreHandler = scoreHandler ?? this.subscribeToContext("scoreHandler");
-  let {classKey, entityPageQualPath, topEntry, curEntKey} = this.state;
+  let {
+    classKey, entityPageQualPath, topEntry, topEntryIsFetching, curEntKey
+  } = this.state;
   let content;
 
   // If the entKey prop has changed, reset the state.
@@ -50,22 +51,25 @@ export function render(props) {
   // Else if the quality path is ready, but the top entry has not yet been
   // fetched, do that.
   else if (topEntry === undefined) {
-    scoreHandler.fetchTopEntry(entityPageQualPath).then(topEntry => {
-      this.setState(state => ({...state, topEntry: topEntry ?? false}));
-    });
+    if (!topEntryIsFetching) {
+      this.setState(state => ({...state, topEntryIsFetching: true}));
+      scoreHandler.fetchTopEntry(entityPageQualPath).then(topEntry => {
+        this.setState(state => ({...state, topEntry: topEntry ?? false}));
+      });
+    }
     content = <div className="fetching">{"..."}</div>;
   }
   
-  // Else ff top entry is non-existent, or the score is non-positive, render
+  // Else if top entry is non-existent, or the score is non-positive, render
   // a general entity page as the default.
-  if (!topEntry || topEntry[1] <= 0) {
+  else if (!topEntry || topEntry[1] <= 0) {
     content = <GeneralEntityPage {...props} key="_0" />;
   }
 
   // Else if the top entry is ready, expect it to be an entity of the "App
   // component" class, with a "Component path" property, and render this via
   // the ComponentEntityComponent.
-  else {console.log(topEntry);
+  else {
     let [compEntID] = topEntry;
     content = <ComponentEntityComponent
       {...props} entKey={compEntID} key="0"

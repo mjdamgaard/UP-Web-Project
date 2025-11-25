@@ -3,8 +3,6 @@ import {fetchRelationalQualityPath} from "/1/1/entities.js";
 import {map} from 'array';
 import {hasType} from 'type';
 
-import * as VariableEntityElement
-from "../variable_components/VariableEntityElement.jsx";
 import * as EntityListMenu from "./EntityListMenu.jsx";
 
 const VariableEntityElementPromise = import(
@@ -12,26 +10,19 @@ const VariableEntityElementPromise = import(
 );
 
 // TODO: This component should at some point be extended with a menu for
-// changing the sorting and filtering options. And it should maybe also at some
-// point get an API that allows it to push browser history states such that
-// the currently focussed entity can be scrolled to automatically again when
-// the page reloads (after we have also implemented such scroll actions/methods
-// (unless wanting to implement it in another way))..
-
-// TODO: This sorting/filtering/search should not least include an option to
-// see the "new" entities (those without a weight above 10), and/or see the
-// entities with a negative score (when dealing with the 'Predicate metric').
-
-// By the way, another todo, which is not about this component directly, is
-// to extend and enhance our scoreHandler such that we don't just use the
-// second-hand trusted user group for everything. In particular we should use
-// a more carefully governed user group for UI safety (used to prevent
-// phishing attempts, and such).
+// changing the sorting and filtering options.
 
 // TODO: The "Add new" menu should be changed for all lists where the
 // "Subject class" of the relation is or is a subset of the 'Texts' class, such
 // that for these lists, the user can add a comment directly.
 
+// By the way, another todo, which is not about this component directly, is
+// to extend and enhance our scoreHandler such that we don't just use the
+// second-hand trusted user group for everything. In particular we should use
+// a more carefully governed user group for UI safety (used to prevent
+// phishing attempts, and such). *Well, maybe we should just increase the
+// weight required for the variable components to use the component entity.
+// Let's just do this for now.
 
 
 
@@ -109,7 +100,8 @@ export function render({
 
 
 export function getInitialState({
-  ElementComponent, options, minScore, minWeight, 
+  ElementComponent = VariableEntityElementPromise,
+  options, minScore, minWeight,
 }) {
   minScore ??= options?.lo;
   minWeight ??= 10;
