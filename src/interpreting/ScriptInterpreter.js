@@ -318,17 +318,17 @@ export class ScriptInterpreter {
     impStmt, curModulePath, callerModuleEnv, ancestorModules
   ) {
     let submodulePath = getAbsolutePath(curModulePath, impStmt.str);
-if (curModulePath == "/1/2/entity_pages/ClassPage.jsx")console.log("before " + submodulePath);
     let ret = await this.import(
-      submodulePath, impStmt, callerModuleEnv, false, true, ancestorModules
-    );if (curModulePath == "/1/2/entity_pages/ClassPage.jsx")console.log("after " + submodulePath);
+      submodulePath, impStmt, callerModuleEnv, false, true, false,
+      ancestorModules
+    );
     return ret;
   }
 
 
   async import(
     route, callerNode, callerEnv, assertJSModule = false, assertModule = false,
-    ancestorModules = [],
+    prepareJSXImmediately = false, ancestorModules = [],
   ) {
     decrCompGas(callerNode, callerEnv);
     decrGas(callerNode, callerEnv, "import");
@@ -359,7 +359,8 @@ if (curModulePath == "/1/2/entity_pages/ClassPage.jsx")console.log("before " + s
     // LiveJSModule where the route ends in ".jsx".
     let {appSettings} = callerEnv.scriptVars;
     if (
-      appSettings && ret instanceof LiveJSModule && route.slice(-4) === ".jsx"
+      appSettings && prepareJSXImmediately &&
+      ret instanceof LiveJSModule && route.slice(-4) === ".jsx"
     ) {
       await appSettings.prepareComponent(ret, callerNode, callerEnv);
     }
@@ -1281,7 +1282,7 @@ if (curModulePath == "/1/2/entity_pages/ClassPage.jsx")console.log("before " + s
         let path = this.evaluateExpression(expNode.pathExp, environment);
         let ret;
         let liveModulePromise = this.import(
-          path, expNode, environment
+          path, expNode, environment, false, false, true
         ).catch(err => {
           if (!ret.hasCatch) {
             this.handleUncaughtException(err, environment);
