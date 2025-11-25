@@ -72,7 +72,7 @@ export function render(props) {
   else {
     let [compEntID] = topEntry;
     content = <ComponentEntityComponent
-      {...props} entKey={compEntID} key="0"
+      {...props} compEntID={compEntID} key="0"
     />;
   }
 

@@ -3,12 +3,12 @@ import {fetchEntityDefinition} from "/1/1/entities.js";
 
 
 export function render(props) {
-  let {entKey} = props;
+  let {compEntID} = props;
   let {componentDef, Component} = this.state;
 
   // If this component's definition object is not already gotten, fetch it.
   if (componentDef === undefined) {
-    fetchEntityDefinition(entKey, true).then(compDef => {
+    fetchEntityDefinition(compEntID, true).then(compDef => {
       this.setState(state => ({...state, componentDef: compDef}));
     });
     return <div className="fetching"></div>;

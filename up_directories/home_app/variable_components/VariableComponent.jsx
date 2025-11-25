@@ -65,7 +65,7 @@ export function render(props) {
     }
     else {
       content = <ComponentEntityComponent 
-        {...props} key="0" entKey={compEntID}
+        {...props} key="0" compEntID={compEntID}
       />;
     }
   }
