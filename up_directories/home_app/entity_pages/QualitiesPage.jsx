@@ -1,5 +1,6 @@
 
 import {map} from 'array';
+import {hasType} from 'type';
 import * as EntityList from "../entity_lists/EntityList.jsx";
 
 const relevantQualitiesRel = "/1/1/em1.js;get/relevantQualities";
@@ -17,15 +18,24 @@ export function render({objKey, qualKeyArr = []}) {
     });
   }
   if (!QualityElement) {
-    return <div><div className="fetching"></div></div>;
+    return <div><div className="fetching">{"..."}</div></div>;
   }
 
   let contextQualityElements = (qualKeyArr[0] === undefined) ? undefined :
-    map(qualKeyArr, qualKey => (
-      <QualityElement key={"cq-" + qualKey}
-        entKey={qualKey} objKey={objKey}
-      />
-    ));
+    map(qualKeyArr, qualKey => {
+      if (hasType(qualKey, "array")) {
+        let subjKey = objKey;
+        let [objKey, relKey] = qualKey; 
+        return <QualityElement key={"cq-" + qualKey}
+          subjKey={subjKey} relKey={relKey} objKey={objKey}
+        />;
+      }
+      else {
+        return <QualityElement key={"cq-" + qualKey}
+          qualKey={qualKey} subjKey={objKey}
+        />;
+      }
+    });
   return <div>
     <h4>{"Qualities relevant to the context"}</h4>
     {contextQualityElements}

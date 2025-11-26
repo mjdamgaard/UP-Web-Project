@@ -1,45 +1,37 @@
 
-import {toPrecision} from 'number';
+import {fetchRelationalQualityPath} from "/1/1/entities.js";
 
-import * as EntityReference from "../misc/EntityReference.jsx";
-import * as ExpandableElement
-from "../misc/ExpandableElement.jsx";
-import * as EntityPage from "../variable_components/EntityPage.jsx";
-
-import * as AggregatedScoreDisplay from "../scoring/AggregatedScoreDisplay.jsx";
-
+import * as QualityEntityElement from "./QualityEntityElement.jsx";
 
 
 export function render({
-  entID, entKey = entID, objKey, qualKeyArr = [],
-  score = undefined, weight = undefined,
+  subjKey, qualKey = undefined, objKey = undefined, relKey = undefined,
+  classKey = undefined, score = undefined, weight = undefined,
 }) {
-  return "QualityElement... entKey=" + entKey + " objKey=" + objKey;
-  return <div className="entity-element">
-    <ExpandableElement key="ee"
-      ExpandedComponent={EntityPage} expCompProps={{
-        entKey: entID,
-        qualKeyArr: qualKeyArr,
-        isNested: true,
-      }}
-    >
-      <div onClick={() => this.call("ee", "expand")}>
-        <div className="entity-display">
-          <EntityReference key="er" entKey={entID} hasLinks={false} />
-        </div>
-        <AggregatedScoreDisplay key="as"
-          score={score ? toPrecision(score, 3) : "N/A"}
-          weight={weight ? toPrecision(weight, 3) : "N/A"}
-        />
-      </div>
-    </ExpandableElement>
-  </div>;
+  let {qualPath} = this.state;
+  qualKey ??= qualPath;
+
+  // If the qualKey prop is undefined, and qualPath has not yet been fetched,
+  // do so.
+  if (qualKey === undefined) {
+    fetchRelationalQualityPath(objKey ?? classKey, relKey).then(qualPath => {
+      this.setState(state => ({...state, qualPath: qualPath ?? false}));
+    });
+    return <div className="fetching">{"..."}</div>;
+  }
+
+  else if (!qualKey) {
+    content = <div className="missing">{"missing"}</div>;
+  }
+
+  return <QualityEntityElement key="0"
+    qualKey={qualKey} objKey={subjKey} score={score} weight={weight}
+  />;
 }
 
 
 
 export const styleSheetPaths = [
-  ...ExpandableElement.styleSheetPaths,
   abs("./GeneralEntityElement.css"),
   abs("../misc/ExpandableElement.css"),
 ];

@@ -20,7 +20,7 @@ export function render({qualKeyArr}) {
   }
   if (!GeneralEntityElement) {
     return <div className="add-entity-menu">
-      <div className="fetching"></div>
+      <div className="fetching">{"..."}</div>
     </div>;
   }
 

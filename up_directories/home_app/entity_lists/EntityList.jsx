@@ -36,7 +36,7 @@ export function render({
   minScore = undefined, minWeight = 10,
   paginationLength = 50, paginationIndex = 0,
 }) {
-  scoreHandler = scoreHandler ?? this.subscribeToContext("scoreHandler");
+  scoreHandler ??= this.subscribeToContext("scoreHandler");
   let {
     ElementComponent, qualPath, list, curMinScore, curMinWeight
   } = this.state;

@@ -1,7 +1,6 @@
 
 import {toPrecision, parseFloat, isNaN} from 'number';
 import {fetchMetric, fetchUserScore} from "/1/1/scores.js";
-import {scoreHandler01} from "/1/1/score_handling/ScoreHandler01/em.js";
 
 import * as InputRangeAndValue
 from "../misc/InputRangeAndValue.jsx";
@@ -10,12 +9,8 @@ import * as AggregatedScoreDisplay from "./AggregatedScoreDisplay.jsx";
 
 
 
-export function render({subjKey, qualKey}) {
-  // TODO: Refactor this ScoreInterface component that uses a constant score
-  // handler into a component with a prop/context-defined score handler, and
-  // then a decorating component which can be used for a request origin
-  // whitelist.
-  let scoreHandler = scoreHandler01;
+export function render({subjKey, qualKey, scoreHandler = undefined}) {
+  scoreHandler ??= this.subscribeToContext("scoreHandler");
   let userEntID = this.subscribeToContext("userEntID");
   let {hasBegunFetching, metric, prevScore, msg} = this.state;
   let content;
@@ -128,7 +123,8 @@ export const actions = {
     });
   },
   "submitScoreWithUserEntID": function(userEntID) {
-    let {qualKey, subjKey} = this.props;
+    let {qualKey, subjKey, scoreHandler} = this.props;
+    scoreHandler ??= this.subscribeToContext("scoreHandler");
     let score = parseFloat(this.call("ir", "getValue"));
     return new Promise(resolve => {
       if (isNaN(score)) {
@@ -138,7 +134,7 @@ export const actions = {
         resolve(false);
       }
       else {
-        scoreHandler01.postScore(
+        scoreHandler.postScore(
           qualKey, subjKey, userEntID, score
         ).then(wasUpdated => {
           if (wasUpdated) {
@@ -196,9 +192,10 @@ export const actions = {
     });
   },
   "deleteScoreWithUserEntID": function(userEntID) {
-    let {qualKey, subjKey} = this.props;
+    let {qualKey, subjKey, scoreHandler} = this.props;
+    scoreHandler ??= this.subscribeToContext("scoreHandler");
     return new Promise(resolve => {
-      scoreHandler01.deleteScore(
+      scoreHandler.deleteScore(
         qualKey, subjKey, userEntID
       ).then(wasDeleted => {
         if (wasDeleted) {
