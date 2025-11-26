@@ -51,7 +51,7 @@ export const render = new DevFunction(
       };
     }
 
-    // Set the oninput event if props.oninput is supplied.
+    // Set the oninput event if props.onInput is supplied.
     if (onInput) {
       domNode.oninput = (event) => {
         let {checked} = event.target;

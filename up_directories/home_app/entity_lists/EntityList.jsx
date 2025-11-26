@@ -85,7 +85,8 @@ export function render({
             curMinWeight !== undefined && weight < curMinWeight
           ) ? undefined :
             <ElementComponent key={"_" + entID}
-              entID={entID} score={score} weight={weight}
+              entID={entID} objKey={objKey ?? classKey}
+              score={score} weight={weight}
               qualKeyArr={[qualKey ?? qualPath]}
             />
         ))

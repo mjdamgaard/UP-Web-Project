@@ -395,7 +395,7 @@ class JSXInstance {
     }
 
     // If componentModule is defined, render the component instance.
-    else if (jsxElement.componentModule) {
+    else if (jsxElement.isComponent) {
       let componentModule = jsxElement.componentModule;
 
       // First we check if the childInstances to see if the child component

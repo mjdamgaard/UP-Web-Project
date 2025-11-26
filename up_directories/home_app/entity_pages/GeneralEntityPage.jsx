@@ -2,9 +2,10 @@
 import * as EntityPageWithTabs
 from "../misc/EntityPageWithTabs.jsx";
 import * as EntityMetadataPage from "./EntityMetadataPage.jsx";
+import * as QualitiesPage from "./QualitiesPage.jsx";
 
 
-export function render({entKey, qualKeyArr, isNested}) {
+export function render({entKey, qualKeyArr = [], isNested}) {
   return <EntityPageWithTabs key="0"
     entKey={entKey} initTabKey={"qualities"} isNested={isNested} tabs={{
       about: {
@@ -14,9 +15,9 @@ export function render({entKey, qualKeyArr, isNested}) {
       },
       qualities: {
         title: "Qualities",
-        Component: EntityMetadataPage,
+        Component: QualitiesPage,
         props: {
-          entKey: entKey,
+          objKey: entKey,
           qualKeyArr: qualKeyArr,
         }
       },

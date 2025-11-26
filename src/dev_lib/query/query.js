@@ -137,7 +137,8 @@ export const query = new DevFunction(
       ancestorModules.includes(extendedRoute) ||
       ancestorModules.includes(route)
     ) throw new LoadError(
-      "Infinite recursion: Module " + route + " imports itself.",
+      "Infinite recursion: Module " + route + " imports itself. Ancestor " +
+      "modules when error happened: " + ancestorModules.join(", ") + ".",
       callerNode, execEnv
     );
 

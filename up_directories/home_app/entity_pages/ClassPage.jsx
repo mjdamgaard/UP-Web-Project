@@ -1,14 +1,17 @@
 
 import * as EntityPageWithTabs from "../misc/EntityPageWithTabs.jsx";
 import * as EntityMetadataPage from "./EntityMetadataPage.jsx";
+import * as QualitiesPage from "./QualitiesPage.jsx";
 import * as EntityList from "../entity_lists/EntityList.jsx";
 import * as GeneralEntityElement 
 from "../entity_elements/GeneralEntityElement.jsx";
 
+const membersRel = "/1/1/em1.js;get/members";
 const subclassesRel = "/1/1/em1.js;get/subclasses";
+const relevantQualitiesRel = "/1/1/em1.js;get/relevantQualities";
 
 
-export function render({entKey, qualKeyArr, isNested}) {
+export function render({entKey, qualKeyArr = [], isNested}) {
   return <EntityPageWithTabs key="0"
     entKey={entKey} initTabKey={isNested ? "subclasses" : "members"}
     isNested={isNested} tabs={{
@@ -21,7 +24,9 @@ export function render({entKey, qualKeyArr, isNested}) {
         title: "Members",
         Component: EntityList,
         props: {
-          classKey: entKey,
+          objKey: entKey,
+          relKey: membersRel,
+          qualKeyArr: [[entKey, membersRel], ...qualKeyArr],
           ElementComponent: GeneralEntityElement,
         }
       },
@@ -29,16 +34,17 @@ export function render({entKey, qualKeyArr, isNested}) {
         title: "Subclasses",
         Component: EntityList,
         props: {
-          relKey: subclassesRel,
           objKey: entKey,
+          relKey: subclassesRel,
+          qualKeyArr: [[entKey, subclassesRel], ...qualKeyArr],
           ElementComponent: GeneralEntityElement,
         },
       },
       qualities: {
         title: "Qualities",
-        Component: EntityMetadataPage,
+        Component: QualitiesPage,
         props: {
-          entKey: entKey,
+          objKey: entKey,
           qualKeyArr: qualKeyArr,
         }
       },

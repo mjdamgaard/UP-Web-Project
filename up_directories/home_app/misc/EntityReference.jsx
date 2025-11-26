@@ -14,12 +14,13 @@ export function getInitialState({entKey}) {
 
 
 export function render({
-  key, entKey = key, isLink = true, hasLinks = false,
+  key, entKey = key, hasLinks = true, linkLevel = 0,
   recLevel = 0, pushState = undefined
 }) {
   let {curEntKey, entDef, entPath, entID} = this.state;
-  pushState ??= isLink ? (this.subscribeToContext("history") ?? {}).pushState :
-    undefined;
+  let isLink = hasLinks && linkLevel === recLevel;
+  pushState ??= hasLinks ?
+    (this.subscribeToContext("history") ?? {}).pushState : undefined;
   let EntityReference = this.component;
   let content = "", href = "./";
 
@@ -97,7 +98,8 @@ export function render({
     // any nested entity keys with EntityReferences.
     else {
       let substitutedSegmentArr = replaceReferences(name, (refEntKey, ind) => (
-        <EntityReference key={ind} entKey={refEntKey} isLink={hasLinks}
+        <EntityReference key={ind} entKey={refEntKey}
+          hasLinks={hasLinks && !isLink} linkLevel={linkLevel}
           recLevel={recLevel + 1} pushState={pushState}
         />
       ));

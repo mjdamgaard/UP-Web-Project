@@ -2,13 +2,27 @@
 import {postEntity} from "/1/1/entities.js";
 
 import * as InputText from 'InputText.jsx';
-import * as GeneralEntityElement
-from "../entity_elements/GeneralEntityElement.jsx";
+
+const GeneralEntityElementPromise = import(
+  "../entity_elements/GeneralEntityElement.jsx"
+);
 
 
 
 export function render({qualKeyArr}) {
-  let {response, entityElement} = this.state;
+  let {GeneralEntityElement, isFetching, response, entityElement} = this.state;
+
+  if (!isFetching) {
+    this.setState(state => ({...state, isFetching: true}));
+    GeneralEntityElementPromise.then(Component => {
+      this.setState(state => ({...state, GeneralEntityElement: Component}));
+    });
+  }
+  if (!GeneralEntityElement) {
+    return <div className="add-entity-menu">
+      <div className="fetching"></div>
+    </div>;
+  }
 
   return <div className="add-entity-menu">
     <div>{

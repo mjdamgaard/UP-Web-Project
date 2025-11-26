@@ -2,7 +2,11 @@
 
 .entity-element {
   width: 100%;
+  border: 2px ridge lightgray;
 }
+/* .entity-element:hover {
+  border: 2px ridge lightgray;
+} */
 
 .entity-element .initial-content > :first-child {
   height: 60px;
@@ -34,7 +38,7 @@
 }
 
 
-:where(.entity-element:hover) .collapse-expand-button {
+:where(.entity-element:has(.initial-content:hover)) .collapse-expand-button {
   background-color: lightgray;
 }
 
