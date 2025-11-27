@@ -40,11 +40,12 @@ export function render({
   let {
     ElementComponent, qualPath, list, curMinScore, curMinWeight
   } = this.state;
+  qualKey ??= qualPath;
   let content;
 
   // If the qualKey prop is undefined, and qualPath has not yet been fetched,
   // do so.
-  if (!qualKey && qualPath === undefined) {
+  if (qualKey === undefined) {
     fetchRelationalQualityPath(objKey ?? classKey, relKey).then(qualPath => {
       this.setState(state => ({...state, qualPath: qualPath ?? false}));
     });
@@ -54,7 +55,7 @@ export function render({
   // Else use the qualKey ?? qualPath to fetch the scored list to show, if it
   // hasn't been fetched already.
   else if (list === undefined) {
-    scoreHandler.fetchList(qualKey ?? qualPath, options).then(list => {
+    scoreHandler.fetchList(qualKey, options).then(list => {
       this.setState(state => ({...state, list: list ?? []}));
     });
     content = <div className="fetching">{"..."}</div>;
@@ -74,7 +75,7 @@ export function render({
   else {
     content = [
       hideMenu ? undefined : <EntityListMenu key="menu"
-        qualKeyArr={[qualKey ?? qualPath]}
+        qualKeyArr={[qualKey]}
         minScore={minScore} minWeight={minWeight}
       />,
       <hr/>,
@@ -87,7 +88,7 @@ export function render({
             <ElementComponent key={"_" + entID}
               entID={entID} objKey={objKey ?? classKey}
               score={score} weight={weight}
-              qualKeyArr={[qualKey ?? qualPath]}
+              qualKeyArr={[qualKey]}
             />
         ))
       }</div>,

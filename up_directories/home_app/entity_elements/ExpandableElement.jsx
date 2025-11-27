@@ -15,7 +15,7 @@ export function render(props) {
         children
       }</div>
       <div className={"expanded-content" + (isOpen ? "" : " hidden")}>{
-        isLoaded ? <ExpandedComponent {...expCompProps} key="expanded" /> :
+        isLoaded ? <ExpandedComponent key="exp" {...expCompProps} /> :
           undefined
       }</div>
     </div>

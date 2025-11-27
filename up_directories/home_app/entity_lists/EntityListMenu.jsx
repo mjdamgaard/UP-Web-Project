@@ -1,16 +1,24 @@
 
 import {parseFloat, isNaN} from 'number';
 import {trim} from 'string';
+import {map} from 'array';
 import * as AddEntityMenu from "./AddEntityMenu.jsx";
 import * as InputText from 'InputText.jsx';
+import * as EntityReference from "../misc/EntityReference.jsx";
 
 
 
-export function render({qualKeyArr, minScore, minWeight}) {
+export function render({
+  qualKeyArr = [], minScore = undefined, minWeight = undefined
+}) {
   let {menuExtension} = this.state;
 
   return (
     <div className="entity-list-menu">
+      <div className="quality-references">{map(qualKeyArr, qualKey => (
+        <EntityReference key={"qr-" + qualKey} entKey={qualKey} />
+      ))}
+      </div>
       <div>
         <button onClick={() => {
           this.setState(state => ({

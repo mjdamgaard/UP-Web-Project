@@ -576,7 +576,7 @@ export const decodeURI = new DevFunction(
 
 
 export const clearPermissions = new DevFunction(
-  "clearPermissions", {},
+  "clearPermissions", {typeArr: ["function"]},
   ({callerNode, execEnv, interpreter}, [callback]) => {
     return interpreter.executeFunction(
       callback, [], callerNode, execEnv, undefined, [CLEAR_FLAG]
@@ -595,11 +595,26 @@ export const noPost = new DevFunction(
 );
 
 export const clearPrivileges = new DevFunction(
-  "clearPrivileges", {},
+  "clearPrivileges", {typeArr: ["function"]},
   ({callerNode, execEnv, interpreter}, [callback]) => {
     return interpreter.executeFunction(
       callback, [], callerNode, execEnv, undefined,
       [[ELEVATED_PRIVILEGES_FLAG, false]]
     );
+  }
+);
+
+
+
+// TODO: Implement this noTrace() function, which should suppress traces from
+// being generated and logged alongside any errors thrown while the flag is
+// raised. And if the SMF calls another SMF (via './callSMF') any traces made
+// inside the this called SMF should stop when reaching the the caller SMF
+// (similarly to what I do currently, but now it should just *only* be done
+// when the "no-trace" flag is raised).
+export const noTrace = new DevFunction(
+  "noTrace", {typeArr: ["function"]},
+  ({callerNode, execEnv, interpreter}, [callback]) => {
+    // TODO: Set some "no-trace" flag.
   }
 );

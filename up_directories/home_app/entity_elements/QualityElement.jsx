@@ -24,14 +24,7 @@ export function render({
     content = <div className="missing">{"missing"}</div>;
   }
 
-  return <QualityEntityElement key="0"
+  return <QualityEntityElement key="_0"
     qualKey={qualKey} objKey={subjKey} score={score} weight={weight}
   />;
 }
-
-
-
-export const styleSheetPaths = [
-  abs("./GeneralEntityElement.css"),
-  abs("../misc/ExpandableElement.css"),
-];

@@ -778,6 +778,7 @@ class JSXInstance {
   trigger(
     eventKey, input, interpreter, node, env, eventTargetScope = undefined
   ) {
+    if (this.isDiscarded) return;
     eventTargetScope ??= env.getFlag(REQUESTING_COMPONENT_FLAG);
     if (!this.parentInstance) return;
     let events = this.parentInstance.events;

@@ -3,7 +3,7 @@ import {toPrecision} from 'number';
 
 import * as EntityReference from "../misc/EntityReference.jsx";
 import * as ExpandableElement
-from "../misc/ExpandableElement.jsx";
+from "./ExpandableElement.jsx";
 import * as EntityPage from "../variable_components/EntityPage.jsx";
 
 import * as AggregatedScoreDisplay from "../scoring/AggregatedScoreDisplay.jsx";
@@ -16,6 +16,7 @@ export function render({
   return <div className="entity-element">
     <ExpandableElement key="ee"
       ExpandedComponent={EntityPage} expCompProps={{
+        key: "_exp",
         entKey: entID,
         qualKeyArr: qualKeyArr,
         isNested: true,
@@ -39,5 +40,5 @@ export function render({
 export const styleSheetPaths = [
   ...ExpandableElement.styleSheetPaths,
   abs("./GeneralEntityElement.css"),
-  abs("../misc/ExpandableElement.css"),
+  abs("../entity_elements/ExpandableElement.css"),
 ];
