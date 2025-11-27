@@ -37,8 +37,7 @@ import * as hexMod from "../dev_lib/conversion/hex.js";
 import * as errorMod from "../dev_lib/error.js";
 import * as typeMod from "../dev_lib/type.js";
 import * as routeMod from "../dev_lib/route.js";
-import * as scoredListsAlgMod
-from "../dev_lib/array_algorithms/scored_lists.js";
+import * as scoredListsMod from "../dev_lib/semantic_entities/scored_lists.js";
 import * as entitiesMod from "../dev_lib/semantic_entities/entities.js";
 
 const staticDevLibs = new Map();
@@ -56,7 +55,7 @@ staticDevLibs.set("hex", hexMod);
 staticDevLibs.set("error", errorMod);
 staticDevLibs.set("type", typeMod);
 staticDevLibs.set("route", routeMod);
-staticDevLibs.set("scored_lists", scoredListsAlgMod);
+staticDevLibs.set("scored_lists", scoredListsMod);
 staticDevLibs.set("entities", entitiesMod);
 
 

@@ -9,6 +9,10 @@ import {
 export const verifyType = new DevFunction(
   "verifyType", {typeArr: ["any?", "string", "boolean?"]},
   ({callerNode, execEnv}, [val, type, isOptional]) => {
+    if (type.at(-1) === "?") {
+      type = type.slice(0, -1);
+      isOptional = true;
+    }
     return _verifyType(val, type, isOptional, callerNode, execEnv);
   },
 );
@@ -27,6 +31,10 @@ export const verifyTypes = new DevFunction(
 export const hasType = new DevFunction(
   "hasType", {typeArr: ["any?", "string", "boolean?"]},
   ({callerNode, execEnv}, [val, type, isOptional]) => {
+    if (type.at(-1) === "?") {
+      type = type.slice(0, -1);
+      isOptional = true;
+    }
     try {
       _verifyType(val, type, isOptional, callerNode, execEnv);
       return true;

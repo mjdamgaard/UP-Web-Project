@@ -1,5 +1,10 @@
 
 
+.entity-list-menu > * {
+  width: 100%;
+  overflow-x: scroll;
+}
+
 .entity-list-menu > * > * {
   display: inline-block;
   margin: 0 0.5em;

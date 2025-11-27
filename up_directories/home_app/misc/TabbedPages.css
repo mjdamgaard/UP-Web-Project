@@ -1,9 +1,9 @@
 
 
-.tabbed-pages .tab-menu {
+/* .tabbed-pages .tab-menu {
   border: 2px solid darkgray;
   border-bottom: 0px solid lightgray;
-}
+} */
 .tabbed-pages .tab-menu .tab {
   margin: 0.1em 0.1em 0;
   display: inline-block;
@@ -53,8 +53,8 @@
 
 
 .tabbed-pages .page-container {
-  border: 2px solid darkgray;
-  border-top: 0px solid lightgray;
+  /* border: 2px solid darkgray;
+  border-top: 0px solid lightgray; */
   padding: 1em;
 }
 .tabbed-pages .page-container > :not(.open) {
