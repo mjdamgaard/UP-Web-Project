@@ -86,18 +86,37 @@ export const combineLists = new DevFunction(
 
 
 
+export const sortListWRTScore = new DevFunction(
+  "sortListWRTScore", {typeArr: ["array", "any?"]},
+  ({callerNode, execEnv}, [list, isAscending = false]) => {
+    // Prepare the list by making appropriate checks and shallow copies.
+    if (list instanceof ObjectObject) list = list.members;
+    list = list.map(entry => {
+      verifyType(entry, "array", false, callerNode, execEnv);
+      if (entry instanceof ObjectObject) entry = entry.members;
+      verifyType(entry[1], "number", false, callerNode, execEnv);
+      return [...entry];
+    });
+
+    // Then sort the list.
+    return isAscending ?
+      list.sort((a, b) => a[1] - b[1]) :
+      list.sort((a, b) => b[1] - a[1]);
+  }
+);
+
+
 
 
 export const filterScoredListWRTWeight = new DevFunction(
   "filterScoredListWRTWeight", {typeArr: ["array", "number?"]},
   ({callerNode, execEnv}, [list, minWeight = 10]) => {
-    // Deep-copy list, also turning it, and its nested array objects into a
-    // plain JS array if they are not already.
+    // Prepare the list by making appropriate checks and shallow copies.
     if (list instanceof ObjectObject) list = list.members;
-    list = list.map(scoreData => {
-      verifyType(scoreData, "array", false, callerNode, execEnv);
-      if (scoreData instanceof ObjectObject) scoreData = scoreData.members;
-      return [...scoreData];
+    list = list.map(entry => {
+      verifyType(entry, "array", false, callerNode, execEnv);
+      if (entry instanceof ObjectObject) entry = entry.members;
+      return [...entry];
     });
 
     // Then filter the scored lists with respect to the weight and return the

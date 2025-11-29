@@ -1,7 +1,8 @@
 
-import {fetchRelationalQualityPath} from "/1/1/entities.js";
+import {fetchRelationalQualityPath, fetchEntityPath} from "/1/1/entities.js";
 import {map} from 'array';
 import {hasType} from 'type';
+import {combineLists, sortListWRTScore} from 'scored_lists';
 
 import * as EntityListMenu from "./EntityListMenu.jsx";
 
@@ -31,51 +32,86 @@ const VariableEntityElementPromise = import(
 // from the relational quality formed by either the relation--object pair, or
 // the class.
 export function render({
-  qualKey, relKey, objKey, classKey, hideMenu = false,
-  scoreHandler = undefined, options = undefined,
-  minScore = undefined, minWeight = 10,
-  paginationLength = 50, paginationIndex = 0,
+  qualKey, objKey, relKey, extQualKeyArr = [qualKey ?? [objKey, relKey]],
+  factorArr = [], constList, scoreHandler = undefined, options = undefined,
+  minScore = undefined, minWeight = 10, isAscending = false,
+  hideMenu = false, paginationLength = 50, paginationIndex = 0,
 }) {
   scoreHandler ??= this.subscribeToContext("scoreHandler");
   let {
-    ElementComponent, qualPath, list, curMinScore, curMinWeight
+    ElementComponent, listArr, isFetching, curMinScore, curMinWeight,
+    qualKeyArr,
   } = this.state;
-  qualKey ??= qualPath;
   let content;
 
-  // If the qualKey prop is undefined, and qualPath has not yet been fetched,
-  // do so.
-  if (qualKey === undefined) {
-    fetchRelationalQualityPath(objKey ?? classKey, relKey).then(qualPath => {
-      this.setState(state => ({...state, qualPath: qualPath ?? false}));
+  // If the lists are not yet being fetched, do so.
+  if (isFetching === undefined) {
+    this.setState(state => ({...state, isFetching: true}));
+
+    // For each extended quality key, fetch the qualPath first in case of a
+    // objKey--relKey pair, then fetch the list. We also make sure to get an
+    // array of all the resulting qualKeys in the process, which we can pass to
+    // EntityListMenu below.
+    let qualKeyPromArr = map(extQualKeyArr, extKey => new Promise(resolve => {
+      if (hasType(extKey, "array")) {
+        let [objKey, relKey] = extKey;
+        fetchRelationalQualityPath(objKey, relKey).then(
+          qualPath => resolve(qualPath)
+        );
+      }
+      else {
+        let qualKey = extKey;
+        fetchEntityPath(qualKey).then(qualPath => resolve(qualPath));
+      }
+    }));
+    Promise.all(qualKeyPromArr).then(qualKeyArr => {
+      this.setState(state => ({...state, qualKeyArr: qualKeyArr}));
     });
+    let listPromArr = map(qualKeyPromArr, qualKeyProm => 
+      new Promise(resolve => qualKeyProm.then(qualKey => {
+        scoreHandler.fetchList(qualKey, options).then(
+          list => resolve(list)
+        );
+      }))
+    );
+    Promise.all(listPromArr).then(listArr => {
+      this.setState(state => ({...state, listArr: listArr}));
+    });
+
+    // Also, if ElementComponent is a promise, wait for it and replace it with
+    // its result. 
+    if (hasType(ElementComponent, "promise")) {
+      ElementComponent.then(result => {
+        this.setState(state => ({...state, ElementComponent: result}));
+      });
+    }
+
     content = <div className="fetching">{"..."}</div>;
   }
 
-  // Else use the qualKey ?? qualPath to fetch the scored list to show, if it
-  // hasn't been fetched already.
-  else if (list === undefined) {
-    scoreHandler.fetchList(qualKey, options).then(list => {
-      this.setState(state => ({...state, list: list ?? []}));
-    });
-    content = <div className="fetching">{"..."}</div>;
-  }
-
-  // Also, if ElementComponent is a promise, wait for it and replace it with
-  // its result. 
-  else if (hasType(ElementComponent, "promise")) {
-    ElementComponent.then(result => {
-      this.setState(state => ({...state, ElementComponent: result}));
-    });
+  // Else if the lists have not yet returned, or the ElementComponent hasn't,
+  // render a "fetching" placeholder.
+  else if (
+    listArr === undefined || hasType(ElementComponent, "promise") ||
+    qualKeyArr === undefined
+  ) {
     content = <div className="fetching">{"..."}</div>;
   }
 
   // And if everything is ready, render the elements. TODO: Only render some
   // elements, namely in a pagination.
   else {
+    // First combine the lists into one.
+    let list = (extQualKeyArr.length === 1 && !constList) ?
+      (isAscending ? sortListWRTScore(list, isAscending) : listArr[0]) :
+      constList ?
+        combineLists([constList, ...list], factorArr, isAscending) :
+        combineLists(list, factorArr, isAscending);
+
+    // Then generate the content of the component.
     content = [
       hideMenu ? undefined : <EntityListMenu key="menu"
-        qualKeyArr={[qualKey]}
+        qualKeyArr={qualKeyArr}
         minScore={minScore} minWeight={minWeight}
       />,
       <hr/>,
@@ -86,7 +122,7 @@ export function render({
             curMinWeight !== undefined && weight < curMinWeight
           ) ? undefined :
             <ElementComponent key={"_" + entID}
-              entID={entID} objKey={objKey ?? classKey}
+              entID={entID} objKey={objKey}
               score={score} weight={weight}
               qualKeyArr={[qualKey]}
             />
