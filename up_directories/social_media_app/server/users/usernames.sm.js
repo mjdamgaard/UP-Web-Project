@@ -3,8 +3,6 @@ import {post, fetch, fetchPrivate} from 'query';
 import {getRequestingUserID} from 'request';
 import {valueToHex, hexToValue} from 'hex';
 import {verifyType} from 'type';
-import {now} from 'date';
-import {map} from 'array';
 import {getConnection} from 'connection';
 
 

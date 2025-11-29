@@ -33,7 +33,8 @@ const VariableEntityElementPromise = import(
 // the class.
 export function render({
   qualKey, objKey, relKey, extQualKeyArr = [qualKey ?? [objKey, relKey]],
-  factorArr = [], constList, scoreHandler = undefined, options = undefined,
+  factorArr = [], constList = undefined, constElementArr = undefined,
+  scoreHandler = undefined, options = undefined,
   minScore = undefined, minWeight = 10, isAscending = false,
   hideMenu = false, paginationLength = 50, paginationIndex = 0,
 }) {
@@ -115,8 +116,9 @@ export function render({
         minScore={minScore} minWeight={minWeight}
       />,
       <hr/>,
-      <div className="list-container">{
-        map(list, ([entID, score, weight]) => (
+      <div className="list-container">
+        {constElementArr}
+        {map(list, ([entID, score, weight]) => (
           (
             curMinScore !== undefined && score < curMinScore ||
             curMinWeight !== undefined && weight < curMinWeight
@@ -126,8 +128,8 @@ export function render({
               score={score} weight={weight}
               qualKeyArr={[qualKey]}
             />
-        ))
-      }</div>,
+        ))}
+      </div>,
     ];
   }
 

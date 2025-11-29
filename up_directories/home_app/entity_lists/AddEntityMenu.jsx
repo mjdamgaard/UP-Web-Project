@@ -9,7 +9,7 @@ const GeneralEntityElementPromise = import(
 
 
 
-export function render({qualKeyArr}) {
+export function render({extQualKeyArr}) {
   let {GeneralEntityElement, isFetching, response, entityElement} = this.state;
 
   if (!isFetching) {
@@ -59,7 +59,8 @@ export function render({qualKeyArr}) {
               ...state, response: "Entity has been assigned the ID of " +
               entID + ". Now give it some relevant scores.",
               entityElement: <GeneralEntityElement key={"_" + entID}
-                entID={entID} qualKeyArr={qualKeyArr} startExpanded={true}
+                entID={entID} extQualKeyArr={extQualKeyArr}
+                startExpanded={true}
               />,
             }));
           }

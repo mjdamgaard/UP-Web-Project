@@ -8,7 +8,8 @@ const relevantQualitiesRel = "/1/1/em1.js;get/relevantQualities";
 const QualityElementPromise = import("../entity_elements/QualityElement.jsx");
 
 
-export function render({objKey, qualKeyArr = []}) {
+export function render({objKey, extQualKeyArr = []}) {
+  // TODO: Use a context as well for getting extQualKeyArr.
   let {QualityElement, isFetching} = this.state;
 
   if (!isFetching) {
@@ -21,28 +22,26 @@ export function render({objKey, qualKeyArr = []}) {
     return <div><div className="fetching">{"..."}</div></div>;
   }
 
-  let contextQualityElements = (qualKeyArr[0] === undefined) ? undefined :
-    map(qualKeyArr, qualKey => {
-      if (hasType(qualKey, "array")) {
+  let contextQualityElements = (extQualKeyArr[0] === undefined) ? undefined :
+    map(extQualKeyArr, extKey => {
+      if (hasType(extKey, "array")) {
         let subjKey = objKey;
-        let [objKey, relKey] = qualKey; 
-        return <QualityElement key={"cq-" + qualKey}
+        let [objKey, relKey] = extKey; 
+        return <QualityElement key={"cq-" + extKey}
           subjKey={subjKey} relKey={relKey} objKey={objKey}
         />;
       }
       else {
+        let qualKey = extKey;
         return <QualityElement key={"cq-" + qualKey}
           qualKey={qualKey} subjKey={objKey}
         />;
       }
     });
   return <div>
-    <h4>{"Qualities relevant to the context"}</h4>
-    {contextQualityElements}
-    <h4>{"Qualities relevant to the entity in general"}</h4>
     <EntityList key="rql"
       objKey={objKey} relKey={relevantQualitiesRel}
-      ElementComponent={QualityElement}
+      ElementComponent={QualityElement} constElementArr={contextQualityElements}
     />
   </div>;
 }

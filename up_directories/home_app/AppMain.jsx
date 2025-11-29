@@ -4,6 +4,7 @@ import {decodeURIComponent, encodeURIComponent} from 'query';
 import {fetchEntityID} from "/1/1/entities.js";
 
 import * as UPIndexPage from "./UPIndexPage.jsx";
+import * as ProfilePage from "./ProfilePage.jsx";
 import * as EntityPage from "./variable_components/EntityPage.jsx";
 import * as FileBrowser from "./file_browsing/FileBrowser.jsx";
 import * as TutorialIndexPage from "./tutorials/index.jsx";
@@ -39,6 +40,21 @@ export function render({
       </main>
     );
   }
+  
+  // Else if relURL starts with "/profile", go to the profile page. 
+  if (firstSegment === "profile") {
+    let indOfThirdSlash = indexOf(tailURL, "/", 9);
+    let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
+    let entID = substring(tailURL, 9, endOfID);
+    let tailURL = substring(tailURL, 9 + entID.length);
+    return (
+      <main className="app-main">
+        <ProfilePage key="_profile"
+          url={url} homeURL={homeURL} tailURL={tailURL}
+        />
+      </main>
+    );
+  } 
 
   // Else if relURL is of the form "/entPath/<encoded entPath>"", fetch the
   // entity ID and then redirect to the "/e/" + entID relURL.

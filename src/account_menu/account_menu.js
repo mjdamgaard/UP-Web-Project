@@ -65,6 +65,9 @@ export function main(settingsContext) {
   document.getElementById("account-page-item").onclick = () => {
       goToAccountPage(settingsContext);
   };
+  document.getElementById("profile-page-item").onclick = () => {
+      goToProfilePage(settingsContext);
+  };
 }
 
 
@@ -291,6 +294,12 @@ function goToAccountPage(settingsContext) {
   });
 }
 
+
+function goToProfilePage(settingsContext) {
+  document.getElementById("up-app-root").click();
+  window.history.pushState(null, "", "/profile");
+  // TODO: I need to also update the URLContext here, somehow.
+}
 
 
 

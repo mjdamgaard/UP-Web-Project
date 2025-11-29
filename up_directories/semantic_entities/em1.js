@@ -4,6 +4,7 @@
 // whole semantic system.
 
 import {fetchEntityProperty} from "./entities.js";
+import {fetchUserTag, fetchUserBio} from "./users/profiles.sm.js";
 
 
 
@@ -197,12 +198,12 @@ export const classes = {
 // the given user and the ID or the UP node that created the user profile.
 export const User = (upNodeID, userID) => ({
   "Class": abs("./em1.js;get/users"),
-
-  // (This "Name" property is only meant to be temporary, as we will also
-  // implement a system for allowing users to choose their own user name/tag
-  // at will.)
-  "Name": "User " + userID,
-
+  "Name": () => new Promise(resolve => {
+    fetchUserTag(userID).then(
+      userTag => resolve(userTag ?? "User " + userID)
+    );
+  }),
+  "Bio": () => fetchUserBio(text),
   "UP node ID": upNodeID,
   "User ID": userID,
 });
