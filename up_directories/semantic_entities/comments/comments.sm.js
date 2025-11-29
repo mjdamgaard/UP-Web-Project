@@ -1,0 +1,97 @@
+
+import {post} from 'query';
+import {getRequestingUserID, checkRequestOrigin} from 'request';
+import {substring, indexOf} from 'string';
+import {verifyType} from 'type';
+import {stringify} from 'json';
+import {
+  fetchEntityDefinition, fetchEntityPath, getUserEntPath,
+} from "../entities.js";
+
+const commentPathPrefix = abs("./comments.att") + "./entry/k/";
+
+
+
+export function postComment(text, targetEntKey) {
+  checkRequestOrigin(true, [
+    "/1/2/... TODO: Insert a path to a component for posting comments",
+  ]);
+  verifyType(text, "string");
+  let authorID = getRequestingUserID();
+  return new Promise(resolve => {
+    // Construct the new comment entity definition and insert it in the
+    // comments.att table.
+    let newCommentDef = {
+      "Class": "/1/1/em1.js;get/commentClass",
+      "Author": getUserEntPath("1", authorID),
+      "Target entity": targetEntKey,
+      "Content": text,
+    };
+    let newCommentEMSource = 'export const comment = ' +
+      stringify(newCommentDef) +
+      ';';
+    post(
+      abs("./comments.att") + "./_insert", newCommentEMSource
+    ).then(textID => {
+      let newEntPath = commentPathPrefix + textID + ";.js;get/comment";
+      resolve(newEntPath);
+      // TODO: Oh, I also need to call the postEntity SMF here before resolving.
+    });
+  });
+}
+
+
+export function editComment(commentEntKey, text, targetEntKey = undefined) {
+  checkRequestOrigin(true, [
+    "/1/2/... TODO: Insert a path to a component for editing comments",
+  ]);
+  verifyType(text, "string");
+  let authorID = getRequestingUserID();
+  return new Promise(resolve => {
+    fetchEntityPath(commentEntKey).then(commentEntPath => {
+      // Extract the textID from commentEntPath and validate the latter.
+      let textID = substring(
+        commentEntPath, commentPathPrefix.length, indexOf(commentEntPath, ";")
+      );
+      verifyType(textID, "hex-string");
+      if (commentEntPath !== commentPathPrefix + textID + ";.js;get/comment") {
+        throw "Invalid comment entity path: " + commentEntPath;
+      }
+
+      fetchEntityDefinition(commentEntPath, false).then(commentDef => {
+        // Authenticate the requesting user as the author.
+        let authorPath = commentDef["Author"];
+        if (authorPath !== getUserEntPath("1", authorID)) {
+          throw "User is not permitted to edit this comment";
+        }
+
+        // If targetEntKey is undefined, do not overwrite the existing "Target
+        // entity" property, but if it is otherwise falsy, set it to undefined.
+        if (targetEntKey === undefined) {
+          targetEntKey = commentDef["Target entity"];
+        }
+        else if (!targetEntKey) {
+          targetEntKey === undefined;
+        }
+
+        // Then construct the new comment entity definition and insert it in
+        // the comments.att table, using textID as the entry key.
+        let newCommentDef = {
+          "Class": "/1/1/em1.js;get/commentClass",
+          "Author": authorPath,
+          "Target entity": targetEntKey,
+          "Content": text,
+        };
+        let newCommentEMSource = 'export const comment = ' +
+          stringify(newCommentDef) +
+          ';';
+        post(
+          abs("./comments.att") + "./_insertEntry/k/" + textID,
+          newCommentEMSource
+        ).then(
+          wasUpdated => resolve(!!wasUpdated)
+        );
+      });
+    });
+  });
+}

@@ -2494,6 +2494,7 @@ export function verifyType(val, type, isOptional, node, env) {
       );
       break;
     case "hex-string":
+    case "hex":
       if (typeOfVal !== "string" || !/^[0-9a-fA-F]*$/.test(val)) {
         throw new ArgTypeError(
           `Value is not a hexadecimal string: ${getString(val, env)}`,
