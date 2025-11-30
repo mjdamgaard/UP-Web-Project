@@ -4,7 +4,7 @@
 // whole semantic system.
 
 import {fetchEntityProperty} from "./entities.js";
-import {fetchUserTag, fetchUserBio} from "./users/profiles.sm.js";
+import {fetchUserTag, fetchUserBio} from "./users/profiles.js";
 
 
 
@@ -203,7 +203,7 @@ export const User = (upNodeID, userID) => ({
       userTag => resolve(userTag ?? "User " + userID)
     );
   }),
-  "Bio": () => fetchUserBio(text),
+  "Bio": () => fetchUserBio(userID),
   "UP node ID": upNodeID,
   "User ID": userID,
 });
@@ -467,10 +467,10 @@ export const relationalQualities = {
 // a.k.a. a quality, with a subject entity. They thus represent all the the
 // floating-point number scales that are scored by the users, and/or aggregated
 // algorithmically.
-export const Scalar = (qualID, subjID) => ({
+export const Scalar = (subjID, qualID) => ({
   "Class": abs("./em1.js;get/scalars"),
-  "Quality": "${" + qualID + "}",
   "Subject": "${" + subjID + "}",
+  "Quality": "${" + qualID + "}",
   "Name": () => new Promise(resolve => {
     fetchEntityProperty(qualID, "getScalarName").then(
       getScalarName => resolve(getScalarName(subjID))
@@ -482,7 +482,7 @@ export const Scalar = (qualID, subjID) => ({
     );
   }),
   "Is derived": () => new Promise(resolve => {
-    fetchEntityProperty(relID, "Is derived").then(
+    fetchEntityProperty(qualID, "Is derived").then(
       isDerived => resolve(isDerived)
     );
   }),

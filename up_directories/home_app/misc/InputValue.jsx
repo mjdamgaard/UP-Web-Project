@@ -1,5 +1,4 @@
 
-import * as InputRange from 'InputRange.jsx';
 import * as InputText from 'InputText.jsx';
 import {parseFloat} from 'number';
 import {toString} from 'string';
@@ -9,21 +8,7 @@ export function render({
   min, max, value, step, size = 4, placeholder, onChange
 }) {
   return (
-    <div className="input-range-and-value">
-      <InputRange key="r"
-        min={min} max={max} value={value} step={step}
-        onInput={({value}) => {
-          this.call("t", "setValue", value);
-          if (onChange) {
-            onChange(value);
-          }
-        }}
-        onChange={({value}) => {
-          if (onChange) {
-            onChange(value);
-          }
-        }}
-      />
+    <div className="input-value">
       <InputText key="t"
         size={size} value={value} placeholder={placeholder}
         onInput={({value}) => {
@@ -45,7 +30,6 @@ export const actions = {
     return parseFloat(this.call("t", "getValue"));
   },
   "setValue": function(val) {
-    this.call("r", "setValue", val);
     return this.call("t", "setValue", val);
   }
 };

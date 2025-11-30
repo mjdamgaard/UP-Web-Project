@@ -17,6 +17,11 @@ import * as TextDisplay from "../misc/TextDisplay.jsx";
 // TODO: Refactor this component now that parseRoute() produces dirSegments and
 // fileName as well.
 
+// TODO: More urgent: Whenever the result is an object with a "Class" property,
+// make a big 'Add entity' button at the top, which posts the result as a new
+// entity and then redirects to the entity page.
+
+
 
 // getInitialState() parses the input route, and in the special case where the
 // route includes only directories, it reinterprets the route by adding a ';'

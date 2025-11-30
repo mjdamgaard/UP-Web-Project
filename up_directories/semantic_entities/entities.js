@@ -9,7 +9,7 @@ import {valueToHex} from 'hex';
 import {verifyType, hasType} from 'type';
 import {toUpperCase} from 'string';
 import {mapToArray, keys} from 'object';
-import {forEach, map} from 'array';
+import {forEach, map, reduce} from 'array';
 
 const membersRelationPath = "/1/1/em1.js;get/members";
 
@@ -185,55 +185,6 @@ export function fetchEntityProperty(
 
 
 
-
-
-
-
-
-export function fetchRelationalQualityPath(
-  objKey, relKey = membersRelationPath
-) {
-  let objIDProm = fetchEntityID(objKey);
-  let relIDProm = fetchEntityID(relKey);
-  return new Promise(resolve => {
-    Promise.all([
-      objIDProm, relIDProm
-    ]).then(([objID, relID]) => {
-      if (!objID || !relID) {
-        resolve(undefined);
-      }
-      else {
-        let qualPath = homePath + "/em1.js;call/RQ/" + objID + "/" + relID;
-        resolve(qualPath);
-      }
-    });
-  });
-}
-
-
-
-
-export function postRelationalQuality(objKey, relKey = membersRelationPath) {
-  let objIDProm = fetchEntityID(objKey);
-  let relIDProm = fetchEntityID(relKey);
-  return new Promise(resolve => {
-    Promise.all([
-      objIDProm, relIDProm
-    ]).then(([objID, relID]) => {
-      if (!objID || !relID) {
-        resolve(undefined);
-      }
-      else {
-        let qualPath = homePath + "/em1.js;call/RQ/" + objID + "/" + relID;
-        post(homePath + "/entities.sm.js./callSMF/postEntity", qualPath).then(
-          qualID => resolve(qualID)
-        );
-      }
-    });
-  });
-}
-
-
 export function postConstructedEntity(
   modulePath, constructorAlias, argArr
 ) {
@@ -244,16 +195,156 @@ export function postConstructedEntity(
   return postEntity(entPath);
 }
 
-
-export function fetchConstructedEntityID(
+export function getConstructedEntityPath(
   modulePath, constructorAlias, argArr
 ) {
   let entPath = modulePath + ";call/" + constructorAlias;
   forEach(argArr, arg => {
     entPath = entPath + "/" + arg;
   });
+  return entPath;
+}
+
+export function fetchConstructedEntityID(
+  modulePath, constructorAlias, argArr
+) {
+  let entPath = getConstructedEntityPath(modulePath, constructorAlias, argArr);
   return fetchEntityID(entPath);
 }
+
+
+export function postEntityKeyConstructedEntity(
+  modulePath, constructorAlias, entKeyArr
+) {
+  return new Promise(resolve => {
+    let entIDPromArr = map(entKeyArr, entKey => fetchOrCreateEntityID(entKey));
+    Promise.all(entIDPromArr).then(entIDArr => {
+      postConstructedEntity(modulePath, constructorAlias, entIDArr).then(
+        entID => resolve(entID)
+      );
+    });
+  });
+}
+
+export function fetchEntityKeyConstructedEntityPath(
+  modulePath, constructorAlias, entKeyArr
+) {
+  return new Promise(resolve => {
+    let entIDPromArr = map(entKeyArr, entKey => fetchEntityID(entKey));
+    Promise.all(entIDPromArr).then(entIDArr => resolve(
+      getConstructedEntityPath(modulePath, constructorAlias, entIDArr)
+    ));
+  });
+}
+
+export function fetchEntityKeyConstructedEntityID(
+  modulePath, constructorAlias, entKeyArr
+) {
+  return new Promise(resolve => {
+    let entIDPromArr = map(entKeyArr, entKey => fetchEntityID(entKey));
+    Promise.all(entIDPromArr).then(entIDArr => {
+      fetchConstructedEntityID(modulePath, constructorAlias, entIDArr).then(
+        entID => resolve(entID)
+      );
+    });
+  });
+}
+
+
+
+export function postRelationalQuality(objKey, relKey = membersRelationPath) {
+  return postEntityKeyConstructedEntity(
+    homePath + "/em1.js", "RQ", [objKey, relKey]
+  );
+}
+export function fetchRelationalQualityPath(
+  objKey, relKey = membersRelationPath
+) {
+  return fetchEntityKeyConstructedEntityPath(
+    homePath + "/em1.js", "RQ", [objKey, relKey]
+  );
+}
+export function fetchRelationalQualityID(
+  objKey, relKey = membersRelationPath
+) {
+  return fetchEntityKeyConstructedEntityID(
+    homePath + "/em1.js", "RQ", [objKey, relKey]
+  );
+}
+
+
+export function postScalarEntity(subjKey, extQualKey) {
+  return new Promise(resolve => {
+    if (hasType(extQualKey, "array")) {
+      let [objKey, relKey] = extQualKey;
+      postRelationalQuality(objKey, relKey).then(qualID => {
+        postEntityKeyConstructedEntity(
+          homePath + "/em1.js", "Scalar", [subjKey, qualID]
+        ).then(
+          entID => resolve(entID)
+        );
+      });
+    }
+    else {
+      let qualKey = extQualKey;
+      postEntityKeyConstructedEntity(
+        homePath + "/em1.js", "Scalar", [subjKey, qualKey]
+      ).then(
+        entID => resolve(entID)
+      );
+    }
+  });
+}
+
+export function fetchScalarEntityPath(subjKey, extQualKey) {
+  return new Promise(resolve => {
+    if (hasType(extQualKey, "array")) {
+      let [objKey, relKey] = extQualKey;
+      fetchRelationalQualityPath(objKey, relKey).then(qualPath => {
+        fetchEntityKeyConstructedEntityPath(
+          homePath + "/em1.js", "Scalar", [subjKey, qualPath]
+        ).then(
+          entPath => resolve(entPath)
+        );
+      });
+    }
+    else {
+      let qualKey = extQualKey;
+      fetchEntityKeyConstructedEntityPath(
+        homePath + "/em1.js", "Scalar", [subjKey, qualKey]
+      ).then(
+        entPath => resolve(entPath)
+      );
+    }
+  });
+}
+
+export function fetchScalarEntityID(subjKey, extQualKey) {
+  return new Promise(resolve => {
+    if (hasType(extQualKey, "array")) {
+      let [objKey, relKey] = extQualKey;
+      fetchRelationalQualityPath(objKey, relKey).then(qualPath => {
+        fetchEntityKeyConstructedEntityID(
+          homePath + "/em1.js", "Scalar", [subjKey, qualPath]
+        ).then(
+          entID => resolve(entID)
+        );
+      });
+    }
+    else {
+      let qualKey = extQualKey;
+      fetchEntityKeyConstructedEntityID(
+        homePath + "/em1.js", "Scalar", [subjKey, qualKey]
+      ).then(
+        entID => resolve(entID)
+      );
+    }
+  });
+}
+
+
+
+
 
 
 

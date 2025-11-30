@@ -2,9 +2,9 @@
 import {toPrecision, parseFloat, isNaN} from 'number';
 import {fetchMetric, fetchUserScore} from "/1/1/scores.js";
 
-import * as InputRangeAndValue
-from "../misc/InputRangeAndValue.jsx";
-import * as QualityVariableReference from "./QualityVariableReference.jsx";
+import * as InputRangeAndValue from "../misc/InputRangeAndValue.jsx";
+import * as InputValue from "../misc/InputValue.jsx";
+import * as ScalarEntityReference from "./ScalarEntityReference.jsx";
 import * as AggregatedScoreDisplay from "./AggregatedScoreDisplay.jsx";
 
 
@@ -41,19 +41,27 @@ export function render({subjKey, qualKey, scoreHandler = undefined}) {
   // And if the metric is ready, render the score interface.
   else {
     let hasPrevScore = typeof prevScore === "number";
-    let min = metric["Lower limit"] ?? -10;
-    let max = metric["Upper limit"] ?? 10;
-    let step = parseFloat(toPrecision((max - min) / 100, 3));
+    let min = metric["Lower limit"];
+    let max = metric["Upper limit"];
+    let isBounded = (min !== undefined && max !== undefined);
+    let step = isBounded ? parseFloat(toPrecision((max - min) / 100, 3)) :
+      undefined;
     content = [
       <div className="score-bar">
-      <QualityVariableReference key="qvr"
-        qualKey={qualKey} subjKey={subjKey}
-      />
-        <InputRangeAndValue key="ir"
-          value={hasPrevScore ? prevScore : undefined}
-          placeholder={hasPrevScore ? undefined : "N/A"}
-          min={min} max={max} step={step}
+        <ScalarEntityReference key="sr"
+          subjKey={subjKey} qualKey={qualKey} 
         />
+        {isBounded ?
+          <InputRangeAndValue key="irv"
+            value={hasPrevScore ? prevScore : undefined}
+            placeholder={hasPrevScore ? undefined : "N/A"}
+            min={min} max={max} step={step}
+          /> :
+          <InputValue key="iv"
+            value={hasPrevScore ? prevScore : undefined}
+            placeholder={hasPrevScore ? undefined : "N/A"}
+          /> 
+        }
         <div className="todo-impl-interval-labels">{/*
           TODO: Implement showing interval labels matching the current value.
         */}</div>

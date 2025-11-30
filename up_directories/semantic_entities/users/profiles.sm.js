@@ -68,12 +68,9 @@ export function requestNewUserTag(userTag) {
 
 
 
-// Since ids.ct and tags.bt are public tables (no underscore in front, neither
-// in their own file name or in any of their ancestor directories' names),
-// these two SMFs (server module functions) for fetching userTag or userID is
-// not strictly necessary, but they might still be considered handy, and it's
-// nice to complete the API of the SM this way. *Oh, and they can also be
-// imported and used as subroutines for other SMFs or front-end modules.  
+// The fetch SMFs are not strictly necessary to have, since the data tables
+// are public anyway. And in fact, all the fetch functions of this module is
+// copied to ./profiles.js as well.
 
 export function fetchUserTag(userID) {
   verifyType(userID, "hex-string");
