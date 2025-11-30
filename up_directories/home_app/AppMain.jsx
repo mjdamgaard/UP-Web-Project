@@ -12,7 +12,39 @@ import * as ComponentEntityPage
 from "./variable_components/ComponentEntityPage.jsx";
 
 
-export function render({
+
+export function getInitialState() {
+  let cacheRef = new MutableArray();
+  cacheRef[0] = [];
+  return {cacheRef: cacheRef};
+}
+
+
+export function render(props) {
+  let {cacheRef} = this.state;
+  let cache = cacheRef[0];
+
+  return renderHelper(props);
+
+  // Call renderHelper() to get the jsxElement to render, along with its key.
+  let [key, jsxElement] = renderHelper(props);
+
+  // If key already exists in the cache, do not update it. ..Hm, I guess it
+  // ought to be an LRU cache, so maybe I should reintroduce that class and use
+  // to define.. well to export a ObjectObject version of it in a dev library,
+  // maybe.. ..Hm, maybe so, yeah.. ..Oh, wait, isn't there a very simple way
+  // to implement a LRU cache with JS: Just use the spread operator to generate
+  // a new object, then turn that object into an entries array, cut it off, and
+  // turn it back into an object (or keep it as an entries array). Yeah, that
+  // ought to work..
+
+  return <div className="main-container">
+    {jsxElement}
+  </div>;
+}
+
+
+export function renderHelper({
   url = "", history, homeURL, localStorage, sessionStorage
 }) {
   let tailURL = substring(url, homeURL.length);
@@ -56,7 +88,7 @@ export function render({
     );
   } 
 
-  // Else if relURL is of the form "/entPath/<encoded entPath>"", fetch the
+  // Else if relURL iMutableArray()s of the form "/entPath/<encoded entPath>"", fetch the
   // entity ID and then redirect to the "/e/" + entID relURL.
   if (firstSegment === "entPath") {
     let entPath = decodeURIComponent(substring(tailURL, 9));

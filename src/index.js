@@ -118,7 +118,7 @@ window.addEventListener("popstate", (event) => {
 
 // Set up the account menu, used for account-related settings and user
 // preferences.
-constructAccountMenu(settingsContext);
+constructAccountMenu(settingsContext, urlContext);
 
 
 // Initialize the interpreter.

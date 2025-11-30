@@ -55,7 +55,7 @@
 .tabbed-pages .page-container {
   /* border: 2px solid darkgray;
   border-top: 0px solid lightgray; */
-  padding: 1em;
+  padding: 0.6em 0;
 }
 .tabbed-pages .page-container > :not(.open) {
   display: none;

@@ -5,7 +5,7 @@ const serverQueryHandler = new ServerQueryHandler();
 
 
 
-export function main(settingsContext) {
+export function main(settingsContext, urlContext) {
   // Determine whether the user is logged in or not (automatically treating the
   // user as logged out if the user session expires within a day). and set a
   // CSS class on #account-menu depending on this.
@@ -52,21 +52,21 @@ export function main(settingsContext) {
 
   // Add onclick events to the account menu items.
   document.getElementById("logout-item").onclick = () => {
-      logout(settingsContext);
+      logout(settingsContext, urlContext);
   };
   document.getElementById("login-item").onclick = () => {
       document.getElementById("account-menu").classList.remove("open");
-      openLoginPage(settingsContext);
+      openLoginPage(settingsContext, urlContext);
   };
   document.getElementById("create-account-item").onclick = () => {
       document.getElementById("account-menu").classList.remove("open");
-      openCreateAccountPage(settingsContext);
+      openCreateAccountPage(settingsContext, urlContext);
   };
   document.getElementById("account-page-item").onclick = () => {
-      goToAccountPage(settingsContext);
+      goToAccountPage(settingsContext, urlContext);
   };
   document.getElementById("profile-page-item").onclick = () => {
-      goToProfilePage(settingsContext);
+      goToProfilePage(settingsContext, urlContext);
   };
 }
 
@@ -233,7 +233,7 @@ function openCreateAccountPage(settingsContext) {
 
 
 
-function goToAccountPage(settingsContext) {
+function goToAccountPage() {
   let overlayPageContainer = document.getElementById("overlay-page-container");
   overlayPageContainer.classList.add("open");
   overlayPageContainer.innerHTML = `
@@ -295,10 +295,12 @@ function goToAccountPage(settingsContext) {
 }
 
 
-function goToProfilePage(settingsContext) {
+function goToProfilePage(_, urlContext) {
   document.getElementById("up-app-root").click();
+  let url = "/profile", stateJSON = 'null';
+  let urlData = {url: url, stateJSON: stateJSON};
+  urlContext.setVal(urlData);
   window.history.pushState(null, "", "/profile");
-  // TODO: I need to also update the URLContext here, somehow.
 }
 
 
