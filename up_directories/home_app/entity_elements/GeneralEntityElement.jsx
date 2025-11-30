@@ -11,7 +11,7 @@ import * as AggregatedScoreDisplay from "../scoring/AggregatedScoreDisplay.jsx";
 
 
 export function render({
-  entID, extQualKeyArr = [], score = undefined, weight = undefined,
+  entID, extQualKeyArr = undefined, score = undefined, weight = undefined,
 }) {
   return <div className="entity-element">
     <ExpandableElement key="ee"

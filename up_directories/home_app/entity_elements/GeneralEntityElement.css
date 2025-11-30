@@ -38,7 +38,9 @@
 }
 
 
-:where(.entity-element:has(.initial-content:hover)) .collapse-expand-button {
+:where(.entity-element:has(
+    > .expandable-element > .content > .initial-content:hover
+)) > .expandable-element > .collapse-expand-button {
   background-color: lightgray;
 }
 

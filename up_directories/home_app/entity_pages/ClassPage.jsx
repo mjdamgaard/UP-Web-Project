@@ -11,7 +11,8 @@ const subclassesRel = "/1/1/em1.js;get/subclasses";
 const relevantQualitiesRel = "/1/1/em1.js;get/relevantQualities";
 
 
-export function render({entKey, extQualKeyArr = [], isNested}) {
+export function render({entKey, extQualKeyArr = undefined, isNested = false}) {
+  extQualKeyArr ??= this.subscribeToContext("extQualKeyArr") ?? [];
   return <EntityPageWithTabs key="0"
     entKey={entKey} initTabKey={isNested ? "subclasses" : "members"}
     isNested={isNested} tabs={{
@@ -26,7 +27,7 @@ export function render({entKey, extQualKeyArr = [], isNested}) {
         props: {
           objKey: entKey,
           relKey: membersRel,
-          extQualKeyArr: [[entKey, membersRel], ...extQualKeyArr],
+          extQualKeyArr: [[entKey, membersRel]],
           ElementComponent: GeneralEntityElement,
         }
       },
@@ -36,7 +37,7 @@ export function render({entKey, extQualKeyArr = [], isNested}) {
         props: {
           objKey: entKey,
           relKey: subclassesRel,
-          extQualKeyArr: [[entKey, subclassesRel], ...extQualKeyArr],
+          extQualKeyArr: [[entKey, subclassesRel]],
           ElementComponent: GeneralEntityElement,
         },
       },

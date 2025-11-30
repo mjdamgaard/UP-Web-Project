@@ -5,7 +5,7 @@ import * as EntityMetadataPage from "./EntityMetadataPage.jsx";
 import * as QualitiesPage from "./QualitiesPage.jsx";
 
 
-export function render({entKey, extQualKeyArr = [], isNested}) {
+export function render({entKey, extQualKeyArr = undefined, isNested = false}) {
   return <EntityPageWithTabs key="0"
     entKey={entKey} initTabKey={"qualities"} isNested={isNested} tabs={{
       about: {
@@ -28,4 +28,5 @@ export function render({entKey, extQualKeyArr = [], isNested}) {
 
 export const styleSheetPaths = [
   abs("../misc/TabbedPages.css"),
+  abs("../entity_lists/EntityList.css"),
 ];

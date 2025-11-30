@@ -30,7 +30,7 @@ export function render({tabs, closeInactiveTabs = undefined}) {
           let isOpen = tabKey === openTabKey;
           let {Component, props: pageProps} = tabData;
           return <div className={"page" + (isOpen ? " open" : "")}>
-            <Component {...pageProps} key={"p-" + tabKey} />
+            <Component key={"p-" + tabKey} {...pageProps} />
           </div>;
         })
       }</div>

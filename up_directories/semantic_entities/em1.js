@@ -876,6 +876,13 @@ export const dimensionlessMetric = {
   "Name": "Dimensionless metric",
   "Description": abs("./em1_aux.js;get/dimensionlessMetricDesc"),
 };
+export const fromMinusToPlusOneMetric = {
+  "Class": abs("./em1.js;get/metrics"),
+  "Name": "Dimensionless finite metric",
+  "Lower limit": -1,
+  "Upper limit": 1,
+  "Description": abs("./em1_aux.js;get/fromMinusToPlusOneMetricDesc"),
+};
 
 export const positiveDimensionlessMetric = {
   "Class": abs("./em1.js;get/metrics"),
@@ -1312,14 +1319,14 @@ export const reactions = {
 // this correlation relation is a scalar one, like relations in this semantic
 // system, it means that we can also use its scores to show *how much* a given
 // argument is regarded as impacting the object of the discussion, namely the
-// object scalar. For instance, if the correlation has a high positive score,
-// it means that an increment in the argument scalar (either due to being
+// object scalar. For instance, if the correlation has a score that's close to
+// 1, it means that an increment in the argument scalar (either due to being
 // evaluated by more users, or if a new "sub-argument" has come to light,
 // making users change their opinions) should be correlated with a relatively
 // large increment in score for the object scalar as well. And if the
-// correlation is a negative number of a large absolute value, an increment
-// in the argument's score should correlate with a relatively large decrement
-// in the score of the object scalar. You get the picture (hopefully).
+// correlation is close -1, an increment in the argument's score should
+// correlate with a relatively large decrement in the score of the object
+// scalar. You get the picture (hopefully).
 // So when showing the list of "arguments" for a given scalar, it is thus
 // important to also show these correlation scores as well, along with the
 // scores of the argument scalars themselves.
@@ -1333,12 +1340,15 @@ export const argumentsRelation = {
   "Subject domain": abs("./em1.js;get/scalars"),
   "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/argumentsRelationDesc"),
-}; 
+};
 
 
 
 // This "correlation" relation was introduced above in the comment for the
-// 'Arguments' relation.
+// 'Arguments' relation. TODO: Be more precise about the semantics of this
+// relation in that comment, and also state that it should only be used between
+// scalars with bounded ranges. And also, move the comment down here instead,
+// and reference it above rather than the other way around. 
 export const correlation = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Correlated scalars",
@@ -1347,9 +1357,9 @@ export const correlation = {
     "} and ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/scalars"),
   "Subject domain": abs("./em1.js;get/scalars"),
-  "Metric": abs("./em1.js;get/dimensionlessMetric"),
+  "Metric": abs("./em1.js;get/fromMinusToPlusOneMetric"),
   "Description": abs("./em1_aux.js;get/correlationDesc"),
-}; 
+};
 
 
 

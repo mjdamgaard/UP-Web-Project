@@ -39,6 +39,7 @@ export function render({
   hideMenu = false, paginationLength = 50, paginationIndex = 0,
 }) {
   scoreHandler ??= this.subscribeToContext("scoreHandler");
+  this.provideContext("extQualKeyArr", extQualKeyArr);
   let {
     ElementComponent, listArr, isFetching, curMinScore, curMinWeight,
     qualKeyArr,
@@ -104,10 +105,10 @@ export function render({
   else {
     // First combine the lists into one.
     let list = (extQualKeyArr.length === 1 && !constList) ?
-      (isAscending ? sortListWRTScore(list, isAscending) : listArr[0]) :
+      (isAscending ? sortListWRTScore(listArr[0], isAscending) : listArr[0]) :
       constList ?
-        combineLists([constList, ...list], factorArr, isAscending) :
-        combineLists(list, factorArr, isAscending);
+        combineLists([constList, ...listArr], factorArr, isAscending) :
+        combineLists(listArr, factorArr, isAscending);
 
     // Then generate the content of the component.
     content = [
