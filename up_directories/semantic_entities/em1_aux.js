@@ -27,6 +27,7 @@ export const scoredListsDesc = tempEM1Desc;
 export const userGroupsDesc = tempEM1Desc;
 export const scoreHandlersDesc = tempEM1Desc;
 export const componentsDesc = tempEM1Desc;
+export const projectsDesc = tempEM1Desc;
 export const metricsDesc = tempEM1Desc;
 export const gradingMetricsDesc = tempEM1Desc;
 export const percentageMetricsDesc = tempEM1Desc;

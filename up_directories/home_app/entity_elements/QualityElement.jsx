@@ -7,6 +7,7 @@ import * as QualityEntityElement from "./QualityEntityElement.jsx";
 export function render({
   subjKey, qualKey = undefined, objKey = undefined, relKey = undefined,
   classKey = undefined, score = undefined, weight = undefined,
+  startOpen = false,
 }) {
   let {qualPath} = this.state;
   qualKey ??= qualPath;
@@ -26,5 +27,6 @@ export function render({
 
   return <QualityEntityElement key="_0"
     qualKey={qualKey} objKey={subjKey} score={score} weight={weight}
+    startOpen={startOpen}
   />;
 }

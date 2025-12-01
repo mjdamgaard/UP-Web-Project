@@ -52,12 +52,12 @@ export function render({subjKey, qualKey, scoreHandler = undefined}) {
           subjKey={subjKey} qualKey={qualKey} 
         />
         {isBounded ?
-          <InputRangeAndValue key="irv"
+          <InputRangeAndValue key="input"
             value={hasPrevScore ? prevScore : undefined}
             placeholder={hasPrevScore ? undefined : "N/A"}
             min={min} max={max} step={step}
           /> :
-          <InputValue key="iv"
+          <InputValue key="input"
             value={hasPrevScore ? prevScore : undefined}
             placeholder={hasPrevScore ? undefined : "N/A"}
           /> 
@@ -133,7 +133,7 @@ export const actions = {
   "submitScoreWithUserEntID": function(userEntID) {
     let {qualKey, subjKey, scoreHandler} = this.props;
     scoreHandler ??= this.subscribeToContext("scoreHandler");
-    let score = parseFloat(this.call("ir", "getValue"));
+    let score = parseFloat(this.call("input", "getValue"));
     return new Promise(resolve => {
       if (isNaN(score)) {
         this.setState(state => ({...state,

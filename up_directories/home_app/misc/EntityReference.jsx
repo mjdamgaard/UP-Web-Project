@@ -14,8 +14,7 @@ export function getInitialState({entKey}) {
 
 
 export function render({
-  key, entKey = key, hasLinks = true, linkLevel = 0,
-  recLevel = 0, pushState = undefined
+  entKey, hasLinks = true, linkLevel = 0, recLevel = 0, pushState = undefined,
 }) {
   let {curEntKey, entDef, entPath, entID} = this.state;
   let isLink = hasLinks && linkLevel === recLevel;

@@ -5,9 +5,11 @@ from "./ExpandableElement.jsx";
 import * as ScoreInterface from "../scoring/ScoreInterface.jsx";
 
 
-export function render({entID, qualKey = entID, objKey: subjKey}) {
+export function render({
+  entID, qualKey = entID, objKey: subjKey, startOpen = false,
+}) {
   return <div className="entity-element">
-    <ExpandableElement key="ee"
+    <ExpandableElement key="ee" startOpen={startOpen}
       ExpandedComponent={ScoreInterface} expCompProps={{
         key: "_si",
         subjKey: subjKey,

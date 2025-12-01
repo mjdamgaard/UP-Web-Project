@@ -816,6 +816,23 @@ export const components = {
 
 
 
+// A class of "projects," formulated as texts, concerning any and all things
+// related to the UP Web, etc. Well, actually, they might concern anything at
+// all, but at least for the early stage of the app, it is expected that users
+// will generally choose to primarily use this class for projects relating to
+// the app itself, or to the UP Web in general. 
+export const projects = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "Projects",
+  "Superclass": abs("./em1.js;get/texts"),
+  "Description": abs("./em1_aux.js;get/projectsDesc"),
+  // Note that we don't have a "Common properties" property here, or a
+  // "constructor", since this class is not meant to be used when creating new
+  // entities. (The 'Texts' and the 'Comments' classes will often be used
+  // instead.)
+};
+
+
 
 
 

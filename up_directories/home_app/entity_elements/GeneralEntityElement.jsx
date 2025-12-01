@@ -12,9 +12,10 @@ import * as AggregatedScoreDisplay from "../scoring/AggregatedScoreDisplay.jsx";
 
 export function render({
   entID, extQualKeyArr = undefined, score = undefined, weight = undefined,
+  startOpen = false,
 }) {
   return <div className="entity-element">
-    <ExpandableElement key="ee"
+    <ExpandableElement key="ee" startOpen={startOpen}
       ExpandedComponent={EntityPage} expCompProps={{
         key: "_exp",
         entKey: entID,

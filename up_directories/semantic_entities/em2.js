@@ -80,7 +80,7 @@ export const indexPagesDesc = <div>
 
 export const upIndexPage01 = {
   "Class": abs("./em1.js;get/components"),
-  "Name": "Index page #01",
+  "Name": "Index page 1.0",
   "Component path": "/1/2/index_pages/IndexPage01.jsx",
   "Example component path": undefined,
   "GitHub repository":
@@ -92,7 +92,7 @@ export const upIndexPage01 = {
 
 export const upIndexPage02 = {
   "Class": abs("./em1.js;get/components"),
-  "Name": "Index page #02",
+  "Name": "Example index page",
   "Component path": "/1/2/index_pages/IndexPage02.jsx",
   "Example component path": undefined,
   "GitHub repository":
@@ -128,7 +128,7 @@ export const classEntityPage = {
 
 export const flipGame = {
   "Class": abs("./em1.js;get/components"),
-  "Name": "Flip game #1",
+  "Name": "Flip game 1.0",
   "Component path": "/1/2/tutorials/flip_game_01/FlipGame01.jsx",
   "Example props": {},
   "GitHub repository":

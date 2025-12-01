@@ -1,24 +1,25 @@
 
+import {map} from 'array';
 import {postEntity} from "/1/1/entities.js";
 
 import * as InputText from 'InputText.jsx';
 
-const GeneralEntityElementPromise = import(
-  "../entity_elements/GeneralEntityElement.jsx"
+const QualityElementPromise = import(
+  "../entity_elements/QualityElement.jsx"
 );
 
 
 
-export function render({extQualKeyArr}) {
-  let {GeneralEntityElement, isFetching, response, entityElement} = this.state;
+export function render({qualKeyArr}) {
+  let {QualityElement, isFetching, response, entityElements} = this.state;
 
   if (!isFetching) {
     this.setState(state => ({...state, isFetching: true}));
-    GeneralEntityElementPromise.then(Component => {
-      this.setState(state => ({...state, GeneralEntityElement: Component}));
+    QualityElementPromise.then(Component => {
+      this.setState(state => ({...state, QualityElement: Component}));
     });
   }
-  if (!GeneralEntityElement) {
+  if (!QualityElement) {
     return <div className="add-entity-menu">
       <div className="fetching">{"..."}</div>
     </div>;
@@ -41,7 +42,7 @@ export function render({extQualKeyArr}) {
             ...state, response: <span className="warning">
               {"User is not logged in"}
             </span>,
-            entityElement: undefined,
+            entityElements: undefined,
           }));
           return;
         }
@@ -51,23 +52,25 @@ export function render({extQualKeyArr}) {
               ...state, response: <span className="warning">
                 {"Invalid entity path"}
               </span>,
-              entityElement: undefined,
+              entityElements: undefined,
             }));
           }
           else {
             this.setState(state => ({
-              ...state, response: "Entity has been assigned the ID of " +
-              entID + ". Now give it some relevant scores.",
-              entityElement: <GeneralEntityElement key={"_" + entID}
-                entID={entID} extQualKeyArr={extQualKeyArr}
-                startExpanded={true}
-              />,
+              ...state,
+              response: "Entity has been assigned the ID of " +
+                entID + ". Now give it some relevant scores.",
+              entityElements: map(qualKeyArr, qualKey => (
+                <QualityElement key={"_" + qualKey}
+                  subjKey={entID} qualKey={qualKey} startOpen
+                />
+              )),
             }));
           }
         });
       });
     }}>{"Submit"}</button>
     <div className="response-display">{response}</div>
-    <div className="entity-display">{entityElement}</div>
+    <div className="qualities">{entityElements}</div>
   </div>;
 }

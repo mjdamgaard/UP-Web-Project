@@ -24,7 +24,10 @@ export function render(props) {
 
 
 export function getInitialState({startOpen}) {
-  return {isOpen: startOpen ? true : false};
+  return {
+    isOpen: startOpen ? true : false,
+    isLoaded: startOpen ? true : false,
+  };
 }
 
 
