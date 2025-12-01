@@ -1238,11 +1238,11 @@ export const discussions = {
   "getQualityName": objKey => "Is a relevant discussion relating to ${" +
     objKey + "}",
   "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a " +
-    "relevant discussion relating to ${" + objKey + "} (somehow)",
+    "relevant discussion relating to ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/texts"),
   "Metric": abs("./em1.js;get/gradingMetric"),
-  "Description": abs("./em1_aux.js;get/discussionDesc"),
+  "Description": abs("./em1_aux.js;get/discussionsDesc"),
 };
 
 // 'Reactions' are a subclass of comments that expresses some immediate
@@ -1274,6 +1274,23 @@ export const reactions = {
   "Description": abs("./em1_aux.js;get/reactionsDesc"),
 };
 
+// Tasks are texts that defines some task that is relevant for the given
+// entity. Such tasks can generally concern anything related to entity, but in
+// case of a text entity that itself defines some task, the relevant tasks
+// should in this case mainly be sub-tasks. Thereby, we can use a 'Tasks' tab,
+// using the following relation, to also form trees of tasks and sub-tasks. 
+export const tasks = {
+  "Class": abs("./em1.js;get/relations"),
+  "Name": "Tasks",
+  "getQualityName": objKey => "Is a relevant tasks relating to ${" +
+    objKey + "}",
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a " +
+    "relevant task relating to ${" + objKey + "}",
+  "Object domain": abs("./em1.js;get/entities"),
+  "Subject domain": abs("./em1.js;get/texts"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
+  "Description": abs("./em1_aux.js;get/tasksDesc"),
+};
 
 
 
@@ -1334,14 +1351,24 @@ export const argumentsRelation = {
 
 // This "impact" relation is supposed to be an estimate of how much the object
 // scalar is thought to increase if the subject scalar increases. Since this is
-// not supposed to be a precise estimate, let's make it as easy to score as
-// possibly by taking the impact score to represent how much the object scalar
-// ought to grow, measured in its own units, when the subject scalar grows by
-// 1 of its units.
-// Note also that when the subject scalar is a 'Probability' scalar in
-// particular, an easier way to compute this is to estimate the growth from
-// when the statement in question is assumed false and to when it is assumed
-// true, and then divide by 100 (as we also consider '%' a type of unit here).
+// not supposed to be a precise estimate, users don't need to think about
+// infinitesimal increments score the relation correctly. It is perfectly okay
+// for a user to just choose an appropriate finite interval in the range of the
+// subject scalar, then estimate how much the object scalar ought to increase
+// and divide that number by the width of said interval. This gives you an
+// approximate "slope" of the growth. But before you submit the score, you also
+// need to "normalize the ranges," as it were, which means to divide by the
+// width of the range of the object scalar and multiply by the width of the
+// range of the subject scalar (both of which should always be finite, as
+// unbounded ranges should not be used as "arguments").  
+// In the "Description" of this entity, we ought to give a few good examples of
+// how this is done (and in particular when it concerns a mix of grading and
+// probability metrics) to make it easier for everyone.
+// Note, by the way, that we cut off the range for the "impact" scores at 1 and
+// -1. So if you ever have a subject scalar where a small increment means a
+// larger increment in the object scalar, ypu then ought to propose using a
+// different argument instead, namely where the semantics of the range of the
+// subject scalar is transformed.
 export const impact = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Impacting scalars",
@@ -1350,7 +1377,7 @@ export const impact = {
     "} on ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/scalars"),
   "Subject domain": abs("./em1.js;get/scalars"),
-  "Metric": abs("./em1.js;get/dimensionlessMetric"),
+  "Metric": abs("./em1.js;get/fromMinusToPlusOneMetric"),
   "Description": abs("./em1_aux.js;get/impactDesc"),
 };
 
