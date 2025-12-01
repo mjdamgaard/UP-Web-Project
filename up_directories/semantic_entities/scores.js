@@ -5,7 +5,7 @@ import {map, join} from 'array';
 import {min} from 'math';
 import {hexToArray, valueToHex, arrayToHex} from 'hex';
 import {
-  fetchEntityID, fetchEntityDefinition, fetchEntityProperty
+  fetchEntityID, fetchEntityDefinition, fetchEntityProperty, postScalarEntity,
 } from "./entities.js";
 
 
@@ -330,9 +330,10 @@ export function postUserScore(
   let subjIDProm = fetchEntityID(subjKey);
   let userIDProm = fetchEntityID(userKey);
   let metricProm = fetchMetric(qualKey);
+  let postScalarProm = postScalarEntity(subjKey, qualKey);
   return new Promise(resolve => {
     Promise.all([
-      qualIDProm, subjIDProm, userIDProm, metricProm
+      qualIDProm, subjIDProm, userIDProm, metricProm, postScalarProm
     ]).then(([qualID, subjID, userID, metric]) => {
       // TODO: Verify hex-string types of the IDs here. 
       let scoreHex = getScoreHex(score, metric);

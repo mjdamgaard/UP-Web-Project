@@ -5,7 +5,7 @@ import {substring, indexOf} from 'string';
 import {verifyType} from 'type';
 import {stringify} from 'json';
 import {
-  fetchEntityDefinition, fetchEntityPath, getUserEntPath,
+  fetchEntityDefinition, fetchEntityPath, getUserEntPath, postEntity,
 } from "../entities.js";
 
 const commentPathPrefix = abs("./comments.att") + "./entry/k/";
@@ -21,21 +21,26 @@ export function postComment(text, targetEntKey) {
   return new Promise(resolve => {
     // Construct the new comment entity definition and insert it in the
     // comments.att table.
-    let newCommentDef = {
-      "Class": "/1/1/em1.js;get/commentClass",
-      "Author": getUserEntPath("1", authorID),
-      "Target entity": targetEntKey,
-      "Content": text,
-    };
-    let newCommentEMSource = 'export const comment = ' +
-      stringify(newCommentDef) +
-      ';';
+    let newCommentEMSource =
+      'import {fetchEntityID} from "/1/1/entities.js";\n' +
+      'export const comment = {\n' +
+      '  "Class": "/1/1/em1.js;get/commentClass",\n' +
+      '  "Name": () => new Promise(resolve => {\n' +
+      '    fetchEntityID(abs(./)).then(\n' +
+      '      entID => resolve("Comment " + entID)\n' +
+      '    );\n' +
+      '  }),\n' +
+      '  "Author": ' + stringify(getUserEntPath("1", authorID)) + ",\n" +
+      '  "Target entity": ' + stringify(targetEntKey) + ",\n" +
+      '  "Content": ' + stringify(text) + ",\n" +
+      "};";
     post(
       abs("./comments.att") + "./_insert", newCommentEMSource
     ).then(textID => {
       let newEntPath = commentPathPrefix + textID + ";.js;get/comment";
-      resolve(newEntPath);
-      // TODO: Oh, I also need to call the postEntity SMF here before resolving.
+      postEntity(newEntPath).then(
+        () => resolve(newEntPath)
+      );
     });
   });
 }

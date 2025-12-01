@@ -1089,10 +1089,6 @@ export class JSXInstanceInterface extends ObjectObject {
   );
 
 
-  // TODO: Extend the API of getBoundingClientRect() such that it can take a
-  // selector argument, in which case the first DOM node from this selection,
-  // filtered so that only elements within the current app scope is selected,
-  // is used instead. 
   getBoundingClientRect = new DevFunction(
     "getBoundingClientRect", {}, () => {
       let domNode = this.jsxInstance.domNode;
@@ -1109,8 +1105,7 @@ export class JSXInstanceInterface extends ObjectObject {
     }
   );
 
-  // TODO: Do the same thing for getIsVisible() as for getBoundingClientRect(),
-  // i.e. in terms of the above todo.
+
   getIsVisible = new DevFunction(
     "getIsVisible", {}, () => {
       let domNode = this.jsxInstance.domNode;
@@ -1118,8 +1113,7 @@ export class JSXInstanceInterface extends ObjectObject {
     }
   );
 
-  // TODO: Do the same thing for getScrollData() as for getBoundingClientRect(),
-  // i.e. in terms of the above todo.
+
   getScrollData = new DevFunction(
     "getScrollData", {}, () => {
       let domNode = this.jsxInstance.domNode;
@@ -1131,7 +1125,6 @@ export class JSXInstanceInterface extends ObjectObject {
     }
   );
 
-  // TODO: Consider adding more instance methods at some point.
 }
 
 

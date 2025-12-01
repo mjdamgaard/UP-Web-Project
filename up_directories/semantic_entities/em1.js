@@ -1314,22 +1314,11 @@ export const reactions = {
 // It should also be noted that we don't distinguish between pros and cons here
 // when it comes to the relevant subjects of the 'Arguments' relation. So a
 // counterargument is thus also considered an 'argument' here. So in order to
-// distinguish what arguments are pros and what are cons in the list, we will
-// instead use a "correlation" relation, which is introduced below. And since
-// this correlation relation is a scalar one, like relations in this semantic
-// system, it means that we can also use its scores to show *how much* a given
-// argument is regarded as impacting the object of the discussion, namely the
-// object scalar. For instance, if the correlation has a score that's close to
-// 1, it means that an increment in the argument scalar (either due to being
-// evaluated by more users, or if a new "sub-argument" has come to light,
-// making users change their opinions) should be correlated with a relatively
-// large increment in score for the object scalar as well. And if the
-// correlation is close -1, an increment in the argument's score should
-// correlate with a relatively large decrement in the score of the object
-// scalar. You get the picture (hopefully).
-// So when showing the list of "arguments" for a given scalar, it is thus
-// important to also show these correlation scores as well, along with the
-// scores of the argument scalars themselves.
+// distinguish what arguments are pros and what are cons in the list, we can
+// instead use an "impact" relation, which is introduced below. This relation
+// not only shows whether a given argument is for or against the scalar
+// proposition at hand, but also gives a measure of how impactful the argument
+// is.
 export const argumentsRelation = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Arguments",
@@ -1343,20 +1332,39 @@ export const argumentsRelation = {
 };
 
 
+// This "impact" relation is supposed to be an estimate of how much the object
+// scalar is thought to increase if the subject scalar increases. Since this is
+// not supposed to be a precise estimate, let's make it as easy to score as
+// possibly by taking the impact score to represent how much the object scalar
+// ought to grow, measured in its own units, when the subject scalar grows by
+// 1 of its units.
+// Note also that when the subject scalar is a 'Probability' scalar in
+// particular, an easier way to compute this is to estimate the growth from
+// when the statement in question is assumed false and to when it is assumed
+// true, and then divide by 100 (as we also consider '%' a type of unit here).
+export const impact = {
+  "Class": abs("./em1.js;get/relations"),
+  "Name": "Impacting scalars",
+  "getQualityName": objKey => "Impact on ${" + objKey + "}",
+  "getScalarName": (objKey, subjKey) => "The impact of ${" + subjKey +
+    "} on ${" + objKey + "}",
+  "Object domain": abs("./em1.js;get/scalars"),
+  "Subject domain": abs("./em1.js;get/scalars"),
+  "Metric": abs("./em1.js;get/dimensionlessMetric"),
+  "Description": abs("./em1_aux.js;get/impactDesc"),
+};
 
-// This "correlation" relation was introduced above in the comment for the
-// 'Arguments' relation. TODO: Be more precise about the semantics of this
-// relation in that comment, and also state that it should only be used between
-// scalars with bounded ranges. And also, move the comment down here instead,
-// and reference it above rather than the other way around. 
+
+// A measure of the correlation between two qualities, both with bounded
+// ranges, after said ranges have been normalized.  
 export const correlation = {
   "Class": abs("./em1.js;get/relations"),
-  "Name": "Correlated scalars",
+  "Name": "Correlated qualities",
   "getQualityName": objKey => "Correlation with ${" + objKey + "}",
   "getScalarName": (objKey, subjKey) => "Correlation between ${" + subjKey +
     "} and ${" + objKey + "}",
-  "Object domain": abs("./em1.js;get/scalars"),
-  "Subject domain": abs("./em1.js;get/scalars"),
+  "Object domain": abs("./em1.js;get/qualities"),
+  "Subject domain": abs("./em1.js;get/qualities"),
   "Metric": abs("./em1.js;get/fromMinusToPlusOneMetric"),
   "Description": abs("./em1_aux.js;get/correlationDesc"),
 };
