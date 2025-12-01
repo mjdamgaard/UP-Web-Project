@@ -12,9 +12,9 @@ const commentPathPrefix = abs("./comments.att") + "./entry/k/";
 
 
 
-export function postComment(text, targetEntKey) {
+export function postComment(text, targetEntKey, returnID = false) {
   checkRequestOrigin(true, [
-    "/1/2/... TODO: Insert a path to a component for posting comments",
+    "/1/2/entity_lists/AddEntityMenu.jsx",
   ]);
   verifyType(text, "string");
   let authorID = getRequestingUserID();
@@ -31,7 +31,8 @@ export function postComment(text, targetEntKey) {
       '    );\n' +
       '  }),\n' +
       '  "Author": ' + stringify(getUserEntPath("1", authorID)) + ",\n" +
-      '  "Target entity": ' + stringify(targetEntKey) + ",\n" +
+      '  "Target entity": ' +
+            (targetEntKey ? stringify(targetEntKey) : "undefined") + ",\n" +
       '  "Content": ' + stringify(text) + ",\n" +
       "};";
     post(
@@ -39,7 +40,7 @@ export function postComment(text, targetEntKey) {
     ).then(textID => {
       let newEntPath = commentPathPrefix + textID + ";.js;get/comment";
       postEntity(newEntPath).then(
-        () => resolve(newEntPath)
+        newEntID => resolve(returnID ? newEntID : newEntPath)
       );
     });
   });

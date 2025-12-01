@@ -113,7 +113,7 @@ export function render({
     // Then generate the content of the component.
     content = [
       hideMenu ? undefined : <EntityListMenu key="menu"
-        qualKeyArr={qualKeyArr}
+        qualKeyArr={qualKeyArr} objKey={objKey}
         minScore={minScore} minWeight={minWeight}
       />,
       <hr/>,

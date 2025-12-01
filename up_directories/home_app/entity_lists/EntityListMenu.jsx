@@ -9,7 +9,7 @@ import * as EntityReference from "../misc/EntityReference.jsx";
 
 
 export function render({
-  qualKeyArr = [], minScore = undefined, minWeight = undefined
+  qualKeyArr = [], objKey, minScore = undefined, minWeight = undefined
 }) {
   let {menuExtension} = this.state;
 
@@ -22,8 +22,8 @@ export function render({
       <div>
         <button onClick={() => {
           this.setState(state => ({
-            ...state, menuExtension: <AddEntityMenu key="add"
-              qualKeyArr={qualKeyArr}
+            ...state, menuExtension: <AddEntityMenu key="_add"
+              qualKeyArr={qualKeyArr} objKey={objKey}
             />
           }));
         }}>{"Add new"}</button>

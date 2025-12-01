@@ -183,6 +183,66 @@ export function fetchEntityProperty(
 
 
 
+// checkClass() and checkSuperClass() searches an entity's class and/or list
+// of superclasses for a given class, and returns true if that class is found.
+// Note that these function both assume that all "Class" properties use entity
+// *paths* rather than IDs, which is also recommended for entities to do. 
+
+export function checkClass(entKey, classPath, maxRecLevel = 10, recLevel = 0) {
+  return new Promise(resolve => {
+    if (recLevel > maxRecLevel) return resolve(false);
+    fetchEntityProperty(entKey, "Class").then(firstClassPath => {
+      if (firstClassPath === classPath) {
+        resolve(true);
+      }
+      else {
+        checkSuperClass(
+          firstClassPath, classPath, maxRecLevel, recLevel + 1
+        ).then(
+          isFound => resolve(isFound)
+        );
+      }
+    });
+  });
+}
+
+export function checkSuperClass(
+  subClassKey, superClassPath, maxRecLevel = 10, recLevel = 0
+) {
+  return new Promise(resolve => {
+    if (recLevel > maxRecLevel) return resolve(false);
+    fetchEntityProperty(subClassKey, "Superclass").then(scPath => {
+      if (!scPath) {
+        resolve(false);
+      }
+      else if (scPath === superClassPath) {
+        resolve(true);
+      }
+      else {
+        checkSuperClass(
+          scPath, superClassPath, maxRecLevel, recLevel + 1
+        ).then(
+          isFound => resolve(isFound)
+        );
+      }
+    });
+  });
+}
+
+// Check domain uses checkClass to check the "Domain" of a quality.
+export function checkDomain(qualKey, classPath,  maxRecLevel = undefined) {
+  return new Promise(resolve => {
+    fetchEntityProperty(qualKey, "Domain").then(domainKey => {
+      checkClass(domainKey, classPath, maxRecLevel).then(
+        isFound => resolve(isFound)
+      );
+    });
+  });
+}
+
+
+
+
 
 
 export function postConstructedEntity(
