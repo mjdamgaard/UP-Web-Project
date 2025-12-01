@@ -185,55 +185,68 @@ export function fetchEntityProperty(
 
 // checkClass() and checkSuperClass() searches an entity's class and/or list
 // of superclasses for a given class, and returns true if that class is found.
-// Note that these function both assume that all "Class" properties use entity
-// *paths* rather than IDs, which is also recommended for entities to do. 
 
-export function checkClass(entKey, classPath, maxRecLevel = 10, recLevel = 0) {
+export function checkClass(
+  entKey, searchClassPath, maxRecLevel = 10, recLevel = 0
+) {
   return new Promise(resolve => {
     if (recLevel > maxRecLevel) return resolve(false);
-    fetchEntityProperty(entKey, "Class").then(firstClassPath => {
-      if (firstClassPath === classPath) {
-        resolve(true);
-      }
-      else {
-        checkSuperClass(
-          firstClassPath, classPath, maxRecLevel, recLevel + 1
-        ).then(
-          isFound => resolve(isFound)
-        );
-      }
+    fetchEntityProperty(entKey, "Class").then(classKey => {
+      fetchEntityPath(classKey).then(classPath => {
+        if (classPath === searchClassPath) {
+          resolve(true);
+        }
+        else {
+          checkSuperClass(
+            classPath, searchClassPath, maxRecLevel, recLevel + 1
+          ).then(
+            isFound => resolve(isFound)
+          );
+        }
+      });
     });
   });
 }
 
 export function checkSuperClass(
-  subClassKey, superClassPath, maxRecLevel = 10, recLevel = 0
+  subClassKey, searchSuperClassPath, maxRecLevel = 10, recLevel = 0
 ) {
   return new Promise(resolve => {
     if (recLevel > maxRecLevel) return resolve(false);
-    fetchEntityProperty(subClassKey, "Superclass").then(scPath => {
-      if (!scPath) {
-        resolve(false);
-      }
-      else if (scPath === superClassPath) {
+    fetchEntityPath(subClassKey).then(subClassPath => {
+      if (subClassPath === searchSuperClassPath) {
         resolve(true);
       }
       else {
-        checkSuperClass(
-          scPath, superClassPath, maxRecLevel, recLevel + 1
-        ).then(
-          isFound => resolve(isFound)
-        );
+        fetchEntityProperty(subClassKey, "Superclass").then(superclassKey => {
+          fetchEntityPath(superclassKey).then(superclassPath => {
+            if (!superclassPath) {
+              resolve(false);
+            }
+            else if (superclassPath === searchSuperClassPath) {
+              resolve(true);
+            }
+            else {
+              checkSuperClass(
+                superclassPath, searchSuperClassPath, maxRecLevel, recLevel + 1
+              ).then(
+                isFound => resolve(isFound)
+              );
+            }
+          });
+        });
       }
     });
   });
 }
 
-// Check domain uses checkClass to check the "Domain" of a quality.
-export function checkDomain(qualKey, classPath,  maxRecLevel = undefined) {
+// checkDomain() uses checkSuperClass() to check the "Domain" of a quality.
+export function checkDomain(
+  qualKey, searchClassPath,  maxRecLevel = undefined
+) {
   return new Promise(resolve => {
     fetchEntityProperty(qualKey, "Domain").then(domainKey => {
-      checkClass(domainKey, classPath, maxRecLevel).then(
+      checkSuperClass(domainKey, searchClassPath, maxRecLevel).then(
         isFound => resolve(isFound)
       );
     });

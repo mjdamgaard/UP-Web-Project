@@ -8,7 +8,8 @@ from "../entity_elements/GeneralEntityElement.jsx";
 
 const membersRel = "/1/1/em1.js;get/members";
 const subclassesRel = "/1/1/em1.js;get/subclasses";
-const relevantQualitiesRel = "/1/1/em1.js;get/relevantQualities";
+const discussionsRel = "/1/1/em1.js;get/discussions";
+const tasksRel = "/1/1/em1.js;get/tasks";
 
 
 export function render({entKey, extQualKeyArr = undefined, isNested = false}) {
@@ -48,6 +49,24 @@ export function render({entKey, extQualKeyArr = undefined, isNested = false}) {
           objKey: entKey,
           extQualKeyArr: extQualKeyArr,
         }
+      },
+      discussions: {
+        title: "Discussions",
+        Component: EntityList,
+        props: {
+          objKey: entKey,
+          relKey: discussionsRel,
+          extQualKeyArr: [[entKey, discussionsRel]],
+        },
+      },
+      tasks: {
+        title: "Tasks",
+        Component: EntityList,
+        props: {
+          objKey: entKey,
+          relKey: tasksRel,
+          extQualKeyArr: [[entKey, tasksRel]],
+        },
       },
     }}
   />;

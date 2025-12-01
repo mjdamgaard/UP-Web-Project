@@ -12,7 +12,9 @@ const commentPathPrefix = abs("./comments.att") + "./entry/k/";
 
 
 
-export function postComment(text, targetEntKey, returnID = false) {
+export function postComment(
+  text, targetEntKey, isSingular = false, returnID = false,
+) {
   checkRequestOrigin(true, [
     "/1/2/entity_lists/AddEntityMenu.jsx",
   ]);
@@ -34,6 +36,8 @@ export function postComment(text, targetEntKey, returnID = false) {
       '  "Target entity": ' +
             (targetEntKey ? stringify(targetEntKey) : "undefined") + ",\n" +
       '  "Content": ' + stringify(text) + ",\n" +
+      '  "Is a singular statement": ' +
+            (isSingular ? "true" : "false") + ",\n" +
       "};";
     post(
       abs("./comments.att") + "./_insert", newCommentEMSource

@@ -3,6 +3,8 @@ import {map} from 'array';
 import {postEntity, checkDomain} from "/1/1/entities.js";
 
 import * as InputText from 'InputText.jsx';
+import * as Textarea from 'Textarea.jsx';
+import * as InputCheckbox from 'InputCheckbox.jsx';
 
 const textClassPath = "/1/1/em1.js;get/texts";
 
@@ -49,8 +51,11 @@ export function render({qualKeyArr, objKey = undefined}) {
         "Or write and insert a new text entity."
       }</div>
       <div>
-        <span>{"Entity ID or path: "}</span>
-        <TextArea key="ta" />
+        <Textarea key="ta" />
+      </div>
+      <div>
+        <span>{"Is a singular statement: "}</span>
+        <InputCheckbox key="icb" />
       </div>
       <button onClick={() => this.do("submitTextEntityToInsert")}>
         {"Submit"}
@@ -107,6 +112,7 @@ export const actions = {
     let {qualKeyArr, objKey = undefined} = this.props;
     let {QualityElement} = this.state;
     let text = this.call("ta", "getValue");
+    let isSingular = this.call("icb", "getIsChecked");
     if (!text) return;
     this.trigger("postUserEntity").then((userEntID) => {
       if (!userEntID) {
@@ -120,7 +126,7 @@ export const actions = {
       }
       post(
         "/1/1/comments/comments.sm.js./callSMF/postComment",
-        [text, objKey, true],
+        [text, objKey, isSingular, true],
       ).then(entID => {
         this.setState(state => ({
           ...state,

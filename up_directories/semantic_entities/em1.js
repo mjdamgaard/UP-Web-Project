@@ -261,7 +261,12 @@ export const commentClass = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Comments",
   "Superclass": abs("./em1.js;get/texts"),
-  "Common properties": ["Target entity", "Author", "Content"],
+  "Common properties": [
+    "Author",
+    "Target entity",
+    "Content",
+    "Is a singular statement",
+  ],
   "Description": abs("./em1_aux.js;get/commentClassDesc"),
 };
 
