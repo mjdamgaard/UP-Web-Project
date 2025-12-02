@@ -109,9 +109,16 @@ export class SettingsObject01 extends SettingsObject {
     // component exports a 'styleSheetPaths' array parameter, we let
     // styleModule be an array of (imported) modules, which is also allowed.
     let styleModulePromise;
+    let stylePath = componentModule.get("stylePath");
     let styleSheetPaths = componentModule.get("styleSheetPaths") ??
-      componentModule.get("styleSheets") ?? componentModule.get("stylePaths");
-    if (styleSheetPaths) {
+      componentModule.get("styleSheets") ??
+      componentModule.get("stylePaths") ?? [];
+    if (stylePath) {
+      let stylePath = componentModule.get("stylePath") || componentPath;
+      stylePath = getAbsolutePath(componentPath, stylePath, node, env);
+      styleModulePromise = interpreter.import(stylePath, node, env);
+    }
+    else {
       let styleSheetPromises = mapValues(styleSheetPaths, node, env, path => (
         new Promise((resolve) => {
           interpreter.import(path, node, env).then(
@@ -122,11 +129,6 @@ export class SettingsObject01 extends SettingsObject {
         })
       ));
       styleModulePromise = Promise.all(styleSheetPromises);
-    }
-    else {
-      let stylePath = componentModule.get("stylePath") || componentPath;
-      stylePath = getAbsolutePath(componentPath, stylePath, node, env);
-      styleModulePromise = interpreter.import(stylePath, node, env);
     }
 
     // Cache the styleModule promise, and then it resolves, replace it with the

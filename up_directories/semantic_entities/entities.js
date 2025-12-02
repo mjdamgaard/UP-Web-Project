@@ -209,11 +209,9 @@ export function checkSuperClass(
       }
       else {
         fetchEntityProperty(subClassKey, "Superclass").then(superclassKey => {
+          if (!superclassKey) return resolve(false);
           fetchEntityPath(superclassKey).then(superclassPath => {
-            if (!superclassPath) {
-              resolve(false);
-            }
-            else if (superclassPath === searchSuperClassPath) {
+            if (superclassPath === searchSuperClassPath) {
               resolve(true);
             }
             else {

@@ -21,6 +21,7 @@ export function render({
       </div>
       <div>
         <button onClick={() => {
+          this.blur();
           this.setState(state => ({
             ...state, menuExtension: <AddEntityMenu key="_add"
               qualKeyArr={qualKeyArr} objKey={objKey}

@@ -1,10 +1,12 @@
 
+import {post} from 'query';
 import {map} from 'array';
 import {postEntity, checkDomain} from "/1/1/entities.js";
 
 import * as InputText from 'InputText.jsx';
 import * as Textarea from 'Textarea.jsx';
 import * as InputCheckbox from 'InputCheckbox.jsx';
+import * as Label from 'Label.jsx';
 
 const textClassPath = "/1/1/em1.js;get/texts";
 
@@ -17,6 +19,7 @@ const QualityElementPromise = import(
 export function render({qualKeyArr, objKey = undefined}) {
   let {
     QualityElement, isFetching, response, entityElements, isTextClass,
+    cbSingIDKey, cbEntIDKey, hasGrabbedFocus,
   } = this.state;
 
   if (!isFetching) {
@@ -34,14 +37,19 @@ export function render({qualKeyArr, objKey = undefined}) {
     </div>;
   }
 
+  // If the instance has not grabbed focus before for its input, do so now.
+  if (!hasGrabbedFocus) {
+    this.doAfterRender("focus-input");
+  }
+
   return <div className="add-entity-menu">
     <div>{
       "Submit the ID or the path of the entity to insert, then score it " +
       "with respect to the relevant qualities."
     }</div>
     <div>
-      <span>{"Entity ID or path: "}</span>
-      <InputText key="i" size={60} />
+      <Label key="l-ent" forKey={cbEntIDKey}>{"Entity ID or path: "}</Label>
+      <InputText key="i" idKey={cbEntIDKey} size={60} />
     </div>
     <button onClick={() => this.do("submitEntityToInsert")}>
       {"Submit"}
@@ -54,8 +62,10 @@ export function render({qualKeyArr, objKey = undefined}) {
         <Textarea key="ta" />
       </div>
       <div>
-        <span>{"Is a singular statement: "}</span>
-        <InputCheckbox key="icb" />
+        <Label key="l-sing" forKey={cbSingIDKey}>
+          {"Is a singular statement: "}
+        </Label>
+        <InputCheckbox key="cb-sing" idKey={cbSingIDKey} />
       </div>
       <button onClick={() => this.do("submitTextEntityToInsert")}>
         {"Submit"}
@@ -67,9 +77,21 @@ export function render({qualKeyArr, objKey = undefined}) {
 }
 
 
+export function getInitialState() {
+  let cbSingIDKey = Symbol("cbSingIDKey");
+  let cbEntIDKey = Symbol("cbEntIDKey");
+  return {cbSingIDKey: cbSingIDKey, cbEntIDKey: cbEntIDKey};
+}
+
 
 
 export const actions = {
+  "focus-input": function() {
+    let {isTextClass} = this.state;
+    let inputKey = isTextClass ? "ta" : "i";
+    this.call(inputKey, "focus");
+    this.setState(state => ({...state, hasGrabbedFocus: true}));
+  },
   "submitEntityToInsert": function() {
     let {qualKeyArr} = this.props;
     let {QualityElement} = this.state;
@@ -112,7 +134,7 @@ export const actions = {
     let {qualKeyArr, objKey = undefined} = this.props;
     let {QualityElement} = this.state;
     let text = this.call("ta", "getValue");
-    let isSingular = this.call("icb", "getIsChecked");
+    let isSingular = this.call("cb-sing", "getIsChecked");
     if (!text) return;
     this.trigger("postUserEntity").then((userEntID) => {
       if (!userEntID) {

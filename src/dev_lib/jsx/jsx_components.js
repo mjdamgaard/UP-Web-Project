@@ -112,6 +112,7 @@ class JSXInstance {
     this.callerEnv = callerEnv;
     this.isDiscarded = undefined;
     this.isFailed = undefined;
+    this.isFirstRender = true;
     this.rerenderPromise = undefined;
     this.actions = {};
     this.methods = {};
@@ -246,6 +247,7 @@ class JSXInstance {
     catch (err) {
       return this.getFailedComponentDOMNode(err, replaceSelf);
     }
+    this.isFirstRender = false;
 
     // Initialize a marks Map to keep track of which existing child instances
     // was used or created in the render, such that instances that are no
@@ -960,10 +962,13 @@ export class JSXInstanceInterface extends ObjectObject {
       "state": this.jsxInstance.state,
       "refs": this.jsxInstance.refs,
       "component": this.jsxInstance.componentModule,
+      "isFirstRender": this.jsxInstance.isFirstRender,
       /* Methods */
       "do": this.do,
       "trigger": this.trigger,
       "call": this.call,
+      "doAfterRender": this.doAfterRender,
+      "doAfterFirstRender": this.doAfterFirstRender,
       "setState": this.setState,
       "rerender": this.rerender,
       "provideContext": this.provideContext,
@@ -974,6 +979,7 @@ export class JSXInstanceInterface extends ObjectObject {
       "getBoundingClientRect": this.getBoundingClientRect,
       "getIsVisible": this.getIsVisible,
       "getScrollData": this.getScrollData,
+      "blur": this.blur,
     });
   }
 
@@ -1006,6 +1012,32 @@ export class JSXInstanceInterface extends ObjectObject {
     }
   );
 
+  // doAfterRender() simply waits to a subsequent tick of the JS event loop
+  // before calling do(). And it therefore also doesn't return anything.
+  doAfterRender = new DevFunction(
+    "doAfterRender", {/*typeArr: ["any", "any?"]*/},
+    ({callerNode, execEnv, interpreter}, [actionKey, input]) => {
+      new Promise(resolve => resolve()).then(() => {
+        this.jsxInstance.do(
+          actionKey, input, interpreter, callerNode, execEnv
+        );
+      });
+    }
+  );
+
+  // doAfterFirstRender() is similar to doAfterRender(), but it must be called
+  // before the first render() call has returned to have any effect.
+  doAfterFirstRender = new DevFunction(
+    "doAfterFirstRender", {/*typeArr: ["any", "any?"]*/},
+    ({callerNode, execEnv, interpreter}, [actionKey, input]) => {
+      if (!this.jsxInstance.isFirstRender) return;
+      new Promise(resolve => resolve()).then(() => {
+        this.jsxInstance.do(
+          actionKey, input, interpreter, callerNode, execEnv
+        );
+      });
+    }
+  );
 
   // setState() assigns to jsxInstance.state immediately, which means that the
   // state changes will be visible to all subsequently triggered events and
@@ -1122,6 +1154,19 @@ export class JSXInstanceInterface extends ObjectObject {
         scrollTop: scrollTop, scrollHeight: scrollHeight,
         scrollLeft: scrollLeft, scrollWidth: scrollWidth
       };
+    }
+  );
+
+  // blur() blurs the focused element if it is within component instance, and
+  // within the same app scope.
+  blur = new DevFunction(
+    "blur", {}, ({callerNode, execEnv}, []) => {
+      let canBlur = !this.jsxInstance.settings.isOutsideFocusedAppScope(
+        this.jsxInstance, callerNode, execEnv
+      );
+      if (canBlur) {
+        document.activeElement.blur();
+      }
     }
   );
 

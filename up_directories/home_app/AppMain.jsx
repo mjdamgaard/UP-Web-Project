@@ -192,7 +192,6 @@ export function renderHelper({
     );
   }
 
-  // TODO: No, go to the index page instead.
   // And else if none of those tailURL types was matched, go to a 404 error
   // page.
   return (
