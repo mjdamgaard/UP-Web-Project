@@ -3,7 +3,9 @@ import {scriptParser} from "./parsing/ScriptParser.js";
 import {
   getExtendedErrorMsg as getExtendedSyntaxErrorMsg, getLnAndCol,
 } from "./parsing/Parser.js";
-import {REQUESTING_SMF_ROUTE_FLAG} from "../dev_lib/query/src/flags.js";
+import {
+  REQUESTING_SMF_ROUTE_FLAG, NO_TRACE_FLAG
+} from "../dev_lib/query/src/flags.js";
 
 
 
@@ -1890,12 +1892,17 @@ export class Environment {
       ret.push(callStr);
       return ret;
     }
-    else if (this.flags.get(REQUESTING_SMF_ROUTE_FLAG)) {
-      // If the function is an SMF called by another SMF, stop the trace before
-      // it bleeds into the caller SMF (in order to prevent data leaks).
-      // TODO: Test that the trace is cut off at the correct point.
+
+    // If the function is an SMF called by another SMF, check if the "no-trace"
+    // flag is raised by the calling SMF, and if so, stop the trace here.
+    else if (
+      this.flags.get(REQUESTING_SMF_ROUTE_FLAG) &&
+      this.getFlag(NO_TRACE_FLAG)
+    ) {
       return [];
+      // TODO: Test that the trace is cut off at the correct point.
     }
+
     else {
       return this.parent.getCallTraceHelper(maxLen, stringify);
     }
@@ -2957,13 +2964,14 @@ export function getExtendedErrorMsg(err) {
   }
 
   // Get the error message.
-  let msg = getString(err.val, err.environment);
+  let env = err.environment;
+  let msg = getString(err.val, env);
 
   // If error is thrown from the global environment, also return the
   // toString()'ed error as is.
   let {
     modulePath, lexArr, strPosArr, script
-  } = err.environment.getModuleEnv() ?? {};
+  } = env.getModuleEnv() ?? {};
   if (!lexArr) {
     return msg;
   }
@@ -2978,9 +2986,18 @@ export function getExtendedErrorMsg(err) {
     script.substring(strPos - SNIPPET_BEFORE_MAX_LEN, strPos) +
     " ▶▶▶" + script.substring(strPos, finStrPos) + "◀◀◀ " +
     script.substring(finStrPos, finStrPos + SNIPPET_AFTER_MAX_LEN);
+    let {interpreter, log} = env.scriptVars;
+  let traceAndLogAppendix = "";
+  if (interpreter.isServerSide) {
+    let trace = env.getFlag(NO_TRACE_FLAG) ? [] : env.getCallTrace();
+    traceAndLogAppendix = "\n\nTrace when error occurred:\n" +
+      trace.join(",\n") + "\n\nAnd log:\n" +
+      log.entries.map(entry => entry.join(", ")).join(";\n") + ";\n"
+  }
   return (
     msg + ` \nError occurred in ${modulePath ?? "root script"} at ` +
-    `Ln ${ln}, Col ${col}: \`\n${codeSnippet}\n\``
+    `Ln ${ln}, Col ${col}: \`\n${codeSnippet}\n\`` +
+    traceAndLogAppendix
   );
 }
 

@@ -20,4 +20,6 @@ export const REQUESTING_COMPONENT_FLAG = Symbol("requesting-component");
 export const CLIENT_TRUST_FLAG = Symbol("client-trust");
 
 
+export const NO_TRACE_FLAG = Symbol("no-trace");
+
 

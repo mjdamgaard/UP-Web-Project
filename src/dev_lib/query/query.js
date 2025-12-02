@@ -9,7 +9,9 @@ import {
 import {scriptParser} from "../../interpreting/parsing/ScriptParser.js";
 import {parseRoute} from './src/route_parsing.js';
 
-import {CAN_POST_FLAG, ELEVATED_PRIVILEGES_FLAG} from "./src/flags.js";
+import {
+  CAN_POST_FLAG, ELEVATED_PRIVILEGES_FLAG, NO_TRACE_FLAG
+} from "./src/flags.js";
 
 
 
@@ -331,7 +333,7 @@ export const query = new DevFunction(
         let globalEnv = execEnv.getGlobalEnv();
         let scriptPath = route + ";" +
           castingSegmentArr.slice(0, i + 1).join(";");
-        let [liveModule] = interpreter.executeModule(
+        let [liveModule] = await interpreter.executeModule(
           parsedScript, lexArr, strPosArr, result, scriptPath, globalEnv
         );
         result = liveModule;
@@ -606,15 +608,16 @@ export const clearPrivileges = new DevFunction(
 
 
 
-// TODO: Implement this noTrace() function, which should suppress traces from
-// being generated and logged alongside any errors thrown while the flag is
-// raised. And if the SMF calls another SMF (via './callSMF') any traces made
-// inside the this called SMF should stop when reaching the the caller SMF
-// (similarly to what I do currently, but now it should just *only* be done
-// when the "no-trace" flag is raised).
+// noTrace() suppresses traces from being generated and logged alongside any
+// errors thrown while the flag is raised. And if the SMF calls another SMF
+// (via './callSMF') any traces made inside the this called SMF should stop
+// when reaching the the caller SMF. Use this function whenever the SMF handles
+// private data that the client or the caller SMF may not see.
 export const noTrace = new DevFunction(
   "noTrace", {typeArr: ["function"]},
   ({callerNode, execEnv, interpreter}, [callback]) => {
-    // TODO: Set some "no-trace" flag.
+    return interpreter.executeFunction(
+      callback, [], callerNode, execEnv, undefined, [NO_TRACE_FLAG]
+    );
   }
 );
