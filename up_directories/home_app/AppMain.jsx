@@ -1,6 +1,6 @@
 
 import {substring, indexOf} from 'string';
-import {decodeURIComponent, encodeURIComponent} from 'query';
+import {encodeURI, decodeURI} from 'query';
 import {fetchEntityID} from "/1/1/entities.js";
 
 import * as UPIndexPage from "./UPIndexPage.jsx";
@@ -49,7 +49,7 @@ export function renderHelper({
 }) {
   let tailURL = substring(url, homeURL.length);
 
-  // If the relURL is empty, replace it with "up" ('up' for 'user-programmed'),
+  // If the tailURL is empty, replace it with "up" ('up' for 'user-programmed'),
   // taking the user to the user-defined home page.
   if (!tailURL) {
     history.replaceState(
@@ -59,7 +59,7 @@ export function renderHelper({
     return <div className="fetching">{"..."}</div>;
   }
 
-  // If the relURL is of the form "/up[/...]", go to a page with the current
+  // If the tailURL is of the form "/up[/...]", go to a page with the current
   // top-rated user-programmed page component for redirecting the the user
   // further to page/app that fits the subsequent part of the url.
   let indOfSecondSlash = indexOf(tailURL, "/", 1);
@@ -73,7 +73,7 @@ export function renderHelper({
     );
   }
   
-  // Else if relURL starts with "/profile", go to the profile page. 
+  // Else if tailURL starts with "/profile", go to the profile page. 
   if (firstSegment === "profile") {
     let indOfThirdSlash = indexOf(tailURL, "/", 9);
     let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
@@ -88,17 +88,17 @@ export function renderHelper({
     );
   } 
 
-  // Else if relURL iMutableArray()s of the form "/entPath/<encoded entPath>"", fetch the
-  // entity ID and then redirect to the "/e/" + entID relURL.
+  // Else if tailURL is of the form "/entPath" + encodedEntPath, fetch the
+  // entity ID and then redirect to the "/e/" + entID tailURL.
   if (firstSegment === "entPath") {
-    let entPath = decodeURIComponent(substring(tailURL, 9));
+    let entPath = decodeURI(substring(tailURL, 8));
     fetchEntityID(entPath).then(entID => {
       if (entID) {
         history.replaceState(history.state, homeURL + "/e/" + entID);
       }
       else {
-        let encEntPath = encodeURIComponent(entPath);
-        history.replaceState(history.state, homeURL + "/f/" + encEntPath);
+        let encEntPath = encodeURI(entPath);
+        history.replaceState(history.state, homeURL + "/f" + encEntPath);
       }
     });
     return (
@@ -108,7 +108,7 @@ export function renderHelper({
     );
   } 
 
-  // Else if relURL is of the form "/e/<entID>", go to the EntityPage of the
+  // Else if tailURL is of the form "/e/<entID>", go to the EntityPage of the
   // given entity.
   if (firstSegment === "e") {
     let indOfThirdSlash = indexOf(tailURL, "/", 3);
@@ -124,7 +124,7 @@ export function renderHelper({
     );
   }
 
-  // Else if relURL is of the form "/c/<entID>[/<name>/...]", go to the
+  // Else if tailURL is of the form "/c/<entID>[/<name>/...]", go to the
   // componentPage of the given entity, expecting it to be a component entity.
   if (firstSegment === "c") {
     let indOfThirdSlash = indexOf(tailURL, "/", 3);
@@ -141,11 +141,11 @@ export function renderHelper({
     );
   } 
 
-  // Else if relURL is of the form "/f" + uriEncodedRoute (where 'f' might
+  // Else if tailURL is of the form "/f" + uriEncodedRoute (where 'f' might
   // stand for 'file' or 'fetch' if you will), go to the file browser app with
   // that route.
   if (firstSegment === "f") {
-    let route = decodeURIComponent(substring(tailURL, 3));
+    let route = decodeURI(substring(tailURL, 2));
     return (
       <main className="app-main">
         <FileBrowser key="f" route={route} />
@@ -154,7 +154,7 @@ export function renderHelper({
   }
 
 
-  // Else if relURL = "/about", go to the about page.
+  // Else if tailURL = "/about", go to the about page.
   if (tailURL === "/about") {
     return (
       <main className="app-main">
@@ -163,7 +163,7 @@ export function renderHelper({
     );
   }
 
-  // Else if relURL = "/tutorials", go to a tutorial index page, which
+  // Else if tailURL = "/tutorials", go to a tutorial index page, which
   // similarly to the home page is also supposed to be a variable, user-
   // determined page some point. TODO: Implement that.
   if (tailURL === "/tutorials") {
@@ -174,7 +174,7 @@ export function renderHelper({
     );
   }
 
-  // Else if relURL = "/donations", go to the about page.
+  // Else if tailURL = "/donations", go to the about page.
   if (tailURL === "/donations") {
     return (
       <main className="app-main">
@@ -183,7 +183,7 @@ export function renderHelper({
     );
   }
 
-  // Else if relURL = "/sponsors", go to the about page.
+  // Else if tailURL = "/sponsors", go to the about page.
   if (tailURL === "/sponsors") {
     return (
       <main className="app-main">
@@ -192,7 +192,9 @@ export function renderHelper({
     );
   }
 
-  // And else if none of those relURL types was matched, go to a 404 error page.
+  // TODO: No, go to the index page instead.
+  // And else if none of those tailURL types was matched, go to a 404 error
+  // page.
   return (
     <main className="app-main">
       {"404 error: Missing page."}

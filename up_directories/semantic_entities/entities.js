@@ -187,23 +187,13 @@ export function fetchEntityProperty(
 // of superclasses for a given class, and returns true if that class is found.
 
 export function checkClass(
-  entKey, searchClassPath, maxRecLevel = 10, recLevel = 0
+  entKey, searchClassPath,  maxRecLevel = 10
 ) {
   return new Promise(resolve => {
-    if (recLevel > maxRecLevel) return resolve(false);
     fetchEntityProperty(entKey, "Class").then(classKey => {
-      fetchEntityPath(classKey).then(classPath => {
-        if (classPath === searchClassPath) {
-          resolve(true);
-        }
-        else {
-          checkSuperClass(
-            classPath, searchClassPath, maxRecLevel, recLevel + 1
-          ).then(
-            isFound => resolve(isFound)
-          );
-        }
-      });
+      checkSuperClass(classKey, searchClassPath, maxRecLevel).then(
+        isFound => resolve(isFound)
+      );
     });
   });
 }
@@ -242,7 +232,7 @@ export function checkSuperClass(
 
 // checkDomain() uses checkSuperClass() to check the "Domain" of a quality.
 export function checkDomain(
-  qualKey, searchClassPath,  maxRecLevel = undefined
+  qualKey, searchClassPath,  maxRecLevel = 10
 ) {
   return new Promise(resolve => {
     fetchEntityProperty(qualKey, "Domain").then(domainKey => {

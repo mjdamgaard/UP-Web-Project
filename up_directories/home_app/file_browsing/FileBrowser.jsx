@@ -5,7 +5,7 @@ import {
 import {slice as sliceArr, at as atArr, join, map} from 'array';
 import {parseRoute, isTextFileExtension} from 'route';
 import {hasType} from 'type';
-import {fetch, encodeURIComponent} from 'query';
+import {fetch, encodeURI} from 'query';
 import {getUserEntPath} from "/1/1/entities.js";
 
 import * as ILink from 'ILink.jsx';
@@ -130,13 +130,13 @@ function getRouteJSXWithSubLinks(
     queryPathSegments.length === 0 ? "" : join(queryPathSegments, "/")
   ) : undefined;
   acc += "/" + resultSegment;
-  href = encodeURIComponent(acc);
+  href = encodeURI(acc);
   let resultLink = <ILink key={"r"} href={href}>{resultSegment}</ILink>;
 
   // Then create an ILink for each casting segment.
   let castingLinks = map(castingSegments, (segment, ind) => {
     acc += ";" + segment;
-    href = encodeURIComponent(acc);
+    href = encodeURI(acc);
     return <ILink key={"cast" + ind} href={href}>{segment}</ILink>;
   });
 
@@ -211,7 +211,7 @@ export function render({route}) {
         let isFile = (indexOf(child, ".") !== -1);
         return <div className={isFile ? "file-link" : "directory-link"}>
           <ILink key={"child" + ind} href={
-            "~/f/" + encodeURIComponent(route + "/" + child)
+            "~/f/" + encodeURI(route + "/" + child)
           }>
             {child}
           </ILink> 

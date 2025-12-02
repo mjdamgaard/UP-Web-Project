@@ -1304,7 +1304,7 @@ export const reactions = {
 export const tasks = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Tasks",
-  "getQualityName": objKey => "Is a relevant tasks relating to ${" +
+  "getQualityName": objKey => "Is a relevant task relating to ${" +
     objKey + "}",
   "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a " +
     "relevant task relating to ${" + objKey + "}",

@@ -4,7 +4,7 @@ import {
 } from "/1/1/entities.js";
 import {mapToArray} from 'object';
 import {stringify} from 'json';
-import {encodeURIComponent} from 'query';
+import {encodeURI} from 'query';
 
 import * as ILink from 'ILink.jsx';
 import * as TextWithSubstitutedLinks from "./TextWithSubstitutedLinks.jsx";
@@ -50,7 +50,7 @@ export function render({entKey}) {
     content = [
       <h3>{"Entity path"}</h3>,
       <div className="ent-path">
-        <ILink key="em"href={"~/f/" + encodeURIComponent(entPath)}>
+        <ILink key="em"href={"~/f" + encodeURI(entPath)}>
           {entPath}
         </ILink>
       </div>,

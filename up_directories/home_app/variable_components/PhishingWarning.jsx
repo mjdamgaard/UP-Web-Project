@@ -7,7 +7,7 @@ import * as Label from 'Label.jsx';
 // trusted (looking at both the score itself and its weight, of course).
 
 export function render() {
-  let {idKey} = this.state;
+  let {cbRemIDKey, cbAgeIDKey} = this.state;
 
   return <div className="phishing-warning">
     <div className="warning">
@@ -25,15 +25,21 @@ export function render() {
       }</p>
       <p>{
         "Also be aware that the content might be inappropriate for sensitive " +
-        "users."
+        "users. Therefore you also have to be 18 years or older to proceed."
       }</p>
     </div>
     <div className="dismissal-option">
       <div>
-        <Label key="l" forKey={idKey}>{
+        <Label key="l-rem" forKey={cbRemIDKey}>{
         "Do not warn against this component again"
         }</Label>
-        <InputCheckbox key="c" idKey={idKey} />
+        <InputCheckbox key="cb-rem" idKey={cbRemIDKey} />
+      </div>
+      <div>
+        <Label key="l-age" forKey={cbAgeIDKey}>{
+        "I am 18 years or older"
+        }</Label>
+        <InputCheckbox key="cb-age" idKey={cbAgeIDKey} />
       </div>
       <button onClick={() => this.do("dismissWarning")}>{"Accept"}</button>
     </div>
@@ -42,14 +48,16 @@ export function render() {
 
 
 export function getInitialState() {
-  let idKey = Symbol("idKey");
-  return {idKey: idKey};
+  let cbRemIDKey = Symbol("cbRemIDKey");
+  let cbAgeIDKey = Symbol("cbAgeIDKey");
+  return {cbRemIDKey: cbRemIDKey, cbAgeIDKey: cbAgeIDKey};
 }
 
 
 export const actions = {
   "dismissWarning": function() {
-    let doNotWarnAgain = this.call("c", "getIsChecked");
+    if (!this.call("cb-age", "getIsChecked")) return;
+    let doNotWarnAgain = this.call("cb-rem", "getIsChecked");
     this.trigger("dismissWarning", doNotWarnAgain);
   }
 };

@@ -2,7 +2,7 @@
 import {
   fetchEntityDefinition, fetchEntityPath, fetchEntityID,
 } from "/1/1/entities.js";
-import {encodeURIComponent} from 'query';
+import {encodeURI} from 'query';
 import {replaceReferences} from 'entities';
 import * as ILink from 'ILink.jsx';
 
@@ -70,7 +70,7 @@ export function render({
   // property, and if not, return and ILink to the file browser instead.
   else if (typeof entDef !== "object" || !entDef.Class) {
     content = entKey;
-    href = "~/f/" + encodeURIComponent(entKey);
+    href = "~/f" + encodeURI(entKey);
   }
 
   // Else if still needing the entID to be fetched, wait for that.
@@ -103,7 +103,7 @@ export function render({
         />
       ));
       content = substitutedSegmentArr;
-      if (isLink) href = "~/entPath/" + encodeURIComponent(entPath);
+      if (isLink) href = "~/entPath" + encodeURI(entPath);
     }
   }
 
