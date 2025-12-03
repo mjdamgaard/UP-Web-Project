@@ -413,7 +413,7 @@ export function postEntity(moduleOrEntPath, alias = undefined) {
   let entPath = alias ? moduleOrEntPath + ";get/" + alias : moduleOrEntPath;
   return new Promise(resolve => {
     fetch(entPath).then(entDef => {
-      if (entDef === undefined) {console.log("--LOG------------");throw "stop";
+      if (entDef === undefined) {
         resolve(false);
       }
       else {

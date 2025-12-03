@@ -28,7 +28,7 @@ export function postComment(
       'export const comment = {\n' +
       '  "Class": "/1/1/em1.js;get/commentClass",\n' +
       '  "Name": () => new Promise(resolve => {\n' +
-      '    fetchEntityID(abs("./")).then(\n' +
+      '    fetchEntityID(abs("./;get/comment")).then(\n' +
       '      entID => resolve("Comment " + entID)\n' +
       '    );\n' +
       '  }),\n' +

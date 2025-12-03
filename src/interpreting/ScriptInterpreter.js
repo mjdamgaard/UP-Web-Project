@@ -1932,7 +1932,7 @@ export const CLEAR_FLAG = Symbol("clear");
 function getCallString(callNode, callEnv, execEnv, stringify) {
   let nodeStr = getNodeString(callNode, callEnv, true);
   let {inputArr} = execEnv;
-  return nodeStr + ", arguments: (" +
+  return nodeStr + ", \narguments: (" +
     inputArr.map(val => (
       (val === undefined) ? "undefined" :
         (typeof val === "string") ? JSON.stringify(val) :
@@ -2991,7 +2991,7 @@ export function getExtendedErrorMsg(err) {
   if (interpreter.isServerSide) {
     let trace = env.getFlag(NO_TRACE_FLAG) ? [] : env.getCallTrace();
     traceAndLogAppendix = "\n\nTrace when error occurred:\n" +
-      trace.join(",\n") + "\n\nAnd log:\n" +
+      trace.join(",\n\n") + "\n\nAnd log:\n" +
       log.entries.map(entry => entry.join(", ")).join(";\n") + ";\n"
   }
   return (
@@ -3023,7 +3023,7 @@ export function logExtendedErrorAndTrace(err) {
   let varReadout = err.environment.getVariableReadout();
   console.error(msg);
   console.error(
-    "Trace when the previous error occurred:\n" + trace.join(",\n")
+    "Trace when the previous error occurred:\n" + trace.join(",\n\n")
   );
   console.error(
     "Declared variables where the previous error occurred:\n" + varReadout
@@ -3036,8 +3036,10 @@ export function logExtendedErrorAndTrace(err) {
 
 
 
-const FILENAME_REGEX = /\/[^./]+\.[^/]+$/;
+const FILENAME_REGEX = /\/[^./]+(?<=[~a-zA-Z0-9_\-])\.[^/]+$/;
 const SEGMENT_TO_REPLACE_REGEX = /(\/\.\/|\/[^/]+\/\.\.\/)/g;
+const SLASH_END_REGEX = /\/$/;
+const SLASH_SEMICOLON_REGEX = /\/;/g;
 
 
 export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
@@ -3052,7 +3054,7 @@ export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
   }
 
   // Remove the last file name from the current path, if any.
-  let moddedCurPath;
+  let moddedCurPath = curPath;
   let [filenamePart] = curPath.match(FILENAME_REGEX) ?? [""];
   if (filenamePart) {
     moddedCurPath = curPath.slice(0, -filenamePart.length);
@@ -3074,7 +3076,10 @@ export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
     `Ill-formed path: "${path}"`, callerNode, callerEnv
   );
 
-  return fullPath.replace(/\/$/, "");
+  // Also replace any occurrence of "/;" with ";".
+  fullPath = fullPath.replaceAll(SLASH_SEMICOLON_REGEX, ";");
+
+  return fullPath.replace(SLASH_END_REGEX, "");
 }
 
 
