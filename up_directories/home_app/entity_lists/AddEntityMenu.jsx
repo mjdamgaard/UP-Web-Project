@@ -1,7 +1,7 @@
 
 import {post} from 'query';
 import {map} from 'array';
-import {postEntity, checkDomain} from "/1/1/entities.js";
+import {postEntity, checkDomain, fetchOrCreateEntityID} from "/1/1/entities.js";
 
 import * as InputText from 'InputText.jsx';
 import * as Textarea from 'Textarea.jsx';
@@ -96,6 +96,7 @@ export const actions = {
     let {qualKeyArr} = this.props;
     let {QualityElement} = this.state;
     let entKey = this.call("i", "getValue");
+    let qualIDArrProm = this.do("post-all-relevant-qualities");
     this.trigger("postUserEntity").then((userEntID) => {
       if (!userEntID) {
         this.setState(state => ({
@@ -107,26 +108,28 @@ export const actions = {
         return;
       }
       postEntity(entKey).then(entID => {
-        if (!entID) {
-          this.setState(state => ({
-            ...state, response: <span className="warning">
-              {"Invalid entity path"}
-            </span>,
-            entityElements: undefined,
-          }));
-        }
-        else {
-          this.setState(state => ({
-            ...state,
-            response: "Entity has been assigned the ID of " +
-              entID + ". Now give it some relevant scores.",
-            entityElements: map(qualKeyArr, qualKey => (
-              <QualityElement key={"_" + qualKey}
-                subjKey={entID} qualKey={qualKey} startOpen
-              />
-            )),
-          }));
-        }
+        qualIDArrProm.then(() => {
+          if (!entID) {
+            this.setState(state => ({
+              ...state, response: <span className="warning">
+                {"Invalid entity path"}
+              </span>,
+              entityElements: undefined,
+            }));
+          }
+          else {
+            this.setState(state => ({
+              ...state,
+              response: "Entity has been assigned the ID of " +
+                entID + ". Now give it some relevant scores.",
+              entityElements: map(qualKeyArr, qualKey => (
+                <QualityElement key={"_" + qualKey}
+                  subjKey={entID} qualKey={qualKey} startOpen
+                />
+              )),
+            }));
+          }
+        });
       });
     });
   },
@@ -136,6 +139,7 @@ export const actions = {
     let text = this.call("ta", "getValue");
     let isSingular = this.call("cb-sing", "getIsChecked");
     if (!text) return;
+    let qualIDArrProm = this.do("post-all-relevant-qualities");
     this.trigger("postUserEntity").then((userEntID) => {
       if (!userEntID) {
         this.setState(state => ({
@@ -150,17 +154,30 @@ export const actions = {
         "/1/1/comments/comments.sm.js./callSMF/postComment",
         [text, objKey, isSingular, true],
       ).then(entID => {
-        this.setState(state => ({
-          ...state,
-          response: "Entity has been assigned the ID of " +
-            entID + ". Now give it some relevant scores.",
-          entityElements: map(qualKeyArr, qualKey => (
-            <QualityElement key={"_" + qualKey}
-              subjKey={entID} qualKey={qualKey} startOpen
-            />
-          )),
-        }));
+        qualIDArrProm.then(() => {
+          this.setState(state => ({
+            ...state,
+            response: "Entity has been assigned the ID of " +
+              entID + ". Now give it some relevant scores.",
+            entityElements: map(qualKeyArr, qualKey => (
+              <QualityElement key={"_" + qualKey}
+                subjKey={entID} qualKey={qualKey} startOpen
+              />
+            )),
+          }));
+        });
       });
     });
   },
+  "post-all-relevant-qualities": function() {
+    let {qualKeyArr} = this.props;
+    return new Promise(resolve => {
+      let qualIDPromArr = map(qualKeyArr, qualKey => (
+        fetchOrCreateEntityID(qualKey)
+      ));
+      Promise.all(qualIDPromArr).then(
+        qualIDArr => resolve(qualIDArr)
+      );
+    });
+  }
 };

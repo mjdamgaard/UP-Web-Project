@@ -6,7 +6,7 @@ import {slice as sliceArr, at as atArr, join, map} from 'array';
 import {parseRoute, isTextFileExtension} from 'route';
 import {hasType} from 'type';
 import {fetch, encodeURI} from 'query';
-import {getUserEntPath} from "/1/1/entities.js";
+import {getUserEntPath, postEntity} from "/1/1/entities.js";
 
 import * as ILink from 'ILink.jsx';
 import * as EntityReference from "../misc/EntityReference.jsx";
@@ -16,10 +16,6 @@ import * as TextDisplay from "../misc/TextDisplay.jsx";
 
 // TODO: Refactor this component now that parseRoute() produces dirSegments and
 // fileName as well.
-
-// TODO: More urgent: Whenever the result is an object with a "Class" property,
-// make a big 'Add entity' button at the top, which posts the result as a new
-// entity and then redirects to the entity page.
 
 
 
@@ -234,6 +230,24 @@ export function render({route}) {
     // Then construct the final content.
     content = [
       <hr/>,
+      result?.Class ? [
+        <div className="submit-entity">
+          {
+            "The result seems to be a semantic entity. Want to submit it " +
+            "and go to its entity page?"
+          }
+          <div>
+            <button onClick={() => {
+              let history = this.subscribeToContext("history");
+              let homeURL = this.subscribeToContext("homeURL");
+              postEntity(route).then(entID => {
+                history.pushState(history.state, homeURL + "/e/" + entID);
+              });
+            }}>{"Submit and go to page"}</button>
+          </div>
+        </div>,
+        <hr/>,
+      ] : undefined,
       <div className="admin">{"Admin: "}{
         adminID ? <EntityReference key="admin"
           entKey={getUserEntPath("1", adminID)}
