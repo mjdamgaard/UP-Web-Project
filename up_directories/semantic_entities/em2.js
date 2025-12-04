@@ -1,5 +1,5 @@
 
-import {getUserEntPath} from "./entities.js";
+import {getUserEntPath, fetchEntityID} from "./entities.js";
 
 
 export const webApps = {
@@ -121,16 +121,40 @@ export const classEntityPage = {
   "Description": undefined,
 };
 
-export const commentElement = {
+export const commentEntityPage = {
   "Class": abs("./em1.js;get/components"),
-  "Name": "Initial comment element",
-  "Component path": "/1/2/entity_elements/CommentElement.jsx",
-  "Example props": {entKey: abs("./em1.js;get/entities")},
+  "Name": "Initial comment entity page",
+  "Component path": "/1/2/entity_pages/CommentPage.jsx",
+  "Example props": {entKey: abs("./em1.js;get/exampleComment")},
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/home_app/entity_pages",
   "Author(s)": getUserEntPath("1", "1"),
   "Description": undefined,
+};
+
+
+export const commentElement = {
+  "Class": abs("./em1.js;get/components"),
+  "Name": "Initial comment element",
+  "Component path": "/1/2/entity_elements/CommentElement.jsx",
+  "Example props": {entKey: abs("+;get/exampleComment")},
+  "GitHub repository":
+    "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
+    "dir_uploads/up_directories/home_app/entity_elements",
+  "Author(s)": getUserEntPath("1", "1"),
+  "Description": undefined,
+};
+
+export const exampleComment = {
+  "Class": abs("./em1.js;get/commentClass"),
+  "Name": () => new Promise(resolve => {
+    fetchEntityID(abs("+;get/comment")).then(
+      entID => resolve("Comment " + entID)
+    );
+  }),
+  "Content": "Lorem ipsum ...",
+  "Is a singular statement": false,
 };
 
 

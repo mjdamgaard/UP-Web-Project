@@ -3,7 +3,6 @@ import {
   fetchRelationalQualityPath, fetchEntityProperty
 } from "/1/1/entities.js";
 
-import * as EntityReference from "../misc/EntityReference.jsx";
 import * as GeneralEntityElement
 from "../entity_elements/GeneralEntityElement.jsx";
 import * as MissingEntityElement
@@ -78,19 +77,9 @@ export function render(props) {
     />;
   }
 
-  // Return the content, together with an initial link to the component class
-  // (which can always be hidden by the style, say, if the component already
-  // contains this link), which allows users to inspect alternative element
-  // components for this class, and to score them and/or add new ones
-  // themselves.
+  // Return the content.
   return (
     <div className="variable-entity-element">
-      {classKey ?
-        <div className="class-link">
-          <EntityReference key="class" entKey={classKey} />
-        </div> :
-        undefined
-      }
       {content}
     </div>
   );

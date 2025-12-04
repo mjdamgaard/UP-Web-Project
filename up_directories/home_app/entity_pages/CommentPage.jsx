@@ -13,7 +13,7 @@ const tasksRel = "/1/1/em1.js;get/tasks";
 
 export function render({entKey, extQualKeyArr = undefined, isNested = false}) {
   return <EntityPageWithTabs key="0"
-    entKey={entKey} initTabKey={"qualities"} isNested={isNested} tabs={{
+    entKey={entKey} initTabKey={"content"} isNested={isNested} tabs={{
       about: {
         title: "About",
         Component: EntityMetadataPage,
