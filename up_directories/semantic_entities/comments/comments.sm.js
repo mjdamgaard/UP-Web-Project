@@ -28,7 +28,7 @@ export function postComment(
       'export const comment = {\n' +
       '  "Class": "/1/1/em1.js;get/commentClass",\n' +
       '  "Name": () => new Promise(resolve => {\n' +
-      '    fetchEntityID(abs("./;get/comment")).then(\n' +
+      '    fetchEntityID(abs("+;get/comment")).then(\n' +
       '      entID => resolve("Comment " + entID)\n' +
       '    );\n' +
       '  }),\n' +
@@ -53,7 +53,7 @@ export function postComment(
 
 export function editComment(commentEntKey, text, targetEntKey = undefined) {
   checkRequestOrigin(true, [
-    "/1/2/... TODO: Insert a path to a component for editing comments",
+    "/1/2/... TODO: Insert a path to a component for editing/deleting comments",
   ]);
   verifyType(text, "string");
   let authorID = getRequestingUserID();
@@ -104,4 +104,10 @@ export function editComment(commentEntKey, text, targetEntKey = undefined) {
       });
     });
   });
+}
+
+
+
+export function deleteComment(commentEntKey) {
+  return editComment(commentEntKey, "<deleted>", false);
 }

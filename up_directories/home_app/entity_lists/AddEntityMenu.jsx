@@ -63,7 +63,7 @@ export function render({qualKeyArr, objKey = undefined}) {
       </div>
       <div>
         <Label key="l-sing" forKey={cbSingIDKey}>
-          {"Is a singular statement: "}
+          {"Is a singular statement (that can be assigned a probability): "}
         </Label>
         <InputCheckbox key="cb-sing" idKey={cbSingIDKey} />
       </div>

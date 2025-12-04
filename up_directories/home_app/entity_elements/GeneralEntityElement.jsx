@@ -41,5 +41,4 @@ export function render({
 export const styleSheetPaths = [
   ...ExpandableElement.styleSheetPaths,
   abs("./GeneralEntityElement.css"),
-  abs("../entity_elements/ExpandableElement.css"),
 ];

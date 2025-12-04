@@ -103,20 +103,20 @@ export class SettingsObject01 extends SettingsObject {
 
 
     // If no overriding style module is found, look first if the component
-    // exports a 'stylePath' parameter from which to get the style transform,
-    // and else use the componentModule itself, in case the user exports the
-    // default transform (and default transformProps) from there. Or if the
-    // component exports a 'styleSheetPaths' array parameter, we let
-    // styleModule be an array of (imported) modules, which is also allowed.
+    // exports a 'styleModulePath' variable from which to get the style
+    // transform, or if it exports a "styleSheetPaths" variable, which is a
+    // short-hand yields a style transform where all instance children inherit
+    // the same style transform, except if their key starts with a "_".
     let styleModulePromise;
-    let stylePath = componentModule.get("stylePath");
+    let styleModulePath = componentModule.get("styleModulePath") ??
+      componentModule.get("styleModule");
     let styleSheetPaths = componentModule.get("styleSheetPaths") ??
-      componentModule.get("styleSheets") ??
-      componentModule.get("stylePaths") ?? [];
-    if (stylePath) {
-      let stylePath = componentModule.get("stylePath") || componentPath;
-      stylePath = getAbsolutePath(componentPath, stylePath, node, env);
-      styleModulePromise = interpreter.import(stylePath, node, env);
+      componentModule.get("styleSheets") ?? [];
+    if (styleModulePath) {
+      styleModulePath = getAbsolutePath(
+        componentPath, styleModulePath, node, env
+      );
+      styleModulePromise = interpreter.import(styleModulePath, node, env);
     }
     else {
       let styleSheetPromises = mapValues(styleSheetPaths, node, env, path => (

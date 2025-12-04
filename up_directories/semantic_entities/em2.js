@@ -121,7 +121,17 @@ export const classEntityPage = {
   "Description": undefined,
 };
 
-
+export const commentElement = {
+  "Class": abs("./em1.js;get/components"),
+  "Name": "Initial comment element",
+  "Component path": "/1/2/entity_elements/CommentElement.jsx",
+  "Example props": {entKey: abs("./em1.js;get/entities")},
+  "GitHub repository":
+    "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
+    "dir_uploads/up_directories/home_app/entity_pages",
+  "Author(s)": getUserEntPath("1", "1"),
+  "Description": undefined,
+};
 
 
 

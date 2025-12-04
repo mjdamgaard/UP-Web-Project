@@ -129,7 +129,7 @@ const scriptInterpreter = new ScriptInterpreter(
 
 // Initialize a continuously self-refilling gas object for the app.
 const FRESH_APP_GAS = {
-  comp: 100000,
+  comp: 1000000,
   import: 1000,
   fetch: 100,
   time: Infinity,

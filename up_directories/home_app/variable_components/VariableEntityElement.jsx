@@ -33,7 +33,7 @@ export function render(props) {
   // If the entity definition is missing, or is not a referential entity (with
   // a "Class" property) render a missing entity element.
   else if (!classKey) {
-    return <MissingEntityElement {...props} key="0" />;
+    return <MissingEntityElement {...props} key="_m" />;
   }
 
   // If the relational quality for the class has not been fetched yet, do so.
@@ -60,7 +60,7 @@ export function render(props) {
   // And if it has, but is undefined (in the case of an empty list), render the
   // default entity element component.
   else if (!topEntry) {
-    return <GeneralEntityElement {...props} key="0" />;
+    return <GeneralEntityElement {...props} key="_0" />;
   }
 
   // Else if the top entry is ready, expect it to be an entity of the "App
@@ -71,7 +71,7 @@ export function render(props) {
     // If the score is not positive, reject the top entry and behave as if the
     // list is empty.
     if (score <= 0) {
-      return <GeneralEntityElement {...props} key="0" />;
+      return <GeneralEntityElement {...props} key="_0" />;
     }
     content = <ComponentEntityComponent
       {...props} compEntID={compEntID} key="0"

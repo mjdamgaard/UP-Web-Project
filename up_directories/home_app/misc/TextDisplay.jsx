@@ -47,6 +47,5 @@ export function getInitialState({jsxLink}) {
 
 
 
-export const styleSheetPaths = [
-  abs("./TextDisplay.css"),
-];
+
+export const styleModulePath = abs("./TextDisplay.style.js");

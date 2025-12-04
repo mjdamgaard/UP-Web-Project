@@ -14,4 +14,4 @@ export function render() {
 }
 
 
-export const stylePath = "./foo.style1.js";
+export const styleModulePath = abs("./foo.style1.js");

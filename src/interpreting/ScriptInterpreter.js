@@ -1909,6 +1909,7 @@ export class Environment {
   }
 
   getVariableReadout() {
+    if (this.getFlag(NO_TRACE_FLAG)) return "";
     let scopeReadout = "<" + this.scopeType + " scope>:\n" +
       [...this.variables.entries()].map(([ident, [val]]) => {
         val = (val === UNDEFINED) ? "undefined" :
@@ -2990,8 +2991,10 @@ export function getExtendedErrorMsg(err) {
   let traceAndLogAppendix = "";
   if (interpreter.isServerSide) {
     let trace = env.getFlag(NO_TRACE_FLAG) ? [] : env.getCallTrace();
+    let varReadout = env.getVariableReadout();
     traceAndLogAppendix = "\n\nTrace when error occurred:\n" +
-      trace.join(",\n\n") + "\n\nAnd log:\n" +
+      trace.join(",\n\n") + "\n\nAnd Declared variables:\n" + varReadout +
+      "\n\nAnd log:\n" +
       log.entries.map(entry => entry.join(", ")).join(";\n") + ";\n"
   }
   return (
@@ -3049,7 +3052,7 @@ export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
     `Ill-formed path: "${path}"`, callerNode, callerEnv
   );
 
-  if (path[0] === "/" || path[0] !== ".") {
+  if (path[0] === "/" || path[0] !== "." && path[0] !== "+") {
     return path.replace(/\/$/, "");
   }
 
@@ -3061,8 +3064,11 @@ export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
   }
 
   // Then concatenate the two paths.
-  let fullPath = (curPath.at(-1) === "/") ? moddedCurPath + path :
-    moddedCurPath + "/" + path;
+  let fullPath = (path[0] === "+") ?
+    curPath + path.substring(1) :
+    (curPath.at(-1) === "/") ?
+      moddedCurPath + path :
+      moddedCurPath + "/" + path;
 
   // Then replace any occurrences of "/./", and "<dirName>/../" with "/".
   let prevFullPath;
