@@ -116,7 +116,6 @@ export function render({
         qualKeyArr={qualKeyArr} objKey={objKey}
         minScore={minScore} minWeight={minWeight}
       />,
-      <hr/>,
       <div className="list-container">
         {constElementArr}
         {map(list, ([entID, score, weight]) => (

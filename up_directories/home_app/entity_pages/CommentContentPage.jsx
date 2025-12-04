@@ -10,7 +10,7 @@ import * as TextDisplay from "../misc/TextDisplay.jsx";
 // TODO: Cut off long texts, using some expandable component.
 
 
-export function render({entID}) {
+export function render({entID, entKey = entID}) {
   let {entDef, isFetching} = this.state;
   // let userEntID = this.subscribeToContext("userEntID");
   // let userID = this.subscribeToContext("userID");
@@ -18,7 +18,7 @@ export function render({entID}) {
 
   if (!isFetching) {
     this.setState(state => ({...state, isFetching: true}));
-    fetchEntityDefinition(entID, [
+    fetchEntityDefinition(entKey, [
       "Name", "Author", "Target entity", "Content", "Is a singular statement",
     ]).then(entDef => {
       this.setState(state => ({...state, entDef: entDef ?? false}));

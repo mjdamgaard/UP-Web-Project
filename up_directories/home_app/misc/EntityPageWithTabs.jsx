@@ -4,7 +4,7 @@ import * as TabbedPages from "./TabbedPages.jsx";
 
 
 export function render({entKey, tabs, initTabKey, isNested}) {
-  return <div className="entity-page">
+  return <div className={"entity-page" + (isNested ? " nested" : "")}>
     <h1>
       <EntityReference key={"title"} entKey={entKey}
         hasLinks linkLevel={isNested ? 0 : 1}
@@ -16,5 +16,6 @@ export function render({entKey, tabs, initTabKey, isNested}) {
 
 
 export const styleSheetPaths = [
-  abs("../misc/TabbedPages.css"),
+  abs("./TabbedPages.css"),
+  abs("./EntityPageWithTabs.css"),
 ];

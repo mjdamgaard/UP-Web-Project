@@ -1,11 +1,57 @@
 
 
+.entity-list-menu {
+  width: 100%;
+  border: 1px solid darkgreen;
+}
+
 .entity-list-menu > * {
   width: 100%;
   overflow-x: scroll;
 }
 
-.entity-list-menu > * > * {
+.entity-list-menu > .quality-references > * {
   display: inline-block;
   margin: 0 0.5em;
+}
+.entity-list-menu > .drop-down-box > .content > .header > * {
+  display: inline-block;
+  margin: 0 0.5em;
+}
+
+
+
+
+.drop-down-box > .collapse-expand-button {
+  text-align: center;
+  height: 15px;
+}
+.drop-down-box > .collapse-expand-button:hover {
+  cursor: pointer;
+  background-color: #dddddd;
+}
+
+.drop-down-box > .collapse-expand-button.collapsed::after {
+  content: "⌄";
+  position: relative;
+  bottom: 0.5em;
+}
+
+.drop-down-box > .collapse-expand-button.expanded::after {
+  content: "⌃";
+  position: relative;
+  top: 0.1em;
+}
+
+
+.drop-down-box:has(> .collapse-expand-button.collapsed) > .content {
+  display: none;
+}
+
+
+
+
+
+.add-entity-menu textarea {
+  width: min(500px, 95%);
 }

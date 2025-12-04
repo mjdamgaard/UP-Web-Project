@@ -5,6 +5,7 @@ import {map} from 'array';
 import * as AddEntityMenu from "./AddEntityMenu.jsx";
 import * as InputText from 'InputText.jsx';
 import * as EntityReference from "../misc/EntityReference.jsx";
+import * as DropDownBox from "../misc/DropDownBox.jsx";
 
 
 
@@ -19,29 +20,31 @@ export function render({
         <EntityReference key={"qr-" + qualKey} entKey={qualKey} />
       ))}
       </div>
-      <div>
-        <button onClick={() => {
-          this.blur();
-          this.setState(state => ({
-            ...state, menuExtension: <AddEntityMenu key="_add"
-              qualKeyArr={qualKeyArr} objKey={objKey}
+      <DropDownBox key="ddb">
+        <div className="header">
+          <button onClick={() => {
+            this.blur();
+            this.setState(state => ({
+              ...state, menuExtension: <AddEntityMenu key="_add"
+                qualKeyArr={qualKeyArr} objKey={objKey}
+              />
+            }));
+          }}>{"Add new"}</button>
+          <div>
+            <span>{"Minimum score:"}</span>
+            <InputText key="msi" value={minScore} size={2}
+              onChange={() => this.do("updateListLimits")}
             />
-          }));
-        }}>{"Add new"}</button>
-        <div>
-          <span>{"Minimum score:"}</span>
-          <InputText key="msi" value={minScore} size={2}
-            onChange={() => this.do("updateListLimits")}
-          />
+          </div>
+          <div>
+            <span>{"Minimum weight:"}</span>
+            <InputText key="mwi" value={minWeight} size={2}
+              onChange={() => this.do("updateListLimits")}
+            />
+          </div>
         </div>
-        <div>
-          <span>{"Minimum weight:"}</span>
-          <InputText key="mwi" value={minWeight} size={2}
-            onChange={() => this.do("updateListLimits")}
-          />
-        </div>
-      </div>
-      <div className="menu-extension">{menuExtension}</div>
+        <div className="menu-extension">{menuExtension}</div>
+      </DropDownBox>
     </div>
   );
 }

@@ -68,7 +68,7 @@ export function render({qualKeyArr, objKey = undefined}) {
         <InputCheckbox key="cb-sing" idKey={cbSingIDKey} />
       </div>
       <button onClick={() => this.do("submitTextEntityToInsert")}>
-        {"Submit"}
+        {"Post"}
       </button>
     </>}
     <div className="response-display">{response}</div>
@@ -181,3 +181,9 @@ export const actions = {
     });
   }
 };
+
+
+
+export const styleSheetPaths = [
+  abs("./EntityList.css"),
+];
