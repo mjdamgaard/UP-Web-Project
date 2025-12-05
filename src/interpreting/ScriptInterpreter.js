@@ -1391,12 +1391,9 @@ export class ScriptInterpreter {
 
   executeDestructuring(expNode, val, environment, isDeclaration, isConst) {
     let type = expNode.type;
-    let valProto = getPrototypeOf(val);
     if (type === "array-destructuring") {
-      if (valProto !== ARRAY_PROTOTYPE) throw new RuntimeError(
-        "Destructuring an array with a non-array value",
-        expNode, environment
-      );
+      verifyType(val, "array", false, expNode, environment);
+      if (val instanceof ObjectObject) val = val.members;
       expNode.children.forEach((paramExp, ind) => {
         if (paramExp !== ",") {
           this.assignToParameter(
@@ -1413,6 +1410,7 @@ export class ScriptInterpreter {
       return val;
     }
     else if (type === "object-destructuring") {
+      let valProto = getPrototypeOf(val);
       if (valProto !== OBJECT_PROTOTYPE && !(val instanceof ObjectObject)) {
         throw new RuntimeError(
           "Destructuring an object with a non-object value: " +
@@ -2053,7 +2051,7 @@ export class ObjectObject {
   }
   toString(env) {
     let {interpreter} = env.scriptVars;
-    let toStringMethod = this.get("toString");
+    let toStringMethod = this.#get("toString");
     if (toStringMethod instanceof FunctionObject) {
       let ret, isInvalid; 
       try {

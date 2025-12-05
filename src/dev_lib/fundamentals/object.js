@@ -1,6 +1,6 @@
 
 import {
-  DevFunction, forEachValue, mapValues,
+  DevFunction, forEachValue, mapValues, ObjectObject, verifyType,
 } from "../../interpreting/ScriptInterpreter.js";
 
 
@@ -51,6 +51,23 @@ export const values = new DevFunction(
     return ret;
   }
 );
+
+
+
+export const fromEntries = new DevFunction(
+  "fromEntries", {typeArr: ["array"]}, ({callerNode, execEnv}, [arr]) => {
+    let ret = {};
+    forEachValue(arr, callerNode, execEnv, (entry) => {
+      verifyType(entry, "array", false, callerNode, execEnv);
+      if (entry instanceof ObjectObject) entry = entry.members;
+      let key = entry[0];
+      verifyType(key, "object key", false, callerNode, execEnv);
+      ret[key] = entry[1];
+    });
+    return ret;
+  }
+);
+
 
 
 export const mapToArray = new DevFunction(

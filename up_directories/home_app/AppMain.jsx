@@ -1,6 +1,8 @@
 
 import {substring, indexOf} from 'string';
 import {encodeURI, decodeURI} from 'query';
+import {entries, fromEntries, mapToArray} from 'object';
+import {slice} from 'array';
 import {fetchEntityID} from "/1/1/entities.js";
 
 import * as UPIndexPage from "./UPIndexPage.jsx";
@@ -16,7 +18,7 @@ const PAGE_CACHE_SIZE = 5;
 
 export function getInitialState() {
   let cacheRef = new MutableArray();
-  cacheRef[0] = [];
+  cacheRef[0] = {};
   return {cacheRef: cacheRef};
 }
 
@@ -25,23 +27,20 @@ export function render(props) {
   let {cacheRef} = this.state;
   let cache = cacheRef[0];
 
-  return renderHelper(props);
-
   // Call renderHelper() to get the jsxElement to render, along with its key.
-  let [key, jsxElement] = renderHelper(props);
+  let [newKey, jsxElement] = renderHelper(props);
 
-  // If key already exists in the cache, do not update it. ..Hm, I guess it
-  // ought to be an LRU cache, so maybe I should reintroduce that class and use
-  // to define.. well to export a ObjectObject version of it in a dev library,
-  // maybe.. ..Hm, maybe so, yeah.. ..Oh, wait, isn't there a very simple way
-  // to implement a LRU cache with JS: Just use the spread operator to generate
-  // a new object, then turn that object into an entries array, cut it off, and
-  // turn it back into an object (or keep it as an entries array). Yeah, that
-  // ought to work..
+  // Update the cache, throwing out the least recently used cached page if the
+  // PAGE_CACHE_SIZE is exceeded.
+  cache = {[newKey]: jsxElement, ...cache};
+  cache = fromEntries(slice(entries(cache), 0, PAGE_CACHE_SIZE));
+  cacheRef[0] = cache;
 
-  return <div className="main-container">
-    {jsxElement}
-  </div>;
+  return <div className="main-container">{
+    mapToArray(cache, (val, key) => (
+      <div className={key === newKey ? "open" : "hidden"}>{val}</div>
+    ))
+  }</div>;
 }
 
 
@@ -57,7 +56,12 @@ export function renderHelper({
       history.state,
       homeURL + "/up"
     );
-    return <div className="fetching">{"..."}</div>;
+    return [
+      "fetching",
+      <main className="app-main">
+        <div className="fetching">{"..."}</div>
+      </main>
+    ];
   }
 
   // If the tailURL is of the form "/up[/...]", go to a page with the current
@@ -67,11 +71,12 @@ export function renderHelper({
   let firstSegment = (indOfSecondSlash === -1) ?
     substring(tailURL, 1) : substring(tailURL, 1, indOfSecondSlash);
   if (firstSegment === "up") {
-    return (
+    return [
+      "idx",
       <main className="app-main">
         <UPIndexPage key="idx" url={url} history={history} homeURL={homeURL} />
       </main>
-    );
+    ];
   }
   
   // Else if tailURL starts with "/profile", go to the profile page. 
@@ -80,13 +85,14 @@ export function renderHelper({
     let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
     let entID = substring(tailURL, 9, endOfID);
     let tailURL = substring(tailURL, 9 + entID.length);
-    return (
+    return [
+      "_profile",
       <main className="app-main">
         <ProfilePage key="_profile"
           url={url} homeURL={homeURL} tailURL={tailURL}
         />
       </main>
-    );
+    ];
   } 
 
   // Else if tailURL is of the form "/entPath" + encodedEntPath, fetch the
@@ -102,11 +108,12 @@ export function renderHelper({
         history.replaceState(history.state, homeURL + "/f" + encEntPath);
       }
     });
-    return (
+    return [
+      "fetching",
       <main className="app-main">
         <div className="fetching">{"..."}</div>
       </main>
-    );
+    ];
   } 
 
   // Else if tailURL is of the form "/e/<entID>", go to the EntityPage of the
@@ -116,13 +123,14 @@ export function renderHelper({
     let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
     let entID = substring(tailURL, 3, endOfID);
     let tailURL = substring(tailURL, 3 + entID.length);
-    return (
+    return [
+      "e-" + entID,
       <main className="app-main">
         <EntityPage key={"e-" + entID}
           entKey={entID} url={url} homeURL={homeURL} tailURL={tailURL}
         />
       </main>
-    );
+    ];
   }
 
   // Else if tailURL is of the form "/c/<entID>[/<name>/...]", go to the
@@ -132,14 +140,15 @@ export function renderHelper({
     let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
     let entID = substring(tailURL, 3, endOfID);
     let tailURL = substring(tailURL, 3 + entID.length);
-    return (
+    return [
+      "c-" + entID,
       <main className="app-main">
         <ComponentEntityPage key={"c-" + entID}
           entKey={entID} url={url} homeURL={homeURL} tailURL={tailURL}
           localStorage={localStorage} sessionStorage={sessionStorage}
         />
       </main>
-    );
+    ];
   } 
 
   // Else if tailURL is of the form "/f" + uriEncodedRoute (where 'f' might
@@ -147,58 +156,64 @@ export function renderHelper({
   // that route.
   if (firstSegment === "f") {
     let route = decodeURI(substring(tailURL, 2));
-    return (
+    return [
+      "f-" + route,
       <main className="app-main">
-        <FileBrowser key="f" route={route} />
+        <FileBrowser key={"f-" + route} route={route} />
       </main>
-    );
+    ];
   }
 
 
   // Else if tailURL = "/about", go to the about page.
   if (tailURL === "/about") {
-    return (
+    return [
+      "about",
       <main className="app-main">
         {"TODO: Insert 'About' page component here."}
       </main>
-    );
+    ];
   }
 
   // Else if tailURL = "/tutorials", go to a tutorial index page, which
   // similarly to the home page is also supposed to be a variable, user-
   // determined page some point. TODO: Implement that.
   if (tailURL === "/tutorials") {
-    return (
+    return [
+      "tut",
       <main className="app-main">
         <TutorialIndexPage key="tut"/>
       </main>
-    );
+    ];
   }
 
-  // Else if tailURL = "/donations", go to the about page.
+  // Else if tailURL = "/donations", go to the donations page.
   if (tailURL === "/donations") {
-    return (
+    return [
+      "donations",
       <main className="app-main">
         {"TODO: Insert 'Donations' page component here."}
       </main>
-    );
+    ];
   }
 
-  // Else if tailURL = "/sponsors", go to the about page.
+  // Else if tailURL = "/sponsors", go to the sponsors page.
   if (tailURL === "/sponsors") {
-    return (
+    return [
+      "sponsors",
       <main className="app-main">
         {"TODO: Insert 'Sponsors' page component here."}
       </main>
-    );
+    ];
   }
 
   // And else if none of those tailURL types was matched, go to a 404 error
   // page.
-  return (
+  return [
+    "missing",
     <main className="app-main">
       {"404 error: Missing page."}
     </main>
-  );
+  ];
 }
 

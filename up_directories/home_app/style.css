@@ -6,7 +6,7 @@
   grid-template-rows: 50px auto;
   background-color: #f8f8f8;
 }
-.app > * {
+.app-main {
   background-color: white;
 }
 

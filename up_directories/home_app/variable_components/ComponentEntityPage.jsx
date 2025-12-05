@@ -10,23 +10,21 @@ export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
   let history = this.subscribeToContext("history");
   let userID = this.subscribeToContext("userID");
   let {
-    componentDef, Component, isFetching, useFullScreen, hasBeenDismissed
+    componentDef, Component, isFetching, hasBeenDismissed, hasBeenReplaced,
   } = this.state;
 
   // If this component's definition object is not already gotten, fetch it.
   if (!isFetching) {
     this.setState(state => ({...state, isFetching: true}));
     fetchEntityDefinition(entKey, true).then(componentDef => {
-      // Fetch the component, and also handle the "Use full screen" property. 
+      // Fetch the component. 
       let componentPath = componentDef["Example component path"] ||
         componentDef["Component path"];
-      let useFullScreenProp = componentDef["Use full screen"] ? true : false;
       import(componentPath).then(Component => {
         this.setState(state => ({
           ...state,
           componentDef: componentDef ?? false,
           Component: Component ?? false,
-          useFullScreen: useFullScreenProp,
         }));
       });
     });
@@ -62,7 +60,8 @@ export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
     let firstTailSegment = slice(tailURL, 1, indOfSecondSlash);
     let newURLTail = slice(tailURL, firstTailSegment.length + 1);
     let uriSafeComponentName = encodeURIComponent(componentName);
-    if (firstTailSegment !== uriSafeComponentName) {
+    if (!hasBeenReplaced && firstTailSegment !== uriSafeComponentName) {
+      this.setState(state => ({...state, hasBeenReplaced: true}));
       history.replaceState(
         null,
         slice(url, 0, -tailURL.length || undefined) +
