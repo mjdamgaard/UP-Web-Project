@@ -1,7 +1,7 @@
 
 import {toString} from 'string';
 import {fetchEntityDefinition} from "/1/1/entities.js";
-import * as TextDisplay from "../misc/TextDisplay.jsx";
+import * as TextDisplay from "../../misc/TextDisplay.jsx";
 
 
 // TODO: If the user is the author of the comment, make it possible to edit or

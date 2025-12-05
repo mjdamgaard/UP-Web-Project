@@ -1,11 +1,11 @@
 
 import {map} from 'array';
 import {hasType} from 'type';
-import * as EntityList from "../entity_lists/EntityList.jsx";
+import * as EntityList from "../../entity_lists/EntityList.jsx";
 
 const relevantQualitiesRel = "/1/1/em1.js;get/relevantQualities";
 
-const QualityElementPromise = import("../entity_elements/QualityElement.jsx");
+const QualityElementPromise = import("../../entity_elements/QualityElement.jsx");
 
 
 export function render({objKey, extQualKeyArr = undefined}) {

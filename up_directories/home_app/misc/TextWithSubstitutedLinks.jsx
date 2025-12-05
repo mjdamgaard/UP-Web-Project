@@ -1,6 +1,6 @@
 
 import {replaceReferences} from 'entities';
-import * as EntityReference from "../misc/EntityReference.jsx";
+import * as EntityReference from "./EntityReference.jsx";
 
 
 export function render({children}) {

@@ -1,6 +1,5 @@
 
-import * as EntityPageWithTabs
-from "../misc/EntityPageWithTabs.jsx";
+import * as EntityPageWithTabs from "../misc/EntityPageWithTabs.jsx";
 import * as EntityMetadataPage from "./EntityMetadataPage.jsx";
 import * as ArgumentContentPage from "./ArgumentContentPage.jsx";
 import * as QualitiesPage from "./QualitiesPage.jsx";

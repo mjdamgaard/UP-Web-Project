@@ -7,8 +7,9 @@ import {stringify} from 'json';
 import {encodeURI} from 'query';
 
 import * as ILink from 'ILink.jsx';
-import * as TextWithSubstitutedLinks from "./TextWithSubstitutedLinks.jsx";
-import * as TextDisplay from "../misc/TextDisplay.jsx";
+import * as TextWithSubstitutedLinks
+from "../../misc/TextWithSubstitutedLinks.jsx";
+import * as TextDisplay from "../../misc/TextDisplay.jsx";
 
 
 export function render({entKey}) {

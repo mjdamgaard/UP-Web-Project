@@ -1,7 +1,6 @@
 
 import * as EntityReference from "../misc/EntityReference.jsx";
-import * as ExpandableElement
-from "./ExpandableElement.jsx";
+import * as ExpandableElement from "./ExpandableElement.jsx";
 import * as ScoreInterface from "../scoring/ScoreInterface.jsx";
 
 

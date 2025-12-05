@@ -2,8 +2,7 @@
 import {toPrecision} from 'number';
 
 import * as EntityReference from "../misc/EntityReference.jsx";
-import * as ExpandableElement
-from "./ExpandableElement.jsx";
+import * as ExpandableElement from "./ExpandableElement.jsx";
 import * as EntityPage from "../variable_components/EntityPage.jsx";
 
 import * as AggregatedScoreDisplay from "../scoring/AggregatedScoreDisplay.jsx";

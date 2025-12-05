@@ -1,12 +1,11 @@
 
-import * as EntityPageWithTabs
-from "../misc/EntityPageWithTabs.jsx";
-import * as EntityMetadataPage from "./EntityMetadataPage.jsx";
-import * as CommentContentPage from "./CommentContentPage.jsx";
-import * as TextQualitiesPage from "./TextQualitiesPage.jsx";
+import * as EntityPageWithTabs from "../misc/EntityPageWithTabs.jsx";
+import * as EntityMetadataPage from "./subpages/EntityMetadataPage.jsx";
+import * as CommentContentPage from "./subpages/CommentContentPage.jsx";
+import * as TextQualitiesPage from "./subpages/TextQualitiesPage.jsx";
+import * as CommentsPage from "./subpages/CommentsPage.jsx";
 import * as EntityList from "../entity_lists/EntityList.jsx";
 
-const commentsRel = "/1/1/em1.js;get/commentsRelation";
 const discussionsRel = "/1/1/em1.js;get/discussions";
 const tasksRel = "/1/1/em1.js;get/tasks";
 
@@ -34,11 +33,10 @@ export function render({entKey, extQualKeyArr = undefined, isNested = false}) {
       },
       comments: {
         title: "Comments",
-        Component: EntityList,
+        Component: CommentsPage,
         props: {
-          objKey: entKey,
-          relKey: commentsRel,
-          extQualKeyArr: [[entKey, commentsRel]],
+          entKey: entKey,
+          isNested: true,
         },
       },
       discussions: {

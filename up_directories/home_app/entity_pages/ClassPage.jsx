@@ -1,7 +1,7 @@
 
 import * as EntityPageWithTabs from "../misc/EntityPageWithTabs.jsx";
-import * as EntityMetadataPage from "./EntityMetadataPage.jsx";
-import * as QualitiesPage from "./QualitiesPage.jsx";
+import * as EntityMetadataPage from "./subpages/EntityMetadataPage.jsx";
+import * as QualitiesPage from "./subpages/QualitiesPage.jsx";
 import * as EntityList from "../entity_lists/EntityList.jsx";
 import * as GeneralEntityElement 
 from "../entity_elements/GeneralEntityElement.jsx";
