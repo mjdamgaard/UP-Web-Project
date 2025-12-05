@@ -3,7 +3,7 @@ import * as EntityPageWithTabs
 from "../misc/EntityPageWithTabs.jsx";
 import * as EntityMetadataPage from "./EntityMetadataPage.jsx";
 import * as CommentContentPage from "./CommentContentPage.jsx";
-import * as QualitiesPage from "./QualitiesPage.jsx";
+import * as TextQualitiesPage from "./TextQualitiesPage.jsx";
 import * as EntityList from "../entity_lists/EntityList.jsx";
 
 const commentsRel = "/1/1/em1.js;get/commentsRelation";
@@ -26,7 +26,7 @@ export function render({entKey, extQualKeyArr = undefined, isNested = false}) {
       },
       qualities: {
         title: "Qualities",
-        Component: QualitiesPage,
+        Component: TextQualitiesPage,
         props: {
           objKey: entKey,
           extQualKeyArr: extQualKeyArr,
