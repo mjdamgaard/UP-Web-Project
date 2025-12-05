@@ -5,6 +5,6 @@
   border: 4px double #1f627d;
 }
 
-.text-display :not(a) {
+/* .text-display :not(a) {
   pointer-events: none;
-}
+} */

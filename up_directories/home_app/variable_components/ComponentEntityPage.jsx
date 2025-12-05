@@ -9,45 +9,36 @@ import * as PhishingWarning from "./PhishingWarning.jsx";
 export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
   let history = this.subscribeToContext("history");
   let userID = this.subscribeToContext("userID");
-  let {componentDef, Component, useFullScreen, hasBeenDismissed} = this.state;
+  let {
+    componentDef, Component, isFetching, useFullScreen, hasBeenDismissed
+  } = this.state;
 
   // If this component's definition object is not already gotten, fetch it.
-  if (componentDef === undefined) {
-    fetchEntityDefinition(entKey, true).then(compDef => {
-      this.setState(state => ({...state, componentDef: compDef ?? false}));
+  if (!isFetching) {
+    this.setState(state => ({...state, isFetching: true}));
+    fetchEntityDefinition(entKey, true).then(componentDef => {
+      // Fetch the component, and also handle the "Use full screen" property. 
+      let componentPath = componentDef["Example component path"] ||
+        componentDef["Component path"];
+      let useFullScreenProp = componentDef["Use full screen"] ? true : false;
+      import(componentPath).then(Component => {
+        this.setState(state => ({
+          ...state,
+          componentDef: componentDef ?? false,
+          Component: Component ?? false,
+          useFullScreen: useFullScreenProp,
+        }));
+      });
     });
-    return <div className="fetching"></div>;
-  }
-
-  else if (!componentDef) {
-    return <div className="missing"></div>;
-  }
-
-  // And if the component has not yet been obtained, do so.
-  else if (Component === undefined) {
-    let componentPath = componentDef["Example component path"] ||
-      componentDef["Component path"];
-
-    import(componentPath).then(Component => {
-      this.setState(state => ({...state, Component: Component ?? false}));
-    });
-
-    // Also immediately handle the "Use full screen" property.
-    let useFullScreenProp = componentDef["Use full screen"] ? true : false;
-    if (useFullScreen === undefined && useFullScreenProp) {
-      this.setState(state => ({...state, useFullScreen: useFullScreenProp}));
-    }
-
-    let className = "fetching" + (useFullScreen ? " full-screen" : "");
-    return <div className={className}></div>;
+    return <div className="fetching">{"..."}</div>;
   }
 
   else if (Component === undefined) {
-    return <div className="fetching"></div>;
+    return <div className="fetching">{"..."}</div>;
   }
 
   else if (!Component) {
-    return <div className="missing"></div>;
+    return <div className="missing">{"missing"}</div>;
   }
 
   // And finally, when all is fetched, compute the props to give to Component,

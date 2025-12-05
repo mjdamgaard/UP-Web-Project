@@ -4,24 +4,26 @@ import {fetchEntityDefinition} from "/1/1/entities.js";
 
 export function render(props) {
   let {compEntID} = props;
-  let {componentDef, Component} = this.state;
+  let {Component, isFetching} = this.state;
 
-  // If this component's definition object is not already gotten, fetch it.
-  if (componentDef === undefined) {
-    fetchEntityDefinition(compEntID, true).then(compDef => {
-      this.setState(state => ({...state, componentDef: compDef}));
+  // Fetch the component.
+  if (!isFetching) {
+    this.setState(state => ({...state, isFetching: true}));
+    fetchEntityDefinition(compEntID, true).then(componentDef => {
+      let componentPath = componentDef["Component path"];
+      import(componentPath).then(Component => {
+        this.setState(state => ({...state, Component: Component ?? false}));
+      });
     });
-    return <div className="fetching"></div>;
+    return <div className="fetching">{"..."}</div>;
   }
 
-  // And if the component, held in the "Component path" property, is not
-  // already imported, do so.
   else if (Component === undefined) {
-    let componentPath = componentDef["Component path"];
-    import(componentPath).then(Component => {
-      this.setState(state => ({...state, Component: Component}));
-    });
-    return <div className="fetching"></div>;
+    return <div className="fetching">{"..."}</div>;
+  }
+
+  else if (!Component) {
+    return <div className="missing">{"missing"}</div>;
   }
 
   // Finally, if the component is ready, render it, passing it the same props

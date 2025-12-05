@@ -64,7 +64,7 @@ export const indexPagesDesc = <div>
     }</p>
     <p>{
       "The \"User-programmed index page\" is the page is the front page of " +
-      "this website, and it also governs all URLs that starts with '/up' " +
+      "this website, and it also governs all URLs that starts with '/up/' " +
       "after the domain. The component's job is thus to redirect to a user-" +
       "programmed page/app that fits that URL." 
     }</p>

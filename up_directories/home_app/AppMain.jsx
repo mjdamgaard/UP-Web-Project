@@ -11,6 +11,7 @@ import * as TutorialIndexPage from "./tutorials/index.jsx";
 import * as ComponentEntityPage
 from "./variable_components/ComponentEntityPage.jsx";
 
+const PAGE_CACHE_SIZE = 5;
 
 
 export function getInitialState() {

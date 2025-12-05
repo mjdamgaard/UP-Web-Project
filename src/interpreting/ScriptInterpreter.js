@@ -554,7 +554,8 @@ export class ScriptInterpreter {
     // If the dev function is asynchronous, call it and return a PromiseObject.
     if (isAsync) {
       let ret;
-      let promise = devFun.fun(execVars, inputArr).catch(err => {
+      let promise = devFun.fun(execVars, inputArr);
+      promise.catch(err => {
         if (!ret.hasCatch) {
           this.handleUncaughtException(err, execEnv);
         }
@@ -1285,7 +1286,8 @@ export class ScriptInterpreter {
         let ret;
         let liveModulePromise = this.import(
           path, expNode, environment, false, false, true
-        ).catch(err => {
+        );
+        liveModulePromise.catch(err => {
           if (!ret.hasCatch) {
             this.handleUncaughtException(err, environment);
           }
@@ -3099,7 +3101,7 @@ export function payGas(node, environment, gasCost) {
       gas[key] -= gasCost[key];
     }
     if (gas[key] < 0) {
-      gas[key] += gasCost[key]
+      gas[key] += gasCost[key];
       throw new OutOfGasError(
         "Ran out of " + GAS_NAMES[key] + " gas",
         node, environment,

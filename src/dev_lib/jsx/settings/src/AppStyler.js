@@ -487,7 +487,8 @@ export class AppStyler01 {
       if (!componentID) {
         let whenReady = this.prepareComponent(
           jsxInstance.componentModule, node, env
-        ).catch(err => interpreter.handleUncaughtException(err, env));
+        );
+        whenReady.catch(err => interpreter.handleUncaughtException(err, env));
         return [false, whenReady];
       }
 
@@ -534,14 +535,24 @@ export class AppStyler01 {
   // and then transforms the nodes of that instance, giving it inline styles
   // and/or classes. 
   transformInstance(jsxInstance, domNode, ownDOMNodes, node, env) {
-    if (ownDOMNodes.length === 0) return;
     let {settingsData, props, state} = jsxInstance;
     let {componentID, transform, transformProps, isScopeRoot} =
       settingsData ?? {};
     let {rules = [], initialClassesSuffix} = transform ?? {};
     let {interpreter} = env.scriptVars;
 
-    // Add the "c<componentID>" class to all ownDOMNodes, and also add an
+    // If the component is the root of an app scope, set the overflow
+    // style property as hidden, and add a scope-root class.
+    if (isScopeRoot) {
+      domNode.style.overflow = "hidden";
+      domNode.classList.add("scope-root");
+    }
+
+    // And if the component has no child DOM nodes that belongs to it
+    // specifically, return early.
+    if (ownDOMNodes.length === 0) return;
+
+    // Else add the "c<componentID>" class to all ownDOMNodes, and also add an
     // "own-leaf" class to all the nodes that haven't got children themselves
     // that are part of the ownDOMNodes. Since the ownDOMNodes array is ordered
     // with ancestors coming before their descendants, we can do this the
@@ -612,13 +623,6 @@ export class AppStyler01 {
 
     // Finally, remove the "own-leaf" classes again.
     ownDOMNodes.forEach(node => node.classList.remove("own-leaf"));
-
-    // And in case of the outer component of an app scope, set the overflow
-    // style property as hidden, and add a scope-root class.
-    if (isScopeRoot) {
-      domNode.style.overflow = "hidden";
-      domNode.classList.add("scope-root");
-    }
   }
 
 

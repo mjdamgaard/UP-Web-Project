@@ -7,7 +7,7 @@ import {
 
 
 
-const ELEMENT_TYPE_PATTERN = "[a-z]+";
+const ELEMENT_TYPE_PATTERN = "[a-z][a-z0-9]*";
 
 const ATOMIC_PSEUDO_CLASS_PATTERN = "[a-z][a-z\\-]*";
 
@@ -198,13 +198,13 @@ export const cssGrammar = {
       lexeme: children[1],
     }),
   },
-  "id-selector": {
-    rules: [
-      [/#[a-z][a-z0-9\-]*/],
-    ],
-    process: copyLexemeFromChild,
-    params: ["id-selector"],
-  },
+  // "id-selector": {
+  //   rules: [
+  //     [/#[a-z][a-z0-9\-]*/],
+  //   ],
+  //   process: copyLexemeFromChild,
+  //   params: ["id-selector"],
+  // },
   "universal-selector": {
     rules: [
       [/\*/],

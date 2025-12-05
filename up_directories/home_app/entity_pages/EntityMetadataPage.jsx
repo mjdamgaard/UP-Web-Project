@@ -58,7 +58,7 @@ export function render({entKey}) {
       <h3>{"Entity ID"}</h3>,
       <div className="ent-id">{
         entID === undefined ? <span className="fetching">{"..."}</span> :
-          entID ? "#" + entID :
+          entID ? entID :
             <span className="missing">{"missing"}</span>
       }</div>,
       <hr/>,

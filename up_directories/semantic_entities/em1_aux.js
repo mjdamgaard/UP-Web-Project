@@ -1,14 +1,20 @@
 
+import * as ILink from 'ILink.jsx';
 
 const tempEM1Desc = <div>
   <section>
     <h2>{"Description placeholder"}</h2>
-    <p>{
-      "The description of this entity has not been written yet. " +
-      "In the meantime, see the comments in the entity module, em1.js, " +
-      "for information about the semantics of this entity, and for the " +
-      "semantic system in general."
-    }</p>
+    <p>
+      {
+        "The description of this entity has not been written yet. " +
+        "In the meantime, see the comments in the entity module, "
+      }
+      <ILink key="em1" href="~/f/1/1/em1.js">{"em1.js"}</ILink>
+      {
+        ", for information about the semantics of this entity, and for the " +
+        "semantic system in general."
+      }
+    </p>
   </section>
 </div>;
 

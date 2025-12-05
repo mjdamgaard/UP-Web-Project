@@ -129,6 +129,7 @@ export class SettingsObject01 extends SettingsObject {
         })
       ));
       styleModulePromise = Promise.all(styleSheetPromises);
+      styleModulePromise.catch(() => {});
     }
 
     // Cache the styleModule promise, and then it resolves, replace it with the
@@ -136,7 +137,7 @@ export class SettingsObject01 extends SettingsObject {
     this.styleModules.set(componentPath, styleModulePromise);
     styleModulePromise.then(styleModule => {
       this.styleModules.set(componentPath, styleModule);
-    })/* Test that this works: .catch(() => {}); */
+    }).catch(() => {});
 
     // Then wait for styleModule and return it.
     styleModule = await styleModulePromise;
