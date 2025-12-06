@@ -6,6 +6,7 @@ import * as TextQualitiesPage from "./subpages/TextQualitiesPage.jsx";
 import * as CommentsPage from "./subpages/CommentsPage.jsx";
 import * as EntityList from "../entity_lists/EntityList.jsx";
 
+const commentsRel = "/1/1/em1.js;get/commentsRelation";
 const discussionsRel = "/1/1/em1.js;get/discussions";
 const tasksRel = "/1/1/em1.js;get/tasks";
 
@@ -31,6 +32,14 @@ export function render({entKey, extQualKeyArr = undefined, isNested = false}) {
           extQualKeyArr: extQualKeyArr,
         }
       },
+      arguments: {
+        title: "Arguments",
+        Component: CommentsPage,
+        props: {
+          entKey: entKey,
+          isNested: true,
+        },
+      },
       comments: {
         title: "Comments",
         Component: CommentsPage,
@@ -45,7 +54,7 @@ export function render({entKey, extQualKeyArr = undefined, isNested = false}) {
         props: {
           objKey: entKey,
           relKey: discussionsRel,
-          extQualKeyArr: [[entKey, discussionsRel]],
+          extQualKeyArr: [[entKey, discussionsRel], [entKey, commentsRel]],
         },
       },
       tasks: {
@@ -54,7 +63,7 @@ export function render({entKey, extQualKeyArr = undefined, isNested = false}) {
         props: {
           objKey: entKey,
           relKey: tasksRel,
-          extQualKeyArr: [[entKey, tasksRel]],
+          extQualKeyArr: [[entKey, tasksRel], [entKey, commentsRel]],
         },
       },
     }}

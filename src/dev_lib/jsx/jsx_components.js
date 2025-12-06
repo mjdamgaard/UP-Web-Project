@@ -1333,12 +1333,14 @@ export class SettingsObject extends ObjectObject {
 
 
 
-export function clearAttributes(elementNode) {
+export function clearAttributes(elementNode, exceptions) {
   let attributeNames = [...elementNode.attributes].map(
     attrNode => attrNode.name
   );
   attributeNames.forEach(name => {
-    elementNode.removeAttribute(name);
+    if (!exceptions || !exceptions.includes(name)) {
+      elementNode.removeAttribute(name);
+    }
   });
   return elementNode;
 }

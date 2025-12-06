@@ -37,16 +37,16 @@ export const render = new DevFunction(
     let domNode = jsxInstance.domNode;
     if (!domNode || domNode.tagName !== "INPUT") {
       domNode = document.createElement("input");
-      domNode.value = "";
+      domNode.setAttribute("value", value ?? "");
+
     }
     else {
-      clearAttributes(domNode);
+      clearAttributes(domNode, ["type", "value"]);
     }
     domNode.setAttribute("type", "text");
     domNode.setAttribute("class", "input-text_0");
     if (id !== undefined) domNode.setAttribute("id", id);
     if (size !== undefined) domNode.setAttribute("size", size);
-    if (value !== undefined) domNode.value = value;
     if (placeholder !== undefined) {
       domNode.setAttribute("placeholder", placeholder);
     }

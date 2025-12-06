@@ -40,7 +40,7 @@ export function render({entKey, extQualKeyArr = undefined, isNested = false}) {
         props: {
           objKey: entKey,
           relKey: discussionsRel,
-          extQualKeyArr: [[entKey, discussionsRel]],
+          extQualKeyArr: [[entKey, discussionsRel], [entKey, commentsRel]],
         },
       },
       tasks: {
@@ -49,7 +49,7 @@ export function render({entKey, extQualKeyArr = undefined, isNested = false}) {
         props: {
           objKey: entKey,
           relKey: tasksRel,
-          extQualKeyArr: [[entKey, tasksRel]],
+          extQualKeyArr: [[entKey, tasksRel], [entKey, commentsRel]],
         },
       },
     }}

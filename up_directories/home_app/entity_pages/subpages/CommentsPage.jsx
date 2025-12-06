@@ -27,7 +27,7 @@ export function render({entKey, isNested = false}) {
         props: {
           objKey: entKey,
           relKey: reactionsRel,
-          extQualKeyArr: [[entKey, reactionsRel]],
+          extQualKeyArr: [[entKey, reactionsRel], [entKey, commentsRel]],
         },
       },
       questionsAndFacts: {
@@ -36,7 +36,7 @@ export function render({entKey, isNested = false}) {
         props: {
           objKey: entKey,
           relKey: questionsAndFactsRel,
-          extQualKeyArr: [[entKey, questionsAndFactsRel]],
+          extQualKeyArr: [[entKey, questionsAndFactsRel], [entKey, commentsRel]],
         },
       },
       discussions: {
@@ -45,7 +45,7 @@ export function render({entKey, isNested = false}) {
         props: {
           objKey: entKey,
           relKey: discussionsRel,
-          extQualKeyArr: [[entKey, discussionsRel]],
+          extQualKeyArr: [[entKey, discussionsRel], [entKey, commentsRel]],
         },
       },
       tasks: {
@@ -54,7 +54,7 @@ export function render({entKey, isNested = false}) {
         props: {
           objKey: entKey,
           relKey: tasksRel,
-          extQualKeyArr: [[entKey, tasksRel]],
+          extQualKeyArr: [[entKey, tasksRel], [entKey, commentsRel]],
         },
       },
     }}

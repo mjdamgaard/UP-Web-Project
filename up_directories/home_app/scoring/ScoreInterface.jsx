@@ -1,5 +1,6 @@
 
 import {toPrecision, parseFloat, isNaN} from 'number';
+import {forEach} from 'array';
 import {fetchMetric, fetchUserScore} from "/1/1/scores.js";
 
 import * as InputRangeAndValue from "../misc/InputRangeAndValue.jsx";
@@ -12,7 +13,7 @@ import * as AggregatedScoreDisplay from "./AggregatedScoreDisplay.jsx";
 export function render({subjKey, qualKey, scoreHandler = undefined}) {
   scoreHandler ??= this.subscribeToContext("scoreHandler");
   let userEntID = this.subscribeToContext("userEntID");
-  let {hasBegunFetching, metric, prevScore, msg} = this.state;
+  let {hasBegunFetching, metric, prevScore, msg, intervalLabel} = this.state;
   let content;
 
   // If the metric and the previous user score are not yet fetched, do so.
@@ -46,25 +47,34 @@ export function render({subjKey, qualKey, scoreHandler = undefined}) {
     let isBounded = (min !== undefined && max !== undefined);
     let step = isBounded ? parseFloat(toPrecision((max - min) / 100, 3)) :
       undefined;
-    content = [
+    intervalLabel ??= hasPrevScore ? getIntervalLabel(metric, prevScore) :
+      undefined;
+    content = <>
+      <div className="header">
+          <ScalarEntityReference key="sr"
+            subjKey={subjKey} qualKey={qualKey} 
+          />
+      </div>
       <div className="score-bar">
-        <ScalarEntityReference key="sr"
-          subjKey={subjKey} qualKey={qualKey} 
-        />
         {isBounded ?
           <InputRangeAndValue key="input"
             value={hasPrevScore ? prevScore : undefined}
             placeholder={hasPrevScore ? undefined : "N/A"}
             min={min} max={max} step={step}
+            onInput={e => this.do("updateLabel", e.value)}
           /> :
           <InputValue key="input"
             value={hasPrevScore ? prevScore : undefined}
             placeholder={hasPrevScore ? undefined : "N/A"}
+            onInput={e => this.do("updateLabel", e.value)}
           /> 
         }
-        <div className="todo-impl-interval-labels">{/*
-          TODO: Implement showing interval labels matching the current value.
-        */}</div>
+        <span className="unit">{metric["Unit"] || undefined}</span>
+        <span className="interval-label">{
+          intervalLabel ? " (" + intervalLabel + ")" : undefined
+        }</span>
+      </div>
+      <div className="submit-buttons">
         <button className="submit" onClick={() => {
           this.do("submitScore");
         }}>{
@@ -76,12 +86,12 @@ export function render({subjKey, qualKey, scoreHandler = undefined}) {
           "Clear"
         }</button>
         <div className="response">{msg}</div>
-      </div>,
+      </div>
       <div className="score-display">
         <div className="user-score">{hasPrevScore ? prevScore : undefined}</div>
         <AggregatedScoreDisplay key="as" qualKey={qualKey} subjKey={subjKey} />
       </div>
-    ];
+    </>;
   }
 
   return (
@@ -222,4 +232,29 @@ export const actions = {
       });
     });
   },
+  "updateLabel": function(score) {
+    let {metric} = this.state;
+    score = parseFloat(score);
+    if (!metric || isNaN(score)) return;
+    let label = getIntervalLabel(metric, score);
+    this.setState(state => ({...state, intervalLabel: label}));
+    return label;
+  }
 };
+
+
+
+
+
+
+function getIntervalLabel(metric, score) {
+  let intervalLabels = metric["Interval labels"];
+  if (!intervalLabels) return undefined;
+  let ret;
+  forEach(intervalLabels, ([lo, hi, label]) => {
+    if (lo <= score && score < hi) {
+      ret = label;
+    }
+  });
+  return ret;
+}

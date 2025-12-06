@@ -31,17 +31,16 @@ export const render = new DevFunction(
     let domNode = jsxInstance.domNode;
     if (!domNode || domNode.tagName !== "INPUT") {
       domNode = document.createElement("input");
-      if (value !== undefined) domNode.value = value;
+      if (value !== undefined) domNode.setAttribute("value", value);
     }
     else {
-      clearAttributes(domNode);
+      clearAttributes(domNode, ["type", "value", "min", "max", "step"]);
     }
     domNode.setAttribute("type", "range");
     domNode.setAttribute("class", "input-range_0");
     if (id !== undefined) domNode.setAttribute("id", id);
     if (min !== undefined) domNode.setAttribute("min", min);
     if (max !== undefined) domNode.setAttribute("max", max);
-    if (value !== undefined) domNode.setAttribute("value", value);
     if (step !== undefined) domNode.setAttribute("step", step);
 
     // Set the onchange event if props.onChange is supplied.

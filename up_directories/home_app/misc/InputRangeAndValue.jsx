@@ -6,36 +6,35 @@ import {toString} from 'string';
 
 
 export function render({
-  min, max, value, step, size = 4, placeholder, onChange
+  min, max, value, step, size = 4, placeholder, onChange, onInput,
 }) {
   return (
-    <div className="input-range-and-value">
+    <span className="input-range-and-value">
       <InputRange key="r"
         min={min} max={max} value={value} step={step}
-        onInput={({value}) => {
+        onInput={e => {
+          let {value} = e;
           this.call("t", "setValue", value);
-          if (onChange) {
-            onChange(value);
+          if (onInput) {
+            onInput(e);
           }
         }}
-        onChange={({value}) => {
-          if (onChange) {
-            onChange(value);
-          }
-        }}
+        onChange={onChange ? e => onChange(e) : undefined}
       />
       <InputText key="t"
         size={size} value={value} placeholder={placeholder}
-        onInput={({value}) => {
+        onInput={e => {
+          let {value} = e;
           let floatValue = parseFloat(value);
           if (toString(floatValue) !== value) return;
           this.call("r", "setValue", floatValue);
-          if (onChange) {
-            onChange(value);
+          if (onInput) {
+            onInput(e);
           }
         }}
+        onChange={onChange ? e => onChange(e) : undefined}
       />
-    </div>
+    </span>
   );
 }
 

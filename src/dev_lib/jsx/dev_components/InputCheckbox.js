@@ -30,14 +30,14 @@ export const render = new DevFunction(
     let domNode = jsxInstance.domNode;
     if (!domNode || domNode.tagName !== "INPUT") {
       domNode = document.createElement("input");
+      if (checked) domNode.setAttribute("checked", true);
     }
     else {
-      clearAttributes(domNode);
+      clearAttributes(domNode, ["type", "checked"]);
     }
     domNode.setAttribute("type", "checkbox");
     domNode.setAttribute("class", "input-checkbox_0");
     if (id !== undefined) domNode.setAttribute("id", id);
-    if (checked) domNode.setAttribute("checked", true);
 
     // Set the onchange event if props.onChange is supplied.
     if (onChange) {

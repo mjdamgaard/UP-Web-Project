@@ -18,19 +18,22 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {idKey, placeholder, onChange, onInput} = props;
+    let {idKey, placeholder, children, onChange, onInput} = props;
     verifyTypes(
       [placeholder, onChange, onInput], ["string?", "function?", "function?"],
       callerNode, execEnv
     );
     let id = idKey === undefined ? undefined : getID(idKey);
+    if (children !== undefined) {
+      children = getString(children, execEnv);
+    }
 
     // Create the DOM node if it has no been so already.
     let jsxInstance = thisVal.jsxInstance;
     let domNode = jsxInstance.domNode;
     if (!domNode || domNode.tagName !== "TEXTAREA") {
       domNode = document.createElement("textarea");
-      domNode.value = "";
+      domNode.value = children ?? "";
     }
     else {
       clearAttributes(domNode);

@@ -35,10 +35,10 @@ export const render = new DevFunction(
     let domNode = jsxInstance.domNode;
     if (!domNode || domNode.tagName !== "INPUT") {
       domNode = document.createElement("input");
-      if (value !== undefined) domNode.value = value;
+      if (value !== undefined) domNode.setAttribute("value", value);
     }
     else {
-      clearAttributes(domNode);
+      clearAttributes(domNode, ["type", "value", "min", "max", "step"]);
     }
     domNode.setAttribute("type", "number");
     domNode.setAttribute("class", "input-number_0");
@@ -46,7 +46,6 @@ export const render = new DevFunction(
     if (min !== undefined) domNode.setAttribute("min", min);
     if (max !== undefined) domNode.setAttribute("max", max);
     if (step !== undefined) domNode.setAttribute("step", step);
-    if (value !== undefined) domNode.setAttribute("value", value);
     if (placeholder !== undefined) {
       domNode.setAttribute("placeholder", getString(placeholder, execEnv));
     }
