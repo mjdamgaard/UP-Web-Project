@@ -1,0 +1,17 @@
+
+
+
+.aggregated-score {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.aggregated-score .score::before {
+  content: "score: ";
+}
+.aggregated-score .weight::before {
+  content: "(weight: ";
+}
+.aggregated-score .weight::after {
+  content: ")";
+}

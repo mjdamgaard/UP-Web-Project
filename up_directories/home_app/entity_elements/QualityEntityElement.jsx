@@ -30,5 +30,6 @@ export function render({
 export const styleSheetPaths = [
   ...ExpandableElement.styleSheetPaths,
   abs("./GeneralEntityElement.css"),
+  abs("../scoring/AggregatedScoreDisplay.css"),
   abs("../entity_elements/ExpandableElement.css"),
 ];

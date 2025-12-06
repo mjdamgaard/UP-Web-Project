@@ -10,10 +10,11 @@ import * as AggregatedScoreDisplay from "./AggregatedScoreDisplay.jsx";
 
 
 
-export function render({subjKey, qualKey, scoreHandler = undefined}) {
-  scoreHandler ??= this.subscribeToContext("scoreHandler");
+export function render({subjKey, qualKey}) {
   let userEntID = this.subscribeToContext("userEntID");
-  let {hasBegunFetching, metric, prevScore, msg, intervalLabel} = this.state;
+  let {
+    hasBegunFetching, metric, intervalLabel, prevScore, newScore, msg
+  } = this.state;
   let content;
 
   // If the metric and the previous user score are not yet fetched, do so.
@@ -50,47 +51,50 @@ export function render({subjKey, qualKey, scoreHandler = undefined}) {
     intervalLabel ??= hasPrevScore ? getIntervalLabel(metric, prevScore) :
       undefined;
     content = <>
-      <div className="header">
+      <div className="main">
+        <div className="header">
           <ScalarEntityReference key="sr"
             subjKey={subjKey} qualKey={qualKey} 
           />
+        </div>
+        <div className="score-bar">
+          {isBounded ?
+            <InputRangeAndValue key="input"
+              value={hasPrevScore ? prevScore : undefined}
+              placeholder={hasPrevScore ? undefined : "N/A"}
+              min={min} max={max} step={step}
+              onInput={e => this.do("updateLabel", e.value)}
+            /> :
+            <InputValue key="input"
+              value={hasPrevScore ? prevScore : undefined}
+              placeholder={hasPrevScore ? undefined : "N/A"}
+              onInput={e => this.do("updateLabel", e.value)}
+            /> 
+          }
+          <span className="unit">{metric["Unit"] || undefined}</span>
+          <span className="interval-label">{
+            intervalLabel ? " (" + intervalLabel + ")" : undefined
+          }</span>
+        </div>
+        <div className="submit-buttons">
+          <button className="submit" onClick={() => {
+            this.do("submitScore");
+          }}>{
+            "Submit"
+          }</button>
+          <button className="clear" onClick={() => {
+            this.do("deleteScore");
+          }}>{
+            "Clear"
+          }</button>
+          <div className="user-score">{
+            newScore ? "Current user score: " + newScore :
+              hasPrevScore ? "Previous user score: " + prevScore : undefined
+          }</div>
+          <div className="response">{msg}</div>
+        </div>
       </div>
-      <div className="score-bar">
-        {isBounded ?
-          <InputRangeAndValue key="input"
-            value={hasPrevScore ? prevScore : undefined}
-            placeholder={hasPrevScore ? undefined : "N/A"}
-            min={min} max={max} step={step}
-            onInput={e => this.do("updateLabel", e.value)}
-          /> :
-          <InputValue key="input"
-            value={hasPrevScore ? prevScore : undefined}
-            placeholder={hasPrevScore ? undefined : "N/A"}
-            onInput={e => this.do("updateLabel", e.value)}
-          /> 
-        }
-        <span className="unit">{metric["Unit"] || undefined}</span>
-        <span className="interval-label">{
-          intervalLabel ? " (" + intervalLabel + ")" : undefined
-        }</span>
-      </div>
-      <div className="submit-buttons">
-        <button className="submit" onClick={() => {
-          this.do("submitScore");
-        }}>{
-          "Submit"
-        }</button>
-        <button className="clear" onClick={() => {
-          this.do("deleteScore");
-        }}>{
-          "Clear"
-        }</button>
-        <div className="response">{msg}</div>
-      </div>
-      <div className="score-display">
-        <div className="user-score">{hasPrevScore ? prevScore : undefined}</div>
-        <AggregatedScoreDisplay key="as" qualKey={qualKey} subjKey={subjKey} />
-      </div>
+      <AggregatedScoreDisplay key="asd" qualKey={qualKey} subjKey={subjKey} />
     </>;
   }
 
@@ -158,8 +162,10 @@ export const actions = {
           if (wasUpdated) {
             this.setState(state => ({...state,
               prevScore: score,
+              newScore: score,
               msg: <span className="success">{"Score was submitted."}</span>,
             }));
+            this.call("asd", "update");
             resolve(true);
           }
           else {
@@ -219,8 +225,10 @@ export const actions = {
         if (wasDeleted) {
           this.setState(state => ({...state,
             prevScore: false,
+            newScore: "N/A",
             msg: <span className="success">{"Score was deleted."}</span>,
           }));
+          this.call("asd", "update");
           resolve(true);
         }
         else {
@@ -252,9 +260,17 @@ function getIntervalLabel(metric, score) {
   if (!intervalLabels) return undefined;
   let ret;
   forEach(intervalLabels, ([lo, hi, label]) => {
-    if (lo <= score && score < hi) {
-      ret = label;
+    if (lo <= score && score <= hi) {
+      ret = ret ? ret + "/" + label : label;
     }
   });
   return ret;
 }
+
+
+
+
+export const styleSheetPaths = [
+  abs("./ScoreInterface.css"),
+  abs("./AggregatedScoreDisplay.css"),
+];

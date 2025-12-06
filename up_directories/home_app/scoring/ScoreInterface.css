@@ -1,0 +1,6 @@
+
+
+.score-interface {
+  display: grid;
+  grid-template-columns: auto 120px;
+}
