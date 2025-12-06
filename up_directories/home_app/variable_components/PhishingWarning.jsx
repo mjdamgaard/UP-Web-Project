@@ -7,7 +7,7 @@ import * as Label from 'Label.jsx';
 // trusted (looking at both the score itself and its weight, of course).
 
 export function render() {
-  let {cbRemIDKey, cbAgeIDKey} = this.state;
+  let {cbRemIDKey} = this.state;
 
   return <div className="phishing-warning">
     <div className="warning">
@@ -35,12 +35,6 @@ export function render() {
         }</Label>
         <InputCheckbox key="cb-rem" idKey={cbRemIDKey} />
       </div>
-      <div>
-        <Label key="l-age" forKey={cbAgeIDKey}>{
-        "I am 18 years or older"
-        }</Label>
-        <InputCheckbox key="cb-age" idKey={cbAgeIDKey} />
-      </div>
       <button onClick={() => this.do("dismissWarning")}>{"Accept"}</button>
     </div>
   </div>;
@@ -49,14 +43,12 @@ export function render() {
 
 export function getInitialState() {
   let cbRemIDKey = Symbol("cbRemIDKey");
-  let cbAgeIDKey = Symbol("cbAgeIDKey");
-  return {cbRemIDKey: cbRemIDKey, cbAgeIDKey: cbAgeIDKey};
+  return {cbRemIDKey: cbRemIDKey};
 }
 
 
 export const actions = {
   "dismissWarning": function() {
-    if (!this.call("cb-age", "getIsChecked")) return;
     let doNotWarnAgain = this.call("cb-rem", "getIsChecked");
     this.trigger("dismissWarning", doNotWarnAgain);
   }

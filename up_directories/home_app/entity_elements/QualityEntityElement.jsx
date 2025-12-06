@@ -2,6 +2,7 @@
 import * as EntityReference from "../misc/EntityReference.jsx";
 import * as ExpandableElement from "./ExpandableElement.jsx";
 import * as ScoreInterface from "../scoring/ScoreInterface.jsx";
+import * as AggregatedScoreDisplay from "../scoring/AggregatedScoreDisplay.jsx";
 
 
 export function render({
@@ -19,7 +20,7 @@ export function render({
         <div className="entity-display">
           <EntityReference key="er" entKey={qualKey} hasLinks={false} />
         </div>
-        {"TODO: Insert fetched score here."}
+        <AggregatedScoreDisplay key="asd" qualKey={qualKey} subjKey={subjKey} />
       </div>
     </ExpandableElement>
   </div>;

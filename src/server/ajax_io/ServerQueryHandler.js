@@ -5,6 +5,8 @@ export const curDomain = (typeof window === "undefined") ? "localhost" :
 export const OWN_UP_NODE_ID = "1";
 
 
+// TODO: Add a noCache option, which the users also get to optionally set.
+
 
 
 export class ServerQueryHandler {
