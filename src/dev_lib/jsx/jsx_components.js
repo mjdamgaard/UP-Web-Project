@@ -986,7 +986,7 @@ export class JSXInstanceInterface extends ObjectObject {
 
   // See the comments above for what do(), trigger(), and call() does.
   do = new DevFunction(
-    "do", {/*typeArr: ["any", "any?"]*/},
+    "do", {},
     ({callerNode, execEnv, interpreter}, [actionKey, input]) => {
       return this.jsxInstance.do(
         actionKey, input, interpreter, callerNode, execEnv
@@ -995,7 +995,7 @@ export class JSXInstanceInterface extends ObjectObject {
   );
 
   trigger = new DevFunction(
-    "trigger", {/*typeArr: ["any", "any?"]*/},
+    "trigger", {},
     ({callerNode, execEnv, interpreter}, [eventKey, input]) => {
       return this.jsxInstance.trigger(
         eventKey, input, interpreter, callerNode, execEnv
@@ -1004,7 +1004,7 @@ export class JSXInstanceInterface extends ObjectObject {
   );
 
   call = new DevFunction(
-    "call", {/*typeArr: ["any", "any", "any?"]*/},
+    "call", {},
     ({callerNode, execEnv, interpreter}, [instanceKey, methodKey, input]) => {
       return this.jsxInstance.call(
         instanceKey, methodKey, input, interpreter, callerNode, execEnv
@@ -1015,7 +1015,7 @@ export class JSXInstanceInterface extends ObjectObject {
   // doAfterRender() simply waits to a subsequent tick of the JS event loop
   // before calling do(). And it therefore also doesn't return anything.
   doAfterRender = new DevFunction(
-    "doAfterRender", {/*typeArr: ["any", "any?"]*/},
+    "doAfterRender", {},
     ({callerNode, execEnv, interpreter}, [actionKey, input]) => {
       new Promise(resolve => resolve()).then(() => {
         this.jsxInstance.do(
@@ -1028,7 +1028,7 @@ export class JSXInstanceInterface extends ObjectObject {
   // doAfterFirstRender() is similar to doAfterRender(), but it must be called
   // before the first render() call has returned to have any effect.
   doAfterFirstRender = new DevFunction(
-    "doAfterFirstRender", {/*typeArr: ["any", "any?"]*/},
+    "doAfterFirstRender", {},
     ({callerNode, execEnv, interpreter}, [actionKey, input]) => {
       if (!this.jsxInstance.isFirstRender) return;
       new Promise(resolve => resolve()).then(() => {

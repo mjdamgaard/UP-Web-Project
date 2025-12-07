@@ -34,7 +34,7 @@ const VariableEntityElementPromise = import(
 export function render({
   qualKey, objKey, relKey, extQualKeyArr = [qualKey ?? [objKey, relKey]],
   factorArr = [], constList = undefined, constElementArr = undefined,
-  scoreHandler = undefined, options = undefined,
+  extraElementProps = {}, scoreHandler = undefined, options = undefined,
   minScore = undefined, minWeight = 10, isAscending = false,
   hideMenu = false, paginationLength = 50, paginationIndex = 0,
 }) {
@@ -126,7 +126,7 @@ export function render({
             <ElementComponent key={"_" + entID}
               entID={entID} objKey={objKey}
               score={score} weight={weight}
-              qualKeyArr={[qualKey]}
+              qualKeyArr={[qualKey]} {...extraElementProps}
             />
         ))}
       </div>,

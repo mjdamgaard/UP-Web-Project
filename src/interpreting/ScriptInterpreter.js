@@ -1311,7 +1311,7 @@ export class ScriptInterpreter {
           );
         }
         // We experiment here with another API for console.trace(), which is:
-        // console.trace(maxNum = 15, stringify = true), which returns a list
+        // console.trace(maxNum = 40, stringify = true), which returns a list
         // of at most maxNum function calls, but not just with the function
         // names; we also include their input tuple and the module in which
         // they are defined.
@@ -1877,7 +1877,7 @@ export class Environment {
   }
 
 
-  getCallTrace(maxLen = 15, stringify = false) {
+  getCallTrace(maxLen = 40, stringify = false) {
     return this.getCallTraceHelper(maxLen, stringify).reverse();
   }
 

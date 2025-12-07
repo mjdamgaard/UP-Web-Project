@@ -41,10 +41,13 @@ export function render({score, weight, qualKey, subjKey, scoreHandler}) {
   }
 
   else {
+    let [score, weight] = scoreData ?? [];
+    score = (score === undefined) ? "N/A" : toPrecision(score, 3);
+    weight = (weight === undefined) ? "N/A" : toPrecision(weight, 3);
     return (
       <div className="aggregated-score">
-        <div className="score">{toPrecision(scoreData[0], 3)}</div>
-        <div className="weight">{toPrecision(scoreData[1], 3)}</div>
+        <div className="score">{score}</div>
+        <div className="weight">{weight}</div>
       </div>
     );
   }

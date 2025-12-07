@@ -1,8 +1,8 @@
 
 import {toString} from 'string';
 import {fetchEntityDefinition, fetchScalarEntityPath} from "/1/1/entities.js";
-import * as TextDisplay from "../../misc/TextDisplay.jsx";
-import * as QualityElement from "../../entity_elements/QualityElement.jsx";
+import * as TextDisplay from "../misc/TextDisplay.jsx";
+import * as QualityElement from "../entity_elements/QualityElement.jsx";
 
 const probabilityQual = "/1/1/em1.js;get/probability";
 const isCorrectQual = "/1/1/em1.js;get/isCorrect";

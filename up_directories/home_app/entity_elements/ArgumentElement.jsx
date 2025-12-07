@@ -1,9 +1,11 @@
 
 import * as EntityPageWithTabs from "../misc/EntityPageWithTabs.jsx";
-import * as EntityMetadataPage from "./subpages/EntityMetadataPage.jsx";
+import * as EntityMetadataPage
+from "../entity_pages/subpages/EntityMetadataPage.jsx";
 import * as ArgumentContentPage from "./ArgumentContentPage.jsx";
-import * as TextQualitiesPage from "./subpages/TextQualitiesPage.jsx";
-import * as CommentsPage from "./subpages/CommentsPage.jsx";
+import * as TextQualitiesPage
+from "../entity_pages/subpages/TextQualitiesPage.jsx";
+import * as CommentsPage from "../entity_pages/subpages/CommentsPage.jsx";
 import * as EntityList from "../entity_lists/EntityList.jsx";
 
 const commentsRel = "/1/1/em1.js;get/commentsRelation";
@@ -12,10 +14,10 @@ const tasksRel = "/1/1/em1.js;get/tasks";
 
 
 export function render({
-  entKey, objScalarKey, extQualKeyArr = undefined, isNested = false
+  entID, entKey = entID, objScalarKey, extQualKeyArr = undefined
 }) {
   return <EntityPageWithTabs key="0"
-    entKey={entKey} initTabKey={"content"} isNested={isNested} tabs={{
+    entKey={entKey} initTabKey={"content"} isNested={true} tabs={{
       about: {
         title: "About",
         Component: EntityMetadataPage,

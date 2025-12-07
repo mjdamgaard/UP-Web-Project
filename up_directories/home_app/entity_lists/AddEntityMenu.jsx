@@ -1,7 +1,9 @@
 
 import {post} from 'query';
-import {map} from 'array';
-import {postEntity, checkDomain, fetchOrCreateEntityID} from "/1/1/entities.js";
+import {map, forEach} from 'array';
+import {
+  postEntity, checkDomain, fetchOrCreateEntityID, postScalarEntity,
+} from "/1/1/entities.js";
 
 import * as InputText from 'InputText.jsx';
 import * as Textarea from 'Textarea.jsx';
@@ -9,6 +11,8 @@ import * as InputCheckbox from 'InputCheckbox.jsx';
 import * as Label from 'Label.jsx';
 
 const textClassPath = "/1/1/em1.js;get/texts";
+const probabilityQual = "/1/1/em1.js;get/probability";
+const isCorrectQual = "/1/1/em1.js;get/isCorrect";
 
 const QualityElementPromise = import(
   "../entity_elements/QualityElement.jsx"
@@ -108,7 +112,8 @@ export const actions = {
         return;
       }
       postEntity(entKey).then(entID => {
-        qualIDArrProm.then(() => {
+        // Post relevant qualities, and then update the state.
+        qualIDArrProm.then(qualIDArr => {
           if (!entID) {
             this.setState(state => ({
               ...state, response: <span className="warning">
@@ -154,7 +159,9 @@ export const actions = {
         "/1/1/comments/comments.sm.js./callSMF/postComment",
         [text, objKey, isSingular, true],
       ).then(entID => {
-        qualIDArrProm.then(() => {
+        // Post relevant qualities and scalars, and then update the state.
+        postScalarEntity(entID, isSingular ? probabilityQual : isCorrectQual);
+        qualIDArrProm.then(qualIDArr => {
           this.setState(state => ({
             ...state,
             response: "Entity has been assigned the ID of " +

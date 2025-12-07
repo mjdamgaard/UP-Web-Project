@@ -1,49 +1,59 @@
 
-import {map} from 'array';
-import {hasType} from 'type';
+import {fetchEntityDefinition, fetchScalarEntityPath} from "/1/1/entities.js";
 import * as EntityList from "../../entity_lists/EntityList.jsx";
+import * as ScoreInterface from "../../scoring/ScoreInterface.jsx";
 
-const relevantQualitiesRel = "/1/1/em1.js;get/relevantQualities";
+const argumentsRel = "/1/1/em1.js;get/argumentsRelation";
+const probabilityQual = "/1/1/em1.js;get/probability";
+const isCorrectQual = "/1/1/em1.js;get/isCorrect";
 
-const QualityElementPromise = import("../../entity_elements/QualityElement.jsx");
+const ArgumentElementPromise =
+  import("../../entity_elements/ArgumentElement.jsx");
 
 
 export function render({
-  entKey, objTextKey = undefined, objScalarKey = undefined
+  objTextKey = undefined, objScalarKey = undefined
 }) {
-  extQualKeyArr ??= this.subscribeToContext("extQualKeyArr") ?? [];
-  let {QualityElement, isFetching} = this.state;
+  let {ArgumentElement, objTruthScalarKey, isFetching} = this.state;
+  objScalarKey ??= objTruthScalarKey;
 
   if (!isFetching) {
     this.setState(state => ({...state, isFetching: true}));
-    QualityElementPromise.then(Component => {
-      this.setState(state => ({...state, QualityElement: Component}));
+    ArgumentElementPromise.then(Component => {
+      this.setState(state => ({...state, ArgumentElement: Component}));
     });
+    if (!objScalarKey) {
+      fetchEntityDefinition(objTextKey, ["Is a singular statement"]).then(
+        entDef => {
+          let truthQual = entDef["Is a singular statement"] ?
+            probabilityQual : isCorrectQual;
+          this.setState(state => ({...state, entDef: entDef ?? false}));
+          fetchScalarEntityPath(objTextKey, truthQual).then(
+            objTruthScalarKey => {
+              this.setState(state => ({
+                ...state,
+                objTruthScalarKey: objTruthScalarKey ?? false,
+              }));
+            }
+          );
+        }
+      );
+    }
   }
-  if (!QualityElement) {
+
+  if (!ArgumentElement || !objScalarKey) {
     return <div><div className="fetching">{"..."}</div></div>;
   }
 
-  let contextQualityElements = (extQualKeyArr[0] === undefined) ? undefined :
-    map(extQualKeyArr, extKey => {
-      if (hasType(extKey, "array")) {
-        let subjKey = objKey;
-        let [objKey, relKey] = extKey; 
-        return <QualityElement key={"cq-" + extKey}
-          subjKey={subjKey} relKey={relKey} objKey={objKey}
-        />;
-      }
-      else {
-        let qualKey = extKey;
-        return <QualityElement key={"cq-" + qualKey}
-          qualKey={qualKey} subjKey={objKey}
-        />;
-      }
-    });
   return <div>
-    <EntityList key="rql"
-      objKey={objKey} relKey={relevantQualitiesRel}
-      ElementComponent={QualityElement} constElementArr={contextQualityElements}
+    <h3>{"Scalar"}</h3>
+    <ScoreInterface key="_scalar" scalarKey={objScalarKey} />
+    <h3>{"Arguments"}</h3>
+    <EntityList key="args"
+      objKey={objScalarKey} relKey={argumentsRel}
+      ElementComponent={ArgumentElement} extraElementProps={{
+        objScalarKey: objScalarKey,
+      }}
     />
   </div>;
 }

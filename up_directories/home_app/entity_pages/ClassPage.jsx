@@ -6,7 +6,7 @@ import * as EntityList from "../entity_lists/EntityList.jsx";
 import * as GeneralEntityElement 
 from "../entity_elements/GeneralEntityElement.jsx";
 
-const commentsRel = "/1/1/em1.js;get/commentsRelation";
+// const commentsRel = "/1/1/em1.js;get/commentsRelation";
 const membersRel = "/1/1/em1.js;get/members";
 const subclassesRel = "/1/1/em1.js;get/subclasses";
 const discussionsRel = "/1/1/em1.js;get/discussions";
@@ -57,7 +57,7 @@ export function render({entKey, extQualKeyArr = undefined, isNested = false}) {
         props: {
           objKey: entKey,
           relKey: discussionsRel,
-          extQualKeyArr: [[entKey, discussionsRel], [entKey, commentsRel]],
+          extQualKeyArr: [[entKey, discussionsRel]],
         },
       },
       tasks: {
@@ -66,7 +66,7 @@ export function render({entKey, extQualKeyArr = undefined, isNested = false}) {
         props: {
           objKey: entKey,
           relKey: tasksRel,
-          extQualKeyArr: [[entKey, tasksRel], [entKey, commentsRel]],
+          extQualKeyArr: [[entKey, tasksRel]],
         },
       },
     }}
