@@ -1,8 +1,8 @@
 
 import {post} from 'query';
-import {map, forEach} from 'array';
+import {map} from 'array';
 import {
-  postEntity, checkDomain, fetchOrCreateEntityID, postScalarEntity,
+  postEntity, checkDomain, postScalarEntity,
 } from "/1/1/entities.js";
 
 import * as InputText from 'InputText.jsx';
@@ -11,6 +11,7 @@ import * as InputCheckbox from 'InputCheckbox.jsx';
 import * as Label from 'Label.jsx';
 
 const textClassPath = "/1/1/em1.js;get/texts";
+const scalarClassPath = "/1/1/em1.js;get/scalars";
 const probabilityQual = "/1/1/em1.js;get/probability";
 const isCorrectQual = "/1/1/em1.js;get/isCorrect";
 
@@ -22,8 +23,8 @@ const QualityElementPromise = import(
 
 export function render({qualKeyArr, objKey = undefined}) {
   let {
-    QualityElement, isFetching, response, entityElements, isTextClass,
-    cbSingIDKey, cbEntIDKey, hasGrabbedFocus,
+    QualityElement, isFetching, response, entityElements,
+    isTextOrScalarClass, cbSingIDKey, cbEntIDKey, hasGrabbedFocus,
   } = this.state;
 
   if (!isFetching) {
@@ -32,10 +33,17 @@ export function render({qualKeyArr, objKey = undefined}) {
       this.setState(state => ({...state, QualityElement: Component}));
     });
     checkDomain(qualKeyArr[0], textClassPath).then(isTextClass => {
-      this.setState(state => ({...state, isTextClass: isTextClass}));
+      this.setState(state => ({...state, isTextOrScalarClass: isTextClass}));
+    });
+    checkDomain(qualKeyArr[0], scalarClassPath).then(isScalarClass => {
+      this.setState(state => ({
+        ...state,
+        isTextOrScalarClass: state.isTextOrScalarClass || isScalarClass,
+        isScalarClass: isScalarClass,
+      }));
     });
   }
-  if (!QualityElement || isTextClass === undefined) {
+  if (!QualityElement || isTextOrScalarClass === undefined) {
     return <div className="add-entity-menu">
       <div className="fetching">{"..."}</div>
     </div>;
@@ -58,7 +66,7 @@ export function render({qualKeyArr, objKey = undefined}) {
     <button onClick={() => this.do("submitEntityToInsert")}>
       {"Submit"}
     </button>
-    {!isTextClass ? undefined : <>
+    {!isTextOrScalarClass ? undefined : <>
       <div>{
         "Or write and insert a new text entity."
       }</div>
@@ -91,8 +99,8 @@ export function getInitialState() {
 
 export const actions = {
   "focus-input": function() {
-    let {isTextClass} = this.state;
-    let inputKey = isTextClass ? "ta" : "i";
+    let {isTextOrScalarClass} = this.state;
+    let inputKey = isTextOrScalarClass ? "ta" : "i";
     this.call(inputKey, "focus");
     this.setState(state => ({...state, hasGrabbedFocus: true}));
   },
@@ -100,7 +108,6 @@ export const actions = {
     let {qualKeyArr} = this.props;
     let {QualityElement} = this.state;
     let entKey = this.call("i", "getValue");
-    let qualIDArrProm = this.do("post-all-relevant-qualities");
     this.trigger("postUserEntity").then((userEntID) => {
       if (!userEntID) {
         this.setState(state => ({
@@ -112,39 +119,35 @@ export const actions = {
         return;
       }
       postEntity(entKey).then(entID => {
-        // Post relevant qualities, and then update the state.
-        qualIDArrProm.then(qualIDArr => {
-          if (!entID) {
-            this.setState(state => ({
-              ...state, response: <span className="warning">
-                {"Invalid entity path"}
-              </span>,
-              entityElements: undefined,
-            }));
-          }
-          else {
-            this.setState(state => ({
-              ...state,
-              response: "Entity has been assigned the ID of " +
-                entID + ". Now give it some relevant scores.",
-              entityElements: map(qualKeyArr, qualKey => (
-                <QualityElement key={"_" + qualKey}
-                  subjKey={entID} qualKey={qualKey} startOpen
-                />
-              )),
-            }));
-          }
-        });
+        if (!entID) {
+          this.setState(state => ({
+            ...state, response: <span className="warning">
+              {"Invalid entity path"}
+            </span>,
+            entityElements: undefined,
+          }));
+        }
+        else {
+          this.setState(state => ({
+            ...state,
+            response: "Entity has been assigned the ID of " +
+              entID + ". Now give it some relevant scores.",
+            entityElements: map(qualKeyArr, qualKey => (
+              <QualityElement key={"_" + qualKey}
+                subjKey={entID} qualKey={qualKey} startOpen
+              />
+            )),
+          }));
+        }
       });
     });
   },
   "submitTextEntityToInsert": function() {
     let {qualKeyArr, objKey = undefined} = this.props;
-    let {QualityElement} = this.state;
+    let {QualityElement, isScalarClass} = this.state;
     let text = this.call("ta", "getValue");
     let isSingular = this.call("cb-sing", "getIsChecked");
     if (!text) return;
-    let qualIDArrProm = this.do("post-all-relevant-qualities");
     this.trigger("postUserEntity").then((userEntID) => {
       if (!userEntID) {
         this.setState(state => ({
@@ -158,35 +161,39 @@ export const actions = {
       post(
         "/1/1/comments/comments.sm.js./callSMF/postComment",
         [text, objKey, isSingular, true],
-      ).then(entID => {
-        // Post relevant qualities and scalars, and then update the state.
-        postScalarEntity(entID, isSingular ? probabilityQual : isCorrectQual);
-        qualIDArrProm.then(qualIDArr => {
-          this.setState(state => ({
-            ...state,
-            response: "Entity has been assigned the ID of " +
-              entID + ". Now give it some relevant scores.",
-            entityElements: map(qualKeyArr, qualKey => (
-              <QualityElement key={"_" + qualKey}
-                subjKey={entID} qualKey={qualKey} startOpen
-              />
-            )),
-          }));
+      ).then(textEntID => {
+        // Post the relevant scalar, then update the state.
+        postScalarEntity(
+          textEntID, isSingular ? probabilityQual : isCorrectQual
+        ).then(scalarEntID => {
+          if (isScalarClass) {
+            this.setState(state => ({
+              ...state,
+              response: "Scalar entity has been assigned the ID of " +
+                scalarEntID + ". Now give it some relevant scores.",
+              entityElements: map(qualKeyArr, qualKey => (
+                <QualityElement key={"_" + qualKey}
+                  subjKey={scalarEntID} qualKey={qualKey} startOpen
+                />
+              )),
+            }));
+          }
+          else {
+            this.setState(state => ({
+              ...state,
+              response: "Text entity has been assigned the ID of " +
+                textEntID + ". Now give it some relevant scores.",
+              entityElements: map(qualKeyArr, qualKey => (
+                <QualityElement key={"_" + qualKey}
+                  subjKey={textEntID} qualKey={qualKey} startOpen
+                />
+              )),
+            }));
+          }
         });
       });
     });
   },
-  "post-all-relevant-qualities": function() {
-    let {qualKeyArr} = this.props;
-    return new Promise(resolve => {
-      let qualIDPromArr = map(qualKeyArr, qualKey => (
-        fetchOrCreateEntityID(qualKey)
-      ));
-      Promise.all(qualIDPromArr).then(
-        qualIDArr => resolve(qualIDArr)
-      );
-    });
-  }
 };
 
 

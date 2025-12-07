@@ -36,7 +36,7 @@ export function render(props) {
   cache = fromEntries(slice(entries(cache), 0, PAGE_CACHE_SIZE));
   cacheRef[0] = cache;
 
-  return <div className="main-container">{
+  return <div className="app-main-container">{
     mapToArray(cache, (val, key) => (
       <div className={key === newKey ? "open" : "hidden"}>{val}</div>
     ))

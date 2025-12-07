@@ -34,12 +34,12 @@
 }
 
 
-.app-main {
+.app-main-container {
   overflow-y: scroll;
   margin: 0px 20%;
   padding: 20px 50px;
 }
-.app-main.full-screen, .app-main:has(> .full-screen) {
+.app-main-container.full-screen, .app-main:has(> .full-screen) {
   margin: 0 0;
   padding: 0 0;
 }

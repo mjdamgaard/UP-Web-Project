@@ -2,6 +2,7 @@
 import {parseFloat, isNaN} from 'number';
 import {trim} from 'string';
 import {map} from 'array';
+import {fetchOrCreateEntityID} from "/1/1/entities.js";
 import * as AddEntityMenu from "./AddEntityMenu.jsx";
 import * as InputText from 'InputText.jsx';
 import * as EntityReference from "../misc/EntityReference.jsx";
@@ -24,11 +25,13 @@ export function render({
         <div className="header">
           <button onClick={() => {
             this.blur();
-            this.setState(state => ({
-              ...state, menuExtension: <AddEntityMenu key="_add"
-                qualKeyArr={qualKeyArr} objKey={objKey}
-              />
-            }));
+            this.do("post-all-relevant-qualities").then(() => {
+              this.setState(state => ({
+                ...state, menuExtension: <AddEntityMenu key="_add"
+                  qualKeyArr={qualKeyArr} objKey={objKey}
+                />
+              }));
+            });
           }}>{"Add new"}</button>
           <div>
             <span>{"Minimum score:"}</span>
@@ -75,5 +78,16 @@ export const actions = {
 
     // Else trigger 'updateListLimits' in the parent EntityList.
     this.trigger("updateListLimits", [minScore, minWeight]);
-  }
+  },
+  "post-all-relevant-qualities": function() {
+    let {qualKeyArr} = this.props;
+    return new Promise(resolve => {
+      let qualIDPromArr = map(qualKeyArr, qualKey => (
+        fetchOrCreateEntityID(qualKey)
+      ));
+      Promise.all(qualIDPromArr).then(
+        qualIDArr => resolve(qualIDArr)
+      );
+    });
+  },
 };

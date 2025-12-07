@@ -43,6 +43,7 @@ export function render({subjKey, qualKey, scalarKey}) {
       });
       if (userEntID) {
         fetchUserScore(qualKey, subjKey, userEntID).then(score => {
+          score &&= parseFloat(toPrecision(score, 4));
           this.setState(state => ({...state, prevScore: score ?? false}));
         });
       } else {
