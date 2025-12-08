@@ -7,21 +7,17 @@ const argumentsRel = "/1/1/em1.js;get/argumentsRelation";
 const probabilityQual = "/1/1/em1.js;get/probability";
 const isCorrectQual = "/1/1/em1.js;get/isCorrect";
 
-const ArgumentElementPromise =
-  import("../../entity_elements/ArgumentElement.jsx");
+const ArgumentElementPromise = import("./ArgumentContentPage.jsx");
 
 
 export function render({
   objTextKey = undefined, objScalarKey = undefined
 }) {
-  let {ArgumentElement, objTruthScalarKey, isFetching} = this.state;
+  let {objTruthScalarKey, isFetching} = this.state;
   objScalarKey ??= objTruthScalarKey;
 
   if (!isFetching) {
     this.setState(state => ({...state, isFetching: true}));
-    ArgumentElementPromise.then(Component => {
-      this.setState(state => ({...state, ArgumentElement: Component}));
-    });
     if (!objScalarKey) {
       fetchEntityDefinition(objTextKey, ["Is a singular statement"]).then(
         entDef => {
@@ -41,7 +37,7 @@ export function render({
     }
   }
 
-  if (!ArgumentElement || !objScalarKey) {
+  if (!objScalarKey) {
     return <div><div className="fetching">{"..."}</div></div>;
   }
 
@@ -51,7 +47,7 @@ export function render({
     <h3>{"Arguments"}</h3>
     <EntityList key="args"
       objKey={objScalarKey} relKey={argumentsRel}
-      ElementComponent={ArgumentElement} extraElementProps={{
+      ElementComponent={ArgumentElementPromise} extraElementProps={{
         objScalarKey: objScalarKey,
       }}
     />

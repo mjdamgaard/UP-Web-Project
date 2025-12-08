@@ -1,9 +1,9 @@
 
 import {toString} from 'string';
 import {fetchEntityDefinition, fetchEntityPath} from "/1/1/entities.js";
-import * as TextDisplay from "../misc/TextDisplay.jsx";
-import * as ScoreInterface from "../scoring/ScoreInterface.jsx";
-import {fetchSubjectAndQualityIDs} from "../scoring/ScoreInterface.jsx";
+import * as TextDisplay from "../../misc/TextDisplay.jsx";
+import * as ScoreInterface from "../../scoring/ScoreInterface.jsx";
+import {fetchSubjectAndQualityIDs} from "../../scoring/ScoreInterface.jsx";
 
 const probabilityQual = "/1/1/em1.js;get/probability";
 const isCorrectQual = "/1/1/em1.js;get/isCorrect";
@@ -12,7 +12,9 @@ const impactRel = "/1/1/em1.js;get/impact";
 // TODO: Cut off long texts, using some expandable component.
 
 
-export function render({subjScalarKey, objScalarKey}) {
+export function render({
+  entID, entKey = entID, subjScalarKey = entKey, objScalarKey
+}) {
   let {textEntDef, isFetching} = this.state;
 
   if (!isFetching) {

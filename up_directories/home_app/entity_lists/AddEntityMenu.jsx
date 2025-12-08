@@ -2,7 +2,7 @@
 import {post} from 'query';
 import {map} from 'array';
 import {
-  postEntity, checkDomain, postScalarEntity,
+  postEntity, checkDomain, postScalarEntity, postRelationalQuality,
 } from "/1/1/entities.js";
 
 import * as InputText from 'InputText.jsx';
@@ -14,10 +14,16 @@ const textClassPath = "/1/1/em1.js;get/texts";
 const scalarClassPath = "/1/1/em1.js;get/scalars";
 const probabilityQual = "/1/1/em1.js;get/probability";
 const isCorrectQual = "/1/1/em1.js;get/isCorrect";
+const impactRel = "/1/1/em1.js;get/impact";
 
 const QualityElementPromise = import(
   "../entity_elements/QualityElement.jsx"
 );
+
+// TODO: Rather than posting the impact quality here, as I do now, the impact
+// extQualKey should be provided as part of the otherExtQualKeyArr for the
+// arguments EntityList (and let me also make sure that these are posted when
+// 'Add new" is clicked here)..
 
 
 
@@ -169,6 +175,7 @@ export const actions = {
         postScalarEntity(
           textEntID, isSingular ? probabilityQual : isCorrectQual
         ).then(scalarEntID => {
+          postRelationalQuality(scalarEntID, impactRel);
           if (isScalarClass) {
             this.setState(state => ({
               ...state,
