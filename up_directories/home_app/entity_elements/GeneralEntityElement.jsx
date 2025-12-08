@@ -1,6 +1,4 @@
 
-import {toPrecision} from 'number';
-
 import * as EntityReference from "../misc/EntityReference.jsx";
 import * as ExpandableElement from "./ExpandableElement.jsx";
 import * as EntityPage from "../variable_components/EntityPage.jsx";
@@ -26,10 +24,7 @@ export function render({
         <div className="entity-display">
           <EntityReference key="er" entKey={entID} hasLinks={false} />
         </div>
-        <AggregatedScoreDisplay key="as"
-          score={score ? toPrecision(score, 3) : "N/A"}
-          weight={weight ? toPrecision(weight, 3) : "N/A"}
-        />
+        <AggregatedScoreDisplay key="as" score={score} weight={weight} />
       </div>
     </ExpandableElement>
   </div>;

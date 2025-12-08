@@ -36,12 +36,9 @@ export function render({subjScalarKey, objScalarKey}) {
 
   let content = textEntDef ? toString(textEntDef["Content"]) : undefined;
   return <div className="content-page">
-    <div className="text">{
-      !content ? undefined : 
-        (typeof content === "string") ?
-          content :
-          <TextDisplay jsxElement={content} />
-    }</div>
+    <div className="text">
+      <TextDisplay key="_0" jsxElement={content} />
+    </div>
     <div className="quality-elements">
       {scoreInterfaces}
     </div>

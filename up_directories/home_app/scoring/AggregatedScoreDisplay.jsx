@@ -7,6 +7,8 @@ export function render({score, weight, qualKey, subjKey, scoreHandler}) {
   let {scoreData, isFetching} = this.state;
 
   if (score !== undefined) {
+    score = (score === undefined) ? "N/A" : toPrecision(score, 3);
+    weight = (weight === undefined) ? "N/A" : toPrecision(weight, 3);
     return (
       <div className="aggregated-score">
         <div className="score">{score}</div>

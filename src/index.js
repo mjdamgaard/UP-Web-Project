@@ -131,7 +131,7 @@ const scriptInterpreter = new ScriptInterpreter(
 const FRESH_APP_GAS = {
   comp: 1000000,
   import: 1000,
-  fetch: 100,
+  fetch: 200,
   post: 30,
   time: Infinity,
 };
