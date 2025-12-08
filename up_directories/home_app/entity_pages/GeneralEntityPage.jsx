@@ -5,7 +5,7 @@ import * as QualitiesPage from "./subpages/QualitiesPage.jsx";
 import * as CommentsPage from "./subpages/CommentsPage.jsx";
 import * as EntityList from "../entity_lists/EntityList.jsx";
 
-// const commentsRel = "/1/1/em1.js;get/commentsRelation";
+const commentsRel = "/1/1/em1.js;get/commentsRelation";
 const discussionsRel = "/1/1/em1.js;get/discussions";
 const tasksRel = "/1/1/em1.js;get/tasks";
 

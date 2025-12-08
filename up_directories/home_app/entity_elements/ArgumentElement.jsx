@@ -14,7 +14,8 @@ const tasksRel = "/1/1/em1.js;get/tasks";
 
 
 export function render({
-  entID, entKey = entID, objScalarKey, extQualKeyArr = undefined
+  entID, entKey = entID, subjScalarKey = entKey, objScalarKey,
+  extQualKeyArr = undefined
 }) {
   return <EntityPageWithTabs key="0"
     entKey={entKey} initTabKey={"content"} isNested={true} tabs={{
@@ -27,7 +28,7 @@ export function render({
         title: "Content",
         Component: ArgumentContentPage,
         props: {
-          entKey: entKey,
+          subjScalarKey: subjScalarKey,
           objScalarKey: objScalarKey,
         },
       },

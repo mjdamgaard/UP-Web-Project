@@ -4,6 +4,7 @@ import {forEach} from 'array';
 import {slice} from 'string';
 import {fetchMetric, fetchUserScore} from "/1/1/scores.js";
 import {fetchEntityDefinition} from '/1/1/entities.js';
+import {fetchQualityKey} from '../entity_lists/quality_keys.js';
 
 import * as InputRangeAndValue from "../misc/InputRangeAndValue.jsx";
 import * as InputValue from "../misc/InputValue.jsx";
@@ -12,7 +13,7 @@ import * as AggregatedScoreDisplay from "./AggregatedScoreDisplay.jsx";
 
 
 
-export function render({subjKey, qualKey, scalarKey}) {
+export function render({subjKey, qualKey, extQualKey = qualKey, scalarKey}) {
   let userEntID = this.subscribeToContext("userEntID");
   let {
     isFetching, metric, intervalLabel, prevScore, newScore, msg,
@@ -20,14 +21,15 @@ export function render({subjKey, qualKey, scalarKey}) {
   } = this.state;
   let content;
   subjKey ??= subjAndQualKeys[0];
-  qualKey ??= subjAndQualKeys[1];
+  extQualKey ??= subjAndQualKeys[1];
+  qualKey ??= this.state.qualKey;
 
   // If the metric and the previous user score are not yet fetched, do so.
   if (!isFetching) {
     this.setState(state => ({...state, isFetching: true}));
     let subjAndQualKeysProm = new Promise(resolve => {
-      if (subjKey && qualKey) {
-        resolve([subjKey, qualKey]);
+      if (subjKey && extQualKey) {
+        resolve([subjKey, extQualKey]);
       }
       else {
         fetchSubjectAndQualityIDs(scalarKey).then(([subjID, qualID]) => {
@@ -36,19 +38,25 @@ export function render({subjKey, qualKey, scalarKey}) {
       }
     });
     subjAndQualKeysProm.then(subjAndQualKeys => {
-      let [subjKey, qualKey] = subjAndQualKeys;
+      let [subjKey, extQualKey] = subjAndQualKeys;
       this.setState(state => ({...state, subjAndQualKeys: subjAndQualKeys}));
-      fetchMetric(qualKey).then(metric => {
-        this.setState(state => ({...state, metric: metric ?? false}));
-      });
-      if (userEntID) {
-        fetchUserScore(qualKey, subjKey, userEntID).then(score => {
-          score &&= parseFloat(toPrecision(score, 4));
-          this.setState(state => ({...state, prevScore: score ?? false}));
+      fetchQualityKey(extQualKey).then(qualKey => {
+        fetchMetric(qualKey).then(metric => {
+          this.setState(state => ({
+            ...state,
+            metric: metric ?? false,
+            qualKey: qualKey,
+          }));
         });
-      } else {
-        this.setState(state => ({...state, prevScore: false}));
-      }
+        if (userEntID) {
+          fetchUserScore(qualKey, subjKey, userEntID).then(score => {
+            score &&= parseFloat(toPrecision(score, 4));
+            this.setState(state => ({...state, prevScore: score ?? false}));
+          });
+        } else {
+          this.setState(state => ({...state, prevScore: false}));
+        }
+      });
     });
     content = <div className="fetching">{"..."}</div>;
   }
@@ -281,7 +289,7 @@ export const actions = {
 
 
 
-function getIntervalLabel(metric, score) {
+export function getIntervalLabel(metric, score) {
   let intervalLabels = metric["Interval labels"];
   if (!intervalLabels) return undefined;
   let ret;
@@ -294,7 +302,7 @@ function getIntervalLabel(metric, score) {
 }
 
 
-function fetchSubjectAndQualityIDs(scalarKey) {
+export function fetchSubjectAndQualityIDs(scalarKey) {
   return new Promise(resolve => {
     fetchEntityDefinition(scalarKey, ["Subject", "Quality"]).then(entDef => {
       let subjID = slice(entDef["Subject"], 2, -1);

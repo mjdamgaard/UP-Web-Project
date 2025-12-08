@@ -25,6 +25,7 @@ export const GAS_NAMES = {
   comp: "computation",
   import: "import",
   fetch: "fetching",
+  post: "posting",
   dbRead: "DB reading",
   dbWrite: "DB writing",
   time: "time",

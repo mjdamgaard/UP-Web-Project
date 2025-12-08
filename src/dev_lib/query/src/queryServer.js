@@ -14,7 +14,7 @@ const serverQueryHandler = new ServerQueryHandler();
 export async function queryServer(
   isPrivate, route, isPost, postData, options, upNodeID, node, env
 ) {
-  payGas(node, env, {fetch: 1});
+  payGas(node, env, {fetch: 1, post: isPost ? 1 : 0});
   let flags = isPrivate ? FlagTransmitter.getTransmittedFlags(env) : undefined;
   options ||= JSON.parse(jsonStringify(options));
   try {

@@ -132,6 +132,7 @@ const FRESH_APP_GAS = {
   comp: 1000000,
   import: 1000,
   fetch: 100,
+  post: 30,
   time: Infinity,
 };
 const appGas = Object.assign({}, FRESH_APP_GAS);

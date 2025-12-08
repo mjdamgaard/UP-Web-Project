@@ -33,7 +33,10 @@ export function render({qualKeyArr, objKey = undefined}) {
       this.setState(state => ({...state, QualityElement: Component}));
     });
     checkDomain(qualKeyArr[0], textClassPath).then(isTextClass => {
-      this.setState(state => ({...state, isTextOrScalarClass: isTextClass}));
+      this.setState(state => ({
+        ...state,
+        isTextOrScalarClass: state.isTextOrScalarClass || isTextClass,
+      }));
     });
     checkDomain(qualKeyArr[0], scalarClassPath).then(isScalarClass => {
       this.setState(state => ({
