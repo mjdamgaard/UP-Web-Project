@@ -1,8 +1,9 @@
 
 import {parseFloat, isNaN} from 'number';
 import {trim} from 'string';
-import {map} from 'array';
+import {map, concat} from 'array';
 import {fetchOrCreateEntityID} from "/1/1/entities.js";
+
 import * as AddEntityMenu from "./AddEntityMenu.jsx";
 import * as InputText from 'InputText.jsx';
 import * as EntityReference from "../misc/EntityReference.jsx";
@@ -11,9 +12,11 @@ import * as DropDownBox from "../misc/DropDownBox.jsx";
 
 
 export function render({
-  qualKeyArr = [], objKey, minScore = undefined, minWeight = undefined
+  qualKeyArr = [], otherQualKeyArr = [], objKey,
+  minScore = undefined, minWeight = undefined
 }) {
   let {menuExtension} = this.state;
+  let fullQualKeyArr = concat(qualKeyArr, otherQualKeyArr);
 
   return (
     <div className="entity-list-menu">
@@ -28,7 +31,7 @@ export function render({
             this.do("post-all-relevant-qualities").then(() => {
               this.setState(state => ({
                 ...state, menuExtension: <AddEntityMenu key="_add"
-                  qualKeyArr={qualKeyArr} objKey={objKey}
+                  qualKeyArr={fullQualKeyArr} objKey={objKey}
                 />
               }));
             });
@@ -80,9 +83,10 @@ export const actions = {
     this.trigger("updateListLimits", [minScore, minWeight]);
   },
   "post-all-relevant-qualities": function() {
-    let {qualKeyArr} = this.props;
+    let {qualKeyArr = [], otherQualKeyArr = []} = this.props;
+    let fullQualKeyArr = concat(qualKeyArr, otherQualKeyArr);
     return new Promise(resolve => {
-      let qualIDPromArr = map(qualKeyArr, qualKey => (
+      let qualIDPromArr = map(fullQualKeyArr, qualKey => (
         fetchOrCreateEntityID(qualKey)
       ));
       Promise.all(qualIDPromArr).then(

@@ -94,11 +94,16 @@ export async function query(
     );
 
     // Import and execute the given JS module using interpreter.import(),
-    // then return the export of the given alias.
+    // then return the export of the given alias, except if the result is a
+    // promise, in which case also wait for it first.
     let liveModule = await interpreter.import(
       `/${ownUPNodeID}/${homeDirID}/${localPath}`, callerNode, execEnv, true
     );
-    return liveModule.get(alias);
+    let result = liveModule.get(alias);
+    if (result instanceof PromiseObject) {
+      result = await result.promise;
+    }
+    return result;
   }
 
   // If route equals ".../<homeDirID>/<filePath>./call/<alias>[/"<input>]*",

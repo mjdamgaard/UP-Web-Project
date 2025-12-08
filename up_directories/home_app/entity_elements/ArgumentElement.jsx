@@ -61,7 +61,8 @@ export function render({
         props: {
           objKey: entKey,
           relKey: discussionsRel,
-          extQualKeyArr: [[entKey, discussionsRel], [entKey, commentsRel]],
+          extQualKeyArr: [[entKey, discussionsRel]],
+          otherExtQualKeyArr: [[entKey, commentsRel]],
         },
       },
       tasks: {
@@ -70,7 +71,8 @@ export function render({
         props: {
           objKey: entKey,
           relKey: tasksRel,
-          extQualKeyArr: [[entKey, tasksRel], [entKey, commentsRel]],
+          extQualKeyArr: [[entKey, tasksRel]],
+          otherExtQualKeyArr: [[entKey, commentsRel]],
         },
       },
     }}

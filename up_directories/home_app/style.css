@@ -6,9 +6,6 @@
   grid-template-rows: 50px auto;
   background-color: #f8f8f8;
 }
-.app-main {
-  background-color: white;
-}
 
 .app-header {
   height: 50px;
@@ -36,6 +33,7 @@
 
 .app-main-container {
   overflow-y: scroll;
+  background-color: white;
   margin: 0px 20%;
   padding: 20px 50px;
 }

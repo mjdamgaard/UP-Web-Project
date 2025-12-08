@@ -41,6 +41,7 @@ export function render({entKey, extQualKeyArr = undefined, isNested = false}) {
           objKey: entKey,
           relKey: discussionsRel,
           extQualKeyArr: [[entKey, discussionsRel]],
+          otherExtQualKeyArr: [[entKey, commentsRel]],
         },
       },
       tasks: {
@@ -50,6 +51,7 @@ export function render({entKey, extQualKeyArr = undefined, isNested = false}) {
           objKey: entKey,
           relKey: tasksRel,
           extQualKeyArr: [[entKey, tasksRel]],
+          otherExtQualKeyArr: [[entKey, commentsRel]],
         },
       },
     }}

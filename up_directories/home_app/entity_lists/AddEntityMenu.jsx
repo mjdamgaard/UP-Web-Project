@@ -23,7 +23,7 @@ const QualityElementPromise = import(
 
 export function render({qualKeyArr, objKey = undefined}) {
   let {
-    QualityElement, isFetching, response, entityElements,
+    QualityElement, isFetching, response, qualityElements,
     isTextOrScalarClass, cbSingIDKey, cbEntIDKey, hasGrabbedFocus,
   } = this.state;
 
@@ -84,7 +84,7 @@ export function render({qualKeyArr, objKey = undefined}) {
       </button>
     </>}
     <div className="response-display">{response}</div>
-    <div className="qualities">{entityElements}</div>
+    <div className="qualities">{qualityElements}</div>
   </div>;
 }
 
@@ -114,7 +114,7 @@ export const actions = {
           ...state, response: <span className="warning">
             {"User is not logged in"}
           </span>,
-          entityElements: undefined,
+          qualityElements: undefined,
         }));
         return;
       }
@@ -124,7 +124,7 @@ export const actions = {
             ...state, response: <span className="warning">
               {"Invalid entity path"}
             </span>,
-            entityElements: undefined,
+            qualityElements: undefined,
           }));
         }
         else {
@@ -132,7 +132,7 @@ export const actions = {
             ...state,
             response: "Entity has been assigned the ID of " +
               entID + ". Now give it some relevant scores.",
-            entityElements: map(qualKeyArr, qualKey => (
+            qualityElements: map(qualKeyArr, qualKey => (
               <QualityElement key={"_" + qualKey}
                 subjKey={entID} qualKey={qualKey} startOpen
               />
@@ -154,7 +154,7 @@ export const actions = {
           ...state, response: <span className="warning">
             {"User is not logged in"}
           </span>,
-          entityElements: undefined,
+          qualityElements: undefined,
         }));
         return;
       }
@@ -171,7 +171,7 @@ export const actions = {
               ...state,
               response: "Scalar entity has been assigned the ID of " +
                 scalarEntID + ". Now give it some relevant scores.",
-              entityElements: map(qualKeyArr, qualKey => (
+              qualityElements: map(qualKeyArr, qualKey => (
                 <QualityElement key={"_" + qualKey}
                   subjKey={scalarEntID} qualKey={qualKey} startOpen
                 />
@@ -183,7 +183,7 @@ export const actions = {
               ...state,
               response: "Text entity has been assigned the ID of " +
                 textEntID + ". Now give it some relevant scores.",
-              entityElements: map(qualKeyArr, qualKey => (
+              qualityElements: map(qualKeyArr, qualKey => (
                 <QualityElement key={"_" + qualKey}
                   subjKey={textEntID} qualKey={qualKey} startOpen
                 />

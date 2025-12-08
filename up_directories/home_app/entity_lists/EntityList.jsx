@@ -1,8 +1,8 @@
 
-import {fetchRelationalQualityPath, fetchEntityPath} from "/1/1/entities.js";
 import {map} from 'array';
 import {hasType} from 'type';
 import {combineLists, sortListWRTScore} from 'scored_lists';
+import {fetchQualityKey, fetchQualityKeyArray} from "./quality_keys.js";
 
 import * as EntityListMenu from "./EntityListMenu.jsx";
 
@@ -33,8 +33,9 @@ const VariableEntityElementPromise = import(
 // the class.
 export function render({
   qualKey, objKey, relKey, extQualKeyArr = [qualKey ?? [objKey, relKey]],
-  factorArr = [], constList = undefined, constElementArr = undefined,
-  extraElementProps = {}, scoreHandler = undefined, options = undefined,
+  otherExtQualKeyArr = [], factorArr = [], constList = undefined,
+  constElementArr = undefined, extraElementProps = {},
+  scoreHandler = undefined, options = undefined,
   minScore = undefined, minWeight = 10, isAscending = false,
   hideMenu = false, paginationLength = 50, paginationIndex = 0,
 }) {
@@ -42,7 +43,7 @@ export function render({
   this.provideContext("extQualKeyArr", extQualKeyArr);
   let {
     ElementComponent, listArr, isFetching, curMinScore, curMinWeight,
-    qualKeyArr,
+    qualKeyArr, otherQualKeyArr
   } = this.state;
   let content;
 
@@ -54,18 +55,9 @@ export function render({
     // objKey--relKey pair, then fetch the list. We also make sure to get an
     // array of all the resulting qualKeys in the process, which we can pass to
     // EntityListMenu below.
-    let qualKeyPromArr = map(extQualKeyArr, extKey => new Promise(resolve => {
-      if (hasType(extKey, "array")) {
-        let [objKey, relKey] = extKey;
-        fetchRelationalQualityPath(objKey, relKey).then(
-          qualPath => resolve(qualPath)
-        );
-      }
-      else {
-        let qualKey = extKey;
-        fetchEntityPath(qualKey).then(qualPath => resolve(qualPath));
-      }
-    }));
+    let qualKeyPromArr = map(extQualKeyArr, extQualKey => (
+      fetchQualityKey(extQualKey)
+    ));
     Promise.all(qualKeyPromArr).then(qualKeyArr => {
       this.setState(state => ({...state, qualKeyArr: qualKeyArr}));
     });
@@ -88,6 +80,14 @@ export function render({
       });
     }
 
+    // And also fetch the otherQualKeyArr, which are relevant qualities that
+    // does should not (by default) be used for fetching and ordering the
+    // elements of the list, but which might be relevant to score if adding new
+    // entities to the list.
+    fetchQualityKeyArray(otherExtQualKeyArr).then(otherQualKeyArr => {
+        this.setState(state => ({...state, otherQualKeyArr: otherQualKeyArr}));
+    }); 
+
     content = <div className="fetching">{"..."}</div>;
   }
 
@@ -95,7 +95,7 @@ export function render({
   // render a "fetching" placeholder.
   else if (
     listArr === undefined || hasType(ElementComponent, "promise") ||
-    qualKeyArr === undefined
+    qualKeyArr === undefined || otherQualKeyArr === undefined
   ) {
     content = <div className="fetching">{"..."}</div>;
   }
@@ -113,8 +113,8 @@ export function render({
     // Then generate the content of the component.
     content = [
       hideMenu ? undefined : <EntityListMenu key="menu"
-        qualKeyArr={qualKeyArr} objKey={objKey}
-        minScore={minScore} minWeight={minWeight}
+        qualKeyArr={qualKeyArr} otherQualKeyArr={otherQualKeyArr}
+        objKey={objKey} minScore={minScore} minWeight={minWeight}
       />,
       <div className="list-container">
         {constElementArr}
