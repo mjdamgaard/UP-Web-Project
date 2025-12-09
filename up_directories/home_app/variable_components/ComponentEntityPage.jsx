@@ -55,28 +55,25 @@ export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
     let componentName = componentDef["Name"] || "n"; // "n" is a placeholder
     // for the name of the component, or an abbreviation for "no name," if you
     // will.
+    let uriSafeComponentName = encodeURIComponent(componentName);
     let indOfSecondSlash = indexOf(tailURL, "/", 1);
     if (indOfSecondSlash === -1) indOfSecondSlash = undefined;
     let firstTailSegment = slice(tailURL, 1, indOfSecondSlash);
-    let newURLTail = slice(tailURL, firstTailSegment.length + 1);
-    let uriSafeComponentName = encodeURIComponent(componentName);
+    let newTailURL = slice(tailURL, firstTailSegment.length + 1);
+    let newHomeURL = slice(url, 0, -tailURL.length || undefined) +
+      "/" + uriSafeComponentName;
     if (!hasBeenReplaced && firstTailSegment !== uriSafeComponentName) {
       this.setState(state => ({...state, hasBeenReplaced: true}));
-      history.replaceState(
-        null,
-        slice(url, 0, -tailURL.length || undefined) +
-          "/" + uriSafeComponentName + newURLTail
-      );
+      history.replaceState(null, newHomeURL + newTailURL);
       return <div className="fetching"></div>;
     }
-    let newHomeURL = slice(url, 0, -newURLTail.length || undefined);
 
     // Create the set of props to pass to component entity component.
     let defaultProps = {
-      url: url, homeURL: newHomeURL, tailURL: newURLTail,
+      url: url, homeURL: newHomeURL, tailURL: newTailURL,
       history: history, userID: userID,
     };
-    let props = exampleProps || (
+    let props = exampleProps ? {...defaultProps, ...exampleProps} : (
       getExampleProps ? getExampleProps(defaultProps) : defaultProps
     );
 
