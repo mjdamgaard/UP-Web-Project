@@ -62,7 +62,7 @@ staticDevLibs.set("entities", entitiesMod);
 // The following gas objects and constants can be adjusted over time.
 const stdGetReqGas = {
   comp: 10000,
-  import: 100,
+  import: 200,
   fetch: 100,
   time: 6000,
   dbRead: 100,
@@ -80,7 +80,7 @@ const stdPostReqGas = {
 };
 const stdElevatedPostReqGas = {
   comp: 1000000,
-  import: 500,
+  import: 2000,
   fetch: 500,
   time: 15000,
   dbRead: 1000,

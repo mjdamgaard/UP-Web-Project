@@ -191,6 +191,17 @@ export const generalEntityPage2 = {
   "Description": undefined,
 };
 
+export const componentEntityPage = {
+  "Class": abs("./em1.js;get/components"),
+  "Name": "Initial component entity page",
+  "Component path": "/1/2/entity_pages/ComponentEntityPage.jsx",
+  "GitHub repository":
+    "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
+    "dir_uploads/up_directories/home_app/entity_pages",
+  "Author(s)": getUserEntPath("1", "1"),
+  "Description": undefined,
+};
+
 
 
 export const flipGame = {

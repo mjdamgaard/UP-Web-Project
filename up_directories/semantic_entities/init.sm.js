@@ -310,6 +310,12 @@ export function postInitialScores01() {
           abs("./em2.js;get/generalEntityPage2"),
           firstModID, 4
         ),
+        postUserRelationalScoreAndUpdateUserGroups(
+          abs("./em1.js;get/components"),
+          abs("./em1.js;get/entityPage"),
+          abs("./em2.js;get/componentEntityPage"),
+          firstModID, 4
+        ),
       ]);
     },
   
