@@ -278,7 +278,41 @@ export function postInitialScores01() {
         ),
       ]);
     },
-
+    () => {
+      return Promise.all([
+        postUserRelationalScoreAndUpdateUserGroups(
+          abs("./em1.js;get/scalars"),
+          abs("./em1.js;get/entityPage"),
+          abs("./em2.js;get/scalarEntityPage"),
+          firstModID, 4
+        ),
+        postUserRelationalScoreAndUpdateUserGroups(
+          abs("./em1.js;get/qualities"),
+          abs("./em1.js;get/entityPage"),
+          abs("./em2.js;get/qualityEntityPage"),
+          firstModID, 4
+        ),
+        postUserRelationalScoreAndUpdateUserGroups(
+          abs("./em1.js;get/relationalQualities"),
+          abs("./em1.js;get/entityPage"),
+          abs("./em2.js;get/qualityEntityPage"),
+          firstModID, 4
+        ),
+        postUserRelationalScoreAndUpdateUserGroups(
+          abs("./em1.js;get/relations"),
+          abs("./em1.js;get/entityPage"),
+          abs("./em2.js;get/generalEntityPage2"),
+          firstModID, 4
+        ),
+        postUserRelationalScoreAndUpdateUserGroups(
+          abs("./em1.js;get/users"),
+          abs("./em1.js;get/entityPage"),
+          abs("./em2.js;get/generalEntityPage2"),
+          firstModID, 4
+        ),
+      ]);
+    },
+  
     // TODO: Continue.
   ];
 

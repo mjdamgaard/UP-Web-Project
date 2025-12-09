@@ -158,6 +158,39 @@ export const exampleComment = {
 };
 
 
+export const scalarEntityPage = {
+  "Class": abs("./em1.js;get/components"),
+  "Name": "Initial scalar entity page",
+  "Component path": "/1/2/entity_pages/ScalarPage.jsx",
+  "GitHub repository":
+    "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
+    "dir_uploads/up_directories/home_app/entity_pages",
+  "Author(s)": getUserEntPath("1", "1"),
+  "Description": undefined,
+};
+
+export const qualityEntityPage = {
+  "Class": abs("./em1.js;get/components"),
+  "Name": "Initial quality entity page",
+  "Component path": "/1/2/entity_pages/QualityPage.jsx",
+  "GitHub repository":
+    "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
+    "dir_uploads/up_directories/home_app/entity_pages",
+  "Author(s)": getUserEntPath("1", "1"),
+  "Description": undefined,
+};
+
+export const generalEntityPage2 = {
+  "Class": abs("./em1.js;get/components"),
+  "Name": "General entity page with 'About' as the default tab",
+  "Component path": "/1/2/entity_pages/GeneralEntityPage2.jsx",
+  "GitHub repository":
+    "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
+    "dir_uploads/up_directories/home_app/entity_pages",
+  "Author(s)": getUserEntPath("1", "1"),
+  "Description": undefined,
+};
+
 
 
 export const flipGame = {
