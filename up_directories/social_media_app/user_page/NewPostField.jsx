@@ -1,6 +1,6 @@
 
 import {post} from 'query';
-import * as Textarea from 'Textarea.jsx';
+import * as TextArea from 'TextArea.jsx';
 
 
 
@@ -10,7 +10,7 @@ export function render() {
   return (
     <div className="new-post-field">
       <h3>{"Make a new post"}</h3>
-      <Textarea key="ta" />
+      <TextArea key="ta" />
       <button onClick={() => {
         this.do("submitPost");
       }}>{"Post"}</button>

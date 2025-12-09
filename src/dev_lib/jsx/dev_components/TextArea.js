@@ -9,12 +9,12 @@ import {getID} from "./getID.js";
 
 
 export const render = new DevFunction(
-  "Textarea.render", {typeArr: ["object?"]},
+  "TextArea.render", {typeArr: ["object?"]},
   function(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    validateJSXInstance(thisVal, "Textarea.jsx", callerNode, execEnv);
+    validateJSXInstance(thisVal, "TextArea.jsx", callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }
@@ -83,13 +83,13 @@ export const methods = [
 export const actions = {
   "getValue": new DevFunction(
     "getValue", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateJSXInstance(thisVal, "Textarea.jsx", callerNode, execEnv);
+      validateJSXInstance(thisVal, "TextArea.jsx", callerNode, execEnv);
       return thisVal.jsxInstance.domNode.value;
     }
   ),
   "setValue": new DevFunction(
     "setValue", {}, function({thisVal, callerNode, execEnv}, [val]) {
-      validateJSXInstance(thisVal, "Textarea.jsx", callerNode, execEnv);
+      validateJSXInstance(thisVal, "TextArea.jsx", callerNode, execEnv);
       val = getString(val, execEnv);
       let domNode = thisVal.jsxInstance.domNode;
       domNode.value = val;
@@ -97,14 +97,14 @@ export const actions = {
   ),
   "clear": new DevFunction(
     "clear", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateJSXInstance(thisVal, "Textarea.jsx", callerNode, execEnv);
+      validateJSXInstance(thisVal, "TextArea.jsx", callerNode, execEnv);
       let domNode = thisVal.jsxInstance.domNode;
       domNode.value = "";
     }
   ),
   "focus": new DevFunction(
     "focus", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateJSXInstance(thisVal, "Textarea.jsx", callerNode, execEnv);
+      validateJSXInstance(thisVal, "TextArea.jsx", callerNode, execEnv);
       let {jsxInstance} = thisVal;
       let canGrabFocus = !jsxInstance.settings.isOutsideFocusedAppScope(
         jsxInstance, callerNode, execEnv
@@ -120,7 +120,7 @@ export const actions = {
   ),
   "blur": new DevFunction(
     "blur", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateJSXInstance(thisVal, "Textarea.jsx", callerNode, execEnv);
+      validateJSXInstance(thisVal, "TextArea.jsx", callerNode, execEnv);
       thisVal.jsxInstance.domNode.blur();
     }
   ),

@@ -6,7 +6,7 @@ import {
 } from "/1/1/entities.js";
 
 import * as InputText from 'InputText.jsx';
-import * as Textarea from 'Textarea.jsx';
+import * as TextArea from 'TextArea.jsx';
 import * as InputCheckbox from 'InputCheckbox.jsx';
 import * as Label from 'Label.jsx';
 
@@ -74,7 +74,7 @@ export function render({qualKeyArr, objKey = undefined}) {
         "Or write and insert a new text entity."
       }</div>
       <div>
-        <Textarea key="ta" />
+        <TextArea key="ta" />
       </div>
       <div>
         <Label key="l-sing" forKey={cbSingIDKey}>

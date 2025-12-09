@@ -112,7 +112,7 @@ export function putUserBio(text) {
     post(
       abs("./bios.att") + "./_insert/k/" + userID, text
     ).then(
-      wasInserted => resolve(wasInserted)
+      wasInserted => {throw "stop";resolve(wasInserted);}
     );
   });
 }

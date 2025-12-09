@@ -2,7 +2,7 @@
 import {post} from 'query';
 import homePath from "./.id.js";
 import * as JSON from 'json';
-import * as Textarea from 'Textarea.jsx';
+import * as TextArea from 'TextArea.jsx';
 import * as CharCount from './CharCount.jsx';
 
 export function render({userID}) {
@@ -11,7 +11,7 @@ export function render({userID}) {
     <div>
       <CharCount key={1} />
       <div>
-        <Textarea key={0} onInput={dispatchCharCount}/>
+        <TextArea key={0} onInput={dispatchCharCount}/>
       </div>
       <button onClick={() => {
         if (!userID) {
