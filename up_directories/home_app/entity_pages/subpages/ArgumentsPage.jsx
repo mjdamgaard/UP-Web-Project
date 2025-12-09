@@ -4,10 +4,12 @@ import * as EntityList from "../../entity_lists/EntityList.jsx";
 import * as ScoreInterface from "../../scoring/ScoreInterface.jsx";
 
 const argumentsRel = "/1/1/em1.js;get/argumentsRelation";
+const impactRel = "/1/1/em1.js;get/impact";
 const probabilityQual = "/1/1/em1.js;get/probability";
 const isCorrectQual = "/1/1/em1.js;get/isCorrect";
 
-const ArgumentElementPromise = import("./ArgumentContentPage.jsx");
+const ArgumentElementPromise =
+  import("../../entity_elements/ArgumentElement.jsx");
 
 
 export function render({
@@ -46,7 +48,9 @@ export function render({
     <ScoreInterface key="_scalar" scalarKey={objScalarKey} />
     <h3>{"Arguments"}</h3>
     <EntityList key="args"
-      objKey={objScalarKey} relKey={argumentsRel}
+      objKey={objScalarKey} relKey={argumentsRel} otherExtQualKeyArr={[
+        [objScalarKey, impactRel],
+      ]}
       ElementComponent={ArgumentElementPromise} extraElementProps={{
         objScalarKey: objScalarKey,
       }}

@@ -30,8 +30,8 @@ export function render({
   }
 
   let scoreInterfaces = [
-    <ScoreInterface key={"own-score"} scalarKey={subjScalarKey} />,
-    <ScoreInterface key={"impact-score"}
+    <ScoreInterface key={"_own-sc"} scalarKey={subjScalarKey} />,
+    <ScoreInterface key={"_impact-sc"}
       subjKey={subjScalarKey} extQualKey={[objScalarKey, impactRel]}
     />,
   ];
