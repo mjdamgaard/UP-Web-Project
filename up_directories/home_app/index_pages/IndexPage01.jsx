@@ -1,4 +1,5 @@
 
+import * as EntityList from "../entity_lists/EntityList.jsx";
 
 
 export function render() {
@@ -20,18 +21,18 @@ const indexpage = <>
     }</p>
     <p>{
       "The User-Programmable Web (UP Web) is meant to be an open-source " +
-      "network of user-programmed websites and applications. This this " +
-      "website, UP-Web.org, is the first, pioneering website in this network."
+      "network of user-programmed websites and applications. And this " +
+      "website, UP-Web.org, is the first, pioneering one in this network!"
     }</p>
-    <p>{
+    <p>{[
       "And by \"user-programmable,\" we refer to the fact that almost " +
       "everything you see on this webpage is generated from source code " +
-      "components that is uploaded to the website, by the users."
-    }</p>
+      "components that is uploaded to the website ", <i>{"by the users."}</i>,
+    ]}</p>
     <p>{
       "In fact, the only thing on this webpage that is not programmed and " +
-      "uploaded by a user is the account menu at the top right of the page. " +
-      "Everything else is user-programmed, even this very index page!"
+      "uploaded by a user is the account menu at the top right of this " +
+      "webpage. Everything else is user-programmed, even this very index page!"
     }</p>
   </section>
 
@@ -42,15 +43,28 @@ const indexpage = <>
       "how that is done."
     }</p>
     <p>{
-      "Below you see a list of alternative index page component, all " +
-      "uploaded by users of this website. TODO: Insert description of how to " +
-      "click on an entity list element and navigate to the given component's " +
-      "page to view it."
+      "Below you see a list of proposed index page component, all " +
+      "uploaded by users of this website. This is a dynamic list where the " +
+      "order depend on how the users of this website have scored each " +
+      "component. And if you click on the element at the very top of the " +
+      "list, called 'Index page 1.0,' and then click on 'View component,' " +
+      "you will see that you are lead to a page with the exact same content " +
+      "as this index page."
     }</p>
+    <div className="index-page-list">
+      <EntityList key="_idx-list" classKey="/1/1/em2.js;get/indexPages"
+        paginationLength={10}
+      />
+    </div>
     <p>{
-      "You might notice that the first component on the list is "
+      "This is no coincidence, as this index page is determined by whatever " +
+      "component element is at the top of this list. Thus, if you have a " +
+      "proposal for a different index page for this website, you can first " +
+      "of all upload that component to the same list, and then give it a " +
+      "high score, and hope that other users scores it highly as well."
     }</p>
   </section>
+
 
   <section>
     <h2>{"..."}</h2>

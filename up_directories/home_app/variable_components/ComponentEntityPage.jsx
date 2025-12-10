@@ -2,15 +2,17 @@
 import {slice, indexOf} from 'string';
 import {encodeURIComponent} from 'query';
 import {includes} from 'array';
-import {fetchEntityDefinition} from "/1/1/entities.js";
+import {fetchEntityDefinition, fetchEntityPath} from "/1/1/entities.js";
 import * as PhishingWarning from "./PhishingWarning.jsx";
+
 
 
 export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
   let history = this.subscribeToContext("history");
   let userID = this.subscribeToContext("userID");
   let {
-    componentDef, Component, isFetching, hasBeenDismissed, hasBeenReplaced,
+    componentDef, Component, isTrusted, isFetching,
+    hasBeenDismissed, hasBeenReplaced,
   } = this.state;
 
   // If this component's definition object is not already gotten, fetch it.
@@ -28,10 +30,13 @@ export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
         }));
       });
     });
+    fetchIsTrusted(entKey).then(isTrusted => {
+      this.setState(state => ({...state, isTrusted: isTrusted}));
+    });
     return <div className="fetching">{"..."}</div>;
   }
 
-  else if (Component === undefined) {
+  else if (Component === undefined || isTrusted === undefined) {
     return <div className="fetching">{"..."}</div>;
   }
 
@@ -79,13 +84,14 @@ export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
 
     // Then return the component page.
     let className = "component-page" + (useFullScreen ? " full-screen" : "");
+    isTrusted ||= hasBeenDismissed;
     return <div className={className}>
-      {hasBeenDismissed ? undefined :
+      {isTrusted ? undefined :
         <PhishingWarning key="w" entKey={entKey}
           sessionStorage={sessionStorage} localStorage={localStorage}
         />
       }
-      <div className={"component" + (hasBeenDismissed ? "" : " blurred")}>
+      <div className={"component" + (isTrusted ? "" : " blurred")}>
         <Component {...props} key="_0" />
       </div>
     </div>;
@@ -137,3 +143,24 @@ export const actions = {
     this.setState(state => ({...state, hasBeenDismissed: true}));
   },
 };
+
+
+
+
+
+// TODO: Check a scored list instead as well to get the isTrusted value, rather
+// than just checking a hardcoded list. (For now, that list is just all
+// component entities exported from /1/1/em*.)
+
+export function fetchIsTrusted(entKey) {
+  return new Promise(resolve => {
+    fetchEntityPath(entKey).then(entPath => {
+      if (slice(entPath, 0, 7) === "/1/1/em") {
+        resolve(true);
+      }
+      else {
+        resolve(false);
+      }
+    });
+  });
+}

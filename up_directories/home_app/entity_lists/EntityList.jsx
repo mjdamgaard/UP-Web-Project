@@ -1,10 +1,12 @@
 
-import {map} from 'array';
+import {map, slice} from 'array';
 import {hasType} from 'type';
 import {combineLists, sortListWRTScore} from 'scored_lists';
 import {fetchQualityKey, fetchQualityKeyArray} from "./quality_keys.js";
 
 import * as EntityListMenu from "./EntityListMenu.jsx";
+
+const membersRel = "/1/1/em1.js;get/members";
 
 const VariableEntityElementPromise = import(
   "../variable_components/VariableEntityElement.jsx"
@@ -18,12 +20,14 @@ const VariableEntityElementPromise = import(
 // that for these lists, the user can add a comment directly.
 
 // By the way, another todo, which is not about this component directly, is
-// to extend and enhance our scoreHandler such that we don't just use the
+// to extend and improve our scoreHandler such that we don't just use the
 // second-hand trusted user group for everything. In particular we should use
 // a more carefully governed user group for UI safety (used to prevent
 // phishing attempts, and such). *Well, maybe we should just increase the
 // weight required for the variable components to use the component entity.
 // Let's just do this for now.
+
+// TODO: Implement the pagination.
 
 
 
@@ -32,7 +36,9 @@ const VariableEntityElementPromise = import(
 // from the relational quality formed by either the relation--object pair, or
 // the class.
 export function render({
-  qualKey, objKey, relKey, extQualKeyArr = [qualKey ?? [objKey, relKey]],
+  classKey, qualKey, objKey = classKey,
+  relKey = classKey ? membersRel : undefined,
+  extQualKeyArr = [qualKey ?? [objKey, relKey]],
   otherExtQualKeyArr = [], factorArr = [], constList = undefined,
   constElementArr = undefined, extraElementProps = {},
   scoreHandler = undefined, options = undefined,
@@ -109,6 +115,7 @@ export function render({
       constList ?
         combineLists([constList, ...listArr], factorArr, isAscending) :
         combineLists(listArr, factorArr, isAscending);
+    list = slice(list, 0, paginationLength);
 
     // Then generate the content of the component.
     content = [
@@ -169,5 +176,6 @@ export const actions = {
 
 
 export const styleSheetPaths = [
+  abs("../style.css"),
   abs("./EntityList.css"),
 ];

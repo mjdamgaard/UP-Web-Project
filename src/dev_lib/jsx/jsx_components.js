@@ -276,6 +276,14 @@ class JSXInstance {
       catch (err) {
         return this.getFailedComponentDOMNode(err, replaceSelf);
       }
+      if (!newDOMNode?.tagName) {
+        return this.getFailedComponentDOMNode(
+          new RuntimeError(
+            "A JSX component must return "
+          ),
+          replaceSelf
+        );
+      }
     }
 
     // Then remove any existing child instances that wasn't marked during the
@@ -378,6 +386,11 @@ class JSXInstance {
       }
       else {
         newDOMNode = new Text();
+      }
+      if (isOuterElement) {
+        let spanElement = document.createElement("span");
+        spanElement.append(newDOMNode);
+        newDOMNode = spanElement;
       }
     }
 
