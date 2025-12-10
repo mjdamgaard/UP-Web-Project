@@ -105,7 +105,8 @@ class JSXInstance {
     this.childInstances = new Map();
     this.props = undefined;
     this.state = undefined;
-    this.refs = undefined;
+    this.prevState = undefined;
+    this.ref = undefined;
     this.contextProvisions = undefined;
     this.contextSubscriptions = undefined;
     this.callerNode = callerNode;
@@ -137,15 +138,17 @@ class JSXInstance {
     // instance is not forced to rerender, or if the instance has failed before.
     if (
       this.isFailed || !force && this.props !== undefined &&
-      deepCompareExceptMutableAndRefs(props, this.props)
+      deepCompareExceptMutableAndRef(props, this.props) &&
+      deepCompareExceptMutableAndRef(this.state, this.prevState)
     ) {
       return this.domNode;
     }
+    this.prevState = this.state;
 
     // Record the props. And on the first render only, initialize the state,
-    // and record the refs as well (which cannot be changed by a subsequent
-    // render). Also initialize the actions, methods, and events of the
-    // instance.
+    // and record the ref prop as well (which cannot be changed by a
+    // subsequent render). Also initialize the actions, methods, and events of
+    // the instance.
     this.props = props;
     let state;
     if (this.state === undefined) {
@@ -171,8 +174,8 @@ class JSXInstance {
       }
       this.state = state ?? {};
 
-      // And store the refs object.
-      this.refs = props["refs"] ?? {};
+      // And store the ref prop.
+      this.ref = props["ref"];
 
       // And set the actions, methods, and events.
       this.prepareActionsMethodsAndEvents(callerNode, callerEnv);
@@ -501,7 +504,7 @@ class JSXInstance {
           /* Mouse events */
           // WARNING: In all documentations of this 'onClick prop, it should be
           // warned that one should not call a callback from the parent
-          // instance (e.g. handed down through refs), unless one is okay with
+          // instance (e.g. handed down through ref), unless one is okay with
           // bleeding the CAN_POST and REQUEST_ORIGIN privileges granted to
           // this onClick handler function into the parent instance.
           // *Well, this is done quite simply: It should be explained how click
@@ -861,7 +864,7 @@ class JSXInstance {
 
 
 
-  queueRerender(interpreter) {
+  queueRerender(interpreter, force = true) {
     // Unless one is already currently queued, queue a Promise (that is
     // executed on the next tick) to rerender the instance, but only if it has
     // not been discarded since then.
@@ -874,7 +877,7 @@ class JSXInstance {
           // for every single triggered event or call.
           this.render(
             this.props, this.isDecorated, interpreter,
-            this.callerNode, this.callerEnv, true, true
+            this.callerNode, this.callerEnv, true, force
           );
         }
       });
@@ -905,7 +908,7 @@ class JSXInstance {
     this.contextProvisions ??= {};
     let {subscribers, prevContext} = this.contextProvisions[key] ?? {};
       this.contextProvisions[key] = {subscribers: new Map(), context: context};
-    if (subscribers && !deepCompareExceptMutableAndRefs(context, prevContext)) {
+    if (subscribers && !deepCompareExceptMutableAndRef(context, prevContext)) {
       subscribers.forEach((_, jsxInstance) => {
         jsxInstance.queueRerender(interpreter);
       });
@@ -973,7 +976,7 @@ export class JSXInstanceInterface extends ObjectObject {
       /* Properties */
       "props": this.jsxInstance.props,
       "state": this.jsxInstance.state,
-      "refs": this.jsxInstance.refs,
+      "ref": this.jsxInstance.ref,
       "component": this.jsxInstance.componentModule,
       "isFirstRender": this.jsxInstance.isFirstRender,
       /* Methods */
@@ -1059,8 +1062,9 @@ export class JSXInstanceInterface extends ObjectObject {
   // in the continued execution of a render() after it has set the new state,
   // but only be visible on a subsequent rerender.
   setState = new DevFunction(
-    "setState", {},
-    ({callerNode, execEnv, interpreter}, [newStateOrCallback]) => {
+    "setState", {}, (
+      {callerNode, execEnv, interpreter}, [newStateOrCallback, force = false]
+    ) => {
       let newState = newStateOrCallback;
       if (newState instanceof FunctionObject) {
         newState = interpreter.executeFunction(
@@ -1068,13 +1072,13 @@ export class JSXInstanceInterface extends ObjectObject {
         );
       }
       this.jsxInstance.state = newState;
-      this.jsxInstance.queueRerender(interpreter);
+      this.jsxInstance.queueRerender(interpreter, force);
     }
   );
 
   // rerender() is equivalent of calling setState() on the current state; it
   // just forces a rerender.
-  rerender = new DevFunction("rerender", {}, ({interpreter}) => {
+  rerender = new DevFunction("rerender", {}, ({interpreter}, []) => {
     this.jsxInstance.queueRerender(interpreter);
   });
 
@@ -1361,7 +1365,7 @@ export function clearAttributes(elementNode, exceptions) {
 
 
 
-function deepCompareExceptMutableAndRefs(props1, props2) {
+function deepCompareExceptMutableAndRef(props1, props2) {
   if (props1 === props2) return true;
   if (typeof props1 !== typeof props2) return false;
   if (typeof props1 !== "object") return false;
@@ -1375,11 +1379,11 @@ function deepCompareExceptMutableAndRefs(props1, props2) {
     return false;
   }
 
-  // Loop through each pair of properties that are not the 'refs' property and
+  // Loop through each pair of properties that are not the 'ref' property and
   // deep-compare them.
   let ret = true;
   Object.entries(props1).some(([key, val1]) => {
-    if (key === "refs") {
+    if (key === "ref") {
       return false; // continue the some() iteration.
     }
     let val2 = Object.hasOwn(props2, key) ? props2[key] : undefined;
