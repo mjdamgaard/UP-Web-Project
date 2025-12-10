@@ -175,14 +175,15 @@ export function renderHelper({
     ];
   }
 
-  // Else if tailURL = "/tutorials", go to a tutorial index page, which
+  // Else if firstSegment == "tutorials", go to a tutorial index page, which
   // similarly to the home page is also supposed to be a variable, user-
   // determined page some point. TODO: Implement that.
-  if (tailURL === "/tutorials") {
+  if (firstSegment === "tutorials") {
+    let newHomeURL = homeURL + "/tutorials";
     return [
       "tut",
       <main className="app-main">
-        <TutorialIndexPage key="tut"/>
+        <TutorialIndexPage key="tut" url={url} homeURL={newHomeURL} />
       </main>
     ];
   }

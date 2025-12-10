@@ -1,20 +1,18 @@
 
+import * as ILink from 'ILink.jsx';
 import * as EntityList from "../entity_lists/EntityList.jsx";
 
 
 export function render() {
-  return indexpage;
+  return indexPage;
 }
 
 
-export const styleSheetPaths = [
-  abs("../style.css"),
-];
 
-
-const indexpage = <>
+const indexPage = <>
+  <h1>{"The User-Programmable Web"}</h1>
   <section>
-    <h1>{"Welcome to the User-Programmable Web"}</h1>
+    <h2>{"Welcome!"}</h2>
     <p>{
       "Welcome to the the User-Programmable Web! Or rather, welcome to an " +
       "initial prototype of a user-programmable website."
@@ -27,7 +25,7 @@ const indexpage = <>
     <p>{[
       "And by \"user-programmable,\" we refer to the fact that almost " +
       "everything you see on this webpage is generated from source code " +
-      "components that is uploaded to the website ", <i>{"by the users."}</i>,
+      "components that is uploaded to the website ", "by the users!",
     ]}</p>
     <p>{
       "In fact, the only thing on this webpage that is not programmed and " +
@@ -37,7 +35,7 @@ const indexpage = <>
   </section>
 
   <section>
-    <h1>{"Changing this index page"}</h1>
+    <h2>{"Changing this index page"}</h2>
     <p>{
       "If you want to help change this index page into a better one, here " +
       "how that is done."
@@ -61,16 +59,64 @@ const indexpage = <>
       "component element is at the top of this list. Thus, if you have a " +
       "proposal for a different index page for this website, you can first " +
       "of all upload that component to the same list, and then give it a " +
-      "high score, and hope that other users scores it highly as well."
+      "high score, and hope that other users does the same."
+    }</p>
+    <p>{[
+      "To learn how to create and upload new components. follow the " +
+      "tutorials at ",
+      <ILink key="tut-link-1" href="/tutorials" >
+        {"up-web.org/tutorials"}
+      </ILink>,
+      "."
+    ]}</p>
+  </section>
+
+  <section>
+    <h2>{"An Everything Website"}</h2>
+    <p>{
+      "In a near future we might change this index page to include some kind " +
+      "of feed, and preferably one that is based on the users own " +
+      "preferences. This feed could e.g. contain ongoing projects and " +
+      "discussions, such that the users can easily update themselves with " +
+      "the goings on of the website, and the UP Web Project at large."
+    }</p>
+    <p>{
+      "But apart from this front page feed, the index page should also " +
+      "contain links to all of the most useful user-uploaded web apps and " +
+      "webpages. And these apps and pages can also further contain links to " +
+      "app and pages, which means that this index will ultimately serve as " +
+      "an index from which you can navigate to all the useful user-uploaded " +
+      "apps and webpages that currently exist."
+    }</p>
+    <p>{
+      "And since there will be practically no limit of what this user-" +
+      "uploaded apps can do, it means that this website can in principle " +
+      "end up offering alternatives to all kinds of websites in existence."
+    }</p>
+    <p>{
+      "Thus, the ultimate goal of this website is to become what we might " +
+      "call an \"Everything Website.\""
+    }</p>
+  </section>
+
+  <section>
+    <h2>{"User-programmed backend modules"}</h2>
+    <p>{
+      "..."
     }</p>
   </section>
 
 
   <section>
-    <h2>{"..."}</h2>
+    <h2>{"Safety"}</h2>
     <p>{
-      "For more information, " +
-      "see https://github.com/mjdamgaard/UP-Web-Project."
+      "..."
     }</p>
   </section>
 </>;
+
+
+
+export const styleSheetPaths = [
+  abs("../style.css"),
+];
