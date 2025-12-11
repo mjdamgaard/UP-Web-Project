@@ -180,10 +180,11 @@ export function renderHelper({
   // determined page some point. TODO: Implement that.
   if (firstSegment === "tutorials") {
     let newHomeURL = homeURL + "/tutorials";
+    let key = "tut-" + tailURL;
     return [
-      "tut",
+      key,
       <main className="app-main">
-        <TutorialIndexPage key="tut" url={url} homeURL={newHomeURL} />
+        <TutorialIndexPage key={key} url={url} homeURL={newHomeURL} />
       </main>
     ];
   }

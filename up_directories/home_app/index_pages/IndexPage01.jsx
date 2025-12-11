@@ -54,9 +54,13 @@ const indexPage = <>
         paginationLength={10}
       />
     </div>
+    <br/>
     <p>{
       "This is no coincidence, as this index page is determined by whatever " +
-      "component element is at the top of this list. Thus, if you have a " +
+      "component element is at the top of this list."
+    }</p>
+    <p>{
+      "So if you have a " +
       "proposal for a different index page for this website, you can first " +
       "of all upload that component to the same list, and then give it a " +
       "high score, and hope that other users does the same."
@@ -75,7 +79,7 @@ const indexPage = <>
     <h2>{"An Everything Website"}</h2>
     <p>{
       "In a near future we might change this index page to include some kind " +
-      "of feed, and preferably one that is based on the users own " +
+      "of feed, and preferably one that is based on the users' own " +
       "preferences. This feed could e.g. contain ongoing projects and " +
       "discussions, such that the users can easily update themselves with " +
       "the goings on of the website, and the UP Web Project at large."

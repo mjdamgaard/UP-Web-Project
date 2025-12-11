@@ -4,6 +4,7 @@ import {substring} from 'string';
 import * as ILink from 'ILink.jsx';
 import * as EntityList from "../entity_lists/EntityList.jsx";
 import * as GettingStartedPage from "./getting_started.jsx";
+import * as ComponentsIntroPage from "./components.jsx";
 
 
 export function render({url, homeURL}) {
@@ -20,7 +21,7 @@ export function render({url, homeURL}) {
   }
 
   else if (tailURL === "/jsx-components") {
-    return <GettingStartedPage key="0" />;
+    return <ComponentsIntroPage key="0" />;
   }
 }
 
