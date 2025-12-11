@@ -72,10 +72,16 @@ export const createJSXApp = new DevFunction(
 
     // Then render the root instance and insert it into the document.
     let rootParent = document.getElementById("up-app-root");
+    let renderResolve;
+    let renderPromise = new Promise(resolve => {
+      renderResolve = resolve;
+    });
     let appNode = rootInstance.render(
-      props, false, interpreter, callerNode, appEnv, false, true, true
+      props, false, interpreter, callerNode, appEnv, renderPromise,
+      false, true, true,
     );
     rootParent.replaceChildren(appNode);
+    renderResolve();
   }
 );
 
@@ -115,6 +121,7 @@ class JSXInstance {
     this.isFailed = undefined;
     this.isFirstRender = true;
     this.rerenderPromise = undefined;
+    this.renderPromise = undefined;
     this.actions = {};
     this.methods = {};
     this.events = {};
@@ -126,13 +133,14 @@ class JSXInstance {
 
 
   render(
-    props = {}, isDecorated, interpreter, callerNode, callerEnv,
+    props = {}, isDecorated, interpreter, callerNode, callerEnv, renderPromise,
     replaceSelf = true, force = false,
   ) {
     decrCompGas(callerNode, callerEnv, 5);
     this.isDecorated = isDecorated;
     this.callerNode = callerNode;
     this.callerEnv = callerEnv;
+    this.renderPromise = renderPromise;
 
     // Return early if the props are the same as on the last render, and the
     // instance is not forced to rerender, or if the instance has failed before.
@@ -403,7 +411,7 @@ class JSXInstance {
     // in which case we wrap it in a div element.
     else if (jsxElement.isFragment || isArray) {
       let childArr = isArray ? jsxElement : jsxElement.props["children"] ?? [];
-      newDOMNode = (curNode?.tagName === "DIV") ?
+      newDOMNode = (curNode === this.domNode && curNode?.tagName === "DIV") ?
         clearAttributes(curNode) :
         document.createElement("div");
       this.replaceChildren(
@@ -450,7 +458,7 @@ class JSXInstance {
       );
       newDOMNode = childInstance.render(
         jsxElement.props, isOuterElement, interpreter,
-        jsxElement.node, childEnv, false
+        jsxElement.node, childEnv, this.renderPromise, false
       );
     }
 
@@ -459,7 +467,9 @@ class JSXInstance {
     // attributes and/or append some content to it.
     else {
       let tagName = jsxElement.tagName;
-      newDOMNode = (curNode?.tagName === tagName.toUpperCase()) ?
+      newDOMNode = (
+        curNode === this.domNode && curNode?.tagName === tagName.toUpperCase()
+      ) ?
         clearAttributes(curNode) :
         document.createElement(tagName);
 
@@ -869,16 +879,21 @@ class JSXInstance {
     // executed on the next tick) to rerender the instance, but only if it has
     // not been discarded since then.
     if (!this.rerenderPromise) {
-      this.rerenderPromise = new Promise(resolve => resolve()).then(() => {
+      this.rerenderPromise = this.renderPromise.then(() => {
         delete this.rerenderPromise;
         if (!this.isDiscarded) {
           // Make sure to use the same callerNode and callerEnv as on the
           // previous render, which is done in order to not increase the memory
           // for every single triggered event or call.
+          let renderResolve;
+          let renderPromise = new Promise(resolve => {
+            renderResolve = resolve;
+          });
           this.render(
             this.props, this.isDecorated, interpreter,
-            this.callerNode, this.callerEnv, true, force
+            this.callerNode, this.callerEnv, renderPromise, true, force
           );
+          renderResolve();
         }
       });
     }

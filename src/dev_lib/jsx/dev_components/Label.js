@@ -1,9 +1,9 @@
 
 import {
-  DevFunction, ArgTypeError, ObjectObject,
+  DevFunction, ObjectObject,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, JSXInstanceInterface, clearAttributes
+  DOMNodeObject, validateJSXInstance, clearAttributes
 } from "../jsx_components.js";
 import {getID} from "./getID.js";
 
@@ -15,11 +15,7 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    if (!(thisVal instanceof JSXInstanceInterface)) throw new ArgTypeError(
-      "Label.render(): 'this' is not a JSXInstance",
-      callerNode, execEnv
-    );
-
+    validateJSXInstance(thisVal, "Label.jsx", callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }
