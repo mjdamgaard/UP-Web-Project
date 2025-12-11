@@ -605,11 +605,11 @@ proc: BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
         DO RELEASE_LOCK(CONCAT("ATT", fileID));
         SELECT numToHex(newTextID) AS newTextID;
     ELSE
-        UPDATE AutoKeyTextTables
-        SET text_data = textData
-        WHERE file_id = fileID AND list_id = listID AND text_id = textID;
+        INSERT INTO AutoKeyTextTables (file_id, list_id, text_id, text_data)
+        VALUES (fileID, listID, textID, textData)
+        ON DUPLICATE KEY UPDATE text_data = textData;
 
-        SELECT ROW_COUNT() AS wasUpdated;
+        SELECT 1 AS wasUpdated;
     END IF;
 END; END proc //
 DELIMITER ;
