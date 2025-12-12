@@ -1,11 +1,6 @@
 
 
 
-export function render({italic, children}) {
-  if (italic) {
-    return <i>{children}</i>;
-  }
-  else {
-    return <span>{children}</span>;
-  }
+export function render() {
+  return <span>{"I am a child component!"}</span>;
 }

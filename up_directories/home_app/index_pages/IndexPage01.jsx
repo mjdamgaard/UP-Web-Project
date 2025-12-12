@@ -49,12 +49,11 @@ const indexPage = <>
       "you will see that you are lead to a page with the exact same content " +
       "as this index page."
     }</p>
-    <div className="index-page-list">
+    <p>
       <EntityList key="_idx-list" classKey="/1/1/em2.js;get/indexPages"
         paginationLength={10}
       />
-    </div>
-    <br/>
+    </p>
     <p>{
       "This is no coincidence, as this index page is determined by whatever " +
       "component element is at the top of this list."
@@ -66,12 +65,11 @@ const indexPage = <>
       "high score, and hope that other users does the same."
     }</p>
     <p>{[
-      "To learn how to create and upload new components. follow the " +
-      "tutorials at ",
+      "To learn how to create and upload new components, follow the " +
       <ILink key="tut-link-1" href="/tutorials" >
-        {"up-web.org/tutorials"}
+        {"tutorials"}
       </ILink>,
-      "."
+      " of this website."
     ]}</p>
   </section>
 

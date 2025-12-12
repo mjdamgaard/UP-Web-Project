@@ -69,13 +69,18 @@
 
 
 code {
+  display: inline-block;
   white-space: pre;
   color: rgb(15, 29, 29);
+  padding-left: 0.5em;
+  padding-right: 40px;
 }
 
 code.command {
-  display: inline-block;
-  padding-right: 40px;
+  background-color: #303030;
+  color: white;
+}
+code.jsx {
   background-color: #303030;
   color: white;
 }
