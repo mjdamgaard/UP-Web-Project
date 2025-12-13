@@ -11,7 +11,7 @@ export function render() {
 
   // return <div>
   //   <h1>{"Hello, World!"}</h1>
-  //   <ExampleComponent2 key="ex-1" />
+  //   <ExampleComponent1 key="ex-1" />
   // </div>;
 
   // return <div>

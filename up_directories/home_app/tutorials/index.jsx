@@ -28,7 +28,7 @@ export function render({url, homeURL}) {
 
 
 
-const indexPage = <>
+const indexPage = <div className="text-page">
   <h1>{"Tutorials and introductions"}</h1>
   <section>
     <h2>{"Basic tutorials for getting started"}</h2>
@@ -103,4 +103,4 @@ const indexPage = <>
       />
     </div>
   </section>
-</>;
+</div>;

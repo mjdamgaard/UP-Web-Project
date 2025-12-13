@@ -1,8 +1,11 @@
 
 import * as ILink from 'ILink.jsx';
 import * as ELink from 'ELink.jsx';
-import * as EntityList from "../entity_lists/EntityList.jsx";
-import * as Example from "./hello_world/main.jsx";
+import * as TextDisplay from "../misc/TextDisplay.jsx";
+import * as Result0 from "./hello_world/result_0.jsx";
+import * as Result1 from "./hello_world/result_1.jsx";
+import * as Result2 from "./hello_world/result_2.jsx";
+import * as Result3 from "./hello_world/result_3.jsx";
 
 
 export function render() {
@@ -11,10 +14,10 @@ export function render() {
 
 
 
-const page = <>
+const page = <div className="text-page">
   <h1>{"Introduction to the front-end JSX components"}</h1>
   <section>
-    <h2>{"About this tutorial"}</h2>
+    <h2>{"A framework similar to React"}</h2>
     <p>{[
       "The system used for building front-end components is inspired a lot " +
       "by React. So if you already know React, it should be easy to learn " +
@@ -25,26 +28,36 @@ const page = <>
       <ELink key="link-w3" href="https://www.w3schools.com">
         {"www.w3schools.com"}
       </ELink>,
-      "."
+      " first."
     ]}</p>
     <p>{
-      "You are also very welcome to send an e-mail to mads@up-web.org if you " +
-      "have any questions. And if you run into any bugs that you don't know " +
-      "how to solve, please feel free to send an e-mail as well, as I " +
-      "might be able to help you."
+      "To see how components work in this framework, let us first of all " +
+      "take a look at the \"Hello, World!\" example from the " +
+      "\"Getting started\" tutorial, where the component you uploaded was " +
+      "defined from these lines of code:"
     }</p>
-  </section>
-
-
-  <section>
-    <h2>{"A system similar to React"}</h2>
+    <p>
+      <code className="jsx">{[
+        'export function render() {\n',
+        '  return <h1>{"Hello, World!"}</h1>;\n',
+        '}',
+      ]}</code>
+    </p>
     <p>{
-      "If you take a look at the \"Hello, World!\" example from the " +
-      "\"Getting started\" tutorial, you will see that the rendered \"Hello, " +
+      "which produced this result:"
+    }</p>
+    <p>{
+      <TextDisplay key="_ex0" >
+        <Result0 key="0" />
+      </TextDisplay>
+    }</p>
+    <p>{
+      "Here we see that the rendered \"Hello, " +
       "World!\" text is returned from an exported function called render(). " +
       "This is because, unlike React where components are generally defined " +
-      "only a single render function, components in this system are defined " +
-      "by whole modules, where the render() function is just one of " +
+      "from only a single render function, components in this framework are " +
+      "defined " +
+      "by whole modules. The render() function is just one of " +
       "functions/methods that define the component."
     }</p>
     <p>{
@@ -52,7 +65,7 @@ const page = <>
       "module, let us see how importing a component works."
     }</p>
     <p>{
-      "In the \"Hello, World!\" main.jsx file that we saw in the " +
+      "In the \"Hello, World!\" main.jsx file that was used in the " +
       "\"Getting started\" tutorial, there is an out-commented line at Ln. 2 " +
       "that reads:"
     }</p>
@@ -65,15 +78,13 @@ const page = <>
       "Anyone familiar with JS modules will know that this has the effect of " +
       "importing all exports in the file at \"./ExampleComponent1.jsx\" " +
       "(relative to the importing module), and gather them all into a single " +
-      "object, which is then declared as a variable called " +
+      "object, which is then assigned to a variable called " +
       "'ExampleComponent1.'"
     }</p>
     <p>{
       "Try commenting in this line. (Your IDE or editor ought to have " +
-      "shortcut for doing so. And if not, you ought to install one that " +
-      "has, and also one that supports syntax highlighting for JSX in " +
-      "particular, such as VSCode (with the right packages). For instance, " +
-      "in VSCode, the shortcut is Ctrl + Shift + '/'.) " +
+      "shortcut for doing so. For instance, " +
+      "in VS Code, the shortcut is Ctrl + Shift + '/'.) " +
       "And after having done this, comment out Ln. 10 as well, and comment " +
       "in Ln. 12-15, such that the render() function now returns an example " +
       "JSX element where ExampleComponent1 is used:"
@@ -82,26 +93,35 @@ const page = <>
       <code className="jsx">{[
         'return <div>\n',
         '  <h1>{"Hello, World!"}</h1>\n', 
-        '  <ExampleComponent2 key="ex-1" />\n',
+        '  <ExampleComponent1 key="ex-1" />\n',
         '</div>;',
       ]}</code>
     </p>
     <p>{
       "If you now re-upload your directory again (in the the same way as " +
       "when you changed the \"...\" to \"World!\" in the previous tutorial), " +
-      "you should now see the text, \"I am a child component!\" rendered " +
-      "underneath the \"Hello, World!\" header. And if you go to the " +
-      "ExampleComponent1.jsx module, you will indeed see that this text is " +
-      "the returned JSX element of this child component."
+      "you should now see the following result:"
     }</p>
     <p>{
-      "Now you know how to import and use components in other components."
+      <TextDisplay key="_ex1" >
+        <Result1 key="0" />
+      </TextDisplay>
+    }</p>
+    <p>{
+      "And if you go to the " +
+      "ExampleComponent1.jsx module, you will indeed see that \"I am a child " +
+      "component!\" is indeed the returned text of the render() function " +
+      "in ExampleComponent1.jsx."
+    }</p>
+    <p>{
+      "Now you know how to import and use components and use them as part " +
+      "of other components!"
     }</p>
   </section>
 
 
   <section>
-    <h2>{"Component properties, a.k.a. \"props\")"}</h2>
+    <h2>{"Component properties (a.k.a. \"props\")"}</h2>
     <p>{
       "If you are already familiar with React, then " +
       "you can probably skip most of this section, except the last part " +
@@ -113,10 +133,10 @@ const page = <>
       "returned JSX element can also depend on the arguments on the render() " +
       "function (as well as on the so-called state of the component " +
       "instance, which we will introduce in the next section). The render() " +
-      "function always takes a \"props\" object (short for \"properties\") " +
+      "function always takes a \"props\" object (short for \"properties\"), " +
       "where each \"prop\" (property) of this object is defined on the JSX " +
       "element that instantiates the component, using a syntax that is " +
-      "similar to when defining attributes of elements in HTML."
+      "similar to defining the attributes of an element in HTML."
     }</p>
     <p>{
       "For example, if you comment out the return statement at Ln. 12-15 " +
@@ -124,8 +144,30 @@ const page = <>
       "17-33), and " +
       "also makes sure that the import statement of ExampleComponent2 is in-" +
       "commented, you will see an example of how to pass the props of " +
-      "component instances."
+      "component instances. The render function should then return the " +
+      "following:"
     }</p>
+    <p>
+      <code className="jsx">{[
+        'return <div>\n',
+        '  <h1>{"Hello, World!"}</h1>\n',
+        '  <h2>{"Some child component examples"}</h2>\n',
+        '  <p>\n',
+        '    <ExampleComponent2 key="ex-1"\n',
+        '      isItalic={true} children="This paragraph is italic!"\n',
+        '    />\n',
+        '  </p>\n',
+        '  <p>\n',
+        '    <ExampleComponent2 key="ex-2" children="This paragraph is not!" />\n',
+        '  </p>\n',
+        '  <p>\n',
+        '    <ExampleComponent2 key="ex-3" isItalic >\n',
+        '      {"But this one is as well!"}\n',
+        '    </ExampleComponent2>\n',
+        '  </p>\n',
+        '</div>;\n',
+      ]}</code>
+    </p>
     <p>{
       "Before re-uploading the directory again, take a look inside the " +
       "ExampleComponent2.jsx module. It reads:"
@@ -142,12 +184,16 @@ const page = <>
         '}\n',
       ]}</code>
     </p>
-    <p>{
-      "This component thus takes two props, namely 'isItalic' prop, which " +
-      "defaults to false, and a 'children' prop. The component then branches " +
+    <p>{[
+      "This component thus takes two props, namely an ",
+      <span>{"'isItalic'"}</span>, " prop, which " +
+      "defaults to false, and a ",
+      <span>{"'children'"}</span>, " prop. " +
+      "The component then branches " +
       "according to isItalic, and renders the value of the children prop, " +
-      "either nested inside an <i> element or not, depending in isItalic."
-    }</p>
+      "either nested inside an <i> element or not, depending on the value of " +
+      "isItalic."
+    ]}</p>
     <p>{[
       "If the you are unfamiliar with the syntax seen inside the argument " +
       "tuple if this render() function, which is a so-called \"object " +
@@ -166,7 +212,15 @@ const page = <>
       "."
     ]}</p>
     <p>{
-      "Now, if you re-upload the directory, you will see that the first " +
+      "Now, if you re-upload the directory, you will then see the following:"
+    }</p>
+    <p>{
+      <TextDisplay key="_ex2" >
+        <Result2 key="0" />
+      </TextDisplay>
+    }</p>
+    <p>{
+      "We thus see that the first " +
       "paragraph shown under the \"Hello, World!\" header is indeed italic, " +
       "namely since isItalic was passed as true to the component instance at " +
       "Ln. 22 in main.jsx. And since no isItalic prop was passed to the " +
@@ -180,14 +234,21 @@ const page = <>
       "can also be passed as the content inside the component instance element."
     }</p>
     <p>{
+      "And ths example also shows, by the way, that passing a prop like " +
+      "'isItalic' without any explicit assignment is a shorthand for " +
+      "writing 'isItalic={true}'."
+    }</p>
+    <p>{
       "Lastly, note that all the component instance elements all have an " +
       "unique 'key' prop. This a requirement in this system, meaning that " +
-      "of omit the key prop, or use a duplicate key prop shared by another " +
-      "child instance of the same component, the program will immediately " +
+      "of one omit the key prop, or use a duplicate key prop shared by " +
+      "another " +
+      "child instance of the same parent component, the program will " +
       "throw an error. And as opposed to React where the key props are only " +
       "used to distinguish between child instances that are children of the " +
       "same HTML element, here we require all the child instances of a " +
-      "component to unique keys among each other, regardless of where they " +
+      "given parent component are given unique keys among each other, " +
+      "regardless of where they " +
       "are located within the returned JSX element."
     }</p>
     <p>{
@@ -195,13 +256,10 @@ const page = <>
       "of course adds a bit of extra work when compared to React. But on the " +
       "plus side, this also means that you can move each individual child " +
       "instance freely around in the returned JSX element of the parent " +
-      "component, without losing the states of these child components."
-    }</p>
-    <p>{
-      "This is unlike React, where if you e.g. wrap a child instance in, " +
+      "component, without losing its state. " +
+      "(This is unlike React, where if you e.g. wrap a child instance in, " +
       "say, an <a> element or an <i> element in response to some event, this " +
-      "will cause the child instance to lose its state. But this is not the " +
-      "case in this system."
+      "will cause the child instance to lose its state.)"
     }</p>
   </section>
 
@@ -217,20 +275,40 @@ const page = <>
       "with React stops."
     }</p>
     <p>{
-      "In this system, the state of a component instance is accessed on an " +
+      "In this framework, the state of a component instance is accessed on " +
+      "an " +
       "object that is bound to the 'this' keyword for the render() function. " +
-      "More precisely the instance's state is accessed via 'this.state'. And " +
-      "the setState() function is called via 'this.setState()'."
+      "More precisely, the instance's state is accessed via 'this.state'. " +
+      "And the setState() function is called via 'this.setState()'."
     }</p>
     <p>{
       "To see an example of this, you can comment out the previous return " +
       "statement in main.jsx, and comment in the next one on Ln. 36-42. " +
       "And also make sure that the import of ExampleComponent3 is in-" +
-      "commented as well."
+      "commented as well. The render() function should now return:"
     }</p>
+    <p>
+      <code className="jsx">{[
+        'return <div>\n',
+        '  <h1>{"Hello, World!"}</h1>\n',
+        '    <h2>{"An example of a stateful component"}</h2>\n',
+        '    <p>\n',
+        '      <ExampleComponent3 key="ex-1" />\n',
+        '    </p>\n',
+        '</div>;',
+      ]}</code>
+    </p>
     <p>{
       "If you then re-upload your directory, you should now see a button " +
-      "saying \"Click me!\". And if you try to click that button a couple of " +
+      "saying \"Click me!\", like so:"
+    }</p>
+    <p>{
+      <TextDisplay key="_ex3" >
+        <Result3 key="0" />
+      </TextDisplay>
+    }</p>
+    <p>{
+      "And if you try to click that button a couple of " +
       "times, you should see that a counter is increased each time, just " +
       "below the button."
     }</p>
@@ -270,42 +348,38 @@ const page = <>
         {"here"}
       </ELink>,
       ".) ",
-      "This destructuring assignment is possibly since the default initial " +
+      "This destructuring assignment is possible since the default initial " +
       "value of this.state is an empty object."
     ]}</p>
     <p>{
       "And then if we take a look at the <button> element, we see that it " +
-      "has an 'onClick' attribute, which redirects the click event to a " +
-      "function that calls this.setState() to increase that counter by one. " +
+      "has an 'onClick' attribute, which directs the click event to a " +
+      "function that calls this.setState() to increase that counter by one."
+    }</p>
+    <p>{[
       "Note that setState() can be called on a callback function that takes " +
       "the " +
       "current state as its argument. And this is very much the recommended " +
       "usage of setState(), as it first of all makes it easier to extend the " +
-      "component in the future. And it also helps to prevent the loss of " +
+      "component in the future, namely by including the ",
+      <ELink key="link-spread"
+        href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax"
+      >
+        {"spread"}
+      </ELink>,
+      " of state, '...state', at the start of the returned new state. " +
+      "And it also helps to prevent the loss of " +
       "data if the component is ever updated multiple times before " +
       "rerendering, namely since the state argument of the callback function " +
-      "is guaranteed to always be completely up to data with the latest " +
+      "is guaranteed to always be completely up-to-date with the latest " +
       "state change."
-    }</p>
+    ]}</p>
     <p>{
       "Whenever setState() is called, a rerender of the component instance " +
       "is queued, which means that the instance will update its appearance " +
       "according to the new state."
     }</p>
-
-    {/* ... */}
-    <p>{
-      "Note that the fact that we need to bind the 'this' keyword is also " +
-      "why you should never define the render() function as an arrow " +
-      "function, as this will prevent the correct binding of the 'this' " +
-      "keyword."
-    }</p>
   </section>
 
 
-  <section>
-    <h2>{"TODO: Remove this:"}</h2>
-    <Example key="example" />
-  </section>
-
-</>;
+</div>;

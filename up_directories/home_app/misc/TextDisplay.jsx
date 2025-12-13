@@ -2,7 +2,9 @@
 import {fetch} from 'query';
 
 
-export function render({jsxElement = undefined, jsxLink = undefined}) {
+export function render({
+  children = undefined, jsxElement = children, jsxLink = undefined
+}) {
   if (jsxElement) {
     return <div className="text-display">
       {jsxElement}

@@ -9,7 +9,7 @@ export function render() {
 
 
 
-const indexPage = <>
+const indexPage = <div className="text-page">
   <h1>{"The User-Programmable Web"}</h1>
   <section>
     <h2>{"Welcome!"}</h2>
@@ -115,7 +115,7 @@ const indexPage = <>
       "..."
     }</p>
   </section>
-</>;
+</div>;
 
 
 

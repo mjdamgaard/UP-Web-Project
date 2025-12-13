@@ -68,6 +68,15 @@
 }
 
 
+.text-page {
+  margin: 0 auto;
+  max-width: 50em;
+}
+
+.monospace {
+  font-family: ui-monospace;
+}
+
 code {
   display: inline-block;
   white-space: pre;
