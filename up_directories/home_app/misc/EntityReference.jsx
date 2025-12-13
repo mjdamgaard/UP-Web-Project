@@ -8,7 +8,7 @@ import * as ILink from 'ILink.jsx';
 
 
 
-export function getInitialState({entKey}) {
+export function initialize({entKey}) {
   return {curEntKey: entKey};
 }
 
@@ -25,7 +25,7 @@ export function render({
 
   // If the entKey prop has changed, reset the state.
   if (entKey !== curEntKey) {
-    this.setState(getInitialState(this.props));
+    this.setState(initialize(this.props));
   }
 
   // If the entity definition has not been fetched, do so. And if isLink is

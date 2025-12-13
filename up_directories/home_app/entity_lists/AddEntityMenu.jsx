@@ -92,7 +92,7 @@ export function render({qualKeyArr, objKey = undefined}) {
 }
 
 
-export function getInitialState() {
+export function initialize() {
   let cbSingIDKey = Symbol("cbSingIDKey");
   let cbEntIDKey = Symbol("cbEntIDKey");
   return {cbSingIDKey: cbSingIDKey, cbEntIDKey: cbEntIDKey};

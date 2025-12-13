@@ -161,10 +161,11 @@ class JSXInstance {
     let state;
     if (this.state === undefined) {
       // Get the initial state if the component module declares one, which is
-      // done either by exporting a 'getInitialState()' function (or just
-      // 'getInitState()'), or a constant  object called 'initialState' or
-      // 'initState.'
-      let getInitialState = this.componentModule.get("getInitialState") ??
+      // done either by exporting an 'getInitialState()' function (or just
+      // 'getInitState(),' or 'initialize()'), or a constant  object called
+      // 'initialState' (or 'initState').
+      let getInitialState = this.componentModule.get("initialize") ??
+        this.componentModule.get("getInitialState") ??
         this.componentModule.get("getInitState");
       if (getInitialState) {
         try {

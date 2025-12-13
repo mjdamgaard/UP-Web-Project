@@ -146,7 +146,7 @@ export function render({
 }
 
 
-export function getInitialState({
+export function initialize({
   ElementComponent = VariableEntityElementPromise,
   options, minScore, minWeight,
 }) {

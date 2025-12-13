@@ -6,7 +6,7 @@ import * as FriendRequestDisplay from "./FriendRequestDisplay.jsx";
 import * as AddNewFriendMenu from "./AddNewFriendMenu.jsx";
 
 
-export function getInitialState({userID}) {
+export function initialize({userID}) {
   return {curUserID: userID};
 }
 
@@ -17,7 +17,7 @@ export function render({userID}) {
 
   // If the userID prop has changed, reset the state.
   if (userID !== curUserID) {
-    this.setState(getInitialState(this.props));
+    this.setState(initialize(this.props));
   }
 
   // And if fetch the request has not yet been sent, do so.

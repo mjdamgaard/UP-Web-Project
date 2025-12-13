@@ -4,7 +4,7 @@ import {fetch} from 'query';
 import * as ILink from 'ILink.jsx';
 
 
-export function getInitialState({userID}) {
+export function initialize({userID}) {
   return {curUserID: userID};
 }
 
@@ -16,7 +16,7 @@ export function render({userID, isLink = true, pushState = undefined}) {
 
   // If the userID prop has changed, reset the state.
   if (userID !== curUserID) {
-    this.setState(getInitialState(this.props));
+    this.setState(initialize(this.props));
   }
 
   // If userID is undefined, render "no user".

@@ -16,7 +16,7 @@ from "./variable_components/ComponentEntityPage.jsx";
 const PAGE_CACHE_SIZE = 5;
 
 
-export function getInitialState() {
+export function initialize() {
   let cacheRef = new MutableArray();
   cacheRef[0] = {};
   return {cacheRef: cacheRef};

@@ -20,7 +20,7 @@ export function render({
 
   // If jsxLink changes reset the state.
   if (jsxLink !== curJSXLink) {
-    this.setState(getInitialState(this.props));
+    this.setState(initialize(this.props));
   }
 
   // If jsxElement has not already been fetched, do so.
@@ -43,7 +43,7 @@ export function render({
 }
 
 
-export function getInitialState({jsxLink}) {
+export function initialize({jsxLink}) {
   return {curJSXLink: jsxLink};
 }
 

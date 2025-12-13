@@ -19,11 +19,11 @@ import * as TextDisplay from "../misc/TextDisplay.jsx";
 
 
 
-// getInitialState() parses the input route, and in the special case where the
+// initialize() parses the input route, and in the special case where the
 // route includes only directories, it reinterprets the route by adding a ';'
 // right after the homeDirID, which casts the "/<upNodeID>/<homeDirID>" result
 // into a list of children of the specific subdirectory pointed to by route.
-export function getInitialState({route: extRoute}) {
+export function initialize({route: extRoute}) {
   if (atStr(extRoute, -1) === "/") extRoute = sliceStr(extRoute, 0, -1);
   // Parse and the (extended) route.
   let [route, ...castingSegments] = split(extRoute, ";");
@@ -163,7 +163,7 @@ export function render({route}) {
 
   // If the route changes (significantly), reset adminID, fileText, and result.
   if (route !== extRoute) {
-    this.setState(getInitialState(this.props));
+    this.setState(initialize(this.props));
   }
 
   if (isLocked || isInvalid || !routeHomePath) {

@@ -8,6 +8,9 @@ import {
 } from "../jsx_components.js";
 import {CAN_POST_FLAG} from "../../query/src/flags.js";
 
+// TODO: There's a vulnerability when calling pushState() here as a callback.
+// So replace the current 'history' API/pattern for another API/pattern using
+// events instead.
 
 
 export const render = new DevFunction(

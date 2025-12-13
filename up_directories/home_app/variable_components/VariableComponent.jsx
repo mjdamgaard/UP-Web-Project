@@ -5,7 +5,7 @@ import * as ComponentEntityComponent from "./ComponentEntityComponent.jsx";
 
 
 
-export function getInitialState({classKey}) {
+export function initialize({classKey}) {
   return {curClassKey: classKey};
 }
 
@@ -18,7 +18,7 @@ export function render(props) {
 
   // If the classKey prop has changed, reset the state.
   if (classKey !== curClassKey) {
-    this.setState(getInitialState(props));
+    this.setState(initialize(props));
   }
 
   // If the relational quality for the class has not been fetched yet, do so.

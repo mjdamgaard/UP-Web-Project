@@ -24,7 +24,7 @@ export function render({children, keepAlive = true}) {
 }
 
 
-export function getInitialState({startOpen}) {
+export function initialize({startOpen}) {
   return {isOpen: startOpen ? true : false};
 }
 

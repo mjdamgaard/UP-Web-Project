@@ -100,7 +100,7 @@ export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
 
 
 
-export function getInitialState({
+export function initialize({
   entKey, localStorage = undefined, sessionStorage = undefined
 }) {
   let hasBeenDismissed;

@@ -384,10 +384,10 @@ const page = <div className="text-page">
     <p>{
       "Lastly, if you want your component to have a different initial state " +
       "than just an empty object, you can export a function called " +
-      "getInitialState() alongside render() in the component module. This " +
+      "initialize() alongside render() in the component module. This " +
       "function takes the same props argument as render() does, and returns" +
       "the initial state object of the component. " +
-      "getInitialState() will thus be called exactly one time in the " +
+      "initialize() will thus be called exactly one time in the " +
       "lifetime of the component instance, namely before the first call to " +
       "the render() function."
     }</p>
@@ -396,7 +396,7 @@ const page = <div className="text-page">
     }</p>
     <p>
       <code className="jsx">{[
-        'export function getInitialState({}) {\n',
+        'export function initialize({}) {\n',
         '  return {counter: 100};\n',
         '}\n',
       ]}</code>
@@ -406,10 +406,10 @@ const page = <div className="text-page">
       "in question will now start at a value of 100."
     }</p>
     <p>{
-      "The getInitialState() function also gets its 'this' " +
+      "The initialize() function also gets its 'this' " +
       "keyword bound to the same value as render(), which means that " +
       "functions like this.setState() can be called from it as well. " +
-      "This thus also makes getInitialState() an ideal place for fetching " +
+      "This thus also makes initialize() an ideal place for fetching " +
       "whatever data the component needs from the database. " +
       "And when the data-fetching promise resolves, the state of the " +
       "component can then be updated with the given data."
@@ -514,11 +514,14 @@ const page = <div className="text-page">
     }</p>
     <p>{
       "Note also that the 'this' keyword is automatically bound to the same " +
-      "object as for render() and getInitialState(), allowing us to call " +
+      "object as for render() and initialize(), allowing us to call " +
       "function this.setState(), or even this.do(), from within the actions " +
       "themselves, without having to pass the 'this' object as a separate " +
       "argument of the action function. And this is indeed one benefit of " +
-      "using actions. However, the greatest benefit of using actions is that " +
+      "using actions."
+    }</p>
+    <p>{
+      "However, the greatest benefit of using actions is that " +
       "they can at any time be elevated to become part of the \"methods\" " +
       "and/or \"events\" of the component, which is what we will introduce " +
       "next."

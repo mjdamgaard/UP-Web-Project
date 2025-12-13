@@ -18,7 +18,7 @@ export function render({entKey}) {
 
   // If entKey changes reset the state.
   if (entKey !== curEntKey) {
-    this.setState(getInitialState(this.props));
+    this.setState(initialize(this.props));
   }
 
   // If date hasn't begun fetching yet, start fetching.
@@ -98,6 +98,6 @@ export function render({entKey}) {
 
 
 
-export function getInitialState({entKey}) {
+export function initialize({entKey}) {
   return {curEntKey: entKey};
 }
