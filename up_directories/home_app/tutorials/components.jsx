@@ -6,6 +6,7 @@ import * as Result0 from "./hello_world/result_0.jsx";
 import * as Result1 from "./hello_world/result_1.jsx";
 import * as Result2 from "./hello_world/result_2.jsx";
 import * as Result3 from "./hello_world/result_3.jsx";
+import * as Result4 from "./hello_world/result_4.jsx";
 
 
 export function render() {
@@ -379,7 +380,149 @@ const page = <div className="text-page">
       "is queued, which means that the instance will update its appearance " +
       "according to the new state."
     }</p>
+
+    <p>{
+      "Lastly, if you want your component to have a different initial state " +
+      "than just an empty object, you can export a function called " +
+      "getInitialState() alongside render() in the component module. This " +
+      "function takes the same props argument as render() does, and returns" +
+      "the initial state object of the component. " +
+      "getInitialState() will thus be called exactly one time in the " +
+      "lifetime of the component instance, namely before the first call to " +
+      "the render() function."
+    }</p>
+    <p>{
+      "For instance, if you add this export:"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'export function getInitialState({}) {\n',
+        '  return {counter: 100};\n',
+        '}\n',
+      ]}</code>
+    </p>
+    <p>{
+      "alongside the render() export of the previous example, the counter " +
+      "in question will now start at a value of 100."
+    }</p>
+    <p>{
+      "The getInitialState() function also gets its 'this' " +
+      "keyword bound to the same value as render(), which means that " +
+      "functions like this.setState() can be called from it as well. " +
+      "This thus also makes getInitialState() an ideal place for fetching " +
+      "whatever data the component needs from the database. " +
+      "And when the data-fetching promise resolves, the state of the " +
+      "component can then be updated with the given data."
+    }</p>
   </section>
 
+  <section>
+    <h2>{"Actions, methods, and events"}</h2>
+    <p>{
+      "The component modules also have three more reserved exports which we " +
+      "will introduce in this tutorial, and that is an 'actions' export, a " +
+      "'methods' export, and an 'events' export."
+    }</p>
+    <h3>{"Actions"}</h3>
+    <p>{
+      "The \"Actions\" of a component are essentially its \"private " +
+      "methods\", for anyone " +
+      "familiar with the concepts of Object-Oriented Programming (OOP). " +
+      "They are exported as properties of a single object called 'actions', " +
+      "and can then subsequently be called via 'this.do(<action key>)."
+    }</p>
+    <p>{
+      "For instance, if we want to refactor our previous example of the " +
+      "increasing counter using actions instead, we can start by adding the " +
+      "following export from component as well:"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'export const actions = {\n',
+        '  "increaseCounter": function(num = 1) {\n',
+        '    let {counter = 0} = this.state;\n',
+        '    this.setState(state => ({...state, counter: counter + num}));\n',
+        '  }\n',
+        '};\n',
+      ]}</code>
+    </p>
+    <p>{
+      "If you go to ExampleComponent4.jsx, you will see an example of this, " +
+      "and here you will also see that the button element in the render() " +
+      "function has been changed from "
+    }</p>
+    <p>
+      <code className="jsx">{[
+        '<button onClick={() => {\n',
+        '  this.setState(state => ({...state, counter: counter + 1}));\n',
+        '}}>{"Click me!"}</button>',
+      ]}</code>
+    </p>
+    <p>{
+      "to just"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        '<button onClick={() => this.do("increaseCounter")}>' +
+          '{"Click me!"}</button>',
+      ]}</code>
+    </p>
+    <p>{
+      "when comparing to ExampleComponent3.jsx. And this yields the exact " +
+      "same outcome as before, namely since this.do(\"increaseCounter\") has " +
+      "the effect of calling the function of the same name from the " +
+      "'actions' object."
+    }</p>
+    <p>{
+      "One can also pass an input value to the given action, namely by " +
+      "supplying this value as the second argument of this.do(). Indeed, you " +
+      "can see that we have given the \"increaseCounter\" action an optional " +
+      "'num' argument, which can specify another increment value other than 1."
+    }</p>
+    <p>{
+      "So if we e.g. pass a value of 2 as the second argument to this.do(), " +
+      "such that the whole component module now reads:"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'export function render({}) {\n',
+        '  let {counter = 0} = this.state;\n',
+        '  return <div>\n',
+        '    <button onClick={() => this.do("increaseCounter", 2)}>' +
+              '{"Click me!"}</button>\n',
+        '    <div className="counter-display">\n',
+        '      {"Number of times clicked ×2: " + counter}\n',
+        '    </div>\n',
+        '  </div>;\n',
+        '}\n',
+        '\n',
+        'export const actions = {\n',
+        '  "increaseCounter": function(num = 1) {\n',
+        '    let {counter = 0} = this.state;\n',
+        '    this.setState(state => ({...state, counter: counter + num}));\n',
+        '  }\n',
+        '};\n',
+      ]}</code>
+    </p>
+    <p>{
+      "We now get that the counter increases by 2 each time:"
+    }</p>
+    <p>{
+      <TextDisplay key="_ex4" >
+        <Result4 key="0" />
+      </TextDisplay>
+    }</p>
+    <p>{
+      "Note also that the 'this' keyword is automatically bound to the same " +
+      "object as for render() and getInitialState(), allowing us to call " +
+      "function this.setState(), or even this.do(), from within the actions " +
+      "themselves, without having to pass the 'this' object as a separate " +
+      "argument of the action function. And this is indeed one benefit of " +
+      "using actions. However, the greatest benefit of using actions is that " +
+      "they can at any time be elevated to become part of the \"methods\" " +
+      "and/or \"events\" of the component, which is what we will introduce " +
+      "next."
+    }</p>
+  </section>
 
 </div>;
