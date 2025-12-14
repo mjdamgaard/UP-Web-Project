@@ -1534,11 +1534,11 @@ function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
       callerNode, execEnv
     );
     if (!HREF_CD_START_REGEX.test(url)) url = './' + url;
-    url = url.replace(/\/$/, "");
 
     // Then construct the full URL (or actually the full pathname).
     let curURL = window.location.pathname;
     url = getAbsolutePath(curURL, url, callerNode, execEnv);
+    url = url.replace(/\/$/, "");
 
     let urlData = {url: url, stateJSON: stateJSON};
     urlContext.setVal(urlData);

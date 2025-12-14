@@ -41,7 +41,7 @@ export const render = new DevFunction(
       // Trigger the getURL event in order to get the absolute href. 
       href = jsxInstance.trigger(
         "getURL", href, interpreter, callerNode, execEnv
-      );
+      ) ?? href;
 
       // Validate href, and prepend './' to it if doesn't start with /.?.?\//.
       if (!(typeof href === "string") || !HREF_REGEX.test(href)) {
@@ -100,11 +100,14 @@ export const render = new DevFunction(
         }
         else {
           let triggerFun = thisVal.members.trigger;
-          interpreter.executeFunctionOffSync(
+          let errRef = [];
+          let hasPushed = interpreter.executeFunctionOffSync(
             triggerFun, ["pushURL", href], callerNode, execEnv, thisVal,
-            [[CAN_POST_FLAG, false]]
+            [[CAN_POST_FLAG, false]], errRef
           );
-          return false; // Prevents default event propagation.
+          if (hasPushed && !errRef[0]) {
+            return false; // Prevents default event propagation.
+          }
         }
       }
 

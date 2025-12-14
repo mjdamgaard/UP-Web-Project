@@ -590,13 +590,18 @@ export class ScriptInterpreter {
   }
 
 
-  executeFunctionOffSync(fun, inputArr, callerNode, execEnv, thisVal, flags) {
+  executeFunctionOffSync(
+    fun, inputArr, callerNode, execEnv, thisVal, flags, errRef = [],
+  ) {
     if (execEnv.scriptVars.isExiting) {
       return;
     }
     try {
-      this.executeFunction(fun, inputArr, callerNode, execEnv, thisVal, flags);
+      return this.executeFunction(
+        fun, inputArr, callerNode, execEnv, thisVal, flags
+      );
     } catch (err) {
+      errRef[0] = err;
       this.handleUncaughtException(err, execEnv);
     }
   }
@@ -3021,7 +3026,7 @@ export function getNodeString(node, env, appendModuleLocation = false) {
 }
 
 
-export function logExtendedErrorAndTrace(err) {
+export function logExtendedErrorAndTrace(err) {debugger;
   let msg = getExtendedErrorMsg(err);
   let trace = err.environment.getCallTrace();
   let varReadout = err.environment.getVariableReadout();
