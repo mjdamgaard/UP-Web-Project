@@ -3026,7 +3026,7 @@ export function getNodeString(node, env, appendModuleLocation = false) {
 }
 
 
-export function logExtendedErrorAndTrace(err) {debugger;
+export function logExtendedErrorAndTrace(err) {
   let msg = getExtendedErrorMsg(err);
   let trace = err.environment.getCallTrace();
   let varReadout = err.environment.getVariableReadout();

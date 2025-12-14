@@ -7,6 +7,7 @@ import * as Result1 from "./hello_world/result_1.jsx";
 import * as Result2 from "./hello_world/result_2.jsx";
 import * as Result3 from "./hello_world/result_3.jsx";
 import * as Result4 from "./hello_world/result_4.jsx";
+import * as Result5 from "./hello_world/result_5.jsx";
 
 
 export function render() {
@@ -526,6 +527,20 @@ const page = <div className="text-page">
       "and/or \"events\" of the component, which is what we will introduce " +
       "next."
     }</p>
+
+
+    <h3>{"Methods"}</h3>
+    <p>{
+      "..."
+    }</p>
+    <p>{
+      <TextDisplay key="_ex5" >
+        <Result5 key="0" />
+      </TextDisplay>
+    }</p>
+
+
   </section>
+
 
 </div>;

@@ -86,10 +86,12 @@ export const render = new DevFunction(
           ctrlKey: ctrlKey, altKey: altKey, shiftKey: shiftKey,
           metaKey: metaKey,
         };
+        let errRef = [];
         let shouldFollowLink = interpreter.executeFunctionOffSync(
-          onClick, [e], callerNode, execEnv, thisVal, [[CAN_POST_FLAG, true]]
+          onClick, [e], callerNode, execEnv, thisVal,
+          [[CAN_POST_FLAG, true]], errRef
         ) ?? true;
-        if (!shouldFollowLink) {
+        if (!shouldFollowLink || errRef[0]) {
           return false; // Prevents default event propagation.
         }
       }
@@ -105,7 +107,7 @@ export const render = new DevFunction(
             triggerFun, ["pushURL", href], callerNode, execEnv, thisVal,
             [[CAN_POST_FLAG, false]], errRef
           );
-          if (hasPushed && !errRef[0]) {
+          if (hasPushed || errRef[0]) {
             return false; // Prevents default event propagation.
           }
         }
