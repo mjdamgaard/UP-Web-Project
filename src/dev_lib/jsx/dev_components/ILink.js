@@ -1,6 +1,6 @@
 
 import {
-  DevFunction, ArgTypeError, ObjectObject, verifyTypes, getPropertyFromObject,
+  DevFunction, ArgTypeError, ObjectObject, verifyTypes, getString,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
   DOMNodeObject, HREF_REGEX, HREF_CD_START_REGEX, clearAttributes,
@@ -8,9 +8,6 @@ import {
 } from "../jsx_components.js";
 import {CAN_POST_FLAG} from "../../query/src/flags.js";
 
-// TODO: There's a vulnerability when calling pushState() here as a callback.
-// So replace the current 'history' API/pattern for another API/pattern using
-// events instead.
 
 
 export const render = new DevFunction(
@@ -23,18 +20,9 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {href, pushState, children, onClick, homeURL} = props;
-    if (pushState === undefined) {
-      let history = thisVal.jsxInstance.subscribeToContext("history");
-      if (history) {
-        pushState = getPropertyFromObject(history, "pushState");
-      }
-    }
-    homeURL ??= thisVal.jsxInstance.subscribeToContext("homeURL");
+    let {href, children, onClick} = props;
     verifyTypes(
-      [href, homeURL, pushState, onClick],
-      ["string?", "string?", "function?", "function?"],
-      callerNode, execEnv
+      [href, onClick], ["string?", "function?"], callerNode, execEnv
     );
 
     // Create the DOM node if it has no been so already.
@@ -50,24 +38,18 @@ export const render = new DevFunction(
 
     // Add the relative href if provided.
     if (href !== undefined) {
-      // If href starts with "~/", interpret it as relative to the homeURL,
-      // which is then parsed, and joined with href into an absolute path.
-      if (href.substring(0, 2) === "~/") {
-        homeURL ||= "";
-        if (!HREF_REGEX.test(homeURL) || (homeURL && homeURL[0] !== "/")) {
-          throw new ArgTypeError(
-            "Invalid home URL: " + homeURL,
-            callerNode, execEnv
-          );
-        }
-        href = (href === "~/") ? homeURL || "/" : homeURL + href.substring(1);
-      }
+      // Trigger the getURL event in order to get the absolute href. 
+      href = jsxInstance.trigger(
+        "getURL", href, interpreter, callerNode, execEnv
+      );
 
       // Validate href, and prepend './' to it if doesn't start with /.?.?\//.
-      if (!HREF_REGEX.test(href)) throw new ArgTypeError(
-        "Invalid href: " + href,
-        callerNode, execEnv
-      );
+      if (!(typeof href === "string") || !HREF_REGEX.test(href)) {
+        throw new ArgTypeError(
+          "Invalid href: " + getString(href, execEnv),
+          callerNode, execEnv
+        );
+      }
       if (!HREF_CD_START_REGEX.test(href)) href = './' + href;
 
       // Add the href attribute.
@@ -87,12 +69,12 @@ export const render = new DevFunction(
     }
     ownDOMNodes = [domNode, ...ownDOMNodes];
 
-    // If pushState is defined we put an onclick event on the <a> element,
-    // in order to redirect to pushState() rather than following the href
-    // directly and reloading the page. (If the user control/middle-clicks the
-    // link, it should still open a new tab in the browser, however.) But if
-    // the onClick prop is defined, we first execute that, and if that returns
-    // false, we prevent the normal behavior.
+    // Regardless of whether onClick is defined, we put an onclick event on the
+    // <a> element, in order to redirect to pushState() rather than following
+    // the href directly and reloading the page. (If the user control/middle-
+    // clicks the link, it should still open a new tab in the browser,
+    // however.) But if the onClick prop is defined, we first execute that, and
+    // if that returns false, we prevent the normal behavior.
     domNode.onclick = (event) => {
       if (onClick) {
         let {
@@ -112,13 +94,15 @@ export const render = new DevFunction(
         }
       }
 
-      if (pushState) {
+      if (href !== undefined) {
         if (event.ctrlKey || event.button == 1) {
           return true;
         }
         else {
+          let triggerFun = thisVal.members.trigger;
           interpreter.executeFunctionOffSync(
-            pushState, [undefined, href], callerNode, execEnv, thisVal
+            triggerFun, ["pushURL", href], callerNode, execEnv, thisVal,
+            [[CAN_POST_FLAG, false]]
           );
           return false; // Prevents default event propagation.
         }

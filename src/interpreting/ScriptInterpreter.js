@@ -3054,7 +3054,7 @@ export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
   );
 
   if (path[0] === "/" || path[0] !== "." && path[0] !== "+") {
-    return path.replace(/\/$/, "");
+    return (path === "/") ? path : path.replace(SLASH_END_REGEX, "");
   }
 
   // Remove the last file name from the current path, if any.
@@ -3085,8 +3085,10 @@ export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
 
   // Also replace any occurrence of "/;" with ";".
   fullPath = fullPath.replaceAll(SLASH_SEMICOLON_REGEX, ";");
-
-  return fullPath.replace(SLASH_END_REGEX, "");
+  if (fullPath !== "/") {
+    fullPath = fullPath.replace(SLASH_END_REGEX, "");
+  }
+  return fullPath;
 }
 
 

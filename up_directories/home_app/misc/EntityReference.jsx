@@ -14,12 +14,10 @@ export function initialize({entKey}) {
 
 
 export function render({
-  entKey, hasLinks = true, linkLevel = 0, recLevel = 0, pushState = undefined,
+  entKey, hasLinks = true, linkLevel = 0, recLevel = 0,
 }) {
   let {curEntKey, entDef, entPath, entID} = this.state;
   let isLink = hasLinks && linkLevel === recLevel;
-  pushState ??= hasLinks ?
-    (this.subscribeToContext("history") ?? {}).pushState : undefined;
   let EntityReference = this.component;
   let content = "", href = "./";
 
@@ -99,7 +97,7 @@ export function render({
       let substitutedSegmentArr = replaceReferences(name, (refEntKey, ind) => (
         <EntityReference key={ind} entKey={refEntKey}
           hasLinks={hasLinks && !isLink} linkLevel={linkLevel}
-          recLevel={recLevel + 1} pushState={pushState}
+          recLevel={recLevel + 1}
         />
       ));
       content = substitutedSegmentArr;
@@ -111,7 +109,7 @@ export function render({
   // on the 'isLink' prop.
   return isLink ?
     <span className={"entity-reference"}>
-      <ILink key="0" href={href} pushState={pushState} >{
+      <ILink key="0" href={href} >{
         content
       }</ILink>
     </span> :

@@ -238,10 +238,8 @@ export function render({route}) {
           }
           <div>
             <button onClick={() => {
-              let history = this.subscribeToContext("history");
-              let homeURL = this.subscribeToContext("homeURL");
               postEntity(route).then(entID => {
-                history.pushState(history.state, homeURL + "/e/" + entID);
+                this.trigger("pushURL", "~/e/" + entID);
               });
             }}>{"Submit and go to page"}</button>
           </div>

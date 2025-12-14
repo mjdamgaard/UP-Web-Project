@@ -69,7 +69,7 @@ export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
       "/" + uriSafeComponentName;
     if (!hasBeenReplaced && firstTailSegment !== uriSafeComponentName) {
       this.setState(state => ({...state, hasBeenReplaced: true}));
-      history.replaceState(null, newHomeURL + newTailURL);
+      this.trigger("replaceURL", newHomeURL + newTailURL);
       return <div className="fetching"></div>;
     }
 

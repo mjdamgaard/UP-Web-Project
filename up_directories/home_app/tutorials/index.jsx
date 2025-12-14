@@ -2,6 +2,7 @@
 import {substring} from 'string';
 
 import * as ILink from 'ILink.jsx';
+import {urlActions, urlEvents} from '../urlActions.js';
 import * as EntityList from "../entity_lists/EntityList.jsx";
 import * as GettingStartedPage from "./getting_started.jsx";
 import * as ComponentsIntroPage from "./components.jsx";
@@ -104,3 +105,9 @@ const indexPage = <div className="text-page">
     </div>
   </section>
 </div>;
+
+
+
+export const actions = urlActions;
+
+export const events = urlEvents;

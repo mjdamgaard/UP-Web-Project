@@ -24,7 +24,7 @@ export function requestNewUsername(username) {
         abs("./user_ids.ct") + "./entry/k/" + usernameHex,
         options
       ).then(existingUserID => {
-        if (existingUserID) {console.log("existingUserID=", existingUserID);
+        if (existingUserID) {
           conn.end(false);
           return resolve(false);
         }
@@ -48,7 +48,7 @@ export function requestNewUsername(username) {
               conn.end();
               resolve(true);
             }
-            else {console.log("userIDIsAdded=", userIDIsAdded, "usernameIsAdded=", usernameIsAdded);
+            else {
               conn.end(false);
               resolve(false);
             }

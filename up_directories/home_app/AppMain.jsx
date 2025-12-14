@@ -28,7 +28,7 @@ export function render(props) {
   let cache = cacheRef[0];
 
   // Call renderHelper() to get the jsxElement to render, along with its key.
-  let [newKey, jsxElement] = renderHelper(props);
+  let [newKey, jsxElement] = renderHelper(this, props);
 
   // Update the cache, throwing out the least recently used cached page if the
   // PAGE_CACHE_SIZE is exceeded.
@@ -44,18 +44,15 @@ export function render(props) {
 }
 
 
-export function renderHelper({
-  url = "", history, homeURL, localStorage, sessionStorage
+export function renderHelper(thisVal, {
+  url = "", homeURL, localStorage, sessionStorage
 }) {
   let tailURL = substring(url, homeURL.length);
 
   // If the tailURL is empty, replace it with "up" ('up' for 'user-programmed'),
   // taking the user to the user-defined home page.
   if (!tailURL) {
-    history.replaceState(
-      history.state,
-      homeURL + "/up"
-    );
+    thisVal.trigger("replaceURL", "~/up");
     return [
       "fetching",
       <main className="app-main">
@@ -74,7 +71,7 @@ export function renderHelper({
     return [
       "idx",
       <main className="app-main">
-        <UPIndexPage key="idx" url={url} history={history} homeURL={homeURL} />
+        <UPIndexPage key="idx" url={url} homeURL={homeURL} />
       </main>
     ];
   }
@@ -101,11 +98,11 @@ export function renderHelper({
     let entPath = decodeURI(substring(tailURL, 8));
     fetchEntityID(entPath).then(entID => {
       if (entID) {
-        history.replaceState(history.state, homeURL + "/e/" + entID);
+        thisVal.trigger("replaceURL", "~/e/" + entID);
       }
       else {
         let encEntPath = encodeURI(entPath);
-        history.replaceState(history.state, homeURL + "/f" + encEntPath);
+        thisVal.trigger("replaceURL", "~/f" + encEntPath);
       }
     });
     return [

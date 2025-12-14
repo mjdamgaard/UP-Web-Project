@@ -1,8 +1,9 @@
 
-import {substring} from 'string';
+import {clearPermissions} from 'query';
 import {
   fetchConstructedEntityID, postConstructedEntity,
 } from "/1/1/entities.js";
+import {urlActions, urlEvents} from "./urlActions.js";
 
 import * as AppHeader from "./AppHeader.jsx";
 import * as AppMain from "./AppMain.jsx";
@@ -14,9 +15,6 @@ export function render({
   url, history, userID, homeURL = "", localStorage, sessionStorage
 }) {
   let {userEntID} = this.state;
-  // TODO: Consider modifying the history object here such that the descendants
-  // who use pushState() or replaceState() doesn't have to prepend the homeURL
-  // themselves.
   this.provideContext("history", history);
   this.provideContext("userID", userID);
   this.provideContext("userEntID", userEntID ? userEntID : undefined);
@@ -49,6 +47,27 @@ export function render({
 
 
 export const actions = {
+  ...urlActions,
+  "pushState": function([state, url]) {
+    clearPermissions(() => this.props.history.pushState(state, url));
+    return true;
+  },
+  "replaceState": function([state, url]) {
+    clearPermissions(() => this.props.history.replaceState(state, url));
+    return true;
+  },
+  "back": function() {
+    clearPermissions(() => this.props.history.back());
+    return true;
+  },
+  "forward": function() {
+    clearPermissions(() => this.props.history.forward());
+    return true;
+  },
+  "go": function(delta) {
+    clearPermissions(() => this.props.history.go(delta));
+    return true;
+  },
   "postUserEntity": function() {
     let {userID} = this.props;
     return new Promise(resolve => {
@@ -72,6 +91,9 @@ export const actions = {
 };
 
 export const events = [
+  ...urlEvents,
+  "pushState",
+  "replaceState",
   "postUserEntity",
 ];
 
