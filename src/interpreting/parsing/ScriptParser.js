@@ -46,8 +46,8 @@ export const scriptGrammar = {
   },
   "import-statement": {
     rules: [
-      ["/import/", "import-list", "/from/!", "string", "/;/"],
-      ["/import/", "/from/", "string", "/;/"],
+      ["/import/", "import-list", "/from/!", "string", "/;/?"],
+      ["/import/", "/from/", "string", "/;/?"],
     ],
     process: (children, ruleInd) => ({
       type: "import-statement",
@@ -111,11 +111,11 @@ export const scriptGrammar = {
   },
   "export-statement": {
     rules: [
-      ["/export/", "/const/", "identifier!", "/=/", "expression", "/;/"],
+      ["/export/", "/const/", "identifier!", "/=/", "expression", "/;/?"],
       ["/export/", "/default/?", "function-declaration!1"],
       ["/export/", "/default/?", "class-declaration!1"],
       ["/export/", "/default/", "expression-statement"],
-      ["/export/", /\{/, "named-export-list!1?", /\}/, "/;/"],
+      ["/export/", /\{/, "named-export-list!1?", /\}/, "/;/?"],
 // TODO: Implement 'export * from' and export * as <name>' statements as well.
     ],
     process: (children, ruleInd) => {
@@ -195,7 +195,7 @@ export const scriptGrammar = {
   },
   "variable-declaration": {
     rules: [
-      ["/let|const/", "parameter-list", "/;/"],
+      ["/let|const/", "parameter-list", "/;/?"],
     ],
     process: (children) => ({
       type: "variable-declaration",
@@ -363,7 +363,7 @@ export const scriptGrammar = {
   "class-member": {
     rules: [
       ["identifier", "parameter-tuple", "block-statement!"],
-      ["identifier", "/=/", "expression", "/;/"],
+      ["identifier", "/=/", "expression", "/;/?"],
     ],
     process: (children, ruleInd) => (
       (ruleInd === 0) ? {
@@ -402,7 +402,7 @@ export const scriptGrammar = {
   },
   "expression-statement": {
     rules: [
-      ["expression", "/;/"],
+      ["expression", "/;/?"],
     ],
     process: (children) => ({
       type: "expression-statement",
@@ -512,8 +512,8 @@ export const scriptGrammar = {
   },
   "return-statement": {
     rules: [
-      ["/return/", "expression", "/;/"],
-      ["/return/", "/;/"],
+      ["/return/", "expression", "/;/?"],
+      ["/return/", "/;/?"],
     ],
     process: (children, ruleInd) => ({
       type: "return-statement",
@@ -522,8 +522,8 @@ export const scriptGrammar = {
   },
   "throw-statement": {
     rules: [
-      ["/throw/", "expression", "/;/"],
-      ["/throw/", "/;/"],
+      ["/throw/", "expression", "/;/?"],
+      ["/throw/", "/;/?"],
     ],
     process: (children, ruleInd) => ({
       type: "throw-statement",
@@ -551,7 +551,7 @@ export const scriptGrammar = {
   },
   "instruction-statement": {
     rules: [
-      ["/break|continue|debugger/", "/;/"],
+      ["/break|continue|debugger/", "/;/?"],
     ],
     process: copyLexemeFromChild,
     params: ["instruction-statement"],

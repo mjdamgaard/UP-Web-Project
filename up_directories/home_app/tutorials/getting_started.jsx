@@ -5,7 +5,7 @@
 export function render() {
   return (
     <div>
-      <h1>{"Tutorial: Getting started!"}</h1>
+      <h1>{"Tutorial 1: Getting started!"}</h1>
       <section>
         <h2>{"About this tutorial"}</h2>
         <p>{

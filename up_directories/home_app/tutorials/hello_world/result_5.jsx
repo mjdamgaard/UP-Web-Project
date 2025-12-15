@@ -4,15 +4,6 @@ import * as ExampleComponent5 from "./ExampleComponent5.jsx";
 
 export function render() {
   return <div>
-    <h1>{"Hello, World!"}</h1>
-    <h2>{"Child instance 1"}</h2>
-    <p>
-      <ExampleComponent5 key="c-1" num={1} />
-    </p>
-    <h2>{"Child instance 2"}</h2>
-    <p>
-      <ExampleComponent5 key="c-2" num={5} />
-    </p>
     <h2>{"Calling increaseCounter() from the parent"}</h2>
     <p>
       {"Click this button to increase the counter of Child instance 1: "}
@@ -25,6 +16,14 @@ export function render() {
       <button onClick={() => this.call("c-2", "increaseCounter")}>
         {"Increase Child 2's counter"}
       </button>
+    </p>
+    <h2>{"Child instance 1"}</h2>
+    <p>
+      <ExampleComponent5 key="c-1" num={1} />
+    </p>
+    <h2>{"Child instance 2"}</h2>
+    <p>
+      <ExampleComponent5 key="c-2" num={5} />
     </p>
   </div>;
 }

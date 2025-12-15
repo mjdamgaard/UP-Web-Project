@@ -1,10 +1,12 @@
 
 
 
-export function render({}) {
+export function render({num = 1}) {
   let {counter = 0} = this.state;
   return <div>
-    <button onClick={() => this.do("increaseCounter")}>{"Click me!"}</button>
+    <button onClick={() => this.do("increaseCounter")}>
+      {"Increase counter by " + num}
+    </button>
     <div className="counter-display">
       {"Counter value: " + counter}
     </div>

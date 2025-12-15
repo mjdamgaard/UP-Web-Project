@@ -17,7 +17,7 @@ export function render() {
 
 
 const page = <div className="text-page">
-  <h1>{"Introduction to the front-end JSX components"}</h1>
+  <h1>{"Tutorial 2: Introduction to the front-end JSX components"}</h1>
   <section>
     <h2>{"A framework similar to React"}</h2>
     <p>{[
@@ -152,7 +152,6 @@ const page = <div className="text-page">
     <p>
       <code className="jsx">{[
         'return <div>\n',
-        '  <h1>{"Hello, World!"}</h1>\n',
         '  <h2>{"Some child component examples"}</h2>\n',
         '  <p>\n',
         '    <ExampleComponent2 key="ex-1"\n',
@@ -292,7 +291,6 @@ const page = <div className="text-page">
     <p>
       <code className="jsx">{[
         'return <div>\n',
-        '  <h1>{"Hello, World!"}</h1>\n',
         '    <h2>{"An example of a stateful component"}</h2>\n',
         '    <p>\n',
         '      <ExampleComponent3 key="ex-1" />\n',
@@ -531,14 +529,104 @@ const page = <div className="text-page">
 
     <h3>{"Methods"}</h3>
     <p>{
-      "..."
+      "Methods are a special kind of actions that can be called from the " +
+      "parent component instance. An action is declared as part of the a " +
+      "given component's methods via an exported array called 'methods.' " +
+      "If this array includes the key of a given action, then that action " +
+      "becomes one of the methods, and can be called by the component " +
+      "instance's parent."
+    }</p>
+    <p>{
+      "To see how this works, we can let our render() function in the " +
+      "main.jsx module return the following:"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'return <div>\n',
+        '  <h2>{"Calling increaseCounter() from the parent"}</h2>\n',
+        '  <p>\n',
+        '    {"Click this button to increase the counter of Child instance 1: "}\n',
+        '    <button onClick={() => this.call("c-1", "increaseCounter")}>\n',
+        '      {"Increase Child 1\'s counter"}\n',
+        '    </button>\n',
+        '  </p>\n',
+        '  <p>\n',
+        '    {"And click this button to increase the counter of Child instance 2: "}\n',
+        '    <button onClick={() => this.call("c-2", "increaseCounter")}>\n',
+        '      {"Increase Child 2\'s counter"}\n',
+        '    </button>\n',
+        '  </p>\n',
+        '  <h2>{"Child instance 1"}</h2>\n',
+        '  <p>\n',
+        '    <ExampleComponent5 key="c-1" num={1} />\n',
+        '  </p>\n',
+        '  <h2>{"Child instance 2"}</h2>\n',
+        '  <p>\n',
+        '    <ExampleComponent5 key="c-2" num={5} />\n',
+        '  </p>\n',
+        '</div>;\n',
+      ]}</code>
+    </p>
+    <p>{
+      "where ExampleComponent5 is defined by the following module:"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'export function render({num = 1}) {\n',
+        '  let {counter = 0} = this.state;\n',
+        '  return <div>\n',
+        '    <button onClick={() => this.do("increaseCounter")}>\n',
+        '      {"Increase counter by " + num}\n',
+        '    </button>\n',
+        '    <div className="counter-display">\n',
+        '      {"Counter value: " + counter}\n',
+        '    </div>\n',
+        '  </div>;\n',
+        '}\n',
+        '\n',
+        'export const actions = {\n',
+        '  "increaseCounter": function() {\n',
+        '    let {num} = this.props;\n',
+        '    let {counter = 0} = this.state;\n',
+        '    this.setState(state => ({...state, counter: counter + num}));\n',
+        '  }\n',
+        '};\n',
+        '\n',
+        'export const methods = [\n',
+        '  "increaseCounter",\n',
+        '];\n',
+      ]}</code>
+    </p>
+    <p>{
+      "Note in particular the 'methods' export at the bottom of " +
+      "ExampleComponent5's module, which declares the \"increaseCounter\"" +
+      "as part of the component's methods. And also note how in the returned " +
+      "JSX element of the parent, we use a this.call() function to call the " +
+      "methods of the two children."
+    }</p>
+    <p>{
+      "As can be seen in this example, the first argument the this.call() " +
+      "is the key prop of the targeted child instance, which in our case is " +
+      "\"c-1\" for the first child instance, and \"c-2\" for the second. " +
+      "And the second argument is of course the key of the method that we " +
+      "want to call for the given child. And if the method's function " +
+      "receives an argument, you can also pass that via a optional third " +
+      "argument of this.call(). (This is not the case for the example above, " +
+      "however.)"
+    }</p>
+    <p>{
+      "So from the code above, we get the following example. (And you can " +
+      "also try this yourself if you comment in the right lines and re-" +
+      "upload your component.)"
     }</p>
     <p>{
       <TextDisplay key="_ex5" >
         <Result5 key="0" />
       </TextDisplay>
     }</p>
-
+    <p>{
+      "You are now ready to use methods"
+    }</p>
 
   </section>
 

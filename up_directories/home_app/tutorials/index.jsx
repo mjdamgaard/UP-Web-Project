@@ -77,7 +77,7 @@ const indexPage = <div className="text-page">
   </section>
 
   <section>
-    <h2>{"User-made basic tutorials"}</h2>
+    <h2>{"User-made introductory tutorials"}</h2>
     <p>{
       "And here is a list of user-made tutorials that expands on on some of " +
       "the basic principles of the UP system, and possibly in a way that " +

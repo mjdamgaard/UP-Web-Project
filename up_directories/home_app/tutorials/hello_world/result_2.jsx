@@ -4,7 +4,6 @@ import * as ExampleComponent2 from "./ExampleComponent2.jsx";
 
 export function render() {
   return <div>
-    <h1>{"Hello, World!"}</h1>
     <h2>{"Some child component examples"}</h2>
     <p>
       <ExampleComponent2 key="ex-1"
