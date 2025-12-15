@@ -119,6 +119,6 @@ const indexPage = <div className="text-page">
 
 
 
-export const styleSheetPaths = [
+export const styleSheets = [
   abs("../style.css"),
 ];

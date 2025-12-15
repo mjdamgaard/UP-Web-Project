@@ -17,7 +17,7 @@ export function render({
 }
 
 
-export const styleSheetPaths = [
+export const styleSheets = [
   abs("./GeneralEntityElement.css"),
   abs("../scoring/AggregatedScoreDisplay.css"),
 ];

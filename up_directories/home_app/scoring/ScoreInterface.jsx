@@ -315,7 +315,7 @@ export function fetchSubjectAndQualityIDs(scalarKey) {
 
 
 
-export const styleSheetPaths = [
+export const styleSheets = [
   abs("./ScoreInterface.css"),
   abs("./AggregatedScoreDisplay.css"),
 ];

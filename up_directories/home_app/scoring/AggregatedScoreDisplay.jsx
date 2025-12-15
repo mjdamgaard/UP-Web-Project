@@ -67,6 +67,6 @@ export const actions = {
 };
 
 
-export const styleSheetPaths = [
+export const styleSheets = [
   abs("./AggregatedScoreDisplay.css"),
 ];

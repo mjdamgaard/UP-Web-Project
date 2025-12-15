@@ -18,9 +18,9 @@ const page = <div className="text-page">
     <h2>{"Defining which style sheets to use for your components"}</h2>
     <p>{
       "The easiest way to style a given component is to export an array " +
-      "with the name of 'styleSheetPaths' (or simply 'styleSheets') from the " +
+      "with the name of 'styleSheets' from the " +
       "root component of your whatever app or webpage you are working on. " +
-      "This 'styleSheetPaths' array should then contain the paths to all the " +
+      "This 'styleSheets' array should then contain the paths to all the " +
       "style sheets that you wish to use."
     }</p>
     <p>{[
@@ -41,12 +41,12 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "And also comment in the 'styleSheetPaths' export at the end of the " +
+      "And also comment in the 'styleSheets' export at the end of the " +
       "document, which reads:"
     }</p>
     <p>
       <code className="jsx">{[
-        'export const styleSheetPaths = [\n',
+        'export const styleSheets = [\n',
         '  "./main.css",\n',
         '];\n',
       ]}</code>

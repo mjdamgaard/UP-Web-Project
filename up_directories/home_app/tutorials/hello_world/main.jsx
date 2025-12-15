@@ -112,6 +112,6 @@ export function render() {
 
 
 
-// export const styleSheetPaths = [
+// export const styleSheets = [
 //   "./main.css",
 // ];

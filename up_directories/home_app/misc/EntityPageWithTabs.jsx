@@ -15,7 +15,7 @@ export function render({entKey, tabs, initTabKey, isNested}) {
 }
 
 
-export const styleSheetPaths = [
+export const styleSheets = [
   abs("./TabbedPages.css"),
   abs("./EntityPageWithTabs.css"),
 ];

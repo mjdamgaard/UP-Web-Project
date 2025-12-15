@@ -9,6 +9,6 @@ export function render({}) {
   </div>;
 }
 
-export const styleSheetPaths = [
-  "../main.css",
+export const styleSheets = [
+  abs("../main.css"),
 ];

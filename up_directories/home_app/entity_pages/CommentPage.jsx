@@ -73,7 +73,7 @@ export function render({entKey, extQualKeyArr = undefined, isNested = false}) {
 }
 
 
-export const styleSheetPaths = [
+export const styleSheets = [
   abs("../misc/EntityPageWithTabs.css"),
   abs("../misc/TabbedPages.css"),
   abs("../entity_lists/EntityList.css"),

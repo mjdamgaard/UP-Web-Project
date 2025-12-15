@@ -98,7 +98,7 @@ export const events = [
 ];
 
 
-export const styleSheetPaths = [
+export const styleSheets = [
   abs("./style.css"),
   abs("./variable_components/ComponentEntityPage.css"),
   abs("./entity_lists/EntityList.css"),

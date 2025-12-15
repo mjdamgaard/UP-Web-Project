@@ -53,7 +53,7 @@ export const actions = {
 };
 
 
-export const styleSheetPaths = [
+export const styleSheets = [
   abs("../style.css"),
   abs("./ExpandableElement.css"),
 ];

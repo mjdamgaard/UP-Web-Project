@@ -24,6 +24,6 @@ export function render({url, history, userID, homeURL = ""}) {
 
 
 
-export const styleSheetPaths = [
+export const styleSheets = [
   abs("./style.css"),
 ];

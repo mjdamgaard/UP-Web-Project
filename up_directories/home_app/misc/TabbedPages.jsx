@@ -101,6 +101,6 @@ export const events = [
 
 
 
-export const styleSheetPaths = [
+export const styleSheets = [
   abs("./TabbedPages.css"),
 ];

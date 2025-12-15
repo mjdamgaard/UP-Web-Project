@@ -30,6 +30,6 @@ export function initialize({startOpen}) {
 
 
 
-export const styleSheetPaths = [
+export const styleSheets = [
   abs("./DropDownBox.css"),
 ];
