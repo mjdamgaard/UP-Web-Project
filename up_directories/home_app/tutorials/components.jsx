@@ -694,7 +694,7 @@ const page = <div className="text-page">
       "reaches its intended target, note that event keys, as well as action " +
       "keys and method keys, can also be ",
       <ELink key="link-sym"
-      href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol">
+        href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol">
         {"Symbols"}
       </ELink>,
       " instead. This means that you can let both the ancestor and " +
@@ -789,6 +789,18 @@ const page = <div className="text-page">
       </ILink>,
       ", which will list a couple of things to look out for when using this " +
       "framework, and give you some tips about debugging your components."
+    ]}</p>
+    <p>{[
+      "And once you are ready to move on from there, Tutorials ",
+      <ILink key="link-tut-5" href="~/styling">
+        {"5"}
+      </ILink>,
+      ", and ",
+      <ILink key="link-tut-6" href="~/styling">
+        {"6"}
+      </ILink>,
+      "will teach you how to create your first \"server modules,\" which " +
+      "will allow your components to upload and retrieve data from the server."
     ]}</p>
   </section>
 

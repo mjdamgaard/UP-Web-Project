@@ -6,6 +6,7 @@ import {urlActions, urlEvents} from '../urlActions.js';
 import * as EntityList from "../entity_lists/EntityList.jsx";
 import * as GettingStartedPage from "./getting_started.jsx";
 import * as ComponentsIntroPage from "./components.jsx";
+import * as StylingIntroPage from "./styling.jsx";
 
 
 export function render({url, homeURL}) {
@@ -23,6 +24,10 @@ export function render({url, homeURL}) {
 
   else if (tailURL === "/jsx-components") {
     return <ComponentsIntroPage key="0" />;
+  }
+
+  else if (tailURL === "/styling") {
+    return <StylingIntroPage key="0" />;
   }
 }
 

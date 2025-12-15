@@ -10,5 +10,5 @@ export function render({}) {
 }
 
 export const styleSheetPaths = [
-  abs("./main.css"),
+  "../main.css",
 ];

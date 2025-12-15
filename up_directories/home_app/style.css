@@ -73,6 +73,11 @@
   max-width: 50em;
 }
 
+.text-frame, .text-display {
+  padding: 1.5em 2em;
+  border: 4px double #1f627d;
+}
+
 .monospace {
   font-family: ui-monospace;
 }
@@ -90,10 +95,13 @@ code.command {
   color: white;
 }
 code.jsx {
-  /* background-color: #303030;
-  color: white; */
   background-color: #eaeaea;
   color: rgb(18, 10, 9);
+  border: 2px ridge gray;
+}
+code.css {
+  background-color: #eaeaea;
+  color: rgb(34, 24, 15);
   border: 2px ridge gray;
 }
 
