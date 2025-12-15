@@ -8,6 +8,7 @@ import * as Result2 from "./hello_world/result_2.jsx";
 import * as Result3 from "./hello_world/result_3.jsx";
 import * as Result4 from "./hello_world/result_4.jsx";
 import * as Result5 from "./hello_world/result_5.jsx";
+import * as Result6 from "./hello_world/result_6.jsx";
 
 
 export function render() {
@@ -625,9 +626,151 @@ const page = <div className="text-page">
       </TextDisplay>
     }</p>
     <p>{
-      "You are now ready to use methods"
+      "You are now ready to use methods!"
+    }</p>
+    <p>{
+      "As a last thing before we move on to the methods, it is also worth " +
+      "mentioning that methods can be aliased when they are declared in the " +
+      "'methods' export. This is done by letting the given entry of the " +
+      "'methods' array be an [\"<method key>\", \"<action key>\"] array, " +
+      "rather than just being the \"<action key>\" string itself. For " +
+      "instance, if we had wanted to alias the \"increaseCounter\" action as " +
+      "by just \"increase\" instead in the example above, we should " +
+      "have just exported"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'export const methods = [\n',
+        '  ["increase", "increaseCounter"],\n',
+        '];\n',
+      ]}</code>
+    </p>
+    <p>{
+      "instead from the component module."
     }</p>
 
+
+    <h3>{"Events"}</h3>
+    <p>{
+      "Finally, we have the 'events' of a component, which are very much " +
+      "similar to the methods, only where the actions in question, rather " +
+      "than being exposed to the parent instance, are exposed to the child " +
+      "instances instead, or in fact all of the descendant instances."
+    }</p>
+    <p>{
+      "Events are declared by exporting an array called 'events' from the " +
+      "component module, namely which includes the keys of the actions that " +
+      "should be elevated to become events. And in the same way that actions " +
+      "are called via this.do() and methods are called vie this.call(), the " +
+      "events are also triggered by their own function on the 'this' " +
+      "keyword, namely by this.trigger()."
+    }</p>
+    <p>{
+      "The this.trigger() function takes the event key as the first " +
+      "as well as an optional second argument consisting of the input to the " +
+      "event function, and it then calls up to each of its ancestors, " +
+      "starting from the parent and going all the way up to the app root, " +
+      "until the first ancestor instance is found with an event of a " +
+      "matching event key. If a match is found this way, the event action is " +
+      "then called (synchronously), and the return value of the given action " +
+      "function is returned by this.trigger(). (Both this.do() and " +
+      "this.call() also forwards the relevant return value, by the way.) " +
+      "And if no event of a matching key is found among the ancestors, " +
+      "this.trigger() simply returns undefined, and nothing else happens."
+    }</p>
+    <p>{
+      "Note that event keys can also be aliased in the exact same way as " +
+      "method keys, namely by letting the relevant entry of the 'events' " +
+      "array be of the form [\"<event key>\", \"<action key>\"]. And this " +
+      "especially relevant for methods, as one might often want to name the " +
+      "event keys after what happens, such as e.g. \"link-was-clicked\", or " +
+      "whatever is the case, and then the ancestor is responsible for " +
+      "determining how that event should be handled."
+    }</p>
+    <p>{[
+      "And if you fear that your triggered event might unintentionally " +
+      "collide with the events of other ancestor components before it " +
+      "reaches its intended target, note that event keys, as well as action " +
+      "keys and method keys, can also be ",
+      <ELink key="link-sym"
+      href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol">
+        {"Symbols"}
+      </ELink>,
+      " instead. This means that you can let both the ancestor and " +
+      "descendant component in question import a Symbol from the same " +
+      "auxiliary module, and use that Symbol as the event key in order to " +
+      "be sure to avoid unintended collisions in intermediary component " +
+      "instances."
+    ]}</p>
+    <p>{
+      "Now, to see an example of using an event, we can let the render() " +
+      "function in main.jsx return the following JSX element:"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'return <div>\n',
+        '  <h2>{"Triggering increaseCounter() from the child instance"}</h2>\n',
+        ' <button onClick={() => this.do("increaseCounter")}>\n',
+        '    {"Click me to increase my counter!"}\n',
+        '  </button>\n',
+        '  <div className="counter-display">\n',
+        '    {"Counter value: " + (this.state.counter ?? 0)}\n',
+        '  </div>\n',
+        '  <h2>{"Child instance"}</h2>\n',
+        '  <p>\n',
+        '    <ExampleComponent6 key="c-1" />\n',
+        '  </p>\n',
+        '</div>;\n',
+      ]}</code>
+    </p>
+    <p>{
+      "You can also once again try this out by just commenting in the right " +
+      "lines in main.jsx. And in this case, you should also comment in the " +
+      "'actions' and 'events' exports below the render() function, such that " +
+      "the main.jsx component module also exports:"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'export const actions = {\n',
+        '  "increaseCounter": function() {\n',
+        '    let {counter = 0} = this.state;\n',
+        '    this.setState(state => ({...state, counter: counter + 1}));\n',
+        '  }\n',
+        '};\n',
+        '\n',
+        'export const events = [\n',
+        '  "increaseCounter",\n',
+        '];\n',
+      ]}</code>
+    </p>
+    <p>{
+      "And for the module of ExampleComponent6, we let this simply consist " +
+      "solely of the following render() function:"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'export function render() {\n',
+        '  return <div>\n',
+        '    <button onClick={() => this.trigger("increaseCounter")}>\n',
+        '      {"Click me to increase my parent\'s counter!"}\n',
+        '    </button>\n',
+        '  </div>;\n',
+        '}\n',
+      ]}</code>
+    </p>
+    <p>{
+      "When the button of the child component is clicked, it thus triggers " +
+      "an event that simply redirects to the \"increaseCounter\" action in " +
+      "the parent, and the parent's counter is increased, like shown here:"
+    }</p>
+    <p>{
+      <TextDisplay key="_ex6" >
+        <Result6 key="0" />
+      </TextDisplay>
+    }</p>
+    <p>{
+      "And now you know how to use events!"
+    }</p>
   </section>
 
 
