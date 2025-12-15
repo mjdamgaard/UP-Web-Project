@@ -1,5 +1,5 @@
 
-import * as ExampleComponent4 from "./ExampleComponent4_2.jsx";
+import * as ExampleComponent4 from "../ExampleComponent4_2.jsx";
 
 
 export function render() {

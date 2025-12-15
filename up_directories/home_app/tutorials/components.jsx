@@ -2,13 +2,13 @@
 import * as ILink from 'ILink.jsx';
 import * as ELink from 'ELink.jsx';
 import * as TextDisplay from "../misc/TextDisplay.jsx";
-import * as Result0 from "./hello_world/result_0.jsx";
-import * as Result1 from "./hello_world/result_1.jsx";
-import * as Result2 from "./hello_world/result_2.jsx";
-import * as Result3 from "./hello_world/result_3.jsx";
-import * as Result4 from "./hello_world/result_4.jsx";
-import * as Result5 from "./hello_world/result_5.jsx";
-import * as Result6 from "./hello_world/result_6.jsx";
+import * as Result0 from "./hello_world/results/result_0.jsx";
+import * as Result1 from "./hello_world/results/result_1.jsx";
+import * as Result2 from "./hello_world/results/result_2.jsx";
+import * as Result3 from "./hello_world/results/result_3.jsx";
+import * as Result4 from "./hello_world/results/result_4.jsx";
+import * as Result5 from "./hello_world/results/result_5.jsx";
+import * as Result6 from "./hello_world/results/result_6.jsx";
 
 
 export function render() {
@@ -88,8 +88,8 @@ const page = <div className="text-page">
       "Try commenting in this line. (Your IDE or editor ought to have " +
       "shortcut for doing so. For instance, " +
       "in VS Code, the shortcut is Ctrl + Shift + '/'.) " +
-      "And after having done this, comment out Ln. 10 as well, and comment " +
-      "in Ln. 12-15, such that the render() function now returns an example " +
+      "And after having done this, comment out Ln. 13 as well, and comment " +
+      "in Ln. 15-18, such that the render() function now returns an example " +
       "JSX element where ExampleComponent1 is used:"
     }</p>
     <p>
@@ -142,9 +142,9 @@ const page = <div className="text-page">
       "similar to defining the attributes of an element in HTML."
     }</p>
     <p>{
-      "For example, if you comment out the return statement at Ln. 12-15 " +
+      "For example, if you comment out the return statement at Ln. 15-18 " +
       "again and comment in the next return statement after that (on Ln. " +
-      "17-33), and " +
+      "20-36), and " +
       "also makes sure that the import statement of ExampleComponent2 is in-" +
       "commented, you will see an example of how to pass the props of " +
       "component instances. The render function should then return the " +
@@ -224,8 +224,9 @@ const page = <div className="text-page">
     <p>{
       "We thus see that the first " +
       "paragraph shown under the \"Hello, World!\" header is indeed italic, " +
-      "namely since isItalic was passed as true to the component instance at " +
-      "Ln. 22 in main.jsx. And since no isItalic prop was passed to the " +
+      "namely since isItalic was passed as true to the first " +
+      "component instance at " +
+      "Ln. 24 in main.jsx. And since no isItalic prop was passed to the " +
       "instance at the second paragraph, that paragraph is not italic."
     }</p>
     <p>{
@@ -285,7 +286,7 @@ const page = <div className="text-page">
     }</p>
     <p>{
       "To see an example of this, you can comment out the previous return " +
-      "statement in main.jsx, and comment in the next one on Ln. 36-42. " +
+      "statement in main.jsx, and comment in the next one on Ln. 39-45. " +
       "And also make sure that the import of ExampleComponent3 is in-" +
       "commented as well. The render() function should now return:"
     }</p>
@@ -773,5 +774,22 @@ const page = <div className="text-page">
     }</p>
   </section>
 
+  <section>
+    <h2>{"Final remarks"}</h2>
+    <p>{[
+      "You are now almost ready to get started on working on your first " +
+      "components, whatever they might be. But before you do, it is " +
+      "recommended to first take a look at ",
+      <ILink key="link-tut-3" href="~/styling">
+        {"Tutorial 3"}
+      </ILink>,
+      ", which will teach you about how to style your components, as well as ",
+      <ILink key="link-tut-4" href="~/styling">
+        {"Tutorial 4"}
+      </ILink>,
+      ", which will list a couple of things to look out for when using this " +
+      "framework, and give you some tips about debugging your components."
+    ]}</p>
+  </section>
 
 </div>;
