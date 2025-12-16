@@ -5,5 +5,5 @@ export function render() {
 }
 
 export const styleSheets = [
-  abs("./ExampleComponent7.css"),
+  "./ExampleComponent7.css",
 ];

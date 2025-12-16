@@ -10,5 +10,5 @@ export function render({}) {
 }
 
 export const styleSheets = [
-  abs("../main.css"),
+  "../main.css",
 ];

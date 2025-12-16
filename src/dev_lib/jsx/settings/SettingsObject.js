@@ -121,7 +121,8 @@ export class SettingsObject01 extends SettingsObject {
     else {
       let styleSheetPromises = mapValues(styleSheetPaths, node, env, path => (
         new Promise((resolve) => {
-          interpreter.import(path, node, env).then(
+          let absPath = getAbsolutePath(componentPath, path, node, env);
+          interpreter.import(absPath, node, env).then(
             result => resolve(result)
           ).catch(
             err => interpreter.handleUncaughtException(err, env)
