@@ -182,15 +182,15 @@ const page = <div className="text-page">
     <h2>{"A more advanced underlying styling system"}</h2>
     <p>{
       "The styling system also has some more advanced features. But these " +
-      "are not necessary to know about for beginners, so we will save them " +
+      "are not necessary to know about for beginners, so let us save these " +
       "for another tutorial." 
     }</p>
     <p>{
       "The advanced system only becomes relevant once you get to a point " +
       "where you have multiple components from multiple different sources, " +
       "and you want to have greater control over how you can overwrite and " +
-      "adjust the styles of these components, without needed to change " +
-      "anything in their source code." 
+      "adjust the styles of these components, without needing to change " +
+      "anything in their JSX source code." 
     }</p>
     <p>{
       "Or if you need to be able to easily change or adjust some overall " +
@@ -201,16 +201,8 @@ const page = <div className="text-page">
       "something like Sass or Less to manage styling themes.)" 
     }</p>
     <p>{
-      "But for now, the reduced system was explained above in this tutorial " +
-      "should suffice, as you make your first couple of apps." 
-    }</p>
-  </section>
-
-  <section>
-    <h2>{"Additional remarks"}</h2>
-    <p>{
-      "As a quick remark on the style sheet paths in the 'stylesheets' " +
-      "export, " 
+      "But for now, the reduced system that was explained above in this " +
+      "tutorial should suffice, at least for your first couple of apps." 
     }</p>
   </section>
 </div>;

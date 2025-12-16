@@ -37,7 +37,7 @@
   margin: 0px 20%;
   padding: 20px 50px;
 }
-.app-main-container:has(> .open > .app-main > .full-screen) {
+.app-main-container:has(> .open > .app-main > .no-page-margins) {
   margin: 0 0;
   padding: 0 0;
 }
@@ -100,9 +100,9 @@ code.jsx {
   border: 2px ridge gray;
 }
 code.css {
-  background-color: #eaeaea;
+  background-color: #f4f4f4;
   color: rgb(117, 14, 14);
-  border: 2px ridge gray;
+  border: 2px ridge #c6d3ae;
 }
 
 ul, ol, li {

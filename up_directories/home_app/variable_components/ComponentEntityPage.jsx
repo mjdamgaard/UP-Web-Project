@@ -83,7 +83,8 @@ export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
     );
 
     // Then return the component page.
-    let className = "component-page" + (useFullScreen ? " full-screen" : "");
+    let className = "component-page" +
+      (useFullScreen ? " no-page-margins" : "");
     isTrusted ||= hasBeenDismissed;
     return <div className={className}>
       {isTrusted ? undefined :

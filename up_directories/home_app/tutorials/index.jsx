@@ -7,6 +7,7 @@ import * as EntityList from "../entity_lists/EntityList.jsx";
 import * as GettingStartedPage from "./getting_started.jsx";
 import * as ComponentsIntroPage from "./components.jsx";
 import * as StylingIntroPage from "./styling.jsx";
+import * as DifferencesPage from "./differences.jsx";
 
 
 export function render({url, homeURL}) {
@@ -28,6 +29,10 @@ export function render({url, homeURL}) {
 
   else if (tailURL === "/styling") {
     return <StylingIntroPage key="0" />;
+  }
+
+  else if (tailURL === "/useful-things-to-know") {
+    return <DifferencesPage key="0" />;
   }
 }
 
@@ -59,6 +64,11 @@ const indexPage = <div className="text-page">
         </ILink>
       </li>
       <li>
+        <ILink key="differences" href="~/useful-things-to-know" >
+          {"Useful things to know"}
+        </ILink>
+      </li>
+      <li>
         <ILink key="SMs" href="~/server-modules" >
           {"Server modules"}
         </ILink>
@@ -71,11 +81,6 @@ const indexPage = <div className="text-page">
       <li>
         <ILink key="entities" href="~/semantic-entities" >
           {"Introduction to semantic entities"}
-        </ILink>
-      </li>
-      <li>
-        <ILink key="notes" href="~/notes" >
-          {"Additional notes"}
         </ILink>
       </li>
     </ol>
