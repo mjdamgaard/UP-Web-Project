@@ -227,7 +227,103 @@ const page = <div className="text-page">
   <section>
     <h2>{"Developer components"}</h2>
     <p>{
-      "Apart from the"
+      "Some of the developer libraries also implement JSX components. These " +
+      "are often implementations of particular HTML elements, such as the " +
+      "<input> element, the <textarea> element, or the <a> element. " +
+      "These developer component are generally given upper camel-case " +
+      "module names, also followed by \".jsx\" at the end."
+    }</p>
+    <p>{
+      "For example, if you want to import the <textarea> developer component," +
+      " you can do it with the following import statement:"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'import * as TextArea from \'TextArea.jsx\';\n',
+      ]}</code>
+    </p>
+    <p>{
+      "And then you can use the this TextArea component exactly in the " +
+      "same way as the user-programmed components." 
+    }</p>
+    <p>{
+      "The TextArea component even comes with some built-in methods, such " +
+      "\"getValue\" and \"setValue\", which can be called by the parent " +
+      "component instance via the this.call() function, exactly like one " +
+      "would call a method of a user-programmed component. " +
+      "Other methods include a \"focus\" and a \"blur\" method, used to grab " +
+      "or release the focus of the document."
+    }</p>
+    <p>{
+      "The developer components also be given props in the same way as the " +
+      "user-programmed components. For instance, if you pass a string as " +
+      "the 'placeholder' prop to the TextArea component, it will get that " +
+      "string as its placeholder text (shown before the user starts typing)." 
+    }</p>
+    <p>{
+      "The <input> element also has, not just one, but several developer " +
+      "components that implement it. You can see the full list of the " +
+      "<input> dev components that is currently implemented here:" 
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'import * as InputCheckbox from \'InputCheckbox.jsx\';\n',
+        'import * as InputNumber from \'InputNumber.jsx\';\n',
+        'import * as InputRadio from \'InputRadio.jsx\';\n',
+        'import * as InputRange from \'InputRange.jsx\';\n',
+        'import * as InputText from \'InputText.jsx\';\n',
+      ]}</code>
+    </p>
+    <p>{
+      "As you might have guessed if you already know about <input> element, " +
+      "these are all named after the 'type' attribute value that they " +
+      "implement. And the props that these components can receive is " +
+      "dependent on this type." 
+    }</p>
+    <p>{
+      "And then we also we also have the <a> element, which is also divided " +
+      "into two versions:" 
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'import * as ILink from \'ILink.jsx\';\n',
+        'import * as ELink from \'ELink.jsx\';\n',
+      ]}</code>
+    </p>
+    <p>{
+      "Where ILink is strictly meant for internal links, i.e. to pages " +
+      "of the same website as the current one, and where ELink is meant " +
+      "for external links. The ILink component also has the added feature " +
+      "that is doesn't cause the page to reload when clicked. Instead it " +
+      "just updates the 'url' prop of the outer app component, causing it to " +
+      "rerender."
+    }</p>
+    <p>{
+      "Now, you might ask: Why do we need these developer components? Why " +
+      "do not just insert e.g. the <input> element or the <a> element " +
+      "directly in the returned JSX element of a component? " +
+      "Well, the reason for this is first of all security concerns. For " +
+      "instance, if the users were given complete control over the 'href' " +
+      "attribute of the <a> element, they could lead other users to " +
+      "malicious websites. But by using the ELink component instead, it is " +
+      "a simple matter to just make sure that this dev. component filters " +
+      "the href prop, and only redirect the user if the URL is recognized " +
+      "as a safe website to visit."
+    }</p>
+    <p>{
+      "Another good example is the <input> element, where if users were " +
+      "given complete control over the 'type' attribute, the could set this " +
+      "attribute to \"password\", and thereby possibly be able to trick " +
+      "the browser of another user to insert the user's password. And after" +
+      "this, they might then be able to upload it to a part of the database " +
+      "that they have access to, thus stealing the password."
+    }</p>
+    <p>{
+      "And apart from these security reasons, there is also simply the fact " +
+      "that this " +
+      "makes us able to call methods like \"getValue\" and \"setValue\", " +
+      "etc., via the this.call() function, which makes it very easy to " +
+      "interact with these kinds of elements."
     }</p>
   </section>
 

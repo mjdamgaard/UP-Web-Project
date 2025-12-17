@@ -46,7 +46,6 @@ staticDevLibs.set("query", queryMod);
 staticDevLibs.set("settings1", basicSettingsMod);
 staticDevLibs.set("jsx", jsxMod);
 staticDevLibs.set("TextArea.jsx", TextAreaMod);
-staticDevLibs.set("Textarea.jsx", TextAreaMod);
 staticDevLibs.set("InputText.jsx", InputTextMod);
 staticDevLibs.set("InputRange.jsx", InputRangeMod);
 staticDevLibs.set("InputRadio.jsx", InputRadioMod);
