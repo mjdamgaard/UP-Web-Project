@@ -16,6 +16,8 @@ export const MAP_PROTOTYPE = Object.getPrototypeOf(new Map());
 
 const MAX_ARRAY_INDEX = Number.MAX_SAFE_INTEGER;
 const MINIMAL_TIME_GAS = 10;
+const TRACE_LENGTH_CS = 15;
+const TRACE_LENGTH_SS = 40;
 
 export const TEXT_FILE_ROUTE_REGEX =
   /.+\.(jsx?|txt|json|html|xml|svg|md|css)$/;
@@ -1323,7 +1325,9 @@ export class ScriptInterpreter {
         // they are defined.
         else if (expNode.subtype === "trace") {
           let maxNum = Math.abs(parseInt(expValArr[0]));
-          maxNum = Number.isNaN(maxNum) ? undefined : maxNum;
+          maxNum = Number.isNaN(maxNum) ?
+            this.isServerSide ? TRACE_LENGTH_SS : TRACE_LENGTH_CS :
+            maxNum;
           let stringify = expValArr[0];
           let trace = environment.getCallTrace(maxNum, stringify);
           let varReadout = environment.getVariableReadout();
@@ -1883,7 +1887,7 @@ export class Environment {
   }
 
 
-  getCallTrace(maxLen = 15, stringify = false) {
+  getCallTrace(maxLen = TRACE_LENGTH_CS, stringify = false) {
     return this.getCallTraceHelper(maxLen, stringify).reverse();
   }
 

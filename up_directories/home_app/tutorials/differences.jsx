@@ -42,8 +42,8 @@ const page = <div className="text-page">
       "of a string or a specific entry of an array."
     }</p>
     <p>{
-      "So if you for instance want to map an array to another array, instead " +
-      "writing something like:"
+      "So if you for instance want to map an array to another array, you " +
+      "would normally write something like:"
     }</p>
     <p>
       <code className="jsx">{[
@@ -52,18 +52,15 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{[
-      "you instead need to import an equivalent function to the ",
+      "But this is wrong in this framework, as the ",
       <ELink key="link-map-1"
         href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map" >
         {"map()"}
       </ELink>,
-      " method from one of the so-called \"developer libraries\" (as opposed " +
-      "to user-made libraries). In particular for the ",
-      <ELink key="link-map-2"
-        href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map" >
-        {"map()"}
-      </ELink>,
-      " method, you would write the following instead:"
+      " method is not defined. And instead you need to import an equivalent " +
+      "function to from one of the so-called 'developer libraries' (as " +
+      "opposed to user-made libraries). In particular for the map() method, " +
+      "you would write the following instead:"
     ]}</p>
     <p>
       <code className="jsx">{[
@@ -80,7 +77,157 @@ const page = <div className="text-page">
   <section>
     <h2>{"Developer functions"}</h2>
     <p>{
-      "..."
+      "The example above shows an example of importing a function from a " +
+      "so-called developer library, which are always referenced using bare " +
+      "module names, i.e. names that does not start with \"/\" or \"./\", " +
+      "etc."
+    }</p>
+    <p>{[
+      "In a future version of this tutorial, we will link here to a " +
+      "documentation index page where one can see all the available " +
+      "developer libraries and their functions. But in the meantime, you can " +
+      "first of all go to ",
+      <ELink key="link-index-js"
+        href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/src/index.js" >
+        {"github.com/mjdamgaard/UP-Web-Project/blob/main/src/index.js"}
+      </ELink>,
+      " to see a list of all the developer libraries that available on the " +
+      "client side. (The first cluster of import statement starting around " +
+      "Ln. 15 shows their source code location, and the next statement " +
+      "cluster shows their bare module names.) " +
+      "And at ",
+      <ELink key="link-server-js"
+        href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/src/server/ajax_server.js" >
+        {"github.com/mjdamgaard/UP-Web-Project/blob/main/src/server/ajax_server.js"}
+      </ELink>,
+      " you can similarly see the developer libraries that are available on " +
+      "the server side. " +
+      "And as you can see, all the developer libraries are located in the ",
+      <ELink key="link-dev-lib"
+        href="https://github.com/mjdamgaard/UP-Web-Project/tree/main/src/dev_lib" >
+        {"src/dev_lib"}
+      </ELink>,
+      " folder, so you can also browse that to see what is available."
+    ]}</p>
+    <p>{
+      "Luckily, however, it is often not very hard to guess how to import " +
+      "a given developer function that you need, especially when it comes to " +
+      "all those prototype methods that are missing when compared to regular " +
+      "JS."
+    }</p>
+    <p>{[
+      "All the most common JS prototypes have their own developer library of " +
+      "the same name (only with lower-case letters): The ",
+      <ELink key="link-number"
+        href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number" >
+        {"Number"}
+      </ELink>,
+      " prototype has a corresponding 'number' dev. lib., the ",
+      <ELink key="link-string"
+        href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String" >
+        {"String"}
+      </ELink>,
+      " prototype has a 'string' dev. lib., the ",
+      <ELink key="link-array"
+        href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array" >
+        {"Array"}
+      </ELink>,
+      " prototype, as we saw above, has an 'array' dev. lib., and the ",
+      <ELink key="link-object"
+        href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object" >
+        {"Object"}
+      </ELink>,
+      " prototype has an 'object' dev. lib."
+    ]}</p>
+    <p>{
+      "In these libraries, you will find, not necessarily all, but most of " +
+      "the functions that you are looking for, generally exported with the " +
+      "exact same name as the corresponding method that you are looking for. " +
+      "And they also generally have the same API, except that all the " +
+      "arguments are moved one place to the right, of course to make room " +
+      "for the object/value in question, which now has to be passed as the " +
+      "first argument."
+    }</p>
+    <p>{
+      "A notable exception is the toString() method, which is only exported " +
+      "from the 'string' dev. lib."
+    }</p>
+    <p>{[
+      "Static methods such as ",
+      <ELink key="link-entries"
+        href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries" >
+        {"Object.entries()"}
+      </ELink>,
+      " and ",
+      <ELink key="link-isNaN"
+        href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isNaN" >
+        {"Number.isNaN()"}
+      </ELink>,
+      " also have corresponding developer functions for the most part. " +
+      "These functions just does not need a special first argument, which " +
+      "means that the API is often exactly the same."
+    ]}</p>
+    <p>{
+      "As an example, here is how one would import and use the entries() " +
+      "function:"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        '/* At the top of the module */\n',
+        'import {entries} from \'object\';\n',
+        '\n',
+        '/* Anywhere inside the module */\n',
+        'let obj = {a: "foo", b: "bar"};\n',
+        'let entries = entries(obj);\n',
+        'console.log(obj); // Prints: [["a", "foo"], ["b", "bar"]].\n',
+      ]}</code>
+    </p>
+  </section>
+
+  <section>
+    <h2>{"Global functions"}</h2>
+    <p>{[
+      "As the keen-eyed reader might have spotted, we did import the " +
+      "console.log() function above before using it. And that is because " +
+      "this framework still has a few number of global functions, some of " +
+      "which are implemented syntactically (similarly to how the ",
+      <ELink key="link-import-1"
+        href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import" >
+        {"import()"}
+      </ELink>,
+      " function is implemented syntactically in regular JS), and some of " +
+      "which or declared in the global scope."
+    ]}</p>
+    <p>{[
+      "These global functions for include:"
+    ]}</p>
+    <p>
+      <code className="jsx">{[
+        'console.log(myValue);\n',
+        'console.error(myValue);\n',
+        'console.trace();\n',
+        '\n',
+        'new Promise(resolve => resolve(myValue));\n',
+        'Promise.all(myPromiseArray);\n',
+        '\n',
+        'Symbol(myStringValue);\n',
+        '\n',
+        'import(myRelativeOrAbsolutePath);\n',
+        'abs(myRelativeOrAbsolutePath);\n',
+      ]}</code>
+    </p>
+    <p>{[
+      "among others. Almost of of these functions/constructors are known " +
+      "from regular JS, except the abs() function at the end of this list, " +
+      "which is a syntactically implemented function that simply returns the " +
+      "absolute version of the input path."
+    ]}</p>
+  </section>
+
+  <section>
+    <h2>{"Developer components"}</h2>
+    <p>{
+      "Apart from the"
     }</p>
   </section>
 
