@@ -238,7 +238,10 @@ export class DirectoryUpdater {
     // Construct the full route, then query the server. If the route still
     // starts with "/1/<dirID>/", post as admin, and else just post regularly,
     // without requesting admin privileges.
-    let route = normalizePath("/1/" + dirID + "/" + relativeRoute);
+    let route = normalizePath("/1/" + dirID + (relativeRoute[0] === "+" ?
+      relativeRoute.substring(1) :
+      "/" + relativeRoute
+    ));
     if (route.substring(0, dirID.length + 3) === "/1/" + dirID) {
       return await serverQueryHandler.postAsAdmin(
         route, postData, {returnLog: returnLog}
@@ -261,7 +264,10 @@ export class DirectoryUpdater {
     );
 
     // Construct the full route, then query the server.
-    let route = normalizePath("/1/" + dirID + "/" + relativeRoute);
+    let route = normalizePath("/1/" + dirID + (relativeRoute[0] === "+" ?
+      relativeRoute.substring(1) :
+      "/" + relativeRoute
+    ));
     return await serverQueryHandler.fetchAsAdmin(
       route, {returnLog: returnLog}
     );

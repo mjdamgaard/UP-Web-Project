@@ -814,7 +814,7 @@ export const components = {
     // (These properties obviously have to been checked by the user community,
     // and the entity ought to be down-rated as a member of this class if they
     // are not true:)
-    "GitHub repository", "Author(s)",
+    "GitHub repository", "Creator(s)",
   ],
   "Description": abs("./em1_aux.js;get/componentsDesc"),
 };

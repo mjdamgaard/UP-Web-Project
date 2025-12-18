@@ -88,6 +88,16 @@ export async function query(
     return adminID;
   }
 
+  // If route equals ".../<homeDirID>./creator", return the creatorID of the
+  // home directory.
+  if (queryType === "creator") {
+    let [[creatorID] = []] = await dbQueryHandler.queryDBProc(
+      "readHomeDirCreatorID", [homeDirID],
+      route, options, callerNode, execEnv,
+    ) ?? [];
+    return creatorID;
+  }
+
   // If route equals ".../<homeDirID>./_setAdmin/a/<adminID>", set a new admin
   // of the home directory.
   if (queryType === "_setAdmin") {

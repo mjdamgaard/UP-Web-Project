@@ -116,7 +116,9 @@ export class SettingsObject01 extends SettingsObject {
       styleModulePath = getAbsolutePath(
         componentPath, styleModulePath, node, env
       );
-      styleModulePromise = interpreter.import(styleModulePath, node, env);
+      styleModulePromise = interpreter.import(
+        styleModulePath, node, env
+      ).then(() => {}, err => interpreter.handleUncaughtException(err, env));
     }
     else {
       let styleSheetPromises = mapValues(styleSheetPaths, node, env, path => (
@@ -127,10 +129,10 @@ export class SettingsObject01 extends SettingsObject {
           ).catch(
             err => interpreter.handleUncaughtException(err, env)
           )
-        })
+        }).then(x => x, e => e)
       ));
       styleModulePromise = Promise.all(styleSheetPromises);
-      styleModulePromise.catch(() => {});
+      styleModulePromise.catch(e => e);
     }
 
     // Cache the styleModule promise, and then it resolves, replace it with the
@@ -138,7 +140,7 @@ export class SettingsObject01 extends SettingsObject {
     this.styleModules.set(componentPath, styleModulePromise);
     styleModulePromise.then(styleModule => {
       this.styleModules.set(componentPath, styleModule);
-    }).catch(() => {});
+    }).catch(e => e);
 
     // Then wait for styleModule and return it.
     styleModule = await styleModulePromise;

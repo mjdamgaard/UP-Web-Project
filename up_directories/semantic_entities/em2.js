@@ -40,7 +40,7 @@ export const homeApp = {
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/home_app",
-  "Author(s)": getUserEntPath("1", "1"),
+  "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
 
@@ -86,7 +86,7 @@ export const upIndexPage01 = {
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/home_app/index_pages",
-  "Author(s)": getUserEntPath("1", "1"),
+  "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
 
@@ -98,7 +98,7 @@ export const upIndexPage02 = {
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/home_app/index_pages",
-  "Author(s)": getUserEntPath("1", "1"),
+  "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
 
@@ -117,7 +117,7 @@ export const classEntityPage = {
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/home_app/entity_pages",
-  "Author(s)": getUserEntPath("1", "1"),
+  "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
 
@@ -129,7 +129,7 @@ export const commentEntityPage = {
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/home_app/entity_pages",
-  "Author(s)": getUserEntPath("1", "1"),
+  "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
 
@@ -142,7 +142,7 @@ export const commentElement = {
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/home_app/entity_elements",
-  "Author(s)": getUserEntPath("1", "1"),
+  "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
 
@@ -165,7 +165,7 @@ export const scalarEntityPage = {
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/home_app/entity_pages",
-  "Author(s)": getUserEntPath("1", "1"),
+  "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
 
@@ -176,7 +176,7 @@ export const qualityEntityPage = {
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/home_app/entity_pages",
-  "Author(s)": getUserEntPath("1", "1"),
+  "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
 
@@ -187,7 +187,7 @@ export const generalEntityPage2 = {
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/home_app/entity_pages",
-  "Author(s)": getUserEntPath("1", "1"),
+  "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
 
@@ -198,7 +198,7 @@ export const componentEntityPage = {
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/home_app/entity_pages",
-  "Author(s)": getUserEntPath("1", "1"),
+  "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
 
@@ -212,6 +212,6 @@ export const flipGame = {
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/home_app/tutorials/flip_game_01",
-  "Author(s)": getUserEntPath("1", "1"),
+  "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };

@@ -557,8 +557,7 @@ export class ScriptInterpreter {
     // If the dev function is asynchronous, call it and return a PromiseObject.
     if (isAsync) {
       let ret;
-      let promise = devFun.fun(execVars, inputArr);
-      promise.catch(err => {
+      let promise = devFun.fun(execVars, inputArr).then(x => x, err => {
         if (!ret.hasCatch) {
           this.handleUncaughtException(err, execEnv);
         }
@@ -1294,8 +1293,7 @@ export class ScriptInterpreter {
         let ret;
         let liveModulePromise = this.import(
           path, expNode, environment, false, false, true
-        );
-        liveModulePromise.catch(err => {
+        ).then(x => x, err => {
           if (!ret.hasCatch) {
             this.handleUncaughtException(err, environment);
           }

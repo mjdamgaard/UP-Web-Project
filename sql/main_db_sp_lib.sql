@@ -7,6 +7,7 @@ DROP FUNCTION numToHex;
 DROP FUNCTION hexToNum;
 
 DROP PROCEDURE readHomeDirAdminID;
+DROP PROCEDURE readHomeDirCreatorID;
 DROP PROCEDURE readDirectoriesOfAdmin;
 DROP PROCEDURE readDirectoriesOfCreator;
 DROP PROCEDURE readAllHomeDirDescendants;
@@ -95,6 +96,20 @@ BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
     DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum(dirIDHex);
 
     SELECT numToHex(admin_id) AS adminID
+    FROM HomeDirectories FORCE INDEX (PRIMARY)
+    WHERE dir_id = dirID;
+END; END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE readHomeDirCreatorID (
+    IN dirIDHex VARCHAR(16)
+)
+BEGIN DECLARE EXIT HANDLER FOR 1411 BEGIN SELECT NULL; END; BEGIN
+    DECLARE dirID BIGINT UNSIGNED DEFAULT hexToNum(dirIDHex);
+
+    SELECT numToHex(creator_id) AS creatorID
     FROM HomeDirectories FORCE INDEX (PRIMARY)
     WHERE dir_id = dirID;
 END; END //
