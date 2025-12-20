@@ -1,4 +1,96 @@
 
+import * as ILink from 'ILink.jsx';
+import * as ELink from 'ELink.jsx';
+
+
+export function render() {
+  return page;
+}
+
+
+
+const page = <div className="text-page">
+  <h1>{"Getting started"}</h1>
+    <p>{
+      "This tutorial will show you how to upload and edit your first " +
+      "\"Hello, World!\" UP app."
+    }</p>
+  <section>
+    <h2>{"Create a user account at up-web.org"}</h2>
+    <p>{
+      "Before you can upload your first test app to up-web.org, you will " +
+      "first of all create a user account."
+    }</p>
+    <p>{
+      "Go to the top right of the page and click the user icon, then select " +
+      "\"Sign up\", and enter a username and password. (Make sure to use a " +
+      "strong password that you have not used anywhere else, preferably by " +
+      "letting your browser generate one for you.)"
+    }</p>
+    <p>{
+      "You can also enter your e-mail address as well, but this is not a " +
+      "requirement."
+    }</p>
+  </section>
+  <section>
+    <h2>{"Installing Node.js"}</h2>
+    <p>{
+      "You will also need to make sure that you have Node.js installed on " +
+      "your computer."
+    }</p>
+    <p>{[
+      "If you do not already have Node.js installed, follow the instructions " +
+      "at ",
+      <ELink key="link-node-install" href="https://nodejs.org/en/download" >
+        {"nodejs.org/en/download"}
+      </ELink>,
+      "."
+    ]}</p>
+  </section>
+  <section>
+    <h2>{"Installing a program for uploading UP directories"}</h2>
+    <p>{
+      "Finally, you will also need to install a small Node.js program which " +
+      "allows you to quickly and easily upload and update a whole UP " +
+      "directory at once."
+    }</p>
+    <p>{[
+      "You can get this program by cloning or downloading the GitHub " +
+      "repository at ",
+      <ELink key="link-UPDirUploader"
+        href="https://github.com/mjdamgaard/UPDirUpdater" >
+        {"github.com/mjdamgaard/UPDirUpdater"}
+      </ELink>,
+      "."
+    ]}</p>
+    <p>{
+      "Once you have downloaded (and unpacked) this directory to your " +
+      "computer, open this directory in your terminal (or cd into it), then " +
+      "run the following command to install the Node.js program:"
+    }</p>
+    <p>
+      <code className="command">{[
+        '$ npm install',
+      ]}</code>
+    </p>
+    <p>{
+      "And after this, you are now ready to upload and test your first UP app!"
+    }</p>
+  </section>
+  <section>
+    <h2>{"Uploading your first UP app"}</h2>
+    <p>{
+      "If you take look in the up_directories folder, you will see that " +
+      "contains a project folder called 'hello_world'. This folder contains " +
+      "the source code of an \"Hello, World!\" example app, which you will " +
+      "now try to upload to up-web.org."
+    }</p>
+    <p>{
+      "..."
+    }</p>
+  </section>
+</div>;
+
 
 
 

@@ -1,6 +1,7 @@
 
 import homePath from "./.id.js";
 import {fetch} from 'query';
+import {getUserEntPath} from "/1/1/entities.js";
 
 
 const APP_NAME = "Hello World app";

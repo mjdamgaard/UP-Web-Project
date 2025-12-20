@@ -1,5 +1,6 @@
 
 -- USE mainDB;
+-- ALTER DATABASE mainDB DEFAULT CHARACTER SET utf8mb4;
 
 DROP TABLE HomeDirectories;
 DROP TABLE Files;

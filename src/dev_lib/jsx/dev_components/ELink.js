@@ -19,6 +19,7 @@ const urlWhitelist = [
   /^https:\/\/(www\.)?up-web\.org($|\/)/,
   /^https:\/\/([a-z]+\.)?wikipedia\.org($|\/)/,
   /^https:\/\/(www\.)?github\.com($|\/)/,
+  /^https:\/\/(www\.)?nodejs\.org($|\/)/,
   /^https:\/\/(www\.)?w3schools\.com($|\/)/,
   /^https:\/\/developer\.mozilla\.org($|\/)/,
   /^https:\/\/(www\.)?reddit\.com($|\/)/,
