@@ -118,7 +118,7 @@ export class SettingsObject01 extends SettingsObject {
       );
       styleModulePromise = interpreter.import(
         styleModulePath, node, env
-      ).then(() => {}, err => interpreter.handleUncaughtException(err, env));
+      ).then(x => x, err => interpreter.handleUncaughtException(err, env));
     }
     else {
       let styleSheetPromises = mapValues(styleSheetPaths, node, env, path => (

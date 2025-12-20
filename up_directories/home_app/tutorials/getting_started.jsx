@@ -86,3 +86,14 @@ export function render() {
     </div>
   );
 }
+
+
+// <section>
+  {/* <h2>{"..."}</h2> */}
+  {/* <p>{ */}
+    // "You are also very welcome to send an e-mail to mads@up-web.org if you " +
+    // "have any questions. And if you run into any bugs that you don't know " +
+    // "how to solve, please feel free to send an e-mail as well, as I " +
+    // "might be able to help you."
+  // }</p>
+{/* </section> */}

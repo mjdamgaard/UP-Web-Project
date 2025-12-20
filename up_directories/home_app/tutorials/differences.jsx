@@ -345,15 +345,6 @@ const page = <div className="text-page">
     }</p>
   </section>
 
-  <section>
-    <h2>{"..."}</h2>
-    <p>{
-      "You are also very welcome to send an e-mail to mads@up-web.org if you " +
-      "have any questions. And if you run into any bugs that you don't know " +
-      "how to solve, please feel free to send an e-mail as well, as I " +
-      "might be able to help you."
-    }</p>
-  </section>
 
     {/* Trigger() is better than callback props. */}
     {/* No un-computed HTML content yet, and nio async function yet. */}
