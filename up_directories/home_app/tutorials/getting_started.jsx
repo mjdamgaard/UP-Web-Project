@@ -11,15 +11,19 @@ export function render() {
 
 const page = <div className="text-page">
   <h1>{"Getting started"}</h1>
+    <h2>{"About this tutorial"}</h2>
     <p>{
-      "This tutorial will show you how to upload and edit your first " +
-      "\"Hello, World!\" UP app."
+      "This tutorial will show you how to create your first user-programmed " +
+      "(UP) app and upload it to this website!"
+    }</p>
+    <p>{
+      "But before you you follow this tutorial, you might..."
     }</p>
   <section>
     <h2>{"Create a user account at up-web.org"}</h2>
     <p>{
       "Before you can upload your first test app to up-web.org, you will " +
-      "first of all create a user account."
+      "first of all need to create a user account."
     }</p>
     <p>{
       "Go to the top right of the page and click the user icon, then select " +
@@ -28,8 +32,8 @@ const page = <div className="text-page">
       "letting your browser generate one for you.)"
     }</p>
     <p>{
-      "You can also enter your e-mail address as well, but this is not a " +
-      "requirement."
+      "You also have the option to enter your e-mail address here as well, " +
+      "but this is not a requirement."
     }</p>
   </section>
   <section>
@@ -94,7 +98,7 @@ const page = <div className="text-page">
 
 
 
-export function render() {
+export function render_old() {
   return (
     <div>
       <h1>{"Tutorial 1: Getting started!"}</h1>

@@ -181,7 +181,7 @@ export const query = new DevFunction(
               );
               resolve(liveModule);
             }).catch(err => reject(err));
-          }).then(x => x, e => e);
+          }).then();
           liveModules.set(route, liveModulePromise);
           liveModule = await liveModulePromise;
           liveModules.set(route, liveModule);
@@ -243,7 +243,7 @@ export const query = new DevFunction(
           ).catch(
             err => reject(err)
           );
-        }).then(x => x, e => e);
+        }).then();
         if (!isPrivate) {
           liveModules.set(route, liveModulePromise);
           liveModule = await liveModulePromise;

@@ -108,7 +108,7 @@ export class AppStyler01 {
         this.componentPaths[id] = componentPath;
         resolve(id);
       }).catch(err => reject(err));
-    }).then(x => x, e => e);
+    }).then();
     this.componentIDs.set(componentPath, idPromise);
 
     return await idPromise;

@@ -354,10 +354,10 @@ export class ScriptInterpreter {
     );
     else if (
       assertModule && !(ret instanceof LiveJSModule || ret instanceof CSSModule)
-    ) throw new LoadError(
+    ) {debugger;throw new LoadError(
       `No script or style sheet was found at ${route}`,
       callerNode, callerEnv
-    );
+    );}
 
     // If the scriptVars.appSettings has been set (meaning that createJSXApp()
     // has been called), also prepare the component's style in case of a 
@@ -557,7 +557,8 @@ export class ScriptInterpreter {
     // If the dev function is asynchronous, call it and return a PromiseObject.
     if (isAsync) {
       let ret;
-      let promise = devFun.fun(execVars, inputArr).then(x => x, err => {
+      let promise = devFun.fun(execVars, inputArr).then();
+      promise.catch(err => {
         if (!ret.hasCatch) {
           this.handleUncaughtException(err, execEnv);
         }
@@ -1293,7 +1294,8 @@ export class ScriptInterpreter {
         let ret;
         let liveModulePromise = this.import(
           path, expNode, environment, false, false, true
-        ).then(x => x, err => {
+        ).then();
+        liveModulePromise.catch(err => {
           if (!ret.hasCatch) {
             this.handleUncaughtException(err, environment);
           }

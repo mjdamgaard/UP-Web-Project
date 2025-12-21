@@ -148,10 +148,10 @@ const TEST_APP_ID = "2";
 const mainScript = `
   import {createJSXApp} from 'jsx';
   import {settings} from 'settings1';
-  import * as testApp from "/1/${TEST_APP_ID}/main.jsx";
+  import * as app from "/1/${TEST_APP_ID}/main.jsx";
 
   export function main() {
-    createJSXApp(testApp, {}, settings);
+    createJSXApp(app, {}, settings);
   }
 `;
 

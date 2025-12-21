@@ -207,7 +207,7 @@ export function render({route}) {
         let isFile = (indexOf(child, ".") !== -1);
         return <div className={isFile ? "file-link" : "directory-link"}>
           <ILink key={"child" + ind} href={
-            "~/f/" + encodeURI(route + "/" + child)
+            "~/f" + encodeURI(route + "/" + child)
           }>
             {child}
           </ILink> 

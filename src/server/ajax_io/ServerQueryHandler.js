@@ -106,7 +106,7 @@ export class ServerQueryHandler {
     // Send the request.
     responsePromise = this.#requestHelper(
       serverKey, route, isGET, reqBody, headers
-    ).then(x => x, e => e);
+    ).then();
 
     // Then add it to requestBuffer, and also give it a then-callback to remove
     // itself from said buffer, before return ing the promise.
