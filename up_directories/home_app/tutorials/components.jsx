@@ -68,7 +68,7 @@ const page = <div className="text-page">
       "module, let us see how importing a component works."
     }</p>
     <p>{
-      "In the \"Hello, World!\" main.jsx file that was used in the " +
+      "In the \"Hello, World!\" app2.jsx file that was used in the " +
       "\"Getting started\" tutorial, there is an out-commented line at Ln. 2 " +
       "that reads:"
     }</p>
@@ -150,13 +150,13 @@ const page = <div className="text-page">
       "directory.)"
     }</p>
     <p>{
-      "For instance, if someone wants to import your new main.jsx " +
+      "For instance, if someone wants to import your new app2.jsx " +
       "component, and your home directory ID is, say, \"12ab\", " +
       "they could import it via this statement:"
     }</p>
     <p>
       <code className="jsx">
-        {'import * as App from "/1/12ab/main.jsx";'}
+        {'import * as App from "/1/12ab/app2.jsx";'}
       </code>
     </p>
   </section>
@@ -265,7 +265,7 @@ const page = <div className="text-page">
       "paragraph shown under the \"Hello, World!\" header is indeed italic, " +
       "namely since isItalic was passed as true to the first " +
       "component instance at " +
-      "Ln. 24 in main.jsx. And since no isItalic prop was passed to the " +
+      "Ln. 24 in app2.jsx. And since no isItalic prop was passed to the " +
       "instance at the second paragraph, that paragraph is not italic."
     }</p>
     <p>{
@@ -325,7 +325,7 @@ const page = <div className="text-page">
     }</p>
     <p>{
       "To see an example of this, you can comment out the previous return " +
-      "statement in main.jsx, and comment in the next one on Ln. 39-45. " +
+      "statement in app2.jsx, and comment in the next one on Ln. 39-45. " +
       "And also make sure that the import of ExampleComponent3 is in-" +
       "commented as well. The render() function should now return:"
     }</p>
@@ -579,7 +579,7 @@ const page = <div className="text-page">
     }</p>
     <p>{
       "To see how this works, we can let our render() function in the " +
-      "main.jsx module return the following:"
+      "app2.jsx module return the following:"
     }</p>
     <p>
       <code className="jsx">{[
@@ -744,7 +744,7 @@ const page = <div className="text-page">
     ]}</p>
     <p>{
       "Now, to see an example of using an event, we can let the render() " +
-      "function in main.jsx return the following JSX element:"
+      "function in app2.jsx return the following JSX element:"
     }</p>
     <p>
       <code className="jsx">{[
@@ -765,9 +765,9 @@ const page = <div className="text-page">
     </p>
     <p>{
       "You can also once again try this out by just commenting in the right " +
-      "lines in main.jsx. And in this case, you should also comment in the " +
+      "lines in app2.jsx. And in this case, you should also comment in the " +
       "'actions' and 'events' exports below the render() function, such that " +
-      "the main.jsx component module also exports:"
+      "the app2.jsx component module also exports:"
     }</p>
     <p>
       <code className="jsx">{[

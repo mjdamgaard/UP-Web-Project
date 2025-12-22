@@ -572,28 +572,6 @@ export class ScriptInterpreter {
 
 
 
-  thenPromise(promise, onFulfilledFun, onRejectedFun, node, env) {
-    promise.then(res => {
-      if (res instanceof ErrorWrapper && onRejectedFun) {
-        this.executeFunctionOffSync(onRejectedFun, [res.val], node, env);
-      }
-      else {
-        this.executeFunctionOffSync(onFulfilledFun, [res], node, env);
-      }
-    });
-  }
-
-  catchPromise(promise, callbackFun, node, env) {
-    promise.catch(err => {
-      if (err instanceof Exception) {
-        this.executeFunctionOffSync(callbackFun, [err.val], node, env);
-      } else {
-        this.handleUncaughtException(err, env);
-      }
-    });
-  }
-
-
   executeFunctionOffSync(
     fun, inputArr, callerNode, execEnv, thisVal, flags, errRef = [],
   ) {

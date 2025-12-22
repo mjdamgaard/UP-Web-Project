@@ -29,7 +29,7 @@ const page = <div className="text-page">
         {"previous tutorial"}
       </ILink>,
       " you can comment out the previous return and comment in Ln. 93-96 of " +
-      "main.jsx, such that it returns the following JSX element:"
+      "app2.jsx, such that it returns the following JSX element:"
     ]}</p>
     <p>
       <code className="jsx">{[
@@ -48,7 +48,7 @@ const page = <div className="text-page">
     <p>
       <code className="jsx">{[
         'export const styleSheets = [\n',
-        '  "./main.css",\n',
+        '  "./app2.css",\n',
         '];\n',
       ]}</code>
     </p>
@@ -62,7 +62,7 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "And the contents of the main.css style sheet is:"
+      "And the contents of the app2.css style sheet is:"
     }</p>
     <p>
       <code className="css">{[
@@ -95,7 +95,7 @@ const page = <div className="text-page">
     <p>{
       "Here you see that both the <h1> header from the root component and " +
       "the <h2> header from the child component are now colored red. This " +
-      "shows that the main.css style sheet has styled both the parent and " +
+      "shows that the app2.css style sheet has styled both the parent and " +
       "the child instance."
     }</p>
   </section>
@@ -155,7 +155,7 @@ const page = <div className="text-page">
     <p>{
       "So to see an example of a child component instance styles itself, " +
       "simply prepend an underscore to the key prop in the returned JSX " +
-      "element in main.jsx from the previous example, such it becomes " +
+      "element in app2.jsx from the previous example, such it becomes " +
       "\"_c-1\" instead of \"c-1\":"
     }</p>
     <p>

@@ -78,7 +78,7 @@
   border: 4px double #1f627d;
 }
 
-.directory-link::after {
+.directory-link > a::after {
   content: "/";
 }
 

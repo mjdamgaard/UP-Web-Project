@@ -13,6 +13,9 @@ import * as EntityReference from "../misc/EntityReference.jsx";
 import * as TextDisplay from "../misc/TextDisplay.jsx";
 
 
+// TODO: There is an error in how I handle paths to subdirectories, where I
+// query the server for the sub-directory route, instead of querying the home
+// path and just filtering the list. So fix this.
 
 // TODO: Refactor this component now that parseRoute() produces dirSegments and
 // fileName as well.
