@@ -67,11 +67,14 @@ const page = <div className="text-page">
       "But before we introduce the other possible exports of a component " +
       "module, let us see how importing a component works."
     }</p>
-    <p>{
-      "In the \"Hello, World!\" app2.jsx file that was used in the " +
-      "\"Getting started\" tutorial, there is an out-commented line at Ln. 2 " +
+    <p>{[
+      "In the app2.jsx file that was used in the last part of the ",
+      <ILink key="link-tut-1" href="~/getting-started">
+        {"Getting started"}
+      </ILink>,
+      " tutorial, there is an out-commented line at Ln. 2 " +
       "that reads:"
-    }</p>
+    ]}</p>
     <p>
       <code className="jsx">
         {'import * as ExampleComponent1 from "./ExampleComponent1.jsx";'}
