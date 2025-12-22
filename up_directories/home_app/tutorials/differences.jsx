@@ -349,5 +349,10 @@ const page = <div className="text-page">
     {/* Trigger() is better than callback props. */}
     {/* No un-computed HTML content yet, and nio async function yet. */}
     {/* Future compiler. */}
+    {/* ref and mutable props, and the deep comparisons in general . */}
+    {/* Extended syntax fro relative routes */}
+    {/* Maybe also a note about the extended relative urls */}
+    {/* Components need to return a single HTML element, and if they don't
+        it just gets wrapped */}
   
 </div>;

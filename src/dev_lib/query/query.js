@@ -5,6 +5,7 @@ import {
   CLEAR_FLAG, PromiseObject, Environment, LiveJSModule, parseString,
   TEXT_FILE_ROUTE_REGEX, SCRIPT_ROUTE_REGEX, CSSModule, getString,
   getPropertyFromObject, ArgTypeError, forEachValue, ObjectObject,
+  ErrorWrapper,
 } from '../../interpreting/ScriptInterpreter.js';
 import {scriptParser} from "../../interpreting/parsing/ScriptParser.js";
 import {parseRoute} from './src/route_parsing.js';
@@ -153,6 +154,9 @@ export const query = new DevFunction(
       if (liveModule instanceof Promise) {
         liveModule = await liveModule;
       }
+      if (liveModule instanceof ErrorWrapper) {
+        throw liveModule.val;
+      }
       result = liveModule;
     }
 
@@ -174,17 +178,19 @@ export const query = new DevFunction(
           callerNode, execEnv
         );
         try {
-          let liveModulePromise = new Promise((resolve, reject) => {
-            import(devLibURL).then(devMod => {
-              let liveModule = new LiveJSModule(
-                route, Object.entries(devMod), execEnv.scriptVars
-              );
-              resolve(liveModule);
-            }).catch(err => reject(err));
-          }).then();
+          let liveModulePromise = import(devLibURL).then(devMod => {
+            return new LiveJSModule(
+              route, Object.entries(devMod), execEnv.scriptVars
+            );
+          }).catch(
+            err => new ErrorWrapper(err)
+          );
           liveModules.set(route, liveModulePromise);
           liveModule = await liveModulePromise;
           liveModules.set(route, liveModule);
+          if (liveModule instanceof ErrorWrapper) {
+            throw liveModule.val;
+          }
         } catch (err) {
           throw new LoadError(
             `Developer library "${route}" failed to import ` +
@@ -227,6 +233,9 @@ export const query = new DevFunction(
         if (liveModule instanceof Promise) {
           liveModule = await liveModule;
         }
+        if (liveModule instanceof ErrorWrapper) {
+          throw liveModule.val;
+        }
         result = liveModule;
       }
 
@@ -234,22 +243,23 @@ export const query = new DevFunction(
       // resulting liveModule, after also adding it to liveModules.
       else {
         let globalEnv = execEnv.getGlobalEnv();
-        let liveModulePromise = new Promise((resolve, reject) => {
-          interpreter.executeModule(
-            parsedScript, lexArr, strPosArr, script, route, globalEnv,
-            ancestorModules,
-          ).then(
-            ([liveModule]) => resolve(liveModule)
-          ).catch(
-            err => reject(err)
-          );
-        }).then();
+        let liveModulePromise = interpreter.executeModule(
+          parsedScript, lexArr, strPosArr, script, route, globalEnv,
+          ancestorModules,
+        ).then(
+          ([liveModule]) => liveModule
+        ).catch(
+          err => new ErrorWrapper(err)
+        );
         if (!isPrivate) {
           liveModules.set(route, liveModulePromise);
           liveModule = await liveModulePromise;
           liveModules.set(route, liveModule);
         } else {
           liveModule = await liveModulePromise;
+        }
+        if (liveModule instanceof ErrorWrapper) {
+          throw liveModule.val;
         }
         result = liveModule;
       }

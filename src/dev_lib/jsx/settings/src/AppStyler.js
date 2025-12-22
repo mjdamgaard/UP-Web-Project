@@ -2,10 +2,9 @@
 import {cssParser} from "./CSSParser.js";
 import {cssTransformer} from "./CSSTransformer.js";
 import {
-  ArgTypeError, parseString, verifyTypes, verifyType, getString,
-  getPropertyFromPlainObject, jsonStringify, CLEAR_FLAG, jsonParse,
+  ArgTypeError, parseString, getString, jsonStringify, CLEAR_FLAG,
   FunctionObject, getPropertyFromObject, forEachValue, CSSModule, isArray,
-  LiveJSModule,
+  LiveJSModule, ErrorWrapper,
 } from "../../../../interpreting/ScriptInterpreter.js";
 
 const CLASS_STRING_REGEX = /^ *([a-z][a-z0-9\-]*)((_[a-z0-9\-]*)?) *$/;
@@ -94,24 +93,31 @@ export class AppStyler01 {
     if (componentID instanceof Promise) {
       componentID = await componentID;
     }
+    if (componentID instanceof ErrorWrapper) {
+      throw componentID.val;
+    }
     if (componentID) {
-      return;
+      return componentID;
     }
 
     // Else store a self-replacing promise at this.componentIDs[modulePath],
     // which resolves with the componentID when the component has been prepared.
-    let idPromise = new Promise((resolve, reject) => {
-      this.prepareComponentHelper(
-        componentModule, componentPath, node, env
-      ).then(id => {
-        this.componentIDs.set(componentPath, id);
-        this.componentPaths[id] = componentPath;
-        resolve(id);
-      }).catch(err => reject(err));
-    }).then();
+    let idPromise = this.prepareComponentHelper(
+      componentModule, componentPath, node, env
+    ).then(id => {
+      this.componentIDs.set(componentPath, id);
+      this.componentPaths[id] = componentPath;
+      return id;
+    }).catch(
+      err => new ErrorWrapper(err)
+    );
     this.componentIDs.set(componentPath, idPromise);
 
-    return await idPromise;
+    componentID = await idPromise;
+    if (componentID instanceof ErrorWrapper) {
+      throw componentID.val;
+    }
+    return componentID;
   }
 
   async prepareComponentHelper(componentModule, componentPath, node, env) {
@@ -481,14 +487,16 @@ export class AppStyler01 {
         let whenReady = componentID;
         return [false, whenReady];
       }
+      if (componentID instanceof ErrorWrapper) {
+        throw componentID.val;
+      }
 
       // Else if it is undefined, call preparedComponent instead, as return
       // that is the whenReady promise.
       if (!componentID) {
         let whenReady = this.prepareComponent(
           jsxInstance.componentModule, node, env
-        );
-        whenReady.catch(err => interpreter.handleUncaughtException(err, env));
+        ).finally();
         return [false, whenReady];
       }
 

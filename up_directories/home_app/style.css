@@ -78,6 +78,10 @@
   border: 4px double #1f627d;
 }
 
+.directory-link::after {
+  content: "/";
+}
+
 .monospace {
   font-family: ui-monospace;
 }

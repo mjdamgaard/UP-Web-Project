@@ -1,6 +1,6 @@
+
 import {
-  DevFunction, forEachValue, LiveJSModule, PromiseObject, RuntimeError,
-  LiveJSModule as SCSSModule, getAbsolutePath, mapValues,
+  getAbsolutePath, mapValues, ErrorWrapper,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {SettingsObject} from "../jsx_components.js";
 import {appStyler} from "./src/AppStyler.js";
@@ -94,6 +94,9 @@ export class SettingsObject01 extends SettingsObject {
       if (styleModule instanceof Promise) {
         styleModule = await styleModule;
       }
+      if (styleModule instanceof ErrorWrapper) {
+        throw styleModule.val;
+      }
       return styleModule;
     }
 
@@ -116,16 +119,24 @@ export class SettingsObject01 extends SettingsObject {
       styleModulePath = getAbsolutePath(
         componentPath, styleModulePath, node, env
       );
-      styleModulePromise = interpreter.import(
-        styleModulePath, node, env
-      ).then();
+      styleModulePromise = interpreter.import(styleModulePath, node, env).then(
+        x => x, err => new ErrorWrapper(err)
+      );
     }
     else {
       let styleSheetPromises = mapValues(styleSheetPaths, node, env, path => {
         let absPath = getAbsolutePath(componentPath, path, node, env);
-        return interpreter.import(absPath, node, env).then();
+        return interpreter.import(absPath, node, env).then(
+          x => x, err => new ErrorWrapper(err)
+        );
       });
-      styleModulePromise = Promise.all(styleSheetPromises).then();
+      styleModulePromise = Promise.all(styleSheetPromises).then(resultArr => {
+        let wrappedError = resultArr.reduce(
+          (acc, val) => acc ?? (val instanceof ErrorWrapper ? val : undefined),
+          undefined
+        );
+        return wrappedError ?? resultArr;
+      });
     }
 
     // Cache the styleModule promise, and then it resolves, replace it with the
@@ -137,6 +148,9 @@ export class SettingsObject01 extends SettingsObject {
 
     // Then wait for styleModule and return it.
     styleModule = await styleModulePromise;
+    if (styleModule instanceof ErrorWrapper) {
+      throw styleModule.val;
+    }
     return styleModule;
   }
 }

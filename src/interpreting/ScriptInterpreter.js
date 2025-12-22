@@ -354,10 +354,10 @@ export class ScriptInterpreter {
     );
     else if (
       assertModule && !(ret instanceof LiveJSModule || ret instanceof CSSModule)
-    ) {debugger;throw new LoadError(
+    ) throw new LoadError(
       `No script or style sheet was found at ${route}`,
       callerNode, callerEnv
-    );}
+    );
 
     // If the scriptVars.appSettings has been set (meaning that createJSXApp()
     // has been called), also prepare the component's style in case of a 
@@ -557,12 +557,9 @@ export class ScriptInterpreter {
     // If the dev function is asynchronous, call it and return a PromiseObject.
     if (isAsync) {
       let ret;
-      let promise = devFun.fun(execVars, inputArr).then();
-      promise.catch(err => {
-        if (!ret.hasCatch) {
-          this.handleUncaughtException(err, execEnv);
-        }
-      });
+      let promise = devFun.fun(execVars, inputArr).then(
+        x => x, err => new ErrorWrapper(err)
+      );
       ret = new PromiseObject(promise, this, callerNode, execEnv);
       return ret;
     }
@@ -575,9 +572,14 @@ export class ScriptInterpreter {
 
 
 
-  thenPromise(promise, callbackFun, node, env) {
+  thenPromise(promise, onFulfilledFun, onRejectedFun, node, env) {
     promise.then(res => {
-      this.executeFunctionOffSync(callbackFun, [res], node, env);
+      if (res instanceof ErrorWrapper && onRejectedFun) {
+        this.executeFunctionOffSync(onRejectedFun, [res.val], node, env);
+      }
+      else {
+        this.executeFunctionOffSync(onFulfilledFun, [res], node, env);
+      }
     });
   }
 
@@ -1257,31 +1259,31 @@ export class ScriptInterpreter {
       }
       case "promise-all-call": {
         let expVal = this.evaluateExpression(expNode.exp, environment);
+        if (expVal instanceof ObjectObject) expVal = expVal.members;
         if (!(expVal instanceof Array)) throw new RuntimeError(
-          "Expression is not iterable",
+          "Value is not iterable",
           expNode.exp, environment
         );
-        let ret;
-        ret = new PromiseObject(
-          Promise.all(
-            expVal.map((promiseObject, key) => {
-              if (promiseObject instanceof PromiseObject) {
-                return promiseObject.promise;
-              }
-              else throw new RuntimeError(
-                "Promise.all() received a non-promise-valued element, at " +
-                `index/key = ${key}`,
-                expNode, environment
-              );
-            })
-          ).catch(err => {
-            if (!ret.hasCatch) {
-              this.handleUncaughtException(err, environment);
+        let parallelPromise = Promise.all(
+          expVal.map((promiseObject, key) => {
+            if (promiseObject instanceof PromiseObject) {
+              return promiseObject.promise;
             }
-          }),
-          this, expNode, environment
-        );
-        return ret;
+            else throw new RuntimeError(
+              "Promise.all() received a non-promise-valued element, at " +
+              `index ${key}`,
+              expNode, environment
+            );
+          })
+        ).then(resultArr => {
+          let wrappedError = resultArr.reduce(
+            (acc, val) => 
+              acc ?? (val instanceof ErrorWrapper ? val : undefined),
+            undefined
+          );
+          return wrappedError ?? resultArr;
+        });
+        return new PromiseObject(parallelPromise, this, expNode, environment);
       }
       case "symbol-call": {
         let expVal = (expNode.exp === undefined) ? undefined : getString(
@@ -1291,19 +1293,14 @@ export class ScriptInterpreter {
       }
       case "import-call": {
         let path = this.evaluateExpression(expNode.pathExp, environment);
-        let ret;
         let liveModulePromise = this.import(
           path, expNode, environment, false, false, true
-        ).then();
-        liveModulePromise.catch(err => {
-          if (!ret.hasCatch) {
-            this.handleUncaughtException(err, environment);
-          }
-        });
-        ret = new PromiseObject(
+        ).then(
+          x => x, err => new ErrorWrapper(err)
+        );
+        return new PromiseObject(
           liveModulePromise, this, expNode, environment
         );
-        return ret;
       }
       case "console-call": {
         let {isExiting, log} = environment.scriptVars;
@@ -2766,10 +2763,15 @@ export class JSXElement extends ObjectObject {
 // language, and instead create a Promise ClassObject and make it one of the
 // few built-in global values (along with MutableObject etc. from above.)
 
+
+
 export class PromiseObject extends ObjectObject {
   constructor(promiseOrFun, interpreter, node, env) {
     super("Promise");
-    this.hasCatch = false;
+    this.isCaught = false;
+
+    // Set this.promise depending on whether promiseOrFun is a Promise or a
+    // FunctionObject.
     if (promiseOrFun instanceof Promise) {
       this.promise = promiseOrFun;
     }
@@ -2783,34 +2785,96 @@ export class PromiseObject extends ObjectObject {
         let userReject = new DevFunction(
           "reject", {}, ({}, [err]) => reject(err)
         );
-        interpreter.executeFunctionOffSync(
+        interpreter.executeFunction(
           fun, [userResolve, userReject], node, env
         );
-      }).catch(err => {
-        if (err instanceof Error) console.error(err);
-      });
+      }).then(
+        x => x, err => new ErrorWrapper(err)
+      );
     }
-// TODO: Add onRejected callback argument to then().
-    this.members["then"] = new DevFunction(
-      "then", {}, ({callerNode, execEnv, interpreter}, [callbackFun]) => {
-        interpreter.thenPromise(
-          this.promise, callbackFun, callerNode, execEnv
+
+    // Wait until after all currently executing code has finished, allowing
+    // users to catch the promise on the same tick of the event loop, before
+    // handling this.promise if it fails/has failed and isn't caught.
+    setTimeout(
+      () => {
+        this.promise.then(res => {
+          if (res instanceof ErrorWrapper && !this.isCaught) {
+            interpreter.handleUncaughtException(res.val, env);
+          }
+        });
+      },
+      0
+    );
+
+    // Define the instance methods.
+    this.members["then"] = new ThenFunction(this);
+    this.members["catch"] = new DevFunction(
+      "catch", {}, ({callerNode, execEnv, interpreter}, [onRejectedFun]) => {
+        return interpreter.executeFunction(
+          this.members["then"], [undefined, onRejectedFun], callerNode, execEnv
         );
-        return this;
       }
     );
-    this.members["catch"] = new DevFunction(
-      "catch", {}, ({callerNode, execEnv, interpreter}, [callbackFun]) => {
-        interpreter.catchPromise(
-          this.promise, callbackFun, callerNode, execEnv
+    this.members["finally"] = new DevFunction(
+      "finally", {}, ({callerNode, execEnv, interpreter}, [onSettledFun]) => {
+        return interpreter.executeFunction(
+          this.members["then"], [onSettledFun, onSettledFun], callerNode,
+          execEnv
         );
-        this.hasCatch = true;
-        return this;
       }
     );
   }
 }
 
+class ThenFunction extends DevFunction {
+  constructor(thisPromObj) {
+    super(
+      "then", {typeArr: ["function?", "function?"]},
+      ({callerNode, execEnv, interpreter}, [onFulfilledFun, onRejectedFun]) => {
+        thisPromObj.isCaught = true;
+        onFulfilledFun ??= new DevFunction("onFulfilled", {}, ({}, [x]) => {
+          return x;
+        });
+        onRejectedFun ??= new DevFunction("onRejected", {}, ({}, [err]) => {
+          throw err;
+        });
+        let newPromise = new Promise(resolve => {
+          thisPromObj.promise.then(result => {
+            let handlerFun = onFulfilledFun;
+            if (result instanceof ErrorWrapper) {
+              handlerFun = onRejectedFun;
+              result = result.val;
+            }
+            let newResult;
+            try {
+              newResult = interpreter.executeFunction(
+                handlerFun, [result], callerNode, execEnv
+              );
+            }
+            catch (err) {
+              newResult = new ErrorWrapper(err);
+            }
+            if (newResult instanceof PromiseObject) {
+              newResult.promise.then(res => resolve(res));
+            }
+            else {
+              resolve(newResult);
+            }
+          });
+        });
+        return new PromiseObject(newPromise, interpreter, callerNode, execEnv);
+      }
+    );
+  }
+}
+
+
+export class ErrorWrapper {
+  constructor(val) {
+    this.val = val;
+  }
+};
 
 
 
@@ -3050,9 +3114,10 @@ export function logExtendedErrorAndTrace(err) {
 
 
 const FILENAME_REGEX = /\/[^./]+(?<=[~a-zA-Z0-9_\-])\.[^/]+$/;
-const SEGMENT_TO_REPLACE_REGEX = /(\/\.\/|\/[^/]+\/\.\.\/)/g;
+const SEGMENT_TO_REPLACE_REGEX = /(\/\.\/|\/[^/]+\/\.\.\/|\/?\+)/g;
+const RELATIVE_PATH_START_REGEX = /^(\.\.?\/|~\/|\+)/;
+const HOME_PATH_REGEX = /^\/[0-9a-f]+\/[0-9a-f]+(?=(\/|$))/g;
 const SLASH_END_REGEX = /\/$/;
-const SLASH_SEMICOLON_REGEX = /\/;/g;
 
 
 export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
@@ -3062,23 +3127,48 @@ export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
     `Ill-formed path: "${path}"`, callerNode, callerEnv
   );
 
-  if (path[0] === "/" || path[0] !== "." && path[0] !== "+") {
-    return (path === "/") ? path : path.replace(SLASH_END_REGEX, "");
+  // If path is either an absolute path or a a bare one, return that, also
+  // removing any trailing slash, unless the slash is the full path.
+  let fullPath;
+  if (path[0] === "/" || !RELATIVE_PATH_START_REGEX.test(path)) {
+    fullPath = (path === "/") ? path : path.replace(SLASH_END_REGEX, "");
   }
 
-  // Remove the last file name from the current path, if any.
-  let moddedCurPath = curPath;
-  let [filenamePart] = curPath.match(FILENAME_REGEX) ?? [""];
-  if (filenamePart) {
-    moddedCurPath = curPath.slice(0, -filenamePart.length);
-  }
-
-  // Then concatenate the two paths.
-  let fullPath = (path[0] === "+") ?
-    curPath + path.substring(1) :
-    (curPath.at(-1) === "/") ?
+  // Else if the path begins with "./" or "../", remove the file name part of
+  // curPath (recognized by a dot in the middle), if any, and append path to
+  // curPath.
+  else if (path[0] === ".") {
+    // Remove the last file name from the current path, if any.
+    let moddedCurPath = curPath;
+    let [filenamePart] = curPath.match(FILENAME_REGEX) ?? [""];
+    if (filenamePart) {
+      moddedCurPath = curPath.slice(0, -filenamePart.length);
+    }
+    fullPath = (curPath.at(-1) === "/") ?
       moddedCurPath + path :
       moddedCurPath + "/" + path;
+  }
+
+
+  // Else if path start with "~/", remove anything except the "home path" from
+  // curPath and change the start of path to "./", before concatenating the two.
+  else if (path[0] === "~") {
+    let [homePath] = curPath.match(HOME_PATH_REGEX) ?? [];
+    if (!homePath) throw new LoadError(
+      `Invalid path in this context: "${path}"`, callerNode, callerEnv
+    );
+    fullPath = homePath + path.substring(1); 
+  }
+
+  // Else if path starts with "+". simply append the rest of it to curPath.
+  // Since we remove all occurrences of "/+" and "+" in the next step, this
+  // "+", as well as any "/" before it, will also be removed (even wen curPath
+  // is just "/").
+  // (TODO: Explain this extension of the usual kinds of relative paths in a
+  // tutorial.)
+  else if (path[0] === "+") {
+    fullPath = curPath + path;
+  }
 
   // Then replace any occurrences of "/./", and "<dirName>/../" with "/".
   let prevFullPath;
@@ -3092,8 +3182,8 @@ export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
     `Ill-formed path: "${path}"`, callerNode, callerEnv
   );
 
-  // Also replace any occurrence of "/;" with ";".
-  fullPath = fullPath.replaceAll(SLASH_SEMICOLON_REGEX, ";");
+  // Then remove any trailing "/" from fullPath, unless that is the whole path,
+  // and return it. 
   if (fullPath !== "/") {
     fullPath = fullPath.replace(SLASH_END_REGEX, "");
   }

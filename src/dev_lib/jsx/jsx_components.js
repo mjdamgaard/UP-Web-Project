@@ -1049,11 +1049,12 @@ export class JSXInstanceInterface extends ObjectObject {
   doAfterRender = new DevFunction(
     "doAfterRender", {},
     ({callerNode, execEnv, interpreter}, [actionKey, input]) => {
-      new Promise(resolve => resolve()).then(() => {
-        this.jsxInstance.do(
+      setTimeout(
+        () => this.jsxInstance.do(
           actionKey, input, interpreter, callerNode, execEnv
-        );
-      });
+        ),
+        0
+      );
     }
   );
 
@@ -1063,11 +1064,12 @@ export class JSXInstanceInterface extends ObjectObject {
     "doAfterFirstRender", {},
     ({callerNode, execEnv, interpreter}, [actionKey, input]) => {
       if (!this.jsxInstance.isFirstRender) return;
-      new Promise(resolve => resolve()).then(() => {
-        this.jsxInstance.do(
+      setTimeout(
+        () => this.jsxInstance.do(
           actionKey, input, interpreter, callerNode, execEnv
-        );
-      });
+        ),
+        0
+      );
     }
   );
 

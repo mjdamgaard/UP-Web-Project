@@ -215,17 +215,20 @@ export function render({route}) {
       }) :
       (hasType(result, "JSXElement")) ?
         <TextDisplay key="_result" jsxElement={result} /> :
-        map(split(toString(result, true), "\n"), (line, ind) => (
-          <code className="line">{ind + 1}{": "}{line}<br/></code>
-        ));
+        isTextFile ?
+          <code className="jsx numbered">{toString(result, true)}</code> :
+          <div>{toString(result, true)}</div>;
+        // map(split(toString(result, true), "\n"), (line, ind) => (
+        //   <code className="line">{ind + 1}{": "}{line}<br/></code>
+        // ));
 
-    // And in case of a text file query, break up the fileText into individual
-    // lines with line numbers in front.
-    let brokenUpText = fetchFile ? map(
-      split(fileText, "\n"), (line, ind) => (
-        <code className="line">{ind + 1}{": "}{line}<br/></code>
-      )
-    ) : undefined;
+    // // And in case of a text file query, break up the fileText into individual
+    // // lines with line numbers in front.
+    // let brokenUpText = fetchFile ? map(
+    //   split(fileText, "\n"), (line, ind) => (
+    //     <code className="line">{ind + 1}{": "}{line}<br/></code>
+    //   )
+    // ) : undefined;
 
     // Then construct the final content.
     content = [
@@ -262,7 +265,11 @@ export function render({route}) {
       <hr/>,
       fetchFile ? <div className="text-file-content">
         <h3>{"File contents"}</h3>
-        <div>{brokenUpText}</div>
+        {/* TODO: Use different CSS classes for different file types. */}
+        {/* TODO: And at some later point, implement syntax highlighting. */}
+        <code className="jsx numbered">
+          {fetchFile ? fileText : undefined}
+        </code>
       </div> : undefined,
     ];
   }

@@ -100,19 +100,27 @@ export class ServerQueryHandler {
     // simply return the promise of that.
     let responsePromise = this.#requestBuffer.get(reqKey);
     if (responsePromise) {
-      return await responsePromise;
+      let ret = await responsePromise;
+      if (ret instanceof ErrorWrapper) {
+        throw ret.val;
+      }
     }
 
     // Send the request.
     responsePromise = this.#requestHelper(
       serverKey, route, isGET, reqBody, headers
-    ).then();
+    ).then(
+      x => x, err => new ErrorWrapper(err)
+    );
 
     // Then add it to requestBuffer, and also give it a then-callback to remove
     // itself from said buffer, before return ing the promise.
     this.#requestBuffer.set(reqKey, responsePromise);
     let ret = await responsePromise;
     this.#requestBuffer.delete(reqKey);
+    if (ret instanceof ErrorWrapper) {
+      throw ret.val;
+    }
     return ret;
   }
 
@@ -210,6 +218,14 @@ export class NetworkError {
     return this.msg; 
   }
 }
+
+
+class ErrorWrapper {
+  constructor(val) {
+    this.val = val;
+  }
+};
+
 
 
 

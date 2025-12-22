@@ -16,9 +16,6 @@ const page = <div className="text-page">
       "This tutorial will show you how to create your first user-programmed " +
       "(UP) app and upload it to this website!"
     }</p>
-    <p>{
-      "But before you you follow this tutorial, you might..."
-    }</p>
   <section>
     <h2>{"Create a user account at up-web.org"}</h2>
     <p>{
@@ -77,20 +74,62 @@ const page = <div className="text-page">
         '$ npm install',
       ]}</code>
     </p>
-    <p>{
-      "And after this, you are now ready to upload and test your first UP app!"
-    }</p>
   </section>
   <section>
     <h2>{"Uploading your first UP app"}</h2>
     <p>{
+      "You are now ready to upload and test your first UP app!"
+    }</p>
+    <p>{
       "If you take look in the up_directories folder, you will see that " +
       "contains a project folder called 'hello_world'. This folder contains " +
       "the source code of an \"Hello, World!\" example app, which you will " +
-      "now try to upload to up-web.org."
+      "now be shown how to upload to up-web.org."
     }</p>
     <p>{
-      "..."
+      "Make sure that you once again have your newly downloaded directory " +
+      "open in a terminal."
+    }</p>
+    <p>{
+      "Then run the following command:"
+    }</p>
+    <p>
+      <code className="command">{[
+        '$ node ./update_dir.js ./up_directories/hello_world up-web.org',
+      ]}</code>
+    </p>
+    <p>{
+      "This will prompt you for the username and password for your user " +
+      "account."
+    }</p>
+    <p>{
+      "Then once you are logged in, you simply need to type in 'u' and hit " +
+      "enter to upload the contents of the up_directories/hello_world " +
+      "folder:"
+    }</p>
+    <p>
+      <code className="command">{[
+        'dir #> u',
+      ]}</code>
+    </p>
+    <p>{
+      "Try doing this now. If the upload is successful, you should then see " +
+      "a list of the uploaded files. The file paths shown are the absolute " +
+      "paths that the files are assigned in the virtual file system on the " +
+      "server. And they all start with \"/1/HEX_NUMBER/, where the " +
+      "initial \"1\" is the ID of up-web.org, and the second hexadecimal " +
+      "number is the ID that is assigned to your new directory."
+    }</p>
+    <p>{
+      "You might also note that the command line prompt has now changed to:"
+    }</p>
+    <p>
+      <code className="command">{[
+        'dir #HEX_NUMBER>',
+      ]}</code>
+    </p>
+    <p>{
+      "where HEX_NUMBER is that same directory ID."
     }</p>
   </section>
 </div>;
