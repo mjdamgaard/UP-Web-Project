@@ -13,14 +13,6 @@ import * as EntityReference from "../misc/EntityReference.jsx";
 import * as TextDisplay from "../misc/TextDisplay.jsx";
 
 
-// TODO: There is an error in how I handle paths to subdirectories, where I
-// query the server for the sub-directory route, instead of querying the home
-// path and just filtering the list. So fix this.
-
-// TODO: Refactor this component now that parseRoute() produces dirSegments and
-// fileName as well.
-
-
 
 // initialize() parses the input route, and in the special case where the
 // route includes only directories, it reinterprets the route by adding a ';'
@@ -45,16 +37,16 @@ export function initialize({route: extRoute}) {
   // Calculate the home path of the route.
   let routeHomePath = homeDirID ? "/" + upNodeID + "/" + homeDirID : undefined;
 
-  // If there is no filePath or casting segments, record that route is a
+  // If there is no fileName or casting segments, record that route is a
   // "directory path."
-  let isDirectoryPath = (!localPath && castingSegments.length === 0);
+  let isDirectoryPath = (!fileName && castingSegments.length === 0);
 
   // If if it is a directory path, reinterpret the route by putting a ';' after
   // the homeDirID, which means that the route becomes a casted as a
   // subdirectory route.
   let transformedRoute = extRoute;
   if (isDirectoryPath) {
-    let subdirectoryPath = join(queryPathSegments, "/");
+    let subdirectoryPath = join(dirSegments, "/");
     transformedRoute = routeHomePath + ";/" + subdirectoryPath;
   }
 
@@ -68,8 +60,8 @@ export function initialize({route: extRoute}) {
   // the user can navigate to ancestor directories, or to pre-casted versions
   // of a casted route.
   let routeJSXWithSubLinks = getRouteJSXWithSubLinks(
-    castingSegments, routeHomePath, localPath, isDirectoryPath, isTextFileQuery,
-    queryPathSegments
+    castingSegments, routeHomePath, dirSegments, fileName, queryPathSegments,
+    isTextFileQuery
   );
 
   // Record wether a separate query for the text file should be made.
@@ -77,7 +69,7 @@ export function initialize({route: extRoute}) {
 
   return {
     extRoute: extRoute, isLocked: isLocked, routeHomePath: routeHomePath,
-    filePath: localPath,
+    localPath: localPath,
     transformedRoute: transformedRoute, isDirectoryPath: isDirectoryPath,
     fetchFile: fetchFile, isTextFile: isTextFile,
     routeJSXWithSubLinks: routeJSXWithSubLinks,
@@ -88,22 +80,9 @@ export function initialize({route: extRoute}) {
 
 
 function getRouteJSXWithSubLinks(
-  castingSegments, routeHomePath, filePath, isDirectoryPath, isTextFileQuery,
-  queryPathSegments = []
+  castingSegments, routeHomePath, dirSegments, fileName, queryPathSegments,
+  isTextFileQuery
 ) {
-  // If there is no filePath, interpret queryPathSegments as an array of
-  // subdirectories, and else parse the subdirectories and file name from
-  // filePath.
-  let directorySegments, fileName;
-  if (isDirectoryPath) {
-    directorySegments = queryPathSegments;
-  }
-  else {
-    let pathSegments = split(filePath, "/");
-    directorySegments = sliceArr(pathSegments, 0, -1);
-    fileName = atArr(pathSegments, -1);
-  }
-
   // Initialize an accumulative path for the following ILinks.
   let href, acc = "~/f" + routeHomePath;
 
@@ -112,7 +91,7 @@ function getRouteJSXWithSubLinks(
   let homeILink = <ILink key="h" href={href}>{routeHomePath}</ILink>;
 
   // Then create an array of ILinks to each additional subdirectory, if any.
-  let subdirectoryLinks = map(directorySegments, (val, ind) => {
+  let subdirectoryLinks = map(dirSegments, (val, ind) => {
     acc += "/" + val;
     href = acc;
     return <ILink key={"s" + ind} href={href}>{val}</ILink>;
@@ -157,7 +136,7 @@ function getRouteJSXWithSubLinks(
 export function render({route}) {
   if (atStr(route, -1) === "/") route = sliceStr(route, 0, -1);
   let {
-    isInvalid, isMissing, extRoute, isLocked, routeHomePath, filePath,
+    isInvalid, isMissing, extRoute, isLocked, routeHomePath, localPath,
     transformedRoute, isDirectoryPath, fetchFile, isTextFile,
     routeJSXWithSubLinks,
     adminID, fileText, result
@@ -188,7 +167,7 @@ export function render({route}) {
       this.setState(state => ({...state, result: result}));
     });
     if (fetchFile) {
-      fetch(routeHomePath + "/" + filePath + ";string").then(text => {
+      fetch(routeHomePath + "/" + localPath + ";string").then(text => {
         this.setState(state => ({...state, fileText: text}));
       });
     }

@@ -2193,7 +2193,11 @@ export function getString(val, env, getSourceCode = false) {
   }
   else if (val instanceof Array) {
     return "[" +
-      val.map(entry => getString(entry, env)).join(", ") +
+      val.map(entry => (
+        typeof entry === "string" ?
+          JSON.stringify(entry) :
+          getString(entry, env)
+      )).join(", ") +
     "]";
   }
   else if (getPrototypeOf(val) === OBJECT_PROTOTYPE) {
