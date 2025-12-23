@@ -179,7 +179,7 @@ const page = <div className="text-page">
         '/* Anywhere inside the module */\n',
         'let obj = {a: "foo", b: "bar"};\n',
         'let entries = entries(obj);\n',
-        'console.log(obj); // Prints: [["a", "foo"], ["b", "bar"]].\n',
+        'console.log(obj); // Prints: [["a", "foo"], ["b", "bar"]].',
       ]}</code>
     </p>
   </section>
@@ -213,7 +213,7 @@ const page = <div className="text-page">
         'Symbol(myStringValue);\n',
         '\n',
         'import(myRelativeOrAbsolutePath);\n',
-        'abs(myRelativeOrAbsolutePath);\n',
+        'abs(myRelativeOrAbsolutePath);',
       ]}</code>
     </p>
     <p>{[
@@ -239,7 +239,7 @@ const page = <div className="text-page">
     }</p>
     <p>
       <code className="jsx">{[
-        'import * as TextArea from \'TextArea.jsx\';\n',
+        'import * as TextArea from \'TextArea.jsx\';',
       ]}</code>
     </p>
     <p>{
@@ -271,7 +271,7 @@ const page = <div className="text-page">
         'import * as InputNumber from \'InputNumber.jsx\';\n',
         'import * as InputRadio from \'InputRadio.jsx\';\n',
         'import * as InputRange from \'InputRange.jsx\';\n',
-        'import * as InputText from \'InputText.jsx\';\n',
+        'import * as InputText from \'InputText.jsx\';',
       ]}</code>
     </p>
     <p>{
@@ -287,7 +287,7 @@ const page = <div className="text-page">
     <p>
       <code className="jsx">{[
         'import * as ILink from \'ILink.jsx\';\n',
-        'import * as ELink from \'ELink.jsx\';\n',
+        'import * as ELink from \'ELink.jsx\';',
       ]}</code>
     </p>
     <p>{
@@ -299,14 +299,12 @@ const page = <div className="text-page">
       "rerender."
     }</p>
     <p>{
-      "Now, you might ask: Why do we need these developer components? Why " +
-      "do not just insert e.g. the <input> element or the <a> element " +
-      "directly in the returned JSX element of a component? " +
-      "Well, the reason for this is first of all security concerns. For " +
+      "The reason why we need developer components some some HTML elements " +
+      "is first of all due to security concerns. For " +
       "instance, if the users were given complete control over the 'href' " +
       "attribute of the <a> element, they could lead other users to " +
-      "malicious websites. But by using the ELink component instead, it is " +
-      "a simple matter to just make sure that this dev. component filters " +
+      "malicious websites. But by using the ELink component instead, we can " +
+      "simply make this component filter the URLs for " +
       "the href prop, and only redirect the user if the URL is recognized " +
       "as a safe website to visit."
     }</p>
@@ -316,21 +314,151 @@ const page = <div className="text-page">
       "attribute to \"password\", and thereby possibly be able to trick " +
       "the browser of another user to insert the user's password. And after" +
       "this, they might then be able to upload it to a part of the database " +
-      "that they have access to, thus stealing the password."
-    }</p>
-    <p>{
-      "And apart from these security reasons, there is also simply the fact " +
-      "that this " +
-      "makes us able to call methods like \"getValue\" and \"setValue\", " +
-      "etc., via the this.call() function, which makes it very easy to " +
-      "interact with these kinds of elements."
+      "that they have access to, thus stealing the password. Thus, we " +
+      "need to have limits on what attributes the users can set for given " +
+      "elements."
     }</p>
   </section>
 
   <section>
     <h2>{"Objects are immutable by default"}</h2>
     <p>{
-      "..."
+      "All objects are immutable by default in this version of JS, " +
+      "including arrays. This is also due to the fact that in this UP system " +
+      "you cannot count on other users not to have malicious or adversarial " +
+      "intentions to you. And this is why you must never export an mutable " +
+      "object from a module, nor any object that holds a reference to a " +
+      "mutable object. For if you do, other users might import and corrupt " +
+      "the data held in those objects."
+    }</p>
+    <p>{
+      "And in order to make preventing exporting mutable objects feasible, " +
+      "all objects are therefore immutable by default."
+    }</p>
+    <p>{
+      "So if you for instance have a standard plain object and you want to " +
+      "change one of its properties, the following code would throw an error:"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'let obj = {a: "foo", b: "bar"};\n',
+        'obj.b = "baz"; // Will throw an error!',
+      ]}</code>
+    </p>
+    <p>{
+      "But what you might do instead is to make use of the spread operator " +
+      "to create the new desired object, and then simply reassign it to the " +
+      "variable, like so:"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'let obj = {a: "foo", b: "bar"};\';\n',
+        'obj = {...obj, b: "baz"};',
+      ]}</code>
+    </p>
+    <p>{
+      "By the way, whereas React recommends using the 'const' keyword as " +
+      "much as possibly, this framework recommends using the 'let' keyword " +
+      "as much as possible, except at the module scope, and in particular " +
+      "for exports."
+    }</p>
+    <p>{
+      "However, if you do want to use a mutable object or array, you can " +
+      "just use either the MutableObject() or the MutableArray() " +
+      "constructor, respectively. For example, the following code will " +
+      "also succeed:"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'let obj = new MutableObject({a: "foo", b: "bar"});\';\n',
+        'obj.b = "baz";\n',
+        '\n',
+        'let arr = new MutableArray([0, 1, 2, 2]);\';\n',
+        'arr[3] = 3;',
+      ]}</code>
+    </p>
+    <p>{
+      "Just make sure that you do not export any such mutable object from the " +
+      "module, nor any object that contains a reference to one. And for the " +
+      "same reason you also should not export any functions that can mutate " +
+      "an object that is part of, or referenced by, the exports of a module."
+    }</p>
+    <p>{
+      "In other words, only use mutable objects that are created within a " +
+      "function's scope, and which never escapes that scope."
+    }</p>
+  </section>
+
+  <section>
+    <h2>{"Debugging"}</h2>
+    <p>{
+      "While the 'debugger;' statement is technically included as part of " +
+      "this version of JS, it will make the program halt inside the native " +
+      "source code, at least in its current implementation, which makes it " +
+      "practically useless."
+    }</p>
+    <p>{
+      "So in order for users to still be able to debug their code fairly " +
+      "efficiently, we have done the following two things."
+    }</p>
+    <p>{
+      "First of all, we have made the console.trace() function much more " +
+      "verbose, not least by making it include information about the values " +
+      "of the arguments of each function call in the stack, and also by " +
+      "making it include a full readout of the variables present where the " +
+      "function is called from."
+    }</p>
+    <p>{
+      "And second of all, we have let uncaught exceptions be much more " +
+      "verbose as well by letting them automatically include the same " +
+      "information as from a console.trace() call."
+    }</p>
+    <p>{
+      "So whenever you develop a new app component, or a server module, " +
+      "always make sure to have the console open in your browser, first of " +
+      "all. And whenever a new error is encountered, do not be frightened by " +
+      "the wall of red text that your console is filled up with. Just click " +
+      "anywhere inside the console and press the 'Home' key on your " +
+      "keyboard. This will bring you straight to top, showing you the first " +
+      "error (which is typically the one you want to debug first)."
+    }</p>
+    <p>{
+      "There you will first of all see the error message, followed the path " +
+      "to the file where the error originated, along with the line and " +
+      "column number. " +
+      "And immediately after that, you will see a medium-sized code " +
+      "snippet printed out from where the error occurred. This snippet will " +
+      "furthermore include some inserted arrows right around " +
+      "the location of the error."
+    }</p>
+    <p>{
+      "Next you will see the aforementioned trace printed out, where you can " +
+      "a sizable portion of the call stack, and where each function is " +
+      "printed out along with its file path and location, and not least its " +
+      "argument values. And in the special case when a function is the " +
+      "render() function of a component, instead of just seeing a printout " +
+      "render() function itself, you will see the JSX element of the " +
+      "component instance (and with the file path and location pointing to " +
+      "that instead)."
+    }</p>
+    <p>{
+      "And this is finally followed by a readout of all the variables that " +
+      "was present in the scope where the error occurred."
+    }</p>
+    <p>{
+      "Additionally, if the error is thrown server-side, you will see both " +
+      "the trace and variable readout of the server-side error, followed by " +
+      "trace and variable readout of the client-side error."
+    }</p>
+    <p>{
+      "Hopefully this will be enough for you to quickly be able locate the " +
+      "source of a given bug most of the time. " +
+      "And then if you ever need additional information beyond that in order " +
+      "to locate or investigate a given bug, you can insert temporary " +
+      "console.log() and console.trace() calls into your code in order to " +
+      "see what happens. And in case you want to see even more of the call " +
+      "stack, console.trace() also accepts an integer argument to specify " +
+      "the maximal length of the trace."
     }</p>
   </section>
 
