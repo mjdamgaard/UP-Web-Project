@@ -380,12 +380,9 @@ const page = <div className="text-page">
     <p>{
       "Just make sure that you do not export any such mutable object from the " +
       "module, nor any object that contains a reference to one. And for the " +
-      "same reason you also should not export any functions that can mutate " +
-      "an object that is part of, or referenced by, the exports of a module."
-    }</p>
-    <p>{
-      "In other words, only use mutable objects that are created within a " +
-      "function's scope, and which never escapes that scope."
+      "same reason you also should not export any functions that mutates " +
+      "an object that is not either created by that function, or comes from " +
+      "one of the arguments."
     }</p>
   </section>
 
@@ -452,11 +449,13 @@ const page = <div className="text-page">
     }</p>
     <p>{
       "Hopefully this will be enough for you to quickly be able locate the " +
-      "source of a given bug most of the time. " +
-      "And then if you ever need additional information beyond that in order " +
+      "source of a given bug most of the time! " +
+      "And if you ever need additional information beyond this in order " +
       "to locate or investigate a given bug, you can insert temporary " +
-      "console.log() and console.trace() calls into your code in order to " +
-      "see what happens. And in case you want to see even more of the call " +
+      "console.log() and console.trace() calls into your code."
+    }</p>
+    <p>{
+      "And in case you want to see even more of the call " +
       "stack, console.trace() also accepts an integer argument to specify " +
       "the maximal length of the trace."
     }</p>
@@ -464,23 +463,136 @@ const page = <div className="text-page">
 
 
   <section>
-    <h2>{"..."}</h2>
+    <h2>{"Additional details about the components"}</h2>
+    <h3>{"The 'ref' prop and mutable props and states"}</h3>
     <p>{
-      "Note that the fact that we need to bind the 'this' keyword is also " +
-      "why you should never define the render() function as an arrow " +
-      "function, as this will prevent the correct binding of the 'this' " +
-      "keyword."
+      "Some additional things that are worth noting for the JSX components " +
+      "are first of all that apart from the 'key' and the 'children' props, " +
+      "there is also a third prop treated in a special way, and that is the " +
+      "'ref' prop."
+    }</p>
+    <p>{
+      "The 'ref' prop is only set once when the component instance is " +
+      "created, and if the parent instance ever tries to change this prop " +
+      "afterwards, nothing will happen. The 'ref' prop will thus never be " +
+      "checked when the instance checks if a rerender is necessary."
+    }</p>
+    <p>{
+      "This is opposed to the other props, which will generally be " +
+      "deep-compared to their former values whenever you call " +
+      "this.setState(). And if the deep comparison succeeds, the instance " +
+      "will not rerender."
+    }</p>
+    <p>{
+      "Additionally, all mutable objects that are part of, or referenced " +
+      "by, the props, will also not be compared when checking if the " +
+      "instance needs to rerender. But unlike the 'refs' prop, these can " +
+      "still be updated by the parent."
+    }</p>
+    <p>{
+      "An instance also deep-compares its current state to its former one " +
+      "before rerendering after a call to this.setState(). And here " +
+      "state.ref is " +
+      "also ignored, as well as the contents of any mutable object within " +
+      "the state."
+    }</p>
+    <p>{
+      "So if you ever mutate a mutable part of the state manually, and you " +
+      "want to force a rerender, you can call this.rerender() to do this."
+    }</p>
+    <h3>{"Using the 'function' keyword rather than arrow functions"}</h3>
+    <p>{
+      "If you are well familiar with JS, it will probably come as no " +
+      "surprise that you should never define a component's functions such " +
+      "as render() or initialize, etc., using arrow functions. This is " +
+      "because " +
+      "one if the main attributes of arrow functions is that they are " +
+      "transparent to the 'this' keyword. However, functions like render() " +
+      "initialize() needs to have 'this' bound to an object that represents " +
+      "the live component instance in order to work as intended."
+    }</p>
+    <p>{
+      "Therefore you should always use the 'function' keyword when defining " +
+      "these functions. And the same is true for all the functions of the " +
+      "'actions' export."
+    }</p>
+    <h3>{"Components can only render single HTML elements"}</h3>
+    <p>{
+      "Lastly, it is worth noting that the returned JSX elements of the " +
+      "render() functions should generally consist of a single HTML element. " +
+      "It is, however, still possibly to let render() return e.g. a string, " +
+      "or a JSX " +
+      "fragment or array. But this will then just automatically be wrapped " +
+      "in either a <span> element, in case of a returned string, or in a " +
+      "<div> element in the case of a returned array or JSX fragment."
     }</p>
   </section>
 
+  <section>
+    <h2>{"Things that have yet to be implemented"}</h2>
+    <h3>{"Plain text directly inside JSX elements"}</h3>
+    <p>{
+      "Speaking of JSX components, if you are familiar with React, you " +
+      "might have wondered why all the JSX elements we have seen so far in " +
+      "this tutorial wraps all their text content in '{\"...\"}', like in:"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'return <h1>{"Hello, World!"}</h1>;',
+      ]}</code>
+    </p>
+    <p>{
+      "Why not simply write"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'return <h1>Hello, World!</h1>; // Will throw a syntax error!',
+      ]}</code>
+    </p>
+    <p>{
+      "instead? The reason for this is simply that this syntax has not been " +
+      "implemented yet. It will be in the near future, however. But in the " +
+      "meantime, you need to use computed values for all text contents, like " +
+      "in the first example."
+    }</p>
+    <h3>{"Asynchronous functions"}</h3>
+    <p>{
+      "It is also worth noting that the 'async' and 'await' keywords " +
+      "are not implemented yet as well. They will, however, be so in the " +
+      "near future, as well."
+    }</p>
+  </section>
 
-    {/* Trigger() is better than callback props. */}
-    {/* No un-computed HTML content yet, and nio async function yet. */}
-    {/* Future compiler. */}
-    {/* ref and mutable props, and the deep comparisons in general . */}
-    {/* Extended syntax fro relative routes */}
+  <section>
+    <h2>{"Final remarks"}</h2>
+    <p>{
+      "These points were all of the most pressing ones that you ought to " +
+      "know before you really start to develop your first UP apps."
+    }</p>
+    <p>{
+      "There are also several other points that are worth mentioning at " +
+      "some point, but this can wait to a later tutorial."
+    }</p>
+    <p>{
+      "You should now have what you need to start building your first " +
+      "client-side UP apps!"
+    }</p>
+    <p>{[
+      "And as was said in ",
+      <ILink key="link-tut-1" href="~/getting-started">
+        {"Tutorial 1"}
+      </ILink>,
+      ", if you have any questions, please feel free to write an e-mail " +
+      "to mads@up-web.org."
+    ]}</p>
+  </section>
+
+
+    {/* Trigger() is better than callback props. *Well, this should be 
+      * explained after (or as part of) the SM tutorial instead.. */}
+    {/* Future compiler. *Hm, maybe I will skip this one.. */}
+    {/* Extended syntax for relative routes. *Yeah, maybe I should add
+      * another miscellaneous tutorial as a later one.. */}
     {/* Maybe also a note about the extended relative urls */}
-    {/* Components need to return a single HTML element, and if they don't
-        it just gets wrapped */}
   
 </div>;
