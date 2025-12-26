@@ -6,6 +6,7 @@ import {slice} from 'array';
 import {fetchEntityID} from "/1/1/entities.js";
 
 import * as UPIndexPage from "./UPIndexPage.jsx";
+import * as AboutPage from "./about.jsx";
 import * as ProfilePage from "./ProfilePage.jsx";
 import * as EntityPage from "./variable_components/EntityPage.jsx";
 import * as FileBrowser from "./file_browsing/FileBrowser.jsx";
@@ -167,7 +168,7 @@ export function renderHelper(thisVal, {
     return [
       "about",
       <main className="app-main">
-        {"TODO: Insert 'About' page component here."}
+        <AboutPage key={"about"} />
       </main>
     ];
   }

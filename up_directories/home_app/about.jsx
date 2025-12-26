@@ -1,16 +1,16 @@
 
 import * as ILink from 'ILink.jsx';
 import * as ELink from 'ELink.jsx';
-import * as EntityList from "../entity_lists/EntityList.jsx";
+import * as EntityList from "./entity_lists/EntityList.jsx";
 
 
 export function render() {
-  return indexPage;
+  return page;
 }
 
 
 
-const indexPage = <div className="text-page">
+const page = <div className="text-page">
   <h1>{"The User-Programmable Web"}</h1>
   <section>
     <h2>{"Welcome!"}</h2>
@@ -32,15 +32,15 @@ const indexPage = <div className="text-page">
     <p>{
       "In fact, the only thing on this webpage that is not programmed and " +
       "uploaded by a user is the account menu at the top right of this " +
-      "webpage. Everything else is you see user-programmed, " +
-      "even this very index page!"
+      "webpage. Everything else is you see user-programmed!"
+      // "even this very index page!"
     }</p>
   </section>
 
   <section>
-    <h2>{"Changing this index page"}</h2>
+    <h2>{"Changing the index page"}</h2>
     <p>{
-      "If you want to help change this index page into a better one, here " +
+      "If you want to help change the index page into a better one, here " +
       "is how that is done."
     }</p>
     <p>{
@@ -50,7 +50,7 @@ const indexPage = <div className="text-page">
       "component. And if you click on the element at the very top of the " +
       "list, called 'Index page 1.0,' and then click on 'View component,' " +
       "you will see that you are lead to a page with the exact same content " +
-      "as this index page."
+      "as that of the current index page."
     }</p>
     <p>
       <EntityList key="_idx-list" classKey="/1/1/em2.js;get/indexPages"
@@ -58,7 +58,7 @@ const indexPage = <div className="text-page">
       />
     </p>
     <p>{
-      "This is no coincidence, as this index page is determined by whatever " +
+      "This is no coincidence, as the index page is determined by whatever " +
       "component element is at the top of this list."
     }</p>
     <p>{
@@ -70,7 +70,7 @@ const indexPage = <div className="text-page">
     <p>{
       "And it is not just the index page that is governed by the users. " +
       "Every " +
-      "page and every app that this index page leads to is also user-" +
+      "page and every app that the index page leads to is also user-" +
       "programmed, as well as any apps and pages that these might lead on " +
       "to, etc. " +
       "The index page will thus serve as an " +
@@ -199,35 +199,6 @@ const indexPage = <div className="text-page">
       "showing videos on the website, it will get this in a near future."
     }</p>
   </section>
-
-  {/* <section>
-    <h2>{"An Everything Website"}</h2>
-    <p>{
-      "In a near future we might change this index page to include some kind " +
-      "of feed, and preferably one that is based on the users' own " +
-      "preferences. This feed could e.g. contain ongoing projects and " +
-      "discussions, such that the users can easily follow " +
-      "the goings on of the website, and the UP Web Project at large."
-    }</p>
-    <p>{
-      "But apart from this front page feed, the index page should also " +
-      "contain links to all of the most useful user-uploaded web apps and " +
-      "webpages. And these apps and pages can also further contain links to " +
-      "app and pages, which means that this index will ultimately serve as " +
-      "an index from which you can navigate to all the useful user-uploaded " +
-      "apps and webpages in existence."
-    }</p>
-    <p>{
-      "And since there will be practically no limit of what this user-" +
-      "uploaded apps can do, it means that this website can in principle " +
-      "end up offering alternatives to all kinds of websites, like " +
-      "Facebook, Twitter/X, YouTube, you name it."
-    }</p>
-    <p>{
-      "Thus, the ultimate goal of this website is to become what we might " +
-      "call an \"Everything Website.\""
-    }</p>
-  </section> */}
 
   <section>
     <h2>{"Getting started"}</h2>

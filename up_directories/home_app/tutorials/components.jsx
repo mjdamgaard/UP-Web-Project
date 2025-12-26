@@ -18,27 +18,44 @@ export function render() {
 
 
 const page = <div className="text-page">
-  <h1>{"Tutorial 2: Introduction to the front-end JSX components"}</h1>
+  <h1>{"Introduction to the front-end JSX components"}</h1>
   <section>
     <h2>{"A framework similar to React"}</h2>
     <p>{[
       "The system used for building front-end components is inspired a lot " +
       "by React. So if you already know React, it should be easy to learn " +
-      "this system as well. And if not, then you might still be able to " +
-      "follow these tutorials, but if you are ever confused about anything, " +
-      "it might help to browse through the HTML, JavaScript (JS), and React " +
-      "tutorials at ",
+      "this system as well. And if not, you might also still be able to " +
+      "follow these tutorials. But in that case, it is probably a good idea " +
+      "to browse through the ",
+      <ELink key="link-w3-html"
+        href="https://www.w3schools.com/html/default.asp">
+        {"HTML"}
+      </ELink>,
+      ", ",
+      <ELink key="link-w3-js"
+        href="https://www.w3schools.com/js/default.asp">
+        {"JavaScript"}
+      </ELink>,
+      " (JS), and ",
+      <ELink key="link-w3-react"
+        href="https://www.w3schools.com/react/default.asp">
+        {"React"}
+      </ELink>,
+      " tutorials at ",
       <ELink key="link-w3" href="https://www.w3schools.com">
         {"www.w3schools.com"}
       </ELink>,
       " first."
     ]}</p>
-    <p>{
+    <p>{[
       "To see how components work in this framework, let us first of all " +
-      "take a look at the \"Hello, World!\" example from the " +
-      "\"Getting started\" tutorial, where the component you uploaded was " +
+      "take a look at the \"Hello, World!\" example from the ",
+      <ILink key="link-tut-1-1" href="~/getting-started">
+        {"Getting started"}
+      </ILink>,
+      " tutorial. Here the component you uploaded was " +
       "defined from these lines of code:"
-    }</p>
+    ]}</p>
     <p>
       <code className="jsx">{[
         'export function render() {\n',
@@ -69,7 +86,7 @@ const page = <div className="text-page">
     }</p>
     <p>{[
       "In the app2.jsx file that was used in the last part of the ",
-      <ILink key="link-tut-1" href="~/getting-started">
+      <ILink key="link-tut-1-2" href="~/getting-started">
         {"Getting started"}
       </ILink>,
       " tutorial, there is an out-commented line at Ln. 2 " +

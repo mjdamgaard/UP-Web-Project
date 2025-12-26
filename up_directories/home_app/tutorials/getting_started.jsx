@@ -150,23 +150,23 @@ const page = <div className="text-page">
       "where \"HOME_DIR_ID\" is the same hexadecimal number."
     }</p>
     <p>{
-      "This means that your the up_directories/hello_world directory and " +
+      "This means that the up_directories/hello_world directory and " +
       "its files are now uploaded to the virtual file system of the server, " +
       "in a new home directory located at /1/HOME_DIR_ID on the server side."
     }</p>
     <p>{
       "The uploader program stores this HOME_DIR_ID in a file called " +
-      "'.id.js', which it creates inside of the targeted directory the " +
+      "'.id.js', which is created inside of the targeted directory the " +
       "first time you upload it. That way, when you re-upload the same " +
       "directory at any time in the future, as long as you have not deleted " +
       "or edited this .id.js file, the directory will be uploaded to the " +
       "same /1/HOME_DIR_ID directory on the server."
     }</p>
-    <p>{
+    {/* <p>{
       "By the way, the initial \"1\" in the paths shown above is the ID of " +
       "up-web.org (which might in the future by just one node in a " +
       "whole distributed and decentralized network of \"UP nodes\")."
-    }</p>
+    }</p> */}
     <p>{
       "Now, in order to view your uploaded files, you can now try to go to " +
       "up-web.org/f/1/HOME_DIR_ID, where you should make sure to substitute " +
@@ -223,7 +223,24 @@ const page = <div className="text-page">
       }</p>
       <p>{
         "On Ln. 14 of this file, you will see an exported object called " +
-        "'app'. This object is a database entity, that when uploaded " +
+        "'app':" 
+      }</p>
+    <p>
+      <code className="jsx">{[
+        'export const app = {\n',
+        '  "Class": "/1/1/em1.js;get/components",\n',
+        '  "Name": APP_NAME,\n',
+        '  "Component path": abs(COMPONENT_PATH),\n',
+        '  "Example component path": undefined,\n',
+        '  "Use full screen": USE_FULL_SCREEN,\n',
+        '  "GitHub repository": GITHUB_REPO_URL,\n',
+        '  "Creator(s)": () => fetchCreatorEntPath(),\n',
+        '  "Description": abs("./em.js;get/appDescription"),\n',
+        '};'
+      ]}</code>
+    </p>
+      <p>{
+        "This object is a database entity, that when uploaded " +
         "to the right part of the database will will represent your UP app." 
       }</p>
       <p>{
@@ -250,9 +267,10 @@ const page = <div className="text-page">
         "This will bring you to a page where you can view your new " +
         "\"Hello, World!\" app component. But first you have to dismiss a " +
         "warning about not falling for phishing attempts, as well as not " +
-        "generally trust the information of the viewed component, as it " +
-        "has been uploaded by a user. But since the user in this case is " +
-        "yourself, you can quickly dismiss this warning."
+        "generally trusting the information in the viewed component, as it " +
+        "has been uploaded by a user. But since that user in this case is " +
+        "no one but yourself, you can quickly go ahead and dismiss this " +
+        "warning."
       }</p>
       <p>{
         "And now you will see your app rendered on the page, which, unless " +
@@ -266,7 +284,7 @@ const page = <div className="text-page">
         </div>
       }</p>
       <p>{
-        "You have now learned how to upload your first UP app!"
+        "You have thus now learned how to upload your first UP app!"
       }</p>
   </section>
   <section>
@@ -280,15 +298,15 @@ const page = <div className="text-page">
       }</p>
       <p>{
         "(If you have closed this page in the meantime, you can get back to " +
-        "via the same process as before. And note the clicking " +
-        "'Submit and go to page' button again will not have any side-effects. " +
-        "Once the entity is already uploaded, submitting it again will not " +
-        "have any effect.)" 
+        "via the same process as before. And note that clicking the " +
+        "'Submit and go to page' button again will not have any effect " +
+        "other than to lead you to the entity page, once the entity " +
+        "has already been uploaded.)" 
       }</p>
       <p>{
         "The first part of this URL, after the domain, is \"c\", which " +
-        "stands for 'component.' The next segment is the component entity " +
-        "ID as mentioned. And the last part, \"YOUR_APP_NAME\" is decided " +
+        "stands for 'component.' And the next segment is the component entity " +
+        "ID as mentioned. The last part, \"YOUR_APP_NAME,\" is then decided " +
         "by the 'app' object exported by the em.js file, which means that " +
         "you can change this name." 
       }</p>

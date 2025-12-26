@@ -50,7 +50,7 @@ const indexPage = <div className="text-page">
     <ol className="tutorial-list">
       <li>
         <ILink key="getting-started" href="~/getting-started" >
-          {"Getting started!"}
+          {"Getting started"}
         </ILink>
       </li>
       <li>

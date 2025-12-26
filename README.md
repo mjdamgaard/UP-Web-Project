@@ -1,7 +1,7 @@
 
 # A User-Programmable Web
 
-*A prototype of this project will be available soon on [www.up-web.org](https://www.up-web.org), possibly within just a few weeks.*
+*A prototype of this project is now available at [www.up-web.org](https://www.up-web.org)!*
 
 
 
