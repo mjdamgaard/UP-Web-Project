@@ -28,17 +28,20 @@ const page = <div className="text-page">
       "follow these tutorials. But in that case, it is probably a good idea " +
       "to browse through the ",
       <ELink key="link-w3-html"
-        href="https://www.w3schools.com/html/default.asp">
+        href="https://www.w3schools.com/html/default.asp"
+      >
         {"HTML"}
       </ELink>,
       ", ",
       <ELink key="link-w3-js"
-        href="https://www.w3schools.com/js/default.asp">
+        href="https://www.w3schools.com/js/default.asp"
+      >
         {"JavaScript"}
       </ELink>,
       " (JS), and ",
       <ELink key="link-w3-react"
-        href="https://www.w3schools.com/react/default.asp">
+        href="https://www.w3schools.com/react/default.asp"
+      >
         {"React"}
       </ELink>,
       " tutorials at ",
@@ -78,7 +81,7 @@ const page = <div className="text-page">
       "from only a single render function, components in this framework are " +
       "defined " +
       "by whole modules. The render() function is just one of " +
-      "functions/methods that define the component."
+      "functions that define the component."
     }</p>
     <p>{
       "But before we introduce the other possible exports of a component " +
@@ -90,7 +93,7 @@ const page = <div className="text-page">
         {"Getting started"}
       </ILink>,
       " tutorial, there is an out-commented line at Ln. 2 " +
-      "that reads:"
+      "which reads:"
     ]}</p>
     <p>
       <code className="jsx">
@@ -107,7 +110,7 @@ const page = <div className="text-page">
     <p>{
       "Try commenting in this line. (Your IDE or editor ought to have " +
       "shortcut for doing so. For instance, " +
-      "in VS Code, the shortcut is Ctrl + Shift + '/'.) " +
+      "in VS Code, the shortcut is Ctrl + '/'.) " +
       "And after having done this, comment out Ln. 13 as well, and comment " +
       "in Ln. 15-18, such that the render() function now returns an example " +
       "JSX element where ExampleComponent1 is used:"
@@ -122,7 +125,7 @@ const page = <div className="text-page">
     </p>
     <p>{
       "If you now re-upload your directory again (in the the same way as " +
-      "when you changed the \"...\" to \"World!\" in the previous tutorial), " +
+      "you did in the previous tutorial), " +
       "you should now see the following result:"
     }</p>
     <p>{
@@ -133,24 +136,21 @@ const page = <div className="text-page">
     <p>{
       "And if you go to the " +
       "ExampleComponent1.jsx module, you will indeed see that \"I am a child " +
-      "component!\" is indeed the returned text of the render() function " +
-      "in ExampleComponent1.jsx."
+      "component!\" is the returned text of the render() function " +
+      "of that module."
     }</p>
     <p>{
-      "Now you know how to import and use components and use them as part " +
-      "of other components!"
+      "Now you know how to import components and use them inside " +
+      "other components!"
     }</p>
   </section>
-
   <section>
     <h2>{"Module paths"}</h2>
     <p>{
       "It is important to note, however, that the paths in the import " +
       "statements, like the one seen " +
       "above, must be relative paths that stay within the directory that " +
-      "you upload. That is, unless you want to import components (or " +
-      "functions, etc.) from another directory altogether, either another " +
-      "one of your own or one of another user."
+      "you have uploaded."
     }</p>
     <p>{
       "That is, unless you want to import components (or " +
@@ -171,12 +171,12 @@ const page = <div className="text-page">
     }</p>
     <p>{
       "For instance, if someone wants to import your new app2.jsx " +
-      "component, and your home directory ID is, say, \"12ab\", " +
+      "component, and your home directory ID is, say, \"123ab\", " +
       "they could import it via this statement:"
     }</p>
     <p>
       <code className="jsx">
-        {'import * as App from "/1/12ab/app2.jsx";'}
+        {'import * as App from "/1/123ab/app2.jsx";'}
       </code>
     </p>
   </section>
@@ -187,8 +187,8 @@ const page = <div className="text-page">
     <p>{
       "If you are already familiar with React, then " +
       "you can probably skip most of this section, except the last part " +
-      "about the 'key' prop, as this property works slightly differently in " +
-      "this system when compared to React."
+      "about the 'key' prop, as this particular property works slightly " +
+      "differently in this system when compared to React."
     }</p>
     <p>{
       "A component does not need to always return the same thing. The " +
@@ -251,9 +251,8 @@ const page = <div className="text-page">
       "defaults to false, and a ",
       <span>{"'children'"}</span>, " prop. " +
       "The component then branches " +
-      "according to isItalic, and renders the value of the children prop, " +
-      "either nested inside an <i> element or not, depending on the value of " +
-      "isItalic."
+      "according to isItalic, and renders the value of the children prop " +
+      "either nested inside an <i> element or not."
     ]}</p>
     <p>{[
       "If the you are unfamiliar with the syntax seen inside the argument " +
@@ -289,34 +288,34 @@ const page = <div className="text-page">
       "instance at the second paragraph, that paragraph is not italic."
     }</p>
     <p>{
-      "The third paragraph also shows another fact about the components, " +
-      "which is similar to React, and that is that the 'children' property " +
-      "is a special property that can also be passed in another way, rather " +
-      "than via the 'children={<value>}' syntax. Instead the children prop " +
-      "can also be passed as the content inside the component instance element."
+      "The third paragraph also shows another fact about the components " +
+      "that is similar to React, which is that the 'children' prop " +
+      "is a special one that can also be passed as the content inside the " +
+      "component instance element, instead of writing 'children={<value>}'."
     }</p>
     <p>{
-      "And ths example also shows, by the way, that passing a prop like " +
+      "This third example also shows, by the way, that passing a prop like " +
       "'isItalic' without any explicit assignment is a shorthand for " +
       "writing 'isItalic={true}'."
     }</p>
     <p>{
-      "Lastly, note that all the component instance elements all have an " +
+      "Lastly, note that each of these component instance elements has an " +
       "unique 'key' prop. This a requirement in this system, meaning that " +
       "of one omit the key prop, or use a duplicate key prop shared by " +
       "another " +
       "child instance of the same parent component, the program will " +
-      "throw an error. And as opposed to React where the key props are only " +
-      "used to distinguish between child instances that are children of the " +
-      "same HTML element, here we require all the child instances of a " +
-      "given parent component are given unique keys among each other, " +
-      "regardless of where they " +
-      "are located within the returned JSX element."
+      "throw an error."
+    }</p>
+    <p>{
+      "This is opposed to React, where the key props are not strictly " +
+      "required, and where these are only used to distinguish between " +
+      "child instances that are children of the " +
+      "same HTML element."
     }</p>
     <p>{
       "Having to always choose a unique key for each single child instance " +
       "of course adds a bit of extra work when compared to React. But on the " +
-      "plus side, this also means that you can move each individual child " +
+      "plus side, this also that you can move each individual child " +
       "instance freely around in the returned JSX element of the parent " +
       "component, without losing its state. " +
       "(This is unlike React, where if you e.g. wrap a child instance in, " +
@@ -333,8 +332,8 @@ const page = <div className="text-page">
       "instance is not determined solely by the props of the instance, but " +
       "also by its \"state.\" This state can be updated during the lifespan " +
       "of the instance via a setState() function, which works similarly to " +
-      "the setState() function of React. But this where the similarities " +
-      "with React stops."
+      "the setState() function of React. But this also where the " +
+      "similarities with React stop."
     }</p>
     <p>{
       "In this framework, the state of a component instance is accessed on " +
@@ -346,8 +345,8 @@ const page = <div className="text-page">
     <p>{
       "To see an example of this, you can comment out the previous return " +
       "statement in app2.jsx, and comment in the next one on Ln. 39-45. " +
-      "And also make sure that the import of ExampleComponent3 is in-" +
-      "commented as well. The render() function should now return:"
+      "And also make sure that ExampleComponent3 is imported at the " +
+      "top of the module as well. The render() function should now return:"
     }</p>
     <p>
       <code className="jsx">{[
@@ -445,7 +444,7 @@ const page = <div className="text-page">
       "Lastly, if you want your component to have a different initial state " +
       "than just an empty object, you can export a function called " +
       "initialize() alongside render() in the component module. This " +
-      "function takes the same props argument as render() does, and returns" +
+      "function takes the same props argument as render() does, and returns " +
       "the initial state object of the component. " +
       "initialize() will thus be called exactly one time in the " +
       "lifetime of the component instance, namely before the first call to " +
@@ -486,10 +485,10 @@ const page = <div className="text-page">
     <h3>{"Actions"}</h3>
     <p>{
       "The \"Actions\" of a component are essentially its \"private " +
-      "methods\", for anyone " +
+      "methods,\" for anyone " +
       "familiar with the concepts of Object-Oriented Programming (OOP). " +
       "They are exported as properties of a single object called 'actions', " +
-      "and can then subsequently be called via 'this.do(<action key>)."
+      "and can then subsequently be called via a 'this.do(actionKey)' function."
     }</p>
     <p>{
       "For instance, if we want to refactor our previous example of the " +
@@ -565,7 +564,7 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "We now get that the counter increases by 2 each time:"
+      "we now get that the counter increases by 2 each time:"
     }</p>
     <p>{
       <TextDisplay key="_ex4" >
@@ -577,8 +576,8 @@ const page = <div className="text-page">
       "object as for render() and initialize(), allowing us to call " +
       "function this.setState(), or even this.do(), from within the actions " +
       "themselves, without having to pass the 'this' object as a separate " +
-      "argument of the action function. And this is indeed one benefit of " +
-      "using actions."
+      "argument to the action function. And this is indeed one of the " +
+      "benefits of using actions."
     }</p>
     <p>{
       "However, the greatest benefit of using actions is that " +
@@ -591,11 +590,11 @@ const page = <div className="text-page">
     <h3>{"Methods"}</h3>
     <p>{
       "Methods are a special kind of actions that can be called from the " +
-      "parent component instance. An action is declared as part of the a " +
+      "parent component instance. An action is declared as a part of the " +
       "given component's methods via an exported array called 'methods.' " +
       "If this array includes the key of a given action, then that action " +
-      "becomes one of the methods, and can be called by the component " +
-      "instance's parent."
+      "becomes one of the methods that can be called by the parent " +
+      "component instance."
     }</p>
     <p>{
       "To see how this works, we can let our render() function in the " +
@@ -666,14 +665,14 @@ const page = <div className="text-page">
       "methods of the two children."
     }</p>
     <p>{
-      "As can be seen in this example, the first argument the this.call() " +
+      "As can be seen in this example, the first argument of this.call() " +
       "is the key prop of the targeted child instance, which in our case is " +
       "\"c-1\" for the first child instance, and \"c-2\" for the second. " +
-      "And the second argument is of course the key of the method that we " +
-      "want to call for the given child. And if the method's function " +
-      "receives an argument, you can also pass that via a optional third " +
-      "argument of this.call(). (This is not the case for the example above, " +
-      "however.)"
+      "The second argument is then of course the key of the method that we " +
+      "want to call for the given child. And although we do not use this " +
+      "in the current example, this.call() can also optionally take a " +
+      "third argument, which will then be passed as the input to the " +
+      "given method."
     }</p>
     <p>{
       "So from the code above, we get the following example. (And you can " +
@@ -689,12 +688,13 @@ const page = <div className="text-page">
       "You are now ready to use methods!"
     }</p>
     <p>{
-      "As a last thing before we move on to the methods, it is also worth " +
+      "As a last thing before we move on to the methods, however, it is " +
+      "also worth " +
       "mentioning that methods can be aliased when they are declared in the " +
       "'methods' export. This is done by letting the given entry of the " +
       "'methods' array be an [\"<method key>\", \"<action key>\"] array, " +
       "rather than just being the \"<action key>\" string itself. For " +
-      "instance, if we had wanted to alias the \"increaseCounter\" action as " +
+      "example, if we had wanted to alias the \"increaseCounter\" action as " +
       "by just \"increase\" instead in the example above, we should " +
       "have just exported"
     }</p>
@@ -712,7 +712,7 @@ const page = <div className="text-page">
 
     <h3>{"Events"}</h3>
     <p>{
-      "Finally, we have the 'events' of a component, which are very much " +
+      "Finally we have the 'events' of a component, which are very " +
       "similar to the methods, only where the actions in question, rather " +
       "than being exposed to the parent instance, are exposed to the child " +
       "instances instead, or in fact all of the descendant instances."
@@ -728,10 +728,10 @@ const page = <div className="text-page">
     <p>{
       "The this.trigger() function takes the event key as the first " +
       "as well as an optional second argument consisting of the input to the " +
-      "event function, and it then calls up to each of its ancestors, " +
+      "event function. It then calls up to each of its ancestors, " +
       "starting from the parent and going all the way up to the app root, " +
       "until the first ancestor instance is found with an event of a " +
-      "matching event key. If a match is found this way, the event action is " +
+      "matching key. If a match is found this way, the event action is " +
       "then called (synchronously), and the return value of the given action " +
       "function is returned by this.trigger(). (Both this.do() and " +
       "this.call() also forwards the relevant return value, by the way.) " +
@@ -742,9 +742,9 @@ const page = <div className="text-page">
       "Note that event keys can also be aliased in the exact same way as " +
       "method keys, namely by letting the relevant entry of the 'events' " +
       "array be of the form [\"<event key>\", \"<action key>\"]. And this " +
-      "especially relevant for methods, as one might often want to name the " +
+      "especially relevant for events, as one might often want to name the " +
       "event keys after what happens, such as e.g. \"link-was-clicked\", or " +
-      "whatever is the case, and then the ancestor is responsible for " +
+      "whatever is the case, and then let the ancestor be responsible for " +
       "determining how that event should be handled."
     }</p>
     <p>{[
@@ -837,7 +837,7 @@ const page = <div className="text-page">
     <h2>{"Final remarks"}</h2>
     <p>{[
       "You are now almost ready to get started on working on your first " +
-      "components, whatever they might be. But before you do, it is " +
+      "app components, whatever they might be. But before you do, it is " +
       "recommended to first take a look at ",
       <ILink key="link-tut-3" href="~/styling">
         {"Tutorial 3"}
@@ -847,7 +847,8 @@ const page = <div className="text-page">
         {"Tutorial 4"}
       </ILink>,
       ", which will list a couple of things to look out for when using this " +
-      "framework, and give you some tips about debugging your components."
+      "framework, as well as give you some tips about debugging your " +
+      "components."
     ]}</p>
     <p>{[
       "And once you are ready to move on from there, Tutorials ",
@@ -858,7 +859,7 @@ const page = <div className="text-page">
       <ILink key="link-tut-6" href="~/styling">
         {"6"}
       </ILink>,
-      "will teach you how to create your first \"server modules,\" which " +
+      " will teach you how to create your first \"server modules,\" which " +
       "will allow your components to upload and retrieve data from the server."
     ]}</p>
   </section>

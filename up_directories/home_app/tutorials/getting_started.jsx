@@ -76,6 +76,22 @@ const page = <div className="text-page">
     </p>
   </section>
   <section>
+    <h2>{"Use an editor that supports JSX syntax"}</h2>
+    <p>{
+      "While this is not a strict requirement, it is also strongly " +
+      "recommended that you use an editor/IDE that supports syntax " +
+      "highlighting for JSX files, and especially if you want to proceed to " +
+      "the next tutorials after this one."
+    }</p>
+    <p>{[
+      "An example of an IDE that supports JSX syntax highlighting is ",
+      <ELink key="link-vscode" href="https://code.visualstudio.com/" >
+        {"VS Code"}
+      </ELink>,
+      "."
+    ]}</p>
+  </section>
+  <section>
     <h2>{"Uploading your first UP directory"}</h2>
     <p>{
       "You are now ready to upload and test your first UP app!"
@@ -274,7 +290,7 @@ const page = <div className="text-page">
       }</p>
       <p>{
         "And now you will see your app rendered on the page, which, unless " +
-        "you have edited it to say something else (or never " +
+        "you have edited it to say something else (or if you never " +
         "substituted the dots for \"World!\" in the first place), should now " +
         "say:"
       }</p>
@@ -322,12 +338,12 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "Now try to change \"YOUR_APP_NAME\" here to something like " +
+      "Now try to change \"YOUR_APP_NAME\" here to something else, like " +
       "\"Hello World app\", then re-upload your directory like you did before." 
     }</p>
     <p>{
       "Then if you go to the same up-web.org/c/ENTITY_ID/YOUR_APP_NAME URL " +
-      "as before (or refresh the the page), you should see that the URL now " +
+      "as before (or refresh the page), you should see that the URL now " +
       "automatically gets replaced by " +
       "\"up-web.org/c/ENTITY_ID/Hello World app\"."
     }</p>
@@ -372,19 +388,19 @@ const page = <div className="text-page">
       "order to confirm that app2.jsx indeed now defines your uploaded app."
     }</p>
     <p>{[
-      "The other contents of app2.jsx will by the way be used as part of " +
+      "The other contents of app2.jsx will, by the way, be used as part of " +
       "the ",
       <ILink key="link-tut-2" href="~/jsx-components" >
         {"next tutorial"}
       </ILink>,
-      ", so make sure you keep \"./app2.jsx\" as your component path for " +
+      ", so make sure you keep this component path of \"./app2.jsx\" for " +
       "now, going into the next tutorial."
     ]}</p>
     <p>{
       "Lastly, the are also the 'GITHUB_REPO_URL' constant, which you " +
-      "should specify at some point if you want your share your app with " +
+      "ought to specify at some point if you want your share your app with " +
       "others. (It is strongly recommended to use a public GitHub " +
-      "repository for your app in case you do want to share it with others.) " +
+      "repository for your app in that case.) " +
       "And there is also a 'USE_FULL_SCREEN' constant, which specifies " +
       "that your app ought to define its own margins on the webpage where it " +
       "is displayed."
@@ -396,13 +412,13 @@ const page = <div className="text-page">
     <p>{[
       "You now know how to upload and edit UP apps. The following couple " +
       "of tutorials will then teach you how to create more advanced " +
-      "components, that does more than just show some text, and how to " +
+      "components, as well as how to " +
       "style these components, and more. And once you finish ",
       <ILink key="link-tut-4" href="~/useful-things-to-know" >
         {"Tutorial 4"}
       </ILink>,
       ", you should have all the knowledge required to start making " +
-      "client-side app you want."
+      "your own client-side apps."
     ]}</p>
     <p>{[
       "Then once you are ready to move on to creating apps that upload " +
