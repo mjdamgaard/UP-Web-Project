@@ -18,9 +18,8 @@ const page = <div className="text-page">
       "interpreter does not behave exactly like you are (perhaps) used to. " +
       "This is because this framework actually employs its own JS " +
       "interpreter in order to be able to sandbox the user-uploaded source " +
-      "code, and execute it in a way that prevents users from hacking the " +
-      "contributions of users, and to prevent them from hacking the client's " +
-      "browser in general."
+      "code, and execute it in a way that prevents users from hacking each " +
+      "other."
     }</p>
     <p>{
       "So whenever a line of your uploaded source code is executed, the " +
@@ -28,22 +27,24 @@ const page = <div className="text-page">
       "interpreter, which then runs your code."
     }</p>
     <p>{
-      "The implications of this sandboxing is first of all that you as a " +
-      "programmer do not have access to all the same functions as in the " +
-      "native JS interpreter, as well as the same object prototype methods " +
+      "The implications of this sandboxing is first of all that you " +
+      "do not have access to all the same functions as in the " +
+      "native JS interpreter, nor to all the same built-in object methods " +
       "and properties."
     }</p>
     <p>{
-      "In fact, all the regular prototypes of this modified version of JS, " +
-      "such for strings, numbers, arrays, and regular key-value objects, " +
+      "In fact, all the regular object prototypes of this modified version " +
+      "of JS, " +
+      "such as for strings, numbers, arrays, and plain objects, " +
       "contain no methods at all. And the only built-in properties are the " +
       "'length' property for strings and arrays, and also the integer " +
-      "indices that can by used to access respectively a specific character " +
+      "indices that can by used to access either a specific character " +
       "of a string or a specific entry of an array."
     }</p>
     <p>{
-      "So if you for instance want to map an array to another array, you " +
-      "would normally write something like:"
+      "So to give an example, if you want to map an array to another array, " +
+      "you would normally write something like the following when using " +
+      "regular JS:"
     }</p>
     <p>
       <code className="jsx">{[
@@ -83,8 +84,8 @@ const page = <div className="text-page">
       "etc."
     }</p>
     <p>{[
-      "In a future version of this tutorial, we will link here to a " +
-      "documentation index page where one can see all the available " +
+      "In a future version of this tutorial, we will link to a " +
+      "documentation page here, where one can see all the available " +
       "developer libraries and their functions. But in the meantime, you can " +
       "first of all go to ",
       <ELink key="link-index-js"
@@ -107,7 +108,7 @@ const page = <div className="text-page">
         href="https://github.com/mjdamgaard/UP-Web-Project/tree/main/src/dev_lib" >
         {"src/dev_lib"}
       </ELink>,
-      " folder, so you can also browse that to see what is available."
+      " folder, so you can also browse this folder to see what is available."
     ]}</p>
     <p>{
       "Luckily, however, it is often not very hard to guess how to import " +
@@ -116,41 +117,44 @@ const page = <div className="text-page">
       "JS."
     }</p>
     <p>{[
-      "All the most common JS prototypes have their own developer library of " +
+      "All the most common JS prototypes have their own developer library " +
+      "(dev lib) of " +
       "the same name (only with lower-case letters): The ",
       <ELink key="link-number"
         href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number" >
         {"Number"}
       </ELink>,
-      " prototype has a corresponding 'number' dev. lib., the ",
+      " prototype has a corresponding 'number' dev lib, the ",
       <ELink key="link-string"
         href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String" >
         {"String"}
       </ELink>,
-      " prototype has a 'string' dev. lib., the ",
+      " prototype has a 'string' dev lib, the ",
       <ELink key="link-array"
         href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array" >
         {"Array"}
       </ELink>,
-      " prototype, as we saw above, has an 'array' dev. lib., and the ",
+      " prototype, as we saw above, has an 'array' dev lib, and the ",
       <ELink key="link-object"
         href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object" >
         {"Object"}
       </ELink>,
-      " prototype has an 'object' dev. lib."
+      " prototype has an 'object' dev lib."
     ]}</p>
     <p>{
       "In these libraries, you will find, not necessarily all, but most of " +
-      "the functions that you are looking for, generally exported with the " +
-      "exact same name as the corresponding method that you are looking for. " +
-      "And they also generally have the same API, except that all the " +
-      "arguments are moved one place to the right, of course to make room " +
-      "for the object/value in question, which now has to be passed as the " +
+      "the functions that you are looking for, and generally exported with " +
+      "the " +
+      "same exact name as the corresponding method that you are looking for. " +
+      "They also generally have the same API, except that all the " +
+      "arguments are moved one place to the right in order to " +
+      "make room " +
+      "for the object/value in question, which has to be passed as the " +
       "first argument."
     }</p>
     <p>{
       "A notable exception is the toString() method, which is only exported " +
-      "from the 'string' dev. lib."
+      "from the 'string' dev lib."
     }</p>
     <p>{[
       "Static methods such as ",
@@ -179,7 +183,7 @@ const page = <div className="text-page">
         '/* Anywhere inside the module */\n',
         'let obj = {a: "foo", b: "bar"};\n',
         'let entries = entries(obj);\n',
-        'console.log(obj); // Prints: [["a", "foo"], ["b", "bar"]].',
+        'console.log(entries); // Prints: [["a", "foo"], ["b", "bar"]].',
       ]}</code>
     </p>
   </section>
@@ -187,19 +191,21 @@ const page = <div className="text-page">
   <section>
     <h2>{"Global functions"}</h2>
     <p>{[
-      "As the keen-eyed reader might have spotted, we did import the " +
-      "console.log() function above before using it. And that is because " +
-      "this framework still has a few number of global functions, some of " +
-      "which are implemented syntactically (similarly to how the ",
+      "As the keen-eyed reader might have spotted, we did not import the " +
+      "console.log() function here in the previous example before using it. " +
+      "And that is because " +
+      "this framework still does has a few global functions that are " +
+      "available at all times. (Some of " +
+      "these are implemented syntactically, similarly to how the ",
       <ELink key="link-import-1"
         href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import" >
         {"import()"}
       </ELink>,
-      " function is implemented syntactically in regular JS), and some of " +
-      "which or declared in the global scope."
+      " function is implemented syntactically in regular JS, and some " +
+      "are declared in the global scope.)"
     ]}</p>
     <p>{[
-      "These global functions for include:"
+      "These global functions include the following:"
     ]}</p>
     <p>
       <code className="jsx">{[
@@ -217,7 +223,7 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{[
-      "among others. Almost of of these functions/constructors are known " +
+      "among others. Almost all of these functions/constructors are known " +
       "from regular JS, except the abs() function at the end of this list, " +
       "which is a syntactically implemented function that simply returns the " +
       "absolute version of the input path."
@@ -227,13 +233,16 @@ const page = <div className="text-page">
   <section>
     <h2>{"Developer components"}</h2>
     <p>{
-      "Some of the developer libraries also implement JSX components. These " +
-      "are often implementations of particular HTML elements, such as the " +
-      "<input> element, the <textarea> element, or the <a> element. " +
-      "These developer component are generally given upper camel-case " +
-      "module names, also followed by \".jsx\" at the end."
+      "There is also another kind of developer libraries, which each " +
+      "implement a single JSX component. We call these 'developer " +
+      "components.'"
     }</p>
     <p>{
+      "These " +
+      "are often implementations of particular HTML elements, such as the " +
+      "<input> element, the <textarea> element, or the <a> element. " +
+      "These developer components are generally given upper camel-case " +
+      "module names, also followed by \".jsx\" at the end. " +
       "For example, if you want to import the <textarea> developer component," +
       " you can do it with the following import statement:"
     }</p>
@@ -255,15 +264,16 @@ const page = <div className="text-page">
       "or release the focus of the document."
     }</p>
     <p>{
-      "The developer components also be given props in the same way as the " +
-      "user-programmed components. For instance, if you pass a string as " +
+      "The developer components can also be given props in the same way as " +
+      "for the user-programmed components. For instance, if you pass a " +
+      "string as " +
       "the 'placeholder' prop to the TextArea component, it will get that " +
       "string as its placeholder text (shown before the user starts typing)." 
     }</p>
     <p>{
       "The <input> element also has, not just one, but several developer " +
-      "components that implement it. You can see the full list of the " +
-      "<input> dev components that is currently implemented here:" 
+      "components that each implement a different type. Here are some " +
+      "examples of such developer components, and how to import them:" 
     }</p>
     <p>
       <code className="jsx">{[
@@ -275,14 +285,23 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "As you might have guessed if you already know about <input> element, " +
-      "these are all named after the 'type' attribute value that they " +
-      "implement. And the props that these components can receive is " +
-      "dependent on this type." 
+      "As you might have guessed if you are already familiar with the " +
+      "<input> element, " +
+      "these are all named after the 'type' attribute that they " +
+      "implement. For instance, the InputText component implements a " +
+      "<input type=\"text\"> element in particular. And InputCheckbox " +
+      "implement an <input type=\"checkbox\"> element, etc." 
     }</p>
     <p>{
-      "And then we also we also have the <a> element, which is also divided " +
-      "into two versions:" 
+      "The props that these components depend on also varies from type, " +
+      "such that InputText for instance might receive a 'placeholder' or a " +
+      "'children' prop, whereas InputCheckbox might instead receive a " +
+      "'checked' prop." 
+    }</p>
+    <p>{
+      "And as the last developer components that we will mention here, we " +
+      "also have two that each implements a different variant of the <a> " +
+      "element:" 
     }</p>
     <p>
       <code className="jsx">{[
@@ -291,15 +310,18 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "Where ILink is strictly meant for internal links, i.e. to pages " +
-      "of the same website as the current one, and where ELink is meant " +
-      "for external links. The ILink component also has the added feature " +
-      "that is doesn't cause the page to reload when clicked. Instead it " +
-      "just updates the 'url' prop of the outer app component, causing it to " +
-      "rerender."
+      "Here, the first one of these, ILink, is strictly meant for internal " +
+      "links, i.e. to pages " +
+      "of the same website as the current one, whereas ELink is meant for " +
+      "general links, including external ones. " +
+      "The ILink component then has the added feature " +
+      "that is does not cause the whole page to reload when clicked. " +
+      "Instead it simply updates the 'url' prop of the outer app " +
+      "component, causing it to rerender."
     }</p>
     <p>{
-      "The reason why we need developer components some some HTML elements " +
+      "The reason why we need developer components for some HTML elements, " +
+      "by the way, " +
       "is first of all due to security concerns. For " +
       "instance, if the users were given complete control over the 'href' " +
       "attribute of the <a> element, they could lead other users to " +
@@ -312,9 +334,9 @@ const page = <div className="text-page">
       "Another good example is the <input> element, where if users were " +
       "given complete control over the 'type' attribute, the could set this " +
       "attribute to \"password\", and thereby possibly be able to trick " +
-      "the browser of another user to insert the user's password. And after" +
+      "the browser of another user to insert the user's password. And after " +
       "this, they might then be able to upload it to a part of the database " +
-      "that they have access to, thus stealing the password. Thus, we " +
+      "that they have access to, thus stealing the password. Therefore we " +
       "need to have limits on what attributes the users can set for given " +
       "elements."
     }</p>
@@ -324,15 +346,17 @@ const page = <div className="text-page">
     <h2>{"Objects are immutable by default"}</h2>
     <p>{
       "All objects are immutable by default in this version of JS, " +
-      "including arrays. This is also due to the fact that in this UP system " +
-      "you cannot count on other users not to have malicious or adversarial " +
-      "intentions to you. And this is why you must never export an mutable " +
+      "including arrays. This is also due to the fact that in this UP " +
+      "system, you generally cannot count on all other users, as some might " +
+      "in principle have malicious, or just adversarial, " +
+      "intentions. And this is why you must never export a mutable " +
       "object from a module, nor any object that holds a reference to a " +
       "mutable object. For if you do, other users might import and corrupt " +
-      "the data held in those objects."
+      "the data held in that object, causing failures and errors elsewhere."
     }</p>
     <p>{
-      "And in order to make preventing exporting mutable objects feasible, " +
+      "And in order to make preventing exporting mutable objects a feasible " +
+      "task for the users, " +
       "all objects are therefore immutable by default."
     }</p>
     <p>{
@@ -348,7 +372,7 @@ const page = <div className="text-page">
     <p>{
       "But what you might do instead is to make use of the spread operator " +
       "to create the new desired object, and then simply reassign it to the " +
-      "variable, like so:"
+      "same variable, like so:"
     }</p>
     <p>
       <code className="jsx">{[
@@ -357,10 +381,10 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "By the way, whereas React recommends using the 'const' keyword as " +
-      "much as possibly, this framework recommends using the 'let' keyword " +
+      "(By the way, whereas React recommends using the 'const' keyword as " +
+      "much as possible, this framework recommends using the 'let' keyword " +
       "as much as possible, except at the module scope, and in particular " +
-      "for exports."
+      "for exports.)"
     }</p>
     <p>{
       "However, if you do want to use a mutable object or array, you can " +
@@ -407,14 +431,15 @@ const page = <div className="text-page">
     }</p>
     <p>{
       "And second of all, we have let uncaught exceptions be much more " +
-      "verbose as well by letting them automatically include the same " +
-      "information as from a console.trace() call."
+      "verbose as well, namely by letting them automatically include the " +
+      "same information as from a console.trace() call."
     }</p>
     <p>{
       "So whenever you develop a new app component, or a server module, " +
       "always make sure to have the console open in your browser, first of " +
       "all. And whenever a new error is encountered, do not be frightened by " +
-      "the wall of red text that your console is filled up with. Just click " +
+      "the wall of red text that is printed to your console. " +
+      "Just click " +
       "anywhere inside the console and press the 'Home' key on your " +
       "keyboard. This will bring you straight to top, showing you the first " +
       "error (which is typically the one you want to debug first)."
@@ -430,22 +455,28 @@ const page = <div className="text-page">
     }</p>
     <p>{
       "Next you will see the aforementioned trace printed out, where you can " +
-      "a sizable portion of the call stack, and where each function is " +
-      "printed out along with its file path and location, and not least its " +
-      "argument values. And in the special case when a function is the " +
-      "render() function of a component, instead of just seeing a printout " +
-      "render() function itself, you will see the JSX element of the " +
-      "component instance (and with the file path and location pointing to " +
-      "that instead)."
+      "see a sizable portion of the call stack, and where each function is " +
+      "printed out along with both the file path and location of the " +
+      "function call, as well as the argument values, not least."
     }</p>
     <p>{
-      "And this is finally followed by a readout of all the variables that " +
+      "And in the special case when a function is the " +
+      "render() function of a component, instead of just seeing a printout " +
+      "of the " +
+      "render() function itself, you will see the JSX element of the " +
+      "component instance, along with the file path and location of it."
+    }</p>
+    <p>{
+      "Finally, you will see a readout of all the variables that " +
       "was present in the scope where the error occurred."
     }</p>
     <p>{
-      "Additionally, if the error is thrown server-side, you will see both " +
-      "the trace and variable readout of the server-side error, followed by " +
-      "trace and variable readout of the client-side error."
+      "That is, unless the error was thrown server-side, in which case all " +
+      "this information will be effectively doubled, as you will then " +
+      "first see " +
+      "the trace for the server-side error, followed by " +
+      "the client-side trace, starting from the function that sent the " +
+      "given request to the server."
     }</p>
     <p>{
       "Hopefully this will be enough for you to quickly be able locate the " +
@@ -468,7 +499,7 @@ const page = <div className="text-page">
     <p>{
       "Some additional things that are worth noting for the JSX components " +
       "are first of all that apart from the 'key' and the 'children' props, " +
-      "there is also a third prop treated in a special way, and that is the " +
+      "there is also a third prop treated in a special way, which is the " +
       "'ref' prop."
     }</p>
     <p>{
@@ -497,24 +528,25 @@ const page = <div className="text-page">
       "the state."
     }</p>
     <p>{
-      "So if you ever mutate a mutable part of the state manually, and you " +
+      "So if you ever mutate a mutable part of the state manually, or " +
+      "a mutable part of the props, and you " +
       "want to force a rerender, you can call this.rerender() to do this."
     }</p>
     <h3>{"Using the 'function' keyword rather than arrow functions"}</h3>
     <p>{
       "If you are well familiar with JS, it will probably come as no " +
       "surprise that you should never define a component's functions such " +
-      "as render() or initialize, etc., using arrow functions. This is " +
+      "as render() or initialize(), etc., using arrow functions. This is " +
       "because " +
       "one if the main attributes of arrow functions is that they are " +
       "transparent to the 'this' keyword. However, functions like render() " +
-      "initialize() needs to have 'this' bound to an object that represents " +
-      "the live component instance in order to work as intended."
+      "and initialize() need to have 'this' bound to an object that " +
+      "represents the live component instance in order to work as intended."
     }</p>
     <p>{
       "Therefore you should always use the 'function' keyword when defining " +
       "these functions. And the same is true for all the functions of the " +
-      "'actions' export."
+      "'actions' object."
     }</p>
     <h3>{"Components can only render single HTML elements"}</h3>
     <p>{
@@ -522,9 +554,9 @@ const page = <div className="text-page">
       "render() functions should generally consist of a single HTML element. " +
       "It is, however, still possibly to let render() return e.g. a string, " +
       "or a JSX " +
-      "fragment or array. But this will then just automatically be wrapped " +
+      "fragment, or an array. But this will then be automatically wrapped " +
       "in either a <span> element, in case of a returned string, or in a " +
-      "<div> element in the case of a returned array or JSX fragment."
+      "<div> element in the case of a returned JSX fragment or array."
     }</p>
   </section>
 
@@ -534,7 +566,7 @@ const page = <div className="text-page">
     <p>{
       "Speaking of JSX components, if you are familiar with React, you " +
       "might have wondered why all the JSX elements we have seen so far in " +
-      "this tutorial wraps all their text content in '{\"...\"}', like in:"
+      "these tutorials wrap all their text content in '{\"...\"}', such as in:"
     }</p>
     <p>
       <code className="jsx">{[
@@ -558,8 +590,8 @@ const page = <div className="text-page">
     <h3>{"Asynchronous functions"}</h3>
     <p>{
       "It is also worth noting that the 'async' and 'await' keywords " +
-      "are not implemented yet as well. They will, however, be so in the " +
-      "near future, as well."
+      "are not implemented yet as well. But they will also be so in the " +
+      "near future."
     }</p>
   </section>
 
@@ -567,7 +599,7 @@ const page = <div className="text-page">
     <h2>{"Final remarks"}</h2>
     <p>{
       "These points were all of the most pressing ones that you ought to " +
-      "know before you really start to develop your first UP apps."
+      "know before you really start developing your first UP apps."
     }</p>
     <p>{
       "There are also several other points that are worth mentioning at " +

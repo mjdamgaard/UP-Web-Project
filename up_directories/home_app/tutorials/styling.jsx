@@ -12,13 +12,13 @@ export function render() {
 
 
 const page = <div className="text-page">
-  <h1>{"Tutorial 3: A quick introduction on how to style components"}</h1>
+  <h1>{"Introduction on how to style components"}</h1>
   <section>
     <h2>{"Defining the style sheets for the root component"}</h2>
     <p>{
       "The easiest way to style a given component is to export an array " +
       "with the name of 'styleSheets' from the " +
-      "root component of whatever app or webpage you are working on. " +
+      "root component of the given app or webpage that you are working on. " +
       "This 'styleSheets' array should then contain the paths to all the " +
       "style sheets that you wish to use."
     }</p>
@@ -28,7 +28,8 @@ const page = <div className="text-page">
       <ILink key="link-tut-2" href="~/jsx-components" >
         {"previous tutorial"}
       </ILink>,
-      " you can comment out the previous return and comment in Ln. 93-96 of " +
+      ", you can comment out the previous return statement and comment " +
+      "in Ln. 93-96 of " +
       "app2.jsx, such that it returns the following JSX element:"
     ]}</p>
     <p>
@@ -40,8 +41,8 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "(Also make sure that the import of ExampleComponent7 is in-commented " +
-      "as well at the top of the document.) " +
+      "And also make sure that the ExampleComponent7 is imported at the top " +
+      "of the module. " +
       "Then comment in the 'styleSheets' export at the end of the " +
       "document as well, which reads:"
     }</p>
@@ -76,8 +77,8 @@ const page = <div className="text-page">
       <ELink key="link-css-1" href="https://www.w3schools.com/css/" >
         {"CSS Tutorial"}
       </ELink>,
-      " to get an introduction to the wonderful world of how CSS can by used " +
-      "to style HTML elements.",
+      " to get an introduction to the wonderful world of CSS, and how it " +
+      "is used to style HTML elements.",
     ]}</p>
     <p>{[
       "Then after having commented in these lines, if you now re-upload the " +
@@ -96,7 +97,7 @@ const page = <div className="text-page">
       "Here you see that both the <h1> header from the root component and " +
       "the <h2> header from the child component are now colored red. This " +
       "shows that the app2.css style sheet has styled both the parent and " +
-      "the child instance."
+      "the child component instance."
     }</p>
   </section>
 
@@ -114,8 +115,8 @@ const page = <div className="text-page">
       "array from the nested component in question."
     }</p>
     <p>{
-      "In fact, if you go to ExampleComponent7.jsx, so see that its full " +
-      "contents are:"
+      "In fact, if you go to ExampleComponent7.jsx, you will see that its " +
+      "full contents are:"
     }</p>
     <p>
       <code className="jsx">{[
@@ -129,7 +130,10 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "And the contents of the ExampleComponent7.css style sheet are:" 
+      "The child component thus also has a 'styleSheets' export, referencing a " +
+      "style sheet called ExampleComponent7.css. " +
+      "And if you look inside this file, you will see " +
+      "that it contains the following ruleset:" 
     }</p>
     <p>
       <code className="css">{[
@@ -139,21 +143,21 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "So if ExampleComponent7 were to style itself, we should see a blue " +
+      "So if the child component were to style itself, we should see a blue " +
       "<h2> header in the previous example instead of a red one." 
     }</p>
     <p>{
       "The reason why we still see a red one, however, is that the parent " +
       "component needs to explicitly specify when a child component should " +
-      "style itself. And this is done via the (mandatory) 'key' props." 
+      "style itself. And this is done via the 'key' prop." 
     }</p>
     <p>{
-      "If a component instance element is given a key prop that starts with " +
-      "an underscore, then it styles itself, and otherwise it just " +
-      "inherits the same style sheets as its parent uses." 
+      "If a component instance is given a key prop that starts with " +
+      "an underscore, then it styles itself. And otherwise it just " +
+      "inherits its set of style sheets from its parent." 
     }</p>
     <p>{
-      "So to see an example of a child component instance styles itself, " +
+      "So to see an example where a child instance styles itself, " +
       "simply prepend an underscore to the key prop in the returned JSX " +
       "element in app2.jsx from the previous example, such it becomes " +
       "\"_c-1\" instead of \"c-1\":"
@@ -167,8 +171,8 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "And then when you re-upload your component, you will indeed see that " +
-      "the child instance's <h2> header has indeed turned blue:" 
+      "And then if you re-upload your component, you will indeed see that " +
+      "the child instance's <h2> header has turned blue:" 
     }</p>
     <p>{
       <div className="text-display">
@@ -198,11 +202,12 @@ const page = <div className="text-page">
       "of each individual element that uses this theme, then the more " +
       "advanced system will also start to become relevant. (In other words, " +
       "if your app is complicated enough that you feel like you need " +
-      "something like Sass or Less to manage styling themes.)" 
+      "something like Sass or Less to manage your style themes, then you " +
+      "might want to learn about the more advanced system.)" 
     }</p>
     <p>{
-      "But for now, the reduced system that was explained above in this " +
-      "tutorial should suffice, at least for your first couple of apps." 
+      "But for now, the reduced system that was explained above " +
+      "should suffice, when you make your first couple of UP apps." 
     }</p>
   </section>
 </div>;
