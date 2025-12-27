@@ -859,7 +859,7 @@ const page = <div className="text-page">
       <ILink key="link-tut-6" href="~/styling">
         {"6"}
       </ILink>,
-      " will teach you how to create your first \"server modules,\" which " +
+      " will teach you how to create your first server modules, which " +
       "will allow your components to upload and retrieve data from the server."
     ]}</p>
   </section>

@@ -265,13 +265,13 @@ export function postInitialScores01() {
           firstModID, 5
         ),
         postUserRelationalScoreAndUpdateUserGroups(
-          abs("./em1.js;get/commentClass"),
+          abs("./em1.js;get/commentsClass"),
           abs("./em1.js;get/entityPage"),
           abs("./em2.js;get/commentEntityPage"),
           firstModID, 4
         ),
         postUserRelationalScoreAndUpdateUserGroups(
-          abs("./em1.js;get/commentClass"),
+          abs("./em1.js;get/commentsClass"),
           abs("./em1.js;get/entityElement"),
           abs("./em2.js;get/commentElement"),
           firstModID, 5

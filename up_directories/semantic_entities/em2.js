@@ -147,7 +147,7 @@ export const commentElement = {
 };
 
 export const exampleComment = {
-  "Class": abs("./em1.js;get/commentClass"),
+  "Class": abs("./em1.js;get/commentsClass"),
   "Name": () => new Promise(resolve => {
     fetchEntityID(abs("+;get/comment")).then(
       entID => resolve("Comment " + entID)

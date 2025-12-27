@@ -58,8 +58,8 @@ export function render({
 
 export const actions = {
   "updateListLimits": function() {
-    let minScoreTextVal = this.call("msi", "getValue");
-    let minWeightTextVal = this.call("mwi", "getValue");
+    let minScoreTextVal = this.call("ddb", "call", ["msi", "getValue"]);
+    let minWeightTextVal = this.call("ddb", "call", ["mwi", "getValue"]);
     let minScore = (minScoreTextVal !== undefined) ?
       parseFloat(minScoreTextVal) : undefined;
     let minWeight = (minScoreTextVal !== undefined) ?

@@ -257,7 +257,7 @@ export const texts = {
 // user-written "Content," and who generally is about a specific "Target
 // entity". And comments also generally have a specific user attached, which is
 // the "Author" of the comment.
-export const commentClass = {
+export const commentsClass = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Comments",
   "Superclass": abs("./em1.js;get/texts"),
@@ -267,7 +267,16 @@ export const commentClass = {
     "Content",
     "Is a singular statement",
   ],
-  "Description": abs("./em1_aux.js;get/commentClassDesc"),
+  "Description": abs("./em1_aux.js;get/commentsClassDesc"),
+};
+
+// 'Discussions' is also a subclass of text entities. See the 'Discussions'
+// relation below for more information.
+export const discussionsClass = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "Discussions",
+  "Superclass": abs("./em1.js;get/texts"),
+  "Description": abs("./em1_aux.js;get/discussionsClassDesc"),
 };
 
 

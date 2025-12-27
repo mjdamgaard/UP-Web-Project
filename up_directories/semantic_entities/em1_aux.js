@@ -11,8 +11,8 @@ const tempEM1Desc = <div>
       }
       <ILink key="em1" href="~/f/1/1/em1.js">{"em1.js"}</ILink>
       {
-        ", for information about the semantics of this entity, and for the " +
-        "semantic system in general."
+        ", for information about the semantics of this entity, as well as " +
+        "for the whole semantic system in general."
       }
     </p>
   </section>
@@ -23,7 +23,8 @@ export const entitiesDesc = tempEM1Desc;
 export const classesDesc = tempEM1Desc;
 export const usersDesc = tempEM1Desc;
 export const textsDesc = tempEM1Desc;
-export const commentClassDesc = tempEM1Desc;
+export const commentsClassDesc = tempEM1Desc;
+export const discussionsClassDesc = tempEM1Desc;
 export const qualitiesDesc = tempEM1Desc;
 export const relationsDesc = tempEM1Desc;
 export const relationalQualitiesDesc = tempEM1Desc;

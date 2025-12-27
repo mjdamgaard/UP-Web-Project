@@ -1,6 +1,9 @@
 
 
 
+export function initialize({startOpen}) {
+  return {isOpen: startOpen ? true : false};
+}
 
 export function render({children, keepAlive = true}) {
   let {isOpen, isLoaded} = this.state;
@@ -24,10 +27,15 @@ export function render({children, keepAlive = true}) {
 }
 
 
-export function initialize({startOpen}) {
-  return {isOpen: startOpen ? true : false};
-}
+export const actions = {
+  "call": function([key, input]) {
+    return this.call(key, input);
+  }
+};
 
+export const methods = [
+  "call",
+];
 
 
 export const styleSheets = [
