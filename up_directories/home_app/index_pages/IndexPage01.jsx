@@ -5,12 +5,123 @@ import * as EntityList from "../entity_lists/EntityList.jsx";
 
 
 export function render() {
-  return indexPage;
+  return indexPage1;
 }
 
 
+const indexPage2 = <div className="text-page">
+  <h1>{"The User-Programmable Web"}</h1>
+  <section>
+    <h2>{"A decentralized network of open source web apps"}</h2>
+    <p>{
+      "The User-Programmable Web (UP Web) is meant to be a " +
+      "collection of open source websites where the users are in complete " +
+      "control over the appearance and functionality of the web " +
+      "apps, as well as the data structures and algorithms behind them."
+    }</p>
+    <p>{
+      "Here it is the users themselves that create and upload all the " +
+      "components that make up the website. " +
+      "And each individual user gets to chose exactly " +
+      "which set of apps and which set of algorithms they want to use, " +
+      "regardless of whether they have contributed any source code themselves."
+    }</p>
+    <p>{
+      "This website, up-web.org, is the very first prototype of such a " +
+      "user-programmable (UP) website. Indeed, every app and every page on " +
+      "this website, including the page that you are reading now, has " +
+      "been uploaded by a user!"
+    }</p>
+  </section>
 
-const indexPage = <div className="text-page">
+  <section>
+    <h2>{"A sandboxing technology that gives the users free rein"}</h2>
+    <p>{
+      "We use a sandboxing technology that allows users to safely upload " +
+      "and share source code modules and with each other, without " +
+      "having to worry about getting hacked by each other."
+    }</p>
+    <p>{
+      "The UP website thus requires very little central oversight when " +
+      "it comes to the development of new app prototypes, and new " +
+      "modifications to existing apps."
+    }</p>
+    <p>{
+      "Furthermore, the sandboxing technology also allows us to store these " +
+      "source code " +
+      "modules in the database rather than in the limited file system of " +
+      "the server itself. This means that there is practically no limit to " +
+      "how many apps the users can create, as well as how many versions of " +
+      "each given app can be made."
+    }</p>
+    <p>{
+      "So whenever you have an idea for a new app or a new feature to an " +
+      "existing app, you can very quickly implement a prototype of that app " +
+      "or feature, and upload it under a relevant category such that other " +
+      "users can find it and try it out. These users might then help you " +
+      "finish the app or feature. And once it is finished and ready to use, " +
+      "the app or modification does not need to go through a centralized " +
+      "review process, and then be rolled out to all users at once. " +
+      "Instead it can just gradually be picked up by more and more of the " +
+      "user base, until it has reached everyone who wants it."
+    }</p>
+    <p>{
+      "And whenever a user does not like a new feature to a given app, they " +
+      "are completely free to just pass on it, and keep using a version of " +
+      "the app without that feature."
+    }</p>
+  </section>
+
+  <section>
+    <h2>{"Business model"}</h2>
+
+    <h3>{"Business model of up-web.org"}</h3>
+    <p>{[
+      "The business model of up-web.org in particular is to just have a ",
+      <ILink key="tut-link-sponsors" href="/sponsors" >
+        {"Sponsors"}
+      </ILink>,
+      " page where we showcase our sponsors, and ask our users to send some " +
+      "appreciation their way."
+    ]}</p>
+    <p>{
+      "We will also accept individual donations as well."
+    }</p>
+
+
+    <h3>{"A company for pooling IP rights and rewarding creators"}</h3>
+    <p>{
+      "We will also at some point launch a company that is not tied " +
+      "specifically to up-web.org, but rather to the whole UP Web at large."
+    }</p>
+    <p>{
+      "The purpose of this company is to implement a way in which the " +
+      "content creators and the source code " +
+      "creators of the UP Web can rewarded for their work."
+    }</p>
+    <p>{
+      "The problem here is that when the users are in complete control over " +
+      "which apps they want to use, they also do not have to use any apps " +
+      "that shows ads, rather than using copies of those apps where the ads " +
+      "are removed."
+    }</p>
+    <p>{
+      "However, without any rewards to the creators, and in particular to " +
+      "the content creators, the UP apps will not necessarily be able to " +
+      "compete with existing apps. In that sense, it could still generally " +
+      "be in the users interest to either pay for access to the content, or " +
+      "watch ads, as long as all other user does the same."
+    }</p>
+    <p>{
+      "This is why we wish to create a company/organization that helps " +
+      "the creators pool their IP rights and negotiate ... with the rest of the " +
+      "user base "
+    }</p>
+  </section>
+</div>;
+
+
+const indexPage1 = <div className="text-page">
   <h1>{"The User-Programmable Web"}</h1>
   <section>
     <h2>{"Welcome!"}</h2>

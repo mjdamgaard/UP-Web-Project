@@ -19,6 +19,8 @@ export const slice = new DevFunction(
   }
 );
 
+// TODO: Decrement comp. gas according to length in map() and similar functions.
+
 export const map = new DevFunction(
   "map", {typeArr: ["any", "function"]},
   ({callerNode, execEnv, interpreter}, [arr, fun]) => {
