@@ -204,9 +204,25 @@ Other potential service providers of the network in the future are of course fre
 
 Lastly, [up-web.org](https://www.up-web.org) also at some point intends to found an organization for monetizing user-contributions, not necessarily so much when it comes to the user-made source code for the site, but more so when it comes to user content such as videos and images, and all such creative content. Hopefully we will be able to create a good organization where such content creators can pool their IPs, and vote on what paywalls to set up for what content, in a fair and democratic way.
 
- -->
+-->
 
 
+
+
+## Business model
+
+In order to fund this open source project, we will include a 'Sponsors' page on the website, where sponsors can advertise themselves.
+
+We will also accept individual donations from anyone interested in supporting the project.
+
+And if the company does a good job of helping to start the UP Web, and helping to maintain the whole project, this will increase the likelihood of getting more sponsors and donors in the future.
+
+So in short, the business model is to attract sponsors and donors by spending the money on helping the UP Web project along. 
+
+
+
+
+<!--
 ## Business model
 
 There are several different approaches that one could take in order to fund this open source project. And the one of the simplest ones would be to just have a 'Sponsors' page on the website(s), where sponsors can advertise themselves. The money that this would bring in could easily be enough to pay the costs of providing access to the databases needed for the project.
@@ -266,26 +282,4 @@ This is where the point of choosing an SRC as the company model comes into play.
 
 So by using the SRC model, we might thus be able to retain the excitement of the users due to being an open source alternative to existing websites, while at the same time even being able to grant the monetary rewards to the source code contributors that they deserve.
 
-
-### Initial shareholders of the SRC
-
-Lastly, let us look at who the initial investors of the company should be. A typical approach here would be to start out with some initial owners, who are then able to sell shares to other investors as they please, and to possibly keep a sizable part of the initial shares to themselves.
-
-However, in the spirit of openness and fairness, this is not the plan for the aforementioned SRC. Instead we intend to start the company as public one from the very outset.
-
-This is done by distributing a fixed amount of shares each month, possibly in the order of 5 % of the total shares, which would mean that the whole company will be sold in the time span of 20 months.
-
-And instead of using a first-come-first-served principle, we instead allow the investors to contribute whatever money they want during each month, and then let the shares that they receive in return be proportional to the money spent this way divided by the total sum of contributions at the end of the given month.
-
-This will obviously mean that the investors will not know the *exact* amount of shares that they will get in return for their contributions. But by analyzing the trend for each month, they will still be able to make a good estimation.
-
-By choosing this extended kind of auction of the initial shares, we ensure that everyone gets a chance to hear about the venture, and gets the opportunity to be part of it if they want.
-
-We will also set an initial investment threshold that needs to be reached before this process starts, thus ensuring that awareness of the venture will have had time to spread even before the first month of this process begins. The money that was invested before this event will then simply count as belonging to the first month of the process.
-
-
-
-
-<!-- ### More information
-
-*TODO: Reference a text that goes through the business plan in more chronological order, and with some additional details added.* -->
+-->

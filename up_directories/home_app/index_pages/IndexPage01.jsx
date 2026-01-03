@@ -21,7 +21,7 @@ const indexPage2 = <div className="text-page">
     }</p>
     <p>{
       "Here it is the users themselves that create and upload all the " +
-      "components that make up the website. " +
+      "components and modules that make up the website. " +
       "And each individual user gets to chose exactly " +
       "which set of apps and which set of algorithms they want to use, " +
       "regardless of whether they have contributed any source code themselves."
@@ -38,13 +38,16 @@ const indexPage2 = <div className="text-page">
     <h2>{"A sandboxing technology that gives the users free rein"}</h2>
     <p>{
       "We use a sandboxing technology that allows users to safely upload " +
-      "and share source code modules and with each other, without " +
-      "having to worry about getting hacked by each other."
+      "new apps, as well as new versions of existing apps, and " +
+      "have other users try them out without needing to fear getting hacked " +
+      "by them."
     }</p>
     <p>{
-      "The UP website thus requires very little central oversight when " +
+      "The UP website therefore requires very little central oversight when " +
       "it comes to the development of new app prototypes, and new " +
-      "modifications to existing apps."
+      "modifications to existing apps. The users are thus free to quickly " +
+      "and easily share new app ideas with each other, without the need for " +
+      "the apps to go through a centralized review process first."
     }</p>
     <p>{
       "Furthermore, the sandboxing technology also allows us to store these " +
@@ -54,12 +57,12 @@ const indexPage2 = <div className="text-page">
       "how many apps the users can create, as well as how many versions of " +
       "each given app can be made."
     }</p>
-    <p>{
+    {/* <p>{
       "So whenever you have an idea for a new app or a new feature to an " +
       "existing app, you can very quickly implement a prototype of that app " +
       "or feature, and upload it under a relevant category such that other " +
       "users can find it and try it out. These users might then help you " +
-      "finish the app or feature. And once it is finished and ready to use, " +
+      "finish the project. And once it is finished and ready to use, " +
       "the app or modification does not need to go through a centralized " +
       "review process, and then be rolled out to all users at once. " +
       "Instead it can just gradually be picked up by more and more of the " +
@@ -69,7 +72,7 @@ const indexPage2 = <div className="text-page">
       "And whenever a user does not like a new feature to a given app, they " +
       "are completely free to just pass on it, and keep using a version of " +
       "the app without that feature."
-    }</p>
+    }</p> */}
   </section>
 
   <section>
@@ -77,7 +80,8 @@ const indexPage2 = <div className="text-page">
 
     <h3>{"Business model of up-web.org"}</h3>
     <p>{[
-      "The business model of up-web.org in particular is to just have a ",
+      "The business model of the company behind up-web.org in particular " +
+      "is to first of all have a ",
       <ILink key="tut-link-sponsors" href="/sponsors" >
         {"Sponsors"}
       </ILink>,
@@ -85,37 +89,13 @@ const indexPage2 = <div className="text-page">
       "appreciation their way."
     ]}</p>
     <p>{
-      "We will also accept individual donations as well."
-    }</p>
-
-
-    <h3>{"A company for pooling IP rights and rewarding creators"}</h3>
-    <p>{
-      "We will also at some point launch a company that is not tied " +
-      "specifically to up-web.org, but rather to the whole UP Web at large."
+      "And we will also accept individual donations from anyone interested " +
+      "in supporting the project."
     }</p>
     <p>{
-      "The purpose of this company is to implement a way in which the " +
-      "content creators and the source code " +
-      "creators of the UP Web can rewarded for their work."
-    }</p>
-    <p>{
-      "The problem here is that when the users are in complete control over " +
-      "which apps they want to use, they also do not have to use any apps " +
-      "that shows ads, rather than using copies of those apps where the ads " +
-      "are removed."
-    }</p>
-    <p>{
-      "However, without any rewards to the creators, and in particular to " +
-      "the content creators, the UP apps will not necessarily be able to " +
-      "compete with existing apps. In that sense, it could still generally " +
-      "be in the users interest to either pay for access to the content, or " +
-      "watch ads, as long as all other user does the same."
-    }</p>
-    <p>{
-      "This is why we wish to create a company/organization that helps " +
-      "the creators pool their IP rights and negotiate ... with the rest of the " +
-      "user base "
+      "We will then spend this money in order to help start and maintain " +
+      "the UP Web as best as we can. And if we do a good job, this might " +
+      "help attract even more sponsors and donors in the future."
     }</p>
   </section>
 </div>;
