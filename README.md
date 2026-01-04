@@ -217,7 +217,11 @@ We will also accept individual donations from anyone interested in supporting th
 
 And if the company does a good job of helping to start the UP Web, and helping to maintain the whole project, this will increase the likelihood of getting more sponsors and donors in the future.
 
-So in short, the business model is to attract sponsors and donors by spending the money on helping the UP Web project along. 
+So in short, the business model is to attract sponsors and donors by spending the money on helping the UP Web project along.
+
+This money will first of all go paying the cost of running the servers, as well as to maintain the fundamental source code of the project. But it will also go towards rewarding the various users that contribute their own source code to the project.
+
+The website might also at some point start to show ads in the margins of the webpages, but this is only a last resort if the cost of running the servers per user turns out to be greater than the donations and sponsorship money that the company can attract per user.  
 
 
 

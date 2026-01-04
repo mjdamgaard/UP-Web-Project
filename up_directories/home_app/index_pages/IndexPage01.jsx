@@ -57,6 +57,26 @@ const indexPage2 = <div className="text-page">
       "how many apps the users can create, as well as how many versions of " +
       "each given app can be made."
     }</p>
+    <p>{
+      "And as the creator of a new app or feature, you do not pay anything " +
+      "for the server traffic and the data storage that the app uses. " +
+      "The fact that other users choose to use your app over others should " +
+      "not come at a cost to you. If anything, you should be rewarded for " +
+      "it."
+    }</p>
+    <p>{
+      "The cost is instead carried by the users of the app, who might " +
+      "pay by watching ads in the margins of the website, or by simply " +
+      "helping to attract " +
+      "more sponsors and donors to the website through their activity."
+    }</p>
+    <p>{
+      "The users thus have an incredible freedom to create and modify apps " +
+      "in a decentralized way. " +
+      "And we hope that the UP Web will develop into a whole ecosystem " +
+      "of web apps of all kinds, and where there is a very short and quick " +
+      "route from idea to practice."
+    }</p>
     {/* <p>{
       "So whenever you have an idea for a new app or a new feature to an " +
       "existing app, you can very quickly implement a prototype of that app " +
@@ -72,6 +92,162 @@ const indexPage2 = <div className="text-page">
       "And whenever a user does not like a new feature to a given app, they " +
       "are completely free to just pass on it, and keep using a version of " +
       "the app without that feature."
+    }</p> */}
+  </section>
+
+  <section>
+    <h2>{"Why to get excited about the UP Web"}</h2>
+
+    <h3>{"Free data portability and an end to \"enshitification!\""}</h3>
+    <p>{
+      "The fact that UP Web is open source and decentralized " +
+      "means that it will be easy for users to avoid exploitation."
+    }</p>
+    <p>{
+      "If any service provider in the network become exploitative towards " +
+      "its users, for instance by showing an excessive amount of ads, the " +
+      "users can just move their source code and data over " +
+      "another node in the network."
+    }</p>
+    <p>{
+      "The service providers will thus have no leverage to start exploiting " +
+      "the users."
+    }</p>
+
+    <h3>{"Choose only the apps and features that you want!"}</h3>
+    <p>{
+      "When new apps or features are created, they are not just rolled " +
+      "out to all users at once, like on other websites. With the UP Web, " +
+      "each user can choose which apps and features to use independently of " +
+      "each other."
+    }</p>
+    <p>{
+      "So whenever a new update comes along that e.g. moves a button to new " +
+      "location that you do not like, or make any other kind of change that " +
+      "you do not like, simply reject that update, and stick to the " +
+      "version(s) of the app that you like."
+    }</p>
+
+    <h3>{"Make it easier to limit your screen time!"}</h3>
+    <p>{
+      "Since the algorithms behind all the apps on the UP Web are user-" +
+      "programmed, there is no real point for the creators to make them " +
+      "aggressively try to maximize your watch time and engagement."
+    }</p>
+    <p>{
+      "And since you are in complete control over which algorithms you use " +
+      "you can also make sure to choose an algorithm that is not optimized " +
+      "towards making you stick to your screen for as long as possible."
+    }</p>
+    <p>{
+      "The UP Web will thus make it a lot easier to limit your screen time " +
+      "when compared to existing web apps on the market."
+    }</p>
+
+    <h3>{"Filter out all inappropriate content!"}</h3>
+    <p>{
+      "When the algorithms are not optimized to maximize your engagement, " +
+      "the algorithms also do not have to push new content to a lot of " +
+      "users quickly."
+    }</p>
+    <p>{
+      "Instead you can choose to only use algorithms that makes sure to " +
+      "take their time, and allowing other, volunteering users to review " +
+      "the content first, and make sure it to mark accordingly if it can " +
+      "be considered inappropriate in some way."
+    }</p>
+    <p>{
+      "With such algorithms, it will not take a lot of effort to be able to " +
+      "filter out all content from your feeds and search results which you " +
+      "deem inappropriate."
+    }</p>
+    <p>{
+      "And while up-web.org in particular intends to give each user free " +
+      "rein to choose the algorithms they want to use, we will also at some " +
+      "point implement other UP websites where the algorithms are restricted."
+    }</p>
+    <p>{
+      "So if you want to protect your children from viewing something that " +
+      "is damaging for them, just make sure that their devices can only " +
+      "access the restricted UP websites."
+    }</p>
+
+    <h3>{"Avoid misinformation!"}</h3>
+    <p>{
+      "In the same way that te UP Web will make it relatively easy to avoid " +
+      "inappropriate content, by taking the time to review new posts rater " +
+      "than quickly pushing it to a large audience, it will also be easier " +
+      "to avoid misinformation."
+    }</p>
+    <p>{
+      "Whenever a post contains some apparent information about the world " +
+      "the volunteering users that review new posts can mark it accordingly. " +
+      "Then the post can be forwarded to volunteering fact-checking user " +
+      "groups. And when the post finally reaches your feed, you will be able " +
+      "to see how the various fact-checking user groups (that you have some " +
+      "amount of trust in) have each rated the veracity of the post so far."
+    }</p>
+
+
+    <h3>{"Suppress rude and nonconstructive comments!"}</h3>
+    <p>{
+      "Another downside of using existing web apps on the market whose " +
+      "algorithms maximize for user engagement is that this has the effect " +
+      "of boosting negative discourse."
+    }</p>
+    <p>{
+      "This is due to the fact that negative and downright rude comments " +
+      "often attract more engagement than more earnest and constructive " +
+      "comments."
+    }</p>
+    <p>{
+      "And even though you might reply to a rude comment in order to express " +
+      "your opposition to it, the algorithms still see that as engagement, " +
+      "and will try to boost the visibility of such comments in the future, " +
+      "for you and for other users, despite the fact that you might want " +
+      "the exact opposite."
+    }</p>
+    <p>{
+      "Furthermore, since these algorithms also tend to boost the visibility " +
+      "of users who has the most engagement, it even gives an increased " +
+      "motivation for users to be rude and disruptive, which adds to the " +
+      "whole problem."
+    }</p>
+    <p>{
+      "However, when the algorithms are user-programmed, and are not " +
+      "trying to optimize for engagement at all cost, it is a rather simple " +
+      "matter of giving the users the possibility to rate a given comment or " +
+      "a given user on an earnest-to-rude scale, and to have the algorithms " +
+      "strongly suppress the users that tends to be nonconstructive in their " +
+      "comments."
+    }</p>
+
+    <h3>{"Filter out AI slop and clickbait!"}</h3>
+    <p>{
+      "The contemporary algorithms that only ties to maximize watch time " +
+      "and user engagement are also effectively blind to whether the given " +
+      "piece of content is clickbait, or if it is AI slop, or in general if " +
+      "it pretends to be something that it is not."
+    }</p>
+    <p>{
+      "But with user-programmed algorithms, it is also a rather simple " +
+      "matter to allow users to rate whether a given post is clickbait, or " +
+      "AI generated, etc., which then allows the algorithms to subsequently " +
+      "suppress that post."
+    }</p>
+
+
+  </section>
+
+  <section>
+    <h2>{"More than just alternatives to existing web apps"}</h2>
+    <p>{
+      "..."
+    }</p>
+
+    {/* <h3>{"Increased creativity means better apps and better algorithms"}</h3>
+    <p>{
+      "When the ..."
     }</p> */}
   </section>
 
@@ -97,9 +273,27 @@ const indexPage2 = <div className="text-page">
       "the UP Web as best as we can. And if we do a good job, this might " +
       "help attract even more sponsors and donors in the future."
     }</p>
+    <p>{
+      "Apart from the maintenance of the servers and the fundamental source " +
+      "code of the project, this money will also go to rewarding the various " +
+      "users who contribute their own source code to the project."
+    }</p>
+    <p>{
+      "Lastly, if the donations and sponsorships turn out not to cover the " +
+      "costs of the user activity, the website might start to show ads in " +
+      "the margins of the webpages. But since users can easily move their " +
+      "data and activity to another service provider in the " +
+      "network, this will only happen if it turns out to be necessary."
+    }</p>
+  </section>
+
+  <section>
+    <h2>{"Rewarding content creators"}</h2>
+    <p>{
+      "..."
+    }</p>
   </section>
 </div>;
-
 
 const indexPage1 = <div className="text-page">
   <h1>{"The User-Programmable Web"}</h1>
