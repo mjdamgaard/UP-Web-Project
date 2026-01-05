@@ -22,8 +22,11 @@ export function render({rowNum = 3, colNum = 3}) {
   ));
 
   // Return the JSX element of the game app.
-  return <div className="game">
-    {gameSquares}
+  return <div>
+    <h4>{"Remove all the black squares"}</h4>
+    <div className="game">
+      {gameSquares}
+    </div>
   </div>;
 }
 

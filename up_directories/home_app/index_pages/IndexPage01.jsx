@@ -437,10 +437,31 @@ const indexPage = <div className="text-page">
 
   <section>
     <h2>{"How to get started"}</h2>
-    <p>{
-      "If you want to learn more about the UP Web, and how to get started " +
-      "as a user programmer, ..."
-    }</p>
+    <p>{[
+      "If you want to get started on making your first user-programmed apps, " +
+      "go to the ",
+      <ILink key="link-tut" href="/tutorials" >
+        {"Tutorials"}
+      </ILink>,
+      " page."
+    ]}</p>
+    <p>{[
+      "And to see a list of the ongoing app projects, started by the team " +
+      "behind up-web.org or by other users, go see the ",
+      <ILink key="link-proj" href="/entPath/1/1/em1.js;get/projects" >
+        {"Projects"}
+      </ILink>,
+      " page."
+    ]}</p>
+    <p>{[
+      "You can also go to the ",
+      <ILink key="link-comp" href="/entPath/1/1/em1.js;get/components" >
+        {"Components"}
+      </ILink>,
+      " page to see some of the proof-of-concept app components that have " +
+      "been made so far. After having clicked on an element in this list, " +
+      "you need to click 'View component' in order to see it rendered."
+    ]}</p>
   </section>
 </div>;
 

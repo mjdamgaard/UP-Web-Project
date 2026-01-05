@@ -215,3 +215,54 @@ export const flipGame = {
   "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
+
+export const mastermindGame = {
+  "Class": abs("./em1.js;get/components"),
+  "Name": "Mastermind game 1.0",
+  "Component path": "/1/2/tutorials/mastermind_app_01/main.jsx",
+  "Example props": {},
+  "GitHub repository":
+    "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
+    "dir_uploads/up_directories/home_app/tutorials/mastermind_app_01/main.jsx",
+  "Creator(s)": getUserEntPath("1", "1"),
+  "Description": undefined,
+};
+
+
+
+
+
+export const introTutorials = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "Introductory tutorials",
+  "Superclass": abs("./em1.js;get/components"),
+  "Description": abs("./em2.js;get/introTutorialsDesc"),
+};
+
+export const introTutorialsDesc = <div>
+  <h1>{"Introductory tutorials for the UP Web"}</h1>
+  <section>
+    <p>{
+      "This is a class of user-submitted tutorials that introduces the " +
+      "reader to some subject that is relevant to the UP Web."
+    }</p>
+  </section>
+</div>;
+
+export const advTutorials = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "Advanced tutorials",
+  "Superclass": abs("./em1.js;get/components"),
+  "Description": abs("./em2.js;get/advTutorialsDesc"),
+};
+
+export const advTutorialsDesc = <div>
+  <h1>{"Advanced tutorials for the UP Web"}</h1>
+  <section>
+    <p>{
+      "This is a class of user-submitted tutorials for advanced users who " +
+      "want to learn more about a certain subject that is relevant to " +
+      "the UP Web."
+    }</p>
+  </section>
+</div>;

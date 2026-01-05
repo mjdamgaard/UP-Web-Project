@@ -69,6 +69,11 @@ const indexPage = <div className="text-page">
         </ILink>
       </li>
       <li>
+        <ILink key="sharing" href="~/sharing-components" >
+          {"Sharing your components"}
+        </ILink>
+      </li>
+      <li>
         <ILink key="SMs" href="~/server-modules" >
           {"Server modules"}
         </ILink>
@@ -78,24 +83,18 @@ const indexPage = <div className="text-page">
           {"Database tables"}
         </ILink>
       </li>
-      <li>
-        <ILink key="entities" href="~/semantic-entities" >
-          {"Introduction to semantic entities"}
-        </ILink>
-      </li>
     </ol>
   </section>
 
   <section>
     <h2>{"User-made introductory tutorials"}</h2>
     <p>{
-      "And here is a list of user-made tutorials that expands on on some of " +
-      "the basic principles of the UP system, and possibly in a way that " +
-      "requires less knowledge beforehand by the reader."
+      "Here is a list of user-made tutorials that expands on on some of " +
+      "the basic principles of the UP system."
     }</p>
     {/* TODO: Change the class. */}
     <div>
-      <EntityList key="_basic-list" classKey="/1/1/em2.js;get/indexPages"
+      <EntityList key="_basic-list" classKey="/1/1/em2.js;get/introTutorials"
         paginationLength={10}
       />
     </div>
@@ -109,7 +108,7 @@ const indexPage = <div className="text-page">
     }</p>
     {/* TODO: Change the class. */}
     <div>
-      <EntityList key="_advanced-list" classKey="/1/1/em2.js;get/indexPages"
+      <EntityList key="_advanced-list" classKey="/1/1/em2.js;get/advTutorials"
         paginationLength={10}
       />
     </div>

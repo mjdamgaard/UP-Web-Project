@@ -226,5 +226,5 @@ const page = <div className="text-page">
 
 
 export const styleSheets = [
-  abs("../style.css"),
+  abs("./style.css"),
 ];

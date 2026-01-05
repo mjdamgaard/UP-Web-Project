@@ -38,11 +38,11 @@ export function render({entKey}) {
     content = <div className="fetching">{"..."}</div>;
   }
 
-  else if (entDef === undefined) {
+  else if (entDef === undefined || entPath === undefined) {
     content = <div className="fetching">{"..."}</div>;
   }
 
-  else if (!entDef) {
+  else if (!entDef || !entPath) {
     content = <div className="missing">{"missing"}</div>;
   }
 
