@@ -843,7 +843,7 @@ const page = <div className="text-page">
         {"Tutorial 3"}
       </ILink>,
       ", which will teach you about how to style your components, as well as ",
-      <ILink key="link-tut-4" href="~/styling">
+      <ILink key="link-tut-4" href="~/useful-things-to-know">
         {"Tutorial 4"}
       </ILink>,
       ", which will list a couple of things to look out for when using this " +
@@ -852,11 +852,11 @@ const page = <div className="text-page">
     ]}</p>
     <p>{[
       "And once you are ready to move on from there, Tutorials ",
-      <ILink key="link-tut-5" href="~/styling">
+      <ILink key="link-tut-5" href="~/server-modules">
         {"5"}
       </ILink>,
       ", and ",
-      <ILink key="link-tut-6" href="~/styling">
+      <ILink key="link-tut-6" href="~/db-tables">
         {"6"}
       </ILink>,
       " will teach you how to create your first server modules, which " +

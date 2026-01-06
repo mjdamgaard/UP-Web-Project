@@ -245,7 +245,7 @@ const indexPage = <div className="text-page">
       "suppress that post."
     }</p>
 
-    <h3>{"Control what data the algorithms collect"}</h3>
+    <h3>{"Control what data the algorithms collect!"}</h3>
     <p>{
       "Another issue with contemporary web apps is that they are often not " +
       "very transparent about the data they collect about you."
@@ -388,9 +388,16 @@ const indexPage = <div className="text-page">
       "so on."
     }</p>
     <p>{
-      "Apart from the maintenance of the servers and the fundamental source " +
-      "code of the project, this money will also go to rewarding the various " +
-      "users who contribute to the project."
+      "Apart from the maintenance of the servers, this money will also go " +
+      "to rewarding the various " +
+      "users who contribute apps and features to the project, as well as " +
+      "those who help develop and extend the fundamental source code of the " +
+      "project."
+    }</p>
+    <p>{
+      "We then intend to let the donors and the sponsors help decide where " +
+      "the money should flow to, by allowing them to vote on the best " +
+      "algorithm to determine the rewards."
     }</p>
     <p>{
       "Lastly, if the donations and sponsorships turn out not to cover the " +
@@ -420,7 +427,7 @@ const indexPage = <div className="text-page">
       "user content, is that up-web.org will not necessarily be taking the " +
       "role as the middleman between the content creators and the " +
       "advertising companies. The content creators might thus have to make " +
-      "those deals with a third-party company instead."
+      "those deals with third-party companies instead."
     }</p>
     <p>{[
       "So at the end of the day, the UP Web will basically be able to " +
@@ -446,8 +453,8 @@ const indexPage = <div className="text-page">
       " page."
     ]}</p>
     <p>{[
-      "And to see a list of the ongoing app projects, started by the team " +
-      "behind up-web.org or by other users, go see the ",
+      "And to see a list of the ongoing app projects related to the UP Web, " +
+      "go see the ",
       <ILink key="link-proj" href="/entPath/1/1/em1.js;get/projects" >
         {"Projects"}
       </ILink>,
@@ -462,6 +469,11 @@ const indexPage = <div className="text-page">
       "been made so far. After having clicked on an element in this list, " +
       "you need to click 'View component' in order to see it rendered."
     ]}</p>
+    <p>{
+      "But before you go anywhere, note that this website is still only a " +
+      "prototype at this stage. So please excuse all the rough edges, so " +
+      "to speak, that you will find here and there."
+    }</p>
   </section>
 </div>;
 

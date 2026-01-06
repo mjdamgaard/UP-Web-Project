@@ -2,7 +2,7 @@
 import {post} from 'query';
 import {map} from 'array';
 import {
-  postEntity, checkDomain, postScalarEntity, postRelationalQuality,
+  postEntity, checkDomain, postScalarEntity,
 } from "/1/1/entities.js";
 
 import * as InputText from 'InputText.jsx';
@@ -14,39 +14,46 @@ const textClassPath = "/1/1/em1.js;get/texts";
 const scalarClassPath = "/1/1/em1.js;get/scalars";
 const probabilityQual = "/1/1/em1.js;get/probability";
 const isCorrectQual = "/1/1/em1.js;get/isCorrect";
+const membersRelPath = "/1/1/em1.js;get/members";
 
 const QualityElementPromise = import(
   "../entity_elements/QualityElement.jsx"
 );
 
 
+export function initialize({qualKeyArr, objKey = undefined}) {
+  QualityElementPromise.then(Component => {
+    this.setState(state => ({...state, QualityElement: Component}));
+  });
+  checkDomain(qualKeyArr[0], textClassPath).then(isTextClass => {
+    this.setState(state => ({
+      ...state,
+      isTextOrScalarClass: state.isTextOrScalarClass || isTextClass,
+      checksResolved: (state.checksResolved ?? 0) + 1,
+    }));
+  });
+  checkDomain(qualKeyArr[0], scalarClassPath).then(isScalarClass => {
+    this.setState(state => ({
+      ...state,
+      isTextOrScalarClass: state.isTextOrScalarClass || isScalarClass,
+      isScalarClass: isScalarClass,
+      checksResolved: (state.checksResolved ?? 0) + 1,
+    }));
+  });
 
-export function render({qualKeyArr, objKey = undefined}) {
+  let cbSingIDKey = Symbol("cbSingIDKey");
+  let cbEntIDKey = Symbol("cbEntIDKey");
+  return {cbSingIDKey: cbSingIDKey, cbEntIDKey: cbEntIDKey};
+}
+
+
+export function render({}) {
   let {
-    QualityElement, isFetching, response, qualityElements,
+    checksResolved = 0, QualityElement, response, qualityElements,
     isTextOrScalarClass, cbSingIDKey, cbEntIDKey, hasGrabbedFocus,
   } = this.state;
 
-  if (!isFetching) {
-    this.setState(state => ({...state, isFetching: true}));
-    QualityElementPromise.then(Component => {
-      this.setState(state => ({...state, QualityElement: Component}));
-    });
-    checkDomain(qualKeyArr[0], textClassPath).then(isTextClass => {
-      this.setState(state => ({
-        ...state,
-        isTextOrScalarClass: state.isTextOrScalarClass || isTextClass,
-      }));
-    });
-    checkDomain(qualKeyArr[0], scalarClassPath).then(isScalarClass => {
-      this.setState(state => ({
-        ...state,
-        isTextOrScalarClass: state.isTextOrScalarClass || isScalarClass,
-        isScalarClass: isScalarClass,
-      }));
-    });
-  }
-  if (!QualityElement || isTextOrScalarClass === undefined) {
+  if (!QualityElement || checksResolved < 2) {
     return <div className="add-entity-menu">
       <div className="fetching">{"..."}</div>
     </div>;
@@ -89,13 +96,6 @@ export function render({qualKeyArr, objKey = undefined}) {
     <div className="response-display">{response}</div>
     <div className="qualities">{qualityElements}</div>
   </div>;
-}
-
-
-export function initialize() {
-  let cbSingIDKey = Symbol("cbSingIDKey");
-  let cbEntIDKey = Symbol("cbEntIDKey");
-  return {cbSingIDKey: cbSingIDKey, cbEntIDKey: cbEntIDKey};
 }
 
 

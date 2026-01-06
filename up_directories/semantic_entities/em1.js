@@ -3,7 +3,9 @@
 // 'Entities' class and the 'Classes' class which are fundamental to the
 // whole semantic system.
 
-import {fetchEntityProperty} from "./entities.js";
+import {
+  fetchEntityProperty, fetchEntityDefinition, fetchEntityPath,
+} from "./entities.js";
 import {fetchUserTag, fetchUserBio} from "./users/profiles.js";
 
 
@@ -406,6 +408,11 @@ export const relations = {
     "Object domain",
     "Subject domain",
 
+    // Or in case the domains depend on the object, it can use these methods
+    // instead, which takes the object key as their argument.
+    "getObjectDomain",
+    "getSubjectDomain",
+
     // The "Metric" of a relation is copied onto all the qualities that are
     // generated from it.
     "Metric",
@@ -444,9 +451,17 @@ export const RQ = (objID, relID) => ({
     );
   }),
   "Domain": () => new Promise(resolve => {
-    fetchEntityProperty(relID, "Subject domain").then(
-      domain => resolve(domain)
-    );
+    fetchEntityDefinition(
+      relID, ["Subject domain", "getSubjectDomain"]
+    ).then(entDef => {
+      if (entDef["Subject domain"]) {
+        resolve(entDef["Subject domain"]);
+      }
+      else {
+        let getSubjectDomain = entDef["getSubjectDomain"];
+        resolve(getSubjectDomain(objID));
+      }
+  });
   }),
   "Metric": () => new Promise(resolve => {
     fetchEntityProperty(relID, "Metric").then(
@@ -1106,7 +1121,7 @@ export const members = {
   "getScalarName": (objKey, subjKey) => "${" + subjKey + "} belongs to " +
     "the class of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
-  "Subject domain": abs("./em1.js;get/entities"),
+  "getSubjectDomain": objKey => fetchEntityPath(objKey),
   "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/membersDesc"),
 };

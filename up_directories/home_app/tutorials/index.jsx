@@ -8,6 +8,7 @@ import * as GettingStartedPage from "./getting_started.jsx";
 import * as ComponentsIntroPage from "./components.jsx";
 import * as StylingIntroPage from "./styling.jsx";
 import * as DifferencesPage from "./differences.jsx";
+import * as ContributionsPage from "./contributions.jsx";
 
 
 export function render({url, homeURL}) {
@@ -18,21 +19,23 @@ export function render({url, homeURL}) {
   if (!tailURL) {
     return indexPage;
   }
-
   else if (tailURL === "/getting-started") {
     return <GettingStartedPage key="0" />;
   }
-
   else if (tailURL === "/jsx-components") {
     return <ComponentsIntroPage key="0" />;
   }
-
   else if (tailURL === "/styling") {
     return <StylingIntroPage key="0" />;
   }
-
   else if (tailURL === "/useful-things-to-know") {
     return <DifferencesPage key="0" />;
+  }
+  else if (tailURL === "/contributions") {
+    return <ContributionsPage key="0" />;
+  }
+  else {
+    return "404 Error: Missing page."
   }
 }
 
@@ -69,11 +72,6 @@ const indexPage = <div className="text-page">
         </ILink>
       </li>
       <li>
-        <ILink key="sharing" href="~/sharing-components" >
-          {"Sharing your components"}
-        </ILink>
-      </li>
-      <li>
         <ILink key="SMs" href="~/server-modules" >
           {"Server modules"}
         </ILink>
@@ -81,6 +79,11 @@ const indexPage = <div className="text-page">
       <li>
         <ILink key="db-tables" href="~/db-tables" >
           {"Database tables"}
+        </ILink>
+      </li>
+      <li>
+        <ILink key="contributions" href="~/contributions" >
+          {"Sharing your contributions"}
         </ILink>
       </li>
     </ol>
