@@ -849,7 +849,7 @@ export const components = {
 // related to the UP Web, etc. Well, actually, they might concern anything at
 // all, but at least for the early stage of the app, it is expected that users
 // will generally choose to primarily use this class for projects relating to
-// the app itself, or to the UP Web in general. 
+// the app itself, or to the UP Web in general.
 export const projects = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Projects",
@@ -859,6 +859,16 @@ export const projects = {
   // "constructor", since this class is not meant to be used when creating new
   // entities. (The 'Texts' and the 'Comments' classes will often be used
   // instead.)
+};
+
+// A class of user-submitted contributions related to the UP Web. Users might
+// log there contributions here when they hope to be rewarded for it, or gain
+// esteem by other users. 
+export const contributions = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "Contributions",
+  "Superclass": abs("./em1.js;get/texts"),
+  "Description": abs("./em1_aux.js;get/contributionsDesc"),
 };
 
 

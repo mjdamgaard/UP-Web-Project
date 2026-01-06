@@ -22,5 +22,8 @@ export function render() {
     <ILink key="disc" href="~/entPath/1/1/em1.js;get/discussionsClass">
       <span className="menu-item">{"Discussions"}</span>
     </ILink>
+    <ILink key="contr" href="~/entPath/1/1/em1.js;get/contributions">
+      <span className="menu-item">{"Contributions"}</span>
+    </ILink>
   </header>;
 }
