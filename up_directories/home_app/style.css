@@ -53,12 +53,24 @@
   margin: 0 0;
   padding: 0 0;
 }
-/* @media (min-width: 600px) {
+@media (max-width: 600px) {
   .app-main-container {
     margin: 0 0;
-    padding: 0 0;
+    padding: 10px 20px;
   }
-} */
+}
+@media (min-width: 600px) and (max-width: 900px) {
+  .app-main-container {
+    margin: 0px 10%;
+    padding: 20px 50px;
+  }
+}
+@media (min-width: 900px) and (max-width: 1200px) {
+  .app-main-container {
+    margin: 0px 15%;
+    padding: 20px 50px;
+  }
+}
 
 section > :is(h1, h2, h3, h4, h5, h6) {
   margin-top: 0.5em;

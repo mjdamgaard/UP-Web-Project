@@ -234,7 +234,10 @@ export class CSSTransformer {
 
   transformAtRuleParameterList(params) {
     return params.map(param => {
-      if (param.type === "identifier") {
+      if (typeof param === "string") {
+        return param;
+      }
+      if (param.lexeme) {
         return param.lexeme;
       }
       else if (param.type === "style-feature") {

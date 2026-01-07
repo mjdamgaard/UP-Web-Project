@@ -370,10 +370,10 @@ export const cssGrammar = {
   },
   "at-rule": {
     rules: [
+      ["at-media-rule"],
       ["at-container-rule"],
       ["at-keyframes-rule"],
       // TODO: Implement:
-      // ["at-media-rule"], // (Only implement a subset of this.)
       // ["at-supports-rule"],
     ],
     process: copyFromChild,
@@ -400,6 +400,41 @@ export const cssGrammar = {
       type: "identifier",
       lexeme: children[0],
     }),
+  },
+  "at-media-rule": {
+    rules: [
+      [
+        "/@media/", "S*", "identifier", "/and/", "style-feature-list",
+        /\{/, "style-sheet", /\}/, "S*"
+      ],
+      [
+        "/@media/", "S*", "identifier", /\{/, "style-sheet", /\}/, "S*"
+      ],
+      [
+        "/@media/", "S*", "style-feature-list", /\{/, "style-sheet", /\}/, "S*"
+      ],
+    ],
+    process: (children, ruleInd) => {
+      let params, content;
+      if (ruleInd === 0) {
+        params = [children[2], ...children[4].children];
+        content = children[6];
+      }
+      else if (ruleInd === 1) {
+        params = [children[2]];
+        content = children[4];
+      }
+      else {
+        params = children[2].children;
+        content = children[4];
+      }
+      return {
+        type: "at-rule",
+        atKeyword: "@media",
+        params: params,
+        content: content,
+      };
+    },
   },
   "style-feature-list": {
     rules: [
