@@ -5,6 +5,7 @@ import {
   processPolyadicInfixOperation,
 } from "../../../../interpreting/parsing/processing.js";
 
+const ESCAPED_SINGLE_QUOTE_REGEX_G = /(?<!(\\\\)*\\)\\'/g;
 
 
 const ELEMENT_TYPE_PATTERN = "[a-z][a-z0-9]*";
@@ -27,7 +28,10 @@ const FLAG_PATTERN =
 
 const PROPERTY_PATTERN = "[a-z\\-]+";
 
-const BUILT_IN_VALUE_PATTERN = "[a-z\\-]+";
+// We include the comma here as a quick hack to allow for fallback values for
+// e.g. font-family declarations. TODO: Implement this comma in a not-so-hacky
+// way.
+const BUILT_IN_VALUE_PATTERN = "[a-zA-Z\\-,]+";
 
 
 const UNIT_PATTERN = "(%|[a-z]+)";
@@ -263,17 +267,21 @@ export const cssGrammar = {
       [/"([^"\\]|\\[.\n])*"/, "S*"],
       [/'([^'\\]|\\[.\n])*'/, "S*"],
     ],
-    process: (children) => {
-      let jsonString;
+    process: (children, ruleInd) => {
+      let stringLiteral = children[0];
+      let str;
+      if (ruleInd === 1) {
+        stringLiteral =
+          '"' + stringLiteral.slice(1, -1).replaceAll('"', '\\"')
+            .replaceAll(ESCAPED_SINGLE_QUOTE_REGEX_G, "'") +
+          '"';
+      }
       try {
-        jsonString = JSON.stringify(JSON.parse(children[0]));
-      } catch (_) {
-        return "Invalid string";
+        str = JSON.parse(stringLiteral);
+      } catch (error) {
+        return `Invalid string: ${stringLiteral}`;
       }
-      return {
-        type: "string",
-        lexeme: jsonString,
-      }
+      return {type: "string", lexeme: str};
     },
   },
   "number": {

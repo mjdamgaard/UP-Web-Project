@@ -103,6 +103,7 @@ html, body, #up-app-root {
 }
 #account-menu.open .items {
   display: block;
+  background-color: white;
   min-width: 300px;
   border: 2px solid lightblue;
   border-radius: 3px;
