@@ -12,6 +12,7 @@ import {mapToArray, keys} from 'object';
 import {forEach, map, reduce} from 'array';
 
 const membersRelationPath = "/1/1/em1.js;get/members";
+const entitiesClassPath = "/1/1/em1.js;get/entities";
 
 
 
@@ -223,6 +224,19 @@ export function checkSuperClass(
             }
           });
         });
+      }
+    });
+  });
+}
+
+export function fetchSuperclassPath(entKey) {
+  return new Promise(resolve => {
+    fetchEntityProperty(entKey, "Superclass").then(classKey => {
+      if (classKey) {
+        resolve(fetchEntityPath(classKey));
+      }
+      else {
+        resolve(entitiesClassPath);
       }
     });
   });

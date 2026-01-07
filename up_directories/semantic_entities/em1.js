@@ -4,7 +4,7 @@
 // whole semantic system.
 
 import {
-  fetchEntityProperty, fetchEntityDefinition, fetchEntityPath,
+  fetchEntityProperty, fetchEntityDefinition, fetchSuperclassPath,
 } from "./entities.js";
 import {fetchUserTag, fetchUserBio} from "./users/profiles.js";
 
@@ -1131,7 +1131,7 @@ export const members = {
   "getScalarName": (objKey, subjKey) => "${" + subjKey + "} belongs to " +
     "the class of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
-  "getSubjectDomain": objKey => fetchEntityPath(objKey),
+  "getSubjectDomain": objKey => fetchSuperclassPath(objKey),
   "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/membersDesc"),
 };
