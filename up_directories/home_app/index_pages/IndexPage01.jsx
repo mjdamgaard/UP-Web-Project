@@ -454,10 +454,10 @@ const indexPage = <div className="text-page">
     <h2>{"Rewarding open source creators like content creators"}</h2>
     <p>{
       "If the UP Web becomes a reality, then there might also come a time " +
-      "where we stop relying on sponsors and donors when it comes to " +
+      "where we stop relying on sponsors and donors for " +
       "rewarding the open source contributors, and simply start using " +
-      "some of the money that goes to rewarding content creators to reward " +
-      "source code creators as well. After all, having better apps and " +
+      "a small portion of the money that goes to the content " +
+      "creators. After all, having better apps and " +
       "algorithms in which to show the content will benefit all, both the " +
       "regular users and the content creators."
     }</p>
@@ -480,7 +480,8 @@ const indexPage = <div className="text-page">
     }</p>
     <p>{
       "Furthermore, the company behind up-web.org will make it one of " +
-      "its primary missions to make sure that the early source code " +
+      "its primary missions to ensure exactly that, namely that the early " +
+      "source code " +
       "creators, as well as anyone else who helped making the UP Web " +
       "take off, will be rewarded the most generously for their work."
     }</p>
@@ -502,7 +503,7 @@ const indexPage = <div className="text-page">
       " page."
     ]}</p>
     <p>{[
-      "And to see a list of the ongoing app projects related to the UP Web, " +
+      "And to see a list of the ongoing projects related to the UP Web, " +
       "go see the ",
       <ILink key="link-proj" href="/entPath/1/1/em1.js;get/projects" >
         {"Projects"}
@@ -515,13 +516,13 @@ const indexPage = <div className="text-page">
         {"Components"}
       </ILink>,
       " page to see some of the proof-of-concept app components that have " +
-      "been made so far. After having clicked on an element in this list, " +
-      "you need to click 'View component' in order to see it rendered."
+      "been made so far. (After having clicked on an element in this list, " +
+      "you need to click 'View component' in order to see it rendered.)"
     ]}</p>
     <p>{[
       "And if you want to have a look at the fundamental source code " +
-      "of the project (or perhaps want to help maintain and extend it at " +
-      "some point), this is currently found at ",
+      "of the project, or perhaps want to help maintain and extend it at " +
+      "some point, this is currently found at ",
       <ELink key="link-github-repo"
         href="https://github.com/mjdamgaard/UP-Web-Project">
         {"github.com/mjdamgaard/UP-Web-Project"}
