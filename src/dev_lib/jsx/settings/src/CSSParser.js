@@ -404,11 +404,11 @@ export const cssGrammar = {
   "at-media-rule": {
     rules: [
       [
-        "/@media/", "S*", "identifier", "/and/", "style-feature-list",
+        "/@media/", "S*", "/screen|print|all/", "/and/", "style-feature-list",
         /\{/, "style-sheet", /\}/, "S*"
       ],
       [
-        "/@media/", "S*", "identifier", /\{/, "style-sheet", /\}/, "S*"
+        "/@media/", "S*", "/screen|print|all/", /\{/, "style-sheet", /\}/, "S*"
       ],
       [
         "/@media/", "S*", "style-feature-list", /\{/, "style-sheet", /\}/, "S*"

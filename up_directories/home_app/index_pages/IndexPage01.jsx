@@ -378,14 +378,14 @@ const indexPage = <div className="text-page">
       "appreciation their way."
     ]}</p>
     <p>{
-      "And we will also accept individual donations from anyone interested " +
-      "in supporting the project."
+      "We will also accept individual donations as well, from anyone " +
+      "interested in supporting the project."
     }</p>
     <p>{
-      "We will then spend this money in order to help start up and maintain " +
-      "the UP Web. And if we do a good job of this, we might " +
-      "be able to attract even more sponsors and donors in the future, and " +
-      "so on."
+      "The money we receive will then be spent in order to help start up " +
+      "and maintain the UP Web. And hopefully, if we do a " +
+      "good job of this, we might " +
+      "then be able to attract even more sponsors and donors in the future."
     }</p>
     <p>{
       "Apart from the maintenance of the servers, this money will also go " +
@@ -412,15 +412,16 @@ const indexPage = <div className="text-page">
     <h2>{"Rewarding content creators"}</h2>
     <p>{
       "You might be wondering at this point: If the website only shows ads " +
-      "in the margins as a last resort if the donations and sponsorships are " +
+      "in the margins as a last resort, i.e. if the donations and " +
+      "sponsorships are " +
       "too scarce, how will the content creators on the website be rewarded?"
     }</p>
     <p>{
       "Well, because the content creators maintain the IP rights to their " +
       "content, they are able to put restrictions on how that content can be " +
-      "shown on the site. And in particular, they can require that the " +
-      "content is only shown inside components that also show ads from time " +
-      "to time, or requires some payment by the users."
+      "shown on the site. And in particular, they can require that their " +
+      "content has to be shown inside components that also show ads from " +
+      "time to time, or requires some payment by the users."
     }</p>
     <p>{
       "So the only difference, when compared to other websites that show " +
@@ -440,6 +441,54 @@ const indexPage = <div className="text-page">
       "the given website as the middleman between them and the advertising " +
       "companies. Instead they will have a free market to choose from!"
     ]}</p>
+    <p>{
+      "Getting the freedom to choose exactly how their content should be " +
+      "monetized might be a game changer for the content creators. " +
+      "And since the ad revenue from content creators around the world is " +
+      "measured in the billions of dollars, there is potentially a lot of " +
+      "money on the line for them if this UP Web becomes a reality."
+    }</p>
+  </section>
+
+  <section>
+    <h2>{"Rewarding open source creators like content creators"}</h2>
+    <p>{
+      "If the UP Web becomes a reality, then there might also come a time " +
+      "where we stop relying on sponsors and donors when it comes to " +
+      "rewarding the open source contributors, and simply start using " +
+      "some of the money that goes to rewarding content creators to reward " +
+      "source code creators as well. After all, having better apps and " +
+      "algorithms in which to show the content will benefit all, both the " +
+      "regular users and the content creators."
+    }</p>
+    <p>{
+      "Now, think for a moment about the countless of hours that content " +
+      "creators around the world pour into their work each year. " +
+      "Imagine if even a small fraction of that vast amount of work went " +
+      "into building new apps for the UP Web, and not least new " +
+      "creative algorithms."
+    }</p>
+    <p>{
+      "If that were the case, the UP Web would take over the Web in no " +
+      "time, so to speak."
+    }</p>
+    <p>{
+      "So rewarding the open source creators will be beneficial for " +
+      "everyone involved. And it is not hard to imagine that the source code " +
+      "creators whom the community will reward most generously for their " +
+      "work will be the ones that helped the whole project take off."
+    }</p>
+    <p>{
+      "Furthermore, the company behind up-web.org will make it one of " +
+      "its primary missions to make sure that the early source code " +
+      "creators, as well as anyone else who helped making the UP Web " +
+      "take off, will be rewarded the most generously for their work."
+    }</p>
+    <p>{
+      "We hope that this might add a bit of extra motivation for anyone who " +
+      "is excited about the prospect of the UP Web and wants to join " +
+      "the project."
+    }</p>
   </section>
 
   <section>
@@ -469,8 +518,31 @@ const indexPage = <div className="text-page">
       "been made so far. After having clicked on an element in this list, " +
       "you need to click 'View component' in order to see it rendered."
     ]}</p>
+    <p>{[
+      "And if you want to have a look at the fundamental source code " +
+      "of the project (or perhaps want to help maintain and extend it at " +
+      "some point), this is currently found at ",
+      <ELink key="link-github-repo"
+        href="https://github.com/mjdamgaard/UP-Web-Project">
+        {"github.com/mjdamgaard/UP-Web-Project"}
+      </ELink>,
+      "."
+    ]}</p>
+    <p>{[
+      "Once it becomes relevant for you, there is also a ",
+      <ILink key="link-contr" href="/entPath/1/1/em1.js;get/contributions" >
+        {"Contributions"}
+      </ILink>,
+      " page where you can log your contributions to the project. (Also " +
+      "feel free to contact up-web.org directly, if you want us to take " +
+      "note of a contribution of yours.) " +
+      "Note that contributions do not need to be related to source code " +
+      "only. They can also be things such as spreading awareness of the " +
+      "project, which will also be very much appreciated, indeed."
+    ]}</p>
     <p>{
-      "But before you go anywhere, note that this website is still only a " +
+      "But before you go anywhere, please note that this website is still " +
+      "only a " +
       "prototype at this stage. So please excuse all the rough edges, so " +
       "to speak, that you will find here and there."
     }</p>

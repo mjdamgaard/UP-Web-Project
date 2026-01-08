@@ -150,7 +150,7 @@ const page = <div className="text-page">
     }</p>
     <p>{[
       "The source code for this project can currently be found at ",
-      <ELink key="link-w3-html"
+      <ELink key="link-github-repo"
         href="https://github.com/mjdamgaard/UP-Web-Project">
         {"github.com/mjdamgaard/UP-Web-Project"}
       </ELink>,
