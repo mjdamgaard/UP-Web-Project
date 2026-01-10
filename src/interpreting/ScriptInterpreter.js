@@ -806,7 +806,17 @@ export class ScriptInterpreter {
             "Invalid, falsy object key",
             member, environment
           );
-          prototype[key] = this.evaluateExpression(member.valExp, environment);
+          let property = this.evaluateExpression(member.valExp, environment);
+
+          // If the property is a method, and the class has a superclass, bind
+          // the superclass object to the function before adding it to the
+          // prototype.
+          if (superclass && property instanceof FunctionObject) {
+            property = Object.create(property)
+            property.superVal = superclass;
+          }
+
+          prototype[key] = property;
         });
 
         let classObj = new ClassObject(
@@ -1330,19 +1340,19 @@ export class ScriptInterpreter {
         return undefined;
       }
       case "super-call": {
-        let superclass = environment.getSuperclass(expNode);
+        let superclass = environment.getSuperclass(expNode, environment);
         let thisVal = environment.getThisVal();
         let inputArr = expNode.params.map(
           param => this.evaluateExpression(param, environment)
         );
         this.executeFunction(
           superclass.instanceConstructor, inputArr, expNode, environment,
-          thisVal, [SUPERCLASS_FLAG, superclass.superclass]
+          thisVal,
         );
         return undefined;
       }
       case "super-access": {
-        let superclass = environment.getSuperclass(expNode);
+        let superclass = environment.getSuperclass(expNode, environment);
         let superPropVal = this.getProperty(
           superclass.instanceProto, expNode.accessor, environment
         );
@@ -1668,13 +1678,16 @@ export class Environment {
     this.flags = new Map();
     if (scopeType === "function") {
       let {
-        isArrowFun, isDevFun, flags: funFlags, thisVal: boundThisVal, name,
+        isArrowFun, isDevFun, flags: funFlags, thisVal: boundThisVal, superVal,
+        name,
       } = fun;
-      thisVal = boundThisVal ?? thisVal;
       this.inputArr = inputArr;
       this.callerNode = callerNode;
       this.callerEnv = callerEnv;
-      if (!isArrowFun && thisVal) this.thisVal = thisVal;
+      if (!isArrowFun) {
+        this.thisVal = boundThisVal ?? thisVal;
+        this.superVal = superVal;
+      }
       if (isArrowFun) this.isArrowFun = isArrowFun;
       if (isDevFun) {
         this.isDevFun = isDevFun;
@@ -1758,9 +1771,8 @@ export class Environment {
 
 
   getThisVal() {
-    let thisVal = this.thisVal;
-    if (thisVal !== undefined) {
-      return (thisVal === UNDEFINED) ? undefined : thisVal;
+    if (this.thisVal !== undefined) {
+      return this.thisVal;
     }
     else if (this.isNonArrowFunction) {
       return undefined;
@@ -1779,13 +1791,19 @@ export class Environment {
     }
   }
 
-  getSuperclass(node, nodeEnvironment = this) {
-    let superclass = this.getFlag(SUPERCLASS_FLAG);
-    if (superclass === undefined) throw new RuntimeError(
-      "'super' is not defined in this context",
-      node, nodeEnvironment
-    );
-    return superclass;
+  getSuperclass(node, env) {
+    if (this.superVal !== undefined) {
+      return this.superVal;
+    }
+    else if (this.isNonArrowFunction) {
+      throw new RuntimeError(
+        "'super' is not defined in this context",
+        node, env
+      );
+    }
+    else if (this.parent) {
+      return this.parent.getSuperclass(node, env);
+    }
   }
 
   getFlag(flag, stopAtClear = true) {
@@ -2084,14 +2102,13 @@ export class ClassObject extends ObjectObject {
     this.className = className;
     this.instanceConstructor = constructor ?? (
       (superclass === undefined) ?
-        new DevFunction(className, {}, () => {}) :
+        new DevFunction(className, {superVal: superclass}, () => {}) :
         new DevFunction(
-          className, {},
+          className, {superVal: superclass},
           ({callerNode, execEnv, thisVal, interpreter}, inputArr) => {
-            let superclass = execEnv.getSuperclass(callerNode);
             interpreter.executeFunction(
               superclass.instanceConstructor, inputArr, callerNode, execEnv,
-              thisVal, [SUPERCLASS_FLAG, superclass.superclass]
+              thisVal,
             );
           }
         )
@@ -2126,8 +2143,7 @@ export class ClassObject extends ObjectObject {
       this.instancesAreArrays, this.instancesAreMaps,
     );
     interpreter.executeFunction(
-      this.instanceConstructor, inputArr, callerNode, callerEnv, newInst,
-      [[SUPERCLASS_FLAG, this.superclass]]
+      this.instanceConstructor, inputArr, callerNode, callerEnv, newInst
     );
     newInst.isMutable = this.instancesAreMutable;
     return newInst;
@@ -2137,8 +2153,6 @@ export class ClassObject extends ObjectObject {
     return "[object Class]";
   }
 }
-
-const SUPERCLASS_FLAG = Symbol("superclass");
 
 
 
@@ -2415,12 +2429,13 @@ export class DevFunction extends FunctionObject {
       fun = options;
       options = {};
     }
-    let {isAsync, typeArr, flags, thisVal} = options;
+    let {isAsync, typeArr, flags, thisVal, superVal} = options;
     this._name = name;
     if (isAsync) this.isAsync = isAsync;
     if (typeArr) this.typeArr = typeArr;
     if (flags) this.flags = flags;
     if (thisVal) this.thisVal = thisVal;
+    if (superVal) this.superVal = superVal;
     this.fun = fun;
   }
   get isArrowFun() {

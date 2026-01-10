@@ -9,7 +9,6 @@ import {getSequentialPromise} from 'promise';
 
 
 
-// A class to generate a list combined of several other scored lists. 
 export class SimpleScoreHandler {
   
   constructor(aggregator, fetchUserGroup, fetchUserGroupsForUpdate, desc) {

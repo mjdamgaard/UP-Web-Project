@@ -5,11 +5,14 @@ import {map} from 'array';
 import ModeratedList from "../../scored_lists/moderated/ModeratedList.js";
 import CombinedList from "../../scored_lists/comb/CombinedList.js";
 import SimpleScoreHandler from "../SimpleScoreHandler.js";
-import {MeanAggregator} from "../../aggregating/mean/MeanAggregator.js";
+import MeanAggregator from "../../aggregating/mean/MeanAggregator.js";
+import BiasedMeanAggregator
+from "../../aggregating/biased_mean/BiasedMeanAggregator.js";
 
 const trustedQualPath = abs("../../em1.js;get/isTrusted");
 
 const meanAggregator = new MeanAggregator();
+const zeroBiasedMeanAggregator = new BiasedMeanAggregator(0, 3);
 
 
 
@@ -96,11 +99,22 @@ export const allUsersList = {
       "A list of all users with equal weights, all of 1. The " +
       "fetchScoreData() method just returns [userID, 1] without " +
       "checking that the user exists. And the fetchList() methods returns " +
-      "the user list gotten from " + abs("./../../users.bt") + "."
+      "the user list gotten from " + abs("../../users.bt") + "."
     }</p>
   </div>,
 };
 
+export const allUsersGroup = {
+  "Class": abs("../../em1.js;get/userGroups"),
+  "Name": "Group of all users with equal weights",
+  "User list": abs("./em.js;get/initialTrustedUserList"),
+  "Description": <div>
+    <h1>{"Group of all users with equal weights"}</h1>
+    <p>{
+      "A user group containing all users, where each user has the weight of 1."
+    }</p>
+  </div>,
+};
 
 
 
@@ -263,5 +277,95 @@ export const scoreHandler01 = new SimpleScoreHandler(
   fetchUserGroup,
   fetchUserGroupsForUpdate,
   <div>{"TODO: Make."}</div>
+);
+
+
+
+
+
+// Actually, I think the following user group will be the initial one instead,
+// where the weights are 1, unless the given user has had their 'trusted'
+// scalar scored by the moderator group. (So this doesn't use neither the 
+// "initially trusted" or the "second-hand-trusted" user group.)
+
+export const moderatedAllUsersList = new CombinedList(
+  abs("./em.js;get/moderatedAllUsersList"), [
+    abs("./em.js;get/initialModeratorGroup"),
+    abs("./em.js;get/allUsersList"),
+  ], [
+    100,
+    1,
+  ],
+);
+
+export const moderatedAllUsersGroup = {
+  "Class": abs("../../em1.js;get/userGroups"),
+  "Name": "Simple moderated user group",
+  "User list": abs("./em.js;get/moderatedAllUserList"),
+  "Description": <div>
+    <h1>{"Simple moderated user group"}</h1>
+    <p>{
+      "A user group where all weights are equal to 1, except if the user has " +
+      "been scored by a moderator, w.r.t. the 'trusted' quality, in which " +
+      "case the resulting weight from that is used instead."
+    }</p>
+    <p>{
+      "This means that moderators can lower the weight of any users that " +
+      "seem to be disruptive."
+    }</p>
+  </div>,
+};
+
+
+
+
+function fetchUserGroup2(qualKey, options = {}) {
+  return new Promise(resolve => {
+    if (options.userGroup) {
+      resolve(options.userGroup);
+    }
+    else {
+      resolve(abs("./em.js;get/moderatedAllUsersGroup"));
+    }
+  });
+}
+
+function fetchUserGroupsForUpdate2(qualKey, options = {}) {
+  return new Promise(resolve => {
+    if (options.userGroupsForUpdate) {
+      resolve(options.userGroupsForUpdate);
+    }
+    else {
+      resolve([
+        abs("./em.js;get/moderatedAllUsersGroup"),
+      ]);
+    }
+  });
+}
+
+
+// But then instead of just using the MeanAggregator, we use an aggregator that
+// also transforms all the score data to make the scores biased towards zero.
+// (This will not make sense once we start using arbitrary metrics, so at 
+// that point, this score handler should be replaced by a more advanced one.) 
+
+export const scoreHandler02 = new SimpleScoreHandler(
+  zeroBiasedMeanAggregator,
+  fetchUserGroup2,
+  fetchUserGroupsForUpdate2,
+  <div>
+    <h1>{"A simple score handler"}</h1>
+    <p>{
+      "This simple score handler just uses a moderated group of all users, " +
+      "where the weight for each user is 1 by default, unless the moderators " +
+      "have given the user a different weight."
+    }</p>
+    <p>{
+      "Furthermore, the score handler uses an aggregator that produces the " +
+      "weighted average score, except that this score is biased towards 0. " +
+      "So all scores will automatically be pulled towards 0 at first, until " +
+      "enough users have scored the given scalar."
+    }</p>
+  </div>
 );
 

@@ -6,9 +6,6 @@ const updatesSMPath = abs("./updates.sm.js");
 const aggrPath = abs("./aggregates.bbt");
 
 
-// TODO: This aggregator has some faults as of yet, as stated in
-// ./updates.sm.js.
-
 
 export class MeanAggregator extends Aggregator {
   constructor() {
