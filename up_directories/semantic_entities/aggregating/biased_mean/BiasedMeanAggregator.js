@@ -1,6 +1,6 @@
 
 import {map, slice} from 'array';
-import MeanAggregator from "../mean/MeanAggregator";
+import MeanAggregator from "../mean/MeanAggregator.js";
 
 
 export class BiasedMeanAggregator extends MeanAggregator {
@@ -14,7 +14,7 @@ export class BiasedMeanAggregator extends MeanAggregator {
   fetchScore(userGroupKey, qualKey, subjKey) {
     return new Promise(resolve => {
       this.fetchScoreData(userGroupKey, qualKey, subjKey).then(
-        scoreData => resolve(scoreData[0])
+        scoreData => resolve(scoreData[1])
       );
     });
   }
@@ -22,7 +22,7 @@ export class BiasedMeanAggregator extends MeanAggregator {
   fetchScoreData(userGroupKey, qualKey, subjKey) {
     return new Promise(resolve => {
       super.fetchScoreData(userGroupKey, qualKey, subjKey).then(scoreData => {
-        if (!scoreData || scoreData[1] <= 0) {
+        if (!scoreData || scoreData[2] <= 0) {
           resolve(scoreData);
         }
         else {
@@ -48,11 +48,11 @@ export class BiasedMeanAggregator extends MeanAggregator {
 
 
 function transformScoreData(scoreData, {biasScore, biasWeight}) {
-  let newWeight = scoreData[1] + biasWeight;
+  let newWeight = scoreData[2] + biasWeight;
   let newScore = (
-    scoreData[0] * scoreData[1] + biasScore * biasWeight
+    scoreData[1] * scoreData[2] + biasScore * biasWeight
   ) / newWeight;
-  return [newScore, newWeight, ...slice(scoreData, 2)];
+  return [scoreData[0], newScore, newWeight, ...slice(scoreData, 3)];
 }
 
 

@@ -1112,7 +1112,7 @@ export const scriptGrammar = {
   "super-call-or-access": {
     rules: [
       ["/super/", "expression-tuple!1"],
-      ["/super/", /\./, "member-accessor"],
+      ["/super/", "member-accessor"],
     ],
     process: (children, ruleInd) => (
       (ruleInd === 0) ? {
@@ -1120,7 +1120,7 @@ export const scriptGrammar = {
         params: children[1].children,
       } : {
         type: "super-access",
-        accessor: children[2],
+        accessor: children[1],
       }
     ),
   },

@@ -770,6 +770,7 @@ export class ScriptInterpreter {
         } else if (stmtNode.lexeme === "debugger") {
           debugger;
         }
+        break;
       }
       case "empty-statement": {
         break;
@@ -812,7 +813,7 @@ export class ScriptInterpreter {
           // the superclass object to the function before adding it to the
           // prototype.
           if (superclass && property instanceof FunctionObject) {
-            property = Object.create(property)
+            property = Object.create(property);
             property.superVal = superclass;
           }
 
@@ -1353,8 +1354,8 @@ export class ScriptInterpreter {
       }
       case "super-access": {
         let superclass = environment.getSuperclass(expNode, environment);
-        let superPropVal = this.getProperty(
-          superclass.instanceProto, expNode.accessor, environment
+        let superPropVal = superclass.getPrototypeProperty(
+          this, expNode.accessor, environment
         );
         if (superPropVal instanceof FunctionObject) {
           superPropVal = Object.create(superPropVal);
@@ -1643,7 +1644,8 @@ export class ScriptInterpreter {
         }
       }
       else throw new RuntimeError(
-        "Trying to access a member of a non-object",
+        "Trying to access a member of a non-object: " +
+        getString(objVal, environment),
         accessor, environment
       );
     }
@@ -2147,6 +2149,18 @@ export class ClassObject extends ObjectObject {
     );
     newInst.isMutable = this.instancesAreMutable;
     return newInst;
+  }
+
+  getPrototypeProperty(interpreter, accessor, env) {
+    let [val] = interpreter.getProperty(
+      this.instanceProto, accessor, env
+    );
+    if (val === undefined && this.superclass) {
+      return this.superclass.getPrototypeProperty(interpreter, accessor, env);
+    }
+    else {
+      return val;
+    }
   }
 
   toString() {
@@ -2775,19 +2789,29 @@ export class PromiseObject extends ObjectObject {
     else {
       let fun = promiseOrFun;
       this.promise = new Promise((resolve, reject) => {
-        env.scriptVars.exitPromise.then(() => {reject()});
+        env.scriptVars.exitPromise.then(() => reject(
+          new Exception(
+            "Script exited before promise resolved",
+            node, env
+          )
+        ));
         let userResolve = new DevFunction(
           "resolve", {}, ({}, [res]) => resolve(res)
         );
         let userReject = new DevFunction(
-          "reject", {}, ({}, [err]) => reject(err)
+          "reject", {}, ({callerNode, execEnv}, [err]) => reject(
+            new Exception(err, callerNode, execEnv)
+          )
         );
         interpreter.executeFunction(
           fun, [userResolve, userReject], node, env
         );
-      }).then(
-        x => x, err => new ErrorWrapper(err)
-      );
+      }).then(x => x, err => {
+        if (err instanceof Exception) {
+          return new ErrorWrapper(err)
+        }
+        else throw err;
+      });
     }
 
     // Wait until after all currently executing code has finished, allowing
@@ -2833,13 +2857,13 @@ class ThenFunction extends DevFunction {
         onFulfilledFun ??= new DevFunction("onFulfilled", {}, ({}, [x]) => {
           return x;
         });
-        onRejectedFun ??= new DevFunction("onRejected", {}, ({}, [err]) => {
-          throw err;
-        });
         let newPromise = new Promise(resolve => {
           thisPromObj.promise.then(result => {
             let handlerFun = onFulfilledFun;
             if (result instanceof ErrorWrapper) {
+              if (!onRejectedFun) {
+                return resolve(result);
+              }
               handlerFun = onRejectedFun;
               result = result.val;
             }

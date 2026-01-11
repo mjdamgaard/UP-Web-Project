@@ -107,7 +107,7 @@ export const allUsersList = {
 export const allUsersGroup = {
   "Class": abs("../../em1.js;get/userGroups"),
   "Name": "Group of all users with equal weights",
-  "User list": abs("./em.js;get/initialTrustedUserList"),
+  "User list": abs("./em.js;get/allUsersList"),
   "Description": <div>
     <h1>{"Group of all users with equal weights"}</h1>
     <p>{
@@ -144,7 +144,8 @@ export const initialTrustedUserGroup = {
   "Description": <div>
     <h1>{"Initial trusted user group"}</h1>
     <p>{
-      "TODO: Make."
+      "A group of users who has had their 'trusted' quality scored by the " +
+      "group of initial moderators"
     }</p>
   </div>,
 };
@@ -165,11 +166,13 @@ export const initialSecondHandTrustedUserList = new ModeratedList(
 export const initialSecondHandTrustedUserGroup = {
   "Class": abs("../../em1.js;get/userGroups"),
   "Name": "Initial second-hand-trusted user group",
-  "User list": abs("./em.js;get/initialTrustedUserList2"),
+  "User list": abs("./em.js;get/initialTrustedUserList"),
   "Description": <div>
     <h1>{"Initial second-hand-trusted user group"}</h1>
     <p>{
-      "TODO: Make."
+      "A group of users who have had their 'trusted' quality scored by the " +
+      "group of initially trusted users, which are those who have had their " +
+      "'trusted' quality scored by the initial moderators."
     }</p>
   </div>,
 };
@@ -285,12 +288,12 @@ export const scoreHandler01 = new SimpleScoreHandler(
 
 // Actually, I think the following user group will be the initial one instead,
 // where the weights are 1, unless the given user has had their 'trusted'
-// scalar scored by the moderator group. (So this doesn't use neither the 
-// "initially trusted" or the "second-hand-trusted" user group.)
+// scalar scored by the moderator group. (So this doesn't use the "second-hand-
+// trusted" user group.)
 
 export const moderatedAllUsersList = new CombinedList(
   abs("./em.js;get/moderatedAllUsersList"), [
-    abs("./em.js;get/initialModeratorGroup"),
+    abs("./em.js;get/initialTrustedUserList"),
     abs("./em.js;get/allUsersList"),
   ], [
     100,
@@ -301,7 +304,7 @@ export const moderatedAllUsersList = new CombinedList(
 export const moderatedAllUsersGroup = {
   "Class": abs("../../em1.js;get/userGroups"),
   "Name": "Simple moderated user group",
-  "User list": abs("./em.js;get/moderatedAllUserList"),
+  "User list": abs("./em.js;get/moderatedAllUsersList"),
   "Description": <div>
     <h1>{"Simple moderated user group"}</h1>
     <p>{
@@ -337,6 +340,7 @@ function fetchUserGroupsForUpdate2(qualKey, options = {}) {
     }
     else {
       resolve([
+        abs("./em.js;get/initialTrustedUserGroup"),
         abs("./em.js;get/moderatedAllUsersGroup"),
       ]);
     }

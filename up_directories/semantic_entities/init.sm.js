@@ -11,10 +11,13 @@ import {getSequentialPromise} from 'promise';
 import {
   fetchOrCreateEntityID, postAllEntitiesFromModule, fetchRelationalQualityPath
 } from "./entities.js";
-import {
-  scoreHandler01, initialTrustedUserGroup, initialStandardUserGroup,
-} from "./score_handling/ScoreHandler01/em.js";
+import {scoreHandler02} from "./score_handling/ScoreHandler01/em.js";
 
+const userGroupsForUpdate = [
+  abs("./score_handling/ScoreHandler01/em.js;get/initialModeratorGroup"),
+  abs("./score_handling/ScoreHandler01/em.js;get/initialTrustedUserGroup"),
+  abs("./score_handling/ScoreHandler01/em.js;get/moderatedAllUsersGroup"),
+];
 
 
 
@@ -380,12 +383,12 @@ function postUserScoreHex(
 
 
 function postUserPredicateScoreAndUpdateUserGroups(
-  qualKey, subjKey, userKey, score, userGroupKeyArr = undefined
+  qualKey, subjKey, userKey, score, userGroupKeyArr = userGroupsForUpdate
 ) {
   let scoreHex = valueToHex(score, "float(-10,10,1)");
   return new Promise(resolve => {
     postUserScoreHex(qualKey, subjKey, userKey, scoreHex).then(() => {
-      scoreHandler01.updateScoreForUser(
+      scoreHandler02.updateScoreForUser(
         qualKey, subjKey, userKey, {userGroupsForUpdate: userGroupKeyArr}
       ).then(
         (wasUpdated) => resolve(wasUpdated)
@@ -397,7 +400,7 @@ function postUserPredicateScoreAndUpdateUserGroups(
 
 function postUserRelationalScoreAndUpdateUserGroups(
   objKey, relKey = undefined, subjKey, userKey, score,
-  userGroupKeyArr = undefined
+  userGroupKeyArr = userGroupsForUpdate
 ) {
   return new Promise(resolve => {
     fetchRelationalQualityPath(objKey, relKey).then(qualPath => {

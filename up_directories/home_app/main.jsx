@@ -8,7 +8,7 @@ import {urlActions, urlEvents} from "./urlActions.js";
 import * as AppHeader from "./AppHeader.jsx";
 import * as AppMain from "./AppMain.jsx";
 
-import {scoreHandler01} from "/1/1/score_handling/ScoreHandler01/em.js";
+import {scoreHandler02} from "/1/1/score_handling/ScoreHandler01/em.js";
 
 
 export function render({
@@ -24,7 +24,7 @@ export function render({
   // shown, followed by an expandable 'Change score handler' sub-menu (with a
   // warning attached), where the user can type in a route for an alternative
   // score handler.
-  this.provideContext("scoreHandler", scoreHandler01);
+  this.provideContext("scoreHandler", scoreHandler02);
 
   if (userID && userEntID === undefined) {
     fetchConstructedEntityID("/1/1/em1.js", "User", ["1", userID]).then(
