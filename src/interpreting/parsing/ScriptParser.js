@@ -320,13 +320,17 @@ export const scriptGrammar = {
   },
   "function-declaration": {
     rules: [
-      ["/function/", "identifier", "parameter-tuple", "block-statement"],
+      [
+        "/async/?", "/function/", "identifier", "parameter-tuple",
+        "block-statement"
+      ],
     ],
     process: (children) => ({
       type: "function-declaration",
-      name: children[1].ident,
-      params: children[2].children,
-      body: children[3],
+      name: children[2].ident,
+      params: children[3].children,
+      body: children[4],
+      isAsync: children[0][0] !== undefined,
     }),
   },
   "function-body": {
@@ -362,17 +366,18 @@ export const scriptGrammar = {
   },
   "class-member": {
     rules: [
-      ["identifier", "parameter-tuple", "block-statement!"],
+      ["/async/?", "identifier", "parameter-tuple", "block-statement!"],
       ["identifier", "/=/", "expression", "/;/?"],
     ],
     process: (children, ruleInd) => (
       (ruleInd === 0) ? {
         type: "member",
-        ident: children[0].ident,
+        ident: children[1].ident,
         valExp: {
           type: "function-expression",
-          params: children[1].children,
-          body: children[2],
+          params: children[2].children,
+          body: children[3],
+          isAsync: children[0][0] !== undefined,
         },
       } : {
         type: "member",
@@ -591,9 +596,9 @@ export const scriptGrammar = {
   },
   "expression": {
     rules: [
-      ["parameter-tuple", "/=>/", "function-body!"],
-      ["identifier", "/=>/", "function-body!"],
-      ["/function/", "parameter-tuple", "function-body!"],
+      ["/async/?", "parameter-tuple", "/=>/", "function-body!"],
+      ["/async/?", "identifier", "/=>/", "function-body!"],
+      ["/async/?", "/function/", "parameter-tuple", "function-body!"],
       ["array-destructuring", "/=/", "expression!"],
       [/\(/, "object-destructuring", "/=/", "expression!", /\)/],
       ["expression^(1)", /=|\+=|\-=|\*=|\/=|&&=|\|\|=|\?\?=/, "expression!"],
@@ -603,19 +608,22 @@ export const scriptGrammar = {
     process: (children, ruleInd) => {
       return (ruleInd === 0) ? {
         type: "arrow-function",
-        params: children[0].children,
-        body: children[2],
+        params: children[1].children,
+        body: children[3],
+        isAsync: children[0][0] !== undefined,
       } : (ruleInd === 1) ? {
         type: "arrow-function",
         params: [{
           type: "parameter",
-          targetExp: children[0],
+          targetExp: children[1],
         }],
-        body: children[2],
+        body: children[3],
+        isAsync: children[0][0] !== undefined,
       } : (ruleInd === 2) ? {
         type: "function-expression",
-        params: children[1].children,
-        body: children[2],
+        params: children[2].children,
+        body: children[3],
+        isAsync: children[0][0] !== undefined,
       } : (ruleInd === 3) ? {
         type: "array-destructuring-assignment",
         destExp: children[0],
@@ -735,7 +743,7 @@ export const scriptGrammar = {
   "expression^(12)": {
     rules: [
       ["/\\+\\+|\\-\\-|delete/", "expression^(14)!"],
-      ["/!|~|\\+|\\-|typeof|void/", "expression^(12)!"],
+      ["/!|~|\\+|\\-|typeof|void|await/", "expression^(12)!"],
       ["expression^(13)"],
     ],
     process: (children, ruleInd) => {
@@ -900,7 +908,10 @@ export const scriptGrammar = {
   "member": {
     rules: [
       [/[_\$a-zA-Z][_\$a-zA-Z0-9]*/, "/:/", "expression!"],
-      [/[_\$a-zA-Z][_\$a-zA-Z0-9]*/, "expression-tuple", "block-statement!"],
+      [
+        "/async/?", /[_\$a-zA-Z][_\$a-zA-Z0-9]*/, "expression-tuple",
+        "block-statement!"
+      ],
       ["string", "/:/!", "expression"],
       [/\[/, "expression", /\]/, "/:/", "expression"],
       ["spread"],
@@ -912,11 +923,12 @@ export const scriptGrammar = {
         valExp: children[2],
       } : (ruleInd === 1) ? {
         type: "member",
-        ident: children[0],
+        ident: children[1],
         valExp: {
           type: "function-expression",
-          params: children[1].children,
-          body: children[2],
+          params: children[2].children,
+          body: children[3],
+          isAsync: children[0][0] !== undefined,
         },
       } : (ruleInd === 2) ? {
         type: "member",
