@@ -407,7 +407,7 @@ export class Parser {
     // simply extract the res property.
     return syntaxTree.children.map(child => {
       if (TRAILING_QUANTIFIER_SUBSTR_REGEXP.test(child.sym)) {
-        return child.children.map(val => val.res);
+        return child.children.map(val => val.res ?? val.lexeme);
       } else if (child.sym.at(0) === "/" && child.sym.at(-1) === "/") {
         return child.lexeme;
       } else {

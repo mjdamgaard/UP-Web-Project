@@ -12,12 +12,12 @@ const indexPage = <div className="text-page">
   <h1>{"The User-Programmable Web"}</h1>
   <section>
     <h2>{"A decentralized network of open source web apps"}</h2>
-    <p>{
-      "The User-Programmable Web (UP Web) is meant to be a " +
-      "collection of open source websites where the users are in complete " +
-      "control over the appearance and functionality of the web " +
-      "apps, as well as the data structures and algorithms behind them!"
-    }</p>
+    <p>
+      The User-Programmable Web (UP Web) is meant to be a
+      collection of open source websites where the users are in complete
+      control over the appearance and functionality of the web
+      apps, as well as the data structures and algorithms behind them!
+    </p>
     <p>{
       "Here it is the users themselves that create and upload all the " +
       "front-end components and back-end modules that make up the website. " +

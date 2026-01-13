@@ -1037,13 +1037,25 @@ export const scriptGrammar = {
   "jsx-content": {
     rules: [
       ["jsx-element!1"],
+      ["text-literal"],
       [/\{/, "expression", /\}/],
       [/\{/, /\}/],
     ],
     process: (children, ruleInd) => {
-      return (ruleInd === 0) ? children[0] : (ruleInd === 1) ? children[1] :
-        {type: "empty-jsx-content"};
+      return (ruleInd <= 1) ? children[0] :
+        (ruleInd === 2) ? children[1] :
+          {type: "empty-jsx-content"};
     },
+  },
+  "text-literal": {
+    lexicon: "text-literal",
+    rules: [
+      ["/\\s+|[^\\s<>{}]+/!1+"],
+    ],
+    process: (children) => ({
+      type: "text-literal",
+      text: children[0].join(""),
+    })
   },
   "literal-list": {
     rules: [
