@@ -1379,7 +1379,13 @@ export class ScriptInterpreter {
         return val;
       }
       case "grouped-expression": {
-        return this.evaluateExpression(expNode.exp, environment);
+        state.retValRef ??= [];
+        let retVal = state.retValRef[0];
+        if (retVal === undefined) retVal = this.evaluateExpression(
+          expNode.exp, environment, state.retValRef
+        );
+        if (retVal === UNDEFINED) retVal = undefined;
+        return retVal;
       }
       case "array": {
         let ret = [];

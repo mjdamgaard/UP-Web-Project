@@ -1181,25 +1181,34 @@ export class ScriptParser extends Parser {
     super(
       scriptGrammar,
       "script",
-      [
-        /"([^"\\]|\\(\S|\s))*"/,
-        /'([^'\\]|\\(\S|\s))*'/,
-        /(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
-        /\+=|\-=|\*=|\/=|&&=|\|\|=|\?\?=/,
-        /&&|\|\||\?\?|\+\+|\-\-|\*\*/,
-        /\?\.|\.\.\.|=>|<\/?>|\/>|<\//,
-        /===|==|!==|!=|<=|>=/,
-        /[.,:;\[\]{}()<>?=+\-*|^&!%/]/,
-        /[_$a-zA-Z0-9]+/,
-      ],
-      /\s+|\/\/.*(\n\s*|$)|\/\*([^*]|\*(?!\/))*(\*\/\s*|$)/
+      {
+        "script": {
+          lexemes: [
+            /"([^"\\]|\\(\S|\s))*"/,
+            /'([^'\\]|\\(\S|\s))*'/,
+            /(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/,
+            /\+=|\-=|\*=|\/=|&&=|\|\|=|\?\?=/,
+            /&&|\|\||\?\?|\+\+|\-\-|\*\*/,
+            /\?\.|\.\.\.|=>|<\/?>|\/>|<\//,
+            /===|==|!==|!=|<=|>=/,
+            /[.,:;\[\]{}()<>?=+\-*|^&!%/]/,
+            /[_$a-zA-Z0-9]+/,
+          ],
+          whitespace: /\s+|\/\/.*(\n\s*|$)|\/\*([^*]|\*(?!\/))*(\*\/\s*|$)/,
+        },
+        "text-literal": {
+          lexemes: [
+            /\s+/,
+            /[^\s<>{}]+/,
+          ],
+        },
+      },
+      "script",
     );
   }
 
-  parse(str, startSym, isPartial, keepLastLexeme) {
-    let [syntaxTree, lexArr, strPosArr] = super.parse(
-      str, startSym, isPartial, keepLastLexeme
-    );
+  parse(str, startSym) {
+    let [syntaxTree, lexArr, strPosArr] = super.parse(str, startSym);
     this.addPosAndNextPosToResults(syntaxTree);
     return [syntaxTree, lexArr, strPosArr];
   }

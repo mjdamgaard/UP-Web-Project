@@ -583,15 +583,15 @@ const page = <div className="text-page">
     </p>
     <p>{
       "instead? The reason for this is simply that this syntax has not been " +
-      "implemented yet. It will be in the near future, however. But in the " +
+      "implemented yet. It will be so in the very near future, however. " +
+      "But in the " +
       "meantime, you need to use computed values for all text contents, like " +
       "in the first example."
     }</p>
     <h3>{"Asynchronous functions"}</h3>
     <p>{
       "It is also worth noting that the 'async' and 'await' keywords " +
-      "are not implemented yet as well. But they will also be so in the " +
-      "near future."
+      "are not implemented yet for all expression types."
     }</p>
   </section>
 
@@ -614,8 +614,9 @@ const page = <div className="text-page">
       <ILink key="link-tut-1" href="~/getting-started">
         {"Tutorial 1"}
       </ILink>,
-      ", if you have any questions, please feel free to write an e-mail " +
-      "to mads@up-web.org."
+      ", if you run into any problems, or have any questions at all, please " +
+      "feel free to contact up-web.org, e.g. by writing an " +
+      "e-mail to mads@up-web.org. We are happy to help you."
     ]}</p>
   </section>
 

@@ -122,6 +122,7 @@ code {
   color: rgb(15, 29, 29);
   padding-left: 0.5em;
   padding-right: 40px;
+  overflow-x: auto;
 }
 
 code.command {

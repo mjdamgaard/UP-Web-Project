@@ -23,12 +23,11 @@ export const EOS_ERROR = "End of partial string";
 
 
 // <summary>
-// A Parser class to lex and parse strings with a given grammar, and a given
-// array of lexeme patterns plus an optional whitespace pattern, which together
-// defines how the string is lexed before the parsing itself.
+// A Parser class to parse strings according to a given grammar, and a given
+// set of lexicons defining the lexeme and whitespace patterns.
 //
-// The main method of this class is Parser.parse(str, startSym?, isPartial?),
-// used for lexing and parsing (and potentially processing) a string.
+// The main method of this class is Parser.parse(str, startSym?) used for
+// lexing and parsing (and potentially processing) a string.
 // </summary>
 // 
 // <param name="grammar">
@@ -37,11 +36,16 @@ export const EOS_ERROR = "End of partial string";
 // nonterminal symbol. (See e.g. https://en.wikipedia.org/wiki/Formal_grammar.)
 // 
 // The values of the grammar object has to be of the form
-// {rules, process?, params?}, where rules first of all is an array of rules,
-// which are each an array of symbols (terminal or nonterminal) to try parsing.
-// Also process() is an optional function to process the syntaxTree on a,
-// success, which will be explained below, and params is an optional input
+// {rules, process?, params?, lexicon?}, where 'rules' first of all is an array
+// of rules, which are each an array of symbols (terminal or nonterminal) to
+// parse.
+// Also, 'process' is an optional function to process the syntaxTree on a
+// success, which will be explained below. And params is an optional input
 // array that is appended to process()'s other inputs.
+// Lastly, 'lexicon' is a string which, if defined, changes the so-called
+// "lexicon" for the duration of the given nonterminal symbol to the one
+// in the 'lexicons' object of the same key, where the 'lexicons' object is
+// another argument of Parser.constructor(), explained below.
 // 
 // The symbols inside each rule of the grammar can either be another (or the
 // same) nonterminal symbol, or a RegExp pattern beginning and ending in '/',
@@ -82,23 +86,24 @@ export const EOS_ERROR = "End of partial string";
 // The default (nonterminal) start symbol for the parser.
 // </param>
 // 
-// <param name="lexemePatternArr">
-// An array of lexeme pattern, which are tried in order from the first to the
-// last when constructing the lexeme array.
+// <param name="lexicons">
+// An key-value object where the values are 'lexicon' objects of the form
+// {lexemes, whitespace?}. Here, 'lexemes' is an array of lexeme patterns
+// (strings or RegExes) for the language, and 'whitespace' is the whitespace
+// pattern of the language. If 'whitespace' is undefined, no whitespace will
+// be removed automatically when the string is lexed. 
 // </param>
 // 
-// <param name="wsPattern">
-// A pattern of what the parser considers "whitespace" (might also include
-// comments) when lexing the string. This whitespace pattern will be tried
-// first thing whenever a new lexeme is lexed.
+// <param name="startLexiconKey">
+// The key to the initial lexicon to use from the 'lexicons' when the parsing
+// begins, unless of course the start symbol declares another lexicon key.
 // </param>
 export class Parser {
-  constructor(grammar, defaultSym, lexemePatternArr, wsPattern) {
+  constructor(grammar, defaultSym, lexicons, startLexiconKey) {
     this.grammar = grammar;
     this.defaultSym = defaultSym;
-
-    // Initialize the lexer.
-    this.lexer = new Lexer(lexemePatternArr, wsPattern);
+    this.lexicons = lexicons;
+    this.startLexiconKey = startLexiconKey;
     
     // preprocess all the regular expressions or patterns appearing in grammar.
     this.regularExpressions = {};
@@ -189,16 +194,6 @@ export class Parser {
   // defaultSym, will be used. 
   // </param>
   // 
-  // <param name="isPartial">
-  // An optional boolean flag, with a default value of false, that if set to
-  // true will make the parsing end with an "End of partial string" error
-  // *the moment* the parser touches the end of the input string. Note that
-  // the syntax tree will still be still be returned, however, even if always
-  // unsuccessful. This option can thus be used to partially parse an
-  // incomplete string, otherwise of the grammar in its complete form, and
-  // then only use the successfully parsed part of it.
-  // </param>
-  // 
   // <returns>
   // [syntaxTree, lexArr, strPosArr], where syntaxTree is a syntax tree
   // consisting of nodes of the form
@@ -215,31 +210,19 @@ export class Parser {
   // symbol, and nextPos is the index of the last lexeme plus 1. And lastly,
   // res is the returned object from the optional process() function.
   // </returns>
-  parse(str, startSym, isPartial = false, keepLastLexeme = false) {
-    startSym ??= this.defaultSym;
-
-    // Lex the input string.
-    let lexArr, strPosArr;
-    try {
-      [lexArr, strPosArr] = this.lexer.lex(str, isPartial, keepLastLexeme);
-    } catch (error) {
-      if (error instanceof LexError) {
-        let syntaxTree = {isSuccess: false, error: error};
-        return [syntaxTree, lexArr, strPosArr];
-      }
-      // Else throw error;
-      else this.lexer.lex(str, isPartial, keepLastLexeme); // For debugging.
-    }
+  parse(str, startSym = this.defaultSym) {
+    // Initialize a Lexer instance to lex the string.
+    let lexer = new Lexer(str, this.lexicons, this.startLexiconKey);
 
     // Then parse the resulting lexeme array.
-    let syntaxTree = this.parseRuleSymbol(lexArr, 0, startSym);
+    let syntaxTree = this.parseRuleSymbol(lexer, 0, startSym);
+    let {lexArr, strPosArr, nextStrPos: strPos} = lexer;
 
     // If the input string was not fully parsed, but the syntax tree was
     // otherwise successful, meaning that only a part of the string was parsed,
     // construct an error saying so. 
-    if (syntaxTree.isSuccess && syntaxTree.nextPos !== strPosArr.length) {
+    if (syntaxTree.isSuccess && strPos !== str.length) {
       syntaxTree.isSuccess = false;
-      let strPos = strPosArr[syntaxTree.nextPos] ?? str.length;
       let subStr = str.substring(0, strPos);
       let [ln, col] = getLnAndCol(subStr);
       syntaxTree.error = new SyntaxError(
@@ -256,7 +239,7 @@ export class Parser {
       let [error, failedNodeSymbol, expectedSymbols] =
         this.#getErrorAndFailedSymbols(syntaxTree);
       if (error) {
-        let strPos = strPosArr[syntaxTree.nextPos - 1] ?? str.length;
+        strPos = strPosArr[syntaxTree.nextPos - 1] ?? str.length;
         let subStr = str.substring(0, strPos);
         let [ln, col] = getLnAndCol(subStr);
         syntaxTree.error = new SyntaxError(
@@ -266,7 +249,6 @@ export class Parser {
         );
         syntaxTree.lexArr = lexArr;
       } else {
-        let strPos = strPosArr[syntaxTree.nextPos] ?? str.length;
         let subStr = str.substring(0, strPos);
         let [ln, col] = getLnAndCol(subStr);
         syntaxTree.error = new SyntaxError(
@@ -348,11 +330,9 @@ export class Parser {
 
 
 
-  parseLexArr(lexArr, pos = 0, nonterminalSymbol, triedSymbols = []) {
-    nonterminalSymbol ??= this.defaultSym;
-
-    // Before anything else, check  that sym hasn't already been tried at this
-    // position in order to prevent infinite recursion.
+  parseNTSymbol(lexer, pos = 0, nonterminalSymbol, triedSymbols = []) {
+    // Before anything else, check that symbol hasn't already been tried at
+    // this position in order to prevent infinite recursion.
     if (triedSymbols.includes(nonterminalSymbol)) {
       throw "Parser: Infinite recursion detected. Symbol: \"" +
       nonterminalSymbol + '". Symbols tried in same place: "' +
@@ -361,14 +341,23 @@ export class Parser {
       triedSymbols = [nonterminalSymbol, ...triedSymbols];
     }
 
+    // Get the properties of the nonterminal symbol in the grammar.
+    let {rules, process, params = [], lexicon: lexiconKey} =
+      this.grammar[nonterminalSymbol] ?? {};
+    if (!rules) throw (
+      "Parser.parseNTSymbol(): Undefined nonterminal symbol: \"" +
+      nonterminalSymbol + '"'
+    );
+
+    // If the 'lexicon' property is defined, change the lexicon of the lexer.
+    let prevLexiconKey;
+    if (lexiconKey) {
+      prevLexiconKey = lexer.changeLexicon(lexiconKey, pos);
+    }
+
     // Parse the rules of the nonterminal symbol.
-    let {rules, process, params = []} = this.grammar[nonterminalSymbol] ||
-      (() => {
-        throw "Parser.parseLexArr(): Undefined nonterminal symbol: \"" +
-          nonterminalSymbol + '"';
-      })();
     let syntaxTree = this.parseRules(
-      lexArr, pos, rules, nonterminalSymbol, triedSymbols
+      lexer, pos, rules, nonterminalSymbol, triedSymbols
     );
     syntaxTree.pos = pos;
 
@@ -399,6 +388,14 @@ export class Parser {
       }
     }
 
+    // Finally, if the lexicon was changed for this rule, change it back before
+    // continuing, and with either the previous or the new position as the
+    // input to changeLexicon() depending on whether the rule succeeded or not.
+    if (lexiconKey) {
+      let nextLexemePos = syntaxTree.isSuccess ? syntaxTree.nextPos : pos;
+      lexer.changeLexicon(prevLexiconKey, nextLexemePos);
+    }
+
     return syntaxTree;
   }
 
@@ -424,7 +421,7 @@ export class Parser {
 
 
 
-  parseRules(lexArr, pos, rules, sym, triedSymbols = []) {
+  parseRules(lexer, pos, rules, sym, triedSymbols = []) {
     // Initialize a variable holding the index of the "record rule," which is
     // the most recent rule who broke or tied with the record of having the
     // largest nextPos (after a failure). 
@@ -523,7 +520,7 @@ export class Parser {
         // After this initial skipping of previously recorded matching
         // successes, First of all try parsing the rule symbol.
         childSyntaxTree = this.parseRuleSymbol(
-          lexArr, nextPos, ruleSym, (nextPos === pos) ? triedSymbols : []
+          lexer, nextPos, ruleSym, (nextPos === pos) ? triedSymbols : []
         );
         nextPos = childSyntaxTree.nextPos;
 
@@ -618,8 +615,8 @@ export class Parser {
 
 
 
-  parseRuleSymbol(lexArr, pos, sym, triedSymbols = []) {
-    let nextLexeme = lexArr[pos];
+  parseRuleSymbol(lexer, pos, sym, triedSymbols = []) {
+    let nextLexeme = lexer.getNextLexeme(pos);
 
     // If sym ends in either '?', '*', '+', '{n}' or '{n,m}', try parsing an
     // appropriate number of instances of the symbol preceding the quantifier.
@@ -669,7 +666,7 @@ export class Parser {
 
         // Else parse a new child.
         let childSyntaxTree = this.parseRuleSymbol(
-          lexArr, nextPos, subSym, (i === 0) ? triedSymbols : []
+          lexer, nextPos, subSym, (i === 0) ? triedSymbols : []
         );
 
         // If an error was raised, abort parsing here immediately.
@@ -692,7 +689,7 @@ export class Parser {
         else {
           if (
             i >= min &&
-            !(failIfEOSIsNotReached && lexArr[nextPos]) &&
+            !(failIfEOSIsNotReached && lexer.getNextLexeme(nextPos) !== EOS) &&
             childSyntaxTree.nextPos - nextPos < doOrDieLevel
           ) {
             return {
@@ -711,18 +708,9 @@ export class Parser {
       }
     }
 
-    // Else if EOS is reached, which is located at the end of the lexArr if
-    // and only if isPartial is true, fail the rule with an "EOS" error,
-    if (nextLexeme === EOS) {
-      return {
-        sym: sym, isSuccess: false, error: EOS_ERROR,
-        nextPos: pos,
-      };
-    }
-
     // Else if sym is a pattern, simply try to parse the next lexeme as that.
     if (sym.at(0) === "/" && sym.at(-1) === "/") {
-      if (!nextLexeme) {
+      if (!nextLexeme || nextLexeme === EOS || nextLexeme === FAILED_LEXEME) {
         return {
           sym: sym, isSuccess: false,
           nextPos: pos,
@@ -747,7 +735,7 @@ export class Parser {
 
     // Else treat sym as a non-terminal symbol, and make a recursive call to
     // parse() with nonterminalSymbol = sym.
-    return this.parseLexArr(lexArr, pos, sym, triedSymbols);
+    return this.parseNTSymbol(lexer, pos, sym, triedSymbols);
   }
 
 }
@@ -761,96 +749,88 @@ export class Parser {
 
 
 export class Lexer {
-  constructor(lexemePatternArr, wsPattern) {
-    // Whitespace RegEx.
-    this.wsRegEx = (wsPattern instanceof RegExp) ? wsPattern :
-      wsPattern ? new RegExp(wsPattern) :
-      /(?!a)a/;
-    this.onlyWSRegEx = new RegExp("^(" + this.wsRegEx.source + ")$");
-    this.hasWhitespace = wsPattern ? true : false;
-    // RegEx of all lexemes and whitespace. 
-    this.lexemeOrWSRegEx = new RegExp(
-      this.wsRegEx.source + "|" +
-      lexemePatternArr.map(
-        pattern => (pattern instanceof RegExp) ? pattern.source :
-          pattern.slice(1, -1)
-      ).join("|")
+  constructor(str, lexicons, startLexiconKey) {
+    this.str = str;
+    this.lexerRegExes = {};
+    Object.entries(lexicons).forEach(
+      ([key, {lexemes, whitespace = /[^\s\S]/}]) => {
+        let wsPattern = (whitespace instanceof RegExp) ? whitespace.source :
+          whitespace;
+        this.lexerRegExes[key] = new RegExp(
+          "(" + wsPattern + ")*" + "(?<lexeme>(" +
+            lexemes.map(pattern => (
+              (pattern instanceof RegExp) ? pattern.source :
+                pattern.slice(1, -1)
+            )).join("|") +
+          ")?)",
+          "g"
+        );
+      }
     );
-    // Lexer RegEx which also includes an extra final match that
-    // greedily matches the rest of the string on failure of the
-    // lexemeOrWSRegEx. 
-    this.lexerRegEx = new RegExp(
-      this.lexemeOrWSRegEx.source + "|" + "[^$]+",
-      "g"
-    );
+    this.curLexiconKey = startLexiconKey;
+    this.curLexerRegEx = this.lexerRegExes[startLexiconKey];
+    this.lexArr = [];
+    this.strPosArr = [];
+    this.nextStrPos = 0;
   }
 
+  /* Public read-only properties:
+   * this.lexArr
+   * this.strPosArr
+   * this.nextStrPos
+  **/
 
-  lex(str, isPartial = false, keepLastLexeme = false) {
-    // Get the initial lexeme array still with whitespace and the potential last
-    // failed string in it, then test and throw if the last match is that last
-    // failure string.
-    let unfilteredLexArr = (str.match(this.lexerRegEx) ?? [])
-      .filter(val => val !== "");
-
-    // Construct an array of the positions in str of each of the element in
-    // unfilteredLexArr.
-    var strPos = 0;
-    let unfilteredStrPosArr = unfilteredLexArr.map(elem => {
-      let ret = strPos;
-      strPos += elem.length;
-      return ret;
-    })
-
-    // Check that the last lexeme isn't the greedy "[^$]+" one, unless
-    // isPartial = true, in which case change it for the EOS constant. 
-    let lastMatch = unfilteredLexArr.at(-1);
-    if (!this.lexemeOrWSRegEx.test(lastMatch)) {
-      if (!isPartial) {
-        let prevStr = unfilteredLexArr.slice(0, -1).join("");
-        let [ln, col] = getLnAndCol(prevStr);
-        throw new LexError(
-          "Lexer error after `\n" +
-          prevStr.slice(-ERROR_ECHO_STR_LEN) +
-          "\n`.\nInvalid lexeme at `" +
-          lastMatch.substring(0, Math.floor(ERROR_ECHO_STR_LEN/4)) + "`",
-          ln, col
-        );
-      } else {
-        unfilteredLexArr[unfilteredLexArr.length - 1] = EOS;
-      }
-    }
-    // If isPartial is true, but the last match is not the greedy one, append
-    // EOS at the end of the lexeme array instead.
-    else if (isPartial) {
-      if (keepLastLexeme) {
-        unfilteredLexArr[unfilteredLexArr.length] = EOS;
-        unfilteredStrPosArr.push(str.length);
-      } else {
-        unfilteredLexArr[unfilteredLexArr.length - 1] = EOS;
-      }
-    }
-  
-    // If successful, filter out the whitespace from the unfilteredLexArr
-    // and the corresponding positions in strPosArr, and return these two
-    // filtered arrays
-    let lexArr, strPosArr;
-    if (this.hasWhitespace) {
-      lexArr = unfilteredLexArr.filter((val, ind) => {
-        let isWhitespace = val !== EOS && this.onlyWSRegEx.test(val);
-        if (isWhitespace) {
-          unfilteredStrPosArr[ind] = null;
-        }
-        return !isWhitespace;
-      });
-      strPosArr = unfilteredStrPosArr.filter(val => val !== null);
+  getNextLexeme(nextPos) {
+    let lexeme = this.lexArr[nextPos];
+    if (lexeme) {
+      return lexeme;
     }
     else {
-      lexArr = unfilteredLexArr;
-      strPosArr = unfilteredStrPosArr;
+      let {0: match, groups} = this.curLexerRegEx.exec(this.str);
+      lexeme = groups.lexeme;
+      this.nextStrPos = this.curLexerRegEx.lastIndex;
+      this.strPosArr[nextPos] = this.nextStrPos - lexeme.length;
+      if (!lexeme) {
+        if (this.nextStrPos + match.length >= this.str.length) {
+          return this.lexArr[nextPos] = EOS;
+        } else {
+          return this.lexArr[nextPos] = FAILED_LEXEME;
+        }
+      }
+      else {
+        return this.lexArr[nextPos] = lexeme;
+      }
+    }
+  }
+
+  changeLexicon(key, nextPos) {
+    let prevKey = this.curLexiconKey;
+    if (key === prevKey) {
+      return key;
+    }
+    else if (nextPos > this.lexArr.length) {
+      throw "Lexer.changeLexicon(): nextPos - 1 must not be greater than " +
+        "the last index of this.lexArr";
     }
 
-    return [lexArr, strPosArr];
+    // Change the current lexicon, and make sure to set the lastIndex of its
+    // regex and this.nextStrPos to the position right after the lexeme at
+    // lexArr[nextPos - 1], or to 0 if nextPos == 0.
+    this.curLexiconKey = key;
+    this.curLexerRegEx = this.lexerRegExes[key];
+    if (!this.curLexerRegEx) {
+      throw "Lexer.changeLexicon(): Unrecognized key";
+    }
+    this.curLexerRegEx.lastIndex = this.nextStrPos = (nextPos <= 0) ? 0 :
+      this.strPosArr[nextPos - 1] + this.lexArr[nextPos - 1].length;
+
+    // Also chop off lexArr and strPosArr such that nextPos - 1 is now the last
+    // index.
+    this.lexArr = this.lexArr.slice(0, nextPos);
+    this.strPosArr = this.strPosArr.slice(0, nextPos);
+
+    // Return the previous lexiconKey;
+    return prevKey;
   }
 }
 
@@ -858,6 +838,7 @@ export class Lexer {
 
 
 const EOS = Symbol("EOS");
+const FAILED_LEXEME = Symbol("failed-lexeme");
 
 
 export class SyntaxError {
@@ -868,19 +849,10 @@ export class SyntaxError {
   }
 }
 
-export class LexError extends SyntaxError {
-  constructor(msg, ln, col) {
-    super(msg, ln, col);
-  }
-}
-
 
 
 export function getExtendedErrorMsg(err) {
-  if (err instanceof LexError) {
-    return `LexError at Ln ${err.ln}, Col ${err.col}: "${err.msg}"`;
-  }
-  else if (err instanceof SyntaxError) {
+  if (err instanceof SyntaxError) {
     return `SyntaxError at Ln ${err.ln}, Col ${err.col}: "${err.msg}"`;
   }
   else {

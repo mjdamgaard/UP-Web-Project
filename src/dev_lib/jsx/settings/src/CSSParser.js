@@ -548,22 +548,25 @@ export class CSSParser extends Parser {
     super(
       cssGrammar,
       "style-sheet",
-      [
-        /"([^"\\]|\\[.\n])*"/,
-        /'([^'\\]|\\[.\n])*'/,
+      {
+        "style-sheet": {
+          lexemes: [
+            /"([^"\\]|\\[.\n])*"/,
+            /'([^'\\]|\\[.\n])*'/,
 /((?<=\s)\-)?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?[%a-zA-Z0-9_\-]*/,
-        /@?[a-zA-Z0-9_\-]+/,
-        /\|\||::|[.,:;\[\]{}()<>?=+\-*|^&!%/#]/,
-        /[ \t\r\n\f]+/
-      ],
-      /\/\*([^*]|\*(?!\/))*(\*\/|$)/
+            /@?[a-zA-Z0-9_\-]+/,
+            /\|\||::|[.,:;\[\]{}()<>?=+\-*|^&!%/#]/,
+            /[ \t\r\n\f]+/
+          ],
+          whitespace: /\/\*([^*]|\*(?!\/))*(\*\/|$)/,
+        },
+      },
+      "style-sheet",
     );
   }
 
-  parse(str, startSym, isPartial, keepLastLexeme) {
-    let [syntaxTree, lexArr, strPosArr] = super.parse(
-      str, startSym, isPartial, keepLastLexeme
-    );
+  parse(str, startSym) {
+    let [syntaxTree, lexArr, strPosArr] = super.parse(str, startSym);
     this.addPosAndNextPosToResults(syntaxTree);
     return [syntaxTree, lexArr, strPosArr];
   }
