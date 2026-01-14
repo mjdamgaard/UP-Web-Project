@@ -1050,11 +1050,11 @@ export const scriptGrammar = {
   "text-literal": {
     lexicon: "text-literal",
     rules: [
-      ["/\\s+|[^\\s<>{}]+/!1+"],
+      ["/[^<>{}]+/"],
     ],
     process: (children) => ({
       type: "text-literal",
-      text: children[0].join(""),
+      text: children[0],
     })
   },
   "literal-list": {
@@ -1210,8 +1210,7 @@ export class ScriptParser extends Parser {
         },
         "text-literal": {
           lexemes: [
-            /\s+/,
-            /[^\s<>{}]+/,
+            /[^<>{}]+/,
           ],
         },
       },

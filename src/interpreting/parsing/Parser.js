@@ -216,13 +216,14 @@ export class Parser {
 
     // Then parse the resulting lexeme array.
     let syntaxTree = this.parseRuleSymbol(lexer, 0, startSym);
-    let {lexArr, strPosArr, nextStrPos: strPos} = lexer;
+    let {lexArr, strPosArr, nextStrPos} = lexer;
 
     // If the input string was not fully parsed, but the syntax tree was
     // otherwise successful, meaning that only a part of the string was parsed,
     // construct an error saying so. 
-    if (syntaxTree.isSuccess && strPos !== str.length) {
+    if (syntaxTree.isSuccess && nextStrPos !== str.length) {
       syntaxTree.isSuccess = false;
+      let strPos = nextStrPos;
       let subStr = str.substring(0, strPos);
       let [ln, col] = getLnAndCol(subStr);
       syntaxTree.error = new SyntaxError(
@@ -239,7 +240,7 @@ export class Parser {
       let [error, failedNodeSymbol, expectedSymbols] =
         this.#getErrorAndFailedSymbols(syntaxTree);
       if (error) {
-        strPos = strPosArr[syntaxTree.nextPos - 1] ?? str.length;
+        let strPos = strPosArr[syntaxTree.nextPos - 1] ?? str.length;
         let subStr = str.substring(0, strPos);
         let [ln, col] = getLnAndCol(subStr);
         syntaxTree.error = new SyntaxError(
@@ -247,8 +248,8 @@ export class Parser {
           '\n`.\nError: ' + error,
           ln, col
         );
-        syntaxTree.lexArr = lexArr;
       } else {
+        let strPos = nextStrPos;
         let subStr = str.substring(0, strPos);
         let [ln, col] = getLnAndCol(subStr);
         syntaxTree.error = new SyntaxError(
