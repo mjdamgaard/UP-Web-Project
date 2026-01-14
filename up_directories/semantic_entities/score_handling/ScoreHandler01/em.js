@@ -4,6 +4,7 @@ import {fetchEntityID, fetchEntityPath} from "../../entities.js";
 import {map} from 'array';
 import ModeratedList from "../../scored_lists/moderated/ModeratedList.js";
 import CombinedList from "../../scored_lists/comb/CombinedList.js";
+import PriorityList from "../../scored_lists/priority/PriorityList.js";
 import SimpleScoreHandler from "../SimpleScoreHandler.js";
 import MeanAggregator from "../../aggregating/mean/MeanAggregator.js";
 import BiasedMeanAggregator
@@ -291,13 +292,10 @@ export const scoreHandler01 = new SimpleScoreHandler(
 // scalar scored by the moderator group. (So this doesn't use the "second-hand-
 // trusted" user group.)
 
-export const moderatedAllUsersList = new CombinedList(
+export const moderatedAllUsersList = new PriorityList(
   abs("./em.js;get/moderatedAllUsersList"), [
     abs("./em.js;get/initialTrustedUserList"),
     abs("./em.js;get/allUsersList"),
-  ], [
-    100,
-    1,
   ],
 );
 

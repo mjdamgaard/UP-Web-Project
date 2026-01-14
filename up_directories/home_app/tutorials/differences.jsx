@@ -561,41 +561,6 @@ const page = <div className="text-page">
   </section>
 
   <section>
-    <h2>{"Things that have yet to be implemented"}</h2>
-    <h3>{"Plain text directly inside JSX elements"}</h3>
-    <p>{
-      "Speaking of JSX components, if you are familiar with React, you " +
-      "might have wondered why all the JSX elements we have seen so far in " +
-      "these tutorials wrap all their text content in '{\"...\"}', such as in:"
-    }</p>
-    <p>
-      <code className="jsx">{[
-        'return <h1>{"Hello, World!"}</h1>;',
-      ]}</code>
-    </p>
-    <p>{
-      "Why not simply write"
-    }</p>
-    <p>
-      <code className="jsx">{[
-        'return <h1>Hello, World!</h1>; // Will throw a syntax error!',
-      ]}</code>
-    </p>
-    <p>{
-      "instead? The reason for this is simply that this syntax has not been " +
-      "implemented yet. It will be so in the very near future, however. " +
-      "But in the " +
-      "meantime, you need to use computed values for all text contents, like " +
-      "in the first example."
-    }</p>
-    <h3>{"Asynchronous functions"}</h3>
-    <p>{
-      "It is also worth noting that the 'async' and 'await' keywords " +
-      "are not implemented yet for all expression types."
-    }</p>
-  </section>
-
-  <section>
     <h2>{"Final remarks"}</h2>
     <p>{
       "These points were all of the most pressing ones that you ought to " +

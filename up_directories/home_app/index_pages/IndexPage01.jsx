@@ -446,7 +446,7 @@ const indexPage = <div className="text-page">
       "monetized might be a game changer for the content creators. " +
       "And since the ad revenue from content creators around the world is " +
       "measured in the billions of dollars, there is potentially a lot of " +
-      "money on the line for them if this UP Web becomes a reality."
+      "money on the line for them if the UP Web becomes a reality."
     }</p>
   </section>
 
@@ -483,7 +483,7 @@ const indexPage = <div className="text-page">
       "its primary missions to ensure exactly that, namely that the early " +
       "source code " +
       "creators, as well as anyone else who helped making the UP Web " +
-      "take off, will be rewarded the most generously for their work."
+      "take off, will indeed be rewarded generously."
     }</p>
     <p>{
       "We hope that this might add a bit of extra motivation for anyone who " +
@@ -544,8 +544,8 @@ const indexPage = <div className="text-page">
     <p>{
       "But before you go anywhere, please note that this website is still " +
       "only a " +
-      "prototype at this stage. So please excuse all the rough edges, so " +
-      "to speak, that you will find here and there."
+      "prototype at this stage. So please excuse all the rough edges " +
+      "that you will find here and there."
     }</p>
   </section>
 </div>;
