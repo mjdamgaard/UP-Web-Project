@@ -7,7 +7,7 @@ export function render({}) {
   return <div>
     <button onClick={() => {
       this.setState(state => ({...state, counter: counter + 1}));
-    }}>{"Click me!"}</button>
+    }}>Click me!</button>
     <div className="counter-display">
       {"Number of times clicked: " + counter}
     </div>

@@ -202,7 +202,7 @@ const page = <div className="text-page">
     }</p>
     <p>
       <code className="jsx">{[
-        'return <h1>{"Hello, World!"}</h1>;',
+        'return <h1>Hello, World!</h1>;',
       ]}</code>
     </p>
     <p>{

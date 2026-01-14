@@ -62,7 +62,7 @@ const page = <div className="text-page">
     <p>
       <code className="jsx">{[
         'export function render() {\n',
-        '  return <h1>{"Hello, World!"}</h1>;\n',
+        '  return <h1>Hello, World!</h1>;\n',
         '}',
       ]}</code>
     </p>
@@ -118,7 +118,7 @@ const page = <div className="text-page">
     <p>
       <code className="jsx">{[
         'return <div>\n',
-        '  <h1>{"Hello, World!"}</h1>\n', 
+        '  <h1>Hello, World!</h1>\n', 
         '  <ExampleComponent1 key="ex-1" />\n',
         '</div>;',
       ]}</code>
@@ -212,7 +212,7 @@ const page = <div className="text-page">
     <p>
       <code className="jsx">{[
         'return <div>\n',
-        '  <h2>{"Some child component examples"}</h2>\n',
+        '  <h2>Some child component examples</h2>\n',
         '  <p>\n',
         '    <ExampleComponent2 key="ex-1"\n',
         '      isItalic={true} children="This paragraph is italic!"\n',
@@ -223,7 +223,7 @@ const page = <div className="text-page">
         '  </p>\n',
         '  <p>\n',
         '    <ExampleComponent2 key="ex-3" isItalic >\n',
-        '      {"But this one is as well!"}\n',
+        '      But this one is as well!\n',
         '    </ExampleComponent2>\n',
         '  </p>\n',
         '</div>;\n',
@@ -351,7 +351,7 @@ const page = <div className="text-page">
     <p>
       <code className="jsx">{[
         'return <div>\n',
-        '    <h2>{"An example of a stateful component"}</h2>\n',
+        '    <h2>An example of a stateful component</h2>\n',
         '    <p>\n',
         '      <ExampleComponent3 key="ex-1" />\n',
         '    </p>\n',
@@ -383,7 +383,7 @@ const page = <div className="text-page">
         '  return <div>\n',
         '    <button onClick={() => {\n',
         '      this.setState(state => ({...state, counter: counter + 1}));\n',
-        '    }}>{"Click me!"}</button>\n',
+        '    }}>Click me!</button>\n',
         '    <div className="counter-display">\n',
         '      {"Number of times clicked: " + counter}\n',
         '    </div>\n',
@@ -514,7 +514,7 @@ const page = <div className="text-page">
       <code className="jsx">{[
         '<button onClick={() => {\n',
         '  this.setState(state => ({...state, counter: counter + 1}));\n',
-        '}}>{"Click me!"}</button>',
+        '}}>Click me!</button>',
       ]}</code>
     </p>
     <p>{
@@ -523,7 +523,7 @@ const page = <div className="text-page">
     <p>
       <code className="jsx">{[
         '<button onClick={() => this.do("increaseCounter")}>' +
-          '{"Click me!"}</button>',
+          'Click me!</button>',
       ]}</code>
     </p>
     <p>{
@@ -548,7 +548,7 @@ const page = <div className="text-page">
         '  let {counter = 0} = this.state;\n',
         '  return <div>\n',
         '    <button onClick={() => this.do("increaseCounter", 2)}>' +
-              '{"Click me!"}</button>\n',
+              'Click me!</button>\n',
         '    <div className="counter-display">\n',
         '      {"Number of times clicked ×2: " + counter}\n',
         '    </div>\n',
@@ -603,24 +603,24 @@ const page = <div className="text-page">
     <p>
       <code className="jsx">{[
         'return <div>\n',
-        '  <h2>{"Calling increaseCounter() from the parent"}</h2>\n',
+        '  <h2>Calling increaseCounter() from the parent</h2>\n',
         '  <p>\n',
         '    {"Click this button to increase the counter of Child instance 1: "}\n',
         '    <button onClick={() => this.call("c-1", "increaseCounter")}>\n',
-        '      {"Increase Child 1\'s counter"}\n',
+        '      Increase Child 1\'s counter\n',
         '    </button>\n',
         '  </p>\n',
         '  <p>\n',
         '    {"And click this button to increase the counter of Child instance 2: "}\n',
         '    <button onClick={() => this.call("c-2", "increaseCounter")}>\n',
-        '      {"Increase Child 2\'s counter"}\n',
+        '      Increase Child 2\'s counter\n',
         '    </button>\n',
         '  </p>\n',
-        '  <h2>{"Child instance 1"}</h2>\n',
+        '  <h2>Child instance 1</h2>\n',
         '  <p>\n',
         '    <ExampleComponent5 key="c-1" num={1} />\n',
         '  </p>\n',
-        '  <h2>{"Child instance 2"}</h2>\n',
+        '  <h2>Child instance 2</h2>\n',
         '  <p>\n',
         '    <ExampleComponent5 key="c-2" num={5} />\n',
         '  </p>\n',
@@ -769,14 +769,14 @@ const page = <div className="text-page">
     <p>
       <code className="jsx">{[
         'return <div>\n',
-        '  <h2>{"Triggering increaseCounter() from the child instance"}</h2>\n',
+        '  <h2>Triggering increaseCounter() from the child instance</h2>\n',
         ' <button onClick={() => this.do("increaseCounter")}>\n',
-        '    {"Click me to increase my counter!"}\n',
+        '    Click me to increase my counter!\n',
         '  </button>\n',
         '  <div className="counter-display">\n',
         '    {"Counter value: " + (this.state.counter ?? 0)}\n',
         '  </div>\n',
-        '  <h2>{"Child instance"}</h2>\n',
+        '  <h2>Child instance</h2>\n',
         '  <p>\n',
         '    <ExampleComponent6 key="c-1" />\n',
         '  </p>\n',
@@ -812,7 +812,7 @@ const page = <div className="text-page">
         'export function render() {\n',
         '  return <div>\n',
         '    <button onClick={() => this.trigger("increaseCounter")}>\n',
-        '      {"Click me to increase my parent\'s counter!"}\n',
+        '      Click me to increase my parent\'s counter!\n',
         '    </button>\n',
         '  </div>;\n',
         '}\n',

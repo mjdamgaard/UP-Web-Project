@@ -26,9 +26,9 @@ export const app = {
 export const appDescription = <div>
   <h1>{APP_NAME}</h1>
   <section>
-    <p>{
-      "This app does not have a description yet."
-    }</p>
+    <p>
+      This app does not have a description yet.
+    </p>
   </section>
 </div>;
 

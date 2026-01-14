@@ -2,5 +2,5 @@
 
 
 export function render() {
-  return <span>{"I am a child component!"}</span>;
+  return <span>I am a child component!</span>;
 }

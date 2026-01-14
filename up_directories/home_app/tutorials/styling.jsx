@@ -35,7 +35,7 @@ const page = <div className="text-page">
     <p>
       <code className="jsx">{[
         'return <div>\n',
-        '  <h1>{"Hello, World!"}</h1>\n',
+        '  <h1>Hello, World!</h1>\n',
         '  <ExampleComponent7 key="c-1" />\n',
         '</div>;\n',
       ]}</code>
@@ -59,7 +59,7 @@ const page = <div className="text-page">
     }</p>
     <p>
       <code className="jsx">{[
-        'return <h2>{"I am a child instance"}</h2>;\n',
+        'return <h2>I am a child instance</h2>;\n',
       ]}</code>
     </p>
     <p>{
@@ -121,7 +121,7 @@ const page = <div className="text-page">
     <p>
       <code className="jsx">{[
         'export function render() {\n',
-        '  return <h2>{"I am a child instance"}</h2>;\n',
+        '  return <h2>I am a child instance</h2>;\n',
         '}\n',
         '\n',
         'export const styleSheets = [\n',
@@ -165,7 +165,7 @@ const page = <div className="text-page">
     <p>
       <code className="jsx">{[
         'return <div>\n',
-        '  <h1>{"Hello, World!"}</h1>\n',
+        '  <h1>Hello, World!</h1>\n',
         '  <ExampleComponent7 key="_c-1" />\n',
         '</div>;\n',
       ]}</code>

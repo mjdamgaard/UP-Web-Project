@@ -338,7 +338,7 @@ function fetchUserGroupsForUpdate2(qualKey, options = {}) {
     }
     else {
       resolve([
-        abs("./em.js;get/initialTrustedUserGroup"),
+        // abs("./em.js;get/initialTrustedUserGroup"),
         abs("./em.js;get/moderatedAllUsersGroup"),
       ]);
     }

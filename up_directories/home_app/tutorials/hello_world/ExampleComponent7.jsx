@@ -1,7 +1,7 @@
 
 
 export function render() {
-  return <h2>{"I am a child instance"}</h2>;
+  return <h2>I am a child instance</h2>;
 }
 
 export const styleSheets = [

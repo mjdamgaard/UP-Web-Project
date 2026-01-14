@@ -15,7 +15,6 @@ import {scoreHandler02} from "./score_handling/ScoreHandler01/em.js";
 
 const userGroupsForUpdate = [
   abs("./score_handling/ScoreHandler01/em.js;get/initialModeratorGroup"),
-  abs("./score_handling/ScoreHandler01/em.js;get/initialTrustedUserGroup"),
   abs("./score_handling/ScoreHandler01/em.js;get/moderatedAllUsersGroup"),
 ];
 
