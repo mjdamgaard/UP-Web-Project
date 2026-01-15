@@ -216,14 +216,16 @@ export class Parser {
 
     // Then parse the resulting lexeme array.
     let syntaxTree = this.parseRuleSymbol(lexer, 0, startSym);
-    let {lexArr, strPosArr, nextStrPos} = lexer;
+    let {lexArr, strPosArr} = lexer;
 
     // If the input string was not fully parsed, but the syntax tree was
     // otherwise successful, meaning that only a part of the string was parsed,
-    // construct an error saying so. 
-    if (syntaxTree.isSuccess && nextStrPos !== str.length) {
+    // construct an error saying so.
+    if (
+      syntaxTree.isSuccess && lexer.getNextLexeme(syntaxTree.nextPos) !== EOS
+    ) {
       syntaxTree.isSuccess = false;
-      let strPos = nextStrPos;
+      let strPos = strPosArr[syntaxTree.nextPos] ?? str.length;
       let subStr = str.substring(0, strPos);
       let [ln, col] = getLnAndCol(subStr);
       syntaxTree.error = new SyntaxError(
@@ -249,7 +251,7 @@ export class Parser {
           ln, col
         );
       } else {
-        let strPos = nextStrPos;
+        let strPos = strPosArr[syntaxTree.nextPos] ?? str.length;
         let subStr = str.substring(0, strPos);
         let [ln, col] = getLnAndCol(subStr);
         syntaxTree.error = new SyntaxError(
@@ -778,7 +780,6 @@ export class Lexer {
   /* Public read-only properties:
    * this.lexArr
    * this.strPosArr
-   * this.nextStrPos
   **/
 
   getNextLexeme(nextPos) {
