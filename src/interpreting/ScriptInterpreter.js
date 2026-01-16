@@ -694,13 +694,13 @@ export class ScriptInterpreter {
     switch (type) {
       case "block-statement": {
         let newEnv = state?.env ?? new Environment(environment);
+        let stmtArr = stmtNode.stmtArr;
         if (state) {
           state.env ??= newEnv;
           state.i ??= 0;
-          state.children ??= stmtArr.map(() => []);
+          state.children ??= stmtArr.map(() => {});
         }
         let i = state?.i ?? 0;
-        let stmtArr = stmtNode.stmtArr;
         let len = stmtArr.length;
         while (i < len) {
           let childState = state ? state.children[i] : undefined;
@@ -724,81 +724,95 @@ export class ScriptInterpreter {
         break;
       }
       case "loop-statement": {
-        let newEnv = state.env ??= new Environment(environment);
+        let newEnv = state?.env ?? new Environment(environment);
+        if (state) {
+          state.env ??= newEnv;
+          state.decStmtState ??= {};
+          state.condState ??= {};
+          state.updateState ??= {};
+          state.loopState ??= {};
+          state.isFirstIteration ??= true;
+        }
         let innerStmt = stmtNode.stmt;
         let updateExp = stmtNode.updateExp;
         let condExp = stmtNode.cond;
-        if (stmtNode.dec && !state.decIsDone) {
-          state.decIsDone = true;
-          this.executeStatement(stmtNode.dec, newEnv);
+        if (stmtNode.dec) {
+          this.executeStatement(stmtNode.dec, newEnv, state?.decStmtState);
         }
-        let postponeCond = !state.hasPostponed && stmtNode.doFirst;
-        state.hasPostponed = true;
+        let isFirstIteration = state?.isFirstIteration ?? true;
         state.condValRef ??= [];
         while (true) {
-          if (state.updateWasSkipped) {
-            this.evaluateExpression(updateExp, newEnv, []);
+          if (
+            !(stmtNode.doFirst && isFirstIteration) &&
+            !this.evaluateExpression(condExp, newEnv, state?.condState)
+          ) {
+            break;
           }
-          if (!postponeCond) {
-            let condVal = state.condValRef[0];
-            if (condVal === undefined) condVal = this.evaluateExpression(
-              condExp, newEnv, state.condValRef
-            );
-            state.condValRef[0] = undefined;
-            if (!condVal || condVal === UNDEFINED) break;
-          }
-          postponeCond = false;
           try {
-            state.updateWasSkipped = true;
-            this.executeStatement(innerStmt, newEnv);
-            state.updateWasSkipped = false;
+            this.executeStatement(innerStmt, newEnv, state?.loopState);
           }
           catch (err) {
             if (err instanceof BreakException) {
+              if (state) state.done = true;
               return;
             } else if (!(err instanceof ContinueException)) {
               throw err;
             }
           }
           if (updateExp) {
-            this.evaluateExpression(updateExp, newEnv, []);
+            this.evaluateExpression(updateExp, newEnv, state?.updateState);
+          }
+          isFirstIteration = false;
+          if (state) {
+            state.isFirstIteration = false;
+            state.condState = {};
+            state.updateState = {};
+            state.loopState = {};
           }
         }
         break;
       }
       case "switch-statement": {
-        state.switchExpValRef ??= [];
-        let switchExpVal = state.switchExpValRef[0];
-        if (switchExpVal === undefined) switchExpVal = this.evaluateExpression(
-          stmtNode.exp, environment, state.switchExpValRef
+        if (state) {
+          state.switchExpState ??= {};
+        }
+        let switchExpVal = this.evaluateExpression(
+          stmtNode.exp, environment, state?.switchExpState
         );
-        if (switchExpVal === UNDEFINED) switchExpVal = undefined;
-        let startInd = state.startInd;
+        let startInd = state?.startInd;
         if (startInd === undefined) {
           startInd = stmtNode.defaultCase;
           stmtNode.caseArr.some(([caseExp, ind]) => {
-            if (switchExpVal === this.evaluateExpression(caseExp, environment)) {
+            if (
+              switchExpVal === this.evaluateExpression(caseExp, environment)
+            ) {
               startInd = ind;
               return true; // breaks the some() iteration.
             }
           });
         }
-        state.startInd = startInd;
+        if (state) state.startInd = startInd;
         if (startInd !== undefined) {
-          let newEnv = state.env ??= new Environment(environment);
+          let newEnv = state?.env ?? new Environment(environment);
           let stmtArr = stmtNode.stmtArr;
+          if (state) {
+            state.env ??= newEnv;
+            state.i ??= 0;
+            state.children ??= stmtArr.map(() => {});
+          }
+          let i = state?.i ?? 0;
           let len = stmtArr.length;
-          let i = state.i ??= startInd;
           try {
             while(i < len) {
-              state.i++;
-              this.executeStatement(stmtArr[i], newEnv);
-              i++
+              let childState = state ? state.children[i] : undefined;
+              this.executeStatement(stmtArr[i], newEnv, childState);
+              i++;
+              if (state) state.i++;
             }
           }
           catch (err) {
             if (err instanceof BreakException) {
-              return;
+              break;
             } else {
               throw err;
             }
@@ -806,20 +820,17 @@ export class ScriptInterpreter {
         }
         break;
       }
+      case "expression-statement":
       case "return-statement":
       case "throw-statement": {
-        state.expValRef ??= [];
-        let expVal = state.expValRef[0];
+        let expState = state ? state.expState ??= {} : undefined;
+        let expVal;
         if (stmtNode.exp) {
-          if (expVal === undefined) expVal = this.evaluateExpression(
-            stmtNode.exp, environment, state.expValRef
-          );
-          if (expVal === UNDEFINED) expVal = undefined;
+          expVal = this.evaluateExpression(stmtNode.exp, environment, expState);
         }
-        else {
-          expVal = undefined;
-        }
-        if (type === "return-statement") {
+        if (type === "expression-statement") {
+          break;
+        } else if (type === "return-statement") {
           throw new ReturnException(expVal, stmtNode, environment);
         } else {
           throw new Exception(expVal, stmtNode, environment);
@@ -828,36 +839,49 @@ export class ScriptInterpreter {
       case "try-catch-statement": {
         try {
           if (state.err) throw state.err;
-          let tryEnv = state.tryEnv ??= new Environment(environment);
-          let i = state.i ??= 0;
-          let stmtArr = stmtNode.tryStmtArr;
+          let tryEnv = state?.tryEnv ?? new Environment(environment);
+          let stmtArr = stmtNode.stmtArr;
+          if (state) {
+            state.tryEnv ??= tryEnv;
+            state.i ??= 0;
+            state.tryChildren ??= stmtArr.map(() => {});
+          }
+          let i = state?.i ?? 0;
           let len = stmtArr.length;
           while (i < len) {
-            state.i++;
-            this.executeStatement(stmtArr[i], tryEnv);
+            let childState = state ? state.tryChildren[i] : undefined;
+            this.executeStatement(stmtArr[i], tryEnv, childState);
             i++;
+            if (state) state.i++;
           }
         }
         catch (err) {
           state.err = err;
           if (err instanceof Exception) {
             try {
-              let catchEnv = state.catchEnv;
+              let catchEnv = state?.catchEnv;
               if (!catchEnv) {
                 catchEnv = state.catchEnv = new Environment(environment);
                 catchEnv.declare(stmtNode.ident, err.val, false, stmtNode);
+                if (state) state.catchEnv = catchEnv;
               }
-              let j = state.j ??= 0;
               let stmtArr = stmtNode.catchStmtArr;
+              if (state) {
+                state.j ??= 0;
+                state.catchChildren ??= stmtArr.map(() => {});
+              }
+              let j = state?.j ?? 0;
               let len = stmtArr.length;
               while (j < len) {
-                state.j++;
-                this.executeStatement(stmtArr[j], catchEnv);
+                let childState = state ? state.catchChildren[j] : undefined;
+                this.executeStatement(stmtArr[j], catchEnv, childState);
                 j++;
+                if (state) state.j++;
               }
             }
             catch (err) {
-              throw (err.val === state.err.val) ? state.err : err;
+              throw (err instanceof Exception && err.val === state.err.val) ?
+                state.err : err;
             }
           }
           else throw err;
@@ -879,17 +903,21 @@ export class ScriptInterpreter {
       }
       case "variable-declaration": {
         let isConst = stmtNode.isConst;
-        state.valRefArr ??= [];
-        let i = state.i ??= 0;
-        let len = stmtNode.children.length;
+        let paramExpArr = stmtNode.children;
+        if (state) {
+          state.i ??= 0;
+          state.children ??= paramExpArr.map(() => {});
+        }
+        let i = state?.i ?? 0;
+        let len = paramExpArr.length;
         while (i < len) {
-          state.i++;
-          let paramExp = stmtNode.children[i];
-          let valRef = state.valRefArr[i] ??= [];
+          let paramExp = paramExpArr[i];
+          let childState = state ? state.children[i] : undefined;
           this.assignToParameter(
-            paramExp, undefined, environment, true, isConst, valRef
+            paramExp, undefined, environment, true, isConst, childState
           );
           i++;
+          if (state) state.i++;
         }
         break;
       }
@@ -935,16 +963,15 @@ export class ScriptInterpreter {
         environment.declare(stmtNode.name, classObj, false, stmtNode);
         break;
       }
-      case "expression-statement": {
-        this.evaluateExpression(stmtNode.exp, environment, []);
-        break;
-      }
       default: throw (
         "ScriptInterpreter.executeStatement(): Unrecognized " +
         `statement type: "${type}"`
       );
     }
 
+    // Set state.done = true such that the statement won't be executed again
+    // in case of an async function.
+    if (state) state.done = true;
   }
 
 
@@ -973,28 +1000,26 @@ export class ScriptInterpreter {
         break;
       }
       case "assignment": {
+        let exp2State = state ? state.exp2State ??= {} : undefined;
         let op = expNode.op;
-        state.valRef ??= [];
-        let val = state.valRef[0];
+        if (state)
         switch (op) {
           case "=":
             ret = this.assignToVariableOrMember(
               expNode.exp1, environment, () => {
-                if (val === undefined) val = this.evaluateExpression(
-                  expNode.exp2, environment, state.valRef
+                let newVal = this.evaluateExpression(
+                  expNode.exp2, environment, exp2State
                 );
-                if (val === UNDEFINED) val = undefined;
-                return [val, val];
+                return [newVal, newVal];
               }
             );
             break;
           case "+=":
             ret = this.assignToVariableOrMember(
               expNode.exp1, environment, prevVal => {
-                if (val === undefined) val = this.evaluateExpression(
-                  expNode.exp2, environment, state.valRef
+                let val = this.evaluateExpression(
+                  expNode.exp2, environment, exp2State
                 );
-                if (val === UNDEFINED) val = undefined;
                 let newVal;
                 if (typeof prevVal === "string" || typeof val === "string") {
                   newVal = getString(prevVal, environment) +
@@ -1013,10 +1038,9 @@ export class ScriptInterpreter {
           case "-=":
             ret = this.assignToVariableOrMember(
               expNode.exp1, environment, prevVal => {
-                if (val === undefined) val = this.evaluateExpression(
-                  expNode.exp2, environment, state.valRef
+                let val = this.evaluateExpression(
+                  expNode.exp2, environment, exp2State
                 );
-                if (val === UNDEFINED) val = undefined;
                 let newVal = parseFloat(prevVal) - parseFloat(val);
                 return [newVal, newVal];
               }
@@ -1025,10 +1049,9 @@ export class ScriptInterpreter {
           case "*=":
             ret = this.assignToVariableOrMember(
               expNode.exp1, environment, prevVal => {
-                if (val === undefined) val = this.evaluateExpression(
-                  expNode.exp2, environment, state.valRef
+                let val = this.evaluateExpression(
+                  expNode.exp2, environment, exp2State
                 );
-                if (val === UNDEFINED) val = undefined;
                 let newVal = parseFloat(prevVal) * parseFloat(val);
                 return [newVal, newVal];
               }
@@ -1037,56 +1060,31 @@ export class ScriptInterpreter {
           case "/=":
             ret = this.assignToVariableOrMember(
               expNode.exp1, environment, prevVal => {
-                if (val === undefined) val = this.evaluateExpression(
-                  expNode.exp2, environment, state.valRef
+                let val = this.evaluateExpression(
+                  expNode.exp2, environment, exp2State
                 );
-                if (val === UNDEFINED) val = undefined;
                 let newVal = parseFloat(prevVal) / parseFloat(val);
                 return [newVal, newVal];
               }
             );
             break;
           case "&&=":
-            ret = this.assignToVariableOrMember(
-              expNode.exp1, environment, prevVal => {
-                if (!prevVal) {
-                  return [prevVal, prevVal];
-                }
-                else {
-                  if (val === undefined) val = this.evaluateExpression(
-                    expNode.exp2, environment, state.valRef
-                  );
-                  return [val, val];
-                }
-              }
-            );
-            break;
           case "||=":
-            ret = this.assignToVariableOrMember(
-              expNode.exp1, environment, prevVal => {
-                if (prevVal) {
-                  return [prevVal, prevVal];
-                }
-                else {
-                  if (val === undefined) val = this.evaluateExpression(
-                    expNode.exp2, environment, state.valRef
-                  );
-                  return [val, val];
-                }
-              }
-            );
-            break;
           case "??=":
             ret = this.assignToVariableOrMember(
               expNode.exp1, environment, prevVal => {
-                if (prevVal !== undefined && prevVal !== null) {
+                if (
+                  op === "&&=" && !prevVal ||
+                  op === "||=" &&  prevVal ||
+                  op === "??=" &&  prevVal !== undefined && prevVal !== null
+                ) {
                   return [prevVal, prevVal];
                 }
                 else {
-                  if (val === undefined) val = this.evaluateExpression(
-                    expNode.exp2, environment, state.valRef
+                  let newVal = this.evaluateExpression(
+                    expNode.exp2, environment, exp2State
                   );
-                  return [val, val];
+                  return [newVal, newVal];
                 }
               }
             );
@@ -1099,20 +1097,12 @@ export class ScriptInterpreter {
         break;
       }
       case "conditional-expression": {
-        state.condValRef ??= [];
-        let condVal = state.condValRef[0];
-        if (condVal === undefined) condVal = this.evaluateExpression(
-          expNode.cond, environment, state.condValRef
-        );
-        if (condVal === UNDEFINED) condVal = undefined;
+        let condState = state ? state.condState ??= {} : undefined;
+        let expState = state ? state.expState ??= {} : undefined;
+        let cond = expNode.cond;
+        let condVal = this.evaluateExpression(cond, environment, condState);
         let exp = condVal ? expNode.exp1 : expNode.exp2;
-        state.retValRef ??= [];
-        let retVal = state.retValRef[0];
-        if (retVal === undefined) retVal = this.evaluateExpression(
-          exp, environment, state.retValRef
-        );
-        if (retVal === UNDEFINED) retVal = undefined;
-        ret = retVal;
+        ret = this.evaluateExpression(exp, environment, expState);
         break;
       }
       case "or-expression":
@@ -1126,6 +1116,7 @@ export class ScriptInterpreter {
       case "relational-expression":
       case "additive-expression":
       case "multiplicative-expression": {
+        let condState = state ? state.condState ??= {} : undefined;
         let children = expNode.children;
         state.accRef ??= [];
         let acc = state.accRef[0];
@@ -1705,15 +1696,11 @@ export class ScriptInterpreter {
 
 
   assignToParameter(
-    paramExp, val, environment, isDeclaration, isConst, valRef = undefined
+    paramExp, val, environment, isDeclaration, isConst, state = undefined
   ) {
     let targetExp = paramExp.targetExp;
     if (val === undefined && paramExp.defaultExp) {
-      val = valRef ? valRef[0] : undefined;
-      if (val === undefined) val = this.evaluateExpression(
-        paramExp.defaultExp, environment, valRef
-      );
-      if (val === UNDEFINED) val = undefined;
+      val = this.evaluateExpression(paramExp.defaultExp, environment, state);
     }
     let type = targetExp.type
     if (type === "identifier") {
