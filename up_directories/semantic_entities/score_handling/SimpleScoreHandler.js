@@ -11,10 +11,14 @@ import {getSequentialPromise} from 'promise';
 
 export class SimpleScoreHandler {
   
-  constructor(aggregator, fetchUserGroup, fetchUserGroupsForUpdate, desc) {
+  constructor(
+    aggregator, fetchUserGroup, fetchUserGroupsForUpdate, moderatorGroupKey,
+    desc
+  ) {
     this.aggregator = aggregator;
     this.fetchUserGroup = fetchUserGroup;
     this.fetchUserGroupsForUpdate = fetchUserGroupsForUpdate;
+    this.moderatorGroupKey = moderatorGroupKey;
     this["Description"] = desc;
   }
 
@@ -80,13 +84,35 @@ export class SimpleScoreHandler {
     });
   }
 
-
-  fetchTopEntry(qualKey, options = {}) {
-    return new Promise(resolve => {
-      this.fetchList(qualKey, options).then(
-        ([topEntry] = []) => resolve(topEntry)
-      );
-    });
+  // Here we introduce a custom option, 'moderate', which when set for
+  // fetchTopEntry() will also query the moderator group for the same quality,
+  // and take the top entry of the original list that is also rated above a
+  // certain threshold by the moderator group. And this threshold is given by
+  // 'threshold' option on the form [minScore = 0, minWeight = 0].
+  async fetchTopEntry(qualKey, options = {}) {
+    let {moderate, threshold = []} = options;
+    if (!moderate) {
+      let list = await this.fetchList(qualKey, options) ?? [];
+      let [topEntry] = list;
+      return topEntry;
+    } else {
+      let [list = [], moderatedList = []] = await Promise.all([
+        this.fetchList(qualKey, options),
+        this.fetchList(qualKey, {userGroup: this.userGroupKey})
+      ]);
+      let [minScore = 0, minWeight = 0] = threshold;
+      let len = list.length;
+      for (let i = 0; i < len; i++) {
+        let entry = list[i];
+        let moderatorEntry = getMatchingEntry(entry, moderatedList);
+        if (
+          moderatorEntry &&
+          moderatorEntry[1] > minScore && moderatorEntry[2] > minWeight
+        ) {
+          return entry;
+        }
+      }
+    }
   }
 
 
@@ -176,6 +202,19 @@ export class SimpleScoreHandler {
     return <div>
       {"No settings menu implemented yet for the current score handler."}
     </div>;
+  }
+
+}
+
+
+export function getMatchingEntry(entry, list) {
+  let [id] = entry;
+  let len = list.length;
+  for (let i = 0; i < len; i++) {
+    let otherEntry = list[i];
+    if (otherEntry[0] === id) {
+      return otherEntry;
+    }
   }
 
 }

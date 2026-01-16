@@ -53,7 +53,8 @@ export function render(props) {
   else if (topEntry === undefined) {
     if (!topEntryIsFetching) {
       this.setState(state => ({...state, topEntryIsFetching: true}));
-      scoreHandler.fetchTopEntry(entityPageQualPath).then(topEntry => {
+      let options = {moderate: true};
+      scoreHandler.fetchTopEntry(entityPageQualPath, options).then(topEntry => {
         this.setState(state => ({...state, topEntry: topEntry ?? false}));
       });
     }

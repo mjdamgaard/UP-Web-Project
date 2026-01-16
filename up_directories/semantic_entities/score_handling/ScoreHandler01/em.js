@@ -280,6 +280,7 @@ export const scoreHandler01 = new SimpleScoreHandler(
   meanAggregator,
   fetchUserGroup,
   fetchUserGroupsForUpdate,
+  undefined,
   <div>{"TODO: Make."}</div>
 );
 
@@ -355,6 +356,7 @@ export const scoreHandler02 = new SimpleScoreHandler(
   zeroBiasedMeanAggregator,
   fetchUserGroup2,
   fetchUserGroupsForUpdate2,
+  abs("./em.js;get/initialModeratorGroup"),
   <div>
     <h1>{"A simple score handler"}</h1>
     <p>{

@@ -40,7 +40,8 @@ export function render(props) {
   // Else if the quality path is ready, but the top entry has not yet been
   // fetched, do that.
   else if (topEntry === undefined) {
-    scoreHandler.fetchTopEntry(relQualPath).then(topEntry => {
+    let options = {moderate: true};
+    scoreHandler.fetchTopEntry(relQualPath, options).then(topEntry => {
       this.setState(state => ({...state, topEntry: topEntry ?? false}));
     });
     content = <div className="fetching">{"..."}</div>;

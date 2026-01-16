@@ -655,7 +655,8 @@ export class ScriptInterpreter {
       }
       catch (err) {
         if (err instanceof AwaitException) {
-          await err.whenReady;
+          err = await err.whenReady;
+          if (err) throw err;
         }
         else throw err;
       }
@@ -703,6 +704,7 @@ export class ScriptInterpreter {
   // the current state of the given statement when it is only partially
   // executed due to awaiting an expression.   
   executeStatement(stmtNode, environment, state = {}, resolve = undefined) {
+    decrCompGas(stmtNode, environment);
     try {
       this.#executeStatement(stmtNode, environment, state);
       if (resolve) resolve();
@@ -711,7 +713,16 @@ export class ScriptInterpreter {
       if (err instanceof AwaitException) {
         let whenReady = new Promise(resolve => {
           err.whenReady.then(() => {
-            this.executeStatement(stmtNode, environment, state, resolve);
+            try {
+              this.executeStatement(stmtNode, environment, state, resolve);
+            }
+            catch (err) {
+              if (err instanceof AwaitException) {
+                err.whenReady.then(err => resolve(err));
+              } else {
+                resolve(err);
+              }
+            }
           });
         });
         throw new AwaitException(whenReady, err.node, err.environment);
@@ -721,8 +732,6 @@ export class ScriptInterpreter {
   }
 
   #executeStatement(stmtNode, environment, state) {
-    decrCompGas(stmtNode, environment);
-
     let type = stmtNode.type;
     switch (type) {
       case "block-statement": {
@@ -869,18 +878,23 @@ export class ScriptInterpreter {
         catch (err) {
           state.err = err;
           if (err instanceof Exception) {
-            let catchEnv = state.catchEnv;
-            if (!catchEnv) {
-              catchEnv = state.catchEnv = new Environment(environment);
-              catchEnv.declare(stmtNode.ident, err.val, false, stmtNode);
+            try {
+              let catchEnv = state.catchEnv;
+              if (!catchEnv) {
+                catchEnv = state.catchEnv = new Environment(environment);
+                catchEnv.declare(stmtNode.ident, err.val, false, stmtNode);
+              }
+              let j = state.j ??= 0;
+              let stmtArr = stmtNode.catchStmtArr;
+              let len = stmtArr.length;
+              while (j < len) {
+                state.j++;
+                this.executeStatement(stmtArr[j], catchEnv);
+                j++;
+              }
             }
-            let j = state.j ??= 0;
-            let stmtArr = stmtNode.catchStmtArr;
-            let len = stmtArr.length;
-            while (j < len) {
-              state.j++;
-              this.executeStatement(stmtArr[j], catchEnv);
-              j++;
+            catch (err) {
+              throw (err.val === state.err.val) ? state.err : err;
             }
           }
           else throw err;
@@ -902,11 +916,18 @@ export class ScriptInterpreter {
       }
       case "variable-declaration": {
         let isConst = stmtNode.isConst;
-        stmtNode.children.forEach(paramExp => {
+        state.valRefArr ??= [];
+        let i = state.i ??= 0;
+        let len = stmtNode.children.length;
+        while (i < len) {
+          state.i++;
+          let paramExp = stmtNode.children[i];
+          let valRef = state.valRefArr[i] ??= [];
           this.assignToParameter(
-            paramExp, undefined, environment, true, isConst
+            paramExp, undefined, environment, true, isConst, valRef
           );
-        });
+          i++;
+        }
         break;
       }
       case "function-declaration": {
@@ -976,7 +997,7 @@ export class ScriptInterpreter {
     try {
       let val = this.#evaluateExpression(expNode, environment, state);
       if (valRef) valRef[0] = (val !== undefined) ? val : UNDEFINED;
-      if (resolve) resolve(val);
+      if (resolve) resolve();
       return val;
     }
     catch (err) {
@@ -987,9 +1008,18 @@ export class ScriptInterpreter {
         );
         let whenReady = new Promise(resolve => {
           err.whenReady.then(() => {
-            this.evaluateExpression(
-              expNode, environment, valRef, state, resolve
-            );
+            try {
+              this.evaluateExpression(
+                expNode, environment, valRef, state, resolve
+              );
+            }
+            catch (err) {
+              if (err instanceof AwaitException) {
+                err.whenReady.then(err => resolve(err));
+              } else {
+                resolve(err);
+              }
+            }
           });
         });
         throw new AwaitException(whenReady, err.node, err.environment);
@@ -1149,9 +1179,6 @@ export class ScriptInterpreter {
         if (retVal === UNDEFINED) retVal = undefined;
         return retVal;
       }
-      // TODO: Continue impl. async handling for the following expression
-      // types (and until then, 'await' will just fail in the following
-      // expressions).
       case "or-expression":
       case "and-expression":
       case "and-expression":
@@ -1164,24 +1191,47 @@ export class ScriptInterpreter {
       case "additive-expression":
       case "multiplicative-expression": {
         let children = expNode.children;
-        let acc = this.evaluateExpression(children[0], environment);
+        state.accRef ??= [];
+        let acc = state.accRef[0];
+        if (acc === undefined) acc = this.evaluateExpression(
+          children[0], environment, state.accRef
+        );
+        if (acc === UNDEFINED) acc = undefined;
+        state.nextValRef ??= [];
         let lastOpIndex = children.length - 2;
         for (let i = 0; i < lastOpIndex; i += 2) {
           let op = children[i + 1];
           let nextChild = children[i + 2];
-          let nextVal;
+          let nextVal = state.nextValRef[0];
           if (op !== "||" && op !== "??" && op !== "&&") {
-            nextVal = this.evaluateExpression(nextChild, environment);
+            if (nextVal === undefined) nextVal = this.evaluateExpression(
+              nextChild, environment, state.nextValRef
+            );
+            state.accRef[0] = (nextVal === undefined) ? UNDEFINED : nextVal;
+            if (nextVal === UNDEFINED) nextVal = undefined;
+            state.nextValRef[0] = undefined;
           }
           switch (op) {
             case "||":
-              acc = acc || this.evaluateExpression(nextChild, environment);
-              break;
             case "??":
-              acc = acc ?? this.evaluateExpression(nextChild, environment);
-              break;
             case "&&":
-              acc = acc && this.evaluateExpression(nextChild, environment);
+              if (
+                op === "||" && acc ||
+                op === "??" && acc !== undefined && acc !== null ||
+                op === "&&" && !acc
+              ) {
+                state.accRef[0] = (acc === undefined) ? UNDEFINED : acc;
+                state.nextValRef[0] = undefined;
+              }
+              else {
+                if (nextVal === undefined) nextVal = this.evaluateExpression(
+                  nextChild, environment, state.nextValRef
+                );
+                if (nextVal === UNDEFINED) nextVal = undefined;
+                acc = nextVal;
+                state.accRef[0] = (nextVal === undefined) ? UNDEFINED : nextVal;
+                state.nextValRef[0] = undefined;
+              }
               break;
             case "|":
               acc = parseInt(acc) | parseInt(nextVal);
@@ -1261,8 +1311,18 @@ export class ScriptInterpreter {
         return acc;
       }
       case "exponential-expression": {
-        let root = this.evaluateExpression(expNode.root, environment);
-        let exp = this.evaluateExpression(expNode.exp, environment);
+        state.rootRef ??= [];
+        let root = state.rootRef[0];
+        if (root === undefined) root = this.evaluateExpression(
+          expNode.root, environment, state.rootRef
+        );
+        if (root === UNDEFINED) root = undefined;
+        state.expRef ??= [];
+        let exp = state.expRef[0];
+        if (exp === undefined) exp = this.evaluateExpression(
+          expNode.exp, environment, state.expRef
+        );
+        if (exp === UNDEFINED) exp = undefined;
         return root ** exp;
       }
       case "prefix-expression": {
@@ -1293,7 +1353,12 @@ export class ScriptInterpreter {
               }
             );
         }
-        let val = this.evaluateExpression(expNode.exp, environment);
+        state.valRef ??= [];
+        let val = state.valRef[0];
+        if (val === undefined) val = this.evaluateExpression(
+          expNode.exp, environment, state.valRef
+        );
+        if (val === UNDEFINED) val = undefined;
         switch (op) {
           case "!":
             return !val;
@@ -1308,8 +1373,23 @@ export class ScriptInterpreter {
           case "void":
             return void val;
           case "await":
-            if (val instanceof PromiseObject) {
-              throw new AwaitException(val.promise, expNode, environment);
+            let [result] = state.resultRef ??= []
+            if (result !== undefined) {
+              if (result instanceof ErrorWrapper) {
+                throw result.val;
+              }
+              else {
+                return (result === UNDEFINED) ? undefined : result;
+              }
+            }
+            else if (val instanceof PromiseObject) {
+              let whenReady = val.promise.then(result => {
+                state.resultRef[0] = (result === undefined) ?
+                  UNDEFINED : result;
+                return (result instanceof ErrorWrapper) ?
+                  result.val : undefined;
+              });
+              throw new AwaitException(whenReady, expNode, environment);
             }
             else throw new RuntimeError(
               "Awaiting a non-promise value: " + getString(val, environment),
@@ -1364,6 +1444,9 @@ export class ScriptInterpreter {
           );
         }
       }
+      // TODO: Continue impl. async handling for the following expression
+      // types (and until then, 'await' will just fail in the following
+      // expressions).
       case "chained-expression": {
         let val;
         try {
@@ -1643,10 +1726,16 @@ export class ScriptInterpreter {
   }
 
 
-  assignToParameter(paramExp, val, environment, isDeclaration, isConst) {
+  assignToParameter(
+    paramExp, val, environment, isDeclaration, isConst, valRef = undefined
+  ) {
     let targetExp = paramExp.targetExp;
     if (val === undefined && paramExp.defaultExp) {
-      val = this.evaluateExpression(paramExp.defaultExp, environment);
+      val = valRef ? valRef[0] : undefined;
+      if (val === undefined) val = this.evaluateExpression(
+        paramExp.defaultExp, environment, valRef
+      );
+      if (val === UNDEFINED) val = undefined;
     }
     let type = targetExp.type
     if (type === "identifier") {
@@ -3088,21 +3177,27 @@ class ThenFunction extends DevFunction {
         let newPromise = new Promise(resolve => {
           thisPromObj.promise.then(result => {
             let handlerFun = onFulfilledFun;
+            let val = result;
             if (result instanceof ErrorWrapper) {
               if (!onRejectedFun) {
                 return resolve(result);
               }
               handlerFun = onRejectedFun;
-              result = result.val;
+              val = result.val;
+              if (val instanceof Exception) {
+                val = val.val;
+              }
+              else throw val;
             }
             let newResult;
             try {
               newResult = interpreter.executeFunction(
-                handlerFun, [result], callerNode, execEnv
+                handlerFun, [val], callerNode, execEnv
               );
             }
             catch (err) {
-              newResult = new ErrorWrapper(err);
+              newResult = (result instanceof ErrorWrapper && err.val === val) ?
+                result : new ErrorWrapper(err);
             }
             if (newResult instanceof PromiseObject) {
               newResult.promise.then(res => resolve(res));
