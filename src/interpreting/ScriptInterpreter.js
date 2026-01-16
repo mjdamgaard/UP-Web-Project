@@ -1116,50 +1116,51 @@ export class ScriptInterpreter {
       case "relational-expression":
       case "additive-expression":
       case "multiplicative-expression": {
-        let condState = state ? state.condState ??= {} : undefined;
         let children = expNode.children;
-        state.accRef ??= [];
-        let acc = state.accRef[0];
-        if (acc === undefined) acc = this.evaluateExpression(
-          children[0], environment, state.accRef
+        if (state) {
+          state.i ??= 0;
+          state.firstExpState ??= {};
+          state.nextExpState ??= {};
+        }
+        let i = state?.i ?? 0;
+        let acc = this.evaluateExpression(
+          children[0], environment, state?.firstExpState
         );
-        if (acc === UNDEFINED) acc = undefined;
-        state.nextValRef ??= [];
+        if (state) state.acc = acc = state.acc ?? acc;
         let lastOpIndex = children.length - 2;
-        for (let i = 0; i < lastOpIndex; i += 2) {
+        let nextVal;
+        for ( ; i < lastOpIndex; i += 2) {
+          if (state) state.i = i;
           let op = children[i + 1];
           let nextChild = children[i + 2];
-          let nextVal = state.nextValRef[0];
-          if (op !== "||" && op !== "??" && op !== "&&") {
-            if (nextVal === undefined) nextVal = this.evaluateExpression(
-              nextChild, environment, state.nextValRef
-            );
-            state.accRef[0] = (nextVal === undefined) ? UNDEFINED : nextVal;
-            if (nextVal === UNDEFINED) nextVal = undefined;
-            state.nextValRef[0] = undefined;
+
+          // If the operator has short-circuiting, only evaluate the expression
+          // if needed.
+          if (op === "||" || op === "??" || op === "&&") {
+            if (
+              op === "||" && acc ||
+              op === "??" && acc !== undefined && acc !== null ||
+              op === "&&" && !acc
+            ) {
+              continue;
+            }
+            else {
+              acc = this.evaluateExpression(
+                nextChild, environment, state?.nextExpState
+              );
+              if (state) {
+                state.nextExpState = {};
+                state.acc = acc;
+              }
+              continue;
+            }
           }
+
+          // Else evaluate the next expression and compute the new acc.
+          nextVal = this.evaluateExpression(
+            nextChild, environment, state?.nextExpState
+          );
           switch (op) {
-            case "||":
-            case "??":
-            case "&&":
-              if (
-                op === "||" && acc ||
-                op === "??" && acc !== undefined && acc !== null ||
-                op === "&&" && !acc
-              ) {
-                state.accRef[0] = (acc === undefined) ? UNDEFINED : acc;
-                state.nextValRef[0] = undefined;
-              }
-              else {
-                if (nextVal === undefined) nextVal = this.evaluateExpression(
-                  nextChild, environment, state.nextValRef
-                );
-                if (nextVal === UNDEFINED) nextVal = undefined;
-                acc = nextVal;
-                state.accRef[0] = (nextVal === undefined) ? UNDEFINED : nextVal;
-                state.nextValRef[0] = undefined;
-              }
-              break;
             case "|":
               acc = parseInt(acc) | parseInt(nextVal);
               break;
@@ -1234,23 +1235,20 @@ export class ScriptInterpreter {
               `operator: "${op}"`
             );
           }
+          if (state) {
+            state.nextExpState = {};
+            state.acc = acc;
+          }
         }
         ret = acc;
         break;
       }
       case "exponential-expression": {
-        state.rootRef ??= [];
-        let root = state.rootRef[0];
-        if (root === undefined) root = this.evaluateExpression(
-          expNode.root, environment, state.rootRef
-        );
-        if (root === UNDEFINED) root = undefined;
-        state.expRef ??= [];
-        let exp = state.expRef[0];
-        if (exp === undefined) exp = this.evaluateExpression(
-          expNode.exp, environment, state.expRef
-        );
-        if (exp === UNDEFINED) exp = undefined;
+        let rootState = state ? state.rootState ??= {} : undefined;
+        let expState = state ? state.expState ??= {} : undefined;
+        let rootExp = expNode.root, expExp = expNode.exp;
+        let root = this.evaluateExpression(rootExp, environment, rootState);
+        let exp = this.evaluateExpression(expExp, environment, expState);
         ret = root ** exp;
         break;
       }
@@ -1284,10 +1282,8 @@ export class ScriptInterpreter {
           );
           break;
         }
-        if (state) state.valState ??= {};
-        let val = this.evaluateExpression(
-          expNode.exp, environment, state.valState
-        );
+        let expState = state ? state.expState ??= {} : undefined;
+        let val = this.evaluateExpression(expNode.exp, environment, expState);
         switch (op) {
           case "!":
             ret = !val;
@@ -1408,13 +1404,8 @@ export class ScriptInterpreter {
         break;
       }
       case "grouped-expression": {
-        state.retValRef ??= [];
-        let retVal = state.retValRef[0];
-        if (retVal === undefined) retVal = this.evaluateExpression(
-          expNode.exp, environment, state.retValRef
-        );
-        if (retVal === UNDEFINED) retVal = undefined;
-        ret = retVal;
+        let expState = state ? state.expState ??= {} : undefined;
+        ret = this.evaluateExpression(expNode.exp, environment, expState);
         break;
       }
       case "array": {
