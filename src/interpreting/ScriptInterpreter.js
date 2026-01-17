@@ -698,7 +698,7 @@ export class ScriptInterpreter {
         if (state) {
           state.env ??= newEnv;
           state.i ??= 0;
-          state.children ??= stmtArr.map(() => {});
+          state.children ??= stmtArr.map(() => ({}));
         }
         let i = state?.i ?? 0;
         let len = stmtArr.length;
@@ -740,7 +740,6 @@ export class ScriptInterpreter {
           this.executeStatement(stmtNode.dec, newEnv, state?.decStmtState);
         }
         let isFirstIteration = state?.isFirstIteration ?? true;
-        state.condValRef ??= [];
         while (true) {
           if (
             !(stmtNode.doFirst && isFirstIteration) &&
@@ -798,7 +797,7 @@ export class ScriptInterpreter {
           if (state) {
             state.env ??= newEnv;
             state.i ??= 0;
-            state.children ??= stmtArr.map(() => {});
+            state.children ??= stmtArr.map(() => ({}));
           }
           let i = state?.i ?? 0;
           let len = stmtArr.length;
@@ -840,11 +839,11 @@ export class ScriptInterpreter {
         try {
           if (state.err) throw state.err;
           let tryEnv = state?.tryEnv ?? new Environment(environment);
-          let stmtArr = stmtNode.stmtArr;
+          let stmtArr = stmtNode.tryStmtArr;
           if (state) {
             state.tryEnv ??= tryEnv;
             state.i ??= 0;
-            state.tryChildren ??= stmtArr.map(() => {});
+            state.tryChildren ??= stmtArr.map(() => ({}));
           }
           let i = state?.i ?? 0;
           let len = stmtArr.length;
@@ -868,7 +867,7 @@ export class ScriptInterpreter {
               let stmtArr = stmtNode.catchStmtArr;
               if (state) {
                 state.j ??= 0;
-                state.catchChildren ??= stmtArr.map(() => {});
+                state.catchChildren ??= stmtArr.map(() => ({}));
               }
               let j = state?.j ?? 0;
               let len = stmtArr.length;
@@ -906,7 +905,7 @@ export class ScriptInterpreter {
         let paramExpArr = stmtNode.children;
         if (state) {
           state.i ??= 0;
-          state.children ??= paramExpArr.map(() => {});
+          state.children ??= paramExpArr.map(() => ({}));
         }
         let i = state?.i ?? 0;
         let len = paramExpArr.length;
@@ -1002,7 +1001,6 @@ export class ScriptInterpreter {
       case "assignment": {
         let exp2State = state ? state.exp2State ??= {} : undefined;
         let op = expNode.op;
-        if (state)
         switch (op) {
           case "=":
             ret = this.assignToVariableOrMember(
@@ -1026,8 +1024,11 @@ export class ScriptInterpreter {
                     getString(val, environment);
                 }
                 else if (
-                  typeof prevVal !== "number" || typeof val !== "number"
-                ) throw new ArgTypeError(
+                  typeof prevVal === "number" && typeof val === "number"
+                ) {
+                  newVal = prevVal + val;
+                }
+                else throw new ArgTypeError(
                   "Addition of two non-string, non-numerical values",
                   expNode, environment
                 );
@@ -1725,11 +1726,11 @@ export class ScriptInterpreter {
 
 
   assignToVariableOrMember(expNode, environment, assignFun) {
-    if(expNode.type === "identifier") {
+    if (expNode.type === "identifier") {
       return environment.assign(expNode.ident, assignFun, expNode);
     }
     else {
-      if(expNode.type !== "chained-expression") throw new RuntimeError(
+      if (expNode.type !== "chained-expression") throw new RuntimeError(
         "Invalid assignment", expNode, environment
       );
       let lastPostfix = expNode.postfixArr.at(-1);
