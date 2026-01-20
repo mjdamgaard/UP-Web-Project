@@ -48,11 +48,10 @@ export class BiasedMeanAggregator extends MeanAggregator {
 
 
 function transformScoreData(scoreData, {biasScore, biasWeight}) {
-  let newWeight = scoreData[2] + biasWeight;
   let newScore = (
     scoreData[1] * scoreData[2] + biasScore * biasWeight
-  ) / newWeight;
-  return [scoreData[0], newScore, newWeight, ...slice(scoreData, 3)];
+  ) / (scoreData[2] + biasWeight);
+  return [scoreData[0], newScore, scoreData[2], ...slice(scoreData, 3)];
 }
 
 
