@@ -10,7 +10,7 @@ export function render() {
 const indexPage = <div className="text-page">
   <h1>The User-Programmable Web</h1>
   <section>
-    <h2>Serverless computing on the next level</h2>
+    <h2>Serverless computing on a new level</h2>
     <p>
       The User-Programmable Web (UP Web) is an open-source web development
       framework that takes the concept of
@@ -19,20 +19,22 @@ const indexPage = <div className="text-page">
       >
         serverless computing
       </ELink>
-      to the next level: Not only does your application scale automatically, it
-      scales for free!
+      to the next level. Not only do applications scale automatically, they
+      scale without any cost to the developers. 
     </p>
     <p>
-      The costs of the server-side request handling and data storage for a
-      given app will thus not be paid for by its developers. Instead the costs
-      are paid for by the users of the app, who pay either by watching ads or
-      via a monthly subscription.
+      The cost of the resources that the apps consume is instead paid for by
+      the users of those apps, who pay either by watching ads on the website on
+      which the apps are hosted, or via subscription to the website.
     </p>
     <p>
-      Furthermore, up-web.org will function as a nonprofit organization with
-      the goal of maximizing the benefit for the users of the UP Web. All
-      profits will thus go towards rewarding the open-source developers of the
-      UP Web, along with content creators and other contributors.    
+      Furthermore, the organization behind up-web.org will function as a
+      nonprofit, and its goal will be to maximize the benefit of the users of
+      the UP Web.  
+    </p>
+    <p>
+      All profits will thus go towards rewarding the open source developers of
+      the UP Web, along with content creators and other contributors.    
     </p>
   </section>
 
@@ -47,16 +49,16 @@ const indexPage = <div className="text-page">
       In fact, up-web.org encourages this kind of competition from other
       service providers, and vows to
       always try to make it as easy as possible for developers and users to
-      transfer their apps and app data to other such service providers.
+      transfer their apps and data to other service providers.
     </p>
     <p>
       So if anyone has complaints about how up-web.org functions, or how it
-      distributes rewards to the contributors, the are free to set up a
-      competitor that aims to do things differently. 
+      redistributes its profits to the contributors, they are completely free
+      to set up a competitor that aims to do things differently. 
     </p>
     <p>
       And apart from allowing for free data portability,
-      up-web.org also vows to allow apps to communicate freely between different
+      up-web.org also vows to allow apps to communicate freely across different
       service providers. This means that apps can potentially extend over
       several service providers at once, and utilize all the different user
       networks as one combined network.
@@ -70,11 +72,14 @@ const indexPage = <div className="text-page">
       <ILink key="link-tut-1" href="/tutorials">
         {"Tutorials"}
       </ILink>
-      page you will find a list of tutorials to get you started. By the end of
-      the first tutorial, you will have learned how to upload simple
+      page you will find a list of tutorials to get you started.
+    </p>
+    <p>
+      By the end of
+      the first tutorial, you will have learned how to upload a simple
       "Hello, World!" app. And the next couple of tutorials will teach you how
-      to style your app, and how to make it responsive, as well as how to
-      upload and download data from the database. 
+      to style your apps, how to make them responsive, and how to
+      make them upload and download data from the database.
     </p>
     <p>
       In fact, by the end of
@@ -85,8 +90,7 @@ const indexPage = <div className="text-page">
       you and other users can communicate, privately or publicly.
     </p>
     <p>
-      The development framework provided for this is a JS framework that is
-      inspired from
+      The development framework that is provided is a JS framework inspired by
       <ELink key="link-w3-react"
         href="https://www.w3schools.com/react/default.asp"
       >
@@ -97,7 +101,7 @@ const indexPage = <div className="text-page">
     </p>
     <p>
       And once you have uploaded a new app or webpage, it will in theory stay
-      up forever.
+      up forever, until you modify or delete it.
     </p>
     <p>
       That is, unless your app breaks our terms of service, of
@@ -153,25 +157,29 @@ const indexPage = <div className="text-page">
     <h2>From Web 2.0 to Web 3.0</h2>
     <p>
       The change from
-      <ELink key="link-web-1.0"
+      {/* <ELink key="link-web-1.0"
         href="https://en.wikipedia.org/wiki/Web_2.0#Web_1.0"
       >
         Web 1.0
-      </ELink>
+      </ELink> */}
+      Web 1.0
       to
       <ELink key="link-web-2.0" href="https://en.wikipedia.org/wiki/Web_2.0">
         Web 2.0
       </ELink>
-      meant the emergence of websites where the users are to a large extent
-      responsible for the content on the site.
-      The structure and appearance of
-      the Web 2.0 sites are still, however, a responsibility solely of the
-      owners of the websites, and the same is true for the algorithms.
+      meant the emergence of websites where the users are
+      responsible for the content shown on the sites to a large extent.
     </p>
     <p>
-      In a way, the UP Web is the natural next step in this process, allowing
-      users to upload apps and app components to the websites, and to help
-      program their algorithms. 
+      The structure and appearance of
+      these websites are still, however, a responsibility solely of the
+      owners of the websites, and the same is true for the algorithms that
+      they use.
+    </p>
+    <p>
+      The UP Web seeks to go one step further in this process, and allow
+      users to help program the apps for the websites as well, including their
+      algorithms.
     </p>
     <p>
       And in the same way that content creators are often rewarded monetarily
@@ -189,20 +197,18 @@ const indexPage = <div className="text-page">
     </p>
     <p>
       Instead we will give each individual user the freedom to choose for
-      themselves. Not only are they free to choose which apps they want
-      to use, but also which version of each individual app they want to use.
+      themselves. And not only will they be free to choose which set of apps
+      they want to use, but also which version of each individual app to use.
     </p>
     <p>
-      We also encourage our app-developing users to make it possible for the
-      users of their apps to choose and adjust the algorithms of the app to
-      their needs. This way, users will also be able to choose whichever
-      algorithms suits them the best.
+      We also strongly encourage our app-developing users to make it possible
+      for the users of these apps to be able to change and adjust the
+      algorithms that they use.
     </p>
     <p>
-      Each user of up-web.org will thus start out with with the most popular
-      set of apps and algorithms as the default choice. This choice might be
-      be fine for a lot of users, but if not, they can can change their
-      selection at any time.
+      Each user of up-web.org will thus start out with the most popular
+      set of apps and algorithms as the default choice. And if they want to,
+      they are then free to change this choice at any time.
     </p>
   </section>
 
@@ -220,7 +226,7 @@ const indexPage = <div className="text-page">
       excited about the UP Web as a user.
     </p>
 
-    <h3>Make it easier to limit your screen time</h3>
+    <h4>1. Make it easier to limit your screen time</h4>
     <p>
       When you are in charge the algorithms that you use, you do not have to
       choose algorithms that are optimized for maximizing your screen time.
@@ -232,7 +238,7 @@ const indexPage = <div className="text-page">
       trying to funnel you into a dopamine trap.
     </p>
 
-    <h3>Filter out inappropriate content</h3>
+    <h4>2. Filter out inappropriate content</h4>
     <p>
       When algorithms are only optimized to maximize your engagement,
       they are incentivized to push new content very quickly to a large group
@@ -252,7 +258,7 @@ const indexPage = <div className="text-page">
       to give out rewards to users for doing this work.
     </p>
 
-    <h3>Avoid misinformation</h3>
+    <h4>3. Avoid misinformation</h4>
     <p>
       When algorithms are only optimized to maximize engagement, they are
       also not incentivized to try to filter out content that spreads
@@ -273,7 +279,7 @@ const indexPage = <div className="text-page">
     </p>
 
 
-    <h3>Suppress rude and nonconstructive posts and comments</h3>
+    <h4>4. Suppress rude and nonconstructive posts and comments</h4>
     <p>
       Another downside of using existing web apps whose algorithms seek to
       maximize user engagement is that this has the effect of boosting
@@ -299,12 +305,12 @@ const indexPage = <div className="text-page">
       However, when the algorithms are user-programmed, and are not
       trying to optimize for engagement at all cost, it is a rather simple
       matter to give the users the option to rate posts and comments on an
-      earnest-to-rude scale, and to have the algorithms
-      strongly suppress the users that tends to be nonconstructive in their
-      posts and comments.
+      scale from being nonconstructive to being earnest, and to have the
+      algorithms strongly suppress the users that tends to be nonconstructive
+      in their posts and comments.
     </p>
 
-    <h3>Filter out AI slop and clickbait</h3>
+    <h4>5. Filter out AI slop and clickbait</h4>
     <p>
       The contemporary algorithms that only try to maximize watch time
       and user engagement are also effectively blind to whether the given
@@ -318,7 +324,7 @@ const indexPage = <div className="text-page">
       to subsequently suppress that post.
     </p>
 
-    <h3>Control what data the algorithms collect</h3>
+    <h4>6. Control what data the algorithms collect</h4>
     <p>
       Another issue with contemporary web apps is that they are often not
       very transparent about what data they collect about you.
