@@ -23,9 +23,9 @@ const indexPage = <div className="text-page">
       scale without any cost to the developers. 
     </p>
     <p>
-      The cost of the resources that the apps consume is instead paid for by
-      the users of those apps, who pay either by watching ads on the website on
-      which the apps are hosted, or via subscription to the website.
+      The cost of the resources that an app consumes is instead paid for by
+      the users of that app, who pay either by watching ads on the website on
+      which the app is hosted, or via subscription to the website.
     </p>
     <p>
       Furthermore, the organization behind up-web.org will function as a
@@ -42,7 +42,7 @@ const indexPage = <div className="text-page">
     <h2>Open source and free data portability</h2>
     <p>
       The fact that the UP Web is an open source project means that anyone is
-      also free to set up their own versions of up-web.org, and to modify the
+      free to set up their own versions of up-web.org, and to modify the
       source code at will.
     </p>
     <p>
@@ -68,11 +68,11 @@ const indexPage = <div className="text-page">
   <section>
     <h2>Easy to get started</h2>
     <p>
-      It is easy get started making your first user-programmed (UP) app. On the
+      It is easy get started making your first user-programmed app. On the
       <ILink key="link-tut-1" href="/tutorials">
         {"Tutorials"}
       </ILink>
-      page you will find a list of tutorials to get you started.
+      page you will find a list of tutorials that will teach you how.
     </p>
     <p>
       By the end of
@@ -106,7 +106,7 @@ const indexPage = <div className="text-page">
     <p>
       That is, unless your app breaks our terms of service, of
       course, which involves adhering to the GDPR, as well as not trying to
-      scam other users, or doing any other kind of illegal activity.
+      scam other users, etc.
     </p>
   </section>
 
@@ -177,9 +177,9 @@ const indexPage = <div className="text-page">
       they use.
     </p>
     <p>
-      The UP Web seeks to go one step further in this process, and allow
-      users to help program the apps for the websites as well, including their
-      algorithms.
+      The UP Web seeks to go one step further in this process by allowing the
+      users to help program the apps for the websites as well, and help
+      decide their appearance and their algorithms.
     </p>
     <p>
       And in the same way that content creators are often rewarded monetarily
@@ -193,7 +193,7 @@ const indexPage = <div className="text-page">
     <p>
       Since the mission of up-web.org is to maximize the benefit of its users,
       there is no point in trying to force a particular set of apps and
-      algorithms on our users. 
+      algorithms on our user base. 
     </p>
     <p>
       Instead we will give each individual user the freedom to choose for
@@ -202,8 +202,7 @@ const indexPage = <div className="text-page">
     </p>
     <p>
       We also strongly encourage our app-developing users to make it possible
-      for the users of these apps to be able to change and adjust the
-      algorithms that they use.
+      for other users to change and adjust the algorithms of the apps.
     </p>
     <p>
       Each user of up-web.org will thus start out with the most popular
@@ -216,24 +215,26 @@ const indexPage = <div className="text-page">
   <section>
     <h2>Reasons to get excited about the UP Web</h2>
     <p>
-      The fact that users will be free to choose the algorithms themselves,
-      and the fact that the app-developing users are rewarded for how well
-      they benefit other users, rather than how well the benefit the profits
-      of the website, creates some very exciting prospects for the UP Web.
+      When users are free to choose the algorithms themselves,
+      and when the app-developing users are rewarded for how well
+      they benefit other users rather than how well the benefit the profits
+      of the website, the UP Web will be able to eliminate some of the
+      unfortunate circumstances that plagues the current web.
     </p>
     <p>
-      In the following subsections, we will list some reasons why to get
-      excited about the UP Web as a user.
+      In the following subsections, we will list some of the reasons
+      why to get excited about the UP Web as a user.
     </p>
 
     <h4>1. Make it easier to limit your screen time</h4>
     <p>
       When you are in charge the algorithms that you use, you do not have to
-      choose algorithms that are optimized for maximizing your screen time.
+      choose algorithms that are optimized for maximizing your watch time and
+      engagement.
     </p>
     <p>
       If you want to make it easier for yourself to limit your screen time,
-      you can instead choose algorithms that only shows you things
+      you can thus simply choose algorithms that only shows you things
       that are relevant to what you initially looked for, rather than always
       trying to funnel you into a dopamine trap.
     </p>
@@ -246,36 +247,35 @@ const indexPage = <div className="text-page">
       inappropriate or damaging content to the users.
     </p>
     <p>
-      But when you are in charge of which algorithms you use, you can make sure
-      that content is only shown to you once it has been past enough other
-      users, and where these users have been given plenty of time to report the
+      But when you are in charge of the algorithms that you use, you can make
+      sure that content is only shown to you once it has been past enough other
+      users, who have then been given plenty of time to report the
       content if it is inappropriate.  
     </p>
     <p>
-      Hopefully there will be enough (adult) users of the UP Web that wants to
-      volunteer for being among the first to see new content, and to report it
-      it is inappropriate. And more volunteers are needed, we can always start
-      to give out rewards to users for doing this work.
+      And in case there is a shortage of users who volunteer to be among the
+      first ones to see new content, and to report it it is inappropriate, we
+      will start to give out rewards to such users as a way of attracting more.
     </p>
 
     <h4>3. Avoid misinformation</h4>
     <p>
       When algorithms are only optimized to maximize engagement, they are
-      also not incentivized to try to filter out content that spreads
-      misinformation, as that kind of content also only helps increase
+      also not really incentivized to filter out content that spreads
+      misinformation, as that kind of content only helps to increase
       engagement. 
     </p>
     <p>
       But when the algorithms are instead optimized to maximize user benefit,
-      we can also filter out such content, in the same way that we can filter
-      out inappropriate content.
+      content that clearly spreads misinformation can be filtered out, in the
+      same way as for inappropriate content.
     </p>
     <p>
-      Furthermore, when facts are disputed, we can make sure that the user can
-      very clearly see this for a given piece of content, and can also
-      immediately see a list of fact-checking user groups, and/or fact-checking
-      third parties, along with the scores for how these user groups and third
-      parties have deemed the veracity of the information.
+      Furthermore, when facts are disputed, we can make sure that the user is
+      warned about this. And we can even make sure to show list of fact-checking
+      user groups and/or third parties in such cases, along with
+      the scores for how these user groups and third parties have deemed the
+      veracity of the information.
     </p>
 
 
@@ -284,27 +284,28 @@ const indexPage = <div className="text-page">
       Another downside of using existing web apps whose algorithms seek to
       maximize user engagement is that this has the effect of boosting
       negative discourse.
-      This is due to the fact that negative and rude post and comments
+      This is due to the fact that negative and disruptive posts
       often attract more engagement than earnest and constructive ones.
     </p>
     <p>
-      And whenever you reply to a rude post or comment,
-      the algorithms still see that as engagement,
+      Whenever you reply to a rude post or comment, even if you reply in
+      order to express your opposition to it,
+      the algorithms still see this as engagement,
       and will try to boost the visibility of such content in the future,
-      for you and for other users. And this is true even if you replied in
-      order to express your opposition to the post or comment. Therefore,
-      paradoxically, showing your opposition to a piece of content actually
-      helps that content.
+      for you and for other users.
+      Therefore, paradoxically, showing your opposition to a piece of content
+      actually helps that content.
     </p>
     <p>
       Furthermore, since negative post and comments are boosted by the
-      algorithms this way, it even incentivizes users who wants to be seen
-      to create even more negative content, creating a bad spiral effect.
+      algorithms in this way, users who wants more attention are thus
+      incentivized to create even more negative and disruptive content, leading
+      to a bad spiral effect.
     </p>
     <p>
       However, when the algorithms are user-programmed, and are not
       trying to optimize for engagement at all cost, it is a rather simple
-      matter to give the users the option to rate posts and comments on an
+      matter to give the users the option to rate posts and comments on a
       scale from being nonconstructive to being earnest, and to have the
       algorithms strongly suppress the users that tends to be nonconstructive
       in their posts and comments.
@@ -385,9 +386,6 @@ const indexPage = <div className="text-page">
       "only. They can also be things such as spreading awareness of the " +
       "project, which will also be very much appreciated, indeed."
     ]}</p>
-    <p>
-
-    </p>
     <p>{
       "But before you go anywhere, please note that this website is still " +
       "only a " +
