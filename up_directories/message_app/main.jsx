@@ -1,16 +1,14 @@
 
-// A test app that shows that the backend works, at least enough to have a
-// server module that governs an ATT table.
-
 import * as PostField from "./PostField.jsx";
 import * as MessageList from "./MessageList.jsx";
+
 
 export function render({userID}) {
   return (
     <div>
       <h2>{"Post a message!"}</h2>
       <PostField key="pf" userID={userID} />
-      <MessageList key="ml" />
+      <MessageList key="ml" userID={userID} />
     </div>
   );
 }
@@ -24,3 +22,8 @@ export const actions = {
     this.call("ml", "refresh");
   }
 };
+
+
+export const styleSheets = [
+  abs("./style.css"),
+];

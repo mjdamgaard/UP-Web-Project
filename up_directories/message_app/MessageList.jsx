@@ -1,26 +1,25 @@
 
-import homePath from "./.id.js";
 import {fetch} from 'query';
 import {map} from 'array';
+import * as MessageDisplay from "./MessageDisplay.jsx";
 
 
-export function render() {
-  let {msgList} = this.state;
+export function render({userID}) {
+  let {messageList} = this.state;
 
-  if (!msgList) {
+  if (!messageList) {
     this.do("refresh");
     return <div></div>;
   }
 
-  let messages = map(msgList, ([, message], ind) => (
-    <div>
-      <span>{ind + 1}{"\t"}</span>
-      <span>{message}</span>
-    </div>
+  let children = map(messageList, ([id, message, authorID]) => (
+    <MessageDisplay key={"m-" + id}
+      message={message} authorID={authorID} userID={userID} messageID={id}
+    />
   ));
   return (
-    <div>
-      {messages}
+    <div className="message-list">
+      {children}
     </div>
   );
 }
@@ -33,9 +32,9 @@ export const methods = [
 export const actions = {
   "refresh": function() {
     fetch(
-      homePath + "/posts.att/list/n/50/a/0"
-    ).then(msgList => {
-      this.setState(state => ({...state, msgList: msgList}));
+      abs("./server/messages.sm.js./callSMF/fetchMessages/1000")
+    ).then(messageList => {
+      this.setState(state => ({...state, messageList: messageList}));
     });
   },
 };

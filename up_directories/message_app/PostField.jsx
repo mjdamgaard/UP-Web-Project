@@ -1,12 +1,11 @@
 
 import {post} from 'query';
-import homePath from "./.id.js";
 import * as TextArea from 'TextArea.jsx';
 
 export function render({userID}) {
   let {response = ""} = this.state;
   return (
-    <div>
+    <div className="post-field">
       <div>
         <TextArea key="ta" onInput={dispatchCharCount}/>
       </div>
@@ -20,7 +19,7 @@ export function render({userID}) {
         let textVal = this.call("ta", "getValue");
         if (textVal) {
           post(
-            homePath + "/posts.sm.js./callSMF/postText", textVal
+            abs("./server/messages.sm.js./callSMF/postMessage"), textVal
           ).then(wasCreated => {
             if (wasCreated) {
               this.call("ta", "clear");
