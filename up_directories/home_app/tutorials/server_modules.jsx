@@ -14,7 +14,7 @@ const page = <div className="text-page">
   <section>
     <h2>{"..."}</h2>
     <p>{
-      "..."
+      "This tutorial is soon underway..."
     }</p>
     
 

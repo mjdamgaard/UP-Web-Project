@@ -90,7 +90,8 @@ const indexPage = <div className="text-page">
       you and other users can communicate, privately or publicly.
     </p>
     <p>
-      The development framework that is provided is a JS framework inspired by
+      The development framework that is provided is a JavaScript framework
+      inspired by
       <ELink key="link-w3-react"
         href="https://www.w3schools.com/react/default.asp"
       >
@@ -110,6 +111,24 @@ const indexPage = <div className="text-page">
     </p>
   </section>
 
+  <section>
+    <h2>User-uploaded code is run in a sandbox</h2>
+    <p>
+      All user-uploaded code is executed in a sandbox that prevents it from
+      accessing any unsafe features of JavaScript. This true both when the code
+      is executed client-side and when it is executed server-side.
+    </p>
+    <p>
+      Other users can therefore safely try out new app prototypes of yours
+      without having to worry about their browser getting hacked. And you can
+      safely try out theirs as well.
+    </p>
+    <p>
+      Different apps are also assigned different parts of the database,
+      isolated from each other. And apps can only upload and download data
+      between each other when the creators have allowed it.
+    </p>
+  </section>
 
   <section>
     <h2>From Web 2.0 to Web 3.0</h2>

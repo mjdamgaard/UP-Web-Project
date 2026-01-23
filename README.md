@@ -80,6 +80,21 @@ scam other users, etc.
 
 
 
+## User-uploaded code is run in a sandbox
+
+All user-uploaded code is executed in a sandbox that prevents it from
+accessing any unsafe features of JavaScript. This true both when the code
+is executed client-side and when it is executed server-side.
+
+Other users can therefore safely try out new app prototypes of yours
+without having to worry about their browser getting hacked. And you can
+safely try out theirs as well.
+
+Different apps are also assigned different parts of the database,
+isolated from each other. And apps can only upload and download data
+between each other when the creators have allowed it.
+
+
 
 ## From Web 2.0 to Web 3.0
 
