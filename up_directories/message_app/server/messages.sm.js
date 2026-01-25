@@ -1,7 +1,8 @@
 
 import {post, fetch, fetchPrivate} from 'query';
 import {getRequestingUserID, checkRequestOrigin} from 'request';
-import {verifyType, verifyTypes} from 'type';
+import {verifyTypes} from 'type';
+import {parseInt, isNaN} from 'type';
 import {indexOf, substring} from 'string';
 import {map} from 'array';
 
@@ -10,9 +11,7 @@ import {map} from 'array';
 
 // postMessage() is a server module function (SMF) for posting a new message.
 export async function postMessage(text) {
-  // Check that the post request was sent from the ../main.jsx app component,
-  // but allow the client's settings to potentially override this check (by
-  // passing true as the the first argument of checkRequestOrigin()).
+  // Check that the post request was sent from the ../main.jsx app component.
   checkRequestOrigin(true, [
     abs("../main.jsx"),
   ]);
@@ -34,14 +33,13 @@ export async function postMessage(text) {
 
 // deleteMessage() is an SMF for deleting a message.
 export async function deleteMessage(messageID) {
-  verifyType(messageID, "hex-string");
-
-  // Check that the post request was sent from the ../main.jsx app component,
-  // but allow the client's settings to potentially override this check (by
-  // passing true as the the first argument of checkRequestOrigin()).
+  // Check that the post request was sent from the ../main.jsx app component.
   checkRequestOrigin(true, [
     abs("../main.jsx"),
   ]);
+
+  // Check that messageID is a hexadecimal string.
+  verifyTypes([messageID], ["hex-string"]);
 
   // Get the ID of the requesting user.
   let userID = getRequestingUserID();
@@ -69,15 +67,18 @@ export async function deleteMessage(messageID) {
 
 // fetchMessages() is an SMF for fetching a list of messages, returning an
 // array with entries of the form [messageID, text, authorID].
-export async function fetchMessages(maxNum = 1000, offset = 0) {
-  verifyTypes([maxNum, offset], ["integer unsigned", "integer unsigned"]);
-
-  // Check that the post request was sent from the ../main.jsx app component,
-  // but allow the client's settings to potentially override this check (by
-  // passing true as the the first argument of checkRequestOrigin()).
+export async function fetchMessages(maxNum = "1000", offset = "0") {
+  // Check that the post request was sent from the ../main.jsx app component.
   checkRequestOrigin(true, [
     abs("../main.jsx"),
   ]);
+
+  // Check that maxNum and offset are parsed as non-negative integers.
+  maxNum = parseInt(maxNum);
+  offset = parseInt(offset);
+  if (isNaN(maxNum) || maxNum < 0 || isNaN(offset) || offset < 0) {
+    throw "The maxNum or the offset argument was not a non-negative integer"
+  }
 
   // Fetch the list of messages.
   let list = await fetch(

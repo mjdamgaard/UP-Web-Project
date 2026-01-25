@@ -837,7 +837,7 @@ export class ScriptInterpreter {
       }
       case "try-catch-statement": {
         try {
-          if (state.err) throw state.err;
+          if (state?.err) throw state.err;
           let tryEnv = state?.tryEnv ?? new Environment(environment);
           let stmtArr = stmtNode.tryStmtArr;
           if (state) {
@@ -855,12 +855,13 @@ export class ScriptInterpreter {
           }
         }
         catch (err) {
-          state.err = err;
+          let initErr = err;
+          if (state) state.err = err;
           if (err instanceof Exception) {
             try {
               let catchEnv = state?.catchEnv;
               if (!catchEnv) {
-                catchEnv = state.catchEnv = new Environment(environment);
+                catchEnv = new Environment(environment);
                 catchEnv.declare(stmtNode.ident, err.val, false, stmtNode);
                 if (state) state.catchEnv = catchEnv;
               }
@@ -879,8 +880,8 @@ export class ScriptInterpreter {
               }
             }
             catch (err) {
-              throw (err instanceof Exception && err.val === state.err.val) ?
-                state.err : err;
+              throw (err instanceof Exception && err.val === initErr.val) ?
+                initErr : err;
             }
           }
           else throw err;
