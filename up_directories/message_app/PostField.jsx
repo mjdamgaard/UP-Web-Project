@@ -7,7 +7,7 @@ export function render({userID}) {
   return (
     <div className="post-field">
       <div>
-        <TextArea key="ta" onInput={dispatchCharCount}/>
+        <TextArea key="ta" />
       </div>
       <button onClick={() => {
         if (!userID) {

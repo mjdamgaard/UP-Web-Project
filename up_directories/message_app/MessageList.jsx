@@ -4,12 +4,16 @@ import {map} from 'array';
 import * as MessageDisplay from "./MessageDisplay.jsx";
 
 
+export function initialize() {
+  this.do("refresh");
+}
+
 export function render({userID}) {
   let {messageList} = this.state;
 
   if (!messageList) {
-    this.do("refresh");
-    return <div></div>;
+    // this.do("refresh");
+    return <div className="message-list"></div>;
   }
 
   let children = map(messageList, ([id, message, authorID]) => (

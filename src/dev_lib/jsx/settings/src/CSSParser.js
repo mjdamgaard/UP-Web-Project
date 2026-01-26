@@ -34,9 +34,6 @@ const PROPERTY_PATTERN = "[a-z\\-]+";
 const BUILT_IN_VALUE_PATTERN = "[a-zA-Z\\-,]+";
 
 
-const UNIT_PATTERN = "(%|[a-z]+)";
-
-
 const FUNCTION_NAME_PATTERN =
   "(abs|acos|asin|atan|atan2|blur|brightness|calc|circle|clamp|color-mix|" +
   "color|conic-gradient|contrast|cos|counters?|cubic-bezier|drop-shadow|" +
@@ -293,14 +290,17 @@ export const cssGrammar = {
   },
   "integer": {
     rules: [
-      ["/0|[1-9][0-9]*/", "S*"],
+      [/-?(0|[1-9][0-9]*)/, "S*"],
     ],
     process: copyLexemeFromChild,
     params: ["integer"],
   },
   "float": {
     rules: [
-      [/(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/, "S*"],
+      [
+        /-?(0|[1-9][0-9]*)?(\.[0-9]+)?(?<=[0-9])([eE][\-+]?(0|[1-9][0-9]*))?/,
+        "S*"
+      ],
     ],
     process: copyLexemeFromChild,
     params: ["float"],
@@ -308,8 +308,10 @@ export const cssGrammar = {
   "ratio": {
     rules: [
       [
-        /(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/, "S*", /\//,
-        "S*!", /(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?/, "S*"
+        /(0|[1-9][0-9]*)?(\.[0-9]+)?(?<=[0-9])([eE][\-+]?(0|[1-9][0-9]*))?/,
+        "S*", /\//, "S*!",
+        /(0|[1-9][0-9]*)?(\.[0-9]+)?(?<=[0-9])([eE][\-+]?(0|[1-9][0-9]*))?/,
+        "S*"
       ],
     ],
     process: (children) => ({
@@ -329,8 +331,8 @@ export const cssGrammar = {
   "dimension": {
     rules: [
       [
-        "/\\-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][\\-\\+]?(0|[1-9][0-9]*))?" +
-        UNIT_PATTERN + "/", "S*"
+/-?(0|[1-9][0-9]*)?(\.[0-9]+)?(?<=[0-9])([eE][\-+]?(0|[1-9][0-9]*))?(%|[a-z]+)/,
+        "S*"
       ],
     ],
     process: (children) => ({
@@ -553,7 +555,7 @@ export class CSSParser extends Parser {
           lexemes: [
             /"([^"\\]|\\[.\n])*"/,
             /'([^'\\]|\\[.\n])*'/,
-/((?<=\s)\-)?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][\-\+]?(0|[1-9][0-9]*))?[%a-zA-Z0-9_\-]*/,
+/((?<=\s)\-)?(0|[1-9][0-9]*)?(\.[0-9]+)?(?<=[0-9])([eE][\-\+]?(0|[1-9][0-9]*))?[%a-zA-Z0-9_\-]*/,
             /@?[a-zA-Z0-9_\-]+/,
             /\|\||::|[.,:;\[\]{}()<>?=+\-*|^&!%/#]/,
             /[ \t\r\n\f]+/

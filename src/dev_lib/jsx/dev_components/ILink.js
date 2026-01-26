@@ -56,9 +56,10 @@ export const render = new DevFunction(
       domNode.setAttribute("href", href);
     }
 
-    // If the children prop is defined, use thisVal.getDOMNode() to render and
-    // append those children, also making sure to record the ownDOMNodes and
-    // marks as well (which will be attached to the returned DOMNodeObject).
+    // If the children prop is defined, use jsxInstance.replaceChildren() to
+    // render and append those children, also making sure to record the
+    // ownDOMNodes and marks as well (which will be attached to the returned
+    // DOMNodeObject).
     let marks = new Map();
     let ownDOMNodes = [];
     if (children !== undefined) {

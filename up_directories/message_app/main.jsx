@@ -8,6 +8,7 @@ export function render({userID}) {
     <div>
       <h2>{"Post a message!"}</h2>
       <PostField key="pf" userID={userID} />
+      <h3>{"Messages"}</h3>
       <MessageList key="ml" userID={userID} />
     </div>
   );

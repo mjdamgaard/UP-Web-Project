@@ -1,0 +1,12 @@
+
+.message-display {
+  border: 1px solid black;
+}
+
+.message-display .text {
+  padding: 1em .5em;
+}
+
+.message-display .delete-button button {
+  float: right;
+}

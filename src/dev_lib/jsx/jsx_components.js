@@ -160,6 +160,9 @@ class JSXInstance {
     this.props = props;
     let state;
     if (this.state === undefined) {
+      // Set the actions, methods, and events.
+      this.prepareActionsMethodsAndEvents(callerNode, callerEnv);
+
       // Get the initial state if the component module declares one, which is
       // done either by exporting an 'getInitialState()' function (or just
       // 'getInitState(),' or 'initialize()'), or a constant  object called
@@ -168,6 +171,7 @@ class JSXInstance {
         this.componentModule.get("getInitialState") ??
         this.componentModule.get("getInitState");
       if (getInitialState) {
+        this.state = {};
         try {
           state = interpreter.executeFunction(
             getInitialState, [props], callerNode, callerEnv,
@@ -185,9 +189,6 @@ class JSXInstance {
 
       // And store the ref prop.
       this.ref = props["ref"];
-
-      // And set the actions, methods, and events.
-      this.prepareActionsMethodsAndEvents(callerNode, callerEnv);
     }
 
 
@@ -386,8 +387,13 @@ class JSXInstance {
 
   getDOMNode(
     jsxElement, curNode, marks, interpreter, callerNode, callerEnv, props,
-    ownDOMNodes, isOuterElement = true
+    ownDOMNodes, childInstanceNodes = undefined, isOuterElement = true
   ) {
+    if (!childInstanceNodes) {
+      childInstanceNodes = [...this.childInstances.values()].map(
+        inst => inst.donNode
+      );
+    }
     let newDOMNode;
     // If jsxElement is not a JSXElement instance, let the new DOM node be a
     // string derived from JSXElement.
@@ -412,12 +418,13 @@ class JSXInstance {
     // in which case we wrap it in a div element.
     else if (jsxElement.isFragment || isArray) {
       let childArr = isArray ? jsxElement : jsxElement.props["children"] ?? [];
-      newDOMNode = (curNode === this.domNode && curNode?.tagName === "DIV") ?
-        clearAttributes(curNode) :
+      let canReuse = curNode === this.domNode && curNode?.tagName === "DIV" &&
+        !childInstanceNodes.includes(curNode);
+      newDOMNode = canReuse ? clearAttributes(curNode) :
         document.createElement("div");
       this.replaceChildren(
         newDOMNode, childArr, marks, interpreter, callerNode, callerEnv,
-        props, ownDOMNodes
+        props, ownDOMNodes, childInstanceNodes
       );
     }
 
@@ -468,10 +475,10 @@ class JSXInstance {
     // attributes and/or append some content to it.
     else {
       let tagName = jsxElement.tagName;
-      newDOMNode = (
-        curNode === this.domNode && curNode?.tagName === tagName.toUpperCase()
-      ) ?
-        clearAttributes(curNode) :
+      let canReuse = curNode === this.domNode &&
+        curNode?.tagName === tagName.toUpperCase() &&
+        !childInstanceNodes.includes(curNode);
+      newDOMNode = canReuse ? clearAttributes(curNode) :
         document.createElement(tagName);
 
       // Update allowed selection of attributes, and throw an invalid/non-
@@ -658,7 +665,7 @@ class JSXInstance {
       ownDOMNodes.push(newDOMNode);
       this.replaceChildren(
         newDOMNode, childArr, marks, interpreter, callerNode, callerEnv,
-        props, ownDOMNodes
+        props, ownDOMNodes, childInstanceNodes
       );
     }
 
@@ -669,58 +676,62 @@ class JSXInstance {
 
   replaceChildren(
     domNode, childArr, marks, interpreter, callerNode, callerEnv,
-    props, ownDOMNodes
+    props, ownDOMNodes, childInstanceNodes = undefined
   ) {
+    if (!childInstanceNodes) {
+      childInstanceNodes = [...this.childInstances.values()].map(
+        inst => inst.donNode
+      );
+    }
     let curChildArr = [...domNode.childNodes];
-    let indRef = [0];
-    this.#replaceChildrenHelper(
+    let newChildArr = this.#getNewChildren(
       domNode, childArr, curChildArr, marks, interpreter, callerNode, callerEnv,
-      props, ownDOMNodes, indRef
+      props, ownDOMNodes, childInstanceNodes
     );
 
-    let len = curChildArr.length;
-    for (let i = indRef[0]; i < len; i++) {
-      curChildArr[i].remove();
+    let len = Math.max(curChildArr.length, newChildArr.length);
+    for (let i = 0; i < len; i++) {
+      let prevChildNode = curChildArr[i];
+      let newChildNode = newChildArr[i];
+      if (!prevChildNode) {
+        domNode.append(newChildNode);
+      }
+      else if (!newChildNode) {
+        if (!newChildArr.includes(prevChildNode)) {
+          prevChildNode.remove();
+        }
+      }
+      else if (newChildNode !== prevChildNode) {
+        prevChildNode.replaceWith(newChildNode);
+      }
     }
   }
 
-  #replaceChildrenHelper(
+  #getNewChildren(
     domNode, childArr, curChildArr, marks, interpreter, callerNode, callerEnv,
-    props, ownDOMNodes, indRef
+    props, ownDOMNodes, childInstanceNodes
   ) {
-    childArr.forEach(child => {
+    let i = 0;
+    return [].concat(...childArr.map(child => {
       let isArray = child instanceof Array;
       if (child?.isFragment || isArray) {
         let nestedChildArr = isArray ? child : child.props["children"] ?? [];
-        this.#replaceChildrenHelper(
+        let newChildren = this.#getNewChildren(
           domNode, nestedChildArr, curChildArr, marks, interpreter, callerNode,
-          callerEnv, props, ownDOMNodes, indRef
+          callerEnv, props, ownDOMNodes, childInstanceNodes
         );
+        i = i + newChildren.length;
+        return newChildren;
       }
       else if (child !== undefined) {
-        let childNode = this.getDOMNode(
-          child, curChildArr[indRef[0]], marks, interpreter, callerNode,
-          callerEnv, props, ownDOMNodes, false
+        let newChild = this.getDOMNode(
+          child, curChildArr[i], marks, interpreter, callerNode,
+          callerEnv, props, ownDOMNodes, childInstanceNodes, false
         );
-        this.#replaceChild(domNode, curChildArr, childNode, indRef[0]);
-        indRef[0]++;
+        i++;
+        return [newChild];
       }
-      else {
-        let childNode = new Text();
-        this.#replaceChild(domNode, curChildArr, childNode, indRef[0]);
-        indRef[0]++;
-      }
-    });
-  }
-
-  #replaceChild(domNode, curChildArr, childNode, ind) {
-    let prevChildNode = curChildArr[ind];
-    if (!prevChildNode) {
-      domNode.append(childNode);
-    }
-    else if (childNode !== prevChildNode) {
-      prevChildNode.replaceWith(childNode);
-    }
+    }));
   }
 
 

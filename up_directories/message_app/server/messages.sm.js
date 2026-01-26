@@ -2,7 +2,7 @@
 import {post, fetch, fetchPrivate} from 'query';
 import {getRequestingUserID, checkRequestOrigin} from 'request';
 import {verifyTypes} from 'type';
-import {parseInt, isNaN} from 'type';
+import {parseInt, isNaN} from 'number';
 import {indexOf, substring} from 'string';
 import {map} from 'array';
 
@@ -49,7 +49,7 @@ export async function deleteMessage(messageID) {
     abs("./messages.att./entry/k/" + messageID)
   );
   let indOfSemicolon = indexOf(storedText, ";");
-  let authorID = substring(0, indOfSemicolon);
+  let authorID = substring(storedText, 0, indOfSemicolon);
 
   // Authenticate.
   if (userID !== authorID) {
@@ -68,11 +68,6 @@ export async function deleteMessage(messageID) {
 // fetchMessages() is an SMF for fetching a list of messages, returning an
 // array with entries of the form [messageID, text, authorID].
 export async function fetchMessages(maxNum = "1000", offset = "0") {
-  // Check that the post request was sent from the ../main.jsx app component.
-  checkRequestOrigin(true, [
-    abs("../main.jsx"),
-  ]);
-
   // Check that maxNum and offset are parsed as non-negative integers.
   maxNum = parseInt(maxNum);
   offset = parseInt(offset);
@@ -82,15 +77,15 @@ export async function fetchMessages(maxNum = "1000", offset = "0") {
 
   // Fetch the list of messages.
   let list = await fetch(
-    abs("./messages.att./list/n/" + maxNum + "/o/" + offset)
+    abs("./messages.att./list/a/1/n/" + maxNum + "/o/" + offset)
   );
 
   // Return a transformed list where the entries are of the form
   // [messageID, text, authorID].
   return map(list, ([messageID, storedText]) => {
     let indOfSemicolon = indexOf(storedText, ";");
-    let authorID = substring(0, indOfSemicolon);
-    let text = substring(indOfSemicolon + 1);
+    let authorID = substring(storedText, 0, indOfSemicolon);
+    let text = substring(storedText, indOfSemicolon + 1);
     return [messageID, text, authorID];
   });
 }

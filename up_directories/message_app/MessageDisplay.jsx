@@ -1,13 +1,41 @@
 
+import {post} from 'query';
+import {getUserEntPath} from "/1/1/entities.js";
+import * as EntityReference from "/1/2/misc/EntityReference.jsx";
 
 
-export function render({message, authorID, userID, index}) {
-  // TODO: Import a function to fetch the user tag of the author given the
-  // authorID.
-  // TODO: Add 'Delete' button, if the author is the current user. 
+export function render({message, authorID, userID, messageID}) {
+  let isAuthor = userID === authorID;
+  let authorEntityPath = getUserEntPath("1", authorID);
   return (
     <div className="message-display">
-      {message}
+      <div className="author">
+        <EntityReference key="auth-ref" entKey={authorEntityPath} />
+      </div>
+      <div className="text">
+        {message}
+      </div>
+      <div className={"delete-button" + (isAuthor ? " active" : "")}>{
+        isAuthor ?
+          <button onClick={() => this.do("delete-message")}>
+            Delete
+          </button> :
+          undefined
+      }</div>
     </div>
   );
 }
+
+
+export const actions = {
+  "delete-message": function() {
+    let {messageID} = this.props;
+    post(
+      abs("./server/messages.sm.js./callSMF/deleteMessage/" + messageID)
+    ).then(wasDeleted => {
+      if (wasDeleted) {
+        this.trigger("refresh");
+      }
+    });
+  },
+};
