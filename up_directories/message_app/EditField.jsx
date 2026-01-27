@@ -4,15 +4,15 @@ import * as TextArea from 'TextArea.jsx';
 
 
 
-export function render({userID}) {
+export function render({userID, message, messageID}) {
   let {response = ""} = this.state;
   return (
     <div className="post-field">
       <div>
-        <TextArea key="ta" />
+        <TextArea key="ta">{message}</TextArea>
       </div>
       <button onClick={() => this.do("post-message")}>
-        {"Post"}
+        {"Post changes"}
       </button>
       <div>{response}</div>
     </div>
@@ -24,7 +24,7 @@ export function render({userID}) {
 
 export const actions = {
   "post-message": function() {
-    let {userID} = this.props;
+    let {userID, messageID} = this.props;
 
     // Check that the user is logged in first.
     if (!userID) {
@@ -42,17 +42,19 @@ export const actions = {
       }));
     }
     
-    // Post the message by calling the postMessage() SMF.
+    // Post the edited message by calling the editMessage() SMF, and pass the
+    // messageID and newText arguments via a post data array. (When the post
+    // data, which is the second argument of post(), is an array, it is always
+    // treated as an input array for "callSMF" queries.)
     post(
-      abs("./server/messages.sm.js./callSMF/postMessage"),
-      textVal
-    ).then(wasCreated => {
-      if (wasCreated) {
-        this.call("ta", "clear");
+      abs("./server/messages.sm.js./callSMF/editMessage"),
+      [messageID, textVal]
+    ).then(wasEdited => {
+      if (wasEdited) {
         this.setState(state => ({
           ...state, response: "Success."
         }));
-        this.trigger("refresh");
+        this.trigger("successful-edit");
       }
       else {
         this.setState(state => ({

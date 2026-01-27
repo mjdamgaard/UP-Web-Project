@@ -3008,7 +3008,8 @@ export class JSXElement extends ObjectObject {
       }
     });
     if (children) {
-      let childrenProp = [], i = 0;
+      // Get an array of all the children. 
+      let childArr = [], i = 0;
       let len = children.length;
       children.forEach((contentNode, ind) => {
         if (contentNode.type === "empty-jsx-content") {
@@ -3022,14 +3023,22 @@ export class JSXElement extends ObjectObject {
           if (ind === len - 1) {
             val = val.trimEnd();
           }
-          if (val) childrenProp[i++] = val;
+          if (val) childArr[i++] = val;
         }
         else {
           let val = interpreter.evaluateExpression(contentNode, decEnv);
-          childrenProp[i++] = val;
+          childArr[i++] = val;
         }
       });
-      this.props["children"] = childrenProp;
+
+      // If there is only one child, set the children prop to that, and else
+      // set it to the childArr array.
+      if (childArr.length === 1) {
+        this.props["children"] = childArr[0];
+      }
+      else {
+        this.props["children"] = childArr;
+      }
     }
     if (isComponent) {
       this.key = this.props["key"];

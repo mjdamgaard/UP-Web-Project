@@ -418,6 +418,9 @@ class JSXInstance {
     // in which case we wrap it in a div element.
     else if (jsxElement.isFragment || isArray) {
       let childArr = isArray ? jsxElement : jsxElement.props["children"] ?? [];
+      if (!(childArr instanceof Array)) {
+        childArr = [childArr];
+      }
       let canReuse = curNode === this.domNode && curNode?.tagName === "DIV" &&
         !childInstanceNodes.includes(curNode);
       newDOMNode = canReuse ? clearAttributes(curNode) :
@@ -491,14 +494,13 @@ class JSXInstance {
         switch (key) {
           case "children" : {
             if (tagName === "br" || tagName === "hr") throw new RuntimeError(
-               `Elements of type "${tagName}" cannot have children`,
+              `Elements of type "${tagName}" cannot have children`,
               jsxNode, jsxDecEnv
             );
-            if (!(childArr instanceof Array)) throw new RuntimeError(
-              `A non-iterable 'children' prop was used`,
-             jsxNode, jsxDecEnv
-           );
             childArr = val ?? [];
+            if (!(childArr instanceof Array)) {
+              childArr = [childArr];
+            }
             break;
           }
 
@@ -718,6 +720,9 @@ class JSXInstance {
       let isArray = child instanceof Array;
       if (child?.isFragment || isArray) {
         let nestedChildArr = isArray ? child : child.props["children"] ?? [];
+        if (!(nestedChildArr instanceof Array)) {
+          nestedChildArr = [nestedChildArr];
+        }
         let newChildren = this.#getNewChildren(
           domNode, nestedChildArr, curChildArr, marks, interpreter, callerNode,
           callerEnv, props, ownDOMNodes, childInstanceNodes

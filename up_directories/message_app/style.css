@@ -7,6 +7,10 @@
   padding: 1em .5em;
 }
 
-.message-display .delete-button button {
+.message-display .edit-menu button {
   float: right;
+}
+
+.hidden {
+  display: none;
 }
