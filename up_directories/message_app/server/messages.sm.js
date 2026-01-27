@@ -64,6 +64,42 @@ export async function deleteMessage(messageID) {
 
 
 
+// editMessage() is an SMF for editing a message.
+export async function editMessage(messageID, newText) {
+  // Check that the post request was sent from the ../main.jsx app component.
+  checkRequestOrigin(true, [
+    abs("../main.jsx"),
+  ]);
+
+  // Check that messageID is a hexadecimal string.
+  verifyTypes([messageID], ["hex-string"]);
+
+  // Get the ID of the requesting user.
+  let userID = getRequestingUserID();
+
+  // Fetch the message in order to authenticate the user as the author.
+  let storedText = await fetch(
+    abs("./messages.att./entry/k/" + messageID)
+  );
+  let indOfSemicolon = indexOf(storedText, ";");
+  let authorID = substring(storedText, 0, indOfSemicolon);
+
+  // Authenticate.
+  if (userID !== authorID) {
+    throw "User " + userID + " was not authenticated as User " + authorID;
+  }
+
+  // Create the new stored text, and overwrite the existing massage entry.
+  // (The default behavior is to overwrite the existing entry on a duplicate
+  // key for such insert queries.)
+  let newStoredText = authorID + ";" + newText;
+  return await post(
+    abs("./messages.att./_insert/k/" + messageID),
+    newStoredText
+  );
+}
+
+
 
 // fetchMessages() is an SMF for fetching a list of messages, returning an
 // array with entries of the form [messageID, text, authorID].

@@ -246,7 +246,7 @@ export function postInitialScores01() {
           abs("./em2.js;get/indexPages"),
           abs("./em1.js;get/members"),
           abs("./em2.js;get/upIndexPage02"),
-          firstModID, 0.1
+          firstModID, -4
         ),
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/components"),

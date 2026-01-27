@@ -694,7 +694,9 @@ class JSXInstance {
       let prevChildNode = curChildArr[i];
       let newChildNode = newChildArr[i];
       if (!prevChildNode) {
-        domNode.append(newChildNode);
+        if (newChildNode) {
+          domNode.append(newChildNode);
+        }
       }
       else if (!newChildNode) {
         if (!newChildArr.includes(prevChildNode)) {
