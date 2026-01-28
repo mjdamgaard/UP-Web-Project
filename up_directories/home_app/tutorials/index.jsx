@@ -9,7 +9,7 @@ import * as ComponentsIntroPage from "./components.jsx";
 import * as StylingIntroPage from "./styling.jsx";
 import * as DifferencesPage from "./differences.jsx";
 import * as ServerModulesPage from "./server_modules.jsx";
-import * as DBTablesPage from "./db_tables.jsx";
+import * as DBQueriesPage from "./db_queries.jsx";
 import * as ContributionsPage from "./contributions.jsx";
 
 
@@ -36,8 +36,8 @@ export function render({url, homeURL}) {
   else if (tailURL === "/server-modules") {
     return <ServerModulesPage key="0" />;
   }
-  else if (tailURL === "/db-tables") {
-    return <DBTablesPage key="0" />;
+  else if (tailURL === "/db-queries") {
+    return <DBQueriesPage key="0" />;
   }
   else if (tailURL === "/contributions") {
     return <ContributionsPage key="0" />;
@@ -85,8 +85,8 @@ const indexPage = <div className="text-page">
         </ILink>
       </li>
       <li>
-        <ILink key="db-tables" href="~/db-tables" >
-          {"Database tables"}
+        <ILink key="db-queries" href="~/db-queries" >
+          {"Database queries"}
         </ILink>
       </li>
       <li>

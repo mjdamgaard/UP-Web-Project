@@ -16,7 +16,7 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   "default|public|debugger|new|console|abstract|arguments|boolean|byte|char|" +
   "double|enum|eval|extends|final|float|goto|implements|in|int|interface|" +
   "long|native|package|private|protected|short|super|synchronized|throws|" +
-  "transient|volatile|with|yield|Promise|abs)$"
+  "transient|volatile|with|yield|Promise|abs|async)$"
 );
 
 

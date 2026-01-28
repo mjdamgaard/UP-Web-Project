@@ -22,7 +22,7 @@ export async function postMessage(text) {
   // Store the authorID simply by prepending it to the stored text.
   let storedText = authorID + ";" + text;
 
-  // Insert the massage in the messages.att table. 
+  // Insert the massage in the messages.att table.
   return await post(
     abs("./messages.att./_insert"),
     storedText

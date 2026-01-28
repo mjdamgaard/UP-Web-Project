@@ -10,7 +10,7 @@ export function render() {
 
 
 const page = <div className="text-page">
-  <h1>{"Database tables"}</h1>
+  <h1>{"Database queries"}</h1>
   <section>
     <h2>{"..."}</h2>
     <p>{

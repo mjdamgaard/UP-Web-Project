@@ -7,7 +7,7 @@
   padding: 1em .5em;
 }
 
-.message-display .edit-menu button {
+.message-display .edit-menu > * {
   float: right;
 }
 

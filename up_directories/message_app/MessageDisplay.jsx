@@ -18,12 +18,14 @@ export function render({message, authorID, userID, messageID}) {
         {message}
       </div>
       <div className={"edit-menu" + (isAuthor ? "" : " hidden")}>
-        <button onClick={() => this.do("toggle-message-editor")}>
-          Edit
-        </button>
-        <button onClick={() => this.do("toggle-message-deletion-prompt")}>
-          Delete
-        </button>
+        <div>
+          <button onClick={() => this.do("toggle-message-editor")}>
+            Edit
+          </button>
+          <button onClick={() => this.do("toggle-message-deletion-prompt")}>
+            Delete
+          </button>
+        </div>
       </div>
       <div className={"editor" + (editorIsOpen ? "" : " hidden")}>
         <EditField key="ef"

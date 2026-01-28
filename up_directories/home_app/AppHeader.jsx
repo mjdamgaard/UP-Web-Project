@@ -8,9 +8,10 @@ export function render() {
       <span className="logo">{"UP-Web.org"}</span>
     </ILink>
     <div className="items">
-      <ILink key="about" href="~/about">
+      {/* The About page is under renovation: */}
+      {/* <ILink key="about" href="~/about">
         <span className="menu-item">{"About"}</span>
-      </ILink>
+      </ILink> */}
       <ILink key="tut" href="~/tutorials">
         <span className="menu-item">{"Tutorials"}</span>
       </ILink>

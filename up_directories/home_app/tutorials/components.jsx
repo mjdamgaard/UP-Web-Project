@@ -856,7 +856,7 @@ const page = <div className="text-page">
         {"5"}
       </ILink>,
       ", and ",
-      <ILink key="link-tut-6" href="~/db-tables">
+      <ILink key="link-tut-6" href="~/db-queries">
         {"6"}
       </ILink>,
       " will teach you how to create your first server modules, which " +
