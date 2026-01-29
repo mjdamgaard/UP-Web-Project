@@ -41,7 +41,7 @@ const page = <div className="text-page">
     </p>
     <p>
       If you have already followed the
-      <ILink key="link-tut-1" href="~/getting-started">
+      <ILink key="link-tut-1-1" href="~/getting-started">
         Getting started
       </ILink>
       tutorial, and downloaded the GitHub...
@@ -55,14 +55,14 @@ const page = <div className="text-page">
     </p>
     <p>
       <code className="jsx">{[
-      'export async function postMessage(text) { ... }\n',
-      // '\n',
-      'export async function deleteMessage(messageID) { ... }\n',
-      // '\n',
-      'export async function editMessage(messageID, newText) { ... }\n',
-      // '\n',
-      'export async function fetchMessages(maxNum = "1000", offset = "0") { ... }\n',
-      // '\n',
+        'export async function postMessage(text) { ... }\n',
+        // '\n',
+        'export async function deleteMessage(messageID) { ... }\n',
+        // '\n',
+        'export async function editMessage(messageID, newText) { ... }\n',
+        // '\n',
+        'export async function fetchMessages(maxNum = "1000", offset = "0") { ... }\n',
+        // '\n',
       ]}</code>
     </p>
     <p>
@@ -90,34 +90,34 @@ const page = <div className="text-page">
     </p>
     <p>
       <code className="jsx">{[
-      'import {post, fetch, fetchPrivate} from \'query\';\n',
-      'import {getRequestingUserID, checkRequestOrigin} from \'request\';\n',
-      '\n',
-      '...\n',
-      '\n',
-      'export async function postMessage(text) {\n',
-      '  // Check that the post request was sent from the ../main.jsx app component.\n',
-      '  checkRequestOrigin(true, [\n',
-      '    abs("../main.jsx"),\n',
-      '  ]);\n',
-      '\n',
-      '  // Get the ID of the requesting user, i.e. the author of the message.\n',
-      '  let authorID = getRequestingUserID();\n',
-      '\n',
-      '  // Store the authorID simply by prepending it to the stored text.\n',
-      '  let storedText = authorID + ";" + text;\n',
-      '\n',
-      '  // Insert the massage in the messages.att table.\n',
-      '  return await post(\n',
-      '    abs("./messages.att./_insert"),\n',
-      '    storedText\n',
-      '  );\n',
-      '}',
+        'import {post, fetch, fetchPrivate} from \'query\';\n',
+        'import {getRequestingUserID, checkRequestOrigin} from \'request\';\n',
+        '\n',
+        '...\n',
+        '\n',
+        'export async function postMessage(text) {\n',
+        '  // Check that the post request was sent from the ../main.jsx app component.\n',
+        '  checkRequestOrigin(true, [\n',
+        '    abs("../main.jsx"),\n',
+        '  ]);\n',
+        '\n',
+        '  // Get the ID of the requesting user, i.e. the author of the message.\n',
+        '  let authorID = getRequestingUserID();\n',
+        '\n',
+        '  // Store the authorID simply by prepending it to the stored text.\n',
+        '  let storedText = authorID + ";" + text;\n',
+        '\n',
+        '  // Insert the massage in the messages.att table.\n',
+        '  return await post(\n',
+        '    abs("./messages.att./_insert"),\n',
+        '    storedText\n',
+        '  );\n',
+        '}',
       ]}</code>
     </p>
     <p>
       This function first checks the origin of the request via the a call to a
-      function called 'checkRequestOrigin()' from the 'request' developer
+      function called 'checkRequestOrigin()' from the 'request'
       library. This is very important to do for all SMFs that inserts or
       modifies data in the database, or reads and returns private data.
     </p>
@@ -127,9 +127,8 @@ const page = <div className="text-page">
       home directory.
     </p>
     <p>
-      We will get back to how the checkRequestOrigin() function works in more
-      detail, as well as how the origin of a request is determined, in a later
-      section below.  
+      We will get back to checkRequestOrigin() and how it works in a later
+      section below, as well as how the origin of a request is determined.  
     </p>
     <p>
       The next thing that postMessage() message does is to get the (hexadecimal)
@@ -148,16 +147,15 @@ const page = <div className="text-page">
     </p>
     <p>
       Finally, postMessage() inserts the encoded text in the database via a
-      call to a function called 'post()' imported from the 'query' developer
-      library:
+      call to a function called 'post()' imported from the 'query' library:
     </p>
     <p>
       <code className="jsx">{[
-      '// Insert the massage in the messages.att table.\n',
-      'return await post(\n',
-      '  abs("./messages.att./_insert"),\n',
-      '  storedText\n',
-      ');',
+        '// Insert the massage in the messages.att table.\n',
+        'return await post(\n',
+        '  abs("./messages.att./_insert"),\n',
+        '  storedText\n',
+        ');',
       ]}</code>
     </p>
     <p>
@@ -190,10 +188,10 @@ const page = <div className="text-page">
     </p>
     <p>
       <code className="sql">{[
-      'CREATE TABLE AutoKeyTextTable (\n',
-      '  text_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n',
-      '  text_data TEXT\n',
-    ');',
+        'CREATE TABLE AutoKeyTexts (\n',
+        '  text_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n',
+        '  text_data TEXT\n',
+        ');',
       ]}</code>
     </p>
     <p>
@@ -203,14 +201,236 @@ const page = <div className="text-page">
       it explicitly.
     </p>
     <p>
-      There are also other kinds of database table files, but we will wait
-      to introduce these in the
-      <ILink key="link-tut-6-1" href="~/db_queries">
+      There are also other kinds of database table files with different
+      file extension, which will be introduced in the
+      <ILink key="link-tut-6-1" href="~/db-queries">
         next tutorial
       </ILink>.
     </p>
     <p>
+      The way to interact with the data stored for these database table files
+      is via the kind of extended paths similar to the
+      abs("./messages.att./_insert") path that we saw above. We will also refer
+      to such extended paths as 'routes.' The routes used to interact with
+      database table files have the following syntax:
+    </p>
+    <p>
+      <code className="jsx">{[
+        '"ABSOLUTE_PATH_TO_FILE./QUERY_TYPE(/PARAM/VALUE)*"',
+      ]}</code>
+    </p>
+    <p>
+      Here ABSOLUTE_PATH_TO_FILE is a placeholder for the absolute path to the
+      file, QUERY_TYPE is a placeholder for a query type such as "_insert" as
+      we saw above, and PARAM and VALUE are a pair of respectively a parameter
+      name and corresponding input value.
+    </p>
+    <p>
+      The './' in such routes should thus be interpreted as essentially
+      meaning: "Do something with this file (or directory)." Also note that
+      file names and directory names are not allowed to end with '.' in this
+      system, which means that any occurrence of './' will always have this
+      meaning.
+    </p>
+    <p>
+      Here are a few examples of such routes for the '.att' files, where
+      ".../my_file.att" is a placeholder for the absolute path to a file
+      called 'my_file.att':
+    </p>
+    <p>
+      <code className="jsx">{[
+        '".../my_file.att./_insert/p/Hello"\n',
+        '".../my_file.att./_insert"\n',
+        '".../my_file.att./_insert/k/1a/p/Hello"\n',
+        '".../my_file.att./_insert/k/1a/p/Hello/i/1"\n',
+        '".../my_file.att./_deleteEntry/k/1a"\n',
+        '".../my_file.att./_deleteList/lo/1a/hi/2a"\n',
+        '".../my_file.att./_deleteList"\n',
+        '".../my_file.att./entry/k/1a"\n',
+        '".../my_file.att./list/n/1000"\n',
+      ]}</code>
+    </p>
+    <p>
+      Let us go through these examples one at a time. First we have a query of
+      the type '_insert', and with a parameter 'p' with the value of "Hello".
+    </p>
+    <p>
+      First of all, the underscore at the start of '_insert' tells the server
+      that this route is "locked," which means that the query requires admin
+      privileges. Admin privileges are generally only granted inside the
+      execution of an SMF. There is also a way for the admin of a directory to
+      make requests with admin privileges manually, which we will show in the
+      <ILink key="link-tut-6-2" href="~/db-queries">
+        next tutorial
+      </ILink>.
+      But other than that, admin privileges are only granted inside of SMFs,
+      regardless of whether the requesting user is the admin or not.
+    </p>
+    <p>
+      The ".../my_file.att./_insert/p/Hello" query has the effect of
+      inserting a new entry into the 'my_file.att' table, with a "Hello" as
+      the so-called "payload" of the entry, which is what the 'p' stands for.
+      The payload of an entry is generally the part of the entry that is not
+      part of any of its index keys. For the '.att' tables, the payload is thus
+      just the "text_data" column that we saw above. Therefore, the
+      ".../my_file.att./_insert/p/Hello" query will insert a new entry with
+      an automatically generated ID and a text payload of "Hello".
+    </p>
+    <p>
+      Now, since the valid characters of routes are heavily restricted, as they
+      need to conform to the URL specification, it would not be very useful if
+      we could only pass the texts for the '.att' tables via the parameters of
+      such routes. Luckily, the "payload" parameter value in particular can
+      also generally be passed via the post data of a post request, which is
+      the optional second argument of the post() function that we saw above.
+    </p>
+    <p>
+      This means that the following two post() calls will have the same effect
+      (where the "..." in front of the routes is still just placeholder):
+    </p>
+    <p>
+      <code className="jsx">{[
+        'post(".../my_file.att./_insert/p/Hello");\n',
+        'post(".../my_file.att./_insert", "Hello");',
+      ]}</code>
+    </p>
+    <p>
+      But with the second kind of query, we obviously have more freedom to
+      insert the payload text that we want.
+    </p>
+    <p>
+      Next we have the route of ".../my_file.att./_insert/k/1a/p/Hello",
+      which is similar to the ones before, but with a 'k' parameter with the
+      value of "1a" as well. The 'k' here stands for "key", and generally
+      represents the primary key for the entry. In the case of '.att' files,
+      this "key" is obviously the "text_id" column that we saw above. So the
+      ".../my_file.att./_insert/k/1a/p/Hello" route will have the effect of
+      inserting a entry with the specific (hexadecimal) key of "1a", and with
+      a payload of "Hello" once again.
+    </p>
+    <p>
+      The default behavior of '_insert' queries is to always overwrite an
+      existing entry in case of a duplicate key. This is why the
+      editMessage() SMF of messages.sm.js can be seen to also simply use an
+      '_insert' query to edit a given message:
+    </p>
+    <p>
+      <code className="jsx">{[
+        'export async function editMessage(text) {\n',
+        '  ...\n',
+        '  let newStoredText = authorID + ";" + newText;\n',
+        '  return await post(\n',
+        '    abs("./messages.att./_insert/k/" + messageID),\n',
+        '    newStoredText\n',
+        '  );\n',
+        '}',
+      ]}</code>
+    </p>
+    <p>
+      If instead wanting to ignore existing entries in case of a duplicate
+      key, set the query parameter of 'i' to "1", as seen in the route of
+      ".../my_file.att./_insert/k/1a/p/Hello/i/1" above. (For boolean query
+      parameters like 'i', we use "1" and "0" rather than "true" and "false".)
+    </p>
+    <p>
+      Next we have route of ".../my_file.att./_deleteEntry/k/1a", which of
+      course has the effect of deleting the entry with the key of "1a".
+    </p>
+    <p>
+      One can also delete whole sections of a table at once. The route of
+      ".../my_file.att./_deleteList/lo/1a/hi/2a" thus has the effect of
+      deleting all entries with a key between "1a" and "2a". And the route of
+      ".../my_file.att./_deleteList" simply deletes all the entries of the
+      table.
+    </p>
+    <p>
+      Finally, we have two query types for fetching data from the table, namely
+      the 'entry' query type, which fetches a particular entry, and 'list',
+      which fetches a whole list.
+    </p>
+    <p>
+      For instance, ".../my_file.att./entry/k/1a" will fetch the entry with
+      the key of "1a". However, rather than returning the full array of the
+      entry, which is of the form '[textID, textData]' for '.att' table
+      entries, the textID will be omitted from the returned value, as this is
+      already known by the requesting client. And since textData is the only
+      column left in this entry, the column value will also be unwrapped from
+      the array, meaning that the ".../my_file.att./entry/k/1a" query will
+      return the textData directly, rather than returning a '[textData]' array.
+    </p>
+    <p>
+      And if no entry exists of the given key, the 'entry' query will simply
+      return null or undefined.
+    </p>
+    <p>
+      For the 'list' queries, on the other hand, the full entries will be
+      returned, meaning that return value of a 'list' query will be a
+      (possibly empty) array of entry arrays of the form '[textID, textData]'.
+    </p>
+    <p>
+      So for example, if the ".../my_file.att" table contains only three
+      entries: '["1", "Foo"]', '["b", "Bar"]', '["1a", "Baz"]', we would get
+      the following results:
+    </p>
+    <p>
+      <code className="jsx">{[
+        'fetch(".../my_file.att./entry/k/1a"); // Resolves to "Baz".\n',
+        'fetch(".../my_file.att./entry/k/1b"); // Resolves to null.\n',
+        'fetch(".../my_file.att./list/n/1000");\n',
+        '// Resolves to [\n',
+        '//   ["1", "Foo"],\n',
+        '//   ["b", "Bar"],\n',
+        '//   ["1a", "Baz"],\n',
+        '// ].\n',
+        'fetch(".../my_file.att./list/n/1000/o/1b"); // Resolves to [].\n',
+      ]}</code>
+    </p>
+    <p>
+      Here, the 'n' parameter for the 'list' query type is the maximal number
+      of entries that the client wish to receive, and 'o' is the offset of the
+      list.
+    </p>
+    <p>
+      Note also that neither 'entry' nor 'list' have an underscore in front,
+      which means that these data-fetching queries do not generally require
+      admin privileges. There is however exceptions to this, which we will get
+      to in the next section.
+    </p>
+    <p>
+      And for more documentation and tips about the various database table
+      files and their query parameters, see the
+      <ILink key="link-tut-6-3" href="~/db-queries">
+        next tutorial
+      </ILink>.
+    </p>
+  </section>
+
+  <section>
+    <h2>Privileges</h2>
+    <p>
       ...
     </p>
   </section>
+
+  <section>
+    <h2>Calling server modules</h2>
+    <p>
+      ...
+    </p>
+  </section>
+
+    {/* <p>
+      In order to read and write data to these database tables, the user can
+      call one of the functions, post(), fetch(), or fetchPrivate(), from the
+      'query' developer library. Each of these functions takes an extended path
+      as its first argument, also referred to as a 'route.' The
+      abs("./messages.att./_insert") argument that we saw above is an example
+      of such a route. And post() can also receive some additional data via
+      its second argument, which allows us to post data without having to
+      always encode it as part of the route.
+    </p> */}
+    {/* <p>
+      Apart from this, the difference between these three functions lies in
+      which kinds of privileges they require.
+    </p> */}
 </div>;
