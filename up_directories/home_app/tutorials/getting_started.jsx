@@ -107,7 +107,7 @@ const page = <div className="text-page">
       "open in a terminal."
     }</p>
     <p>{
-      "Then run the following command:"
+      "Then run the following command."
     }</p>
     <p>
       <code className="command">{[
@@ -131,7 +131,7 @@ const page = <div className="text-page">
     <p>{
       "Try doing this now. If the upload is successful, you should see " +
       "the following output, only where \"HOME_DIR_ID\" is replaced by a " +
-      "hexadecimal number:"
+      "hexadecimal number."
     }</p>
     <p>
       <code className="command">{[
@@ -155,7 +155,7 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "And you might also note that the command line prompt now says:"
+      "And you might also note that the command line prompt now says"
     }</p>
     <p>
       <code className="command">{[
@@ -198,7 +198,7 @@ const page = <div className="text-page">
       "Then to verify that these files were indeed uploaded from you " +
       "computer, try to open the hello_world/app1.jsx file in a " +
       "text editor on your computer, and then replace the three dots on " +
-      "Ln. 4 with \"World!\" instead, such that the full line reads:" 
+      "Ln. 4 with \"World!\" instead, such that the full line reads" 
     }</p>
     <p>
       <code className="jsx">{[
@@ -239,7 +239,7 @@ const page = <div className="text-page">
       }</p>
       <p>{
         "On Ln. 14 of this file, you will see an exported object called " +
-        "'app':" 
+        "'app', whose definition reads" 
       }</p>
     <p>
       <code className="jsx">{[
@@ -292,7 +292,7 @@ const page = <div className="text-page">
         "And now you will see your app rendered on the page, which, unless " +
         "you have edited it to say something else (or if you never " +
         "substituted the dots for \"World!\" in the first place), should now " +
-        "say:"
+        "say"
       }</p>
       <p>{
         <div className="text-display">
@@ -330,7 +330,7 @@ const page = <div className="text-page">
         "To do so, open the up_directories/hello_world/em.js " +
         "in a text editor on your computer. On Ln. 7-10 of this file, you " +
         "will see a couple of constants that you are free to change. And the " +
-        "first of these constants says:" 
+        "first of these constants says" 
       }</p>
     <p>
       <code className="jsx">{[
@@ -357,7 +357,7 @@ const page = <div className="text-page">
        * TODO: Implement said feature. */
     }</p>
     <p>{
-      "The next constant on Ln. 8, which you can also edit, currently says:"
+      "The next constant on Ln. 8, which you can also edit, currently says"
     }</p>
     <p>
       <code className="jsx">{[
@@ -372,7 +372,7 @@ const page = <div className="text-page">
     }</p>
     <p>{
       "If you then go back and refresh your component page, you should see " +
-      "that it renders the following:"
+      "that it renders the following."
     }</p>
     <p>{
       <div className="text-display">

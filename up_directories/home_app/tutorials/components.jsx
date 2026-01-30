@@ -57,7 +57,7 @@ const page = <div className="text-page">
         {"Getting started"}
       </ILink>,
       " tutorial. Here the component you uploaded was " +
-      "defined from these lines of code:"
+      "defined from the following lines of code."
     ]}</p>
     <p>
       <code className="jsx">{[
@@ -67,7 +67,7 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "which produced this result:"
+      "And these produced the result:"
     }</p>
     <p>{
       <TextDisplay key="_ex0" >
@@ -93,7 +93,7 @@ const page = <div className="text-page">
         {"Getting started"}
       </ILink>,
       " tutorial, there is an out-commented line at Ln. 2 " +
-      "which reads:"
+      "which reads"
     ]}</p>
     <p>
       <code className="jsx">
@@ -126,7 +126,7 @@ const page = <div className="text-page">
     <p>{
       "If you now re-upload your directory again (in the the same way as " +
       "you did in the previous tutorial), " +
-      "you should now see the following result:"
+      "you should now see the following result."
     }</p>
     <p>{
       <TextDisplay key="_ex1" >
@@ -172,7 +172,7 @@ const page = <div className="text-page">
     <p>{
       "For instance, if someone wants to import your new app2.jsx " +
       "component, and your home directory ID is, say, \"123ab\", " +
-      "they could import it via this statement:"
+      "they could import it via the following statement."
     }</p>
     <p>
       <code className="jsx">
@@ -207,7 +207,7 @@ const page = <div className="text-page">
       "also makes sure that the import statement of ExampleComponent2 is in-" +
       "commented, you will see an example of how to pass the props of " +
       "component instances. The render function should then return the " +
-      "following:"
+      "following."
     }</p>
     <p>
       <code className="jsx">{[
@@ -231,7 +231,7 @@ const page = <div className="text-page">
     </p>
     <p>{
       "Before re-uploading the directory again, take a look inside the " +
-      "ExampleComponent2.jsx module. It reads:"
+      "ExampleComponent2.jsx module. It reads"
     }</p>
     <p>
       <code className="jsx">{[
@@ -272,7 +272,7 @@ const page = <div className="text-page">
       "."
     ]}</p>
     <p>{
-      "Now, if you re-upload the directory, you will then see the following:"
+      "Now, if you re-upload the directory, you will then see the following."
     }</p>
     <p>{
       <TextDisplay key="_ex2" >
@@ -346,7 +346,8 @@ const page = <div className="text-page">
       "To see an example of this, you can comment out the previous return " +
       "statement in app2.jsx, and comment in the next one on Ln. 39-45. " +
       "And also make sure that ExampleComponent3 is imported at the " +
-      "top of the module as well. The render() function should now return:"
+      "top of the module as well. The render() function should now return " +
+      "the following."
     }</p>
     <p>
       <code className="jsx">{[
@@ -360,7 +361,7 @@ const page = <div className="text-page">
     </p>
     <p>{
       "If you then re-upload your directory, you should now see a button " +
-      "saying \"Click me!\", like so:"
+      "saying \"Click me!\", like this:"
     }</p>
     <p>{
       <TextDisplay key="_ex3" >
@@ -374,7 +375,7 @@ const page = <div className="text-page">
     }</p>
     <p>{
       "To understand how this happens, we can inspect ExampleComponent3.jsx, " +
-      "which reads:"
+      "which reads"
     }</p>
     <p>
       <code className="jsx">{[
@@ -451,7 +452,7 @@ const page = <div className="text-page">
       "the render() function."
     }</p>
     <p>{
-      "For instance, if you add this export:"
+      "For instance, if you add the following export statement,"
     }</p>
     <p>
       <code className="jsx">{[
@@ -493,7 +494,7 @@ const page = <div className="text-page">
     <p>{
       "For instance, if we want to refactor our previous example of the " +
       "increasing counter using actions instead, we can start by adding the " +
-      "following export from component as well:"
+      "following export from component as well."
     }</p>
     <p>
       <code className="jsx">{[
@@ -540,7 +541,7 @@ const page = <div className="text-page">
     }</p>
     <p>{
       "So if we e.g. pass a value of 2 as the second argument to this.do(), " +
-      "such that the whole component module now reads:"
+      "such that the whole component module now reads"
     }</p>
     <p>
       <code className="jsx">{[
@@ -598,7 +599,7 @@ const page = <div className="text-page">
     }</p>
     <p>{
       "To see how this works, we can let our render() function in the " +
-      "app2.jsx module return the following:"
+      "app2.jsx module return the following,"
     }</p>
     <p>
       <code className="jsx">{[
@@ -628,7 +629,7 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "where ExampleComponent5 is defined by the following module:"
+      "where ExampleComponent5 is defined by the following module,"
     }</p>
     <p>
       <code className="jsx">{[
@@ -764,7 +765,7 @@ const page = <div className="text-page">
     ]}</p>
     <p>{
       "Now, to see an example of using an event, we can let the render() " +
-      "function in app2.jsx return the following JSX element:"
+      "function in app2.jsx return the following JSX element."
     }</p>
     <p>
       <code className="jsx">{[
@@ -787,7 +788,7 @@ const page = <div className="text-page">
       "You can also once again try this out by just commenting in the right " +
       "lines in app2.jsx. And in this case, you should also comment in the " +
       "'actions' and 'events' exports below the render() function, such that " +
-      "the app2.jsx component module also exports:"
+      "the app2.jsx component module also exports the following object."
     }</p>
     <p>
       <code className="jsx">{[
@@ -805,7 +806,7 @@ const page = <div className="text-page">
     </p>
     <p>{
       "And for the module of ExampleComponent6, we let this simply consist " +
-      "solely of the following render() function:"
+      "solely of the following render() function."
     }</p>
     <p>
       <code className="jsx">{[

@@ -44,7 +44,7 @@ const page = <div className="text-page">
     <p>{
       "So to give an example, if you want to map an array to another array, " +
       "you would normally write something like the following when using " +
-      "regular JS:"
+      "regular JS."
     }</p>
     <p>
       <code className="jsx">{[
@@ -61,7 +61,7 @@ const page = <div className="text-page">
       " method is not defined. And instead you need to import an equivalent " +
       "function to from one of the so-called 'developer libraries' (as " +
       "opposed to user-made libraries). In particular for the map() method, " +
-      "you would write the following instead:"
+      "you would write the following instead."
     ]}</p>
     <p>
       <code className="jsx">{[
@@ -205,7 +205,7 @@ const page = <div className="text-page">
       "are declared in the global scope.)"
     ]}</p>
     <p>{[
-      "These global functions include the following:"
+      "These global functions include the following ones,"
     ]}</p>
     <p>
       <code className="jsx">{[
@@ -244,7 +244,7 @@ const page = <div className="text-page">
       "These developer components are generally given upper camel-case " +
       "module names, also followed by \".jsx\" at the end. " +
       "For example, if you want to import the <textarea> developer component," +
-      " you can do it with the following import statement:"
+      " you can do it with the following import statement."
     }</p>
     <p>
       <code className="jsx">{[
@@ -361,7 +361,7 @@ const page = <div className="text-page">
     }</p>
     <p>{
       "So if you for instance have a standard plain object and you want to " +
-      "change one of its properties, the following code would throw an error:"
+      "change one of its properties, the following code would throw an error."
     }</p>
     <p>
       <code className="jsx">{[
@@ -390,7 +390,7 @@ const page = <div className="text-page">
       "However, if you do want to use a mutable object or array, you can " +
       "just use either the MutableObject() or the MutableArray() " +
       "constructor, respectively. For example, the following code will " +
-      "also succeed:"
+      "also succeed."
     }</p>
     <p>
       <code className="jsx">{[

@@ -86,7 +86,7 @@ const page = <div className="text-page">
       </ELink>.
     </p>
     <p>
-      Let us now start by looking at the postMessage() SMF first, which reads:
+      Let us now start by looking at the postMessage() SMF first, which reads
     </p>
     <p>
       <code className="jsx">{[
@@ -182,9 +182,29 @@ const page = <div className="text-page">
       essentially create a new database table associated with that file.
     </p>
     <p>
+      And if the file is subsequently removed by the user, the server-side
+      file and associated table will also be removed when the user uploads the
+      directory again, and any data held by the table will thus also be deleted.
+    </p>
+    <p>
+      WARNING: If you move or rename a database table file, or rename any of
+      its parent subdirectories such that its file path relative to the home
+      directory changes, the
+      uploader program will treat this as a deletion of the file, and will
+      delete the data in the associated table. So be careful
+      about changing the file structure of an app once it is already being
+      used online by other users.
+      <ILink key="link-tut-6-1" href="~/db-queries">
+        Tutorial 6
+      </ILink>
+      will teach you how you can safely move or rename a database table file
+      without losing its data. 
+    </p>
+    <p>
       The type of database table created depends on the extension of the file.
-      For instance, '.att' stands for "Automatic-key Text Table", and
-      essentially corresponds to a table of the form when expressed in MySQL:
+      For instance, '.att' stands for "Automatic-key Text Table," and
+      essentially corresponds to a table of the following form, when expressed
+      in SQL.
     </p>
     <p>
       <code className="sql">{[
@@ -203,7 +223,7 @@ const page = <div className="text-page">
     <p>
       There are also other kinds of database table files with different
       file extension, which will be introduced in the
-      <ILink key="link-tut-6-1" href="~/db-queries">
+      <ILink key="link-tut-6-2" href="~/db-queries">
         next tutorial
       </ILink>.
     </p>
@@ -212,7 +232,7 @@ const page = <div className="text-page">
       is via the kind of extended paths similar to the
       abs("./messages.att./_insert") path that we saw above. We will also refer
       to such extended paths as 'routes.' The routes used to interact with
-      database table files have the following syntax:
+      database table files have the following syntax.
     </p>
     <p>
       <code className="jsx">{[
@@ -260,7 +280,7 @@ const page = <div className="text-page">
       privileges. Admin privileges are generally only granted inside the
       execution of an SMF. There is also a way for the admin of a directory to
       make requests with admin privileges manually, which we will show in the
-      <ILink key="link-tut-6-2" href="~/db-queries">
+      <ILink key="link-tut-6-3" href="~/db-queries">
         next tutorial
       </ILink>.
       But other than that, admin privileges are only granted inside of SMFs,
@@ -286,7 +306,7 @@ const page = <div className="text-page">
     </p>
     <p>
       This means that the following two post() calls will have the same effect
-      (where the "..." in front of the routes is still just placeholder):
+      (where the "..." in front of the routes is still just placeholder).
     </p>
     <p>
       <code className="jsx">{[
@@ -370,7 +390,7 @@ const page = <div className="text-page">
     <p>
       So for example, if the ".../my_file.att" table contains only three
       entries: '["1", "Foo"]', '["b", "Bar"]', '["1a", "Baz"]', we would get
-      the following results:
+      the following results.
     </p>
     <p>
       <code className="jsx">{[
@@ -390,34 +410,90 @@ const page = <div className="text-page">
       of entries that the client wish to receive, and 'o' is the offset of the
       list.
     </p>
-    <p>
+    {/* <p>
       Note also that neither 'entry' nor 'list' have an underscore in front,
       which means that these data-fetching queries do not generally require
       admin privileges. There is however exceptions to this, which we will get
       to in the next section.
-    </p>
+    </p> */}
     <p>
-      And for more documentation and tips about the various database table
+      For more documentation and tips about the various database table
       files and their query parameters, see the
-      <ILink key="link-tut-6-3" href="~/db-queries">
+      <ILink key="link-tut-6-4" href="~/db-queries">
         next tutorial
       </ILink>.
     </p>
   </section>
 
   <section>
-    <h2>Privileges</h2>
+    <h2>Calling a server module function</h2>
     <p>
-      ...
+      To make a call to a given SMF from the client-side, we can use routes of
+      the form
+    </p>
+    <p>
+      <code className="jsx">{[
+        '"ABSOLUTE_PATH_TO_SM_FILE./callSMF/FUN_NAME/(/ARG_1/ARG_2/...)?"',
+      ]}</code>
+    </p>
+    <p>
+      where ABSOLUTE_PATH_TO_SM_FILE is a placeholder for the absolute path to
+      the '.sm.js' file in question, FUN_NAME is the alias of the exported SMF
+      to call, and ARG_1, ARG_2, ... is an optional list of input values of
+      optional length, where each argument will be treated as a string.
+    </p>
+    <p>
+      Again, since the the valid characters of the route segments are
+      restricted, passing the arguments this way puts a restriction on what
+      values the SMF can receive. However, in the case of post() queries, the
+      arguments can also be passed via the post data argument, i.e. the second
+      argument of post(). This means that the following two post queries are
+      equivalent.
+    </p>
+    <p>
+      <code className="jsx">{[
+        'post(".../my_file.sm.js./callSMF/myFun/foo/bar");\n',
+        'post(".../my_file.sm.js./callSMF/myFun", ["foo", "bar"]);',
+      ]}</code>
+    </p>
+    <p>
+      And if only passing a single argument to an SMF, and that argument is
+      not an array, one can also just pass the argument directly as the second
+      argument of post(), without wrapping it in an array, which means that
+      the following two post queries are also equivalent.
+    </p>
+    <p>
+      <code className="jsx">{[
+        'post(".../my_file.sm.js./callSMF/myFun/foo");\n',
+        'post(".../my_file.sm.js./callSMF/myFun", "foo");',
+      ]}</code>
+    </p>
+    <p>
+      Passing the arguments via the post data argument, however, means that
+      you can also pass values of other types apart from strings, such as
+      numbers, booleans, arrays and plain objects. And as long as these values
+      can be losslessly JSON-encoded, they will have the same values and types
+      at the beginning of the SMF's execution.
+    </p>
+    <p>
+      As an example... TODO: Show the user where the postMessage() is called
+      from in PostField.jsx, and then show where the list is fetched, and
+      possibly note that you can (and often want to) use fetch() for SMF calls. 
     </p>
   </section>
 
   <section>
-    <h2>Calling server modules</h2>
+    <h2>Privileges</h2>
     <p>
-      ...
+      When a function is executed, it can sometimes get elevated privileges
+      under certain circumstances, which allows it to do things that would
+      otherwise fail. The privileges 
+    </p>
+    <p>
+      The two main types of privileges to know about  
     </p>
   </section>
+
 
     {/* <p>
       In order to read and write data to these database tables, the user can

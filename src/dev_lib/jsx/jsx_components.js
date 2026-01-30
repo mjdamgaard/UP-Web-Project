@@ -151,45 +151,8 @@ class JSXInstance {
     ) {
       return this.domNode;
     }
-    this.prevState = this.state;
-
-    // Record the props. And on the first render only, initialize the state,
-    // and record the ref prop as well (which cannot be changed by a
-    // subsequent render). Also initialize the actions, methods, and events of
-    // the instance.
     this.props = props;
-    let state;
-    if (this.state === undefined) {
-      // Set the actions, methods, and events.
-      this.prepareActionsMethodsAndEvents(callerNode, callerEnv);
-
-      // Get the initial state if the component module declares one, which is
-      // done either by exporting an 'getInitialState()' function (or just
-      // 'getInitState(),' or 'initialize()'), or a constant  object called
-      // 'initialState' (or 'initState').
-      let getInitialState = this.componentModule.get("initialize") ??
-        this.componentModule.get("getInitialState") ??
-        this.componentModule.get("getInitState");
-      if (getInitialState) {
-        this.state = {};
-        try {
-          state = interpreter.executeFunction(
-            getInitialState, [props], callerNode, callerEnv,
-            new JSXInstanceInterface(this), [CLEAR_FLAG],
-          );
-        }
-        catch (err) {
-          return this.getFailedComponentDOMNode(err, replaceSelf);
-        }
-      } else {
-        state = this.componentModule.get("initialState") ??
-          this.componentModule.get("initState");
-      }
-      this.state = state ?? {};
-
-      // And store the ref prop.
-      this.ref = props["ref"];
-    }
+    this.prevState = this.state;
 
 
     // Call settings.prepareInstance() to prepare the other methods of settings
@@ -233,6 +196,43 @@ class JSXInstance {
       [CLIENT_TRUST_FLAG, isTrusted],
       [REQUESTING_COMPONENT_FLAG, requestOrigin],
     ]});
+
+
+    // On the first render only, initialize the state, and record the 'ref'
+    // prop as well (which cannot be changed by a subsequent render). Also
+    // initialize the actions, methods, and events of the instance.
+    if (this.state === undefined) {
+      // Set the actions, methods, and events.
+      this.prepareActionsMethodsAndEvents(callerNode, callerEnv);
+
+      // Get the initial state if the component module declares one, which is
+      // done either by exporting an 'getInitialState()' function (or just
+      // 'getInitState(),' or 'initialize()'), or a constant  object called
+      // 'initialState' (or 'initState').
+      let state;
+      let getInitialState = this.componentModule.get("initialize") ??
+        this.componentModule.get("getInitialState") ??
+        this.componentModule.get("getInitState");
+      if (getInitialState) {
+        this.state = {};
+        try {
+          state = interpreter.executeFunction(
+            getInitialState, [props], callerNode, compEnv,
+            new JSXInstanceInterface(this)
+          );
+        }
+        catch (err) {
+          return this.getFailedComponentDOMNode(err, replaceSelf);
+        }
+      } else {
+        state = this.componentModule.get("initialState") ??
+          this.componentModule.get("initState");
+      }
+      this.state = state ?? {};
+
+      // And store the ref prop.
+      this.ref = props["ref"];
+    }
 
 
     // Then get the component module's render() function.

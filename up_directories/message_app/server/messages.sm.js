@@ -2,7 +2,7 @@
 import {post, fetch, fetchPrivate} from 'query';
 import {getRequestingUserID, checkRequestOrigin} from 'request';
 import {verifyTypes} from 'type';
-import {parseInt, isNaN} from 'number';
+import {parseInt} from 'number';
 import {indexOf, substring} from 'string';
 import {map} from 'array';
 
@@ -107,9 +107,7 @@ export async function fetchMessages(maxNum = "1000", offset = "0") {
   // Check that maxNum and offset are parsed as non-negative integers.
   maxNum = parseInt(maxNum);
   offset = parseInt(offset);
-  if (isNaN(maxNum) || maxNum < 0 || isNaN(offset) || offset < 0) {
-    throw "The maxNum or the offset argument was not a non-negative integer"
-  }
+  verifyTypes([maxNum, offset], ["integer unsigned", "integer unsigned"]);
 
   // Fetch the list of messages.
   let list = await fetch(

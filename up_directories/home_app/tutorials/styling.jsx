@@ -30,7 +30,7 @@ const page = <div className="text-page">
       </ILink>,
       ", you can comment out the previous return statement and comment " +
       "in Ln. 93-96 of " +
-      "app2.jsx, such that it returns the following JSX element:"
+      "app2.jsx, such that it returns the following JSX element."
     ]}</p>
     <p>
       <code className="jsx">{[
@@ -44,7 +44,7 @@ const page = <div className="text-page">
       "And also make sure that the ExampleComponent7 is imported at the top " +
       "of the module. " +
       "Then comment in the 'styleSheets' export at the end of the " +
-      "document as well, which reads:"
+      "document as well, which reads"
     }</p>
     <p>
       <code className="jsx">{[
@@ -55,7 +55,7 @@ const page = <div className="text-page">
     </p>
     <p>{
       "The returned JSX of the render() function of ExampleComponent7 is " +
-      "simply:"
+      "simply given by"
     }</p>
     <p>
       <code className="jsx">{[
@@ -63,7 +63,7 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "And the contents of the app2.css style sheet is:"
+      "And the contents of the app2.css style sheet is the following."
     }</p>
     <p>
       <code className="css">{[
@@ -86,7 +86,7 @@ const page = <div className="text-page">
       <ILink key="link-tut-1" href="~/getting-started" >
         {"Tutorial 1"}
       </ILink>,
-      " as well), you will see the following:"
+      " as well), you will see the following."
     ]}</p>
     <p>{
       <div className="text-display">
@@ -116,7 +116,7 @@ const page = <div className="text-page">
     }</p>
     <p>{
       "In fact, if you go to ExampleComponent7.jsx, you will see that its " +
-      "full contents are:"
+      "full contents are the following."
     }</p>
     <p>
       <code className="jsx">{[
@@ -133,7 +133,7 @@ const page = <div className="text-page">
       "The child component thus also has a 'styleSheets' export, referencing a " +
       "style sheet called ExampleComponent7.css. " +
       "And if you look inside this file, you will see " +
-      "that it contains the following ruleset:" 
+      "that it contains the following ruleset." 
     }</p>
     <p>
       <code className="css">{[
