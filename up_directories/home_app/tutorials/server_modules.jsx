@@ -480,37 +480,44 @@ const page = <div className="text-page">
       from in PostField.jsx, and then show where the list is fetched, and
       possibly note that you can (and often want to) use fetch() for SMF calls. 
     </p>
+    <p>
+      TODO: Also talk about how an SMF can be called from another SMF, and
+      that admin privileges then changes (and stress that the previous ones are
+      removed). *Or maybe not; now I'm talking about that below..
+    </p>
   </section>
 
   <section>
-    <h2>Privileges</h2>
+    <h2>Permissions</h2>
     <p>
-      When a function is executed, it can sometimes get elevated privileges
+      When a function is executed, it can sometimes get elevated permissions
       under certain circumstances, which allows it to do things that would
       otherwise fail.
     </p>
-    <p>
-      The privileges are thus a type of flags that are raised for the execution
+    {/* <p>
+      A permission is thus a type of flag that is raised for the execution
       environment of the given function, which might then be checked by some
       developer functions, such as post() and fetch(), at the beginning of
       their execution.
-    </p>
+    </p> */}
     <p>
-      The two main types of privileges to know about, which are the "admin"
-      privilege, which we have already talked about above, and the "can-post"
-      privilege.
+      There are two main types of permissions to know about, which are the
+      'admin privilege,' which we have already talked about above, and the
+      'post permission.'
     </p>
 
-    <h4>The "admin" privilege</h4>
+    <h3>The admin privilege</h3>
     <p>
-      The "admin" privilege is raised only at the beginning of the execution
+      The admin privilege is raised only at the beginning of the execution
       of an SMF, and only if that SMF is called specifically via a
-      "./callSMF" query, like we saw in the last section.
+      "./callSMF" query, like we saw in the last section. They are always
+      associated with the particular home directory to which the SMF belongs,
+      and grant certain rights only within that home directory.
     </p>
     <p>
-      The "admin" privilege allows for queries to so-called "locked" routes,
-      which are all routes that contains a segment that starts with an
-      underscore.
+      In particular, the admin privilege allows for queries to so-called
+      "locked" routes, which are all routes that contains a segment that
+      starts with an underscore.
     </p>
     <p>
       Note that the so-called "query type" after a "./" also counts as a
@@ -539,10 +546,66 @@ const page = <div className="text-page">
       </ILink>.
     </p>
 
-    <h4>The "can-post" privilege</h4>
+    <h3>The post permission</h3>
     <p>
-      ...
+      The post permission, as the name suggests, gives a function the
+      permission to make post requests, via the post() function as seen above.
     </p>
+    <p>
+      In the current JSX framework, the components do not always have the
+      permission to make post requests to the server, but only in response to
+      an action by the user, such as a mouse click or a press of the Enter key. 
+    </p>
+    <p>
+      And more importantly, whenever a query is made via fetch() or
+      fetchPrivate(), any existing post permission will be removed for the
+      duration of the query. And this is true regardless of whether fetch()
+      or fetchPrivate() is called on the client side or on the server side. 
+    </p>
+
+    <h3>Clearing permissions manually</h3>
+    <p>
+      Sometimes you might wish to clear a permission manually. This is
+      particular useful if you want an SMF to be able to make a query that is
+      dependent on user input, but does not want to bleed e.g. admin privileges
+      and/or post permissions into such queries.
+    </p>
+    <p>
+      Allowing admin privileges to bleed into functions controlled by the
+      client of the request is obviously a big no-no, and should always be
+      avoided.
+    </p>
+    <p>
+      Permissions can be cleared using a call to one of the following three
+      functions, also exported by the 'query' library: clearPermissions(),
+      clearPrivileges(), and noPost().
+    </p>
+    <p>
+      Use clearPermissions() to clear both admin privileges and post
+      permissions, use clearPrivileges() to clear only admin privileges, but
+      not post permissions, and use noPost() to only clear the post permission,
+      although this is rarely enough when it comes to SMFs.
+    </p>
+
+    <h3>Calling a foreign SMF</h3>
+    <p>
+      Another way that the admin privileges are cleared is whenever an SMF
+      calls another SMF, possibly from a different home directory.
+    </p>
+    <p>
+      Whenever a "./callSMF" query is made from within an SMF, the current
+      admin privileges will be cleared during the query, and replaced by the
+      admin privilege of the home directory of the called SMF.
+    </p>
+    <p>
+      So another good way to prevent bleeding admin privileges into the wrong
+      functions within an SMF is to only use "./callSMF" queries when calling
+      any foreign functions that depend on client input. 
+    </p>
+  </section>
+
+  <section>
+    <h2>Request origins</h2>
   </section>
 
 
