@@ -487,10 +487,61 @@ const page = <div className="text-page">
     <p>
       When a function is executed, it can sometimes get elevated privileges
       under certain circumstances, which allows it to do things that would
-      otherwise fail. The privileges 
+      otherwise fail.
     </p>
     <p>
-      The two main types of privileges to know about  
+      The privileges are thus a type of flags that are raised for the execution
+      environment of the given function, which might then be checked by some
+      developer functions, such as post() and fetch(), at the beginning of
+      their execution.
+    </p>
+    <p>
+      The two main types of privileges to know about, which are the "admin"
+      privilege, which we have already talked about above, and the "can-post"
+      privilege.
+    </p>
+
+    <h4>The "admin" privilege</h4>
+    <p>
+      The "admin" privilege is raised only at the beginning of the execution
+      of an SMF, and only if that SMF is called specifically via a
+      "./callSMF" query, like we saw in the last section.
+    </p>
+    <p>
+      The "admin" privilege allows for queries to so-called "locked" routes,
+      which are all routes that contains a segment that starts with an
+      underscore.
+    </p>
+    <p>
+      Note that the so-called "query type" after a "./" also counts as a
+      segment, which is why query types such as "_insert" and "_deleteEntry",
+      etc., are all "locked," and therefore generally only works if they are
+      used inside of an SMF. 
+    </p>
+    <p>
+      Additionally, if any file name start with an underscore, all queries to
+      that file (including its content in case of a text file) will be locked
+      as well. And if the name of a subdirectory starts with an underscore,
+      all the files within that subdirectory will be locked.
+    </p>
+    <p>
+      This makes it possible for an app to have private data, which can only
+      be read by an SMF, or by the admin.
+    </p>
+    <p>
+      Note that admin privileges are <i>not</i> automatically granted to
+      queries that originate from the admin of the given home directory, at
+      least while using the browser to access their own app. The admin can,
+      however, use the uploader program to make posts with elevated privileges,
+      as we will show in the
+      <ILink key="link-tut-6-5" href="~/db-queries">
+        next tutorial
+      </ILink>.
+    </p>
+
+    <h4>The "can-post" privilege</h4>
+    <p>
+      ...
     </p>
   </section>
 
