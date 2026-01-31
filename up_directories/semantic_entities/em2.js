@@ -36,7 +36,7 @@ export const homeApp = {
   "Name": "Home app",
   "Component path": "/1/2/main.jsx",
   "Example component path": undefined,
-  "Use full screen": true,
+  "No margins": true,
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/home_app",

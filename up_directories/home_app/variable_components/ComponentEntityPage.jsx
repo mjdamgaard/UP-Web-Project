@@ -49,7 +49,8 @@ export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
   else {
     let exampleProps = componentDef["Example props"];
     let getExampleProps = componentDef["getExampleProps"];
-    let useFullScreen = componentDef["Use full screen"];
+    let noMargins = componentDef["No margins"];
+    let noHeader = componentDef["No header"];
 
     // Create the new homeURL for the component page, which in the case
     // componentName is undefined is just the url minus the tailURL (i.e. the
@@ -84,7 +85,8 @@ export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
 
     // Then return the component page.
     let className = "component-page" +
-      (useFullScreen ? " no-page-margins" : "");
+      (noMargins ? " no-margins" : "") +
+      (noHeader ? " no-header" : "");
     isTrusted ||= hasBeenDismissed;
     return <div className={className}>
       {isTrusted ? undefined :

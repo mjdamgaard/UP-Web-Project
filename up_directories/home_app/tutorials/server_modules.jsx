@@ -584,7 +584,7 @@ const page = <div className="text-page">
       Use clearPermissions() to clear both admin privileges and post
       permissions, use clearPrivileges() to clear only admin privileges, but
       not post permissions, and use noPost() to only clear the post permission,
-      although this is rarely enough when it comes to SMFs.
+      although this is generally not advised when it comes to SMFs.
     </p>
 
     <h3>Calling a foreign SMF</h3>

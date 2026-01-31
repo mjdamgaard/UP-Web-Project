@@ -49,7 +49,7 @@
   margin: 0px 20%;
   padding: 20px 50px;
 }
-.app-main-container:has(> .open > .app-main > .no-page-margins) {
+.app-main-container:has(> .open > .app-main > .no-margins) {
   margin: 0 0;
   padding: 0 0;
 }

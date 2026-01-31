@@ -248,7 +248,8 @@ const page = <div className="text-page">
         '  "Name": APP_NAME,\n',
         '  "Component path": abs(COMPONENT_PATH),\n',
         '  "Example component path": undefined,\n',
-        '  "Use full screen": USE_FULL_SCREEN,\n',
+        '  "No margins": NO_MARGINS,\n',
+        '  "No header": NO_HEADER,\n',
         '  "GitHub repository": GITHUB_REPO_URL,\n',
         '  "Creator(s)": () => fetchCreatorEntPath(),\n',
         '  "Description": abs("./em.js;get/appDescription"),\n',
@@ -397,13 +398,13 @@ const page = <div className="text-page">
       "now, going into the next tutorial."
     ]}</p>
     <p>{
-      "Lastly, the are also the 'GITHUB_REPO_URL' constant, which you " +
+      "Lastly, there is also a 'GITHUB_REPO_URL' constant, which you " +
       "ought to specify at some point if you want your share your app with " +
       "others. (It is strongly recommended to use a public GitHub " +
-      "repository for your app in that case.) " +
-      "And there is also a 'USE_FULL_SCREEN' constant, which specifies " +
-      "that your app ought to define its own margins on the webpage where it " +
-      "is displayed."
+      "repository for your app in that case.)"
+      // "And there is also a 'NO_MARGINS' constant, which specifies " +
+      // "that your app ought to define its own margins on the webpage where it " +
+      // "is displayed."
     }</p>
   </section>
 

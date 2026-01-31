@@ -7,7 +7,8 @@ import {getUserEntPath} from "/1/1/entities.js";
 const APP_NAME = "YOUR_APP_NAME";
 const COMPONENT_PATH = "./main.jsx";
 const GITHUB_REPO_URL = "URL_TO_YOUR_GITHUB_REPO";
-const USE_FULL_SCREEN = false;
+const NO_MARGINS = false;
+const NO_HEADER = false;
 
 
 
@@ -16,7 +17,8 @@ export const app = {
   "Name": APP_NAME,
   "Component path": abs(COMPONENT_PATH),
   "Example component path": undefined,
-  "Use full screen": USE_FULL_SCREEN,
+  "No margins": NO_MARGINS,
+  "No header": NO_HEADER,
   "GitHub repository": GITHUB_REPO_URL,
   "Creator(s)": () => fetchCreatorEntPath(),
   "Description": abs("./em.js;get/appDescription"),
