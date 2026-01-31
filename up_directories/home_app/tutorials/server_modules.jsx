@@ -4,7 +4,7 @@ import * as ELink from 'ELink.jsx';
 
 
 export function render() {
-  return pagePlaceholder;
+  // return pagePlaceholder;
   return page;
 }
 
@@ -635,14 +635,116 @@ const page = <div className="text-page">
     <p>
       So another good way to prevent bleeding admin privileges into the wrong
       functions within an SMF is to only use "./callSMF" queries when calling
-      any foreign functions that depend on client input. 
+      any foreign functions that depend on client input.
     </p>
   </section>
 
   <section>
     <h2>Request origins</h2>
     <p>
+      Whenever an SMF is queried using either post() or fetchPrivate(), the
+      so-called 'request origin' is also recorded for the query, which is a
+      string that denoted from where the query originated, not unlike a
+      the
+      <ELink key="link-moz-async"
+        href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Origin"
+      >
+        Origin HTTP header
+      </ELink>.
+    </p>
+    <p>
+      But whereas an Origin HTTP header denotes the domain name or the IP
+      address of the origin server of the current website, the request origin
+      in this system denotes the particular app component or SMF from which the
+      query originated.
+    </p>
 
+    <h3>Request origins of client-side requests</h3>
+    <p>
+      Whenever an app component makes a post() or a fetchPrivate() request to
+      the server, the request origin is set to the file path of that
+      component, or one of its ancestor components, depending on whether the
+      requesting component defines its own style or not. If the component's
+      style is defined by an ancestor component, then the module path of that
+      ancestor component is used instead for the request origin. 
+    </p>
+    <p>
+      For example, if consider the message app discussed above, one can see
+      that the outer component of the app, defined by the 'main.jsx' module,
+      is responsible for styling the whole app, namely since none of its
+      descendant component instances use keys that start with an underscore.
+      And as we recall from
+      <ILink key="link-tut-3-1" href="~/styling">
+        Tutorial 3
+      </ILink>,
+      this means that the app component never hands over the styling
+      responsibility to any of its descendants.
+    </p>
+    <p>
+      Therefore, for all post() or fetchPrivate() queries made by the message
+      app the request origin will be set to the absolute path of the 'main.jsx'
+      file.
+    </p>
+    <p>
+      And indeed, this is why all the SMFs of the 'messages.sm.js' module that
+      inserts or modifies data in the database starts with the following check.
+    </p>
+    <p>
+      <code className="jsx">{[
+        'checkRequestOrigin(true, [\n',
+        '  abs("../main.jsx"),\n',
+        ']);',
+      ]}</code>
+    </p>
+    <p>
+      The checkRequestOrigin() function takes a boolean value as its first
+      argument, which determines whether the client is potentially able to
+      override the check. (You generally want this boolean to be true whenever
+      the SMF is open to requests from client side, and not just from
+      a other, trusted SMFs.)
+      And the second argument is an array of permitted request origins.
+    </p>
+    <p>
+      The strings inside this array are also allowed to end in "*", by the way,
+      in which case the "*" is treated as a wildcard, matching anything that
+      comes after.
+    </p>
+    <p>
+      These request origins checks are often crucial to include, since if it is
+      left out, it means that all other apps on the UP Web is free to post to
+      the SMF at will, which is rarely desired.
+    </p>
+
+    <h3>Request origins of server-side requests</h3>
+    <p>
+      As stated above, an SMF can also be called from other SMFs, including
+      ones from other home directories.
+    </p>
+    <p>
+      For such queries between two SMFs, the request origin will not be set to
+      the path of any component module, but rather to the "./callSMF" route
+      that was used to call the first of the two SMFs, i.e. the one who is now
+      calling the second one. 
+    </p>
+    <p>
+      So if the first SMF was called via a route such as
+      ".../my_file_1.sm.js./callSMF/mySMF1/arg1/arg2", and that SMF then calls
+      a second one via the route ".../my_file_2.sm.js./callSMF/mySMF2/arg1",
+      then the request origin that the second SMF sees will given by
+      ".../my_file_1.sm.js./callSMF/mySMF1/arg1/arg2".
+    </p>
+    <p>
+      Note, however, that due to the fact that checkRequestOrigin() allows its
+      whitelisted routes to end in a "*" wildcard, you do not need to match
+      all potential arguments, but can just check for a string
+      such as e.g. ".../my_file_1.sm.js./callSMF/mySMF1*" instead.
+    </p>
+  </section>
+
+  <section>
+    <h2>Requesting user ID</h2>
+    <p>
+      ...
     </p>
   </section>
 
