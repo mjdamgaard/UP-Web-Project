@@ -4,9 +4,19 @@ import * as ELink from 'ELink.jsx';
 
 
 export function render() {
+  return pagePlaceholder;
   return page;
 }
 
+const pagePlaceholder = <div className="text-page">
+  <h1>{"Server modules"}</h1>
+  <section>
+    <h2>{"..."}</h2>
+    <p>{
+      "This tutorial is soon underway..."
+    }</p>
+  </section>
+</div>;
 
 
 const page = <div className="text-page">
@@ -16,13 +26,13 @@ const page = <div className="text-page">
     <p>
       When an app needs to store data on the server, it does so by creating a
       so-called server module (SM), which is a JS module whose exported
-      functions are allowed to be executed serve-side.
+      functions are allowed to be executed server-side.
     </p>
     <p>
       The server modules are recognized by a special file extension of
-      ".sm.js". Whenever you crate a file with this extension at the end, you
-      thus tell the server the exported functions of that module is allowed to
-      be called by the clients and executed on the server.
+      ".sm.js". Whenever you create a file with this extension, you
+      tell the server the exported functions of that module is allowed to
+      be executed on the server, at the request of a client.
     </p>
     <p>
       And whenever a server module function (SMF) is called this way, it is
@@ -66,9 +76,8 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>
-      These are the SMFs that the client can call to respectively post a new
-      message, delete a message, edit a message, or fetch a list of the
-      existing messages.
+      These are the SMFs that the client can call to respectively post new
+      messages, delete or edit messages, or fetch a list of existing messages.
     </p>
     <p>
       If you are not familiar with the 'async' and 'await' keywords, you can
@@ -86,7 +95,7 @@ const page = <div className="text-page">
       </ELink>.
     </p>
     <p>
-      Let us now start by looking at the postMessage() SMF first, which reads
+      Let us now start by looking at the postMessage() SMF first. It reads
     </p>
     <p>
       <code className="jsx">{[
@@ -118,13 +127,13 @@ const page = <div className="text-page">
     <p>
       This function first checks the origin of the request via the a call to a
       function called 'checkRequestOrigin()' from the 'request'
-      library. This is very important to do for all SMFs that inserts or
-      modifies data in the database, or reads and returns private data.
+      library. This is very important to do for all SMFs that insert or
+      modify any data in the database, or fetch any private data.
     </p>
     <p>
       This particular call to checkRequestOrigin() checks that the origin of
-      the request is the message app defined by the '~/main.jsx' in the same
-      home directory.
+      the request is the message app defined by the 'main.jsx' module in the
+      same home directory.
     </p>
     <p>
       We will get back to checkRequestOrigin() and how it works in a later
@@ -134,11 +143,6 @@ const page = <div className="text-page">
       The next thing that postMessage() message does is to get the (hexadecimal)
       ID of of the requesting user, and then combine this with the input text,
       using ";" as a separator, before storing inserting it in the database.
-    </p>
-    <p>
-      There are also other ways that we could store this data which are more
-      efficient in terms of storage space. But for the sake of simplicity, we
-      just store all the data as a single encoded text for this tutorial.
     </p>
     <p>
       There are also other ways that we could store this data which are more
@@ -184,7 +188,7 @@ const page = <div className="text-page">
     <p>
       And if the file is subsequently removed by the user, the server-side
       file and associated table will also be removed when the user uploads the
-      directory again, and any data held by the table will thus also be deleted.
+      directory again.
     </p>
     <p>
       WARNING: If you move or rename a database table file, or rename any of
@@ -194,11 +198,13 @@ const page = <div className="text-page">
       delete the data in the associated table. So be careful
       about changing the file structure of an app once it is already being
       used online by other users.
-      <ILink key="link-tut-6-1" href="~/db-queries">
+      {/* <ILink key="link-tut-6-1" href="~/db-queries">
         Tutorial 6
       </ILink>
       will teach you how you can safely move or rename a database table file
-      without losing its data. 
+      without losing its data.  */}
+      (You should generally be careful about changing the file structure of
+      a directory that is already being used by others.)
     </p>
     <p>
       The type of database table created depends on the extension of the file.
@@ -215,14 +221,14 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>
-      In other words, the '.att' files represent simple tables with only two
+      In other words, an '.att' file represents a simple table with only two
       columns, namely a 'text_id' and a 'text_data' column, where a unique
       'text_id' is automatically generated whenever the client does not specify
       it explicitly.
     </p>
     <p>
       There are also other kinds of database table files with different
-      file extension, which will be introduced in the
+      file extensions. These will all be introduced in the
       <ILink key="link-tut-6-2" href="~/db-queries">
         next tutorial
       </ILink>.
@@ -240,10 +246,10 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>
-      Here ABSOLUTE_PATH_TO_FILE is a placeholder for the absolute path to the
-      file, QUERY_TYPE is a placeholder for a query type such as "_insert" as
-      we saw above, and PARAM and VALUE are a pair of respectively a parameter
-      name and corresponding input value.
+      Here, ABSOLUTE_PATH_TO_FILE is a placeholder for the absolute path to the
+      file, QUERY_TYPE is a placeholder for the type of the given query, such
+      as the "_insert" query type that we saw above, and PARAM and VALUE are a
+      pair of respectively a parameter name and corresponding input value.
     </p>
     <p>
       The './' in such routes should thus be interpreted as essentially
@@ -253,7 +259,20 @@ const page = <div className="text-page">
       meaning.
     </p>
     <p>
-      Here are a few examples of such routes for the '.att' files, where
+      The standard way to make a query for a given route is the pass that route
+      to one of the three main query functions exported from the 'query'
+      library: post(), fetch(), and fetchPrivate(). The difference between
+      these
+      will be explained below.
+      {/* three functions is that post(), unlike the two others, allows for
+      data to be inserted or modified in the database. And fetchPrivate(),
+      unlike fetch() allows SMFs to receive particular information about the
+      request, such as who the requesting user is. The getRequestingUserID()
+      function that we saw above will thus fail for a fetch() request, but not
+      for a fetchPrivate() request. */}
+    </p>
+    <p>
+      Here are a few examples of some valid routes for the '.att' files, where
       ".../my_file.att" is a placeholder for the absolute path to a file
       called 'my_file.att':
     </p>
@@ -288,8 +307,8 @@ const page = <div className="text-page">
     </p>
     <p>
       The ".../my_file.att./_insert/p/Hello" query has the effect of
-      inserting a new entry into the 'my_file.att' table, with a "Hello" as
-      the so-called "payload" of the entry, which is what the 'p' stands for.
+      inserting a new entry into the 'my_file.att' table, with a "Hello" string
+      as the so-called 'payload' of the entry, which is what the 'p' stands for.
       The payload of an entry is generally the part of the entry that is not
       part of any of its index keys. For the '.att' tables, the payload is thus
       just the "text_data" column that we saw above. Therefore, the
@@ -298,10 +317,10 @@ const page = <div className="text-page">
     </p>
     <p>
       Now, since the valid characters of routes are heavily restricted, as they
-      need to conform to the URL specification, it would not be very useful if
+      need to conform to URL specifications, it would not be very useful if
       we could only pass the texts for the '.att' tables via the parameters of
       such routes. Luckily, the "payload" parameter value in particular can
-      also generally be passed via the post data of a post request, which is
+      also be passed via the post data of a post request, which is
       the optional second argument of the post() function that we saw above.
     </p>
     <p>
@@ -316,14 +335,15 @@ const page = <div className="text-page">
     </p>
     <p>
       But with the second kind of query, we obviously have more freedom to
-      insert the payload text that we want.
+      insert whichever payload text we want.
     </p>
     <p>
       Next we have the route of ".../my_file.att./_insert/k/1a/p/Hello",
       which is similar to the ones before, but with a 'k' parameter with the
       value of "1a" as well. The 'k' here stands for "key", and generally
       represents the primary key for the entry. In the case of '.att' files,
-      this "key" is obviously the "text_id" column that we saw above. So the
+      this "key" is simply the "text_id" column that we saw above (but using
+      a hexadecimal encoding of the BIGINT UNSIGNED value). So the
       ".../my_file.att./_insert/k/1a/p/Hello" route will have the effect of
       inserting a entry with the specific (hexadecimal) key of "1a", and with
       a payload of "Hello" once again.
@@ -347,14 +367,15 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>
-      If instead wanting to ignore existing entries in case of a duplicate
-      key, set the query parameter of 'i' to "1", as seen in the route of
+      If instead wanting to ignore existing entries in case of duplicate
+      keys, set the query parameter of 'i' to "1", as seen in the route of
       ".../my_file.att./_insert/k/1a/p/Hello/i/1" above. (For boolean query
       parameters like 'i', we use "1" and "0" rather than "true" and "false".)
     </p>
     <p>
-      Next we have route of ".../my_file.att./_deleteEntry/k/1a", which of
-      course has the effect of deleting the entry with the key of "1a".
+      Next we have a route of ".../my_file.att./_deleteEntry/k/1a", which, as
+      you might have guessed, has the effect of deleting the entry with the
+      key of "1a".
     </p>
     <p>
       One can also delete whole sections of a table at once. The route of
@@ -365,8 +386,8 @@ const page = <div className="text-page">
     </p>
     <p>
       Finally, we have two query types for fetching data from the table, namely
-      the 'entry' query type, which fetches a particular entry, and 'list',
-      which fetches a whole list.
+      the 'entry' query type, which fetches a particular entry, and the 'list'
+      query type, which fetches a whole list of entries at once.
     </p>
     <p>
       For instance, ".../my_file.att./entry/k/1a" will fetch the entry with
@@ -383,7 +404,7 @@ const page = <div className="text-page">
       return null or undefined.
     </p>
     <p>
-      For the 'list' queries, on the other hand, the full entries will be
+      For 'list' queries, on the other hand, the full entries will be
       returned, meaning that return value of a 'list' query will be a
       (possibly empty) array of entry arrays of the form '[textID, textData]'.
     </p>
@@ -408,7 +429,8 @@ const page = <div className="text-page">
     <p>
       Here, the 'n' parameter for the 'list' query type is the maximal number
       of entries that the client wish to receive, and 'o' is the offset of the
-      list.
+      list. And the fetch() function is a function similar to post(), which
+      prevents inserting or modifying data in the database.
     </p>
     {/* <p>
       Note also that neither 'entry' nor 'list' have an underscore in front,
@@ -417,11 +439,19 @@ const page = <div className="text-page">
       to in the next section.
     </p> */}
     <p>
-      For more documentation and tips about the various database table
+      For more documentation about the various database table
       files and their query parameters, see the
       <ILink key="link-tut-6-4" href="~/db-queries">
         next tutorial
       </ILink>.
+    </p>
+  </section>
+
+  <section>
+    <h2>Query functions</h2>
+    <p>
+      There are three main functions to use when making queries to the server
+      and/or the database, 
     </p>
   </section>
 
@@ -483,7 +513,12 @@ const page = <div className="text-page">
     <p>
       TODO: Also talk about how an SMF can be called from another SMF, and
       that admin privileges then changes (and stress that the previous ones are
-      removed). *Or maybe not; now I'm talking about that below..
+      removed). *Or maybe not; now I'm talking about that below.. *No, I still
+      need to mention that SMFs can call other SMFs, and I should then also
+      mention the admin privilege shift. *It would be a good idea to also..
+      ..mention fetchPrivate() here, or maybe somewhere below.. ..I could maybe
+      just talk about the three query functions here in this section.. ..Or
+      maybe in a small section below..
     </p>
   </section>
 
@@ -606,6 +641,9 @@ const page = <div className="text-page">
 
   <section>
     <h2>Request origins</h2>
+    <p>
+
+    </p>
   </section>
 
 
