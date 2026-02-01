@@ -67,7 +67,8 @@ const page = <div className="text-page">
     <p>{
       "Once you have downloaded (and unpacked) this directory to your " +
       "computer, open this directory in your terminal (or cd into it), then " +
-      "run the following command to install the Node.js program:"
+      "run the following command to install the Node.js program. " +
+      "(Do not include the initial '$')"
     }</p>
     <p>
       <code className="command">{[
@@ -107,7 +108,7 @@ const page = <div className="text-page">
       "open in a terminal."
     }</p>
     <p>{
-      "Then run the following command."
+      "Then run the following command. (Do not include the initial '$')"
     }</p>
     <p>
       <code className="command">{[

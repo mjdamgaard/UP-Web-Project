@@ -1,11 +1,14 @@
 
 import * as ILink from 'ILink.jsx';
 import * as ELink from 'ELink.jsx';
+import * as ComponentEntityComponent
+from "../variable_components/ComponentEntityComponent.jsx";
 
 
 export function render() {
+  let userID = this.subscribeToContext("userID");
   // return pagePlaceholder;
-  return page;
+  return page(userID);
 }
 
 const pagePlaceholder = <div className="text-page">
@@ -19,7 +22,7 @@ const pagePlaceholder = <div className="text-page">
 </div>;
 
 
-const page = <div className="text-page">
+const page = (userID) => <div className="text-page">
   <h1>Server modules</h1>
   <section>
     <h2>Introduction</h2>
@@ -55,6 +58,16 @@ const page = <div className="text-page">
         Getting started
       </ILink>
       tutorial, and downloaded the GitHub...
+    </p>
+    <p>
+      ...
+    </p>
+    <p>
+      <div className="text-frame">
+        <ComponentEntityComponent key="app-example"
+          compEntKey={"/1/1/em2.js;get/messageAppExample"} userID={userID}
+        />
+      </div>
     </p>
   </section>
 
@@ -800,8 +813,9 @@ const page = <div className="text-page">
       looks the same as the example above, go to the 'message.att' file in the
       'server' folder and rename it to '_message.att'. Then change all
       occurrences of 'message.att' to '_message.att' inside the 'message.sm.js'
-      module, and change the 'MessageList.jsx' component to use fetchPrivate()
-      instead of fetch(). Then modify the postMessage() and fetchMessages()
+      module, and change both 'message.sm.js' and the 'MessageList.jsx' modules
+      to use fetchPrivate() instead of fetch().
+      Then modify the postMessage() and fetchMessages()
       SMFs within the 'message.sm.js' module by adding a call to
       getRequestingUserID() in order to get the user ID, followed by whatever
       check you want to make of that user ID.

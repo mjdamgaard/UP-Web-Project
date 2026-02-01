@@ -3,13 +3,13 @@ import {fetchEntityDefinition} from "/1/1/entities.js";
 
 
 export function render(props) {
-  let {compEntID} = props;
+  let {compEntKey} = props;
   let {Component, isFetching} = this.state;
 
   // Fetch the component.
   if (!isFetching) {
     this.setState(state => ({...state, isFetching: true}));
-    fetchEntityDefinition(compEntID, true).then(componentDef => {
+    fetchEntityDefinition(compEntKey, true).then(componentDef => {
       let componentPath = componentDef["Component path"];
       import(componentPath).then(Component => {
         this.setState(state => ({...state, Component: Component ?? false}));

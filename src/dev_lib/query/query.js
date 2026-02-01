@@ -63,7 +63,7 @@ export const queryRoute = new DevFunction(
     // Check against querying a locked route without the isPrivate option being
     // true, or without it being a post request.
     let isPrivate = isPost || getPropertyFromObject(options, "isPrivate");
-    if (isLocked && !isPrivate) ArgTypeError(
+    if (isLocked && !isPrivate) throw new ArgTypeError(
       "Fetching from a locked route without the 'isPrivate' option set",
       callerNode, execEnv
     );

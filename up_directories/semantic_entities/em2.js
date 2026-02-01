@@ -228,6 +228,17 @@ export const mastermindGame = {
   "Description": undefined,
 };
 
+export const messageAppExample = {
+  "Class": abs("./em1.js;get/components"),
+  "Name": "Message app",
+  "Component path": "/1/2/tutorials/message_app/main.jsx",
+  "GitHub repository":
+    "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
+    "dir_uploads/up_directories/home_app/tutorials/message_app/main.jsx",
+  "Creator(s)": getUserEntPath("1", "1"),
+  "Description": undefined,
+};
+
 
 
 

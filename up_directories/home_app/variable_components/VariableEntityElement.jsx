@@ -74,7 +74,7 @@ export function render(props) {
       return <GeneralEntityElement {...props} key="_0" />;
     }
     content = <ComponentEntityComponent
-      {...props} compEntID={compEntID} key="0"
+      {...props} compEntKey={compEntID} key="0"
     />;
   }
 
