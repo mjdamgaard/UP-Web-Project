@@ -286,7 +286,7 @@ const page = <div className="text-page">
         '".../my_file.att./_deleteList/lo/1a/hi/2a"\n',
         '".../my_file.att./_deleteList"\n',
         '".../my_file.att./entry/k/1a"\n',
-        '".../my_file.att./list/n/1000"\n',
+        '".../my_file.att./list/a/1/n/1000"\n',
       ]}</code>
     </p>
     <p>
@@ -417,41 +417,31 @@ const page = <div className="text-page">
       <code className="jsx">{[
         'fetch(".../my_file.att./entry/k/1a"); // Resolves to "Baz".\n',
         'fetch(".../my_file.att./entry/k/1b"); // Resolves to null.\n',
-        'fetch(".../my_file.att./list/n/1000");\n',
+        'fetch(".../my_file.att./list/a/1/n/1000");\n',
         '// Resolves to [\n',
         '//   ["1", "Foo"],\n',
         '//   ["b", "Bar"],\n',
         '//   ["1a", "Baz"],\n',
         '// ].\n',
-        'fetch(".../my_file.att./list/n/1000/o/1b"); // Resolves to [].\n',
+        'fetch(".../my_file.att./list/a/1/n/1000/o/3"); // Resolves to [].',
       ]}</code>
     </p>
     <p>
-      Here, the 'n' parameter for the 'list' query type is the maximal number
-      of entries that the client wish to receive, and 'o' is the offset of the
-      list. And the fetch() function is a function similar to post(), which
-      prevents inserting or modifying data in the database.
+      Here, the 'a' parameter is a boolean parameter
+      for whether to sort the list in ascending rather than descending
+      order, 'n' is the maximal number
+      of entries that the client wish to receive, and 'o' is an offset, which
+      is a number of how many entries to skip on the list.
+      The fetch() function that is used here, by the way, is a function
+      similar to post(), except it prevents the query from inserting or
+      modifying data in the database.
     </p>
-    {/* <p>
-      Note also that neither 'entry' nor 'list' have an underscore in front,
-      which means that these data-fetching queries do not generally require
-      admin privileges. There is however exceptions to this, which we will get
-      to in the next section.
-    </p> */}
     <p>
       For more documentation about the various database table
       files and their query parameters, see the
       <ILink key="link-tut-6-4" href="~/db-queries">
         next tutorial
       </ILink>.
-    </p>
-  </section>
-
-  <section>
-    <h2>Query functions</h2>
-    <p>
-      There are three main functions to use when making queries to the server
-      and/or the database, 
     </p>
   </section>
 
@@ -646,7 +636,7 @@ const page = <div className="text-page">
       so-called 'request origin' is also recorded for the query, which is a
       string that denoted from where the query originated, not unlike a
       the
-      <ELink key="link-moz-async"
+      <ELink key="link-moz-origin"
         href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Origin"
       >
         Origin HTTP header
@@ -727,27 +717,102 @@ const page = <div className="text-page">
       calling the second one. 
     </p>
     <p>
-      So if the first SMF was called via a route such as
-      ".../my_file_1.sm.js./callSMF/mySMF1/arg1/arg2", and that SMF then calls
-      a second one via the route ".../my_file_2.sm.js./callSMF/mySMF2/arg1",
-      then the request origin that the second SMF sees will given by
-      ".../my_file_1.sm.js./callSMF/mySMF1/arg1/arg2".
+      For example, if the first SMF is called via a route of
+      ".../my_file.sm.js./callSMF/mySMF/arg1/arg2", and that SMF then calls
+      another SMF,
+      then the request origin that the second SMF will see is given by
+      the route to the first SMF: ".../my_file.sm.js./callSMF/mySMF/arg1/arg2".
     </p>
     <p>
       Note, however, that due to the fact that checkRequestOrigin() allows its
       whitelisted routes to end in a "*" wildcard, you do not need to match
       all potential arguments, but can just check for a string
-      such as e.g. ".../my_file_1.sm.js./callSMF/mySMF1*" instead.
+      such as e.g. ".../my_file.sm.js./callSMF/mySMF*" instead.
     </p>
   </section>
 
   <section>
-    <h2>Requesting user ID</h2>
+    <h2>Private data</h2>
     <p>
-      ...
+      It is important to note that the data contained in a database table file
+      is visible to the public, unless the file name starts an underscore to
+      denote it as a locked file, or if it is nested inside a directory that
+      starts with an underscore.
+    </p>
+    <p>
+      If not, the data can be queried via "./entry" or "./list" routes. And
+      since these query types are not locked, they do not need admin
+      privileges and can therefore be made directly from the client side,
+      without using any SMF.
+    </p>
+    <p>
+      For example, in the message app discussed above, the 'message.att' file
+      is not locked, and can therefore also be queried directly from the client
+      side, via fetch() calls such as
+    </p>
+    <p>
+      <code className="jsx">{[
+        'fetch(".../messages.att./list/a/1/n/1000"));',
+      ]}</code>
+    </p>
+    <p>
+      So if you want your app to have data that is private, for instance if
+      you do not want anyone to be able to read a users messages, you should
+      first of all make sure to prepend an underscore to the file name of the
+      given database table file, and then handle reading data from that file
+      via SMFs.
+    </p>
+    <p>
+      When querying an SMF to read private data, you will then need to use
+      either the fetchPrivate() or the post() function, exported from the
+      'query' library. Unlike the fetch() function, both of these functions
+      has the effect transmitting the ID of the requesting user, along with the
+      request.
+    </p>
+    <p>
+      This user ID can then be obtained by the called SMF via the
+      getRequestingUserID() function that we have seen above, exported from the
+      'request' library. And the SMF can then use this ID to check whether the
+      user should be given access to the requested data from a locked file. 
+    </p>
+    <p>
+      By the way, if you do not know what your user ID is, go to the account
+      menu at the top right of the webpage (on up-web.org), and click the
+      'Account' option. You will then see an overlay page where you can see
+      your user ID under the 'User info' header.
     </p>
   </section>
 
+  <section>
+    <h2>Exercise</h2>
+    <p>
+      Now that you have learned how to make data private, why not have a go at
+      modifying the message app such that the message board is no longer open
+      to the public.
+    </p>
+    <p>
+      Hint: After having first uploaded the message app in the same way as
+      shown in
+      <ILink key="link-tut-1-2" href="~/getting-started">
+        Tutorial 1
+      </ILink>
+      for the "Hello, World!" app, and checked that the newly uploaded app
+      looks the same as the example above, go to the 'message.att' file in the
+      'server' folder and rename it to '_message.att'. Then change all
+      occurrences of 'message.att' to '_message.att' inside the 'message.sm.js'
+      module, and change the 'MessageList.jsx' component to use fetchPrivate()
+      instead of fetch(). Then modify the postMessage() and fetchMessages()
+      SMFs within the 'message.sm.js' module by adding a call to
+      getRequestingUserID() in order to get the user ID, followed by whatever
+      check you want to make of that user ID.
+    </p>
+    <p>
+      And feel free to create another test account or two in order to test
+      your new private message app. For instance, you could let your message
+      app accept requests from two out of three of your test accounts, and then
+      test the app by logging in and posting from different accounts.
+    </p>
+  </section>
 
     {/* <p>
       In order to read and write data to these database tables, the user can
