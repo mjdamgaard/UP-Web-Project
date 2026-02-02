@@ -19,10 +19,10 @@ export function render({message, authorID, userID, messageID}) {
       </div>
       <div className={"edit-menu" + (isAuthor ? "" : " hidden")}>
         <div>
-          <button onClick={() => this.do("toggle-message-editor")}>
+          <button onClick={() => this.do("toggleMessageEditor")}>
             Edit
           </button>
-          <button onClick={() => this.do("toggle-message-deletion-prompt")}>
+          <button onClick={() => this.do("toggleMessageDeletionPrompt")}>
             Delete
           </button>
         </div>
@@ -34,7 +34,7 @@ export function render({message, authorID, userID, messageID}) {
       </div>
       <div className={"deletion-prompt" + (delPromptIsOpen ? "" : " hidden")}>
         <div>Are you sure you wish to delete this message?</div>
-        <button onClick={() => this.do("delete-message")}>
+        <button onClick={() => this.do("deleteMessage")}>
           Yes
         </button>
       </div>
@@ -44,22 +44,22 @@ export function render({message, authorID, userID, messageID}) {
 
 
 export const events = [
-  ["successful-edit", "handle-successful-edit"],
+  ["successful-edit", "handleSuccessfulEdit"],
 ];
 
 
 export const actions = {
-  "toggle-message-editor": function() {
+  "toggleMessageEditor": function() {
     this.setState(state => ({
       ...state, delPromptIsOpen: false, editorIsOpen: !state.editorIsOpen,
     }));
   },
-  "toggle-message-deletion-prompt": function() {
+  "toggleMessageDeletionPrompt": function() {
     this.setState(state => ({
       ...state, delPromptIsOpen: !state.delPromptIsOpen, editorIsOpen: false,
     }));
   },
-  "delete-message": function() {
+  "deleteMessage": function() {
     let {messageID} = this.props;
     post(
       abs("./server/messages.sm.js./callSMF/deleteMessage/" + messageID)
@@ -69,7 +69,7 @@ export const actions = {
       }
     });
   },
-  "handle-successful-edit": function() {
+  "handleSuccessfulEdit": function() {
     this.setState(state => ({
       ...state, delPromptIsOpen: false, editorIsOpen: false,
     }));

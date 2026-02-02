@@ -180,11 +180,9 @@ class JSXInstance {
     // Call settings.getClientTrust() to get a boolean of whether the client
     // trusts this instance to override CORS-like server module checks. And use
     // this to create a new environment, with or without the "client-trust"
-    // flag. Note that if the instance is not yet prepared, getClientTrust()
-    // might just return false temporarily, and wait for the rerender. Similarly
-    // call settings.getRequestOrigin() to get the a component path (not
-    // necessarily that of the current component) which can also used in CORS-
-    // lie checks by the server modules.
+    // flag. Also call settings.getRequestOrigin() to get the a component path
+    // (not necessarily that of the current component) which can also used in
+    // CORS-like checks by the server modules.
     let isTrusted = this.settings.getClientTrust(
       this, callerNode, callerEnv
     );
@@ -1364,6 +1362,9 @@ export class SettingsObject extends ObjectObject {
   // fetch private data. If getClientTrust() has not yet been prepared by
   // prepareInstance(), it might just return false temporarily.
   getClientTrust(jsxInstance, node, env) {}
+
+  // TODO: Describe.
+  getRequestOrigin(jsxInstance, node, env) {}
 
   // transformInstance() ...
   transformInstance(

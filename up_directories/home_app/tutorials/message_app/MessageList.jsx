@@ -35,6 +35,8 @@ export const methods = [
 
 export const actions = {
   "refresh": function() {
+    let {userID} = this.props;
+    if (!userID) return;
     fetchPrivate(
       abs("./server/messages.sm.js./callSMF/fetchMessages/1000")
     ).then(messageList => {

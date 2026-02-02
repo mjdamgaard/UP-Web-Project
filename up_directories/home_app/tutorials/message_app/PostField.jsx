@@ -11,8 +11,8 @@ export function render({userID}) {
       <div>
         <TextArea key="ta" />
       </div>
-      <button onClick={() => this.do("post-message")}>
-        {"Post"}
+      <button onClick={() => this.do("postMessage")}>
+        Post
       </button>
       <div>{response}</div>
     </div>
@@ -23,7 +23,7 @@ export function render({userID}) {
 
 
 export const actions = {
-  "post-message": function() {
+  "postMessage": function() {
     let {userID} = this.props;
 
     // Check that the user is logged in first.

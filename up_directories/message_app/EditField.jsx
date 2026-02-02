@@ -7,12 +7,12 @@ import * as TextArea from 'TextArea.jsx';
 export function render({userID, message, messageID}) {
   let {response = ""} = this.state;
   return (
-    <div className="post-field">
+    <div className="edit-field">
       <div>
         <TextArea key="ta">{message}</TextArea>
       </div>
-      <button onClick={() => this.do("post-message")}>
-        {"Post changes"}
+      <button onClick={() => this.do("editMessage")}>
+        Post changes
       </button>
       <div>{response}</div>
     </div>
@@ -23,7 +23,7 @@ export function render({userID, message, messageID}) {
 
 
 export const actions = {
-  "post-message": function() {
+  "editMessage": function() {
     let {userID, messageID} = this.props;
 
     // Check that the user is logged in first.
