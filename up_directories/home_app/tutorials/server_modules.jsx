@@ -8,7 +8,7 @@ from "../variable_components/ComponentEntityComponent.jsx";
 export function render() {
   let userID = this.subscribeToContext("userID");
   // return pagePlaceholder;
-  return page(userID);
+  return getPage(userID);
 }
 
 const pagePlaceholder = <div className="text-page">
@@ -22,7 +22,7 @@ const pagePlaceholder = <div className="text-page">
 </div>;
 
 
-const page = (userID) => <div className="text-page">
+const getPage = (userID) => <div className="text-page">
   <h1>Server modules</h1>
   <section>
     <h2>Introduction</h2>
@@ -779,8 +779,8 @@ const page = (userID) => <div className="text-page">
       When querying an SMF to read private data, you will then need to use
       either the fetchPrivate() or the post() function, exported from the
       'query' library. Unlike the fetch() function, both of these functions
-      has the effect transmitting the ID of the requesting user, along with the
-      request.
+      are allowed to be used for locked routes, and they also have the effect
+      of transmitting the ID of the requesting user along with the request.
     </p>
     <p>
       This user ID can then be obtained by the called SMF via the

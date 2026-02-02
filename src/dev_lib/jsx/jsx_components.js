@@ -1192,9 +1192,9 @@ export class JSXInstanceInterface extends ObjectObject {
 
 
   getIsVisible = new DevFunction(
-    "getIsVisible", {}, () => {
+    "getIsVisible", {}, ({}, [checkViewport = false]) => {
       let domNode = this.jsxInstance.domNode;
-      return getIsVisible(domNode);
+      return getIsVisible(domNode, checkViewport);
     }
   );
 
@@ -1231,7 +1231,7 @@ const MARGIN_OF_ALLOWED_OVERLAP = 0.01;
 
 // getIsVisible() that checks that the input DOM node is on screen and without
 // overlaps from its siblings, as well as any of its ancestors' siblings. 
-export function getIsVisible(domNode) {
+export function getIsVisible(domNode, checkViewport = false) {
   if (!domNode.getBoundingClientRect) {
     return undefined;
   }
@@ -1241,12 +1241,14 @@ export function getIsVisible(domNode) {
   let effectiveRight = right - right * MARGIN_OF_ALLOWED_OVERLAP;
   let effectiveBottom = bottom - bottom * MARGIN_OF_ALLOWED_OVERLAP;
 
-  // Check that the node is not too much out of the viewport.
-  let {innerHeight, innerWidth} = window;
-  let isOutOfViewport = effectiveTop < 0 || effectiveLeft < 0 ||
-    effectiveRight > innerWidth || effectiveBottom > innerHeight;
-  if (isOutOfViewport) {
-    return false;
+  // Check that the node is not out of the viewport.
+  if (checkViewport) {
+    let {innerHeight, innerWidth} = window;
+    let isOutOfViewport = effectiveTop < 0 || effectiveLeft < 0 ||
+      effectiveRight > innerWidth || effectiveBottom > innerHeight;
+    if (isOutOfViewport) {
+      return false;
+    }
   }
 
   // Then check that none of the siblings or ancestor siblings overlap too much
