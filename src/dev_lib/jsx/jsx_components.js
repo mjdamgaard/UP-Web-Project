@@ -42,24 +42,25 @@ export const createJSXApp = new DevFunction(
     // other flags.)
     let appEnv = new Environment(execEnv, undefined, {flags: [CLEAR_FLAG]});
 
+    // Create the app's root component instance (but don't render it yet).
+    let rootInstance = new JSXInstance(
+      appComponent, "root", undefined, callerNode, appEnv, settings
+    );
+
     // Get the userID if the user is logged in and call settings.initiate() in
     // order to make any initial user-dependent preparations for the 'settings'
     // object. Note that the settings object extend the (abstract)
     // SettingsObject class declared below.
     let userID = getUserID();
-    await settings.initiate(userID, appComponent, callerNode, appEnv);
+    await settings.initiate(userID, rootInstance, callerNode, appEnv);
   
     // Set the appSettings property of the scriptVars object, which changes the
     // behavior of import() going forward such that it also prepares the
     // component's style in the case of a .jsx import.
     execEnv.scriptVars.appSettings = settings;
 
-    // Then create the app's root component instance, and before rendering it,
-    // add some props for getting user data and URL data, and pushing/replacing
-    // a new browser session history state, to it.
-    let rootInstance = new JSXInstance(
-      appComponent, "root", undefined, callerNode, appEnv, settings
-    );
+    // Add some props to the root instance for getting user data and URL data,
+    // and for pushing/replacing a new browser session history state.
     props = addUserRelatedProps(
       props, rootInstance, interpreter, callerNode, appEnv
     );
@@ -177,16 +178,12 @@ class JSXInstance {
 
     }
 
-    // Call settings.getClientTrust() to get a boolean of whether the client
-    // trusts this instance to override CORS-like server module checks. And use
-    // this to create a new environment, with or without the "client-trust"
-    // flag. Also call settings.getRequestOrigin() to get the a component path
-    // (not necessarily that of the current component) which can also used in
-    // CORS-like checks by the server modules.
-    let isTrusted = this.settings.getClientTrust(
-      this, callerNode, callerEnv
-    );
-    let requestOrigin = this.settings.getRequestOrigin(
+    // Call settings.getRequestOriginData() to get an 'isTrusted' boolean of
+    // whether the client trusts this instance to override CORS-like server
+    // module checks. And at the same time, get the 'requestOrigin' which is
+    // what might be checked in these CORS-like checks if isTrusted is false. 
+    // Then use this to create a new environment with the appropriate flags set.
+    let [isTrusted, requestOrigin] = this.settings.getRequestOriginData(
       this, callerNode, callerEnv
     );
     let compEnv = new Environment(callerEnv, undefined, {flags: [
@@ -1336,8 +1333,8 @@ export class SettingsObject extends ObjectObject {
 
   // TODO: Correct and complete the following comments.
 
-  // initiate(userID, appComponent, node, env) ...
-  initiate(userID, appComponent, node, env) {}
+  // initiate(userID, rootInstance, node, env) ...
+  initiate(userID, rootInstance, node, env) {}
 
   // getUserID(node, env) ...
   getUserID(node, env) {}
@@ -1361,10 +1358,10 @@ export class SettingsObject extends ObjectObject {
   // of whether client trust the component to make post requests, and to
   // fetch private data. If getClientTrust() has not yet been prepared by
   // prepareInstance(), it might just return false temporarily.
-  getClientTrust(jsxInstance, node, env) {}
+  getClientTrust(componentPath, node, env) {}
 
   // TODO: Describe.
-  getRequestOrigin(jsxInstance, node, env) {}
+  getRequestOriginData(jsxInstance, node, env) {}
 
   // transformInstance() ...
   transformInstance(
@@ -1538,8 +1535,12 @@ function addUserRelatedProps(props, jsxInstance, interpreter, node, env) {
   let userID = settingsContext.getVal().getUserID(node, env);
   settingsContext.addSubscriberCallback(settings => {
     let userID = settings.getUserID(node, env);
-    jsxInstance.changePropsAndQueueRerender({userID: userID}, interpreter);
-    jsxInstance.queueFullRerender(interpreter);
+    settings.initiate(userID, jsxInstance, node, env).then(() => {
+      jsxInstance.changePropsAndQueueRerender({userID: userID}, interpreter);
+      jsxInstance.queueFullRerender(interpreter);
+    }).catch(err => {
+      interpreter.handleUncaughtException(err, env);
+    });
   });
   return {...props, userID: userID};
 }

@@ -20,15 +20,17 @@ const styleSheetRoutes = new Map();
 
 export class SettingsObject01 extends SettingsObject {
 
-  async initiate(userID, appComponent, node, env) {
+  async initiate(userID, rootInstance, node, env) {
     this.userID = userID;
-    this.appComponent = appComponent;
+    this.appComponent = rootInstance.componentModule;
     this.initNode = node;
     this.initEnv = env;
     this.styleModules = new Map();
+
+    clearSettingsData(rootInstance);
     
     this.appStyler = appStyler;
-    return await this.appStyler.initiate(appComponent, this, node, env);
+    return await this.appStyler.initiate(this.appComponent, this, node, env);
   }
 
 
@@ -37,13 +39,8 @@ export class SettingsObject01 extends SettingsObject {
   }
 
 
-  changeUser(userID, node = this.initNode, env = this.initEnv) {
-    if (this.appComponent) {
-      this.initiate(userID, this.appComponent, node, env);
-    }
-    else {
-      this.userID = userID;
-    }
+  changeUser(userID) {
+    this.userID = userID;
   }
 
 
@@ -55,16 +52,50 @@ export class SettingsObject01 extends SettingsObject {
     return this.appStyler.prepareInstance(jsxInstance, node, env);
   }
 
-  // TODO: At some point reimplement this such that certain components can get
-  // "CLIENT_TRUST", other than the outer app component, and make this be able
-  // to depend on user preferences as well.
-  getClientTrust(requestOrigin, node, env) {
-    return requestOrigin === this.appComponent;
+  // TODO: At some point reimplement this to look up the trust of the
+  // component by some user group chosen by the user's settings.
+  getClientTrust(componentPath, node, env) {
+    return componentPath.substring(0, 5) === "/1/2/";
   }
 
-  getRequestOrigin(jsxInstance) {
-    let {componentID} = jsxInstance.settingsData;
-    return this.appStyler.componentPaths[componentID];
+  getRequestOriginData(jsxInstance) {
+    // If the request origin data is already recorded for the instance, return that.
+    let {componentID, requestOriginData} = jsxInstance.settingsData;
+    if (requestOriginData !== undefined) {
+      return requestOriginData;
+    }
+
+    // Else if the parent instance has the same componentID, get it from that.
+    // (Recall that componentID is the ID of the component at the root of the
+    // current app scope, not necessarily that of jsxInstance.)
+    let {
+      componentID: parentComponentID,
+      requestOriginData: parentRequestOriginData
+    } = jsxInstance.parentInstance?.settingsData ?? {};
+    if (parentComponentID === componentID) {
+      let requestOriginData = (parentRequestOriginData !== undefined) ?
+        parentRequestOriginData :
+        this.getRequestOriginData(jsxInstance.parentInstance);
+      return jsxInstance.settingsData.requestOriginData = requestOriginData;
+    }
+
+    // Else jsxInstance must be the root of an app scope, in which case the
+    // isTrusted value should be gotten from appStyler.componentTrustValues,
+    // unless the parent scope already isn't trusted.
+    // And the request origin should be jsxInstance.componentPath, unless the
+    // parent scope is not trusted, in which case it should just be false
+    // instead.
+    // Also, if the jsxInstance has no parent, behave as if the parent scope
+    // is trusted.
+    else {
+      let parentIsTrusted = !jsxInstance.parentInstance ? true :
+        this.getRequestOriginData(jsxInstance.parentInstance)[0];
+      let isTrusted = parentIsTrusted &&
+        this.appStyler.componentTrustValues[componentID];
+      let requestOrigin = parentIsTrusted ? jsxInstance.componentPath : false;
+      let requestOriginData = [isTrusted, requestOrigin]
+      return jsxInstance.settingsData.requestOriginData = requestOriginData;
+    }
   }
 
   transformInstance(jsxInstance, domNode, ownDOMNodes, node, env) {
@@ -153,6 +184,15 @@ export class SettingsObject01 extends SettingsObject {
     }
     return styleModule;
   }
+}
+
+
+
+function clearSettingsData(jsxInstance) {
+  jsxInstance.settingsData = {};
+  jsxInstance.childInstances.forEach(
+    childInstance => clearSettingsData(childInstance)
+  );
 }
 
 

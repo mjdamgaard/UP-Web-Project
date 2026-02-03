@@ -44,9 +44,11 @@ const TRANSFORM_KEYWORD_REGEX = /^(copy|inherit)$/;
 // childRules := *same as above*.
 //
 // Furthermore, the settingsData props used are:
+//
 // componentID?: <the ID of root component of the current app scope>,
 // transform?: <prepared transform>,
-// transformProps?: <an object passed as input to functions in the transform>.
+// transformProps?: <an object passed as input to functions in the transform>,
+// requestOriginData?: [<isTrusted>, <requestOrigin>].
 
 
 
@@ -67,6 +69,7 @@ export class AppStyler01 {
     this.nextComponentID = 1;
     this.componentPaths = []; // with componentID keys.
     this.defaultComponentStyles = new Map(); // with componentPath keys.
+    this.componentTrustValues = [];
 
     await this.prepareComponent(componentModule, node, env);
   }
@@ -134,9 +137,27 @@ export class AppStyler01 {
     let styleModule = this.settings.getStyleModule(
       componentModule, node, env
     );
+
+    // Also get whether the client trusts this component.
+    let isTrusted = this.settings.getClientTrust(
+      componentPath, node, env
+    );
+
+    // And in case styleModule and/or isTrusted are promises, wait for them.
+    if (styleModule instanceof Promise && isTrusted instanceof Promise) {
+      [styleModule, isTrusted] = await Promise.all([styleModule, isTrusted]);
+    }
     if (styleModule instanceof Promise) {
       styleModule = await styleModule;
     }
+    if (isTrusted instanceof Promise) {
+      isTrusted = await isTrusted;
+    }
+    // (TODO: Check that there isn't a potential for uncaught errors in regards
+    // to these promises above.)
+
+    // Record isTrusted in the this.componentTrustValues.
+    this.componentTrustValues[componentID] = isTrusted;
 
     // If the styleModule is a CSSModule, we use a default transform format
     // where the given style sheet will simply target the component and all

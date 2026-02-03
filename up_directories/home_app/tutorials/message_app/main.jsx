@@ -16,7 +16,6 @@ export function render({userID}) {
 
 export const events = [
   "refresh",
-  "checkVisibility"
 ];
 
 export const actions = {
