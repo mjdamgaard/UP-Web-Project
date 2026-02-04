@@ -27,21 +27,22 @@ const getPage = (userID) => <div className="text-page">
   <section>
     <h2>Introduction</h2>
     <p>
-      When an app needs to store data on the server, it does so by creating a
-      so-called server module (SM), which is a JS module whose exported
+      When an app needs to store data on the server, it can do so by creating a
+      server module (SM), which is a JS module whose exported
       functions are allowed to be executed server-side.
     </p>
     <p>
       The server modules are recognized by a special file extension of
-      ".sm.js". Whenever you create a file with this extension, you
+      ".sm.js". Whenever you create a file with this extension in an uploaded
+      directory, you
       tell the server the exported functions of that module is allowed to
       be executed on the server, at the request of a client.
     </p>
     <p>
       And whenever a server module function (SMF) is called this way, it is
-      granted admin privileges on the home directory of the given app during
+      granted admin privileges on the given server-side home directory during
       the function's execution. This means that it is allowed to insert and
-      delete data from the database tables associated with that home directory,
+      delete data from the database tables associated with the directory,
       as well as read data from locked files within it. 
     </p>
   </section>
@@ -53,14 +54,41 @@ const getPage = (userID) => <div className="text-page">
       an example of an app that uses a backend.
     </p>
     <p>
-      If you have already followed the
+      If you have already followed
       <ILink key="link-tut-1-1" href="~/getting-started">
-        Getting started
-      </ILink>
-      tutorial, and downloaded the GitHub...
+        Tutorial 1
+      </ILink>,
+      and downloaded the GitHub repository at
+      <ELink key="link-UPDirUploader"
+        href="https://github.com/mjdamgaard/UPDirUpdater" >
+        github.com/mjdamgaard/UPDirUpdater
+      </ELink>,
+      then you will see a directory called
+      <ELink key="link-message_app"
+        href="https://github.com/mjdamgaard/UPDirUpdater/tree/main/up_directories/message_app" >
+        'message_app'
+      </ELink>
+      in the
+      <ELink key="link-up_directories"
+        href="https://github.com/mjdamgaard/UPDirUpdater/tree/main/up_directories" >
+        'up_directories'
+      </ELink>
+      directory.
     </p>
     <p>
-      ...
+      Feel free to upload this 'message_app' app in the same way that you
+      uploaded the 'hello_world' app in
+      <ILink key="link-tut-1-2" href="~/getting-started">
+        Tutorial 1
+      </ILink>
+      if you want to try the app out in your own hands. (And at the end of this
+      tutorial, there is an exercise you can try, where you will modify the
+      app to make the messages private.)
+    </p>
+    <p>
+      When this message app is uploaded, it should look as follows. (Feel
+      free to try it out by posting a message or two, provided that you are
+      logged in.)
     </p>
     <p>
       <div className="text-frame">
@@ -69,12 +97,17 @@ const getPage = (userID) => <div className="text-page">
         />
       </div>
     </p>
-  </section>
-
-  <section>
-    <h2>...</h2>
     <p>
-      ... In this file you will see the following four exported functions.
+      The way that this app uploads and downloads data from the database is
+      exclusively via calls to the server module located at
+      <ELink key="link-messages-sm"
+        href="https://github.com/mjdamgaard/UPDirUpdater/blob/main/up_directories/message_app/server/messages.sm.js" >
+        'server/messages.sm.js'
+      </ELink>.
+    </p>
+    <p>
+      If you look inside this file, you will see the following four exported
+      functions.
     </p>
     <p>
       <code className="jsx">{[
@@ -108,7 +141,7 @@ const getPage = (userID) => <div className="text-page">
       </ELink>.
     </p>
     <p>
-      Let us now start by looking at the postMessage() SMF first. It reads
+      Let us now start by looking at the postMessage() SMF. It reads
     </p>
     <p>
       <code className="jsx">{[
@@ -804,9 +837,9 @@ const getPage = (userID) => <div className="text-page">
       to the public.
     </p>
     <p>
-      Hint: After having first uploaded the message app in the same way as
+      <b>Hint:</b> After having first uploaded the message app in the same way as
       shown in
-      <ILink key="link-tut-1-2" href="~/getting-started">
+      <ILink key="link-tut-1-3" href="~/getting-started">
         Tutorial 1
       </ILink>
       for the "Hello, World!" app, and checked that the newly uploaded app

@@ -3,9 +3,11 @@ import {
   REQUESTING_COMPONENT_FLAG, CLIENT_TRUST_FLAG, REQUEST_ADMIN_PRIVILEGES_FLAG,
 } from "../dev_lib/query/src/flags.js";
 
+const SM_EXT_REGEX = /\.sm\.js/;
+
+
 
 export class FlagTransmitter {
-  
 
   static getTransmittedFlags(environment) {
     let ret = {};
@@ -18,7 +20,9 @@ export class FlagTransmitter {
     // Transmit the "requesting-component" flag (holding the route of the last
     // JSX component that declared itself as a request origin).
     let reqComp = environment.getFlag(REQUESTING_COMPONENT_FLAG);
-    if (reqComp) ret["requesting-component"] = reqComp;
+    if (reqComp && !SM_EXT_REGEX.test(reqComp)) {
+      ret["requesting-component"] = reqComp;
+    }
 
     // Transmit the "client-trust" flag (holding a boolean of whether the
     // client trusts the POST request to have only the results that they
