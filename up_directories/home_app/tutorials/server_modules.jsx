@@ -66,29 +66,22 @@ const getPage = (userID) => <div className="text-page">
       then you will see a directory called
       <ELink key="link-message_app"
         href="https://github.com/mjdamgaard/UPDirUpdater/tree/main/up_directories/message_app" >
-        'message_app'
+        'up_directories/message_app'
       </ELink>
-      in the
-      <ELink key="link-up_directories"
-        href="https://github.com/mjdamgaard/UPDirUpdater/tree/main/up_directories" >
-        'up_directories'
-      </ELink>
-      directory.
+      next to the 'up_directories/hello_world' directory.
     </p>
     <p>
       Feel free to upload this 'message_app' app in the same way that you
       uploaded the 'hello_world' app in
       <ILink key="link-tut-1-2" href="~/getting-started">
         Tutorial 1
-      </ILink>
+      </ILink>,
       if you want to try the app out in your own hands. (And at the end of this
       tutorial, there is an exercise you can try, where you will modify the
       app to make the messages private.)
     </p>
     <p>
-      When this message app is uploaded, it should look as follows. (Feel
-      free to try it out by posting a message or two, provided that you are
-      logged in.)
+      When this message app is uploaded, it should look as follows.
     </p>
     <p>
       <div className="text-frame">
@@ -96,6 +89,10 @@ const getPage = (userID) => <div className="text-page">
           compEntKey={"/1/1/em2.js;get/messageAppExample"} userID={userID}
         />
       </div>
+    </p>
+    <p>
+      (Feel free to try out this copy of the app as well, by posting a
+      message or two, provided that you are logged in.)
     </p>
     <p>
       The way that this app uploads and downloads data from the database is
@@ -141,7 +138,8 @@ const getPage = (userID) => <div className="text-page">
       </ELink>.
     </p>
     <p>
-      Let us now start by looking at the postMessage() SMF. It reads
+      Let us now take a closer look at the postMessage() SMF in this module.
+      It reads
     </p>
     <p>
       <code className="jsx">{[
@@ -171,33 +169,31 @@ const getPage = (userID) => <div className="text-page">
       ]}</code>
     </p>
     <p>
-      This function first checks the origin of the request via the a call to a
-      function called 'checkRequestOrigin()' from the 'request'
-      library. This is very important to do for all SMFs that insert or
-      modify any data in the database, or fetch any private data.
+      The first thing that this SMF does is to call a function called
+      'checkRequestOrigin()' in order to check that the request
+      originated from the message app itself, which is defined by the
+      'main.jsx' module in the same home directory. This is an important check
+      to make as it prevents other apps from posting, editing,
+      or deleting messages in this message app on behalf of the user.
     </p>
     <p>
-      This particular call to checkRequestOrigin() checks that the origin of
-      the request is the message app defined by the 'main.jsx' module in the
-      same home directory.
+      We will get more into how this checkRequestOrigin() function works in
+      another section below.
     </p>
     <p>
-      We will get back to checkRequestOrigin() and how it works in a later
-      section below, as well as how the origin of a request is determined.  
-    </p>
-    <p>
-      The next thing that postMessage() message does is to get the (hexadecimal)
-      ID of of the requesting user, and then combine this with the input text,
+      The next thing that postMessage() does is then to get the (hexadecimal)
+      ID of of the requesting user, and combine this with the input text,
       using ";" as a separator, before storing inserting it in the database.
     </p>
     <p>
-      There are also other ways that we could store this data which are more
-      efficient in terms of storage space. But for the sake of simplicity, we
-      just store all the data as a single encoded text for this tutorial.
+      There are also other ways that we could store this data which are
+      more efficient in terms of storage space.
+      But for the sake of simplicity, we just store all the data as a single
+      encoded text for this tutorial.
     </p>
     <p>
       Finally, postMessage() inserts the encoded text in the database via a
-      call to a function called 'post()' imported from the 'query' library:
+      call to a function called 'post(),' imported from the 'query' library:
     </p>
     <p>
       <code className="jsx">{[
@@ -211,7 +207,7 @@ const getPage = (userID) => <div className="text-page">
     <p>
       As you can see, the first argument of post() is an absolute path to the
       'message.att' file located in the same subdirectory as 'messages.sm.js',
-      but with an additional string of "./_insert" appended to the end as well.
+      but with an additional string of "./_insert" appended to it as well.
       And the second argument is the text to be stored in the database.
     </p>
     <p>
@@ -237,23 +233,25 @@ const getPage = (userID) => <div className="text-page">
       directory again.
     </p>
     <p>
-      WARNING: If you move or rename a database table file, or rename any of
-      its parent subdirectories such that its file path relative to the home
-      directory changes, the
-      uploader program will treat this as a deletion of the file, and will
-      delete the data in the associated table. So be careful
+      CAUTION: If you move or rename a database table file, or rename any of
+      its parent subdirectories such that its file path relative to the
+      server-side home directory changes, the
+      uploader program will treat this as a deletion of the file as well, and
+      the data in the table will also be deleted.
+      {/* So be careful
       about changing the file structure of an app once it is already being
       used online by other users.
       {/* <ILink key="link-tut-6-1" href="~/db-queries">
         Tutorial 6
       </ILink>
       will teach you how you can safely move or rename a database table file
-      without losing its data.  */}
+      without losing its data.  * /}
       (You should generally be careful about changing the file structure of
-      a directory that is already being used by others.)
+      a directory that is already being used by others.) */}
     </p>
     <p>
-      The type of database table created depends on the extension of the file.
+      The type of database table created depends on the extension of the given
+      file.
       For instance, '.att' stands for "Automatic-key Text Table," and
       essentially corresponds to a table of the following form, when expressed
       in SQL.
@@ -280,11 +278,11 @@ const getPage = (userID) => <div className="text-page">
       </ILink>.
     </p>
     <p>
-      The way to interact with the data stored for these database table files
-      is via the kind of extended paths similar to the
+      The data stored in a given database table file can be accessed and
+      modified via a kind of extended paths to the file, similar to the
       abs("./messages.att./_insert") path that we saw above. We will also refer
       to such extended paths as 'routes.' The routes used to interact with
-      database table files have the following syntax.
+      database table files all have the following syntax.
     </p>
     <p>
       <code className="jsx">{[
@@ -294,20 +292,20 @@ const getPage = (userID) => <div className="text-page">
     <p>
       Here, ABSOLUTE_PATH_TO_FILE is a placeholder for the absolute path to the
       file, QUERY_TYPE is a placeholder for the type of the given query, such
-      as the "_insert" query type that we saw above, and PARAM and VALUE are a
-      pair of respectively a parameter name and corresponding input value.
+      as the "_insert" type that we saw above, and PARAM and VALUE are a
+      pair of respectively a parameter's name and its value.
     </p>
     <p>
-      The './' in such routes should thus be interpreted as essentially
+      The "./" in such routes should thus be interpreted as essentially
       meaning: "Do something with this file (or directory)." Also note that
       file names and directory names are not allowed to end with '.' in this
-      system, which means that any occurrence of './' will always have this
+      system, which means that any occurrence of "./" will always have this
       meaning.
     </p>
     <p>
-      The standard way to make a query for a given route is the pass that route
+      The standard way to make a query for a given route is to pass that route
       to one of the three main query functions exported from the 'query'
-      library: post(), fetch(), and fetchPrivate(). The difference between
+      library: post(), fetch(), or fetchPrivate(). The difference between
       these
       will be explained below.
       {/* three functions is that post(), unlike the two others, allows for
@@ -319,7 +317,7 @@ const getPage = (userID) => <div className="text-page">
     </p>
     <p>
       Here are a few examples of some valid routes for the '.att' files, where
-      ".../my_file.att" is a placeholder for the absolute path to a file
+      ".../my_file.att" is a placeholder for the absolute path to some file
       called 'my_file.att':
     </p>
     <p>
@@ -365,7 +363,7 @@ const getPage = (userID) => <div className="text-page">
       Now, since the valid characters of routes are heavily restricted, as they
       need to conform to URL specifications, it would not be very useful if
       we could only pass the texts for the '.att' tables via the parameters of
-      such routes. Luckily, the "payload" parameter value in particular can
+      such routes. Luckily, this particular payload parameter, 'p', can
       also be passed via the post data of a post request, which is
       the optional second argument of the post() function that we saw above.
     </p>
@@ -381,12 +379,12 @@ const getPage = (userID) => <div className="text-page">
     </p>
     <p>
       But with the second kind of query, we obviously have more freedom to
-      insert whichever payload text we want.
+      insert whichever payload text that we want.
     </p>
     <p>
       Next we have the route of ".../my_file.att./_insert/k/1a/p/Hello",
-      which is similar to the ones before, but with a 'k' parameter with the
-      value of "1a" as well. The 'k' here stands for "key", and generally
+      which is similar to the first route, but with an additional 'k' parameter
+      as well, set to "1a". The 'k' here stands for "key," and generally
       represents the primary key for the entry. In the case of '.att' files,
       this "key" is simply the "text_id" column that we saw above (but using
       a hexadecimal encoding of the BIGINT UNSIGNED value). So the
@@ -414,7 +412,7 @@ const getPage = (userID) => <div className="text-page">
     </p>
     <p>
       If instead wanting to ignore existing entries in case of duplicate
-      keys, set the query parameter of 'i' to "1", as seen in the route of
+      keys, set the query parameter of 'i' (for 'ignore') to "1", as seen in the route of
       ".../my_file.att./_insert/k/1a/p/Hello/i/1" above. (For boolean query
       parameters like 'i', we use "1" and "0" rather than "true" and "false".)
     </p>
@@ -476,7 +474,7 @@ const getPage = (userID) => <div className="text-page">
       Here, the 'a' parameter is a boolean parameter
       for whether to sort the list in ascending rather than descending
       order, 'n' is the maximal number
-      of entries that the client wish to receive, and 'o' is an offset, which
+      of entries that the client wishes to receive, and 'o' is an offset, which
       is a number of how many entries to skip on the list.
       The fetch() function that is used here, by the way, is a function
       similar to post(), except it prevents the query from inserting or
@@ -494,19 +492,19 @@ const getPage = (userID) => <div className="text-page">
   <section>
     <h2>Calling a server module function</h2>
     <p>
-      To make a call to a given SMF from the client-side, we can use routes of
+      To make a call to a given SMF from the client side, we can use routes of
       the form
     </p>
     <p>
       <code className="jsx">{[
-        '"ABSOLUTE_PATH_TO_SM_FILE./callSMF/FUN_NAME/(/ARG_1/ARG_2/...)?"',
+        '"ABSOLUTE_PATH_TO_SM_FILE./callSMF/FUN_NAME(/ARG)*"',
       ]}</code>
     </p>
     <p>
       where ABSOLUTE_PATH_TO_SM_FILE is a placeholder for the absolute path to
       the '.sm.js' file in question, FUN_NAME is the alias of the exported SMF
-      to call, and ARG_1, ARG_2, ... is an optional list of input values of
-      optional length, where each argument will be treated as a string.
+      to call, and '(/ARG)*' is an optional list of input values, where each
+      argument is treated as a string value.
     </p>
     <p>
       Again, since the the valid characters of the route segments are
@@ -535,26 +533,51 @@ const getPage = (userID) => <div className="text-page">
       ]}</code>
     </p>
     <p>
-      Passing the arguments via the post data argument, however, means that
-      you can also pass values of other types apart from strings, such as
+      Passing the arguments via the post data argument also allows us to pass
+      other types values than just the string type, such as
       numbers, booleans, arrays and plain objects. And as long as these values
       can be losslessly JSON-encoded, they will have the same values and types
       at the beginning of the SMF's execution.
     </p>
     <p>
-      As an example... TODO: Show the user where the postMessage() is called
-      from in PostField.jsx, and then show where the list is fetched, and
-      possibly note that you can (and often want to) use fetch() for SMF calls. 
+      As an example of an SMF call, see the
+      <ELink key="link-MessageList.jsx"
+        href="https://github.com/mjdamgaard/UPDirUpdater/tree/main/up_directories/message_app/MessageList.jsx" >
+        'MessageList.jsx'
+      </ELink>
+      component module of the message app, which fetches the list of messages
+      via the following action named "refresh".
     </p>
     <p>
-      TODO: Also talk about how an SMF can be called from another SMF, and
-      that admin privileges then changes (and stress that the previous ones are
-      removed). *Or maybe not; now I'm talking about that below.. *No, I still
-      need to mention that SMFs can call other SMFs, and I should then also
-      mention the admin privilege shift. *It would be a good idea to also..
-      ..mention fetchPrivate() here, or maybe somewhere below.. ..I could maybe
-      just talk about the three query functions here in this section.. ..Or
-      maybe in a small section below..
+      <code className="jsx">{[
+        '"refresh": function() {\n',
+        '  let {userID} = this.props;\n',
+        '  if (!userID) return;\n',
+        '  fetch(\n',
+        '    abs("./server/messages.sm.js./callSMF/fetchMessages/1000")\n',
+        '  ).then(messageList => {\n',
+        '    this.setState(state => ({...state, messageList: messageList}));\n',
+        '  });\n',
+        '},',
+      ]}</code>
+    </p>
+    <p>
+      This action first of all checks that the user is logged in, before
+      calling the fetchMessages() SMF from the 'messages.sm.js' module to get
+      the list of all messages.
+    </p>
+    <p>
+      You can also see the
+      <ELink key="link-PostField.jsx"
+        href="https://github.com/mjdamgaard/UPDirUpdater/tree/main/up_directories/message_app/PostField.jsx" >
+        'PostField.jsx'
+      </ELink>
+      and
+      <ELink key="link-EditField.jsx"
+        href="https://github.com/mjdamgaard/UPDirUpdater/tree/main/up_directories/message_app/EditField.jsx" >
+        'EditField.jsx'
+      </ELink>
+      components for some other examples.
     </p>
   </section>
 
@@ -577,9 +600,9 @@ const getPage = (userID) => <div className="text-page">
       'post permission.'
     </p>
 
-    <h3>The admin privilege</h3>
+    <h4>The admin privilege</h4>
     <p>
-      The admin privilege is raised only at the beginning of the execution
+      The admin privilege is granted only at the beginning of the execution
       of an SMF, and only if that SMF is called specifically via a
       "./callSMF" query, like we saw in the last section. They are always
       associated with the particular home directory to which the SMF belongs,
@@ -617,7 +640,7 @@ const getPage = (userID) => <div className="text-page">
       </ILink>.
     </p>
 
-    <h3>The post permission</h3>
+    <h4>The post permission</h4>
     <p>
       The post permission, as the name suggests, gives a function the
       permission to make post requests, via the post() function as seen above.
@@ -634,7 +657,7 @@ const getPage = (userID) => <div className="text-page">
       or fetchPrivate() is called on the client side or on the server side. 
     </p>
 
-    <h3>Clearing permissions manually</h3>
+    <h4>Clearing permissions manually</h4>
     <p>
       Sometimes you might wish to clear a permission manually. This is
       particular useful if you want an SMF to be able to make a query that is
@@ -643,7 +666,7 @@ const getPage = (userID) => <div className="text-page">
     </p>
     <p>
       Allowing admin privileges to bleed into functions controlled by the
-      client of the request is obviously a big no-no, and should always be
+      client of the request is obviously a very bad, and should always be
       avoided.
     </p>
     <p>
@@ -658,7 +681,7 @@ const getPage = (userID) => <div className="text-page">
       although this is generally not advised when it comes to SMFs.
     </p>
 
-    <h3>Calling a foreign SMF</h3>
+    <h4>Calling a foreign SMF</h4>
     <p>
       Another way that the admin privileges are cleared is whenever an SMF
       calls another SMF, possibly from a different home directory.
@@ -680,8 +703,7 @@ const getPage = (userID) => <div className="text-page">
     <p>
       Whenever an SMF is queried using either post() or fetchPrivate(), the
       so-called 'request origin' is also recorded for the query, which is a
-      string that denoted from where the query originated, not unlike a
-      the
+      string that denoted from where the query originated, not unlike an
       <ELink key="link-moz-origin"
         href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Origin"
       >
@@ -695,7 +717,7 @@ const getPage = (userID) => <div className="text-page">
       query originated.
     </p>
 
-    <h3>Request origins of client-side requests</h3>
+    <h4>Request origins of client-side requests</h4>
     <p>
       Whenever an app component makes a post() or a fetchPrivate() request to
       the server, the request origin is set to the file path of that
@@ -718,7 +740,7 @@ const getPage = (userID) => <div className="text-page">
     </p>
     <p>
       Therefore, for all post() or fetchPrivate() queries made by the message
-      app the request origin will be set to the absolute path of the 'main.jsx'
+      app, the request origin will be set to the absolute path of the 'main.jsx'
       file.
     </p>
     <p>
@@ -734,24 +756,24 @@ const getPage = (userID) => <div className="text-page">
     </p>
     <p>
       The checkRequestOrigin() function takes a boolean value as its first
-      argument, which determines whether the client is potentially able to
+      argument, which determines whether the client is allowed to
       override the check. (You generally want this boolean to be true whenever
       the SMF is open to requests from client side, and not just from
       a other, trusted SMFs.)
       And the second argument is an array of permitted request origins.
     </p>
     <p>
-      The strings inside this array are also allowed to end in "*", by the way,
-      in which case the "*" is treated as a wildcard, matching anything that
+      The strings inside this array can also end in "*",
+      in which case this is treated as a wildcard, matching anything that
       comes after.
     </p>
     <p>
       These request origins checks are often crucial to include, since if it is
       left out, it means that all other apps on the UP Web is free to post to
-      the SMF at will, which is rarely desired.
+      the SMF at will, which is often not desired at all.
     </p>
 
-    <h3>Request origins of server-side requests</h3>
+    <h4>Request origins of server-side requests</h4>
     <p>
       As stated above, an SMF can also be called from other SMFs, including
       ones from other home directories.

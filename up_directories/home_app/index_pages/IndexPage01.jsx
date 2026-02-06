@@ -305,6 +305,39 @@ const indexPage = <div className="text-page">
       they can also choose precisely what data should and should not be
       collected about them.
     </p>
+
+    {/* <h4>7. Enjoy a greater variety of possibilities</h4>
+    <p>
+      Last but not least, since the UP can draw on its entire user base for
+      coming up with new creative solutions and features, both for the UI of
+      the apps as well
+      as for the algorithms, it will no doubt lead to much greater variety of
+      possibilities for the users.
+    </p>
+    <p>
+      The world of open source already has a vast number of contributors,
+      collectively spending vast amounts of time and energy on open source
+      projects, despite often not getting paid at all for their contributions.
+      And if the UP Web can attract even just a small fraction of all that work
+      and energy, it will not take long before the UP Web can offer products
+      that are on par with contemporary apps.
+    </p>
+    <p>
+      This is especially true now that web development has never been easier.
+      There are so many resources available now that web developers can utilize
+      in order to expedite the processes, and to make even fairly complicated
+      apps in relatively small amounts of time.
+      Furthermore, the framework that the UP Web offers
+      takes care of most of the security-related aspects automatically, which
+      makes it very easy for developers to also ensure that their apps are
+      secure, on top of providing a good UI.   
+    </p>
+    <p>
+      And after the apps of the UP Web have reached the same level as
+      contemporary ones, the UP Web can only continue to evolve from there,
+      drawing on the combined creativity of all users, who can continue to come
+      up with new ideas for useful apps and features.
+    </p> */}
   </section>
 
   <section>
