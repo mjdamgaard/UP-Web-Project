@@ -765,196 +765,88 @@ const getPage = (userID) => <div className="text-page">
 
 
   <section>
-    <h2>post(), fetch(), and fetchPrivate()</h2>
+    <h2>Query functions</h2>
     <p>
       The three main functions to choose between when making a query to a
       given route is the post(), the fetch(), and the fetchPrivate() function,
       all three exported from the 'query' library. In this section, we will
       explain their differences in more detail.
     </p>
+
+    <h4>The post() function</h4>
     <p>
-      ...
+      The post() function is the most permissive of the three. It allows for
+      locked routes to be queried, provided that the appropriate admin
+      privileges have been already granted, and it allows queries to make
+      changes to the database.
+    </p>
+    <p>
+      On the other hand, post() can only be called if current execution
+      environment already have permission to make posts. This post permission
+      is only granted on the client side if post() was called in response to
+      some action by the user, such as a mouse click or a press of the Enter
+      key. And on the server side, post() can only be called if the currently
+      executing SMF was also called using post(), including if the SMF was
+      called server-side by another SMF.
+    </p>
+    <p>
+      The post() function also has an optional second argument for
+      passing data along with the query, as we have seen examples of above.
+    </p>
+    <p>
+      And lastly, the post() function keeps track of both the "request origin,"
+      as introduced above, as well as the requesting user, meaning that
+      functions such as checkRequestOrigin(), getRequestOrigin(), and
+      getRequestingUserID(), all exported from the 'request' library, works
+      for post() requests.
+    </p>
+
+    <h4>The fetchPrivate() function</h4>
+    <p>
+      The fetchPrivate() function has most of the same qualities as the post()
+      function, with the exceptions that is does not have a second argument
+      for passing post data to the request, and more importantly, is does not
+      require post permissions to be called.
+    </p>
+    <p>
+      This makes it the ideal function for fetching private data, where you
+      need to query locked routes, and where you potentially also need to check
+      the ID of the requesting user, but where you do not need to change the
+      state of the database at all.
+    </p>
+
+    <h4>The fetch() function</h4>
+    <p>
+      Finally, we have the fetch() function, which can only be called on
+      routes that are not locked, and which does not record neither the
+      request origin nor the ID of the requesting user.
+    </p>
+    <p>
+      This function is meant to be used whenever the fetched data is public,
+      and when the request should not depend on the requesting user.
+    </p>
+    <p>
+      The reason for using fetch() rather than fetchPrivate() is first of all
+      that fetch() generally consumes less resources. And it also helps to
+      clearly signal that the fetched data is public, and therefore does not
+      require special care when handling. 
+    </p>
+    <p>
+      So while a call to fetch() can in fact always be replaced by a call to
+      fetchPrivate() in principle, it is best to use fetch() whenever the
+      queried data is public.
     </p>
   </section>
 
 
 
-
-
-
-  <section>
-    <h2>Permissions</h2>
-    <p>
-      When a function is executed, it can sometimes get elevated
-      permissions/privileges
-      under certain circumstances, which allows it to do things that would
-      otherwise fail.
-    </p>
     {/* <p>
-      A permission is thus a type of flag that is raised for the execution
-      environment of the given function, which might then be checked by some
-      developer functions, such as post() and fetch(), at the beginning of
-      their execution.
-    </p> */}
-    <p>
-      There are two main types of permissions to know about: The
-      'admin privilege,' which we have already mentioned above, and the
-      'post permission.'
-    </p>
-
-    <h4>The admin privilege</h4>
-    <p>
-      The admin privilege is granted only at the beginning of the execution
-      of an SMF, and only if that SMF is called specifically via a
-      "./callSMF" query, like we saw in the last section. They are always
-      associated with the particular home directory to which the SMF belongs,
-      and grant certain rights only within that home directory.
-    </p>
-    <p>
-      In particular, the admin privilege allows for queries to so-called
-      "locked" routes, which are all routes that contains a segment that
-      starts with an underscore.
-    </p>
-    <p>
-      Note that the so-called "query type" after a "./" also counts as a
-      segment, which is why query types such as "_insert" and "_deleteEntry",
-      etc., are all "locked," and therefore generally only works if they are
-      used inside of an SMF. 
-    </p>
-    <p>
-      Additionally, if any file name start with an underscore, all queries to
-      that file
-      {/* (including its content in case of a text file) */}
-      will be locked
-      as well. And if the name of a subdirectory starts with an underscore,
-      all the files within that subdirectory will be locked.
-    </p>
-    <p>
-      This makes it possible for an app to have private data, which can only
-      be read by an SMF, or by the admin.
-    </p>
-    <p>
-      Note that admin privileges are <i>not</i> automatically granted to
-      when an admin is simply using their own app via a browser.
-      If an admin want to make queries with elevated privileges, besides
-      calling an SMF, they can use the uploader program to do so, however,
-      as we will see in the
-      <ILink key="link-tut-6-5.2" href="~/db-queries">
-        next tutorial
-      </ILink>.
-    </p>
-
-    <h4>The post permission</h4>
-    <p>
-      The post permission, as the name suggests, gives a function the
-      permission to make post requests, via the post() function as seen above.
-    </p>
-    <p>
-      In the current JSX framework, the components do not always have the
-      permission to make post requests to the server, but only in response to
-      an action by the user, such as a mouse click or a press of the Enter key. 
-    </p>
-    <p>
-      And more importantly, whenever a query is made via fetch() or
-      fetchPrivate(), any existing post permission will be removed for the
-      duration of the query. And this is true regardless of whether fetch()
-      or fetchPrivate() is called on the client side or on the server side. 
-    </p>
-
-    {/* <h4>Clearing permissions manually</h4>
-    <p>
-      Sometimes you might wish to clear a permission manually. This is
-      particular useful if you want an SMF to be able to make a query that is
-      dependent on user input, but does not want to bleed e.g. admin privileges
-      and/or post permissions into such queries.
-    </p>
-    <p>
-      Allowing admin privileges to bleed into functions controlled by the
-      client of the request is obviously a very bad, and should always be
-      avoided.
-    </p>
-    <p>
-      Permissions can be cleared using a call to one of the following three
-      functions, also exported by the 'query' library: clearPermissions(),
-      clearPrivileges(), and noPost().
-    </p>
-    <p>
-      Use clearPermissions() to clear both admin privileges and post
-      permissions, use clearPrivileges() to clear only admin privileges, but
-      not post permissions, and use noPost() to only clear the post permission,
-      although this is generally not advised when it comes to SMFs.
-    </p> */}
-
-    <h4>Calling a foreign SMF</h4>
-    <p>
-      If an SMF allows it, it can also be called server-side by other SMFs,
-      potentially from foreign home directories.
-    </p>
-    <p>
-      If an SMF successfully queries  a "./callSMF" query is made from within
-      an SMF, the current
-      admin privileges will be cleared during the query, and replaced by the
-      admin privilege of the home directory of the called SMF.
-    </p>
-    <p>
-      So another good way to prevent bleeding admin privileges into the wrong
-      functions within an SMF is to only use "./callSMF" queries when calling
-      any foreign functions that depend on client input.
-    </p>
-  </section>
-
-
-  <section>
-    <h2>Private data</h2>
-    <p>
-      It is important to note that the data contained in a database table file
-      is visible to the public, unless the file name starts an underscore to
-      denote it as a locked file, or if it is nested inside a directory that
-      starts with an underscore.
-    </p>
-    <p>
-      If not, the data can be queried via "./entry" or "./list" routes. And
-      since these query types are not locked, they do not need admin
-      privileges and can therefore be made directly from the client side,
-      without using any SMF.
-    </p>
-    <p>
-      For example, in the message app discussed above, the 'message.att' file
-      is not locked, and can therefore also be queried directly from the client
-      side, via fetch() calls such as
-    </p>
-    <p>
-      <code className="jsx">{[
-        'fetch(".../messages.att./list/a/1/n/1000"));',
-      ]}</code>
-    </p>
-    <p>
-      So if you want your app to have data that is private, for instance if
-      you do not want anyone to be able to read a users messages, you should
-      first of all make sure to prepend an underscore to the file name of the
-      given database table file, and then handle reading data from that file
-      via SMFs.
-    </p>
-    <p>
-      When querying an SMF to read private data, you will then need to use
-      either the fetchPrivate() or the post() function, exported from the
-      'query' library. Unlike the fetch() function, both of these functions
-      are allowed to be used for locked routes, and they also have the effect
-      of transmitting the ID of the requesting user along with the request.
-    </p>
-    <p>
-      This user ID can then be obtained by the called SMF via the
-      getRequestingUserID() function that we have seen above, exported from the
-      'request' library. And the SMF can then use this ID to check whether the
-      user should be given access to the requested data from a locked file. 
-    </p>
-    <p>
       By the way, if you do not know what your user ID is, go to the account
       menu at the top right of the webpage (on up-web.org), and click the
       'Account' option. You will then see an overlay page where you can see
       your user ID under the 'User info' header.
-    </p>
-  </section>
+    </p> */}
+
 
   <section>
     <h2>Exercise</h2>
@@ -978,7 +870,7 @@ const getPage = (userID) => <div className="text-page">
       Then modify the postMessage() and fetchMessages()
       SMFs within the 'message.sm.js' module by adding a call to
       getRequestingUserID() in order to get the user ID, followed by whatever
-      check you want to make of that user ID.
+      check you want to make for that user ID.
     </p>
     <p>
       And feel free to create another test account or two in order to test
@@ -988,18 +880,4 @@ const getPage = (userID) => <div className="text-page">
     </p>
   </section>
 
-    {/* <p>
-      In order to read and write data to these database tables, the user can
-      call one of the functions, post(), fetch(), or fetchPrivate(), from the
-      'query' developer library. Each of these functions takes an extended path
-      as its first argument, also referred to as a 'route.' The
-      abs("./messages.att./_insert") argument that we saw above is an example
-      of such a route. And post() can also receive some additional data via
-      its second argument, which allows us to post data without having to
-      always encode it as part of the route.
-    </p> */}
-    {/* <p>
-      Apart from this, the difference between these three functions lies in
-      which kinds of privileges they require.
-    </p> */}
 </div>;
