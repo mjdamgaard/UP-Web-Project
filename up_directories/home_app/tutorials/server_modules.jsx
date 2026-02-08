@@ -177,8 +177,7 @@ const getPage = (userID) => <div className="text-page">
       or deleting messages in this message app on behalf of the user.
     </p>
     <p>
-      We will get more into how this checkRequestOrigin() function works in
-      another section below.
+      We will get more into how this checkRequestOrigin() function works below.
     </p>
     <p>
       The next thing that postMessage() does is then to get the (hexadecimal)
@@ -186,7 +185,7 @@ const getPage = (userID) => <div className="text-page">
       using ";" as a separator, before storing inserting it in the database.
     </p>
     <p>
-      There are also other ways that we could store this data which are
+      There are also other ways that we could store this data that are
       more efficient in terms of storage space.
       But for the sake of simplicity, we just store all the data as a single
       encoded text for this tutorial.
@@ -298,7 +297,7 @@ const getPage = (userID) => <div className="text-page">
     <p>
       The "./" in such routes should thus be interpreted as essentially
       meaning: "Do something with this file (or directory)." Also note that
-      file names and directory names are not allowed to end with '.' in this
+      file names and directory names are not allowed to end in '.' in this
       system, which means that any occurrence of "./" will always have this
       meaning.
     </p>
@@ -581,10 +580,213 @@ const getPage = (userID) => <div className="text-page">
     </p>
   </section>
 
+
+  <section>
+    <h2>Request origins</h2>
+    <p>
+      Whenever an SMF is queried using either post() or fetchPrivate(), the
+      so-called 'request origin' is also recorded for the query, which is a
+      string that denotes where the query originated from.
+    </p>
+    <p>
+      This is not unlike the
+      <ELink key="link-moz-origin"
+        href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Origin"
+      >
+        Origin header
+      </ELink>
+      for HTTP request, but instead of containing a domain name or IP address,
+      the request origins of this system contain a path/route to to the
+      component or the SMF that made the request, depending on whether the
+      query originates from the client or the server side. 
+    </p>
+
+    <h4>Client-side requests</h4>
+    <p>
+      If the request is made from the client side, by some app, the request
+      origin will typically be the path to the JSX component module of that
+      app.
+    </p>
+    <p>
+      This is for example the case for our message app, whose post()
+      requests will all get the request origin set to the absolute path to
+      the 'main.jsx' module that defines the app. And it is why all the SMFs
+      in the 'message.sm.js' module that inserts, modifies, or deletes data
+      from the database starts with the following call to check that the
+      request originated from the same message app.
+    </p>
+    <p>
+      <code className="jsx">{[
+        'checkRequestOrigin(true, [\n',
+        '  abs("../main.jsx"),\n',
+        ']);',
+      ]}</code>
+    </p>
+    <p>
+      The first argument of this checkRequestOrigin() function is a boolean
+      value that, if true, allows the client to override the check.
+      (You generally want this value to be true whenever
+      the SMF is open to requests from the client side, and not just from
+      other SMFs.)
+    </p>
+    <p>
+      And the second argument is an array of all the permitted request origins,
+      which is in this case is just the path to the root component of the
+      message app.
+    </p>
+    <p>
+      There are exceptions, however, where the request origin is not set to the
+      root component of a given app. Whenever you allow a component to style
+      itself, which is typically achieved by using a 'key' prop that starts
+      with an underscore, as we learned in
+      <ILink key="link-tut-3-1" href="~/styling">
+        Tutorial 3
+      </ILink>,
+      the request origin of requests made inside this self-styling component
+      will be set to the path of that component instead.
+    </p>
+    <p>
+      More precisely, whenever a component that does not style itself
+      makes a request, the request origin will always be set to the nearest
+      ancestor component that does.
+    </p>
+    <p>
+      Note that this makes it possible for apps to import
+      and use foreign components that are allowed to access foreign parts of
+      the database, as long as those components just get to define their own
+      style. 
+    </p>
+    <p>
+      But for our message app example, no 'key' props with leading
+      underscores are used anywhere, which means that the request origin will
+      always be the path to the root component of the app.
+    </p>
+
+
+    <h4>Server-side requests</h4>
+    <p>
+      An SMF can also be queried by other SMFs, running on the server side.
+    </p>
+    <p>
+      For such queries, the request origin will not be set to
+      the path of any component module, but rather to the "./callSMF" route
+      that was used to call the first of the two SMFs, who is now
+      calling the second one. 
+    </p>
+    <p>
+      For example, if the first SMF was originally queried via a route of
+      ".../fst_file.sm.js./callSMF/firstSMF/arg1/arg2", and then that SMF
+      makes a query to another SMF via some different route, such as
+      ".../sec_file.sm.js./callSMF/secondSMF/arg1",
+      the request origin that the second SMF will need to check will be given
+      by that first route: ".../fst_file.sm.js./callSMF/firstSMF/arg1/arg2".
+    </p>
+    <p>
+      It is worth mentioning here that checkRequestOrigin() function also
+      allows for the use of a "*" wildcard at the end of the whitelisted
+      routes. For SMF routes in particular, this means you do not need to
+      match all potential arguments of the requesting SMF.
+      For instance, if you want to accept all requests from a given
+      SMF, you can make a check similar to the following one.
+    </p>
+    <p>
+      <code className="jsx">{[
+        'export async function secondSMF(arg1) {\n',
+        '  checkRequestOrigin(false, [\n',
+        '    ".../fst_file.sm.js./callSMF/firstSMF*",\n',
+        '  ]);\n',
+        '\n',
+        '  ...\n',
+        '}',
+      ]}</code>
+    </p>
+    <p>
+      By the way, whenever an SMF quires another SMF in a different home
+      directory, the admin privileges will also shift for that
+      query, meaning that the admin privileges granted to the first SMF will
+      not bleed into the second one.
+    </p>
+  </section>
+
+
+  <section>
+    <h2>Admin privileges</h2>
+    <p>
+      When admin privileges are granted, typically at the beginning of the
+      execution of a given SMF, they allow the SMF to make queries to "locked"
+      routes, as we call them, but only if the route targets a file or
+      directory within the same home directory where the SMF is located.
+    </p>
+    <p>
+      A route is locked whenever it contains a query
+      type that starts with an underscore, such as "_insert" or "_deleteEntry",
+      etc., or if it contains any segments at all that start with an
+      underscore, including subdirectory and file name segments.
+    </p>
+    <p>
+      So if a file name starts with an underscore, its contents are not
+      visible to the public, but can only be read by the SMFs within the same
+      home directory, or by the admin. And if a subdirectory name starts with
+      an underscore, then all files within that directory is locked.
+    </p>
+    <p>
+      This makes it possible for apps to have private data. For instance, if
+      we take a look at the 'messages.att' file in the message app, we see
+      that this does not have a leading underscore anywhere in its path, and is
+      thus not locked. The query types such as "entry" and "list" will
+      therefore not require any admin privileges, and will therefore work
+      anywhere, meaning that the data is visible to all other apps.
+    </p>
+    <p>
+      However, if we were to change its name to "_messages.att" instead, the
+      data will now only be accessible from within an SMF in the same home
+      directory, or by the admin.
+    </p>
+    <p>
+      Note that admin privileges are <i>not</i> automatically granted to
+      when an admin is simply using their own app via a browser.
+      If an admin want to make queries with elevated privileges, besides
+      calling an SMF, they can use the uploader program to do so, however,
+      as we will see in the
+      <ILink key="link-tut-6-5" href="~/db-queries">
+        next tutorial
+      </ILink>.
+    </p>
+    <p>
+      It is also worth noting that an admin of a home directory is always
+      able to remove themselves as the admin, which means that they can
+      no longer access any private data, or make any changes to the directory.
+      And as we will at some point teach in a future tutorial, the admin can
+      also at the same time choose to hand over maintenance responsibilities to
+      a user group of choice, such that any subsequent updates are now voted
+      on democratically by that user group.
+    </p>
+  </section>
+
+
+  <section>
+    <h2>post(), fetch(), and fetchPrivate()</h2>
+    <p>
+      The three main functions to choose between when making a query to a
+      given route is the post(), the fetch(), and the fetchPrivate() function,
+      all three exported from the 'query' library. In this section, we will
+      explain their differences in more detail.
+    </p>
+    <p>
+      ...
+    </p>
+  </section>
+
+
+
+
+
+
   <section>
     <h2>Permissions</h2>
     <p>
-      When a function is executed, it can sometimes get elevated permissions
+      When a function is executed, it can sometimes get elevated
+      permissions/privileges
       under certain circumstances, which allows it to do things that would
       otherwise fail.
     </p>
@@ -595,8 +797,8 @@ const getPage = (userID) => <div className="text-page">
       their execution.
     </p> */}
     <p>
-      There are two main types of permissions to know about, which are the
-      'admin privilege,' which we have already talked about above, and the
+      There are two main types of permissions to know about: The
+      'admin privilege,' which we have already mentioned above, and the
       'post permission.'
     </p>
 
@@ -621,7 +823,9 @@ const getPage = (userID) => <div className="text-page">
     </p>
     <p>
       Additionally, if any file name start with an underscore, all queries to
-      that file (including its content in case of a text file) will be locked
+      that file
+      {/* (including its content in case of a text file) */}
+      will be locked
       as well. And if the name of a subdirectory starts with an underscore,
       all the files within that subdirectory will be locked.
     </p>
@@ -631,11 +835,11 @@ const getPage = (userID) => <div className="text-page">
     </p>
     <p>
       Note that admin privileges are <i>not</i> automatically granted to
-      queries that originate from the admin of the given home directory, at
-      least while using the browser to access their own app. The admin can,
-      however, use the uploader program to make posts with elevated privileges,
-      as we will show in the
-      <ILink key="link-tut-6-5" href="~/db-queries">
+      when an admin is simply using their own app via a browser.
+      If an admin want to make queries with elevated privileges, besides
+      calling an SMF, they can use the uploader program to do so, however,
+      as we will see in the
+      <ILink key="link-tut-6-5.2" href="~/db-queries">
         next tutorial
       </ILink>.
     </p>
@@ -657,7 +861,7 @@ const getPage = (userID) => <div className="text-page">
       or fetchPrivate() is called on the client side or on the server side. 
     </p>
 
-    <h4>Clearing permissions manually</h4>
+    {/* <h4>Clearing permissions manually</h4>
     <p>
       Sometimes you might wish to clear a permission manually. This is
       particular useful if you want an SMF to be able to make a query that is
@@ -679,15 +883,16 @@ const getPage = (userID) => <div className="text-page">
       permissions, use clearPrivileges() to clear only admin privileges, but
       not post permissions, and use noPost() to only clear the post permission,
       although this is generally not advised when it comes to SMFs.
-    </p>
+    </p> */}
 
     <h4>Calling a foreign SMF</h4>
     <p>
-      Another way that the admin privileges are cleared is whenever an SMF
-      calls another SMF, possibly from a different home directory.
+      If an SMF allows it, it can also be called server-side by other SMFs,
+      potentially from foreign home directories.
     </p>
     <p>
-      Whenever a "./callSMF" query is made from within an SMF, the current
+      If an SMF successfully queries  a "./callSMF" query is made from within
+      an SMF, the current
       admin privileges will be cleared during the query, and replaced by the
       admin privilege of the home directory of the called SMF.
     </p>
@@ -698,106 +903,6 @@ const getPage = (userID) => <div className="text-page">
     </p>
   </section>
 
-  <section>
-    <h2>Request origins</h2>
-    <p>
-      Whenever an SMF is queried using either post() or fetchPrivate(), the
-      so-called 'request origin' is also recorded for the query, which is a
-      string that denoted from where the query originated, not unlike an
-      <ELink key="link-moz-origin"
-        href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Origin"
-      >
-        Origin HTTP header
-      </ELink>.
-    </p>
-    <p>
-      But whereas an Origin HTTP header denotes the domain name or the IP
-      address of the origin server of the current website, the request origin
-      in this system denotes the particular app component or SMF from which the
-      query originated.
-    </p>
-
-    <h4>Request origins of client-side requests</h4>
-    <p>
-      Whenever an app component makes a post() or a fetchPrivate() request to
-      the server, the request origin is set to the file path of that
-      component, or one of its ancestor components, depending on whether the
-      requesting component defines its own style or not. If the component's
-      style is defined by an ancestor component, then the module path of that
-      ancestor component is used instead for the request origin. 
-    </p>
-    <p>
-      For example, if consider the message app discussed above, one can see
-      that the outer component of the app, defined by the 'main.jsx' module,
-      is responsible for styling the whole app, namely since none of its
-      descendant component instances use keys that start with an underscore.
-      And as we recall from
-      <ILink key="link-tut-3-1" href="~/styling">
-        Tutorial 3
-      </ILink>,
-      this means that the app component never hands over the styling
-      responsibility to any of its descendants.
-    </p>
-    <p>
-      Therefore, for all post() or fetchPrivate() queries made by the message
-      app, the request origin will be set to the absolute path of the 'main.jsx'
-      file.
-    </p>
-    <p>
-      And indeed, this is why all the SMFs of the 'messages.sm.js' module that
-      inserts or modifies data in the database starts with the following check.
-    </p>
-    <p>
-      <code className="jsx">{[
-        'checkRequestOrigin(true, [\n',
-        '  abs("../main.jsx"),\n',
-        ']);',
-      ]}</code>
-    </p>
-    <p>
-      The checkRequestOrigin() function takes a boolean value as its first
-      argument, which determines whether the client is allowed to
-      override the check. (You generally want this boolean to be true whenever
-      the SMF is open to requests from client side, and not just from
-      a other, trusted SMFs.)
-      And the second argument is an array of permitted request origins.
-    </p>
-    <p>
-      The strings inside this array can also end in "*",
-      in which case this is treated as a wildcard, matching anything that
-      comes after.
-    </p>
-    <p>
-      These request origins checks are often crucial to include, since if it is
-      left out, it means that all other apps on the UP Web is free to post to
-      the SMF at will, which is often not desired at all.
-    </p>
-
-    <h4>Request origins of server-side requests</h4>
-    <p>
-      As stated above, an SMF can also be called from other SMFs, including
-      ones from other home directories.
-    </p>
-    <p>
-      For such queries between two SMFs, the request origin will not be set to
-      the path of any component module, but rather to the "./callSMF" route
-      that was used to call the first of the two SMFs, i.e. the one who is now
-      calling the second one. 
-    </p>
-    <p>
-      For example, if the first SMF is called via a route of
-      ".../my_file.sm.js./callSMF/mySMF/arg1/arg2", and that SMF then calls
-      another SMF,
-      then the request origin that the second SMF will see is given by
-      the route to the first SMF: ".../my_file.sm.js./callSMF/mySMF/arg1/arg2".
-    </p>
-    <p>
-      Note, however, that due to the fact that checkRequestOrigin() allows its
-      whitelisted routes to end in a "*" wildcard, you do not need to match
-      all potential arguments, but can just check for a string
-      such as e.g. ".../my_file.sm.js./callSMF/mySMF*" instead.
-    </p>
-  </section>
 
   <section>
     <h2>Private data</h2>
@@ -859,7 +964,7 @@ const getPage = (userID) => <div className="text-page">
       to the public.
     </p>
     <p>
-      <b>Hint:</b> After having first uploaded the message app in the same way as
+      Hint: After having first uploaded the message app in the same way as
       shown in
       <ILink key="link-tut-1-3" href="~/getting-started">
         Tutorial 1

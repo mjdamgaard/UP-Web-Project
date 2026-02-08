@@ -106,6 +106,11 @@ const page = <div className="text-page">
       "\"/1/HOME_DIR_ID/em.js;get/app\" into the aforementioned text field, " +
       "and then give it a positive score."
     }</p>
+    <p>
+      (In a near future, we will of course implement a submission page that
+      automates a lot of this process, and where the user only has to insert
+      the relevant data into a form.)
+    </p>
 
   </section>
 
