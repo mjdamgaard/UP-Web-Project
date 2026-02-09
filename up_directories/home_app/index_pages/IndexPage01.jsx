@@ -321,19 +321,7 @@ const indexPage = <div className="text-page">
       and energy, it will not take long before the UP Web can offer products
       that are on par with contemporary apps.
     </p>
-    {/* <p>
-      This is especially true now that web development has never been easier.
-      There are so many resources available now that web developers can utilize
-      in order to expedite the processes, and to make even fairly complicated
-      apps in relatively small amounts of time.
-      Furthermore, the framework that the UP Web offers
-      takes care of most of the security-related aspects automatically, which
-      makes it very easy for developers to also ensure that their apps are
-      secure, on top of providing a good UI.
-    </p> */}
     <p>
-      {/* And after the apps of the UP Web have reached the same level as
-      contemporary ones, the UP Web can only continue to evolve from there, */}
       And from there, the UP Web can only continue to evolve,
       drawing on the combined creativity of all users, who can continue to come
       up with new ideas for useful apps and features.

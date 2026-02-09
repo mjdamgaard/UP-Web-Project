@@ -37,6 +37,9 @@ export function render({message, authorID, userID, messageID}) {
         <button onClick={() => this.do("deleteMessage")}>
           Yes
         </button>
+        <button onClick={() => this.do("toggleMessageDeletionPrompt")}>
+          No
+        </button>
       </div>
     </div>
   );
@@ -45,6 +48,7 @@ export function render({message, authorID, userID, messageID}) {
 
 export const events = [
   ["successful-edit", "handleSuccessfulEdit"],
+  ["cancel-edit", "toggleMessageEditor"],
 ];
 
 

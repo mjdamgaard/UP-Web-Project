@@ -14,6 +14,9 @@ export function render({userID, message, messageID}) {
       <button onClick={() => this.do("editMessage")}>
         Post changes
       </button>
+      <button onClick={() => this.trigger("cancel-edit")}>
+        Cancel
+      </button>
       <div>{response}</div>
     </div>
   );

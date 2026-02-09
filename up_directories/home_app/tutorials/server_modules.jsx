@@ -585,7 +585,7 @@ const getPage = (userID) => <div className="text-page">
     <h2>Request origins</h2>
     <p>
       Whenever an SMF is queried using either post() or fetchPrivate(), the
-      so-called 'request origin' is also recorded for the query, which is a
+      so-called 'request origin' is recorded for the given query, which is a
       string that denotes where the query originated from.
     </p>
     <p>
@@ -595,10 +595,10 @@ const getPage = (userID) => <div className="text-page">
       >
         Origin header
       </ELink>
-      for HTTP request, but instead of containing a domain name or IP address,
-      the request origins of this system contain a path/route to to the
+      for HTTP requests. But instead of containing a domain name or IP address,
+      the request origin here contains a path/route to the
       component or the SMF that made the request, depending on whether the
-      query originates from the client or the server side. 
+      query originated from the client or the server side. 
     </p>
 
     <h4>Client-side requests</h4>
@@ -608,7 +608,8 @@ const getPage = (userID) => <div className="text-page">
       app.
     </p>
     <p>
-      This is for example the case for our message app, whose post()
+      This is for example the case for the message app introduced above, whose
+      post()
       requests will all get the request origin set to the absolute path to
       the 'main.jsx' module that defines the app. And it is why all the SMFs
       in the 'message.sm.js' module that inserts, modifies, or deletes data
@@ -631,7 +632,7 @@ const getPage = (userID) => <div className="text-page">
     </p>
     <p>
       And the second argument is an array of all the permitted request origins,
-      which is in this case is just the path to the root component of the
+      which in this example is just the path to the root component of the
       message app.
     </p>
     <p>
@@ -642,8 +643,8 @@ const getPage = (userID) => <div className="text-page">
       <ILink key="link-tut-3-1" href="~/styling">
         Tutorial 3
       </ILink>,
-      the request origin of requests made inside this self-styling component
-      will be set to the path of that component instead.
+      the request origin of any requests made inside this self-styling
+      component will be set to the path of that component instead.
     </p>
     <p>
       More precisely, whenever a component that does not style itself
@@ -670,15 +671,15 @@ const getPage = (userID) => <div className="text-page">
     <p>
       For such queries, the request origin will not be set to
       the path of any component module, but rather to the "./callSMF" route
-      that was used to call the first of the two SMFs, who is now
-      calling the second one. 
+      that was used to call the first of the two SMFs, i.e. the one that is now
+      calling the second one.
     </p>
     <p>
       For example, if the first SMF was originally queried via a route of
-      ".../fst_file.sm.js./callSMF/firstSMF/arg1/arg2", and then that SMF
+      ".../fst_file.sm.js./callSMF/firstSMF/arg1/arg2", and that SMF
       makes a query to another SMF via some different route, such as
       ".../sec_file.sm.js./callSMF/secondSMF/arg1",
-      the request origin that the second SMF will need to check will be given
+      the request origin that this second SMF will see is then given
       by that first route: ".../fst_file.sm.js./callSMF/firstSMF/arg1/arg2".
     </p>
     <p>
@@ -701,7 +702,7 @@ const getPage = (userID) => <div className="text-page">
       ]}</code>
     </p>
     <p>
-      By the way, whenever an SMF quires another SMF in a different home
+      By the way, whenever an SMF queries another SMF in a different home
       directory, the admin privileges will also shift for that
       query, meaning that the admin privileges granted to the first SMF will
       not bleed into the second one.
@@ -720,8 +721,8 @@ const getPage = (userID) => <div className="text-page">
     <p>
       A route is locked whenever it contains a query
       type that starts with an underscore, such as "_insert" or "_deleteEntry",
-      etc., or if it contains any segments at all that start with an
-      underscore, including subdirectory and file name segments.
+      or if it contains any segment at all that starts with an
+      underscore, including subdirectory names and file names.
     </p>
     <p>
       So if a file name starts with an underscore, its contents are not
@@ -734,19 +735,17 @@ const getPage = (userID) => <div className="text-page">
       we take a look at the 'messages.att' file in the message app, we see
       that this does not have a leading underscore anywhere in its path, and is
       thus not locked. The query types such as "entry" and "list" will
-      therefore not require any admin privileges, and will therefore work
+      therefore not require any admin privileges, and will thus work from
       anywhere, meaning that the data is visible to all other apps.
-    </p>
-    <p>
       However, if we were to change its name to "_messages.att" instead, the
       data will now only be accessible from within an SMF in the same home
       directory, or by the admin.
     </p>
     <p>
-      Note that admin privileges are <i>not</i> automatically granted to
+      Note that admin privileges are <i>not</i> automatically granted
       when an admin is simply using their own app via a browser.
-      If an admin want to make queries with elevated privileges, besides
-      calling an SMF, they can use the uploader program to do so, however,
+      However, if an admin want to make queries with elevated privileges,
+      besides calling an SMF, they can use the uploader program to do so,
       as we will see in the
       <ILink key="link-tut-6-5" href="~/db-queries">
         next tutorial
@@ -757,8 +756,8 @@ const getPage = (userID) => <div className="text-page">
       able to remove themselves as the admin, which means that they can
       no longer access any private data, or make any changes to the directory.
       And as we will at some point teach in a future tutorial, the admin can
-      also at the same time choose to hand over maintenance responsibilities to
-      a user group of choice, such that any subsequent updates are now voted
+      also even choose to hand over maintenance responsibilities to a user
+      group of their choice, such that any subsequent updates are now voted
       on democratically by that user group.
     </p>
   </section>
@@ -768,7 +767,7 @@ const getPage = (userID) => <div className="text-page">
     <h2>Query functions</h2>
     <p>
       The three main functions to choose between when making a query to a
-      given route is the post(), the fetch(), and the fetchPrivate() function,
+      given route are post(), fetch(), and fetchPrivate(),
       all three exported from the 'query' library. In this section, we will
       explain their differences in more detail.
     </p>
@@ -781,9 +780,10 @@ const getPage = (userID) => <div className="text-page">
       changes to the database.
     </p>
     <p>
-      On the other hand, post() can only be called if current execution
-      environment already have permission to make posts. This post permission
-      is only granted on the client side if post() was called in response to
+      On the other hand, post() can only be called if the current execution
+      environment already has the permission to make posts. This post
+      permission is generally only granted on the client side if post() was
+      called in response to
       some action by the user, such as a mouse click or a press of the Enter
       key. And on the server side, post() can only be called if the currently
       executing SMF was also called using post(), including if the SMF was
@@ -797,16 +797,16 @@ const getPage = (userID) => <div className="text-page">
       And lastly, the post() function keeps track of both the "request origin,"
       as introduced above, as well as the requesting user, meaning that
       functions such as checkRequestOrigin(), getRequestOrigin(), and
-      getRequestingUserID(), all exported from the 'request' library, works
+      getRequestingUserID(), all exported from the 'request' library, work
       for post() requests.
     </p>
 
     <h4>The fetchPrivate() function</h4>
     <p>
       The fetchPrivate() function has most of the same qualities as the post()
-      function, with the exceptions that is does not have a second argument
+      function, with the exceptions that it does not have a second argument
       for passing post data to the request, and more importantly, is does not
-      require post permissions to be called.
+      require any special post permission before it can be called.
     </p>
     <p>
       This makes it the ideal function for fetching private data, where you
@@ -817,42 +817,33 @@ const getPage = (userID) => <div className="text-page">
 
     <h4>The fetch() function</h4>
     <p>
-      Finally, we have the fetch() function, which can only be called on
-      routes that are not locked, and which does not record neither the
-      request origin nor the ID of the requesting user.
+      Finally we have the fetch() function, ideal for fetching any public data,
+      where the database should not change as a response to the request.
+      The fetch() function can only be called on routes that are not locked,
+      and it does not record neither the request origin nor the user ID for the
+      request.
     </p>
     <p>
-      This function is meant to be used whenever the fetched data is public,
-      and when the request should not depend on the requesting user.
-    </p>
-    <p>
-      The reason for using fetch() rather than fetchPrivate() is first of all
-      that fetch() generally consumes less resources. And it also helps to
-      clearly signal that the fetched data is public, and therefore does not
+      The reason for using fetch() rather than fetchPrivate() when fetching
+      public data is first of all that fetch() generally consumes fewer
+      resources. And furthermore, it also helps to clearly signal to other
+      programmers that the fetched data is public, and therefore does not
       require special care when handling. 
     </p>
-    <p>
+    {/* <p>
       So while a call to fetch() can in fact always be replaced by a call to
-      fetchPrivate() in principle, it is best to use fetch() whenever the
-      queried data is public.
-    </p>
+      fetchPrivate() in principle, at least when the user is logged in, it is
+      best to use fetch() whenever the queried data is public.
+    </p> */}
   </section>
 
-
-
-    {/* <p>
-      By the way, if you do not know what your user ID is, go to the account
-      menu at the top right of the webpage (on up-web.org), and click the
-      'Account' option. You will then see an overlay page where you can see
-      your user ID under the 'User info' header.
-    </p> */}
 
 
   <section>
     <h2>Exercise</h2>
     <p>
       Now that you have learned how to make data private, why not have a go at
-      modifying the message app such that the message board is no longer open
+      modifying the message app such that the message thread is no longer open
       to the public.
     </p>
     <p>
@@ -865,18 +856,27 @@ const getPage = (userID) => <div className="text-page">
       looks the same as the example above, go to the 'message.att' file in the
       'server' folder and rename it to '_message.att'. Then change all
       occurrences of 'message.att' to '_message.att' inside the 'message.sm.js'
-      module, and change both 'message.sm.js' and the 'MessageList.jsx' modules
-      to use fetchPrivate() instead of fetch().
-      Then modify the postMessage() and fetchMessages()
-      SMFs within the 'message.sm.js' module by adding a call to
-      getRequestingUserID() in order to get the user ID, followed by whatever
-      check you want to make for that user ID.
+      module, and change both the 'message.sm.js' and the 'MessageList.jsx'
+      modules to use fetchPrivate() everywhere instead of fetch().
+      Then add a checkRequestOrigin() and a getRequestingUserID() call at the
+      beginning of fetchMessages(), such that it starts out the same way as
+      postMessage(). (Without this request origin check, any other
+      app would be able to fetch the same private data as well.)
+      And finally, for both postMessage() and fetchMessages(), add
+      whatever checks you like to the user ID in order to limit who can post
+      and who can read the messages.
     </p>
     <p>
-      And feel free to create another test account or two in order to test
+      Feel free to create another test account or two in order to test
       your new private message app. For instance, you could let your message
       app accept requests from two out of three of your test accounts, and then
       test the app by logging in and posting from different accounts.
+    </p>
+    <p>
+      By the way, if you do not know what your user ID is, go to the account
+      menu at the top right of the webpage (on up-web.org), and click the
+      'Account' option. You will then see an overlay page where you can find
+      your user ID under the 'User info' header.
     </p>
   </section>
 
