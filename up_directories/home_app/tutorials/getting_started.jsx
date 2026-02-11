@@ -59,7 +59,7 @@ const page = <div className="text-page">
     <p>{[
       "You can get this program by cloning or downloading the GitHub " +
       "repository at ",
-      <ELink key="link-UPDirUploader"
+      <ELink key="link-UPDirUpdater"
         href="https://github.com/mjdamgaard/UPDirUpdater" >
         {"github.com/mjdamgaard/UPDirUpdater"}
       </ELink>,
@@ -198,7 +198,7 @@ const page = <div className="text-page">
     <p>
       If you follow the first link in this list, after making sure that you
       have typed in the correct HOME_DIR_ID, you will be lead to a file browser
-      app where you can browse the files that you just uploaded.
+      app where you can browse the files that you have just uploaded.
     </p>
     <p>
       And to see your new "Hello, World!" app, do the the following.
@@ -235,71 +235,70 @@ const page = <div className="text-page">
       against this component again" option.
     </p>
     <p>
-      You can now see the uploaded ...
+      You can now see your new uploaded app! It should currently look as
+      follows.
     </p>
-    {/* <p>{
-      "By the way, the initial \"1\" in the paths shown above is the ID of " +
-      "up-web.org (which might in the future by just one node in a " +
-      "whole distributed and decentralized network of \"UP nodes\")."
-    }</p> */}
     <p>{
-      "Now, in order to view your uploaded files, you can now try to go to " +
-      "up-web.org/f/1/HOME_DIR_ID, where you should make sure to substitute " +
-      "\"HOME_DIR_ID\" in this URL by the hexadecimal number from the " +
-      "prompt. So for instance, if your new home directory was assigned an " +
-      "ID of \"123ab\", you should go to up-web.org/f/1/123ab."
-    }</p>
-    <p>{
-      "This should lead you to a simple file browser app where you can view " +
-      "the uploaded files."
-    }</p>
-    <p>{
-      "Then to verify that these files were indeed uploaded from you " +
-      "computer, try to open the hello_world/app1.jsx file in a " +
-      "text editor on your computer, and then replace the three dots on " +
-      "Ln. 4 with \"World!\" instead, such that the full line reads" 
+      <div className="text-display">
+        <h1>{"Hello, World!"}</h1>
+      </div>
     }</p>
     <p>
+      Now try to open up the file 'app1.jsx' file located at
+      UPDirUpdater/up_directories/hello_world/app1.jsx on your own computer,
+      using your editor of choice. You will see that this file simply reads
+    </p>
+    <p>
       <code className="jsx">{[
-        'return <h1>Hello, World!</h1>;',
+        'export function render() {\n',
+        '  return <h1>Hello, World!</h1>;\n',
+        '}',
       ]}</code>
     </p>
-    <p>{
-      "Then re-upload your directory by once again typing in the 'u' command " +
-      "into the uploader program as before (provided you are still logged in):" 
-    }</p>
+    <p>
+      This is the file that currently defines your app. (We will explain why
+      this is in a moment.) You can see that it defines a function which
+      returns a {"<h1>"} header HTML element that reads "Hello, World!". 
+    </p>
+    <p>
+      Go ahead and try editing this file by replacing the word "World" with
+      something else, perhaps your own name, or whatever you like.
+    </p>
+    <p>
+      Then save the file and go back to the uploader program, and once again
+      upload the directory the same way as you did before. (If you still
+      have the program open from before, all you need to do is type in the
+      'u' command again and hit Enter.)
+    </p>
     <p>
       <code className="command">{[
         'dir #HOME_DIR_ID> u',
       ]}</code>
     </p>
+    <p>
+      Now go to the page of your app once again and refresh your page. You
+      should now immediately be able to see the changes that you have just
+      made to your app:
+    </p>
     <p>{
-      "And after hopefully seeing the same successful output as before, you " +
-      "can now go to up-web.org/f/1/HOME_DIR_ID/app1.jsx (once again " +
-      "replacing \"HOME_DIR_ID\" with the number from before) to see the " +
-      "now edited file!" 
-    }</p>
-    <p>{
-      "(Feel free to edit this text into something else as well if you want, " +
-      "but note that other users can also view the same files.)" 
+      <div className="text-display">
+        <h1>Hello, <i>{"<Word of your choice>"}</i>!</h1>
+      </div>
     }</p>
   </section>
+
+
   <section>
-    <h2>{"Uploading your first UP app!"}</h2>
-      <p>{
-        "Having uploaded the directory with the source code for your first " +
-        "\"Hello, World!\" app, it does not take a lot to also upload and " +
-        "view the app itself." 
-      }</p>
-      <p>{
-        "First let us have a look at the hello_world/em.js file. " +
-        "(You can view this file either on your own computer or at " +
-        "up-web.org/f/1/HOME_DIR_ID/em.js)." 
-      }</p>
-      <p>{
-        "On Ln. 14 of this file, you will see an exported object called " +
-        "'app', whose definition reads" 
-      }</p>
+    <h2>Editing the metadata of your app</h2>
+    <p>
+      In order to understand why the 'app1.jsx' file was assigned as the root
+      component of your new app, open up the file called 'em.js', in the
+      same UPDirUpdater/up_directories/hello_world directory.
+    </p>
+    <p>{
+      "On Ln. 15 of this file, you will see an exported object called " +
+      "'app', whose definition reads" 
+    }</p>
     <p>
       <code className="jsx">{[
         'export const app = {\n',
@@ -315,181 +314,158 @@ const page = <div className="text-page">
         '};'
       ]}</code>
     </p>
-      <p>{
-        "This object is a database entity, that when uploaded " +
-        "to the right part of the database will will represent your UP app." 
-      }</p>
-      <p>{
-        "(The \"em\" in em.js is by the way short for \"entity module.\")" 
-      }</p>
-      <p>{
-        "Now to upload this entity, all you need to do is to first of all " +
-        "go to " +
-        "up-web.org/f/1/HOME_DIR_ID/em.js;get/app (where \"HOME_DIR_ID\" " +
-        "should of course once again by substituted with your particular " +
-        "home directory ID), while also making sure that you are still " +
-        "logged in, by the way. Then you should see a button that says " +
-        "'Submit and go to page.' Now, click that button in order to upload " +
-        "this entity."
-      }</p>
-      <p>{
-        "Provided that you were indeed logged in, this should now bring you " +
-        "to a newly " +
-        "created page for your new app component. For now, do not bother too " +
-        "much with what is on this page, apart from a large link saying " +
-        "'View component' near the top of the page. Click that link!"
-      }</p>
-      <p>{
-        "This will bring you to a page where you can view your new " +
-        "\"Hello, World!\" app component. But first you have to dismiss a " +
-        "warning about not falling for phishing attempts, as well as not " +
-        "generally trusting the information in the viewed component, as it " +
-        "has been uploaded by a user. But since that user in this case is " +
-        "no one but yourself, you can quickly go ahead and dismiss this " +
-        "warning."
-      }</p>
-      <p>{
-        "And now you will see your app rendered on the page, which, unless " +
-        "you have edited it to say something else (or if you never " +
-        "substituted the dots for \"World!\" in the first place), should now " +
-        "say"
-      }</p>
-      <p>{
-        <div className="text-display">
-          <h1>{"Hello, World!"}</h1>
-        </div>
-      }</p>
-      <p>{
-        "You have thus now learned how to upload your first UP app!"
-      }</p>
-  </section>
-  <section>
-    <h2>{"Changing the metadata of your component"}</h2>
-      <p>{
-        "If you take a look at the URL of the page where you viewed your " +
-        "\"Hello, World!\" component, you will see that is says " +
-        "\"up-web.org/c/ENTITY_ID/YOUR_APP_NAME\", only where \"ENTITY_ID\" " +
-        "is replaced by some hexadecimal number, which is an ID assigned " +
-        "to the uploaded component entity." 
-      }</p>
-      <p>{
-        "(If you have closed this page in the meantime, you can get back to " +
-        "via the same process as before. And note that clicking the " +
-        "'Submit and go to page' button again will not have any effect " +
-        "other than to lead you to the entity page, once the entity " +
-        "has already been uploaded.)" 
-      }</p>
-      <p>{
-        "The first part of this URL, after the domain, is \"c\", which " +
-        "stands for 'component.' And the next segment is the component entity " +
-        "ID as mentioned. The last part, \"YOUR_APP_NAME,\" is then decided " +
-        "by the 'app' object exported by the em.js file, which means that " +
-        "you can change this name." 
-      }</p>
-      <p>{
-        "To do so, open the up_directories/hello_world/em.js " +
-        "in a text editor on your computer. On Ln. 7-10 of this file, you " +
-        "will see a couple of constants that you are free to change. And the " +
-        "first of these constants says" 
-      }</p>
+    <p>
+      This object contains all the metadata needed in order for the "home app"
+      of up-web.org (i.e. the app the this website uses as its root) to
+      render your app, as well as some additional useful metadata.
+      And in order to see one's app rendered, one needs to first submit this
+      object to a specific SMF, which will then make a record of it in the
+      database.
+    </p>
+    {/* <p>{
+      "(The \"em\" in em.js is by the way short for \"entity module.\")" 
+    }</p> */}
+    <p>
+      However, you do not need to worry about all this, because you have
+      already done exactly that, namely when you pressed that "Submit and go
+      to page" button as part three-step process listed above for getting to
+      your app page.
+    </p>
+    <p>
+      Note, by the way, that clicking the same button again will not alter the
+      state of the database once the app has already been submitted, so feel
+      free to use the same three-step path to get to your app page whenever you
+      like.
+    </p>
+    <p>
+      Now, if you want to edit the metadata of your app, it is best not to
+      edit the object that you see above directly, but rather to edit the
+      values of the five constant declarations that you see above it:
+    </p>
     <p>
       <code className="jsx">{[
-        'const APP_NAME = "YOUR_APP_NAME";',
+        'const APP_NAME = "YOUR_APP_NAME";\n',
+        'const COMPONENT_PATH = "./app1.jsx";\n',
+        'const GITHUB_REPO_URL = "URL_TO_YOUR_GITHUB_REPO";\n',
+        'const NO_MARGINS = false;\n',
+        'const NO_HEADER = false;'
       ]}</code>
     </p>
-    <p>{
-      "Now try to change \"YOUR_APP_NAME\" here to something else, like " +
-      "\"Hello World app\", then re-upload your directory like you did before." 
-    }</p>
-    <p>{
-      "Then if you go to the same up-web.org/c/ENTITY_ID/YOUR_APP_NAME URL " +
-      "as before (or refresh the page), you should see that the URL now " +
-      "automatically gets replaced by " +
-      "\"up-web.org/c/ENTITY_ID/Hello World app\"."
-    }</p>
-    <p>{
-      "Your and other users can now use this URL to access your new " +
-      "(experimental) app. Other users will however also have to dismiss " +
-      "that same warning as you did before they can see your app. But once " +
-      "your app gets recognized and acknowledged as a trusted app by the " +
-      "user community, this warning will no longer be shown."
-      /* This feature is not implemented yet, but it will be in the future.
-       * TODO: Implement said feature. */
-    }</p>
-    <p>{
-      "The next constant on Ln. 8, which you can also edit, currently says"
-    }</p>
+    <p>
+      And here you might first of all note the particular 'COMPONENT_PATH'
+      constant, which currently has the value of "./app1.jsx". As you might
+      have guessed, this constant contains a relative path to the JSX module
+      that is the root component of the given app. 
+    </p>
+    <p>
+      In fact, have a go at changing this path to say "./app2.jsx" instead,
+      such that the line now reads
+    </p>
     <p>
       <code className="jsx">{[
-        'const COMPONENT_PATH = "./app1.jsx";',
+        'const COMPONENT_PATH = "./app2.jsx";',
       ]}</code>
     </p>
-    <p>{
-      "Here \"./app1.jsx\" is the relative path from the em.js module to " +
-      "the app's component module. You can also change this path. In fact, " +
-      "try to change it now to \"./app2.jsx\" instead, then re-upload your " +
-      "directory once again."
-    }</p>
-    <p>{
-      "If you then go back and refresh your component page, you should see " +
-      "that it renders the following."
-    }</p>
-    <p>{
-      <div className="text-display">
-        <h1>{"Hello, ..."}</h1>
-      </div>
-    }</p>
-    <p>{
-      "which is indeed the text that is returned from the app2.jsx module."
-    }</p>
-    <p>{
-      "Now try to edit this app2.jsx file by changing these three dots to " +
-      "\"World!\" once again, and re-upload the directory yet again, in " +
-      "order to confirm that app2.jsx indeed now defines your uploaded app."
-    }</p>
-    <p>{[
-      "The other contents of app2.jsx will, by the way, be used as part of " +
-      "the ",
+    <p>
+      Since the 'app2.jsx' currently also returns {"'<h1>Hello, World!</h1>'"}
+      from its render() function, as long as you haven't edited it yet, when
+      you re-upload your directory and refresh the app page once again, you
+      should now once again see the same "Hello, World!" text as you did
+      initially: 
+    </p>
+    <p>
+      <code className="jsx">{[
+        'export function render() {\n',
+        '  return <h1>Hello, World!</h1>;\n',
+        '}',
+      ]}</code>
+    </p>
+    <p>
+      You now know how to specify which component module in your directory
+      should define the root of your app! (You will learn more about the
+      syntax and the structure of these '.jsx' component modules in the
       <ILink key="link-tut-2" href="~/jsx-components" >
-        {"next tutorial"}
-      </ILink>,
-      ", so make sure you keep this component path of \"./app2.jsx\" for " +
-      "now, going into the next tutorial."
-    ]}</p>
-    <p>{
-      "Lastly, there is also a 'GITHUB_REPO_URL' constant, which you " +
-      "ought to specify at some point if you want your share your app with " +
-      "others. (It is strongly recommended to use a public GitHub " +
-      "repository for your app.)"
-      // "And there is also a 'NO_MARGINS' constant, which specifies " +
-      // "that your app ought to define its own margins on the webpage where it " +
-      // "is displayed."
-    }</p>
+        next tutorial
+      </ILink>.)
+    </p>
+    <p>
+      It is also worth having a brief look at the other four metadata
+      constants.
+    </p>
+    <p>
+      First of all, we have the 'APP_NAME' constant, which defines the name of
+      your app. This name will often displayed when your app is referenced,
+      e.g. if the app appears as part of a list of app components. And the
+      app's name will furthermore also appear in the standard URL to the page
+      of you app, as you can see if you go to your app page and have a look at
+      the URL.   
+    </p>
+    <p>
+      Feel free to go ahead and try to change this 'APP_NAME' constant, e.g. to
+      "Hello World app", and see if the URL does not indeed change as well.
+      (Remember to re-upload you directory once again before refreshing the
+      page.)
+    </p>
+    <p>
+      Next, there is the 'GITHUB_REPO_URL' constant, which you
+      ought to specify at some point if you want your share your app with
+      others. (It is strongly recommended to use a public GitHub
+      repository for your app.)
+    </p>
+    <p>
+      And finally, there is the 'NO_MARGINS' and the 'NO_HEADER' constant
+      which are meant to affect how your app is positioned on the webpage. 
+      The 'NO_MARGINS' constant thus specifies, if true, that the app should
+      define its own margin. And the 'NO_HEADER' constant, once implemented,
+      will specify that the app should define its own header, while the header
+      of the home app should be hidden. However, this latter constant is not
+      implemented yet and will currently have no effect on how your app is
+      displayed.
+    </p>
   </section>
 
-  {/* <section>
+  <section>
     <h2>{"Questions and answers"}</h2>
     <p>{[
       "You now know how to upload and edit UP apps. The following couple " +
       "of tutorials will then teach you how to create more advanced " +
       "components, as well as how to " +
       "style these components, and more. And once you finish ",
-      <ILink key="link-tut-4" href="~/useful-things-to-know" >
+      <ILink key="link-tut-4" href="~/useful-things-to-know">
         {"Tutorial 4"}
       </ILink>,
       ", you should have all the knowledge required to start making " +
       "your own client-side apps."
     ]}</p>
-    <p>{[
-      "Then once you are ready to move on to creating apps that upload " +
-      "and download data from the database, Tutorials 6 and 7 will teach you " +
-      "how."
-    ]}</p>
-    <p>{[
-      "And if you have any questions at all, e.g. about specific bugs " +
-      " that you might encounter (your own or others'), or about " +
-      "the system and the project in general, please don't hesitate to write " +
-      "an e-mail to mads@up-web.org."
-    ]}</p>
-  </section> */}
+    <p>
+      Then once you are ready to move on to creating apps that upload
+      and download data from the database, Tutorials
+      <ILink key="link-tut-5" href="~/server-modules">
+        5
+      </ILink>
+      and
+      <ILink key="link-tut-6" href="~/db-queries">
+        6
+      </ILink>
+      will teach you how.
+    </p>
+    <p>
+      And if you have any questions at all, e.g. about specific bugs
+      that you might encounter, or about
+      the system and the project in general, please don't hesitate to post
+      your question to one of the forums listed at the bottom the
+      <ILink key="link-home-page" href="/" >
+        home page
+      </ILink>,
+      or alternatively e-mail up-web.org directly at mads@up-web.org.
+    </p>
+  </section>
 </div>;
+
+
+
+  {/* <p>{
+    "By the way, the initial \"1\" in the paths shown above is the ID of " +
+    "up-web.org (which might in the future by just one node in a " +
+    "whole distributed and decentralized network of \"UP nodes\")."
+  }</p> */}
