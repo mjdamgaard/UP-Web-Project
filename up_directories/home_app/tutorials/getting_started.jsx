@@ -1,6 +1,7 @@
 
 import * as ILink from 'ILink.jsx';
 import * as ELink from 'ELink.jsx';
+import * as VariableAppLinks from "./VariableAppLinks.jsx";
 
 
 export function render() {
@@ -11,26 +12,26 @@ export function render() {
 
 const page = <div className="text-page">
   <h1>{"Getting started"}</h1>
-    <h2>{"About this tutorial"}</h2>
+    {/* <h2>{"About this tutorial"}</h2>
     <p>{
       "This tutorial will show you how to create your first user-programmed " +
-      "(UP) app and upload it to this website!"
-    }</p>
+      "(UP) app and upload it to this website."
+    }</p> */}
   <section>
-    <h2>{"Create a user account at up-web.org"}</h2>
+    <h2>{"Create a user account"}</h2>
     <p>{
       "Before you can upload your first test app to up-web.org, you will " +
       "first of all need to create a user account."
     }</p>
     <p>{
       "Go to the top right of the page and click the user icon, then select " +
-      "\"Sign up\", and enter a username and password. (Make sure to use a " +
+      "\"Sign up,\" and enter a username and password. (Make sure to use a " +
       "strong password that you have not used anywhere else, preferably by " +
       "letting your browser generate one for you.)"
     }</p>
     <p>{
-      "You also have the option to enter your e-mail address here as well, " +
-      "but this is not a requirement."
+      "You also have the option to enter your e-mail address, " +
+      "but this is not a requirement at this point."
     }</p>
   </section>
   <section>
@@ -63,12 +64,15 @@ const page = <div className="text-page">
         {"github.com/mjdamgaard/UPDirUpdater"}
       </ELink>,
       "."
+      // " (To simply download the repository as a ZIP folder, click on the " +
+      // "green 'Code' button, then click 'Download ZIP.')"
     ]}</p>
     <p>{
       "Once you have downloaded (and unpacked) this directory to your " +
-      "computer, open this directory in your terminal (or cd into it), then " +
+      "computer, open this 'UPDirUpdater' directory in your terminal " +
+      "(or cd into it), then " +
       "run the following command to install the Node.js program. " +
-      "(Do not include the initial '$')"
+      "(Do not include the initial '$'.)"
     }</p>
     <p>
       <code className="command">{[
@@ -93,22 +97,24 @@ const page = <div className="text-page">
     ]}</p>
   </section>
   <section>
-    <h2>{"Uploading your first UP directory"}</h2>
+    <h2>{"Uploading your first UP app"}</h2>
     <p>{
       "You are now ready to upload and test your first UP app!"
     }</p>
     <p>{
-      "If you take look in the up_directories folder, you will see that " +
+      "If you take look in the 'up_directories' folder inside the GitHub " +
+      "repository that you " +
+      "just downloaded, you will see that " +
       "contains a project folder called 'hello_world'. This folder contains " +
-      "the source code of an \"Hello, World!\" example app, which you will " +
-      "now be shown how to upload to up-web.org."
+      "the source code of an \"Hello, World!\" example app, which we will " +
+      "now shown you how to upload to up-web.org."
     }</p>
     <p>{
-      "Make sure that you once again have your newly downloaded directory " +
+      "Make sure that you once again have your the 'UPDirUpdater' directory " +
       "open in a terminal."
     }</p>
     <p>{
-      "Then run the following command. (Do not include the initial '$')"
+      "Then run the following command. (Again, do not include the initial '$'.)"
     }</p>
     <p>
       <code className="command">{[
@@ -121,7 +127,7 @@ const page = <div className="text-page">
     }</p>
     <p>{
       "Then once you are logged in, you simply need to type in 'u' and hit " +
-      "enter to upload the contents of the up_directories/hello_world " +
+      "enter to upload the contents of the 'up_directories/hello_world' " +
       "folder:"
     }</p>
     <p>
@@ -151,8 +157,7 @@ const page = <div className="text-page">
         'Uploaded /1/HOME_DIR_ID/ExampleComponent7.css\n',
         'Uploaded /1/HOME_DIR_ID/ExampleComponent7.jsx\n',
         'Uploaded /1/HOME_DIR_ID/em.js\n',
-        'Success\n',
-        'dir #HOME_DIR_ID>\n',
+        'Success',
       ]}</code>
     </p>
     <p>{
@@ -164,10 +169,10 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "where \"HOME_DIR_ID\" is the same hexadecimal number."
+      "where HOME_DIR_ID is substituted by the same hexadecimal number."
     }</p>
     <p>{
-      "This means that the up_directories/hello_world directory and " +
+      "This means that the 'up_directories/hello_world' directory and " +
       "its files are now uploaded to the virtual file system of the server, " +
       "in a new home directory located at /1/HOME_DIR_ID on the server side."
     }</p>
@@ -177,8 +182,61 @@ const page = <div className="text-page">
       "first time you upload it. That way, when you re-upload the same " +
       "directory at any time in the future, as long as you have not deleted " +
       "or edited this .id.js file, the directory will be uploaded to the " +
-      "same /1/HOME_DIR_ID directory on the server."
+      "same '/1/HOME_DIR_ID' directory on the server."
     }</p>
+    <p>
+      Now, in order to see your new app rendered, type in this
+      HOME_DIR_ID that the uploader program shows in the following input field.
+      This will then provide some useful links to your uploaded files, and to
+      the new app itself.
+    </p>
+    <p>
+      <div className="text-frame">
+        <VariableAppLinks key="var-app-links" />
+      </div>
+    </p>
+    <p>
+      If you follow the first link in this list, after making sure that you
+      have typed in the correct HOME_DIR_ID, you will be lead to a file browser
+      app where you can browse the files that you just uploaded.
+    </p>
+    <p>
+      And to see your new "Hello, World!" app, do the the following.
+    </p>
+    <ol>
+      <li>
+        Follow the second link above,
+        namely the one that says "app entity definition" (after you have
+        inserted the correct HOME_DIR_ID).
+      </li>
+      <li>
+        At the top of the new page that this leads you to, there is button
+        which says "Submit and go to page." Make sure that you are logged in,
+        and then click this button.
+      </li>
+      <li>
+        You should then be redirected to another page which contains some
+        information about your new app. (You can edit this information later.)
+        And at the top of this page, you should see a big link that says
+        "View component." Click this link in order to go a page where you can
+        see you new app rendered.
+      </li>
+    </ol>
+    <p>
+      The first time you view your new app, however, it will likely be blurred
+      out, and a warning message will appear at the top. This message warns you
+      about not falling for phishing attempts when viewing untrusted apps, and
+      is displayed whenever the user community has not yet reviewed your app
+      and declared it as trusted.
+    </p>
+    <p>
+      However, since you can obviously trust your own app yourself, feel free
+      to just skip this message right away, and even check the "Do not warn
+      against this component again" option.
+    </p>
+    <p>
+      You can now see the uploaded ...
+    </p>
     {/* <p>{
       "By the way, the initial \"1\" in the paths shown above is the ID of " +
       "up-web.org (which might in the future by just one node in a " +
@@ -402,14 +460,14 @@ const page = <div className="text-page">
       "Lastly, there is also a 'GITHUB_REPO_URL' constant, which you " +
       "ought to specify at some point if you want your share your app with " +
       "others. (It is strongly recommended to use a public GitHub " +
-      "repository for your app in that case.)"
+      "repository for your app.)"
       // "And there is also a 'NO_MARGINS' constant, which specifies " +
       // "that your app ought to define its own margins on the webpage where it " +
       // "is displayed."
     }</p>
   </section>
 
-  <section>
+  {/* <section>
     <h2>{"Questions and answers"}</h2>
     <p>{[
       "You now know how to upload and edit UP apps. The following couple " +
@@ -433,5 +491,5 @@ const page = <div className="text-page">
       "the system and the project in general, please don't hesitate to write " +
       "an e-mail to mads@up-web.org."
     ]}</p>
-  </section>
+  </section> */}
 </div>;

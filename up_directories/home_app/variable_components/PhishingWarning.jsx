@@ -12,12 +12,12 @@ export function render() {
   return <div className="phishing-warning">
     <div className="warning">
       <p>{
-        "This user-made component has not yet been evaluated as a trusted " +
-        "by the user community, or is still under development."
+        "This user-made component has not yet been reviewed and deemed to " +
+        "be trusted by the user community."
       }</p>
       <p>{
-        "UP-Web.org therefore does not guarantee that it does not contain " +
-        "phishing attempts, or other mischievous content."
+        "UP-Web.org can therefore not guarantee that it does not contain any " +
+        "phishing attempts, or any other kind of mischievous content."
       }</p>
       <p>{
         "No not give up any sensitive " +
@@ -33,6 +33,7 @@ export function render() {
         <Label key="l-rem" forKey={cbRemIDKey}>{
         "Do not warn against this component again"
         }</Label>
+        {" "}
         <InputCheckbox key="cb-rem" idKey={cbRemIDKey} />
       </div>
       <button onClick={() => this.do("dismissWarning")}>{"Accept"}</button>

@@ -250,7 +250,7 @@ they can also choose precisely what data should and should not be
 collected about them.
 
 
-#### 7. Enjoy a greater variety of possibilities
+<!-- #### 7. Enjoy a greater variety of possibilities
 
 Last but not least, since the UP can draw on its entire user base for
 coming up with new creative solutions and features, for the apps and
@@ -266,7 +266,7 @@ that are on par with contemporary apps.
 
 And from there, the UP Web can only continue to evolve,
 drawing on the combined creativity of all users, who can continue to come
-up with new ideas for useful apps and features.
+up with new ideas for useful apps and features. -->
 
 
 

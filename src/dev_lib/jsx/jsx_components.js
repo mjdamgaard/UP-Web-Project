@@ -386,7 +386,7 @@ class JSXInstance {
   ) {
     if (!childInstanceNodes) {
       childInstanceNodes = [...this.childInstances.values()].map(
-        inst => inst.donNode
+        inst => inst.domNode
       );
     }
     let newDOMNode;
@@ -416,7 +416,7 @@ class JSXInstance {
       if (!(childArr instanceof Array)) {
         childArr = [childArr];
       }
-      let canReuse = curNode === this.domNode && curNode?.tagName === "DIV" &&
+      let canReuse = curNode?.tagName === "DIV" &&
         !childInstanceNodes.includes(curNode);
       newDOMNode = canReuse ? clearAttributes(curNode) :
         document.createElement("div");
@@ -473,8 +473,7 @@ class JSXInstance {
     // attributes and/or append some content to it.
     else {
       let tagName = jsxElement.tagName;
-      let canReuse = curNode === this.domNode &&
-        curNode?.tagName === tagName.toUpperCase() &&
+      let canReuse = curNode?.tagName === tagName.toUpperCase() &&
         !childInstanceNodes.includes(curNode);
       newDOMNode = canReuse ? clearAttributes(curNode) :
         document.createElement(tagName);
@@ -677,7 +676,7 @@ class JSXInstance {
   ) {
     if (!childInstanceNodes) {
       childInstanceNodes = [...this.childInstances.values()].map(
-        inst => inst.donNode
+        inst => inst.domNode
       );
     }
     let curChildArr = [...domNode.childNodes];

@@ -306,7 +306,11 @@ const indexPage = <div className="text-page">
       collected about them.
     </p>
 
-    <h4>7. Enjoy a greater variety of possibilities</h4>
+    {/*
+      I'm not sure that this section adds enough value, strangely enough, even
+      though it is indeed kinda the most important reason..:
+    */}
+    {/* <h4>7. Enjoy a greater variety of possibilities</h4>
     <p>
       Last but not least, since the UP can draw on its entire user base for
       coming up with new creative solutions and features, for the apps and
@@ -325,64 +329,89 @@ const indexPage = <div className="text-page">
       And from there, the UP Web can only continue to evolve,
       drawing on the combined creativity of all users, who can continue to come
       up with new ideas for useful apps and features.
-    </p>
+    </p> */}
   </section>
 
   <section>
-    <h2>{"How to get started"}</h2>
-    <p>{[
-      "If you want to get started on making your first user-programmed apps, " +
-      "go to the ",
-      <ILink key="link-tut-2" href="/tutorials" >
-        {"Tutorials"}
-      </ILink>,
-      " page."
-    ]}</p>
-    <p>{[
-      "And to see a list of the ongoing projects related to the UP Web, " +
-      "go see the ",
-      <ILink key="link-proj" href="/entPath/1/1/em1.js;get/projects" >
-        {"Projects"}
-      </ILink>,
-      " page."
-    ]}</p>
-    <p>{[
-      "You can also go to the ",
+    <h2>How to get started</h2>
+    <p>
+      If you want to get started on making your first user-programmed apps,
+      go see the
+      <ILink key="link-tut-2" href="/tutorials">
+        Tutorial pages
+      </ILink>.
+    </p>
+
+    <p>
+      And if looking for inspiration, or just wanting to see what app
+      components other users have made so far, you can go to the
       <ILink key="link-comp" href="/entPath/1/1/em1.js;get/components" >
-        {"Components"}
-      </ILink>,
-      " page to see some of the proof-of-concept app components that have " +
-      "been made so far. (After having clicked on an element in this list, " +
-      "you need to click 'View component' in order to see it rendered.)"
-    ]}</p>
-    <p>{[
-      "And if you want to have a look at the fundamental source code " +
-      "of the project, or perhaps want to help maintain and extend it at " +
-      "some point, this is currently found at ",
+        Components page
+      </ILink>.
+      (After having clicked on an element in this list,
+      you need to click 'View component' in order to see it rendered.)
+    </p>
+
+    {/* <p>
+      And to see a list of the ongoing projects related to the UP Web,
+      go see the
+      <ILink key="link-proj" href="/entPath/1/1/em1.js;get/projects">
+        Projects
+      </ILink>
+      page.
+    </p> */}
+    <p>
+      There is also a
+      <ILink key="link-proj" href="/entPath/1/1/em1.js;get/projects">
+        Projects page
+      </ILink>
+      where users can post and discuss ongoing projects relating to the
+      UP Web.
+      However, at this early stage of the website, we actually recommend
+      joining an UP Web forum on a more established SoMe website instead for
+      the time being,
+      at least while this Projects page is still under construction.
+      The currently available (official) forums are:
+    </p>
+    <ul>
+      <li><i>TODO: Insert a list of external forum links here.</i></li>
+      <li>...</li>
+    </ul>
+    <p>
+      By all means, please join one or more of these external forums if you
+      are at all interested in keeping yourself up-to-date with the evolution
+      of the UP Web project.
+      And if you ever have any questions as a learner of this framework,
+      or if you want to discuss or debate anything related to the UP Web at
+      all, these forums will also be a good way for you do so.
+    </p>
+
+    <p>
+      Once it becomes relevant for you, there is also a
+      <ILink key="link-contr" href="/entPath/1/1/em1.js;get/contributions">
+        Contributions page
+      </ILink>
+      where you can log your contributions to the project.
+      Note that contributions do not need to be related to source code
+      only. They can also be things such as spreading awareness of the
+      project, etc.
+    </p>
+
+    <p>
+      And if you want to have a look at the fundamental source code
+      of the project, or perhaps want to help maintain and extend it at
+      some point, this is currently found at
       <ELink key="link-github-repo"
         href="https://github.com/mjdamgaard/UP-Web-Project">
         {"github.com/mjdamgaard/UP-Web-Project"}
-      </ELink>,
-      "."
-    ]}</p>
-    <p>{[
-      "Once it becomes relevant for you, there is also a ",
-      <ILink key="link-contr" href="/entPath/1/1/em1.js;get/contributions" >
-        {"Contributions"}
-      </ILink>,
-      " page where you can log your contributions to the project. (Also " +
-      "feel free to contact up-web.org directly, if you want us to take " +
-      "note of a contribution of yours.) " +
-      "Note that contributions do not need to be related to source code " +
-      "only. They can also be things such as spreading awareness of the " +
-      "project, which will also be very much appreciated, indeed."
-    ]}</p>
-    <p>{
-      "But before you go anywhere, please note that this website is still " +
-      "only a " +
-      "prototype at this stage. So please excuse all the rough edges " +
-      "that you will find here and there."
-    }</p>
+      </ELink>.
+    </p>
+
+    <p>
+      But before you go anywhere, please note that this website is still
+      only a prototype at this stage. So please excuse all the rough edges
+      that you will find here and there.
+    </p>
   </section>
 
 </div>;

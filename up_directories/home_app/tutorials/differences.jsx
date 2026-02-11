@@ -380,12 +380,12 @@ const page = <div className="text-page">
         'obj = {...obj, b: "baz"};',
       ]}</code>
     </p>
-    <p>{
+    {/* <p>{
       "(By the way, whereas React recommends using the 'const' keyword as " +
       "much as possible, this framework recommends using the 'let' keyword " +
       "as much as possible, except at the module scope, and in particular " +
       "for exports.)"
-    }</p>
+    }</p> */}
     <p>{
       "However, if you do want to use a mutable object or array, you can " +
       "just use either the MutableObject() or the MutableArray() " +

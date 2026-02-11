@@ -7,19 +7,8 @@ from "../variable_components/ComponentEntityComponent.jsx";
 
 export function render() {
   let userID = this.subscribeToContext("userID");
-  // return pagePlaceholder;
   return getPage(userID);
 }
-
-const pagePlaceholder = <div className="text-page">
-  <h1>{"Server modules"}</h1>
-  <section>
-    <h2>{"..."}</h2>
-    <p>{
-      "This tutorial is soon underway..."
-    }</p>
-  </section>
-</div>;
 
 
 const getPage = (userID) => <div className="text-page">

@@ -3,6 +3,7 @@
 
 .phishing-warning {
   background-color: rgba(255, 238, 0, 0.411);
+  padding: 0.5em;
   border: 3px ridge rgb(45, 42, 0);
 }
 
