@@ -67,13 +67,17 @@ const page = <div className="text-page">
       // " (To simply download the repository as a ZIP folder, click on the " +
       // "green 'Code' button, then click 'Download ZIP.')"
     ]}</p>
-    <p>{
-      "Once you have downloaded (and unpacked) this directory to your " +
-      "computer, open this 'UPDirUpdater' directory in your terminal " +
-      "(or cd into it), then " +
-      "run the following command to install the Node.js program. " +
-      "(Do not include the initial '$'.)"
-    }</p>
+    <p>
+      Once you have downloaded (and unpacked) this directory to your
+      computer, open this 'UPDirUpdater' directory in your
+      terminal/command prompt, or
+      <ELink key="link-cd"
+        href="https://en.wikipedia.org/wiki/Cd_(command)" >
+        cd
+      </ELink>
+      into it, then run the following command to install the Node.js program.
+      (Do not include the initial '$'.)
+    </p>
     <p>
       <code className="command">{[
         '$ npm install',
@@ -83,7 +87,7 @@ const page = <div className="text-page">
   <section>
     <h2>{"Use an editor that supports JSX syntax"}</h2>
     <p>{
-      "While this is not a strict requirement, it is also strongly " +
+      "While it is not a strict requirement, it is also strongly " +
       "recommended that you use an editor/IDE that supports syntax " +
       "highlighting for JSX files, and especially if you want to proceed to " +
       "the next tutorials after this one."
@@ -102,18 +106,16 @@ const page = <div className="text-page">
       "You are now ready to upload and test your first UP app!"
     }</p>
     <p>{
-      "If you take look in the 'up_directories' folder inside the GitHub " +
-      "repository that you " +
-      "just downloaded, you will see that " +
+      "If you take look in the 'up_directories' folder inside the " +
+      "'UPDirUpdater' that you have " +
+      "just downloaded, you will see that it " +
       "contains a project folder called 'hello_world'. This folder contains " +
       "the source code of an \"Hello, World!\" example app, which we will " +
-      "now shown you how to upload to up-web.org."
+      "now show you how to upload to up-web.org."
     }</p>
     <p>{
       "Make sure that you once again have your the 'UPDirUpdater' directory " +
-      "open in a terminal."
-    }</p>
-    <p>{
+      "open in a terminal. " +
       "Then run the following command. (Again, do not include the initial '$'.)"
     }</p>
     <p>
@@ -174,21 +176,22 @@ const page = <div className="text-page">
     <p>{
       "This means that the 'up_directories/hello_world' directory and " +
       "its files are now uploaded to the virtual file system of the server, " +
-      "in a new home directory located at /1/HOME_DIR_ID on the server side."
+      "in a new home directory located at '/1/HOME_DIR_ID' on the server side."
     }</p>
     <p>{
       "The uploader program stores this HOME_DIR_ID in a file called " +
       "'.id.js', which is created inside of the targeted directory the " +
       "first time you upload it. That way, when you re-upload the same " +
       "directory at any time in the future, as long as you have not deleted " +
-      "or edited this .id.js file, the directory will be uploaded to the " +
+      "or edited this '.id.js' file, the directory will be uploaded to the " +
       "same '/1/HOME_DIR_ID' directory on the server."
     }</p>
     <p>
-      Now, in order to see your new app rendered, type in this
-      HOME_DIR_ID that the uploader program shows in the following input field.
-      This will then provide some useful links to your uploaded files, and to
-      the new app itself.
+      Now, in order to see your new app rendered, insert the given
+      HOME_DIR_ID that the uploader program shows you in the following input
+      field.
+      This will provide you with some useful links to your uploaded files, and
+      to the new app itself.
     </p>
     <p>
       <div className="text-frame">
@@ -212,7 +215,7 @@ const page = <div className="text-page">
       <li>
         At the top of the new page that this leads you to, there is button
         which says "Submit and go to page." Make sure that you are logged in,
-        and then click this button.
+        then click this button.
       </li>
       <li>
         You should then be redirected to another page which contains some
@@ -226,8 +229,8 @@ const page = <div className="text-page">
       The first time you view your new app, however, it will likely be blurred
       out, and a warning message will appear at the top. This message warns you
       about not falling for phishing attempts when viewing untrusted apps, and
-      is displayed whenever the user community has not yet reviewed your app
-      and declared it as trusted.
+      is displayed whenever the user community has not yet reviewed the given
+      app and declared it as trusted.
     </p>
     <p>
       However, since you can obviously trust your own app yourself, feel free
@@ -244,7 +247,7 @@ const page = <div className="text-page">
       </div>
     }</p>
     <p>
-      Now try to open up the file 'app1.jsx' file located at
+      Now try to open up the file called 'app1.jsx', located at
       UPDirUpdater/up_directories/hello_world/app1.jsx on your own computer,
       using your editor of choice. You will see that this file simply reads
     </p>
@@ -257,11 +260,12 @@ const page = <div className="text-page">
     </p>
     <p>
       This is the file that currently defines your app. (We will explain why
-      this is in a moment.) You can see that it defines a function which
-      returns a {"<h1>"} header HTML element that reads "Hello, World!". 
+      this is in a moment.) As you can see, this module file simply
+      defines a function called render(), which
+      returns a {"<h1>"} HTML element that reads "Hello, World!". 
     </p>
     <p>
-      Go ahead and try editing this file by replacing the word "World" with
+      Now go ahead and try to edit this file by replacing the word "World" with
       something else, perhaps your own name, or whatever you like.
     </p>
     <p>
@@ -276,8 +280,9 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>
-      Now go to the page of your app once again and refresh your page. You
-      should now immediately be able to see the changes that you have just
+      Now go to the page of your app once again (and refresh the page if
+      needed). You should now immediately be able to see the changes that you
+      have just
       made to your app:
     </p>
     <p>{
@@ -285,6 +290,9 @@ const page = <div className="text-page">
         <h1>Hello, <i>{"<Word of your choice>"}</i>!</h1>
       </div>
     }</p>
+    <p>
+      You have now uploaded and edited your first UP app!
+    </p>
   </section>
 
 
@@ -297,7 +305,7 @@ const page = <div className="text-page">
     </p>
     <p>{
       "On Ln. 15 of this file, you will see an exported object called " +
-      "'app', whose definition reads" 
+      "'app,' whose definition reads" 
     }</p>
     <p>
       <code className="jsx">{[
@@ -316,20 +324,18 @@ const page = <div className="text-page">
     </p>
     <p>
       This object contains all the metadata needed in order for the "home app"
-      of up-web.org (i.e. the app the this website uses as its root) to
-      render your app, as well as some additional useful metadata.
-      And in order to see one's app rendered, one needs to first submit this
-      object to a specific SMF, which will then make a record of it in the
-      database.
+      of up-web.org (i.e. the app that this website uses as its root) to
+      render your app. {/* , as well as some additional useful metadata. */}
+      And indeed, this was the very object that you submitted when you pressed
+      the "Submit and go to page" button in the three-step process listed
+      above, before you were able to see your app.
     </p>
-    {/* <p>{
-      "(The \"em\" in em.js is by the way short for \"entity module.\")" 
-    }</p> */}
     <p>
-      However, you do not need to worry about all this, because you have
-      already done exactly that, namely when you pressed that "Submit and go
-      to page" button as part three-step process listed above for getting to
-      your app page.
+      When you submit this object, the home app creates a new database entity
+      that contains a reference to this 'app' export. And when you go to the
+      page of that entity, i.e. the page that the "Submit and go to page"
+      button redirected you to, the home app will load the data contained in
+      this 'app' object in order to read the relevant metadata.
     </p>
     <p>
       Note, by the way, that clicking the same button again will not alter the
@@ -339,8 +345,9 @@ const page = <div className="text-page">
     </p>
     <p>
       Now, if you want to edit the metadata of your app, it is best not to
-      edit the object that you see above directly, but rather to edit the
-      values of the five constant declarations that you see above it:
+      edit the 'app' object itself directly, but rather to edit the
+      values of the five constants that you see just above it in the
+      'em.js' file:
     </p>
     <p>
       <code className="jsx">{[
@@ -355,10 +362,10 @@ const page = <div className="text-page">
       And here you might first of all note the particular 'COMPONENT_PATH'
       constant, which currently has the value of "./app1.jsx". As you might
       have guessed, this constant contains a relative path to the JSX module
-      that is the root component of the given app. 
+      that is assigned to be the root component of the given app. 
     </p>
     <p>
-      In fact, have a go at changing this path to say "./app2.jsx" instead,
+      In fact, have a go at changing this path to "./app2.jsx" instead,
       such that the line now reads
     </p>
     <p>
@@ -368,36 +375,33 @@ const page = <div className="text-page">
     </p>
     <p>
       Since the 'app2.jsx' currently also returns {"'<h1>Hello, World!</h1>'"}
-      from its render() function, as long as you haven't edited it yet, when
-      you re-upload your directory and refresh the app page once again, you
-      should now once again see the same "Hello, World!" text as you did
-      initially: 
+      from its render() function, you can see that if you try to re-upload
+      your directory once again, and refresh the app page, you
+      should now see the same "Hello, World!" text as you did initially: 
     </p>
+    <p>{
+      <div className="text-display">
+        <h1>{"Hello, World!"}</h1>
+      </div>
+    }</p>
     <p>
-      <code className="jsx">{[
-        'export function render() {\n',
-        '  return <h1>Hello, World!</h1>;\n',
-        '}',
-      ]}</code>
-    </p>
-    <p>
-      You now know how to specify which component module in your directory
-      should define the root of your app! (You will learn more about the
+      You now know how to specify the root component of your app!
+      (You will learn more about the
       syntax and the structure of these '.jsx' component modules in the
       <ILink key="link-tut-2" href="~/jsx-components" >
         next tutorial
       </ILink>.)
     </p>
     <p>
-      It is also worth having a brief look at the other four metadata
-      constants.
+      It is also worth briefly discussing the other four metadata
+      constants that you see above.
     </p>
     <p>
       First of all, we have the 'APP_NAME' constant, which defines the name of
-      your app. This name will often displayed when your app is referenced,
+      your app. This name will often be displayed when your app is referenced,
       e.g. if the app appears as part of a list of app components. And the
       app's name will furthermore also appear in the standard URL to the page
-      of you app, as you can see if you go to your app page and have a look at
+      of your app, as you can see if you go to your app page and have a look at
       the URL.   
     </p>
     <p>
@@ -413,24 +417,24 @@ const page = <div className="text-page">
       repository for your app.)
     </p>
     <p>
-      And finally, there is the 'NO_MARGINS' and the 'NO_HEADER' constant
+      And finally, there is the 'NO_MARGINS' and 'NO_HEADER' constants,
       which are meant to affect how your app is positioned on the webpage. 
       The 'NO_MARGINS' constant thus specifies, if true, that the app should
-      define its own margin. And the 'NO_HEADER' constant, once implemented,
-      will specify that the app should define its own header, while the header
-      of the home app should be hidden. However, this latter constant is not
-      implemented yet and will currently have no effect on how your app is
-      displayed.
+      define its own margins. And the 'NO_HEADER' constant, once implemented,
+      will specify that the app should define its own header, meaning that the
+      header of the home app will be hidden. (However, this latter constant
+      is not implemented yet and will currently have no effect on how your app
+      is displayed.)
     </p>
   </section>
 
   <section>
-    <h2>{"Questions and answers"}</h2>
+    <h2>Final remarks</h2>
     <p>{[
       "You now know how to upload and edit UP apps. The following couple " +
       "of tutorials will then teach you how to create more advanced " +
       "components, as well as how to " +
-      "style these components, and more. And once you finish ",
+      "style these components. And once you finish ",
       <ILink key="link-tut-4" href="~/useful-things-to-know">
         {"Tutorial 4"}
       </ILink>,
@@ -452,12 +456,13 @@ const page = <div className="text-page">
     <p>
       And if you have any questions at all, e.g. about specific bugs
       that you might encounter, or about
-      the system and the project in general, please don't hesitate to post
+      the system or the project in general, please don't hesitate to post
       your question to one of the forums listed at the bottom the
       <ILink key="link-home-page" href="/" >
         home page
-      </ILink>,
-      or alternatively e-mail up-web.org directly at mads@up-web.org.
+      </ILink>.
+      Or alternatively, you can also e-mail up-web.org directly at
+      mads@up-web.org.
     </p>
   </section>
 </div>;
@@ -468,4 +473,8 @@ const page = <div className="text-page">
     "By the way, the initial \"1\" in the paths shown above is the ID of " +
     "up-web.org (which might in the future by just one node in a " +
     "whole distributed and decentralized network of \"UP nodes\")."
+  }</p> */}
+
+  {/* <p>{
+    "(The \"em\" in em.js is by the way short for \"entity module.\")" 
   }</p> */}

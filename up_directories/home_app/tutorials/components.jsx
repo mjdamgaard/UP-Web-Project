@@ -18,14 +18,32 @@ export function render() {
 
 
 const page = <div className="text-page">
-  <h1>{"Introduction to the front-end JSX components"}</h1>
+  <h1>{"Front-end components"}</h1>
+  <section>
+    <h2>Prerequisites</h2>
+    <p>
+      I you want to follow along the steps of this tutorial, make sure that you
+      have first completed the
+      <ILink key="link-tut-1-1" href="~/getting-started">
+        previous tutorial
+      </ILink>,
+      and in particular that you have edited the 'em.js' file in the
+      'hello_world' directory such that the 'COMPONENT_PATH' constant now
+      points to the 'app2.jsx' file. 
+    </p>
+  </section>
   <section>
     <h2>{"A framework similar to React"}</h2>
     <p>{[
-      "The system used for building front-end components is inspired a lot " +
-      "by React. So if you already know React, it should be easy to learn " +
-      "this system as well. And if not, you might also still be able to " +
-      "follow these tutorials. But in that case, it is probably a good idea " +
+      "The system used for building front-end components is inspired by ",
+      <ELink key="link-wiki-react"
+        href="https://en.wikipedia.org/wiki/React_(software)"
+      >
+        {"React"}
+      </ELink>,
+      ". So if you already know React, it should be easy to learn " +
+      "this system as well. And if not, you might still be able to " +
+      "follow these tutorials, but in that case, it is probably a good idea " +
       "to browse through the ",
       <ELink key="link-w3-html"
         href="https://www.w3schools.com/html/default.asp"
@@ -46,14 +64,14 @@ const page = <div className="text-page">
       </ELink>,
       " tutorials at ",
       <ELink key="link-w3" href="https://www.w3schools.com">
-        {"www.w3schools.com"}
+        {"w3schools.com"}
       </ELink>,
-      " first."
+      " first, before you continue with this tutorial."
     ]}</p>
     <p>{[
       "To see how components work in this framework, let us first of all " +
       "take a look at the \"Hello, World!\" example from the ",
-      <ILink key="link-tut-1-1" href="~/getting-started">
+      <ILink key="link-tut-1-2" href="~/getting-started">
         {"Getting started"}
       </ILink>,
       " tutorial. Here the component you uploaded was " +
@@ -75,7 +93,7 @@ const page = <div className="text-page">
       </TextDisplay>
     }</p>
     <p>{
-      "Here we see that the rendered \"Hello, " +
+      "We can see here that the rendered \"Hello, " +
       "World!\" text is returned from an exported function called render(). " +
       "This is because, unlike React where components are generally defined " +
       "from only a single render function, components in this framework are " +
@@ -89,7 +107,7 @@ const page = <div className="text-page">
     }</p>
     <p>{[
       "In the app2.jsx file that was used in the last part of the ",
-      <ILink key="link-tut-1-2" href="~/getting-started">
+      <ILink key="link-tut-1-3" href="~/getting-started">
         {"Getting started"}
       </ILink>,
       " tutorial, there is an out-commented line at Ln. 2 " +

@@ -12,7 +12,7 @@ export function render() {
 
 
 const page = <div className="text-page">
-  <h1>{"Introduction on how to style components"}</h1>
+  <h1>{"How to style components"}</h1>
   <section>
     <h2>{"Defining the style sheets for the root component"}</h2>
     <p>{

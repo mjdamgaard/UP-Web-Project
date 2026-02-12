@@ -13,7 +13,7 @@ import {CAN_POST_FLAG} from "../../query/src/flags.js";
 // And in the meantime, a todo is also to expand the list below.
 
 const URL_VALID_CHARACTERS_REGEX =
-  /^https:\/(\/([.~a-zA-Z0-9_\-?=:#]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+)+\/?$/;
+  /^https:\/(\/([.~a-zA-Z0-9_\-?=:#()\[\]]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+)+\/?$/;
 
 const urlWhitelist = [
   /^https:\/\/(www\.)?up-web\.org($|\/)/,

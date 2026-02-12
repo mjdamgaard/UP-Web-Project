@@ -10,7 +10,7 @@ export function render() {
 
 
 const page = <div className="text-page">
-  <h1>{"Some useful things to know while using this framework"}</h1>
+  <h1>{"Other useful things to know about the framework"}</h1>
   <section>
     <h2>{"This framework uses its own JS interpreter"}</h2>
     <p>{
