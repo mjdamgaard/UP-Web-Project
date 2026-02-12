@@ -31,9 +31,6 @@ const page = <div className="text-page">
       'hello_world' directory such that the 'COMPONENT_PATH' constant now
       points to the 'app2.jsx' file. 
     </p>
-  </section>
-  <section>
-    <h2>{"A framework similar to React"}</h2>
     <p>{[
       "The system used for building front-end components is inspired by ",
       <ELink key="link-wiki-react"
@@ -68,6 +65,9 @@ const page = <div className="text-page">
       </ELink>,
       " first, before you continue with this tutorial."
     ]}</p>
+  </section>
+  <section>
+    <h2>{"A framework similar to React"}</h2>
     <p>{[
       "To see how components work in this framework, let us first of all " +
       "take a look at the \"Hello, World!\" example from the ",
@@ -85,7 +85,7 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "And these produced the result:"
+      "And these lines produced the following result."
     }</p>
     <p>{
       <TextDisplay key="_ex0" >
@@ -98,15 +98,15 @@ const page = <div className="text-page">
       "This is because, unlike React where components are generally defined " +
       "from only a single render function, components in this framework are " +
       "defined " +
-      "by whole modules. The render() function is just one of " +
-      "functions that define the component."
+      "by whole modules. The render() function is thus not the only " +
+      "function that can be used to define the given component."
     }</p>
     <p>{
       "But before we introduce the other possible exports of a component " +
       "module, let us see how importing a component works."
     }</p>
     <p>{[
-      "In the app2.jsx file that was used in the last part of the ",
+      "In the 'app2.jsx' file that was used in the last part of the ",
       <ILink key="link-tut-1-3" href="~/getting-started">
         {"Getting started"}
       </ILink>,
@@ -120,13 +120,13 @@ const page = <div className="text-page">
     </p>
     <p>{
       "Anyone familiar with JS modules will know that this has the effect of " +
-      "importing all exports in the file at \"./ExampleComponent1.jsx\" " +
+      "importing all exports in the file at './ExampleComponent1.jsx' " +
       "(relative to the importing module), and gather them all into a single " +
       "object, which is then assigned to a variable called " +
       "'ExampleComponent1.'"
     }</p>
     <p>{
-      "Try commenting in this line. (Your IDE or editor ought to have " +
+      "Try commenting in this line. (Your IDE/editor ought to have " +
       "shortcut for doing so. For instance, " +
       "in VS Code, the shortcut is Ctrl + '/'.) " +
       "And after having done this, comment out Ln. 13 as well, and comment " +
@@ -155,7 +155,7 @@ const page = <div className="text-page">
       "And if you go to the " +
       "ExampleComponent1.jsx module, you will indeed see that \"I am a child " +
       "component!\" is the returned text of the render() function " +
-      "of that module."
+      "in that module."
     }</p>
     <p>{
       "Now you know how to import components and use them inside " +
@@ -173,7 +173,7 @@ const page = <div className="text-page">
     <p>{
       "That is, unless you want to import components (or " +
       "functions, etc.) from another directory altogether, either another " +
-      "one of your own or one of another user."
+      "one of yours, or of another user."
     }</p>
     <p>{
       "In that case, you need " +
@@ -206,13 +206,13 @@ const page = <div className="text-page">
       "If you are already familiar with React, then " +
       "you can probably skip most of this section, except the last part " +
       "about the 'key' prop, as this particular property works slightly " +
-      "differently in this system when compared to React."
+      "differently in this framework when compared to React."
     }</p>
     <p>{
       "A component does not need to always return the same thing. The " +
-      "returned JSX element can also depend on the arguments on the render() " +
-      "function (as well as on the so-called state of the component " +
-      "instance, which we will introduce in the next section). The render() " +
+      "returned JSX element can also depend on the arguments of the render() " +
+      "function. " +
+      "The render() " +
       "function always takes a \"props\" object (short for \"properties\"), " +
       "where each \"prop\" (property) of this object is defined on the JSX " +
       "element that instantiates the component, using a syntax that is " +
@@ -220,8 +220,8 @@ const page = <div className="text-page">
     }</p>
     <p>{
       "For example, if you comment out the return statement at Ln. 15-18 " +
-      "again and comment in the next return statement after that (on Ln. " +
-      "20-36), and " +
+      "again and comment in the next return statement on Ln. " +
+      "20-36, and " +
       "also makes sure that the import statement of ExampleComponent2 is in-" +
       "commented, you will see an example of how to pass the props of " +
       "component instances. The render function should then return the " +
@@ -290,7 +290,7 @@ const page = <div className="text-page">
       "."
     ]}</p>
     <p>{
-      "Now, if you re-upload the directory, you will then see the following."
+      "If you now re-upload the directory, you will see the following."
     }</p>
     <p>{
       <TextDisplay key="_ex2" >
@@ -317,9 +317,9 @@ const page = <div className="text-page">
       "writing 'isItalic={true}'."
     }</p>
     <p>{
-      "Lastly, note that each of these component instance elements has an " +
-      "unique 'key' prop. This a requirement in this system, meaning that " +
-      "of one omit the key prop, or use a duplicate key prop shared by " +
+      "Lastly, note that each of these component instance elements is given " +
+      "a unique 'key' prop. This a requirement in this system, meaning that " +
+      "if one omits the key prop, or use a duplicate key prop shared by " +
       "another " +
       "child instance of the same parent component, the program will " +
       "throw an error."
@@ -333,7 +333,7 @@ const page = <div className="text-page">
     <p>{
       "Having to always choose a unique key for each single child instance " +
       "of course adds a bit of extra work when compared to React. But on the " +
-      "plus side, this also that you can move each individual child " +
+      "plus side, this also means that you can move each individual child " +
       "instance freely around in the returned JSX element of the parent " +
       "component, without losing its state. " +
       "(This is unlike React, where if you e.g. wrap a child instance in, " +
@@ -346,9 +346,9 @@ const page = <div className="text-page">
   <section>
     <h2>{"States"}</h2>
     <p>{
-      "As mentioned above, the returned JSX element of each component " +
-      "instance is not determined solely by the props of the instance, but " +
-      "also by its \"state.\" This state can be updated during the lifespan " +
+      "The returned JSX element of each component instance is not " +
+      "determined solely by the props of the instance, but can also depend " +
+      "on its \"state.\" This state can be updated during the lifespan " +
       "of the instance via a setState() function, which works similarly to " +
       "the setState() function of React. But this also where the " +
       "similarities with React stop."
@@ -363,8 +363,8 @@ const page = <div className="text-page">
     <p>{
       "To see an example of this, you can comment out the previous return " +
       "statement in app2.jsx, and comment in the next one on Ln. 39-45. " +
-      "And also make sure that ExampleComponent3 is imported at the " +
-      "top of the module as well. The render() function should now return " +
+      "(Also make sure that ExampleComponent3 is imported at the " +
+      "top of the module as well.) The render() function should now return " +
       "the following."
     }</p>
     <p>
@@ -392,8 +392,8 @@ const page = <div className="text-page">
       "below the button."
     }</p>
     <p>{
-      "To understand how this happens, we can inspect ExampleComponent3.jsx, " +
-      "which reads"
+      "To understand how this happens, we can inspect the " +
+      "'ExampleComponent3.jsx' module, which reads"
     }</p>
     <p>
       <code className="jsx">{[
@@ -490,7 +490,7 @@ const page = <div className="text-page">
       "This thus also makes initialize() an ideal place for fetching " +
       "whatever data the component needs from the database. " +
       "And when the data-fetching promise resolves, the state of the " +
-      "component can then be updated with the given data."
+      "component can be updated with the given data."
     }</p>
   </section>
 
@@ -525,7 +525,8 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "If you go to ExampleComponent4.jsx, you will see an example of this, " +
+      "If you go to the 'ExampleComponent4.jsx' module, you will see an " +
+      "example of this, " +
       "and here you will also see that the button element in the render() " +
       "function has been changed from "
     }</p>
@@ -546,7 +547,8 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "when comparing to ExampleComponent3.jsx. And this yields the exact " +
+      "when comparing to the 'ExampleComponent3.jsx' module. " +
+      "And this yields the exact " +
       "same outcome as before, namely since this.do(\"increaseCounter\") has " +
       "the effect of calling the function of the same name from the " +
       "'actions' object."
@@ -595,13 +597,13 @@ const page = <div className="text-page">
       "object as for render() and initialize(), allowing us to call " +
       "function this.setState(), or even this.do(), from within the actions " +
       "themselves, without having to pass the 'this' object as a separate " +
-      "argument to the action function. And this is indeed one of the " +
+      "argument to the action functions. And this is indeed one of the " +
       "benefits of using actions."
     }</p>
     <p>{
       "However, the greatest benefit of using actions is that " +
       "they can at any time be elevated to become part of the \"methods\" " +
-      "and/or \"events\" of the component, which is what we will introduce " +
+      "and/or the \"events\" of the component, which is what we will introduce " +
       "next."
     }</p>
 
@@ -617,7 +619,8 @@ const page = <div className="text-page">
     }</p>
     <p>{
       "To see how this works, we can let our render() function in the " +
-      "app2.jsx module return the following,"
+      "'app2.jsx' module return the following, which is once again included " +
+      "as an out-commented snippet that you can easily comment in."
     }</p>
     <p>
       <code className="jsx">{[
@@ -647,7 +650,7 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "where ExampleComponent5 is defined by the following module,"
+      "Here, ExampleComponent5 is defined by the following module."
     }</p>
     <p>
       <code className="jsx">{[
@@ -677,11 +680,11 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "Note in particular the 'methods' export at the bottom of " +
-      "ExampleComponent5's module, which declares the \"increaseCounter\"" +
+      "Note in particular the 'methods' export at the bottom of the " +
+      "'ExampleComponent5.jsx' module, which declares the \"increaseCounter\"" +
       "as part of the component's methods. And also note how in the returned " +
-      "JSX element of the parent, we use a this.call() function to call the " +
-      "methods of the two children."
+      "JSX element of the parent uses a certain 'this.call()' function to " +
+      "call the methods of the two children."
     }</p>
     <p>{
       "As can be seen in this example, the first argument of this.call() " +
@@ -707,15 +710,15 @@ const page = <div className="text-page">
       "You are now ready to use methods!"
     }</p>
     <p>{
-      "As a last thing before we move on to the methods, however, it is " +
+      "As a last thing before we move on to the \"events,\" however, it is " +
       "also worth " +
       "mentioning that methods can be aliased when they are declared in the " +
       "'methods' export. This is done by letting the given entry of the " +
-      "'methods' array be an [\"<method key>\", \"<action key>\"] array, " +
-      "rather than just being the \"<action key>\" string itself. For " +
+      "'methods' array be a [\"<method key>\", \"<action key>\"] array, " +
+      "rather than just the \"<action key>\" string. For " +
       "example, if we had wanted to alias the \"increaseCounter\" action as " +
-      "by just \"increase\" instead in the example above, we should " +
-      "have just exported"
+      "just, say, \"increase\" in the example above, we should " +
+      "have exported the following 'methods' array instead."
     }</p>
     <p>
       <code className="jsx">{[
@@ -724,9 +727,6 @@ const page = <div className="text-page">
         '];\n',
       ]}</code>
     </p>
-    <p>{
-      "instead from the component module."
-    }</p>
 
 
     <h3>{"Events"}</h3>
@@ -740,50 +740,28 @@ const page = <div className="text-page">
       "Events are declared by exporting an array called 'events' from the " +
       "component module, namely which includes the keys of the actions that " +
       "should be elevated to become events. And in the same way that actions " +
-      "are called via this.do() and methods are called vie this.call(), the " +
+      "are called via this.do(), and methods are called via this.call(), the " +
       "events are also triggered by their own function on the 'this' " +
-      "keyword, namely by this.trigger()."
+      "keyword, namely by 'this.trigger().'"
     }</p>
     <p>{
-      "The this.trigger() function takes the event key as the first " +
-      "as well as an optional second argument consisting of the input to the " +
-      "event function. It then calls up to each of its ancestors, " +
+      "The this.trigger() function takes the event key as its first " +
+      "argument, as well as an optional second argument which becomes the " +
+      "input " +
+      "to the event function. It then calls up to each of its ancestors, " +
       "starting from the parent and going all the way up to the app root, " +
       "until the first ancestor instance is found with an event of a " +
-      "matching key. If a match is found this way, the event action is " +
-      "then called (synchronously), and the return value of the given action " +
-      "function is returned by this.trigger(). (Both this.do() and " +
-      "this.call() also forwards the relevant return value, by the way.) " +
+      "matching key. If a match is found this way, the event action of the " +
+      "given ancestor instance is called. " +
+      // "called (synchronously), and the return value of the given action " +
+      // "function is returned by this.trigger(). (Both this.do() and " +
+      // "this.call() also forwards the relevant return value, by the way.) " +
       "And if no event of a matching key is found among the ancestors, " +
       "this.trigger() simply returns undefined, and nothing else happens."
     }</p>
     <p>{
-      "Note that event keys can also be aliased in the exact same way as " +
-      "method keys, namely by letting the relevant entry of the 'events' " +
-      "array be of the form [\"<event key>\", \"<action key>\"]. And this " +
-      "especially relevant for events, as one might often want to name the " +
-      "event keys after what happens, such as e.g. \"link-was-clicked\", or " +
-      "whatever is the case, and then let the ancestor be responsible for " +
-      "determining how that event should be handled."
-    }</p>
-    <p>{[
-      "And if you fear that your triggered event might unintentionally " +
-      "collide with the events of other ancestor components before it " +
-      "reaches its intended target, note that event keys, as well as action " +
-      "keys and method keys, can also be ",
-      <ELink key="link-sym"
-        href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol">
-        {"Symbols"}
-      </ELink>,
-      " instead. This means that you can let both the ancestor and " +
-      "descendant component in question import a Symbol from the same " +
-      "auxiliary module, and use that Symbol as the event key in order to " +
-      "be sure to avoid unintended collisions in intermediary component " +
-      "instances."
-    ]}</p>
-    <p>{
-      "Now, to see an example of using an event, we can let the render() " +
-      "function in app2.jsx return the following JSX element."
+      "To see an example of using an event, we can let the render() " +
+      "function in the 'app2.jsx' module return the following JSX element."
     }</p>
     <p>
       <code className="jsx">{[
@@ -803,10 +781,11 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "You can also once again try this out by just commenting in the right " +
-      "lines in app2.jsx. And in this case, you should also comment in the " +
+      "You can also once again try this out by commenting in the right " +
+      "lines in the 'app2.jsx' file. " +
+      "And in this case, you should also comment in the " +
       "'actions' and 'events' exports below the render() function, such that " +
-      "the app2.jsx component module also exports the following object."
+      "the 'app2.jsx' component module now also exports the following objects."
     }</p>
     <p>
       <code className="jsx">{[
@@ -824,7 +803,7 @@ const page = <div className="text-page">
     </p>
     <p>{
       "And for the module of ExampleComponent6, we let this simply consist " +
-      "solely of the following render() function."
+      "of the following render() function."
     }</p>
     <p>
       <code className="jsx">{[
@@ -850,6 +829,30 @@ const page = <div className="text-page">
     <p>{
       "And now you know how to use events!"
     }</p>
+    <p>{
+      "Note that event keys can also be aliased in the exact same way as " +
+      "method keys, namely by letting the relevant entry of the 'events' " +
+      "array be of the form [\"<event key>\", \"<action key>\"]. And this " +
+      "especially relevant for events, as one might often want to name the " +
+      "event keys after what happens, such as e.g. \"link-was-clicked\", or " +
+      "whatever is the case, and then let the ancestor be responsible for " +
+      "determining how that event should be handled."
+    }</p>
+    <p>{[
+      "And if you ever fear that a triggered event might unintentionally " +
+      "collide with an event of another ancestor component instance, " +
+      "before it " +
+      "reaches its intended target, note that event keys, as well as action " +
+      "keys and method keys, can also be ",
+      <ELink key="link-sym"
+        href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol">
+        {"Symbols"}
+      </ELink>,
+      " instead of strings. This means that you can let both the ancestor " +
+      "and descendant component in question import a Symbol from the same " +
+      "auxiliary module, and use that Symbol as the event key in order to " +
+      "be sure to avoid unintended collisions."
+    ]}</p>
   </section>
 
   <section>

@@ -70,6 +70,16 @@ const getPage = (userID) => <div className="text-page">
       app to make the messages private.)
     </p>
     <p>
+      Note that you need to change the second argument of the node program when
+      you launch the uploader program in order to upload the 'message_app'
+      directory instead of the 'hello_world' directory:
+    </p>
+    <p>
+      <code className="command">{[
+        '$ node ./update_dir.js ./up_directories/message_app up-web.org',
+      ]}</code>
+    </p>
+    <p>
       When this message app is uploaded, it should look as follows.
     </p>
     <p>

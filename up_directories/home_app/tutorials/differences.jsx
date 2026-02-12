@@ -59,7 +59,7 @@ const page = <div className="text-page">
         {"map()"}
       </ELink>,
       " method is not defined. And instead you need to import an equivalent " +
-      "function to from one of the so-called 'developer libraries' (as " +
+      "function from one of the so-called 'developer libraries' (as " +
       "opposed to user-made libraries). In particular for the map() method, " +
       "you would write the following instead."
     ]}</p>
@@ -182,8 +182,8 @@ const page = <div className="text-page">
         '\n',
         '/* Anywhere inside the module */\n',
         'let obj = {a: "foo", b: "bar"};\n',
-        'let entries = entries(obj);\n',
-        'console.log(entries); // Prints: [["a", "foo"], ["b", "bar"]].',
+        'let entriesArr = entries(obj);\n',
+        'console.log(entriesArr); // Prints: [["a", "foo"], ["b", "bar"]].',
       ]}</code>
     </p>
   </section>
@@ -205,7 +205,7 @@ const page = <div className="text-page">
       "are declared in the global scope.)"
     ]}</p>
     <p>{[
-      "These global functions include the following ones,"
+      "These global functions include the following ones, among others."
     ]}</p>
     <p>
       <code className="jsx">{[
@@ -223,10 +223,11 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{[
-      "among others. Almost all of these functions/constructors are known " +
+      "Almost all of these functions/constructors are known " +
       "from regular JS, except the abs() function at the end of this list, " +
-      "which is a syntactically implemented function that simply returns the " +
-      "absolute version of the input path."
+      "which is a syntactically implemented function that takes a path as " +
+      "argument, potentially a relative one (from the current module), and " +
+      "returns the absolute version of that path."
     ]}</p>
   </section>
 
@@ -241,7 +242,7 @@ const page = <div className="text-page">
       "These " +
       "are often implementations of particular HTML elements, such as the " +
       "<input> element, the <textarea> element, or the <a> element. " +
-      "These developer components are generally given upper camel-case " +
+      "These developer components are generally given upper-camel-case " +
       "module names, also followed by \".jsx\" at the end. " +
       "For example, if you want to import the <textarea> developer component," +
       " you can do it with the following import statement."
@@ -288,18 +289,19 @@ const page = <div className="text-page">
       "As you might have guessed if you are already familiar with the " +
       "<input> element, " +
       "these are all named after the 'type' attribute that they " +
-      "implement. For instance, the InputText component implements a " +
+      "implement. For instance, the InputText component implements an " +
       "<input type=\"text\"> element in particular. And InputCheckbox " +
       "implement an <input type=\"checkbox\"> element, etc." 
     }</p>
     <p>{
-      "The props that these components depend on also varies from type, " +
-      "such that InputText for instance might receive a 'placeholder' or a " +
+      "The props that these components depend on also varies depending on " +
+      "the type. " +
+      "For instance, InputText might receive a 'placeholder' or a " +
       "'children' prop, whereas InputCheckbox might instead receive a " +
       "'checked' prop." 
     }</p>
     <p>{
-      "And as the last developer components that we will mention here, we " +
+      "And as the last developer components that we will introduce here, we " +
       "also have two that each implements a different variant of the <a> " +
       "element:" 
     }</p>
@@ -310,13 +312,13 @@ const page = <div className="text-page">
       ]}</code>
     </p>
     <p>{
-      "Here, the first one of these, ILink, is strictly meant for internal " +
-      "links, i.e. to pages " +
+      "The first one of these, the 'ILink' component, is strictly meant " +
+      "for internal links, i.e. to pages " +
       "of the same website as the current one, whereas ELink is meant for " +
       "general links, including external ones. " +
-      "The ILink component then has the added feature " +
-      "that is does not cause the whole page to reload when clicked. " +
-      "Instead it simply updates the 'url' prop of the outer app " +
+      "One useful feature of the ILink component is " +
+      "that it does not cause the whole page to reload when clicked, but " +
+      "instead simply updates the 'url' prop of the outer app " +
       "component, causing it to rerender."
     }</p>
     <p>{
@@ -348,8 +350,8 @@ const page = <div className="text-page">
       "All objects are immutable by default in this version of JS, " +
       "including arrays. This is also due to the fact that in this UP " +
       "system, you generally cannot count on all other users, as some might " +
-      "in principle have malicious, or just adversarial, " +
-      "intentions. And this is why you must never export a mutable " +
+      "in principle have malicious intentions. " +
+      "And this is why you must never export a mutable " +
       "object from a module, nor any object that holds a reference to a " +
       "mutable object. For if you do, other users might import and corrupt " +
       "the data held in that object, causing failures and errors elsewhere."
@@ -467,12 +469,13 @@ const page = <div className="text-page">
       "component instance, along with the file path and location of it."
     }</p>
     <p>{
-      "Finally, you will see a readout of all the variables that " +
-      "was present in the scope where the error occurred."
+      "And at the end of this combined error message, you will see a " +
+      "readout of all the variables that " +
+      "were present in the scope where the error occurred."
     }</p>
     <p>{
       "That is, unless the error was thrown server-side, in which case all " +
-      "this information will be effectively doubled, as you will then " +
+      "this information will effectively be doubled, as you will then " +
       "first see " +
       "the trace for the server-side error, followed by " +
       "the client-side trace, starting from the function that sent the " +
@@ -480,7 +483,7 @@ const page = <div className="text-page">
     }</p>
     <p>{
       "Hopefully this will be enough for you to quickly be able locate the " +
-      "source of a given bug most of the time! " +
+      "source of a given bug most of the time. " +
       "And if you ever need additional information beyond this in order " +
       "to locate or investigate a given bug, you can insert temporary " +
       "console.log() and console.trace() calls into your code."
