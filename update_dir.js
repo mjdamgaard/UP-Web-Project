@@ -25,7 +25,9 @@ if (domain !== "localhost" && domain !== "up-web.org") throw (
 );
 if (dirPath[0] === ".") {
   dirPath = path.normalize(path.dirname(curPath) + "/" + dirPath);
-  if (dirPath.at(-1) === "/") dirPath = dirPath.slice(0, -1);
+}
+if (dirPath.at(-1) === "/" || dirPath.at(-1) === "\\") {
+  dirPath = dirPath.slice(0, -1);
 }
 directoryUpdater.setDomain(domain);
 

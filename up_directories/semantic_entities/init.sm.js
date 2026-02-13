@@ -266,12 +266,12 @@ export function postInitialScores01() {
           abs("./em2.js;get/mastermindGame"),
           firstModID, 4
         ),
-        postUserRelationalScoreAndUpdateUserGroups(
-          abs("./em1.js;get/components"),
-          abs("./em1.js;get/members"),
-          abs("./em2.js;get/messageAppExample"),
-          firstModID, 4
-        ),
+        // postUserRelationalScoreAndUpdateUserGroups(
+        //   abs("./em1.js;get/components"),
+        //   abs("./em1.js;get/members"),
+        //   abs("./em2.js;get/messageAppExample"),
+        //   firstModID, 4
+        // ),
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/classes"),
           abs("./em1.js;get/entityPage"),

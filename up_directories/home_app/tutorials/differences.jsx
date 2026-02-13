@@ -498,25 +498,24 @@ const page = <div className="text-page">
 
   <section>
     <h2>{"Additional details about the components"}</h2>
-    <h3>{"The 'ref' prop and mutable props and states"}</h3>
+    <h3>{"The 'ref' prop and mutable props/states"}</h3>
     <p>{
-      "Some additional things that are worth noting for the JSX components " +
-      "are first of all that apart from the 'key' and the 'children' props, " +
-      "there is also a third prop treated in a special way, which is the " +
-      "'ref' prop."
+      "There is one more prop with a special implementation for the JSX " +
+      "components, apart from the 'key' and the 'children' props, " +
+      "and that is the 'ref' prop."
     }</p>
     <p>{
-      "The 'ref' prop is only set once when the component instance is " +
-      "created, and if the parent instance ever tries to change this prop " +
-      "afterwards, nothing will happen. The 'ref' prop will thus never be " +
-      "checked when the instance checks if a rerender is necessary."
+      "The 'ref' prop is first of all constant, meaning that if the parent " +
+      "instance ever tries to change it, nothing will happen. " +
+      "And the 'ref' prop will thus always be skipped whenever " +
+      "the instance checks to see if a rerender is necessary."
     }</p>
-    <p>{
-      "This is opposed to the other props, which will generally be " +
-      "deep-compared to their former values whenever you call " +
-      "this.setState(). And if the deep comparison succeeds, the instance " +
-      "will not rerender."
-    }</p>
+    <p>
+      This is opposed to the other props, which will in fact generally be
+      <i>deep-compared</i> to their former values whenever the instance
+      checks to see if it should rerender. And only if this deep comparison
+      succeeds will the instance skip the rerender.
+    </p>
     <p>{
       "Additionally, all mutable objects that are part of, or referenced " +
       "by, the props, will also not be compared when checking if the " +
@@ -525,31 +524,33 @@ const page = <div className="text-page">
     }</p>
     <p>{
       "An instance also deep-compares its current state to its former one " +
-      "before rerendering after a call to this.setState(). And here " +
+      "when checking if a rerender is necessary. And for this check, " +
       "state.ref is " +
       "also ignored, as well as the contents of any mutable object within " +
       "the state."
     }</p>
     <p>{
       "So if you ever mutate a mutable part of the state manually, or " +
-      "a mutable part of the props, and you " +
-      "want to force a rerender, you can call this.rerender() to do this."
+      "a mutable part of the props, you will need to force a rerender " +
+      "manually. This can most easily be achieved by calling " +
+      "this.rerender(), which is a function used for this exact purpose."
     }</p>
+
     <h3>{"Using the 'function' keyword rather than arrow functions"}</h3>
     <p>{
       "If you are well familiar with JS, it will probably come as no " +
-      "surprise that you should never define a component's functions such " +
-      "as render() or initialize(), etc., using arrow functions. This is " +
+      "surprise that you should never define a component's functions, such " +
+      "as render() or initialize(), using arrow functions. This is " +
       "because " +
-      "one if the main attributes of arrow functions is that they are " +
+      "one of the main attributes of arrow functions is that they are " +
       "transparent to the 'this' keyword. However, functions like render() " +
       "and initialize() need to have 'this' bound to an object that " +
       "represents the live component instance in order to work as intended."
     }</p>
     <p>{
       "Therefore you should always use the 'function' keyword when defining " +
-      "these functions. And the same is true for all the functions of the " +
-      "'actions' object."
+      "these functions. And the same is true for all the actions of the " +
+      "component."
     }</p>
     <h3>{"Components can only render single HTML elements"}</h3>
     <p>{
@@ -566,18 +567,18 @@ const page = <div className="text-page">
   <section>
     <h2>{"Final remarks"}</h2>
     <p>{
-      "These points were all of the most pressing ones that you ought to " +
-      "know before you really start developing your first UP apps."
+      "These were all of the most pressing points that you ought to " +
+      "know before you start developing your first UP apps."
     }</p>
     <p>{
       "There are also several other points that are worth mentioning at " +
-      "some point, but this can wait to a later tutorial."
+      "some point, but these can wait to a later tutorial."
     }</p>
     <p>{
       "You should now have what you need to start building your first " +
-      "client-side UP apps!"
+      "client-side UP apps. Good luck!"
     }</p>
-    <p>{[
+    {/* <p>{[
       "And as was said in ",
       <ILink key="link-tut-1" href="~/getting-started">
         {"Tutorial 1"}
@@ -585,7 +586,7 @@ const page = <div className="text-page">
       ", if you run into any problems, or have any questions at all, please " +
       "feel free to contact up-web.org, e.g. by writing an " +
       "e-mail to mads@up-web.org. We are happy to help you."
-    ]}</p>
+    ]}</p> */}
   </section>
 
 

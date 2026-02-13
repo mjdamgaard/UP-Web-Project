@@ -374,16 +374,15 @@ const indexPage = <div className="text-page">
       The currently available (official) forums are:
     </p>
     <ul>
-      <li><i>TODO: Insert a list of external forum links here.</i></li>
-      <li>...</li>
+      <li><i>A list of external forum links will be inserted here soon.</i></li>
     </ul>
     <p>
       By all means, please join one or more of these external forums if you
       are at all interested in keeping yourself up-to-date with the evolution
       of the UP Web project.
-      And if you ever have any questions as a learner of this framework,
-      or if you want to discuss or debate anything related to the UP Web at
-      all, these forums will also be a good way for you do so.
+      And if you have any questions at all as a learner of this framework,
+      or if you want to discuss anything related to the UP Web,
+      these forums will also be a great way for you do so.
     </p>
 
     <p>

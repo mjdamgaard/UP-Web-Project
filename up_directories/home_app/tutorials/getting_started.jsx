@@ -127,6 +127,11 @@ const page = <div className="text-page">
       "This will prompt you for the username and password for your user " +
       "account."
     }</p>
+    <p>
+      (If using Windows, it seems that you have to manually type in both the
+      username and the password here, as copy-pasting them apparently does not
+      seem to work for the time being.)
+    </p>
     <p>{
       "Then once you are logged in, you simply need to type in 'u' and hit " +
       "enter to upload the contents of the 'up_directories/hello_world' " +
