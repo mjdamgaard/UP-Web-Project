@@ -53,7 +53,7 @@ export function renderHelper(thisVal, {
   // If the tailURL is empty, replace it with "up" ('up' for 'user-programmed'),
   // taking the user to the user-defined home page.
   if (!tailURL) {
-    thisVal.trigger("replaceURL", "~/up");
+    thisVal.trigger("replaceURL", "~/i");
     return [
       "fetching",
       <main className="app-main">
@@ -62,13 +62,13 @@ export function renderHelper(thisVal, {
     ];
   }
 
-  // If the tailURL is of the form "/up[/...]", go to a page with the current
+  // If the tailURL is of the form "/i[/...]", go to a page with the current
   // top-rated user-programmed page component for redirecting the the user
   // further to page/app that fits the subsequent part of the url.
   let indOfSecondSlash = indexOf(tailURL, "/", 1);
   let firstSegment = (indOfSecondSlash === -1) ?
     substring(tailURL, 1) : substring(tailURL, 1, indOfSecondSlash);
-  if (firstSegment === "up") {
+  if (firstSegment === "i") {
     return [
       "idx",
       <main className="app-main">

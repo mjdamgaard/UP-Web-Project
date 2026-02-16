@@ -19,7 +19,7 @@ const indexPage = <div className="text-page">
       >
         serverless computing
       </ELink>
-      to the next level. Not only do applications scale automatically, they
+      to the next level: Not only do applications scale automatically, they
       scale without any cost to the developers. 
     </p>
     <p>
@@ -111,6 +111,7 @@ const indexPage = <div className="text-page">
     </p>
   </section>
 
+
   <section>
     <h2>User-uploaded code is run in a sandbox</h2>
     <p>
@@ -119,16 +120,17 @@ const indexPage = <div className="text-page">
       is executed client-side and when it is executed server-side.
     </p>
     <p>
-      Other users can therefore safely try out new app prototypes of yours
+      Other users can therefore safely try out your new app prototypes,
       without having to worry about their browser getting hacked. And you can
       safely try out theirs as well.
     </p>
     <p>
       Different apps are also assigned different parts of the database,
       isolated from each other. And apps can only upload and download data
-      between each other when the creators have allowed it.
+      between each other when the creators allow it.
     </p>
   </section>
+
 
   <section>
     <h2>From Web 2.0 to Web 3.0</h2>
@@ -155,6 +157,14 @@ const indexPage = <div className="text-page">
       And in the same way that content creators are often rewarded monetarily
       on Web 2.0 sites, so will the users that help create the apps and the
       algorithms for the UP Web.
+    </p>
+    <p>
+      The rewards that these app-developing users receive ought to
+      reflect how much their contributions help increase the benefit of other
+      users. So for example, if you help create or improve a given app, and
+      that app ends up being used by a significant portion of the user base,
+      you will also receive a significant portion of the revenue of the UP Web
+      as a reward.
     </p>
   </section>
 
@@ -219,20 +229,21 @@ const indexPage = <div className="text-page">
     <p>
       But when you are in charge of the algorithms that you use, you can make
       sure that content is only shown to you once it has been past enough other
-      users, who have then been given plenty of time to report the
+      users first, who have been given enough of time to report the
       content if it is inappropriate.  
     </p>
     <p>
       And in case there is a shortage of users who volunteer to be among the
-      first ones to see new content, and to report it it is inappropriate, we
-      will start to give out rewards to such users as a way of attracting more.
+      first ones to see new content, and to report it if it is inappropriate,
+      we will start to give out rewards to such users as a way of attracting
+      more.
     </p>
 
     <h4>3. Avoid misinformation</h4>
     <p>
       When algorithms are only optimized to maximize engagement, they are
       also not really incentivized to filter out content that spreads
-      misinformation, as that kind of content only helps to increase
+      misinformation, since that kind of content also only helps to increase
       engagement. 
     </p>
     <p>
@@ -306,11 +317,7 @@ const indexPage = <div className="text-page">
       collected about them.
     </p>
 
-    {/*
-      I'm not sure that this section adds enough value, strangely enough, even
-      though it is indeed kinda the most important reason..:
-    */}
-    {/* <h4>7. Enjoy a greater variety of possibilities</h4>
+    <h4>7. Enjoy a greater variety of possibilities</h4>
     <p>
       Last but not least, since the UP can draw on its entire user base for
       coming up with new creative solutions and features, for the apps and
@@ -321,16 +328,17 @@ const indexPage = <div className="text-page">
       The world of open source already has a vast number of contributors,
       collectively spending vast amounts of time and energy on open source
       projects, despite often not getting paid at all for their contributions.
-      And if the UP Web can attract even just a small fraction of all that work
-      and energy, it will not take long before the UP Web can offer products
-      that are on par with contemporary apps.
+      Thus, if the UP Web can attract even just a small fraction of all that
+      work and energy, it will not take long before the UP Web can offer
+      products that are on par with contemporary apps.
     </p>
     <p>
       And from there, the UP Web can only continue to evolve,
-      drawing on the combined creativity of all users, who can continue to come
-      up with new ideas for useful apps and features.
-    </p> */}
+      drawing on the combined creativity of all its users, who can continue
+      to come up with new ideas for useful apps and features.
+    </p>
   </section>
+
 
   <section>
     <h2>How to get started</h2>

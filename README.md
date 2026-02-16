@@ -10,7 +10,7 @@
 The User-Programmable Web (UP Web) is an open-source web development
 framework that takes the concept of
 [serverless computing](https://en.wikipedia.org/wiki/Serverless_computing)
-to the next level. Not only do applications scale automatically, they
+to the next level: Not only do applications scale automatically, they
 scale without any cost to the developers. 
 
 The cost of the resources that an app consumes is instead paid for by
@@ -86,13 +86,13 @@ All user-uploaded code is executed in a sandbox that prevents it from
 accessing any unsafe features of JavaScript. This true both when the code
 is executed client-side and when it is executed server-side.
 
-Other users can therefore safely try out new app prototypes of yours
+Other users can therefore safely try out your new app prototypes,
 without having to worry about their browser getting hacked. And you can
 safely try out theirs as well.
 
 Different apps are also assigned different parts of the database,
 isolated from each other. And apps can only upload and download data
-between each other when the creators have allowed it.
+between each other when the creators allow it.
 
 
 
@@ -115,6 +115,13 @@ decide their appearance and their algorithms.
 And in the same way that content creators are often rewarded monetarily
 on Web 2.0 sites, so will the users that help create the apps and the
 algorithms for the UP Web.
+
+The rewards that these app-developing users receive ought to
+reflect how much their contributions help increase the benefit of other
+users. So for example, if you help create or improve a given app, and
+that app ends up being used by a significant portion of the user base,
+you will also receive a significant portion of the revenue of the UP Web
+as a reward.
 
 
 
@@ -171,19 +178,20 @@ inappropriate or damaging content to the users.
 
 But when you are in charge of the algorithms that you use, you can make
 sure that content is only shown to you once it has been past enough other
-users, who have then been given plenty of time to report the
+users first, who have been given enough of time to report the
 content if it is inappropriate.  
 
 And in case there is a shortage of users who volunteer to be among the
-first ones to see new content, and to report it it is inappropriate, we
-will start to give out rewards to such users as a way of attracting more.
+first ones to see new content, and to report it if it is inappropriate,
+we will start to give out rewards to such users as a way of attracting
+more.
 
 
 #### 3. Avoid misinformation
 
 When algorithms are only optimized to maximize engagement, they are
 also not really incentivized to filter out content that spreads
-misinformation, as that kind of content only helps to increase
+misinformation, since that kind of content also only helps to increase
 engagement. 
 
 But when the algorithms are instead optimized to maximize user benefit,
@@ -250,7 +258,7 @@ they can also choose precisely what data should and should not be
 collected about them.
 
 
-<!-- #### 7. Enjoy a greater variety of possibilities
+#### 7. Enjoy a greater variety of possibilities
 
 Last but not least, since the UP can draw on its entire user base for
 coming up with new creative solutions and features, for the apps and
@@ -260,19 +268,72 @@ possibilities for the users.
 The world of open source already has a vast number of contributors,
 collectively spending vast amounts of time and energy on open source
 projects, despite often not getting paid at all for their contributions.
-And if the UP Web can attract even just a small fraction of all that work
-and energy, it will not take long before the UP Web can offer products
-that are on par with contemporary apps.
+Thus, if the UP Web can attract even just a small fraction of all that
+work and energy, it will not take long before the UP Web can offer
+products that are on par with contemporary apps.
 
 And from there, the UP Web can only continue to evolve,
-drawing on the combined creativity of all users, who can continue to come
-up with new ideas for useful apps and features. -->
+drawing on the combined creativity of all its users, who can continue
+to come up with new ideas for useful apps and features.
 
 
 
 
 ## How to get started
-If you want to get started on making your first user-programmed apps, go to the
+
+If you want to get started on making your first user-programmed apps,
+go see the
+[Tutorial pages](https://www.up-web.org/tutorials).
+
+
+And if looking for inspiration, or just wanting to see what app
+components other users have made so far, you can go to the
+[Components page](https://www.up-web.org/entPath/1/1/em1.js;get/components).
+(After having clicked on an element in this list,
+you need to click 'View component' in order to see it rendered.)
+
+
+There is also a
+[Projects page](https://www.up-web.org/entPath/1/1/em1.js;get/projects)
+where users can post and discuss ongoing projects relating to the
+UP Web.
+However, at this early stage of the website, we actually recommend
+joining an UP Web forum on a more established SoMe website instead for
+the time being,
+at least while this Projects page is still under construction.
+The currently available (official) forums are:
+
+* *A list of external forum links will be inserted here soon.*
+
+By all means, please join one or more of these external forums if you
+are at all interested in keeping yourself up-to-date with the evolution
+of the UP Web project.
+And if you have any questions at all as a learner of this framework,
+or if you want to discuss anything related to the UP Web,
+these forums will also be a great way for you do so.
+
+
+Once it becomes relevant for you, there is also a
+[Contributions page](https://www.up-web.org/entPath/1/1/em1.js;get/contributions)
+where you can log your contributions to the project.
+Note that contributions do not need to be related to source code
+only. They can also be things such as spreading awareness of the
+project, etc.
+
+
+And if you want to have a look at the fundamental source code
+of the project, or perhaps want to help maintain and extend it at
+some point, this is currently found at
+[github.com/mjdamgaard/UP-Web-Project](https://github.com/mjdamgaard/UP-Web-Project).
+
+
+But before you go anywhere, please note that this website is still
+only a prototype at this stage. So please excuse all the rough edges
+that you will find here and there.
+
+
+
+<!-- If you want to get started on making your first user-programmed apps, go to the
 [Tutorials](https://www.up-web.org/tutorials)
 page.
 
@@ -292,7 +353,7 @@ Once it becomes relevant for you, there is also a
 [Contributions](https://www.up-web.org/entPath/1/1/em1.js;get/contributions)
 page where you can log your contributions to the project. (Also feel free to contact up-web.org directly, if you want us to take note of a contribution of yours.) Note that contributions do not need to be related to source code only. They can also be things such as spreading awareness of the project, which will also be very much appreciated, indeed.
 
-But before you go anywhere, please note that this website is still only a prototype at this stage. So please excuse all the rough edges that you will find here and there.
+But before you go anywhere, please note that this website is still only a prototype at this stage. So please excuse all the rough edges that you will find here and there. -->
 
 
 
