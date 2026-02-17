@@ -382,7 +382,12 @@ const indexPage = <div className="text-page">
       The currently available (official) forums are:
     </p>
     <ul>
-      <li><i>A list of external forum links will be inserted here soon.</i></li>
+      <li>
+      <ELink key="link-forum-fb"
+        href="https://www.facebook.com/groups/945313801782150">
+        {"facebook.com/groups/945313801782150"}
+      </ELink>
+      </li>
     </ul>
     <p>
       By all means, please join one or more of these external forums if you

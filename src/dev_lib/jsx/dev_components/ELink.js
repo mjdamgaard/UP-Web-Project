@@ -23,8 +23,8 @@ const urlWhitelist = [
   /^https:\/\/(www\.)?w3schools\.com($|\/)/,
   /^https:\/\/developer\.mozilla\.org($|\/)/,
   /^https:\/\/(www\.)?reddit\.com($|\/)/,
-  /^https:\/\/(www\.)?facebook\.[a-z]+($|\/)/,
-  /^https:\/\/(www\.)?youtube\.[a-z]+($|\/)/,
+  /^https:\/\/(www\.)?facebook\.com($|\/)/,
+  /^https:\/\/(www\.)?youtube\.com($|\/)/,
   /^https:\/\/code\.visualstudio\.com($|\/)/,
 ];
 

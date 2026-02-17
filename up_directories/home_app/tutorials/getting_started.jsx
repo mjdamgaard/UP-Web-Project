@@ -467,7 +467,7 @@ const page = <div className="text-page">
         home page
       </ILink>.
       Or alternatively, you can also e-mail up-web.org directly at
-      mads@up-web.org.
+      <s>mads@up-web.org</s> fxn318@alumni.ku.dk (temporary e-mail address).
     </p>
   </section>
 </div>;

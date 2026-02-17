@@ -303,7 +303,7 @@ the time being,
 at least while this Projects page is still under construction.
 The currently available (official) forums are:
 
-* *A list of external forum links will be inserted here soon.*
+* [facebook.com/groups/945313801782150](https://www.facebook.com/groups/945313801782150)*
 
 By all means, please join one or more of these external forums if you
 are at all interested in keeping yourself up-to-date with the evolution
