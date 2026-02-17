@@ -24,6 +24,7 @@ const urlWhitelist = [
   /^https:\/\/developer\.mozilla\.org($|\/)/,
   /^https:\/\/(www\.)?reddit\.com($|\/)/,
   /^https:\/\/(www\.)?facebook\.com($|\/)/,
+  /^https:\/\/(www\.)?linkedin\.com($|\/)/,
   /^https:\/\/(www\.)?youtube\.com($|\/)/,
   /^https:\/\/code\.visualstudio\.com($|\/)/,
 ];

@@ -388,6 +388,12 @@ const indexPage = <div className="text-page">
         {"facebook.com/groups/945313801782150"}
       </ELink>
       </li>
+      <li>
+      <ELink key="link-forum-linkedin"
+        href="https://www.linkedin.com/groups/17277059/">
+        {"linkedin.com/groups/17277059"}
+      </ELink>
+      </li>
     </ul>
     <p>
       By all means, please join one or more of these external forums if you
