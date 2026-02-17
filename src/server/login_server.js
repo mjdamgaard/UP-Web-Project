@@ -17,6 +17,7 @@ const MAX_ACCOUNT_NUM = 10; // Number of user accounts per e-mail address.
 const AUTH_TOKEN_REGEX = /^Bearer (.+)$/;
 const USER_CREDENTIALS_REGEX = /^Basic (.+)$/;
 const USERNAME_AND_PW_REGEX = /^([^:]+):(.*)$/;
+const EMAIL_REGEX = /^[a-zA-Z][a-zA-Z0-9.\-_]*@[a-zA-Z][a-zA-Z0-9.\-_]*$/;
 
 
 // The following gas objects and constants can be adjusted over time.
@@ -288,8 +289,7 @@ export function validateUsernamePWAndEmailFormats(
   if (!password || password.length < 8 || password.length > 120) {
     throw new ClientError("Invalid password");
   }
-  // TODO: Implement validation.
-  if (emailAddr && !/^.$/.test(emailAddr)) {
+  if (emailAddr && !EMAIL_REGEX.test(emailAddr)) {
     throw new ClientError(
       "Invalid e-mail address"
     );

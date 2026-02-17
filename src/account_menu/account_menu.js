@@ -3,6 +3,8 @@ import {ServerQueryHandler} from "../server/ajax_io/ServerQueryHandler.js";
 
 const serverQueryHandler = new ServerQueryHandler();
 
+const EMAIL_REGEX = /^[a-zA-Z][a-zA-Z0-9.\-_]*@[a-zA-Z][a-zA-Z0-9.\-_]*$/;
+
 
 
 export function main(settingsContext, urlContext) {
@@ -326,8 +328,7 @@ export function validateUsernamePWAndEmailFormats(
   if (!password || password.length < 8 || password.length > 120) {
     return "Password not long enough";
   }
-  // TODO: Implement validation.
-  if (emailAddr && !/^.$/.test(emailAddr)) {
+  if (emailAddr && !EMAIL_REGEX.test(emailAddr)) {
     return "Invalid e-mail address";
   }
 }
