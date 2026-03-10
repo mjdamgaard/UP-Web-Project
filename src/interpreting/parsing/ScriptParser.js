@@ -23,8 +23,9 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
 
 export const HTML_ELEMENT_TYPE_REGEX = new RegExp(
   "^(div|span|i|b|s|br|hr|template|button|h1|h2|h3|h4|h5|h6|p|section|code|" +
-  "|pre|footer|header|main|ol|ul|li|table|tr|th|td)$"
-  // TODO: Continue this list.
+  "pre|footer|header|main|ol|ul|li|table|tr|th|td|aside|caption|cite|col|" +
+  "colgroup|dd|dfn|dl|dt|em|figure|figcaption|hgroup|mark|menu|nav|q|" +
+  "blockquote|samp|search|small|strong|sub|sup|tbody|tfoot|thead|u|var|wbr)$"
 );
 
 

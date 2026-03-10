@@ -141,6 +141,10 @@ const page = <div className="text-page">
         '</div>;',
       ]}</code>
     </p>
+    <p>
+      (The 'key' prop is mandatory in this framework, by the way, which is why
+      it is used here. You will learn more about this 'key' prop below.) 
+    </p>
     <p>{
       "If you now re-upload your directory again (in the the same way as " +
       "you did in the previous tutorial), " +

@@ -487,10 +487,12 @@ class JSXInstance {
         let eventProperty, canPost;
         switch (key) {
           case "children" : {
-            if (tagName === "br" || tagName === "hr") throw new RuntimeError(
-              `Elements of type "${tagName}" cannot have children`,
-              jsxNode, jsxDecEnv
-            );
+            if (tagName === "br" || tagName === "hr" || tagName === "wbr") {
+              throw new RuntimeError(
+                `Elements of type "${tagName}" cannot have children`,
+                jsxNode, jsxDecEnv
+              );
+            }
             childArr = val ?? [];
             if (!(childArr instanceof Array)) {
               childArr = [childArr];
@@ -1024,6 +1026,8 @@ export class JSXInstanceInterface extends ObjectObject {
       "getIsVisible": this.getIsVisible,
       "getScrollData": this.getScrollData,
       "blur": this.blur,
+      "delay": this.delay,
+      "loop": this.loop,
     });
   }
 
@@ -1217,6 +1221,68 @@ export class JSXInstanceInterface extends ObjectObject {
     }
   );
 
+  // delay() and loop() are much like setTimeout() and setInterval(),
+  // respectively, only where the arguments are switched, where the return
+  // value is a clear() callback to unset the timeout/interval, and where the
+  // timeout/interval clears itself when the component is discarded or failed.
+  delay = new DevFunction(
+    "delay", {typeArr: ["integer unsigned", "function"]},
+    ({callerNode, execEnv, interpreter}, [delay, callback, ...rest]) => {
+      let timeoutID;
+      timeoutID = setTimeout(
+        () => {
+          let {isDiscarded, isFailed} = this.jsxInstance;
+          timeoutID = undefined;
+          if (!isDiscarded && !isFailed) {
+            interpreter.executeFunctionOffSync(
+              callback, rest, callerNode, execEnv
+            );
+          }
+        },
+        delay
+      );
+      return new DevFunction(
+        "clear", {}, ({}, []) => {
+          if (timeoutID !== undefined) {
+            clearTimeout(timeoutID);
+            timeoutID = undefined;
+          }
+        }
+      );
+    }
+  );
+
+  loop = new DevFunction(
+    "loop", {typeArr: ["integer positive", "function"]},
+    ({callerNode, execEnv, interpreter}, [delay, callback, ...rest]) => {
+      let intervalID;
+      intervalID = setInterval(
+        () => {
+          let {isDiscarded, isFailed} = this.jsxInstance;
+          if (isDiscarded || isFailed) {
+            if (intervalID !== undefined) {
+              clearInterval(intervalID);
+              intervalID = undefined;
+            }
+          }
+          else {
+            interpreter.executeFunctionOffSync(
+              callback, rest, callerNode, execEnv
+            );
+          }
+        },
+        delay
+      );
+      return new DevFunction(
+        "clear", {}, ({}, []) => {
+          if (intervalID !== undefined) {
+            clearInterval(intervalID);
+            intervalID = undefined;
+          }
+        }
+      );
+    }
+  );
 }
 
 

@@ -158,14 +158,15 @@ const indexPage = <div className="text-page">
       on Web 2.0 sites, so will the users that help create the apps and the
       algorithms for the UP Web.
     </p>
-    <p>
+    {/* This point is important, but maybe it should go somewhere else..: */}
+    {/* <p>
       The rewards that these app-developing users receive ought to
       reflect how much their contributions help increase the benefit of other
       users. So for example, if you help create or improve a given app, and
       that app ends up being used by a significant portion of the user base,
       you will also receive a significant portion of the revenue of the UP Web
       as a reward.
-    </p>
+    </p> */}
   </section>
 
   <section>
@@ -358,6 +359,10 @@ const indexPage = <div className="text-page">
       </ILink>.
       (After having clicked on an element in this list,
       you need to click 'View component' in order to see it rendered.)
+      Note that this list also includes the "Home app" of this website, which
+      is the very web app that you are using right now. In fact, everything you
+      see on this website, apart from the account menu at the top right, is 
+      built as a user-programmed app.
     </p>
 
     {/* <p>

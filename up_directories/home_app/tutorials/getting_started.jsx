@@ -246,11 +246,17 @@ const page = <div className="text-page">
       You can now see your new uploaded app! It should currently look as
       follows.
     </p>
-    <p>{
+    <p>
       <div className="text-display">
         <h1>{"Hello, World!"}</h1>
       </div>
-    }</p>
+    </p>
+    <p>
+      You might want to copy the URL of this page and save it on your
+      computer, or bookmark it in your browser, if you want a quicker way to
+      get to this page. (We will also implement a page on this website in the
+      near future where you can see a list of all your projects.) 
+    </p>
     <p>
       Now try to open up the file called 'app1.jsx', located at
       UPDirUpdater/up_directories/hello_world/app1.jsx on your own computer,
