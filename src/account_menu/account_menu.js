@@ -3,8 +3,6 @@ import {ServerQueryHandler} from "../server/ajax_io/ServerQueryHandler.js";
 
 const serverQueryHandler = new ServerQueryHandler();
 
-const EMAIL_REGEX = /^[a-zA-Z][a-zA-Z0-9.\-_]*@[a-zA-Z][a-zA-Z0-9.\-_]*$/;
-
 
 
 export function main(settingsContext, urlContext) {
@@ -23,8 +21,8 @@ export function main(settingsContext, urlContext) {
     document.getElementById("account-menu").classList.add("logged-in");
     document.getElementById("user-name-display").replaceChildren(username);
 
-    // Also send a request to place the token if the expTime is close enough to
-    // the present.
+    // Also send a request to replace the token if the expTime is close enough
+    // to the present.
     if (expTime * 1000 < Date.now() + 2678400000) {
       let {authToken, userID} =
         JSON.parse(localStorage.getItem("userData") ?? "{}");
@@ -65,7 +63,7 @@ export function main(settingsContext, urlContext) {
       openCreateAccountPage(settingsContext, urlContext);
   };
   document.getElementById("account-page-item").onclick = () => {
-      goToAccountPage(settingsContext, urlContext);
+      openAccountPage(settingsContext, urlContext);
   };
   document.getElementById("profile-page-item").onclick = () => {
       goToProfilePage(settingsContext, urlContext);
@@ -74,27 +72,27 @@ export function main(settingsContext, urlContext) {
 
 
 
-function logout(settingsContext) {
+export async function logout(settingsContext) {
   let {userID, authToken} = JSON.parse(
     localStorage.getItem("userData") ?? "{}"
   );
-  queryLoginServer(
-    "logout", userID, {authToken: authToken}
-  ).then(() => {
+  try {
+    await queryLoginServer("logout", userID, {authToken: authToken});
     localStorage.clear();
     settingsContext.update(settings => settings.changeUser(undefined));
     document.getElementById("user-name-display").replaceChildren("");
     let accountMenu = document.getElementById("account-menu");
     accountMenu.classList.remove("open");
     accountMenu.classList.remove("logged-in");
-  }).catch(err => {
+  }
+  catch (err) {
     console.error(`An error occurred when logging out: "${err.toString()}"`);
-  });
+  }
 }
 
 
 
-function openLoginPage(settingsContext) {
+export function openLoginPage(settingsContext) {
   let overlayPageContainer = document.getElementById("overlay-page-container");
   overlayPageContainer.classList.add("open");
   overlayPageContainer.innerHTML = `
@@ -161,7 +159,7 @@ function openLoginPage(settingsContext) {
 
 
 
-function openCreateAccountPage(settingsContext) {
+export function openCreateAccountPage(settingsContext) {
   let overlayPageContainer = document.getElementById("overlay-page-container");
   overlayPageContainer.classList.add("open");
   overlayPageContainer.innerHTML = `
@@ -235,7 +233,7 @@ function openCreateAccountPage(settingsContext) {
 
 
 
-function goToAccountPage() {
+export function openAccountPage() {
   let overlayPageContainer = document.getElementById("overlay-page-container");
   overlayPageContainer.classList.add("open");
   overlayPageContainer.innerHTML = `
@@ -297,7 +295,7 @@ function goToAccountPage() {
 }
 
 
-function goToProfilePage(_, urlContext) {
+export function goToProfilePage(_, urlContext) {
   document.getElementById("up-app-root").click();
   let url = "/profile", stateJSON = 'null';
   let urlData = {url: url, stateJSON: stateJSON};
@@ -317,6 +315,8 @@ async function queryLoginServer(reqType, reqBody, authOptions) {
 
 
 
+
+const EMAIL_REGEX = /^[a-zA-Z][a-zA-Z0-9.\-_]*@[a-zA-Z][a-zA-Z0-9.\-_]*$/;
 
 
 export function validateUsernamePWAndEmailFormats(

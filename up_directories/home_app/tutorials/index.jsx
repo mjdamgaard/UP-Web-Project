@@ -97,13 +97,13 @@ const indexPage = <div className="text-page">
     </ol>
   </section>
 
-  <section>
+  {/* <section>
     <h2>{"User-made introductory tutorials"}</h2>
     <p>{
       "Here is a list of user-made tutorials that expands on on some of " +
       "the basic principles of the UP system."
     }</p>
-    {/* TODO: Change the class. */}
+    {/* TODO: Change the class. * /}
     <div>
       <EntityList key="_basic-list" classKey="/1/1/em2.js;get/introTutorials"
         paginationLength={10}
@@ -117,13 +117,13 @@ const indexPage = <div className="text-page">
       "And here is a list of user-made tutorials and introductions for more " +
       "advanced users."
     }</p>
-    {/* TODO: Change the class. */}
+    {/* TODO: Change the class. * /}
     <div>
       <EntityList key="_advanced-list" classKey="/1/1/em2.js;get/advTutorials"
         paginationLength={10}
       />
     </div>
-  </section>
+  </section> */}
 </div>;
 
 

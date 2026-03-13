@@ -354,7 +354,7 @@ const indexPage = <div className="text-page">
     <p>
       And if looking for inspiration, or just wanting to see what app
       components other users have made so far, you can go to the
-      <ILink key="link-comp" href="/entPath/1/1/em1.js;get/components" >
+      <ILink key="link-comp" href="/ep/1/1/em1.js;get/components" >
         Components page
       </ILink>.
       (After having clicked on an element in this list,
@@ -368,14 +368,14 @@ const indexPage = <div className="text-page">
     {/* <p>
       And to see a list of the ongoing projects related to the UP Web,
       go see the
-      <ILink key="link-proj" href="/entPath/1/1/em1.js;get/projects">
+      <ILink key="link-proj" href="/ep/1/1/em1.js;get/projects">
         Projects
       </ILink>
       page.
     </p> */}
     <p>
       There is also a
-      <ILink key="link-proj" href="/entPath/1/1/em1.js;get/projects">
+      <ILink key="link-proj" href="/ep/1/1/em1.js;get/projects">
         Projects page
       </ILink>
       where users can post and discuss ongoing projects relating to the
@@ -411,7 +411,7 @@ const indexPage = <div className="text-page">
 
     <p>
       Once it becomes relevant for you, there is also a
-      <ILink key="link-contr" href="/entPath/1/1/em1.js;get/contributions">
+      <ILink key="link-contr" href="/ep/1/1/em1.js;get/contributions">
         Contributions page
       </ILink>
       where you can log your contributions to the project.

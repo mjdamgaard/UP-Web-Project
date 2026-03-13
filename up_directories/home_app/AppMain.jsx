@@ -93,10 +93,10 @@ export function renderHelper(thisVal, {
     ];
   } 
 
-  // Else if tailURL is of the form "/entPath" + encodedEntPath, fetch the
+  // Else if tailURL is of the form "/ep" + encodedEntPath, fetch the
   // entity ID and then redirect to the "/e/" + entID tailURL.
-  if (firstSegment === "entPath") {
-    let entPath = decodeURI(substring(tailURL, 8));
+  if (firstSegment === "ep") {
+    let entPath = decodeURI(substring(tailURL, 3));
     fetchEntityID(entPath).then(entID => {
       if (entID) {
         thisVal.trigger("replaceURL", "~/e/" + entID);

@@ -16,6 +16,7 @@ const URL_VALID_CHARACTERS_REGEX =
 
 const urlWhitelist = [
   /^https:\/\/en\.wikipedia\.org($|\/)/,
+  /^\/assets\/.+$/,
 ];
 
 function getIsWhitelisted(src) {

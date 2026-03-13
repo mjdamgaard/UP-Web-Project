@@ -101,7 +101,7 @@ export function render({
         />
       ));
       content = substitutedSegmentArr;
-      if (isLink) href = "/entPath" + encodeURI(entPath);
+      if (isLink) href = "/ep" + encodeURI(entPath);
     }
   }
 

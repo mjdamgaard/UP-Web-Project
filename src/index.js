@@ -38,6 +38,7 @@ import * as errorMod from "./dev_lib/error.js";
 import * as typeMod from "./dev_lib/type.js";
 import * as routeMod from "./dev_lib/route.js";
 import * as pathMod from "./dev_lib/path.js";
+import * as accountMod from "./dev_lib/account.js";
 import * as scoredListsMod from "./dev_lib/semantic_entities/scored_lists.js";
 import * as entitiesMod from "./dev_lib/semantic_entities/entities.js";
 
@@ -68,6 +69,7 @@ staticDevLibs.set("error", errorMod);
 staticDevLibs.set("type", typeMod);
 staticDevLibs.set("route", routeMod);
 staticDevLibs.set("path", pathMod);
+staticDevLibs.set("account", accountMod);
 staticDevLibs.set("scored_lists", scoredListsMod);
 staticDevLibs.set("entities", entitiesMod);
 

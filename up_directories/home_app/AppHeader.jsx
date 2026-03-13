@@ -15,16 +15,16 @@ export function render() {
       <ILink key="tut" href="~/tutorials">
         <span className="menu-item">{"Tutorials"}</span>
       </ILink>
-      <ILink key="comp" href="~/entPath/1/1/em1.js;get/components">
+      <ILink key="comp" href="~/ep/1/1/em1.js;get/components">
         <span className="menu-item">{"Components"}</span>
       </ILink>
-      <ILink key="proj" href="~/entPath/1/1/em1.js;get/projects">
+      <ILink key="proj" href="~/ep/1/1/em1.js;get/projects">
         <span className="menu-item">{"Projects"}</span>
       </ILink>
-      <ILink key="disc" href="~/entPath/1/1/em1.js;get/discussionsClass">
+      <ILink key="disc" href="~/ep/1/1/em1.js;get/discussionsClass">
         <span className="menu-item">{"Discussions"}</span>
       </ILink>
-      <ILink key="contr" href="~/entPath/1/1/em1.js;get/contributions">
+      <ILink key="contr" href="~/ep/1/1/em1.js;get/contributions">
         <span className="menu-item">{"Contributions"}</span>
       </ILink>
     </div>

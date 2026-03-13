@@ -16,7 +16,7 @@ const page = <div className="text-page">
     <p>{[
       "If you have started working a new app or feature and you want other " +
       "users to join in, you can make a post describing it on the ",
-      <ILink key="link-proj" href="/entPath/1/1/em1.js;get/projects" >
+      <ILink key="link-proj" href="/ep/1/1/em1.js;get/projects" >
         {"Projects"}
       </ILink>,
       " page."
@@ -61,7 +61,7 @@ const page = <div className="text-page">
     <p>{[
       "When your new app is ready to be tried out by others, you can post " +
       "it on the ",
-      <ILink key="link-comp" href="/entPath/1/1/em1.js;get/components" >
+      <ILink key="link-comp" href="/ep/1/1/em1.js;get/components" >
         {"Components"}
       </ILink>,
       " page."
@@ -119,7 +119,7 @@ const page = <div className="text-page">
     <p>{[
       "Whenever you create or modify a user-programmed app, it is also a " +
       "good idea to log it on the ",
-      <ILink key="link-contr" href="/entPath/1/1/em1.js;get/contributions" >
+      <ILink key="link-contr" href="/ep/1/1/em1.js;get/contributions" >
         {"Contributions"}
       </ILink>,
       " page."

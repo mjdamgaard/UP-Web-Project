@@ -288,13 +288,13 @@ go see the
 
 And if looking for inspiration, or just wanting to see what app
 components other users have made so far, you can go to the
-[Components page](https://www.up-web.org/entPath/1/1/em1.js;get/components).
+[Components page](https://www.up-web.org/ep/1/1/em1.js;get/components).
 (After having clicked on an element in this list,
 you need to click 'View component' in order to see it rendered.)
 
 
 There is also a
-[Projects page](https://www.up-web.org/entPath/1/1/em1.js;get/projects)
+[Projects page](https://www.up-web.org/ep/1/1/em1.js;get/projects)
 where users can post and discuss ongoing projects relating to the
 UP Web.
 However, at this early stage of the website, we actually recommend
@@ -315,7 +315,7 @@ these forums will also be a great way for you do so.
 
 
 Once it becomes relevant for you, there is also a
-[Contributions page](https://www.up-web.org/entPath/1/1/em1.js;get/contributions)
+[Contributions page](https://www.up-web.org/ep/1/1/em1.js;get/contributions)
 where you can log your contributions to the project.
 Note that contributions do not need to be related to source code
 only. They can also be things such as spreading awareness of the
@@ -339,11 +339,11 @@ that you will find here and there.
 page.
 
 And to see a list of the ongoing projects related to the UP Web, go see the
-[Projects](https://www.up-web.org/entPath/1/1/em1.js;get/projects)
+[Projects](https://www.up-web.org/ep/1/1/em1.js;get/projects)
 page.
 
 You can also go to the
-[Components](https://www.up-web.org/entPath/1/1/em1.js;get/components)
+[Components](https://www.up-web.org/ep/1/1/em1.js;get/components)
 page to see some of the proof-of-concept app components that have been made so far. (After having clicked on an element in this list, you need to click 'View component' in order to see it rendered.)
 
 And if you want to have a look at the fundamental source code of the project,
@@ -351,7 +351,7 @@ or perhaps want to help maintain and extend it at some point, this is currently 
 [github.com/mjdamgaard/UP-Web-Project](https://github.com/mjdamgaard/UP-Web-Project).
 
 Once it becomes relevant for you, there is also a
-[Contributions](https://www.up-web.org/entPath/1/1/em1.js;get/contributions)
+[Contributions](https://www.up-web.org/ep/1/1/em1.js;get/contributions)
 page where you can log your contributions to the project. (Also feel free to contact up-web.org directly, if you want us to take note of a contribution of yours.) Note that contributions do not need to be related to source code only. They can also be things such as spreading awareness of the project, which will also be very much appreciated, indeed.
 
 But before you go anywhere, please note that this website is still only a prototype at this stage. So please excuse all the rough edges that you will find here and there. -->

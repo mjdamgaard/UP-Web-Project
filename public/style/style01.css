@@ -25,11 +25,17 @@ html, body, #up-app-root {
 }
 
 
+/* Hide native account menu if the root app has a "no-account-menu" class. */
+body:has(> #up-app-root > .no-account-menu_0) > #account-menu {
+  display: none;
+}
+
+
+
 /* Hide that error overlay for now */
 /* #webpack-dev-server-client-overlay {
   display: none;
 } */
-
 
 
 
