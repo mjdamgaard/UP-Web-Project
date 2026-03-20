@@ -32,6 +32,7 @@ export function uploadInitialEntities() {
       homePath + "/score_handling/ScoreHandler01/em.js"
     ),
     postAllEntitiesFromModule(homePath + "/em2.js"),
+    postAllEntitiesFromModule(homePath + "/em3.js"),
   ]);
 }
 

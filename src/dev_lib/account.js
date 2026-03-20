@@ -46,6 +46,15 @@ export const goToProfilePage = new DevFunction(
 );
 
 
+export const getUsername = new DevFunction(
+  "getUsername", {}, ({callerNode, execEnv}, []) => {
+    checkAccountLibraryPermission(callerNode, execEnv);
+    let {username} = JSON.parse(localStorage.getItem("userData") ?? "{}");
+    return username;
+  },
+);
+
+
 export const canUseAccountLibrary = new DevFunction(
   "canUseAccountLibrary", {}, ({execEnv}, []) => {
     return execEnv.getFlag(CLIENT_TRUST_FLAG) ? true : false;

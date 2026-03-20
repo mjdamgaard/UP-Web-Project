@@ -8,6 +8,7 @@ import {fetchEntityID} from "/1/1/entities.js";
 import * as UPIndexPage from "./UPIndexPage.jsx";
 import * as AboutPage from "./about.jsx";
 import * as ProfilePage from "./ProfilePage.jsx";
+import * as AppBrowser from "./app_browser/AppBrowser.jsx";
 import * as EntityPage from "./variable_components/EntityPage.jsx";
 import * as FileBrowser from "./file_browsing/FileBrowser.jsx";
 import * as TutorialIndexPage from "./tutorials/index.jsx";
@@ -76,18 +77,26 @@ export function renderHelper(thisVal, {
       </main>
     ];
   }
-  
+
   // Else if tailURL starts with "/profile", go to the profile page. 
   if (firstSegment === "profile") {
-    let indOfThirdSlash = indexOf(tailURL, "/", 9);
-    let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
-    let entID = substring(tailURL, 9, endOfID);
-    let tailURL = substring(tailURL, 9 + entID.length);
     return [
       "_profile",
       <main className="app-main">
-        <ProfilePage key="_profile"
-          url={url} homeURL={homeURL} tailURL={tailURL}
+        <ProfilePage key="_profile" />
+      </main>
+    ];
+  }
+
+  // Else if tailURL starts with "/apps", go to the Apps page. 
+  if (firstSegment === "apps") {
+    let newHomeURL = homeURL + "/apps";
+    let newTailURL = substring(tailURL, 5);
+    return [
+      "_apps",
+      <main className="app-main">
+        <AppBrowser key="_apps"
+          url={url} homeURL={newHomeURL} tailURL={newTailURL}
         />
       </main>
     ];
@@ -112,7 +121,7 @@ export function renderHelper(thisVal, {
         <div className="fetching">{"..."}</div>
       </main>
     ];
-  } 
+  }
 
   // Else if tailURL is of the form "/e/<entID>", go to the EntityPage of the
   // given entity.
@@ -120,12 +129,12 @@ export function renderHelper(thisVal, {
     let indOfThirdSlash = indexOf(tailURL, "/", 3);
     let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
     let entID = substring(tailURL, 3, endOfID);
-    let tailURL = substring(tailURL, 3 + entID.length);
+    let newTailURL = substring(tailURL, 3 + entID.length);
     return [
       "e-" + entID,
       <main className="app-main">
         <EntityPage key={"e-" + entID}
-          entKey={entID} url={url} homeURL={homeURL} tailURL={tailURL}
+          entKey={entID} url={url} homeURL={homeURL} tailURL={newTailURL}
         />
       </main>
     ];
@@ -137,12 +146,12 @@ export function renderHelper(thisVal, {
     let indOfThirdSlash = indexOf(tailURL, "/", 3);
     let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
     let entID = substring(tailURL, 3, endOfID);
-    let tailURL = substring(tailURL, 3 + entID.length);
+    let newTailURL = substring(tailURL, 3 + entID.length);
     return [
       "c-" + entID,
       <main className="app-main">
         <ComponentEntityPage key={"c-" + entID}
-          entKey={entID} url={url} homeURL={homeURL} tailURL={tailURL}
+          entKey={entID} url={url} homeURL={homeURL} tailURL={newTailURL}
           localStorage={localStorage} sessionStorage={sessionStorage}
         />
       </main>

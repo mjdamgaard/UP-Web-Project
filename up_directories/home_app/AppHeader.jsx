@@ -15,6 +15,9 @@ export function render() {
       <ILink key="tut" href="~/tutorials">
         <span className="menu-item">{"Tutorials"}</span>
       </ILink>
+      <ILink key="apps" href="~/apps">
+        <span className="menu-item">{"Apps"}</span>
+      </ILink>
       <ILink key="comp" href="~/ep/1/1/em1.js;get/components">
         <span className="menu-item">{"Components"}</span>
       </ILink>

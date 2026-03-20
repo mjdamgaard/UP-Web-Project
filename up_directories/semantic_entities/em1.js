@@ -186,11 +186,11 @@ export const classes = {
     // entities.
     "Member value type(s)",
 
-  // A class might also include an "Area of concern" property (see below
-  // for more details), but as mentioned below, such properties will often be
-  // defined as "scored properties" instead, namely by scoring an 'Area of
-  // concern' relation for the given class.
-  "Area of concern",
+    // A class might also include an "Area of concern" property (see below
+    // for more details), but as mentioned below, such properties will often be
+    // defined as "scored properties" instead, namely by scoring an 'Area of
+    // concern' relation for the given class.
+    "Area of concern",
   ],
   "Description": abs("./em1_aux.js;get/classesDesc"),
 };
