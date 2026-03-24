@@ -86,6 +86,14 @@ export const blogging = {
     "blogs as well as apps that serves as indexes for blogs.",
 };
 
+export const startApps = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "Start apps",
+  "Superclass": abs("./em3.js;get/apps"),
+  "Description": "All apps that can be used as the start app for " +
+    "the website, serving as an index page for it.",
+};
+
 
 
 // An app idea consists of a text and potentially an example component that
