@@ -323,6 +323,11 @@ export const qualities = {
   // below).
   "getScalarName",
 
+  // It sometimes makes sense to form a class from a quality (in particular
+  // for relational qualities (see below)). And in that case, this (optional)
+  // property specifies the name of that class.
+  "Class name",
+
   // The "Domain" of a quality is a class to which the subjects are supposed to
   // belong. Or it can also be a quality, in which case it is implicitly
   // understood to mean that set of all entities with a positive score for that
@@ -402,6 +407,10 @@ export const relations = {
     // And the "getQualityName()" similarly takes an objKey argument and
     // generates the name of the relational quality.
     "getQualityName",
+
+    // And the same goes for "getClassName()" (optional), which takes an
+    // objKey and produces the "Class name" property.
+    "getClassName",
 
     // A relation doesn't just have a "Domain" property, but both an "Object
     // domain" and a "Subject domain".
@@ -486,6 +495,36 @@ export const relationalQualities = {
   "Superclass": abs("./em1.js;get/qualities"),
   "constructor": RQ,
   "Description": abs("./em1_aux.js;get/relationalQualitiesDesc"),
+};
+
+
+
+// Derived classes are always constructed from this DC() constructor. These
+// are the classes that derives from a quality (typically one that uses the
+// grading metric (see below)). That quality then replaces the 'members of
+// <class>' (relational) quality.
+export const DC = (qualID) => ({
+  "Class": abs("./em1.js;get/derivedClasses"),
+  "Quality": "${" + qualID + "}",
+  "Name": () => new Promise(resolve => {
+    fetchEntityProperty(qualID, "Class name").then(
+      className => resolve(className)
+    );
+  }),
+  "Superclass": () => new Promise(resolve => {
+    fetchEntityProperty(qualID, "Domain").then(
+      domain => resolve(domain)
+    );
+  }),
+  "Description": "The class of all entities that fits the quality, " +
+    "${" + qualID + "}.",
+});
+export const derivedClasses = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "Derived classes",
+  "Superclass": abs("./em1.js;get/classes"),
+  "constructor": DC,
+  "Description": abs("./em1_aux.js;get/derivedClassesDesc"),
 };
 
 
@@ -835,10 +874,15 @@ export const components = {
   "Common properties": [
     "Component path", "Example component path", "Example props",
     "getExampleProps", "No margins", "No header",
+
     // (These properties obviously have to been checked by the user community,
     // and the entity ought to be down-rated as a member of this class if they
     // are not true:)
     "GitHub repository", "Creator(s)",
+
+    // In case the component implements a given app (see ./em3.js), this
+    // property should point to that app entity.
+    "App",
   ],
   "Description": abs("./em1_aux.js;get/componentsDesc"),
 };
@@ -1130,6 +1174,7 @@ export const members = {
   "getQualityName": objKey => "Belongs to ${" + objKey + "}",
   "getScalarName": (objKey, subjKey) => "${" + subjKey + "} belongs to " +
     "the class of ${" + objKey + "}",
+  "getClassName": undefined,
   "Object domain": abs("./em1.js;get/classes"),
   "getSubjectDomain": objKey => fetchSuperclassPath(objKey),
   "Metric": abs("./em1.js;get/gradingMetric"),
@@ -1144,6 +1189,7 @@ export const subclasses = {
   "getQualityName": objKey => "Is a subclass of ${" + objKey + "}",
   "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a subclass " +
     "of ${" + objKey + "}",
+  "getClassName": objKey => "Subclasses of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/classes"),
   "Metric": abs("./em1.js;get/gradingMetric"),
@@ -1161,6 +1207,7 @@ export const relevantRelations = {
   "getQualityName": objKey => "Is a relevant relation for ${" + objKey + "}",
   "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "relation for ${" + objKey + "}",
+  "getClassName": objKey => "Relevant relations for ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/relations"),
   "Metric": abs("./em1.js;get/gradingMetric"),
@@ -1177,6 +1224,8 @@ export const relationsForMembers = {
     objKey + "}",
   "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "relation for the members of ${" + objKey + "}",
+  "getClassName": objKey => "Relevant relations for members of ${" +
+    objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/relations"),
   "Metric": abs("./em1.js;get/gradingMetric"),
@@ -1193,6 +1242,7 @@ export const subRelations = {
     "}",
   "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "sub-relation of ${" + objKey + "}",
+  "getClassName": objKey => "Relevant sub-relations of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/relations"),
   "Subject domain": abs("./em1.js;get/relations"),
   "Metric": abs("./em1.js;get/gradingMetric"),
@@ -1206,6 +1256,7 @@ export const relevantQualities = {
   "getQualityName": objKey => "Is a relevant quality for ${" + objKey + "}",
   "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "quality for ${" + objKey + "}",
+  "getClassName": objKey => "Relevant qualities for ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/qualities"),
   "Metric": abs("./em1.js;get/gradingMetric"),
@@ -1221,6 +1272,8 @@ export const qualitiesForMembers = {
     objKey + "}",
   "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "quality for the members of ${" + objKey + "}",
+  "getClassName": objKey => "Relevant qualities for members of ${" +
+    objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/qualities"),
   "Metric": abs("./em1.js;get/gradingMetric"),
@@ -1239,6 +1292,7 @@ export const subQualities = {
   "getQualityName": objKey => "Is a relevant sub-quality of ${" + objKey + "}",
   "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "sub-quality of ${" + objKey + "}",
+  "getClassName": objKey => "Relevant sub-qualities of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/qualities"),
   "Subject domain": abs("./em1.js;get/qualities"),
   "Metric": abs("./em1.js;get/gradingMetric"),
@@ -1258,6 +1312,7 @@ export const commentsRelation = {
   "getQualityName": objKey => "Is a relevant comment about ${" + objKey + "}",
   "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
     "comment about ${" + objKey + "}",
+  "getClassName": objKey => "Comments about ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/comments"),
   "Metric": abs("./em1.js;get/gradingMetric"),
@@ -1275,6 +1330,7 @@ export const questionsAndFacts = {
     objKey + "}",
   "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a " +
     "relevant question or fact relating to ${" + objKey + "}",
+  "getClassName": objKey => "Questions and facts about ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/texts"),
   "Metric": abs("./em1.js;get/gradingMetric"),
@@ -1295,6 +1351,7 @@ export const discussions = {
     objKey + "}",
   "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a " +
     "relevant discussion relating to ${" + objKey + "}",
+  "getClassName": objKey => "Discussions about ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/texts"),
   "Metric": abs("./em1.js;get/gradingMetric"),
@@ -1324,6 +1381,7 @@ export const reactions = {
     objKey + "}",
   "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a " +
     "relevant reaction comment for ${" + objKey + "}",
+  "getClassName": objKey => "Reaction comments about ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/comments"),
   "Metric": abs("./em1.js;get/gradingMetric"),
@@ -1342,6 +1400,7 @@ export const tasks = {
     objKey + "}",
   "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a " +
     "relevant task relating to ${" + objKey + "}",
+  "getClassName": objKey => "Tasks relating to ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/entities"),
   "Subject domain": abs("./em1.js;get/texts"),
   "Metric": abs("./em1.js;get/gradingMetric"),
@@ -1398,6 +1457,7 @@ export const argumentsRelation = {
   "getQualityName": objKey => "Is a relevant argument for ${" + objKey + "}",
   "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a " +
     "relevant argument for ${" + objKey + "}",
+  "getClassName": objKey => "Arguments for ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/scalars"),
   "Subject domain": abs("./em1.js;get/scalars"),
   "Metric": abs("./em1.js;get/gradingMetric"),

@@ -28,6 +28,7 @@ export const discussionsClassDesc = tempEM1Desc;
 export const qualitiesDesc = tempEM1Desc;
 export const relationsDesc = tempEM1Desc;
 export const relationalQualitiesDesc = tempEM1Desc;
+export const derivedClassesDesc = tempEM1Desc;
 export const scalarsDesc = tempEM1Desc;
 export const areasOfConcernDesc = tempEM1Desc;
 export const scoredListsDesc = tempEM1Desc;

@@ -5,8 +5,8 @@ import * as ILink from 'ILink.jsx';
 
 
 
-export function initialize({urlEntIDs, epCache}) {
-  let linkArrProm = getILinks(urlEntIDs, epCache);
+export function initialize({urlEntIDs}) {
+  let linkArrProm = getILinks(urlEntIDs);
   linkArrProm.then(links => {
     this.setState(state => ({...state, links: links}));
   });
@@ -14,7 +14,7 @@ export function initialize({urlEntIDs, epCache}) {
 }
 
 
-export function render({urlEntIDs, epCache}) {
+export function render({urlEntIDs}) {
   let {links} = this.state;
   if (!links) {
     return <div className="nav-path fetching">{"..."}</div>;
@@ -27,15 +27,14 @@ export function render({urlEntIDs, epCache}) {
 
 
 // getILinks() resolves an array of ILinks based on the urlEntIDs.
-async function getILinks(urlEntIDs, epCache) {
+async function getILinks(urlEntIDs) {
   // Construct and return the array of ILinks.
   let ret = new MutableArray();
   let len = urlEntIDs.length;
   for (let i = 0; i < len; i++) {
     let href = "~/" + join(slice(urlEntIDs, 0, i + 1), "/");
     let entID = urlEntIDs[i];
-    let entPath = epCache.getEntPathOrProm(entID);
-    let name = await fetchEntityProperty(entPath, "Name");
+    let name = await fetchEntityProperty(entID, "Name");
     ret[i] = <ILink key={"l-" + i} href={href} >{name}</ILink>;
   }
 
