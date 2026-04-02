@@ -3026,7 +3026,16 @@ export class JSXElement extends ObjectObject {
           if (val) childArr[i++] = val;
         }
         else {
-          let val = interpreter.evaluateExpression(contentNode, decEnv);
+          let {exp, isWrapped} = contentNode;
+          let val = interpreter.evaluateExpression(exp, decEnv);
+
+          // Unless the expression was wrapped in parenthesis, "()", check
+          // that the value contains no nested JSX elements that would
+          // otherwise be rendered.
+          if (!isWrapped) {
+            val = checkAgainstJSXElements(val, node, decEnv);
+          }
+
           childArr[i++] = val;
         }
       });
@@ -3047,6 +3056,19 @@ export class JSXElement extends ObjectObject {
         node, decEnv
       );
     }
+  }
+}
+
+
+function checkAgainstJSXElements(val, node, env) {
+  if (val instanceof JSXElement) throw new RuntimeError(
+    "A JSX element occurred inside a computed value that was not wrapped " +
+    "in parentheses. (If you trust this JSX element and want to render it, " +
+    "wrap the computed value inside '{()}' rather than just '{}'.)",
+    node, env
+  );
+  else if (isArray(val)) {
+    return forEachValue(val, node, env, elem => checkAgainstJSXElements(elem));
   }
 }
 

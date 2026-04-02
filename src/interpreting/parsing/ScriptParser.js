@@ -1039,13 +1039,20 @@ export const scriptGrammar = {
     rules: [
       ["jsx-element!1"],
       ["text-literal"],
+      [/\{/, /\(/, "expression!", /\)/, /\}/],
       [/\{/, "expression", /\}/],
       [/\{/, /\}/],
     ],
     process: (children, ruleInd) => {
-      return (ruleInd <= 1) ? children[0] :
-        (ruleInd === 2) ? children[1] :
-          {type: "empty-jsx-content"};
+      return (ruleInd <= 1) ? (
+        children[0]
+      ) : (ruleInd <= 3) ? {
+        type: "computed-value",
+        isWrapped: ruleInd === 2,
+        exp: (ruleInd === 2) ? children[2] : children[1],
+      } : {
+        type: "empty-jsx-content"
+      };
     },
   },
   "text-literal": {

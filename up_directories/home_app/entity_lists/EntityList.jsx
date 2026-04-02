@@ -124,8 +124,8 @@ export function render({
         objKey={objKey} minScore={minScore} minWeight={minWeight}
       />,
       <div className="list-container">
-        {constElementArr}
-        {map(list, ([entID, score, weight]) => (
+        {(constElementArr)}
+        {(map(list, ([entID, score, weight]) => (
           (
             curMinScore !== undefined && score < curMinScore ||
             curMinWeight !== undefined && weight < curMinWeight
@@ -135,7 +135,7 @@ export function render({
               score={score} weight={weight}
               qualKeyArr={[qualKey]} {...extraElementProps}
             />
-        ))}
+        )))}
       </div>,
     ];
   }
