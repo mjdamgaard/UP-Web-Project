@@ -9,9 +9,10 @@ export const apps = {
   "Name": "Apps",
   "Superclass": abs("./em1.js;get/entities"),
   "Common properties": [
-    // (Optional) A prototype component showcasing the idea and the purpose
-    // behind the app. This property ought to reference a component entity
-    // rather than a JSX component directly.
+    // (Optional) A prototype component entity showcasing the idea and the
+    // purpose behind the app. Note that this component might also be a text
+    // page, either with embedded examples showcasing the visions, or with
+    // links to such examples.
     "Prototype",
   ],
   "Description": "The class of all user-programmed apps.",
@@ -60,35 +61,31 @@ export const versions = {
 
 
 
-// Features *can* be specific components with a specific purpose that appears
-// inside of an app, but they can also be more general things, such as a
-// specific algorithm, or a layout/style of an app, or a new button/option that
-// is added to existing components.
+// Features can be anything regarding the UI or the functions of an app. It can
+// for instance be a specific component with a specific purpose, or a specific
+// algorithm, or a layout/style of an app, or a new button/option that is
+// added to existing components. A feature can also be having the option to
+// adjust and personalize the settings of an app, possibly in order to choose
+// between a set of other features.
+// Similarly to the 'App' entities above, 'Feature' entities only describes the
+// vision of the feature, through their "Description" property, and possibly a
+// "Prototype" property. And then similarly to the 'Versions' relation for
+// apps, the feature entities have an 'Implementations' relation where users
+// can post their implementations of the given feature. 
 export const features = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Features",
   "Superclass": abs("./em1.js;get/entities"),
   "Common properties": [
-    // A route to the implementation of the feature. This might for instance be
-    // a JS module or a JSX module that implements it, but it could also be a
-    // route to a specific function, or something else. That depends on the
-    // kind of feature.
-    "Implementation", 
-
-    // A component (entity) that showcases the the feature.
-    "Example component",
+    // (Optional) Similar to the "Prototype" property for 'Apps' above.
+    "Prototype",
   ],
   "Description": "A class of all \"features\" that an app might use.",
 };
 
 
 // When browsing an app, you should be able to explore what features other
-// users have suggested for the given app. These 'features' should come with a
-// prototype, in the form of the "Example component," such that users can
-// immediately try them out and rate them. And when you browse a feature, you
-// should be able to go to a tab of 'Support' to see what app versions already
-// support the given feature at the current moment (together with an
-// explanation of how to access the feature in the given version).
+// users have suggested for the given app.
 export const featuresRel = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Features",
@@ -103,6 +100,29 @@ export const featuresRel = {
 };
 
 
+// The 'implementations' of a given feature are a list of components that
+// showcases a specific implementation of the given feature. (These components
+// can include (or link to) their own documentation for how the implemented
+// feature cna be installed in an app.)
+export const implementations = {
+  "Class": abs("./em1.js;get/relations"),
+  "Name": "Implementations",
+  "getQualityName": objKey => "Is an implementation of ${" + objKey + "}",
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is an " +
+  "implementation of ${" + objKey + "}",
+  "getClassName": objKey => "Implementations of ${" + objKey + "}",
+  "Object domain": abs("./em3.js;get/features"),
+  "Subject domain": abs("./em1.js;get/components"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
+  "Description": abs("./em1_aux.js;get/membersDesc"),
+};
+
+
+
+// When you browse a feature, you should be able to go to a tab of 'Support' to
+// see what app versions already support the given feature at the current
+// moment (together with an explanation of how to access the feature in the
+// given version).
 export const supportingAppVersions = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Supporting app versions",
@@ -125,42 +145,6 @@ export const supportedFeatures = {
   "getClassName": objKey => "Supported features by ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/components"),
   "Subject domain": abs("./em3.js;get/features"),
-  "Metric": abs("./em1.js;get/gradingMetric"),
-  "Description": abs("./em1_aux.js;get/membersDesc"),
-};
-
-
-
-
-
-// An app idea consists of a text and potentially an example component that
-// showcases the idea.
-export const appIdeas = {
-  "Class": abs("./em1.js;get/classes"),
-  "Name": "App ideas",
-  "Superclass": abs("./em1.js;get/entities"),
-  "Common properties": [
-    // A text describing the idea.
-    "Text",
-    // A component (entity) that showcases the idea in some way. 
-    "Example component",
-  ],
-  "Description": "A class of app ideas, which each first of all consist of " +
-    "a text describing the idea, and potentially also an example component " +
-    "that showcases the idea.",
-};
-
-
-
-export const appIdeasRel = {
-  "Class": abs("./em1.js;get/relations"),
-  "Name": "App ideas",
-  "getQualityName": objKey => "Is a relevant idea about ${" + objKey + "}",
-  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
-    "idea about ${" + objKey + "}",
-  "getClassName": objKey => "Ideas about ${" + objKey + "}",
-  "Object domain": abs("./em1.js;get/entities"),
-  "Subject domain": abs("./em3.js;get/appIdeas"),
   "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/membersDesc"),
 };
