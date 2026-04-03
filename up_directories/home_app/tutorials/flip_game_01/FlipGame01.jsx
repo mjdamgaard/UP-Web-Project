@@ -25,7 +25,7 @@ export function render({rowNum = 3, colNum = 3}) {
   return <div>
     <h4>{"Remove all the black squares"}</h4>
     <div className="game">
-      {gameSquares}
+      {(gameSquares)}
     </div>
   </div>;
 }

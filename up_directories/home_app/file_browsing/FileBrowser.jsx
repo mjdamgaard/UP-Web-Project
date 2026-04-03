@@ -242,7 +242,7 @@ export function render({route}) {
           isDirectoryPath ? <h3>{"Directory contents"}</h3> :
             <h3>{"Result"}</h3>
         }
-        <div>{transformedResult}</div>
+        <div>{(transformedResult)}</div>
       </div>,
       <hr/>,
       fetchFile ? <div className="text-file-content">
@@ -259,7 +259,7 @@ export function render({route}) {
   return (
     <div className="file-browser">
       <div className="route">{routeJSXWithSubLinks}</div>
-      {content}
+      {(content)}
     </div>
   );
 }

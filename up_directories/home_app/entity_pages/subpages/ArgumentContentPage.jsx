@@ -42,7 +42,7 @@ export function render({
       <TextDisplay key="_0" jsxElement={content} />
     </div>
     <div className="quality-elements">
-      {scoreInterfaces}
+      {(scoreInterfaces)}
     </div>
   </div>;
 }

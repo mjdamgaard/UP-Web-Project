@@ -23,7 +23,7 @@ export function render({userID}) {
   ));
   return (
     <div className="message-list">
-      {children}
+      {(children)}
     </div>
   );
 }

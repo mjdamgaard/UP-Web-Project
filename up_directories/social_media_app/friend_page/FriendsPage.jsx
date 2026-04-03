@@ -81,7 +81,7 @@ export function render({userID}) {
       <h2>{"Friends"}</h2>
       <AddNewFriendMenu key="new-f-menu" />
       <hr/>
-      {content}
+      {(content)}
     </div>
   );
 }

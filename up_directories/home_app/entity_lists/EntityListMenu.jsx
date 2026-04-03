@@ -20,9 +20,9 @@ export function render({
 
   return (
     <div className="entity-list-menu">
-      <div className="quality-references">{map(qualKeyArr, qualKey => (
+      <div className="quality-references">{(map(qualKeyArr, qualKey => (
         <EntityReference key={"qr-" + qualKey} entKey={qualKey} />
-      ))}
+      )))}
       </div>
       <DropDownBox key="ddb">
         <div className="header">
@@ -49,7 +49,7 @@ export function render({
             />
           </div>
         </div>
-        <div className="menu-extension">{menuExtension}</div>
+        <div className="menu-extension">{(menuExtension)}</div>
       </DropDownBox>
     </div>
   );

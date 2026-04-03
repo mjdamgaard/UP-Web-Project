@@ -91,7 +91,7 @@ export function render({entKey}) {
   
   return (
     <div className="metadata-page">
-      {content}
+      {(content)}
     </div>
   );
 }

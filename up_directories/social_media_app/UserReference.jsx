@@ -56,8 +56,8 @@ export function render({userID, isLink = true, pushState = undefined}) {
   return isLink ?
     <span className={"user-reference"}>
       <ILink key="0" href={href} pushState={pushState} >{
-        content
+        (content)
       }</ILink>
     </span> :
-    <span className={"user-reference"}>{content}</span>;
+    <span className={"user-reference"}>{(content)}</span>;
 }

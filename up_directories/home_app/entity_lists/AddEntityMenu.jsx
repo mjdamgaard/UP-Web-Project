@@ -93,8 +93,8 @@ export function render({}) {
         {"Post"}
       </button>
     </>}
-    <div className="response-display">{response}</div>
-    <div className="qualities">{qualityElements}</div>
+    <div className="response-display">{(response)}</div>
+    <div className="qualities">{(qualityElements)}</div>
   </div>;
 }
 

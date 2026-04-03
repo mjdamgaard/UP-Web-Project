@@ -30,6 +30,10 @@ const VariableEntityElementPromise = import(
 // TODO: Implement the pagination.
 
 
+// Note: This impl. of EntityList does not automatically support derived
+// classes, meaning that you should not use the classKey prop in case of a
+// derived class, but rather extract the quality it derives from beforehand
+// and pass it via the qualKey (or extQualKeyArr) instead. 
 
 // This component takes either a quality, a relation--object pair, or a class,
 // and renders a list of entities fetched either from the provided quality, or
@@ -133,7 +137,8 @@ export function render({
             <ElementComponent key={"_" + entID}
               entID={entID} objKey={objKey}
               score={score} weight={weight}
-              qualKeyArr={[qualKey]} {...extraElementProps}
+              qualKeyArr={qualKeyArr} qualKey={qualKeyArr[0]}
+              {...extraElementProps}
             />
         )))}
       </div>,
@@ -141,7 +146,7 @@ export function render({
   }
 
   return (
-    <div className="entity-list">{content}</div>
+    <div className="entity-list">{(content)}</div>
   );
 }
 

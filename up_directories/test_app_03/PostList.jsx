@@ -25,7 +25,7 @@ export function render() {
   ));
   return (
     <div>
-      {retChildren}
+      {(retChildren)}
     </div>
   );
 }

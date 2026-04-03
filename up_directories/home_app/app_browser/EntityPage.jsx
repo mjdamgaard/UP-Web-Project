@@ -1,6 +1,6 @@
 
+import {slice} from 'string';
 import {fetchEntityDefinition, fetchEntityPath} from "/1/1/entities.js";
-import {verifyTypes} from 'type';
 
 import * as ClassPage from "./entity_pages/ClassPage.jsx";
 
@@ -13,11 +13,13 @@ const featuresClass = "/1/1/em3.js;get/features";
 
 
 export function initialize({entID}) {
-  fetchEntityDefinition(entID, ["Class", "Name"]).then(entDef => {
+  fetchEntityDefinition(entID, ["Class", "Name", "Quality"]).then(entDef => {
     let classKey = entDef["Class"];
     fetchEntityPath(classKey).then(classPath => {
+      let qualProp = entDef["Quality"];
       this.setState(state => ({
         ...state, classPath: classPath, name: entDef["Name"],
+        qualID: qualProp ? slice(qualProp, 2, -1) : undefined,
       }));
     });
   });
@@ -26,20 +28,20 @@ export function initialize({entID}) {
 }
 
 export function render({entID}) {
-  let {classPath, name} = this.state;
+  let {classPath, name, qualID} = this.state;
   if (classPath === undefined) {
     return <div className="entity-page fetching">{"..."}</div>;
   }
 
-  else {
-    verifyTypes([classPath, name], ["string", "string"]);
-  }
-
   // Branch according the the class of the entity.
-  let PageComponent;
+  let PageComponent, extraProps = {};
   switch(classPath) {
     case classesClass:
       PageComponent = ClassPage;
+      break;
+    case derivedClassesClass:
+      PageComponent = ClassPage;
+      extraProps = {qualKey: qualID};
       break;
     // TODO: Continue.
     default:
@@ -47,7 +49,7 @@ export function render({entID}) {
   }
 
   return <div className="entity-page">
-    <PageComponent key={entID} entID={entID} name={name} />
+    <PageComponent key={entID} entID={entID} name={name} {...extraProps} />
   </div>;
 }
 

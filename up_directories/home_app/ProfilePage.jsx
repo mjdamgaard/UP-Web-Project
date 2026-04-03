@@ -41,7 +41,7 @@ export function render({}) {
         <div className="tag-edit-field">
           <InputText key="i-tag" value={entDef["Name"]} size={10} />
           <button onClick={() => this.do("submitTag")}>{"Submit"}</button>
-          <div className="tag-response-text">{tagResponse}</div>
+          <div className="tag-response-text">{(tagResponse)}</div>
         </div>
       }
     </div>
@@ -54,7 +54,7 @@ export function render({}) {
       <div className="tag-edit-field">
         <TextArea key="i-bio" value={entDef["Bio"]} />
         <button onClick={() => this.do("submitBio")}>{"Submit"}</button>
-        <div className="bio-response-text">{bioResponse}</div>
+        <div className="bio-response-text">{(bioResponse)}</div>
       </div>
     }
   </div>;

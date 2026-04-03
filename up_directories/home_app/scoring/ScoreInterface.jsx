@@ -127,7 +127,7 @@ export function render({subjKey, qualKey, extQualKey = qualKey, scalarKey}) {
   }
 
   return (
-    <div className="score-interface">{content}</div>
+    <div className="score-interface">{(content)}</div>
   );
 }
 

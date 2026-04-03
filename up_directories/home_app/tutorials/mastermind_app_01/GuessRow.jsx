@@ -30,8 +30,8 @@ export function render({
 
   return (
     <div className={isActive ? "active" : ""}>
-      {guessRow}
-      {answerGroup}
+      {(guessRow)}
+      {(answerGroup)}
     </div>
   );
 }

@@ -113,5 +113,5 @@ export function render({
         content
       }</ILink>
     </span> :
-    <span className={"entity-reference"}>{content}</span>;
+    <span className={"entity-reference"}>{(content)}</span>;
 }

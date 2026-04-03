@@ -39,7 +39,7 @@ export function render({textID, userID, ownUserID, timestamp}) {
   return (
     <div className="post">
       <h4><UserReference key="u" userID={userID} /></h4>
-      {content}
+      {(content)}
     </div>
   );
 }

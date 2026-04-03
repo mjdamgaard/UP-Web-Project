@@ -73,7 +73,7 @@ export function render(props) {
   // Return the content.
   return (
     <div className="variable-component">
-      {content}
+      {(content)}
     </div>
   );
 }

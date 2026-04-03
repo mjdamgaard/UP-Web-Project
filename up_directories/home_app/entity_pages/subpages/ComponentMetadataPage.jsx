@@ -30,7 +30,7 @@ export function render({entKey}) {
   return <div className={
     "component-metadata-page" + (entID ? "" : " fetching")
   }>
-    <h2>{link}</h2>
+    <h2>{(link)}</h2>
     <hr/>
     <EntityMetadataPage key="m" entKey={entKey} />
   </div>;

@@ -49,7 +49,7 @@ export function render() {
         }}/>
       </div>
       <div className="link list">
-        {linkChildren}
+        {(linkChildren)}
       </div>
     </div>
   );

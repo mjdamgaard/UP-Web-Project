@@ -7,7 +7,7 @@ export function render({
 }) {
   if (jsxElement) {
     return <div className="text-display">
-      {jsxElement}
+      {(jsxElement)}
     </div>;
   }
   else if (!jsxLink) {
@@ -38,7 +38,7 @@ export function render({
   }
 
   return <div className="text-display">
-    {content}
+    {(content)}
   </div>;
 }
 

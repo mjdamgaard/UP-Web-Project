@@ -52,7 +52,7 @@ export function render({userID, ownUserID}) {
 
   return (
     <div className="user-post-wall">
-      {content}
+      {(content)}
     </div>
   );
 }
