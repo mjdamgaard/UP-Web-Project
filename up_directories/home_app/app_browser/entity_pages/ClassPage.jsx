@@ -1,5 +1,5 @@
 
-import * as TabbedPages from "/1/1/misc/TabbedPages.jsx";
+import * as TabbedPages from "/1/2/misc/TabbedPages.jsx";
 import * as MembersPage from "./subpages/MembersPage.jsx";
 
 

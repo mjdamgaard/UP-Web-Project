@@ -3025,7 +3025,7 @@ export class JSXElement extends ObjectObject {
           }
           if (val) childArr[i++] = val;
         }
-        else {
+        else if (contentNode.type === "computed-value") {
           let {exp, isWrapped} = contentNode;
           let val = interpreter.evaluateExpression(exp, decEnv);
 
@@ -3036,6 +3036,10 @@ export class JSXElement extends ObjectObject {
             val = checkAgainstJSXElements(val, node, decEnv);
           }
 
+          childArr[i++] = val;
+        }
+        else {
+          let val = interpreter.evaluateExpression(contentNode, decEnv);
           childArr[i++] = val;
         }
       });
@@ -3060,7 +3064,7 @@ export class JSXElement extends ObjectObject {
 }
 
 
-function checkAgainstJSXElements(val, node, env) {
+function checkAgainstJSXElements(val, node, env) {if (!env) debugger;
   if (val instanceof JSXElement) throw new RuntimeError(
     "A JSX element occurred inside a computed value that was not wrapped " +
     "in parentheses. (If you trust this JSX element and want to render it, " +
@@ -3068,7 +3072,9 @@ function checkAgainstJSXElements(val, node, env) {
     node, env
   );
   else if (isArray(val)) {
-    return forEachValue(val, node, env, elem => checkAgainstJSXElements(elem));
+    forEachValue(val, node, env, elem => {
+      checkAgainstJSXElements(elem, node, env);
+    });
   }
 }
 

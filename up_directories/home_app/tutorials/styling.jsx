@@ -22,7 +22,7 @@ const page = <div className="text-page">
       "This 'styleSheets' array should then contain the paths to all the " +
       "style sheets that you wish to use."
     }</p>
-    <p>{[
+    <p>{([
       "For instance, if you want to style the \"Hello, World!\" component " +
       "from the ",
       <ILink key="link-tut-2" href="~/jsx-components" >
@@ -31,7 +31,7 @@ const page = <div className="text-page">
       ", you can comment out the previous return statement and comment " +
       "in Ln. 93-96 of " +
       "the 'app2.jsx' module, such that it returns the following JSX element."
-    ]}</p>
+    ])}</p>
     <p>
       <code className="jsx">{[
         'return <div>\n',
@@ -72,27 +72,27 @@ const page = <div className="text-page">
         '}\n',
       ]}</code>
     </p>
-    <p>{[
+    <p>{([
       "By the way, if you are new to using style sheets, you can browse this ",
       <ELink key="link-css-1" href="https://www.w3schools.com/css/" >
         {"CSS Tutorial"}
       </ELink>,
       " to get an introduction to the wonderful world of CSS, and how it " +
       "is used to style HTML elements.",
-    ]}</p>
-    <p>{[
+    ])}</p>
+    <p>{([
       "Then after having commented in these lines, if you now re-upload the " +
       "component (assuming you have followed the steps of ",
       <ILink key="link-tut-1" href="~/getting-started" >
         {"Tutorial 1"}
       </ILink>,
       " as well), you will see the following."
-    ]}</p>
-    <p>{
+    ])}</p>
+    <p>
       <div className="text-display">
         <Result7_1 key="_ex7-1" />
       </div>
-    }</p>
+    </p>
     <p>{
       "Here you see that both the <h1> header from the root component and " +
       "the <h2> header from the child component are now colored red. This " +
@@ -172,11 +172,11 @@ const page = <div className="text-page">
       "And then if you re-upload your component, you will indeed see that " +
       "the child instance's <h2> header has turned blue:" 
     }</p>
-    <p>{
+    <p>
       <div className="text-display">
         <Result7_2 key="_ex7-2" />
       </div>
-    }</p>
+    </p>
   </section>
 
 

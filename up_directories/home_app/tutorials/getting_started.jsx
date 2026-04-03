@@ -40,14 +40,14 @@ const page = <div className="text-page">
       "You will also need to make sure that you have Node.js installed on " +
       "your computer."
     }</p>
-    <p>{[
+    <p>{([
       "If you do not already have Node.js installed, follow the instructions " +
       "at ",
       <ELink key="link-node-install" href="https://nodejs.org/en/download" >
         {"nodejs.org/en/download"}
       </ELink>,
       "."
-    ]}</p>
+    ])}</p>
   </section>
   <section>
     <h2>{"Installing a program for uploading UP directories"}</h2>
@@ -56,7 +56,7 @@ const page = <div className="text-page">
       "allows you to quickly and easily upload and update a whole UP " +
       "directory at once."
     }</p>
-    <p>{[
+    <p>{([
       "You can get this program by cloning or downloading the GitHub " +
       "repository at ",
       <ELink key="link-UPDirUpdater"
@@ -66,7 +66,7 @@ const page = <div className="text-page">
       "."
       // " (To simply download the repository as a ZIP folder, click on the " +
       // "green 'Code' button, then click 'Download ZIP.')"
-    ]}</p>
+    ])}</p>
     <p>
       Once you have downloaded (and unpacked) this directory to your
       computer, open this 'UPDirUpdater' directory in your
@@ -92,13 +92,13 @@ const page = <div className="text-page">
       "highlighting for JSX files, and especially if you want to proceed to " +
       "the next tutorials after this one."
     }</p>
-    <p>{[
+    <p>{([
       "An example of an IDE that supports JSX syntax highlighting is ",
       <ELink key="link-vscode" href="https://code.visualstudio.com/" >
         {"VS Code"}
       </ELink>,
       "."
-    ]}</p>
+    ])}</p>
   </section>
   <section>
     <h2>{"Uploading your first UP app"}</h2>
@@ -296,11 +296,11 @@ const page = <div className="text-page">
       have just
       made to your app:
     </p>
-    <p>{
+    <p>
       <div className="text-display">
         <h1>Hello, <i>{"<Word of your choice>"}</i>!</h1>
       </div>
-    }</p>
+    </p>
     <p>
       You have now uploaded and edited your first UP app!
     </p>
@@ -390,11 +390,11 @@ const page = <div className="text-page">
       your directory once again, and refresh the app page, you
       should now see the same "Hello, World!" text as you did initially: 
     </p>
-    <p>{
+    <p>
       <div className="text-display">
         <h1>{"Hello, World!"}</h1>
       </div>
-    }</p>
+    </p>
     <p>
       You now know how to specify the root component of your app!
       (You will learn more about the
@@ -441,7 +441,7 @@ const page = <div className="text-page">
 
   <section>
     <h2>Final remarks</h2>
-    <p>{[
+    <p>{([
       "You now know how to upload and edit UP apps. The following couple " +
       "of tutorials will then teach you how to create more advanced " +
       "components, as well as how to " +
@@ -451,7 +451,7 @@ const page = <div className="text-page">
       </ILink>,
       ", you should have all the knowledge required to start making " +
       "your own client-side apps."
-    ]}</p>
+    ])}</p>
     <p>
       Then once you are ready to move on to creating apps that upload
       and download data from the database, Tutorials

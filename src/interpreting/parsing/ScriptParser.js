@@ -504,8 +504,8 @@ export const scriptGrammar = {
   "case-or-statement": {
     rules: [
       ["statement"],
-      ["/case/", "expression", "/:/"],
-      ["/default/", "expression", "/:/"],
+      ["/case/", "expression!", "/:/"],
+      ["/default/", "/:/"],
     ],
     process: (children, ruleInd) => (
       (ruleInd === 0) ? children[0] : (ruleInd === 1) ? {
@@ -1039,7 +1039,7 @@ export const scriptGrammar = {
     rules: [
       ["jsx-element!1"],
       ["text-literal"],
-      [/\{/, /\(/, "expression!", /\)/, /\}/],
+      [/\{/, /\(/, "expression", /\)/, /\}/],
       [/\{/, "expression", /\}/],
       [/\{/, /\}/],
     ],

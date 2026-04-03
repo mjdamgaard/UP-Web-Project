@@ -13,14 +13,14 @@ const page = <div className="text-page">
   <h1>{"Sharing your contributions"}</h1>
   <section>
     <h2>{"How to share an ongoing project"}</h2>
-    <p>{[
+    <p>{([
       "If you have started working a new app or feature and you want other " +
       "users to join in, you can make a post describing it on the ",
       <ILink key="link-proj" href="/ep/1/1/em1.js;get/projects" >
         {"Projects"}
       </ILink>,
       " page."
-    ]}</p>
+    ])}</p>
     <p>{
       "On this page you see a class of 'Projects,' whose members are all the " +
       "user-submitted projects."
@@ -58,15 +58,15 @@ const page = <div className="text-page">
 
   <section>
     <h2>{"How to share a new app"}</h2>
-    <p>{[
+    <p>{([
       "When your new app is ready to be tried out by others, you can post " +
       "it on the ",
       <ILink key="link-comp" href="/ep/1/1/em1.js;get/components" >
         {"Components"}
       </ILink>,
       " page."
-    ]}</p>
-    <p>{[
+    ])}</p>
+    <p>{([
       "This is done in a similar way as how you post a project, except " +
       "that you need to use the text field that is followed by a 'Submit' " +
       "button. Here you should enter the (server-side) path to your app " +
@@ -76,7 +76,7 @@ const page = <div className="text-page">
         {"Tutorial 1"}
       </ILink>,
       "."
-    ]}</p>
+    ])}</p>
     <p>{
       "In that tutorial, the component entity object looked like this:"
     }</p>
@@ -116,14 +116,14 @@ const page = <div className="text-page">
 
   <section>
     <h2>{"How to log a contribution"}</h2>
-    <p>{[
+    <p>{([
       "Whenever you create or modify a user-programmed app, it is also a " +
       "good idea to log it on the ",
       <ILink key="link-contr" href="/ep/1/1/em1.js;get/contributions" >
         {"Contributions"}
       </ILink>,
       " page."
-    ]}</p>
+    ])}</p>
     <p>{
       "And here you can also log any other kind of contribution that you " +
       "have made " +

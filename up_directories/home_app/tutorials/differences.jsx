@@ -52,17 +52,17 @@ const page = <div className="text-page">
         'let squares = numbers.map(num => num * num); // Wrong!\n',
       ]}</code>
     </p>
-    <p>{[
-      "But this is wrong in this framework, as the ",
+    <p>
+      But this is wrong in this framework, as the
       <ELink key="link-map-1"
         href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map" >
-        {"map()"}
-      </ELink>,
-      " method is not defined. And instead you need to import an equivalent " +
-      "function from one of the so-called 'developer libraries' (as " +
-      "opposed to user-made libraries). In particular for the map() method, " +
-      "you would write the following instead."
-    ]}</p>
+        map()
+      </ELink>
+      method is not defined. And instead you need to import an equivalent
+      function from one of the so-called 'developer libraries' (as
+      opposed to user-made libraries). In particular for the map() method,
+      you would write the following instead.
+    </p>
     <p>
       <code className="jsx">{[
         '/* At the top of the module */\n',
@@ -83,7 +83,7 @@ const page = <div className="text-page">
       "module names, i.e. names that does not start with \"/\" or \"./\", " +
       "etc."
     }</p>
-    <p>{[
+    <p>{([
       "In a future version of this tutorial, we will link to a " +
       "documentation page here, where one can see all the available " +
       "developer libraries and their functions. But in the meantime, you can " +
@@ -109,14 +109,14 @@ const page = <div className="text-page">
         {"src/dev_lib"}
       </ELink>,
       " folder, so you can also browse this folder to see what is available."
-    ]}</p>
+    ])}</p>
     <p>{
       "Luckily, however, it is often not very hard to guess how to import " +
       "a given developer function that you need, especially when it comes to " +
       "all those prototype methods that are missing when compared to regular " +
       "JS."
     }</p>
-    <p>{[
+    <p>{([
       "All the most common JS prototypes have their own developer library " +
       "(dev lib) of " +
       "the same name (only with lower-case letters): The ",
@@ -140,7 +140,7 @@ const page = <div className="text-page">
         {"Object"}
       </ELink>,
       " prototype has an 'object' dev lib."
-    ]}</p>
+    ])}</p>
     <p>{
       "In these libraries, you will find, not necessarily all, but most of " +
       "the functions that you are looking for, and generally exported with " +
@@ -156,7 +156,7 @@ const page = <div className="text-page">
       "A notable exception is the toString() method, which is only exported " +
       "from the 'string' dev lib."
     }</p>
-    <p>{[
+    <p>{([
       "Static methods such as ",
       <ELink key="link-entries"
         href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries" >
@@ -170,7 +170,7 @@ const page = <div className="text-page">
       " also have corresponding developer functions for the most part. " +
       "These functions just does not need a special first argument, which " +
       "means that the API is often exactly the same."
-    ]}</p>
+    ])}</p>
     <p>{
       "As an example, here is how one would import and use the entries() " +
       "function:"
@@ -190,7 +190,7 @@ const page = <div className="text-page">
 
   <section>
     <h2>{"Global functions"}</h2>
-    <p>{[
+    <p>{([
       "As the keen-eyed reader might have spotted, we did not import the " +
       "console.log() function here in the previous example before using it. " +
       "And that is because " +
@@ -203,10 +203,10 @@ const page = <div className="text-page">
       </ELink>,
       " function is implemented syntactically in regular JS, and some " +
       "are declared in the global scope.)"
-    ]}</p>
-    <p>{[
+    ])}</p>
+    <p>{([
       "These global functions include the following ones, among others."
-    ]}</p>
+    ])}</p>
     <p>
       <code className="jsx">{[
         'console.log(myValue);\n',
@@ -222,13 +222,13 @@ const page = <div className="text-page">
         'abs(myRelativeOrAbsolutePath);',
       ]}</code>
     </p>
-    <p>{[
+    <p>{([
       "Almost all of these functions/constructors are known " +
       "from regular JS, except the abs() function at the end of this list, " +
       "which is a syntactically implemented function that takes a path as " +
       "argument, potentially a relative one (from the current module), and " +
       "returns the absolute version of that path."
-    ]}</p>
+    ])}</p>
   </section>
 
   <section>
@@ -578,7 +578,7 @@ const page = <div className="text-page">
       "You should now have what you need to start building your first " +
       "client-side UP apps. Good luck!"
     }</p>
-    {/* <p>{[
+    {/* <p>{([
       "And as was said in ",
       <ILink key="link-tut-1" href="~/getting-started">
         {"Tutorial 1"}
@@ -586,7 +586,7 @@ const page = <div className="text-page">
       ", if you run into any problems, or have any questions at all, please " +
       "feel free to contact up-web.org, e.g. by writing an " +
       "e-mail to mads@up-web.org. We are happy to help you."
-    ]}</p> */}
+    ])}</p> */}
   </section>
 
 

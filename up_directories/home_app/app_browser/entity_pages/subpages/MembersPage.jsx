@@ -1,7 +1,7 @@
 
 
 import * as EntityList from "/1/2/entity_lists/EntityList.jsx"
-import * as EntityElement from "../EntityElement.jsx";
+import * as EntityElement from "../../EntityElement.jsx";
 
 
 export function render({classKey, qualKey}) {

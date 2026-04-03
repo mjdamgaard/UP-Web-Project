@@ -23,12 +23,12 @@ const page = <div className="text-page">
       "network of user-programmed websites and applications. And up-web.org " +
       "is the first, pioneering website in this network!"
     }</p>
-    <p>{[
+    <p>{([
       "And by \"user-programmable,\" we refer to the fact that almost " +
       "everything you see on this webpage is generated from source code " +
       "components that is uploaded to the website, by the users!",
       // <i>{"by the users!"}</i>,
-    ]}</p>
+    ])}</p>
     <p>{
       "In fact, the only thing on this webpage that is not programmed and " +
       "uploaded by a user is the account menu at the top right of this " +
@@ -148,14 +148,14 @@ const page = <div className="text-page">
       "and modify the source code, and set up their own version this website " +
       "if they want."
     }</p>
-    <p>{[
+    <p>{([
       "The source code for this project can currently be found at ",
       <ELink key="link-github-repo"
         href="https://github.com/mjdamgaard/UP-Web-Project">
         {"github.com/mjdamgaard/UP-Web-Project"}
       </ELink>,
       "."
-    ]}</p>
+    ])}</p>
     <p>{
       "The users are furthermore strongly encouraged to use open-source " +
       "licenses for their uploaded source code as well, and to make this " +
@@ -207,19 +207,19 @@ const page = <div className="text-page">
       "want to take part in programming some of the first UP apps, and to " +
       "familiarize themselves with the system."
     }</p>
-    <p>{[
+    <p>{([
       "To learn how to get started with creating and uploading your own app " +
       "components, you can follow the ",
       <ILink key="tut-link-1" href="/tutorials" >
         {"tutorials"}
       </ILink>,
       " of this website."
-    ]}</p>
-    <p>{[
+    ])}</p>
+    <p>{([
       "We hope that you will have fun creating your own UP apps, and taking " +
       "an early and important part in this potentially ground-breaking " +
       "online movement."
-    ]}</p>
+    ])}</p>
   </section>
 </div>;
 

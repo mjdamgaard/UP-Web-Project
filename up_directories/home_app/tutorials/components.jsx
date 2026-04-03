@@ -31,7 +31,7 @@ const page = <div className="text-page">
       'hello_world' directory such that the 'COMPONENT_PATH' constant now
       points to the 'app2.jsx' file. 
     </p>
-    <p>{[
+    <p>{([
       "The system used for building front-end components is inspired by ",
       <ELink key="link-wiki-react"
         href="https://en.wikipedia.org/wiki/React_(software)"
@@ -64,11 +64,11 @@ const page = <div className="text-page">
         {"w3schools.com"}
       </ELink>,
       " first, before you continue with this tutorial."
-    ]}</p>
+    ])}</p>
   </section>
   <section>
     <h2>{"A framework similar to React"}</h2>
-    <p>{[
+    <p>{([
       "To see how components work in this framework, let us first of all " +
       "take a look at the \"Hello, World!\" example from the ",
       <ILink key="link-tut-1-2" href="~/getting-started">
@@ -76,7 +76,7 @@ const page = <div className="text-page">
       </ILink>,
       " tutorial. Here the component you uploaded was " +
       "defined from the following lines of code."
-    ]}</p>
+    ])}</p>
     <p>
       <code className="jsx">{[
         'export function render() {\n',
@@ -87,11 +87,11 @@ const page = <div className="text-page">
     <p>{
       "And these lines produced the following result."
     }</p>
-    <p>{
+    <p>
       <TextDisplay key="_ex0" >
         <Result0 key="0" />
       </TextDisplay>
-    }</p>
+    </p>
     <p>{
       "We can see here that the rendered \"Hello, " +
       "World!\" text is returned from an exported function called render(). " +
@@ -105,14 +105,14 @@ const page = <div className="text-page">
       "But before we introduce the other possible exports of a component " +
       "module, let us see how importing a component works."
     }</p>
-    <p>{[
+    <p>{([
       "In the 'app2.jsx' file that was used in the last part of the ",
       <ILink key="link-tut-1-3" href="~/getting-started">
         {"Getting started"}
       </ILink>,
       " tutorial, there is an out-commented line at Ln. 2 " +
       "which reads"
-    ]}</p>
+    ])}</p>
     <p>
       <code className="jsx">
         {'import * as ExampleComponent1 from "./ExampleComponent1.jsx";'}
@@ -150,11 +150,11 @@ const page = <div className="text-page">
       "you did in the previous tutorial), " +
       "you should now see the following result."
     }</p>
-    <p>{
+    <p>
       <TextDisplay key="_ex1" >
         <Result1 key="0" />
       </TextDisplay>
-    }</p>
+    </p>
     <p>{
       "And if you go to the " +
       "ExampleComponent1.jsx module, you will indeed see that \"I am a child " +
@@ -267,7 +267,7 @@ const page = <div className="text-page">
         '}\n',
       ]}</code>
     </p>
-    <p>{[
+    <p>{([
       "This component thus takes two props, namely an ",
       <span>{"'isItalic'"}</span>, " prop, which " +
       "defaults to false, and a ",
@@ -275,8 +275,8 @@ const page = <div className="text-page">
       "The component then branches " +
       "according to isItalic, and renders the value of the children prop " +
       "either nested inside an <i> element or not."
-    ]}</p>
-    <p>{[
+    ])}</p>
+    <p>{([
       "If the you are unfamiliar with the syntax seen inside the argument " +
       "tuple if this render() function, which is a so-called \"object " +
       "destructuring\" syntax, you can can read about it ",
@@ -292,15 +292,15 @@ const page = <div className="text-page">
         {"here"}
       </ELink>,
       "."
-    ]}</p>
+    ])}</p>
     <p>{
       "If you now re-upload the directory, you will see the following."
     }</p>
-    <p>{
+    <p>
       <TextDisplay key="_ex2" >
         <Result2 key="0" />
       </TextDisplay>
-    }</p>
+    </p>
     <p>{
       "We thus see that the first " +
       "paragraph shown under the \"Hello, World!\" header is indeed italic, " +
@@ -385,11 +385,11 @@ const page = <div className="text-page">
       "If you then re-upload your directory, you should now see a button " +
       "saying \"Click me!\", like this:"
     }</p>
-    <p>{
+    <p>
       <TextDisplay key="_ex3" >
         <Result3 key="0" />
       </TextDisplay>
-    }</p>
+    </p>
     <p>{
       "And if you try to click that button a couple of " +
       "times, you should see that a counter is increased each time, just " +
@@ -414,7 +414,7 @@ const page = <div className="text-page">
         '}\n',
       ]}</code>
     </p>
-    <p>{[
+    <p>{([
       "First of all, we see that on the first line within the function body, " +
       "we extract a 'counter' property of the this.state object, and let its " +
       "default value be 0. (This is another example of an object " +
@@ -433,13 +433,13 @@ const page = <div className="text-page">
       ".) ",
       "This destructuring assignment is possible since the default initial " +
       "value of this.state is an empty object."
-    ]}</p>
+    ])}</p>
     <p>{
       "And then if we take a look at the <button> element, we see that it " +
       "has an 'onClick' attribute, which directs the click event to a " +
       "function that calls this.setState() to increase that counter by one."
     }</p>
-    <p>{[
+    <p>{([
       "Note that setState() can be called on a callback function that takes " +
       "the " +
       "current state as its argument. And this is very much the recommended " +
@@ -456,7 +456,7 @@ const page = <div className="text-page">
       "rerendering, namely since the state argument of the callback function " +
       "is guaranteed to always be completely up-to-date with the latest " +
       "state change."
-    ]}</p>
+    ])}</p>
     <p>{
       "Whenever setState() is called, a rerender of the component instance " +
       "is queued, which means that the instance will update its appearance " +
@@ -591,11 +591,11 @@ const page = <div className="text-page">
     <p>{
       "we now get that the counter increases by 2 each time:"
     }</p>
-    <p>{
+    <p>
       <TextDisplay key="_ex4" >
         <Result4 key="0" />
       </TextDisplay>
-    }</p>
+    </p>
     <p>{
       "Note also that the 'this' keyword is automatically bound to the same " +
       "object as for render() and initialize(), allowing us to call " +
@@ -705,11 +705,11 @@ const page = <div className="text-page">
       "also try this yourself if you comment in the right lines and re-" +
       "upload your component.)"
     }</p>
-    <p>{
+    <p>
       <TextDisplay key="_ex5" >
         <Result5 key="0" />
       </TextDisplay>
-    }</p>
+    </p>
     <p>{
       "You are now ready to use methods!"
     }</p>
@@ -825,11 +825,11 @@ const page = <div className="text-page">
       "an event that simply redirects to the \"increaseCounter\" action in " +
       "the parent, and the parent's counter is increased, like shown here:"
     }</p>
-    <p>{
+    <p>
       <TextDisplay key="_ex6" >
         <Result6 key="0" />
       </TextDisplay>
-    }</p>
+    </p>
     <p>{
       "And now you know how to use events!"
     }</p>
@@ -842,7 +842,7 @@ const page = <div className="text-page">
       "whatever is the case, and then let the ancestor be responsible for " +
       "determining how that event should be handled."
     }</p>
-    <p>{[
+    <p>{([
       "And if you ever fear that a triggered event might unintentionally " +
       "collide with an event of another ancestor component instance, " +
       "before it " +
@@ -856,12 +856,12 @@ const page = <div className="text-page">
       "and descendant component in question import a Symbol from the same " +
       "auxiliary module, and use that Symbol as the event key in order to " +
       "be sure to avoid unintended collisions."
-    ]}</p>
+    ])}</p>
   </section>
 
   <section>
     <h2>{"Final remarks"}</h2>
-    <p>{[
+    <p>{([
       "You are now almost ready to get started on working on your first " +
       "app components, whatever they might be. But before you do, it is " +
       "recommended to first take a look at ",
@@ -875,8 +875,8 @@ const page = <div className="text-page">
       ", which will list a couple of things to look out for when using this " +
       "framework, as well as give you some tips about debugging your " +
       "components."
-    ]}</p>
-    <p>{[
+    ])}</p>
+    <p>{([
       "And once you are ready to move on from there, Tutorials ",
       <ILink key="link-tut-5" href="~/server-modules">
         {"5"}
@@ -887,7 +887,7 @@ const page = <div className="text-page">
       </ILink>,
       " will teach you how to create your first server modules, which " +
       "will allow your components to upload and retrieve data from the server."
-    ]}</p>
+    ])}</p>
   </section>
 
 </div>;

@@ -541,7 +541,7 @@ export const styleSheets = [
 //       "which as we have argued above is also not a very good measure, as it " +
 //       "often inadvertently boosts clickbait and negative content, etc."
 //     }</p>
-//     <p>{[
+//     <p>{([
 //       "We want to make up for this by introducing 'scalar predicates,' " +
 //       "which you can think about as a kind of ",
 //       <ELink key="link-tag"
@@ -549,7 +549,7 @@ export const styleSheets = [
 //         {"tags"}
 //       </ELink>,
 //       ", but where each tag can be rated on a scale."
-//     ]}</p>
+//     ])}</p>
 //     <p>{
 //       "For instance, if a user wants to rate a given movie, instead of just " +
 //       "being able to say whether it is good or bad, the user gets a wide " +
@@ -575,13 +575,13 @@ export const styleSheets = [
 //       "simpler user interface, it does not necessarily mean a better user " +
 //       "experience. For even though ..."
 //     }</p> * /}
-//     <p>{[
+//     <p>{([
 //       "For more on this project, go to ",
 //       <ILink key="link-semantic-qualities" href="/intro/qualities" >
 //         {"this page"}
 //       </ILink>,
 //       "."
-//     ]}</p>
+//     ])}</p>
 
 //     <h3>{"Structured comment sections"}</h3>
 //     <p>{

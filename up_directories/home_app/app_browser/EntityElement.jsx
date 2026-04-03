@@ -34,7 +34,7 @@ export function render({entID, qualKey, score, weight}) {
   switch(classPath) {
     case classesClass:
     case derivedClassesClass:
-      content = "...";
+      content = <EntityReference key="er" entKey={entID} />;
       break;
     // TODO: Continue.
     default:
