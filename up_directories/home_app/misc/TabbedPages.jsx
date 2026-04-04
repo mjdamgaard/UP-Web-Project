@@ -15,7 +15,7 @@ export function render({tabs, closeInactiveTabs = undefined}) {
 
   return (
     <div className="tabbed-pages">
-      <div className="tab-menu">{
+      <div className="tab-menu">{(
         map(tabEntries, ([tabKey, tabData]) => {
           if (!tabData) return undefined;
           let {title} = tabData;
@@ -23,8 +23,8 @@ export function render({tabs, closeInactiveTabs = undefined}) {
             isOpen={tabKey === openTabKey} isLoaded={loadedPages[tabKey]}
           />;
         })
-      }</div>
-      <div className="page-container">{
+      )}</div>
+      <div className="page-container">{(
         map(loadedPageEntries, ([tabKey, tabData]) => {
           if (!tabData) return undefined;
           let isOpen = tabKey === openTabKey;
@@ -33,7 +33,7 @@ export function render({tabs, closeInactiveTabs = undefined}) {
             <Component key={"p-" + tabKey} {...pageProps} />
           </div>;
         })
-      }</div>
+      )}</div>
     </div>
   );
 }

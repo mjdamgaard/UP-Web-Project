@@ -76,7 +76,7 @@ export function render({}) {
     <button onClick={() => this.do("submitEntityToInsert")}>
       {"Submit"}
     </button>
-    {!isTextOrScalarClass ? undefined : <>
+    {(!isTextOrScalarClass ? undefined : <>
       <div>{
         "Or write and insert a new text entity."
       }</div>
@@ -92,7 +92,7 @@ export function render({}) {
       <button onClick={() => this.do("submitTextEntityToInsert")}>
         {"Post"}
       </button>
-    </>}
+    </>)}
     <div className="response-display">{(response)}</div>
     <div className="qualities">{(qualityElements)}</div>
   </div>;

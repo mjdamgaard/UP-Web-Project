@@ -56,7 +56,7 @@ export function render({userID}) {
   // friend requests, followed by a div with the friends.
   else {
     content = [
-      <div className="friend-requests">{
+      <div className="friend-requests">{(
         map(friendRequestList, ([otherUserID, timestamp, isDeclined]) => (
           isDeclined ? undefined :
             <FriendRequestDisplay key={"f-req-" + otherUserID}
@@ -64,15 +64,15 @@ export function render({userID}) {
               timestamp={timestamp}
             />
         ))
-      }</div>,
+      )}</div>,
       <hr/>,
-      <div className="friend-list">{
+      <div className="friend-list">{(
         map(friendList, ([friendID, timestamp]) => (
           <FriendDisplay key={"f-" + friendID}
             friendID={friendID} ownUserID={userID} timestamp={timestamp}
           />
         ))
-      }</div>,
+      )}</div>,
     ];
   }
 

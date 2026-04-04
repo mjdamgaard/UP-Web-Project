@@ -11,13 +11,13 @@ export function render(props) {
       onClick={() => this.do("toggle")}
     ><span className="symbol"></span></div>
     <div className="content">
-      <div className={"initial-content" + (isOpen ? " hidden" : "")}>{
+      <div className={"initial-content" + (isOpen ? " hidden" : "")}>{(
         children
-      }</div>
-      <div className={"expanded-content" + (isOpen ? "" : " hidden")}>{
+      )}</div>
+      <div className={"expanded-content" + (isOpen ? "" : " hidden")}>{(
         isLoaded ? <ExpandedComponent key="exp" {...expCompProps} /> :
           undefined
-      }</div>
+      )}</div>
     </div>
   </div>;
 }

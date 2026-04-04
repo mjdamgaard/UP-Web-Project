@@ -19,9 +19,9 @@ export function render({urlEntIDs}) {
   if (!links) {
     return <div className="nav-path fetching">{"..."}</div>;
   }
-  return <div className="nav-path">{
+  return <div className="nav-path">{(
     map(links, link => [" / ", link])
-  }</div>;
+  )}</div>;
 }
 
 

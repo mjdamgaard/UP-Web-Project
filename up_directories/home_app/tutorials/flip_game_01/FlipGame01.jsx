@@ -12,13 +12,13 @@ export function render({rowNum = 3, colNum = 3}) {
   // Create a random rowNum-by-colNum matrix of GameSquare instances, which
   // each chooses its own initial state at random.
   let gameSquares = createArray(rowNum, rowInd => (
-    <div className="row">{
+    <div className="row">{(
       createArray(colNum, colInd => (
         <GameSquare key={"s-" + rowInd + "-" + colInd}
           rowInd={rowInd} colInd={colInd}
         />
       ))
-    }</div>
+    )}</div>
   ));
 
   // Return the JSX element of the game app.

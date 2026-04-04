@@ -3033,7 +3033,7 @@ export class JSXElement extends ObjectObject {
           // that the value contains no nested JSX elements that would
           // otherwise be rendered.
           if (!isWrapped) {
-            val = checkAgainstJSXElements(val, node, decEnv);
+            checkAgainstJSXElements(val, node, decEnv);
           }
 
           childArr[i++] = val;

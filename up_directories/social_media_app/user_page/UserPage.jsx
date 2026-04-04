@@ -9,14 +9,14 @@ export function render({userID, ownUserID}) {
   return (
     <div className="home-page">
       <h2 className="title"><UserReference key="title" userID={userID} /></h2>
-      {
+      {(
         (userID && ownUserID === userID) ? <>
           <ChangeUsernameMenu key={"ch-uname-" + userID} userID={userID} />
           <hr/>
           <NewPostField key="post" userID={userID} />
           <hr/>
         </> : undefined
-      }
+      )}
       <UserPostWall key="wall" userID={userID} ownUserID={ownUserID} />
     </div>
   );

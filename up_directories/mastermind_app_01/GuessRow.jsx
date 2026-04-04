@@ -6,7 +6,7 @@ export function render({
   guess: {curSlot, slots} = defaultGuess, answer = defaultAnswer, isActive
 }) {
   let guessRow = (
-    <div className="guess-row">{
+    <div className="guess-row">{(
       map(slots, (colorID, ind) => {
         let className = (ind === curSlot) ? "selected" : "";
         let onClick = !isActive ? undefined : () => {
@@ -18,14 +18,14 @@ export function render({
           </div>
         );
       })
-    }</div>
+    )}</div>
   );
   let answerGroup = (
-    <div className="answer">{
+    <div className="answer">{(
       map(answer, (colorID, ind) => (
         <Peg key={"p-a-" + ind} colorID={colorID}/>
       ))
-    }</div>
+    )}</div>
   );
 
   return (

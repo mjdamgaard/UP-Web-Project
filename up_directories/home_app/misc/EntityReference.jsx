@@ -109,9 +109,9 @@ export function render({
   // on the 'isLink' prop.
   return isLink ?
     <span className={"entity-reference"}>
-      <ILink key="0" href={href} >{
+      <ILink key="0" href={href} >{(
         content
-      }</ILink>
+      )}</ILink>
     </span> :
     <span className={"entity-reference"}>{(content)}</span>;
 }

@@ -89,11 +89,11 @@ export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
       (noHeader ? " no-header" : "");
     isTrusted ||= hasBeenDismissed;
     return <div className={className}>
-      {isTrusted ? undefined :
+      {(isTrusted ? undefined :
         <PhishingWarning key="w" entKey={entKey}
           sessionStorage={sessionStorage} localStorage={localStorage}
         />
-      }
+      )}
       <div className={"component" + (isTrusted ? "" : " blurred")}>
         <Component {...props} key="_0" />
       </div>

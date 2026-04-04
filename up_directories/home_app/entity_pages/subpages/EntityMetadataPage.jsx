@@ -57,28 +57,28 @@ export function render({entKey}) {
       </div>,
       <hr/>,
       <h3>{"Entity ID"}</h3>,
-      <div className="ent-id">{
+      <div className="ent-id">{(
         entID === undefined ? <span className="fetching">{"..."}</span> :
           entID ? entID :
             <span className="missing">{"missing"}</span>
-      }</div>,
+      )}</div>,
       <hr/>,
       <h3>{"Defining properties"}</h3>,
-      <table className="def-props-table">{
+      <table className="def-props-table">{(
         mapToArray(entDef, (val, key, ind) => (
           <tr>
             <th>{key}</th>
-            <td>{
+            <td>{(
               (typeof val === "string") ?
                 <TextWithSubstitutedLinks key={"attr-" + ind}
                   children={val}
                 /> :
               (val && typeof val === "object") ? stringify(val) :
               (val === undefined) ? "undefined" : val
-            }</td>
+            )}</td>
           </tr>
         ))
-      }</table>,
+      )}</table>,
       <hr/>,
       <h3>{"Description"}</h3>,
       descAttr ? (

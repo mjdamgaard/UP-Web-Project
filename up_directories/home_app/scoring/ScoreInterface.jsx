@@ -86,7 +86,7 @@ export function render({subjKey, qualKey, extQualKey = qualKey, scalarKey}) {
           />
         </div>
         <div className="score-bar">
-          {isBounded ?
+          {(isBounded ?
             <InputRangeAndValue key="input"
               value={hasPrevScore ? prevScore : undefined}
               placeholder={hasPrevScore ? undefined : "N/A"}
@@ -98,7 +98,7 @@ export function render({subjKey, qualKey, extQualKey = qualKey, scalarKey}) {
               placeholder={hasPrevScore ? undefined : "N/A"}
               onInput={e => this.do("updateLabel", e.value)}
             /> 
-          }
+          )}
           <span className="unit">{metric["Unit"] || undefined}</span>
           <span className="interval-label">{
             intervalLabel ? " (" + intervalLabel + ")" : undefined
@@ -119,7 +119,7 @@ export function render({subjKey, qualKey, extQualKey = qualKey, scalarKey}) {
             newScore ? "Current user score: " + newScore :
               hasPrevScore ? "Previous user score: " + prevScore : undefined
           }</div>
-          <div className="response">{msg}</div>
+          <div className="response">{(msg)}</div>
         </div>
       </div>
       <AggregatedScoreDisplay key="asd" qualKey={qualKey} subjKey={subjKey} />
