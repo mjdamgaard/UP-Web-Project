@@ -879,10 +879,6 @@ export const components = {
     // and the entity ought to be down-rated as a member of this class if they
     // are not true:)
     "GitHub repository", "Creator(s)",
-
-    // In case the component implements a given app (see ./em3.js), this
-    // property should point to that app entity.
-    "App",
   ],
   "Description": abs("./em1_aux.js;get/componentsDesc"),
 };

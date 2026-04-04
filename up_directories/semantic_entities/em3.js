@@ -43,10 +43,25 @@ export const startApps = {
 
 
 
-// The 'versions' of an app are the component entities that implements the
-// app (following the overall vision defined by the app's description and
-// possibly its prototype).
-export const versions = {
+// 'App versions' are specific implementations of a given app.
+export const appVersions = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "App versions",
+  "Superclass": abs("./em1.js;get/entities"),
+  "Common properties": [
+    // The app entity that this entity is a version of.
+    "App",
+    // A component entity that showcases and/or documents the app version.
+    "Example component",
+    // The component entity that actually implements the app.
+    "Implementation",
+  ],
+  "Description": "The class of all user-programmed apps.",
+};
+
+
+// The relation to connect an app with its versions.
+export const appVersionsRel = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Versions",
   "getQualityName": objKey => "Is a version of ${" + objKey + "}",
@@ -54,10 +69,11 @@ export const versions = {
     "of ${" + objKey + "}",
   "getClassName": objKey => "Versions of ${" + objKey + "}",
   "Object domain": abs("./em3.js;get/apps"),
-  "Subject domain": abs("./em1.js;get/components"),
+  "Subject domain": abs("./em3.js;get/appVersions"),
   "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/membersDesc"),
 };
+
 
 
 
@@ -69,9 +85,7 @@ export const versions = {
 // between a set of other features.
 // Similarly to the 'App' entities above, 'Feature' entities only describes the
 // vision of the feature, through their "Description" property, and possibly a
-// "Prototype" property. And then similarly to the 'Versions' relation for
-// apps, the feature entities have an 'Implementations' relation where users
-// can post their implementations of the given feature. 
+// "Prototype" property.
 export const features = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Features",
@@ -100,19 +114,34 @@ export const featuresRel = {
 };
 
 
-// The 'implementations' of a given feature are a list of components that
-// showcases a specific implementation of the given feature. (These components
-// can include (or link to) their own documentation for how the implemented
-// feature cna be installed in an app.)
-export const implementations = {
+
+// 'App versions' are specific implementations of a given app.
+export const featureVersions = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "Feature versions",
+  "Superclass": abs("./em1.js;get/entities"),
+  "Common properties": [
+    // The feature entity that this entity is a version of.
+    "Feature",
+    // A component entity that showcases and/or documents the app version.
+    "Example component",
+    // The component entity that actually implements the app.
+    "Implementation",
+  ],
+  "Description": "The class of all user-programmed apps.",
+};
+
+
+// The relation to connect an app with its versions.
+export const featureVersionsRel = {
   "Class": abs("./em1.js;get/relations"),
-  "Name": "Implementations",
-  "getQualityName": objKey => "Is an implementation of ${" + objKey + "}",
-  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is an " +
-  "implementation of ${" + objKey + "}",
-  "getClassName": objKey => "Implementations of ${" + objKey + "}",
-  "Object domain": abs("./em3.js;get/features"),
-  "Subject domain": abs("./em1.js;get/components"),
+  "Name": "Versions",
+  "getQualityName": objKey => "Is a version of ${" + objKey + "}",
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a version " +
+    "of ${" + objKey + "}",
+  "getClassName": objKey => "Versions of ${" + objKey + "}",
+  "Object domain": abs("./em3.js;get/apps"),
+  "Subject domain": abs("./em3.js;get/featureVersions"),
   "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/membersDesc"),
 };
@@ -131,7 +160,7 @@ export const supportingAppVersions = {
     "${" + objKey + "}",
   "getClassName": objKey => "Supporting apps for ${" + objKey + "}",
   "Object domain": abs("./em3.js;get/features"),
-  "Subject domain": abs("./em1.js;get/components"),
+  "Subject domain": abs("./em3.js;get/appVersions"),
   "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/membersDesc"),
 };
@@ -143,7 +172,7 @@ export const supportedFeatures = {
   "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is supported by " +
     "${" + objKey + "}",
   "getClassName": objKey => "Supported features by ${" + objKey + "}",
-  "Object domain": abs("./em1.js;get/components"),
+  "Object domain": abs("./em3.js;get/appVersions"),
   "Subject domain": abs("./em3.js;get/features"),
   "Metric": abs("./em1.js;get/gradingMetric"),
   "Description": abs("./em1_aux.js;get/membersDesc"),

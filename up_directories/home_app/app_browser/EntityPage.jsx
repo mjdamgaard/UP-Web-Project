@@ -6,9 +6,10 @@ import * as ClassPage from "./entity_pages/ClassPage.jsx";
 
 const classesClass = "/1/1/em1.js;get/classes";
 const derivedClassesClass = "/1/1/em1.js;get/derivedClasses";
-const componentsClass = "/1/1/em1.js;get/components";
 const appsClass = "/1/1/em3.js;get/apps";
 const featuresClass = "/1/1/em3.js;get/features";
+const appVersionsClass = "/1/1/em3.js;get/appVersions";
+const featureVersionsClass = "/1/1/em3.js;get/featureVersions";
 
 
 
