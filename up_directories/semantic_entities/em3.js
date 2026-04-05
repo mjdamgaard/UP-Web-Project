@@ -147,6 +147,23 @@ export const featureVersionsRel = {
 };
 
 
+// 'Relevant features' to a feature will typically be "sub-features," i.e.
+// features that are within / part of the given feature. (But they can also be
+// external features, as long as they are still relevant somehow.) 
+export const relevantFeatures = {
+  "Class": abs("./em1.js;get/relations"),
+  "Name": "Relevant features",
+  "getQualityName": objKey => "Is a relevant feature for ${" + objKey + "}",
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
+    "feature for ${" + objKey + "}",
+  "getClassName": objKey => "Relevant features for ${" + objKey + "}",
+  "Object domain": abs("./em3.js;get/features"),
+  "Subject domain": abs("./em3.js;get/features"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
+  "Description": abs("./em1_aux.js;get/membersDesc"),
+};
+
+
 
 // When you browse a feature, you should be able to go to a tab of 'Support' to
 // see what app versions already support the given feature at the current

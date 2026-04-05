@@ -9,7 +9,8 @@ import {map} from 'array';
 import {valueToHex, arrayToHex} from 'hex';
 import {getSequentialPromise} from 'promise';
 import {
-  fetchOrCreateEntityID, postAllEntitiesFromModule, fetchRelationalQualityPath
+  fetchOrCreateEntityID, postAllEntitiesFromModule, fetchRelationalQualityPath,
+  getUserEntPath, fetchEntityID,
 } from "./entities.js";
 import {scoreHandler02} from "./score_handling/ScoreHandler01/em.js";
 
@@ -89,6 +90,8 @@ export const initialModerators = [
 
 
 
+// NOTE: This postInitialScores01() function was made before I impl. async
+// functions. TODO: Consider refactoring it.
 
 
 export function postInitialScores01() {
@@ -267,6 +270,16 @@ export function postInitialScores01() {
           abs("./em2.js;get/mastermindGame"),
           firstModID, 4
         ),
+    // TODO: Investigate a bug here when including one too many elements here
+    // in this list (which is why the following element is out-commented). It's
+    // probably due to running out of some gas, but the weird thing is that the
+    // program would halt without throwing an error, and then only exit once
+    // the time gas ran out (much later than the SMF would normally finish). So
+    // there seems to be an error propagation bug here. *(And it might very
+    // well just be a bug in this module, but I think its worth testing.) ..Oh,
+    // but I have just rewritten postUserRelationalScoreAndUpdateUserGroups(),
+    // but let me include the old version in a comment, in case that matters
+    // in order to reproduce the bug.
         // postUserRelationalScoreAndUpdateUserGroups(
         //   abs("./em1.js;get/components"),
         //   abs("./em1.js;get/members"),
@@ -352,6 +365,43 @@ export function postInitialScores02() {
 
 
 
+export async function postInitialScores03() {
+  let firstModID = await fetchEntityID(
+    getUserEntPath("1", initialModerators[0][0])
+  );
+
+  await Promise.all([
+    postUserRelationalScoreAndUpdateUserGroups(
+      abs("./em1.js;get/components"),
+      abs("./em1.js;get/members"),
+      abs("./em2.js;get/messageAppExample"),
+      firstModID, 4
+    ),
+    postUserRelationalScoreAndUpdateUserGroups(
+      abs("./em3.js;get/apps"),
+      abs("./em1.js;get/members"),
+      abs("./em3.js;get/socialMedia"),
+      firstModID, 8
+    ),
+    postUserRelationalScoreAndUpdateUserGroups(
+      abs("./em3.js;get/apps"),
+      abs("./em1.js;get/members"),
+      abs("./em3.js;get/blogging"),
+      firstModID, 5
+    ),
+    postUserRelationalScoreAndUpdateUserGroups(
+      abs("./em3.js;get/apps"),
+      abs("./em1.js;get/members"),
+      abs("./em3.js;get/startApps"),
+      firstModID, 7
+    ),
+  ]);
+}
+
+
+
+
+
 
 
 /* DO NOT export any of the following functions, obviously. */
@@ -404,20 +454,32 @@ function postUserPredicateScoreAndUpdateUserGroups(
 }
 
 
-function postUserRelationalScoreAndUpdateUserGroups(
+async function postUserRelationalScoreAndUpdateUserGroups(
   objKey, relKey = undefined, subjKey, userKey, score,
   userGroupKeyArr = userGroupsForUpdate
 ) {
-  return new Promise(resolve => {
-    fetchRelationalQualityPath(objKey, relKey).then(qualPath => {
-      postUserPredicateScoreAndUpdateUserGroups(
-        qualPath, subjKey, userKey, score, userGroupKeyArr
-      ).then(
-        wasUpdated => resolve(wasUpdated)
-      );
-    });
-  });
+  let qualPath = await fetchRelationalQualityPath(objKey, relKey);
+  let wasUpdated = await postUserPredicateScoreAndUpdateUserGroups(
+    qualPath, subjKey, userKey, score, userGroupKeyArr
+  );
+  return wasUpdated;
 }
+
+/* Previous version of postUserRelationalScoreAndUpdateUserGroups(): */
+// function postUserRelationalScoreAndUpdateUserGroups(
+//   objKey, relKey = undefined, subjKey, userKey, score,
+//   userGroupKeyArr = userGroupsForUpdate
+// ) {
+//   return new Promise(resolve => {
+//     fetchRelationalQualityPath(objKey, relKey).then(qualPath => {
+//       postUserPredicateScoreAndUpdateUserGroups(
+//         qualPath, subjKey, userKey, score, userGroupKeyArr
+//       ).then(
+//         wasUpdated => resolve(wasUpdated)
+//       );
+//     });
+//   });
+// }
 
 
 

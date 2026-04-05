@@ -17,7 +17,9 @@ export function render() {
   );
 }
 
-export const initState = {isFirstRender: true};
+export function initialize() {
+  return {isFirstRender: true};
+}
 
 
 function runTests() {

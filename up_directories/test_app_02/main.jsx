@@ -39,7 +39,7 @@ export function render({}) {
 
 
 
-export const initState = {name: "World"};
+export const initialize = () => ({name: "World"});
 
 
 export const actions = {

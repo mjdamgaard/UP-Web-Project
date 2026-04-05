@@ -126,6 +126,7 @@ class JSXInstance {
     this.actions = {};
     this.methods = {};
     this.events = {};
+    this.dependencies = undefined;
   }
 
   get componentPath() {
@@ -200,30 +201,8 @@ class JSXInstance {
       // Set the actions, methods, and events.
       this.prepareActionsMethodsAndEvents(callerNode, callerEnv);
 
-      // Get the initial state if the component module declares one, which is
-      // done either by exporting an 'getInitialState()' function (or just
-      // 'getInitState(),' or 'initialize()'), or a constant  object called
-      // 'initialState' (or 'initState').
-      let state;
-      let getInitialState = this.componentModule.get("initialize") ??
-        this.componentModule.get("getInitialState") ??
-        this.componentModule.get("getInitState");
-      if (getInitialState) {
-        this.state = {};
-        try {
-          state = interpreter.executeFunction(
-            getInitialState, [props], callerNode, compEnv,
-            new JSXInstanceInterface(this)
-          );
-        }
-        catch (err) {
-          return this.getFailedComponentDOMNode(err, replaceSelf);
-        }
-      } else {
-        state = this.componentModule.get("initialState") ??
-          this.componentModule.get("initState");
-      }
-      this.state = state ?? {};
+      // Initialize the state.
+      this.initialize(interpreter, callerNode, compEnv, replaceSelf);
 
       // And store the ref prop.
       this.ref = props["ref"];
@@ -335,6 +314,26 @@ class JSXInstance {
     return newDOMNode;
   }
 
+
+
+  initialize(interpreter, callerNode, compEnv, replaceSelf = true) {
+    // Get the initialize() function if the component module declares one.
+    let state;
+    let initialize = this.componentModule.get("initialize");
+    if (initialize) {
+      this.state = {};
+      try {
+        state = interpreter.executeFunction(
+          initialize, [this.props], callerNode, compEnv,
+          new JSXInstanceInterface(this)
+        );
+      }
+      catch (err) {
+        return this.getFailedComponentDOMNode(err, replaceSelf);
+      }
+    }
+    this.state = (state instanceof PromiseObject) ? {} : state ?? {};
+  }
 
 
   getFailedComponentDOMNode(error, replaceSelf) {
@@ -989,6 +988,24 @@ class JSXInstance {
     }
   }
 
+
+  // declareOrCheckDependencies() sets the dependencies if this.dependencies is
+  // nullish, and otherwise it deep-compares the argument to this.dependencies,
+  // and if the comparison fails, it first resets this.dependencies to
+  // undefined, and then it calls this.initialize() and this.queueRerender() to
+  // reset the component instance's state and rerender it.
+  declareOrCheckDependencies(deps, interpreter, node, env) {
+    let prevDeps = this.dependencies;
+    if (prevDeps === undefined || prevDeps === null) {
+      this.dependencies = deps;
+    }
+    else if (!deepCompare(deps, prevDeps)) {
+      this.dependencies = undefined;
+      this.initialize(interpreter, node, env);
+      this.queueRerender(interpreter);
+    }
+  }
+
 }
 
 
@@ -1021,6 +1038,7 @@ export class JSXInstanceInterface extends ObjectObject {
       "subscribeToContext": this.subscribeToContext,
       "unsubscribeFromContext": this.unsubscribeFromContext,
       "getOwnContext": this.getOwnContext,
+      "dependencies": this.dependencies,
       "getSettings": this.getSettings,
       "getBoundingClientRect": this.getBoundingClientRect,
       "getIsVisible": this.getIsVisible,
@@ -1152,6 +1170,16 @@ export class JSXInstanceInterface extends ObjectObject {
   getOwnContext = new DevFunction(
     "getOwnContext", {typeArr: ["object key"]}, (_, [key]) => {
       return this.jsxInstance.getOwnContext(key);
+    }
+  );
+
+
+  // dependencies(deps) redirects to declareOrCheckDependencies() above.
+  dependencies = new DevFunction(
+    "dependencies", {}, ({interpreter, callerNode, execEnv}, [deps]) => {
+      return this.jsxInstance.declareOrCheckDependencies(
+        deps, interpreter, callerNode, execEnv
+      );
     }
   );
 
