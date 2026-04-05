@@ -197,12 +197,8 @@ class JSXInstance {
       // Set the actions, methods, and events.
       this.prepareActionsMethodsAndEvents(callerNode, callerEnv);
 
-      // Initialize the state, and set renderIsQueued to true again temporarily
-      // in order to suppress any redundant rerenders if calling setState()
-      // synchronously from initialize().
-      this.renderIsQueued = true;
+      // Initialize the state.
       this.initialize(interpreter, callerNode, compEnv, replaceSelf);
-      this.renderIsQueued = false;
 
       // And store the ref prop.
       this.ref = props["ref"];
@@ -320,6 +316,10 @@ class JSXInstance {
     this.state ??= {};
     this.stateIsSet = false;
 
+    // Set renderIsQueued = true temporarily to avoid redundant rerenders if
+    // setState() is called synchronously within initialize().
+    this.renderIsQueued = true;
+
     // Get the initialize() function if the component module declares one.
     let state;
     let initialize = this.componentModule.get("initialize");
@@ -342,7 +342,9 @@ class JSXInstance {
     if (!this.stateIsSet) {
       this.state = (state instanceof PromiseObject) ? {} : state ?? {};
     }
+
     this.stateIsSet = true;
+    this.renderIsQueued = false;
   }
 
 
