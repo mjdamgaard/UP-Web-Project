@@ -73,16 +73,10 @@ export const createJSXApp = new DevFunction(
 
     // Then render the root instance and insert it into the document.
     let rootParent = document.getElementById("up-app-root");
-    let renderResolve;
-    let renderPromise = new Promise(resolve => {
-      renderResolve = resolve;
-    });
     let appNode = rootInstance.render(
-      props, false, interpreter, callerNode, appEnv, renderPromise,
-      false, true, true,
+      props, false, interpreter, callerNode, appEnv, false, true,
     );
     rootParent.replaceChildren(appNode);
-    renderResolve();
   }
 );
 
@@ -113,6 +107,7 @@ class JSXInstance {
     this.props = undefined;
     this.state = undefined;
     this.prevState = undefined;
+    this.stateIsSet = false;
     this.ref = undefined;
     this.contextProvisions = undefined;
     this.contextSubscriptions = undefined;
@@ -121,8 +116,7 @@ class JSXInstance {
     this.isDiscarded = undefined;
     this.isFailed = undefined;
     this.isFirstRender = true;
-    this.rerenderPromise = undefined;
-    this.renderPromise = undefined;
+    this.renderIsQueued = true;
     this.actions = {};
     this.methods = {};
     this.events = {};
@@ -135,14 +129,14 @@ class JSXInstance {
 
 
   render(
-    props = {}, isDecorated, interpreter, callerNode, callerEnv, renderPromise,
+    props = {}, isDecorated, interpreter, callerNode, callerEnv,
     replaceSelf = true, force = false,
   ) {
     decrCompGas(callerNode, callerEnv, 5);
     this.isDecorated = isDecorated;
     this.callerNode = callerNode;
     this.callerEnv = callerEnv;
-    this.renderPromise = renderPromise;
+    this.renderIsQueued = false;
 
     // Return early if the props are the same as on the last render, and the
     // instance is not forced to rerender, or if the instance has failed before.
@@ -317,11 +311,13 @@ class JSXInstance {
 
 
   initialize(interpreter, callerNode, compEnv, replaceSelf = true) {
+    this.state ??= {};
+    this.stateIsSet = false;
+
     // Get the initialize() function if the component module declares one.
     let state;
     let initialize = this.componentModule.get("initialize");
     if (initialize) {
-      this.state = {};
       try {
         state = interpreter.executeFunction(
           initialize, [this.props], callerNode, compEnv,
@@ -332,7 +328,15 @@ class JSXInstance {
         return this.getFailedComponentDOMNode(err, replaceSelf);
       }
     }
-    this.state = (state instanceof PromiseObject) ? {} : state ?? {};
+
+    // If this.stateIsSet has not been set to true by a synchronous call to
+    // setState() within initialize(), then set the state to the return value
+    // of initialize(), unless that value is undefined or a promise, in which
+    // case set the state to an empty object.
+    if (!this.stateIsSet) {
+      this.state = (state instanceof PromiseObject) ? {} : state ?? {};
+    }
+    this.stateIsSet = true;
   }
 
 
@@ -463,7 +467,7 @@ class JSXInstance {
       );
       newDOMNode = childInstance.render(
         jsxElement.props, isOuterElement, interpreter,
-        jsxElement.node, childEnv, this.renderPromise, false
+        jsxElement.node, childEnv, false
       );
     }
 
@@ -889,25 +893,18 @@ class JSXInstance {
 
 
   queueRerender(interpreter, force = true) {
-    // Unless one is already currently queued, queue a Promise (that is
-    // executed on the next tick) to rerender the instance, but only if it has
-    // not been discarded since then.
-    if (!this.rerenderPromise) {
-      this.rerenderPromise = this.renderPromise.then(() => {
-        delete this.rerenderPromise;
+    // Unless one is already currently queued, queue a rerender that is then
+    // executed on the next tick of the event loop.
+    if (!this.renderIsQueued) {
+      Promise.resolve().then(() => {
         if (!this.isDiscarded) {
           // Make sure to use the same callerNode and callerEnv as on the
           // previous render, which is done in order to not increase the memory
           // for every single triggered event or call.
-          let renderResolve;
-          let renderPromise = new Promise(resolve => {
-            renderResolve = resolve;
-          });
           this.render(
             this.props, this.isDecorated, interpreter,
-            this.callerNode, this.callerEnv, renderPromise, true, force
+            this.callerNode, this.callerEnv, true, force
           );
-          renderResolve();
         }
       });
     }
@@ -1129,6 +1126,7 @@ export class JSXInstanceInterface extends ObjectObject {
         );
       }
       this.jsxInstance.state = newState;
+      this.jsxInstance.stateIsSet = true;
       this.jsxInstance.queueRerender(interpreter, force);
     }
   );
