@@ -1000,10 +1000,14 @@ class JSXInstance {
       this.dependencies = deps;
     }
     else if (!deepCompare(deps, prevDeps)) {
-      this.dependencies = undefined;
-      this.initialize(interpreter, node, env);
-      this.queueRerender(interpreter);
+      this.reset(interpreter, node, env);
     }
+  }
+
+  reset(interpreter, node, env) {
+    this.dependencies = undefined;
+    this.initialize(interpreter, node, env);
+    this.queueRerender(interpreter);
   }
 
 }
@@ -1039,6 +1043,7 @@ export class JSXInstanceInterface extends ObjectObject {
       "unsubscribeFromContext": this.unsubscribeFromContext,
       "getOwnContext": this.getOwnContext,
       "dependencies": this.dependencies,
+      "reset": this.reset,
       "getSettings": this.getSettings,
       "getBoundingClientRect": this.getBoundingClientRect,
       "getIsVisible": this.getIsVisible,
@@ -1176,10 +1181,16 @@ export class JSXInstanceInterface extends ObjectObject {
 
   // dependencies(deps) redirects to declareOrCheckDependencies() above.
   dependencies = new DevFunction(
-    "dependencies", {}, ({interpreter, callerNode, execEnv}, [deps]) => {
-      return this.jsxInstance.declareOrCheckDependencies(
+    "dependencies", {}, ({interpreter, callerNode, execEnv}, [...deps]) => {
+      this.jsxInstance.declareOrCheckDependencies(
         deps, interpreter, callerNode, execEnv
       );
+    }
+  );
+
+  reset = new DevFunction(
+    "reset", {}, ({interpreter, callerNode, execEnv}, []) => {
+      this.jsxInstance.reset(interpreter, callerNode, execEnv);
     }
   );
 

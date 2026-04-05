@@ -25,6 +25,10 @@ export function render({homeURL, tailURL}) {
   this.dependencies(homeURL, tailURL);
   let {urlEntIDs, curEntID} = this.state;
 
+  if (!curEntID) {
+    return <div className="app-browser fetching">...</div>;
+  }
+
   return <div className="app-browser">
     <NavigationPath key={tailURL} urlEntIDs={urlEntIDs} />
     <EntityPage key={"ep-" + curEntID} entID={curEntID} />
