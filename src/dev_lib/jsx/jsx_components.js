@@ -138,6 +138,7 @@ class JSXInstance {
     this.callerNode = callerNode;
     this.callerEnv = callerEnv;
     this.renderIsQueued = false;
+    this.forceWhenRerendering = false;
 
     // Return early if the props are the same as on the last render, and the
     // instance is not forced to rerender, or if the instance has failed before.
