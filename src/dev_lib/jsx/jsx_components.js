@@ -117,6 +117,7 @@ class JSXInstance {
     this.isFailed = undefined;
     this.isFirstRender = true;
     this.renderIsQueued = true;
+    this.forceWhenRerendering = undefined;
     this.actions = {};
     this.methods = {};
     this.events = {};
@@ -195,8 +196,12 @@ class JSXInstance {
       // Set the actions, methods, and events.
       this.prepareActionsMethodsAndEvents(callerNode, callerEnv);
 
-      // Initialize the state.
+      // Initialize the state, and set renderIsQueued to true again temporarily
+      // in order to suppress any redundant rerenders if calling setState()
+      // synchronously from initialize().
+      this.renderIsQueued = true;
       this.initialize(interpreter, callerNode, compEnv, replaceSelf);
+      this.renderIsQueued = false;
 
       // And store the ref prop.
       this.ref = props["ref"];
@@ -893,9 +898,12 @@ class JSXInstance {
 
 
   queueRerender(interpreter, force = true) {
+    this.forceWhenRerendering ||= force;
+
     // Unless one is already currently queued, queue a rerender that is then
     // executed on the next tick of the event loop.
     if (!this.renderIsQueued) {
+      this.renderIsQueued = true;
       Promise.resolve().then(() => {
         if (!this.isDiscarded) {
           // Make sure to use the same callerNode and callerEnv as on the
@@ -903,17 +911,17 @@ class JSXInstance {
           // for every single triggered event or call.
           this.render(
             this.props, this.isDecorated, interpreter,
-            this.callerNode, this.callerEnv, true, force
+            this.callerNode, this.callerEnv, true, this.forceWhenRerendering
           );
         }
       });
     }
   }
 
-  queueFullRerender(interpreter) {
-    this.queueRerender(interpreter);
+  queueFullRerender(interpreter, force = true) {
+    this.queueRerender(interpreter, force);
     this.childInstances.forEach(jsxInstance => {
-      jsxInstance.queueFullRerender(interpreter);
+      jsxInstance.queueFullRerender(interpreter, force);
     });
   }
 
