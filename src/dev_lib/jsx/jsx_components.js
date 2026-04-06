@@ -121,7 +121,7 @@ class JSXInstance {
     this.actions = {};
     this.methods = {};
     this.events = {};
-    this.dependencies = undefined;
+    this.constants = undefined;
   }
 
   get componentPath() {
@@ -997,23 +997,23 @@ class JSXInstance {
   }
 
 
-  // declareOrCheckDependencies() sets the dependencies if this.dependencies is
-  // nullish, and otherwise it deep-compares the argument to this.dependencies,
-  // and if the comparison fails, it first resets this.dependencies to
-  // undefined, and then it calls this.initialize() and this.queueRerender() to
+  // declareOrCheckConstants() sets the constants if this.constants is
+  // nullish, and otherwise it deep-compares the argument to this.constants,
+  // and if the comparison fails, it first resets this.constants to undefined,
+  // and then it calls this.initialize() and this.queueRerender() to
   // reset the component instance's state and rerender it.
-  declareOrCheckDependencies(deps, interpreter, node, env) {
-    let prevDeps = this.dependencies;
-    if (prevDeps === undefined || prevDeps === null) {
-      this.dependencies = deps;
+  declareOrCheckConstants(constants, interpreter, node, env) {
+    let prevConstants = this.constants;
+    if (prevConstants === undefined || prevConstants === null) {
+      this.constants = constants;
     }
-    else if (!deepCompare(deps, prevDeps)) {
+    else if (!deepCompare(constants, prevConstants)) {
       this.reset(interpreter, node, env);
     }
   }
 
   reset(interpreter, node, env) {
-    this.dependencies = undefined;
+    this.constants = undefined;
     this.initialize(interpreter, node, env);
     this.queueRerender(interpreter);
   }
@@ -1050,7 +1050,7 @@ export class JSXInstanceInterface extends ObjectObject {
       "subscribeToContext": this.subscribeToContext,
       "unsubscribeFromContext": this.unsubscribeFromContext,
       "getOwnContext": this.getOwnContext,
-      "dependencies": this.dependencies,
+      "constant": this.constant,
       "reset": this.reset,
       "getSettings": this.getSettings,
       "getBoundingClientRect": this.getBoundingClientRect,
@@ -1188,15 +1188,23 @@ export class JSXInstanceInterface extends ObjectObject {
   );
 
 
-  // dependencies(deps) redirects to declareOrCheckDependencies() above.
-  dependencies = new DevFunction(
-    "dependencies", {}, ({interpreter, callerNode, execEnv}, [...deps]) => {
-      this.jsxInstance.declareOrCheckDependencies(
-        deps, interpreter, callerNode, execEnv
+  // constant() is used to declare a set of constants for the instance, that
+  // will cause the instance to re-initialize its state (and rerender) should
+  // they ever be changed. This is useful whenever initialize() depends on some
+  // props, and you want to make sure that these props aren't changed, or if
+  // they do, that you then reset the whole instance.
+  // Note that we choose this this ambiguous-but-short name, 'constant()', over
+  // a more illustrative name, since that name would have to be
+  // 'declareOrCheckConstants(),' which is too long.
+  constant = new DevFunction(
+    "constant", {}, ({interpreter, callerNode, execEnv}, [...constants]) => {
+      this.jsxInstance.declareOrCheckConstants(
+        constants, interpreter, callerNode, execEnv
       );
     }
   );
 
+  // reset() re-initializes the state and rerenders the instance. 
   reset = new DevFunction(
     "reset", {}, ({interpreter, callerNode, execEnv}, []) => {
       this.jsxInstance.reset(interpreter, callerNode, execEnv);
