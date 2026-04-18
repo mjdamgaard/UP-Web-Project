@@ -1415,6 +1415,9 @@ export class ScriptInterpreter {
         expNode.children.forEach(exp => {
           if (exp.type === "spread") {
             let spreadExpVal = this.evaluateExpression(exp.exp, environment);
+            if (spreadExpVal instanceof ObjectObject && spreadExpVal.isArray) {
+              spreadExpVal = spreadExpVal.members;
+            }
             if (!(spreadExpVal instanceof Array)) throw new RuntimeError(
               "Invalid spread of a non-array inside an array literal",
               exp, environment

@@ -7,9 +7,9 @@ import * as MembersPage from "./subpages/MembersPage.jsx";
 
 export function render({entID, name, qualKey = undefined}) {
   return <div className="class-page">
-    <h3>{name}</h3>
+    <h1>{name}</h1>
     <TabbedPages key="0"
-      initTabKey={"all"} isNested={isNested} tabs={{
+      initTabKey={"members"} tabs={{
         members: {
           title: "Members",
           Component: MembersPage,
@@ -33,6 +33,6 @@ export function render({entID, name, qualKey = undefined}) {
           },
         },
       }}
-    />;
+    />
   </div>
 }

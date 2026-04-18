@@ -1,11 +1,13 @@
 
 import * as ScoreDisplay from "./ScoreDisplay.jsx";
+import {fetchEntityPath, fetchEntityDefinition} from "/1/1/entities.js";
 
 const classesClass = "/1/1/em1.js;get/classes";
 const derivedClassesClass = "/1/1/em1.js;get/derivedClasses";
-const componentsClass = "/1/1/em1.js;get/components";
 const appsClass = "/1/1/em3.js;get/apps";
 const featuresClass = "/1/1/em3.js;get/features";
+const appVersionsClass = "/1/1/em3.js;get/appVersions";
+const featureVersionsClass = "/1/1/em3.js;get/featureVersions";
 
 
 
@@ -34,7 +36,7 @@ export function render({entID, qualKey, score, weight}) {
   switch(classPath) {
     case classesClass:
     case derivedClassesClass:
-      content = <EntityReference key="er" entKey={entID} />;
+      content = "entID: " + entID;//<EntityReference key="er" entKey={entID} />;
       break;
     // TODO: Continue.
     default:
