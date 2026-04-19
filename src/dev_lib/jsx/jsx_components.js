@@ -520,7 +520,7 @@ class JSXInstance {
               "/[a-z][a-z0-9\-]*/)",
               jsxNode, jsxDecEnv
             );
-            // Add automatic '_' suffixes to all initial classes.
+            // Add automatic '_' postfixes to all initial classes.
             className = className.replaceAll(
               /[a-z][a-z0-9\-]*/g, str => str + "_"
             );

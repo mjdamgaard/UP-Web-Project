@@ -9,7 +9,7 @@ import {
 const ESCAPED_SINGLE_QUOTE_REGEX_G = /(?<!(\\\\)*\\)\\'/g;
 
 
-const RESERVED_KEYWORD_REGEXP = new RegExp(
+const RESERVED_KEYWORD_REGEX = new RegExp(
   "^(let|var|const|this|function|export|import|break|continue|return|throw|" +
   "if|else|switch|case|void|typeof|instanceof|delete|await|class|static|" +
   "true|false|null|undefined|Infinity|NaN|try|catch|finally|for|while|do|" +
@@ -19,14 +19,14 @@ const RESERVED_KEYWORD_REGEXP = new RegExp(
   "transient|volatile|with|yield|Promise|abs|async)$"
 );
 
-
-
 export const HTML_ELEMENT_TYPE_REGEX = new RegExp(
   "^(div|span|i|b|s|br|hr|template|button|h1|h2|h3|h4|h5|h6|p|section|code|" +
   "pre|footer|header|main|ol|ul|li|table|tr|th|td|aside|caption|cite|col|" +
   "colgroup|dd|dfn|dl|dt|em|figure|figcaption|hgroup|mark|menu|nav|q|" +
   "blockquote|samp|search|small|strong|sub|sup|tbody|tfoot|thead|u|var|wbr)$"
 );
+
+const IMPORT_STR_POSTFIX_REGEX = /(:await|:private)+$/;
 
 
 
@@ -50,11 +50,23 @@ export const scriptGrammar = {
       ["/import/", "import-list", "/from/!", "string", "/;/?"],
       ["/import/", "/from/", "string", "/;/?"],
     ],
-    process: (children, ruleInd) => ({
-      type: "import-statement",
-      str: (ruleInd == 0) ? children[3].str : children[2].str,
-      importArr: (ruleInd === 0) ? children[1].children : [],
-    }),
+    process: (children, ruleInd) => {
+      let str = (ruleInd == 0) ? children[3].str : children[2].str;
+      let [postfixStr] = str.match(IMPORT_STR_POSTFIX_REGEX) ?? [""];
+      str = str.substring(0, str.length - postfixStr.length);
+      let isAwait, isPrivate;
+      if (postfixStr) {
+        isAwait = postfixStr.includes(":await");
+        isPrivate = postfixStr.includes(":private");
+      }
+      return {
+        type: "import-statement",
+        str: str,
+        importArr: (ruleInd === 0) ? children[1].children : [],
+        isAwait: isAwait,
+        isPrivate: isPrivate,
+      };
+    },
   },
   "import-list": {
     rules: [
@@ -187,7 +199,7 @@ export const scriptGrammar = {
     ],
     process: (children) => {
       let lexeme = children[0];
-      if (RESERVED_KEYWORD_REGEXP.test(lexeme)) {
+      if (RESERVED_KEYWORD_REGEX.test(lexeme)) {
         return false;
       } else {
         return {type: "identifier", ident: lexeme};

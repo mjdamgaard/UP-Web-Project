@@ -34,13 +34,13 @@ const TRANSFORM_KEYWORD_REGEX = /^(copy|inherit)$/;
 //
 // And after having been prepared, they are of the form:
 //
-// <transform> := {(rules, childRules, initialClassesSuffix},
+// <transform> := {(rules, childRules, initialClassesPostfix},
 // rules : [({selector, style, classes, check?},)*],
 // styles : [(<style>,)*],
 // <style> := <string ready to be appended to a style attribute> | <function>,
 // classes : [(<class ready to be added to an element's classList>,)*]
 // check : <function>,
-// initialClassesSuffix := "_" | "_" + <integer string>,
+// initialClassesPostfix := "_" | "_" + <integer string>,
 // childRules := *same as above*.
 //
 // Furthermore, the settingsData props used are:
@@ -280,7 +280,7 @@ export class AppStyler01 {
 
 
     // With the styleSheetID array in hand, we can now prepare the rules by
-    // appending or substituting the right styleSheetID suffix to the output
+    // appending or substituting the right styleSheetID postfix to the output
     // classes. We also go through each of the output styles and validate these.
     let rules = getPropertyFromObject(transform, "rules") ?? [];
     let preparedRules = [];
@@ -413,12 +413,12 @@ export class AppStyler01 {
     preparedTransform.childRules = preparedChildRules;
 
 
-    // And unless removeInitialClasses is true, assign the initialClassesSuffix
+    // And unless removeInitialClasses is true, assign the initialClassesPostfix
     // property the first styleSheetID from styleSheetIDArr, and otherwise
     // assign it "".
-    // Correction: Now that we don't use style sheet ID suffixes, we let the
-    // suffix be "_0" rather than "_" + styleSheetIDArr[0]
-    preparedTransform.initialClassesSuffix =
+    // Correction: Now that we don't use style sheet ID postfixes, we let the
+    // postfix be "_0" rather than "_" + styleSheetIDArr[0]
+    preparedTransform.initialClassesPostfix =
       getPropertyFromObject(transform, "removeInitialClasses") ? "_" :
         "_0"; // "_" + (styleSheetIDArr[0] ?? "");
 
@@ -567,7 +567,7 @@ export class AppStyler01 {
     let {settingsData, props, state} = jsxInstance;
     let {componentID, transform, transformProps, isScopeRoot} =
       settingsData ?? {};
-    let {rules = [], initialClassesSuffix} = transform ?? {};
+    let {rules = [], initialClassesPostfix} = transform ?? {};
     let {interpreter} = env.scriptVars;
 
     // If the component is the root of an app scope, set the overflow
@@ -637,15 +637,15 @@ export class AppStyler01 {
       });
     });
 
-    // Then append the initialClassesSuffix all the JSXElement-defined
+    // Then append the initialClassesPostfix all the JSXElement-defined
     // classes, who all have a trailing '_', so that, unless removeInitial-
     // Classes is true, the first among the component's style sheets will get
     // to style the JSXElement-defined classes.
-    if (initialClassesSuffix) {
+    if (initialClassesPostfix) {
       ownDOMNodes.forEach(node => {
         let className = node.getAttribute("class");
         node.setAttribute("class", className.replaceAll(
-          TRAILING_UNDERSCORE_REGEX_G, initialClassesSuffix
+          TRAILING_UNDERSCORE_REGEX_G, initialClassesPostfix
         ));
       });
     }

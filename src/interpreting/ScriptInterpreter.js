@@ -83,14 +83,6 @@ export class ScriptInterpreter {
     // for all modules.
     let globalEnv = this.createGlobalEnvironment(scriptVars);
 
-    // Add the 'server' dev library (used for fetching scripts and other data)
-    // to liveModules from the beginning.
-    liveModules.set(
-      "query", new LiveJSModule(
-        "query", Object.entries(this.staticDevLibs.get("query")), scriptVars
-      )
-    );
-
     // If script is provided, rather than the scriptPath, first parse it.
     let parsedScript, lexArr, strPosArr;
     if (scriptPath === null) {
@@ -131,9 +123,11 @@ export class ScriptInterpreter {
     // Now execute the script as a module, followed by an execution of any
     // function called 'main,' and make sure to try-catch any exceptions.
     try {
-      let [liveScriptModule, scriptEnv] = await this.executeModule(
-        parsedScript, lexArr, strPosArr, script, scriptPath, globalEnv
+      let liveScriptModule = await this.executeModule(
+        parsedScript, lexArr, strPosArr, script, scriptPath ?? "main",
+        globalEnv, liveModules
       );
+      let scriptEnv = liveScriptModule.moduleEnv;
       this.executeMainFunction(
         liveScriptModule, mainInputs, parsedScript, scriptEnv
       );
@@ -263,11 +257,17 @@ export class ScriptInterpreter {
   }
 
 
-  async fetch(route, callerNode, callerEnv, ancestorModules) {
-    let fetchFun = callerEnv.scriptVars.liveModules.get("query").get("fetch");
-    return await this.executeFunction(
-      fetchFun, [route, undefined, ancestorModules], callerNode, callerEnv
-    ).promise;
+  async fetch(
+    route, callerNode, callerEnv, ancestorModules, finalCallbacks, isPrivate
+  ) {
+    // Redirect to _fetch() from the 'query' dev lib, and avoid infinite
+    // recursion by getting it from staticDevLibs rather than importing it.
+    let _fetch = this.staticDevLibs.get("query")["_fetch"];
+    return await _fetch(
+      route, {isPrivate: isPrivate},
+      callerNode, callerEnv, this,
+      ancestorModules, finalCallbacks,
+    );
   }
 
 
@@ -275,8 +275,70 @@ export class ScriptInterpreter {
 
 
   async executeModule(
-    moduleNode, lexArr, strPosArr, script, modulePath, globalEnv,
-    ancestorModules = [],
+    moduleNode, lexArr, strPosArr, script, modulePath, globalEnv, liveModules,
+    ancestorModules = [], finalCallbacks = [], isPrivate = false,
+  ) {
+    // Check against infinite import recursion.
+    if (ancestorModules.includes(modulePath)) throw new LoadError(
+      `Infinite recursion: Module ${modulePath} imports itself. Ancestor ` +
+      "modules when error happened: " + ancestorModules.join(", ") + ".",
+      moduleNode, globalEnv
+    );
+
+    // Before executing the module, first check if it, or a promise for it, is
+    // already recorded in the liveModules cache.
+    let liveModule = liveModules.get(modulePath);
+    if (liveModule) {
+      if (liveModule instanceof Promise) {
+        liveModule = await liveModule;
+      }
+      if (liveModule instanceof ErrorWrapper) {
+        throw liveModule.val;
+      }
+    }
+
+    // Else call the helper function to execute the module, and record the
+    // returned promise temporarily in the liveModules cache, and overwrite it
+    // again when the promise resolves.
+    else {
+      let liveModulePromise = this.executeModuleHelper(
+        moduleNode, lexArr, strPosArr, script, modulePath, globalEnv,
+        liveModules, ancestorModules, finalCallbacks, isPrivate,
+      ).then(
+        liveModule => liveModule
+      ).catch(
+        err => new ErrorWrapper(err)
+      );
+      if (!isPrivate) {
+        liveModules.set(modulePath, liveModulePromise);
+        liveModule = await liveModulePromise;
+        liveModules.set(modulePath, liveModule);
+      } else {
+        liveModule = await liveModulePromise;
+      }
+      if (liveModule instanceof ErrorWrapper) {
+        throw liveModule.val;
+      }
+    }
+
+    // If the module has no ancestor modules, call all finalCallbacks and wait
+    // for each one to resolve. (This is used to impl. the ":await" postfix.)
+    if (ancestorModules[0] === undefined && finalCallbacks[0] !== undefined) {
+      let promArr = finalCallbacks.map(callback => callback()).filter(ret =>
+        ret instanceof Promise
+      );
+      await Promise.all(promArr);
+    }
+
+    // And finally return the live module.
+    return liveModule;
+
+  }
+
+
+  async executeModuleHelper(
+    moduleNode, lexArr, strPosArr, script, modulePath, globalEnv, liveModules,
+    ancestorModules, finalCallbacks, isPrivate,
   ) {
     decrCompGas(moduleNode, globalEnv);
 
@@ -293,7 +355,9 @@ export class ScriptInterpreter {
     let liveSubmoduleArr = await Promise.all(
       moduleNode.importStmtArr.map(impStmt => (
         this.executeSubmoduleOfImportStatement(
-          impStmt, modulePath, moduleEnv, [...ancestorModules, modulePath])
+          impStmt, modulePath, moduleEnv,
+          [...ancestorModules, modulePath], finalCallbacks, isPrivate
+        )
       ))
     );
 
@@ -302,7 +366,10 @@ export class ScriptInterpreter {
     // executed module, and where the changes are now made to moduleEnv.
     moduleNode.importStmtArr.forEach((impStmt, ind) => {
       let liveSubmodule = liveSubmoduleArr[ind];
-      this.finalizeImportStatement(impStmt, liveSubmodule, moduleEnv);
+      this.finalizeImportStatement(
+        impStmt, liveSubmodule, moduleEnv, modulePath,
+        finalCallbacks, isPrivate
+      );
     });
 
     // Then execute the body of the script, consisting of "outer statements"
@@ -312,7 +379,7 @@ export class ScriptInterpreter {
     });
 
     // And finally get the exported "live module," and return it.
-    return [moduleEnv.getLiveJSModule(), moduleEnv];
+    return moduleEnv.getLiveJSModule();
   }
 
 
@@ -320,20 +387,33 @@ export class ScriptInterpreter {
 
 
   async executeSubmoduleOfImportStatement(
-    impStmt, curModulePath, callerModuleEnv, ancestorModules
+    impStmt, curModulePath, callerModuleEnv,
+    ancestorModules, finalCallbacks, isPrivate,
   ) {
+    // If the import statement has the ":await" postfix, return an empty object
+    // and postpone handling of the statement to finalizeImportStatement().
+    if (impStmt.isAwait) {
+      return {};
+    }
+    if (impStmt.isPrivate && !isPrivate) throw new LoadError(
+      'The ":private" postfix was used inside a module that was not fetched ' +
+      'privately itself',
+      impStmt, callerModuleEnv
+    );
+
     let submodulePath = getAbsolutePath(curModulePath, impStmt.str);
     let ret = await this.import(
       submodulePath, impStmt, callerModuleEnv, false, true, false,
-      ancestorModules
+      ancestorModules, finalCallbacks, impStmt.isPrivate,
     );
     return ret;
   }
 
 
   async import(
-    route, callerNode, callerEnv, assertJSModule = false, assertModule = false,
-    prepareJSXImmediately = false, ancestorModules = [],
+    route, callerNode, callerEnv,
+    assertJSModule = false, assertModule = false, prepareJSXImmediately = false,
+    ancestorModules = [], finalCallbacks = [], isPrivate = false,
   ) {
     decrCompGas(callerNode, callerEnv);
     decrGas(callerNode, callerEnv, "import");
@@ -347,7 +427,9 @@ export class ScriptInterpreter {
 
     // Then simple redirect to this.fetch(), and if assertJSModule is true,
     // assert that the returned value is a LiveJSModule instance.
-    let ret = await this.fetch(route, callerNode, callerEnv, ancestorModules);
+    let ret = await this.fetch(
+      route, callerNode, callerEnv, ancestorModules, finalCallbacks, isPrivate
+    );
     if (assertJSModule && !(ret instanceof LiveJSModule)) throw new LoadError(
       `No script was found at ${route}`,
       callerNode, callerEnv
@@ -376,52 +458,78 @@ export class ScriptInterpreter {
 
 
 
-  finalizeImportStatement(impStmt, liveSubmodule, curModuleEnv) {
+  finalizeImportStatement(
+    impStmt, liveSubmodule, curModuleEnv, curModulePath,
+    finalCallbacks, isPrivate
+  ) {
     decrCompGas(impStmt, curModuleEnv);
 
     // Iterate through all the imports and add each import to the environment.
     impStmt.importArr.forEach(imp => {
       // If liveSubmodule is a string, accept only a "namespace import", which
-      // has the effect of assigning the string to the import variable.
-      if (typeof liveSubmodule === "string") {
-        if (imp.importType !== "namespace-import") throw new LoadError(
-          "Only imports of the form '* as <variable>' is allowed for text " +
+      // has the effect of assigning the string to the import variable. And if
+      // the import string has the ":await" postfix, also only accept
+      // namespace imports.
+      if (imp.importType !== "namespace-import") {
+        if (typeof liveSubmodule === "string") throw new LoadError(
+          "Only imports of the form '* as <variable>' are allowed for text " +
           "file imports",
           imp, curModuleEnv
         );
-        curModuleEnv.declare(imp.ident, liveSubmodule, true, imp);
+        if (impStmt.isAwait) throw new LoadError(
+          "The \":await\" postfix is only allowed for imports of the " +
+          "form '* as <variable>'",
+          imp, curModuleEnv
+        );
       }
 
-      // Else import the module regularly, as a JS module.
-      else {
-        let impType = imp.importType
-        if (impType === "namespace-import") {
-          let moduleNamespaceObj = liveSubmodule;
-          curModuleEnv.declare(imp.ident, moduleNamespaceObj, true, imp);
-        }
-        else if (impType === "named-imports") {
-          imp.namedImportArr.forEach(namedImp => {
-            let ident = namedImp.ident ?? "default";
-            let alias = namedImp.alias ?? ident;
-            let val = liveSubmodule.get(ident);
-            if (val === undefined) throw new LoadError(
-              "No export found of the name '" + ident + "' in module " +
-              liveSubmodule.modulePath,
-              namedImp, curModuleEnv
+      let impType = imp.importType
+      if (impType === "namespace-import") {
+        let moduleNamespaceObj = liveSubmodule;
+        curModuleEnv.declare(imp.ident, moduleNamespaceObj, true, imp);
+
+        // If the ":await" postfix is used, moduleNamespaceObj will just be an
+        // empty object at this point. But then we push a callback to
+        // finalCallbacks, which is only called once all ancestor modules have
+        // been executed, and make this callback import the module and mutate
+        // moduleNamespaceObj with the right LiveJSModule.
+        if (impStmt.isAwait) {
+          finalCallbacks.push(async () => {
+            let submodulePath = getAbsolutePath(curModulePath, impStmt.str);
+            let liveModule = await this.import(
+              submodulePath, impStmt, curModuleEnv, false, true, false,
+              undefined, undefined, isPrivate
             );
-            curModuleEnv.declare(alias, val, true, namedImp);
+            if (!(liveModule instanceof LiveJSModule)) throw new LoadError(
+              'The ":await" postfix can only be used for JS(X) module imports',
+              imp, curModuleEnv
+            );
+            Object.assign(moduleNamespaceObj, liveModule);
           });
-        }
-        else if (impType === "default-import") {
-          let val = liveSubmodule.get("default");
-          if (val === undefined) throw new LoadError(
-            "No default export in module " + liveSubmodule.modulePath,
-            imp, curModuleEnv
-          );
-          curModuleEnv.declare(imp.ident, val, true, imp);
-        }
-        else throw "finalizeImportStatement(): Unrecognized import type";
+        }  
       }
+      else if (impType === "named-imports") {
+        imp.namedImportArr.forEach(namedImp => {
+          let ident = namedImp.ident ?? "default";
+          let alias = namedImp.alias ?? ident;
+          let val = liveSubmodule.get(ident);
+          if (val === undefined) throw new LoadError(
+            "No export found of the name '" + ident + "' in module " +
+            liveSubmodule.modulePath,
+            namedImp, curModuleEnv
+          );
+          curModuleEnv.declare(alias, val, true, namedImp);
+        });
+      }
+      else if (impType === "default-import") {
+        let val = liveSubmodule.get("default");
+        if (val === undefined) throw new LoadError(
+          "No default export in module " + liveSubmodule.modulePath,
+          imp, curModuleEnv
+        );
+        curModuleEnv.declare(imp.ident, val, true, imp);
+      }
+      else throw "finalizeImportStatement(): Unrecognized import type";
     });
   }
 
@@ -2125,7 +2233,7 @@ export class Environment {
   getLiveJSModule() {
     if (!this.liveModule ) {
       this.liveModule = new LiveJSModule(
-        this.modulePath, this.exports, this.scriptVars, this.script
+        this.modulePath, this.exports, this.scriptVars, this.script, this
       );
     }
     return this.liveModule;
@@ -2948,10 +3056,13 @@ export function verifyTypes(valArr, typeArr, node, env) {
 
 
 export class LiveJSModule extends ObjectObject {
-  constructor(modulePath, exports, scriptVars, script = undefined) {
+  constructor(
+    modulePath, exports, scriptVars, script = undefined, moduleEnv = undefined
+  ) {
     super("LiveJSModule");
     this.modulePath = modulePath;
     this.script = script;
+    this.moduleEnv = moduleEnv;
     this.interpreter = scriptVars.interpreter;
     exports.forEach(([alias, val]) => {
       // Filter out any Function instance, which might be exported from a dev
@@ -3067,7 +3178,7 @@ export class JSXElement extends ObjectObject {
 }
 
 
-function checkAgainstJSXElements(val, node, env) {if (!env) debugger;
+function checkAgainstJSXElements(val, node, env) {
   if (val instanceof JSXElement) throw new RuntimeError(
     "A JSX element occurred inside a computed value that was not wrapped " +
     "in parentheses. (If you trust this JSX element and want to render it, " +
