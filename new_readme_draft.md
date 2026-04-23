@@ -27,7 +27,7 @@ The users are free to create new apps on the platform as well as fork existing o
 
 All user-uploaded apps and code modules are run in a sandbox which ensures that new prototypes for apps and features can be shared quickly among the users, without needing to first be verified for security.
 
-Being able quickly and safely share prototypes for new apps and features with a lot of users, who can give feedback and rate the project, and potentially even help complete it, means that the development of the platform can move fast. 
+Being able quickly and safely share prototypes for new apps and features with a lot of users, who can give feedback and rate the project, and potentially even help complete it, means that the development of the platform can move very fast. 
 
 
 <!-- All user-uploaded apps and code modules are run in a sandbox which ensures that it is always safe to try out new apps, or new versions of existing apps, without having to worry about safety.
@@ -48,9 +48,9 @@ This means that as long as you trust the user-programmable platform itself to sh
 This removes a core issue that otherwise affects decentralized platforms in general, namely the issue that in order to use the desired features of the platform, the individual user often has to trust several different independent parties that they do not know much about.
 
 
-#### 4. No allocation required means free hosting (almost)
+#### 4. No need for allocating resources means free hosting! (almost)
 
-Another feature of a user-programmable platform is that apps do not have to allocate storage space or computational resources in advance. Instead the resources are only allocated on demand by the users of the apps.[^1]
+Another feature of a user-programmable platform is that apps do not have to allocate storage space or computational resources in advance. Instead the resources are only allocated when needed by the users that use the app.[^1]
 
 [^1]: And if an app needs server-side maintenance routines to run at regularly scheduled intervals, these intervals can just be based on how many post requests has occurred since the last execution, rather than how much time has passed.
 
@@ -58,6 +58,13 @@ This means that it is essentially free for developers to upload new apps and fea
 
 The funding of the resources is thus not a concern for the developers of the apps and features, but is instead a matter purely between the platform and the end users who consume those resources.
 The platform thus keeps track of the resources that each user consumes, but does not care about where and how these resources are consumed.
+
+Note that since the platform is able to include any kind of app, including any kind of website that you can imagine, personal or otherwise, this means that you will be able to have any kind of website that you want hosted essentially for free and in perpetuity by a user-programmable platform: You only pay the small cost of storing the source code for your website (which might even be covered by a free plan), and the visitors will carry cost of any additional resources that it needs to consume.
+
+
+#### 5. An open and decentralized network
+
+A user-programmable platform also ought to allow for decentralization, namely by allowing apps on one platform to communicate and transfer data with other platforms, in particular other user-programmable platforms, as well as any other platform that utilizes open protocols.  
 
 
 
@@ -94,16 +101,34 @@ Furthermore, any user-programmable platform would only benefit from creating net
 
 
 
-## Current state of technology
+## Current state of project
 
-We currently have a working prototype of a user-programmable platform, where users can already extend the platform freely.
+The project is ready for use. We currently have a working version of a user-programmable platform online at up-web.org, where users can already extend the platform freely.
 
-We currently only offer JavaScript as the language with which to build apps and server modules, but in the future, other languages will be available as well.
+This prototype offers a high-level web development framework based on JavaScript, and where front-end components are built in the same way as in React.
 
-The current prototype only uses an interpreter so far for executing the user-uploaded code, rather than compiling it. But a compiler will be built as well in the future, increasing the speed and reducing the resource consumption somewhat, both on the server side and on the client side.
+And in the future, we intend to make it possible to program in other languages and frameworks as well, such that the users can choose the languages that they prefer.
+
+And while the current prototype at this point only uses an interpreter for executing user-uploaded code, a compiler will also be added in the future, allowing the users to compile their source code modules and achieve near-native speeds.
 
 
 
-## Summary
+## Summary: Key takeaways
 
-...
+* The platform can be extended and modified arbitrarily by the users, and each fork can be hosted from the same place.
+
+* Each individual users can freely choose which fork of each app they want to use.
+
+* Hosting the apps is essentially free for the developers, regardless of whether they implement personal websites, blogs, tools, or even full social media apps, etc.
+
+* The cost of the resources that an app consumes is instead carried by the users who are using the app, and with a simple business model where they pay with money, and that is it.
+
+* Collaboration on apps can happen fast and in a decentralized manner, without sacrificing safety, due to all the user-uploaded apps being sandboxed.
+
+* The source code of the uploaded apps is visible to the public, and cannot be changed on a whim, which means that users do not have to trust each individual creator of the apps and features that they want to use.
+
+* An *extended business model* (TODO: Insert link), if utilized, will allow the developing users to actually get paid for their contributions, and even help to attract more investments on top of that.
+
+
+## TODOs
+*TODO: Insert links in the above text.*
