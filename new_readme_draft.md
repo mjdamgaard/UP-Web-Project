@@ -4,11 +4,12 @@
 
 A user-programmable platform is a platform where the users are free to create, modify, and extend the apps on the platform, and where each end user is able to choose exactly which version of each app they want to use, without having to change to a different web domain or download a different app.
 
-Are you tired of platforms that uses algorithms that always tries to funnel you into a dopamine loop?
-Are you tired of rude comments and posts not being sufficiently suppressed, and of misinformation and inappropriate content not being sufficiently moderated?
-Are you tired of AI slop and clickbait?
-Are you tired of your data being sold to third parties, or of the lack of transparency about this?
-Are you tired of ads that just keep increasing in volume?
+* *Are you tired of platforms that uses algorithms that always tries to funnel you into a dopamine loop?*
+* *Are you tired of rude comments and posts not being sufficiently suppressed, and of misinformation and inappropriate content not being sufficiently moderated?*
+* *Are you tired of AI slop and clickbait?*
+* *Are you tired of your data being sold to third parties, or of the lack of transparency about this?*
+* *Are you tired of ads that just keep increasing in volume?*
+* *Or are you tired updates in general that you do not like and cannot decline?*
 
 With a user-programmable platform you do not need to worry about any of these problems. Here the users are in complete control over what apps and what algorithms they use, and they are free to modify them and extend them however they want.
 
@@ -30,9 +31,7 @@ All user-uploaded apps and code modules are run in a sandbox which ensures that 
 Being able quickly and safely share prototypes for new apps and features with a lot of users, who can give feedback and rate the project, and potentially even help complete it, means that the development of the platform can move very fast. 
 
 
-<!-- All user-uploaded apps and code modules are run in a sandbox which ensures that it is always safe to try out new apps, or new versions of existing apps, without having to worry about safety.
-
-Even when a new version of an app requires access to the same back-end data structure as its predecessor, it can simply use a mockup version of this back end while waiting to be verified by the user community and/or by the administrator(s) of the predecessor app.
+<!-- Even when a new version of an app requires access to the same back-end data structure as its predecessor, it can simply use a mockup version of this back end while waiting to be verified by the user community and/or by the administrator(s) of the predecessor app.
 
 This allows other users to immediately try out the new prototype and to give feedback to the creator, and maybe even help to complete it.
 
@@ -68,11 +67,11 @@ A user-programmable platform also ought to allow for decentralization, namely by
 
 
 
-## Proposed core business model
+## Proposed core business model: A freemium subscription model
 
 Each user of the platform has an amount of resources that they can use for free each month, both in terms of storage space and computational resources. And if they need to use more than what the free plan allows, they need to subscribe to a paid plan.
 
-The free resources that each user gets is paid for at least in part by sponsors, grants, and/or initial investments. And if this does not cover it, they can also be paid for in part by charging a the paying users more in the paid plans.
+The free resources that each user gets is paid for at least in part by sponsors, grants, and/or donations. And if this does not cover it, they can also be paid for in part by charging a the paying users more in the paid plans.
 
 
 
@@ -82,7 +81,7 @@ While a user-programmable platform could absolutely be based purely on open-sour
 
 Such a model might be especially interesting if a user-programmable platform wants to succeed in the space of business applications, and not just web and mobile applications, since business customers will generally happily pay more in order to get quick and reliable updates and maintenance of the software.
 
-And a model like this could also help attract initial investments from venture capital, instead of having to rely purely on grants, etc.
+And a model like this could also help attract initial investments from venture capital, instead of having to rely purely on sponsorships, grants, and donations.
 
 You can read about a proposition for such a business model here *(TODO: Insert a link to another MD file, maybe in a different repo)*.
 
