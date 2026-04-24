@@ -9,7 +9,7 @@ A user-programmable platform is a platform where the users are free to create, m
 * *Are you tired of AI slop and clickbait?*
 * *Are you tired of your data being sold to third parties, or of the lack of transparency about this?*
 * *Are you tired of ads that just keep increasing in volume?*
-* *Or are you tired updates in general that you do not like and cannot decline?*
+* *Or are you tired updates in general that makes things worse?*
 
 With a user-programmable platform you do not need to worry about any of these problems. Here the users are in complete control over what apps and what algorithms they use, and they are free to modify them and extend them however they want.
 
@@ -58,7 +58,7 @@ This means that it is essentially free for developers to upload new apps and fea
 The funding of the resources is thus not a concern for the developers of the apps and features, but is instead a matter purely between the platform and the end users who consume those resources.
 The platform thus keeps track of the resources that each user consumes, but does not care about where and how these resources are consumed.
 
-Note that since the platform is able to include any kind of app, including any kind of website that you can imagine, personal or otherwise, this means that you will be able to have any kind of website that you want hosted essentially for free and in perpetuity by a user-programmable platform: You only pay the small cost of storing the source code for your website (which might even be covered by a free plan), and the visitors will carry cost of any additional resources that it needs to consume.
+Note that since the platform is able to host any kind of app, including any kind of website that you can imagine, personal or otherwise, you will thus be able to have any kind of website that you want hosted essentially for free and in perpetuity by a user-programmable platform: You only pay the small cost of storing the source code for your website (which might even be covered by a free plan), and the visitors and users of your site will then carry the rest of the costs.
 
 
 #### 5. An open and decentralized network
@@ -89,14 +89,11 @@ You can read about a proposition for such a business model here *(TODO: Insert a
 
 ## Existing platforms can also adopt the same technology
 
-Although the previous section references a non-open-source business model, the overall project is still completely open-source.
-And it is not in competition with any existing open-source platforms, at least not directly.
+A platform does not need to be built as a user-programmable platform from the ground up. Existing platforms can also adopt the same technology.
 
-The concepts of a user-programmable platform, as listed above, is not to our knowledge at odds at all with the concepts behind e.g. the Fediverse, or with BlueSky and the AT Protocol. (TODO: Edit)
+Open-source platforms such as Mastodon, and the Fediverse at large, could thus adopt the technology by introducing user-programmable instances. And BlueSky and the ATmosphere at large could adopt the technology by introducing user-programmable AppViews.
 
-Thus, the Fediverse could absolutely launch a user-programmable type of instance. And the ATmosphere could absolutely launch a user-programmable AppView.
-
-Furthermore, any user-programmable platform would only benefit from creating network bridges, allowing users to federate data across networks.
+The benefits of doing this is the same as described above, which is to allow developers to collaborate on improving the platforms more quickly and freely, without having to bear the costs of starting new servers in order to share their prototypes and host their applications.
 
 
 
@@ -106,7 +103,7 @@ The project is ready for use. We currently have a working version of a user-prog
 
 This prototype offers a high-level web development framework based on JavaScript, and where front-end components are built in the same way as in React.
 
-And in the future, we intend to make it possible to program in other languages and frameworks as well, such that the users can choose the languages that they prefer.
+And in the future, we intend to make it possible to program in other languages and frameworks as well, such that the users can choose whichever languages they prefer.
 
 And while the current prototype at this point only uses an interpreter for executing user-uploaded code, a compiler will also be added in the future, allowing the users to compile their source code modules and achieve near-native speeds.
 
@@ -118,15 +115,17 @@ And while the current prototype at this point only uses an interpreter for execu
 
 * Each individual users can freely choose which fork of each app they want to use.
 
-* Hosting the apps is essentially free for the developers, regardless of whether they implement personal websites, blogs, tools, or even full social media apps, etc.
+* Hosting the apps is essentially free for the developers, regardless of whether they implement something simple, like a personal website or a blog, or a small tool of some kind, or if they implement something large like a full social media app.
 
-* The cost of the resources that an app consumes is instead carried by the users who are using the app, and with a simple business model where they pay with money, and that is it.
+<!-- TODO: Maybe the last part of the above item should go in a section of its own, together with the last paragraph of Sect. 2.4. -->
 
-* Collaboration on apps can happen fast and in a decentralized manner, without sacrificing safety, due to all the user-uploaded apps being sandboxed.
+* The cost of the resources that an app consumes is instead carried by the users who are using the app, via a simple freemium subscription model.
+
+* Collaboration on apps can happen fast and in a decentralized manner, without sacrificing safety, due to the user-uploaded apps being sandboxed.
 
 * The source code of the uploaded apps is visible to the public, and cannot be changed on a whim, which means that users do not have to trust each individual creator of the apps and features that they want to use.
 
-* An *extended business model* (TODO: Insert link), if utilized, will allow the developing users to actually get paid for their contributions, and even help to attract more investments on top of that.
+* An *extended business model* (TODO: Insert link), if utilized, will allow the developing users to get paid fairly for their contributions, and even help to attract more investments on top of that.
 
 
 ## TODOs
