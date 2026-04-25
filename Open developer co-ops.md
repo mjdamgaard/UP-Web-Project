@@ -4,7 +4,40 @@
 
 ## Introduction
 
-The
+An 'open developer co-op' is a business model designed to bridge the gap between open source and closed source, yielding the best of both worlds.
+
+Like open source, this model incentivizes the developers to collaborate on projects publicly, and to share their new ideas and source code contributions quickly with the world. But unlike open source, the developers can nonetheless still get a fair payment for their work.
+
+This is achieved by forming a kind of cooperative of developers where anyone is free to join and contribute source code, which the co-op then sub-licenses to its customers, and distributes the revenue among the contributors based on a protocol that takes into account how well the customers deem the contributions.
+
+<!-- The fact that an open developer co-ops are able to draw on the entire world of software developers for coming up with new ideas for useful software applications, while still being able to offer pay for the good ones, will give such co-ops a competitive advantage, which will only grow over time with the evolution of AI.
+
+As AI evolves, the time and work required for implementing ideas for new software applications will decrease over time, while the creative work required of coming up with those ideas will remain constant. -->
+
+## Advantage
+
+Since open developer co-ops are able to draw on the entire world, essentially, for coming up with creative new ideas for applications and features, and be able to reward good ideas well, 
+
+
+
+
+
+
+
+
+
+<!-- 
+
+## Introduction
+
+Open source has some advantages and disadvantages when compared to closed source. One of the advantages is that open source projects are in principle able to draw on ideas from the entire world. However, one of the disadvantages is that open source does not pay its contributors.
+
+So while open source projects might able to draw on a larger group of people for ideas and source code contributions, closed source projects are able to draw on more dedicated people.
+
+The model of 'open developer co-ops' tries to bridge the gap between the open source and closed source model, and be a model in between the two, which yields the best of both worlds.
+
+In this model, developers are still incentivized to share their ideas and source code publicly and quickly with the world, as is the case in open source. But they can nonetheless expect payment for their contributions, based on how well these contributions are received. -->
+
 
 
 
