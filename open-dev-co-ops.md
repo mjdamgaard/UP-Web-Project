@@ -8,15 +8,33 @@ An 'open developer co-op' is a business model designed to bridge the gap between
 
 Like open source, this model incentivizes the developers to collaborate on projects publicly, and to share their new ideas and source code contributions quickly with the world. But unlike open source, the developers can nonetheless still get a fair payment for their work.
 
-This is achieved by forming a kind of cooperative of developers where anyone is free to join and contribute source code, which the co-op then sub-licenses to its customers, and distributes the revenue among the contributors based on a protocol that takes into account how well the customers deem the contributions.
+This is achieved by forming a kind of cooperative of developers where anyone is free to join and contribute source code. The co-op then gathers and sub-licenses this source code to its customers, and distributes the revenue among the contributors based on a protocol that takes into account how well the customers deem the contributions.
 
-<!-- The fact that an open developer co-ops are able to draw on the entire world of software developers for coming up with new ideas for useful software applications, while still being able to offer pay for the good ones, will give such co-ops a competitive advantage, which will only grow over time with the evolution of AI.
 
-As AI evolves, the time and work required for implementing ideas for new software applications will decrease over time, while the creative work required of coming up with those ideas will remain constant. -->
+## Advantages
 
-## Advantage
+Similar to open source, the model of open developer co-ops will be able to essentially draw on the entire world for coming up with new ideas for useful software applications, and not least draw on the users of the software themselves, who are often the most likely ones to come up with new useful improvements.
 
-Since open developer co-ops are able to draw on the entire world, essentially, for coming up with creative new ideas for applications and features, and be able to reward good ideas well, 
+This gives the open developer co-ops an advantage especially in the creative department. And this advantage can be extended further by also utilizing *user-programmable platforms* (TODO: Insert link to main document) to allow the contributors to share their ideas and prototypes quickly and safely with each other in a decentralized creative space, and to allow the users to freely choose whichever ideas they like the most.
+
+Having an advantage in the creative department is a great benefit to a software company, and this advantage is only made more critical by the rise AI as a software development tool.
+As AI advances, the process to go from idea to implementation gets easier and quicker, which means that the success of a software company will increasingly rely on that company's ability to come up creative ideas for improving the software applications, and to quickly make those new applications and features available to its users.
+
+
+
+## Outlines of the model
+
+<!-- An open developer co-op consist first and foremost an organization of developers, who contributes software to the organization by publishing it under a special kind of license which gives the organization the right to sub-license this software to at least one company of choice. ... -->
+
+
+
+
+
+
+
+
+
+<!-- And similar to open source, some of these developers might even be users of the software themselves, giving them an additional motivation to contribute besides the potential for monetary rewards.   -->
 
 
 
