@@ -11,6 +11,7 @@ Like open source, this model incentivizes the developers to collaborate on proje
 This is achieved by forming a kind of cooperative of developers where anyone is free to join and contribute source code. The co-op then gathers and sub-licenses this source code to its customers, and distributes the revenue among the contributors based on a protocol that takes into account how well the users deem the contributions.
 
 
+
 ## Advantages
 
 Similar to open source, the model of open developer co-ops will be able to essentially draw on the entire world for coming up with new ideas for useful software applications, and not least draw on the users of the software themselves, who are often the most likely ones to come up with new useful improvements.
@@ -34,7 +35,7 @@ The organization is governed by its members, but not in the usual 'one person, o
 
 The exception to this rule is the first members of the organization, who might hold an increased voting weight for an initial period of time in order to get the organization started.
 
-This voting weight is then used in all the democratic decisions that the organization needs to take, such as voting for a new reward distribution protocol, of for what the organization should require of the companies that it employs to sub-license the software.
+This voting weight is then used in all the democratic decisions that the organization needs to make, such as voting for a new reward distribution protocol, of for what the organization should require of the companies that it employs to sub-license the software.
 
 And in order to prevent the organization from stagnating due to old contributors being tempted to vote for reward distributions that favors themselves rather than new ones, the organization should also have the following rule: All licenses that it accepts from its contributors must contain a clause stating that after *y* years from the publication of the licensed code, where *y* might be a number in the order of 10-15, that code will be open-source from then on.
 
@@ -42,7 +43,17 @@ This means that the collective IP that the organization governs is only ever at 
 
 
 
-## ...
+## Adjusting the parameters
+
+The parameters *x* and *y* from the last section can of course be adjusted,depending on how close to open source contra closed source you want to go.
+
+If you choose too small values, you risk not being able to set the prices very high, which means less payment for the contributors. However, if you set them too high, you might need to find other ways to assure the customers that the company will not stagnate or *enshittify* (TODO: Insert wiki link) in the future, or gamble that they will not care about this significantly. But if they do, you might risk that the customers choose a competing developer co-op instead with better assurances.
+
+
+
+## An investment opportunity
+
+It is possible to launch a developer co-op as a business venture starting only with a sufficient amount of invested capital. The following 
 
 
 
