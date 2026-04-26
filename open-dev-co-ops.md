@@ -8,7 +8,7 @@ An 'open developer co-op' is a business model designed to bridge the gap between
 
 Like open source, this model incentivizes the developers to collaborate on projects publicly, and to share their new ideas and source code contributions quickly with the world. But unlike open source, the developers can nonetheless still get a fair payment for their work.
 
-This is achieved by forming a kind of cooperative of developers where anyone is free to join and contribute source code. The co-op then gathers and sub-licenses this source code to its customers, and distributes the revenue among the contributors based on a protocol that takes into account how well the customers deem the contributions.
+This is achieved by forming a kind of cooperative of developers where anyone is free to join and contribute source code. The co-op then gathers and sub-licenses this source code to its customers, and distributes the revenue among the contributors based on a protocol that takes into account how well the users deem the contributions.
 
 
 ## Advantages
@@ -24,8 +24,25 @@ As AI advances, the process to go from idea to implementation gets easier and qu
 
 ## Outlines of the model
 
-<!-- An open developer co-op consist first and foremost an organization of developers, who contributes software to the organization by publishing it under a special kind of license which gives the organization the right to sub-license this software to at least one company of choice. ... -->
+An open developer co-op is an organization of developers who license software to the organization in return for potential future monetary rewards, which might depend on how well the software is received by the users.
 
+The developers contribute their software simply by publishing it under a license which targets the organization, and allows it to make deals with third parties on behalf of the developers about how these third parties can sub-license the software.
+
+The organization then employs one or several of such third party companies, whose function is to sub-license the software to customers at a cost, and then distribute the revenue back to the developers who have contributed to the organization, in accordance with a distribution determined by the organization, while taking some agreed-upon cut of the revenue for themselves.
+
+The organization is governed by its members, but not in the usual 'one person, one vote' sense. Instead the vote of each member of the organization has a weight attached to it, and that weight is generally proportional to total amount of rewards the member has received through the organization in the last *x* years, where *x* might be a number in the order of 30-40.
+
+The exception to this rule is the first members of the organization, who might hold an increased voting weight for an initial period of time in order to get the organization started.
+
+This voting weight is then used in all the democratic decisions that the organization needs to take, such as voting for a new reward distribution protocol, of for what the organization should require of the companies that it employs to sub-license the software.
+
+And in order to prevent the organization from stagnating due to old contributors being tempted to vote for reward distributions that favors themselves rather than new ones, the organization should also have the following rule: All licenses that it accepts from its contributors must contain a clause stating that after *y* years from the publication of the licensed code, where *y* might be a number in the order of 10-15, that code will be open-source from then on.
+
+This means that the collective IP that the organization governs is only ever at most 10-15 years away from turning completely open-source at any given moment. And the organization is therefore forced to keep extending and renewing its code base in order to stay relevant for the customers, which means that it needs to make sure to keep rewarding new contributors well.
+
+
+
+## ...
 
 
 
