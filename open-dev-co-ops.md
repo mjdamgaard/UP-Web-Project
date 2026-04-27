@@ -23,7 +23,7 @@ As AI advances, the process to go from idea to implementation gets easier and qu
 
 
 
-## Outlines of the model
+## Outline of the model
 
 An open developer co-op is an organization of developers who license software to the organization in return for potential future monetary rewards, which might depend on how well the software is received by the users.
 
@@ -53,7 +53,23 @@ If you choose too small values, you risk not being able to set the prices very h
 
 ## An investment opportunity
 
-It is possible to launch a developer co-op as a business venture starting only with a sufficient amount of invested capital. The following 
+It is possible to launch a developer co-op as a business venture, starting only with a sufficient amount capital. A way to do this would be for a capital-backed company to have some associates start up the co-op, and make an initial deal with the company that gives it exclusive rights to sub-license the software of the co-op for an extended period of time, while being able to take a fixed cut of the revenue for itself.
+
+The company can then use its capital, not just to set up its own infrastructure for sub-licensing the software, but also possibly to help pay the first contributors of the co-op, perhaps generously, as a way of attracting the initial contributions that the co-op can then build on.
+
+The company can also help decide the reward distribution for the initial contributors, and even get a vote in the co-op during the same period where it has the exclusive rights. This vote might have a weight that is more than 50 % of the total weight to begin with, but where this fraction decreases over time as the co-op grows.
+
+The parameters of this deal, and in particular the length of the exclusivity period, as well as the percentage of the revenue that the company earns, need to be set high enough, of course, that if the co-op succeeds as planned, the company will earn enough profits during this period to make the investments well worth it, compared to the risk it takes.
+
+
+
+## Summary
+
+An open developer co-op is a 
+
+
+
+
 
 
 
