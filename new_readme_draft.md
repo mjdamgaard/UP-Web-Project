@@ -102,9 +102,13 @@ Some other use cases that are worth mentioning ... -->
 
 ## The evolution of AI increases the advantages of user-programmable platforms
 
-TODO: Write.
+As AI continues to improve as a tool for software development, the process of going from idea to implementation gets easier and easier as time goes on. This means that companies who excel at the creative part of the process, namely of coming up with and recognizing good ideas, will get an increased competitive advantage. And this advantage will only grow over time, unless their competitors can find ways to keep up.
 
+A user-programmable platform is designed exactly for the purpose of creating a free and decentralized creative space where everyone can contribute, not least the users of the platform themselves, who are generally the ones most likely to think of new useful features and improvements.
 
+Thus, user-programmable platforms stand to gain a significant advantage in the long run over any competitor who does not manage to engage its users to the same extend in the development of the platform.
+
+Furthermore, the evolution of AI also means that more people can engage in the development of apps and features, without needing the same kind of experience as it once took. For a user-programmable platform, this means that a far greater part of the user base will be able to engage in the development of new apps and features, greatly increasing the amount of contributions that the platform can attract.
 
 
 
