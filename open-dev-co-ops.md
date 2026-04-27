@@ -63,9 +63,19 @@ The parameters of this deal, and in particular the length of the exclusivity per
 
 
 
-## Summary
+## Key takeaways
 
-An open developer co-op is a 
+* An open developer co-op is a business model in between open and closed source.
+
+* The purpose of the co-op is to gather public source code contributions, licensed specifically for the co-op, and sub-license it to third parties in return for payment that is then distributed to the contributors.
+
+* The distribution is determined by the co-op, and is supposed to reward the contributions based on how useful they are to the users.
+
+* The voting power in the co-op is not distributed equally, but rather based on the amount of recent rewards that the member has earned, meaning that members who have contributed more than others, both in terms of volume and usability, will also have more of a say in the decisions of the co-op.
+
+* The licenses of contributors might be required to have the source code be open-source after a fixed period of time from when it was published. This is done in order to keep the model somewhat close to an open source model, and to assure the users that the co-op will not stagnate or enshittify.
+
+* The co-op and potentially attract initial investments by making an initial deal with a capital-backed company, which gives it exclusive rights to sub-license the source code for an extended period, and gives the right to take a fixed cut of the revenue during this period.
 
 
 
