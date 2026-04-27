@@ -58,7 +58,7 @@ This means that it is essentially free for developers to upload new apps and fea
 The funding of the resources is thus not a concern for the developers of the apps and features, but is instead a matter purely between the platform and the end users who consume those resources.
 The platform thus keeps track of the resources that each user consumes, but does not care about where and how these resources are consumed.
 
-Note that since the platform is able to host any kind of app, including any kind of website that you can imagine, personal or otherwise, you will thus be able to have any kind of website that you want hosted essentially for free and in perpetuity by a user-programmable platform: You only pay the small cost of storing the source code for your website (which might even be covered by a free plan), and the visitors and users of your site will then carry the rest of the costs.
+Note that since the platform is able to host any kind of app, including any kind of website that you can imagine, personal or otherwise, you will thus be able to have any kind of website that you want hosted essentially for free and in perpetuity by a user-programmable platform: You only pay the small cost of storing the source code for your website (which might even be covered by a free plan), and the visitors/users of your site will carry the rest of the costs.
 
 
 #### 5. An open and decentralized network
@@ -71,19 +71,40 @@ A user-programmable platform also ought to allow for decentralization, namely by
 
 Each user of the platform has an amount of resources that they can use for free each month, both in terms of storage space and computational resources. And if they need to use more than what the free plan allows, they need to subscribe to a paid plan.
 
-The free resources that each user gets is paid for at least in part by sponsors, grants, and/or donations. And if this does not cover it, they can also be paid for in part by charging a the paying users more in the paid plans.
+The free resources that each user gets is paid for at least in part by sponsors, grants, donations, and/or initial investments. And if this does not cover it, they can also be paid for in part by charging a the paying users more in the paid plans.
 
 
 
 ## An extended business model where the developing users also get paid
 
-While a user-programmable platform could absolutely be based purely on open-source contributions, and on the willingness of its users to improve the platform for themselves and others, there is also other possible models which allow the developing users to actually get paid for their contributions, while still motivating them to collaborate publicly, and share their contributions quickly and openly with each other.
+While a user-programmable platform could certainly just be based purely on open-source contributions, and on the willingness of its users to improve the platform for themselves and others, there is also other possible models which allow the developing users to actually be rewarded for their contributions, and which can also help attract investments for the platform.
 
-Such a model might be especially interesting if a user-programmable platform wants to succeed in the space of business applications, and not just web and mobile applications, since business customers will generally happily pay more in order to get quick and reliable updates and maintenance of the software.
+<!-- Such a model might be especially interesting if a user-programmable platform wants to succeed in the space of business applications, and not just web and mobile applications, since business customers will generally happily pay more in order to get quick and reliable updates and maintenance of the software. -->
 
-And a model like this could also help attract initial investments from venture capital, instead of having to rely purely on sponsorships, grants, and donations.
+We thus propose utilizing the model of an '*open developer co-op* (TODO: Insert link),' on top of the proposed core business model, in order for the platform to be able to attract more contributions, and also more investments.
 
-You can read about a proposition for such a business model here *(TODO: Insert a link to another MD file, maybe in a different repo)*.
+In short, this model designed to be a midway between an open source and a closed source model, in a way that still motivates the developers to collaborate publicly, and share their contributions quickly and openly with each other, but which nonetheless still limits the use of the resulting code base in order to ensure payment for its contributors.
+
+And by promising investors a share of this revenue as well, this model can thus also help bring in investments for the platform.
+
+You can read about this model of 'open developer co-ops' *here* (TODO: Insert link).
+
+
+
+<!--
+## Some more use cases
+
+In the introduction, we already touched on several use cases, some of which had to do with getting control back over the algorithms, and being able to adjust them to your needs, as well being able to prevent what is known as *enshittification* (TODO: Insert link) of the platform.
+
+Some other use cases that are worth mentioning ... -->
+
+
+
+## The evolution of AI increases the advantages of user-programmable platforms
+
+TODO: Write.
+
+
 
 
 
@@ -91,9 +112,13 @@ You can read about a proposition for such a business model here *(TODO: Insert a
 
 A platform does not need to be built as a user-programmable platform from the ground up. Existing platforms can also adopt the same technology.
 
-Open-source platforms such as Mastodon, and the Fediverse at large, could thus adopt the technology by introducing user-programmable instances. And BlueSky and the ATmosphere at large could adopt the technology by introducing user-programmable AppViews.
+Open-source platforms such as Mastodon, and the Fediverse at large, could thus adopt the technology by introducing user-programmable instances. The same goes for BlueSky and the ATmosphere at large, which could adopt the technology by introducing user-programmable AppViews.
 
-The benefits of doing this is the same as described above, which is to allow developers to collaborate on improving the platforms more quickly and freely, without having to bear the costs of starting new servers in order to share their prototypes and host their applications.
+The benefits of doing this is the same as described above, which is to allow developers to collaborate on improving the platforms more quickly and freely, without having to bear the costs of starting new servers in order to share their prototypes and host their applications. And it means that these platforms can get a wider and more decentralized variety of choices, without at causing the trust and the safety on the platforms to become more diluted in the process.
+
+It is also even possible for closed-source platforms to adopt the technology to some extend, opening up parts of their platform for the users to extend and modify themselves.[^2]
+
+[^2]: This would of course require isolation between the original and the user-programmable part of the platform. And if the platform wants its user-programmed modules to be able to interact with the original data structure of the platform, it thus ought to use a mock-up of their data, and require the user-programmable modules to be manually approved before they get to access the real data structure. 
 
 
 
@@ -109,15 +134,13 @@ And while the current prototype at this point only uses an interpreter for execu
 
 
 
-## Summary: Key takeaways
+## Key takeaways
 
-* The platform can be extended and modified arbitrarily by the users, and each fork can be hosted from the same place.
+* A user-programmable platform can be extended and modified arbitrarily by the users, and each fork can be hosted from the same place.
 
 * Each individual users can freely choose which fork of each app they want to use.
 
 * Hosting the apps is essentially free for the developers, regardless of whether they implement something simple, like a personal website or a blog, or a small tool of some kind, or if they implement something large like a full social media app.
-
-<!-- TODO: Maybe the last part of the above item should go in a section of its own, together with the last paragraph of Sect. 2.4. -->
 
 * The cost of the resources that an app consumes is instead carried by the users who are using the app, via a simple freemium subscription model.
 
