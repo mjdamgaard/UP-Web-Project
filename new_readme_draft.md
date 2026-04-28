@@ -6,10 +6,11 @@ A 'user-programmable platform' is a one where the users are free to create, modi
 
 * *Are you tired of platforms whose algorithms always tries to funnel you into a dopamine loop?*
 * *Are you tired of rude comments and posts not being sufficiently suppressed, and of misinformation and inappropriate content not being sufficiently moderated?*
+* *Are you tired of search results being dominated by paid-for entires, rather than just showing you the things that are actually the most relevant for you?*
 * *Are you tired of AI slop and clickbait?*
 * *Are you tired of your data being sold to third parties, or of the lack of transparency in this regard?*
 * *Are you tired of ads that just keep increasing in volume?*
-* *Or are you tired updates in general that makes things worse for you as a user?*
+* *Or are you tired of updates in general that make things worse for you as a user?*
 
 With a user-programmable platform, you do not need to worry about any of these problems. Here the users are in complete control over what apps and what algorithms they use, and are free to modify and extend them however they want.
 
@@ -106,7 +107,7 @@ You can read more about this model of 'open developer co-ops' [here](open-dev-co
     - Or another idea might be to introduce more parameters that users can rate for any given type resource (such as a post, a video, a movie, etc.), other than just the normal 'good vs. bad' parameter. Think of [tags](https://en.wikipedia.org/wiki/Tag_(metadata)), but where each tag forms its own rating scale, which can be rated by all users on the platform. Such "ratable tags" could then be used to improve search results, and to improve algorithms on the platform in general.
     - And as a last, more down-to-earth example, it would also be a natural idea for a social media app on a user-programmable platform to allow its users to program their profile pages themselves, giving them almost complete freedom to build their profile page however they want, almost like a personal website.
 
-* If you have an idea for some website or app that you want the world to see/use, and you do aim for this website/app to make enough ad money to make it profitable, you can choose to publish it on a user-programmable platform and save all the costs of running the servers. On a user-programmable platform, the only cost to the developer is paying for the storage space of the source code, which is usually miniscule, and the users pay the rest of the costs. Thus, on a user-programmable platform, there is no money to win, at least not ad money, but there is also no money to lose. And your website/app will stay up for as long as the user-programmable platform stays up, even if barely anyone uses it.
+* If you have an idea for some website or app that you want the world to see/use, and you do not aim for this website/app to make enough ad money to make it profitable, you can choose to publish it on a user-programmable platform and save all the costs of running the servers. On a user-programmable platform, the only cost to the developer is paying for the storage space of the source code, which is usually miniscule, and the users pay the rest of the costs. Thus, on a user-programmable platform, there is no money to win, at least not ad money, but there is also no money to lose. And your website/app will stay up for as long as the user-programmable platform stays up, even if barely anyone uses it.
 
 
 

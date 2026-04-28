@@ -16,7 +16,7 @@ This is achieved by forming a kind of cooperative of developers where anyone is 
 
 Similar to open source, the model of open developer co-ops will be able to essentially draw on the entire world for coming up with new ideas for useful software applications, and not least draw on the users of the software themselves, who are often the most likely ones to come up with new useful improvements.
 
-This gives the open developer co-ops an advantage especially in the creative department. And this advantage can be extended further by also utilizing *user-programmable platforms* (TODO: Insert link to main document) to allow the contributors to share their ideas and prototypes quickly and safely with each other in a decentralized creative space, and to allow the users to freely choose whichever ideas they like the most.
+This gives the open developer co-ops an advantage especially in the creative department. And this advantage can be extended further by also utilizing [user-programmable platforms](README.md) to allow the contributors to share their ideas and prototypes quickly and safely with each other in a decentralized creative space, and to allow the users to freely choose whichever ideas they like the most.
 
 Having an advantage in the creative department is a great benefit to a software company, and this advantage is only made more critical by the rise AI as a software development tool.
 As AI advances, the process to go from idea to implementation gets easier and quicker, which means that the success of a software company will increasingly rely on that company's ability to come up creative ideas for improving the software applications, and to quickly make those new applications and features available to its users.
@@ -47,7 +47,7 @@ This means that the collective IP that the organization governs is only ever at 
 
 The parameters *x* and *y* from the last section can of course be adjusted,depending on how close to open source contra closed source you want to go.
 
-If you choose too small values, you risk not being able to set the prices very high, which means less payment for the contributors. However, if you set them too high, you might need to find other ways to assure the customers that the company will not stagnate or *enshittify* (TODO: Insert wiki link) in the future, or gamble that they will not care about this significantly. But if they do, you might risk that the customers choose a competing developer co-op instead with better assurances.
+If you choose too small values, you risk not being able to set the prices very high, which means less payment for the contributors. However, if you set them too high, you might need to find other ways to assure the customers that the company will not stagnate or [enshittify](https://en.wikipedia.org/wiki/Enshittification) in the future, or gamble that they will not care about this significantly. But if they do, you might risk that the customers choose a competing developer co-op instead with better assurances.
 
 
 
@@ -131,17 +131,6 @@ And although this is bound to flip at some point due to the rise of AI, the clos
 This is where the model of 'open developer co-ops' comes in. It is a model in between open source and closed course, where the developers are still incentivized to share their ideas and source code publicly and quickly with the world, but where they can nonetheless expect payment for their contributions, based on how well these contributions are received.
 
 This model thus might be able to win out against the closed source model, even at presents times while AI's capabilities are still limited, and give a big boost to the productivity of the software industry as a whole.
-
-
-
-## Summary of the model
-
-In the model of an 'open developer co-op' involves 
-
-
-
-## Further details -->
-
 
 
 
