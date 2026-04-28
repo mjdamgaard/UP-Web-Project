@@ -91,12 +91,18 @@ You can read about this model of 'open developer co-ops' *here* (TODO: Insert li
 
 
 
-<!--
-## Some more use cases
+## Use cases
 
-In the introduction, we already touched on several use cases, some of which had to do with getting control back over the algorithms, and being able to adjust them to your needs, as well being able to prevent what is known as *enshittification* (TODO: Insert link) of the platform.
+* If you are want more control over the algorithms, for feed and for searches, as well as over how your data is handled, a user-programmable platform will benefit you since it puts the users completely in charge of the algorithms, and each user can choose to use whichever one they most prefer.
 
-Some other use cases that are worth mentioning ... -->
+* If you are tired of updates turning things worse for you as a user, either intentionally (known as *enshittification* (TODO: Insert link)) or unintentionally, a user-programmable platform will benefit you, since here you never have to accept a new update, but can choose whichever fork of the platform that you prefer the most.
+
+* If you have an idea for a new feature or improvement of a given app you use, you can first of all share that idea, and if others find it interesting, you can collaborate on making a prototype, which all other users on the platform will immediately be able to try out. And if enough users like the new feature, it can quickly be added is a new fork to the given app, which you and other users can then enjoy.
+  - A concrete example could be if you had the idea to add a shared calender for all the events of a group on a social media app.
+  - Or it could be if you had the idea to add 'quizzes' and/or 'surveys' as a new type of post that you can post to you friends/connections on a social media platform.
+  - It could also be if you had the idea to create a way to organize posts and threads in a group according to topics, such that you can find related posts and threads in one place, instead of only relying on a chronologically ordered feed.
+
+* If you have an idea for some website or app that you want the world to see/use, and you do aim for this website/app to make enough ad money to make it profitable, you can choose to publish it on a user-programmable platform and save all the costs of running the servers. On a user-programmable platform, the only cost to the developer is paying for the storage space of the source code, which is usually miniscule, and the users pay the rest of the costs. Thus, on a user-programmable platform, there is no money to win, at least not ad money, but there is also no money to lose. And your website/app will stay up for as long as the user-programmable platform stays up, even if barely anyone uses it.
 
 
 
