@@ -4,7 +4,7 @@
 
 ## Introduction
 
-A 'user-programmable platform' is a one where the users are free to create, modify, and extend the apps on the platform, and where each end user is able to choose exactly which version of each app they want to use, without having to change to a different web domain or download a different app.
+A 'user-programmable platform' is a platform where the users are free to create, modify, and extend the apps that it offers, and where each end user is able to choose exactly which version of each app they want to use, without having to change to a different web domain or download a different app.
 
 * *Are you tired of platforms whose algorithms always tries to funnel you into a dopamine loop?*
 * *Are you tired of rude comments and posts not being sufficiently suppressed, or of misinformation and inappropriate content not being sufficiently moderated?*
@@ -29,16 +29,11 @@ The users are free to create new apps on the platform as well as fork existing o
 
 #### 2. A sandbox technology makes it safe to try out new apps
 
-All user-uploaded apps and code modules are run in a sandbox which ensures that new prototypes for apps and features can be shared quickly among the users, without needing to first be verified for security.
+All user-uploaded apps and code modules are run in a sandbox which ensures that new prototypes for apps and features can be shared quickly among the users, without needing to first be verified for security.[^1]
+
+[^1]: Even when a new version of an app requires access to the same back-end data structure as its predecessor, it can simply use a mockup version of this back end while waiting to be verified by the user community and/or by the administrators of the predecessor app.
 
 Being able quickly and safely share prototypes for new apps and features with a lot of users, who can give feedback and rate the project, and potentially even help complete it, means that the development of the platform can move very fast. 
-
-
-<!-- Even when a new version of an app requires access to the same back-end data structure as its predecessor, it can simply use a mockup version of this back end while waiting to be verified by the user community and/or by the administrator(s) of the predecessor app.
-
-This allows other users to immediately try out the new prototype and to give feedback to the creator, and maybe even help to complete it.
-
-And as soon as it has been verified as being safe, users can now start using this new version of the app if they want, on equal footing with the other versions. -->
 
 
 #### 3. Transparency means that trust is not required
@@ -52,9 +47,9 @@ This removes a core issue that otherwise affects decentralized platforms in gene
 
 #### 4. No need for allocating resources means free hosting! (almost)
 
-Another feature of a user-programmable platform is that apps do not have to allocate storage space or computational resources in advance. Instead the resources are only allocated exactly when needed by the users of the given app.[^1]
+Another feature of a user-programmable platform is that apps do not have to allocate storage space or computational resources in advance. Instead the resources are only allocated exactly when needed by the users of the given app.[^2]
 
-[^1]: And if an app needs server-side maintenance routines to run at regularly scheduled intervals, these intervals can just be based on how many post requests has occurred since the last execution, rather than how much time has passed.
+[^2]: And if an app needs server-side maintenance routines to run at regularly scheduled intervals, these intervals can just be based on how many post requests has occurred since the last execution, rather than how much time has passed.
 
 This means that it is essentially free for developers to upload new apps and features, as it only costs the system the storage space required for the given source code.
 
@@ -135,9 +130,9 @@ For instance, an open-source platform such as Mastodon, and the Fediverse at lar
 
 The benefits of doing this is the same as described above, which is to allow developers to collaborate on improving the platforms more quickly and freely, without having to bear the costs of starting new servers in order to share their prototypes and host their applications. And it means that these platforms can get a wider and more decentralized variety of choices, without diluting the trust and the safety on the platforms in the process, due to the transparency of user-programmable servers.
 
-It is also even possible for closed-source platforms to adopt the technology, opening up parts of their platform for the users to extend and modify.[^2]
+It is also even possible for closed-source platforms to adopt the technology, opening up parts of their platform for the users to extend and modify.[^3]
 
-[^2]: This would of course require isolation between the original and the user-programmable part of the platform. And if the platform wants its user-programmed modules to be able to interact with the original data structure of the platform, it thus ought to use a mock-up of that data, which new user-made modules can access temporarily while they wait to be approved for accessing the real data structure.
+[^3]: This would of course require isolation between the original and the user-programmable part of the platform. And if the platform wants its user-programmed modules to be able to interact with the original data structure of the platform, it thus ought to use a mockup of that data, which new user-made modules can access temporarily while they wait to be approved for accessing the real data structure.
 
 
 
