@@ -18,7 +18,7 @@ Similar to open source, the model of open developer co-ops will be able to essen
 
 This gives the open developer co-ops an advantage especially in the creative department. And this advantage can be extended further by also utilizing [user-programmable platforms](README.md) to allow the contributors to share their ideas and prototypes quickly and safely with each other in a decentralized creative space, and to allow the users to freely choose whichever ideas they like the most.
 
-Having an advantage in the creative department is a great benefit to a software company, and this advantage is only made more critical by the rise AI as a software development tool.
+Having an advantage in the creative department is a great benefit to a software company, and this advantage is only made more critical by the rise of AI as a software development tool.
 As AI advances, the process to go from idea to implementation gets easier and quicker, which means that the success of a software company will increasingly rely on that company's ability to come up creative ideas for improving the software applications, and to quickly make those new applications and features available to its users.
 
 
@@ -27,39 +27,56 @@ As AI advances, the process to go from idea to implementation gets easier and qu
 
 An open developer co-op is an organization of developers who license software to the organization in return for potential future monetary rewards, which might depend on how well the software is received by the users.
 
-The developers contribute their software simply by publishing it under a license which targets the organization, and allows it to make deals with third parties on behalf of the developers about how these third parties can sub-license the software.
+The developers contribute their software to the organization by publishing it under a license which allows it to sub-license the software on behalf of the developers.
 
-The organization then employs one or several of such third party companies, whose function is to sub-license the software to customers at a cost, and then distribute the revenue back to the developers who have contributed to the organization, in accordance with a distribution determined by the organization, while taking some agreed-upon cut of the revenue for themselves.
+The organization then makes sure that the revenue generated from sub-licensing the software is distributed among the developers. But rather than collecting this revenue itself and distributing it to the developers itself, it can also employ third party companies instead to do this, who might then get a cut of the revenue.
 
-The organization is governed by its members, but not in the usual 'one person, one vote' sense. Instead the vote of each member of the organization has a weight attached to it, and that weight is generally proportional to total amount of rewards the member has received through the organization in the last *x* years, where *x* might be a number in the order of 30-40.
+The protocol that determines the distribution of the rewards to the contribution developers is supposed to take into account how well the users benefit from those contributions. But at the end of the day, this distribution protocol is determined by the organization.  
 
-The exception to this rule is the first members of the organization, who might hold an increased voting weight for an initial period of time in order to get the organization started.
+The organization is governed by its members, but not in the usual 'one person, one vote' sense. Instead the vote of each member of the organization has a weight attached to it, and that weight is generally proportional to total amount of rewards the member has received through the organization in the last *x* years, where *x* can be seen as a parameter of the model.
+
+An exception to this rule might be the first members of the organization, who might hold an increased voting weight for an initial period of time in order to get the organization started.
+
+Or another potential exception is if the co-op also gives its recent customers a vote as well, such that the total voting weight is split in two fractions, *a* % and *b* %, where the developers get *a* % of the total weight and the recent customers get *b* % of the total weight. The relative weight distribution for the customers then ought be proportional to how much money each customer has spent on using the software within the last *x* years.
 
 This voting weight is then used in all the democratic decisions that the organization needs to make, such as voting for a new reward distribution protocol, of for what the organization should require of the companies that it employs to sub-license the software.
 
-And in order to prevent the organization from stagnating due to old contributors being tempted to vote for reward distributions that favors themselves rather than new ones, the organization should also have the following rule: All licenses that it accepts from its contributors must contain a clause stating that after *y* years from the publication of the licensed code, where *y* might be a number in the order of 10-15, that code will be open-source from then on.
+Lastly, in order to move the model closer to an open source model and to assure the users that the co-op will not [enshittify](https://en.wikipedia.org/wiki/Enshittification) over time, or stagnate due to old contributors not giving way to new ones, the licenses of the developers can also contain a clause stating that after *y* years from the publication of the licensed code, that code will be open-source from then on.
 
-This means that the collective IP that the organization governs is only ever at most 10-15 years away from turning completely open-source at any given moment. And the organization is therefore forced to keep extending and renewing its code base in order to stay relevant for the customers, which means that it needs to make sure to keep rewarding new contributors well.
+We will discuss the purpose this *y*-parameter in more detail in the following section, along with the other parameters of this model, *x*, *a*, and *b*.
 
 
 
-## Adjusting the parameters
+## Adjusting the parameters of the model
 
-The parameters *x* and *y* from the last section can of course be adjusted,depending on how close to open source contra closed source you want to go.
+The parameters of the model, *x*, *y*, *a*, and *b*, are included in order to give the co-op ways to assure the customers, as well as new potential source code contributors, that the co-op will not [enshittify](https://en.wikipedia.org/wiki/Enshittification) over time.
 
-If you choose too small values, you risk not being able to set the prices very high, which means less payment for the contributors. However, if you set them too high, you might need to find other ways to assure the customers that the company will not stagnate or [enshittify](https://en.wikipedia.org/wiki/Enshittification) in the future, or gamble that they will not care about this significantly. But if they do, you might risk that the customers choose a competing developer co-op instead with better assurances.
+Without these parameters, or rather if we set *a* = 100, *b* = 0, and *x*, *y* ≥ 100, we still get a developer co-op where new contributors are motivated to share their contributions quickly and openly with each other, like in open source. However, open source offers more than just being able to collaborate open and freely on a project. It also assures both the contributors and the users that the software will not end up being controlled by a few actors who will jam up prices, or enshittify the product in other ways.
+
+When starting an open developer co-op, it is therefore worth finding ways to make these same assurances, namely if it turns out that not enough users and/or new contributors will support the business otherwise.
+
+One way of creating such an assurance is to adjust the *x* and *y*-parameters of the model. For instance, if you set *y* = 15, *x* = 50, it means that all the source code that the the co-op has rights to at any given time will turn open-source within the next 15 years. So in order for the co-op to stay relevant to its customers it needs to constantly extend and improve its source code, which requires it to keep recruiting new contributors by giving them fair rewards for their contributions.
+
+And another, perhaps more reliable, way of assuring everyone that the co-op will not enshittify, and start squeezing its customers for money, is to simply let the customers slowly take over the co-op over time, namely by slowly increasing *b* in comparison to *a*, meaning that the customers will get an increasing amount of the total vote in the co-op.
+
+With this proposal, the co-op will thus essentially turn into a [consumer's co-op](https://en.wikipedia.org/wiki/Consumers%27_co-operative) over time, little by little, where the prices and the rewards for the developers will to an increasing extend be determined (democratically) by the customers themselves. And these customers will of course still have an incentive to keep the business going, and not least to still reward the contributions of the developers who maintain and extend the software.
+
+
+<!-- The parameters *x* and *y* from the last section be adjusted depending on how close to an open source model you want to go.
+
+If you choose too small values, you risk not being able to set the prices very high, which means less payment for the contributors. However, if you set them too high, you might need to find other ways to assure the customers that the company will not stagnate or [enshittify](https://en.wikipedia.org/wiki/Enshittification) in the future, or gamble that they will not care about this significantly. But if they do, you might risk that the customers choose a competing developer co-op instead with better assurances. -->
 
 
 
 ## An investment opportunity
 
-It is possible to launch a developer co-op as a business venture, starting only with a sufficient amount capital. A way to do this would be for a capital-backed company to have some associates start up the co-op, and make an initial deal with the company that gives it exclusive rights to sub-license the software of the co-op for an extended period of time, while being able to take a fixed cut of the revenue for itself.
+It is possible to launch a developer co-op as a business venture by starting only with a sufficient amount capital. A way to do this would be for a capital-backed company to get some associates to start up the co-op, and make an initial deal with the company that gives it exclusive rights to sub-license the software of the co-op for an extended period of time, while being able to take a fixed cut of the revenue for itself.
 
-The company can then use its capital, not just to set up its own infrastructure for sub-licensing the software, but also possibly to help pay the first contributors of the co-op, perhaps generously, as a way of attracting the initial contributions that the co-op can then build on.
+The company can then use its capital, not just to set up its own infrastructure for sub-licensing the software, but also possibly to help pay the first contributors of the co-op, perhaps generously, as a way of attracting the initial contributions that the co-op can then build on from there.
 
 The company can also help decide the reward distribution for the initial contributors, and even get a vote in the co-op during the same period where it has the exclusive rights. This vote might have a weight that is more than 50 % of the total weight to begin with, but where this fraction decreases over time as the co-op grows.
 
-The parameters of this deal, such as in particular the length of the exclusivity period, as well as the percentage of the revenue that the company earns, need to be set high enough that if the co-op succeeds as planned, the company will earn enough profits during this period to make the investments well worth it, compared to the risk it takes.
+The parameters of this deal, such as in particular the length of the exclusivity period, as well as the percentage of the revenue that the company earns, need to be set high enough such that if the co-op succeeds as planned, the company will earn enough profits during this period to make the investments well worth it, compared to the risk it takes.
 
 
 
