@@ -49,7 +49,7 @@ This removes a core issue that otherwise affects decentralized platforms in gene
 
 Another feature of a user-programmable platform is that apps do not have to allocate storage space or computational resources in advance. Instead the resources are only allocated exactly when needed by the users of the given app.[^2]
 
-[^2]: And if an app needs server-side maintenance routines to run at regularly scheduled intervals, these intervals can just be based on how many post requests has occurred since the last execution, rather than how much time has passed.
+[^2]: And if an app needs server-side maintenance routines to run at regularly scheduled intervals, these intervals can just be based on how many POST requests has occurred since the last execution, rather than on how much time has passed.
 
 This means that it is essentially free for developers to upload new apps and features, as it only costs the system the storage space required for the given source code.
 
@@ -100,8 +100,8 @@ You can read more about this model of 'open developer co-ops' [here](open-dev-co
     - Or it could be if you had the idea to add 'quizzes' and/or 'surveys' as a new type of post that you can post to you friends/connections on a social media platform.
     - It could also be if you had the idea to create a way to organize posts and threads in a group according to topics, such that you can find related posts and threads in one place, instead of only relying on a chronologically ordered feed.
     - Or if you had an idea for how to structure comment sections in a better way, such that reactions, jokes, and personal anecdotes are grouped separately from the purely factual comments and questions about the given post/resource.
-    <!-- - Or in a similar vein, you might have an idea for how to structure discussion threads more like [argument maps](https://en.wikipedia.org/wiki/Argument_map), where each argument has a list of the most relevant arguments and counterarguments, as rated by the users, and where this structure repeats itself to form a whole tree of arguments and counterarguments for the given discussion.
-    - Or another idea might be to introduce more parameters that users can rate for any given type resource (such as a post, a video, a movie, etc.), other than just the normal 'good vs. bad' parameter. Think of [tags](https://en.wikipedia.org/wiki/Tag_(metadata)), but where each tag forms its own rating scale, which can be rated by all users on the platform. Such "ratable tags" could then be used to improve search results, and to improve algorithms on the platform in general. -->
+    <!-- - Or in a similar vein, you might have an idea for how to structure discussion threads more like [argument maps](https://en.wikipedia.org/wiki/Argument_map), where each argument has a list of the most relevant arguments and counterarguments, as rated by the users, and where this structure repeats itself to form a whole tree of arguments and counterarguments for the given discussion. -->
+    <!-- - Or another idea might be to introduce more parameters that users can rate for any given type resource (such as a post, a video, a movie, etc.), other than just the normal 'good vs. bad' parameter. Think of [tags](https://en.wikipedia.org/wiki/Tag_(metadata)), but where each tag forms its own rating scale, which can be rated by all users on the platform. Such "ratable tags" could then be used to improve search results, and to improve algorithms on the platform in general. -->
     - And as a last example, it would also be a natural idea for any social media app on a user-programmable platform to allow its users to freely build their own individual profile pages however they want, almost like a personal website.
 
 * If you have an idea for some website or app that you want the world to see/use, and you do not aim for this website/app to make enough ad money to make it profitable, you can choose to publish it on a user-programmable platform and save all the costs of running the servers. On a user-programmable platform, the only cost to the developer is paying for the storage space for the source code, which is usually miniscule, and the users pay the rest of the costs. Thus, on a user-programmable platform, there is no ad money to win, but there is also no money to lose either. And your website/app will stay up for as long as the user-programmable platform stays up, regardless of how many users it has.
@@ -152,7 +152,7 @@ And while the current prototype at this point only uses an interpreter for execu
 
 * A user-programmable platform can be extended and modified arbitrarily by the users, and each fork can be hosted from the same place.
 
-* Each individual users can freely choose which fork of each app they want to use.
+* Each individual user can freely choose which fork of each app they want to use, without having switch to another web domain or install a different app.
 
 * Collaboration on apps can happen fast and in a decentralized manner, without sacrificing safety, due to the user-uploaded apps being sandboxed.
 
