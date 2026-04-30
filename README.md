@@ -22,12 +22,12 @@ Furthermore, a user-programmable platform is designed to make it very easy and q
 
 ## Key features of a user-programmable platform
 
-#### 1. All forks of the platform can be hosted simultaneously from the same place
+### All forks of the platform can be hosted simultaneously from the same place
 
 The users are free to create new apps on the platform as well as fork existing ones. And whenever a new version of an app is created, other users are free to try out this new version, and switch to it if they like, without having switch to another web domain or install a different app.
 
 
-#### 2. A sandbox technology makes it safe to try out new apps
+### A sandbox technology makes it safe to try out new apps
 
 All user-uploaded apps and code modules are run in a sandbox which ensures that new prototypes for apps and features can be shared quickly among the users, without needing to first be verified for security.[^1]
 
@@ -36,7 +36,7 @@ All user-uploaded apps and code modules are run in a sandbox which ensures that 
 Being able quickly and safely share prototypes for new apps and features with a lot of users, who can give feedback and rate the project, and potentially even help complete it, means that the development of the platform can move very fast. 
 
 
-#### 3. Transparency means that trust is not required
+### Transparency means that trust is not required
 
 When an app or a back-end module is uploaded to the platform, the source code is generally completely visible to the public. And the creator of the app cannot change the source code on a whim while the app is in use.
 
@@ -45,7 +45,7 @@ This means that as long as you trust the user-programmable platform itself to sh
 This removes a core issue that otherwise affects decentralized platforms in general, namely the issue that in order to use the desired features of the platform, the individual user often has to trust several different independent parties that they do not know much about.
 
 
-#### 4. No need for allocating resources means free hosting! (almost)
+### No need for allocating resources means free hosting! (almost)
 
 Another feature of a user-programmable platform is that apps do not have to allocate storage space or computational resources in advance. Instead the resources are only allocated exactly when needed by the users of the given app.[^2]
 
@@ -59,7 +59,7 @@ The platform thus keeps track of the resources that each user consumes, but does
 Note that since the platform is able to host any kind of app, including any kind of website that you can imagine, personal or otherwise, you will thus be able to have any kind of website that you want hosted essentially for free and in perpetuity by a user-programmable platform: You only pay the small cost of storing the source code for your website (which might even be covered by a free plan), and the visitors/users of your site will carry the rest of the costs.
 
 
-#### 5. An open and decentralized network
+### An open and decentralized network
 
 A user-programmable platform also ought to allow for decentralization, namely by allowing apps on one platform to communicate and transfer data with other platforms, in particular other user-programmable platforms, as well as any other platform that utilizes open protocols.  
 
