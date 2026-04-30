@@ -75,13 +75,13 @@ The free resources that each user gets is paid for at least in part by sponsorsh
 
 ## An extended business model where the developing users also get paid
 
-While a user-programmable platform could certainly be based purely on open-source contributions, and on the willingness of its users to improve the platform for themselves and others, there is also other possible models which allow the developing users to actually be rewarded for their contributions, and which can also make the platform more interesting for investors.
+While a user-programmable platform could certainly be based purely on open-source contributions, and on the willingness of its users to improve the platform for themselves and others, there are also other possible models which allow the developing users to actually be rewarded for their contributions, and which can also make the platform more interesting for investors.
 
 <!-- Such a model might be especially interesting if a user-programmable platform wants to succeed in the space of business applications, and not just web and mobile applications, since business customers will generally happily pay more in order to get quick and reliable updates and maintenance of the software. -->
 
-We thus propose utilizing the model of an '[open developer co-op](open-dev-co-ops.md),' on top of the proposed core business model, in order for the platform to be able to attract more contributions, as well as also more investments.
+We thus propose utilizing the model of an '[open developer co-op](open-dev-co-ops.md),' on top of the proposed core business model, in order for the platform to be able to attract more contributions, and more investments as well.
 
-In short, this model designed to be a midway between an open source and a closed source model, in a way that still motivates the developers to collaborate publicly, and share their contributions quickly and openly with each other, but which nonetheless still limits the use of the resulting code base in order to ensure payment for its contributors.
+In short, this model designed to be a midway between an open source and a closed source model, in a way that still motivates the developers to collaborate publicly, and share their contributions quickly and openly with each other, but which nonetheless still limits the use of the resulting code base in order to generate a revenue, which can then be used to pay the developers.
 
 And by promising investors a share of this revenue as well, this model can thus also help bring in investments for the platform.
 
@@ -91,7 +91,7 @@ You can read more about this model of 'open developer co-ops' [here](open-dev-co
 
 ## Use cases
 
-* If you are want more control over the algorithms of your platforms, as well as over how your data is handled, a user-programmable platform will be beneficial for you, namely since it puts its users completely in charge of the algorithms, and lets each user choose which one they want to use.
+* If you want more control over the algorithms of your platforms, as well as over how your data is handled, a user-programmable platform will be beneficial to you, namely since it puts its users completely in charge of the algorithms, and lets each user choose which one they want to use.
 
 * If you are tired of updates turning things worse for you as a user, either intentionally (known as [enshittification](https://en.wikipedia.org/wiki/Enshittification)) or unintentionally, a user-programmable platform will also benefit you. Here you never have to accept a new update, but can freely choose whichever fork of the platform you like, and switch any time you want.
 
