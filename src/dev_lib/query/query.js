@@ -5,7 +5,7 @@ import {
   CLEAR_FLAG, PromiseObject, Environment, LiveJSModule, parseString,
   TEXT_FILE_ROUTE_REGEX, SCRIPT_ROUTE_REGEX, CSSModule, getString,
   getPropertyFromObject, ArgTypeError, forEachValue, ObjectObject,
-  ErrorWrapper,
+  ErrorWrapper, RouteObject, HEX_ID_REGEX, getAbsolutePath,
 } from '../../interpreting/ScriptInterpreter.js';
 import {scriptParser} from "../../interpreting/parsing/ScriptParser.js";
 import {parseRoute} from './src/route_parsing.js';
@@ -115,7 +115,7 @@ export const queryRoute = new DevFunction(
 export const query = new DevFunction(
   "query", {
     isAsync: true,
-    typeArr: ["string", "boolean?", "any?", "object?"],
+    typeArr: ["string|Route", "boolean?", "any?", "object?"],
   },
   function(
     {callerNode, execEnv, interpreter}, [
@@ -136,6 +136,19 @@ export async function _query(
   ancestorModules = [], finalCallbacks = [],
 ) {
   let isPrivate = isPost || getPropertyFromObject(options, "isPrivate");
+
+  // If extendedRoute is a RouteObject, namely due to using non-hexadecimal ID
+  // placeholders for either the upNodeID or the homeDirID, call
+  // fetchAndSubstituteNodeAndDirIDs() to substitute these placeholders, which
+  // is done by querying a 'nodeIDs' and a 'dirIDs' object of a 'ids.js' module
+  // in the home directory that was recorded when the RouteObject was created.
+  if (extendedRoute instanceof RouteObject) {
+    extendedRoute = await fetchAndSubstituteNodeAndDirIDs(
+      extendedRoute, callerNode, execEnv, interpreter,
+      ancestorModules, finalCallbacks
+    );
+  }
+
 
   // First split the input route along each (optional) occurrence of ';',
   // where the first part is then the actual route that is queried, and any
@@ -420,11 +433,51 @@ export async function _query(
 }
 
 
+// fetchAndSubstituteNodeAndDirIDs() imports '~/ids.js' from the local home
+// directory and substitutes any of the input ID segments that are not already
+// hexadecimal ID strings, but are instead placeholders.
+async function fetchAndSubstituteNodeAndDirIDs(
+  routeObject, callerNode, execEnv, interpreter,
+  ancestorModules, finalCallbacks
+) {
+  // Fetch the 'ids.js' module that is expected to be in the home directory of
+  // curPath. 
+  let {nodeIDSegment, dirIDSegment, restSegments, curPath} = routeObject;
+  let idsModulePath = getAbsolutePath(
+    curPath, "~/ids.js", callerNode, execEnv
+  );
+  let idsModule = await _fetch(
+    idsModulePath, {}, callerNode, execEnv, interpreter,
+    ancestorModules, finalCallbacks
+  )
+
+  // Substitute any non-hexadecimal node or dir placeholder.
+  let nodeID = nodeIDSegment, dirID = dirIDSegment;
+  if (nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment)) {
+    let nodeIDsObject = getPropertyFromObject(idsModule, "nodeIDs");
+    nodeID = getPropertyFromObject(nodeIDsObject, nodeIDSegment);
+  }
+  if (dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment)) {
+    let dirIDsObject = getPropertyFromObject(idsModule, "dirIDs");
+    dirID = getPropertyFromObject(dirIDsObject, dirIDSegment);
+  }
+  
+  // Then construct and return the full substituted route.
+  let ret = "";
+  if (nodeID) ret += "/" + nodeID;
+  if (dirID) ret += "/" + dirID;
+  if (restSegments.length > 0) {
+    ret += "/" + restSegments.join("/");
+  }
+  return ret;
+}
+
+
 
 
 
 export const fetch = new DevFunction(
-  "fetch", {isAsync: true, typeArr: ["string", "object?"]},
+  "fetch", {isAsync: true, typeArr: ["string|Route", "object?"]},
   function(
     {callerNode, execEnv, interpreter},
     [extendedRoute, options],
@@ -463,7 +516,7 @@ export async function _fetch(
 
 
 export const fetchPrivate = new DevFunction(
-  "fetchPrivate", {isAsync: true, typeArr: ["string", "object?"]},
+  "fetchPrivate", {isAsync: true, typeArr: ["string|Route", "object?"]},
   function(
     {callerNode, execEnv, interpreter},
     [extendedRoute, options = {}],
@@ -498,7 +551,7 @@ export async function _fetchPrivate(
 
 
 export const post = new DevFunction(
-  "post", {isAsync: true, typeArr: ["string", "any?", "object?"]},
+  "post", {isAsync: true, typeArr: ["string|Route", "any?", "object?"]},
   async function(
     {callerNode, execEnv, interpreter},
     [route, postData, options],

@@ -22,6 +22,7 @@ const TRACE_LENGTH_SS = 40;
 export const TEXT_FILE_ROUTE_REGEX =
   /.+\.(jsx?|txt|json|html|xml|svg|md|css)$/;
 export const SCRIPT_ROUTE_REGEX = /.+\.jsx?$/;
+export const HEX_ID_REGEX = /^[0-9a-f]+$/;
 
 export const GAS_NAMES = {
   comp: "computation",
@@ -418,11 +419,24 @@ export class ScriptInterpreter {
     decrCompGas(callerNode, callerEnv);
     decrGas(callerNode, callerEnv, "import");
 
-    // If modulePath is a relative path, get the current modulePath and
-    // compute the full path.
+    // If modulePath is a relative path, compute the absolute path from the
+    // current modulePath.
+    let curPath = callerEnv.getModuleEnv().modulePath;
     if (/^\.\.?\//.test(route)) {
-      let curPath = callerEnv.getModuleEnv().modulePath;
       route = getAbsolutePath(curPath, route, callerNode, callerEnv);
+    }
+
+    // If the absolute path contains non-hexadecimal ID placeholders for the
+    // upNodeID or the homeDirID, wrap it in a 'Route' object, which are also
+    // accepted by the standard query functions, and by this.fetch().
+    let [nodeIDSegment, dirIDSegment, ...restSegments] = ret.split("/");
+    if (
+      nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment) ||
+      dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment)
+    ) {
+      route = new RouteObject(
+        route, nodeIDSegment, dirIDSegment, restSegments, curPath
+      );
     }
 
     // Then simple redirect to this.fetch(), and if assertJSModule is true,
@@ -431,13 +445,13 @@ export class ScriptInterpreter {
       route, callerNode, callerEnv, ancestorModules, finalCallbacks, isPrivate
     );
     if (assertJSModule && !(ret instanceof LiveJSModule)) throw new LoadError(
-      `No script was found at ${route}`,
+      `No script was found at ${route.toString()}`,
       callerNode, callerEnv
     );
     else if (
       assertModule && !(ret instanceof LiveJSModule || ret instanceof CSSModule)
     ) throw new LoadError(
-      `No script or style sheet was found at ${route}`,
+      `No script or style sheet was found at ${route.toString()}`,
       callerNode, callerEnv
     );
 
@@ -1729,6 +1743,19 @@ export class ScriptInterpreter {
         if (expType === "string") {
           let curPath = environment.getModuleEnv().modulePath;
           ret = getAbsolutePath(curPath, expVal, expNode.exp, environment);
+
+          // If the resulting route contains non-hexadecimal ID placeholders
+          // for the upNodeID or the homeDirID, wrap it in a 'Route' object,
+          // which are also accepted by the standard query functions.
+          let [nodeIDSegment, dirIDSegment, ...restSegments] = ret.split("/");
+          if (
+            nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment) ||
+            dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment)
+          ) {
+            ret = new RouteObject(
+              ret, nodeIDSegment, dirIDSegment, restSegments, curPath
+            );
+          }
         }
         else if (expType === "number") {
           ret = Math.abs(expVal);
@@ -2873,6 +2900,31 @@ export const mutableMapClass = new ClassObject(
 
 
 export function verifyType(val, type, isOptional, node, env) {
+  let typeDisjunctionArr = type.split("|");
+  let len = typeDisjunctionArr.length;
+  if (len === 1) {
+    return verifyTypeHelper(val, type, isOptional, node, env);
+  }
+  else {
+    let isValid;
+    for (let i = 0; i < len; i++) {
+      try {
+        verifyTypeHelper(typeDisjunctionArr[i], type, isOptional, node, env);
+      }
+      catch (err) {
+        continue;
+      }
+      isValid = true;
+      break;
+    }
+    if (!isValid) throw new ArgTypeError(
+      'Value did not match any of the types in "' + getString(type, env) + '"',
+      node, env
+    );
+  }
+}
+
+function verifyTypeHelper(val, type, isOptional, node, env) {
   if (val === undefined) {
     if (isOptional) {
       return;
@@ -3189,6 +3241,25 @@ function checkAgainstJSXElements(val, node, env) {
     forEachValue(val, node, env, elem => {
       checkAgainstJSXElements(elem, node, env);
     });
+  }
+}
+
+
+
+// A RouteObject can be returned by abs() in case the resulting absolute route
+// contains ID placeholders.
+export class RouteObject extends ObjectObject {
+  constructor(route, nodeIDSegment, dirIDSegment, restSegments, curPath) {
+    super("Route");
+    this.route = route;
+    this.nodeIDSegment = nodeIDSegment;
+    this.dirIDSegment = dirIDSegment;
+    this.restSegments = restSegments;
+    this.curPath = curPath;
+  }
+
+  toString() {
+    return this.route;
   }
 }
 
