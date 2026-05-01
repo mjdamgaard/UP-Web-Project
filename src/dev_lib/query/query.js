@@ -456,10 +456,20 @@ async function fetchAndSubstituteNodeAndDirIDs(
   if (nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment)) {
     let nodeIDsObject = getPropertyFromObject(idsModule, "nodeIDs");
     nodeID = getPropertyFromObject(nodeIDsObject, nodeIDSegment);
+    if (!HEX_ID_REGEX.test(nodeID)) throw new ArgTypeError(
+      "Invalid ID imported from " + idsModulePath + ". Expected a " +
+      'hexadecimal string but got "' + getString(nodeID, execEnv) + '".',
+      callerNode, execEnv
+    );
   }
   if (dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment)) {
     let dirIDsObject = getPropertyFromObject(idsModule, "dirIDs");
     dirID = getPropertyFromObject(dirIDsObject, dirIDSegment);
+    if (!HEX_ID_REGEX.test(dirID)) throw new ArgTypeError(
+      "Invalid ID imported from " + idsModulePath + ". Expected a " +
+      'hexadecimal string but got "' + getString(dirID, execEnv) + '".',
+      callerNode, execEnv
+    );
   }
   
   // Then construct and return the full substituted route.
