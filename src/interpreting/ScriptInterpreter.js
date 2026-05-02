@@ -259,7 +259,8 @@ export class ScriptInterpreter {
 
 
   async fetch(
-    route, callerNode, callerEnv, ancestorModules, finalCallbacks, isPrivate
+    route, callerNode, callerEnv,
+    ancestorModules = [], finalCallbacks = [], isPrivate = false
   ) {
     // Redirect to _fetch() from the 'query' dev lib, and avoid infinite
     // recursion by getting it from staticDevLibs rather than importing it.

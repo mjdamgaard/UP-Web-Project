@@ -46,7 +46,7 @@ export function render({
   otherExtQualKeyArr = [], factorArr = [], constList = undefined,
   constElementArr = undefined, extraElementProps = {},
   scoreHandler = undefined, options = undefined,
-  minScore = undefined, minWeight = 10, isAscending = false,
+  minScore = 0, minWeight = 10, isAscending = false,
   hideMenu = false, paginationLength = 50, paginationIndex = 0,
 }) {
   scoreHandler ??= this.subscribeToContext("scoreHandler");
@@ -155,7 +155,7 @@ export function initialize({
   ElementComponent = VariableEntityElementPromise,
   options, minScore, minWeight,
 }) {
-  minScore ??= options?.lo;
+  minScore ??= options?.lo ?? 0;
   minWeight ??= 10;
   return {
     ElementComponent: ElementComponent,
@@ -181,6 +181,6 @@ export const actions = {
 
 
 export const styleSheets = [
-  abs("../style.css"),
+  abs("../../root_app/style.css"),
   abs("./EntityList.css"),
 ];

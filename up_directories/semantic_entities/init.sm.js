@@ -395,6 +395,19 @@ export async function postInitialScores03() {
       abs("./em3.js;get/startApps"),
       firstModID, 7
     ),
+    // Temporary:
+    postUserRelationalScoreAndUpdateUserGroups(
+      abs("./em2.js;get/webApps"),
+      abs("./em1.js;get/members"),
+      abs("./em2.js;get/homeApp"),
+      firstModID, -10
+    ),
+    postUserRelationalScoreAndUpdateUserGroups(
+      abs("./em1.js;get/components"),
+      abs("./em1.js;get/members"),
+      abs("./em2.js;get/homeApp"),
+      firstModID, -10
+    ),
   ]);
 }
 

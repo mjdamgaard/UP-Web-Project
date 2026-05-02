@@ -150,14 +150,14 @@ export class SettingsObject01 extends SettingsObject {
       styleModulePath = getAbsolutePath(
         componentPath, styleModulePath, node, env
       );
-      styleModulePromise = interpreter.import(styleModulePath, node, env).then(
+      styleModulePromise = interpreter.fetch(styleModulePath, node, env).then(
         x => x, err => new ErrorWrapper(err)
       );
     }
     else {
       let styleSheetPromises = mapValues(styleSheetPaths, node, env, path => {
         let absPath = getAbsolutePath(componentPath, path, node, env);
-        return interpreter.import(absPath, node, env).then(
+        return interpreter.fetch(absPath, node, env).then(
           x => x, err => new ErrorWrapper(err)
         );
       });
