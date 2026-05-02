@@ -1,0 +1,893 @@
+
+import * as ILink from 'ILink.jsx';
+import * as ELink from 'ELink.jsx';
+import * as TextDisplay from "../utilities/TextDisplay.jsx";
+import * as Result0 from "./hello_world/results/result_0.jsx";
+import * as Result1 from "./hello_world/results/result_1.jsx";
+import * as Result2 from "./hello_world/results/result_2.jsx";
+import * as Result3 from "./hello_world/results/result_3.jsx";
+import * as Result4 from "./hello_world/results/result_4.jsx";
+import * as Result5 from "./hello_world/results/result_5.jsx";
+import * as Result6 from "./hello_world/results/result_6.jsx";
+
+
+export function render() {
+  return page;
+}
+
+
+
+const page = <div className="text-page">
+  <h1>{"Front-end components"}</h1>
+  <section>
+    <h2>Prerequisites</h2>
+    <p>
+      I you want to follow along the steps of this tutorial, make sure that you
+      have first completed the
+      <ILink key="link-tut-1-1" href="~/getting-started">
+        previous tutorial
+      </ILink>,
+      and in particular that you have edited the 'em.js' file in the
+      'hello_world' directory such that the 'COMPONENT_PATH' constant now
+      points to the 'app2.jsx' file. 
+    </p>
+    <p>{([
+      "The system used for building front-end components is inspired by ",
+      <ELink key="link-wiki-react"
+        href="https://en.wikipedia.org/wiki/React_(software)"
+      >
+        {"React"}
+      </ELink>,
+      ". So if you already know React, it should be easy to learn " +
+      "this system as well. And if not, you might still be able to " +
+      "follow these tutorials, but in that case, it is probably a good idea " +
+      "to browse through the ",
+      <ELink key="link-w3-html"
+        href="https://www.w3schools.com/html/default.asp"
+      >
+        {"HTML"}
+      </ELink>,
+      ", ",
+      <ELink key="link-w3-js"
+        href="https://www.w3schools.com/js/default.asp"
+      >
+        {"JavaScript"}
+      </ELink>,
+      " (JS), and ",
+      <ELink key="link-w3-react"
+        href="https://www.w3schools.com/react/default.asp"
+      >
+        {"React"}
+      </ELink>,
+      " tutorials at ",
+      <ELink key="link-w3" href="https://www.w3schools.com">
+        {"w3schools.com"}
+      </ELink>,
+      " first, before you continue with this tutorial."
+    ])}</p>
+  </section>
+  <section>
+    <h2>{"A framework similar to React"}</h2>
+    <p>{([
+      "To see how components work in this framework, let us first of all " +
+      "take a look at the \"Hello, World!\" example from the ",
+      <ILink key="link-tut-1-2" href="~/getting-started">
+        {"Getting started"}
+      </ILink>,
+      " tutorial. Here the component you uploaded was " +
+      "defined from the following lines of code."
+    ])}</p>
+    <p>
+      <code className="jsx">{[
+        'export function render() {\n',
+        '  return <h1>Hello, World!</h1>;\n',
+        '}',
+      ]}</code>
+    </p>
+    <p>{
+      "And these lines produced the following result."
+    }</p>
+    <p>
+      <TextDisplay key="_ex0" >
+        <Result0 key="0" />
+      </TextDisplay>
+    </p>
+    <p>{
+      "We can see here that the rendered \"Hello, " +
+      "World!\" text is returned from an exported function called render(). " +
+      "This is because, unlike React where components are generally defined " +
+      "from only a single render function, components in this framework are " +
+      "defined " +
+      "by whole modules. The render() function is thus not the only " +
+      "function that can be used to define the given component."
+    }</p>
+    <p>{
+      "But before we introduce the other possible exports of a component " +
+      "module, let us see how importing a component works."
+    }</p>
+    <p>{([
+      "In the 'app2.jsx' file that was used in the last part of the ",
+      <ILink key="link-tut-1-3" href="~/getting-started">
+        {"Getting started"}
+      </ILink>,
+      " tutorial, there is an out-commented line at Ln. 2 " +
+      "which reads"
+    ])}</p>
+    <p>
+      <code className="jsx">
+        {'import * as ExampleComponent1 from "./ExampleComponent1.jsx";'}
+      </code>
+    </p>
+    <p>{
+      "Anyone familiar with JS modules will know that this has the effect of " +
+      "importing all exports in the file at './ExampleComponent1.jsx' " +
+      "(relative to the importing module), and gather them all into a single " +
+      "object, which is then assigned to a variable called " +
+      "'ExampleComponent1.'"
+    }</p>
+    <p>{
+      "Try commenting in this line. (Your IDE/editor ought to have " +
+      "shortcut for doing so. For instance, " +
+      "in VS Code, the shortcut is Ctrl + '/'.) " +
+      "And after having done this, comment out Ln. 13 as well, and comment " +
+      "in Ln. 15-18, such that the render() function now returns an example " +
+      "JSX element where ExampleComponent1 is used:"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'return <div>\n',
+        '  <h1>Hello, World!</h1>\n', 
+        '  <ExampleComponent1 key="ex-1" />\n',
+        '</div>;',
+      ]}</code>
+    </p>
+    <p>
+      (The 'key' prop is mandatory in this framework, by the way, which is why
+      it is used here. You will learn more about this 'key' prop below.) 
+    </p>
+    <p>{
+      "If you now re-upload your directory again (in the the same way as " +
+      "you did in the previous tutorial), " +
+      "you should now see the following result."
+    }</p>
+    <p>
+      <TextDisplay key="_ex1" >
+        <Result1 key="0" />
+      </TextDisplay>
+    </p>
+    <p>{
+      "And if you go to the " +
+      "ExampleComponent1.jsx module, you will indeed see that \"I am a child " +
+      "component!\" is the returned text of the render() function " +
+      "in that module."
+    }</p>
+    <p>{
+      "Now you know how to import components and use them inside " +
+      "other components!"
+    }</p>
+  </section>
+  <section>
+    <h2>{"Module paths"}</h2>
+    <p>{
+      "It is important to note, however, that the paths in the import " +
+      "statements, like the one seen " +
+      "above, must be relative paths that stay within the directory that " +
+      "you have uploaded."
+    }</p>
+    <p>{
+      "That is, unless you want to import components (or " +
+      "functions, etc.) from another directory altogether, either another " +
+      "one of yours, or of another user."
+    }</p>
+    <p>{
+      "In that case, you need " +
+      "to use the absolute path to the foreign module, not in relation to " +
+      "your local file system, but to the server-side file system. This " +
+      "means that the absolute paths should be of the form " +
+      "\"/<UP node ID>/<home directory ID>/<path from that directory>\". " +
+      "Here <UP node ID> is the ID of the UP node, which in the case of " +
+      "up-web.org is just \"1\". " +
+      "And <home directory ID> is the ID that was assigned to the uploaded " +
+      "directory. (You can see this when you upload or re-upload your " +
+      "directory.)"
+    }</p>
+    <p>{
+      "For instance, if someone wants to import your new app2.jsx " +
+      "component, and your home directory ID is, say, \"123ab\", " +
+      "they could import it via the following statement."
+    }</p>
+    <p>
+      <code className="jsx">
+        {'import * as App from "/1/123ab/app2.jsx";'}
+      </code>
+    </p>
+  </section>
+
+
+  <section>
+    <h2>{"Component properties (a.k.a. \"props\")"}</h2>
+    <p>{
+      "If you are already familiar with React, then " +
+      "you can probably skip most of this section, except the last part " +
+      "about the 'key' prop, as this particular property works slightly " +
+      "differently in this framework when compared to React."
+    }</p>
+    <p>{
+      "A component does not need to always return the same thing. The " +
+      "returned JSX element can also depend on the arguments of the render() " +
+      "function. " +
+      "The render() " +
+      "function always takes a \"props\" object (short for \"properties\"), " +
+      "where each \"prop\" (property) of this object is defined on the JSX " +
+      "element that instantiates the component, using a syntax that is " +
+      "similar to defining the attributes of an element in HTML."
+    }</p>
+    <p>{
+      "For example, if you comment out the return statement at Ln. 15-18 " +
+      "again and comment in the next return statement on Ln. " +
+      "20-36, and " +
+      "also makes sure that the import statement of ExampleComponent2 is in-" +
+      "commented, you will see an example of how to pass the props of " +
+      "component instances. The render function should then return the " +
+      "following."
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'return <div>\n',
+        '  <h2>Some child component examples</h2>\n',
+        '  <p>\n',
+        '    <ExampleComponent2 key="ex-1"\n',
+        '      isItalic={true} children="This paragraph is italic!"\n',
+        '    />\n',
+        '  </p>\n',
+        '  <p>\n',
+        '    <ExampleComponent2 key="ex-2" children="This paragraph is not!" />\n',
+        '  </p>\n',
+        '  <p>\n',
+        '    <ExampleComponent2 key="ex-3" isItalic >\n',
+        '      But this one is as well!\n',
+        '    </ExampleComponent2>\n',
+        '  </p>\n',
+        '</div>;\n',
+      ]}</code>
+    </p>
+    <p>{
+      "Before re-uploading the directory again, take a look inside the " +
+      "ExampleComponent2.jsx module. It reads"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'export function render({isItalic = false, children}) {\n',
+        '  if (italic) {\n',
+        '    return <i>{children}</i>;\n',
+        '  }\n',
+        '  else {\n',
+        '    return <span>{children}</span>;\n',
+        '  }\n',
+        '}\n',
+      ]}</code>
+    </p>
+    <p>{([
+      "This component thus takes two props, namely an ",
+      <span>{"'isItalic'"}</span>, " prop, which " +
+      "defaults to false, and a ",
+      <span>{"'children'"}</span>, " prop. " +
+      "The component then branches " +
+      "according to isItalic, and renders the value of the children prop " +
+      "either nested inside an <i> element or not."
+    ])}</p>
+    <p>{([
+      "If the you are unfamiliar with the syntax seen inside the argument " +
+      "tuple if this render() function, which is a so-called \"object " +
+      "destructuring\" syntax, you can can read about it ",
+      <ELink key="link-destruct-1"
+        href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring"
+      >
+        {"here"}
+      </ELink>,
+      " or ",
+      <ELink key="link-destruct-2"
+        href="https://www.w3schools.com/js/js_destructuring.asp"
+      >
+        {"here"}
+      </ELink>,
+      "."
+    ])}</p>
+    <p>{
+      "If you now re-upload the directory, you will see the following."
+    }</p>
+    <p>
+      <TextDisplay key="_ex2" >
+        <Result2 key="0" />
+      </TextDisplay>
+    </p>
+    <p>{
+      "We thus see that the first " +
+      "paragraph shown under the \"Hello, World!\" header is indeed italic, " +
+      "namely since isItalic was passed as true to the first " +
+      "component instance at " +
+      "Ln. 24 in app2.jsx. And since no isItalic prop was passed to the " +
+      "instance at the second paragraph, that paragraph is not italic."
+    }</p>
+    <p>{
+      "The third paragraph also shows another fact about the components " +
+      "that is similar to React, which is that the 'children' prop " +
+      "is a special one that can also be passed as the content inside the " +
+      "component instance element, instead of writing 'children={<value>}'."
+    }</p>
+    <p>{
+      "This third example also shows, by the way, that passing a prop like " +
+      "'isItalic' without any explicit assignment is a shorthand for " +
+      "writing 'isItalic={true}'."
+    }</p>
+    <p>{
+      "Lastly, note that each of these component instance elements is given " +
+      "a unique 'key' prop. This a requirement in this system, meaning that " +
+      "if one omits the key prop, or use a duplicate key prop shared by " +
+      "another " +
+      "child instance of the same parent component, the program will " +
+      "throw an error."
+    }</p>
+    <p>{
+      "This is opposed to React, where the key props are not strictly " +
+      "required, and where these are only used to distinguish between " +
+      "child instances that are children of the " +
+      "same HTML element."
+    }</p>
+    <p>{
+      "Having to always choose a unique key for each single child instance " +
+      "of course adds a bit of extra work when compared to React. But on the " +
+      "plus side, this also means that you can move each individual child " +
+      "instance freely around in the returned JSX element of the parent " +
+      "component, without losing its state. " +
+      "(This is unlike React, where if you e.g. wrap a child instance in, " +
+      "say, an <a> element or an <i> element in response to some event, this " +
+      "will cause the child instance to lose its state.)"
+    }</p>
+  </section>
+
+
+  <section>
+    <h2>{"States"}</h2>
+    <p>{
+      "The returned JSX element of each component instance is not " +
+      "determined solely by the props of the instance, but can also depend " +
+      "on its \"state.\" This state can be updated during the lifespan " +
+      "of the instance via a setState() function, which works similarly to " +
+      "the setState() function of React. But this also where the " +
+      "similarities with React stop."
+    }</p>
+    <p>{
+      "In this framework, the state of a component instance is accessed on " +
+      "an " +
+      "object that is bound to the 'this' keyword for the render() function. " +
+      "More precisely, the instance's state is accessed via 'this.state'. " +
+      "And the setState() function is called via 'this.setState()'."
+    }</p>
+    <p>{
+      "To see an example of this, you can comment out the previous return " +
+      "statement in app2.jsx, and comment in the next one on Ln. 39-45. " +
+      "(Also make sure that ExampleComponent3 is imported at the " +
+      "top of the module as well.) The render() function should now return " +
+      "the following."
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'return <div>\n',
+        '    <h2>An example of a stateful component</h2>\n',
+        '    <p>\n',
+        '      <ExampleComponent3 key="ex-1" />\n',
+        '    </p>\n',
+        '</div>;',
+      ]}</code>
+    </p>
+    <p>{
+      "If you then re-upload your directory, you should now see a button " +
+      "saying \"Click me!\", like this:"
+    }</p>
+    <p>
+      <TextDisplay key="_ex3" >
+        <Result3 key="0" />
+      </TextDisplay>
+    </p>
+    <p>{
+      "And if you try to click that button a couple of " +
+      "times, you should see that a counter is increased each time, just " +
+      "below the button."
+    }</p>
+    <p>{
+      "To understand how this happens, we can inspect the " +
+      "'ExampleComponent3.jsx' module, which reads"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'export function render({}) {\n',
+        '  let {counter = 0} = this.state;\n',
+        '  return <div>\n',
+        '    <button onClick={() => {\n',
+        '      this.setState(state => ({...state, counter: counter + 1}));\n',
+        '    }}>Click me!</button>\n',
+        '    <div className="counter-display">\n',
+        '      {"Number of times clicked: " + counter}\n',
+        '    </div>\n',
+        '  </div>;\n',
+        '}\n',
+      ]}</code>
+    </p>
+    <p>{([
+      "First of all, we see that on the first line within the function body, " +
+      "we extract a 'counter' property of the this.state object, and let its " +
+      "default value be 0. (This is another example of an object " +
+      "destructuring, which you can read about ",
+      <ELink key="link-destruct-3"
+        href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring"
+      >
+        {"here"}
+      </ELink>,
+      " or ",
+      <ELink key="link-destruct-4"
+        href="https://www.w3schools.com/js/js_destructuring.asp"
+      >
+        {"here"}
+      </ELink>,
+      ".) ",
+      "This destructuring assignment is possible since the default initial " +
+      "value of this.state is an empty object."
+    ])}</p>
+    <p>{
+      "And then if we take a look at the <button> element, we see that it " +
+      "has an 'onClick' attribute, which directs the click event to a " +
+      "function that calls this.setState() to increase that counter by one."
+    }</p>
+    <p>{([
+      "Note that setState() can be called on a callback function that takes " +
+      "the " +
+      "current state as its argument. And this is very much the recommended " +
+      "usage of setState(), as it first of all makes it easier to extend the " +
+      "component in the future, namely by including the ",
+      <ELink key="link-spread"
+        href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax"
+      >
+        {"spread"}
+      </ELink>,
+      " of state, '...state', at the start of the returned new state. " +
+      "And it also helps to prevent the loss of " +
+      "data if the component is ever updated multiple times before " +
+      "rerendering, namely since the state argument of the callback function " +
+      "is guaranteed to always be completely up-to-date with the latest " +
+      "state change."
+    ])}</p>
+    <p>{
+      "Whenever setState() is called, a rerender of the component instance " +
+      "is queued, which means that the instance will update its appearance " +
+      "according to the new state."
+    }</p>
+
+    <p>{
+      "Lastly, if you want your component to have a different initial state " +
+      "than just an empty object, you can export a function called " +
+      "initialize() alongside render() in the component module. This " +
+      "function takes the same props argument as render() does, and returns " +
+      "the initial state object of the component. " +
+      "initialize() will thus be called exactly one time in the " +
+      "lifetime of the component instance, namely before the first call to " +
+      "the render() function."
+    }</p>
+    <p>{
+      "For instance, if you add the following export statement,"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'export function initialize({}) {\n',
+        '  return {counter: 100};\n',
+        '}\n',
+      ]}</code>
+    </p>
+    <p>{
+      "alongside the render() export of the previous example, the counter " +
+      "in question will now start at a value of 100."
+    }</p>
+    <p>{
+      "The initialize() function also gets its 'this' " +
+      "keyword bound to the same value as render(), which means that " +
+      "functions like this.setState() can be called from it as well. " +
+      "This thus also makes initialize() an ideal place for fetching " +
+      "whatever data the component needs from the database. " +
+      "And when the data-fetching promise resolves, the state of the " +
+      "component can be updated with the given data."
+    }</p>
+  </section>
+
+  <section>
+    <h2>{"Actions, methods, and events"}</h2>
+    <p>{
+      "The component modules also have three more reserved exports which we " +
+      "will introduce in this tutorial, and that is an 'actions' export, a " +
+      "'methods' export, and an 'events' export."
+    }</p>
+    <h3>{"Actions"}</h3>
+    <p>{
+      "The \"Actions\" of a component are essentially its \"private " +
+      "methods,\" for anyone " +
+      "familiar with the concepts of Object-Oriented Programming (OOP). " +
+      "They are exported as properties of a single object called 'actions', " +
+      "and can then subsequently be called via a 'this.do(actionKey)' function."
+    }</p>
+    <p>{
+      "For instance, if we want to refactor our previous example of the " +
+      "increasing counter using actions instead, we can start by adding the " +
+      "following export from component as well."
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'export const actions = {\n',
+        '  "increaseCounter": function(num = 1) {\n',
+        '    let {counter = 0} = this.state;\n',
+        '    this.setState(state => ({...state, counter: counter + num}));\n',
+        '  }\n',
+        '};\n',
+      ]}</code>
+    </p>
+    <p>{
+      "If you go to the 'ExampleComponent4.jsx' module, you will see an " +
+      "example of this, " +
+      "and here you will also see that the button element in the render() " +
+      "function has been changed from "
+    }</p>
+    <p>
+      <code className="jsx">{[
+        '<button onClick={() => {\n',
+        '  this.setState(state => ({...state, counter: counter + 1}));\n',
+        '}}>Click me!</button>',
+      ]}</code>
+    </p>
+    <p>{
+      "to just"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        '<button onClick={() => this.do("increaseCounter")}>' +
+          'Click me!</button>',
+      ]}</code>
+    </p>
+    <p>{
+      "when comparing to the 'ExampleComponent3.jsx' module. " +
+      "And this yields the exact " +
+      "same outcome as before, namely since this.do(\"increaseCounter\") has " +
+      "the effect of calling the function of the same name from the " +
+      "'actions' object."
+    }</p>
+    <p>{
+      "One can also pass an input value to the given action, namely by " +
+      "supplying this value as the second argument of this.do(). Indeed, you " +
+      "can see that we have given the \"increaseCounter\" action an optional " +
+      "'num' argument, which can specify another increment value other than 1."
+    }</p>
+    <p>{
+      "So if we e.g. pass a value of 2 as the second argument to this.do(), " +
+      "such that the whole component module now reads"
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'export function render({}) {\n',
+        '  let {counter = 0} = this.state;\n',
+        '  return <div>\n',
+        '    <button onClick={() => this.do("increaseCounter", 2)}>' +
+              'Click me!</button>\n',
+        '    <div className="counter-display">\n',
+        '      {"Number of times clicked ×2: " + counter}\n',
+        '    </div>\n',
+        '  </div>;\n',
+        '}\n',
+        '\n',
+        'export const actions = {\n',
+        '  "increaseCounter": function(num = 1) {\n',
+        '    let {counter = 0} = this.state;\n',
+        '    this.setState(state => ({...state, counter: counter + num}));\n',
+        '  }\n',
+        '};\n',
+      ]}</code>
+    </p>
+    <p>{
+      "we now get that the counter increases by 2 each time:"
+    }</p>
+    <p>
+      <TextDisplay key="_ex4" >
+        <Result4 key="0" />
+      </TextDisplay>
+    </p>
+    <p>{
+      "Note also that the 'this' keyword is automatically bound to the same " +
+      "object as for render() and initialize(), allowing us to call " +
+      "function this.setState(), or even this.do(), from within the actions " +
+      "themselves, without having to pass the 'this' object as a separate " +
+      "argument to the action functions. And this is indeed one of the " +
+      "benefits of using actions."
+    }</p>
+    <p>{
+      "However, the greatest benefit of using actions is that " +
+      "they can at any time be elevated to become part of the \"methods\" " +
+      "and/or the \"events\" of the component, which is what we will introduce " +
+      "next."
+    }</p>
+
+
+    <h3>{"Methods"}</h3>
+    <p>{
+      "Methods are a special kind of actions that can be called from the " +
+      "parent component instance. An action is declared as a part of the " +
+      "given component's methods via an exported array called 'methods.' " +
+      "If this array includes the key of a given action, then that action " +
+      "becomes one of the methods that can be called by the parent " +
+      "component instance."
+    }</p>
+    <p>{
+      "To see how this works, we can let our render() function in the " +
+      "'app2.jsx' module return the following, which is once again included " +
+      "as an out-commented snippet that you can easily comment in."
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'return <div>\n',
+        '  <h2>Calling increaseCounter() from the parent</h2>\n',
+        '  <p>\n',
+        '    {"Click this button to increase the counter of Child instance 1: "}\n',
+        '    <button onClick={() => this.call("c-1", "increaseCounter")}>\n',
+        '      Increase Child 1\'s counter\n',
+        '    </button>\n',
+        '  </p>\n',
+        '  <p>\n',
+        '    {"And click this button to increase the counter of Child instance 2: "}\n',
+        '    <button onClick={() => this.call("c-2", "increaseCounter")}>\n',
+        '      Increase Child 2\'s counter\n',
+        '    </button>\n',
+        '  </p>\n',
+        '  <h2>Child instance 1</h2>\n',
+        '  <p>\n',
+        '    <ExampleComponent5 key="c-1" num={1} />\n',
+        '  </p>\n',
+        '  <h2>Child instance 2</h2>\n',
+        '  <p>\n',
+        '    <ExampleComponent5 key="c-2" num={5} />\n',
+        '  </p>\n',
+        '</div>;\n',
+      ]}</code>
+    </p>
+    <p>{
+      "Here, ExampleComponent5 is defined by the following module."
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'export function render({num = 1}) {\n',
+        '  let {counter = 0} = this.state;\n',
+        '  return <div>\n',
+        '    <button onClick={() => this.do("increaseCounter")}>\n',
+        '      {"Increase counter by " + num}\n',
+        '    </button>\n',
+        '    <div className="counter-display">\n',
+        '      {"Counter value: " + counter}\n',
+        '    </div>\n',
+        '  </div>;\n',
+        '}\n',
+        '\n',
+        'export const actions = {\n',
+        '  "increaseCounter": function() {\n',
+        '    let {num} = this.props;\n',
+        '    let {counter = 0} = this.state;\n',
+        '    this.setState(state => ({...state, counter: counter + num}));\n',
+        '  }\n',
+        '};\n',
+        '\n',
+        'export const methods = [\n',
+        '  "increaseCounter",\n',
+        '];\n',
+      ]}</code>
+    </p>
+    <p>{
+      "Note in particular the 'methods' export at the bottom of the " +
+      "'ExampleComponent5.jsx' module, which declares the \"increaseCounter\"" +
+      "as part of the component's methods. And also note how in the returned " +
+      "JSX element of the parent uses a certain 'this.call()' function to " +
+      "call the methods of the two children."
+    }</p>
+    <p>{
+      "As can be seen in this example, the first argument of this.call() " +
+      "is the key prop of the targeted child instance, which in our case is " +
+      "\"c-1\" for the first child instance, and \"c-2\" for the second. " +
+      "The second argument is then of course the key of the method that we " +
+      "want to call for the given child. And although we do not use this " +
+      "in the current example, this.call() can also optionally take a " +
+      "third argument, which will then be passed as the input to the " +
+      "given method."
+    }</p>
+    <p>{
+      "So from the code above, we get the following example. (And you can " +
+      "also try this yourself if you comment in the right lines and re-" +
+      "upload your component.)"
+    }</p>
+    <p>
+      <TextDisplay key="_ex5" >
+        <Result5 key="0" />
+      </TextDisplay>
+    </p>
+    <p>{
+      "You are now ready to use methods!"
+    }</p>
+    <p>{
+      "As a last thing before we move on to the \"events,\" however, it is " +
+      "also worth " +
+      "mentioning that methods can be aliased when they are declared in the " +
+      "'methods' export. This is done by letting the given entry of the " +
+      "'methods' array be a [\"<method key>\", \"<action key>\"] array, " +
+      "rather than just the \"<action key>\" string. For " +
+      "example, if we had wanted to alias the \"increaseCounter\" action as " +
+      "just, say, \"increase\" in the example above, we should " +
+      "have exported the following 'methods' array instead."
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'export const methods = [\n',
+        '  ["increase", "increaseCounter"],\n',
+        '];\n',
+      ]}</code>
+    </p>
+
+
+    <h3>{"Events"}</h3>
+    <p>{
+      "Finally we have the 'events' of a component, which are very " +
+      "similar to the methods, only where the actions in question, rather " +
+      "than being exposed to the parent instance, are exposed to the child " +
+      "instances instead, or in fact all of the descendant instances."
+    }</p>
+    <p>{
+      "Events are declared by exporting an array called 'events' from the " +
+      "component module, namely which includes the keys of the actions that " +
+      "should be elevated to become events. And in the same way that actions " +
+      "are called via this.do(), and methods are called via this.call(), the " +
+      "events are also triggered by their own function on the 'this' " +
+      "keyword, namely by 'this.trigger().'"
+    }</p>
+    <p>{
+      "The this.trigger() function takes the event key as its first " +
+      "argument, as well as an optional second argument which becomes the " +
+      "input " +
+      "to the event function. It then calls up to each of its ancestors, " +
+      "starting from the parent and going all the way up to the app root, " +
+      "until the first ancestor instance is found with an event of a " +
+      "matching key. If a match is found this way, the event action of the " +
+      "given ancestor instance is called. " +
+      // "called (synchronously), and the return value of the given action " +
+      // "function is returned by this.trigger(). (Both this.do() and " +
+      // "this.call() also forwards the relevant return value, by the way.) " +
+      "And if no event of a matching key is found among the ancestors, " +
+      "this.trigger() simply returns undefined, and nothing else happens."
+    }</p>
+    <p>{
+      "To see an example of using an event, we can let the render() " +
+      "function in the 'app2.jsx' module return the following JSX element."
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'return <div>\n',
+        '  <h2>Triggering increaseCounter() from the child instance</h2>\n',
+        ' <button onClick={() => this.do("increaseCounter")}>\n',
+        '    Click me to increase my counter!\n',
+        '  </button>\n',
+        '  <div className="counter-display">\n',
+        '    {"Counter value: " + (this.state.counter ?? 0)}\n',
+        '  </div>\n',
+        '  <h2>Child instance</h2>\n',
+        '  <p>\n',
+        '    <ExampleComponent6 key="c-1" />\n',
+        '  </p>\n',
+        '</div>;\n',
+      ]}</code>
+    </p>
+    <p>{
+      "You can also once again try this out by commenting in the right " +
+      "lines in the 'app2.jsx' file. " +
+      "And in this case, you should also comment in the " +
+      "'actions' and 'events' exports below the render() function, such that " +
+      "the 'app2.jsx' component module now also exports the following objects."
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'export const actions = {\n',
+        '  "increaseCounter": function() {\n',
+        '    let {counter = 0} = this.state;\n',
+        '    this.setState(state => ({...state, counter: counter + 1}));\n',
+        '  }\n',
+        '};\n',
+        '\n',
+        'export const events = [\n',
+        '  "increaseCounter",\n',
+        '];\n',
+      ]}</code>
+    </p>
+    <p>{
+      "And for the module of ExampleComponent6, we let this simply consist " +
+      "of the following render() function."
+    }</p>
+    <p>
+      <code className="jsx">{[
+        'export function render() {\n',
+        '  return <div>\n',
+        '    <button onClick={() => this.trigger("increaseCounter")}>\n',
+        '      Click me to increase my parent\'s counter!\n',
+        '    </button>\n',
+        '  </div>;\n',
+        '}\n',
+      ]}</code>
+    </p>
+    <p>{
+      "When the button of the child component is clicked, it thus triggers " +
+      "an event that simply redirects to the \"increaseCounter\" action in " +
+      "the parent, and the parent's counter is increased, like shown here:"
+    }</p>
+    <p>
+      <TextDisplay key="_ex6" >
+        <Result6 key="0" />
+      </TextDisplay>
+    </p>
+    <p>{
+      "And now you know how to use events!"
+    }</p>
+    <p>{
+      "Note that event keys can also be aliased in the exact same way as " +
+      "method keys, namely by letting the relevant entry of the 'events' " +
+      "array be of the form [\"<event key>\", \"<action key>\"]. And this " +
+      "especially relevant for events, as one might often want to name the " +
+      "event keys after what happens, such as e.g. \"link-was-clicked\", or " +
+      "whatever is the case, and then let the ancestor be responsible for " +
+      "determining how that event should be handled."
+    }</p>
+    <p>{([
+      "And if you ever fear that a triggered event might unintentionally " +
+      "collide with an event of another ancestor component instance, " +
+      "before it " +
+      "reaches its intended target, note that event keys, as well as action " +
+      "keys and method keys, can also be ",
+      <ELink key="link-sym"
+        href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol">
+        {"Symbols"}
+      </ELink>,
+      " instead of strings. This means that you can let both the ancestor " +
+      "and descendant component in question import a Symbol from the same " +
+      "auxiliary module, and use that Symbol as the event key in order to " +
+      "be sure to avoid unintended collisions."
+    ])}</p>
+  </section>
+
+  <section>
+    <h2>{"Final remarks"}</h2>
+    <p>{([
+      "You are now almost ready to get started on working on your first " +
+      "app components, whatever they might be. But before you do, it is " +
+      "recommended to first take a look at ",
+      <ILink key="link-tut-3" href="~/styling">
+        {"Tutorial 3"}
+      </ILink>,
+      ", which will teach you about how to style your components, as well as ",
+      <ILink key="link-tut-4" href="~/useful-things-to-know">
+        {"Tutorial 4"}
+      </ILink>,
+      ", which will list a couple of things to look out for when using this " +
+      "framework, as well as give you some tips about debugging your " +
+      "components."
+    ])}</p>
+    <p>{([
+      "And once you are ready to move on from there, Tutorials ",
+      <ILink key="link-tut-5" href="~/server-modules">
+        {"5"}
+      </ILink>,
+      ", and ",
+      <ILink key="link-tut-6" href="~/db-queries">
+        {"6"}
+      </ILink>,
+      " will teach you how to create your first server modules, which " +
+      "will allow your components to upload and retrieve data from the server."
+    ])}</p>
+  </section>
+
+</div>;

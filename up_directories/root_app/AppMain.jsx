@@ -1,0 +1,229 @@
+
+import {substring, indexOf} from 'string';
+import {encodeURI, decodeURI} from 'query';
+import {entries, fromEntries, mapToArray} from 'object';
+import {slice} from 'array';
+import {fetchEntityID} from "/1/1/entities.js";
+
+import * as UPIndexPage from "./UPIndexPage.jsx";
+import * as AboutPage from "./about.jsx";
+import * as ProfilePage from "./ProfilePage.jsx";
+import * as AppBrowser from "../app_browser/AppBrowser.jsx";
+import * as EntityPage from
+  "../entity_browser/variable_components/EntityPage.jsx";
+import * as FileBrowser from "../file_browser/FileBrowser.jsx";
+import * as TutorialIndexPage from "../tutorials/index.jsx";
+import * as ComponentEntityPage from
+  "../entity_browser/variable_components/ComponentEntityPage.jsx";
+
+const PAGE_CACHE_SIZE = 5;
+
+
+export function initialize() {
+  let cacheRef = new MutableArray();
+  cacheRef[0] = {};
+  return {cacheRef: cacheRef};
+}
+
+
+export function render(props) {
+  let {cacheRef} = this.state;
+  let cache = cacheRef[0];
+
+  // Call renderHelper() to get the jsxElement to render, along with its key.
+  let [newKey, jsxElement] = renderHelper(this, props);
+
+  // Update the cache, throwing out the least recently used cached page if the
+  // PAGE_CACHE_SIZE is exceeded.
+  cache = {[newKey]: jsxElement, ...cache, [newKey]: jsxElement};
+  cache = fromEntries(slice(entries(cache), 0, PAGE_CACHE_SIZE));
+  cacheRef[0] = cache;
+
+  return <div className="app-main-container">{(
+    mapToArray(cache, (val, key) => (
+      <div className={key === newKey ? "open" : "hidden"}>{(val)}</div>
+    ))
+  )}</div>;
+}
+
+
+export function renderHelper(thisVal, {
+  url = "", homeURL, localStorage, sessionStorage
+}) {
+  let tailURL = substring(url, homeURL.length);
+
+  // If the tailURL is empty, replace it with "up" ('up' for 'user-programmed'),
+  // taking the user to the user-defined home page.
+  if (!tailURL) {
+    thisVal.trigger("replaceURL", "~/i");
+    return [
+      "fetching",
+      <main className="app-main">
+        <div className="fetching">{"..."}</div>
+      </main>
+    ];
+  }
+
+  // If the tailURL is of the form "/i[/...]", go to a page with the current
+  // top-rated user-programmed page component for redirecting the the user
+  // further to page/app that fits the subsequent part of the url.
+  let indOfSecondSlash = indexOf(tailURL, "/", 1);
+  let firstSegment = (indOfSecondSlash === -1) ?
+    substring(tailURL, 1) : substring(tailURL, 1, indOfSecondSlash);
+  if (firstSegment === "i") {
+    return [
+      "idx",
+      <main className="app-main">
+        <UPIndexPage key="idx" url={url} homeURL={homeURL} />
+      </main>
+    ];
+  }
+
+  // Else if tailURL starts with "/profile", go to the profile page. 
+  if (firstSegment === "profile") {
+    return [
+      "_profile",
+      <main className="app-main">
+        <ProfilePage key="_profile" />
+      </main>
+    ];
+  }
+
+  // Else if tailURL starts with "/apps", go to the Apps page. 
+  if (firstSegment === "apps") {
+    let newHomeURL = homeURL + "/apps";
+    let newTailURL = substring(tailURL, 5);
+    return [
+      "_apps",
+      <main className="app-main">
+        <AppBrowser key="_apps"
+          url={url} homeURL={newHomeURL} tailURL={newTailURL}
+        />
+      </main>
+    ];
+  } 
+
+  // Else if tailURL is of the form "/ep" + encodedEntPath, fetch the
+  // entity ID and then redirect to the "/e/" + entID tailURL.
+  if (firstSegment === "ep") {
+    let entPath = decodeURI(substring(tailURL, 3));
+    fetchEntityID(entPath).then(entID => {
+      if (entID) {
+        thisVal.trigger("replaceURL", "~/e/" + entID);
+      }
+      else {
+        let encEntPath = encodeURI(entPath);
+        thisVal.trigger("replaceURL", "~/f" + encEntPath);
+      }
+    });
+    return [
+      "fetching",
+      <main className="app-main">
+        <div className="fetching">{"..."}</div>
+      </main>
+    ];
+  }
+
+  // Else if tailURL is of the form "/e/<entID>", go to the EntityPage of the
+  // given entity.
+  if (firstSegment === "e") {
+    let indOfThirdSlash = indexOf(tailURL, "/", 3);
+    let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
+    let entID = substring(tailURL, 3, endOfID);
+    let newTailURL = substring(tailURL, 3 + entID.length);
+    return [
+      "e-" + entID,
+      <main className="app-main">
+        <EntityPage key={"e-" + entID}
+          entKey={entID} url={url} homeURL={homeURL} tailURL={newTailURL}
+        />
+      </main>
+    ];
+  }
+
+  // Else if tailURL is of the form "/c/<entID>[/<name>/...]", go to the
+  // componentPage of the given entity, expecting it to be a component entity.
+  if (firstSegment === "c") {
+    let indOfThirdSlash = indexOf(tailURL, "/", 3);
+    let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
+    let entID = substring(tailURL, 3, endOfID);
+    let newTailURL = substring(tailURL, 3 + entID.length);
+    return [
+      "c-" + entID,
+      <main className="app-main">
+        <ComponentEntityPage key={"c-" + entID}
+          entKey={entID} url={url} homeURL={homeURL} tailURL={newTailURL}
+          localStorage={localStorage} sessionStorage={sessionStorage}
+        />
+      </main>
+    ];
+  } 
+
+  // Else if tailURL is of the form "/f" + uriEncodedRoute (where 'f' might
+  // stand for 'file' or 'fetch' if you will), go to the file browser app with
+  // that route.
+  if (firstSegment === "f") {
+    let route = decodeURI(substring(tailURL, 2));
+    return [
+      "f-" + route,
+      <main className="app-main">
+        <FileBrowser key={"f-" + route} route={route} />
+      </main>
+    ];
+  }
+
+
+  // Else if tailURL = "/about", go to the about page.
+  if (tailURL === "/about") {
+    return [
+      "about",
+      <main className="app-main">
+        <AboutPage key={"about"} />
+      </main>
+    ];
+  }
+
+  // Else if firstSegment == "tutorials", go to a tutorial index page, which
+  // similarly to the home page is also supposed to be a variable, user-
+  // determined page some point. TODO: Implement that.
+  if (firstSegment === "tutorials") {
+    let newHomeURL = homeURL + "/tutorials";
+    let key = "tut-" + tailURL;
+    return [
+      key,
+      <main className="app-main">
+        <TutorialIndexPage key={key} url={url} homeURL={newHomeURL} />
+      </main>
+    ];
+  }
+
+  // Else if tailURL = "/donations", go to the donations page.
+  if (tailURL === "/donations") {
+    return [
+      "donations",
+      <main className="app-main">
+        {"TODO: Insert 'Donations' page component here."}
+      </main>
+    ];
+  }
+
+  // Else if tailURL = "/sponsors", go to the sponsors page.
+  if (tailURL === "/sponsors") {
+    return [
+      "sponsors",
+      <main className="app-main">
+        {"TODO: Insert 'Sponsors' page component here."}
+      </main>
+    ];
+  }
+
+  // And else if none of those tailURL types was matched, go to a 404 error
+  // page.
+  return [
+    "missing",
+    <main className="app-main">
+      {"404 error: Missing page."}
+    </main>
+  ];
+}
+

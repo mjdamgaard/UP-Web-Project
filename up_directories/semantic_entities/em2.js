@@ -31,15 +31,15 @@ export const webAppsDesc = <div>
 </div>;
 
 
-export const homeApp = {
+export const rootApp = {
   "Class": abs("./em1.js;get/components"),
   "Name": "Home app",
-  "Component path": "/1/2/main.jsx",
+  "Component path": abs("../root_app/main.jsx"),
   "Example component path": undefined,
   "No margins": true,
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
-    "dir_uploads/up_directories/home_app",
+    "dir_uploads/up_directories/root_app",
   "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
@@ -81,11 +81,11 @@ export const indexPagesDesc = <div>
 export const upIndexPage01 = {
   "Class": abs("./em1.js;get/components"),
   "Name": "Index page 1.0",
-  "Component path": "/1/2/index_pages/IndexPage01.jsx",
+  "Component path": abs("../root_app/index_pages/IndexPage01.jsx"),
   "Example component path": undefined,
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
-    "dir_uploads/up_directories/home_app/index_pages",
+    "dir_uploads/up_directories/root_app/index_pages",
   "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
@@ -93,11 +93,11 @@ export const upIndexPage01 = {
 export const upIndexPage02 = {
   "Class": abs("./em1.js;get/components"),
   "Name": "Example index page",
-  "Component path": "/1/2/index_pages/IndexPage02.jsx",
+  "Component path": abs("../root_app/index_pages/IndexPage02.jsx"),
   "Example component path": undefined,
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
-    "dir_uploads/up_directories/home_app/index_pages",
+    "dir_uploads/up_directories/root_app/index_pages",
   "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
@@ -112,11 +112,11 @@ export const upIndexPage02 = {
 export const classEntityPage = {
   "Class": abs("./em1.js;get/components"),
   "Name": "Initial class entity page",
-  "Component path": "/1/2/entity_pages/ClassPage.jsx",
+  "Component path": abs("../entity_browser/entity_pages/ClassPage.jsx"),
   "Example props": {entKey: abs("./em1.js;get/entities")},
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
-    "dir_uploads/up_directories/home_app/entity_pages",
+    "dir_uploads/up_directories/entity_browser/entity_pages",
   "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
@@ -124,11 +124,11 @@ export const classEntityPage = {
 export const commentEntityPage = {
   "Class": abs("./em1.js;get/components"),
   "Name": "Initial comment entity page",
-  "Component path": "/1/2/entity_pages/CommentPage.jsx",
+  "Component path": abs("../entity_browser/entity_pages/CommentPage.jsx"),
   "Example props": {entKey: abs("./em1.js;get/exampleComment")},
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
-    "dir_uploads/up_directories/home_app/entity_pages",
+    "dir_uploads/up_directories/entity_browser/entity_pages",
   "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
@@ -137,11 +137,11 @@ export const commentEntityPage = {
 export const commentElement = {
   "Class": abs("./em1.js;get/components"),
   "Name": "Initial comment element",
-  "Component path": "/1/2/entity_elements/CommentElement.jsx",
+  "Component path": abs("../entity_browser/entity_elements/CommentElement.jsx"),
   "Example props": {entKey: abs("+;get/exampleComment")},
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
-    "dir_uploads/up_directories/home_app/entity_elements",
+    "dir_uploads/up_directories/entity_browser/entity_elements",
   "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
@@ -164,7 +164,7 @@ export const scalarEntityPage = {
   "Component path": "/1/2/entity_pages/ScalarPage.jsx",
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
-    "dir_uploads/up_directories/home_app/entity_pages",
+    "dir_uploads/up_directories/entity_browser/entity_pages",
   "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
@@ -172,10 +172,10 @@ export const scalarEntityPage = {
 export const qualityEntityPage = {
   "Class": abs("./em1.js;get/components"),
   "Name": "Initial quality entity page",
-  "Component path": "/1/2/entity_pages/QualityPage.jsx",
+  "Component path": abs("../entity_browser/entity_pages/QualityPage.jsx"),
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
-    "dir_uploads/up_directories/home_app/entity_pages",
+    "dir_uploads/up_directories/entity_browser/entity_pages",
   "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
@@ -183,10 +183,10 @@ export const qualityEntityPage = {
 export const generalEntityPage2 = {
   "Class": abs("./em1.js;get/components"),
   "Name": "General entity page with 'About' as the default tab",
-  "Component path": "/1/2/entity_pages/GeneralEntityPage2.jsx",
+  "Component path": abs("../entity_browser/entity_pages/GeneralEntityPage2.jsx"),
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
-    "dir_uploads/up_directories/home_app/entity_pages",
+    "dir_uploads/up_directories/entity_browser/entity_pages",
   "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
@@ -194,10 +194,10 @@ export const generalEntityPage2 = {
 export const componentEntityPage = {
   "Class": abs("./em1.js;get/components"),
   "Name": "Initial component entity page",
-  "Component path": "/1/2/entity_pages/ComponentEntityPage.jsx",
+  "Component path": abs("../entity_browser/entity_pages/ComponentEntityPage.jsx"),
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
-    "dir_uploads/up_directories/home_app/entity_pages",
+    "dir_uploads/up_directories/entity_browser/entity_pages",
   "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
@@ -207,11 +207,11 @@ export const componentEntityPage = {
 export const flipGame = {
   "Class": abs("./em1.js;get/components"),
   "Name": "Flip game 1.0",
-  "Component path": "/1/2/tutorials/flip_game_01/FlipGame01.jsx",
+  "Component path": abs("../tutorials/flip_game_01/FlipGame01.jsx"),
   "Example props": {},
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
-    "dir_uploads/up_directories/home_app/tutorials/flip_game_01",
+    "dir_uploads/up_directories/tutorials/flip_game_01",
   "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
@@ -219,11 +219,11 @@ export const flipGame = {
 export const mastermindGame = {
   "Class": abs("./em1.js;get/components"),
   "Name": "Mastermind game 1.0",
-  "Component path": "/1/2/tutorials/mastermind_app_01/main.jsx",
+  "Component path": abs("../tutorials/mastermind_app_01/main.jsx"),
   "Example props": {},
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
-    "dir_uploads/up_directories/home_app/tutorials/mastermind_app_01/main.jsx",
+    "dir_uploads/up_directories/tutorials/mastermind_app_01/main.jsx",
   "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
@@ -231,10 +231,10 @@ export const mastermindGame = {
 export const messageAppExample = {
   "Class": abs("./em1.js;get/components"),
   "Name": "Message app",
-  "Component path": "/1/2/tutorials/message_app/main.jsx",
+  "Component path": abs("../tutorials/message_app/main.jsx"),
   "GitHub repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
-    "dir_uploads/up_directories/home_app/tutorials/message_app/main.jsx",
+    "dir_uploads/up_directories/tutorials/message_app/main.jsx",
   "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };

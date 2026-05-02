@@ -463,7 +463,7 @@ export class ScriptInterpreter {
     let {appSettings} = callerEnv.scriptVars;
     if (
       appSettings && prepareJSXImmediately &&
-      ret instanceof LiveJSModule && route.slice(-4) === ".jsx"
+      ret instanceof LiveJSModule && route.toString().slice(-4) === ".jsx"
     ) {
       await appSettings.prepareComponent(ret, callerNode, callerEnv);
     }
@@ -3659,6 +3659,10 @@ const SLASH_END_REGEX = /\/$/;
 
 export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
   if (!curPath) curPath = "/";
+
+  if (path instanceof RouteObject) {
+    return path;
+  }
 
   if (!path) throw new LoadError(
     `Ill-formed path: "${path}"`, callerNode, callerEnv

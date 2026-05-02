@@ -1,7 +1,7 @@
 
 import {post} from 'query';
 import {getUserEntPath} from "/1/1/entities.js";
-import * as EntityReference from "../utilities/EntityReference.jsx";
+import * as EntityReference from "../../utilities/EntityReference.jsx";
 import * as EditField from "./EditField.jsx";
 
 
