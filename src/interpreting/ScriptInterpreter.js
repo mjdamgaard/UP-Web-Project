@@ -429,14 +429,16 @@ export class ScriptInterpreter {
     // If the absolute path contains non-hexadecimal ID placeholders for the
     // upNodeID or the homeDirID, wrap it in a 'Route' object, which are also
     // accepted by the standard query functions, and by this.fetch().
-    let [nodeIDSegment, dirIDSegment, ...restSegments] = ret.split("/");
-    if (
-      nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment) ||
-      dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment)
-    ) {
-      route = new RouteObject(
-        route, nodeIDSegment, dirIDSegment, restSegments, curPath
-      );
+    if (route[0] === "/") {
+      let [_, nodeIDSegment, dirIDSegment, ...restSegments] = route.split("/");
+      if (
+        nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment) ||
+        dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment)
+      ) {
+        route = new RouteObject(
+          route, nodeIDSegment, dirIDSegment, restSegments, curPath
+        );
+      }
     }
 
     // Then simple redirect to this.fetch(), and if assertJSModule is true,
@@ -1747,14 +1749,17 @@ export class ScriptInterpreter {
           // If the resulting route contains non-hexadecimal ID placeholders
           // for the upNodeID or the homeDirID, wrap it in a 'Route' object,
           // which are also accepted by the standard query functions.
-          let [nodeIDSegment, dirIDSegment, ...restSegments] = ret.split("/");
-          if (
-            nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment) ||
-            dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment)
-          ) {
-            ret = new RouteObject(
-              ret, nodeIDSegment, dirIDSegment, restSegments, curPath
-            );
+          if (ret[0] === "/") {
+            let [_, nodeIDSegment, dirIDSegment, ...restSegments] =
+              ret.split("/");
+            if (
+              nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment) ||
+              dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment)
+            ) {
+              ret = new RouteObject(
+                ret, nodeIDSegment, dirIDSegment, restSegments, curPath
+              );
+            }
           }
         }
         else if (expType === "number") {
@@ -2909,7 +2914,7 @@ export function verifyType(val, type, isOptional, node, env) {
     let isValid;
     for (let i = 0; i < len; i++) {
       try {
-        verifyTypeHelper(typeDisjunctionArr[i], type, isOptional, node, env);
+        verifyTypeHelper(val, typeDisjunctionArr[i], isOptional, node, env);
       }
       catch (err) {
         continue;
@@ -2918,7 +2923,8 @@ export function verifyType(val, type, isOptional, node, env) {
       break;
     }
     if (!isValid) throw new ArgTypeError(
-      'Value did not match any of the types in "' + getString(type, env) + '"',
+      'Value did not match any of the types in "' + getString(type, env) +
+      '": ' + getString(val, env),
       node, env
     );
   }
