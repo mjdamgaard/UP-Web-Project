@@ -40,7 +40,7 @@ Being able quickly and safely share prototypes for new apps and features with a 
 
 When an app or a back-end module is uploaded to the platform, the source code is generally completely visible to the public. And the creator of the app cannot change the source code on a whim while the app is in use.
 
-This means that as long as you trust the user-programmable platform itself to show you the correct source code, you do not need to trust any given creator on the platform in order to know that it is safe to use their apps.
+This means that as long as you trust the user-programmable platform itself to show you the correct source code, and trust the user community at large to evaluate the safety of this source code, you do not need to trust any individual creator on the platform in order to know that it is safe to use their apps.
 
 This removes a core issue that otherwise affects decentralized platforms in general, namely the issue that in order to use the desired features of the platform, the individual user often has to trust several different independent parties that they do not know much about.
 
@@ -57,6 +57,13 @@ The funding of the resources is thus not a concern for the developers of the app
 The platform thus keeps track of the resources that each user consumes, but does not care about *where* and *how* these resources are consumed.
 
 Note that since the platform is able to host any kind of app, including any kind of website that you can imagine, personal or otherwise, you will thus be able to have any kind of website that you want hosted essentially for free and in perpetuity by a user-programmable platform: You only pay the small cost of storing the source code for your website (which might even be covered by a free plan), and the visitors/users of your site will carry the rest of the costs.
+
+
+
+### User authentication is handled globally on the platform
+
+The apps of a user-programmable platform never have to (and should never) implement their own user authentication procedures. Instead user authentication is handled by the platform on a global level. And whenever a user-programmed server function is called, any authentication will have already taken place beforehand, and the function will have access to the user's global ID if the authentication succeeded.
+
 
 
 ### An open and decentralized network
