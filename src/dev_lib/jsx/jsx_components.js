@@ -4,7 +4,7 @@ import {
   forEachValue, CLEAR_FLAG, PromiseObject, logExtendedErrorAndTrace,
   OBJECT_PROTOTYPE, Environment, ARRAY_PROTOTYPE, FunctionObject, Exception,
   getStringOrSymbol, getPropertyFromObject, getPropertyFromPlainObject,
-  jsonStringify, ArgTypeError, decrCompGas, getAbsolutePath,
+  jsonStringify, ArgTypeError, decrCompGas, getAbsolutePath, ErrorWrapper,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
@@ -165,7 +165,12 @@ class JSXInstance {
       isReady, whenReady, renderBeforeReady = false
     ] = this.settings.prepareInstance(this, callerNode, callerEnv);
     if (!isReady) {
-      whenReady.then(() => this.queueRerender(interpreter));
+      whenReady.then(res => {
+        if (res instanceof ErrorWrapper) {
+          this.failComponentAndGetDOMNode(res.val, replaceSelf);
+        }
+        this.queueRerender(interpreter);
+      });
       if (!renderBeforeReady) {
         let newDOMNode = document.createElement("template");
         newDOMNode.setAttribute("class", "_pending-settings");
@@ -209,7 +214,7 @@ class JSXInstance {
     let renderFun = this.componentModule.get("render") ??
       this.componentModule.get("default");
     if (!renderFun) {
-      return this.getFailedComponentDOMNode(
+      return this.failComponentAndGetDOMNode(
         new RuntimeError(
           'Component module is missing a render() function at "' +
           this.componentPath + '"',
@@ -228,7 +233,7 @@ class JSXInstance {
       );
     }
     catch (err) {
-      return this.getFailedComponentDOMNode(err, replaceSelf);
+      return this.failComponentAndGetDOMNode(err, replaceSelf);
     }
     this.isFirstRender = false;
 
@@ -257,10 +262,10 @@ class JSXInstance {
         );
       }
       catch (err) {
-        return this.getFailedComponentDOMNode(err, replaceSelf);
+        return this.failComponentAndGetDOMNode(err, replaceSelf);
       }
       if (!newDOMNode?.tagName) {
-        return this.getFailedComponentDOMNode(
+        return this.failComponentAndGetDOMNode(
           new RuntimeError(
             "A JSX component must return "
           ),
@@ -331,7 +336,7 @@ class JSXInstance {
         );
       }
       catch (err) {
-        return this.getFailedComponentDOMNode(err, replaceSelf);
+        return this.failComponentAndGetDOMNode(err, replaceSelf);
       }
     }
 
@@ -348,7 +353,7 @@ class JSXInstance {
   }
 
 
-  getFailedComponentDOMNode(error, replaceSelf) {
+  failComponentAndGetDOMNode(error, replaceSelf) {
     this.isFailed = true;
     if (error instanceof Exception) {
       logExtendedErrorAndTrace(error);

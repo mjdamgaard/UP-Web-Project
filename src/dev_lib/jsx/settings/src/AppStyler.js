@@ -126,8 +126,6 @@ export class AppStyler01 {
   async prepareComponentHelper(componentModule, componentPath, node, env) {
     // Get a new, unique ID for the component.
     let componentID = this.getNextComponentID();
-    this.componentIDs.set(componentPath, componentID);
-    this.componentPaths[componentID] = componentPath;
 
     // Then call settings.getStyleModule() to get the so-called style module
     // for the component. This might be the module pointed to by a
