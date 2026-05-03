@@ -3264,8 +3264,8 @@ export class RouteObject extends ObjectObject {
     this.restSegments = restSegments;
     this.curPath = curPath;
     this.members = {
-      fetchRoute: new DevFunction(
-        "fetchRoute", {isAsync: true},
+      fetchString: new DevFunction(
+        "fetchString", {isAsync: true},
         async ({callerNode, execEnv, interpreter}, []) => {
           return await fetchAndSubstituteNodeAndDirIDs(
             this, callerNode, execEnv, interpreter

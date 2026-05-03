@@ -19,7 +19,7 @@ const entitiesClassPath = "/1/1/em1.js;get/entities";
 
 export async function fetchEntityID(entKey) {
   if (hasType(entKey, "Route")) {
-    entKey = await entKey.fetchRoute();
+    entKey = await entKey.fetchString();
   }
   verifyType(entKey, "string");
 
@@ -53,7 +53,7 @@ export async function fetchOrCreateEntityID(entKey) {
 
 export async function fetchEntityPath(entKey) {
   if (hasType(entKey, "Route")) {
-    entKey = await entKey.fetchRoute();
+    entKey = await entKey.fetchString();
   }
   verifyType(entKey, "string");
 
