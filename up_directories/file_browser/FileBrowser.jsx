@@ -231,17 +231,17 @@ export function render({route}) {
         </div>,
         <hr/>,
       ] : undefined,
-      <div className="admin">{"Admin: "}{
+      <div className="admin">{"Admin: "}{(
         adminID ? <EntityReference key="admin"
           entKey={getUserEntPath("1", adminID)}
         /> : "None"
-      }</div>,
+      )}</div>,
       <hr/>,
-      <div className="result">{
+      <div className="result">{(
         isTextFile && !fetchFile ? <h3>{"File contents"}</h3> :
           isDirectoryPath ? <h3>{"Directory contents"}</h3> :
             <h3>{"Result"}</h3>
-        }
+        )}
         <div>{(transformedResult)}</div>
       </div>,
       <hr/>,
@@ -258,7 +258,7 @@ export function render({route}) {
 
   return (
     <div className="file-browser">
-      <div className="route">{routeJSXWithSubLinks}</div>
+      <div className="route">{(routeJSXWithSubLinks)}</div>
       {(content)}
     </div>
   );

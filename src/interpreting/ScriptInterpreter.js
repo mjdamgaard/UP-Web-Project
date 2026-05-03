@@ -3263,11 +3263,69 @@ export class RouteObject extends ObjectObject {
     this.dirIDSegment = dirIDSegment;
     this.restSegments = restSegments;
     this.curPath = curPath;
+    this.members = {
+      fetchRoute: new DevFunction(
+        "fetchRoute", {isAsync: true},
+        async ({callerNode, execEnv, interpreter}, []) => {
+          return await fetchAndSubstituteNodeAndDirIDs(
+            this, callerNode, execEnv, interpreter
+          );
+        }
+      ),
+    };
   }
 
   toString() {
     return this.route;
   }
+}
+
+// fetchAndSubstituteNodeAndDirIDs() imports '~/ids.js' from the local home
+// directory and substitutes any of the input ID segments that are not already
+// hexadecimal ID strings, but are instead placeholders.
+export async function fetchAndSubstituteNodeAndDirIDs(
+  routeObject, callerNode, execEnv, interpreter,
+  ancestorModules = [], finalCallbacks = []
+) {
+  // Fetch the 'ids.js' module that is expected to be in the home directory of
+  // curPath. 
+  let {nodeIDSegment, dirIDSegment, restSegments, curPath} = routeObject;
+  let idsModulePath = getAbsolutePath(
+    curPath, "~/ids.js", callerNode, execEnv
+  );
+  let idsModule = await interpreter.fetch(
+    idsModulePath, callerNode, execEnv, ancestorModules, finalCallbacks
+  )
+
+  // Substitute any non-hexadecimal node or dir placeholder.
+  let nodeID = nodeIDSegment, dirID = dirIDSegment;
+  if (nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment)) {
+    let nodeIDsObject = getPropertyFromObject(idsModule, "nodeIDs");
+    if (nodeIDsObject) {
+      nodeID = getPropertyFromObject(nodeIDsObject, nodeIDSegment);
+    }
+    // If nodeIDs[nodeIDSegment] is nullish, just use nodeIdSegment as it was,
+    // expecting an error to be thrown by query().
+    nodeID ??= nodeIDSegment;
+  }
+  if (dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment)) {
+    let dirIDsObject = getPropertyFromObject(idsModule, "dirIDs");
+    if (dirIDSegment) {
+      dirID = getPropertyFromObject(dirIDsObject, dirIDSegment);
+    }
+    // If dirIDs[dirIDSegment] is nullish, just use dirIDSegment as it was,
+    // expecting an error to be thrown by query().
+    dirID ??= dirIDSegment;
+  }
+  
+  // Then construct and return the full substituted route.
+  let ret = "";
+  if (nodeID) ret += "/" + nodeID;
+  if (dirID) ret += "/" + dirID;
+  if (restSegments.length > 0) {
+    ret += "/" + restSegments.join("/");
+  }
+  return ret;
 }
 
 

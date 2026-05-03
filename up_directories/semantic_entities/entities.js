@@ -10,62 +10,63 @@ import {verifyType, hasType} from 'type';
 import {toUpperCase} from 'string';
 import {mapToArray, keys} from 'object';
 import {forEach, map, reduce} from 'array';
+import {TypeError} from 'error';
 
 const membersRelationPath = "/1/1/em1.js;get/members";
 const entitiesClassPath = "/1/1/em1.js;get/entities";
 
 
 
-export function fetchEntityID(entKey) {
+export async function fetchEntityID(entKey) {
+  if (hasType(entKey, "Route")) {
+    entKey = await entKey.fetchRoute();
+  }
+  verifyType(entKey, "string");
+
   // If entKey is a path, fetch the entID from ./entIDs.bt.
   if (entKey[0] === "/") {
-    return new Promise(resolve => {
-      let entPathHex = valueToHex(entKey, "string");
-      fetch(homePath + "/entIDs.bt./entry/k/" + entPathHex).then(
-        entID => resolve(entID)
-      );
-    });
+    let entPathHex = valueToHex(entKey, "string");
+    return await fetch(homePath + "/entIDs.bt./entry/k/" + entPathHex);
   }
 
   // Else if of the form '<entID>', return a trivial promise to that entID.
   else {
     verifyType(entKey, "hex-string");
-    return new Promise(resolve => resolve(entKey));
+    return entKey;
+;
   }
 }
 
 
-export function fetchOrCreateEntityID(entKey) {
-  return new Promise((resolve) => {
-    fetchEntityID(entKey).then(entID => {
-      if (entID) {
-        resolve(entID);
-      }
-      else {
-        fetchEntityPath(entKey).then(entPath => {
-          postEntity(entPath).then(entID => resolve(entID));
-        });
-      }
-    });
-  });
+export async function fetchOrCreateEntityID(entKey) {
+  let entID = await fetchEntityID(entKey);
+  if (entID) {
+    return entID;
+  }
+  else {
+    let entPath = await fetchEntityPath(entKey);
+    entID = await postEntity(entPath);
+    return entID;
+  }
 }
 
 
-export function fetchEntityPath(entKey) {
+export async function fetchEntityPath(entKey) {
+  if (hasType(entKey, "Route")) {
+    entKey = await entKey.fetchRoute();
+  }
+  verifyType(entKey, "string");
+
   // If entKey is a path, just return a trivial promise to the same path.
   if (entKey[0] === "/") {
-    return new Promise(resolve => resolve(entKey));
+    return entKey;
   }
 
   // Else expect entKey to be of the form '<entID>', and fetch the path from
   // the entPaths.att table.
   else {
     verifyType(entKey, "hex-string");
-    return new Promise(resolve => {
-      fetch(homePath + "/entPaths.att./entry/k/" + entKey).then(
-        entPath => resolve(entPath)
-      );
-    });
+    return await fetch(homePath + "/entPaths.att./entry/k/" + entKey);
   }
 }
 

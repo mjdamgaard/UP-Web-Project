@@ -515,7 +515,9 @@ export class AppStyler01 {
       if (!componentID) {
         let whenReady = this.prepareComponent(
           jsxInstance.componentModule, node, env
-        ).finally();
+        ).then(
+          x => x, err => new ErrorWrapper(err)
+        );
         return [false, whenReady];
       }
 

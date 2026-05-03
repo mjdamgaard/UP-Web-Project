@@ -52,5 +52,5 @@ export const events = urlEvents;
 
 export const styleSheets = [
   abs("../root_app/style.css"),
-  abs("../../utilities/TabbedPages.css"),
+  abs("../utilities/TabbedPages.css"),
 ];

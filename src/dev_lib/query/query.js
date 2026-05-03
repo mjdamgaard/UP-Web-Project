@@ -6,6 +6,7 @@ import {
   TEXT_FILE_ROUTE_REGEX, SCRIPT_ROUTE_REGEX, CSSModule, getString,
   getPropertyFromObject, ArgTypeError, forEachValue, ObjectObject,
   ErrorWrapper, RouteObject, HEX_ID_REGEX, getAbsolutePath,
+  fetchAndSubstituteNodeAndDirIDs,
 } from '../../interpreting/ScriptInterpreter.js';
 import {scriptParser} from "../../interpreting/parsing/ScriptParser.js";
 import {parseRoute} from './src/route_parsing.js';
@@ -432,57 +433,6 @@ export async function _query(
   return result;
 }
 
-
-// fetchAndSubstituteNodeAndDirIDs() imports '~/ids.js' from the local home
-// directory and substitutes any of the input ID segments that are not already
-// hexadecimal ID strings, but are instead placeholders.
-async function fetchAndSubstituteNodeAndDirIDs(
-  routeObject, callerNode, execEnv, interpreter,
-  ancestorModules, finalCallbacks
-) {
-  // Fetch the 'ids.js' module that is expected to be in the home directory of
-  // curPath. 
-  let {nodeIDSegment, dirIDSegment, restSegments, curPath} = routeObject;
-  let idsModulePath = getAbsolutePath(
-    curPath, "~/ids.js", callerNode, execEnv
-  );
-  let idsModule = await _fetch(
-    idsModulePath, {}, callerNode, execEnv, interpreter,
-    ancestorModules, finalCallbacks
-  )
-
-  // Substitute any non-hexadecimal node or dir placeholder.
-  let nodeID = nodeIDSegment, dirID = dirIDSegment;
-  if (nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment)) {
-    let nodeIDsObject = getPropertyFromObject(idsModule, "nodeIDs");
-    nodeID = getPropertyFromObject(nodeIDsObject, nodeIDSegment);
-    if (!HEX_ID_REGEX.test(nodeID)) throw new ArgTypeError(
-      'Invalid ID at nodeIDs["' + nodeIDSegment + '"] imported from ' +
-      idsModulePath + '. Expected a hexadecimal string but got "' +
-      getString(nodeID, execEnv) + '".',
-      callerNode, execEnv
-    );
-  }
-  if (dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment)) {
-    let dirIDsObject = getPropertyFromObject(idsModule, "dirIDs");
-    dirID = getPropertyFromObject(dirIDsObject, dirIDSegment);
-    if (!HEX_ID_REGEX.test(dirID)) throw new ArgTypeError(
-      'Invalid ID at dirIDs["' + dirIDSegment + '"] imported from ' +
-      idsModulePath + '. Expected a hexadecimal string but got "' +
-      getString(dirID, execEnv) + '".',
-      callerNode, execEnv
-    );
-  }
-  
-  // Then construct and return the full substituted route.
-  let ret = "";
-  if (nodeID) ret += "/" + nodeID;
-  if (dirID) ret += "/" + dirID;
-  if (restSegments.length > 0) {
-    ret += "/" + restSegments.join("/");
-  }
-  return ret;
-}
 
 
 
