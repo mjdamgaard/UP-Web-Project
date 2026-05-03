@@ -725,9 +725,9 @@ class JSXInstance {
 
   #getNewChildren(
     domNode, childArr, curChildArr, marks, interpreter, callerNode, callerEnv,
-    props, ownDOMNodes, childInstanceNodes
+    props, ownDOMNodes, childInstanceNodes, offset = 0
   ) {
-    let i = 0;
+    let i = offset;
     return [].concat(...childArr.map(child => {
       let isArray = child instanceof Array;
       if (child?.isFragment || isArray) {
@@ -737,7 +737,7 @@ class JSXInstance {
         }
         let newChildren = this.#getNewChildren(
           domNode, nestedChildArr, curChildArr, marks, interpreter, callerNode,
-          callerEnv, props, ownDOMNodes, childInstanceNodes
+          callerEnv, props, ownDOMNodes, childInstanceNodes, i
         );
         i = i + newChildren.length;
         return newChildren;
@@ -749,6 +749,9 @@ class JSXInstance {
         );
         i++;
         return [newChild];
+      }
+      else {
+        return [];
       }
     }));
   }
