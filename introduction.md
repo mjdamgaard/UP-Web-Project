@@ -34,8 +34,12 @@ A user-programmable platform excels at exactly this, since it is able to draw on
 
 (And then continue from the top of the above introduction text.)
 
-*Or after the first paragraph here you could say:
+...Or after the first paragraph here you could say:
 
 "If only there was a platform that was able to draw on its whole user base, and thereby the whole world, for coming up with new creative ideas for apps and features. Well, this is exactly what a 'user-programmable platform' can"... 
+
+...Hm, one could maybe even also insert a comment before that quickly talking about the fact that a lot of people are tired of enshittification..
+
+...And I guess that a good "conclusion" to this introduction/pitch to keep in mind is that: "A user programmable platform creates a space where creativity is really allowed to flourish, unlike any other platform, which will only be more and more important in the age of AI. And at the same time, a user-programmable platforms offers the users that they can sleep safe at night knowing that the platform will not enshittify: It will also keep being good to its users in the long run.  
 
  -->
