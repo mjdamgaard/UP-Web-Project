@@ -4,7 +4,7 @@
 
 ## Introduction
 
-A 'user-programmable platform' is a platform where the users are free to create, modify, and extend the apps that it offers, and where each end user is able to choose exactly which version of each app they want to use, without having to change to a different web domain or download a different app.
+A 'user-programmable platform' is a platform where the users are free to create, modify, and extend the apps that it offers, and where each individual end user is able to choose exactly which version of each app they want to use, without having to change to a different web domain or download a different app.
 
 * *Are you tired of platforms whose algorithms always tries to funnel you into a dopamine loop?*
 * *Are you tired of rude comments and posts not being sufficiently suppressed, or of misinformation and inappropriate content not being sufficiently moderated?*
