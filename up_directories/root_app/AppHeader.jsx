@@ -15,13 +15,13 @@ export function render() {
       <ILink key="tut" href="~/tutorials">
         <span className="menu-item">{"Tutorials"}</span>
       </ILink>
-      <ILink key="apps" href="~/apps">
+      {/* <ILink key="apps" href="~/apps">
         <span className="menu-item">{"Apps"}</span>
-      </ILink>
+      </ILink> */}
       <ILink key="comp" href="~/ep/1/1/em1.js;get/components">
         <span className="menu-item">{"Components"}</span>
       </ILink>
-      <ILink key="proj" href="~/ep/1/1/em1.js;get/projects">
+      {/* <ILink key="proj" href="~/ep/1/1/em1.js;get/projects">
         <span className="menu-item">{"Projects"}</span>
       </ILink>
       <ILink key="disc" href="~/ep/1/1/em1.js;get/discussionsClass">
@@ -29,7 +29,7 @@ export function render() {
       </ILink>
       <ILink key="contr" href="~/ep/1/1/em1.js;get/contributions">
         <span className="menu-item">{"Contributions"}</span>
-      </ILink>
+      </ILink> */}
     </div>
   </header>;
 }
