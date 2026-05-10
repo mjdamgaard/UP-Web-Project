@@ -1,10 +1,10 @@
 
-# Open developer co-ops
+# Open tech co-ops
 
 
 ## Introduction
 
-An 'open developer co-op' is a business model designed to bridge the gap between open source and closed source, yielding the best of both worlds.
+An 'open tech co-op' is a business model designed to bridge the gap between open source and closed source, yielding the best of both worlds.
 
 Like open source, this model incentivizes the developers to collaborate on projects publicly, and to share their new ideas and source code contributions quickly with the world. But unlike open source, the developers can nonetheless still get a fair payment for their work.
 
@@ -14,9 +14,9 @@ This is achieved by forming a kind of cooperative of developers where anyone is 
 
 ## Advantages
 
-Similar to open source, the model of open developer co-ops will be able to essentially draw on the entire world for coming up with new ideas for useful software applications, and not least draw on the users of the software themselves, who are often the most likely ones to come up with new useful improvements.
+Similar to open source, the model of open tech co-ops will be able to essentially draw on the entire world for coming up with new ideas for useful software applications, and not least draw on the users of the software themselves, who are often the most likely ones to come up with new useful improvements.
 
-This gives the open developer co-ops an advantage in the creative department. And this advantage can be extended further by also utilizing [user-programmable platforms](README.md) to allow the contributors to share their ideas and prototypes quickly and safely with each other, and to give the end users complete freedom to choose whichever ideas they want to use themselves.
+This gives the open tech co-ops an advantage in the creative department. And this advantage can be extended further by also utilizing [user-programmable platforms](README.md) to allow the contributors to share their ideas and prototypes quickly and safely with each other, and to give the end users complete freedom to choose whichever ideas they want to use themselves.
 
 Having an advantage in the creative department is a great benefit to a software company, and this advantage is only made more critical by the rise of AI as a software development tool.
 As AI advances, the process to go from idea to implementation gets easier and quicker, which means that the success of a software company will increasingly rely on that company's ability to come up creative ideas for improving the software applications, and to quickly make those new applications and features available to its users.
@@ -25,7 +25,7 @@ As AI advances, the process to go from idea to implementation gets easier and qu
 
 ## Outline of the model
 
-An open developer co-op is an organization of developers who license software to the organization in return for potential future monetary rewards, which might depend on how well the software is received by the users.
+An open tech co-op is an organization of developers who license software to the organization in return for potential future monetary rewards, which might depend on how well the software is received by the users.
 
 The developers contribute their software to the organization by publishing it under a license which allows the organization to sub-license the software on behalf of the developers.
 
@@ -51,9 +51,9 @@ We will discuss the purpose this *y*-parameter in more detail in the following s
 
 The parameters of the model, *x*, *y*, *a*, and *b*, are included in order to give the co-op ways to assure the customers, as well as new potential source code contributors, that the co-op will not undergo the process known as [enshittification](https://en.wikipedia.org/wiki/Enshittification), and get increasingly worse for its customers over time.
 
-Without these parameters, or rather if we set *a* = 100 %, *b* = 0 %, and *x*, *y* ≥ 100, we still get a developer co-op where new contributors are motivated to share their contributions quickly and openly with each other, like in open source. However, open source offers more than just being able to collaborate open and freely on a project. It also assures both the contributors and the users that the software will not end up being controlled by a few actors who can jam up prices as they please, or enshittify the product in other ways.
+Without these parameters, or rather if we set *a* = 100 %, *b* = 0 %, and *x*, *y* ≥ 100, we still get an open tech co-op where new contributors are motivated to share their contributions quickly and openly with each other, like in open source. However, open source offers more than just being able to collaborate open and freely on a project. It also assures both the contributors and the users that the software will not end up being controlled by a few actors who can jam up prices as they please, or enshittify the product in other ways.
 
-When starting an open developer co-op, it might therefore be worth finding reliable ways to make similar kinds of assurances, namely if it turns out that not enough users and/or contributors will support the business otherwise.
+When starting an open tech co-op, it might therefore be worth finding reliable ways to make similar kinds of assurances, namely if it turns out that not enough users and/or contributors will support the business otherwise.
 
 One way of creating such an assurance is to adjust the *x* and *y*-parameters of the model. For instance, if you set *y* = 15, *x* = 50, it means that all the source code that the co-op governs at any given time will turn open-source within the next 15 years. So in order for the co-op to stay relevant to its customers, it needs to constantly extend and improve its source code, which requires it to keep recruiting new contributors by giving them fair rewards for their contributions.
 
@@ -64,13 +64,13 @@ With this proposal, the co-op will thus essentially turn into a [consumer's co-o
 
 <!-- The parameters *x* and *y* from the last section be adjusted depending on how close to an open source model you want to go.
 
-If you choose too small values, you risk not being able to set the prices very high, which means less payment for the contributors. However, if you set them too high, you might need to find other ways to assure the customers that the company will not stagnate or [enshittify](https://en.wikipedia.org/wiki/Enshittification) in the future, or gamble that they will not care about this significantly. But if they do, you might risk that the customers choose a competing developer co-op instead with better assurances. -->
+If you choose too small values, you risk not being able to set the prices very high, which means less payment for the contributors. However, if you set them too high, you might need to find other ways to assure the customers that the company will not stagnate or [enshittify](https://en.wikipedia.org/wiki/Enshittification) in the future, or gamble that they will not care about this significantly. But if they do, you might risk that the customers choose a competing tech co-op instead with better assurances. -->
 
 
 
 ## An investment opportunity
 
-It is possible to launch a developer co-op as a business venture by starting only with a sufficient amount capital. A way to do this would be for a capital-backed company to get some associates to start up the co-op, and make an initial deal with the company that gives it exclusive rights to sub-license the software of the co-op for an extended period of time, while being able to take a fixed cut of the revenue for itself.
+It is possible to launch an open tech co-op as a business venture by starting only with a sufficient amount capital. A way to do this would be for a capital-backed company to get some associates to start up the co-op, and make an initial deal with the company that gives it exclusive rights to sub-license the software of the co-op for an extended period of time, while being able to take a fixed cut of the revenue for itself.
 
 The company can then use its capital, not just to set up its own infrastructure for sub-licensing the software, but also possibly to help pay the first contributors of the co-op, perhaps generously, as a way of attracting the initial contributions that the co-op can then build on from there.
 
@@ -82,7 +82,7 @@ The parameters of this deal, such as in particular the length of the exclusivity
 
 ## Key takeaways
 
-* An open developer co-op is a business model in between open and closed source.
+* An open tech co-op is a business model in between open and closed source.
 
 * The purpose of the co-op is to gather public source code contributions, licensed specifically for the co-op, and sub-license it to third parties in return for payment which is then distributed among the contributors.
 
