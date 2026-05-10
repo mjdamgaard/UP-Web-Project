@@ -1712,6 +1712,13 @@ export class ScriptInterpreter {
           }
           log.error = expValArr[0];
         }
+        else if (expNode.subtype === "warn") {
+          if (this.isServerSide) throw new RuntimeError(
+            "console.warn() is not implemented server-side yet",
+            expNode, environment
+          );
+          console.warn(...expValArr);
+        }
         ret = undefined;
         break;
       }

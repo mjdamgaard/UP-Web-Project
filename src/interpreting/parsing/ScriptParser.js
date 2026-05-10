@@ -48,10 +48,10 @@ export const scriptGrammar = {
   "import-statement": {
     rules: [
       ["/import/", "import-list", "/from/!", "string", "/;/?"],
-      ["/import/", "/from/", "string", "/;/?"],
+      ["/import/", "string", "/;/?"],
     ],
     process: (children, ruleInd) => {
-      let str = (ruleInd == 0) ? children[3].str : children[2].str;
+      let str = (ruleInd == 0) ? children[3].str : children[1].str;
       let [postfixStr] = str.match(IMPORT_STR_POSTFIX_REGEX) ?? [""];
       str = str.substring(0, str.length - postfixStr.length);
       let isAwait, isPrivate;
@@ -1145,7 +1145,7 @@ export const scriptGrammar = {
   },
   "console-call": {
     rules: [
-      ["/console/", /\./, "/log|trace|error/", "expression-tuple"],
+      ["/console/", /\./, "/log|trace|error|warn/", "expression-tuple"],
     ],
     process: (children) => ({
       type: "console-call",
