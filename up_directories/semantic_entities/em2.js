@@ -33,7 +33,7 @@ export const webAppsDesc = <div>
 
 export const rootApp = {
   "Class": abs("./em1.js;get/components"),
-  "Name": "Home app",
+  "Name": "Root app",
   "Component path": abs("../root_app/main.jsx"),
   "Example component path": undefined,
   "No margins": true,
