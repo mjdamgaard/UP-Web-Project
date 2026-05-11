@@ -1,5 +1,74 @@
 
+# Introduction
 
+
+## Outline of the concept
+
+This platform is a 'user-programmable platform.' It is a platform where:
+
+- The users are free to build and extend the apps on the platform themselves, in collaboration with one another.
+
+- Each individual end user is able to freely choose which version of each app they want to use, just by changing their settings on the platform.
+
+- A majority of the profits of the platform will go to rewarding the developing users who contribute source code and ideas to the platform, in a similar way to how a [Web 2.0](https://en.wikipedia.org/wiki/Web_2.0) platform might reward its content creators.
+
+- The rest of the profits will go to the investors, but only until these have gained a fixed maximal profit margin on their investments.
+
+- The platform will be governed by three parties: 1, the investors, 2, an organization of the developers, and 3, an organization of the end users.
+<!-- The investors' voting power will decrease as their investments are paid back (with profit margins). And the voting power of the developer organization will also slowly decrease at some point, meaning that in the long run, the platform will end up being governed by the organization, forming a kind of consumer's co-op, or a "user's co-op" if you will. -->
+
+- The relative voting power between these three parties will shift over time, and in the long run, the user organization will end up taking over a majority of the voting power, meaning that the platform will essentially turn into a [consumer's co-op](https://en.wikipedia.org/wiki/Consumers%27_co-operative) in the end, or a "user's co-op," if you will.
+
+
+
+## Benefits
+
+### A great creative advantage
+
+A user-programmable platform like this will have a great advantage over other platforms in the creative department, since it has all the benefits of open source without any of the drawbacks:
+
+- Like any closed-source platform, this platform will be able to reward the developers fairly for their contributions.
+
+- But like any open-source platform, this platform will also be able to draw on the entire world for coming up with new creative ideas for how to extend the apps on the platform, and for implementing those ideas.
+
+- These contributors might also be users of the software themselves, who are also motivated to contribute simply in order to the product better for themselves and their peers, on top of the potential for monetary rewards.
+
+- And like open source, this platform will also ensure that the users of the software will not end up being squeezed for money by the owners, since the users themselves will end up being the owners of the software, effectively.
+
+With these benefits, the platform will be able to draw in many more creative contributions than any closed-source platform can ever hope to get from its workers.
+
+And especially in an age where AI continues to evolve as a development tool, and the process of going from idea to implementation gets easier and easier, a platforms success will to an increasing extend rely on its ability to generate new creative ideas for how to improve the platform with new apps and features.
+
+Thus, a user-programmable platform will have a great competitive advantage in the long run over any other kind of platform that does not to the same extend engage its users continuously in its development.
+
+
+### The users can trust the platform
+
+Another great benefit of this platform is that the end users will be able to trust the platform not to [enshittify](https://en.wikipedia.org/wiki/Enshittification) in the end.
+
+* *Are you tired of platforms whose algorithms always tries to funnel you into a dopamine loop, without being able to adjust this?*
+* *Are you tired of rude comments and posts not being sufficiently suppressed, or of misinformation and inappropriate content not being sufficiently moderated?*
+* *Are you tired of search results being dominated by paid-for entires, rather than just showing you the things that are the most relevant?*
+* *Are you tired of AI slop and clickbait?*
+* *Are you tired of your data being sold to third parties, or of the lack of transparency in this regard?*
+* *Are you tired of ads that just keep increasing in volume?*
+* *Or are you tired of updates in general that make things worse?*
+
+With a user-programmable platform of this kind, you will no longer have to worry about any of these problems.
+
+
+
+## More information
+
+For more information of what makes a user-programmable platform special, follow [this link](README.md).
+
+And for more information about the proposed governance structure of the platform, follow [this link](open-tech-co-ops.md).
+
+
+
+
+
+<!-- 
 # Introduction
 
 A 'user-programmable platform' is a platform that is able to allow its users develop and extend the apps on the platform, in a secure way, and is thereby able to draw on the creativity of its entire user base to come up with new useful apps and features.
@@ -17,7 +86,7 @@ And by fostering a great environment for creativity to flourish, a user-programm
 As the process of implementing new ideas gets easier, a platform's success will to an increasing extend rely on its ability to come up with new useful ideas for apps and features, and allow itself to evolve in new creative ways.
 And that is where a user-programmable platform excels.
 
-You can learn more about 'user-programmable platforms' [here](README.md).
+You can learn more about 'user-programmable platforms' [here](README.md). -->
 
 
 
