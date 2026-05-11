@@ -9,38 +9,218 @@ export function render() {
 
 const indexPage = <div className="text-page">
   <h1>The User-Programmable Web</h1>
-  <p>
-    This prototype of a
-    <ELink key="link-github-repo-1"
-      href="https://github.com/mjdamgaard/UP-Web-Project">
-      user-programmable platform
-    </ELink>
-    is currently undergoing some renovations.
-  </p>
-  <p>
-    To see the project description of what a 'user-programmable platform' is,
-    follow
-    <ELink key="link-github-repo-readme"
-      href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/README.md">
-      this link
-    </ELink>.
-  </p>
-  <p>
-    And to explore this prototype in its current form, go to the
-    <ILink key="link-comp" href="/ep/1/1/em1.js;get/components" >
-      Components page
-    </ILink>
-    to see some examples of user-uploaded app components. (You will also find
-    this app on that list, since this whole web app is built and uploaded
-    as a user-programmed app itself.)
-  </p>
-  <p>
-    And to get started on building and uploading user-programmed apps
-    yourself, go to the
-    <ILink key="link-tut-1" href="/tutorials">
-      Tutorial pages
-    </ILink>.
-  </p>
+
+  <section>
+    <h2>A user-programmable platform</h2>
+    <p>
+      UP-Web.org is a
+      <ELink key="link-github-repo-1"
+        href="https://github.com/mjdamgaard/UP-Web-Project">
+        user-programmable platform
+      </ELink>.
+      It is a platform where:
+    </p>
+    <p><ul>
+      <li>
+        The users are free to build and extend the apps on the platform
+        themselves, in collaboration with one another.
+      </li>
+      <li>
+        Each individual end user is able to freely choose which version of
+        each app they want to use, just by changing their settings on the
+        platform.
+      </li>
+      <li>
+        A majority of the profits of the platform will go to rewarding the
+        developing users who contribute source code and ideas to the
+        platform, in a similar way to how a
+        <ELink key="link-web-2.0"
+          href="https://en.wikipedia.org/wiki/Web_2.0">
+          Web 2.0 platform
+        </ELink>
+        might reward its content creators.
+      </li>
+      {/* <li>
+        The rest of the profits will go to the investors, but only until
+        these have gained a fixed maximal profit margin on their investments.
+      </li> */}
+      <li>
+        The platform will be governed by three parties: 1, the investors, 2,
+        an organization of the developers, and 3, an organization of the end
+        users.
+      </li>
+      <li>
+        {/* And at some point, the voting power will start to switch over to the
+        latter party, i.e. the user organization, meaning that the platform
+        will essentially turn into a */}
+        The relative voting power between these three parties will shift over
+        time, and in the long run, the user organization will end up taking
+        over a majority of the voting power, meaning that the platform will
+        essentially turn into a 
+        <ELink key="link-consumers-co-op"
+          href="https://en.wikipedia.org/wiki/Consumers%27_co-operative">
+          consumers' co-op
+        </ELink>
+        in the end (or a "users' co-op," if you will).
+      </li>
+    </ul></p>
+    <p>
+      The platform thus puts its own users in charge of its development, and
+      even ends up putting them completely in charge of everything.
+    </p>
+  </section>
+
+  <section>
+    <h2>Benefits</h2>
+    <section>
+      <h3>A great creative advantage</h3>
+      <p>
+        A user-programmable platform like this will have a great advantage over
+        other platforms in the creative department, since it essentially has
+        all the benefits of open source without the drawbacks:
+      </p>
+      <p><ul>
+        <li>
+          Like any closed-source platform, this platform will be able to reward
+          the developers fairly for their contributions.
+        </li>
+        <li>
+          But like any open-source platform, this platform will also be able to
+          draw on the entire world for coming up with new creative ideas for
+          how to extend the apps on the platform, and for implementing those
+          ideas.
+        </li>
+        <li>
+          These contributors might also be users of the software themselves,
+          who are also motivated to contribute simply in order to make the
+          product better for themselves and their peers, on top of the
+          potential for monetary rewards.
+        </li>
+        <li>
+          And like open source, this platform will also ensure that the users
+          of the software will not end up being squeezed for money by the
+          owners, since the users themselves will end up being the owners of
+          the software, effectively.
+        </li>
+      </ul></p>
+      <p>
+        With these benefits, the platform will be able to draw in many more
+        creative contributions than any closed-source platform can ever hope to
+        get from its workers.
+      </p>
+      <p>
+        And especially in an age where AI continues to evolve as a development
+        tool, and the process of going from idea to implementation gets easier
+        and easier, a platform's success will to an increasing extend rely on
+        its ability to generate new creative ideas for improving the
+        platform.
+      </p>
+      <p>
+        Thus, a user-programmable platform will have a great competitive
+        advantage in the long run over any other platform that does not
+        to the same extend engage its users continuously in its development.
+      </p>
+    </section>
+
+    <section>
+      <h3>The users can trust the platform</h3>
+      <p>
+        Another great benefit of this platform is that the end users will be
+        able to trust the platform not to undergo
+        <ELink key="link-enshittification-1"
+          href="https://en.wikipedia.org/wiki/Enshittification">
+          enshittification
+        </ELink>
+        in the end.
+      </p>
+      <p><ul>
+        <li><i>
+          Are you tired of platforms whose algorithms always tries to funnel
+          you into a dopamine loop, without being able to adjust this?
+        </i></li>
+        <li><i>
+          Are you tired of rude comments and posts not being sufficiently
+          suppressed, or of misinformation and inappropriate content not being
+          sufficiently moderated?
+        </i></li>
+        <li><i>
+          Are you tired of search results being dominated by paid-for entires,
+          rather than just showing you the things that are the most relevant?
+        </i></li>
+        <li><i>
+          Are you tired of AI slop and clickbait?
+        </i></li>
+        <li><i>
+          Are you tired of your data being sold to third parties, or of the
+          lack of transparency in this regard?
+        </i></li>
+        <li><i>
+          Are you tired of ads that just keep increasing in volume?
+        </i></li>
+        <li><i>
+          Or are you tired of updates in general that make things worse?
+        </i></li>
+      </ul></p>
+      <p>
+        With a user-programmable platform, you will no longer have
+        to worry about any of these problems. Here the <i>users</i> are in
+        charge, and each user can freely choose which version of each app they
+        want to use.
+      </p>
+      <p>
+        And if a significant part of the user base wants a new feature, it is
+        only a matter time before someone will implement it, and collect the
+        rewards for doing so.
+      </p>
+    </section>
+  </section>
+
+  <section>
+    <h2>More information</h2>
+    <p>
+      For more information of what makes a user-programmable platform special,
+      follow
+      <ELink key="link-github-repo-readme"
+        href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/README.md">
+        this link
+      </ELink>.
+    </p>
+    <p>
+      And for more information about the proposed governance structure of the
+      platform, follow
+      <ELink key="link-github-repo-tech-co-ops"
+        href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/open-tech-co-ops.md">
+        this link
+      </ELink>.
+    </p>
+  </section>
+
+  <section>
+    <h2>Explore this prototype</h2>
+    <p>
+      This prototype of a user-programmable platform
+      is currently undergoing some renovations.
+    </p>
+    <p>
+      But to explore it in its current form, go to the
+      <ILink key="link-comp" href="/ep/1/1/em1.js;get/components" >
+        Components page
+      </ILink>
+      to see some examples of user-uploaded app components.
+      (You will also find
+      this app on that list, since this whole web app is built and uploaded
+      as a user-programmed app itself.)
+      After clicking on an element in the list, click on 'View component' in
+      order to see it. 
+    </p>
+    <p>
+      And to get started on building and uploading user-programmed apps
+      yourself, go to the
+      <ILink key="link-tut-1" href="/tutorials">
+        Tutorial pages
+      </ILink>.
+    </p>
+  </section>
 
 </div>;
 

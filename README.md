@@ -78,6 +78,12 @@ Each user of the platform has an amount of resources that they can use for free 
 
 The free resources that each user gets is paid for at least in part by sponsorships, grants, donations, and/or initial investments. And if this does not cover it, they can also be paid for in part by charging a the paying users more in the paid plans.
 
+<!--
+Actually, there's also an option to show ads, where the users just determines themselves whether ads should be shown or not, how many ads should be shown, and how intrusive vs. non-intrusive they should be. The latter will then be a global setting, i.e. the intrusiveness, and so will whether to see any ads or not, such that all ad-showing (dev) components will just automatically collapse if that setting is off. And in terms of volume, this is technically just a matter for the apps to decide. But they are supposed to read and adhere to the user's ad volume setting (and they don't benefit from not doing this, only on the contrary). But the ad-showing components can also perhaps make this easier by adjusting the ad volume automatically.
+
+And here's the important point: The ads then ought to once in a while show a captcha, that the user is supposed to react to and answer in order to get more gas/tokens. Then these captcha samples are supposed to be random, and only occur with low enough frequency, and with high enough gas rewards, that the user will benefit from and generally be interested in submitting the captcha answers.  
+-->
+
 
 
 ## An extended business model where the developing users also get paid
