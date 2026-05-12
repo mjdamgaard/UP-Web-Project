@@ -72,6 +72,35 @@ And for more information about the proposed governance structure of the platform
 
 
 
+
+<!-- 
+# About how to pitch the idea (verbally)
+
+If sensing that the listener(s) are expecting a more neat and smart-sounding sales pitch, I should maybe start by saying something like:
+
+- The advancement of AI means that creativity will be the deciding factor in the competition between platforms.
+
+- Open source is able to draw on the creativity of the entire world, but it has the major drawback that the contributors aren't getting paid, meaning that the development is still slow.
+
+- This platform solves this problem: It is the perfect midway between open source and closed source.
+
+And then I can continue from there.
+
+And if the listeners are made up of mainly potential future users, the pitch can just start much like my current README.md file's introduction section.
+
+And if it is a bit more relaxed scenario, which is probably what I will encounter the most, I could maybe start much like this document in its current form, but maybe leave out the sandboxing point at the beginning..
+
+-->
+
+
+
+
+
+
+
+
+
+
 <!-- 
 # Introduction
 
