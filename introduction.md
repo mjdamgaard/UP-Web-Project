@@ -63,7 +63,7 @@ And if a part of the user base wants a new feature, it is only a matter time bef
 
 For more information of what makes a user-programmable platform special, follow [this link](README.md).
 
-And for more information about the proposed governance structure of the platform, follow [this link](open-tech-co-ops.md).
+And for more information about the proposed governance structure of the platform, follow [this link](open_tech_co-ops.md).
 
 
 

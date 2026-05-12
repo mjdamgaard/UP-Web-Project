@@ -92,13 +92,13 @@ While a user-programmable platform could certainly be based purely on open-sourc
 
 <!-- Such a model might be especially interesting if a user-programmable platform wants to succeed in the space of business applications, and not just web and mobile applications, since business customers will generally happily pay more in order to get quick and reliable updates and maintenance of the software. -->
 
-We thus propose utilizing the model of an '[open tech co-op](open-tech-co-ops.md),' on top of the proposed core business model, in order for the platform to be able to attract more contributions, and more investments as well.
+We thus propose utilizing the model of an '[open tech co-op](open_tech_co-ops.md),' on top of the proposed core business model, in order for the platform to be able to attract more contributions, and more investments as well.
 
 In short, this model designed to be a midway between an open source and a closed source model, in a way that still motivates the developers to collaborate publicly, and share their contributions quickly and openly with each other, but which nonetheless still limits the use of the resulting code base in order to generate a revenue, which can then be used to pay the developers.
 
 And by promising investors a share of this revenue as well, this model can thus also help bring in investments for the platform.
 
-You can read more about this model of 'open tech co-ops' [here](open-tech-co-ops.md).
+You can read more about this model of 'open tech co-ops' [here](open_tech_co-ops.md).
 
 
 

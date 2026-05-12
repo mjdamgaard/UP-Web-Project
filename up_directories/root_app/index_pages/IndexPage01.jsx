@@ -26,19 +26,19 @@ const indexPage = <div className="text-page">
         themselves, in collaboration with one another.
       </li>
       <li>
-        Each individual end user is able to freely choose which version of
+        Each individual end user is free to choose whichever version of
         each app they want to use, just by changing their settings on the
         platform.
       </li>
       <li>
         A majority of the profits of the platform will go to rewarding the
         developing users who contribute source code and ideas to the
-        platform, in a similar way to how a
+        platform, similarly to how
         <ELink key="link-web-2.0"
           href="https://en.wikipedia.org/wiki/Web_2.0">
-          Web 2.0 platform
+          Web 2.0 platforms
         </ELink>
-        might reward its content creators.
+        sometimes reward their content creators.
       </li>
       {/* <li>
         The rest of the profits will go to the investors, but only until
@@ -50,9 +50,6 @@ const indexPage = <div className="text-page">
         users.
       </li>
       <li>
-        {/* And at some point, the voting power will start to switch over to the
-        latter party, i.e. the user organization, meaning that the platform
-        will essentially turn into a */}
         The relative voting power between these three parties will shift over
         time, and in the long run, the user organization will end up taking
         over a majority of the voting power, meaning that the platform will
@@ -189,7 +186,7 @@ const indexPage = <div className="text-page">
       And for more information about the proposed governance structure of the
       platform, follow
       <ELink key="link-github-repo-tech-co-ops"
-        href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/open-tech-co-ops.md">
+        href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/open_tech_co-ops.md">
         this link
       </ELink>.
     </p>
