@@ -14,11 +14,11 @@ const indexPage = <div className="text-page">
     <h2>A user-programmable platform</h2>
     <p>
       UP-Web.org is a
-      <ELink key="link-github-repo-1"
-        href="https://github.com/mjdamgaard/UP-Web-Project">
+      <ELink key="link-github-repo-readme-1"
+        href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/README.md">
         user-programmable platform
       </ELink>.
-      It is a platform where:
+      It is a platform with the following main features.
     </p>
     <p><ul>
       <li>
@@ -27,8 +27,14 @@ const indexPage = <div className="text-page">
       </li>
       <li>
         Each individual end user is free to choose whichever version of
-        each app they want to use, just by changing their settings on the
+        each app they want to use, just by changing their settings for the
         platform.
+      </li>
+      <li>
+        A sandboxing technology makes it safe for users to try out even brand
+        new prototypes of apps and features uploaded by other users, allowing
+        the development of the platform to move fast and with minimal central
+        oversight required. 
       </li>
       <li>
         A majority of the profits of the platform will go to rewarding the
@@ -45,15 +51,10 @@ const indexPage = <div className="text-page">
         these have gained a fixed maximal profit margin on their investments.
       </li> */}
       <li>
-        The platform will be governed by three parties: 1, the investors, 2,
-        an organization of the developers, and 3, an organization of the end
-        users.
-      </li>
-      <li>
-        The relative voting power between these three parties will shift over
-        time, and in the long run, the user organization will end up taking
-        over a majority of the voting power, meaning that the platform will
-        essentially turn into a 
+        The platform will have an initial stage where it is mainly governed by
+        its investors, a middle stage where it is mainly governed by its
+        developing users, and an end stage where it is mainly governed by its
+        end users. Thus, the platform will essentially turn into a
         <ELink key="link-consumers-co-op"
           href="https://en.wikipedia.org/wiki/Consumers%27_co-operative">
           consumers' co-op
@@ -62,19 +63,20 @@ const indexPage = <div className="text-page">
       </li>
     </ul></p>
     <p>
-      The platform thus puts its own users in charge of its development, and
-      even ends up putting them completely in charge of everything.
+      So not only are the users put in charge of the platform's development
+      from the very start, but they are also put in charge of directing the
+      platform completely in the end.
     </p>
   </section>
 
   <section>
-    <h2>Benefits</h2>
+    <h2>Advantages</h2>
     <section>
       <h3>A great creative advantage</h3>
       <p>
-        A user-programmable platform like this will have a great advantage over
-        other platforms in the creative department, since it essentially has
-        all the benefits of open source without the drawbacks:
+        A user-programmable platform like this will have a great advantage in
+        the creative department, since it essentially has all the benefits of
+        open source without the drawbacks:
       </p>
       <p><ul>
         <li>
@@ -89,33 +91,39 @@ const indexPage = <div className="text-page">
         </li>
         <li>
           These contributors might also be users of the software themselves,
-          who are also motivated to contribute simply in order to make the
-          product better for themselves and their peers, on top of the
-          potential for monetary rewards.
+          who might therefore be motivated to contribute in order to make the
+          product better for themselves and their peers, on top of being
+          motivated by the monetary rewards.
         </li>
         <li>
           And like open source, this platform will also ensure that the users
           of the software will not end up being squeezed for money by the
-          owners, since the users themselves will end up being the owners of
-          the software, effectively.
+          owners, in the process known as
+          <ELink key="link-enshittification-1"
+            href="https://en.wikipedia.org/wiki/Enshittification">
+            enshittification
+          </ELink>.
+          Instead the users themselves will end up as the owners of the
+          software, effectively.
         </li>
       </ul></p>
       <p>
         With these benefits, the platform will be able to draw in many more
-        creative contributions than any closed-source platform can ever hope to
-        get from its workers.
+        creative contributions than any closed-source platform can hope to
+        draw from its workers.
       </p>
       <p>
-        And especially in an age where AI continues to evolve as a development
-        tool, and the process of going from idea to implementation gets easier
-        and easier, a platform's success will to an increasing extend rely on
-        its ability to generate new creative ideas for improving the
+        And especially in an age where AI continues to advance as a development
+        tool, and the process of going from idea to implementation gets
+        increasingly easy, a platform's success will to an increasing extend
+        rely on its ability to generate new creative ideas for improving the
         platform.
       </p>
       <p>
         Thus, a user-programmable platform will have a great competitive
         advantage in the long run over any other platform that does not
-        to the same extend engage its users continuously in its development.
+        to the same extend engage its users and put them in charge of its
+        development.
       </p>
     </section>
 
@@ -124,7 +132,7 @@ const indexPage = <div className="text-page">
       <p>
         Another great benefit of this platform is that the end users will be
         able to trust the platform not to undergo
-        <ELink key="link-enshittification-1"
+        <ELink key="link-enshittification-2"
           href="https://en.wikipedia.org/wiki/Enshittification">
           enshittification
         </ELink>
@@ -175,9 +183,10 @@ const indexPage = <div className="text-page">
   <section>
     <h2>More information</h2>
     <p>
-      For more information of what makes a user-programmable platform special,
+      For more information on what sets a user-programmable platform apart
+      from other platforms,
       follow
-      <ELink key="link-github-repo-readme"
+      <ELink key="link-github-repo-readme-2"
         href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/README.md">
         this link
       </ELink>.
@@ -195,15 +204,16 @@ const indexPage = <div className="text-page">
   <section>
     <h2>Explore this prototype</h2>
     <p>
-      This prototype of a user-programmable platform
-      is currently undergoing some renovations.
+      This website already implements a functional prototype of a
+      user-programmable platform, where users can freely upload apps and app
+      components to it.
     </p>
     <p>
-      But to explore it in its current form, go to the
+      To explore some examples of some user-uploaded app components, go to
+      the
       <ILink key="link-comp" href="/ep/1/1/em1.js;get/components" >
         Components page
-      </ILink>
-      to see some examples of user-uploaded app components.
+      </ILink>.
       (You will also find
       this app on that list, since this whole web app is built and uploaded
       as a user-programmed app itself.)
@@ -216,6 +226,12 @@ const indexPage = <div className="text-page">
       <ILink key="link-tut-1" href="/tutorials">
         Tutorial pages
       </ILink>.
+    </p>
+    <p>
+      By the way, this prototype will also soon be given a start page with a
+      clearer overview of all the user-uploaded apps,
+      and where the users will be able to see how they can easily switch
+      between different versions of a given app.
     </p>
   </section>
 

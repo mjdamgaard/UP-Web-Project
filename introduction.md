@@ -2,48 +2,51 @@
 # Quick introduction to the platform
 
 
-## Outline of the idea
+## A user-programmable platform
 
 This is a 'user-programmable platform.' It is a platform where:
 
 - The users are free to build and extend the apps on the platform themselves, in collaboration with one another.
 <!--  -->
-- Each individual end user is able to freely choose which version of each app they want to use, just by changing their settings on the platform.
+- Each individual end user is free to choose whichever version of each app they want to use, just by changing their settings for the platform.
 <!--  -->
-- A majority of the profits of the platform will go to rewarding the developing users who contribute source code and ideas to the platform, in a similar way to how a [Web 2.0 platform](https://en.wikipedia.org/wiki/Web_2.0) might reward its content creators.
+- A sandboxing technology makes it safe for users to try out even brand new prototypes of apps and features uploaded by other users, allowing the development of the platform to move fast and with minimal central oversight required.
+<!--  -->
+- A majority of the profits of the platform will go to rewarding the developing users who contribute source code and ideas to the platform, isimilarly to how [Web 2.0 platforms](https://en.wikipedia.org/wiki/Web_2.0) sometimes reward their content creators.
 <!--  -->
 - The rest of the profits will go to the investors, but only until these have gained a fixed maximal profit margin on their investments.
 <!--  -->
 - The platform will be governed by three parties: 1, the investors, 2, an organization of the developers, and 3, an organization of the end users.
 <!--  -->
-- The relative voting power between these three parties will shift over time, and in the long run, the user organization will end up taking over a majority of the voting power, meaning that the platform will essentially turn into a [consumers' co-op](https://en.wikipedia.org/wiki/Consumers%27_co-operative) in the end, or a "users' co-op," if you will.
+- The platform will have an initial stage where it is mainly governed by its investors, a middle stage where it is mainly governed by its developing users, and an end stage where it is mainly governed by its end users. Thus, the platform will essentially turn into a [consumers' co-op](https://en.wikipedia.org/wiki/Consumers%27_co-operative) in the end (or a "users' co-op," if you will).
+
+So not only are the users put in charge of the platform's development from the very start, but they are also put in charge of directing the platform completely in the end.
 
 
-
-## Benefits
+## Advantages
 
 ### A great creative advantage
 
-A user-programmable platform like this will have a great advantage over other platforms in the creative department, since it essentially has all the benefits of open source without the drawbacks:
+A user-programmable platform like this will have a great advantage in the creative department, since it essentially has all the benefits of open source without the drawbacks:
 
 - Like any closed-source platform, this platform will be able to reward the developers fairly for their contributions.
 <!--  -->
 - But like any open-source platform, this platform will also be able to draw on the entire world for coming up with new creative ideas for how to extend the apps on the platform, and for implementing those ideas.
 <!--  -->
-- These contributors might also be users of the software themselves, who are also motivated to contribute simply in order to make the product better for themselves and their peers, on top of the potential for monetary rewards.
+- These contributors might also be users of the software themselves, who might therefore be motivated to contribute in order to make the product better for themselves and their peers, on top of being motivated by the monetary rewards.
 <!--  -->
-- And like open source, this platform will also ensure that the users of the software will not end up being squeezed for money by the owners, since the users themselves will end up being the owners of the software, effectively.
+- And like open source, this platform will also ensure that the users of the software will not end up being squeezed for money by the owners, in the process known as [enshittification](https://en.wikipedia.org/wiki/Enshittification). Instead the users themselves will end up as the owners of the software, effectively.
 
-With these benefits, the platform will be able to draw in many more creative contributions than any closed-source platform can ever hope to get from its workers.
+With these benefits, the platform will be able to draw in many more creative contributions than any closed-source platform can hope to draw from its workers.
 
-And especially in an age where AI continues to evolve as a development tool, and the process of going from idea to implementation gets easier and easier, a platform's success will to an increasing extend rely on its ability to generate new creative ideas for improving the platform with new apps and features.
+And especially in an age where AI continues to advance as a development tool, and the process of going from idea to implementation gets increasingly easy, a platform's success will to an increasing extend rely on its ability to generate new creative ideas for improving the platform.
 
-Thus, a user-programmable platform will have a great competitive advantage in the long run over any other platform that does not to the same extend engage its users continuously in its development.
+Thus, a user-programmable platform will have a great competitive advantage in the long run over any other platform that does not to the same extend engage its users and put them in charge of its development.
 
 
 ### The users can trust the platform
 
-Another great benefit of this platform is that the end users will be able to trust the platform not to [enshittify](https://en.wikipedia.org/wiki/Enshittification) in the end.
+Another great benefit of this platform is that the end users will be able to trust the platform not to undergo [enshittification](https://en.wikipedia.org/wiki/Enshittification) in the end.
 
 - *Are you tired of platforms whose algorithms always tries to funnel you into a dopamine loop, without being able to adjust this?*
 - *Are you tired of rude comments and posts not being sufficiently suppressed, or of misinformation and inappropriate content not being sufficiently moderated?*
@@ -61,7 +64,7 @@ And if a part of the user base wants a new feature, it is only a matter time bef
 
 ## More information
 
-For more information of what makes a user-programmable platform special, follow [this link](README.md).
+For more information on what sets a user-programmable platform apart from other platforms, follow [this link](README.md).
 
 And for more information about the proposed governance structure of the platform, follow [this link](open_tech_co-ops.md).
 
