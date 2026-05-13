@@ -26,6 +26,16 @@ const indexPage = <div className="text-page">
         themselves, in collaboration with one another.
       </li>
       <li>
+        A majority of the profits of the platform will go to rewarding the
+        users who contribute source code and ideas to the
+        platform, similarly to how
+        <ELink key="link-web-2.0"
+          href="https://en.wikipedia.org/wiki/Web_2.0">
+          Web 2.0 platforms
+        </ELink>
+        will often reward their content creators.
+      </li>
+      <li>
         Each individual end user is free to choose whichever version of
         each app they want to use, just by changing their settings for the
         platform.
@@ -35,16 +45,6 @@ const indexPage = <div className="text-page">
         and features uploaded by other users, allowing
         the development of the platform to move fast and with minimal central
         oversight required.
-      </li>
-      <li>
-        A majority of the profits of the platform will go to rewarding the
-        developing users who contribute source code and ideas to the
-        platform, similarly to how
-        <ELink key="link-web-2.0"
-          href="https://en.wikipedia.org/wiki/Web_2.0">
-          Web 2.0 platforms
-        </ELink>
-        will often reward their content creators.
       </li>
       {/* <li>
         The rest of the profits will go to the investors, but only until
@@ -243,7 +243,7 @@ const indexPage = <div className="text-page">
       By the way, this prototype will also soon be given a start page with a
       clearer overview of all the user-uploaded apps,
       and where the users will be able to see how they can easily switch
-      between different versions of a given app.
+      between different versions of each app.
     </p>
   </section>
 
