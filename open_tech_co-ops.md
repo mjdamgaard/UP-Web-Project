@@ -14,12 +14,12 @@ This is achieved by forming a kind of cooperative of developers where anyone is 
 
 ## Advantages
 
-Similar to open source, the model of open tech co-ops will be able to essentially draw on the entire world for coming up with new ideas for useful software applications, and not least draw on the users of the software themselves, who are often the most likely ones to come up with new useful improvements.
+Similar to open source, the model of open tech co-ops will be able to essentially draw on the entire world for coming up with new ideas for useful software applications, and not least draw on the users of the software themselves, who are often the ones most likely to come up with new ideas for useful improvements.
 
 This gives the open tech co-ops an advantage in the creative department. And this advantage can be extended further by also utilizing [user-programmable platforms](README.md) to allow the contributors to share their ideas and prototypes quickly and safely with each other, and to give the end users complete freedom to choose whichever ideas they want to use themselves.
 
 Having an advantage in the creative department is a great benefit to a software company, and this advantage is only made more critical by the rise of AI as a software development tool.
-As AI advances, the process to go from idea to implementation gets easier and quicker, which means that the success of a software company will increasingly rely on that company's ability to come up creative ideas for improving the software applications, and to quickly make those new applications and features available to its users.
+As AI advances, the process going from idea to implementation gets easier and easier, which means that the success of a software company will increasingly rely on that company's ability to come up creative ideas for improving the software applications, and to quickly make those new applications and features available to its users.
 
 
 
@@ -31,9 +31,9 @@ The developers contribute their software to the organization by publishing it un
 
 The organization then makes sure that the revenue generated from sub-licensing the software is distributed among the developers. But rather than collecting this revenue itself and distributing it to the developers itself, it can also employ third party companies to do this instead, who might then get a cut of the revenue.
 
-The protocol that determines the distribution of the rewards for the contributing developers is supposed to take into account how well the users benefit from those contributions. Although, at the end of the day, this distribution protocol is determined by the organization.  
+The protocol that determines the distribution of the rewards for the contributing developers is supposed to take into account how much their contributions seem to have benefited the users. Although, at the end of the day, this distribution protocol is determined by the organization.  
 
-The organization is governed by its members, but not in the usual 'one person, one vote' sense. Instead the vote of each member of the organization has a weight attached to it, and that weight is generally proportional to total amount of rewards the member has received through the organization in the last *x* years, where *x* is thus a parameter of this model.
+The organization is governed by its members, but not in the usual 'one person, one vote' sense. Instead the vote of each member of the organization is generally weighted proportional to total amount of rewards the member has received through the organization in the last *x* years, where *x* is thus a parameter of this model.
 
 A possible exception to this rule is the first members of the organization, who might hold an increased voting weight for an initial period of time in order to get the organization started.
 
@@ -51,7 +51,7 @@ We will discuss the purpose this *y*-parameter in more detail in the following s
 
 The parameters of the model, *x*, *y*, *a*, and *b*, are included in order to give the co-op ways to assure the customers, as well as new potential source code contributors, that the co-op will not undergo the process known as [enshittification](https://en.wikipedia.org/wiki/Enshittification), and get increasingly worse for its customers over time.
 
-Without these parameters, or rather if we set *a* = 100 %, *b* = 0 %, and *x*, *y* ≥ 100, we still get an open tech co-op where new contributors are motivated to share their contributions quickly and openly with each other, like in open source. However, open source offers more than just being able to collaborate open and freely on a project. It also assures both the contributors and the users that the software will not end up being controlled by a few actors who can jam up prices as they please, or enshittify the product in other ways.
+Without these parameters, or rather if we set *a* = 100 %, *b* = 0 %, and *x*, *y* ≥ 100, we still get an open tech co-op where new contributors are motivated to share their contributions quickly and openly with one another, like in open source. However, open source offers more than just being able to collaborate open and freely on a project. It also assures both the contributors and the users that the software will not end up being controlled by a few actors who can jam up prices as they please, or enshittify the product in other ways.
 
 When starting an open tech co-op, it might therefore be worth finding reliable ways to make similar kinds of assurances, namely if it turns out that not enough users and/or contributors will support the business otherwise.
 
