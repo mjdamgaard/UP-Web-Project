@@ -10,13 +10,13 @@ This is a 'user-programmable platform.' It is a platform where:
 <!--  -->
 - Each individual end user is free to choose whichever version of each app they want to use, just by changing their settings for the platform.
 <!--  -->
-- A sandboxing technology makes it safe for users to try out even brand new prototypes of apps and features uploaded by other users, allowing the development of the platform to move fast and with minimal central oversight required.
+- A sandboxing technology makes it safe for users to try out any new app or feature uploaded by another user, allowing the development of the platform to move fast and with minimal central oversight required.
 <!--  -->
 - A majority of the profits of the platform will go to rewarding the developing users who contribute source code and ideas to the platform, similarly to how [Web 2.0 platforms](https://en.wikipedia.org/wiki/Web_2.0) sometimes reward their content creators.
 <!--  -->
 <!-- - The rest of the profits will go to the investors, but only until these have gained a fixed maximal profit margin on their investments. -->
 <!--  -->
-- The platform will have an initial stage where it is mainly governed by its investors, a middle stage where it is mainly governed by its developing users, and an end stage where it is mainly governed by its end users. Thus, the platform will essentially turn into a [consumers' co-op](https://en.wikipedia.org/wiki/Consumers%27_co-operative) in the end (or a "users' co-op," if you will).
+- The platform will have an initial stage where it is governed mainly by its investors, a middle stage where it is governed mainly by its developing users, and an end stage where it is governed mainly by its end users. Thus, the platform will essentially turn into a [consumers' co-op](https://en.wikipedia.org/wiki/Consumers%27_co-operative) in the end (or a "users' co-op," if you will).
 
 So not only are the users put in charge of the platform's development from the very start, but they are also put in charge of directing the platform completely in the end.
 

@@ -31,10 +31,10 @@ const indexPage = <div className="text-page">
         platform.
       </li>
       <li>
-        A sandboxing technology makes it safe for users to try out even brand
-        new prototypes of apps and features uploaded by other users, allowing
+        A sandboxing technology makes it safe for users to try out any new app
+        or feature uploaded by another user, allowing
         the development of the platform to move fast and with minimal central
-        oversight required. 
+        oversight required.
       </li>
       <li>
         A majority of the profits of the platform will go to rewarding the
@@ -50,17 +50,33 @@ const indexPage = <div className="text-page">
         The rest of the profits will go to the investors, but only until
         these have gained a fixed maximal profit margin on their investments.
       </li> */}
+        {/* <ELink key="link-worker-co-op"
+          href="https://en.wikipedia.org/wiki/Worker_cooperative">
+          worker co-op
+        </ELink> */}
       <li>
-        The platform will have an initial stage where it is mainly governed by
-        its investors, a middle stage where it is mainly governed by its
-        developing users, and an end stage where it is mainly governed by its
-        end users. Thus, the platform will essentially turn into a
+        The platform will have an initial stage where it is governed mainly by
+        its investors, a middle stage where it is governed mainly by its
+        developing users, and an end stage where it is governed mainly by its
+        end users.
+        Thus, the platform will essentially turn into a
         <ELink key="link-consumers-co-op"
           href="https://en.wikipedia.org/wiki/Consumers%27_co-operative">
           consumers' co-op
         </ELink>
         in the end (or a "users' co-op," if you will).
       </li>
+      {/* <li>
+        The platform might have an initial stage where it is governed mainly by
+        its investors, but after a time, the governance of the platform will
+        instead be handed over to the users themselves.
+        Thus, the platform will essentially turn into a
+        <ELink key="link-consumers-co-op"
+          href="https://en.wikipedia.org/wiki/Consumers%27_co-operative">
+          consumers' co-op
+        </ELink>
+        in the end (or a "users' co-op," if you will).
+      </li> */}
     </ul></p>
     <p>
       So not only are the users put in charge of the platform's development
