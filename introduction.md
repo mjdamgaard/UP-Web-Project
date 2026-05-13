@@ -38,7 +38,7 @@ A user-programmable platform like this will have a great advantage in the creati
 
 With these benefits, the platform will be able to draw in many more creative contributions than any closed-source platform can hope to draw from its workers.
 
-And especially in an age where AI continues to advance as a development tool, and the process of going from idea to implementation gets increasingly easy, a platform's success will to an increasing extend rely on its ability to generate new creative ideas for improving the platform.
+And especially in an age where AI continues to advance as a development tool, and the process of going from idea to implementation gets easier and easier, a platform's success will to an increasing extend rely on its ability to generate new creative ideas for improving the platform.
 
 Thus, a user-programmable platform will have a great competitive advantage in the long run over any other platform that does not to the same extend engage its users and put them in charge of its development.
 

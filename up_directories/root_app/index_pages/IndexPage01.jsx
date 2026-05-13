@@ -127,7 +127,7 @@ const indexPage = <div className="text-page">
       <p>
         And especially in an age where AI continues to advance as a development
         tool, and the process of going from idea to implementation gets
-        increasingly easy, a platform's success will to an increasing extend
+        easier and easier, a platform's success will to an increasing extend
         rely on its ability to generate new creative ideas for improving the
         platform.
       </p>
