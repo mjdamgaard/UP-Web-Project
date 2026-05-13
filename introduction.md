@@ -12,11 +12,9 @@ This is a 'user-programmable platform.' It is a platform where:
 <!--  -->
 - A sandboxing technology makes it safe for users to try out even brand new prototypes of apps and features uploaded by other users, allowing the development of the platform to move fast and with minimal central oversight required.
 <!--  -->
-- A majority of the profits of the platform will go to rewarding the developing users who contribute source code and ideas to the platform, isimilarly to how [Web 2.0 platforms](https://en.wikipedia.org/wiki/Web_2.0) sometimes reward their content creators.
+- A majority of the profits of the platform will go to rewarding the developing users who contribute source code and ideas to the platform, similarly to how [Web 2.0 platforms](https://en.wikipedia.org/wiki/Web_2.0) sometimes reward their content creators.
 <!--  -->
-- The rest of the profits will go to the investors, but only until these have gained a fixed maximal profit margin on their investments.
-<!--  -->
-- The platform will be governed by three parties: 1, the investors, 2, an organization of the developers, and 3, an organization of the end users.
+<!-- - The rest of the profits will go to the investors, but only until these have gained a fixed maximal profit margin on their investments. -->
 <!--  -->
 - The platform will have an initial stage where it is mainly governed by its investors, a middle stage where it is mainly governed by its developing users, and an end stage where it is mainly governed by its end users. Thus, the platform will essentially turn into a [consumers' co-op](https://en.wikipedia.org/wiki/Consumers%27_co-operative) in the end (or a "users' co-op," if you will).
 
@@ -91,7 +89,14 @@ And if the listeners are made up of mainly potential future users, the pitch can
 And if it is a bit more relaxed scenario, which is probably what I will encounter the most, I could maybe start much like this document in its current form, but maybe leave out the sandboxing point at the beginning..
 
 -->
+<!--
+I just realized: Why don't I start the pitch something like:
 
+- It's a platform that engages its users in it's own development and allow them to build and extend the apps on the platform. Similar to how a Web 2.0 allows its users to create and upload their own content, this platform allows its users to also create and upload the actual apps and algorithms on it.
+
+Hm, maybe this is a good start, but maybe the start of this current document is better, and then you can just keep this point in mind..
+
+-->
 
 
 
