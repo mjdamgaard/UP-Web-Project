@@ -33,7 +33,7 @@ All user-uploaded apps and code modules are run in a sandbox which ensures that 
 
 Even when a new version of a given app is supposed access the same back-end data structure as its predecessor, such as e.g. the user's posts and messages in case of a social media app, it will only be able to do so once it is verified by the user community and/or by the administrators of the predecessor app. And until then, it can simply use a mockup of that data structure instead, making it safe for users to try out as well, without risking deletion or corruption of their data.
 
-Being able quickly and safely share prototypes for new apps and features with a lot of users, who can give feedback and rate the project, and potentially even help complete it, means that the development of the platform can move very fast. 
+Being able quickly and safely share prototypes for new apps and features with a lot of users, who can give feedback and rate the project, and potentially even help complete it, means that the development of the platform can move fast. 
 
 
 ### Transparency means that trust is not required
@@ -94,11 +94,25 @@ While a user-programmable platform could certainly be based purely on open-sourc
 
 We thus propose utilizing the model of an '[open tech co-op](open_tech_co-ops.md),' on top of the proposed core business model, in order for the platform to be able to attract more contributions, and more investments as well.
 
-In short, this model designed to be a midway between an open source and a closed source model, in a way that still motivates the developers to collaborate publicly, and share their contributions quickly and openly with each other, but which nonetheless still limits the use of the resulting code base in order to generate a revenue, which can then be used to pay the developers.
+In short, this model designed to be a midway between an open source and a closed source model, in a way that still motivates the developers to collaborate publicly, and share their contributions quickly and openly with each other, but which nonetheless still limits the use of the resulting code base in order to generate a profit, which can then be used to pay the developers.
 
-And by promising investors a share of this revenue as well, this model can thus also help bring in investments for the platform.
+And by promising investors a share of this profit as well, this model can thus also help bring in investments for the platform.
 
 You can read more about this model of 'open tech co-ops' [here](open_tech_co-ops.md).
+
+
+
+## The evolution of AI increases the advantages of user-programmable platforms
+
+As AI continues to improve as a tool for software development, the process of going from idea to implementation gets easier and easier as time goes on. This means that companies who excel at the creative part of the process, namely of coming up with and recognizing good ideas, will get an increased competitive advantage. And this advantage will only grow over time, unless their competitors can find ways to keep up.
+
+A user-programmable platform is designed exactly for the purpose of creating a free and decentralized creative space where anyone can contribute, not least the users of the platform themselves, who are generally the ones most likely to come up with new ideas for useful features and improvements, and who can best recognize the useful ideas of others.
+
+Thus, if AI continues to evolve, user-programmable platforms stand to gain a significant advantage in the long run over any competitor who does not manage to engage its users to the same extend in the development of their platform.
+
+Furthermore, the evolution of AI also means that more people can engage in the development of apps and features, without needing the same kind of experience as it once took. For a user-programmable platform, this means that a far greater part of the user base will be able to engage in the development of new apps and features, greatly increasing the amount of contributions that the platform can attract.
+
+And due to the sandboxing of the all user-uploaded code, a user-programmable platform also creates a safe space where the AI coding agents can be given free rein to build new prototypes for apps and features, without having to worry about security at that stage.
 
 
 
@@ -118,20 +132,6 @@ You can read more about this model of 'open tech co-ops' [here](open_tech_co-ops
     - And as a last example, it would also be a natural idea for any social media app on a user-programmable platform to allow its users to freely build their own individual profile pages however they want, almost like a personal website.
 
 * If you have an idea for some website or app that you want the world to see/use, and you do not aim for this website/app to make enough ad money to make it profitable, you can choose to publish it on a user-programmable platform and save all the costs of running the servers. On a user-programmable platform, the only cost to the developer is paying for the storage space for the source code, which is usually miniscule, and the users pay the rest of the costs. Thus, on a user-programmable platform, there is no ad money to win, but there is also no money to lose either. And your website/app will stay up for as long as the user-programmable platform stays up, regardless of how many users it has.
-
-
-
-## The evolution of AI increases the advantages of user-programmable platforms
-
-As AI continues to improve as a tool for software development, the process of going from idea to implementation gets easier and easier as time goes on. This means that companies who excel at the creative part of the process, namely of coming up with and recognizing good ideas, will get an increased competitive advantage. And this advantage will only grow over time, unless their competitors can find ways to keep up.
-
-A user-programmable platform is designed exactly for the purpose of creating a free and decentralized creative space where anyone can contribute, not least the users of the platform themselves, who are generally the ones most likely to come up with new ideas for useful features and improvements, and who can best recognize the useful ideas of others.
-
-Thus, if AI continues to evolve, user-programmable platforms stand to gain a significant advantage in the long run over any competitor who does not manage to engage its users to the same extend in the development of their platform.
-
-Furthermore, the evolution of AI also means that more people can engage in the development of apps and features, without needing the same kind of experience as it once took. For a user-programmable platform, this means that a far greater part of the user base will be able to engage in the development of new apps and features, greatly increasing the amount of contributions that the platform can attract.
-
-And due to the sandboxing of the all user-uploaded code, a user-programmable platform also creates a safe space where the AI coding agents can be given free rein to build new prototypes for apps and features, without having to worry about security at that stage.
 
 
 
