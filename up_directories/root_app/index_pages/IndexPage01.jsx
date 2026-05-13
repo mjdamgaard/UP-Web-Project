@@ -17,8 +17,8 @@ const indexPage = <div className="text-page">
       <ELink key="link-github-repo-readme-1"
         href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/README.md">
         user-programmable platform
-      </ELink>.
-      It is a platform with the following main features.
+      </ELink>,
+      which is a platform that puts its users in charge of its development:
     </p>
     <p><ul>
       <li>
@@ -31,8 +31,8 @@ const indexPage = <div className="text-page">
         platform.
       </li>
       <li>
-        A sandboxing technology makes it safe for users to try out any new app
-        or feature uploaded by another user, allowing
+        A sandboxing technology makes it safe for users to try out new apps
+        and features uploaded by other users, allowing
         the development of the platform to move fast and with minimal central
         oversight required.
       </li>
@@ -44,17 +44,13 @@ const indexPage = <div className="text-page">
           href="https://en.wikipedia.org/wiki/Web_2.0">
           Web 2.0 platforms
         </ELink>
-        sometimes reward their content creators.
+        will often reward their content creators.
       </li>
       {/* <li>
         The rest of the profits will go to the investors, but only until
         these have gained a fixed maximal profit margin on their investments.
       </li> */}
-        {/* <ELink key="link-worker-co-op"
-          href="https://en.wikipedia.org/wiki/Worker_cooperative">
-          worker co-op
-        </ELink> */}
-      <li>
+      {/* <li>
         The platform will have an initial stage where it is governed mainly by
         its investors, a middle stage where it is governed mainly by its
         developing users, and an end stage where it is governed mainly by its
@@ -65,18 +61,18 @@ const indexPage = <div className="text-page">
           consumers' co-op
         </ELink>
         in the end (or a "users' co-op," if you will).
-      </li>
-      {/* <li>
-        The platform might have an initial stage where it is governed mainly by
-        its investors, but after a time, the governance of the platform will
-        instead be handed over to the users themselves.
-        Thus, the platform will essentially turn into a
+      </li> */}
+      <li>
+        The platform will also let its users take part in its governance,
+        giving them a vote on corporate decisions. And the weight of this vote
+        will slowly increase over time, meaning that the platform
+        will essentially turn into a
         <ELink key="link-consumers-co-op"
           href="https://en.wikipedia.org/wiki/Consumers%27_co-operative">
           consumers' co-op
         </ELink>
-        in the end (or a "users' co-op," if you will).
-      </li> */}
+        in the long run (or a "users' co-op," if you will).
+      </li>
     </ul></p>
     <p>
       So not only are the users put in charge of the platform's development
