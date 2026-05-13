@@ -8,7 +8,7 @@ This is a 'user-programmable platform,' which is a platform that puts its users 
 
 - The users are free to build and extend the apps on the platform themselves, in collaboration with one another.
 <!--  -->
-- A majority of the profits of the platform will go to rewarding the developing users who contribute source code and ideas to the platform, similarly to how [Web 2.0 platforms](https://en.wikipedia.org/wiki/Web_2.0) will often reward their content creators.
+- A majority of the profits of the platform will go to rewarding the users who contribute source code and ideas to the platform, similarly to how [Web 2.0 platforms](https://en.wikipedia.org/wiki/Web_2.0) will often reward their content creators.
 <!--  -->
 - Each individual end user is free to choose whichever version of each app they want to use, just by changing their settings for the platform.
 <!--  -->
