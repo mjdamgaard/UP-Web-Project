@@ -28,6 +28,8 @@ If you want to install this system as a server on your localhost, you need to:
 
 12. And that's it, you should now be able to go to your browser and refresh the localhost page, in which case you should have a functional version of the website running on a local server.
 
+*Correction: There are now several more directories you need to upload. But soon this will also be easier with a new implementation, and these install instructions will be edited and corrected afterwards.*
+
 
 
 ## Restarting the server
