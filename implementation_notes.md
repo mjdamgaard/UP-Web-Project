@@ -78,6 +78,20 @@ We can also extend the back end to allow the users to set up servers implemented
 
 I have some specific plans for how to do this, which will allow the users to implement any kind of server that they want, while still keeping the overhead costs low, such that the developers still only have to pay the cost of storing their source code (in line with the principles of a [user-programmable platform](README.md)).
 
+<!-- See my working notes for this. https://github.com/mjdamgaard/Notes/blob/master/Working%20notes/23-26%20note%20collection.tex. -->
+
 But without getting too much into technical details, the concept can also be summarized as simply: A [serverless](https://en.wikipedia.org/wiki/Serverless_computing) cloud service, where the resource consumption tokens are withdrawn from the requesting users rather than from the developers.
 
-We might also name this kind of service as a "financed platform as a service" ("FPaaS").
+The cloud service then keeps track of the resource usage statistics of each app, and makes sure to adjust the token costs of the requests to each app such that the costs match the expenditures. Thus, if a given app requires a lot of tokens compared a more light-weight version of the same app, the users might simply choose to switch to the latter version in order to save some tokens. 
+
+<!-- We might also name this kind of service as a "financed platform as a service" ("FPaaS"). -->
+
+
+
+## Backwards compatibility
+
+These extensions will be backwards compatible with the current implementation, meaning that any app that is developed in the current framework will keep being usable after the extensions.
+
+And by implementing a compiler, we will even be able to take any app implemented with the current framework and compile it in order to make it run efficiently.
+
+So users should not shy away from using the current framework for building the first "user-programmed" apps.

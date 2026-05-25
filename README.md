@@ -84,6 +84,8 @@ Actually, there's also an option to show ads, where the users just determines th
 And here's the important point: The ads then ought to once in a while show a captcha, that the user is supposed to react to and answer in order to get more gas/tokens. Then these captcha samples are supposed to be random, and only occur with low enough frequency, and with high enough gas rewards, that the user will benefit from and generally be interested in submitting the captcha answers.  
 -->
 
+<!-- TODO: I think I might want to note this possibility for showing ads.. -->
+
 
 
 ## An extended business model where the developing users also get paid
@@ -131,7 +133,8 @@ And due to the sandboxing of the all user-uploaded code, a user-programmable pla
     <!-- - Or another idea might be to introduce more parameters that users can rate for any given type resource (such as a post, a video, a movie, etc.), other than just the normal 'good vs. bad' parameter. Think of [tags](https://en.wikipedia.org/wiki/Tag_(metadata)), but where each tag forms its own rating scale, which can be rated by all users on the platform. Such "ratable tags" could then be used to improve search results, and to improve algorithms on the platform in general. -->
     - And as a last example, it would also be a natural idea for any social media app on a user-programmable platform to allow its users to freely build their own individual profile pages however they want, almost like a personal website.
 
-* If you have an idea for some website or app that you want the world to see/use, and you do not aim for this website/app to make enough ad money to make it profitable, you can choose to publish it on a user-programmable platform and save all the costs of running the servers. On a user-programmable platform, the only cost to the developer is paying for the storage space for the source code, which is usually miniscule, and the users pay the rest of the costs. Thus, on a user-programmable platform, there is no ad money to win, but there is also no money to lose either. And your website/app will stay up for as long as the user-programmable platform stays up, regardless of how many users it has.
+* If you have an idea for some website or app that you want the world to see/use, and you do not aim for this website/app to make enough ad money to make it profitable, you can choose to publish it on a user-programmable platform and save all the costs of running the servers.
+<!-- On a user-programmable platform, the only cost to the developer is paying for the storage space for the source code, which is usually miniscule, and the users pay the rest of the costs. Thus, on a user-programmable platform, there is no ad money to win, but there is also no money to lose either. And your website/app will stay up for as long as the user-programmable platform stays up, regardless of how many users it has. -->
 
 
 
