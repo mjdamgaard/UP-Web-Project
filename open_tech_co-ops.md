@@ -1,4 +1,54 @@
+<!-- 
+# Open tech co-ops
 
+
+## Introduction
+
+An 'open tech co-op' is a business model designed to bridge the gap between open source and closed source, yielding the best of both worlds.
+
+Like open source, this model incentivizes the developers to collaborate on projects publicly, and to share their new ideas and source code contributions quickly with the world. But unlike open source, the developers can nonetheless still get a fair payment for their work.
+
+This is achieved by forming a kind of cooperative of both developers and users, where anyone is free to contribute source code, and where the co-op redistributes a majority of its profits to these source code contributors themselves, based on how well-liked their contributions are among the users.
+
+
+
+## Outline of the model
+
+An open tech co-op is essentially a tech company whose software products are made up of public contributions, and where anyone around the world is allowed to contribute. But unlike open source where anyone is also free to use the software, the source code contributions to a tech co-op are generally only licensed for that co-op specifically.
+
+By holding on to the IP rights of the software this way, the co-op can be allowed to generate a profit from sub-licensing the software to its customers, as it prevents others from being able to copy it and sub-license it at a cheaper price.
+
+The majority of these profits are distributed to the source code contributors, as a way to attract more contributions in the future. And the size of these rewards ought to depend on how well-liked the contributions seem to be among the users.
+
+The co-op is for the most part governed by own users and its own developers, who all get a vote in the major decisions of the company, and not least when it comes to deciding how the rewards should be distributed among the developers.
+
+And rather than using the principle of 'one person, one vote,' the co-op can instead use a [weighted voting](https://en.wikipedia.org/wiki/Weighted_voting) system where each member's vote is proportional to the money they have spent as a user of the software, plus the money they have received as rewards for their own source code contributions. This way, the members who have contributed more than others will also have more of a say in the decisions of the co-op.
+
+The co-op might also have an initial stage where the decisions of the company, and the reward distribution, is not governed directly by the users and the source code contributors themselves, but rather by some initial investors 
+
+
+
+
+
+
+
+
+
+## Advantages
+
+Similar to open source, the model of open tech co-ops will be able to essentially draw on the entire world for coming up with new ideas for useful software applications, and not least draw on the users of the software themselves, who are often the ones most likely to come up with new ideas for useful improvements.
+
+This gives the open tech co-ops an advantage in the creative department. And this advantage can be extended further by also utilizing [user-programmable platforms](README.md) to allow the contributors to share their ideas and prototypes quickly and safely with each other, and to give the end users complete freedom to choose whichever ideas they want to use themselves.
+
+Having an advantage in the creative department is a great benefit to a software company, and this advantage is only made more critical by the rise of AI as a software development tool.
+As AI advances, the process going from idea to implementation gets easier and easier, which means that the success of a software company will increasingly rely on that company's ability to come up creative ideas for improving the software applications, and to quickly make those new applications and features available to its users.
+
+ -->
+
+
+
+<!-- Previous version: -->
+<!-- <!- -  -->
 # Open tech co-ops
 
 
@@ -62,11 +112,6 @@ And another potential way to ensure that the co-op will not enshittify, and star
 With this proposal, the co-op will thus essentially turn into a [consumers' co-op](https://en.wikipedia.org/wiki/Consumers%27_co-operative) over time, as *b* slowly increases, meaning that the prices and the rewards for the developers will be determined by the customers themselves to an increasing extend. The customers will then still have an incentive to keep the business going, assuming that they want to keep being able to use its products and services. And they will also have an incentive to keep rewarding the contributions of the developers who maintain and extend the software, and come up with new useful ideas.
 
 
-<!-- The parameters *x* and *y* from the last section be adjusted depending on how close to an open source model you want to go.
-
-If you choose too small values, you risk not being able to set the prices very high, which means less payment for the contributors. However, if you set them too high, you might need to find other ways to assure the customers that the company will not stagnate or [enshittify](https://en.wikipedia.org/wiki/Enshittification) in the future, or gamble that they will not care about this significantly. But if they do, you might risk that the customers choose a competing tech co-op instead with better assurances. -->
-
-
 
 ## An investment opportunity
 
@@ -95,99 +140,5 @@ This is done in order to bring the model closer to an open source model, and to 
 
 * The co-op can potentially attract initial investments by making an initial deal with a capital-backed company, which gives that company exclusive rights to sub-license the source code for an extended period of time, and gives it the right to take a fixed cut of all the revenue during the same period.
 
-
-
-
-
-
-
-
-
-
-
-
-<!-- And similar to open source, some of these developers might even be users of the software themselves, giving them an additional motivation to contribute besides the potential for monetary rewards.   -->
-
-
-
-
-
-
-
-
-
-<!-- 
-
-## Introduction
-
-Open source has some advantages and disadvantages when compared to closed source. One of the advantages is that open source projects are in principle able to draw on ideas from the entire world. However, one of the disadvantages is that open source does not pay its contributors.
-
-So while open source projects might able to draw on a larger group of people for ideas and source code contributions, closed source projects are able to draw on more dedicated people.
-
-The model of 'open developer co-ops' tries to bridge the gap between the open source and closed source model, and be a model in between the two, which yields the best of both worlds.
-
-In this model, developers are still incentivized to share their ideas and source code publicly and quickly with the world, as is the case in open source. But they can nonetheless expect payment for their contributions, based on how well these contributions are received. -->
-
-
-
-
-
-
-<!-- 
-## Introduction
-
-As AI evolves, the amount of work required for implementing a given software application decreases in the comparison to the work it takes to come up with and develop the idea.
-
-And in a hypothetical future where AI becomes so efficient that it can program nearly everything for us, this means that all software IPs basically lose their value. For what is the worth of owning the rights to a piece of software if any competitor of yours can just generate the same software almost in an instant?
-
-This is why such a future, open source would take over the world of software development. After all, open source allows you to draw on the creativity of the entire world to come up with new useful ideas for applications and features. And in a world where the part of coming up with good ideas is where all the value lies, and not in the implementation, open source will thus win out in the end.
-
-However, until we get to that point, open source has a big "flaw," namely the fact that its contributors do not get paid for their work. So while open source projects are indeed able to draw on a larger group of people (the entire world in principle), closed source projects are able to draw on more dedicated people.
-
-And although this is bound to flip at some point due to the rise of AI, the closed source model still seems to win out overall at the time of writing.
-
-This is where the model of 'open developer co-ops' comes in. It is a model in between open source and closed course, where the developers are still incentivized to share their ideas and source code publicly and quickly with the world, but where they can nonetheless expect payment for their contributions, based on how well these contributions are received.
-
-This model thus might be able to win out against the closed source model, even at presents times while AI's capabilities are still limited, and give a big boost to the productivity of the software industry as a whole.
-
-
-
-
-
-
-
-
-<!-- 
-# PRP co-ops: An almost-open-source model where developers nonetheless get paid 
-
-## Introduction
-
-The model of PRP (performance-related pay) co-ops is a possible solution to the problem of how you can create a model that works much like open source in practice, where people can contribute freely and publicly to projects, but where you can still ensure that the participant can get paid a fair salary for their contributions.
-
-The model involves creating what might be described as a co-op of developers which collects licenses from the individual contributors in return for a membership and a promise of performance-related pay (PRP).
-
-This model is not dependent on using a user-programmable platform (*TODO: Make this a link to the other (main) document.*), but as discussed below, the two ideas work well together.
-
-
-## Why AI will pave the road to open source
-
-As AI evolves and become more and more advanced, tech companies might ultimately be able to fire most of their software developers and replace them with AI.
-
-The CEOs and the shareholders of these companies no doubt dreams of a future where all software developers are replaced with AI, who does 10 times the work for a fraction of the cost.
-
-However, in a future where most of your code base is either generated by AI, or will be able to be generated by AI, at very low costs, what is your IP really worth? If you can generate all that code in an instance, so can your competitors.
-
-And in particular, so can your open-source competitors, who has a competitive.. ..advantage in that they can source creativity from the entire world..
-
-
-## The need for an intermediary step between closed and open source
-
-But what in the meantime?...
-
-
-## Outlines of the model -->
-
-
-
-
+<!-- - -> -->
 
