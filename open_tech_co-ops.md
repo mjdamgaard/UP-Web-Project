@@ -1,4 +1,4 @@
-<!-- 
+
 # Open tech co-ops
 
 
@@ -8,61 +8,45 @@ An 'open tech co-op' is a business model designed to bridge the gap between open
 
 Like open source, this model incentivizes the developers to collaborate on projects publicly, and to share their new ideas and source code contributions quickly with the world. But unlike open source, the developers can nonetheless still get a fair payment for their work.
 
-<!-- This is achieved by forming a kind of cooperative of both developers and users, where anyone is free to contribute source code, and where the co-op redistributes a majority of its profits to these source code contributors themselves, based on how well-liked their contributions are among the users. - ->
-
 As the name suggests, an open tech co-op will end up being governed purely by its own users and developers, basically forming a mix between a consumer co-op and a worker co-op. But at an initial stage, the co-op will also be governed in part by its investors, who will receive returns on their investments depending on the success of the co-op.
 
-An open tech co-op will thus allow its initial investors to profit from it, but will nonetheless stop being driven just by profits in the end, and will instead be driven by the interests of its users and developers.
+An open tech co-op will thus allow its initial investors to profit from it, but will nonetheless be driven by the interests of its users and developers in the end, rather than being driven purely by profits.
 
 
 
 ## Outline of the model
 
-An open tech co-op is a tech company whose software products are made up of public contributions, where anyone around the world is allowed to contribute. The source code is contributed in the same way as open-source software, but where the licenses targets the co-op specifically, and give it the right to use and sub-license the code.
+An open tech co-op is a tech company whose software products are made up of public contributions, where anyone around the world is allowed to contribute. The source code is contributed in the same way as open-source software, but where the licenses target the co-op specifically, and give it the right to use and sub-license the code.
 
-The tech co-op then uses and/or sub.licenses this software in order to generate a revenue and a profit, a majority of which is then distributed out to the developers who contributed the source code.
+The tech co-op then uses and/or sub-licenses this software in order to generate a revenue and a profit, a majority of which is then distributed out to the developers who contributed the source code.
 
-By rewarding the source code contributions based on how much utility they seem to bring, and how well-liked the contributions are among the users, the co-op can hope to attract as much useful source code as possible.
+By rewarding the source code contributions based on how much utility they seem to bring, and how well-liked they are among the users, the co-op can thereby hope to attract as many useful contributions as possible.
 
 The remainder of the profits is used to pay back investors, allowing them to earn a profit for their investments, which might depend on how much the company has grown in the meantime.
 
-The company is governed partly by an organization of its users and its developers, and partly by its investors, until the co-op has paid them back for their investments. All major decisions in the company are decided through a [weighted voting](https://en.wikipedia.org/wiki/Weighted_voting) system, where each member get a vote proportional to how much money they have spent or earned from the company: The voting weight of a user is proportional to the money they have spent[^1] on the software, up until the present. The voting weight of a developer is proportional to the rewards that they have received so far. And the investors' weights are each proportional to how much money the co-op currently owes them.
+The company is governed partly by an organization of its users and its developers, and partly by its initial investors, until the co-op has paid them back for their investments. All major decisions in the company are thus decided through a [weighted voting](https://en.wikipedia.org/wiki/Weighted_voting) system, where each member gets a vote proportional to how much money they have spent or earned from the company: The voting weight of a user is proportional to the money they have spent[^1] on the software in the past, the voting weight of a developer is proportional to the rewards that they have received in the past, and the initial investors' weights are each proportional to how much money the co-op currently owes them.
 
 [^1]: If the user "pays" for using the software by watching ads while using it, rather than by paying for it directly via a subscription, their voting weight should still be the same as if they had just paid directly.
 
-All investments will have their interests and returns capped at a maximal value, which means that the co-op, if it succeeds, will eventually have paid back all its investments, and will from that point on thus be purely governed by the users and the developers. (TODO: Edit)
-
-<!-- Lastly, it might be a good idea to keep the organization of users and developers as a separate entity, set apart from the rest of the company. And if the company somehow fails, the organization should have no liability, allowing it to remain and to keep the IP rights for the software in this case. The organization should then simply be allowed to choose a new company in place of the previous one that failed. This is done in order to prevent all the software licenses from being nullified in case of a company failure.[^2]
-
-[^2]: The software licenses could also even include a clause saying that if the targeted user–developer organization somehow still fails despite these measures, and despite its limited liability, the software will simply turn open-source. - ->
+All investments will have their returns capped at a maximal value, and will only give the investors a vote in the co-op if the investments are made within an initial startup period, decided at the outset. Thus, if the co-op succeeds, it will eventually have paid back all its initial investments, and will from that point on be governed purely by its users and its developers.
 
 
 
 ## Advantages
 
-Similar to open source, the model of open tech co-ops will be able to essentially draw on the entire world for coming up with new ideas for useful software applications, and not least draw on the users of the software themselves, who are often the ones most likely to come up with new ideas for useful improvements.
+Similar to open source, the model of open tech co-ops will be able to essentially draw on the entire world for coming up with new ideas for useful software applications, and not least draw on the users of the software themselves, who are often the ones most likely to come up with new ideas for useful improvements. And unlike open source, an open tech co-op will furthermore also be able to motivate its contributors with monetary rewards.
 
-This gives the open tech co-ops an advantage in the creative department. And this advantage can be extended further by also utilizing [user-programmable platforms](README.md) to allow the contributors to share their ideas and prototypes quickly and safely with each other, and to give the end users complete freedom to choose whichever ideas they want to use themselves.
+This gives the open tech co-ops an advantage in the creative department. And this advantage can be extended further by also utilizing [user-programmable platforms](README.md) to allow the contributors to share their ideas and prototypes quickly and safely with each other, and to give the end users complete freedom to choose whichever versions of the software they want to use themselves.
 
 Having an advantage in the creative department is a great benefit to a software company, and this advantage is only made more critical by the rise of AI as a software development tool.
-As AI advances, the process going from idea to implementation gets easier and easier, which means that the success of a software company will increasingly rely on that company's ability to come up creative ideas for improving the software applications, and to quickly make those new applications and features available to its users.
+As AI advances, the process going from idea to implementation gets easier and easier, which means that the success of a software company will to an increasing extent rely on that company's ability to come up creative ideas for improving the software applications, and to quickly make those new applications and features available to its users.
+
+Thus, in the long run, it is hard to imagine a traditional tech company being able to compete with an open tech co-op once established, unless it can find other ways to engage its users in its own development to the same extend. 
 
 
 
-## Further details
 
-
-### Contingency plan if the company fails
-
-It might be a good idea to keep the organization of users and developers as a separate entity, set apart from the rest of the company, and make sure the the organization has limited liability in case of a company failure.
-
-In such a circumstance, the user–developer organization should be allowed to remain, and simply choose a new company in place of the previous one that failed,
-keeping the IP rights for the software.
-
-This is done in order to prevent all the software licenses from being nullified in case of a company failure.[^2]
-
-[^2]: The software licenses could also even include a clause saying that if the targeted user–developer organization somehow still fails despite these measures, and despite its limited liability, the software will simply turn open-source.
-
+## Some additional details and options for the model
 
 ### Having a separate co-op for sub-licensing business applications
 
@@ -70,28 +54,71 @@ In case of business applications, the customers of the software are not the end 
 
 So rather than the ending up being governed purely by its developers and its end users, this second co-op will instead end up being governed by the developers and the customer companies.
 
-However, although this splits the co-op in two, the software licenses can still be made to always target both co-ops at the same time, meaning that both co-ops will have rights to the same software. When you contribute source code to the co-ops, both will thus be able to benefit from it in principle, and each of the two co-ops will determine separately what rewards they want to give you.
+However, although this splits the co-op in two, the software licenses can still be made to generally target both co-ops at the same time, meaning that both co-ops will have the rights to the same software, unless the contributor specifically states otherwise in their license. And when you contribute source code to both the co-ops at the same time, each of these will just determine separately what rewards you will earn from them.
 
 For instance, if your contribution is especially useful for some business application, you might get a huge reward from the second co-op, whose customers are other companies, whereas you might just get a small or no reward from the first co-op, whose customers are private individuals.
+
+
+### Contingency plan if the company fails
+
+It might be a good idea to keep the organization of users and developers as a separate entity, set apart from the rest of the company, and make sure that this organization has limited liability in case of a company failure.
+
+In such a circumstance, the user–developer organization should be allowed to remain, and simply choose a new company in place of the previous one that failed,
+keeping the IP rights to the software.
+
+This is done in order to prevent all the software licenses from being nullified in case of a company failure.[^2]
+
+[^2]: The software licenses could also even include a clause saying that if the targeted user–developer organization somehow still fails despite these measures, and despite its limited liability, the software will simply turn open-source.
 
 
 ### The sizes of the rewards can be estimated and declared ahead of time
 
 The co-op might not always have the money on hand to pay the source code contributors right away, especially at the early stage. Additionally, it might also make sense to deliberately wait paying a reward in order to see how well the contribution is received by the user community, and let the size of the reward depend on that.
 
-In either case, it might be a good idea to still give a good estimate to the contributors ahead of time, letting them know roughly how much the can expect to get, and on what parameters the size of the final reward depend.
+In either case, it might be a good idea to still give a good estimate to the contributors ahead of time, letting them know roughly how much the can expect to get, and on what parameters the size of the final reward depends.
 
 Whenever the co-op distributes its profits to the contributors, the money distributed to each individual contributor should generally be proportional to how much the co-op "owes" them according to their own estimate.
 
 If a contributor is dissatisfied with the estimate for their reward, they should also have the option to complain, by which the co-op should take a second look at and reevaluate their reward estimate.
 
- -->
+
+<!--
+Here are some small points that didn't make the cut:
+
+- The founders/executives pay can also be made to depend on the growth of the company at the startup phase. (This goes without saying, really).
+
+- If the company has a surplus of money (and not enough deserving contributors to pay), it can start giving the customers discounts. These discounts might then very well be dependent on how much the customer has spent in the past (maybe directly proportional to it).
+
+- The voting weight might not be a simple sum of the three variables mentioned above, i.e. the payment as a user, the rewards as a developer, and the money owed as an investor. It might also be a linear combination, i.e. with different coefficients. And the coefficients might even be taken to vary in time, for instance if you specifically want the users to have little power at first, but a clear majority of the power in the end.
+
+- The software licenses might also include a clause saying that it turns open-source after a number of years (maybe 10, 15, or 20...), i.e. a significantly smaller number than 95 (after which the copy right expires anyway).
+(This is btw similar to the *y* parameter in the "previous version" of the 'open tach co-op' model seen below (which is basically just an extension of the model above, the way I see it).)
+
+- Also, why not make a rule that if there are regional differences in the prices, they have to be well-founded, and otherwise the prices can't exceed, say, 130 % of the median price of the world. Maybe a rule like this would be good, but on the other hand, maybe it isn't necessary.(?)
+-->
+
+
+
+## Key takeaways
+
+* An open tech co-op is a business model in between open source and closed source.
+
+* The purpose of the co-op is to gather public source code contributions, licensed specifically for the co-op, and use it and/or sub-license it to third parties in order to generate a profit.
+
+* This profit is then distributed out to the source code contributors themselves, as well as potentially to any investors who are still owed money.
+
+* The reward distribution is determined by the co-op, and is supposed to reward the contributions based on how useful they are to the users, in order that the co-op can attract more useful contributions in the future.
+
+* While the co-op might be governed predominantly by its initial investors at first, it will eventually be governed purely by its own users and its own source code contributors.
+
+
+
 
 
 
 
 <!-- Previous version: -->
-<!-- <!- -  -->
+<!-- 
 # Open tech co-ops
 
 
@@ -183,5 +210,5 @@ This is done in order to bring the model closer to an open source model, and to 
 
 * The co-op can potentially attract initial investments by making an initial deal with a capital-backed company, which gives that company exclusive rights to sub-license the source code for an extended period of time, and gives it the right to take a fixed cut of all the revenue during the same period.
 
-<!-- - -> -->
+-->
 
