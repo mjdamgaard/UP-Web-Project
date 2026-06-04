@@ -3,7 +3,7 @@
 
 ## Kort beskrivelse
 
-Et globalt software-kooperativ omkring en app-markedsplads, der danner en gylden middelvej mellem open source og closed source: Alle kan bidrage offentligt til at bygge og videreudvikle apps i markedspladsen, ligesom i open source. Men i modsætning til open source holder kooperativet fast på IP-rettighederne for dermed at kunne tjene en profit på softwaren, som således kan bruges til at belønne de udviklere, der har bidraget til den.
+Et globalt software-kooperativ omkring et app-økosystem, der danner en gylden middelvej mellem open source og closed source: Alle kan bidrage offentligt til at bygge og videreudvikle apps i økosystemet, ligesom i open source. Men i modsætning til open source holder kooperativet fast på IP-rettighederne for dermed at kunne tjene en profit på softwaren, som således kan bruges til at belønne de udviklere, der har bidraget til den.
 
 
 
@@ -19,7 +19,7 @@ Men open source er heller ikke en bæredygtig model i det lange løb, da arbejde
 
 ## Løsning
 
-Løsningen på ovenstående problemer er at skabe en app-markedsplads, samt en bagvedliggende cloud service, som ejes af et kooperativ bestående af både brugere og udviklere. Her skal alle fra hele verden kunne bidrage med kildekode til kooperativet og forgrene og videreudvikle eksisterende software, akkurat ligesom i open source, bare hvor softwarelicenserne retter sig specifikt mod kooperativet.
+Løsningen på ovenstående problemer er at skabe et app-økosystem, samt en bagvedliggende cloud service, som ejes af et kooperativ bestående af både brugere og udviklere. Her skal alle fra hele verden kunne bidrage med kildekode til kooperativet og forgrene og videreudvikle eksisterende software, akkurat ligesom i open source, bare hvor softwarelicenserne retter sig specifikt mod kooperativet.
 
 Disse udviklere belønnes så løbende, alt efter hvor gavnlige deres bidrag er, hvilket i sidste ende vurderes af kooperativet selv som helhed. Man kan sammenligne dette med, hvordan mange web og mobile apps belønner de brugere, der bidrager med indhold (også kendt som "content creators"), alt efter hvor populære deres indholdsbidrag er. På samme måde vil kooperativet belønne de apps og de app features, der er efterspurgte hos brugerne, og belønne brugbare kildekode- og idé-bidrag generelt fra udviklerne.
 
@@ -28,7 +28,7 @@ Kooperativets afstemninger skal kunne foregå online, så alle brugere og udvikl
 Kooperativet kan godt tage imod investeringer, som så bare skal betales tilbage med en vis avance aftalt på forhånd. Og indledningsvist kan investorerne endda også godt få en stemme i kooperativet, som er proportionel med størrelsen af investeringen, men hvor denne stemme dog fjernes, når investeringen tilbagebetales.
 <!-- (Og for at gøre det nemmere for investorerne kan man evt. lave et separat aktieselskab med det formål at investere i kooperativet, som de individuelle investorer så bare køber sig ind i.) -->
 
-Som nævnt bør kooperativet også gerne bestræbe sig på at levere en cloud service til at hoste de apps, der er i dens app-markedsplads. Og her er pointen at implementere en cloud-løsning, der kan skalere automatisk, alt efter hvor der er brug for ressourcer (også kaldet "serverless computing"). Men i modsætning til eksisterende cloud services, hvor omkostningerne skal betales af udviklerne selv, skal dette i stedet blot være en sag mellem brugerne og kooperativet som helhed, hvor brugernes betalinger i sidste ende skal være nok til at dække deres eget ressourceforbrug.
+Som nævnt bør kooperativet også gerne bestræbe sig på at levere en cloud service til at hoste de apps, der indgår i dets økosystem. Og her er pointen at implementere en cloud-løsning, der kan skalere automatisk, alt efter hvor der er brug for ressourcer (også kaldet "serverless computing"). Men i modsætning til eksisterende cloud services, hvor omkostningerne skal betales af udviklerne selv, skal dette i stedet blot være en sag mellem brugerne og kooperativet som helhed, hvor brugernes betalinger i sidste ende skal være nok til at dække deres eget ressourceforbrug.
 
 Med andre ord kan man sige, at kooperativet skal levere, hvad man kunne kalde en "financed platform as a service," hvor udviklerne hverken selv skal tænke på skalering af servere eller på hele finansieringsspørgsmålet omkring deres applikationer. Til gengæld er priserne for brugernes ressourceforbrug bestemt af kooperativet som helhed, og det samme er de individuelle udvikleres fortjenester.
 
