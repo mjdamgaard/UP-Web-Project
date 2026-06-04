@@ -44,7 +44,7 @@ Den helt store fordel med denne løsning er, at det vil gøre det nemt for udvik
 
 Fordi udviklingsarbejdet sker offentligt, kan man også hurtigt få brugerne selv med om bord til afprøve prototyper tidligt i deres udviklingsfase, da man således kan gøre det muligt for alle brugere at deltage i dette, uden at man skal værne om forretningshemmeligheder.
 
-Og hvis brugerne kommer med gode idéer til forbedringer af prototyper, eller til de apps de allerede selv bruger, så kan kooperativet endda også belønne disse bidrag. På den måde kan man i høj grad engagere brugerne selv i udviklingen, hvilket er fordelagtigt, da det må siges at være brugerne, der er bedst egnede til at finde på, hvilke forbedringer kunne være nyttige for de apps, som de selv bruger.
+Og hvis brugerne kommer med gode idéer til forbedringer af prototyper, eller til de apps de allerede selv bruger, så kan kooperativet endda også belønne disse bidrag. På den måde kan man i høj grad engagere brugerne selv i udviklingen, hvilket er fordelagtigt, da det må siges at være brugerne selv, der er bedst egnede til at finde på, hvilke forbedringer kunne være nyttige for de apps, som de bruger.
 
 Disse fordele er særligt vigtige i en tid, hvor AI stormer frem som redskab til softwareudvikling, og hvor der hele tiden bliver kortere og kortere fra idé til implementering, samtidigt med at flere og flere bliver i stand til at deltage effektivt i udviklingen. Dette vil give en klar konkurrencemæssig fordel til netop en virksomhed, der forstår at samle disse kræfter på et globalt plan, så folk kan bygge på skuldrene af hinanden i stedet for hver for sig, og hvor brugerne i høj grad også selv engagerer sig med at bidrage idéer til nye apps og features.
 
