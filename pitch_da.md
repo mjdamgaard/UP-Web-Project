@@ -51,3 +51,14 @@ Disse fordele er særligt vigtige i en tid, hvor AI stormer frem som redskab til
 Foruden dette er det også en kæmpe fordel, at både udviklere og brugere kan føle sig trygge ved at bidrage til og benytte softwaren, da de kan være sikre på, at de selv ender med at bestemme demokratisk over virksomheden sammen med de andre udviklere og brugere.
 
 Slutteligt er det værd at bemærke, at disse fordele også gør sig gældende, hvad end kooperativet har mest fokus på software til individuelle slutbrugere eller på business-applikationer til virksomhedskunder. I sidstnævnte tilfælde har virksomhedskunderne nemlig også gavn af, at de ikke er afhængige af en enkelt udbyders evne til at videreudvikle og vedligeholde (og ikke forringe) softwaren, eftersom alle er frie til at bidrage og videreudvikle denne, inklusiv kunderne selv når de har mulighed. Og alle kunder er frie til at benytte den version af softwaren, som de selv foretrækker. Denne løsning kan derfor ligeledes give en stor konkurrencemæssig fordel, når det kommer til branchen om udvikling af business-applikationer.
+
+
+
+## Sidste bemærkninger
+
+Hvis denne løsning, der skaber en middelvej mellem open source og closed source, virkeligt kan disrupte markedet, ikke bare inden for web og mobile apps, men muligvis endda også inden for business-applikationer, så er der således ikke bare er milliarder på spil, men ligefrem muligvis billioner. Og eftersom løsningen ikke forhindrer, at investorer kan betales tilbage med en god profit, må det derfor klart være muligt at finde finansiering til at få skubbet projektet godt i gang.
+
+Kooperativet er heller ikke forbudt fra at købe andre virksomheders produkter og services (så længe man bare har for øje ikke at gøre sig for afhængig af noget specifikt produkt). Så dermed kunne kooperativet også komme til at fremme erhverv omkring sig, hvis det bliver en succes.
+
+Ydermere har projektet også en meget klar socialøkonomisk slagside, og taler endda direkte ind i et samfundsproblem, som er meget diskuteret for tiden, nemlig om hvordan vi gør os mindre afhængig af udemokratisk tech, som vi ikke selv kan kontrollere på nogen måde, og som ikke altid vil os det bedste. Derfor bør projektet også kunne tiltrække stor offentlig støtte og finansiering.
+
