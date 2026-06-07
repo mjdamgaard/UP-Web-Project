@@ -1,6 +1,5 @@
 
 import {post} from 'query';
-import homePath from "./.id.js";
 import * as JSON from 'json';
 import * as TextArea from 'TextArea.jsx';
 import * as CharCount from './CharCount.jsx';
@@ -25,7 +24,7 @@ export function render({userID}) {
         // particular, and use it here:
         if (textVal) {
           post(
-            homePath + "/posts.sm.js./callSMF/postText", textVal
+            abs("~/posts.sm.js./callSMF/postText"), textVal
           ).then(wasCreated => {this.call(0, "clear");
             if (wasCreated) {
               this.call(0, "clear");

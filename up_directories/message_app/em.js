@@ -1,5 +1,4 @@
 
-import homePath from "./.id.js";
 import {fetch} from 'query';
 import {getUserEntPath} from "/1/1/entities.js";
 
@@ -39,7 +38,7 @@ export const appDescription = <div>
 
 function fetchCreatorEntPath() {
   return new Promise(resolve => {
-    fetch(homePath + "./creator").then(
+    fetch(abs("~./creator")).then(
       creatorID => resolve(getUserEntPath("1", creatorID))
     );
   })

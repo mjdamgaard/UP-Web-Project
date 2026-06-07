@@ -1,5 +1,4 @@
 
-import homePath from "./.id.js";
 import {fetch, post, clearPermissions, clearPrivileges} from 'query';
 import {map, join} from 'array';
 import {min} from 'math';
@@ -49,7 +48,7 @@ export function fetchUserScoreHex(
     ]).then(([qualID, subjID, userID]) => {
       let listIDHex = valueToHex(qualID + "-" + userID, "string");
       fetch(
-        homePath + "/userScores.bbt./entry/l/" + listIDHex + "/k/" + subjID,
+        abs("~/userScores.bbt./entry/l/" + listIDHex + "/k/" + subjID),
         options
       ).then(entry => {
         let [userScoreHex] = entry ?? [];
@@ -122,12 +121,14 @@ export function fetchUserScoreHexList(
     Promise.all([qualIDProm, userIDProm]).then(([qualID, userID]) => {
       let listIDHex = valueToHex(qualID + "-" + userID, "string");
       fetch(
-        homePath + "/userScores.bbt./skList/l/" + listIDHex +
-        (!loHex ? "" : "/lo/" + loHex) +
-        (!hiHex ? "" : "/hi/" + hiHex) +
-        (maxNum === undefined ? "" : "/n/" + maxNum) +
-        (offset === undefined ? "" : "/o/" + offset) +
-        (isAscending === undefined ? "" : "/a/" + isAscending ? "1" : "0"),
+        abs(
+          "~/userScores.bbt./skList/l/" + listIDHex +
+          (!loHex ? "" : "/lo/" + loHex) +
+          (!hiHex ? "" : "/hi/" + hiHex) +
+          (maxNum === undefined ? "" : "/n/" + maxNum) +
+          (offset === undefined ? "" : "/o/" + offset) +
+          (isAscending === undefined ? "" : "/a/" + isAscending ? "1" : "0")
+        ),
         options
       ).then(userScoreHexList => {
         userScoreHexList ??= [];
@@ -338,7 +339,7 @@ export function postUserScore(
       // TODO: Verify hex-string types of the IDs here. 
       let scoreHex = getScoreHex(score, metric);
       post(
-        homePath + "/user_scores.sm.js./callSMF/postUserScoreHex",
+        abs("~/user_scores.sm.js./callSMF/postUserScoreHex"),
         [qualID, subjID, userID, scoreHex, payloadHex], options
       ).then(
         wasUpdated => resolve(wasUpdated)
@@ -359,7 +360,7 @@ export function deleteUserScore(
     ]).then(([qualID, subjID, userID]) => {
       // TODO: Verify hex-string types of the IDs here. 
       post(
-        homePath + "/user_scores.sm.js./callSMF/deleteUserScore",
+        abs("~/user_scores.sm.js./callSMF/deleteUserScore"),
         [qualID, subjID, userID], options
       ).then(
         wasUpdated => resolve(wasUpdated)

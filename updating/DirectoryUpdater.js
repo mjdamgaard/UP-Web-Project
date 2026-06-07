@@ -6,14 +6,77 @@ import fetch from 'node-fetch';
 
 
 export class DirectoryUpdater {
-  constructor(authToken = undefined, domain = undefined) {
+  constructor(upDirectoriesPath, domain, authToken = undefined) {
+    this.upDirectoriesPath = upDirectoriesPath;
     this.authToken = authToken;
     this.domain = domain;
+    this.dirData = undefined;
+    this.#readDirDataSync();
   }
 
-  setDomain(domain) {
-    this.domain = domain;
+  #readDirDataSync() {
+    // Read directories.json and parse it.
+    let dirDataPath = this.upDirectoriesPath + "/directories.json";
+    let contents, dirData;
+    try {
+      contents = fs.readFileSync(dirDataPath, 'utf8');
+    } catch (err) {
+      throw "Error when reading the directories.json file"
+    }
+    try {
+      dirData = JSON.parse(contents);
+    } catch (err) {
+      throw "Error when parsing directories.json"
+    }
+    this.dirData = dirData;
   }
+
+  #writeDirDataSync(dirData = this.dirData) {
+    // Stringify the dirData and write to directories.json.
+    let dirDataPath = this.upDirectoriesPath + "/directories.json";
+    let contents = JSON.stringify(dirData, null, 2);
+    fs.writeFileSync(dirDataPath, contents);
+    this.dirData = dirData;
+  }
+
+
+  getDirID(
+    dirName, throwIfMissing = true, includeForeignDirs = false,
+    domain = this.domain
+  ) {
+    // If dirName is falsy or equals "all", throw an error.
+    if (!dirName || dirName === "all") throw (
+      "No particular directory selected. (Use the 'cd' command " +
+      "to select a directory, or restart the program using the \"-d\" option.)"
+    );
+
+    // Else read the dirID from the dirData.
+    let dirID = (this.dirData[domain]?.ownDirectories ?? {})[dirName];
+    if (!dirID && includeForeignDirs) {
+      dirID = (this.dirData[domain]?.foreignDirectories ?? {})[dirName];
+    }
+    if (!dirID && throwIfMissing) throw (
+      `No directory ID was found for "${dirName}" (domain = "${domain}") ` +
+      "in directories.json"
+    );
+    return dirID;
+  }
+
+  #writeDirIDSync(dirName, dirID) {
+    let domainEntry = this.dirData[this.domain];
+    if (!domainEntry) {
+      domainEntry = this.dirData[this.domain] = {};
+    }
+    domainEntry[dirName] = dirID.toString();
+    this.#writeDirDataSync();
+  }
+
+
+  getOwnDirectoriesArray() {
+    let ownDirectories = (this.dirData[this.domain] ?? {}).ownDirectories ?? {};
+    return Object.keys(ownDirectories);
+  }
+
 
 
   async login(username, password) {
@@ -28,41 +91,35 @@ export class DirectoryUpdater {
   }
 
 
-  readDirID(dirPath) {
-    // Read the dirID.
-    let idFilePath = dirPath + "/.id.js";
-    let dirID;
-    try {
-      let contents = fs.readFileSync(idFilePath, 'utf8');
-      [ , dirID] = /\/[0-9a-f]+\/([0-9a-f]+)/.exec(contents) ?? [];
-    } catch (_) {}
-    return dirID;
-  }
-
-  // uploadDir() first looks in a '.id.js' file to get the dirID of the home
-  // directory, and if not is found, it requests the server to create a new home
+  // uploadDir() first looks in '.directories.json' to get the directory ID,
+  // and if none is found, it requests the server to create a new home
   // directory. Then it loops through all files of the directory at path and
   // uploads all that has a recognized file extension to the (potentially new)
-  // server-side directory. The valid file extensions are text file extensions
-  // such as '.js', '.json', or '.txt', for which the content will be uploaded
-  // as is, as well as file extensions of abstract files (often implemented via
-  // one or several relational DB tables), for which the file content, if any,
-  // will have to conform to a specific format.
-  async uploadDir(userID, dirPath, dirID) {
+  // server-side directory. Text files will generally be uploaded as is, while
+  // files representing special database tables (with extensions such as
+  // '.att', '.bt', and '.bbt') when "uploaded" will have the effect of
+  // creating a corresponding relational table (effectively) server-side, if it
+  // has not already been created before.
+  // The file name of 'dependencies.json' is treated in a special way, namely
+  // since it is transformed before being uploaded, by replacing the contained
+  // dirName arrays with dirName--ID objects, where the IDs are read from the
+  // shared directories.json file (i.e. the file from which this.dirData is
+  // parsed). And instead of a JSON file, it also gets transformed to a '.js'
+  // module instead, with the object as its default export.
+  async uploadDir(userID, curDir, upDirectoriesPath) {
     let serverQueryHandler = new ServerQueryHandler(
       this.authToken, Infinity, fetch, this.domain
     );
+    let nodeID = await serverQueryHandler.fetchNodeID();
 
-    // If no dirID was provided, request the server to create a new directory
-    // and get the new dirID.
-    let idFilePath = dirPath + "/.id.js";
+    // If dirID is not found in directories.json, request the server to create
+    // a new directory and get the new dirID, then write this dirID to the
+    // directories.json file (and update this.dirData).
+    let dirID = this.getDirID(dirPath, false);
     if (!dirID) {
-      dirID = this.readDirID(dirPath) ?? "";
-      if (!dirID) {
-        dirID = await serverQueryHandler.post(`/1./mkdir/a/${userID}`);
-        if (!dirID) throw "mkdir error";
-        fs.writeFileSync(idFilePath, `export default "/1/${dirID}";`);
-      }
+      dirID = await serverQueryHandler.post(`/this./mkdir/a/${userID}`);
+      if (!dirID) throw "mkdir error";
+      this.#writeDirIDSync(curDir, dirID);
     }
 
     // Request a list of all the files in the server-side directory, and then
@@ -72,13 +129,13 @@ export class DirectoryUpdater {
     // that generates a promise, and then we generate and wait for each promise
     // in sequence.  
     let filePaths = await serverQueryHandler.fetchAsAdmin(
-      `/1/${dirID}./_all`
+      `/this/${dirID}./_all`
     );
     let deletionPromiseGenerators = [];
     let serverFilePaths = [];
     filePaths.forEach((relPath) => {
       let clientFilePath = dirPath + "/" + relPath;
-      let serverFilePath = normalizePath(`/1/${dirID}/${relPath}`);
+      let serverFilePath = normalizePath(`/${nodeID}/${dirID}/${relPath}`);
       if (!fs.existsSync(clientFilePath)) {
         deletionPromiseGenerators.push(
           () => serverQueryHandler.postAsAdmin(serverFilePath + "./_rm")
@@ -101,7 +158,7 @@ export class DirectoryUpdater {
     serverFilePaths = [];
     this.#uploadDirHelper(
       dirPath, dirID, uploadPromiseGenerators, serverFilePaths,
-      serverQueryHandler
+      serverQueryHandler, nodeID
     );
     len = uploadPromiseGenerators.length;
     for (let i = 0; i < len; i++) {
@@ -116,7 +173,7 @@ export class DirectoryUpdater {
 
   async #uploadDirHelper(
     dirPath, relPath, uploadPromiseGenerators, serverFilePaths,
-    serverQueryHandler
+    serverQueryHandler, nodeID, depth = 0
   ) {
     // Get each file in the directory at path, and loop through and handle each
     // one according to its extension (or lack thereof).
@@ -135,40 +192,87 @@ export class DirectoryUpdater {
       if (/^\.*[^.]+$/.test(name)) {
         this.#uploadDirHelper(
           childAbsPath, childRelPath, uploadPromiseGenerators, serverFilePaths,
-          serverQueryHandler
+          serverQueryHandler, nodeID, depth + 1
         );
       }
 
-      // Else if the file is a text file, upload it as is to the server.
+      // Else consult the .timestamps.json file to see if the file should be
+      // skipped.
+      // TODO: Implement.
+
+      // Then if the file is a text file, upload it as is to the server, unless
+      // it is ~/dependencies.json, in which case transform it first to
+      // ~/dependencies.json.
       else if (/\.(jsx?|txt|json|html|xml|svg|css|md)$/.test(name)) {
         let contentText = fs.readFileSync(childAbsPath, 'utf8');
+        if (depth === 0 && name === "dependencies.json") {
+          childRelPath = relPath + "/dependencies.js";
+          contentText = this.#transformDependenciesFileText(contentText);
+        }
         uploadPromiseGenerators.push(
+          // TODO: Change this promise to also update the timestamp when it
+          // resolves.
           () => serverQueryHandler.postAsAdmin(
-            `/1/${childRelPath}./_put`,
+            `/this/${childRelPath}./_put`,
             contentText,
           )
         );
-        serverFilePaths.push([`/1/${childRelPath}`, false]);
+        serverFilePaths.push([`/${nodeID}/${childRelPath}`, false]);
       }
+
+      // Else if it is a database table file, simply touch the file serer-side.
       else if (/\.(att|bt|ct|bbt|ftt)$/.test(name)) {
+        // TODO: Change this promise to also update the timestamp when it
+        // resolves.
         uploadPromiseGenerators.push(
-          () => serverQueryHandler.postAsAdmin(`/1/${childRelPath}./_touch`)
+          () => serverQueryHandler.postAsAdmin(`/this/${childRelPath}./_touch`)
         );
-        serverFilePaths.push([`/1/${childRelPath}`, true]);
+        serverFilePaths.push([`/${nodeID}/${childRelPath}`, true]);
       }
     });
   }
 
+  #transformDependenciesFileText(jsonText) {
+    let deps, transformedDeps = {};
+    try {
+      deps = JSON.parse(jsonText);
+    } catch (err) {
+      throw "Error when parsing dependencies.json"
+    }
+    Object.entries(deps).forEach(([domain, dirNameArr]) => {
+      // Put the nodeID property on transformedDeps[domain], and create
+      // a new directory property by looping over all directory names from
+      // dirNameArr, looking up the ID for each in this.dirData, and then
+      // storing each dirName--ID pair in transformedDeps[domain].directories.
+      let actualDomain = (domain === "this") ? this.domain : domain;
+      let nodeID = this.dirData[actualDomain]?.nodeID;
+      if (!nodeID) throw (
+        "No nodeID found in directories.json for domain = " + actualDomain
+      );
+      transformedDeps[domain] = {nodeID: nodeID.toString(), directories: {}};
+      let directories = transformedDeps[domain].directories;
+      dirNameArr.forEach(dirName => {
+        let dirID = this.getDirID(actualDomain, true, true, domain);
+        directories[dirName] = dirID;
+      });
+    });
+    return (
+    `export default ${JSON.stringify(transformedDeps, null, 2)};`
+    );
+  }
 
 
-  // deleteData(dirID, relativePath) deletes the table data at all table files
+
+  // deleteData(curDir, relativePath) deletes the table data at all table files
   // (i.e. .att, .bt, .ct, .bbt, or .ftt files) that is either equal to
   // "/<upNodeID>/<homeDirID>/<relativePath>", or extends this path if
   // relativePath ends in a '*' wildcard.
-  async deleteData(dirID, relativePath, read) {
+  async deleteData(curDir, relativePath, read) {
+    let dirID = this.getDirID(curDir);
     let serverQueryHandler = new ServerQueryHandler(
       this.authToken, Infinity, fetch, this.domain
     );
+    let nodeID = await serverQueryHandler.fetchNodeID();
 
     // If no dirID was provided, fail.
     if (!dirID) {
@@ -181,7 +285,7 @@ export class DirectoryUpdater {
     // table files (nothing happens to matched text files), and if so add them
     // to an array of serverFilePaths for data deletion.
     let filePaths = await serverQueryHandler.fetchAsAdmin(
-      `/1/${dirID}./_all`
+      `/this/${dirID}./_all`
     );
     let serverFilePaths = [];
     let hasWildCard = relativePath.at(-1) === "*";
@@ -193,7 +297,7 @@ export class DirectoryUpdater {
           relPath.substring(0, relativePathLen) === relativePath :
           relPath === relativePath;
         if (isMatch) {
-          serverFilePaths.push(normalizePath(`/1/${dirID}/${relPath}`));
+          serverFilePaths.push(normalizePath(`/${nodeID}/${dirID}/${relPath}`));
         }
       }
     });
@@ -226,9 +330,25 @@ export class DirectoryUpdater {
   // request, if the SMF calls checkAdminPrivileges() (from the 'request' dev
   // lib), the check will succeed and the execution of the SMF will continue
   // from there.
-  // TODO: Implement postDataFilePath to read the postData from a file.
-  async post(dirID, relativeRoute, returnLog, dirPath, postDataFilePath) {
+  async post(curDir, relativeRoute, returnLog, postDataFilePath) {
+    let dirID = this.getDirID(curDir);
+
+    // Read and parse the postData from the postDataFilePath if provided.
     let postData = undefined;
+    if (postDataFilePath) {
+      let contents;
+      try {
+        contents = fs.readFileSync(postDataFilePath, 'utf8');
+      } catch (err) {
+        throw "Error when reading the file at " + postDataFilePath + ": " +
+        err.toString()
+      }
+      try {
+        postData = JSON.parse(contents);
+      } catch (err) {
+        throw "Error when parsing the file at " + postDataFilePath
+      }
+    }
 
     // Initialize the serverQueryHandler with the provided authToken.
     let serverQueryHandler = new ServerQueryHandler(
@@ -236,13 +356,13 @@ export class DirectoryUpdater {
     );
 
     // Construct the full route, then query the server. If the route still
-    // starts with "/1/<dirID>/", post as admin, and else just post regularly,
-    // without requesting admin privileges.
-    let route = normalizePath("/1/" + dirID + (relativeRoute[0] === "+" ?
+    // starts with "/this/<dirID>/", post as admin, and else just post
+    // regularly, without requesting admin privileges.
+    let route = normalizePath("/this/" + dirID + (relativeRoute[0] === "+" ?
       relativeRoute.substring(1) :
       "/" + relativeRoute
     ));
-    if (route.substring(0, dirID.length + 3) === "/1/" + dirID) {
+    if (route.substring(0, dirID.length + 6) === "/this/" + dirID) {
       return await serverQueryHandler.postAsAdmin(
         route, postData, {returnLog: returnLog}
       );
@@ -258,13 +378,14 @@ export class DirectoryUpdater {
   // data at locked routes directly.
   // TODO: Implement setting returnLog = true for the request, if I haven't
   // already.
-  async fetch(dirID, relativeRoute, returnLog) {
+  async fetch(curDir, relativeRoute, returnLog) {
+    let dirID = this.getDirID(curDir);
     let serverQueryHandler = new ServerQueryHandler(
       this.authToken, Infinity, fetch, this.domain
     );
 
     // Construct the full route, then query the server.
-    let route = normalizePath("/1/" + dirID + (relativeRoute[0] === "+" ?
+    let route = normalizePath("/this/" + dirID + (relativeRoute[0] === "+" ?
       relativeRoute.substring(1) :
       "/" + relativeRoute
     ));

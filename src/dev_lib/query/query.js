@@ -141,8 +141,9 @@ export async function _query(
   // If extendedRoute is a RouteObject, namely due to using non-hexadecimal ID
   // placeholders for either the upNodeID or the homeDirID, call
   // fetchAndSubstituteNodeAndDirIDs() to substitute these placeholders, which
-  // is done by querying a 'nodeIDs' and a 'dirIDs' object of a 'ids.js' module
-  // in the home directory that was recorded when the RouteObject was created.
+  // is done by querying a 'nodeIDs' and a 'dirIDs' object of a
+  // '.dependencies.json' file in the home directory that was recorded when the
+  // RouteObject was created.
   if (extendedRoute instanceof RouteObject) {
     extendedRoute = await fetchAndSubstituteNodeAndDirIDs(
       extendedRoute, callerNode, execEnv, interpreter,

@@ -2,7 +2,10 @@
 export const curDomain = (typeof window === "undefined") ? "localhost" :
   /^https?:\/\/([^:/]*)/.exec(window.location.href)[1];
 
-export const OWN_UP_NODE_ID = "1";
+export const upNodeIDs = {
+  "localhost": "1",
+  "up-web.org": "1",
+};
 
 
 // TODO: Add a noCache option, which the users also get to optionally set.
@@ -18,6 +21,7 @@ export class ServerQueryHandler {
     this.tokenData = {authToken: authToken, expTime: expTime};
     this.fetch = fetchFun;
     this.domain = domain;
+    this.nodeID = upNodeIDs[domain];
   }
 
   getTokenData() {
@@ -29,11 +33,15 @@ export class ServerQueryHandler {
     );
   }
 
+  async fetchNodeID(domain = this.domain) {
+    return upNodeIDs[domain];
+  }
+
 
   async queryAJAXServer(
-    isPrivate, route, isPost, postData, options, upNodeID, flags
+    isPrivate, route, isPost, postData, options, flags, upNodeID = this.nodeID
   ) {
-    if (upNodeID !== OWN_UP_NODE_ID) throw new NetworkError(
+    if (upNodeID !== this.nodeID) throw new NetworkError(
       `Unrecognized UP node ID: "${upNodeID}" (queries to routes of foreign ` +
       "UP nodes are not implemented yet)"
     );
@@ -41,6 +49,10 @@ export class ServerQueryHandler {
       "A route must not contain empty segments (repeated slashes). Received: " +
       route + "."
     );
+
+    // If route starts with "this" in place of the upNodeID, replace it with
+    // this.nodeID.
+    route = route.replace(/^\/this(?![a-zA-Z0-9_-])/, "/" + this.nodeID);
 
     // Construct the reqBody.
     let reqData = {};
@@ -181,20 +193,20 @@ export class ServerQueryHandler {
 
   fetch(route, options) {
     return this.queryAJAXServer(
-      false, route, false, undefined, options, OWN_UP_NODE_ID
+      false, route, false, undefined, options,
     );
   }
 
   fetchAsAdmin(route, options) {
     return this.queryAJAXServer(
-      true, route, false, undefined, options, OWN_UP_NODE_ID,
+      true, route, false, undefined, options,
       {["request-admin-privileges"]: true}
     );
   }
 
   post(route, postData, options, flags) {
     return this.queryAJAXServer(
-      true, route, true, postData, options, OWN_UP_NODE_ID, flags
+      true, route, true, postData, options, flags,
     );
   }
 

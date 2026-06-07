@@ -1,5 +1,4 @@
 
-import homePath from "./.id.js";
 import {fetch} from 'query';
 import {map} from 'array';
 
@@ -44,7 +43,7 @@ export const actions = {
 
 function fetchPostListAndUpdate(inst) {
   fetch(
-    homePath + "/posts.att/list/n/50/a/" + (inst.state.isAscending ? 1 : 0)
+    abs("~/posts.att/list/n/50/a/" + (inst.state.isAscending ? "1" : "0"))
   ).then(res => {
     if (res) {
       inst.setState({...inst.state, postList: res});

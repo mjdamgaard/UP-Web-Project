@@ -3,7 +3,7 @@
 /src/server/db_io/config.js
 /sql/install.sql
 
-# Ignore all dot-files in the UP directories (in particular the .id.js files)
+# Ignore all dot-files in the UP directories
 /up_directories/**/.*
 
 

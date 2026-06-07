@@ -11,7 +11,6 @@
 // representing that the user wants their score to count as less then what is
 // the standard.
 
-import homePath from "./.id.js";
 import {post, upNodeID} from 'query';
 import {valueToHex} from 'hex';
 import {getRequestingUserID, checkRequestOrigin} from 'request';
@@ -42,11 +41,11 @@ export function postUserScoreHex(
       }
       else {
         let listIDHex = valueToHex(qualID + "-" + userEntID, "string");
-        post(homePath + "/users.bt./_insert/k/" + userEntID);
-        post(
-          homePath + "/userScores.bbt./_insert/l/" + listIDHex + "/k/" + subjID +
+        post(abs("~/users.bt./_insert/k/" + userEntID));
+        post(abs(
+          "~/userScores.bbt./_insert/l/" + listIDHex + "/k/" + subjID +
           "/s/" + scoreHex + (payloadHex ? "/p/" + payloadHex : "")
-        ).then(
+        )).then(
           wasUpdated => resolve(wasUpdated)
         );
       }
@@ -76,10 +75,9 @@ export function deleteUserScore(qualKey, subjKey, userKey) {
       }
       else {
         let listIDHex = valueToHex(qualID + "-" + userEntID, "string");
-        post(
-          homePath + "/userScores.bbt./_deleteEntry/l/" + listIDHex +
-          "/k/" + subjID
-        ).then(
+        post(abs(
+          "~/userScores.bbt./_deleteEntry/l/" + listIDHex + "/k/" + subjID
+        )).then(
           wasDeleted => resolve(wasDeleted)
         );
       }

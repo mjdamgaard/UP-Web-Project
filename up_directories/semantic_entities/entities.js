@@ -3,7 +3,6 @@
 // got the other one (and when you just got the "entity key" in general), as
 // well as functions to fetch entity definitions, and such.
 
-import homePath from "./.id.js";
 import {post, fetch, clearPermissions} from 'query';
 import {valueToHex} from 'hex';
 import {verifyType, hasType} from 'type';
@@ -26,7 +25,7 @@ export async function fetchEntityID(entKey) {
   // If entKey is a path, fetch the entID from ./entIDs.bt.
   if (entKey[0] === "/") {
     let entPathHex = valueToHex(entKey, "string");
-    return await fetch(homePath + "/entIDs.bt./entry/k/" + entPathHex);
+    return await fetch(abs("~/entIDs.bt./entry/k/" + entPathHex));
   }
 
   // Else if of the form '<entID>', return a trivial promise to that entID.
@@ -66,14 +65,14 @@ export async function fetchEntityPath(entKey) {
   // the entPaths.att table.
   else {
     verifyType(entKey, "hex-string");
-    return await fetch(homePath + "/entPaths.att./entry/k/" + entKey);
+    return await fetch(abs("~/entPaths.att./entry/k/" + entKey));
   }
 }
 
 
 
 export function getUserEntPath(upNodeID, userID) {
-  return homePath + "/em1.js;call/User/" + upNodeID + "/" + userID;
+  return abs("~/em1.js;call/User/" + upNodeID + "/" + userID);
 }
 
 
@@ -330,21 +329,21 @@ export function fetchEntityKeyConstructedEntityID(
 
 export function postRelationalQuality(objKey, relKey = membersRelationPath) {
   return postEntityKeyConstructedEntity(
-    homePath + "/em1.js", "RQ", [objKey, relKey]
+    abs("~/em1.js"), "RQ", [objKey, relKey]
   );
 }
 export function fetchRelationalQualityPath(
   objKey, relKey = membersRelationPath
 ) {
   return fetchEntityKeyConstructedEntityPath(
-    homePath + "/em1.js", "RQ", [objKey, relKey]
+    abs("~/em1.js"), "RQ", [objKey, relKey]
   );
 }
 export function fetchRelationalQualityID(
   objKey, relKey = membersRelationPath
 ) {
   return fetchEntityKeyConstructedEntityID(
-    homePath + "/em1.js", "RQ", [objKey, relKey]
+    abs("~/em1.js"), "RQ", [objKey, relKey]
   );
 }
 
@@ -355,7 +354,7 @@ export function postScalarEntity(subjKey, extQualKey) {
       let [objKey, relKey] = extQualKey;
       postRelationalQuality(objKey, relKey).then(qualID => {
         postEntityKeyConstructedEntity(
-          homePath + "/em1.js", "Scalar", [subjKey, qualID]
+          abs("~/em1.js"), "Scalar", [subjKey, qualID]
         ).then(
           entID => resolve(entID)
         );
@@ -364,7 +363,7 @@ export function postScalarEntity(subjKey, extQualKey) {
     else {
       let qualKey = extQualKey;
       postEntityKeyConstructedEntity(
-        homePath + "/em1.js", "Scalar", [subjKey, qualKey]
+        abs("~/em1.js"), "Scalar", [subjKey, qualKey]
       ).then(
         entID => resolve(entID)
       );
@@ -378,7 +377,7 @@ export function fetchScalarEntityPath(subjKey, extQualKey) {
       let [objKey, relKey] = extQualKey;
       fetchRelationalQualityPath(objKey, relKey).then(qualPath => {
         fetchEntityKeyConstructedEntityPath(
-          homePath + "/em1.js", "Scalar", [subjKey, qualPath]
+          abs("~/em1.js"), "Scalar", [subjKey, qualPath]
         ).then(
           entPath => resolve(entPath)
         );
@@ -387,7 +386,7 @@ export function fetchScalarEntityPath(subjKey, extQualKey) {
     else {
       let qualKey = extQualKey;
       fetchEntityKeyConstructedEntityPath(
-        homePath + "/em1.js", "Scalar", [subjKey, qualKey]
+        abs("~/em1.js"), "Scalar", [subjKey, qualKey]
       ).then(
         entPath => resolve(entPath)
       );
@@ -401,7 +400,7 @@ export function fetchScalarEntityID(subjKey, extQualKey) {
       let [objKey, relKey] = extQualKey;
       fetchRelationalQualityPath(objKey, relKey).then(qualPath => {
         fetchEntityKeyConstructedEntityID(
-          homePath + "/em1.js", "Scalar", [subjKey, qualPath]
+          abs("~/em1.js"), "Scalar", [subjKey, qualPath]
         ).then(
           entID => resolve(entID)
         );
@@ -410,7 +409,7 @@ export function fetchScalarEntityID(subjKey, extQualKey) {
     else {
       let qualKey = extQualKey;
       fetchEntityKeyConstructedEntityID(
-        homePath + "/em1.js", "Scalar", [subjKey, qualKey]
+        abs("~/em1.js"), "Scalar", [subjKey, qualKey]
       ).then(
         entID => resolve(entID)
       );
@@ -424,20 +423,21 @@ export function fetchScalarEntityID(subjKey, extQualKey) {
 
 
 
-export function postEntity(moduleOrEntPath, alias = undefined) {
+export async function postEntity(moduleOrEntPath, alias = undefined) {
   let entPath = alias ? moduleOrEntPath + ";get/" + alias : moduleOrEntPath;
-  return new Promise(resolve => {
-    fetch(entPath).then(entDef => {
-      if (entDef === undefined) {
-        resolve(false);
-      }
-      else {
-        post(homePath + "/entities.sm.js./callSMF/postEntity", entPath).then(
-          entID => resolve(entID)
-        );
-      }
-    });
-  });
+  if (hasType(entPath, "Route")) {
+    entPath = await entPath.fetchString();
+  }
+  let entDef = await fetch(entPath);
+  if (entDef === undefined) {
+    return false;
+  }
+  else {
+    let entID = await post(
+      abs("~/entities.sm.js./callSMF/postEntity"), entPath
+    );
+    return entID;
+  }
 }
 
 

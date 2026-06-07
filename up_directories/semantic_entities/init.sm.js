@@ -2,7 +2,6 @@
 // An admin-only server module for uploading initial entities, as well as some
 // initial scores. 
 
-import homePath from "./.id.js";
 import {checkAdminPrivileges} from 'request';
 import {post, upNodeID} from 'query';
 import {map} from 'array';
@@ -10,7 +9,7 @@ import {valueToHex, arrayToHex} from 'hex';
 import {getSequentialPromise} from 'promise';
 import {
   fetchOrCreateEntityID, postAllEntitiesFromModule, fetchRelationalQualityPath,
-  getUserEntPath, fetchEntityID,
+  getUserEntPath, fetchEntityID, postEntity,
 } from "./entities.js";
 import {scoreHandler02} from "./score_handling/ScoreHandler01/em.js";
 
@@ -28,12 +27,12 @@ export function uploadInitialEntities() {
   checkAdminPrivileges();
 
   return Promise.all([
-    postAllEntitiesFromModule(homePath + "/em1.js"),
+    postAllEntitiesFromModule(abs("~/em1.js")),
     postAllEntitiesFromModule(
-      homePath + "/score_handling/ScoreHandler01/em.js"
+      abs("~/score_handling/ScoreHandler01/em.js")
     ),
-    postAllEntitiesFromModule(homePath + "/em2.js"),
-    postAllEntitiesFromModule(homePath + "/em3.js"),
+    postAllEntitiesFromModule(abs("~/em2.js")),
+    postAllEntitiesFromModule(abs("~/em3.js")),
   ]);
 }
 
@@ -47,14 +46,13 @@ export function insertInitialModerators() {
     let transformedInitialModeratorListProm = Promise.all(
       map(initialModerators, ([userID, weight, weightWeight]) => {
         return new Promise(resolve => {
-          let userEntPath = homePath + "/em1.js;call/User/" + upNodeID +
-            "/" + userID;
+          let userEntPath = abs(
+            "~/em1.js;call/User/" + upNodeID + "/" + userID
+          );
           let scoreHex = arrayToHex(
             [weight, weightWeight], ["float(,,3)", "float(,,3)"]
           );
-          post(
-            homePath + "/entities.sm.js./callSMF/postEntity", userEntPath
-          ).then(
+          postEntity(userEntPath).then(
             userEntID => resolve([userEntID, scoreHex])
           );
         }); 
@@ -62,11 +60,10 @@ export function insertInitialModerators() {
     );
     transformedInitialModeratorListProm.then(initModList => {
       post(
-        homePath + "/score_handling/ScoreHandler01/init_mods.bbt./_put"
+        abs("~/score_handling/ScoreHandler01/init_mods.bbt./_put")
       ).then(() => {
         post(
-          homePath + "/score_handling/ScoreHandler01/init_mods.bbt" +
-            "./_insertList",
+          abs("~/score_handling/ScoreHandler01/init_mods.bbt./_insertList"),
           initModList
         ).then(
           wasUpdated => resolve(wasUpdated)
@@ -102,11 +99,8 @@ export function postInitialScores01() {
   let initModeratorIDArrProm = Promise.all(
     map(initialModerators, ([userID]) => {
       return new Promise(res => {
-        let userEntPath = homePath + "/em1.js;call/User/" + upNodeID +
-          "/" + userID;
-        post(
-          homePath + "/entities.sm.js./callSMF/postEntity", userEntPath
-        ).then(
+        let userEntPath = abs("~/em1.js;call/User/" + upNodeID + "/" + userID);
+        postEntity(userEntPath).then(
           userEntID => res(userEntID)
         );
       }); 
@@ -435,11 +429,11 @@ function postUserScoreHex(
       qualIDProm, subjIDProm, userEntIDProm
     ]).then(([qualID, subjID, userEntID]) => {
       let listIDHex = valueToHex(qualID + "-" + userEntID, "string");
-      post(homePath + "/users.bt./_insert/k/" + userEntID);
-      post(
-        homePath + "/userScores.bbt./_insert/l/" + listIDHex + "/k/" + subjID +
+      post(abs("~/users.bt./_insert/k/" + userEntID));
+      post(abs(
+        "~/userScores.bbt./_insert/l/" + listIDHex + "/k/" + subjID +
         "/s/" + scoreHex + (payloadHex ? "/p/" + payloadHex : "")
-      ).then(
+      )).then(
         wasUpdated => resolve(wasUpdated)
       );
     });

@@ -1,0 +1,28 @@
+{
+  "localhost": {
+    "nodeID": "1",
+    "ownDirectories": {
+      "semantic_entities": "1",
+      "root_app": "2",
+      "file_browser": "8",
+      "entity_browser": "9",
+      "app_browser": "a",
+      "utilities": "b",
+      "tutorials": "c"
+    },
+    "foreignDirectories": {}
+  },
+  "up-web.org": {
+    "nodeID": "1",
+    "ownDirectories": {
+      "semantic_entities": "1",
+      "root_app": "2",
+      "file_browser": "c",
+      "entity_browser": "d",
+      "app_browser": "e",
+      "utilities": "10",
+      "tutorials": "f"
+    },
+    "foreignDirectories": {}
+  }
+}

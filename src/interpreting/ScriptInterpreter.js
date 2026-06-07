@@ -3287,42 +3287,45 @@ export class RouteObject extends ObjectObject {
   }
 }
 
-// fetchAndSubstituteNodeAndDirIDs() imports '~/ids.js' from the local home
-// directory and substitutes any of the input ID segments that are not already
-// hexadecimal ID strings, but are instead placeholders.
+// fetchAndSubstituteNodeAndDirIDs() imports '~/dependencies.js' from the
+// local home directory and substitutes any of the node or directory ID
+// segments that are not already hexadecimal ID strings, but are instead
+// placeholders.
 export async function fetchAndSubstituteNodeAndDirIDs(
   routeObject, callerNode, execEnv, interpreter,
   ancestorModules = [], finalCallbacks = []
 ) {
-  // Fetch the 'ids.js' module that is expected to be in the home directory of
-  // curPath. 
+  // Fetch the 'dependencies.js' module that is expected to be in the home
+  // directory of curPath. 
   let {nodeIDSegment, dirIDSegment, restSegments, curPath} = routeObject;
-  let idsModulePath = getAbsolutePath(
-    curPath, "~/ids.js", callerNode, execEnv
+  let depsModulePath = getAbsolutePath(
+    curPath, "~/dependencies.js", callerNode, execEnv
   );
-  let idsModule = await interpreter.fetch(
-    idsModulePath, callerNode, execEnv, ancestorModules, finalCallbacks
+  let depsModule = await interpreter.fetch(
+    depsModulePath, callerNode, execEnv, ancestorModules, finalCallbacks
   )
 
   // Substitute any non-hexadecimal node or dir placeholder.
   let nodeID = nodeIDSegment, dirID = dirIDSegment;
-  if (nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment)) {
-    let nodeIDsObject = getPropertyFromObject(idsModule, "nodeIDs");
-    if (nodeIDsObject) {
-      nodeID = getPropertyFromObject(nodeIDsObject, nodeIDSegment);
+  let shouldSubstituteNode = nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment);
+  let shouldSubstituteDir = dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment);
+  if (shouldSubstituteNode || shouldSubstituteDir) {
+    let dependencies = getPropertyFromObject(depsModule, "default");
+    let domain = shouldSubstituteNode ? nodeIDSegment : "this";
+    let domainDependencies = getPropertyFromObject(dependencies, domain);
+    if (shouldSubstituteNode) {
+      nodeID = getPropertyFromObject(domainDependencies, "nodeID");
+      // If nodeIDs[nodeIDSegment] is nullish, just use nodeIdSegment as it was,
+      // expecting an error to be thrown by query().
+      nodeID ??= nodeIDSegment;
     }
-    // If nodeIDs[nodeIDSegment] is nullish, just use nodeIdSegment as it was,
-    // expecting an error to be thrown by query().
-    nodeID ??= nodeIDSegment;
-  }
-  if (dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment)) {
-    let dirIDsObject = getPropertyFromObject(idsModule, "dirIDs");
-    if (dirIDSegment) {
-      dirID = getPropertyFromObject(dirIDsObject, dirIDSegment);
+    if (shouldSubstituteDir) {
+      let dirs = getPropertyFromObject(domainDependencies, "directories");
+      dirID = getPropertyFromObject(dirs, dirIDSegment);
+      // If dirIDs[dirIDSegment] is nullish, just use dirIDSegment as it was,
+      // expecting an error to be thrown by query().
+      dirID ??= dirIDSegment;
     }
-    // If dirIDs[dirIDSegment] is nullish, just use dirIDSegment as it was,
-    // expecting an error to be thrown by query().
-    dirID ??= dirIDSegment;
   }
   
   // Then construct and return the full substituted route.
@@ -3757,8 +3760,8 @@ export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
   }
 
 
-  // Else if path start with "~/", remove anything except the "home path" from
-  // curPath and change the start of path to "./", before concatenating the two.
+  // Else if path start with "~", remove anything except the "home path" from
+  // curPath and remove the initial "~" from path, before concatenating the two.
   else if (path[0] === "~") {
     let [homePath] = curPath.match(HOME_PATH_REGEX) ?? [];
     if (!homePath) throw new LoadError(
