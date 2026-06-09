@@ -56,7 +56,7 @@ Slutteligt er det værd at bemærke, at disse fordele også gør sig gældende, 
 
 ## Sidste bemærkninger
 
-Hvis denne løsning, der skaber en middelvej mellem open source og closed source, virkeligt kan disrupte markedet, ikke bare inden for web og mobile apps, men muligvis endda også inden for business-applikationer, så er der således ikke bare er milliarder på spil, men ligefrem muligvis billioner. Og eftersom løsningen ikke forhindrer, at investorer kan betales tilbage med en god profit, må det derfor klart være muligt at finde finansiering til at få skubbet projektet godt i gang.
+Hvis denne løsning, der skaber en middelvej mellem open source og closed source, virkeligt kan disrupte markedet, ikke bare inden for web og mobile apps, men muligvis endda også inden for business-applikationer, er der således milliarder af kroner på spil. Og eftersom løsningen ikke forhindrer, at investorer kan betales tilbage med en god profit, må det derfor klart være muligt at finde finansiering til at få skubbet projektet godt i gang.
 
 Kooperativet er heller ikke forbudt fra at købe andre virksomheders produkter og services (så længe man bare har for øje ikke at gøre sig for afhængig af noget specifikt produkt). Så dermed kunne kooperativet også komme til at fremme erhverv omkring sig, hvis det bliver en succes.
 
