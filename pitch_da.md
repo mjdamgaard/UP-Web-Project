@@ -60,5 +60,5 @@ Hvis denne løsning, der skaber en middelvej mellem open source og closed source
 
 Kooperativet er heller ikke forbudt fra at købe andre virksomheders produkter og services (så længe man bare har for øje ikke at gøre sig for afhængig af noget specifikt produkt). Så dermed kunne kooperativet også komme til at fremme erhverv omkring sig, hvis det bliver en succes.
 
-Ydermere har projektet også en meget klar socialøkonomisk slagside, og taler endda direkte ind i et samfundsproblem, som er meget diskuteret for tiden, nemlig om hvordan vi gør os mindre afhængig af udemokratisk tech, som vi ikke selv kan kontrollere på nogen måde, og som ikke altid vil os det bedste. Derfor bør projektet også kunne tiltrække stor offentlig støtte og finansiering.
+Ydermere har projektet også en meget klar socialøkonomisk slagside, og taler endda direkte ind i et samfundsproblem, som er meget diskuteret for tiden, nemlig om hvordan vi gør os mindre afhængig af udemokratisk tech, som vi ikke selv kan kontrollere på nogen måde, og som ikke altid vil os det bedste. Derfor bør projektet også kunne tiltrække sig stor offentlig opbakning og finansiering.
 
