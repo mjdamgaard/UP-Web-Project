@@ -257,6 +257,9 @@ async function main() {
     else if (/^([eE]|exit)$/.test(command)) {
       hasExited = true;
     }
+    // TODO: Add command to remove a whole directory server-side (while also
+    // untracking it from directories.json), as well as a command just to
+    // untrack an uploaded directory client-side (from directories.json).
     else {
       console.log("Unrecognized command");
     }
