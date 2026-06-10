@@ -94,11 +94,9 @@ export class DirectoryUpdater {
   }
 
   #writeDirIDSync(dirName, dirID) {
-    let domainEntry = this.dirData[this.domain];
-    if (!domainEntry) {
-      domainEntry = this.dirData[this.domain] = {};
-    }
-    domainEntry[dirName] = dirID.toString();
+    let domainEntry = this.dirData[this.domain] ??= {};
+    let ownDirectories = domainEntry.ownDirectories ??= {};
+    ownDirectories[dirName] = dirID.toString();
     this.#writeDirDataSync();
   }
 

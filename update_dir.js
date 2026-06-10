@@ -81,10 +81,10 @@ async function main() {
   console.log("");
   let userID = await directoryUpdater.login(username, password);
   if (!userID) {
-    console.log("Login failed.");
+    console.log("Login failed");
     return;
   }
-  console.log(`Logged in with user #${userID}.`);
+  console.log(`Logged in with user #${userID}`);
 
   // If the -d/--directory flag is set, change curDir to that directory name.
   let initDir = optArgObj["directory"];
@@ -102,17 +102,17 @@ async function main() {
   let dirID = false;
   if (curDir && curDir !== "all") {
     dirID = directoryUpdater.getDirID(curDir, false);
-    console.log(`Current directory: ${curDir}.`);
+    console.log(`Current directory: ${curDir}`);
   }
   if (curDir === "all") {
     let ownDirectories = directoryUpdater.getOwnDirectoriesArray();
     console.log("Current directories: \n- " + ownDirectories.join(",\n- "));
   }
   if (dirID) {
-    console.log(`Directory ID: ${dirID}.`);
+    console.log(`Directory ID: ${dirID}`);
   }
   else {
-    console.log(`Directory has not yet been uploaded.`);
+    console.log(`Directory has not yet been uploaded`);
   }
 
   // Show command options at the start.
@@ -149,8 +149,8 @@ async function main() {
       }
       console.log("Success");
     }
-    else if (/^([bB]|bundle)$/.test(command)) {
-      console.log("Bundling not implemented yet.");
+    else if (/^([bB]|build|bundle)$/.test(command)) {
+      console.log("Bundling not implemented yet");
     }
     else if (/^([pP]|post)$/.test(command)) {
       console.log("Usage: ~# relative_route [--log] [--data json_file]");
@@ -234,12 +234,21 @@ async function main() {
     else if (/^(cd )/.test(command)) {
       let newDir = command.substring(3).trim();
       curDir = getValidatedDirectoryNameOrUndefined(newDir);
-      if (curDir !== "all") {
-        console.log(`Directory was changed to ${curDir}`);
-      }
-      else {
+      if (curDir === "all") {
         let ownDirectories = directoryUpdater.getOwnDirectoriesArray();
         console.log("Current directories: \n- " + ownDirectories.join(",\n- "));
+      }
+      else {
+        console.log(`Directory was changed to ${curDir}`);
+        if (curDir) {
+          let dirID = directoryUpdater.getDirID(curDir, false);
+          if (dirID) {
+            console.log(`Directory ID: ${dirID}`);
+          }
+          else {
+            console.log(`Directory has not yet been uploaded`);
+          }
+        }
       }
     }
     else if (/^([hH]|help)$/.test(command)) {
@@ -249,7 +258,7 @@ async function main() {
       hasExited = true;
     }
     else {
-      console.log("Unrecognized command.");
+      console.log("Unrecognized command");
     }
   }
 };
@@ -260,7 +269,7 @@ function getValidatedDirectoryNameOrUndefined(dirName) {
     return dirName;
   }
   if (!/^[a-z-A-Z._-][a-z-A-Z0-9._-]*$/.test(dirName)) {
-    console.log("Invalid directory name.");
+    console.log("Invalid directory name");
     return undefined;
   }
   if (/^[0-9a-fA-F]+$/.test(dirName)) {
