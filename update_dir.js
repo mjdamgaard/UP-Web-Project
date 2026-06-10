@@ -2,13 +2,14 @@
 import * as process from 'process';
 import path from 'path';
 import {read} from 'read';
+import fs from 'fs';
 
 import {DirectoryUpdater} from './updating/DirectoryUpdater.js';
 
 // Get the current path and use it to construct the path to the up_directories
 // directory. Also get a second 'domain' argument, which determines to where
 // the data is uploaded.
-const [ , curPath, domain = "localhost", ...optArgs] = process.argv;
+const [ , curPath, domain, ...optArgs] = process.argv;
 if (domain !== "localhost" && domain !== "up-web.org") throw (
   "Unrecognized domain: " + domain
 );
@@ -23,7 +24,7 @@ const directoryUpdater = new DirectoryUpdater(upDirectoriesPath, domain);
 // Construct plain object with optional argument values.
 const optArgObj = {};
 let optArgsLen = optArgs.length;
-for (let i = 0; i > optArgsLen; i++) {
+for (let i = 0; i < optArgsLen; i++) {
   let flag = optArgs[i];
 
   // transform abbreviations.
@@ -84,20 +85,6 @@ async function main() {
     return;
   }
   console.log(`Logged in with user #${userID}.`);
-
-  // Read the ID of the current directory, if any is provided, and if curDir is
-  // not equal to "all", in which which the user can choose to upload to all
-  // directories at the same time (if they are not marked as "foreign" in
-  // directories.json).
-  let dirID = false;
-  if (curDir && curDir !== "all") {
-    dirID = directoryUpdater.getDirID(curDir, false);
-  }
-  if (dirID) {
-    console.log(`Current directory: #${dirID}.`);
-  }
-  
-  // Prompt the user about how they want to update the directory.
   console.log(
     "Type 'u' for upload, 'b' for bundle, 'p' for post, 'f' for fetch, " +
     "'delete' for deleting table data, 'cd' for changing directory, " +
@@ -108,6 +95,25 @@ async function main() {
   let initDir = optArgObj["directory"];
   if (initDir) {
     curDir = initDir;
+  }
+  if (curDir) {
+    curDir = getValidatedDirectoryNameOrUndefined(curDir);
+  }
+
+  // Read the ID of the current directory, if any is provided, and if curDir is
+  // not equal to "all", in which which the user can choose to upload to all
+  // directories at the same time (if they are not marked as "foreign" in
+  // directories.json).
+  let dirID = false;
+  if (curDir && curDir !== "all") {
+    dirID = directoryUpdater.getDirID(curDir, false);
+    console.log(`Current directory: ${curDir}.`);
+  }
+  if (dirID) {
+    console.log(`Directory ID: ${dirID}.`);
+  }
+  else {
+    console.log(`Directory has not yet been uploaded.`);
   }
 
   let hasExited = false;
@@ -122,12 +128,13 @@ async function main() {
       }
       let dirNameArr = (curDir !== "all") ? [curDir] :
         directoryUpdater.getOwnDirectoriesArray();
-      console.log("Uploading...");
       try {
         let len = dirNameArr.length;
         for (let i = 0; i < len; i++) {
-          let dirName = dirNameArr[0];
+          let dirName = dirNameArr[i];
+          console.log("Uploading files in " + dirName + "...");
           await directoryUpdater.uploadDir(userID, dirName, upDirectoriesPath);
+          console.log("Files in " + dirName + " was uploaded.");
         }
       } catch (err) {
         console.error(err);
@@ -220,11 +227,42 @@ async function main() {
     else if (/^([eE]|exit)$/.test(command)) {
       hasExited = true;
     }
+    else if (/^(cd )/.test(command)) {
+      let newDir = command.substring(3).trim();
+      curDir = getValidatedDirectoryNameOrUndefined(newDir);
+      console.log(`Directory was changed to ${curDir}`);
+    }
     else {
       console.log("Unrecognized command.");
     }
   }
 };
+
+
+function getValidatedDirectoryNameOrUndefined(dirName) {
+  if (dirName === "all") {
+    return dirName;
+  }
+  if (!/^[a-z-A-Z._-][a-z-A-Z0-9._-]*$/.test(dirName)) {
+    console.log("Invalid directory name.");
+    return undefined;
+  }
+  if (/^[0-9a-fA-F]+$/.test(dirName)) {
+      console.log(
+        "Error: Directory name must include other symbols than [0-9a-f]."
+      );
+      return undefined;
+  }
+  if (!fs.existsSync(upDirectoriesPath + "/" + dirName)) {
+    console.log(
+      `Error: No directory of the name ${dirName} in ${upDirectoriesPath}.`
+    );
+    return undefined;
+  }
+  else {
+    return dirName;
+  }
+}
 
 
 

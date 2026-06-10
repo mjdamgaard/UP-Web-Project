@@ -111,11 +111,12 @@ export class DirectoryUpdater {
       this.authToken, Infinity, fetch, this.domain
     );
     let nodeID = await serverQueryHandler.fetchNodeID();
+    let dirPath = upDirectoriesPath + "/" + curDir;
 
     // If dirID is not found in directories.json, request the server to create
     // a new directory and get the new dirID, then write this dirID to the
     // directories.json file (and update this.dirData).
-    let dirID = this.getDirID(dirPath, false);
+    let dirID = this.getDirID(curDir, false);
     if (!dirID) {
       dirID = await serverQueryHandler.post(`/this./mkdir/a/${userID}`);
       if (!dirID) throw "mkdir error";
@@ -133,7 +134,7 @@ export class DirectoryUpdater {
     );
     let deletionPromiseGenerators = [];
     let serverFilePaths = [];
-    filePaths.forEach((relPath) => {
+    filePaths.forEach(relPath => {
       let clientFilePath = dirPath + "/" + relPath;
       let serverFilePath = normalizePath(`/${nodeID}/${dirID}/${relPath}`);
       if (!fs.existsSync(clientFilePath)) {
@@ -156,7 +157,7 @@ export class DirectoryUpdater {
     // for each upload promise in sequence.
     let uploadPromiseGenerators = [];
     serverFilePaths = [];
-    this.#uploadDirHelper(
+    await this.#uploadDirHelper(
       dirPath, dirID, uploadPromiseGenerators, serverFilePaths,
       serverQueryHandler, nodeID
     );
@@ -252,7 +253,7 @@ export class DirectoryUpdater {
       transformedDeps[domain] = {nodeID: nodeID.toString(), directories: {}};
       let directories = transformedDeps[domain].directories;
       dirNameArr.forEach(dirName => {
-        let dirID = this.getDirID(actualDomain, true, true, domain);
+        let dirID = this.getDirID(dirName, true, true, actualDomain);
         directories[dirName] = dirID;
       });
     });
