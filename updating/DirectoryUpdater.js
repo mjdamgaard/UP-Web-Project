@@ -11,64 +11,59 @@ export class DirectoryUpdater {
     this.authToken = authToken;
     this.domain = domain;
     this.dirData = undefined;
+    this.dirDataFileName = (domain === "localhost") ?
+      ".directories_local.json" :
+      "directories.json";
     this.#readDirDataSync();
     this.timestamps = undefined;
     this.#readUploadTimestampsSync();
   }
 
-  #readDirDataSync() {
-    // Read directories.json and parse it.
-    let dirDataPath = this.upDirectoriesPath + "/directories.json";
-    let contents, dirData;
+  #readJSONFilePropertySync(fileName, propName) {
+    // Read file and parse it.
+    let filePath = this.upDirectoriesPath + "/" + fileName;
+    if (!fs.existsSync(filePath)) {
+      this[propName] = {};
+      return;
+    }
+    let contents, propObj;
     try {
-      contents = fs.readFileSync(dirDataPath, 'utf8');
+      contents = fs.readFileSync(filePath, 'utf8');
     } catch (err) {
-      throw "Error when reading the directories.json file"
+      throw "Error when reading the " + fileName + " file";
     }
     try {
-      dirData = JSON.parse(contents);
+      propObj = JSON.parse(contents);
     } catch (err) {
-      throw "Error when parsing directories.json"
+      throw "Error when parsing " + fileName;
     }
-    this.dirData = dirData;
+
+    // Store the resulting object in the this[propName].
+    this[propName] = propObj;
   }
 
-  #writeDirDataSync(dirData = this.dirData) {
-    // Stringify the dirData and write to directories.json.
-    let dirDataPath = this.upDirectoriesPath + "/directories.json";
-    let contents = JSON.stringify(dirData, null, 2);
-    fs.writeFileSync(dirDataPath, contents);
-    this.dirData = dirData;
+  #writeJSONFilePropertySync(fileName, propName) {
+    // Stringify the this[propName] object and write to the file.
+    let filePath = this.upDirectoriesPath + "/" + fileName;
+    let contents = JSON.stringify(this[propName], null, 2);
+    fs.writeFileSync(filePath, contents);
+  }
+
+
+  #readDirDataSync() {
+    return this.#readJSONFilePropertySync(this.dirDataFileName, "dirData");
+  }
+  #writeDirDataSync() {
+    return this.#writeJSONFilePropertySync(this.dirDataFileName, "dirData");
   }
 
   #readUploadTimestampsSync() {
-    // Read .timestamps.json and parse it.
-    let timestampsPath = this.upDirectoriesPath + "/.timestamps.json";
-    if (!fs.existsSync(timestampsPath)) {
-      this.timestamps = {};
-      return;
-    }
-    let contents, timestamps;
-    try {
-      contents = fs.readFileSync(timestampsPath, 'utf8');
-    } catch (err) {
-      throw "Error when reading the .timestamps.json file"
-    }
-    try {
-      timestamps = JSON.parse(contents);
-    } catch (err) {
-      throw "Error when parsing .timestamps.json"
-    }
-    this.timestamps = timestamps;
+    return this.#readJSONFilePropertySync(".timestamps.json", "timestamps");
+  }
+  #writeUploadTimestampsSync() {
+    return this.#writeJSONFilePropertySync(".timestamps.json", "timestamps");
   }
 
-  #writeUploadTimestampsSync(timestamps = this.timestamps) {
-    // Stringify the timestamps and write to .timestamps.json.
-    let timestampsPath = this.upDirectoriesPath + "/.timestamps.json";
-    let contents = JSON.stringify(timestamps, null, 2);
-    fs.writeFileSync(timestampsPath, contents);
-    this.timestamps = timestamps;
-  }
 
 
   getDirID(
@@ -115,7 +110,7 @@ export class DirectoryUpdater {
   }
 
   #isModifiedSinceLastUpload(relFilePath, dependsOnDirectoriesFile = false) {
-    let timestamp = this.timestamps[relFilePath];
+    let timestamp = (this.timestamps[this.domain] ?? {})[relFilePath];
     if (!timestamp || this.#isModifiedSince(relFilePath, timestamp)) {
       return true;
     }
@@ -128,12 +123,14 @@ export class DirectoryUpdater {
   }
 
   #updateUploadTimestampSync(relFilePath) {
-    this.timestamps[relFilePath] = Date.now();
+    let domainEntry = this.timestamps[this.domain] ??= {};
+    domainEntry[relFilePath] = Date.now();
     this.#writeUploadTimestampsSync();
   }
 
   #removeUploadTimestampSync(relFilePath) {
-    delete this.timestamps[relFilePath];
+    let domainEntry = this.timestamps[this.domain] ?? {};
+    delete domainEntry[relFilePath];
     this.#writeUploadTimestampsSync();
   }
 
