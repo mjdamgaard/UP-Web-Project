@@ -85,11 +85,6 @@ async function main() {
     return;
   }
   console.log(`Logged in with user #${userID}.`);
-  console.log(
-    "Type 'u' for upload, 'b' for bundle, 'p' for post, 'f' for fetch, " +
-    "'delete' for deleting table data, 'cd' for changing directory, " +
-    "or 'e' for exit."
-  );
 
   // If the -d/--directory flag is set, change curDir to that directory name.
   let initDir = optArgObj["directory"];
@@ -116,9 +111,16 @@ async function main() {
     console.log(`Directory has not yet been uploaded.`);
   }
 
+  // Show command options at the start.
+  let commandOptionsText =
+    "Type 'u' for upload, 'b' for bundle, 'p' for post, 'f' for fetch, " +
+    "'delete' for deleting table data, 'cd' for changing directory, " +
+    "or 'e' for exit.";
+  console.log(commandOptionsText);
+
   let hasExited = false;
   while(!hasExited) {
-    let command = await read({prompt: "> "});
+    let command = await read({prompt: `${curDir ? curDir : ""}> `});
     if (/^([uU]|upload)$/.test(command)) {
       if (!curDir) {
          console.log(
@@ -133,8 +135,9 @@ async function main() {
         for (let i = 0; i < len; i++) {
           let dirName = dirNameArr[i];
           console.log("Uploading files in " + dirName + "...");
-          await directoryUpdater.uploadDir(userID, dirName, upDirectoriesPath);
+          await directoryUpdater.uploadDir(userID, dirName);
           console.log("Files in " + dirName + " was uploaded.");
+          console.log("");
         }
       } catch (err) {
         console.error(err);
@@ -224,13 +227,16 @@ async function main() {
       let relativePath = await read({prompt: `Path of file(s) to delete: `});
       await directoryUpdater.deleteData(curDir, relativePath, read);
     }
-    else if (/^([eE]|exit)$/.test(command)) {
-      hasExited = true;
-    }
     else if (/^(cd )/.test(command)) {
       let newDir = command.substring(3).trim();
       curDir = getValidatedDirectoryNameOrUndefined(newDir);
       console.log(`Directory was changed to ${curDir}`);
+    }
+    else if (/^([hH]|help)$/.test(command)) {
+      console.log(commandOptionsText);
+    }
+    else if (/^([eE]|exit)$/.test(command)) {
+      hasExited = true;
     }
     else {
       console.log("Unrecognized command.");

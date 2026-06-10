@@ -12,6 +12,8 @@ export class DirectoryUpdater {
     this.domain = domain;
     this.dirData = undefined;
     this.#readDirDataSync();
+    this.timestamps = undefined;
+    this.#readUploadTimestampsSync();
   }
 
   #readDirDataSync() {
@@ -37,6 +39,35 @@ export class DirectoryUpdater {
     let contents = JSON.stringify(dirData, null, 2);
     fs.writeFileSync(dirDataPath, contents);
     this.dirData = dirData;
+  }
+
+  #readUploadTimestampsSync() {
+    // Read .timestamps.json and parse it.
+    let timestampsPath = this.upDirectoriesPath + "/.timestamps.json";
+    if (!fs.existsSync(timestampsPath)) {
+      this.timestamps = {};
+      return;
+    }
+    let contents, timestamps;
+    try {
+      contents = fs.readFileSync(timestampsPath, 'utf8');
+    } catch (err) {
+      throw "Error when reading the .timestamps.json file"
+    }
+    try {
+      timestamps = JSON.parse(contents);
+    } catch (err) {
+      throw "Error when parsing .timestamps.json"
+    }
+    this.timestamps = timestamps;
+  }
+
+  #writeUploadTimestampsSync(timestamps = this.timestamps) {
+    // Stringify the timestamps and write to .timestamps.json.
+    let timestampsPath = this.upDirectoriesPath + "/.timestamps.json";
+    let contents = JSON.stringify(timestamps, null, 2);
+    fs.writeFileSync(timestampsPath, contents);
+    this.timestamps = timestamps;
   }
 
 
@@ -79,6 +110,38 @@ export class DirectoryUpdater {
 
 
 
+  #isModifiedSince(relFilePath, timestamp) {
+    let filePath = this.upDirectoriesPath + "/" + relFilePath;
+    let lastModifiedAt = fs.statSync(filePath).mtimeMs;
+    return lastModifiedAt > timestamp;
+  }
+
+  #isModifiedSinceLastUpload(relFilePath, dependsOnDirectoriesFile = false) {
+    let timestamp = this.timestamps[relFilePath];
+    if (!timestamp || this.#isModifiedSince(relFilePath, timestamp)) {
+      return true;
+    }
+    else if (dependsOnDirectoriesFile) {
+      return this.#isModifiedSince("directories.json", timestamp);
+    }
+    else {
+      return false;
+    }
+  }
+
+  #updateUploadTimestampSync(relFilePath) {
+    this.timestamps[relFilePath] = Date.now();
+    this.#writeUploadTimestampsSync();
+  }
+
+  #removeUploadTimestampSync(relFilePath) {
+    delete this.timestamps[relFilePath];
+    this.#writeUploadTimestampsSync();
+  }
+
+
+
+
   async login(username, password) {
     let serverQueryHandler = new ServerQueryHandler(
       this.authToken, Infinity, fetch, this.domain
@@ -106,12 +169,11 @@ export class DirectoryUpdater {
   // shared directories.json file (i.e. the file from which this.dirData is
   // parsed). And instead of a JSON file, it also gets transformed to a '.js'
   // module instead, with the object as its default export.
-  async uploadDir(userID, curDir, upDirectoriesPath) {
+  async uploadDir(userID, curDir) {
     let serverQueryHandler = new ServerQueryHandler(
       this.authToken, Infinity, fetch, this.domain
     );
     let nodeID = await serverQueryHandler.fetchNodeID();
-    let dirPath = upDirectoriesPath + "/" + curDir;
 
     // If dirID is not found in directories.json, request the server to create
     // a new directory and get the new dirID, then write this dirID to the
@@ -134,12 +196,22 @@ export class DirectoryUpdater {
     );
     let deletionPromiseGenerators = [];
     let serverFilePaths = [];
+    let curDirPath = this.upDirectoriesPath + "/" + curDir;
     filePaths.forEach(relPath => {
-      let clientFilePath = dirPath + "/" + relPath;
+      let relClientPath = (relPath === "dependencies.js") ?
+        "dependencies.json" : relPath
+      let clientFilePath = curDirPath + "/" + relClientPath;
       let serverFilePath = normalizePath(`/${nodeID}/${dirID}/${relPath}`);
       if (!fs.existsSync(clientFilePath)) {
+        // Push a promise to delete the file server-side, and delete the file's
+        // timestamp upon return.
         deletionPromiseGenerators.push(
-          () => serverQueryHandler.postAsAdmin(serverFilePath + "./_rm")
+          () => serverQueryHandler.postAsAdmin(
+            serverFilePath + "./_rm"
+          ).then(x => {
+            this.#removeUploadTimestampSync(curDir + "/" + relClientPath);
+            return x;
+          })
         );
         serverFilePaths.push(serverFilePath);
       }
@@ -158,7 +230,7 @@ export class DirectoryUpdater {
     let uploadPromiseGenerators = [];
     serverFilePaths = [];
     await this.#uploadDirHelper(
-      dirPath, dirID, uploadPromiseGenerators, serverFilePaths,
+      curDir, dirID, uploadPromiseGenerators, serverFilePaths,
       serverQueryHandler, nodeID
     );
     len = uploadPromiseGenerators.length;
@@ -173,64 +245,88 @@ export class DirectoryUpdater {
 
 
   async #uploadDirHelper(
-    dirPath, relPath, uploadPromiseGenerators, serverFilePaths,
-    serverQueryHandler, nodeID, depth = 0
+    relClientPath, relServerPath, uploadPromiseGenerators,
+    serverFilePaths, serverQueryHandler, nodeID, depth = 0
   ) {
+    let absClientPath = this.upDirectoriesPath + "/" + relClientPath;
     // Get each file in the directory at path, and loop through and handle each
     // one according to its extension (or lack thereof).
     let fileNames;
     try {
-      fileNames = fs.readdirSync(dirPath);
+      fileNames = fs.readdirSync(absClientPath);
     } catch (_) {
       return;
     }
-    fileNames.forEach(name => {
-      let childAbsPath = dirPath + "/" + name;
-      let childRelPath = relPath + "/" + name;
+    let fileNamesLen = fileNames.length;
+    for (let i = 0; i < fileNamesLen; i++) {
+      let name = fileNames[i];
+      let relChildClientPath = relClientPath + "/" + name;
+      let relChildServerPath = relServerPath + "/" + name;
+      let absChildClientPath = absClientPath + "/" + name;
 
       // If the file has no extensions, treat it as a folder, and call this
       // helper method recursively.
       if (/^\.*[^.]+$/.test(name)) {
-        this.#uploadDirHelper(
-          childAbsPath, childRelPath, uploadPromiseGenerators, serverFilePaths,
-          serverQueryHandler, nodeID, depth + 1
+        await this.#uploadDirHelper(
+          relChildClientPath, relChildServerPath, uploadPromiseGenerators,
+          serverFilePaths, serverQueryHandler, nodeID, depth + 1
         );
       }
 
-      // Else consult the .timestamps.json file to see if the file should be
-      // skipped.
-      // TODO: Implement.
-
-      // Then if the file is a text file, upload it as is to the server, unless
+      // Else if the file is a text file, upload it as is to the server, unless
       // it is ~/dependencies.json, in which case transform it first to
       // ~/dependencies.json.
       else if (/\.(jsx?|txt|json|html|xml|svg|css|md)$/.test(name)) {
-        let contentText = fs.readFileSync(childAbsPath, 'utf8');
+        let contentText = fs.readFileSync(absChildClientPath, 'utf8');
+        // Consult .timestamps.json to see if the file should be skipped, and
+        // if the the file is the special dependencies.json file (at depth = 0),
+        // then also check the the modifiedAt time for the directories.json
+        // file. And in case of the dependencies.json file, also transform the
+        // JSON file to a JS module, with inserted dirIDs, before uploading. 
         if (depth === 0 && name === "dependencies.json") {
-          childRelPath = relPath + "/dependencies.js";
+          if (!this.#isModifiedSinceLastUpload(relChildClientPath, true)) {
+            return;
+          }
+          relChildServerPath = relServerPath + "/dependencies.js";
           contentText = this.#transformDependenciesFileText(contentText);
         }
+        else {
+          if (!this.#isModifiedSinceLastUpload(relChildClientPath)) {
+            return;
+          }
+        }
+        // Push a promise to upload the file, and update the file's timestamp
+        // upon return.
         uploadPromiseGenerators.push(
-          // TODO: Change this promise to also update the timestamp when it
-          // resolves.
           () => serverQueryHandler.postAsAdmin(
-            `/this/${childRelPath}./_put`,
+            `/this/${relChildServerPath}./_put`,
             contentText,
-          )
+          ).then(x => {
+            this.#updateUploadTimestampSync(relChildClientPath);
+            return x;
+          })
         );
-        serverFilePaths.push([`/${nodeID}/${childRelPath}`, false]);
+        serverFilePaths.push([`/${nodeID}/${relChildServerPath}`, false]);
       }
 
       // Else if it is a database table file, simply touch the file serer-side.
       else if (/\.(att|bt|ct|bbt|ftt)$/.test(name)) {
-        // TODO: Change this promise to also update the timestamp when it
-        // resolves.
+        if (!this.#isModifiedSinceLastUpload(relChildClientPath)) {
+          return;
+        }
+        // Push a promise to touch the database table file (nothing happens if
+        // the table already exists), and update the timestamp upon return.
         uploadPromiseGenerators.push(
-          () => serverQueryHandler.postAsAdmin(`/this/${childRelPath}./_touch`)
+          () => serverQueryHandler.postAsAdmin(
+            `/this/${relChildServerPath}./_touch`
+          ).then(x => {
+            this.#updateUploadTimestampSync(relChildClientPath);
+            return x;
+          })
         );
-        serverFilePaths.push([`/${nodeID}/${childRelPath}`, true]);
+        serverFilePaths.push([`/${nodeID}/${relChildServerPath}`, true]);
       }
-    });
+    }
   }
 
   #transformDependenciesFileText(jsonText) {
