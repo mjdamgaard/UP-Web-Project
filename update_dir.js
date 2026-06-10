@@ -104,6 +104,10 @@ async function main() {
     dirID = directoryUpdater.getDirID(curDir, false);
     console.log(`Current directory: ${curDir}.`);
   }
+  if (curDir === "all") {
+    let ownDirectories = directoryUpdater.getOwnDirectoriesArray();
+    console.log("Current directories: \n- " + ownDirectories.join(",\n- "));
+  }
   if (dirID) {
     console.log(`Directory ID: ${dirID}.`);
   }
@@ -230,7 +234,13 @@ async function main() {
     else if (/^(cd )/.test(command)) {
       let newDir = command.substring(3).trim();
       curDir = getValidatedDirectoryNameOrUndefined(newDir);
-      console.log(`Directory was changed to ${curDir}`);
+      if (curDir !== "all") {
+        console.log(`Directory was changed to ${curDir}`);
+      }
+      else {
+        let ownDirectories = directoryUpdater.getOwnDirectoriesArray();
+        console.log("Current directories: \n- " + ownDirectories.join(",\n- "));
+      }
     }
     else if (/^([hH]|help)$/.test(command)) {
       console.log(commandOptionsText);

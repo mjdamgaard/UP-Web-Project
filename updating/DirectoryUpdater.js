@@ -219,7 +219,7 @@ export class DirectoryUpdater {
     let len = deletionPromiseGenerators.length;
     for (let i = 0; i < len; i++) {
        await deletionPromiseGenerators[i]();
-       console.log("Removed " + serverFilePaths[i]);
+       console.log("- Removed " + serverFilePaths[i]);
     }
 
     // Then call a helper method to recursively loop through all files in the
@@ -229,7 +229,7 @@ export class DirectoryUpdater {
     // for each upload promise in sequence.
     let uploadPromiseGenerators = [];
     serverFilePaths = [];
-    await this.#uploadDirHelper(
+    this.#uploadDirHelper(
       curDir, dirID, uploadPromiseGenerators, serverFilePaths,
       serverQueryHandler, nodeID
     );
@@ -237,14 +237,16 @@ export class DirectoryUpdater {
     for (let i = 0; i < len; i++) {
       await uploadPromiseGenerators[i]();
       let [serverFilePath, isTableFile] = serverFilePaths[i];
-      console.log((isTableFile ? "Touched " : "Uploaded ") + serverFilePath);
+      console.log(
+        (isTableFile ? "- Touched " : "- Uploaded ") + serverFilePath
+      );
     }
 
     return dirID;
   }
 
 
-  async #uploadDirHelper(
+  #uploadDirHelper(
     relClientPath, relServerPath, uploadPromiseGenerators,
     serverFilePaths, serverQueryHandler, nodeID, depth = 0
   ) {
@@ -257,9 +259,7 @@ export class DirectoryUpdater {
     } catch (_) {
       return;
     }
-    let fileNamesLen = fileNames.length;
-    for (let i = 0; i < fileNamesLen; i++) {
-      let name = fileNames[i];
+    fileNames.forEach(name => {
       let relChildClientPath = relClientPath + "/" + name;
       let relChildServerPath = relServerPath + "/" + name;
       let absChildClientPath = absClientPath + "/" + name;
@@ -267,7 +267,7 @@ export class DirectoryUpdater {
       // If the file has no extensions, treat it as a folder, and call this
       // helper method recursively.
       if (/^\.*[^.]+$/.test(name)) {
-        await this.#uploadDirHelper(
+        this.#uploadDirHelper(
           relChildClientPath, relChildServerPath, uploadPromiseGenerators,
           serverFilePaths, serverQueryHandler, nodeID, depth + 1
         );
@@ -326,7 +326,7 @@ export class DirectoryUpdater {
         );
         serverFilePaths.push([`/${nodeID}/${relChildServerPath}`, true]);
       }
-    }
+    });
   }
 
   #transformDependenciesFileText(jsonText) {
