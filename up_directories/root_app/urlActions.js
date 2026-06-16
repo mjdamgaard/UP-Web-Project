@@ -16,6 +16,8 @@ import {getAbsolutePath} from 'path';
 // Also, if the url does not match any of these things, for instance if it
 // starts with an alphanumerical character, then this is treated equivalently
 // as if "./" was prepended to it.
+// Rather than including url and homeURL as part of the component's props, you
+// can also alternatively overwrite the "getURLData" action below.
 
 // TODO: Test that all these options work as intended.
 
@@ -32,27 +34,39 @@ export const urlActions = {
 
   "pushURL": function(url) {
     if (substring(url, 0, 3) === "~~/") {
-      return this.trigger("pushURL", substring(url, 1));
+      let newURL = (substring(url, 3, 6) === "~~/") ? substring(url, 3) :
+        substring(url, 1);
+      return this.trigger("pushURL", newURL);
     }
-    let {url: curURL, homeURL = ""} = this.props;
+    let [curURL, homeURL] = this.do("getURLData");
     url = getURL(url, curURL, homeURL);
     return this.do("pushState", [null, url]);
   },
   "replaceURL": function(url) {
     if (substring(url, 0, 3) === "~~/") {
-      return this.trigger("replaceURL", substring(url, 1));
+      let newURL = (substring(url, 3, 6) === "~~/") ? substring(url, 3) :
+        substring(url, 1);
+      return this.trigger("replaceURL", newURL);
     }
-    let {url: curURL, homeURL} = this.props;
+    let [curURL, homeURL] = this.do("getURLData");
     url = getURL(url, curURL, homeURL);
     return this.do("replaceState", [null, url]);
   },
   "getURL": function(url) {
     if (substring(url, 0, 3) === "~~/") {
-      return this.trigger("getURL", substring(url, 1));
+      let newURL = (substring(url, 3, 6) === "~~/") ? substring(url, 3) :
+        substring(url, 1);
+      return this.trigger("getURL", newURL);
     }
-    let {url: curURL, homeURL} = this.props;
+    let [curURL, homeURL] = this.do("getURLData");
     return getURL(url, curURL, homeURL);
-  }
+  },
+
+  // (This action can be overwritten.)
+  "getURLData": function() {
+    let {url, homeURL} = this.props;
+    return [url, homeURL];
+  },
 };
 
 export const urlEvents = [

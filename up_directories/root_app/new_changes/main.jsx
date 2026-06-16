@@ -1,0 +1,173 @@
+
+import {clearPermissions} from 'query';
+import {urlActions, urlEvents} from "./urlActions.js";
+
+import {substring, indexOf} from 'string';
+
+import * as AppHeader from "./AppHeader.jsx";
+import * as AppLoader from "./AppLoader.jsx";
+
+import dependencies from "./dependencies.js";
+
+const {this: {"file_browser": fileBrowserID, "app_browser": appBrowserID}}
+
+const missingPageContent = "404 error: Missing page."; // TODO: Improve.
+
+
+
+export function initialize({hideHeader = false}) {
+  return {
+    hideHeader: hideHeader,
+    overlayPage: undefined,
+    ref: {
+      appLoaderProps: undefined,
+    },
+  };
+}
+
+
+
+export function render({
+  url, history, nodeID, userID, homeURL = "", localStorage, sessionStorage
+}) {
+  let {hideHeader, overlayPage, ref: {appLoaderProps}} = this.state;
+  this.provideContext("history", history);
+  this.provideContext("userID", userID);
+  this.provideContext("nodeID", nodeID);
+  this.provideContext("homeURL", homeURL);
+
+  let tailURL = substring(url, homeURL.length);
+
+  // Get the first segment of the tailURL, and according this segment.
+  let firstSegment = "", newTailURL = "", newHomeURL = undefined;
+  if (tailURL) {
+    let indOfSecondSlash = indexOf(tailURL, "/", 1);
+    firstSegment = (indOfSecondSlash === -1) ?
+      substring(tailURL, 1) : substring(tailURL, 1, indOfSecondSlash);
+    newTailURL = substring(tailURL, 1 + firstSegment.length);
+    newHomeURL = homeURL + "/" + firstSegment
+  }
+  let content, hideAppLoader = true;
+  switch (firstSegment) {
+    // If the tailURL starts with "a", redirect to the AppLoader. (We also
+    // use hideAppLoader and appLoaderProps is part of a scheme to not lose its
+    // state once the AppLoader is rendered the first time.
+    case "a": {
+      appLoaderProps = {homeURL: newHomeURL, tailURL: newTailURL};
+      hideAppLoader = false;
+      this.setState(state => ({
+        ...state,
+        ref: {...state.ref, appLoaderProps: appLoaderProps},
+      }));
+      // (Since we only alter state.ref here, this will not cause a rerender.)
+      break;
+    }
+    
+    // The fallowing cases are some placeholder segments that each redirects to
+    // a URL of the "/a/..." type.
+    case "":
+    case "apps":
+      this.do("replaceURL", "~/a/apps/" + appBrowserID + newTailURL);
+      content = <div className="fetching">{"..."}</div>;
+      break;
+    case "f":
+    case "files":
+      this.do("replaceURL", "~/a/files/" + fileBrowserID + newTailURL);
+      content = <div className="fetching">{"..."}</div>;
+      break;
+    
+    // The following cases are some constant built-in pages, such as the
+    // about page.
+    case "about":
+      content = <AboutPage key="about" />;
+      break;
+    default:
+      content = missingPageContent;
+  }
+
+  return (
+    <div className="root-app">
+      <AppHeader key="h"
+        url={url} history={history} homeURL={homeURL} isHidden={hideHeader}
+      />
+      {/* An overlay page is a page that does not change the URL */}
+      <div className={"overlay-page" + (overlayPage ? "" : " hidden")}>
+        {(overlayPage)}
+      </div>
+      {/* The content div is for non-AppLoader pages with their own URLs */}
+      <div className={"overlay-page" + (overlayPage ? "" : " hidden")}>
+        {(overlayPage)}
+      </div>
+      {/* Once the AppLoader child is rendered, we keep rendering as to not
+        lose its state.
+      */}
+      <div className={"app-loader" + (hideAppLoader ? " hidden" : "")}>
+        {(
+          appLoaderProps ? <AppLoader key="l" {...appLoaderProps}/> :
+            undefined
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+
+export const events = [
+  ...urlEvents,
+  "pushState",
+  "replaceState",
+  "back",
+  "forward",
+  "go",
+  "hideHeader",
+  "showHeader",
+];
+
+
+export const actions = {
+  // The urlActions and urlEvents objects importantly define a "pushURL" and
+  // a "replaceURL" action/event, which can be used let push/replaceState()
+  // without the state argument, and which importantly also include some syntax
+  // regarding what we call "home URLs," which are essentially used to group
+  // the URL segments, and then use relative URLs stating with "~/" or "~~/"
+  // (which are similar to "./" and "../") to go to the start of the current
+  // group, or go to the start of the parent group, etc. (In order to make this
+  // work, it needs a bit of careful setup, however, as you also e.g. need to
+  // set the homeURL prop correctly on the components at the root of a group.)
+  ...urlActions,
+
+  "pushState": function([state, url]) {
+    clearPermissions(() => this.props.history.pushState(state, url));
+    return true;
+  },
+  "replaceState": function([state, url]) {
+    clearPermissions(() => this.props.history.replaceState(state, url));
+    return true;
+  },
+  "back": function() {
+    clearPermissions(() => this.props.history.back());
+    return true;
+  },
+  "forward": function() {
+    clearPermissions(() => this.props.history.forward());
+    return true;
+  },
+  "go": function(delta) {
+    clearPermissions(() => this.props.history.go(delta));
+    return true;
+  },
+
+  "hideHeader": function() {
+    this.setState(state => ({...state, hideHeader = true}));
+  },
+  "showHeader": function() {
+    this.setState(state => ({...state, hideHeader = false}));
+  },
+};
+
+
+
+export const styleSheets = [
+  abs("./style.css"),
+];
