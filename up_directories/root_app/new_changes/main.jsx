@@ -3,9 +3,11 @@ import {clearPermissions} from 'query';
 import {urlActions, urlEvents} from "./urlActions.js";
 
 import {substring, indexOf} from 'string';
+import {hasType} from 'type';
 
 import * as AppHeader from "./AppHeader.jsx";
 import * as AppLoader from "./AppLoader.jsx";
+import {getFirstSegment} from "./AppLoader.jsx";
 
 import dependencies from "./dependencies.js";
 
@@ -27,23 +29,20 @@ export function initialize({hideHeader = false}) {
 
 
 
-export function render({
-  url, history, nodeID, userID, homeURL = "", localStorage, sessionStorage
-}) {
+export function render(props) {
+  let {
+    url, history, nodeID, userID, homeURL = "", localStorage, sessionStorage
+  } = props;
   let {hideHeader, overlayPage, ref: {appLoaderProps}} = this.state;
-  this.provideContext("history", history);
   this.provideContext("userID", userID);
   this.provideContext("nodeID", nodeID);
-  this.provideContext("homeURL", homeURL);
 
   let tailURL = substring(url, homeURL.length);
 
   // Get the first segment of the tailURL, and according this segment.
   let firstSegment = "", newTailURL = "", newHomeURL = undefined;
   if (tailURL) {
-    let indOfSecondSlash = indexOf(tailURL, "/", 1);
-    firstSegment = (indOfSecondSlash === -1) ?
-      substring(tailURL, 1) : substring(tailURL, 1, indOfSecondSlash);
+    firstSegment = getFirstSegment(tailURL);
     newTailURL = substring(tailURL, 1 + firstSegment.length);
     newHomeURL = homeURL + "/" + firstSegment
   }
@@ -53,7 +52,7 @@ export function render({
     // use hideAppLoader and appLoaderProps is part of a scheme to not lose its
     // state once the AppLoader is rendered the first time.
     case "a": {
-      appLoaderProps = {homeURL: newHomeURL, tailURL: newTailURL};
+      appLoaderProps = {...props, homeURL: newHomeURL, tailURL: newTailURL};
       hideAppLoader = false;
       this.setState(state => ({
         ...state,
@@ -66,15 +65,17 @@ export function render({
     // The fallowing cases are some placeholder segments that each redirects to
     // a URL of the "/a/..." type.
     case "":
+      newTailURL = "/start";
     case "apps":
-      this.do("replaceURL", "~/a/apps/" + appBrowserID + newTailURL);
+      this.do("replaceURL", "~/a/" + appBrowserID + "/apps" + newTailURL);
       content = <div className="fetching">{"..."}</div>;
       break;
-    case "f":
     case "files":
-      this.do("replaceURL", "~/a/files/" + fileBrowserID + newTailURL);
+      this.do("replaceURL", "~/a/" + fileBrowserID + "/files" + newTailURL);
       content = <div className="fetching">{"..."}</div>;
       break;
+    // TODO: Add other shortcuts, in particular for tutorials and the entity
+    // browser.
     
     // The following cases are some constant built-in pages, such as the
     // about page.
@@ -103,7 +104,7 @@ export function render({
       */}
       <div className={"app-loader" + (hideAppLoader ? " hidden" : "")}>
         {(
-          appLoaderProps ? <AppLoader key="l" {...appLoaderProps}/> :
+          appLoaderProps ? <AppLoader {...appLoaderProps} key="l" /> :
             undefined
         )}
       </div>

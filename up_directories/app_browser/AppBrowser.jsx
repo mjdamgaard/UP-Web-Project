@@ -29,7 +29,7 @@ export async function initialize({homeURL, tailURL}) {
 
 
 export function render({homeURL, tailURL}) {
-  this.constant(homeURL, tailURL);
+  this.constants(homeURL, tailURL);
   this.provideContext("homeURL", homeURL);
   let {urlEntIDs, curEntID} = this.state;
 

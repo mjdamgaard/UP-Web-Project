@@ -64,7 +64,10 @@ export const urlActions = {
 
   // (This action can be overwritten.)
   "getURLData": function() {
-    let {url, homeURL} = this.props;
+    let {url, homeURL, tailURL} = this.props;
+    if (!url && tailURL) {
+      url = homeURL + tailURL;
+    }
     return [url, homeURL];
   },
 };

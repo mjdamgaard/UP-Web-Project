@@ -2,96 +2,50 @@
 import {clearPermissions} from 'query';
 import {urlActions, urlEvents} from "./urlActions.js";
 
-import {substring, indexOf, split} from 'string';
-import {fetchPrivate} from 'query';
-import {verifyType} from 'type';
+import {substring, split} from 'string';
+import {fetchPrivate, fetch} from 'query';
+import {hasType, verifyType} from 'type';
 
-import {scoreHandler02} from
-  "../semantic_entities/score_handling/ScoreHandler01/em.js";
-// TODO: Implement a settings page where users can change their score handler
-// (with ample warnings), among other settings.
-
-
-export function initialize({scoreHandler = scoreHandler02}) {
-  return {
-    scoreHandler: scoreHandler,
-
-    // Since we expect a general user session to not include opening that many
-    // new apps in general that this will cause a performance issue, we cache
-    // the state rather than throwing this computed data away whenever
-    // the user navigates to another app.
-    stateCache: new MutableObject(),
-  };
-}
+const fetchBestSubAppRouteSubstring = abs(
+  "./server/apps.sm.js./callSMF/fetchPreferredSubApp/0"
+);
+// TODO: Implement a fundamental settings page where users can change this
+// SMF route for fetching the best sub-app (with ample warnings about doing so).
 
 
 
-export function render({url, homeURL, tailURL}) {
-  let {scoreHandler, stateCache} = this.state;
+export function render(props) {
+  let {url, homeURL, tailURL, history, userID} = props;
+  this.constants(userID);
+  let {appDirID, userID: prevUserID} = history.state;
 
-  // Parse the appDirID segment from the URL, and look for a corresponding
-  // entry in the state cache.
-  let [ , appURLSegment, appDirIDSegment] = split(tailURL, "/");
-  verifyType(appDirIDSegment, "hex");
-  let cacheEntry = stateCache[appDirIDSegment];
+  // Parse the appDirIDSegment from the URL.
+  let appDirIDSegment = getFirstSegment(tailURL);
+  if (!hasType(appDirIDSegment, "hex")) {
+    return "404 error: Missing page."; // TODO: Improve.
+  }
 
-  // If no entry is found, call an action to load a new app.
-  if (!cacheEntry) {
-    this.do("loadNewApp", appDirIDSegment);
+  // If the history.state.appDirID has already been set, and for the same user,
+  // simply load the app of this appDirID.
+  if (appDirID && prevUserID === userID) {
+    let newHomeURL = homeURL + "/" + appDirIDSegment;
+    let newTailURL = substring(url, newHomeURL.length);
     return (
       <div className="app">
-        <div className="fetching">"..."</div>
+        <App {...props} key="a"
+          appDirID={appDirID} homeURL={newHomeURL} tailURL={newTailURL}
+        />
       </div>
     );
   }
 
-  // If there is an entry, extract the data from it.
-  let {
-    // appDirID is the (directory) ID of the app to be loaded.
-    appDirID,
-
-    // urlAPI is an object derived from the api.js module in the directory of
-    // the current app. It is used to determine what to do in response to a
-    // change in the URL.
-    urlAPI,
-  } = cacheEntry;
-
-  // Use urlApi to validate the appURLSegment.
-  let expectedAppURLSegment = urlAPI.appURLSegment;
-  if (appURLSegment !== expectedAppURLSegment) {
-    <div className="app">
-      <AppURLSegmentMismatchWarning key="w"
-        appURLSegment={appURLSegment}
-        expectedAppURLSegment={expectedAppURLSegment} tailURL={tailURL}
-      />
-    </div>
-  }
-
-  // Then call urlApi.getMostGeneralAppID() to get the appID of the loaded
-  // app's ancestor that is furthest up the line and which still implements the
-  // current tailURL. If the resulting appID is different from appDirIDSegment,
-  // trigger the "replaceURL" event, to replace this appDirID segment, causing
-  // this component to rerender once, but it won't change the the props below
-  // of the <App /> child component.
-  // (This is all done in order for users to be able to share URLs with each
-  // other while still maintaining as much of their individual preferences as
-  // possible for which sub-app should handle these URLs.)
-  let mostGeneralAppID = urlApi.getMostGeneralAppID();
-  if (appURLSegment !== mostGeneralAppID) {
-    let newURL = "~/" + appURLSegment + "/" + mostGeneralAppID + tailURL;
-    this.trigger("replaceURL", newURL);
-  }
-
-  // Redefine the homeURL and tailURL for the <App /> child, and use
-  // mostGeneralAppID rather than appURLSegment to prevent a redundant rerender.
-  let newHomeURL = homeURL + "/" + appURLSegment + "/" + mostGeneralAppID;
-  let newTailURL = substring(url, newHomeURL.length);
-  url = newHomeURL + newTailURL;
+  // Else call an action to load a new app derived from the appDirIDSegment.
+  // When resolving, this action triggers the "replaceState" event to update
+  // the history.state.
+  this.do("loadNewApp", appDirIDSegment);
   return (
     <div className="app">
-      <App key="a"
-        appDirID={appDirID} url={url} homeURL={newHomeURL} tailURL={newTailURL}
-      />
+      <div className="fetching">"..."</div>
     </div>
   );
 }
@@ -100,54 +54,112 @@ export function render({url, homeURL, tailURL}) {
 
 export const events = [
   ...urlEvents,
+  "pushState",
+  "replaceState",
 ];
 
 
 export const actions = {
   ...urlActions,
 
-  // "redirectToStartApp": async function() {
-  //   let {localStorage, userID} = this.props;
-  //   let startURL = localStorage.getItem("startURL");
-  //   if (!startURL && userID) {
-  //     startURL = await fetchPrivate(abs(
-  //       "./_startURLs.att./entry/k/" + userID
-  //     )).catch(err => {
-  //       console.warn("Could not fetch user's start URL");
-  //       return undefined;
-  //     });
-  //     if (startURL) {
-  //       localStorage.setItem("startURL", startURL);
-  //     }
-  //   }
-  //   if (startURL) {
-  //     this.trigger("replaceState", "~/" + startURL);
-  //   }
-  //   else {
-  //     this.trigger("replaceState", "~/apps");
-  //   }
-  // },
+  // AppLoader needs to overwrite the push/replaceState actions/events from
+  // urlActions, such that they use the api.js module to transform the
+  // appDirIDSegment to the ID of the most general app that implements the
+  // given tailURL.
+  "pushState": async function(stateAndURL) {
+    stateAndURL = await this.do("getTransformedStateAndURL", stateAndURL);
+    return this.trigger("pushState", stateAndURL);
+  },
+  "replaceState": async function(stateAndURL) {
+    stateAndURL = await this.do("getTransformedStateAndURL", stateAndURL);
+    return this.trigger("replaceState", stateAndURL);
+  },
+
+  "getTransformedStateAndURL": async function([childState = null, url]) {
+    let {history: {state}, homeURL} = this.props;
+    let {appDirID} = state ??= {};
+
+    // First put the childState on a state within its own property, as to not
+    // overwrite e.g. the appDirID property of state, used by this component.
+    state = {...state, childState: childState};
+    
+    // Then if appDirID is undefined, meaning that the current app hasn't
+    // loaded yet, or if url does not start with homeURL, simply return state
+    // and url as they are.
+    if (!appDirID || substring(url, 0, homeURL.length) !== homeURL) {
+      return [state, url];
+    }
+  
+    // Else split the tail URL in the first appDirID segment, followed by the
+    // rest of the URL, which we can refer to as the appTailURL, and call
+    // fetchMostGeneralAppDirIDSegment() to get the most general appDirID
+    // segment replacement (which is done to let users to share URLs where the
+    // resulting apps can still depend on user preferences, while keeping the
+    // semantics of the URL the same).
+    let tailURL = substring(url, homeURL.length);
+    let appDirIDSegment = getFirstSegment(tailURL);
+    let appTailURL = substring(tailURL, 1 + appDirIDSegment.length);
+    let mostGeneralAppDirID =
+      await fetchMostGeneralAppDirIDSegment(appDirID, appTailURL);
+
+    // If fetchMostGeneralAppDirIDSegment() returns falsy, it means that the
+    // url is outside of the current app's API, which means that we should
+    // erase appDirID from the new state such that the AppLoader will load a
+    // fresh app.
+    if (!mostGeneralAppDirID) {
+      state = {...state, appDirID: undefined};
+      return [state, url];
+    }
+
+    // Else keep the appDirID state, but overwrite the appDirIDSegment of url
+    // with the mostGeneralAppDirID.
+    let transformedURL = homeURL + "/" + mostGeneralAppDirID + appTailURL;
+    return [state, transformedURL];
+  },
+
 
   "loadNewApp": async function(appDirIDSegment) {
-    let {localStorage, userID} = this.props;
+    verifyType(appDirIDSegment, "hex")
+    let {url, userID} = this.props;
 
-    // Look in the user's own preferences to see if the have a preferred sub-
-    // app to substitute the starting appDirID.
-    let appDirID = await fetchUsersOwnPreferredAppIDIfAny(
-      appDirIDSegment, userID, localStorage
-    ) ?? appDirIDSegment;
-    
-    // Query the server for the top-rated sub-app of the app pointed to by
-    // appDirID, along with.. Hm, you also need all the URL-API-defining appIDs,
-    // and we need the api.js object for each one as well, which are then all
-    // combined into the urlAPI object, and the stateCache is finally updated
-    // with a duplicate entry for all.. no only for the current appDirIDSegment
-    // as well as all its API-defining descendant appIDs (but not the ancestor
-    // apps!). TODO: Do all this.. 
-    appDirID = await fetchTopRatedSubAppID(appDirID, )
+    // Query the route of fetchBestSubAppRouteSubstring with "/" +
+    // appDirIDSegment added at the end, and make it a private query iff the
+    // user is logged in.
+    if (hasType(fetchBestSubAppRouteSubstring, "Route")) {
+      fetchBestSubAppRouteSubstring =
+        await fetchBestSubAppRouteSubstring.fetchString();
+    }
+    let fetchBestSubAppRoute = fetchBestSubAppRouteSubstring + "/" +
+      appDirIDSegment;
+    let fetchFun = userID ? fetchPrivate : fetch;
+    let appDirID = await fetchFun(fetchBestSubAppRoute);
+
+    // Check that the URL and the user haven't changed in the meantime, then
+    // replace the history state with the resulting appDirID of the best sub-
+    // app to load for the user.
+    let {curURL, curUserID} = this.getCurrent().props;
+    if (curURL === url && curUserID === userID) {
+      this.trigger("replaceState", [{appDirID: appDirID, userID: userID}, url]);
+    }
   },
 };
 
+
+export function getFirstSegment(url) {
+  let indOfSecondSlash = indexOf(tailURL, "/", 1);
+  let firstSegment = (indOfSecondSlash === -1) ?
+    substring(tailURL, 1) : substring(tailURL, 1, indOfSecondSlash);
+  return firstSegment;
+}
+
+
+export async function fetchMostGeneralAppDirIDSegment(appDirID, appTailURL) {
+  // First fetch the api.js module, which is expected to be in the app's home
+  // directory.
+  let apiModule = fetch(abs("../" + appDirID + "/api.js"));
+
+  // ...
+}
 
 
 export const styleSheets = [

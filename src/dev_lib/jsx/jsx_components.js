@@ -1053,12 +1053,13 @@ export class JSXInstanceInterface extends ObjectObject {
       "doAfterRender": this.doAfterRender,
       "doAfterFirstRender": this.doAfterFirstRender,
       "setState": this.setState,
+      "getCurrent": this.getCurrent,
       "rerender": this.rerender,
       "provideContext": this.provideContext,
       "subscribeToContext": this.subscribeToContext,
       "unsubscribeFromContext": this.unsubscribeFromContext,
       "getOwnContext": this.getOwnContext,
-      "constant": this.constant,
+      "constants": this.declareConstants,
       "reset": this.reset,
       "getSettings": this.getSettings,
       "getBoundingClientRect": this.getBoundingClientRect,
@@ -1150,6 +1151,14 @@ export class JSXInstanceInterface extends ObjectObject {
     }
   );
 
+  // getCurrent() returns a copy of this JSXInstanceInterface, only with all
+  // the properties (like props and state) updated to the current ones.
+  getCurrent = new DevFunction(
+    "getCurrent", {}, () => {
+      return new JSXInstanceInterface(this.jsxInstance);
+    }
+  );
+
   // rerender() is equivalent of calling setState() on the current state; it
   // just forces a rerender.
   rerender = new DevFunction("rerender", {}, ({interpreter}, []) => {
@@ -1196,7 +1205,7 @@ export class JSXInstanceInterface extends ObjectObject {
   );
 
 
-  // constant() is used to declare a set of constants for the instance, that
+  // constants() is used to declare a set of constants for the instance, that
   // will cause the instance to re-initialize its state (and rerender) should
   // they ever be changed. This is useful whenever initialize() depends on some
   // props, and you want to make sure that these props aren't changed, or if
@@ -1204,8 +1213,8 @@ export class JSXInstanceInterface extends ObjectObject {
   // Note that we choose this this ambiguous-but-short name, 'constant()', over
   // a more illustrative name, since that name would have to be
   // 'declareOrCheckConstants(),' which is too long.
-  constant = new DevFunction(
-    "constant", {}, ({interpreter, callerNode, execEnv}, [...constants]) => {
+  declareConstants = new DevFunction(
+    "constants", {}, ({interpreter, callerNode, execEnv}, [...constants]) => {
       this.jsxInstance.declareOrCheckConstants(
         constants, interpreter, callerNode, execEnv
       );
