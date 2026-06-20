@@ -46,3 +46,18 @@ export const hasType = new DevFunction(
     }
   },
 );
+
+export const hasTypes = new DevFunction(
+  "hasTypes", {typeArr: ["array", "array"]},
+  ({callerNode, execEnv}, [valArr, typeArr]) => {
+    try {
+      _verifyTypes(valArr, typeArr, callerNode, execEnv);
+      return true;
+    } catch (err) {
+      if (err instanceof ArgTypeError) {
+        return false;
+      }
+      else throw err;
+    }
+  },
+);

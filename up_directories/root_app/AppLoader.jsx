@@ -2,15 +2,17 @@
 import {clearPermissions} from 'query';
 import {urlActions, urlEvents} from "./urlActions.js";
 
-import {substring, split} from 'string';
+import {substring, split, at, slice} from 'string';
 import {fetchPrivate, fetch} from 'query';
-import {hasType, verifyType} from 'type';
+import {hasType, hasTypes, verifyType} from 'type';
 
-const fetchBestSubAppRouteSubstring = abs(
-  "./server/apps.sm.js./callSMF/fetchPreferredSubApp/0"
+const fetchBestSubAppRouteTemplateStart = abs(
+  "./server/apps.sm.js./callSMF/fetchPreferredSubApp/"
 );
+const fetchBestSubAppRouteTemplateEnd = "";
 // TODO: Implement a fundamental settings page where users can change this
-// SMF route for fetching the best sub-app (with ample warnings about doing so).
+// SMF route template for fetching the best sub-app (with ample warnings about
+// doing so).
 
 
 
@@ -122,15 +124,15 @@ export const actions = {
     verifyType(appDirIDSegment, "hex")
     let {url, userID} = this.props;
 
-    // Query the route of fetchBestSubAppRouteSubstring with "/" +
-    // appDirIDSegment added at the end, and make it a private query iff the
+    // Query the route of fetchBestSubAppRouteTemplateStart + appDirIDSegment +
+    // fetchBestSubAppRouteTemplateEnd, and make it a private query iff the
     // user is logged in.
-    if (hasType(fetchBestSubAppRouteSubstring, "Route")) {
-      fetchBestSubAppRouteSubstring =
-        await fetchBestSubAppRouteSubstring.fetchString();
+    if (hasType(fetchBestSubAppRouteTemplateStart, "Route")) {
+      fetchBestSubAppRouteTemplateStart =
+        await fetchBestSubAppRouteTemplateStart.fetchString();
     }
-    let fetchBestSubAppRoute = fetchBestSubAppRouteSubstring + "/" +
-      appDirIDSegment;
+    let fetchBestSubAppRoute = fetchBestSubAppRouteTemplateStart +
+      appDirIDSegment + fetchBestSubAppRouteTemplateEnd;
     let fetchFun = userID ? fetchPrivate : fetch;
     let appDirID = await fetchFun(fetchBestSubAppRoute);
 
@@ -156,9 +158,73 @@ export function getFirstSegment(url) {
 export async function fetchMostGeneralAppDirIDSegment(appDirID, appTailURL) {
   // First fetch the api.js module, which is expected to be in the app's home
   // directory.
-  let apiModule = fetch(abs("../" + appDirID + "/api.js"));
+  let apiModule = await fetch(abs("../" + appDirID + "/api.js")).catch(
+    err => false
+  );
+  if (!apiModule) throw (
+    "Missing api.js module (in directory #" + appDirID + ")"
+  );
 
-  // ...
+  // Go through each entry in the default export, which ought to be an array
+  // of url substring and appDirID identifier pairs, until the first match is
+  // found.
+  let urlSubstringAndAppIdentPairArr = apiModule.default;
+  if (!hasType(urlSubstringAndAppIdentPairArr, "array")) throw (
+    "Default export of api.js module is not an array"
+  );
+  let len = urlSubstringAndAppIdentPairArr.length;
+  let urlSubstring, appIdent;
+  for (let i = 0; i < len; i++) {
+    // Extract urlSubstring and appIdent.
+    let urlSubstringAndAppIdentPair = urlSubstringAndAppIdentPairArr[i];
+    if (!hasType(urlSubstringAndAppIdentPair, "array")) throw (
+      "Default export of api.js module contains a non-array entry"
+    );
+    if (!hasTypes(urlSubstringAndAppIdentPair, ["string", "string"])) throw (
+      "Default export of api.js module contains nested non-string values"
+    );
+    [urlSubstring, appIdent] = urlSubstringAndAppIdentPair;
+
+    // If urlSubstring matches appTailURL, break the loop.
+    if (urlSubstring === appTailURL) {
+      break;
+    }
+    let lastChar = at(urlSubstring, -1);
+    if (
+      lastChar === "*" && substring(appTailURL, 0, urlSubstring.length - 1) ===
+        slice(urlSubstring, 0, -1)
+    ) {
+      break;
+    }
+  }
+
+  // If no match was found, return false to signify this.
+  if (!appIdent) {
+    return false;
+  }
+
+  // Else if a match was found, check whether it is a hexadecimal string, in
+  // which case interpret as the appDirID itself and return it as is.
+  if (hasType(appIdent, "hex")) {
+    let mostGeneralAppDirID = appIdent;
+    return mostGeneralAppDirID;
+  }
+
+  // And if it is not a hexadecimal string, look in the dependencies module
+  // expecting to find the appDirID at depModule.default.this.directories
+  // [appIdent].
+  try {
+    let depModule = await fetch(abs("../" + appDirID + "/dependencies.js"));
+    let mostGeneralAppDirID = depModule.default.this.directories[appIdent];
+    if (!hasType(mostGeneralAppDirID, "hex")) throw "";
+    return mostGeneralAppDirID;
+  }
+  catch (err) {
+    throw (
+      `Error when looking up "${appIdent}", obtained from the api.js ` +
+      "module, in the dependencies.js module."
+    );
+  }
 }
 
 
