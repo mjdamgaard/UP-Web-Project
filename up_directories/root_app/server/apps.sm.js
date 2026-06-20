@@ -1,4 +1,8 @@
 
+import {post, fetch, fetchPrivate} from 'query';
+import {getRequestingUserID, checkRequestOrigin} from 'request';
+import {verifyTypes} from 'type';
+import {parse, stringify} from 'json';
 
 
 // The algorithm that this SM implements for getting the best sub-app to load
@@ -44,8 +48,23 @@
 
 
 export async function fetchPreferredSubApp(appDirID, scoreHandlerID = "0") {
+  verifyTypes([appDirID, scoreHandlerID], ["hex", "hex"]);
 
-  // TODO: Implement
+  // Check that the post request was sent from the ../main.jsx app component.
+  checkRequestOrigin(true, [
+    abs("../main.jsx"),
+  ]);
+
+  // Get the ID of the requesting user, which is undefined if not logged in.
+  let userID = getRequestingUserID();
+
+  // If the user is logged in, fetch the preferences object, alongside the
+  // subApps.att ("cache") entry for scoreHandlerID and appDirID.
+  let entryKey = "" // TODO: Use hex lib...
+  let [preferences, subAppIDListString] = await Promise.all([
+    fetchUserPreferences(),
+    fetch(abs("./subApps.att/entry"))
+  ]);
 }
 
 
@@ -66,17 +85,34 @@ export async function fetchPreferredSubAppList(appDirID, scoreHandlerID = "0") {
 /* SMFs for fetching and updating user preferences */
 
 
-export async function fetchUserPreference(appDirID) {
+export async function fetchUserPreferences() {
+  // Check that the post request was sent from the ../main.jsx app component.
+  checkRequestOrigin(true, [
+    abs("../main.jsx"),
+  ]);
 
-  // TODO: Implement
+  // Get the ID of the requesting user, which is undefined if not logged in.
+  let userID = getRequestingUserID();
+
+  if (!userID) throw (
+    "User is not logged in"
+  );
+
+  let prefJSON = fetchPrivate(abs("./_userPreferences.att./entry/k/" + userID));
+  let preferences = parse(prefJSON);
+  return preferences;
 }
 
 export async function updateUserPreference(appDirID, subAppDirID) {
-
-  // TODO: Implement
+  verifyTypes([appDirID, subAppDirID], ["hex", "hex?"]);
+  let preferences = await fetchUserPreferences(appDirID);
+  preferences = {...preferences, [appDirID]: subAppDirID};
+  let newPrefJSON = stringify(preferences)
+  return await post(
+    abs("./_userPreferences.att./_insert/k/" + userID), newPrefJSON
+  );
 }
 
 export async function removeUserPreference(appDirID) {
-
-  // TODO: Implement
+  return await updateUserPreference(appDirID, undefined);
 }
