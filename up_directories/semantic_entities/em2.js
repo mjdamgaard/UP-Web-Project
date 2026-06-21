@@ -37,7 +37,7 @@ export const rootApp = {
   "Component path": abs("../root_app/main.jsx"),
   "Example component path": undefined,
   "No margins": true,
-  "GitHub repository":
+  "Public repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/root_app",
   "Creator(s)": getUserEntPath("1", "1"),
@@ -83,7 +83,7 @@ export const upIndexPage01 = {
   "Name": "Index page 1.0",
   "Component path": abs("../root_app/index_pages/IndexPage01.jsx"),
   "Example component path": undefined,
-  "GitHub repository":
+  "Public repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/root_app/index_pages",
   "Creator(s)": getUserEntPath("1", "1"),
@@ -95,7 +95,7 @@ export const upIndexPage02 = {
   "Name": "Example index page",
   "Component path": abs("../root_app/index_pages/IndexPage02.jsx"),
   "Example component path": undefined,
-  "GitHub repository":
+  "Public repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/root_app/index_pages",
   "Creator(s)": getUserEntPath("1", "1"),
@@ -114,7 +114,7 @@ export const classEntityPage = {
   "Name": "Initial class entity page",
   "Component path": abs("../entity_browser/entity_pages/ClassPage.jsx"),
   "Example props": {entKey: abs("./em1.js;get/entities")},
-  "GitHub repository":
+  "Public repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/entity_browser/entity_pages",
   "Creator(s)": getUserEntPath("1", "1"),
@@ -126,7 +126,7 @@ export const commentEntityPage = {
   "Name": "Initial comment entity page",
   "Component path": abs("../entity_browser/entity_pages/CommentPage.jsx"),
   "Example props": {entKey: abs("./em1.js;get/exampleComment")},
-  "GitHub repository":
+  "Public repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/entity_browser/entity_pages",
   "Creator(s)": getUserEntPath("1", "1"),
@@ -139,7 +139,7 @@ export const commentElement = {
   "Name": "Initial comment element",
   "Component path": abs("../entity_browser/entity_elements/CommentElement.jsx"),
   "Example props": {entKey: abs("+;get/exampleComment")},
-  "GitHub repository":
+  "Public repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/entity_browser/entity_elements",
   "Creator(s)": getUserEntPath("1", "1"),
@@ -162,7 +162,7 @@ export const scalarEntityPage = {
   "Class": abs("./em1.js;get/components"),
   "Name": "Initial scalar entity page",
   "Component path": "/1/2/entity_pages/ScalarPage.jsx",
-  "GitHub repository":
+  "Public repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/entity_browser/entity_pages",
   "Creator(s)": getUserEntPath("1", "1"),
@@ -173,7 +173,7 @@ export const qualityEntityPage = {
   "Class": abs("./em1.js;get/components"),
   "Name": "Initial quality entity page",
   "Component path": abs("../entity_browser/entity_pages/QualityPage.jsx"),
-  "GitHub repository":
+  "Public repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/entity_browser/entity_pages",
   "Creator(s)": getUserEntPath("1", "1"),
@@ -184,7 +184,7 @@ export const generalEntityPage2 = {
   "Class": abs("./em1.js;get/components"),
   "Name": "General entity page with 'About' as the default tab",
   "Component path": abs("../entity_browser/entity_pages/GeneralEntityPage2.jsx"),
-  "GitHub repository":
+  "Public repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/entity_browser/entity_pages",
   "Creator(s)": getUserEntPath("1", "1"),
@@ -195,7 +195,7 @@ export const componentEntityPage = {
   "Class": abs("./em1.js;get/components"),
   "Name": "Initial component entity page",
   "Component path": abs("../entity_browser/entity_pages/ComponentEntityPage.jsx"),
-  "GitHub repository":
+  "Public repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/entity_browser/entity_pages",
   "Creator(s)": getUserEntPath("1", "1"),
@@ -209,7 +209,7 @@ export const flipGame = {
   "Name": "Flip game 1.0",
   "Component path": abs("../tutorials/flip_game_01/FlipGame01.jsx"),
   "Example props": {},
-  "GitHub repository":
+  "Public repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/tutorials/flip_game_01",
   "Creator(s)": getUserEntPath("1", "1"),
@@ -221,7 +221,7 @@ export const mastermindGame = {
   "Name": "Mastermind game 1.0",
   "Component path": abs("../tutorials/mastermind_app_01/main.jsx"),
   "Example props": {},
-  "GitHub repository":
+  "Public repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/tutorials/mastermind_app_01/main.jsx",
   "Creator(s)": getUserEntPath("1", "1"),
@@ -232,7 +232,7 @@ export const messageAppExample = {
   "Class": abs("./em1.js;get/components"),
   "Name": "Message app",
   "Component path": abs("../tutorials/message_app/main.jsx"),
-  "GitHub repository":
+  "Public repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
     "dir_uploads/up_directories/tutorials/message_app/main.jsx",
   "Creator(s)": getUserEntPath("1", "1"),

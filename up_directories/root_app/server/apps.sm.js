@@ -3,6 +3,10 @@ import {post, fetch, fetchPrivate} from 'query';
 import {getRequestingUserID, checkRequestOrigin} from 'request';
 import {verifyTypes} from 'type';
 import {parse, stringify} from 'json';
+import {split} from 'string';
+import {at} from 'array';
+
+const maxRecLevel = 3;
 
 
 // The algorithm that this SM implements for getting the best sub-app to load
@@ -59,13 +63,65 @@ export async function fetchPreferredSubApp(appDirID, scoreHandlerID = "0") {
   let userID = getRequestingUserID();
 
   // If the user is logged in, fetch the preferences object, alongside the
-  // subApps.att ("cache") entry for scoreHandlerID and appDirID.
-  let entryKey = "" // TODO: Use hex lib...
-  let [preferences, subAppIDListString] = await Promise.all([
-    fetchUserPreferences(),
-    fetch(abs("./subApps.att/entry"))
-  ]);
+  // subApps.att ("cache") entry for scoreHandlerID and appDirID, and else just
+  // fetch the latter.
+  let preferences, subAppIDListString;
+  if (userID) {
+    [preferences, subAppIDListString] = await Promise.all([
+      fetchUserPreferences(),
+      fetch(abs("./subApps.att/entry/l/" + scoreHandlerID + "/k/" + appDirID))
+    ]);
+  }
+  else {
+    subAppIDListString =
+      fetch(abs("./subApps.att/entry/l/" + scoreHandlerID + "/k/" + appDirID));
+  }
+  
+  // Then redirect to the recursive fetchPreferredSubAppHelper(). 
+  return await fetchPreferredSubAppHelper(
+    appDirID, scoreHandlerID, preferences, subAppIDListString
+  );
 }
+
+async function fetchPreferredSubAppHelper(
+  appDirID, scoreHandlerID, preferences, subAppIDListString, recLevel = 0
+) {
+  // Parse the subAppIDListString into an array, putting the initial appDirID
+  // itself in front of the list.
+  let appIDListString = !subAppIDListString ? appDirID :
+    appDirID + "," + subAppIDListString;
+  let appIDArr = split(appIDListString, ",");
+
+  // If the user is not logged in, or if the maximal recursion level has been
+  // reached, simply return the last entry of this list.
+  if (!preferences || recLevel >= maxRecLevel) {
+    return at(appIDArr, -1);
+  }
+
+  // Else loop through the appIDArr until a user preference overwrites the next
+  // subAppDirID in the list.
+  let subAppDirID;
+  let len = appIDArr.length;
+  for (let i = 0; i < len; i++) {
+    subAppDirID = appIDArr[i];
+    let substituteAppID = preferences[subAppDirID];
+    if (substituteAppID && substituteAppID !== subAppIDArr[i + 1]) {
+      subAppIDListString = await fetch(abs(
+        "./subApps.att/entry/l/" + scoreHandlerID + "/k/" + substituteAppID
+      ));
+      return await fetchPreferredSubAppHelper(
+        substituteAppID, scoreHandlerID, preferences, subAppIDListString,
+        recLevel + 1
+      );
+    }
+  }
+
+  // And if no preference caused a divergence from the list, return the last
+  // element in the list (which might be the initial appDirID itself).
+  return subAppDirID; 
+}
+
+
 
 
 export async function updatePreferredSubApp(appDirID, scoreHandlerID = "0") {
@@ -75,20 +131,24 @@ export async function updatePreferredSubApp(appDirID, scoreHandlerID = "0") {
 
 
 export async function fetchPreferredSubAppList(appDirID, scoreHandlerID = "0") {
-
-  // TODO: Implement
+  let subAppIDListString = await fetch(abs(
+    "./subApps.att/entry/l/" + scoreHandlerID + "/k/" + appDirID
+  ));
+  return subAppIDListString ? split(subAppIDListString, ",") : [];
 }
+
 
 
 
 
 /* SMFs for fetching and updating user preferences */
 
-
 export async function fetchUserPreferences() {
   // Check that the post request was sent from the ../main.jsx app component.
+  let appBrowserPath = await abs("../../app_browser/main.jsx").fetchString();
   checkRequestOrigin(true, [
     abs("../main.jsx"),
+    appBrowserPath,
   ]);
 
   // Get the ID of the requesting user, which is undefined if not logged in.
@@ -103,6 +163,7 @@ export async function fetchUserPreferences() {
   return preferences;
 }
 
+
 export async function updateUserPreference(appDirID, subAppDirID) {
   verifyTypes([appDirID, subAppDirID], ["hex", "hex?"]);
   let preferences = await fetchUserPreferences(appDirID);
@@ -112,6 +173,7 @@ export async function updateUserPreference(appDirID, subAppDirID) {
     abs("./_userPreferences.att./_insert/k/" + userID), newPrefJSON
   );
 }
+
 
 export async function removeUserPreference(appDirID) {
   return await updateUserPreference(appDirID, undefined);

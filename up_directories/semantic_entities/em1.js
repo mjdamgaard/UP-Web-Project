@@ -873,12 +873,12 @@ export const components = {
   "Superclass": abs("./em1.js;get/entities"),
   "Common properties": [
     "Component path", "Example component path", "Example props",
-    "getExampleProps", "No margins", "No header", "URL Segment",
+    "getExampleProps", "No margins", "No header", "Is a prototype",
 
     // (These properties obviously have to been checked by the user community,
     // and the entity ought to be down-rated as a member of this class if they
     // are not true:)
-    "GitHub repository", "Creator(s)",
+    "Public repository", "Creator(s)",
   ],
   "Description": abs("./em1_aux.js;get/componentsDesc"),
 };

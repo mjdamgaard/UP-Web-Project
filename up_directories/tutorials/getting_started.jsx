@@ -327,7 +327,7 @@ const page = <div className="text-page">
         '  "Example component path": undefined,\n',
         '  "No margins": NO_MARGINS,\n',
         '  "No header": NO_HEADER,\n',
-        '  "GitHub repository": GITHUB_REPO_URL,\n',
+        '  "Public repository": GITHUB_REPO_URL,\n',
         '  "Creator(s)": () => fetchCreatorEntPath(),\n',
         '  "Description": abs("./em.js;get/appDescription"),\n',
         '};'

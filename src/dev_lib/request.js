@@ -8,10 +8,6 @@ import {
 } from './query/src/flags.js';
 
 
-// TODO: Implement handling for when the whitelist contains Route instances
-// (although we do want for this check to be synchronous, so I'm not sure what
-// to do, actually).
-
 
 export const checkRequestOrigin = new DevFunction(
   "checkRequestOrigin", {typeArr: ["boolean", "array?"]},

@@ -100,9 +100,9 @@ export const actions = {
 
     // Else return the transformed state along with the same url for now, but
     // also call fetchMostGeneralAppDirIDSegment() to run in the background,
-    // and then when it resolves, trigger "replaceState" again to adjust the
-    // url with the mostGeneralAppDirID as the new appDirIDSegment, unless this
-    // url has changed in the meantime. Also, if mostGeneralAppDirID is falsy,
+    // and when it resolves, trigger "replaceState" again to adjust the url
+    // with the mostGeneralAppDirID as the new appDirIDSegment, unless this url
+    // has changed in the meantime. Also, if mostGeneralAppDirID is falsy,
     // simply log a warning, but do not replace the URL.
     fetchMostGeneralAppDirIDSegment(appDirID, appTailURL).then(
       mostGeneralAppDirID => {

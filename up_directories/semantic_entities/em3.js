@@ -1,22 +1,60 @@
 
 
-// A class of apps, where each app can have several implementations/versions
-// of itself. The app entities thus only defines the overall goal of the app,
-// in their Description property. And they might also come with an initial
-// prototype component.
+// 'Apps' is a subclass of Components that are meant as standalone
+// applications. Rather than being defined by a"Component path," they are
+// defined by a home directory, which is supposed to contain a main.jsx module
+// defining the app. (This directory is also meant to contain an api.js module
+// defining the URL API of the app, by the way.)   
 export const apps = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Apps",
-  "Superclass": abs("./em1.js;get/entities"),
+  "Superclass": abs("./em1.js;get/components"),
   "Common properties": [
-    // (Optional) A prototype component entity showcasing the idea and the
-    // purpose behind the app. Note that this component might also be a text
-    // page, either with embedded examples showcasing the visions, or with
-    // links to such examples.
-    "Prototype",
+    "App directory ID", "No margins", "No header", "Is a prototype",
+    "Public repository", "Creator(s)",
   ],
   "Description": "The class of all user-programmed apps.",
 };
+
+
+
+// The (successive) 'Versions' of a given app, which we will also sometimes
+// refer to as the 'sub-apps,' are apps that extends the given app, or
+// implements it more fully (e.g. in case the given app is a prototype). This
+// relation can thus be used to form a tree of apps, where each child node is
+// an app that extends/implements the app of the parent node. (Actually, we
+// should say a 'directional graph' rather than a 'tree,' since an app can
+// implement/extend several different parent nodes.) For instance, a SoMe app
+// might have a basic prototype app at the root of its "tree"/dir. graph which
+// just implements a a post feed from all your connections. The list of
+// successive versions might then contain a new app prototype that also
+// implements private messages, and another app that implements groups, and yet
+// another app that doesn't add any new features but simply improves on the UI
+// of the starting prototype. And once you make an app that does all these
+// three things at the same time, you might add that as a successor to any and
+// all these children (which is how different branches of the "tree" can end
+// up pointing to the same node).
+// It is important to note that you don't want to just up-rate the newest and
+// best implementation of the app directly as a relevant, *successive* version
+// to the root app itself, namely since you want the resulting "app tree" to
+// essentially branch with only one added feature/concept at a time, such that
+// the users can explore different versions of the app, and each be able to
+// select their own preferred version.
+export const versionsRel = {
+  "Class": abs("./em1.js;get/relations"),
+  "Name": "Versions",
+  "getQualityName": objKey => "Is a relevant successive version of ${" +
+    objKey + "}",
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
+    "successive version of ${" + objKey + "}",
+  "getClassName": objKey => "Versions of ${" + objKey + "}",
+  "Object domain": abs("./em3.js;get/apps"),
+  "Subject domain": abs("./em3.js;get/apps"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
+  "Description": "TODO: Write description.",
+};
+
+
 
 
 // Some app subclasses:
@@ -33,47 +71,12 @@ export const blogging = {
   "Description": "All apps related to blogging, both specific " +
     "blogs as well as apps that serves as indexes for blogs.",
 };
-export const startApps = {
+export const appBrowserApps = {
   "Class": abs("./em1.js;get/classes"),
-  "Name": "Start apps",
+  "Name": "App browsers",
   "Superclass": abs("./em3.js;get/apps"),
-  "Description": "All apps that can be used as the start app for " +
-    "the website, serving as an index page for it.",
+  "Description": "Apps used to browse other apps.",
 };
-
-
-
-// 'App versions' are specific implementations of a given app.
-export const appVersions = {
-  "Class": abs("./em1.js;get/classes"),
-  "Name": "App versions",
-  "Superclass": abs("./em1.js;get/entities"),
-  "Common properties": [
-    // The app entity that this entity is a version of.
-    "App",
-    // A component entity that showcases and/or documents the app version.
-    "Example component",
-    // The component entity that actually implements the app.
-    "Implementation",
-  ],
-  "Description": "The class of all user-programmed apps.",
-};
-
-
-// The relation to connect an app with its versions.
-export const appVersionsRel = {
-  "Class": abs("./em1.js;get/relations"),
-  "Name": "Versions",
-  "getQualityName": objKey => "Is a version of ${" + objKey + "}",
-  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a version " +
-    "of ${" + objKey + "}",
-  "getClassName": objKey => "Versions of ${" + objKey + "}",
-  "Object domain": abs("./em3.js;get/apps"),
-  "Subject domain": abs("./em3.js;get/appVersions"),
-  "Metric": abs("./em1.js;get/gradingMetric"),
-  "Description": abs("./em1_aux.js;get/membersDesc"),
-};
-
 
 
 

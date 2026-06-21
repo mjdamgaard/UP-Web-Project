@@ -18,7 +18,7 @@ export const app = {
   "Example component path": undefined,
   "No margins": NO_MARGINS,
   "No header": NO_HEADER,
-  "GitHub repository": GITHUB_REPO_URL,
+  "Public repository": GITHUB_REPO_URL,
   "Creator(s)": () => fetchCreatorEntPath(),
   "Description": abs("./em.js;get/appDescription"),
 };
