@@ -18,7 +18,7 @@ export const apps = {
 
 
 
-// The (successive) 'Versions' of a given app, which we will also sometimes
+// The (succeeding) 'Versions' of a given app, which we will also sometimes
 // refer to as the 'sub-apps,' are apps that extends the given app, or
 // implements it more fully (e.g. in case the given app is a prototype). This
 // relation can thus be used to form a tree of apps, where each child node is
@@ -27,7 +27,7 @@ export const apps = {
 // implement/extend several different parent nodes.) For instance, a SoMe app
 // might have a basic prototype app at the root of its "tree"/dir. graph which
 // just implements a a post feed from all your connections. The list of
-// successive versions might then contain a new app prototype that also
+// succeeding versions might then contain a new app prototype that also
 // implements private messages, and another app that implements groups, and yet
 // another app that doesn't add any new features but simply improves on the UI
 // of the starting prototype. And once you make an app that does all these
@@ -35,7 +35,7 @@ export const apps = {
 // all these children (which is how different branches of the "tree" can end
 // up pointing to the same node).
 // It is important to note that you don't want to just up-rate the newest and
-// best implementation of the app directly as a relevant, *successive* version
+// best implementation of the app directly as a relevant, *succeeding* version
 // to the root app itself, namely since you want the resulting "app tree" to
 // essentially branch with only one added feature/concept at a time, such that
 // the users can explore different versions of the app, and each be able to
@@ -43,10 +43,10 @@ export const apps = {
 export const versionsRel = {
   "Class": abs("./em1.js;get/relations"),
   "Name": "Versions",
-  "getQualityName": objKey => "Is a relevant successive version of ${" +
+  "getQualityName": objKey => "Is a relevant succeeding version of ${" +
     objKey + "}",
   "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
-    "successive version of ${" + objKey + "}",
+    "succeeding version of ${" + objKey + "}",
   "getClassName": objKey => "Versions of ${" + objKey + "}",
   "Object domain": abs("./em3.js;get/apps"),
   "Subject domain": abs("./em3.js;get/apps"),

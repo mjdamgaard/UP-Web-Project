@@ -157,25 +157,32 @@ export class AppStyler01 {
     // Record isTrusted in the this.componentTrustValues.
     this.componentTrustValues[componentID] = isTrusted;
 
-    // If the styleModule is a CSSModule, we use a default transform format
-    // where the given style sheet will simply target the component and all
-    // its descendants that does not have keys the begin with "_". And if a
-    // descendant is reached with a key starting with "_", it will then get
-    // its own app scope.
+
+    // If the styleModule is a CSSModule, or an array of such, we use a default
+    // transform format that depends on whether componentModule has an export
+    // called "isolatedDescendants," which is supposed to be an array of
+    // descendant component keys, possibly with "*" wildcards. If this export
+    // exists, let the childRules have an undefined transform for each of these
+    // descendant keys, meaning that the descendants will be isolated. And if
+    // not, let isolatedDescendants default to ["_*"] such that all descendant
+    // component keys that starts with "_" will be isolated (and thus get their
+    // own 'app scope' in other words).
     let transform, transformProps;
     if (styleModule instanceof CSSModule) {
-      transform = {
-        styleSheets: [styleModule],
-        childRules: [{key: "!_*", transform: "copy"}],
-      };
+      styleModule = [styleModule];
     }
-
-    // Or if it is an array of CSSModules, do something similar, but where the
-    // styeSheets array is set as that whole array. 
-    else if (!styleModule || styleModule instanceof Array) {
+    if (!styleModule || styleModule instanceof Array) {
+      let isolatedDescendantKeys =
+        getPropertyFromObject(componentModule, "isolatedDescendants") ??
+        ["_*"];
+      let childRules = [];
+      forEachValue(isolatedDescendantKeys, node, env, key => {
+        childRules.push({key: getString(key, env), transform: undefined});
+      });
+      childRules.push({key: "*", transform: "copy"});
       transform = {
         styleSheets: styleModule ? styleModule : [],
-        childRules: [{key: "!_*", transform: "copy"}],
+        childRules: childRules,
       };
     }
 
@@ -460,12 +467,12 @@ export class AppStyler01 {
     let {childRules = []} = parentTransform ?? {};
     let {interpreter} = env.scriptVars;
 
-    // Extract the transform and transformProps from the last child rule in the
-    // parent instance's childRules array where the key format matches this
+    // Extract the transform and transformProps from the first child rule in
+    // the parent instance's childRules array where the key format matches this
     // instance's key.
     let transform, transformProps, rule;
     let len = childRules.length;
-    for (let i = len - 1; i >= 0; i--) {
+    for (let i = 0; i < len; i++) {
       let {key: keyFormat} = rule = childRules[i];
       if (testKey(key, keyFormat)) {
         transform = rule.transform;
