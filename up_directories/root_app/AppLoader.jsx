@@ -130,10 +130,6 @@ export const actions = {
     // Query the route of fetchBestSubAppRouteTemplateStart + appDirIDSegment +
     // fetchBestSubAppRouteTemplateEnd, and make it a private query iff the
     // user is logged in.
-    if (hasType(fetchBestSubAppRouteTemplateStart, "Route")) {
-      fetchBestSubAppRouteTemplateStart =
-        await fetchBestSubAppRouteTemplateStart.fetchString();
-    }
     let fetchBestSubAppRoute = fetchBestSubAppRouteTemplateStart +
       appDirIDSegment + fetchBestSubAppRouteTemplateEnd;
     let fetchFun = userID ? fetchPrivate : fetch;
@@ -216,19 +212,21 @@ export async function fetchMostGeneralAppDirIDSegment(appDirID, appTailURL) {
     return mostGeneralAppDirID;
   }
 
-  // And if it is not a hexadecimal string, look in the dependencies module
-  // expecting to find the appDirID at depModule.default.this.directories
-  // [appIdent].
+  // And if it is not a hexadecimal string, look in the placeholders module
+  // expecting to find the appDirID at placeholdersModule.default.this-
+  // .directories[appIdent].
   try {
-    let depModule = await fetch(abs("../" + appDirID + "/dependencies.js"));
-    let mostGeneralAppDirID = depModule.default.this.directories[appIdent];
+    let placeholdersModule = 
+      await fetch(abs("../" + appDirID + "/placeholders.js"));
+    let mostGeneralAppDirID =
+      placeholdersModule.default.this.directories[appIdent];
     if (!hasType(mostGeneralAppDirID, "hex")) throw "";
     return mostGeneralAppDirID;
   }
   catch (err) {
     throw (
       `Error when looking up "${appIdent}", obtained from the api.js ` +
-      "module, in the dependencies.js module."
+      "module, in the placeholders.js module."
     );
   }
 }

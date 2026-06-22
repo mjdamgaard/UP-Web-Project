@@ -9,8 +9,6 @@ import * as AppHeader from "./AppHeader.jsx";
 import * as AppLoader from "./AppLoader.jsx";
 import {getFirstSegment} from "./AppLoader.jsx";
 
-import dependencies from "./dependencies.js";
-
 const {this: {"file_browser": fileBrowserID, "app_browser": appBrowserID}}
 
 const missingPageContent = "404 error: Missing page."; // TODO: Improve.

@@ -278,7 +278,8 @@ export class ScriptInterpreter {
 
   async executeModule(
     moduleNode, lexArr, strPosArr, script, modulePath, globalEnv, liveModules,
-    ancestorModules = [], finalCallbacks = [], isPrivate = false,
+    placeholdersModule = undefined, ancestorModules = [], finalCallbacks = [],
+    isPrivate = false,
   ) {
     // Check against infinite import recursion.
     if (ancestorModules.includes(modulePath)) throw new LoadError(
@@ -305,7 +306,8 @@ export class ScriptInterpreter {
     else {
       let liveModulePromise = this.executeModuleHelper(
         moduleNode, lexArr, strPosArr, script, modulePath, globalEnv,
-        liveModules, ancestorModules, finalCallbacks, isPrivate,
+        liveModules, placeholdersModule, ancestorModules, finalCallbacks,
+        isPrivate,
       ).then(
         liveModule => liveModule
       ).catch(
@@ -340,7 +342,7 @@ export class ScriptInterpreter {
 
   async executeModuleHelper(
     moduleNode, lexArr, strPosArr, script, modulePath, globalEnv, liveModules,
-    ancestorModules, finalCallbacks, isPrivate,
+    placeholdersModule, ancestorModules, finalCallbacks, isPrivate,
   ) {
     decrCompGas(moduleNode, globalEnv);
 
@@ -348,7 +350,7 @@ export class ScriptInterpreter {
     let moduleEnv = new Environment(
       globalEnv, "module", {
        modulePath: modulePath, lexArr: lexArr, strPosArr: strPosArr,
-       script: script,
+       script: script, placeholdersModule: placeholdersModule,
       }
     );
 
@@ -403,7 +405,9 @@ export class ScriptInterpreter {
       impStmt, callerModuleEnv
     );
 
-    let submodulePath = getAbsolutePath(curModulePath, impStmt.str);
+    let submodulePath = getAbsolutePath(
+      curModulePath, impStmt.str, impStmt, callerModuleEnv
+    );
     let ret = await this.import(
       submodulePath, impStmt, callerModuleEnv, false, true, false,
       ancestorModules, finalCallbacks, impStmt.isPrivate,
@@ -427,22 +431,7 @@ export class ScriptInterpreter {
       route = getAbsolutePath(curPath, route, callerNode, callerEnv);
     }
 
-    // If the absolute path contains non-hexadecimal ID placeholders for the
-    // upNodeID or the homeDirID, wrap it in a 'Route' object, which are also
-    // accepted by the standard query functions, and by this.fetch().
-    if (route[0] === "/") {
-      let [_, nodeIDSegment, dirIDSegment, ...restSegments] = route.split("/");
-      if (
-        nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment) ||
-        dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment)
-      ) {
-        route = new RouteObject(
-          route, nodeIDSegment, dirIDSegment, restSegments, curPath
-        );
-      }
-    }
-
-    // Then simple redirect to this.fetch(), and if assertJSModule is true,
+    // Then simply redirect to this.fetch(), and if assertJSModule is true,
     // assert that the returned value is a LiveJSModule instance.
     let ret = await this.fetch(
       route, callerNode, callerEnv, ancestorModules, finalCallbacks, isPrivate
@@ -512,7 +501,9 @@ export class ScriptInterpreter {
         // moduleNamespaceObj with the right LiveJSModule.
         if (impStmt.isAwait) {
           finalCallbacks.push(async () => {
-            let submodulePath = getAbsolutePath(curModulePath, impStmt.str);
+            let submodulePath = getAbsolutePath(
+              curModulePath, impStmt.str, imp, curModuleEnv
+            );
             let liveModule = await this.import(
               submodulePath, impStmt, curModuleEnv, false, true, false,
               undefined, undefined, isPrivate
@@ -1753,22 +1744,6 @@ export class ScriptInterpreter {
         if (expType === "string") {
           let curPath = environment.getModuleEnv().modulePath;
           ret = getAbsolutePath(curPath, expVal, expNode.exp, environment);
-
-          // If the resulting route contains non-hexadecimal ID placeholders
-          // for the upNodeID or the homeDirID, wrap it in a 'Route' object,
-          // which are also accepted by the standard query functions.
-          if (ret[0] === "/") {
-            let [_, nodeIDSegment, dirIDSegment, ...restSegments] =
-              ret.split("/");
-            if (
-              nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment) ||
-              dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment)
-            ) {
-              ret = new RouteObject(
-                ret, nodeIDSegment, dirIDSegment, restSegments, curPath
-              );
-            }
-          }
         }
         else if (expType === "number") {
           ret = Math.abs(expVal);
@@ -2078,7 +2053,7 @@ export class Environment {
   constructor(
     parent, scopeType = "block", {
       fun, inputArr, callerNode, callerEnv, thisVal, flags,
-      modulePath, lexArr, strPosArr, script,
+      modulePath, lexArr, strPosArr, script, placeholdersModule,
       scriptVars,
     } = {},
   ) {
@@ -2113,6 +2088,7 @@ export class Environment {
       this.lexArr = lexArr;
       this.strPosArr = strPosArr;
       this.script = script;
+      this.placeholdersModule = placeholdersModule;
       this.exports = [];
       this.liveModule = undefined;
     }
@@ -3260,92 +3236,12 @@ function checkAgainstJSXElements(val, node, env) {
 
 
 
-// A RouteObject can be returned by abs() in case the resulting absolute route
-// contains ID placeholders.
-export class RouteObject extends ObjectObject {
-  constructor(route, nodeIDSegment, dirIDSegment, restSegments, curPath) {
-    super("Route");
-    this.route = route;
-    this.nodeIDSegment = nodeIDSegment;
-    this.dirIDSegment = dirIDSegment;
-    this.restSegments = restSegments;
-    this.curPath = curPath;
-    this.members = {
-      fetchString: new DevFunction(
-        "fetchString", {isAsync: true},
-        async ({callerNode, execEnv, interpreter}, []) => {
-          return await fetchAndSubstituteNodeAndDirIDs(
-            this, callerNode, execEnv, interpreter
-          );
-        }
-      ),
-    };
-  }
-
-  toString() {
-    return this.route;
-  }
-}
-
-// fetchAndSubstituteNodeAndDirIDs() imports '~/dependencies.js' from the
-// local home directory and substitutes any of the node or directory ID
-// segments that are not already hexadecimal ID strings, but are instead
-// placeholders.
-export async function fetchAndSubstituteNodeAndDirIDs(
-  routeObject, callerNode, execEnv, interpreter,
-  ancestorModules = [], finalCallbacks = []
-) {
-  // Fetch the 'dependencies.js' module that is expected to be in the home
-  // directory of curPath. 
-  let {nodeIDSegment, dirIDSegment, restSegments, curPath} = routeObject;
-  let depsModulePath = getAbsolutePath(
-    curPath, "~/dependencies.js", callerNode, execEnv
-  );
-  let depsModule = await interpreter.fetch(
-    depsModulePath, callerNode, execEnv, ancestorModules, finalCallbacks
-  )
-
-  // Substitute any non-hexadecimal node or dir placeholder.
-  let nodeID = nodeIDSegment, dirID = dirIDSegment;
-  let shouldSubstituteNode = nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment);
-  let shouldSubstituteDir = dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment);
-  if (shouldSubstituteNode || shouldSubstituteDir) {
-    let dependencies = getPropertyFromObject(depsModule, "default");
-    let domain = shouldSubstituteNode ? nodeIDSegment : "this";
-    let domainDependencies = getPropertyFromObject(dependencies, domain);
-    if (shouldSubstituteNode) {
-      nodeID = getPropertyFromObject(domainDependencies, "nodeID");
-      // If nodeIDs[nodeIDSegment] is nullish, just use nodeIdSegment as it was,
-      // expecting an error to be thrown by query().
-      nodeID ??= nodeIDSegment;
-    }
-    if (shouldSubstituteDir) {
-      let dirs = getPropertyFromObject(domainDependencies, "directories");
-      dirID = getPropertyFromObject(dirs, dirIDSegment);
-      // If dirIDs[dirIDSegment] is nullish, just use dirIDSegment as it was,
-      // expecting an error to be thrown by query().
-      dirID ??= dirIDSegment;
-    }
-  }
-  
-  // Then construct and return the full substituted route.
-  let ret = "";
-  if (nodeID) ret += "/" + nodeID;
-  if (dirID) ret += "/" + dirID;
-  if (restSegments.length > 0) {
-    ret += "/" + restSegments.join("/");
-  }
-  return ret;
-}
-
-
 
 
 
 // TODO: Change the current syntactical implementation of Promise in the
 // language, and instead create a Promise ClassObject and make it one of the
 // few built-in global values (along with MutableObject etc. from above.)
-
 
 
 export class PromiseObject extends ObjectObject {
@@ -3729,10 +3625,6 @@ const SLASH_END_REGEX = /\/$/;
 export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
   if (!curPath) curPath = "/";
 
-  if (path instanceof RouteObject) {
-    return path;
-  }
-
   if (!path) throw new LoadError(
     `Ill-formed path: "${path}"`, callerNode, callerEnv
   );
@@ -3792,15 +3684,65 @@ export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
     `Ill-formed path: "${path}"`, callerNode, callerEnv
   );
 
-  // Then remove any trailing "/" from fullPath, unless that is the whole path,
-  // and return it. 
+  // Then remove any trailing "/" from fullPath, unless that is the whole path.
   if (fullPath !== "/") {
     fullPath = fullPath.replace(SLASH_END_REGEX, "");
   }
+
+  // And before returning the absolute path, if either the nodeID or the dirID
+  // segments are non-hexadecimal placeholders, call substituteNodeAndDirIDs()
+  // to substitute these placeholders with IDs gotten from the placeholder.js
+  // module.
+  let [_, nodeIDSegment, dirIDSegment, ...restSegments] = fullPath.split("/");
+  if (
+    nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment) ||
+    dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment)
+  ) {
+    let routeTail = !restSegments[0] ? "" : "/" + restSegments.join("/");
+    fullPath = substituteNodeAndDirIDs(
+      nodeIDSegment, dirIDSegment, routeTail, callerNode, callerEnv
+    );
+  }
+
   return fullPath;
 }
 
 
+function substituteNodeAndDirIDs(
+  nodeIDSegment, dirIDSegment, routeTail, callerNode, callerEnv,
+) {
+  let {placeholdersModule} = callerEnv.getModuleEnv();
+
+  // Substitute any non-hexadecimal node or dir placeholder.
+  let nodeID = nodeIDSegment, dirID = dirIDSegment;
+  let shouldSubstituteNode = nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment);
+  let shouldSubstituteDir = dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment);
+  if (shouldSubstituteNode || shouldSubstituteDir) {
+    let placeholders = getPropertyFromObject(placeholdersModule, "default");
+    let domain = shouldSubstituteNode ? nodeIDSegment : "this";
+    let domainPlaceholders = getPropertyFromObject(placeholders, domain);
+    if (shouldSubstituteNode) {
+      nodeID = getPropertyFromObject(domainPlaceholders, "nodeID");
+      // If nodeIDs[nodeIDSegment] is nullish, just use nodeIdSegment as it was,
+      // expecting an error to be thrown by query().
+      nodeID ??= nodeIDSegment;
+    }
+    if (shouldSubstituteDir) {
+      let dirs = getPropertyFromObject(domainPlaceholders, "directories");
+      dirID = getPropertyFromObject(dirs, dirIDSegment);
+      // If dirIDs[dirIDSegment] is nullish, just use dirIDSegment as it was,
+      // expecting an error to be thrown by query().
+      dirID ??= dirIDSegment;
+    }
+  }
+  
+  // Then construct and return the full substituted route.
+  let ret = "";
+  if (nodeID) ret += "/" + nodeID;
+  if (dirID) ret += "/" + dirID;
+  ret += routeTail;
+  return ret;
+}
 
 
 

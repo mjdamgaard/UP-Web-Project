@@ -158,7 +158,7 @@ export class DirectoryUpdater {
   // '.att', '.bt', and '.bbt') when "uploaded" will have the effect of
   // creating a corresponding relational table (effectively) server-side, if it
   // has not already been created before.
-  // The file name of 'dependencies.json' is treated in a special way, namely
+  // The file name of 'placeholders.json' is treated in a special way, namely
   // since it is transformed before being uploaded, by replacing the contained
   // dirName arrays with dirName--ID objects, where the IDs are read from the
   // shared directories.json file (i.e. the file from which this.dirData is
@@ -193,8 +193,8 @@ export class DirectoryUpdater {
     let serverFilePaths = [];
     let curDirPath = this.upDirectoriesPath + "/" + curDir;
     filePaths.forEach(relPath => {
-      let relClientPath = (relPath === "dependencies.js") ?
-        "dependencies.json" : relPath
+      let relClientPath = (relPath === "placeholders.js") ?
+        "placeholders.json" : relPath
       let clientFilePath = curDirPath + "/" + relClientPath;
       let serverFilePath = normalizePath(`/${nodeID}/${dirID}/${relPath}`);
       if (!fs.existsSync(clientFilePath)) {
@@ -269,21 +269,21 @@ export class DirectoryUpdater {
       }
 
       // Else if the file is a text file, upload it as is to the server, unless
-      // it is ~/dependencies.json, in which case transform it first to
-      // ~/dependencies.json.
+      // it is ~/placeholders.json, in which case transform it first to
+      // ~/placeholders.json.
       else if (/\.(jsx?|txt|json|html|xml|svg|css|md)$/.test(name)) {
         let contentText = fs.readFileSync(absChildClientPath, 'utf8');
         // Consult .timestamps.json to see if the file should be skipped, and
-        // if the the file is the special dependencies.json file (at depth = 0),
+        // if the the file is the special placeholders.json file (at depth = 0),
         // then also check the the modifiedAt time for the directories.json
-        // file. And in case of the dependencies.json file, also transform the
+        // file. And in case of the placeholders.json file, also transform the
         // JSON file to a JS module, with inserted dirIDs, before uploading. 
-        if (depth === 0 && name === "dependencies.json") {
+        if (depth === 0 && name === "placeholders.json") {
           if (!this.#isModifiedSinceLastUpload(relChildClientPath, true)) {
             return;
           }
-          relChildServerPath = relServerPath + "/dependencies.js";
-          contentText = this.#transformDependenciesFileText(contentText);
+          relChildServerPath = relServerPath + "/placeholders.js";
+          contentText = this.#transformPlaceholdersFileText(contentText);
         }
         else {
           if (!this.#isModifiedSinceLastUpload(relChildClientPath)) {
@@ -324,32 +324,35 @@ export class DirectoryUpdater {
     });
   }
 
-  #transformDependenciesFileText(jsonText) {
-    let deps, transformedDeps = {};
+  #transformPlaceholdersFileText(jsonText) {
+    let placeholders, transformedPlaceholders = {};
     try {
-      deps = JSON.parse(jsonText);
+      placeholders = JSON.parse(jsonText);
     } catch (err) {
-      throw "Error when parsing dependencies.json"
+      throw "Error when parsing placeholders.json"
     }
-    Object.entries(deps).forEach(([domain, dirNameArr]) => {
-      // Put the nodeID property on transformedDeps[domain], and create
+    Object.entries(placeholders).forEach(([domain, dirNameArr]) => {
+      // Put the nodeID property on transformedPlaceholders[domain], and create
       // a new directory property by looping over all directory names from
       // dirNameArr, looking up the ID for each in this.dirData, and then
-      // storing each dirName--ID pair in transformedDeps[domain].directories.
+      // storing each dirName--ID pair in transformedPlaceholders[domain]-
+      // .directories.
       let actualDomain = (domain === "this") ? this.domain : domain;
       let nodeID = this.dirData[actualDomain]?.nodeID;
       if (!nodeID) throw (
         "No nodeID found in directories.json for domain = " + actualDomain
       );
-      transformedDeps[domain] = {nodeID: nodeID.toString(), directories: {}};
-      let directories = transformedDeps[domain].directories;
+      transformedPlaceholders[domain] = {
+        nodeID: nodeID.toString(), directories: {}
+      };
+      let directories = transformedPlaceholders[domain].directories;
       dirNameArr.forEach(dirName => {
         let dirID = this.getDirID(dirName, true, true, actualDomain);
         directories[dirName] = dirID;
       });
     });
     return (
-    `export default ${JSON.stringify(transformedDeps, null, 2)};`
+    `export default ${JSON.stringify(transformedPlaceholders, null, 2)};`
     );
   }
 

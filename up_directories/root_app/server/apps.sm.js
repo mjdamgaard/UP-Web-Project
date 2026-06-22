@@ -144,11 +144,11 @@ export async function fetchPreferredSubAppList(appDirID, scoreHandlerID = "0") {
 /* SMFs for fetching and updating user preferences */
 
 export async function fetchUserPreferences() {
-  // Check that the post request was sent from the ../main.jsx app component.
-  let appBrowserPath = await abs("../../app_browser/main.jsx").fetchString();
+  // Check that the post request was sent from the ../main.jsx app or the
+  // the app browser app.
   checkRequestOrigin(true, [
     abs("../main.jsx"),
-    appBrowserPath,
+    abs("../../app_browser/main.jsx"),
   ]);
 
   // Get the ID of the requesting user, which is undefined if not logged in.

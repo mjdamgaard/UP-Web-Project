@@ -5,8 +5,7 @@ import {
   CLEAR_FLAG, PromiseObject, Environment, LiveJSModule, parseString,
   TEXT_FILE_ROUTE_REGEX, SCRIPT_ROUTE_REGEX, CSSModule, getString,
   getPropertyFromObject, ArgTypeError, forEachValue, ObjectObject,
-  ErrorWrapper, RouteObject, HEX_ID_REGEX, getAbsolutePath,
-  fetchAndSubstituteNodeAndDirIDs,
+  ErrorWrapper, HEX_ID_REGEX, getAbsolutePath,
 } from '../../interpreting/ScriptInterpreter.js';
 import {scriptParser} from "../../interpreting/parsing/ScriptParser.js";
 import {parseRoute} from './src/route_parsing.js';
@@ -116,7 +115,7 @@ export const queryRoute = new DevFunction(
 export const query = new DevFunction(
   "query", {
     isAsync: true,
-    typeArr: ["string|Route", "boolean?", "any?", "object?"],
+    typeArr: ["string", "boolean?", "any?", "object?"],
   },
   function(
     {callerNode, execEnv, interpreter}, [
@@ -137,20 +136,6 @@ export async function _query(
   ancestorModules = [], finalCallbacks = [],
 ) {
   let isPrivate = isPost || getPropertyFromObject(options, "isPrivate");
-
-  // If extendedRoute is a RouteObject, namely due to using non-hexadecimal ID
-  // placeholders for either the upNodeID or the homeDirID, call
-  // fetchAndSubstituteNodeAndDirIDs() to substitute these placeholders, which
-  // is done by querying a 'nodeIDs' and a 'dirIDs' object of a
-  // '.dependencies.json' file in the home directory that was recorded when the
-  // RouteObject was created.
-  if (extendedRoute instanceof RouteObject) {
-    extendedRoute = await fetchAndSubstituteNodeAndDirIDs(
-      extendedRoute, callerNode, execEnv, interpreter,
-      ancestorModules, finalCallbacks
-    );
-  }
-
 
   // First split the input route along each (optional) occurrence of ';',
   // where the first part is then the actual route that is queried, and any
@@ -219,8 +204,16 @@ export async function _query(
   // Else if the module is a user module, with a '.js' or '.jsx' extension,
   // fetch/get it and create and return a LiveJSModule instance rom it.
   else if (SCRIPT_ROUTE_REGEX.test(route)) {
-    // First try to get it from the parsedScripts buffer, then try to fetch
-    // it from the database.
+    // First call fetchPlaceholdersModule() to fetch the ~/placeholders.js
+    // module for the given home directory, if it has not already been fetched.
+    let placeholdersModulePromise = fetchPlaceholdersModule(
+      route, callerNode, execEnv, interpreter, ancestorModules, finalCallbacks
+    ).catch(
+      err => new ErrorWrapper(err)
+    );
+
+    // Then try to get the parsed script from the parsedScripts buffer, or else
+    // try to fetch it from the database.
     let [parsedScript, lexArr, strPosArr, script] =
       parsedScripts.get(route) ?? [];
     if (!parsedScript) {
@@ -240,12 +233,22 @@ export async function _query(
       }
     }
 
+    // Now wait for the placeholders.js module.
+    let placeholdersModule = await placeholdersModulePromise;
+    if (placeholdersModule instanceof ErrorWrapper) {
+      let err = placeholdersModule.val;
+      if (err instanceof LoadError) {
+        placeholdersModule = undefined;
+      }
+      else throw err;
+    }
+
     // Then execute the module, inside the global environment, and return the
     // resulting liveModule, after also adding it to liveModules.
     let globalEnv = execEnv.getGlobalEnv();
     liveModule = await interpreter.executeModule(
       parsedScript, lexArr, strPosArr, script, route, globalEnv, liveModules,
-      ancestorModules, finalCallbacks, isPrivate
+      placeholdersModule, ancestorModules, finalCallbacks, isPrivate
     );
     result = liveModule;
   }
@@ -328,9 +331,19 @@ export async function _query(
       let globalEnv = execEnv.getGlobalEnv();
       let modulePath = route + ";" +
         castingSegmentArr.slice(0, i + 1).join(";");
+      let placeholdersModule = await fetchPlaceholdersModule(
+        route, callerNode, execEnv, interpreter, ancestorModules,
+        finalCallbacks
+      ).catch(err => {
+        if (err instanceof LoadError) {
+          return undefined;
+        }
+        else throw err;
+      });
       let liveModule = await interpreter.executeModule(
         parsedScript, lexArr, strPosArr, result, modulePath, globalEnv,
-        liveModules, ancestorModules, finalCallbacks, isPrivate
+        liveModules, placeholdersModule, ancestorModules, finalCallbacks,
+        isPrivate
       );
       result = liveModule;
     }
@@ -435,12 +448,31 @@ export async function _query(
 }
 
 
+async function fetchPlaceholdersModule(
+  route, callerNode, execEnv, interpreter, ancestorModules, finalCallbacks
+) {
+  // Parse the nodeID and dirID from the route, as well as the rest of it.
+  let [ , homePath, tail] = /^(\/[^/]+\/[^/]+)(\/.+)$/.exec(route) ?? [];
+
+  // If the route is itself a placeholders route, simply return undefined.
+  if (!tail || tail === "/placeholders.js") {
+    return undefined;
+  }
+
+  // Else simply call _fetch() an homePath + "" to get the placeholders module.
+  return await _fetch(
+    homePath + "/placeholders.js", {},
+    callerNode, execEnv, interpreter, ancestorModules, finalCallbacks,
+  );
+}
+
+
 
 
 
 
 export const fetch = new DevFunction(
-  "fetch", {isAsync: true, typeArr: ["string|Route", "object?"]},
+  "fetch", {isAsync: true, typeArr: ["string", "object?"]},
   function(
     {callerNode, execEnv, interpreter},
     [extendedRoute, options],
@@ -479,7 +511,7 @@ export async function _fetch(
 
 
 export const fetchPrivate = new DevFunction(
-  "fetchPrivate", {isAsync: true, typeArr: ["string|Route", "object?"]},
+  "fetchPrivate", {isAsync: true, typeArr: ["string", "object?"]},
   function(
     {callerNode, execEnv, interpreter},
     [extendedRoute, options = {}],
@@ -514,7 +546,7 @@ export async function _fetchPrivate(
 
 
 export const post = new DevFunction(
-  "post", {isAsync: true, typeArr: ["string|Route", "any?", "object?"]},
+  "post", {isAsync: true, typeArr: ["string", "any?", "object?"]},
   async function(
     {callerNode, execEnv, interpreter},
     [route, postData, options],

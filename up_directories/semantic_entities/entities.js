@@ -17,9 +17,6 @@ const entitiesClassPath = "/1/1/em1.js;get/entities";
 
 
 export async function fetchEntityID(entKey) {
-  if (hasType(entKey, "Route")) {
-    entKey = await entKey.fetchString();
-  }
   verifyType(entKey, "string");
 
   // If entKey is a path, fetch the entID from ./entIDs.bt.
@@ -51,9 +48,6 @@ export async function fetchOrCreateEntityID(entKey) {
 
 
 export async function fetchEntityPath(entKey) {
-  if (hasType(entKey, "Route")) {
-    entKey = await entKey.fetchString();
-  }
   verifyType(entKey, "string");
 
   // If entKey is a path, just return a trivial promise to the same path.
@@ -425,9 +419,6 @@ export function fetchScalarEntityID(subjKey, extQualKey) {
 
 export async function postEntity(moduleOrEntPath, alias = undefined) {
   let entPath = alias ? moduleOrEntPath + ";get/" + alias : moduleOrEntPath;
-  if (hasType(entPath, "Route")) {
-    entPath = await entPath.fetchString();
-  }
   let entDef = await fetch(entPath);
   if (entDef === undefined) {
     return false;
