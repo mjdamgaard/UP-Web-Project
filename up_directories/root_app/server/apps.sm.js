@@ -1,10 +1,18 @@
 
-import {post, fetch, fetchPrivate} from 'query';
+import {post, fetch, fetchPrivate, clearPermissions} from 'query';
 import {getRequestingUserID, checkRequestOrigin} from 'request';
 import {verifyTypes} from 'type';
 import {parse, stringify} from 'json';
 import {split} from 'string';
 import {at} from 'array';
+
+import {fetchEntityDefinition, fetchRelationalQualityPath} from 
+  "../../semantic_entities/entities.js";
+
+import {scoreHandler02 as defaultScoreHandler} from
+  "../../semantic_entities/score_handling/ScoreHandler01/em.js";
+
+const versionsRelKey = abs("../../semantic_entities/em3.js;get/versionsRel");
 
 const maxRecLevel = 3;
 
@@ -83,6 +91,7 @@ export async function fetchPreferredSubApp(appDirID, scoreHandlerID = "0") {
   );
 }
 
+
 async function fetchPreferredSubAppHelper(
   appDirID, scoreHandlerID, preferences, subAppIDListString, recLevel = 0
 ) {
@@ -125,8 +134,41 @@ async function fetchPreferredSubAppHelper(
 
 
 export async function updatePreferredSubApp(appDirID, scoreHandlerID = "0") {
+  // Start fetching the quality path.
+  let topSubAppQualPathProm =
+    fetchRelationalQualityPath(appDirID, versionsRelKey);
 
-  // TODO: Implement
+  // Get/fetch the score handler.
+  let scoreHandler;
+  if (scoreHandlerID === "0") {
+    scoreHandler = defaultScoreHandler;
+  }
+  else {
+    scoreHandler = await fetchEntityDefinition(scoreHandlerID);
+  }
+
+  // Await the quality path.
+  let topSubAppQualPath = await topSubAppQualPathProm;
+
+  // Use the score handler's fetchTopEntry() method to get the ID of the top
+  // app entity, along with the score and the weight.
+  let topEntry;
+  clearPermissions(() => {
+    let options = {moderate: true};
+    topEntry = await = scoreHandler.fetchTopEntry(topSubAppQualPath, options);
+  });
+  let [topSubAppEntID, score, weight] = topEntry ?? [];
+
+  // If no top entry was found, or the score and/or the weight are not
+  // sufficiently high, remove the current entry in subApps.att if one exists.
+  if ("...") {
+    // ...
+  } 
+
+  // Else fetch the entity definition of the sub-app entity, and extract the
+  // app's *directory* ID from it.
+  let appEntDef = await fetchEntityDefinition(scoreHandlerID);
+  // ...
 }
 
 
