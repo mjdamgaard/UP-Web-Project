@@ -1,7 +1,7 @@
 
 import {post, fetch, fetchPrivate, clearPermissions} from 'query';
 import {getRequestingUserID, checkRequestOrigin} from 'request';
-import {verifyTypes} from 'type';
+import {verifyTypes, hasType} from 'type';
 import {parse, stringify} from 'json';
 import {split} from 'string';
 import {at} from 'array';
@@ -62,9 +62,11 @@ const maxRecLevel = 3;
 export async function fetchPreferredSubApp(appDirID, scoreHandlerID = "0") {
   verifyTypes([appDirID, scoreHandlerID], ["hex", "hex"]);
 
-  // Check that the post request was sent from the ../main.jsx app component.
+  // Check that the post request was sent from the ../main.jsx app or the
+  // the app browser app.
   checkRequestOrigin(true, [
     abs("../main.jsx"),
+    abs("../../app_browser/main.jsx"),
   ]);
 
   // Get the ID of the requesting user, which is undefined if not logged in.
@@ -77,12 +79,12 @@ export async function fetchPreferredSubApp(appDirID, scoreHandlerID = "0") {
   if (userID) {
     [preferences, subAppIDListString] = await Promise.all([
       fetchUserPreferences(),
-      fetch(abs("./subApps.att/entry/l/" + scoreHandlerID + "/k/" + appDirID))
+      fetch(abs("./subApps.att./entry/l/" + scoreHandlerID + "/k/" + appDirID))
     ]);
   }
   else {
     subAppIDListString =
-      fetch(abs("./subApps.att/entry/l/" + scoreHandlerID + "/k/" + appDirID));
+      fetch(abs("./subApps.att./entry/l/" + scoreHandlerID + "/k/" + appDirID));
   }
   
   // Then redirect to the recursive fetchPreferredSubAppHelper(). 
@@ -116,7 +118,7 @@ async function fetchPreferredSubAppHelper(
     let substituteAppID = preferences[subAppDirID];
     if (substituteAppID && substituteAppID !== subAppIDArr[i + 1]) {
       subAppIDListString = await fetch(abs(
-        "./subApps.att/entry/l/" + scoreHandlerID + "/k/" + substituteAppID
+        "./subApps.att./entry/l/" + scoreHandlerID + "/k/" + substituteAppID
       ));
       return await fetchPreferredSubAppHelper(
         substituteAppID, scoreHandlerID, preferences, subAppIDListString,
@@ -134,6 +136,15 @@ async function fetchPreferredSubAppHelper(
 
 
 export async function updatePreferredSubApp(appDirID, scoreHandlerID = "0") {
+  verifyTypes([appDirID, scoreHandlerID], ["hex", "hex"]);
+
+  // Check that the post request was sent from the ../main.jsx app or the
+  // the app browser app.
+  checkRequestOrigin(true, [
+    abs("../main.jsx"),
+    abs("../../app_browser/main.jsx"),
+  ]);
+
   // Start fetching the quality path.
   let topSubAppQualPathProm =
     fetchRelationalQualityPath(appDirID, versionsRelKey);
@@ -151,31 +162,67 @@ export async function updatePreferredSubApp(appDirID, scoreHandlerID = "0") {
   let topSubAppQualPath = await topSubAppQualPathProm;
 
   // Use the score handler's fetchTopEntry() method to get the ID of the top
-  // app entity, along with the score and the weight.
+  // app entity, along with the score and the weight. (We of course clear the
+  // permissions first such that this client-controlled function is safe to
+  // execute.)
   let topEntry;
   clearPermissions(() => {
-    let options = {moderate: true};
+    let options = {moderate: true, threshold: [5, 10]};
     topEntry = await = scoreHandler.fetchTopEntry(topSubAppQualPath, options);
   });
-  let [topSubAppEntID, score, weight] = topEntry ?? [];
+  let [topSubAppEntID] = topEntry ?? [];
 
-  // If no top entry was found, or the score and/or the weight are not
-  // sufficiently high, remove the current entry in subApps.att if one exists.
-  if ("...") {
-    // ...
+  // If no top entry was found, given the score >= 5, weight >= 10 threshold,
+  // remove the current entry in subApps.att if one exists.
+  if (!topSubAppEntID) {
+    await post(abs(
+      "./subApps.att/_deleteEntry/l/" + scoreHandlerID + "/k/" + appDirID
+    ));
+    return;
   } 
 
   // Else fetch the entity definition of the sub-app entity, and extract the
   // app's *directory* ID from it.
-  let appEntDef = await fetchEntityDefinition(scoreHandlerID);
-  // ...
+  let appEntDef =
+    await fetchEntityDefinition(scoreHandlerID, ["App directory ID"]) ?? {};
+  let subAppDirID = appEntDef["App directory ID"];
+
+  // If the subAppDirID is invalid, or is the appDirID itself, also remove any
+  // current entry in subApps.att
+  if (!hasType(subAppDirID, "hex") || subAppDirID === appDirID) {
+    await post(abs(
+      "./subApps.att/_deleteEntry/l/" + scoreHandlerID + "/k/" + appDirID
+    ));
+    return;
+  }
+
+  // Else fetch the subApps list for the subAppDirID, prepend subAppDirID
+  // itself to it, and insert that string as the subApps.att entry for appDirID.
+  let subSubAppIDListString = await fetch(abs(
+    "./subApps.att./entry/l/" + scoreHandlerID + "/k/" + subAppDirID
+  ));
+  let subAppIDListString = subAppDirID + (
+    subSubAppIDListString ? "," + subSubAppIDListString : ""
+  );
+  await post(
+    abs("./subApps.att/_insert/l/" + scoreHandlerID + "/k/" + appDirID),
+    subAppIDListString
+  );
+  return;
 }
 
 
+
 export async function fetchPreferredSubAppList(appDirID, scoreHandlerID = "0") {
+  verifyTypes([appDirID, scoreHandlerID], ["hex", "hex"]);
+  // (This SMF does not query any private data, and we thus do not need to
+  // check the origin.)
+
   let subAppIDListString = await fetch(abs(
-    "./subApps.att/entry/l/" + scoreHandlerID + "/k/" + appDirID
+    "./subApps.att./entry/l/" + scoreHandlerID + "/k/" + appDirID
   ));
+
+  // Return the list as an array for convenience.
   return subAppIDListString ? split(subAppIDListString, ",") : [];
 }
 

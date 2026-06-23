@@ -26,7 +26,7 @@ export const apps = {
 // should say a 'directional graph' rather than a 'tree,' since an app can
 // implement/extend several different parent nodes.) For instance, a SoMe app
 // might have a basic prototype app at the root of its "tree"/dir. graph which
-// just implements a a post feed from all your connections. The list of
+// just implements a post feed from all the user's connections. The list of
 // succeeding versions might then contain a new app prototype that also
 // implements private messages, and another app that implements groups, and yet
 // another app that doesn't add any new features but simply improves on the UI
