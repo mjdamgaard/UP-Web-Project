@@ -24,52 +24,48 @@ const fetchTrustIdentRouteTemplate = [
 
 
 export async function initialize({appDirID}) {
-  // Preserve the trustIdentCache state property between reinitializations
+  // Preserve the fetchedDataCache state property between reinitializations
   // (caused by the this.constants() call below, namely if appDirID changed).
-  let {trustIdentCache} = this.state;
+  let {fetchedDataCache = new MutableObject()} = this.state;
+  let fetchedData = fetchedDataCache[appDirID] ??= new MutableObject();
   this.setState({
-    AppComponent: undefined,
+    // State data fetched by this initialize() function, and a cache for it: 
+    fetchedDataCache: fetchedDataCache,
+    fetchedData: fetchedData,
+
+    // State data that depends on user input: 
     warningIsExpanded: undefined,
-    trustIdentCache: trustIdentCache ?? new MutableObject(),
-    ref: {
-      trustIdent: undefined,
-    },
   });
 
-  // Import the app component module at ~/../<appDirID>/main.jsx.
-  let AppComponent = await import("~/../" + appDirID + "/main.jsx");
-  this.setState(state => ({...state, AppComponent: AppComponent}));
+  let {AppComponent, trustIdent} = fetchedData;
+
+  // Import the app component module at ~/../<appDirID>/main.jsx, and write it
+  // to fetchedData as a side-effect.
+  let AppComponentProm = AppComponent ? new Promise() :
+    import("~/../" + appDirID + "/main.jsx").then(AppComponent => {
+      fetchedData.AppComponent = AppComponent;
+    });
+
+  // Fetch the trust identifier, and write it to fetchedData as a side-effect.
+  let fetchTrustIdentRoute = join(fetchTrustIdentRouteTemplate, appDirID);
+  let trustIdentProm = trustIdent ? new Promise() :
+    fetch(fetchTrustIdentRoute).then(trustIdent => {
+      fetchedData.trustIdent = trustIdent;
+    });
+
+  // Await the two promises, then queue a rerender manually.
+  await Promise.all([AppComponentProm, trustIdentProm]);
+  this.rerender();
 }
+
 
 
 export function render({appDirID, homeURL, tailURL}) {
   this.constants(appDirID); // Reinitialize the component if appDirID changes. 
   let {
-    AppComponent, warningIsExpanded, trustIdentCache, ref: {trustIdent}
+    fetchedData: {AppComponent, trustIdent},
+    warningIsExpanded,
   } = this.state;
-
-  // Get trustIdent from the state, and if it is undefined, fetch the value.
-  if (trustIdent === undefined) {
-    trustIdent = trustIdentCache[appDirID];
-    // If trustIdent was found in the cache, set the trustIdent ref state in
-    // order to reduce cache lookups. (This will not trigger a rerender.) 
-    if (trustIdent !== undefined) {
-      this.setState(state => ({
-        ...state, ref: {...state.ref, trustIdent: trustIdent},
-      }));
-    }
-
-    // Else fetch the trustIdent.
-    else {
-      let fetchTrustIdentRoute = join(fetchTrustIdentRouteTemplate, appDirID);
-      fetch(fetchTrustIdentRoute).then(trustIdent => {
-        trustIdentCache[appDirID] = trustIdent;
-        this.setState(state => ({
-          ...state, ref: {...state.ref, trustIdent: trustIdent},
-        }));
-      });
-    }
-  }
 
   // If ...
   return (
@@ -86,6 +82,11 @@ export function render({appDirID, homeURL, tailURL}) {
 
 export const events = [
   ...urlEvents,
+
+  "hideWarning",
+  "showWarning",
+  "hideHeader",
+  "showHeader",
 ];
 
 
@@ -102,6 +103,9 @@ export const actions = {
   // Overwrite the "hideHeader" event to only work if the the warning isn't
   // expanded... ..Hm, do I want to queue the hideHeader signals, though?..
   "hideHeader": function() {
+    // ...
+  },
+  "showHeader": function() {
     // ...
   },
 };
