@@ -838,10 +838,11 @@ class JSXInstance {
   // arrays (or a mix). If no ancestors has an event of a matching key, then
   // trigger() just fails silently.
   trigger(
-    eventKey, input, interpreter, node, env, eventTargetScope = undefined
+    eventKey, input, interpreter, node, env, originScope = undefined,
+    originKey = this.key
   ) {
     if (this.isDiscarded) return;
-    eventTargetScope ??= env.getFlag(REQUESTING_COMPONENT_FLAG);
+    originScope ??= env.getFlag(REQUESTING_COMPONENT_FLAG);
     if (!this.parentInstance) return;
     let events = this.parentInstance.events;
     eventKey = getStringOrSymbol(eventKey, env);
@@ -850,18 +851,18 @@ class JSXInstance {
       // TODO: Right now we choose to be very restrictive and clear all
       // permission-giving flags, except the "can-post" flag, between
       // components when triggering events and calling methods, but we might
-      // want to change this at some point, potentially. Luckily, is is easy to
-      // loosen restrictions in the future, rather than imposing new ones.
+      // want to loosen these restrictions this at some point, potentially.
       let canPost = env.getFlag(CAN_POST_FLAG);
+      let childKey = this.key;
       return interpreter.executeFunction(
-        eventFun, [input, eventTargetScope], node, env,
-        new JSXInstanceInterface(this.parentInstance),
+        eventFun, [input, childKey, originScope, originKey],
+        node, env, new JSXInstanceInterface(this.parentInstance),
         [CLEAR_FLAG, [CAN_POST_FLAG, canPost]],
       );
     }
     else {
       return this.parentInstance.trigger(
-        eventKey, input, interpreter, node, env, eventTargetScope
+        eventKey, input, interpreter, node, env, originScope, originKey
       );
     }
 
@@ -1042,7 +1043,7 @@ export class JSXInstanceInterface extends ObjectObject {
     Object.assign(this.members, {
       /* Properties */
       "props": this.jsxInstance.props,
-      "state": this.jsxInstance.state,
+      "state": this.jsxInstance.state ?? {},
       "ref": this.jsxInstance.ref,
       "component": this.jsxInstance.componentModule,
       "isFirstRender": this.jsxInstance.isFirstRender,

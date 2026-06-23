@@ -2,14 +2,14 @@
 import {clearPermissions} from 'query';
 import {urlActions, urlEvents} from "./urlActions.js";
 
-import {substring, split, at, slice} from 'string';
+import {substring, split, at, slice, join} from 'string';
 import {fetchPrivate, fetch} from 'query';
 import {hasType, hasTypes, verifyType} from 'type';
 
-const fetchBestSubAppRouteTemplateStart = abs(
-  "./server/apps.sm.js./callSMF/fetchPreferredSubApp/"
-);
-const fetchBestSubAppRouteTemplateEnd = "";
+const fetchBestSubAppRouteTemplate = [
+  abs("./server/apps.sm.js./callSMF/fetchPreferredSubApp/"),
+  "",
+];
 // TODO: Implement a fundamental settings page where users can change this
 // SMF route template for fetching the best sub-app (with ample warnings about
 // doing so).
@@ -127,11 +127,10 @@ export const actions = {
     verifyType(appDirIDSegment, "hex")
     let {url, userID} = this.props;
 
-    // Query the route of fetchBestSubAppRouteTemplateStart + appDirIDSegment +
-    // fetchBestSubAppRouteTemplateEnd, and make it a private query iff the
-    // user is logged in.
-    let fetchBestSubAppRoute = fetchBestSubAppRouteTemplateStart +
-      appDirIDSegment + fetchBestSubAppRouteTemplateEnd;
+    // Query the route of fetchBestSubAppRouteTemplate.join(appDirIDSegment),
+    // and make it a private query iff the user is logged in.
+    let fetchBestSubAppRoute =
+      join(fetchBestSubAppRouteTemplate, appDirIDSegment);
     let fetchFun = userID ? fetchPrivate : fetch;
     let appDirID = await fetchFun(fetchBestSubAppRoute);
 

@@ -59,6 +59,8 @@ const maxRecLevel = 3;
 
 
 
+/* SMFs for fetching and updating user preferences */
+
 export async function fetchPreferredSubApp(appDirID, scoreHandlerID = "0") {
   verifyTypes([appDirID, scoreHandlerID], ["hex", "hex"]);
 
@@ -266,4 +268,14 @@ export async function updateUserPreference(appDirID, subAppDirID) {
 
 export async function removeUserPreference(appDirID) {
   return await updateUserPreference(appDirID, undefined);
+}
+
+
+
+
+
+/* SMF for fetching the "trust identifiers" (used by App.jsx) */
+
+export async function fetchTrustIdentifier(appDirID, scoreHandlerID = "0") {
+  // TODO: Implement.
 }
