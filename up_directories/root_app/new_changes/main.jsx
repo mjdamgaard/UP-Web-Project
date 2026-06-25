@@ -17,8 +17,6 @@ const missingPageContent = "404 error: Missing page."; // TODO: Improve.
 
 export function initialize({hideHeader = false}) {
   return {
-    hideHeader: hideHeader,
-    overlayPage: undefined,
     ref: {
       appLoaderProps: undefined,
     },
@@ -31,7 +29,7 @@ export function render(props) {
   let {
     url, history, nodeID, userID, homeURL = "", localStorage, sessionStorage
   } = props;
-  let {hideHeader, overlayPage, ref: {appLoaderProps}} = this.state;
+  let {ref: {appLoaderProps}} = this.state;
   this.provideContext("userID", userID);
   this.provideContext("nodeID", nodeID);
 
@@ -76,9 +74,12 @@ export function render(props) {
     // browser.
     
     // The following cases are some constant built-in pages, such as the
-    // about page.
+    // about page and the account page.
     case "about":
       content = <AboutPage key="about" />;
+      break;
+    case "account":
+      content = <AccountPage key="account" />;
       break;
     default:
       content = missingPageContent;
@@ -86,24 +87,17 @@ export function render(props) {
 
   return (
     <div className="root-app">
-      <AppHeader key="h"
-        url={url} history={history} homeURL={homeURL} isHidden={hideHeader}
-      />
-      {/* An overlay page is a page that does not change the URL */}
-      <div className={"overlay-page" + (overlayPage ? "" : " hidden")}>
-        {(overlayPage)}
-      </div>
       {/* The content div is for non-AppLoader pages with their own URLs */}
-      <div className={"overlay-page" + (overlayPage ? "" : " hidden")}>
-        {(overlayPage)}
+      <div className={"native-page" + (content ? "" : " hidden")}>
+        {(content)}
       </div>
-      {/* Once the AppLoader child is rendered, we keep rendering as to not
-        lose its state.
+      {/* The AppLoader, which we keep rendering once it has the first time,
+      as to not its state, but where we hide it if a native page is open.
       */}
       <div className={"app-loader" + (hideAppLoader ? " hidden" : "")}>
-        {(
-          appLoaderProps ? <AppLoader {...appLoaderProps} key="l" /> :
-            undefined
+        {(appLoaderProps ?
+          <AppLoader {...appLoaderProps} key="l" /> :
+          undefined
         )}
       </div>
     </div>
@@ -119,8 +113,6 @@ export const events = [
   "back",
   "forward",
   "go",
-  "hideHeader",
-  "showHeader",
 ];
 
 
@@ -155,13 +147,6 @@ export const actions = {
   "go": function(delta) {
     clearPermissions(() => this.props.history.go(delta));
     return true;
-  },
-
-  "hideHeader": function() {
-    this.setState(state => ({...state, hideHeader = true}));
-  },
-  "showHeader": function() {
-    this.setState(state => ({...state, hideHeader = false}));
   },
 };
 

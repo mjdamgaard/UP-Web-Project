@@ -2854,9 +2854,6 @@ export class DevFunction extends FunctionObject {
 
 
 
-// TODO: I might have forgotten to impl. the length property for mutable arrays,
-// so check/implement this, and also check/implement get()/set() methods for
-// mutable maps, etc.
 
 export const mutableObjectClass = new ClassObject(
   "MutableObject", new DevFunction(

@@ -3,8 +3,8 @@ import {fetch, clearPermissions} from 'query';
 import {join} from 'string';
 import {urlActions, urlEvents} from "./urlActions.js";
 
-const fetchTrustIdentRouteTemplate = [
-  abs("./server/apps.sm.js./callSMF/fetchTrustIdentifier/"),
+const fetchTrustClassRouteTemplate = [
+  abs("./server/apps.sm.js./callSMF/fetchTrustClass/"),
   "",
 ];
 // TODO: Like the fetchBestSubAppRouteTemplate of AppLoader, implement a
@@ -14,8 +14,8 @@ const fetchTrustIdentRouteTemplate = [
 // Apart from loading the main.jsx component from the directory pointed to by
 // appDirID, the job of this component is to also query about whether the given
 // app is trusted, and to show a warning message/sign if it is not. The warning
-// sign, and whether to show it at all, depends on the "trust identifier"
-// returned by the SMF of the fetchTrustIdentRouteTemplate, which can be either
+// sign, and whether to show it at all, depends on the "trust class" returned
+// by the SMF of the fetchTrustClassRouteTemplate, which can be either
 // "trusted", "untrusted", or "harmful".
 // Also, when the warning message is expanded (possibly due to the user
 // clicking on the warning sign), this component needs to trigger the
@@ -34,10 +34,10 @@ export async function initialize({appDirID}) {
     fetchedData: fetchedData,
 
     // State data that depends on user input: 
-    warningIsExpanded: undefined,
+    warningIsDismissed: undefined,
   });
 
-  let {AppComponent, trustIdent} = fetchedData;
+  let {AppComponent, trustClass} = fetchedData;
 
   // Import the app component module at ~/../<appDirID>/main.jsx, and write it
   // to fetchedData as a side-effect.
@@ -46,34 +46,49 @@ export async function initialize({appDirID}) {
       fetchedData.AppComponent = AppComponent;
     });
 
-  // Fetch the trust identifier, and write it to fetchedData as a side-effect.
-  let fetchTrustIdentRoute = join(fetchTrustIdentRouteTemplate, appDirID);
-  let trustIdentProm = trustIdent ? new Promise() :
-    fetch(fetchTrustIdentRoute).then(trustIdent => {
-      fetchedData.trustIdent = trustIdent;
+  // Fetch the trust class, and write it to fetchedData as a side-effect.
+  let fetchTrustClassRoute = join(fetchTrustClassRouteTemplate, appDirID);
+  let trustClassProm = trustClass ? new Promise() :
+    fetch(fetchTrustClassRoute).then(trustClass => {
+      fetchedData.trustClass = trustClass;
     });
 
   // Await the two promises, then queue a rerender manually.
-  await Promise.all([AppComponentProm, trustIdentProm]);
+  await Promise.all([AppComponentProm, trustClassProm]);
   this.rerender();
 }
 
 
 
-export function render({appDirID, homeURL, tailURL}) {
+export function render({appDirID, url, homeURL, tailURL}) {
   this.constants(appDirID); // Reinitialize the component if appDirID changes. 
   let {
     fetchedData: {AppComponent, trustIdent},
-    warningIsExpanded,
+    warningIsDismissed,
   } = this.state;
 
-  // If ...
+  // If the fetchedData isn't ready yet, simply render a fetching div.
+  if (!AppComponent || !trustClass) {
+    return (
+      <div className="app">
+        <div className="fetching">...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="app">
-      <div className="warning-container">
-
-      </div>
-      
+      <AppWarning key="w" trustClass={trustClass} />
+      {/* TODO: Add className to blur if untrusted, and don't render if
+      "harmful" */}
+      <div className={
+        "app-component " + trustClass + (warningIsDismissed ? " dismissed" : "")
+      }>{(
+        !AppComponent || trustClass === "harmful" ? undefined :
+          <AppComponent key="c"
+            url={url} homeURL={homeURL} tailURL={tailURL}
+          />
+      )}</div>
     </div>
   );
 }
@@ -83,30 +98,19 @@ export function render({appDirID, homeURL, tailURL}) {
 export const events = [
   ...urlEvents,
 
-  "hideWarning",
-  "showWarning",
-  "hideHeader",
-  "showHeader",
+  "warning-was-dismissed",
 ];
 
 
 export const actions = {
   ...urlActions,
 
-  "hideWarning": function(_, childKey) {
-    // ...
-  },
-  "showWarning": function(_, childKey) {
-    // ...
-  },
-
-  // Overwrite the "hideHeader" event to only work if the the warning isn't
-  // expanded... ..Hm, do I want to queue the hideHeader signals, though?..
-  "hideHeader": function() {
-    // ...
-  },
-  "showHeader": function() {
-    // ...
+  "warning-was-dismissed": function(_, childKey) {
+    // Check that the event was triggered by the AppWarning child before
+    // setting the warningIsDismissed state property.
+    if (childKey === "w") {
+      this.setState(state => ({...state, warningIsDismissed: true}));
+    }
   },
 };
 
