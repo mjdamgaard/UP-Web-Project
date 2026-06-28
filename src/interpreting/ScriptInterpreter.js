@@ -2204,6 +2204,10 @@ export class Environment {
     }
   }
 
+  getFlags(flags) {
+    return flags.map(flag => this.getFlag(flag));
+  }
+
   setFlag(flag, flagParams = UNDEFINED) {
     this.flags.set(flag, flagParams);
   }

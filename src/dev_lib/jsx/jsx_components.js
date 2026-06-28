@@ -40,8 +40,10 @@ export const createJSXApp = new DevFunction(
     );
 
     // Create a new environment clearing the CAN_CREATE_APP_FLAG (as well as
-    // other flags.)
-    let appEnv = new Environment(execEnv, undefined, {flags: [CLEAR_FLAG]});
+    // other flags), and adding a CLIENT_TRUST_FLAG and CAN_POST_FLAG.
+    let appEnv = new Environment(execEnv, undefined, {flags: [
+      CLEAR_FLAG, CLIENT_TRUST_FLAG, CAN_POST_FLAG
+    ]});
 
     // Create the app's root component instance (but don't render it yet).
     let rootInstance = new JSXInstance(
@@ -100,6 +102,7 @@ class JSXInstance {
     this.contextSubscriptions = undefined;
     this.callerNode = callerNode;
     this.callerEnv = callerEnv;
+    this.compEnv = undefined;
     this.isDiscarded = undefined;
     this.isFailed = undefined;
     this.isFirstRender = true;
@@ -151,10 +154,12 @@ class JSXInstance {
       let parentIsTrusted = callerEnv.getFlag(CLIENT_TRUST_FLAG);
       flags = !parentIsTrusted ? [CLEAR_FLAG] : [
         CLEAR_FLAG,
+        CAN_POST_FLAG,
         [REQUESTING_COMPONENT_FLAG, this.componentPath],
       ];
     }
-    let compEnv = new Environment(callerEnv, undefined, {flags: flags});
+    let compEnv = this.compEnv =
+      new Environment(callerEnv, undefined, {flags: flags});
 
 
     // On the first render only, initialize the state, and record the 'ref'
@@ -442,7 +447,7 @@ class JSXInstance {
       let childArr = [];
       let {node: jsxNode, decEnv: jsxDecEnv} = jsxElement;
       forEachValue(jsxElement.props, jsxNode, jsxDecEnv, (val, key) => {
-        let eventProperty, canPost;
+        let eventProperty;
         switch (key) {
           case "children" : {
             if (tagName === "br" || tagName === "hr" || tagName === "wbr") {
@@ -484,7 +489,6 @@ class JSXInstance {
             eventProperty ??= "onclick";
           case "onDBLClick":
             eventProperty ??= "ondblclick";
-            canPost ??= true;
           case "onMouseDown":
             eventProperty ??= "onmousedown";
           case "onMouseUp":
@@ -495,7 +499,6 @@ class JSXInstance {
             eventProperty ??= "onmouseleave";
           case "onMouseMove":
             eventProperty ??= "onmousemove";
-            canPost ??= false;
             if (!val) break;
             else if (!(val instanceof FunctionObject)) throw new ArgTypeError(
               key + " event received a non-function value",
@@ -503,22 +506,18 @@ class JSXInstance {
             );
 
             newDOMNode[eventProperty] = (event) => {
-              // Execute the function object held in val, with elevated
-              // privileges that allows the function to make POST-like
-              // requests. Also pass some of the properties of event, as well
-              // as an added canPost property.
+              // Execute the function object held in val, and pass some of the
+              // properties of event.
               let {
                 button, offsetX, offsetY, ctrlKey, altKey, shiftKey, metaKey
               } = event;
               let e = {
-                canPost: canPost,
                 button: button, offsetX: offsetX, offsetY: offsetY,
                 ctrlKey: ctrlKey, altKey: altKey, shiftKey: shiftKey,
                 metaKey: metaKey,
               };
               interpreter.executeFunctionOffSync(
-                val, [e], callerNode, callerEnv,
-                new JSXInstanceInterface(this), [[CAN_POST_FLAG, canPost]]
+                val, [e], callerNode, callerEnv, new JSXInstanceInterface(this)
               );
             };
             break;
@@ -818,16 +817,17 @@ class JSXInstance {
     eventKey = getStringOrSymbol(eventKey, env);
     let eventFun = getPropertyFromPlainObject(events, eventKey);
     if (eventFun) {
-      // TODO: Right now we choose to be very restrictive and clear all
-      // permission-giving flags, except the "can-post" flag, between
-      // components when triggering events and calling methods, but we might
-      // want to loosen these restrictions this at some point, potentially.
-      let canPost = env.getFlag(CAN_POST_FLAG);
       let childKey = this.key;
+      let [clientTrust, reqCompPath] = this.parentInstance.compEnv.getFlags([
+        CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
+      ]);
       return interpreter.executeFunction(
         eventFun, [input, childKey, originScope, originKey],
-        node, env, new JSXInstanceInterface(this.parentInstance),
-        [CLEAR_FLAG, [CAN_POST_FLAG, canPost]],
+        node, env, new JSXInstanceInterface(this.parentInstance), [
+          CLEAR_FLAG, CAN_POST_FLAG,
+          [CLIENT_TRUST_FLAG, clientTrust],
+          [REQUESTING_COMPONENT_FLAG, reqCompPath]
+        ],
       );
     }
     else {
@@ -861,12 +861,16 @@ class JSXInstance {
     methodKey = getStringOrSymbol(methodKey, env);
     let methodFun = getPropertyFromPlainObject(methods, methodKey);
     if (methodFun) {
-      // TODO: The same todo applies here as in the trigger() method above.
-      let canPost = env.getFlag(CAN_POST_FLAG);
+      let [clientTrust, reqCompPath] = targetInstance.compEnv.getFlags([
+        CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
+      ]);
       return interpreter.executeFunction(
         methodFun, [input], node, env,
-        new JSXInstanceInterface(targetInstance),
-        [CLEAR_FLAG, [CAN_POST_FLAG, canPost]],
+        new JSXInstanceInterface(targetInstance), [
+          CLEAR_FLAG, CAN_POST_FLAG,
+          [CLIENT_TRUST_FLAG, clientTrust],
+          [REQUESTING_COMPONENT_FLAG, reqCompPath]
+        ],
       );
     }
     else throw new RuntimeError(

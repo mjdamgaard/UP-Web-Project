@@ -196,7 +196,7 @@ export function render({route}) {
         </div>;
       }) :
       (hasType(result, "JSXElement")) ?
-        <TextDisplay key="_result" jsxElement={result} /> :
+        <TextDisplay key="_result" untrusted jsxElement={result} /> :
         isTextFile ?
           <code className="jsx numbered">{toString(result, true)}</code> :
           <div>{toString(result, true)}</div>;

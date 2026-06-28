@@ -83,9 +83,9 @@ export function render({entKey}) {
       <h3>{"Description"}</h3>,
       descAttr ? (
         descAttr[0] === "/" ?
-          <TextDisplay key="_desc" jsxLink={descAttr} /> :
-          <TextDisplay key="_desc" jsxElement={descAttr} />
-      ) : <TextDisplay key="_desc" jsxElement={"No description"} />,
+          <TextDisplay key="_desc" untrusted jsxLink={descAttr} /> :
+          <TextDisplay key="_desc" untrusted jsxElement={descAttr} />
+      ) : <TextDisplay key="_desc" untrusted jsxElement={"No description"} />,
     ];
   }
   

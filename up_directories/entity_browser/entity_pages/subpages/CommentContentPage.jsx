@@ -37,7 +37,7 @@ export function render({entID, entKey = entID}) {
   let content = toString(entDef["Content"]);
   return <div className="content-page">
     <div className="text">
-      <TextDisplay key="_0" jsxElement={content} />
+      <TextDisplay key="_0" untrusted jsxElement={content} />
     </div>
   </div>;
 }

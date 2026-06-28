@@ -134,7 +134,7 @@ export function render({
             curMinScore !== undefined && score < curMinScore ||
             curMinWeight !== undefined && weight < curMinWeight
           ) ? undefined :
-            <ElementComponent key={"_" + entID}
+            <ElementComponent key={"_" + entID} untrusted 
               entID={entID} objKey={objKey}
               score={score} weight={weight}
               qualKeyArr={qualKeyArr} qualKey={qualKeyArr[0]}

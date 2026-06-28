@@ -12,6 +12,14 @@ import * as mainStyle from "./style.css";
 import * as compEntPageStyle from
   "../entity_browser/variable_components/ComponentEntityPage.css";
 import * as entListStyle from "../entity_browser/entity_lists/EntityList.css";
+import * as expElemStyle from
+  "../entity_browser/entity_elements/ExpandableElement.css";
+import * as genEntElemStyle from
+  "../entity_browser/entity_elements/GeneralEntityElement.css";
+import * as dropDownBoxStyle from "../utilities/DropDownBox.css";
+import * as entPageWTabsStyle from "../utilities/EntityPageWithTabs.css";
+import * as tabbedPagesStyle from "../utilities/TabbedPages.css";
+
 
 import {scoreHandler02} from "/1/1/score_handling/ScoreHandler01/em.js";
 
@@ -40,7 +48,10 @@ export function render({
   }
 
   return (
-    <div innerStyle={[mainStyle, compEntPageStyle, entListStyle]}>
+    <div innerStyle={[
+      mainStyle, compEntPageStyle, entListStyle, expElemStyle, genEntElemStyle,
+      dropDownBoxStyle, entPageWTabsStyle, tabbedPagesStyle,
+      ]}>
       <div className="app">
         <AppHeader key="h" url={url} history={history} homeURL={homeURL} />
         <AppMain key="m" url={url} history={history} homeURL={homeURL}

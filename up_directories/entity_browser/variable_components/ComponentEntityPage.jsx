@@ -95,7 +95,7 @@ export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
         />
       )}
       <div className={"component" + (isTrusted ? "" : " blurred")}>
-        <Component {...props} key="_0" />
+        <Component {...props} key="_0" untrusted />
       </div>
     </div>;
   }

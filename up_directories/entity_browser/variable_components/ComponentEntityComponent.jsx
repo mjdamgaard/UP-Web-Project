@@ -29,6 +29,6 @@ export function render(props) {
   // Finally, if the component is ready, render it, passing it the same props
   // is this component.
   else {
-    return <Component {...props} key="_0" />;
+    return <Component {...props} key="_0" untrusted />;
   }
 }

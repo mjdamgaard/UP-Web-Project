@@ -19,7 +19,7 @@ export async function queryServer(
   options ||= JSON.parse(jsonStringify(options));
   try {
     return await serverQueryHandler.queryAJAXServer(
-      isPrivate, route, isPost, postData, options, upNodeID, flags
+      isPrivate, route, isPost, postData, options, flags, upNodeID
     );
   }
   catch(err) {
