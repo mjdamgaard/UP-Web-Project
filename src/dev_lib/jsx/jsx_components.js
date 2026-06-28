@@ -5,7 +5,7 @@ import {
   OBJECT_PROTOTYPE, Environment, ARRAY_PROTOTYPE, FunctionObject, Exception,
   getStringOrSymbol, getPropertyFromObject, getPropertyFromPlainObject,
   jsonStringify, ArgTypeError, decrCompGas, getAbsolutePath, ErrorWrapper,
-  CSSModule, isArray,
+  CSSModule, isArray, verifyType,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
@@ -57,7 +57,7 @@ export const createJSXApp = new DevFunction(
 
     // Create the app's root component instance (but don't render it yet).
     let rootInstance = new JSXInstance(
-      appComponent, "root", undefined, callerNode, appEnv
+      appComponent, "root", "RootApp", undefined, callerNode, appEnv
     );
 
     // Add some props to the root instance for getting user data and URL data,
@@ -90,14 +90,13 @@ export const createJSXApp = new DevFunction(
 class JSXInstance {
 
   constructor (
-    componentModule, key, parentInstance = undefined, callerNode, callerEnv
+    componentObject, key, tagName, parentInstance = undefined,
+    callerNode, callerEnv
   ) {
-    if (!(componentModule instanceof LiveJSModule)) throw new RuntimeError(
-      "JSX component needs to be an imported module namespace object",
-      callerNode, callerEnv
-    );
-    this.componentModule = componentModule;
+    verifyType(componentObject, "object");
+    this.componentObject = componentObject;
     this.key = getString(key, callerEnv);
+    this.tagName = tagName;
     this.parentInstance = parentInstance;
     this.domNode = undefined;
     this.isDecorated = undefined;
@@ -125,7 +124,8 @@ class JSXInstance {
   }
 
   get componentPath() {
-    return this.componentModule.modulePath;
+    return (this.componentObject instanceof LiveJSModule) ?
+      this.componentObject.modulePath : undefined;
   }
 
 
@@ -165,7 +165,7 @@ class JSXInstance {
       flags = !parentIsTrusted ? [CLEAR_FLAG] : [
         CLEAR_FLAG,
         CAN_POST_FLAG,
-        [REQUESTING_COMPONENT_FLAG, this.componentPath],
+        [REQUESTING_COMPONENT_FLAG, this.componentPath ?? false],
       ];
     }
     let compEnv = this.compEnv =
@@ -187,14 +187,15 @@ class JSXInstance {
     }
 
 
-    // Then get the component module's render() function.
-    let renderFun = this.componentModule.get("render") ??
-      this.componentModule.get("default");
+    // Then get the component's render() function.
+    let renderFun = (this.componentObject instanceof FunctionObject) ?
+      this.componentObject :
+      getPropertyFromObject(this.componentObject, "render") ??
+        getPropertyFromObject(this.componentObject, "default");
     if (!renderFun) {
       return this.failComponentAndGetDOMNode(
         new RuntimeError(
-          'Component module is missing a render() function at "' +
-          this.componentPath + '"',
+          `${this.tagName} component is missing a render() function`,
           callerNode, compEnv
         ),
         replaceSelf
@@ -283,7 +284,7 @@ class JSXInstance {
 
     // Get the initialize() function if the component module declares one.
     let state;
-    let initialize = this.componentModule.get("initialize");
+    let initialize = getPropertyFromObject(this.componentObject, "initialize");
     if (initialize) {
       try {
         state = interpreter.executeFunction(
@@ -399,9 +400,9 @@ class JSXInstance {
       );
     }
 
-    // If componentModule is defined, render the component instance.
+    // If componentObject is defined, render the component instance.
     else if (jsxElement.isComponent) {
-      let componentModule = jsxElement.componentModule;
+      let componentObject = jsxElement.componentObject;
 
       // First we check if the childInstances to see if the child component
       // instance already exists, and if not, create a new one. In both cases,
@@ -415,10 +416,11 @@ class JSXInstance {
       let childInstance = this.childInstances.get(key);
       if (
         !childInstance ||
-        childInstance.componentPath !== componentModule.modulePath
+        childInstance.componentObject !== componentObject
       ) {
         childInstance = new JSXInstance(
-          componentModule, key, this, jsxElement.node, jsxElement.decEnv
+          componentObject, key, jsxElement.tagName, this,
+          jsxElement.node, jsxElement.decEnv
         );
         this.childInstances.set(key, childInstance);
       }
@@ -755,7 +757,7 @@ class JSXInstance {
 
   prepareActionsMethodsAndEvents(node, env) {
     forEachValue(
-      this.componentModule.get("actions"), node, env,
+      getPropertyFromObject(this.componentObject, "actions"), node, env,
       (fun, key) => {
         key = getStringOrSymbol(key, env) || " ";
         this.actions[key] = fun;
@@ -763,7 +765,7 @@ class JSXInstance {
       true
     );
     forEachValue(
-      this.componentModule.get("methods"), node, env,
+      getPropertyFromObject(this.componentObject, "methods"), node, env,
       keyOrAliasKeyPair => {
         if (typeof keyOrAliasKeyPair === "string") {
           let key = keyOrAliasKeyPair || " ";
@@ -780,7 +782,7 @@ class JSXInstance {
       true
     );
     forEachValue(
-      this.componentModule.get("events"), node, env,
+      getPropertyFromObject(this.componentObject, "events"), node, env,
       keyOrAliasKeyPair => {
         if (typeof keyOrAliasKeyPair === "string") {
           let key = keyOrAliasKeyPair || " ";
@@ -811,8 +813,8 @@ class JSXInstance {
       );
     }
     else throw new RuntimeError(
-      `Call to a non-existent action, "${actionKey}", of the component at ` +
-      this.componentPath,
+      `Call to a non-existent action, "${actionKey}", of ${this.tagName} ` +
+      "component",
       node, env
     );
   }
@@ -891,8 +893,8 @@ class JSXInstance {
       );
     }
     else throw new RuntimeError(
-      `Call to a non-existent method, "${methodKey}", of the component at` +
-      targetInstance.componentPath,
+      `Call to a non-existent method, "${methodKey}", of ${this.tagName} ` +
+      "component",
       node, env
     );
   }
@@ -1041,7 +1043,7 @@ export class JSXInstanceInterface extends ObjectObject {
       "props": this.jsxInstance.props,
       "state": this.jsxInstance.state ?? {},
       "ref": this.jsxInstance.ref,
-      "component": this.jsxInstance.componentModule,
+      "component": this.jsxInstance.componentObject,
       "isFirstRender": this.jsxInstance.isFirstRender,
       /* Methods */
       "do": this.do,

@@ -3166,7 +3166,7 @@ export class JSXElement extends ObjectObject {
     let {tagName, isComponent, isFragment, propArr, children} = node;
     this.tagName = tagName;
     this.isComponent = isComponent;
-    if (isComponent) this.componentModule = decEnv.get(tagName, node);
+    if (isComponent) this.componentObject = decEnv.get(tagName, node);
     this.isFragment = isFragment;
     this.props = {};
     if (propArr) propArr.forEach(propNode => {
