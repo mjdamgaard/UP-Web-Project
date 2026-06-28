@@ -274,8 +274,8 @@ export async function removeUserPreference(appDirID) {
 
 
 
-/* SMF for fetching the "trust identifiers" (used by App.jsx) */
+/* SMF for fetching the "trust class" (used by App.jsx) */
 
-export async function fetchTrustIdentifier(appDirID, scoreHandlerID = "0") {
+export async function fetchTrustClass(appDirID, scoreHandlerID = "0") {
   // TODO: Implement.
 }

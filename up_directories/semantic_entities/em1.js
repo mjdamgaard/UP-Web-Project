@@ -853,10 +853,10 @@ export const scoreHandlers = {
 
 
 
-// Component entities (short for 'JSX components' or 'App components) represent
-// internal JSX components in the database/network, that can be imported into
-// scripts. A defining property is obviously the path (or "route," if you will)
-// to the given component's module. And then there are some optional metadata
+// Component entities (short for 'JSX components') represent internal JSX
+// components in the database/network, that can be imported into scripts.
+// A defining property is obviously the path (or "route," if you will) to
+// the given component's module. And then there are some optional metadata
 // properties, including an URL to the GitHub repo from which the module stems,
 // and also not least an "Example component path", which leads to another,
 // props-independent component that showcases the given component (either by
@@ -869,7 +869,7 @@ export const scoreHandlers = {
 // props" property instead.
 export const components = {
   "Class": abs("./em1.js;get/classes"),
-  "Name": "App components",
+  "Name": "Components",
   "Superclass": abs("./em1.js;get/entities"),
   "Common properties": [
     "Component path", "Example component path", "Example props",

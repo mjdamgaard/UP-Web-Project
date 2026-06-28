@@ -5,7 +5,6 @@ import {urlActions, urlEvents} from "./urlActions.js";
 import {substring, indexOf} from 'string';
 import {hasType} from 'type';
 
-import * as AppHeader from "./AppHeader.jsx";
 import * as AppLoader from "./AppLoader.jsx";
 import {getFirstSegment} from "./AppLoader.jsx";
 
@@ -15,7 +14,7 @@ const missingPageContent = "404 error: Missing page."; // TODO: Improve.
 
 
 
-export function initialize({hideHeader = false}) {
+export function initialize() {
   return {
     ref: {
       appLoaderProps: undefined,

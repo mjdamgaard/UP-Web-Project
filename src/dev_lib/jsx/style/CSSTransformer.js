@@ -1,43 +1,12 @@
 
-import {cssParser} from "./CSSParser.js";
-import {getString, parseString}
-from "../../../../interpreting/ScriptInterpreter.js";
 
-
-const COMPONENT_ID_PLACEHOLDER = /(?<!\\)\\cid/g;
-const STYLE_SHEET_ID_PLACEHOLDER = /(?<!\\)\\sid/g;
-
+// TODO: This CSS transformer is now almost redundant, but for now we keep it
+// just as an added layer of security if the CSSParser is faulty. But once the
+// CSSParser has been sufficiently tested, parsing a style sheet should be
+// enough to validate it. (This class used to actually transform the CSS, by
+// e.g. transforming class names, but now it only essentially removes comments.)
 
 export class CSSTransformer {
-
-  // instantiateStyleSheetTemplate() takes a template as returned from
-  // transformStyleSheet() below, as well as a component ID (of the root
-  // component of the current app scope) and a style sheet ID, and creates
-  // an instance of that template, which is a valid CSS string ready to be
-  // inserted in the document head.
-  instantiateStyleSheetTemplate(
-    styleSheetTemplate, componentID, styleSheetID
-  ) {
-    return styleSheetTemplate.replaceAll(
-      COMPONENT_ID_PLACEHOLDER, componentID
-    ).replaceAll(
-      STYLE_SHEET_ID_PLACEHOLDER, styleSheetID
-    );
-  }
-
-
-  // transformStyleSheet() parses and transforms the input styleSheet into a
-  // style sheet template with "\sid" and "\cid" placeholders, which are
-  // substituted respectively with the style sheet ID and a component ID for
-  // the relevant app scope component before the style sheet is ready to be
-  // inserted in the document head.
-  transformStyleSheet(styleSheet, node, env) {
-    styleSheet = getString(styleSheet, env);
-    let [styleSheetNode] = parseString(styleSheet, node, env, cssParser);
-    let styleSheetTemplate = this.transformParsedStyleSheet(styleSheetNode);
-    return styleSheetTemplate;
-  }
-
 
   transformParsedStyleSheet(styleSheetNode, indentSpace = "") {
     return styleSheetNode.stmtArr.map(stmt => (
@@ -149,10 +118,6 @@ export class CSSTransformer {
       this.transformSimpleSelector(child)
     )).join("");
 
-    // Then append ":where(.c\cid)" to that part, where "\cid" is a
-    // placeholder that is meant to be replaced by a component ID.
-    transformedMainChildren = transformedMainChildren + ":where(.c\\cid)";
-
     // Then append the pseudo-element if any, and return the result.
     let pseudoElement = selector.pseudoElement;
     return pseudoElement ?
@@ -164,25 +129,7 @@ export class CSSTransformer {
     let type = selector.type;
     if (type === "class-selector") {
       let className = selector.className;
-
-      // If the class name has a leading underscore, leave it as it is, and do
-      // not push it to classes. This is because such classes are built-in,
-      // dev-defined classes for which the style sheets are free to define
-      // their own styles.
-      let indOfUnderscore = className.indexOf("_");
-      if (indOfUnderscore === 0 && className.length > 1) {
-        return "." + className;
-      }
-
-      // Else if there are no underscore, push the untransformed class name to
-      // the classes array, and return a transformed version where "_\sid" is
-      // appended to it. 
-      else if (indOfUnderscore === -1) {
-        return "." + className + "_\\sid";
-      }
-      else {
-        return "._/* No non-leading underscores are allowed in classes */._";
-      }
+      return "." + className;
     }
     else if (type === "pseudo-class-selector") {
       let argument = selector.argument; 

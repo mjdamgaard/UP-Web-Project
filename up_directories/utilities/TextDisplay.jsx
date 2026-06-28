@@ -1,13 +1,18 @@
 
 import {fetch} from 'query';
 
+import * as textDisplayStyle from "./TextDisplay.css";
+import * as mainStyle from "../root_app/style.css";
+
 
 export function render({
   children = undefined, jsxElement = children, jsxLink = undefined
 }) {
   if (jsxElement) {
-    return <div className="text-display">
-      {(jsxElement)}
+    return <div innerStyle={[mainStyle, textDisplayStyle]}>
+        <div className="text-display">
+        {(jsxElement)}
+      </div>
     </div>;
   }
   else if (!jsxLink) {
@@ -37,8 +42,10 @@ export function render({
     content = jsxElement;
   }
 
-  return <div className="text-display">
-    {(content)}
+  return <div innerStyle={[mainStyle, textDisplayStyle]}>
+    <div className="text-display">
+      {(content)}
+    </div>
   </div>;
 }
 
@@ -47,7 +54,3 @@ export function initialize({jsxLink}) {
   return {curJSXLink: jsxLink};
 }
 
-
-
-
-export const styleModulePath = abs("./TextDisplay.style.js");

@@ -7,13 +7,10 @@ import {CAN_CREATE_APP_FLAG} from "./dev_lib/jsx/jsx_components.js";
 
 import {main as constructAccountMenu} from "./account_menu/account_menu.js"
 
-import {settings} from "./dev_lib/jsx/settings/SettingsObject.js";
-
 
 /* Static developer libraries */
 
 import * as queryMod from "./dev_lib/query/query.js";
-import * as basicSettingsMod from "./dev_lib/jsx/settings/SettingsObject.js";
 import * as jsxMod from "./dev_lib/jsx/jsx_components.js";
 import * as TextAreaMod from "./dev_lib/jsx/dev_components/TextArea.js";
 import * as InputTextMod from "./dev_lib/jsx/dev_components/InputText.js";
@@ -44,7 +41,6 @@ import * as entitiesMod from "./dev_lib/semantic_entities/entities.js";
 
 const staticDevLibs = new Map();
 staticDevLibs.set("query", queryMod);
-staticDevLibs.set("settings1", basicSettingsMod);
 staticDevLibs.set("jsx", jsxMod);
 staticDevLibs.set("TextArea.jsx", TextAreaMod);
 staticDevLibs.set("InputText.jsx", InputTextMod);
@@ -107,7 +103,7 @@ class AppContext {
   }
 }
 
-const settingsContext = new AppContext(settings);
+const userContext = new AppContext({userID: undefined});
 const urlContext = new AppContext({
   url: window.location.pathname.replace(/\/$/, ""), stateJSON: "null"
 });
@@ -122,7 +118,7 @@ window.addEventListener("popstate", (event) => {
 
 // Set up the account menu, used for account-related settings and user
 // preferences.
-constructAccountMenu(settingsContext, urlContext);
+constructAccountMenu(userContext, urlContext); // TODO: Remove.
 
 
 // Initialize the interpreter.
@@ -146,14 +142,13 @@ setInterval(
 );
 
 // The script the initializes the UP app.
-const TEST_APP_ID = "2";
+const ROOT_APP_ID = "2";
 const mainScript = `
   import {createJSXApp} from 'jsx';
-  import {settings} from 'settings1';
-  import * as app from "/1/${TEST_APP_ID}/main.jsx";
+  import * as app from "/1/${ROOT_APP_ID}/main.jsx";
 
   export function main() {
-    createJSXApp(app, {}, settings);
+    createJSXApp(app);
   }
 `;
 
@@ -163,7 +158,7 @@ const flags = [CAN_CREATE_APP_FLAG];
 // Run the main script to create the app.
 scriptInterpreter.interpretScript(
   appGas, mainScript, undefined, [], flags,
-  {settingsContext: settingsContext, urlContext: urlContext},
+  {userContext: userContext, urlContext: urlContext},
 ).then(
   ([output, log]) => {
     if (log?.error) {

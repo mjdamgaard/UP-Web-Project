@@ -36,7 +36,7 @@ export const render = new DevFunction(
       clearAttributes(domNode, ["type", "checked"]);
     }
     domNode.setAttribute("type", "radio");
-    domNode.setAttribute("class", "input-radio_0");
+    domNode.setAttribute("class", "input-radio");
     if (id !== undefined) domNode.setAttribute("id", id);
     if (name !== undefined) domNode.setAttribute("name", name);
 
@@ -62,7 +62,7 @@ export const render = new DevFunction(
       };
     }
 
-    return new DOMNodeObject(domNode, [domNode]);
+    return new DOMNodeObject(domNode);
   }
 );
 
@@ -102,10 +102,7 @@ export const actions = {
     "focus", {}, function({thisVal, callerNode, execEnv}, []) {
       validateJSXInstance(thisVal, "InputRadio.jsx", callerNode, execEnv);
       let {jsxInstance} = thisVal;
-      let canGrabFocus = !jsxInstance.settings.isOutsideFocusedAppScope(
-        jsxInstance, callerNode, execEnv
-      );
-      if (canGrabFocus) {
+      if (jsxInstance.canGrabFocus()) {
         thisVal.jsxInstance.domNode.focus();
         return true;
       }

@@ -5,12 +5,13 @@ import {
   OBJECT_PROTOTYPE, Environment, ARRAY_PROTOTYPE, FunctionObject, Exception,
   getStringOrSymbol, getPropertyFromObject, getPropertyFromPlainObject,
   jsonStringify, ArgTypeError, decrCompGas, getAbsolutePath, ErrorWrapper,
+  CSSModule, isArray,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
 } from "../query/src/flags.js";
 
-const CLASS_NAME_REGEX = /^ *([a-z][a-z0-9\-]* *)*$/;
+const CLASS_NAME_REGEX = /^ *([a-z][a-z0-9_-]* *)*$/;
 
 export const HREF_REGEX =
   /^(\.{0,2}\/)?(([;.~a-zA-Z0-9_\-]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+(\/([;.~a-zA-Z0-9_\-]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+)*)?$/;
@@ -27,9 +28,9 @@ export const CAN_CREATE_APP_FLAG = Symbol("can-create-app");
 // HTML page, in the element with the id of "up-app-root".
 export const createJSXApp = new DevFunction(
   "createJSXApp",
-  {isAsync: true, typeArr:["module", "object?", "Settings"]},
+  {isAsync: true, typeArr:["module", "object?"]},
   async function(
-    {callerNode, execEnv, interpreter}, [appComponent, props = {}, settings]
+    {callerNode, execEnv, interpreter}, [appComponent, props = {}]
   ) {
     // Check if the caller is allowed to create an app from in the current
     // environment.
@@ -44,20 +45,8 @@ export const createJSXApp = new DevFunction(
 
     // Create the app's root component instance (but don't render it yet).
     let rootInstance = new JSXInstance(
-      appComponent, "root", undefined, callerNode, appEnv, settings
+      appComponent, "root", undefined, callerNode, appEnv
     );
-
-    // Get the userID if the user is logged in and call settings.initiate() in
-    // order to make any initial user-dependent preparations for the 'settings'
-    // object. Note that the settings object extend the (abstract)
-    // SettingsObject class declared below.
-    let userID = getUserID();
-    await settings.initiate(userID, rootInstance, callerNode, appEnv);
-  
-    // Set the appSettings property of the scriptVars object, which changes the
-    // behavior of import() going forward such that it also prepares the
-    // component's style in the case of a .jsx import.
-    execEnv.scriptVars.appSettings = settings;
 
     // Add some props to the root instance for getting user data and URL data,
     // and for pushing/replacing a new browser session history state.
@@ -89,8 +78,7 @@ export const createJSXApp = new DevFunction(
 class JSXInstance {
 
   constructor (
-    componentModule, key, parentInstance = undefined, callerNode, callerEnv,
-    settings = undefined,
+    componentModule, key, parentInstance = undefined, callerNode, callerEnv
   ) {
     if (!(componentModule instanceof LiveJSModule)) throw new RuntimeError(
       "JSX component needs to be an imported module namespace object",
@@ -99,16 +87,15 @@ class JSXInstance {
     this.componentModule = componentModule;
     this.key = getString(key, callerEnv);
     this.parentInstance = parentInstance;
-    this.settings = settings ?? parentInstance.settings;
-    this.settingsData = {}; // Reserved property handled purely by settings.
     this.domNode = undefined;
     this.isDecorated = undefined;
     this.childInstances = new Map();
     this.props = undefined;
     this.state = undefined;
+    this.ref = undefined;
+    this.style = undefined;
     this.prevState = undefined;
     this.stateIsSet = false;
-    this.ref = undefined;
     this.contextProvisions = undefined;
     this.contextSubscriptions = undefined;
     this.callerNode = callerNode;
@@ -152,47 +139,22 @@ class JSXInstance {
     this.props = props;
     this.prevState = this.state;
 
-
-    // Call settings.prepareInstance() to prepare the other methods of settings
-    // for this instance, in particular transformInstance(), used below.
-    // prepareInstance(), like any other methods of settings, is allowed to
-    // read and write to the 'settingsData' property of this JSXInstance.
-    // prepareInstance() returns a whenReady value which is a promise if and
-    // only if the the instance has not been prepared yet. That promise will
-    // then resolve once the instance is finally prepared, which means that we
-    // can queue a rerender here when that happens.
-    let [
-      isReady, whenReady, renderBeforeReady = false
-    ] = this.settings.prepareInstance(this, callerNode, callerEnv);
-    if (!isReady) {
-      whenReady.then(res => {
-        if (res instanceof ErrorWrapper) {
-          this.failComponentAndGetDOMNode(res.val, replaceSelf);
-        }
-        this.queueRerender(interpreter);
-      });
-      if (!renderBeforeReady) {
-        let newDOMNode = document.createElement("template");
-        newDOMNode.setAttribute("class", "_pending-settings");
-        this.replaceDOMNode(newDOMNode, replaceSelf);
-        return newDOMNode;
-      }
-
+    // Create a new environment for the component instance, and if the
+    // 'untrusted' prop is true, query the CLIENT_TRUST_FLAG about whether the
+    // parent instance was trusted. If so, remove the CLIENT_TRUST_FLAG, but
+    // set the REQUESTING_COMPONENT_FLAG instead, allowing the untrusted
+    // component to make requests with itself as the request origin (when it
+    // is nested in a trusted component). But if the parent was not trusted,
+    // simply clear both flags.
+    let flags = undefined;
+    if (props["untrusted"]) {
+      let parentIsTrusted = callerEnv.getFlag(CLIENT_TRUST_FLAG);
+      flags = !parentIsTrusted ? [CLEAR_FLAG] : [
+        CLEAR_FLAG,
+        [REQUESTING_COMPONENT_FLAG, this.componentPath],
+      ];
     }
-
-    // Call settings.getRequestOriginData() to get an 'isTrusted' boolean of
-    // whether the client trusts this instance to override CORS-like server
-    // module checks. And at the same time, get the 'requestOrigin' which is
-    // what might be checked in these CORS-like checks if isTrusted is false. 
-    // Then use this to create a new environment with the appropriate flags set.
-    let [isTrusted, requestOrigin] = this.settings.getRequestOriginData(
-      this, callerNode, callerEnv
-    );
-    let compEnv = new Environment(callerEnv, undefined, {flags: [
-      CLEAR_FLAG,
-      [CLIENT_TRUST_FLAG, isTrusted],
-      [REQUESTING_COMPONENT_FLAG, requestOrigin],
-    ]});
+    let compEnv = new Environment(callerEnv, undefined, {flags: flags});
 
 
     // On the first render only, initialize the state, and record the 'ref'
@@ -245,20 +207,17 @@ class JSXInstance {
     // If a JSXElement was successfully returned, call getDOMNode() to generate
     // the instance's new DOM node, unless render() is a dev function that
     // returns a DOM node directly, wrapped in the DOMNodeWrapper class
-    // defined below, in which case just use that DOM node. getDOMNode() will
-    // also fill out the ownDOMNodes array, which will include all the DOM
-    // elements of the component instance that is not part of a child instance. 
-    let newDOMNode, ownDOMNodes = [];
+    // defined below, in which case just use that DOM node. 
+    let newDOMNode;
     if (jsxElement instanceof DOMNodeObject) {
       newDOMNode = jsxElement.domNode;
-      ownDOMNodes = jsxElement.ownDOMNodes ?? [newDOMNode];
       marks = jsxElement.marks ?? marks;
     }
     else {
       try {
         newDOMNode = this.getDOMNode(
           jsxElement, this.domNode, marks, interpreter, callerNode, compEnv,
-          props, ownDOMNodes
+          props
         );
       }
       catch (err) {
@@ -292,24 +251,6 @@ class JSXInstance {
       this.updateDecoratingAncestors(newDOMNode);
     }
     this.domNode = newDOMNode;
-
-
-    // If the instance is not prepared yet, meaning that the style might not be
-    // ready, add a "_pending-settings" class to the DOM node while waiting for
-    // the rerender. (Note that the underscore here is meant to make it possible
-    // for "trusted" style sheets to style the class.)
-    if (!isReady) {
-      newDOMNode.classList.add("_pending-settings");
-    }
-
-    // And before returning the new DOM node, call settings.transformInstance()
-    // in order to transform the DOM node, in particular for applying style to
-    // it (by giving it classes and/or inline styles). Note if this method has
-    // not yet been prepared for the instance, it will just do nothing, and
-    // wait for the rerender.
-    this.settings.transformInstance(
-      this, newDOMNode, ownDOMNodes, callerNode, compEnv
-    );
 
     // Finally, return the instance's new DOM node.
     return newDOMNode;
@@ -398,7 +339,7 @@ class JSXInstance {
 
   getDOMNode(
     jsxElement, curNode, marks, interpreter, callerNode, callerEnv, props,
-    ownDOMNodes, childInstanceNodes = undefined, isOuterElement = true
+    childInstanceNodes = undefined, isOuterElement = true
   ) {
     if (!childInstanceNodes) {
       childInstanceNodes = [...this.childInstances.values()].map(
@@ -406,6 +347,7 @@ class JSXInstance {
       );
     }
     let newDOMNode;
+
     // If jsxElement is not a JSXElement instance, let the new DOM node be a
     // string derived from JSXElement.
     let isArray = jsxElement instanceof Array;
@@ -438,7 +380,7 @@ class JSXInstance {
         document.createElement("div");
       this.replaceChildren(
         newDOMNode, childArr, marks, interpreter, callerNode, callerEnv,
-        props, ownDOMNodes, childInstanceNodes
+        props, childInstanceNodes
       );
     }
 
@@ -519,15 +461,8 @@ class JSXInstance {
           case "className" : {
             let className = val.toString();
             if (!CLASS_NAME_REGEX.test(className)) throw new RuntimeError(
-              `Invalid class name: "${className}" (each class name needs to ` +
-              "be of the form '[<id>_]<name>' where both id is of the form " +
-              "/([a-z]|-_)[a-z-A0-9\-]*/ and name is of the form " +
-              "/[a-z][a-z0-9\-]*/)",
+              `Invalid class name: "${className}"`,
               jsxNode, jsxDecEnv
-            );
-            // Add automatic '_' postfixes to all initial classes.
-            className = className.replaceAll(
-              /[a-z][a-z0-9\-]*/g, str => str + "_"
             );
             newDOMNode.setAttribute("class", className);
             break;
@@ -598,9 +533,6 @@ class JSXInstance {
               jsxNode, jsxDecEnv
             );
             break;
-          // TODO: Consider also adding an 'autofocus' prop here that grabs the
-          // focus, but only once, and only if allowed by 
-          // settings.isOutsideFocusedAppScope().
           case "onKeyDown":
             eventProperty ??= "onkeydown";
           case "onKeyUp":
@@ -669,17 +601,28 @@ class JSXInstance {
         }
       });
 
+      // After the props have been set, check if the JSXElement styles its own
+      // children, and if so, create a shadow root node to be inserted between
+      // newDOMNode and its children, or reuse any existing shadow root, then
+      // add the style to it. 
+      let domNode = newDOMNode;
+      if (jsxElement.innerStyle) {
+        let shadowRoot = newDOMNode.shadowRoot ??
+          newDOMNode.attachShadow({mode: "open"});
+        let styleSheetArray = this.getCSSStyleSheets(
+          jsxElement.innerStyle, callerNode, callerEnv
+        );
+        shadowRoot.adoptedStyleSheets = styleSheetArray;
+        domNode = shadowRoot;
+      }
+
       // Then call a recursive helper method which calls getDOMNode() on any
       // and all children, and append each one to the new DOM node. And if a
       // child returns an array, it also calls itself recursively to append
-      // any and all nested children inside that array (at any depth). We also
-      // push the new DOM node to ownDOMNodes, and do this before hand, such
-      // that ownDOMNodes will be ordered from ancestors to descendants at the
-      // end.
-      ownDOMNodes.push(newDOMNode);
+      // any and all nested children inside that array (at any depth).
       this.replaceChildren(
-        newDOMNode, childArr, marks, interpreter, callerNode, callerEnv,
-        props, ownDOMNodes, childInstanceNodes
+        domNode, childArr, marks, interpreter, callerNode,
+        callerEnv, props, childInstanceNodes
       );
     }
 
@@ -690,7 +633,7 @@ class JSXInstance {
 
   replaceChildren(
     domNode, childArr, marks, interpreter, callerNode, callerEnv,
-    props, ownDOMNodes, childInstanceNodes = undefined
+    props, childInstanceNodes = undefined
   ) {
     if (!childInstanceNodes) {
       childInstanceNodes = [...this.childInstances.values()].map(
@@ -700,7 +643,7 @@ class JSXInstance {
     let curChildArr = [...domNode.childNodes];
     let newChildArr = this.#getNewChildren(
       domNode, childArr, curChildArr, marks, interpreter, callerNode, callerEnv,
-      props, ownDOMNodes, childInstanceNodes
+      props, childInstanceNodes
     );
 
     let len = Math.max(curChildArr.length, newChildArr.length);
@@ -725,7 +668,7 @@ class JSXInstance {
 
   #getNewChildren(
     domNode, childArr, curChildArr, marks, interpreter, callerNode, callerEnv,
-    props, ownDOMNodes, childInstanceNodes, offset = 0
+    props, childInstanceNodes, offset = 0
   ) {
     let i = offset;
     return [].concat(...childArr.map(child => {
@@ -737,7 +680,7 @@ class JSXInstance {
         }
         let newChildren = this.#getNewChildren(
           domNode, nestedChildArr, curChildArr, marks, interpreter, callerNode,
-          callerEnv, props, ownDOMNodes, childInstanceNodes, i
+          callerEnv, props, childInstanceNodes, i
         );
         i = i + newChildren.length;
         return newChildren;
@@ -745,7 +688,7 @@ class JSXInstance {
       else if (child !== undefined) {
         let newChild = this.getDOMNode(
           child, curChildArr[i], marks, interpreter, callerNode,
-          callerEnv, props, ownDOMNodes, childInstanceNodes, false
+          callerEnv, props, childInstanceNodes, false
         );
         i++;
         return [newChild];
@@ -756,6 +699,33 @@ class JSXInstance {
     }));
   }
 
+
+  getCSSStyleSheets(innerStyleProp, node, env) {
+    let ret = [], isValid = true;
+    if (innerStyleProp instanceof CSSModule) {
+      ret.push(innerStyleProp.getCSSStyleSheet(node, env));
+    }
+    else if (isArray(innerStyleProp)) {
+      forEachValue(innerStyleProp, node, env, cssModule => {
+        if (cssModule instanceof CSSModule) {
+          ret.push(cssModule.getCSSStyleSheet(node, env));
+        }
+        else {
+          isValid = false;
+        }
+      });
+    }
+    else {
+      isValid = false;
+    }
+
+    if (!isValid) throw new ArgTypeError(
+      'The "innerStyle" attribute must be a either a CSSModule object or ' +
+      'an array of such objects',
+       node, env
+    );
+    return ret;
+  }
 
 
   getFullKey() {
@@ -1027,6 +997,11 @@ class JSXInstance {
     this.queueRerender(interpreter);
   }
 
+
+  canGrabFocus() {
+    let focusedNode = document.activeElement;
+    return !(focusedNode && focusedNode.classList.contains("locked-focus"));
+  }
 }
 
 
@@ -1062,9 +1037,9 @@ export class JSXInstanceInterface extends ObjectObject {
       "getOwnContext": this.getOwnContext,
       "constants": this.declareConstants,
       "reset": this.reset,
-      "getSettings": this.getSettings,
+      "canGrabFocus": this.canGrabFocus,
       "getBoundingClientRect": this.getBoundingClientRect,
-      "getIsVisible": this.getIsVisible,
+      // "getIsVisible": this.getIsVisible,
       "getScrollData": this.getScrollData,
       "blur": this.blur,
       "delay": this.delay,
@@ -1229,19 +1204,9 @@ export class JSXInstanceInterface extends ObjectObject {
     }
   );
 
-
-  // getSettings() returns a promise to the settings. Note that it might be a
-  // good idea to check the CLIENT_TRUST_FLAG before allowing a component
-  // instance to get settings that the user might consider private. So don't
-  // just let private settings be properties of settings; make them methods
-  // that check said flag.
-  getSettings = new DevFunction(
-    "getSettings", {isAsync: true}, async () => {
-      let settings = this.jsxInstance.settings;
-      if (settings instanceof Promise) {
-        settings = await settings;
-      }
-      return settings;
+  canGrabFocus = new DevFunction(
+    "canGrabFocus", {}, () => {
+      return this.jsxInstance.canGrabFocus();
     }
   );
 
@@ -1263,12 +1228,12 @@ export class JSXInstanceInterface extends ObjectObject {
   );
 
 
-  getIsVisible = new DevFunction(
-    "getIsVisible", {}, ({}, [checkViewport = false]) => {
-      let domNode = this.jsxInstance.domNode;
-      return getIsVisible(domNode, checkViewport);
-    }
-  );
+  // getIsVisible = new DevFunction(
+  //   "getIsVisible", {}, ({}, [checkViewport = false]) => {
+  //     let domNode = this.jsxInstance.domNode;
+  //     return getIsVisible(domNode, checkViewport);
+  //   }
+  // );
 
 
   getScrollData = new DevFunction(
@@ -1279,19 +1244,6 @@ export class JSXInstanceInterface extends ObjectObject {
         scrollTop: scrollTop, scrollHeight: scrollHeight,
         scrollLeft: scrollLeft, scrollWidth: scrollWidth
       };
-    }
-  );
-
-  // blur() blurs the focused element if it is within component instance, and
-  // within the same app scope.
-  blur = new DevFunction(
-    "blur", {}, ({callerNode, execEnv}, []) => {
-      let canBlur = !this.jsxInstance.settings.isOutsideFocusedAppScope(
-        this.jsxInstance, callerNode, execEnv
-      );
-      if (canBlur) {
-        document.activeElement.blur();
-      }
     }
   );
 
@@ -1360,6 +1312,9 @@ export class JSXInstanceInterface extends ObjectObject {
 }
 
 
+
+// TODO: I think I will remove this, along wit the getIsVisible method above
+// (just out-commented for now).
 
 const MARGIN_OF_ALLOWED_OVERLAP = 0.01;
 
@@ -1453,72 +1408,11 @@ export function getIsVisible(domNode, checkViewport = false) {
 
 // DOMNodeObjects can be returned by the render() functions of dev components.
 export class DOMNodeObject extends ObjectObject {
-  constructor(domNode, ownDOMNodes = undefined, marks = undefined) {
+  constructor(domNode, marks = undefined) {
     super("DOMNode");
     this.domNode = domNode;
-    this.ownDOMNodes = ownDOMNodes;
     this.marks = marks;
   }
-}
-
-
-// SettingsObject is an abstract class that is meant to be extended by settings
-// systems, i.e. the modules that define a getSettings() function to be passed
-// to createJSXApp().
-export class SettingsObject extends ObjectObject {
-  constructor() {
-    super("Settings");
-  }
-
-  // TODO: Correct and complete the following comments.
-
-  // initiate(userID, rootInstance, node, env) ...
-  initiate(userID, rootInstance, node, env) {}
-
-  // getUserID(node, env) ...
-  getUserID(node, env) {}
-
-  // changeUser(userID?, node, env) ...
-  changeUser(userID, node, env) {}
-
-  // prepareComponent(componentModule, node, env) ...
-  prepareComponent(componentModule, node, env) {}
-
-  // prepareInstance(jsxInstance, node, env) has
-  // to prepare transformInstance() such that it can be called synchronously.
-  // It should also return a whenPrepared value that might be a promise, in
-  // which case the component renders with a "_pending-settings" class and
-  // queues a rerender when the promise resolves.
-  prepareInstance(jsxInstance, node, env) {}
-
-  // TODO: Correct.
-  // getClientTrust(componentPath, node, env) takes a component path,
-  // which will often be the so-called "request origin", and returns boolean
-  // of whether client trust the component to make post requests, and to
-  // fetch private data. If getClientTrust() has not yet been prepared by
-  // prepareInstance(), it might just return false temporarily.
-  getClientTrust(componentPath, node, env) {}
-
-  // TODO: Describe.
-  getRequestOriginData(jsxInstance, node, env) {}
-
-  // transformInstance() ...
-  transformInstance(
-    jsxInstance, domNode, ownDOMNodes, node, env
-  ) {}
-
-  // getAppScopeRoot(jsxInstance) gets the DOM node at the root of the
-  // current app scope.
-  getAppScopeRoot(jsxInstance, node, env) {}
-
-  // isOutsideFocusedAppScope(jsxInstance) returns true iff there is an
-  // HTML element in focus outside of the current app scope.
-  isOutsideFocusedAppScope(jsxInstance, node, env) {}
-
-  // Note that these are just the minimal API needed for this module to
-  // function. In practice the settings class will likely be extended with
-  // other methods.
-
 }
 
 
@@ -1637,27 +1531,6 @@ export function deepCompare(val1, val2, excludeMutableProps = false) {
 
 
 
-export async function getSetting(
-  settings, name, inputArr = undefined, interpreter, node, env
-) {
-  let val = settings[name];
-  if (val instanceof PromiseObject) {
-    val = await val.promise;
-  }
-  if (val instanceof FunctionObject) {
-    val = interpreter.executeFunctionOffSync(
-      val, inputArr ?? [], node, env, settings
-    );
-    if (val instanceof PromiseObject) {
-      val = await val.promise;
-    }
-  }
-  return val;
-}
-
-
-
-
 
 
 export function getUserID() {
@@ -1668,18 +1541,12 @@ export function getUserID() {
 }
 
 
-
 function addUserRelatedProps(props, jsxInstance, interpreter, node, env) {
-  let {contexts: {settingsContext}} = env.scriptVars;
-  let userID = settingsContext.getVal().getUserID(node, env);
-  settingsContext.addSubscriberCallback(settings => {
-    let userID = settings.getUserID(node, env);
-    settings.initiate(userID, jsxInstance, node, env).then(() => {
-      jsxInstance.changePropsAndQueueRerender({userID: userID}, interpreter);
-      jsxInstance.queueFullRerender(interpreter);
-    }).catch(err => {
-      interpreter.handleUncaughtException(err, env);
-    });
+  let {contexts: {userContext}} = env.scriptVars;
+  let userID = getUserID();
+  userContext.setVal({userID: userID});
+  userContext.addSubscriberCallback(({userID}) => {
+    jsxInstance.changePropsAndQueueRerender({userID: userID}, interpreter);
   });
   return {...props, userID: userID};
 }
@@ -1739,7 +1606,7 @@ function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
   // state JSON.
   let {url, stateJSON} = urlContext.getVal();
 
-  // Then subscribe the app component's jsxInstance to the urlContext.
+  // Then subscribe the root component's jsxInstance to the urlContext.
   urlContext.addSubscriberCallback((urlData) => {
     jsxInstance.changePropsAndQueueRerender({
       url: urlData.url,

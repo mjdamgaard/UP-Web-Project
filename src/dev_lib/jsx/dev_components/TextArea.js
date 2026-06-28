@@ -18,7 +18,7 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {idKey, placeholder, children, onChange, onInput} = props;
+    let {idKey, placeholder, children, onChange, onInput, lockFocus} = props;
     verifyTypes(
       [placeholder, onChange, onInput], ["string?", "function?", "function?"],
       callerNode, execEnv
@@ -38,7 +38,9 @@ export const render = new DevFunction(
     else {
       clearAttributes(domNode);
     }
-    domNode.setAttribute("class", "textarea_0");
+    domNode.setAttribute(
+      "class", "textarea" + (lockFocus ? " lock-focus" : "")
+    );
     if (id !== undefined) domNode.setAttribute("id", id);
     if (placeholder !== undefined) {
       domNode.setAttribute("placeholder", placeholder);
@@ -66,7 +68,7 @@ export const render = new DevFunction(
       };
     }
 
-    return new DOMNodeObject(domNode, [domNode]);
+    return new DOMNodeObject(domNode);
   }
 );
 
@@ -106,10 +108,7 @@ export const actions = {
     "focus", {}, function({thisVal, callerNode, execEnv}, []) {
       validateJSXInstance(thisVal, "TextArea.jsx", callerNode, execEnv);
       let {jsxInstance} = thisVal;
-      let canGrabFocus = !jsxInstance.settings.isOutsideFocusedAppScope(
-        jsxInstance, callerNode, execEnv
-      );
-      if (canGrabFocus) {
+      if (jsxInstance.canGrabFocus()) {
         thisVal.jsxInstance.domNode.focus();
         return true;
       }

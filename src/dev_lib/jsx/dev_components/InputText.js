@@ -18,7 +18,7 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {idKey, size, value, placeholder, onChange, onInput} = props;
+    let {idKey, size, value, placeholder, onChange, onInput, lockFocus} = props;
     verifyTypes(
       [size, onChange, onInput],
       ["integer positive?", "function?", "function?"],
@@ -44,7 +44,9 @@ export const render = new DevFunction(
       clearAttributes(domNode, ["type", "value"]);
     }
     domNode.setAttribute("type", "text");
-    domNode.setAttribute("class", "input-text_0");
+    domNode.setAttribute(
+      "class", "input-text" + (lockFocus ? " lock-focus" : "")
+    );
     if (id !== undefined) domNode.setAttribute("id", id);
     if (size !== undefined) domNode.setAttribute("size", size);
     if (placeholder !== undefined) {
@@ -73,7 +75,7 @@ export const render = new DevFunction(
       };
     }
 
-    return new DOMNodeObject(domNode, [domNode]);
+    return new DOMNodeObject(domNode);
   }
 );
 
@@ -112,10 +114,7 @@ export const actions = {
     "focus", {}, function({thisVal, callerNode, execEnv}, []) {
       validateJSXInstance(thisVal, "InputText.jsx", callerNode, execEnv);
       let {jsxInstance} = thisVal;
-      let canGrabFocus = !jsxInstance.settings.isOutsideFocusedAppScope(
-        jsxInstance, callerNode, execEnv
-      );
-      if (canGrabFocus) {
+      if (jsxInstance.canGrabFocus()) {
         thisVal.jsxInstance.domNode.focus();
         return true;
       }

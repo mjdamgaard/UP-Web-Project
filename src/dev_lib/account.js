@@ -8,40 +8,40 @@ import {CLIENT_TRUST_FLAG} from './query/src/flags.js';
 export const logout = new DevFunction(
   "logout", {isAsync: true}, async ({callerNode, execEnv}, []) => {
     checkAccountLibraryPermission(callerNode, execEnv);
-    let {settingsContext} = execEnv.scriptVars.contexts;
-    return await accountMenu.logout(settingsContext);
+    let {userContext} = execEnv.scriptVars.contexts;
+    return await accountMenu.logout(userContext);
   },
 );
 
 export const openLoginPage = new DevFunction(
   "openLoginPage", {}, ({callerNode, execEnv}, []) => {
     checkAccountLibraryPermission(callerNode, execEnv);
-    let {settingsContext} = execEnv.scriptVars.contexts;
-    return accountMenu.openLoginPage(settingsContext);
+    let {userContext} = execEnv.scriptVars.contexts;
+    return accountMenu.openLoginPage(userContext);
   },
 );
 
 export const openCreateAccountPage = new DevFunction(
   "openCreateAccountPage", {}, ({callerNode, execEnv}, []) => {
     checkAccountLibraryPermission(callerNode, execEnv);
-    let {settingsContext} = execEnv.scriptVars.contexts;
-    return accountMenu.openCreateAccountPage(settingsContext);
+    let {userContext} = execEnv.scriptVars.contexts;
+    return accountMenu.openCreateAccountPage(userContext);
   },
 );
 
 export const openAccountPage = new DevFunction(
   "openAccountPage", {}, ({callerNode, execEnv}, []) => {
     checkAccountLibraryPermission(callerNode, execEnv);
-    let {settingsContext} = execEnv.scriptVars.contexts;
-    return accountMenu.openAccountPage(settingsContext);
+    let {userContext} = execEnv.scriptVars.contexts;
+    return accountMenu.openAccountPage(userContext);
   },
 );
 
 export const goToProfilePage = new DevFunction(
   "goToProfilePage", {}, ({callerNode, execEnv}, []) => {
     checkAccountLibraryPermission(callerNode, execEnv);
-    let {settingsContext} = execEnv.scriptVars.contexts;
-    return accountMenu.goToProfilePage(settingsContext);
+    let {userContext} = execEnv.scriptVars.contexts;
+    return accountMenu.goToProfilePage(userContext);
   },
 );
 

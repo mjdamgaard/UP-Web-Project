@@ -59,7 +59,7 @@ export const render = new DevFunction(
       clearAttributes(domNode);
     }
     domNode.setAttribute(
-      "class", "img_0" + (isWhiteListed ? "" : " invalid_0")
+      "class", "img" + (isWhiteListed ? "" : " invalid")
     );
     if (src) {
       if (isWhiteListed) domNode.setAttribute("src", src);
@@ -67,7 +67,7 @@ export const render = new DevFunction(
     }
     if (alt !== undefined) domNode.setAttribute("alt", alt);
 
-    return new DOMNodeObject(domNode, [domNode]);
+    return new DOMNodeObject(domNode);
   }
 );
 

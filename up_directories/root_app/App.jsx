@@ -78,13 +78,11 @@ export function render({appDirID, url, homeURL, tailURL}) {
 
   return (
     <div className="app">
-      <AppWarning key="w" trustClass={trustClass} />
-      {/* TODO: Add className to blur if untrusted, and don't render if
-      "harmful" */}
+      <AppWarning key="w" trustClass={trustClass} appDirID={appDirID} />
       <div className={
         "app-component " + trustClass + (warningIsDismissed ? " dismissed" : "")
       }>{(
-        !AppComponent || trustClass === "harmful" ? undefined :
+        (!AppComponent || trustClass === "harmful") ? undefined :
           <AppComponent key="c"
             url={url} homeURL={homeURL} tailURL={tailURL}
           />

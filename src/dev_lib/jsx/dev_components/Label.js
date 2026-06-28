@@ -31,23 +31,20 @@ export const render = new DevFunction(
     else {
       clearAttributes(domNode);
     }
-    domNode.setAttribute("class", "label_0");
+    domNode.setAttribute("class", "label");
     if (forVal !== undefined) domNode.setAttribute("for", forVal);
 
     // If the children prop is defined, use sxInstance.replaceChildren() to
-    // render and append those children, also making sure to record the
-    // ownDOMNodes and marks as well (which will be attached to the returned
-    // DOMNodeObject).
+    // render and append those children, also making sure to record the marks
+    // as well (which will be attached to the returned DOMNodeObject).
     let marks = new Map();
-    let ownDOMNodes = [];
     if (children !== undefined) {
       jsxInstance.replaceChildren(
         domNode, [children], marks, interpreter, callerNode, execEnv,
-        props, ownDOMNodes
+        props
       );
     }
-    ownDOMNodes = [domNode, ...ownDOMNodes];
 
-    return new DOMNodeObject(domNode, [domNode]);
+    return new DOMNodeObject(domNode, marks);
   }
 );

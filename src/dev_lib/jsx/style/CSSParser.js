@@ -1,9 +1,9 @@
 
-import {Parser} from "../../../../interpreting/parsing/Parser.js";
+import {Parser} from "../../../interpreting/parsing/Parser.js";
 import {
   straightenListSyntaxTree, copyFromChild, copyLexemeFromChild,
   processPolyadicInfixOperation,
-} from "../../../../interpreting/parsing/processing.js";
+} from "../../../interpreting/parsing/processing.js";
 
 const ESCAPED_SINGLE_QUOTE_REGEX_G = /(?<!(\\\\)*\\)\\'/g;
 

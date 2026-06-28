@@ -8,6 +8,11 @@ import {urlActions, urlEvents} from "./urlActions.js";
 import * as AppHeader from "./AppHeader.jsx";
 import * as AppMain from "./AppMain.jsx";
 
+import * as mainStyle from "./style.css";
+import * as compEntPageStyle from
+  "../entity_browser/variable_components/ComponentEntityPage.css";
+import * as entListStyle from "../entity_browser/entity_lists/EntityList.css";
+
 import {scoreHandler02} from "/1/1/score_handling/ScoreHandler01/em.js";
 
 
@@ -35,11 +40,13 @@ export function render({
   }
 
   return (
-    <div className="app">
-      <AppHeader key="h" url={url} history={history} homeURL={homeURL} />
-      <AppMain key="m" url={url} history={history} homeURL={homeURL}
-        localStorage={localStorage} sessionStorage={sessionStorage}
-      />
+    <div innerStyle={[mainStyle, compEntPageStyle, entListStyle]}>
+      <div className="app">
+        <AppHeader key="h" url={url} history={history} homeURL={homeURL} />
+        <AppMain key="m" url={url} history={history} homeURL={homeURL}
+          localStorage={localStorage} sessionStorage={sessionStorage}
+        />
+      </div>
     </div>
   );
 }
@@ -95,11 +102,4 @@ export const events = [
   "pushState",
   "replaceState",
   "postUserEntity",
-];
-
-
-export const styleSheets = [
-  abs("./style.css"),
-  abs("../entity_browser/variable_components/ComponentEntityPage.css"),
-  abs("../entity_browser/entity_lists/EntityList.css"),
 ];

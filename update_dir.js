@@ -149,6 +149,9 @@ async function main() {
       }
       console.log("Success");
     }
+    // TODO: Instead of implementing a bundle command, I might implement a
+    // command to just "hoist" all descendant imports of a module up to the
+    // module itself. 
     else if (/^([bB]|build|bundle)$/.test(command)) {
       console.log("Bundling not implemented yet");
     }

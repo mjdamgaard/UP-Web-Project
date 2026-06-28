@@ -5,13 +5,13 @@ const serverQueryHandler = new ServerQueryHandler();
 
 
 
-export function main(settingsContext, urlContext) {
+export function main(userContext, urlContext) {
   // Determine whether the user is logged in or not (automatically treating the
   // user as logged out if the user session expires within a day). and set a
   // CSS class on #account-menu depending on this.
   let {userID, username, expTime} =
     JSON.parse(localStorage.getItem("userData") ?? "{}");
-  settingsContext.update(settings => settings.changeUser(userID));
+  userContext.setVal({userID: userID});
 
   if (!expTime || expTime * 1000 < Date.now() + 86400000) {
     localStorage.removeItem("userData");
@@ -52,34 +52,34 @@ export function main(settingsContext, urlContext) {
 
   // Add onclick events to the account menu items.
   document.getElementById("logout-item").onclick = () => {
-      logout(settingsContext, urlContext);
+      logout(userContext, urlContext);
   };
   document.getElementById("login-item").onclick = () => {
       document.getElementById("account-menu").classList.remove("open");
-      openLoginPage(settingsContext, urlContext);
+      openLoginPage(userContext, urlContext);
   };
   document.getElementById("create-account-item").onclick = () => {
       document.getElementById("account-menu").classList.remove("open");
-      openCreateAccountPage(settingsContext, urlContext);
+      openCreateAccountPage(userContext, urlContext);
   };
   document.getElementById("account-page-item").onclick = () => {
-      openAccountPage(settingsContext, urlContext);
+      openAccountPage(userContext, urlContext);
   };
   document.getElementById("profile-page-item").onclick = () => {
-      goToProfilePage(settingsContext, urlContext);
+      goToProfilePage(userContext, urlContext);
   };
 }
 
 
 
-export async function logout(settingsContext) {
+export async function logout(userContext) {
   let {userID, authToken} = JSON.parse(
     localStorage.getItem("userData") ?? "{}"
   );
   try {
     await queryLoginServer("logout", userID, {authToken: authToken});
     localStorage.clear();
-    settingsContext.update(settings => settings.changeUser(undefined));
+    userContext.setVal({userID: undefined});
     document.getElementById("user-name-display").replaceChildren("");
     let accountMenu = document.getElementById("account-menu");
     accountMenu.classList.remove("open");
@@ -92,7 +92,7 @@ export async function logout(settingsContext) {
 
 
 
-export function openLoginPage(settingsContext) {
+export function openLoginPage(userContext) {
   let overlayPageContainer = document.getElementById("overlay-page-container");
   overlayPageContainer.classList.add("open");
   overlayPageContainer.innerHTML = `
@@ -142,7 +142,7 @@ export function openLoginPage(settingsContext) {
         responseDisplay.replaceChildren("Incorrect password");
         return;
       }
-      settingsContext.update(settings => settings.changeUser(userID));
+      userContext.setVal({userID: userID});
       localStorage.setItem("userData", JSON.stringify({
         userID: userID, username: username,
         authToken: authToken, expTime: expTime,
@@ -159,7 +159,7 @@ export function openLoginPage(settingsContext) {
 
 
 
-export function openCreateAccountPage(settingsContext) {
+export function openCreateAccountPage(userContext) {
   let overlayPageContainer = document.getElementById("overlay-page-container");
   overlayPageContainer.classList.add("open");
   overlayPageContainer.innerHTML = `
@@ -215,7 +215,7 @@ export function openCreateAccountPage(settingsContext) {
         responseDisplay.replaceChildren("Username already exists");
         return;
       }
-      settingsContext.update(settings => settings.changeUser(userID));
+      userContext.setVal({userID: userID});
       localStorage.setItem("userData", JSON.stringify({
         userID: userID, username: username,
         authToken: authToken, expTime: expTime,

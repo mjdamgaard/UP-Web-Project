@@ -41,7 +41,7 @@ export const render = new DevFunction(
       clearAttributes(domNode, ["type", "value", "min", "max", "step"]);
     }
     domNode.setAttribute("type", "number");
-    domNode.setAttribute("class", "input-number_0");
+    domNode.setAttribute("class", "input-number");
     if (id !== undefined) domNode.setAttribute("id", id);
     if (min !== undefined) domNode.setAttribute("min", min);
     if (max !== undefined) domNode.setAttribute("max", max);
@@ -73,7 +73,7 @@ export const render = new DevFunction(
       };
     }
 
-    return new DOMNodeObject(domNode, [domNode]);
+    return new DOMNodeObject(domNode);
   }
 );
 
@@ -114,10 +114,7 @@ export const actions = {
     "focus", {}, function({thisVal, callerNode, execEnv}, []) {
       validateJSXInstance(thisVal, "InputNumber.jsx", callerNode, execEnv);
       let {jsxInstance} = thisVal;
-      let canGrabFocus = !jsxInstance.settings.isOutsideFocusedAppScope(
-        jsxInstance, callerNode, execEnv
-      );
-      if (canGrabFocus) {
+      if (jsxInstance.canGrabFocus()) {
         thisVal.jsxInstance.domNode.focus();
         return true;
       }

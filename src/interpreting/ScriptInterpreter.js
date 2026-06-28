@@ -1,5 +1,7 @@
 
 import {scriptParser} from "./parsing/ScriptParser.js";
+import {cssParser} from "../dev_lib/jsx/style/CSSParser.js";
+import {cssTransformer} from "../dev_lib/jsx/style/CSSTransformer.js";
 import {
   getExtendedErrorMsg as getExtendedSyntaxErrorMsg, getLnAndCol,
 } from "./parsing/Parser.js";
@@ -77,7 +79,6 @@ export class ScriptInterpreter {
       flags: flags, contexts: contexts, globalEnv: undefined, interpreter: this,
       isExiting: false, resolveScript: undefined, exitPromise: undefined,
       parsedScripts: parsedScripts, liveModules: liveModules,
-      appSettings: undefined,
     };
 
     // First create a global environment, which is used as a parent environment
@@ -446,17 +447,6 @@ export class ScriptInterpreter {
       `No script or style sheet was found at ${route.toString()}`,
       callerNode, callerEnv
     );
-
-    // If the scriptVars.appSettings has been set (meaning that createJSXApp()
-    // has been called), also prepare the component's style in case of a 
-    // LiveJSModule where the route ends in ".jsx".
-    let {appSettings} = callerEnv.scriptVars;
-    if (
-      appSettings && prepareJSXImmediately &&
-      ret instanceof LiveJSModule && route.toString().slice(-4) === ".jsx"
-    ) {
-      await appSettings.prepareComponent(ret, callerNode, callerEnv);
-    }
 
     return ret;
   }
@@ -3123,17 +3113,41 @@ export class LiveJSModule extends ObjectObject {
   }
 }
 
+// TODO: Include CSSModules in the liveModules cache.
 export class CSSModule extends ObjectObject {
   constructor(modulePath, styleSheet) {
     super("CSSModule");
     this.modulePath = modulePath;
     this.styleSheet = styleSheet;
     this.members["styleSheet"] = styleSheet;
+    this.cssStyleSheet = undefined;
   }
 
   toString(env, getSourceCode) {
     return getSourceCode ? this.styleSheet : super.toString(env);
   }
+
+  getCSSStyleSheet(node, env) {
+    if (this.cssStyleSheet) {
+      return this.cssStyleSheet;
+    }
+    else {
+      let cssStyleSheet = new CSSStyleSheet();
+      let validatedStyleSheet = getValidatedStyleSheet(
+        this.styleSheet, node, env
+      );
+      cssStyleSheet.replaceSync(validatedStyleSheet);
+      return this.cssStyleSheet = cssStyleSheet;
+    }
+  }
+}
+
+function getValidatedStyleSheet(styleSheet, node, env) {
+    styleSheet = getString(styleSheet, env);
+    let [styleSheetNode] = parseString(styleSheet, node, env, cssParser);
+    let validatedStyleSheet =
+      cssTransformer.transformParsedStyleSheet(styleSheetNode);
+    return validatedStyleSheet;
 }
 
 
@@ -3209,6 +3223,8 @@ export class JSXElement extends ObjectObject {
         this.props["children"] = childArr;
       }
     }
+
+    // If the element is a component, check that the "key" prop is set.
     if (isComponent) {
       this.key = this.props["key"];
       if (this.key === undefined) throw new RuntimeError(
@@ -3216,6 +3232,14 @@ export class JSXElement extends ObjectObject {
         node, decEnv
       );
     }
+
+    // If not, and if the "innerStyle" prop is set, mark the JSXElement as
+    // being style defining, by moving the innerStyle prop to the JSXElement
+    // itself.
+    else {
+      this.innerStyle = this.props["innerStyle"];
+      delete this.props["innerStyle"];
+    } 
   }
 }
 

@@ -26,7 +26,7 @@ html, body, #up-app-root {
 
 
 /* Hide native account menu if the root app has a "no-account-menu" class. */
-body:has(> #up-app-root > .no-account-menu_0) > #account-menu {
+body:has(> #up-app-root > .no-account-menu) > #account-menu {
   display: none;
 }
 

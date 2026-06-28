@@ -34,7 +34,7 @@ export const render = new DevFunction(
     else {
       clearAttributes(domNode);
     }
-    domNode.setAttribute("class", "i-link_0");
+    domNode.setAttribute("class", "i-link");
 
     // Add the relative href if provided.
     if (href !== undefined) {
@@ -57,18 +57,15 @@ export const render = new DevFunction(
     }
 
     // If the children prop is defined, use jsxInstance.replaceChildren() to
-    // render and append those children, also making sure to record the
-    // ownDOMNodes and marks as well (which will be attached to the returned
-    // DOMNodeObject).
+    // render and append those children, also making sure to record the marks
+    // as well (which will be attached to the returned DOMNodeObject).
     let marks = new Map();
-    let ownDOMNodes = [];
     if (children !== undefined) {
       jsxInstance.replaceChildren(
         domNode, [children], marks, interpreter, callerNode, execEnv,
-        props, ownDOMNodes
+        props
       );
     }
-    ownDOMNodes = [domNode, ...ownDOMNodes];
 
     // Regardless of whether onClick is defined, we put an onclick event on the
     // <a> element, in order to redirect to pushState() rather than following
@@ -117,7 +114,7 @@ export const render = new DevFunction(
       return true;
     };
 
-    return new DOMNodeObject(domNode, ownDOMNodes, marks);
+    return new DOMNodeObject(domNode, marks);
   }
 );
 
@@ -133,10 +130,7 @@ export const actions = {
     "focus", {}, function({thisVal, callerNode, execEnv}, []) {
       validateJSXInstance(thisVal, "ILink.jsx", callerNode, execEnv);
       let {jsxInstance} = thisVal;
-      let canGrabFocus = !jsxInstance.settings.isOutsideFocusedAppScope(
-        jsxInstance, callerNode, execEnv
-      );
-      if (canGrabFocus) {
+      if (jsxInstance.canGrabFocus()) {
         thisVal.jsxInstance.domNode.focus();
         return true;
       }
