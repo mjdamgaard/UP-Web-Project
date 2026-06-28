@@ -4,6 +4,9 @@
   width: 300px;
   height: 500px;
 }
+.app * {
+  overflow: hidden;
+}
 
 .game-area {
   width: 300px;

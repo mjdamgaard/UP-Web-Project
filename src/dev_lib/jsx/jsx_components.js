@@ -17,8 +17,18 @@ export const HREF_REGEX =
   /^(\.{0,2}\/)?(([;.~a-zA-Z0-9_\-]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+(\/([;.~a-zA-Z0-9_\-]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+)*)?$/;
 export const HREF_CD_START_REGEX = /^\.{0,2}\//;
 
-
 export const CAN_CREATE_APP_FLAG = Symbol("can-create-app");
+
+const globalStyleSheets = [...document.styleSheets].map(cssStyleSheet => {
+  // We copy each cssStyleSheet element and return a new "constructed"
+  // CSSStyleSheet object in order to avoid an error when assigning to shadow
+  // roots.
+  let constructedStyleSheet = new CSSStyleSheet();
+  for (let rule of cssStyleSheet.cssRules) {
+    constructedStyleSheet.insertRule(rule.cssText);
+  }
+  return constructedStyleSheet;
+});
 
 
 
@@ -606,12 +616,19 @@ class JSXInstance {
       // add the style to it. 
       let domNode = newDOMNode;
       if (jsxElement.innerStyle) {
+        // Create or get the shadow root.
         let shadowRoot = newDOMNode.shadowRoot ??
           newDOMNode.attachShadow({mode: "open"});
+
+        // Get the CSSStyleSheets from the innerStyle prop, and add the
+        // document's outer style sheets to the shadow root as well.
         let styleSheetArray = this.getCSSStyleSheets(
           jsxElement.innerStyle, callerNode, callerEnv
         );
+        styleSheetArray = [...globalStyleSheets, ...styleSheetArray];
         shadowRoot.adoptedStyleSheets = styleSheetArray;
+
+        // Change the domNode argument of replaceChildren() to the shadow root.
         domNode = shadowRoot;
       }
 

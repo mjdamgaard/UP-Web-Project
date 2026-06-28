@@ -1,11 +1,12 @@
 
 import * as PostField from "./PostField.jsx";
 import * as MessageList from "./MessageList.jsx";
+import * as mainStyle from "./style.css";
 
 
 export function render({userID}) {
   return (
-    <div>
+    <div innerStyle={mainStyle}>
       <h2>Post a message!</h2>
       <PostField key="pf" userID={userID} />
       <h3>Messages</h3>
@@ -23,8 +24,3 @@ export const actions = {
     this.call("ml", "refresh");
   }
 };
-
-
-export const styleSheets = [
-  abs("./style.css"),
-];

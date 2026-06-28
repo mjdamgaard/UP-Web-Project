@@ -2,6 +2,7 @@
 import {createArray} from 'array';
 
 import * as GameSquare from "./GameSquare.jsx";
+import * as mainStyle from "./FlipGame01.css";
 
 
 
@@ -22,7 +23,7 @@ export function render({rowNum = 3, colNum = 3}) {
   ));
 
   // Return the JSX element of the game app.
-  return <div>
+  return <div innerStyle={mainStyle}>
     <h4>{"Remove all the black squares"}</h4>
     <div className="game">
       {(gameSquares)}
@@ -68,9 +69,4 @@ export const actions = {
 // instance via 'this.trigger(<event key>, [input])'.
 export const events = [
   "new-move",
-]; 
-
-
-export const styleSheets = [
-  abs("./FlipGame01.css"),
 ];

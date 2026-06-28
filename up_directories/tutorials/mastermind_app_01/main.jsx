@@ -9,6 +9,7 @@ import * as HeaderMenu from "./HeaderMenu.jsx";
 import * as GuessRow from "./GuessRow.jsx";
 import * as PegSelection from "./PegSelection.jsx";
 import * as GameOverPrompt from "./GameOverPrompt.jsx";
+import * as mainStyle from "./style.css";
 
 
 export function render({maxGuesses = 10}) {
@@ -24,15 +25,17 @@ export function render({maxGuesses = 10}) {
   });
 
   return (
-    <div className="app">
-      <HeaderMenu key="menu" />
-      <div className="game-area">
-        <PegSelection key="pegs" />
-        <div className="rows">{(rows)}</div>
+    <div innerStyle={mainStyle}>
+      <div className="app">
+        <HeaderMenu key="menu" />
+        <div className="game-area">
+          <PegSelection key="pegs" />
+          <div className="rows">{(rows)}</div>
+        </div>
+        <GameOverPrompt key="prompt"
+          isDone={isDone} hasWon={hasWon} answers={answers}
+        />
       </div>
-      <GameOverPrompt key="prompt"
-        isDone={isDone} hasWon={hasWon} answers={answers}
-      />
     </div>
   );
 }

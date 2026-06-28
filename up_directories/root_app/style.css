@@ -25,6 +25,7 @@
 }
 .app-header a {
   padding: 6px 10px;
+  overflow: hidden;
 }
 .app-header a:hover {
   background-color: #bfc8ce;
