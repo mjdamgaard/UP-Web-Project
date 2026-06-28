@@ -3,8 +3,8 @@ import {
   DevFunction, RuntimeError, LoadError, jsonParse, jsonStringify,
   getPrototypeOf, OBJECT_PROTOTYPE, ARRAY_PROTOTYPE, FunctionObject,
   CLEAR_FLAG, PromiseObject, Environment, LiveJSModule, parseString,
-  TEXT_FILE_ROUTE_REGEX, SCRIPT_ROUTE_REGEX, CSSModule, getString,
-  getPropertyFromObject, ArgTypeError, forEachValue, ObjectObject,
+  TEXT_FILE_ROUTE_REGEX, SCRIPT_ROUTE_REGEX, CSS_ROUTE_REGEX, CSSModule,
+  getString, getPropertyFromObject, ArgTypeError, forEachValue, ObjectObject,
   ErrorWrapper, HEX_ID_REGEX, getAbsolutePath,
 } from '../../interpreting/ScriptInterpreter.js';
 import {scriptParser} from "../../interpreting/parsing/ScriptParser.js";
@@ -201,8 +201,9 @@ export async function _query(
     result = liveModule;
   }
 
-  // Else if the module is a user module, with a '.js' or '.jsx' extension,
-  // fetch/get it and create and return a LiveJSModule instance rom it.
+  // Else if the file has a '.js', '.mjs' or '.jsx' extension, fetch it or get
+  // it from the liveModules cache and create and return a LiveJSModule
+  // instance.
   else if (SCRIPT_ROUTE_REGEX.test(route)) {
     // First call fetchPlaceholdersModule() to fetch the ~/placeholders.js
     // module for the given home directory, if it has not already been fetched.
@@ -253,22 +254,44 @@ export async function _query(
     result = liveModule;
   }
 
-  // Else if the module is actually a non-JS text file, fetch/get it and
-  // return a string of its content instead.
+  // Else if the file a '.css' file, fetch it or get it from the liveModules
+  // cache and create and return a CSSModule instance.
+  else if (CSS_ROUTE_REGEX.test(route)) {
+    let cssModule = liveModules.get(route);
+    if (cssModule) {
+      if (cssModule instanceof Promise) {
+        cssModule = await cssModule;
+      }
+    }
+    else {
+      let cssModulePromise = queryRoute.fun(
+        {callerNode, execEnv, interpreter}, [route, false, undefined, options],
+      ).then(
+        text => new CSSModule(route, text, execEnv)
+      ).catch(
+        err => new ErrorWrapper(err)
+      );
+      liveModules.set(route, cssModulePromise);
+      cssModule = await cssModulePromise;
+      liveModules.set(route, cssModule);
+    }
+    if (cssModule instanceof ErrorWrapper) {
+      throw cssModule.val;
+    }
+    result = cssModule;
+  }
+
+  // Else if the file is a non-JS, non-CSS text file, fetch it and return
+  // a string of its content.
   else if (TEXT_FILE_ROUTE_REGEX.test(route)) {
-    let text = await queryRoute.fun(
+    let result = await queryRoute.fun(
       {callerNode, execEnv, interpreter},
       [route, false, undefined, options],
     );
-    if (typeof text !== "string") throw new LoadError(
+    if (typeof result !== "string") throw new LoadError(
       `No text was found at ${route}`,
       callerNode, execEnv
     );
-    if (route.slice(-4) === ".css") {
-      result = new CSSModule(route, text);
-    } else {
-      result = text;
-    }
   }
 
   // Else simply redirect to queryRoute().
@@ -321,7 +344,7 @@ export async function _query(
 
     // You can also cast any string-valued result into a JS or JSX module,
     // or a CSS module.
-    else if (/^\.jsx?$/.test(castingSegment)) {
+    else if (/^\.(jsx?|mjs)$/.test(castingSegment)) {
       if (result instanceof LiveJSModule) {
         return result;
       }
@@ -353,7 +376,7 @@ export async function _query(
       }
       let modulePath = route + ";" +
         castingSegmentArr.slice(0, i + 1).join(";");
-      result = new CSSModule(modulePath, result);
+      result = new CSSModule(modulePath, result, execEnv);
     }
 
     // And then we have the ';get' and ';call' casting segments, which work

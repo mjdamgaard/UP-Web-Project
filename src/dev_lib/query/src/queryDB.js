@@ -24,6 +24,7 @@ export async function queryDB(
       break;
     case "js":
     case "jsx":
+    case "mjs":
     case "txt":
     case "html":
     case "xml":

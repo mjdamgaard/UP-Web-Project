@@ -165,7 +165,7 @@ class JSXInstance {
       flags = !parentIsTrusted ? [CLEAR_FLAG] : [
         CLEAR_FLAG,
         CAN_POST_FLAG,
-        [REQUESTING_COMPONENT_FLAG, this.componentPath ?? false],
+        [REQUESTING_COMPONENT_FLAG, this.componentPath],
       ];
     }
     let compEnv = this.compEnv =

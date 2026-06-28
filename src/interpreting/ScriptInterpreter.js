@@ -22,8 +22,9 @@ const TRACE_LENGTH_CS = 15;
 const TRACE_LENGTH_SS = 40;
 
 export const TEXT_FILE_ROUTE_REGEX =
-  /.+\.(jsx?|txt|json|html|xml|svg|md|css)$/;
-export const SCRIPT_ROUTE_REGEX = /.+\.jsx?$/;
+  /.+\.(jsx?|mjs|txt|json|html|xml|svg|md)$/;
+export const SCRIPT_ROUTE_REGEX = /.+\.(jsx?|mjs)$/;
+export const CSS_ROUTE_REGEX = /.+\.css$/;
 export const HEX_ID_REGEX = /^[0-9a-f]+$/;
 
 export const GAS_NAMES = {
@@ -3119,10 +3120,10 @@ export class LiveJSModule extends ObjectObject {
 
 // TODO: Include CSSModules in the liveModules cache.
 export class CSSModule extends ObjectObject {
-  constructor(modulePath, styleSheet) {
+  constructor(modulePath, styleSheet, env) {
     super("CSSModule");
     this.modulePath = modulePath;
-    this.styleSheet = styleSheet;
+    this.styleSheet = getString(styleSheet, env);
     this.members["styleSheet"] = styleSheet;
     this.cssStyleSheet = undefined;
   }

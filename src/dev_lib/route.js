@@ -20,6 +20,6 @@ export const parseRoute = new DevFunction(
 
 export const isTextFileExtension = new DevFunction(
   "isTextFileExtension", {typeArr: ["string"]}, ({}, [fileExt]) => {
-    return /^(.+\.)?(jsx?|txt|json|html|xml|svg|md|css)$/.test(fileExt);
+    return /^(.+\.)?(jsx?|mjs|txt|json|html|xml|svg|md|css)$/.test(fileExt);
   },
 );

@@ -271,7 +271,7 @@ export class DirectoryUpdater {
       // Else if the file is a text file, upload it as is to the server, unless
       // it is ~/placeholders.json, in which case transform it first to
       // ~/placeholders.json.
-      else if (/\.(jsx?|txt|json|html|xml|svg|css|md)$/.test(name)) {
+      else if (/\.(jsx?|mjs|txt|json|html|xml|svg|css|md)$/.test(name)) {
         let contentText = fs.readFileSync(absChildClientPath, 'utf8');
         // Consult .timestamps.json to see if the file should be skipped, and
         // if the the file is the special placeholders.json file (at depth = 0),
