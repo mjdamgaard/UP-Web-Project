@@ -5,7 +5,7 @@ import {
 import {
   DOMNodeObject, clearAttributes, validateJSXInstance,
 } from "../jsx_components.js";
-import {CAN_POST_FLAG} from "../../query/src/flags.js";
+import {CAN_POST_FLAG, CLIENT_TRUST_FLAG} from "../../query/src/flags.js";
 
 
 // TODO: Call a method from the SettingsObject instead in order to get the
@@ -29,8 +29,8 @@ const urlWhitelist = [
   /^https:\/\/code\.visualstudio\.com($|\/)/,
 ];
 
-function getIsWhitelisted(href) {
-  return !href || (
+function getIsAllowed(href, execEnv) {
+  return !href || execEnv.getFlag(CLIENT_TRUST_FLAG) || (
     URL_VALID_CHARACTERS_REGEX.test(href) &&
     urlWhitelist.reduce(
       (acc, val) => acc || val.test(href),
@@ -57,7 +57,7 @@ export const render = new DevFunction(
     );
 
     // Check whether the href is whitelisted.
-    let isWhiteListed = getIsWhitelisted(href);
+    let isAllowed = getIsAllowed(href, execEnv);
 
     // Create the DOM node if it has no been so already.
     let jsxInstance = thisVal.jsxInstance;
@@ -69,10 +69,10 @@ export const render = new DevFunction(
       clearAttributes(domNode);
     }
     domNode.setAttribute(
-      "class", "e-link" + (isWhiteListed ? "" : " invalid")
+      "class", "e-link" + (isAllowed ? " allowed" : " not-allowed")
     );
     if (href) {
-      if (isWhiteListed) domNode.setAttribute("href", href);
+      if (isAllowed) domNode.setAttribute("href", href);
       else domNode.setAttribute("data-href", href);
     }
 
@@ -113,17 +113,17 @@ export const render = new DevFunction(
 
 
 export const methods = [
-  "getIsValid",
+  "getIsAllowed",
   "focus",
   "blur",
 ];
 
 export const actions = {
-  "getIsValid": new DevFunction(
-    "getIsValid", {}, function({thisVal, callerNode, execEnv}, []) {
+  "getIsAllowed": new DevFunction(
+    "getIsAllowed", {}, function({thisVal, callerNode, execEnv}, []) {
       validateJSXInstance(thisVal, "ELink.jsx", callerNode, execEnv);
       let {href} = thisVal.jsxInstance.props;
-      return getIsWhitelisted(href);
+      return getIsAllowed(href, execEnv);
     }
   ),
   "focus": new DevFunction(
