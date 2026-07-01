@@ -5,7 +5,6 @@
 ## Motivation
 
 With the advancement of AI, software development is becoming easier and more accessible than ever.
-<!-- and the process of going from idea to implementation gets shorter and shorter. -->
 This empowers software developers around the world, both experienced and inexperienced ones, to build software faster than ever before.
 
 However, despite this new empowerment, people are still competing with each other and building into their own separate silos, often repeating each other's work redundantly, instead of collaborating and building on the shoulders of one another.
@@ -33,7 +32,7 @@ But imagine that there were another model, one that bridges the gap between open
 
 An 'open tech cooperative' is a company that gathers source code contributions publicly from around the world, allowing software developers to share source code and collaborate on it publicly, just like in open source. But unlike open source where the software is licensed to the public at large, the software is instead licensed to the company specifically, giving it the rights to use and/or sub-license the software on behalf of the developers.
 
-When a developer contributes source code to the company, they thus publish under a license where anyone is free to extend the source code as long as they publish under the same license (similarly to how [copyleft](https://en.wikipedia.org/wiki/Copyleft) licenses work). But rather than allowing anyone to use the software, these right are instead given specifically to the company. 
+When a developer contributes source code to the company, they thus publish under a license where anyone is free to extend the source code, as long as they publish under the same license (similarly to how [copyleft](https://en.wikipedia.org/wiki/Copyleft) licenses work). But rather than allowing anyone to use the software, these right are instead given specifically to the company. 
 
 The company then uses the resulting software to earn a profit, either by sub-licensing it to other companies or by creating its own B2C platform, or a mix of both. And the majority of these profits can then be used to pay the developers for their work.
 
@@ -45,34 +44,25 @@ From a business standpoint, the advantage of the cooperative model is thus to be
 
 
 
-<!-- An 'open tech cooperative' is a model designed to be a golden middle way between open source and closed source, yielding the best of both worlds.
-It is a model where software developers can share source code and collaborate on it publicly, just like in open source. But unlike open source where the software is licensed to the public at large, the software is instead licensed to a specific company, giving it the exclusive rights to use and/or sub-license the software on behalf of the developers.
-
-The company can thereby gather source code contributions publicly from developers around the world, and use the resulting software to earn a profit, either by sub-licensing it to other companies or by creating its own B2C platform, or a mix of both. And the company can then use this profit to actually pay the contributing developers for their work, unlike the open source model.
-
-The sizes of the monetary rewards given to the developers are determined by the company, and ought to depend on how important and useful the company deems the contributions to be, in order to best attract more useful source code contributions in the future.
-
-And in order for the developers to be able to trust that the company has the developers' and the users' best interests at heart, the company can use a cooperative model, where the company ends up being governed by the developers and the users of the software themselves, preventing any eventual price gouging or general [enshittification](https://en.wikipedia.org/wiki/Enshittification) of the company's products and services.
-
-From a business standpoint, the advantage of the cooperative model is thus to be able to attract source code contributions from the same segment of developers who contribute to open source, as well from developers who might like the idea of open source but who cannot find the time to contribute due to the lack of payment. And as we will discuss below, the cooperative model does not, however, prevent the initial founders and investors from making a good profit as well. -->
-
-
-
-
-
-<!-- This is achieved by using a software license similar to those of [copyleft](https://en.wikipedia.org/wiki/Copyleft), with unrestricted freedom of who can extend the software, as long as they publish it under the same license. But rather than allowing anyone to use the software freely, this license instead targets a specific company, giving it the rights to use and to sub-license the software on behalf of the developers.
-
-By targeting a specific company only, this allows the company to make a profit from using and/or sub-licensing the software, without anyone being able to set up a cheaper competitor that uses the same software. And this  
-
-As the name suggests, an open tech co-op will end up being governed purely by its own users and developers, basically forming a mix between a consumer co-op and a worker co-op. But at an initial stage, the co-op will also be governed in part by its investors, who will receive returns on their investments depending on the success of the co-op.
-
-An open tech co-op will thus allow its initial investors to profit from it, but will nonetheless be driven by the interests of its users and developers in the end, rather than being driven purely by profits. -->
-
-
-
 ## Advantages
 
-* An open tech cooperative will be able ...
+An open tech cooperative will be able to draw on the entire world for coming up with new ideas and implementing new software applications. And many of the developers might even be users of the software themselves, which means that they will also be motivated to contribute simply in order to make the software products better for themselves and their peers, apart from being motivated by the monetary rewards the the cooperative offers.
+
+And with the cooperative model, the users and the developers will also be able to trust that the product will not undergo enshittification in the end, which might thus help to attract a lot of users as well as developers to the company, since enshittification is something that negatively affects nearly everyone in the present day, and many people want to find alternatives that have the users' interests more at heart.
+
+An open tech cooperative also offers a way for developers to easily get their applications out to the users, where they do not have to think about the question of how to finance the applications themselves. Instead the developers can focus purely on the development part, and let the cooperative handle the business of how to monetize the software.
+
+Furthermore, if a developer extends an existing software application, then rather than having to compete for users with the existing application, and going through the slow process of getting users to migrate to the new application, the cooperative can instead make both versions available in an interoperable way, letting them share access to the same data structure, and thus allowing users to seamlessly switch between the different versions.
+
+Last but not least, an open tech cooperative also solves a problem that closed-source developers face, and which will become increasingly relevant as AI continues to develop. As AI advances, the work it takes to reverse-engineer existing software applications decreases. This means that closed-source developers are faced with the problem that in a near future, it might be easy for any competitor to just use AI to make a non-copyright-breaking copy of all their hard work. But with an open tech cooperative, the developers are not in competition with each other in the same way, and it makes no sense for the cooperative to reward a developer that reverse-engineers another developers work. The cooperative is instead always motivated to reward the true sources of the creative ideas and the hard work of the developers, as this is the best way that it can attract more useful ideas and work in the future. 
+
+
+
+## Utilizing a user-programmable platform
+
+An open tech cooperative can also utilize the idea and the concepts of a [user-programmable platform](README.md), in order to allow the developers to share their ideas and prototypes quickly and safely with each other, and to always give the users complete freedom to choose whichever versions of the software application they want to use.
+
+Allowing the users to choose the software application versions for themselves thus also creates an equal playing field for the developers when it comes to getting their contributions out to the users, since they do not have to go through a centralized decision-making body first in order to get a green light to roll out the new version. And since the cooperative does not have a hand in deciding which software contributions reach the users, it can also evaluate the worth of the contributions more fairly, by simply keeping track of the usage and the popularity of each software application version.
 
 
 
@@ -110,11 +100,9 @@ Furthermore, the IOU tokens can also be used to pay the developers themselves as
 
 
 
-
-
 ## Key takeaways
 
-
+...
 
 
 
