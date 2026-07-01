@@ -49,14 +49,14 @@ export function render({
   // entID (possibly null).
   if (recLevel > 4) {
     content = (entID === undefined) ?
-      <span className="fetching">{"..."}</span> :
+      <span className="fetching"></span> :
       <span className="entity-id">{entID}</span>;
   }
 
   // And else if waiting for the entity definition, render a "fetching" span,
   // which can be restyled at will.
   else if (entDef === undefined) {
-    content = <span className="fetching">{"..."}</span>;
+    content = <span className="fetching"></span>;
   }
 
   // Else if the entity does not exist, render a missing entity title.
@@ -73,7 +73,7 @@ export function render({
 
   // Else if still needing the entID to be fetched, wait for that.
   else if (isLink && entPath === undefined) {
-    content = <span className="fetching">{"..."}</span>;
+    content = <span className="fetching"></span>;
   }
 
   // And if it turns out to be missing, render a missing entity title.

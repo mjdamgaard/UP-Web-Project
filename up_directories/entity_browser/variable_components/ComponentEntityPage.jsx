@@ -33,11 +33,11 @@ export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
     fetchIsTrusted(entKey).then(isTrusted => {
       this.setState(state => ({...state, isTrusted: isTrusted}));
     });
-    return <div className="fetching">{"..."}</div>;
+    return <div className="fetching"></div>;
   }
 
   else if (Component === undefined || isTrusted === undefined) {
-    return <div className="fetching">{"..."}</div>;
+    return <div className="fetching"></div>;
   }
 
   else if (!Component) {

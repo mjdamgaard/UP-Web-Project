@@ -14,11 +14,11 @@ export function render({
     fetchScalarEntityPath(subjKey, extQualKey).then(scalarPath => {
       this.setState(state => ({...state, scalarPath: scalarPath}));
     });
-    return <span className="fetching">{"..."}</span>;
+    return <span className="fetching"></span>;
   }
 
   else if (!scalarPath) {
-    return <span className="fetching">{"..."}</span>;
+    return <span className="fetching"></span>;
   }
 
   return <EntityReference key="0" entKey={scalarPath}

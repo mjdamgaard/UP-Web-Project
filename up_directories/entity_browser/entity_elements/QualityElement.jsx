@@ -18,7 +18,7 @@ export function render({
     fetchRelationalQualityPath(objKey ?? classKey, relKey).then(qualPath => {
       this.setState(state => ({...state, qualPath: qualPath ?? false}));
     });
-    return <div className="fetching">{"..."}</div>;
+    return <div className="fetching"></div>;
   }
 
   else if (!qualKey) {

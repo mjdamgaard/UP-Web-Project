@@ -34,7 +34,7 @@ export function render(props) {
     fetchEntityProperty(entKey, "Class").then(classKey => {
       this.setState(state => ({...state, classKey: classKey ?? false}));
     });
-    content = <div className="fetching">{"..."}</div>;
+    content = <div className="fetching"></div>;
   }
 
   // Else if the relational "Entity page" quality for the class has not been
@@ -45,7 +45,7 @@ export function render(props) {
         ...state, entityPageQualPath: qualPath ?? false
       }));
     });
-    content = <div className="fetching">{"..."}</div>;
+    content = <div className="fetching"></div>;
   }
 
   // Else if the quality path is ready, but the top entry has not yet been
@@ -58,7 +58,7 @@ export function render(props) {
         this.setState(state => ({...state, topEntry: topEntry ?? false}));
       });
     }
-    content = <div className="fetching">{"..."}</div>;
+    content = <div className="fetching"></div>;
   }
   
   // Else if top entry is non-existent, or the score is non-positive, render

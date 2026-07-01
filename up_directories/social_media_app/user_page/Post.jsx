@@ -21,7 +21,7 @@ export function render({textID, userID, ownUserID, timestamp}) {
   // Then if waiting for the text, render a "fetching" span, which can be
   // restyled at will.
   if (text === undefined) {
-    content = <span className="fetching">{"..."}</span>;
+    content = <span className="fetching"></span>;
   }
 
   // Else if text did not return correctly render an error message.

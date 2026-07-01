@@ -30,7 +30,7 @@ export function render({userID, ownUserID}) {
   // Then if waiting for the postList, render a "fetching" span, which can be
   // restyled at will.
   if (postList === undefined) {
-    content = <span className="fetching">{"..."}</span>;
+    content = <span className="fetching"></span>;
   }
 
   // Else if postList did not return correctly, render an error message.

@@ -19,7 +19,7 @@ export function render({objKey, extQualKeyArr = undefined}) {
     });
   }
   if (!QualityElement) {
-    return <div><div className="fetching">{"..."}</div></div>;
+    return <div><div className="fetching"></div></div>;
   }
 
   let contextQualityElements = (extQualKeyArr[0] === undefined) ? undefined :

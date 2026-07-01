@@ -40,7 +40,7 @@ export function render({
   }
 
   if (!objScalarKey) {
-    return <div><div className="fetching">{"..."}</div></div>;
+    return <div><div className="fetching"></div></div>;
   }
 
   return <div>

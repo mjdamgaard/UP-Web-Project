@@ -171,13 +171,13 @@ export function render({route}) {
         this.setState(state => ({...state, fileText: text}));
       });
     }
-    content = <div className="fetching">{"..."}</div>;
+    content = <div className="fetching"></div>;
   }
 
   else if (
     !adminID || result === undefined || fetchFile && fileText === undefined
   ) {
-    content = <div className="fetching">{"..."}</div>;
+    content = <div className="fetching"></div>;
   }
 
   else {

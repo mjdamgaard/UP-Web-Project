@@ -98,7 +98,7 @@ export function render({
         this.setState(state => ({...state, otherQualKeyArr: otherQualKeyArr}));
     }); 
 
-    content = <div className="fetching">{"..."}</div>;
+    content = <div className="fetching"></div>;
   }
 
   // Else if the lists have not yet returned, or the ElementComponent hasn't,
@@ -107,7 +107,7 @@ export function render({
     listArr === undefined || hasType(ElementComponent, "promise") ||
     qualKeyArr === undefined || otherQualKeyArr === undefined
   ) {
-    content = <div className="fetching">{"..."}</div>;
+    content = <div className="fetching"></div>;
   }
 
   // And if everything is ready, render the elements. TODO: Only render some

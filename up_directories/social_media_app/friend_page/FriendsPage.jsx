@@ -42,7 +42,7 @@ export function render({userID}) {
   // Then if waiting for the lists, render a "fetching" span, which can be
   // restyled at will.
   if (friendList === undefined || friendRequestList === undefined) {
-    content = <span className="fetching">{"..."}</span>;
+    content = <span className="fetching"></span>;
   }
 
   // Else if one of the lists did not return correctly, render an error message.

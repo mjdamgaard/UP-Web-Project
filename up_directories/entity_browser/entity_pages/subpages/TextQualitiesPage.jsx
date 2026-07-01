@@ -20,7 +20,7 @@ export function render({objKey, extQualKeyArr = undefined}) {
   }
 
   if (isSingular === undefined) {
-    return <div className="fetching">{"..."}</div>;
+    return <div className="fetching"></div>;
   }
 
   extQualKeyArr = [

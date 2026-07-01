@@ -38,7 +38,7 @@ export function render({userID, isLink = true, pushState = undefined}) {
   // And if waiting for the username, render a "fetching" span, which can be
   // restyled at will.
   if (username === undefined) {
-    content = <span className="fetching">{"..."}</span>;
+    content = <span className="fetching"></span>;
   }
 
   // Else if the username is missing, render "User <userID>" instead.

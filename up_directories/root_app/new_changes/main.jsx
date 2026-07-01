@@ -42,12 +42,20 @@ export function render(props) {
     newHomeURL = homeURL + "/" + firstSegment
   }
   let content, hideAppLoader = true;
+  let useOriginal, noPreferences;
   switch (firstSegment) {
     // If the tailURL starts with "a", redirect to the AppLoader. (We also
     // use hideAppLoader and appLoaderProps is part of a scheme to not lose its
     // state once the AppLoader is rendered the first time.
-    case "a": {
-      appLoaderProps = {...props, homeURL: newHomeURL, tailURL: newTailURL};
+    case "a-o":
+      useOriginal = true;
+    case "a-np":
+      noPreferences = true;
+    case "a": 
+      appLoaderProps = {
+        ...props, homeURL: newHomeURL, tailURL: newTailURL,
+        useOriginal: useOriginal, noPreferences: noPreferences,
+      };
       hideAppLoader = false;
       this.setState(state => ({
         ...state,
@@ -55,7 +63,6 @@ export function render(props) {
       }));
       // (Since we only alter state.ref here, this will not cause a rerender.)
       break;
-    }
     
     // The fallowing cases are some placeholder segments that each redirects to
     // a URL of the "/a/..." type.
@@ -63,11 +70,11 @@ export function render(props) {
       newTailURL = "/start";
     case "apps":
       this.do("replaceURL", "~/a/" + appBrowserID + "/apps" + newTailURL);
-      content = <div className="fetching">{"..."}</div>;
+      content = <div className="fetching"></div>;
       break;
     case "files":
       this.do("replaceURL", "~/a/" + fileBrowserID + "/files" + newTailURL);
-      content = <div className="fetching">{"..."}</div>;
+      content = <div className="fetching"></div>;
       break;
     // TODO: Add other shortcuts, in particular for tutorials and the entity
     // browser.

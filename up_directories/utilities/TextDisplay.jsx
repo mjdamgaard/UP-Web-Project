@@ -33,7 +33,7 @@ export function render({
     fetch(jsxLink).then(jsxElement => {
       this.setState(state => ({...state, jsxElement: jsxElement ?? false}));
     });
-    content = <div className="fetching">{"..."}</div>;
+    content = <div className="fetching"></div>;
   }
   else if (!jsxElement) {
     content = <div className="missing">{"missing"}</div>;

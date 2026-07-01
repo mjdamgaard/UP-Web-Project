@@ -28,7 +28,7 @@ export function render(props) {
         ...state, relQualPath: qualPath ?? false
       }));
     });
-    content = <div className="fetching">{"..."}</div>;
+    content = <div className="fetching"></div>;
   }
 
   // And if the quality path cannot be formed, return a "missing" content
@@ -44,7 +44,7 @@ export function render(props) {
     scoreHandler.fetchTopEntry(relQualPath, options).then(topEntry => {
       this.setState(state => ({...state, topEntry: topEntry ?? false}));
     });
-    content = <div className="fetching">{"..."}</div>;
+    content = <div className="fetching"></div>;
   }
 
   // And if it has been fetched, but is undefined (in the case of an empty

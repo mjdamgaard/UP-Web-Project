@@ -71,7 +71,7 @@ export function render({appDirID, url, homeURL, tailURL}) {
   if (!AppComponent || !trustClass) {
     return (
       <div className="app">
-        <div className="fetching">...</div>
+        <div className="fetching"></div>
       </div>
     );
   }

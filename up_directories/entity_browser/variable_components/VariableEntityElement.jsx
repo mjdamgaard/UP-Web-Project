@@ -25,7 +25,7 @@ export function render(props) {
     fetchEntityProperty(entID, "Class").then(classKey => {
       this.setState(state => ({...state, classKey: classKey ?? false}));
     });
-    content = <div className="fetching">{"..."}</div>;
+    content = <div className="fetching"></div>;
   }
 
   // TODO: Should value entities also be implemented here?
@@ -44,7 +44,7 @@ export function render(props) {
         ...state, relQualPath: qualPath ?? false
       }));
     });
-    content = <div className="fetching">{"..."}</div>;
+    content = <div className="fetching"></div>;
   }
 
   // Else if the quality path is ready, but the top entry has not yet been
@@ -54,7 +54,7 @@ export function render(props) {
     scoreHandler.fetchTopEntry(relQualPath, options).then(topEntry => {
       this.setState(state => ({...state, topEntry: topEntry ?? false}));
     });
-    content = <div className="fetching">{"..."}</div>;
+    content = <div className="fetching"></div>;
   }
 
   // And if it has, but is undefined (in the case of an empty list), render the

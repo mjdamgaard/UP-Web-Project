@@ -55,7 +55,7 @@ export function render({}) {
 
   if (!QualityElement || checksResolved < 2) {
     return <div className="add-entity-menu">
-      <div className="fetching">{"..."}</div>
+      <div className="fetching"></div>
     </div>;
   }
 

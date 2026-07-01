@@ -35,11 +35,11 @@ export function render({entKey}) {
       this.setState(state => ({...state, entID: entID ?? false}));
     });
 
-    content = <div className="fetching">{"..."}</div>;
+    content = <div className="fetching"></div>;
   }
 
   else if (entDef === undefined || entPath === undefined) {
-    content = <div className="fetching">{"..."}</div>;
+    content = <div className="fetching"></div>;
   }
 
   else if (!entDef || !entPath) {
@@ -58,7 +58,7 @@ export function render({entKey}) {
       <hr/>,
       <h3>{"Entity ID"}</h3>,
       <div className="ent-id">{(
-        entID === undefined ? <span className="fetching">{"..."}</span> :
+        entID === undefined ? <span className="fetching"></span> :
           entID ? entID :
             <span className="missing">{"missing"}</span>
       )}</div>,
