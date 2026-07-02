@@ -7,7 +7,7 @@
 With the advancement of AI, software development is becoming easier and more accessible than ever, empowering software developers around the world to build software faster than ever before.
 However, despite this new empowerment, people are still to large extent building into their own separate silos, often repeating each other's work redundantly, rather than collaborating.
 
-But imagine if we could find a way to gather all this newfound power and get software developes from across the world to join forces and collaborate on building software together, standing on the shoulders of one another rather than competing for users. If this could be done, the potential would truly be unlimited.
+But imagine if we could find a way to gather all this newfound power and get software developers from across the world to join forces and collaborate on building software together, standing on the shoulders of one another rather than competing for users. If this could be done, the potential would truly be unlimited.
 
 Of course, there already exists a model where people around the world collaborate on software, and that model is called open source. However, the open source model does not generally pay its developers anything, which is why the vast majority of developers still spend most of their working hours doing paid, closed-source work instead.
 
@@ -30,14 +30,14 @@ But imagine that there were another model, one that bridges the gap between open
 
 An 'open tech cooperative' is a company that gathers source code contributions publicly from around the world, allowing software developers to share source code and collaborate on it publicly, just like in open source. But unlike open source where the software is licensed to the public at large, the software is instead licensed specifically to the company, giving it the rights to use and/or sub-license the software on behalf of the developers.
 
-Thus, when a developer contributes source code to the company, they publish under a license where anyone is free to extend this source code, as long as they publish under the same license (similarly to how [copyleft](https://en.wikipedia.org/wiki/Copyleft) licenses work). But rather than allowing anyone to use the software, these right are instead given to the company. 
+Thus, when a developer contributes source code to the company, they publish under a license where anyone is free to extend the source code, as long as they publish under the same license (similarly to how [copyleft](https://en.wikipedia.org/wiki/Copyleft) licenses work). But rather than allowing anyone to use the software, these right are instead given to the company. 
 
 The company then uses the resulting software to earn a profit, either by sub-licensing it to other companies or by creating its own B2C platform, or a mix of both. These profits can then be used to pay the developers for their work,
 where the size of the rewards ought to depend on how important and useful the company deems the software contributions to be, namely in order to best attract more useful contributions in the future.
 
 And in order for the developers to be able to trust that the company has the best interests of the developers and the users at heart, the company can use a cooperative model where the company ends up being governed by the developers and the users of the software themselves,[^1] preventing any eventual price gouging, or any general [enshittification](https://en.wikipedia.org/wiki/Enshittification) of the company's products and services.
 
-From a business standpoint, the advantage of the cooperative model is thus to be able to attract source code contributions from the same segment of developers who contribute to open source, as well from developers who might like the idea of open source but who cannot find the time to contribute due to the lack of payment. And as we will discuss below, the cooperative model does not, however, prevent the initial founders and investors from making a good profit as well.
+From a business standpoint, the advantage of the cooperative model is thus to be able to attract source code contributions from the same segment of developers who contribute to open source, as well from developers who might like the idea of open source but who cannot find the time to contribute due to the lack of payment. And as we will discuss below, the cooperative model does not, however, prevent the initial founders and the investors from making a good profit as well.
 
 [^1]: Since an open tech cooperative is supposed to be open for contributions from everyone, regardless of where they are in the world, the cooperative of course ought to facilitate online board meetings, where the members can cast their votes on new decisions digitally.
 
@@ -53,7 +53,7 @@ An open tech cooperative also offers a way for developers to easily get their ap
 
 Furthermore, if a developer extends an existing software application, then rather than having to compete with the existing application for users, and going through the slow process of getting users to migrate to the new application, the cooperative can instead make both versions available at the same time and let them share access to the same data structure, making it easy and seamless for users switch between the different versions.
 
-Last but not least, an open tech cooperative also solves a problem that closed-source developers face, which will likely become increasingly relevant as AI continues to develop. As AI advances, the work it takes to reverse-engineer existing software applications decreases. This means that closed-source developers are faced with the problem that in a near future, it might be easy for any competitor to just use AI to make a non-copyright-breaking copy of all their hard work. But with an open tech cooperative, the developers are not in competition with each other in the same way, and it makes no sense for the cooperative to reward a developer that reverse-engineers another developer's work. The cooperative is instead always motivated to reward the true sources of the creative ideas and the hard work of the developers, as this is the best way to attract more useful ideas and work in the future. 
+Last but not least, an open tech cooperative also solves a problem that closed-source developers face, which will likely become increasingly relevant as AI continues to develop. As AI advances, the work it takes to reverse-engineer existing software applications decreases. This means that closed-source developers are faced with the problem that in a near future, it might be easy for any competitor to just use AI to make a non-copyright-breaking copy of all their hard work. But with an open tech cooperative, the developers are not in competition with each other in the same way, and it makes no sense for the cooperative to reward a developer that reverse-engineers the work of another. The cooperative is instead always motivated to reward the true sources of the creative ideas and the hard work of the developers, as this is the best way to attract more useful ideas and work in the future. 
 
 
 
@@ -61,7 +61,7 @@ Last but not least, an open tech cooperative also solves a problem that closed-s
 
 An open tech cooperative does not have to start out with a cooperative governance structure from day one. It might instead have an initial phase instead where the company is run by some initial executives, possibly the founders of the company.
 
-In order to assure the contributing developers that the company will indeed transition into a cooperative eventually, the company then ought sign a contract stating so. More precisely, this contract should state that the members of the cooperative will take over the company once the it has reached a certain level of maturity, which could be measured in the amount of revenue that that company has generated, and generates currently, as well as in the number of members it has attracted for the cooperative.
+In order to assure the contributing developers that the company will indeed transition into a cooperative eventually, the company then ought sign a contract stating so. More precisely, this contract should state that the members of the cooperative will take over the company once the it has reached a certain level of maturity, which could be measured in the amount of revenue that that company has generated, and generates currently, as well as in the number of members it has attracted to the cooperative.
 
 And this contract should also define the salary and potential bonuses for the initial executives, which ought to depend on how much and how quickly the company grows under this initial phase, before the transition to a cooperative.
 
@@ -73,11 +73,11 @@ Furthermore, if the company has some initial investors who help it get started, 
 
 One of the potential drawbacks of using a cooperative company model is that it might dissuade some investors from investing in the company. This is partly because cooperatives tend to promise their investors less profits upon success when compared to regular types of companies. And the inconvenience of not being able to invest simply by trading stock on the stock market also likely plays a significant role in this.
 
-However, if enough developers and potential users are excited about the prospect of an open tech cooperative, and believes that it will be able to succeed to the point where it can continuously generate a sizable revenue, the cooperative might be able to finance it self via what we might call 'IOU tokens.'
+However, if enough developers and potential users are excited about the prospect of an open tech cooperative, and believes that it will be able to succeed to the point where it can continuously generate a sizable revenue, the cooperative might be able to finance itself via what we might call 'IOU tokens.'
 
 We here define an IOU ("I owe you") token to be a type of token, either an [NFT](https://en.wikipedia.org/wiki/Non-fungible_token) on a blockchain or another kind of digital token, where the company in question has a contract that commits it to eventually pay the holder of the token an amount of money specified by the token.
 
-The same contract can furthermore have a clause that the company also has to use at least 5 % of its revenue to pay back IOU tokens at regular intervals, until there are no more unpaid tokens left in circulation. And the order of when the IOU tokens are paid back should also be predetermined, by the contract.
+The same contract can furthermore have a clause that the company has to use at least 5 % of its revenue to pay back IOU tokens at regular intervals, until there are no more unpaid tokens left in circulation. And the order of when the IOU tokens are paid back should be predetermined by the contract.
 
 The value of these IOU tokens will thus be equal to the amount of money that is owed on them, times the probability that the company in question will succeed and be able to pay the money back, minus the interests lost in the meantime by the holder due to not being able to invest the same money elsewhere.
 
@@ -97,7 +97,7 @@ And here's another point that almost deserves to be included as a footnote as we
 
 ## Utilizing a user-programmable platform
 
-An open tech cooperative can also utilize the idea and the concepts of a [user-programmable platform](user-programmable_platform.md), in order to allow the developers to share their ideas and prototypes quickly and safely with each other, and to always give the users complete freedom to choose whichever versions of the software application they want to use.
+An open tech cooperative can also utilize the idea and the concepts of a [user-programmable platform](user-programmable_platform.md), in order to allow the developers to share their ideas and prototypes quickly and safely with each other, and to always give the users complete freedom to choose whichever versions of the software applications they want to use.
 
 Allowing the users to choose the software application versions for themselves thus also creates an equal playing field for the developers when it comes to getting their contributions out to the users, since they do not have to go through a centralized decision-making body first in order to get a green light to roll out the new version. And since the cooperative does not have a hand in deciding which versions reach the users, it can also evaluate the worth of the contributions more fairly, by simply keeping track of the usage and the popularity of each version.
 
@@ -111,11 +111,11 @@ Allowing the users to choose the software application versions for themselves th
 
 * This profit is then distributed out to the source code contributors themselves, as well as potentially to any investors and founders who are still owed money.
 
-* The reward distribution is determined by the cooperative, and is supposed to reward the contributions based on how useful they are to the users as to best be able to attract more useful contributions in the future.
+* The reward distribution is determined by the cooperative, and is supposed to reward the contributions based on how useful they are to the users, as to best be able to attract more useful contributions in the future.
 
-* By choosing a cooperative model over a more conventional company model, the company can hope to thereby increase the segment of developers who want to contribute, as well as increase the user base and the general support of the users.
+* By choosing a cooperative model over a more conventional company model, the company can hope to thereby increase the segment of developers who want to contribute, as well as increase the user base and the general support from the users.
 
-* The company can utilize IOU tokens to help attract more investments, and also as a way to commit itself to paying the early developers for their contributions.
+* The company can utilize IOU tokens to help attract more investments, and also as a way to commit itself to paying the early developers for their contributions when it has the funds to do so.
 
 
 
