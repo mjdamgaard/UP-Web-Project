@@ -152,6 +152,13 @@ async function main() {
     // TODO: Instead of implementing a bundle command, I might implement a
     // command to just "hoist" all descendant imports of a module up to the
     // module itself. 
+    // TODO: Also implement a 'compile' command which request the server to
+    // compile a module into a dev library/module instead, where the JS(X) is
+    // transformed into some safe JS instead (with variable re-namings and
+    // added guard clauses, etc.). And maybe we'll reserve a special file
+    // extension for these compiled modules, which means that the client can
+    // import them in a way where the actual (safe) JS module is imported and
+    // used (similar to importing a dev module).
     else if (/^([bB]|build|bundle)$/.test(command)) {
       console.log("Bundling not implemented yet");
     }
@@ -232,7 +239,12 @@ async function main() {
     }
     else if (/^delete$/.test(command)) {
       let relativePath = await read({prompt: `Path of file(s) to delete: `});
-      await directoryUpdater.deleteData(curDir, relativePath, read);
+      try {
+        await directoryUpdater.deleteData(curDir, relativePath, read);
+      } catch (err) {
+        console.error(err);
+        continue;
+      }
     }
     else if (/^(cd )/.test(command)) {
       let newDir = command.substring(3).trim();

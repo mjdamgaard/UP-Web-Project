@@ -190,7 +190,7 @@ export class DirectoryUpdater {
       `/this/${dirID}./_all`
     );
     let deletionPromiseGenerators = [];
-    let serverFilePaths = [];
+    let serverFilePathsToDelete = [];
     let curDirPath = this.upDirectoriesPath + "/" + curDir;
     filePaths.forEach(relPath => {
       let relClientPath = (relPath === "placeholders.js") ?
@@ -208,13 +208,14 @@ export class DirectoryUpdater {
             return x;
           })
         );
-        serverFilePaths.push(serverFilePath);
+        serverFilePathsToDelete.push(serverFilePath);
       }
     });
+    let colorStr = "\x1b[31m%s\x1b[0m"; // red color
     let len = deletionPromiseGenerators.length;
     for (let i = 0; i < len; i++) {
-       await deletionPromiseGenerators[i]();
-       console.log("- Removed " + serverFilePaths[i]);
+      await deletionPromiseGenerators[i]();
+      console.log(colorStr, "- Removed " + serverFilePathsToDelete[i]);
     }
 
     // Then call a helper method to recursively loop through all files in the
@@ -223,18 +224,25 @@ export class DirectoryUpdater {
     // uploadPromiseGenerators array, which is then used to generate and wait
     // for each upload promise in sequence.
     let uploadPromiseGenerators = [];
-    serverFilePaths = [];
+    let serverFilePathBuffer = [];
     this.#uploadDirHelper(
-      curDir, dirID, uploadPromiseGenerators, serverFilePaths,
+      curDir, dirID, uploadPromiseGenerators, serverFilePathBuffer,
       serverQueryHandler, nodeID
+    );
+    let initServerFilePaths = filePaths.map(
+      relPath => normalizePath(`/${nodeID}/${dirID}/${relPath}`)
     );
     len = uploadPromiseGenerators.length;
     for (let i = 0; i < len; i++) {
       await uploadPromiseGenerators[i]();
-      let [serverFilePath, isTableFile] = serverFilePaths[i];
-      console.log(
-        (isTableFile ? "- Touched " : "- Uploaded ") + serverFilePath
-      );
+      let [serverFilePath, isTableFile] = serverFilePathBuffer[i];
+      let wasCreated = !initServerFilePaths.includes(serverFilePath);
+      let colorStr = wasCreated ?
+        "\x1b[32m%s\x1b[0m" : // green color
+        "\x1b[33m%s\x1b[0m"; // yellow color
+      let initStr = isTableFile ? "- Touched " :
+        wasCreated ? "- Created " : "- Modified ";
+      console.log(colorStr, initStr + serverFilePath);
     }
 
     return dirID;
@@ -243,7 +251,7 @@ export class DirectoryUpdater {
 
   #uploadDirHelper(
     relClientPath, relServerPath, uploadPromiseGenerators,
-    serverFilePaths, serverQueryHandler, nodeID, depth = 0
+    serverFilePathBuffer, serverQueryHandler, nodeID, depth = 0
   ) {
     let absClientPath = this.upDirectoriesPath + "/" + relClientPath;
     // Get each file in the directory at path, and loop through and handle each
@@ -264,7 +272,7 @@ export class DirectoryUpdater {
       if (/^\.*[^.]+$/.test(name)) {
         this.#uploadDirHelper(
           relChildClientPath, relChildServerPath, uploadPromiseGenerators,
-          serverFilePaths, serverQueryHandler, nodeID, depth + 1
+          serverFilePathBuffer, serverQueryHandler, nodeID, depth + 1
         );
       }
 
@@ -301,7 +309,7 @@ export class DirectoryUpdater {
             return x;
           })
         );
-        serverFilePaths.push([`/${nodeID}/${relChildServerPath}`, false]);
+        serverFilePathBuffer.push([`/${nodeID}/${relChildServerPath}`, false]);
       }
 
       // Else if it is a database table file, simply touch the file serer-side.
@@ -319,7 +327,7 @@ export class DirectoryUpdater {
             return x;
           })
         );
-        serverFilePaths.push([`/${nodeID}/${relChildServerPath}`, true]);
+        serverFilePathBuffer.push([`/${nodeID}/${relChildServerPath}`, true]);
       }
     });
   }
@@ -363,6 +371,10 @@ export class DirectoryUpdater {
   // "/<upNodeID>/<homeDirID>/<relativePath>", or extends this path if
   // relativePath ends in a '*' wildcard.
   async deleteData(curDir, relativePath, read) {
+    relativePath = normalizePath(relativePath);
+    if (relativePath.substring(0, 2) === "./") {
+      relativePath = relativePath.substring(2);
+    }
     let dirID = this.getDirID(curDir);
     let serverQueryHandler = new ServerQueryHandler(
       this.authToken, Infinity, fetch, this.domain
@@ -407,10 +419,13 @@ export class DirectoryUpdater {
       let deletionPromiseGenerators = serverFilePaths.map(serverFilePath => (
         () => serverQueryHandler.postAsAdmin(serverFilePath + "./_put")
       ));
+      let colorStr = "\x1b[31m%s\x1b[0m"; // red color
       let len = deletionPromiseGenerators.length;
       for (let i = 0; i < len; i++) {
         await deletionPromiseGenerators[i]();
-        console.log("Deleted data from " + serverFilePaths[i]);
+        console.log(
+          colorStr, "- Deleted data from " + serverFilePaths[i]
+        );
       }
       console.log("Data successfully deleted.");
     }
