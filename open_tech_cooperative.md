@@ -113,9 +113,9 @@ Allowing the users to choose the software application versions for themselves th
 
 * The reward distribution is determined by the cooperative, and is supposed to reward the contributions based on how useful they are to the users, as to best be able to attract more useful contributions in the future.
 
-* By choosing a cooperative model over a more conventional company model, the company can hope to thereby increase the segment of developers who want to contribute, as well as increase the user base and the general support from the users.
+* By choosing a cooperative model over a more conventional company model, the company can thereby hope to increase the segment of developers who want to contribute, as well as increase the user base and the general support from the users.
 
-* The company can utilize IOU tokens to help attract more investments, and also as a way to commit itself to paying the early developers for their contributions when it has the funds to do so.
+* The company can utilize IOU tokens to help attract more investments, and also as a way to commit itself to paying the early developers for their contributions once it has the funds to do so.
 
 
 

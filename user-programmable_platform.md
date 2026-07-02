@@ -100,7 +100,7 @@ In short, this model designed to be a golden middle between an open source and a
 
 And by promising investors a share of this profit as well, this model can thus also help bring in investments for the platform.
 
-You can read more about this model of en 'open tech cooperative' [here](open_tech_cooperative.md).
+You can read more about this model of an 'open tech cooperative' [here](open_tech_cooperative.md).
 
 
 
