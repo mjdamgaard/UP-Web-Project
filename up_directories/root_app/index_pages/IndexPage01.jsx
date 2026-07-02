@@ -13,71 +13,94 @@ const indexPage = <div className="text-page">
   <section>
     <h2>A user-programmable platform</h2>
     <p>
-      UP-Web.org is a
-      <ELink key="link-github-repo-readme-1"
-        href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/user-programmable_platform.md">
-        user-programmable platform
-      </ELink>,
-      which is a platform that puts its users in charge of its development:
+      This is a 'user-programmable platform,' which is a platform where the
+      users themselves are free to fork and extend the apps on the platform,
+      or build new ones.
     </p>
-    <p><ul>
-      <li>
-        The users are free to build and extend the apps on the platform
-        themselves, in collaboration with one another.
-      </li>
-      <li>
-        A majority of the profits of the platform will go to rewarding the
-        users who contribute source code and ideas to the
-        platform, similarly to how
-        <ELink key="link-web-2.0"
-          href="https://en.wikipedia.org/wiki/Web_2.0">
-          Web 2.0 platforms
-        </ELink>
-        will often reward their content creators.
-      </li>
-      <li>
-        Each individual end user is free to choose whichever version of
-        each app they want to use, just by changing their settings for the
-        platform.
-      </li>
-      <li>
-        A sandboxing technology makes it safe for users to try out new apps
-        and features uploaded by other users, allowing
-        the development of the platform to move fast and with minimal central
-        oversight required.
-      </li>
-      {/* <li>
-        The rest of the profits will go to the investors, but only until
-        these have gained a fixed maximal profit margin on their investments.
-      </li> */}
-      {/* <li>
-        The platform will have an initial stage where it is governed mainly by
-        its investors, a middle stage where it is governed mainly by its
-        developing users, and an end stage where it is governed mainly by its
-        end users.
-        Thus, the platform will essentially turn into a
-        <ELink key="link-consumers-co-op"
-          href="https://en.wikipedia.org/wiki/Consumers%27_co-operative">
-          consumers' co-op
-        </ELink>
-        in the end (or a "users' co-op," if you will).
-      </li> */}
-      <li>
-        The platform will also let its users take part in its governance,
-        giving them a vote on corporate decisions. And the weight of this vote
-        will slowly increase over time, meaning that the platform
-        will essentially turn into a
-        <ELink key="link-consumers-co-op"
-          href="https://en.wikipedia.org/wiki/Consumers%27_co-operative">
-          consumers' co-op
-        </ELink>
-        in the long run (or a "users' co-op," if you will).
-      </li>
-    </ul></p>
     <p>
-      So not only are the users put in charge of the platform's development
-      from the very start, but they are also put in charge of directing the
-      platform completely in the end.
+      And each individual end user is furthermore free to choose exactly which
+      version of each app they want to use themselves, without having to go to
+      a different web domain or download a different app.
+    </p>
+    <p>
+      When a users upload source code for a new app, the platform interprets
+      this source code and sandboxes it such that other users can try out the
+      new app without fear of getting hacked.
+    </p>
+    <p>
+      This sandbox even extends to the back end, which means that users are
+      also free to program their own back-end data structures and their own
+      algorithms for their apps.
+    </p>
+    <p>
+      And if an app extends an existing one, then once this app is reviewed
+      and declared as trusted by the user community, the new app version can
+      also be given access the same back-end API.
+    </p>
+    <p>
+      For instance, if a user uploads a new version of an existing SoMe app
+      with some added feature, such as a different algorithm or a some new
+      tool, then once the user community has ensured that this new version
+      behaves as intended, and does not try to trick its users in any way,
+      it can go from accessing a temporary, mock-up data structure to
+      accessing the same date structure as its predecessor.
+    </p>
+    <p>
+      For more on user-programmable platforms, follow
+      <ELink key="link-github-repo-user-programmable-1"
+        href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/user-programmable_platform.md">
+        this link
+      </ELink>.
+    </p>
+  </section>
+
+  <section>
+    <h2>Business model</h2>
+    <p>
+      This platform is currently fully open-source, and will likely continue
+      to have a fully open-source branch in the future. However, in order to
+      be able to actually pay the developers who contribute source code to the
+      platform, we also propose model which is designed to be a golden middle
+      way between open and closed source. We call this model an
+      <ELink key="link-github-repo-tech-co-op-1"
+        href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/open_tech_cooperative.md">
+        open tech cooperative
+      </ELink>.
+    </p>
+    <p>
+      In this model, the developers who contribute source code to the platform
+      does so under a license that allows anyone to extend the source code, as
+      long as they publish it under the same license. However, the rights to
+      use the software is not given to the public at large, but is instead
+      given specifically to the platform, allowing it to use the software to
+      earn a profit.
+    </p>
+    <p>
+      This profit can be generated similarly to any conventional platform,
+      namely via paid subscriptions and/or by showing ads on the platform.</p>
+    <p>
+      However, in order to assure the contributing developers and the end users that
+      the platform has their best interests at heart, the platform will
+      use a cooperative company model where the users and developers end up
+      running the platform.
+    </p>
+    <p>
+      This platform will thus not only put its users in charge of its
+      development, but will even put the users in charge of everything
+      eventually, by essentially turning into a
+        <ELink key="link-consumers-co-op"
+          href="https://en.wikipedia.org/wiki/Consumers%27_co-operative">
+          consumers' cooperative
+        </ELink>
+      (or a "user's cooperative," if you will), once a level of maturity has
+      been reached.
+    </p>
+    <p>
+      For more on the model of an open tech cooperative, follow
+      <ELink key="link-github-repo-tech-co-op-2"
+        href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/open_tech_cooperative.md">
+        this link
+      </ELink>.
     </p>
   </section>
 
@@ -92,11 +115,11 @@ const indexPage = <div className="text-page">
       </p>
       <p><ul>
         <li>
-          Like any closed-source platform, this platform will be able to reward
-          the developers fairly for their contributions.
+          Like any closed-source platform, this platform
+          will be able to reward the developers fairly for their contributions.
         </li>
         <li>
-          But like any open-source platform, this platform will also be able to
+          But at the same time, like any open-source platform, this platform will also be able to
           draw on the entire world for coming up with new creative ideas for
           how to extend the apps on the platform, and for implementing those
           ideas.
@@ -198,15 +221,15 @@ const indexPage = <div className="text-page">
       For more information on what sets a user-programmable platform apart
       from other platforms,
       follow
-      <ELink key="link-github-repo-readme-2"
+      <ELink key="link-github-repo-user-programmable-2"
         href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/user-programmable_platform.md">
         this link
       </ELink>.
     </p>
     <p>
-      And for more information about the proposed governance structure of the
-      platform, follow
-      <ELink key="link-github-repo-tech-co-ops"
+      And for more information about the proposed governance structure and
+      business model of the platform, follow
+      <ELink key="link-github-repo-tech-co-op-3"
         href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/open_tech_cooperative.md">
         this link
       </ELink>.
@@ -248,634 +271,3 @@ const indexPage = <div className="text-page">
   </section>
 
 </div>;
-
-
-
-
-
-export const styleSheets = [
-  abs("../style.css"),
-];
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// const indexPage = <div className="text-page">
-//   <h1>The User-Programmable Web</h1>
-//   <section>
-//     <h2>Serverless computing on a new level</h2>
-//     <p>
-//       The User-Programmable Web (UP Web) is an open-source web development
-//       framework that takes the concept of
-//       <ELink key="link-serverless"
-//         href="https://en.wikipedia.org/wiki/Serverless_computing"
-//       >
-//         serverless computing
-//       </ELink>
-//       to the next level: Not only do applications scale automatically, they
-//       scale without any cost to the developers. 
-//     </p>
-//     <p>
-//       The cost of the resources that an app consumes is instead paid for by
-//       the users of that app, who pay either by watching ads on the website on
-//       which the app is hosted, or via subscription to the website.
-//     </p>
-//     <p>
-//       Furthermore, the organization behind up-web.org will function as a
-//       nonprofit, and its goal will be to maximize the benefit of the users of
-//       the UP Web.  
-//     </p>
-//     <p>
-//       All profits will thus go towards rewarding the open source developers of
-//       the UP Web, along with content creators and other contributors.    
-//     </p>
-//   </section>
-
-//   <section>
-//     <h2>Open source and free data portability</h2>
-//     <p>
-//       The fact that the UP Web is an open source project means that anyone is
-//       free to set up their own versions of up-web.org, and to modify the
-//       source code at will.
-//     </p>
-//     <p>
-//       In fact, up-web.org encourages this kind of competition from other
-//       service providers, and vows to
-//       always try to make it as easy as possible for developers and users to
-//       transfer their apps and data to other service providers.
-//     </p>
-//     <p>
-//       So if anyone has complaints about how up-web.org functions, or how it
-//       redistributes its profits to the contributors, they are completely free
-//       to set up a competitor that aims to do things differently. 
-//     </p>
-//     <p>
-//       And apart from allowing for free data portability,
-//       up-web.org also vows to allow apps to communicate freely across different
-//       service providers. This means that apps can potentially extend over
-//       several service providers at once, and utilize all the different user
-//       networks as one combined network.
-//     </p>
-//   </section>
-
-//   <section>
-//     <h2>Easy to get started</h2>
-//     <p>
-//       It is easy get started making your first user-programmed app. On the
-//       <ILink key="link-tut-1" href="/tutorials">
-//         {"Tutorials"}
-//       </ILink>
-//       page you will find a list of tutorials that will teach you how.
-//     </p>
-//     <p>
-//       By the end of
-//       the first tutorial, you will have learned how to upload a simple
-//       "Hello, World!" app. And the next couple of tutorials will teach you how
-//       to style your apps, how to make them responsive, and how to
-//       make them upload and download data from the database.
-//     </p>
-//     <p>
-//       In fact, by the end of
-//       <ILink key="link-tut-SMs" href="/tutorials/server-modules">
-//         {"Tutorial 5"}
-//       </ILink>,
-//       you will already have learned how to make a little message app, where
-//       you and other users can communicate, privately or publicly.
-//     </p>
-//     <p>
-//       The development framework that is provided is a JavaScript framework
-//       inspired by
-//       <ELink key="link-w3-react"
-//         href="https://www.w3schools.com/react/default.asp"
-//       >
-//         React
-//       </ELink>.
-//       So if you are already familiar with React, getting started will be
-//       particularly easy. 
-//     </p>
-//     <p>
-//       And once you have uploaded a new app or webpage, it will in theory stay
-//       up forever, until you modify or delete it.
-//     </p>
-//     <p>
-//       That is, unless your app breaks our terms of service, of
-//       course, which involves adhering to the GDPR, as well as not trying to
-//       scam other users, etc.
-//     </p>
-//   </section>
-
-
-//   <section>
-//     <h2>User-uploaded code is run in a sandbox</h2>
-//     <p>
-//       All user-uploaded code is executed in a sandbox that prevents it from
-//       accessing any unsafe features of JavaScript. This true both when the code
-//       is executed client-side and when it is executed server-side.
-//     </p>
-//     <p>
-//       Other users can therefore safely try out your new app prototypes,
-//       without having to worry about their browser getting hacked. And you can
-//       safely try out theirs as well.
-//     </p>
-//     <p>
-//       Different apps are also assigned different parts of the database,
-//       isolated from each other. And apps can only upload and download data
-//       between each other when the creators allow it.
-//     </p>
-//   </section>
-
-
-//   <section>
-//     <h2>From Web 2.0 to Web 3.0</h2>
-//     <p>
-//       The change from Web 1.0 to
-//       <ELink key="link-web-2.0" href="https://en.wikipedia.org/wiki/Web_2.0">
-//         Web 2.0
-//       </ELink>
-//       meant the emergence of websites where the users are
-//       responsible for the content shown on the sites to a large extent.
-//     </p>
-//     <p>
-//       The structure and appearance of
-//       these websites are still, however, a responsibility solely of the
-//       owners of the websites, and the same is true for the algorithms that
-//       they use.
-//     </p>
-//     <p>
-//       The UP Web seeks to go one step further in this process by allowing the
-//       users to help program the apps for the websites as well, and help
-//       decide their appearance and their algorithms.
-//     </p>
-//     <p>
-//       And in the same way that content creators are often rewarded monetarily
-//       on Web 2.0 sites, so will the users that help create the apps and the
-//       algorithms for the UP Web.
-//     </p>
-//     {/* This point is important, but maybe it should go somewhere else..: */}
-//     {/* <p>
-//       The rewards that these app-developing users receive ought to
-//       reflect how much their contributions help increase the benefit of other
-//       users. So for example, if you help create or improve a given app, and
-//       that app ends up being used by a significant portion of the user base,
-//       you will also receive a significant portion of the revenue of the UP Web
-//       as a reward.
-//     </p> */}
-//   </section>
-
-//   <section>
-//     <h2>Users can choose their own set of apps and algorithms</h2>
-//     <p>
-//       Since the mission of up-web.org is to maximize the benefit of its users,
-//       there is no point in trying to force a particular set of apps and
-//       algorithms on our user base. 
-//     </p>
-//     <p>
-//       Instead we will give each individual user the freedom to choose for
-//       themselves. And not only will they be free to choose which set of apps
-//       they want to use, but also which version of each individual app to use.
-//     </p>
-//     <p>
-//       We also strongly encourage our app-developing users to make it possible
-//       for other users to change and adjust the algorithms of the apps.
-//     </p>
-//     <p>
-//       Each user of up-web.org will thus start out with the most popular
-//       set of apps and algorithms as the default choice. And if they want to,
-//       they are then free to change this choice at any time.
-//     </p>
-//   </section>
-
-
-//   <section>
-//     <h2>Reasons to get excited about the UP Web</h2>
-//     <p>
-//       When users are free to choose the algorithms themselves,
-//       and when the app-developing users are rewarded for how well
-//       they benefit other users rather than how well the benefit the profits
-//       of the website, the UP Web will be able to eliminate some of the
-//       unfortunate circumstances that plagues the current web.
-//     </p>
-//     <p>
-//       In the following subsections, we will list some of the reasons
-//       why to get excited about the UP Web as a user.
-//     </p>
-
-//     <h4>1. Make it easier to limit your screen time</h4>
-//     <p>
-//       When you are in charge the algorithms that you use, you do not have to
-//       choose algorithms that are optimized for maximizing your watch time and
-//       engagement.
-//     </p>
-//     <p>
-//       If you want to make it easier for yourself to limit your screen time,
-//       you can thus simply choose algorithms that only shows you things
-//       that are relevant to what you initially looked for, rather than always
-//       trying to funnel you into a dopamine trap.
-//     </p>
-
-//     <h4>2. Filter out inappropriate content</h4>
-//     <p>
-//       When algorithms are only optimized to maximize your engagement,
-//       they are incentivized to push new content very quickly to a large group
-//       of users. But by doing so, they also increase the risk of showing
-//       inappropriate or damaging content to the users.
-//     </p>
-//     <p>
-//       But when you are in charge of the algorithms that you use, you can make
-//       sure that content is only shown to you once it has been past enough other
-//       users first, who have been given enough of time to report the
-//       content if it is inappropriate.  
-//     </p>
-//     <p>
-//       And in case there is a shortage of users who volunteer to be among the
-//       first ones to see new content, and to report it if it is inappropriate,
-//       we will start to give out rewards to such users as a way of attracting
-//       more.
-//     </p>
-
-//     <h4>3. Avoid misinformation</h4>
-//     <p>
-//       When algorithms are only optimized to maximize engagement, they are
-//       also not really incentivized to filter out content that spreads
-//       misinformation, since that kind of content also only helps to increase
-//       engagement. 
-//     </p>
-//     <p>
-//       But when the algorithms are instead optimized to maximize user benefit,
-//       content that clearly spreads misinformation can be filtered out, in the
-//       same way as for inappropriate content.
-//     </p>
-//     <p>
-//       Furthermore, when facts are disputed, we can make sure that the user is
-//       warned about this. And we can even make sure to show list of fact-checking
-//       user groups and/or third parties in such cases, along with
-//       the scores for how these user groups and third parties have deemed the
-//       veracity of the information.
-//     </p>
-
-
-//     <h4>4. Suppress rude and nonconstructive posts and comments</h4>
-//     <p>
-//       Another downside of using existing web apps whose algorithms seek to
-//       maximize user engagement is that this has the effect of boosting
-//       negative discourse.
-//       This is due to the fact that negative and disruptive posts
-//       often attract more engagement than earnest and constructive ones.
-//     </p>
-//     <p>
-//       Whenever you reply to a rude post or comment, even if you reply in
-//       order to express your opposition to it,
-//       the algorithms still see this as engagement,
-//       and will try to boost the visibility of such content in the future,
-//       for you and for other users.
-//       Therefore, paradoxically, showing your opposition to a piece of content
-//       actually helps that content.
-//     </p>
-//     <p>
-//       Furthermore, since negative post and comments are boosted by the
-//       algorithms in this way, users who wants more attention are thus
-//       incentivized to create even more negative and disruptive content, leading
-//       to a bad spiral effect.
-//     </p>
-//     <p>
-//       However, when the algorithms are user-programmed, and are not
-//       trying to optimize for engagement at all cost, it is a rather simple
-//       matter to give the users the option to rate posts and comments on a
-//       scale from being nonconstructive to being earnest, and to have the
-//       algorithms strongly suppress the users that tends to be nonconstructive
-//       in their posts and comments.
-//     </p>
-
-//     <h4>5. Filter out AI slop and clickbait</h4>
-//     <p>
-//       The contemporary algorithms that only try to maximize watch time
-//       and user engagement are also effectively blind to whether the given
-//       piece of content is clickbait, or if it is AI slop, or in general if
-//       it pretends to be something that it is not.
-//     </p>
-//     <p>
-//       But with user-programmed algorithms, it is also a rather simple
-//       matter to allow users to rate whether a given post is clickbait, or
-//       AI generated, or otherwise insincere, which then allows the algorithms
-//       to subsequently suppress that post.
-//     </p>
-
-//     <h4>6. Control what data the algorithms collect</h4>
-//     <p>
-//       Another issue with contemporary web apps is that they are often not
-//       very transparent about what data they collect about you.
-//     </p>
-//     <p>
-//       But when each user can choose exactly which algorithms to use, the
-//       they can also choose precisely what data should and should not be
-//       collected about them.
-//     </p>
-
-//     <h4>7. Enjoy a greater variety of possibilities</h4>
-//     <p>
-//       Last but not least, since the UP can draw on its entire user base for
-//       coming up with new creative solutions and features, for the apps and
-//       for the algorithms, it will no doubt lead to much greater variety of
-//       possibilities for the users.
-//     </p>
-//     <p>
-//       The world of open source already has a vast number of contributors,
-//       collectively spending vast amounts of time and energy on open source
-//       projects, despite often not getting paid at all for their contributions.
-//       Thus, if the UP Web can attract even just a small fraction of all that
-//       work and energy, it will not take long before the UP Web can offer
-//       products that are on par with contemporary apps.
-//     </p>
-//     <p>
-//       And from there, the UP Web can only continue to evolve,
-//       drawing on the combined creativity of all its users, who can continue
-//       to come up with new ideas for useful apps and features.
-//     </p>
-//   </section>
-
-
-//   <section>
-//     <h2>How to get started</h2>
-//     <p>
-//       If you want to get started on making your first user-programmed apps,
-//       go see the
-//       <ILink key="link-tut-2" href="/tutorials">
-//         Tutorial pages
-//       </ILink>.
-//     </p>
-
-//     <p>
-//       And if looking for inspiration, or just wanting to see what app
-//       components other users have made so far, you can go to the
-//       <ILink key="link-comp" href="/ep/1/1/em1.js;get/components" >
-//         Components page
-//       </ILink>.
-//       (After having clicked on an element in this list,
-//       you need to click 'View component' in order to see it rendered.)
-//       Note that this list also includes the "Home app" of this website, which
-//       is the very web app that you are using right now. In fact, everything you
-//       see on this website, apart from the account menu at the top right, is 
-//       built as a user-programmed app.
-//     </p>
-
-//     {/* <p>
-//       And to see a list of the ongoing projects related to the UP Web,
-//       go see the
-//       <ILink key="link-proj" href="/ep/1/1/em1.js;get/projects">
-//         Projects
-//       </ILink>
-//       page.
-//     </p> */}
-//     <p>
-//       There is also a
-//       <ILink key="link-proj" href="/ep/1/1/em1.js;get/projects">
-//         Projects page
-//       </ILink>
-//       where users can post and discuss ongoing projects relating to the
-//       UP Web.
-//       However, at this early stage of the website, we actually recommend
-//       joining an UP Web forum on a more established SoMe website instead for
-//       the time being,
-//       at least while this Projects page is still under construction.
-//       The currently available (official) forums are:
-//     </p>
-//     <ul>
-//       <li>
-//       <ELink key="link-forum-fb"
-//         href="https://www.facebook.com/groups/945313801782150">
-//         {"facebook.com/groups/945313801782150"}
-//       </ELink>
-//       </li>
-//       <li>
-//       <ELink key="link-forum-linkedin"
-//         href="https://www.linkedin.com/groups/17277059/">
-//         {"linkedin.com/groups/17277059"}
-//       </ELink>
-//       </li>
-//     </ul>
-//     <p>
-//       By all means, please join one or more of these external forums if you
-//       are at all interested in keeping yourself up-to-date with the evolution
-//       of the UP Web project.
-//       And if you have any questions at all as a learner of this framework,
-//       or if you want to discuss anything related to the UP Web,
-//       these forums will also be a great way for you do so.
-//     </p>
-
-//     <p>
-//       Once it becomes relevant for you, there is also a
-//       <ILink key="link-contr" href="/ep/1/1/em1.js;get/contributions">
-//         Contributions page
-//       </ILink>
-//       where you can log your contributions to the project.
-//       Note that contributions do not need to be related to source code
-//       only. They can also be things such as spreading awareness of the
-//       project, etc.
-//     </p>
-
-//     <p>
-//       And if you want to have a look at the fundamental source code
-//       of the project, or perhaps want to help maintain and extend it at
-//       some point, this is currently found at
-//       <ELink key="link-github-repo"
-//         href="https://github.com/mjdamgaard/UP-Web-Project">
-//         {"github.com/mjdamgaard/UP-Web-Project"}
-//       </ELink>.
-//     </p>
-
-//     <p>
-//       But before you go anywhere, please note that this website is still
-//       only a prototype at this stage. So please excuse all the rough edges
-//       that you will find here and there.
-//     </p>
-//   </section>
-// </div>;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//   <section>
-//     <h2>{"A sandboxing technology that gives the users free rein"}</h2>
-//     <p>{
-//       "We use a sandboxing technology that allows users to safely upload " +
-//       "new apps, or new versions of existing apps, and " +
-//       "have other users try them out without needing to fear getting hacked."
-//     }</p>
-//     <p>{
-//       "The development process of a UP website therefore requires very " +
-//       "little central oversight, and " +
-//       "users are free to quickly " +
-//       "and easily share new app ideas with each other, without the need for " +
-//       "the apps to go through a centralized review process first."
-//     }</p>
-//     <p>{
-//       "Furthermore, the sandboxing technology allows us to store the " +
-//       "uploaded source code " +
-//       "modules in the database rather than in the limited file system of the " +
-//       "HTTP server itself. This means that there is practically no limit to " +
-//       "how many apps the users can create, as well as how many versions " +
-//       "each app can have!"
-//     }</p>
-//     <p>{
-//       "And importantly, as the creator of a new app or feature, you do not " +
-//       "pay anything at all for the server traffic and the data storage " +
-//       "that the app uses! " +
-//       "The fact that other users choose to use your app over others should " +
-//       "not come at a cost to you. (If anything, you should be rewarded for " +
-//       "it.)"
-//     }</p>
-//     <p>{
-//       "The cost of the traffic and storage space is instead carried by the " +
-//       "users of the app, who might " +
-//       "pay by watching ads in the margins of the website, or by simply " +
-//       "helping to attract " +
-//       "more sponsors and donors to the website through their activity."
-//     }</p>
-//     <p>{
-//       "The users thus have an incredible freedom to create and modify apps " +
-//       "in a decentralized way. " +
-//       "And we hope that the UP Web will develop into a whole ecosystem " +
-//       "of web apps of all kinds, and where there is a very short and quick " +
-//       "route from idea to practice!"
-//     }</p>
-//     {/* <p>{
-//       "So whenever you have an idea for a new app or a new feature to an " +
-//       "existing app, you can very quickly implement a prototype of that app " +
-//       "or feature, and upload it under a relevant category such that other " +
-//       "users can find it and try it out. These users might then help you " +
-//       "finish the project. And once it is finished and ready to use, " +
-//       "the app or modification does not need to go through a centralized " +
-//       "review process, and then be rolled out to all users at once. " +
-//       "Instead it can just gradually be picked up by more and more of the " +
-//       "user base, until it has reached everyone who wants it."
-//     }</p>
-//     <p>{
-//       "And whenever a user does not like a new feature to a given app, they " +
-//       "are completely free to just pass on it, and keep using a version of " +
-//       "the app without that feature."
-//     }</p> */}
-//   </section>
-
-
-//   {/* <section>
-//     <h2>{"Other exciting ideas"}</h2>
-//     <p>{
-//       "Apart from seeking to implement open source versions of existing web " +
-//       "apps on the market, up-web.org also has some exciting projects ..."
-//     }</p>
-
-//     <h3>{"Scalar predicates"}</h3>
-//     <p>{
-//       "The fact contemporary web apps often optimize their algorithms to " +
-//       "maximize watch time and engagement is not the only valid critique " +
-//       "against them. Another point of critique is that the data they collect " +
-//       "is often very low quality in terms of figuring out what the users are " +
-//       "into."
-//     }</p>
-//     <p>{
-//       "Most conventional web apps only has a single thumbs up or thumbs down " +
-//       "rating that the users can interact with. And whether or not you hit " +
-//       "the thumbs up button might depend a lot on your current mood, as well " +
-//       "as if the given content creator asks you to."
-//     }</p>
-//     <p>{
-//       "And apart from this, the algorithms only has your activity to go by, " +
-//       "which as we have argued above is also not a very good measure, as it " +
-//       "often inadvertently boosts clickbait and negative content, etc."
-//     }</p>
-//     <p>{([
-//       "We want to make up for this by introducing 'scalar predicates,' " +
-//       "which you can think about as a kind of ",
-//       <ELink key="link-tag"
-//         href="https://en.wikipedia.org/wiki/Tag_(metadata)">
-//         {"tags"}
-//       </ELink>,
-//       ", but where each tag can be rated on a scale."
-//     ])}</p>
-//     <p>{
-//       "For instance, if a user wants to rate a given movie, instead of just " +
-//       "being able to say whether it is good or bad, the user gets a wide " +
-//       "range of predicates to choose from. This could be predicates such as " +
-//       "'funny,' 'scary,' 'has good acting,' etc."
-//     }</p>
-//     <p>{
-//       "By thereby allowing users to be much more precise about what they " +
-//       "like and dislike about a given resource, and what qualities it has " +
-//       "in general, we can thereby get data of much greater quality when it " +
-//       "comes the algorithms."
-//     }</p>
-//     <p>{
-//       "And with much greater quality of data we will be able to get a much " +
-//       "greater quality of algorithms. In other words, we do not have to " +
-//       "make algorithms that are more computationally sophisticated than " +
-//       "contemporary ones in order to beat them. We just have to create " +
-//       "an avenue for the users to provide data of a much greater quality to " +
-//       "the algorithms."
-//     }</p>
-//     {/ * <p>{
-//       "And while a simple thumbs up or thumbs down button makes for a " +
-//       "simpler user interface, it does not necessarily mean a better user " +
-//       "experience. For even though ..."
-//     }</p> * /}
-//     <p>{([
-//       "For more on this project, go to ",
-//       <ILink key="link-semantic-qualities" href="/intro/qualities" >
-//         {"this page"}
-//       </ILink>,
-//       "."
-//     ])}</p>
-
-//     <h3>{"Structured comment sections"}</h3>
-//     <p>{
-//       "Another project that up-web.org is excited to introduce is one about " +
-//       "structured comment sections."
-//     }</p>
-//     <p>{
-//       "When a users visits the comment section of a given post or resource, " +
-//       "it is not always for the same reason. " +
-//       "Sometimes they might primarily be interesting in seeing the positive " +
-//       "reaction comments, other times they might be interested in seeing the " +
-//       "negative ones. And sometimes they might not be looking for reaction " +
-//       "comments at all, but rather for factual comments clarifying some " +
-//       "question the user has about the resource, or for discussions about a " +
-//       "specific topic relating to the resource."
-//     }</p>
-//     <p>{
-//       "But when all these types of comments are mixed together in the same " +
-//       "single thread, what you are looking for is often drowned out by the " +
-//       "other types of comments."
-//     }</p>
-//     <p>{
-//       "This is why we also seek to implement more structured comment " +
-//       "sections, where each type of comment can be put under a fitting " +
-//       "category, represented by a tab, such that you can more easily find " +
-//       "what you are looking for."
-//     }</p>
-//     <p>{
-//       "Furthermore, when it comes to discussions, each statement that is " +
-//       "being discussed should have a tab of arguments and counterarguments, " +
-//       "ordered such that the most relevant ..."
-//     }</p>
-
-//   </section> */}

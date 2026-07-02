@@ -6,15 +6,15 @@
 
 This is a 'user-programmable platform,' which is a platform where the users themselves are free to fork and extend the apps on the platform, or build new ones.
 
-And each individual end user is furthermore free to choose exactly which version of each app they want to use themselves, without having to go to a different web domain or download a different app, but merely by changing their settings.
+And each individual end user is furthermore free to choose exactly which version of each app they want to use themselves, without having to go to a different web domain or download a different app.
 
 When a users upload source code for a new app, the platform interprets this source code and sandboxes it such that other users can try out the new app without fear of getting hacked.
 
-This sandbox even extends to the back end, which means that users are also free to program their own back end data structures and their own algorithms for their apps.
+This sandbox even extends to the back end, which means that users are also free to program their own back-end data structures and their own algorithms for their apps.
 
 And if an app extends an existing one, then once this app is reviewed and declared as trusted by the user community, the new app version can also be given access the same back-end API.
 
-For instance, if a user uploads a new version of an existing SoMe app with some added feature, such as a different algorithm or a some new tool, then once the user community has ensured that this new version behaves as intended, and does not try to trick its users in any way, it can go from accessing a temporary, mock-up data structure to accessing the same one as its predecessor.
+For instance, if a user uploads a new version of an existing SoMe app with some added feature, such as a different algorithm or a some new tool, then once the user community has ensured that this new version behaves as intended, and does not try to trick its users in any way, it can go from accessing a temporary, mock-up data structure to accessing the same data structure as its predecessor.
 
 For more on user-programmable platforms, follow [this link](user-programmable_platform.md).
 
@@ -26,9 +26,9 @@ This platform is currently fully open-source, and will likely continue to have a
 
 In this model, the developers who contribute source code to the platform does so under a license that allows anyone to extend the source code, as long as they publish it under the same license. However, the rights to use the software is not given to the public at large, but is instead given specifically to the platform, allowing it to use the software to earn a profit.
 
-This profit can be generated similarly to any conventional platform, namely via paid subscription plans and/or by showing ads on the platform.
+This profit can be generated similarly to any conventional platform, namely via paid subscriptions and/or by showing ads on the platform.
 
-But in order to assure the contributing developers and the end users that the platform has their best interests at heart, the platform will even use a cooperative company model where the users and developers end up running the platform.
+However, in order to assure the contributing developers and the end users that the platform has their best interests at heart, the platform will use a cooperative company model where the users and developers end up running the platform.
 
 This platform will thus not only put its users in charge of its development, but will even put the users in charge of everything eventually, by essentially turning into a [consumers' cooperative](https://en.wikipedia.org/wiki/Consumers%27_co-operative) (or a "user's cooperative," if you will), once a level of maturity has been reached.
 
@@ -73,7 +73,6 @@ And especially in an age where AI continues to advance as a development tool, an
 Thus, a user-programmable platform will have a great competitive advantage in the long run over any other platform that does not to the same extend engage its users and put them in charge of its development.
 
 
-
 ### The users can trust the platform
 
 Another great benefit of this platform is that the end users will be able to trust the platform not to undergo [enshittification](https://en.wikipedia.org/wiki/Enshittification) in the end.
@@ -96,4 +95,4 @@ And if a part of the user base wants a new feature, it is only a matter time bef
 
 For more information on what sets a user-programmable platform apart from other platforms, follow [this link](user-programmable_platform.md).
 
-And for more information about the proposed governance structure of the platform, follow [this link](open_tech_cooperative.md).
+And for more information about the proposed governance structure and business model of the platform, follow [this link](open_tech_cooperative.md).
