@@ -168,12 +168,12 @@ This is done in order to prevent all the software licenses from being nullified 
 <!--
 ## Advantages
 
-Similar to open source, the model of open tech co-ops will be able to essentially draw on the entire world for coming up with new ideas for useful software applications, and not least draw on the users of the software themselves, who are often the ones most likely to come up with new ideas for useful improvements. And unlike open source, an open tech co-op will furthermore also be able to motivate its contributors with monetary rewards.
+Similar to open source, the model of open tech cooperatives will be able to essentially draw on the entire world for coming up with new ideas for useful software applications, and not least draw on the users of the software themselves, who are often the ones most likely to come up with new ideas for useful improvements. And unlike open source, an open tech cooperative will furthermore also be able to motivate its contributors with monetary rewards.
 
-This gives the open tech co-ops an advantage in the creative department. And this advantage can be extended further by also utilizing [user-programmable platforms](user-programmable_platform.md) to allow the contributors to share their ideas and prototypes quickly and safely with each other, and to give the end users complete freedom to choose whichever versions of the software they want to use themselves.
+This gives the open tech cooperatives an advantage in the creative department. And this advantage can be extended further by also utilizing [user-programmable platforms](user-programmable_platform.md) to allow the contributors to share their ideas and prototypes quickly and safely with each other, and to give the end users complete freedom to choose whichever versions of the software they want to use themselves.
 
 Having an advantage in the creative department is a great benefit to a software company, and this advantage is only made more critical by the rise of AI as a software development tool.
 As AI advances, the process going from idea to implementation gets easier and easier, which means that the success of a software company will to an increasing extent rely on that company's ability to come up creative ideas for improving the software applications, and to quickly make those new applications and features available to its users.
 
-Thus, in the long run, an open tech co-op will have a clear competitive advantage over any traditional tech company who does not find ways to engage its users to the same extent in its own development.
+Thus, in the long run, an open tech cooperative will have a clear competitive advantage over any traditional tech company who does not find ways to engage its users to the same extent in its own development.
 -->

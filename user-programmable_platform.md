@@ -94,13 +94,13 @@ While a user-programmable platform could certainly be based purely on open-sourc
 
 <!-- Such a model might be especially interesting if a user-programmable platform wants to succeed in the space of business applications, and not just web and mobile applications, since business customers will generally happily pay more in order to get quick and reliable updates and maintenance of the software. -->
 
-We thus propose utilizing the model of an '[open tech co-op](open_tech_cooperative.md),' on top of the proposed core business model, in order for the platform to be able to attract more contributions, and more investments as well.
+We thus propose utilizing the model of an '[open tech cooperative](open_tech_cooperative.md),' on top of the proposed core business model, in order for the platform to be able to attract more contributions, and more investments as well.
 
 In short, this model designed to be a golden middle between an open source and a closed source model, in a way that still motivates the developers to collaborate publicly, and share their contributions quickly and openly with each other, but which nonetheless still limits the use of the resulting code base in order to generate a profit, which can then be used to pay the developers.
 
 And by promising investors a share of this profit as well, this model can thus also help bring in investments for the platform.
 
-You can read more about this model of 'open tech co-ops' [here](open_tech_cooperative.md).
+You can read more about this model of en 'open tech cooperative' [here](open_tech_cooperative.md).
 
 
 
@@ -162,6 +162,21 @@ In the future, we also intend to make it possible for the users to program in ot
 
 And while the current prototype at this point only uses an interpreter for executing user-uploaded code, a compiler will also be added in the future, allowing the users to compile their source code modules and achieve near-native speeds.
 
+<!--
+My current plans for implementing a compiler, by the way, is to transform the
+JS(X) to a safe version of JS, where all variable names are prefixed, and where
+there are guard clauses around all statements where this is necessary, such as
+whenever an object is mutated (checking first that the object is mutable), and
+at the start of all function calls where it makes sense. Furthermore, all
+import statements might also be transformed, perhaps using Promise.all(), such
+that the imported modules are also transformed before use.
+(And JSX elements should of course be transformed similar to how React does
+it.)
+
+And another related point: The component browser should also include the possibility to link to JS Fiddle, or a similar service, instead, such that the users can program components in any framework from the beginning. And whenever
+these components get enough attention and up-rates/likes, the user community and the platform (company/cooperative) should of course then work on translating this component into a dev component (and make it available via a dev library). 
+-->
+
 
 
 ## Key takeaways
@@ -178,4 +193,4 @@ And while the current prototype at this point only uses an interpreter for execu
 
 * The cost of the resources that an app consumes is instead carried by the users of the platform, who generally pay either via subscriptions or by watching ads on the platform (unless they qualify for a free plan).
 
-* An [extended business model](open-dev-co-ops.md), if utilized, will allow the developing users to get paid fairly for their contributions, and can also allow the platform to attract more investments on top of that.
+* An [extended business model](open_tech_cooperative.md), if utilized, will allow the developing users to get paid fairly for their contributions, and can also allow the platform to attract more investments on top of that.
