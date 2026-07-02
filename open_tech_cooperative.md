@@ -77,7 +77,7 @@ However, if enough developers and potential users are excited about the prospect
 
 We here define an IOU ("I owe you") token to be a type of token, either an [NFT](https://en.wikipedia.org/wiki/Non-fungible_token) on a blockchain or another kind of digital token, where the company in question has a contract that commits it to eventually pay the holder of the token an amount of money specified by the token.
 
-The same contract can furthermore have a clause that the company has to use at least 5 % of its revenue to pay back IOU tokens at regular intervals, until there are no more unpaid tokens left in circulation. And the order of when the IOU tokens are paid back should be predetermined by the contract.
+The same contract can furthermore have a clause that the company has to use at least 5 % of its revenue to pay back IOU tokens at regular intervals, until there are no more unpaid tokens left in circulation. And the order of when the IOU tokens are paid back should also be predetermined by the contract.
 
 The value of these IOU tokens will thus be equal to the amount of money that is owed on them, times the probability that the company in question will succeed and be able to pay the money back, minus the interests lost in the meantime by the holder due to not being able to invest the same money elsewhere.
 
@@ -99,7 +99,7 @@ And here's another point that almost deserves to be included as a footnote as we
 
 An open tech cooperative can also utilize the idea and the concepts of a [user-programmable platform](user-programmable_platform.md), in order to allow the developers to share their ideas and prototypes quickly and safely with each other, and to always give the users complete freedom to choose whichever versions of the software applications they want to use.
 
-Allowing the users to choose the software application versions for themselves thus also creates an equal playing field for the developers when it comes to getting their contributions out to the users, since they do not have to go through a centralized decision-making body first in order to get a green light to roll out the new version. And since the cooperative does not have a hand in deciding which versions reach the users, it can also evaluate the worth of the contributions more fairly, by simply keeping track of the usage and the popularity of each version.
+Allowing the users to choose the software application versions for themselves thus also creates an equal playing field for the developers when it comes to getting their contributions out to the users, since they do not have to go through a centralized decision-making body first in order to get a green light to roll out the new version. And since the cooperative does not have a hand in deciding which versions reach the users, it can thus evaluate the worth of the contributions more fairly, by simply keeping track of the usage and the popularity of each version.
 
 
 
