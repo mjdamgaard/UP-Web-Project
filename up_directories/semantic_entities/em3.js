@@ -10,8 +10,7 @@ export const apps = {
   "Name": "Apps",
   "Superclass": abs("./em1.js;get/components"),
   "Common properties": [
-    "App directory ID", "No margins", "No header", "Is a prototype",
-    "Public repository", "Creator(s)",
+    "App directory ID", "Is a prototype", "Public repository", "Creator(s)",
   ],
   "Description": "The class of all user-programmed apps.",
 };

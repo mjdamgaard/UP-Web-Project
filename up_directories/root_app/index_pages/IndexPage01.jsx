@@ -15,7 +15,7 @@ const indexPage = <div className="text-page">
     <p>
       UP-Web.org is a
       <ELink key="link-github-repo-readme-1"
-        href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/README.md">
+        href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/user-programmable_platform.md">
         user-programmable platform
       </ELink>,
       which is a platform that puts its users in charge of its development:
@@ -199,7 +199,7 @@ const indexPage = <div className="text-page">
       from other platforms,
       follow
       <ELink key="link-github-repo-readme-2"
-        href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/README.md">
+        href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/user-programmable_platform.md">
         this link
       </ELink>.
     </p>
@@ -207,7 +207,7 @@ const indexPage = <div className="text-page">
       And for more information about the proposed governance structure of the
       platform, follow
       <ELink key="link-github-repo-tech-co-ops"
-        href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/open_tech_co-ops.md">
+        href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/open_tech_cooperative.md">
         this link
       </ELink>.
     </p>

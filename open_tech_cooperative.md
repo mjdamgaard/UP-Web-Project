@@ -35,9 +35,11 @@ When a developer contributes source code to the company, they thus publish under
 The company then uses the resulting software to earn a profit, either by sub-licensing it to other companies or by creating its own B2C platform, or a mix of both. These profits can then be used to pay the developers for their work,
 where the size of the rewards ought to depend on how important and useful the company deems the software contributions to be, namely in order to best attract more useful contributions in the future.
 
-And in order for the developers to be able to trust that the company has the best interests of the developers and the users at heart, the company can use a cooperative model where the company ends up being governed by the developers and the users of the software themselves, preventing any eventual price gouging, or any general [enshittification](https://en.wikipedia.org/wiki/Enshittification) of the company's products and services.
+And in order for the developers to be able to trust that the company has the best interests of the developers and the users at heart, the company can use a cooperative model where the company ends up being governed by the developers and the users of the software themselves,[^1] preventing any eventual price gouging, or any general [enshittification](https://en.wikipedia.org/wiki/Enshittification) of the company's products and services.
 
 From a business standpoint, the advantage of the cooperative model is thus to be able to attract source code contributions from the same segment of developers who contribute to open source, as well from developers who might like the idea of open source but who cannot find the time to contribute due to the lack of payment. And as we will discuss below, the cooperative model does not, however, prevent the initial founders and investors from making a good profit as well.
+
+[^1]: Since an open tech cooperative is supposed to be open for contributions from everyone, regardless of where they are in the world, the cooperative of course ought to facilitate online board meetings, where the members can cast their votes on new decisions digitally.
 
 
 
@@ -57,7 +59,7 @@ Last but not least, an open tech cooperative also solves a problem that closed-s
 
 ## Utilizing a user-programmable platform
 
-An open tech cooperative can also utilize the idea and the concepts of a [user-programmable platform](README.md), in order to allow the developers to share their ideas and prototypes quickly and safely with each other, and to always give the users complete freedom to choose whichever versions of the software application they want to use.
+An open tech cooperative can also utilize the idea and the concepts of a [user-programmable platform](user-programmable_platform.md), in order to allow the developers to share their ideas and prototypes quickly and safely with each other, and to always give the users complete freedom to choose whichever versions of the software application they want to use.
 
 Allowing the users to choose the software application versions for themselves thus also creates an equal playing field for the developers when it comes to getting their contributions out to the users, since they do not have to go through a centralized decision-making body first in order to get a green light to roll out the new version. And since the cooperative does not have a hand in deciding which versions reach the users, it can also evaluate the worth of the contributions more fairly, by simply keeping track of the usage and the popularity of each version.
 
@@ -91,9 +93,9 @@ And if the tokens are implemented as NFTs, they might gain an additional value o
 
 When the company in question, or in our case the open tech cooperative, wants to get new investments, it can thus auction off some new IOU tokens. Of course, this does not mean unlimited money, as a large enough debt might mean that developers will be tempted to start a new tech cooperative in place of the old. But the money from selling the IOU tokens might very well be enough to attract sufficient investments.
 
-Furthermore, the IOU tokens can also be used to pay the developers themselves as well, and especially during the startup phase where the cooperative might struggle to pay the developers what they deserve directly in regular currency, but still wants to commit themselves to paying them a certain amount.[^1]
+Furthermore, the IOU tokens can also be used to pay the developers themselves as well, and especially during the startup phase where the cooperative might struggle to pay the developers what they deserve directly in regular currency, but still wants to commit themselves to paying them a certain amount.[^2]
 
-[^1]: Of course, the cooperative could also auction off new IOU tokens to investors, and *then* pay the developers using that money. But if deciding to use NFTs for implementing the IOU tokens, it is likely that people would have a greater interest in collecting tokens that are connected specifically to individual source code contributions, which might thus increase their value.
+[^2]: Of course, the cooperative could also auction off new IOU tokens to investors, and *then* pay the developers using that money. But if deciding to use NFTs for implementing the IOU tokens, it is likely that people would have a greater interest in collecting tokens that are connected specifically to individual source code contributions, which might thus increase their value.
 
 <!--
 And here's another point that almost deserves to be included as a footnote as well: The company does not have to implement the NFTs right away. It can also instead implement their own tokens, in their own database, and then just promise that the NFTs will eventually be implemented, and that the holders of all the initial non-NFT tokens will be able to convert them into NFTs as well.
@@ -166,7 +168,7 @@ This is done in order to prevent all the software licenses from being nullified 
 
 Similar to open source, the model of open tech co-ops will be able to essentially draw on the entire world for coming up with new ideas for useful software applications, and not least draw on the users of the software themselves, who are often the ones most likely to come up with new ideas for useful improvements. And unlike open source, an open tech co-op will furthermore also be able to motivate its contributors with monetary rewards.
 
-This gives the open tech co-ops an advantage in the creative department. And this advantage can be extended further by also utilizing [user-programmable platforms](README.md) to allow the contributors to share their ideas and prototypes quickly and safely with each other, and to give the end users complete freedom to choose whichever versions of the software they want to use themselves.
+This gives the open tech co-ops an advantage in the creative department. And this advantage can be extended further by also utilizing [user-programmable platforms](user-programmable_platform.md) to allow the contributors to share their ideas and prototypes quickly and safely with each other, and to give the end users complete freedom to choose whichever versions of the software they want to use themselves.
 
 Having an advantage in the creative department is a great benefit to a software company, and this advantage is only made more critical by the rise of AI as a software development tool.
 As AI advances, the process going from idea to implementation gets easier and easier, which means that the success of a software company will to an increasing extent rely on that company's ability to come up creative ideas for improving the software applications, and to quickly make those new applications and features available to its users.
