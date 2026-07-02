@@ -13,19 +13,19 @@ const indexPage = <div className="text-page">
   <section>
     <h2>A user-programmable platform</h2>
     <p>
-      This is a 'user-programmable platform,' which is a platform where the
-      users themselves are free to fork and extend the apps on the platform,
-      or build new ones.
+      This is a user-programmable platform: A platform where the
+      users themselves are free to fork and extend all the apps on it,
+      and build new ones.
     </p>
     <p>
-      And each individual end user is furthermore free to choose exactly which
+      And each individual end user is also free to choose exactly which
       version of each app they want to use themselves, without having to go to
       a different web domain or download a different app.
     </p>
     <p>
-      When a users upload source code for a new app, the platform interprets
-      this source code and sandboxes it such that other users can try out the
-      new app without fear of getting hacked.
+      When a user uploads source code for a new app, the platform interprets
+      this source code and sandboxes it such that other users can try it out
+      without fear of getting hacked.
     </p>
     <p>
       This sandbox even extends to the back end, which means that users are
@@ -33,17 +33,17 @@ const indexPage = <div className="text-page">
       algorithms for their apps.
     </p>
     <p>
-      And if an app extends an existing one, then once this app is reviewed
-      and declared as trusted by the user community, the new app version can
-      also be given access the same back-end API.
+      And if an app extends an existing one, then once this new version is
+      reviewed and declared as trusted by the user community, the new app
+      version can also be given access the same back-end API.
     </p>
     <p>
       For instance, if a user uploads a new version of an existing SoMe app
-      with some added feature, such as a different algorithm or a some new
+      with some added feature, such as a different algorithm or some new
       tool, then once the user community has ensured that this new version
       behaves as intended, and does not try to trick its users in any way,
       it can go from accessing a temporary, mock-up data structure to
-      accessing the same date structure as its predecessor.
+      accessing the same data structure as its predecessor.
     </p>
     <p>
       For more on user-programmable platforms, follow
@@ -60,7 +60,7 @@ const indexPage = <div className="text-page">
       This platform is currently fully open-source, and will likely continue
       to have a fully open-source branch in the future. However, in order to
       be able to actually pay the developers who contribute source code to the
-      platform, we also propose model which is designed to be a golden middle
+      platform, we also propose a model which is designed to be a golden middle
       way between open and closed source. We call this model an
       <ELink key="link-github-repo-tech-co-op-1"
         href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/open_tech_cooperative.md">
@@ -82,7 +82,7 @@ const indexPage = <div className="text-page">
       However, in order to assure the contributing developers and the end users that
       the platform has their best interests at heart, the platform will
       use a cooperative company model where the users and developers end up
-      running the platform.
+      governing the platform.
     </p>
     <p>
       This platform will thus not only put its users in charge of its
@@ -92,11 +92,11 @@ const indexPage = <div className="text-page">
           href="https://en.wikipedia.org/wiki/Consumers%27_co-operative">
           consumers' cooperative
         </ELink>
-      (or a "user's cooperative," if you will), once a level of maturity has
-      been reached.
+      (or a "user's cooperative," if you will), once a certain level of
+      maturity has been reached.
     </p>
     <p>
-      For more on the model of an open tech cooperative, follow
+      For more on the model of open tech cooperatives, follow
       <ELink key="link-github-repo-tech-co-op-2"
         href="https://github.com/mjdamgaard/UP-Web-Project/blob/main/open_tech_cooperative.md">
         this link
