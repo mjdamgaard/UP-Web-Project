@@ -1,6 +1,6 @@
 
 
-import * as EntityList from "../../../entity_browser/entity_lists/EntityList.jsx"
+import * as EntityList from "../../../../entity_browser/entity_lists/EntityList.jsx"
 import * as EntityElement from "../../EntityElement.jsx";
 
 

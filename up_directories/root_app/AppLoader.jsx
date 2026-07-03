@@ -5,6 +5,7 @@ import {urlActions, urlEvents} from "./urlActions.js";
 import {substring, split, at, slice, join} from 'string';
 import {fetchPrivate, fetch} from 'query';
 import {hasType, hasTypes, verifyType} from 'type';
+import {getFirstSegment} from 'path';
 
 const fetchBestSubAppRouteTemplate = [
   abs("./server/apps.sm.js./callSMF/fetchPreferredSubApp/"),
@@ -157,12 +158,6 @@ export const actions = {
 };
 
 
-export function getFirstSegment(url) {
-  let indOfSecondSlash = indexOf(tailURL, "/", 1);
-  let firstSegment = (indOfSecondSlash === -1) ?
-    substring(tailURL, 1) : substring(tailURL, 1, indOfSecondSlash);
-  return firstSegment;
-}
 
 
 export async function fetchMostGeneralAppDirIDSegment(appDirID, appTailURL) {

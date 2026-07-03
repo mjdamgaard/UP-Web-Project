@@ -83,7 +83,7 @@ export function getUserEntPath(upNodeID, userID) {
 // true might also mean that the so-called "scored properties" will be checked
 // as well, namely to see if a defining property has been overwritten by a
 // scored one.
-export function fetchEntityDefinition(
+export async function fetchEntityDefinition(
   entKey, propArr = undefined, useScores = false
 ) {
   // useScores is not implemented yet, meaning that so far, the properties of
@@ -91,35 +91,34 @@ export function fetchEntityDefinition(
   // properties themselves, and not from so-called 'scored properties' (yet).
   useScores = useScores;
 
-  return new Promise(resolve => {
-    fetchEntityPath(entKey).then(entPath => {
-      fetch(entPath).then(entDef => {
-        // If propArr is falsy, just resolve with the entDef as is.
-        if (!propArr) return resolve(entDef);
+  let entPath = await fetchEntityPath(entKey);
+  let entDef = await fetch(entPath);
+  if (hasType(entDef, "Promise")) {
+    entDef = await entDef;
+  }
 
-        // And if propArr is equal to true, treat it as being equal to the
-        // array of all the keys in entDef.
-        if (propArr === true) {
-          propArr = keys(entDef);
-        }
+  // If propArr is falsy, just return entDef as is.
+  if (!propArr) return entDef;
 
-        // Then call substituteIfGetterProperty on all the properties, wait
-        // for the resulting promises in parallel, and use substitute the
-        // obtained properties in entDef before returning it.
-        let propValuePromiseArr = map(propArr, propName => (
-          substituteIfGetterProperty(propName, entDef[propName])
-        ));
-        Promise.all(propValuePromiseArr).then(subbedPropArr => {
-          let partialSubbedEntDef = new MutableObject();
-          forEach(subbedPropArr, (subbedProp, ind) => {
-            partialSubbedEntDef[propArr[ind]] = subbedProp;
-          });
-          let subbedEntDef = {...entDef, ...partialSubbedEntDef};
-          resolve(subbedEntDef);
-        });
-      });
-    });
+  // And if propArr is equal to true, treat it as being equal to the
+  // array of all the keys in entDef.
+  if (propArr === true) {
+    propArr = keys(entDef);
+  }
+
+  // Then call substituteIfGetterProperty on all the properties, wait
+  // for the resulting promises in parallel, and use substitute the
+  // obtained properties in entDef before returning it.
+  let propValuePromiseArr = map(propArr, propName => (
+    substituteIfGetterProperty(propName, entDef[propName])
+  ));
+  let subbedPropArr = await Promise.all(propValuePromiseArr);
+  let partialSubbedEntDef = new MutableObject();
+  forEach(subbedPropArr, (subbedProp, ind) => {
+    partialSubbedEntDef[propArr[ind]] = subbedProp;
   });
+  let subbedEntDef = {...entDef, ...partialSubbedEntDef};
+  return subbedEntDef;
 }
 
 

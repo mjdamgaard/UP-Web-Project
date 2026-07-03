@@ -90,6 +90,14 @@ Furthermore, the IOU tokens can also be used to pay the developers themselves as
 [^2]: Of course, the cooperative could also auction off new IOU tokens to investors, and *then* pay the developers using that money. But if deciding to use NFTs for implementing the IOU tokens, it is likely that people would have a greater interest in collecting tokens that are connected specifically to individual source code contributions, which might thus increase their value.
 
 <!--
+Of course, just because a token might be connected to a specific contribution
+doesn't mean that that IOU reward is final: If the contribution turns out to be
+more important than was initially estimated, for instance if the popularity of
+the app or the feature(s) grows, then the cooperative can of course increase
+the rewards, possibly by minting new tokens for the same contribution.
+-->
+
+<!--
 And here's another point that almost deserves to be included as a footnote as well: The company does not have to implement the NFTs right away. It can also instead implement their own tokens, in their own database, and then just promise that the NFTs will eventually be implemented, and that the holders of all the initial non-NFT tokens will be able to convert them into NFTs as well.
 -->
 

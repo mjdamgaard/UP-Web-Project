@@ -6,7 +6,7 @@ import {substring, indexOf} from 'string';
 import {hasType} from 'type';
 
 import * as AppLoader from "./AppLoader.jsx";
-import {getFirstSegment} from "./AppLoader.jsx";
+import {getFirstSegment} from 'path';
 
 const {this: {"file_browser": fileBrowserID, "app_browser": appBrowserID}}
 

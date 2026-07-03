@@ -1,16 +1,43 @@
 
+import {fetch} from 'query';
+import {verifyTypes} from 'type';
+import {parse} from 'json';
 
 // 'Apps' is a subclass of Components that are meant as standalone
 // applications. Rather than being defined by a"Component path," they are
 // defined by a home directory, which is supposed to contain a main.jsx module
 // defining the app. (This directory is also meant to contain an api.js module
-// defining the URL API of the app, by the way.)   
+// defining the URL API of the app, by the way.)
+export async function App(appDirID, upNodeID = undefined) {
+  verifyTypes([appDirID, upNodeID], ["hex", "hex?"]);
+
+  // Import and parse the metadata.json file in the app directory, then add its
+  // properties to the returned entity definition.
+  let metadata = await fetch(
+    upNodeID ? abs(`/${upNodeID}/${appDirID}/metadata.json`) :
+      abs(`~/../${appDirID}/metadata.json`)
+  ).then(
+    metadataJSON => parse(metadataJSON)
+  ).catch(err => {
+    console.warn(
+      "App directory #" + appDirID + " is either missing a metadata.json " +
+      "file or its content is ill-formed."
+    );
+    return {};
+  });
+  return {
+    ...metadata,
+    "Class": abs("./em3.js;get/apps"),
+    "App directory ID": appDirID,
+  };
+}
 export const apps = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Apps",
   "Superclass": abs("./em1.js;get/components"),
+  "constructor": App,
   "Common properties": [
-    "App directory ID", "Is a prototype", "Public repository", "Creator(s)",
+    "App directory ID", "Public repository", "Creator(s)", "Is a prototype",
   ],
   "Description": "The class of all user-programmed apps.",
 };
