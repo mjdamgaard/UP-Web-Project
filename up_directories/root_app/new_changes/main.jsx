@@ -6,11 +6,11 @@ import {substring, indexOf} from 'string';
 import {hasType} from 'type';
 
 import * as AppLoader from "./AppLoader.jsx";
-import {getFirstSegment} from 'path';
+import {getFirstSegmentAndTail} from 'path';
 
 const {this: {"file_browser": fileBrowserID, "app_browser": appBrowserID}}
 
-const missingPageContent = "404 error: Missing page."; // TODO: Improve.
+export const missingPage = "404 error: Missing page."; // TODO: Improve.
 
 
 
@@ -35,12 +35,9 @@ export function render(props) {
   let tailURL = substring(url, homeURL.length);
 
   // Get the first segment of the tailURL, and according this segment.
-  let firstSegment = "", newTailURL = "", newHomeURL = undefined;
-  if (tailURL) {
-    firstSegment = getFirstSegment(tailURL);
-    newTailURL = substring(tailURL, 1 + firstSegment.length);
-    newHomeURL = homeURL + "/" + firstSegment
-  }
+  let [firstSegment, newTailURL] = getFirstSegmentAndTail(tailURL ?? "");
+  let newHomeURL = homeURL + "/" + firstSegment;
+
   let content, hideAppLoader = true;
   let useOriginal, noPreferences;
   switch (firstSegment) {
@@ -67,7 +64,6 @@ export function render(props) {
     // The fallowing cases are some placeholder segments that each redirects to
     // a URL of the "/a/..." type.
     case "":
-      newTailURL = "/start";
     case "apps":
       this.do("replaceURL", "~/a/" + appBrowserID + "/apps" + newTailURL);
       content = <div className="fetching"></div>;
