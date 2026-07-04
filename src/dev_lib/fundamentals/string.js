@@ -1,5 +1,6 @@
 
-import {DevFunction, getString} from "../../interpreting/ScriptInterpreter.js";
+import {DevFunction, getString, ObjectObject} from
+  "../../interpreting/ScriptInterpreter.js";
 
 
 
@@ -41,6 +42,14 @@ export const split = new DevFunction(
   "split", {typeArr: ["string", "string", "integer unsigned?"]},
   ({}, [str, separator, limit]) => {
     return str.split(separator, limit);
+  }
+);
+
+export const join = new DevFunction(
+  "join", {typeArr: ["array", "string?"]},
+  ({execEnv}, [arr, separator]) => {
+    if (arr instanceof ObjectObject) arr = arr.members;
+    return arr.map(val => getString(val, execEnv)).join(separator);
   }
 );
 

@@ -342,7 +342,7 @@ export const qualities = {
 
   // Some qualities might also have a "getScoredList()" method. In such cases,
   // we might refer to the quality as being a 'derived quality.' And to make it
-  // even more clear, we also include an "Is derived" quality that should be
+  // even more clear, we also include an "Is derived" property that should be
   // set as true in such cases.
   // The "getScoredList()" method takes a so-called 'score handler' (see below)
   // as its argument, which in short is an object that handles fetching (and
