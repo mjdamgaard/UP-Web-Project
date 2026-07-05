@@ -1706,7 +1706,7 @@ const localStorageObject = {
     }
   ),
   getItem: new DevFunction(
-    "setItem", {typeArr: ["string"]},
+    "getItem", {typeArr: ["string"]},
     ({}, [key]) => {
       let actualKey = "up-" + key;
       let jsonValue = window.localStorage.getItem(actualKey);
@@ -1714,7 +1714,7 @@ const localStorageObject = {
     }
   ),
   removeItem: new DevFunction(
-    "setItem", {typeArr: ["string"]},
+    "removeItem", {typeArr: ["string"]},
     ({}, [key]) => {
       let actualKey = "up-" + key;
       window.localStorage.removeItem(actualKey);

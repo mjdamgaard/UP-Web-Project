@@ -4,11 +4,14 @@ import {urlActions, urlEvents} from "./urlActions.js";
 
 import {substring, indexOf} from 'string';
 import {hasType} from 'type';
+import {getFirstSegmentAndTail} from 'path';
+import {parse} from 'json';
 
 import * as AppLoader from "./AppLoader.jsx";
-import {getFirstSegmentAndTail} from 'path';
+import * as placeholdersJSON from "./placeholders.json";
 
-const {this: {"file_browser": fileBrowserID, "app_browser": appBrowserID}}
+const {this: {"file_browser": fileBrowserID, "app_browser": appBrowserID}} =
+  parse(placeholdersJSON);
 
 export const missingPage = "404 error: Missing page."; // TODO: Improve.
 
@@ -26,11 +29,9 @@ export function initialize() {
 
 export function render(props) {
   let {
-    url, history, nodeID, userID, homeURL = "", localStorage, sessionStorage
+    url, homeURL = "", nodeID, userID, history, localStorage, sessionStorage
   } = props;
   let {ref: {appLoaderProps}} = this.state;
-  this.provideContext("userID", userID);
-  this.provideContext("nodeID", nodeID);
 
   let tailURL = substring(url, homeURL.length);
 
@@ -39,19 +40,19 @@ export function render(props) {
   let newHomeURL = homeURL + "/" + firstSegment;
 
   let content, hideAppLoader = true;
-  let useOriginal, noPreferences;
+  let useOriginal, useDefault;
   switch (firstSegment) {
     // If the tailURL starts with "a", redirect to the AppLoader. (We also
     // use hideAppLoader and appLoaderProps is part of a scheme to not lose its
     // state once the AppLoader is rendered the first time.
     case "a-o":
       useOriginal = true;
-    case "a-np":
-      noPreferences = true;
+    case "a-d":
+      useDefault = true;
     case "a": 
       appLoaderProps = {
         ...props, homeURL: newHomeURL, tailURL: newTailURL,
-        useOriginal: useOriginal, noPreferences: noPreferences,
+        useOriginal: useOriginal, useDefault: useDefault,
       };
       hideAppLoader = false;
       this.setState(state => ({
@@ -151,9 +152,3 @@ export const actions = {
     return true;
   },
 };
-
-
-
-export const styleSheets = [
-  abs("./style.css"),
-];

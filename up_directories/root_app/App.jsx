@@ -60,7 +60,9 @@ export async function initialize({appDirID}) {
 
 
 
-export function render({appDirID, url, homeURL, tailURL}) {
+export function render({
+  appDirID, url, homeURL, tailURL, userID, nodeID, localStorage, sessionStorage
+}) {
   this.constants(appDirID); // Reinitialize the component if appDirID changes. 
   let {
     fetchedData: {AppComponent, trustIdent},
@@ -76,6 +78,22 @@ export function render({appDirID, url, homeURL, tailURL}) {
     );
   }
 
+  // If the app is trusted, we also hand down the localStorage and
+  // sessionStorage as is, but otherwise we redefine and hand down some read-
+  // only versions of them instead. IMPORTANT: Any app that wants to set an
+  // item of either of these storage objects is required to prefix that item
+  // with its own appDirID, or that of an ancestor app, and otherwise it
+  // shouldn't be granted trust.
+  let childProps = {
+    url: url, homeURL: homeURL, tailURL: tailURL, appDirID: appDirID,
+    userID: userID, nodeID: nodeID, localStorage: localStorage,
+    sessionStorage: sessionStorage
+  };
+  if (trustClass !== "trusted") {
+    childProps = {
+      ...childProps, ...getReadOnlyStorageProps(localStorage, sessionStorage),
+    }
+  }
   return (
     <div className="app">
       <AppWarning key="w" trustClass={trustClass} appDirID={appDirID} />
@@ -83,13 +101,29 @@ export function render({appDirID, url, homeURL, tailURL}) {
         "app-component " + trustClass + (warningIsDismissed ? " dismissed" : "")
       }>{(
         (!AppComponent || trustClass === "harmful") ? undefined :
-          <AppComponent key="c"
-            url={url} homeURL={homeURL} tailURL={tailURL}
-          />
+          <AppComponent key="c" {...childProps} />
       )}</div>
     </div>
   );
 }
+
+
+
+function getReadOnlyStorageProps(localStorage, sessionStorage) {
+  return {
+    localStorage: {
+      getItem: (key) => localStorage.getItem(key),
+      setItem: () => {},
+      removeItem: () => {},
+    },
+    sessionStorage: {
+      getItem: (key) => sessionStorage.getItem(key),
+      setItem: () => {},
+      removeItem: () => {},
+    },
+  };
+}
+
 
 
 
@@ -111,9 +145,3 @@ export const actions = {
     }
   },
 };
-
-
-
-export const styleSheets = [
-  abs("./style.css"),
-];

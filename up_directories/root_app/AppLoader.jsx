@@ -125,7 +125,7 @@ export const actions = {
 
   "loadNewApp": async function(appDirIDSegment) {
     verifyType(appDirIDSegment, "hex")
-    let {url, userID, useOriginal, noPreferences} = this.props;
+    let {url, userID, useOriginal, useDefault} = this.props;
 
     // If useOriginal is set, simply use the same appDirIDSegment instead of
     // querying for the best sub-app.
@@ -138,10 +138,10 @@ export const actions = {
 
     // Else query the route of fetchBestSubAppRouteTemplate.join(
     // appDirIDSegment), and make it a private query iff the user is logged in
-    // and noPreferences is falsy.
+    // and useDefault is falsy.
     let fetchBestSubAppRoute =
       join(fetchBestSubAppRouteTemplate, appDirIDSegment);
-    let fetchFun = userID && !noPreferences ? fetchPrivate : fetch;
+    let fetchFun = userID && !useDefault ? fetchPrivate : fetch;
     let appDirID = await fetchFun(fetchBestSubAppRoute);
 
     // Also fetch the app's api.js module in the background.
@@ -233,8 +233,3 @@ export async function fetchMostGeneralAppDirIDSegment(appDirID, appTailURL) {
     );
   }
 }
-
-
-export const styleSheets = [
-  abs("./style.css"),
-];

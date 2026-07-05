@@ -5,8 +5,10 @@ import {hasType} from 'type';
 import {fetchEntityID} from "../semantic_entities/entities.js";
 import {urlActions, urlEvents} from "../root_app/urlActions.js";
 import {missingPage} from "../root_app/main.jsx";
-import * as AppClassPage from "./src/AppClassPage.jsx";
+import * as AppCategoryPage from "./src/AppCategoryPage.jsx";
 import * as AppPage from "./src/AppPage.jsx";
+import {scoreHandler02 as defaultScoreHandler} from
+  "../semantic_entities/score_handling/ScoreHandler01/em.js";
 
 const missingPageJSX = <div className="app-browser">
   {(missingPage)}
