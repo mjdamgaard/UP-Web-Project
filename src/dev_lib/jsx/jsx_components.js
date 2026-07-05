@@ -19,6 +19,13 @@ export const HREF_CD_START_REGEX = /^\.{0,2}\//;
 
 export const CAN_CREATE_APP_FLAG = Symbol("can-create-app");
 
+// This symbol can be imported by the users and thrown from a render() function
+// in order to make the component instance immediately reinitialize it and
+// rerender it.
+export const REINITIALIZE_SYMBOL = Symbol("reinitialize");
+
+
+
 const globalStyleSheets = [...document.styleSheets].map(cssStyleSheet => {
   // We copy each cssStyleSheet element and return a new "constructed"
   // CSSStyleSheet object in order to avoid an error when assigning to shadow
@@ -175,7 +182,7 @@ class JSXInstance {
     // On the first render only, initialize the state, and record the 'ref'
     // prop as well (which cannot be changed by a subsequent render). Also
     // initialize the actions, methods, and events of the instance.
-    if (this.state === undefined) {
+    if (this.isFirstRender) {
       // Set the actions, methods, and events.
       this.prepareActionsMethodsAndEvents(callerNode, callerEnv);
 
@@ -202,18 +209,30 @@ class JSXInstance {
       );
     }
 
-    // Now call the component module's render() function, but catch and instead
-    // log any error, rather than letting the whole app fail.
+    // Now call the component module's render() function, and if it throws the
+    // "reinitialize" symbol, immediately reinitialize and rerender the
+    // component instance.
     let jsxElement;
-    try {
-      jsxElement = interpreter.executeFunction(
-        renderFun, [props], callerNode, compEnv, new JSXInstanceInterface(this)
-      );
-    }
-    catch (err) {
-      return this.failComponentAndGetDOMNode(err, replaceSelf);
-    }
-    this.isFirstRender = false;
+    let repeat;
+    do {
+      repeat = false;
+      try {
+        jsxElement = interpreter.executeFunction(
+          renderFun, [props], callerNode, compEnv,
+          new JSXInstanceInterface(this)
+        );
+      }
+      catch (err) {
+        if (err instanceof Exception && err.val === REINITIALIZE_SYMBOL) {
+          this.initialize(interpreter, callerNode, compEnv, replaceSelf);
+          repeat = true;
+        }
+        else {
+          return this.failComponentAndGetDOMNode(err, replaceSelf);
+        }
+      }
+      this.isFirstRender = false;
+    } while (repeat);
 
     // Initialize a marks Map to keep track of which existing child instances
     // was used or created in the render, such that instances that are no
@@ -277,6 +296,7 @@ class JSXInstance {
   initialize(interpreter, callerNode, compEnv, replaceSelf = true) {
     this.state ??= {};
     this.stateIsSet = false;
+    this.constants = undefined;
 
     // Set renderIsQueued = true temporarily to avoid redundant rerenders if
     // setState() is called synchronously within initialize().
@@ -999,23 +1019,7 @@ class JSXInstance {
   }
 
 
-  // declareOrCheckConstants() sets the constants if this.constants is
-  // nullish, and otherwise it deep-compares the argument to this.constants,
-  // and if the comparison fails, it first resets this.constants to undefined,
-  // and then it calls this.initialize() and this.queueRerender() to
-  // reset the component instance's state and rerender it.
-  declareOrCheckConstants(constants, interpreter, node, env) {
-    let prevConstants = this.constants;
-    if (prevConstants === undefined || prevConstants === null) {
-      this.constants = constants;
-    }
-    else if (!deepCompare(constants, prevConstants)) {
-      this.reset(interpreter, node, env);
-    }
-  }
-
   reset(interpreter, node, env) {
-    this.constants = undefined;
     this.initialize(interpreter, node, env);
     this.queueRerender(interpreter);
   }
@@ -1058,7 +1062,7 @@ export class JSXInstanceInterface extends ObjectObject {
       "subscribeToContext": this.subscribeToContext,
       "unsubscribeFromContext": this.unsubscribeFromContext,
       "getOwnContext": this.getOwnContext,
-      "constants": this.declareConstants,
+      "constants": this.declareOrCheckConstants,
       "reset": this.reset,
       "canGrabFocus": this.canGrabFocus,
       "getBoundingClientRect": this.getBoundingClientRect,
@@ -1204,23 +1208,27 @@ export class JSXInstanceInterface extends ObjectObject {
   );
 
 
-  // constants() is used to declare a set of constants for the instance, that
-  // will cause the instance to re-initialize its state (and rerender) should
-  // they ever be changed. This is useful whenever initialize() depends on some
-  // props, and you want to make sure that these props aren't changed, or if
-  // they do, that you then reset the whole instance.
-  // Note that we choose this this ambiguous-but-short name, 'constant()', over
-  // a more illustrative name, since that name would have to be
-  // 'declareOrCheckConstants(),' which is too long.
-  declareConstants = new DevFunction(
+  // constants(), which is a shorthand for declareOrCheckConstants(), is used
+  // to declare a set of constants for the instance, that will cause the
+  // instance to reinitialize and rerender should they ever be changed. This is
+  // useful whenever initialize() depends on some props, or in general if the
+  // state depends on some specific props and you want the instance to start
+  // over if these props are changed.
+  declareOrCheckConstants = new DevFunction(
     "constants", {}, ({interpreter, callerNode, execEnv}, [...constants]) => {
-      this.jsxInstance.declareOrCheckConstants(
-        constants, interpreter, callerNode, execEnv
-      );
+      let prevConstants = this.jsxInstance.constants;
+      if (prevConstants === undefined || prevConstants === null) {
+        this.jsxInstance.constants = constants;
+      }
+      else if (!deepCompare(constants, prevConstants)) {
+        // This symbol exception is meant to be caught by JSXInstance.render(),
+        // and signals it to immediately reinitialize and rerender.
+        throw new Exception(REINITIALIZE_SYMBOL, callerNode, execEnv);
+      }
     }
   );
 
-  // reset() re-initializes the state and rerenders the instance. 
+  // reset() reinitializes the state and rerenders the instance. 
   reset = new DevFunction(
     "reset", {}, ({interpreter, callerNode, execEnv}, []) => {
       this.jsxInstance.reset(interpreter, callerNode, execEnv);

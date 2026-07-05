@@ -16,20 +16,19 @@ const fetchingPageJSX = <div className="app-browser">
 </div>;
 
 // The entity path of the general 'Apps' class.
-// const appsClassEntPath = abs("~/../semantic_entities/em3.js;get/apps");
-// const defaultTailURL = "~/apps/cat/path" + appsClassEntPath;
-const defaultTailURL = "~/apps/start" + appsClassEntPath;
+const appsClassEntPath = abs("~/../semantic_entities/em3.js;get/apps");
+const defaultTailURL = "~/apps/cat/path" + appsClassEntPath;
 
 
 // The URL API for this app browser prototype is that the (tail) URLs of "" and
-// "/apps" both redirect to "/apps/start", which should contain a constant app
-// selection, which will be useful for the tutorial/guide of how to use the app
-// browser. And then we have the more essential URLs for category pages of the
-// form '/apps/cat(/<entID>)*(/<entID>|/path<entPath>)' for class/category
-// pages, and '/apps(/cat(/<entID>)*)?/app(/<entID>)*(/<entID>|/path<entPath>)'
-// for app pages.
-// If a "/cat" or "/app" URL ends in '/path<entPath>', we query for the
-// corresponding entID and redirect to the URL that ends in '/<entID>' instead.
+// "/apps" both redirect to the default app category page. And the URLs for
+// category pages of the form
+// '/apps/cat(/<entID>)*(/<entID>|/path<entPath>)'
+// for class/category pages, and
+// '/apps(/cat(/<entID>)*)?/app(/<entID>)*(/<entID>|/path<entPath>)'
+// for app pages. And if a "/cat" or "/app" URL ends in '/path<entPath>', we
+// query for the corresponding entID and redirect to the URL that ends in
+// '/<entID>' instead.
 
 export function initialize() {
   return {entityIsMissing: undefined};
@@ -40,7 +39,7 @@ export function render({url, homeURL, tailURL}) {
   let [segment1, segment2, ...restSegments] = split(tailURL ?? "", "/");
 
   // If the tail URL is empty, or if the second segment is empty, redirect to
-  // "~/apps/c/path" + appsClassEntPath.
+  // "~/apps/cat/path" + appsClassEntPath.
   if (!segment1 || segment1 === "apps" && !segment2) {
     this.trigger("replaceURL", defaultTailURL);
     return fetchingPageJSX;
@@ -52,11 +51,6 @@ export function render({url, homeURL, tailURL}) {
   // convention, unless they start to implement other kinds of apps as well.)
   if (segment1 !== "apps") {
     return missingPageJSX;
-  }
-
-  // If the URL is of the "/apps/start(/...)?" type, load the special StartPage.
-  if (segment2 === "start") {
-    return <StartPage key="s" tailURL={join(restSegments, "/")} />;
   }
 
   // If the second segment is either "app" or "cat", parse the list of

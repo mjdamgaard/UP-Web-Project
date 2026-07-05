@@ -3102,9 +3102,12 @@ export class LiveJSModule extends ObjectObject {
     this.moduleEnv = moduleEnv;
     this.interpreter = scriptVars.interpreter;
     exports.forEach(([alias, val]) => {
-      // Filter out any Function instance, which might be exported from a dev
-      // library, in which case it is meant only for other dev libraries.
-      if (!(val instanceof Function)) {
+      // Filter out any exports from a dev library that isn't meant to imported
+      // directly by the users, but only by other dev libraries.
+      if (
+        !val || typeof val !== "object" || val instanceof ObjectObject ||
+        val instanceof Array || Object.getPrototypeOf(val) === OBJECT_PROTOTYPE
+      ) {
         this.members[alias] = val;
       }
     });
