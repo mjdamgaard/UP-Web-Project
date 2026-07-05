@@ -1066,7 +1066,6 @@ export class JSXInstanceInterface extends ObjectObject {
       "reset": this.reset,
       "canGrabFocus": this.canGrabFocus,
       "getBoundingClientRect": this.getBoundingClientRect,
-      // "getIsVisible": this.getIsVisible,
       "getScrollData": this.getScrollData,
       "blur": this.blur,
       "delay": this.delay,
@@ -1259,14 +1258,6 @@ export class JSXInstanceInterface extends ObjectObject {
   );
 
 
-  // getIsVisible = new DevFunction(
-  //   "getIsVisible", {}, ({}, [checkViewport = false]) => {
-  //     let domNode = this.jsxInstance.domNode;
-  //     return getIsVisible(domNode, checkViewport);
-  //   }
-  // );
-
-
   getScrollData = new DevFunction(
     "getScrollData", {}, () => {
       let domNode = this.jsxInstance.domNode;
@@ -1342,96 +1333,6 @@ export class JSXInstanceInterface extends ObjectObject {
   );
 }
 
-
-
-// TODO: I think I will remove this, along wit the getIsVisible method above
-// (just out-commented for now).
-
-const MARGIN_OF_ALLOWED_OVERLAP = 0.01;
-
-// getIsVisible() that checks that the input DOM node is on screen and without
-// overlaps from its siblings, as well as any of its ancestors' siblings. 
-export function getIsVisible(domNode, checkViewport = false) {
-  if (!domNode.getBoundingClientRect) {
-    return undefined;
-  }
-  let {top, right, bottom, left} = domNode.getBoundingClientRect();
-  let effectiveTop = top + top * MARGIN_OF_ALLOWED_OVERLAP;
-  let effectiveLeft = left + left * MARGIN_OF_ALLOWED_OVERLAP;
-  let effectiveRight = right - right * MARGIN_OF_ALLOWED_OVERLAP;
-  let effectiveBottom = bottom - bottom * MARGIN_OF_ALLOWED_OVERLAP;
-
-  // Check that the node is not out of the viewport.
-  if (checkViewport) {
-    let {innerHeight, innerWidth} = window;
-    let isOutOfViewport = effectiveTop < 0 || effectiveLeft < 0 ||
-      effectiveRight > innerWidth || effectiveBottom > innerHeight;
-    if (isOutOfViewport) {
-      return false;
-    }
-  }
-
-  // Then check that none of the siblings or ancestor siblings overlap too much
-  // with the node.
-  let curDOMNode = domNode;
-  let upRootNode = document.getElementById("up-app-root");
-  let ret = true;
-  while(ret && curDOMNode !== upRootNode) {
-    // First check that curDOMNode does not overflow its parent node.
-    let {parentNode} = curDOMNode;
-    let {top, right, bottom, left} = parentNode.getBoundingClientRect();
-    let doesOverflow =  top > effectiveTop || left > effectiveLeft ||
-      right < effectiveRight || bottom < effectiveBottom;
-    if (doesOverflow) {
-      ret = false;
-      break;
-    }
-
-    // Also check that the opacity of curDOMNode is 1.
-    if (window.getComputedStyle(curDOMNode).opacity != 1) {
-      ret = false;
-      break;
-    }
-
-    // Then get curDOMNode's the siblings (and itself), and then go through
-    // each one and check that it does not overlap, as well as any of its
-    // descendants. However, we only check said descendants if the (computed)
-    // 'overflow:visible' style is set.
-    let siblingsAndSelf = [...parentNode.childNodes];
-    ret = !siblingsAndSelf.some(sibling => {
-      if (sibling === curDOMNode || !sibling.getBoundingClientRect) {
-        return;
-      }
-
-      // Check that the sibling does not overlap.
-      let {top, right, bottom, left} = sibling.getBoundingClientRect();
-      let isClear =  top >= effectiveBottom || left >= effectiveRight ||
-        right <= effectiveLeft || bottom <= effectiveTop;
-      if (!isClear) {
-        return true;
-      }
-
-      // The check that the sibling does not have a computed overflow-x or -y
-      // style of 'visible,' and if it does, then check all its descendants as
-      // well.
-      let {overflowX, overflowY} = window.getComputedStyle(sibling);
-      if (overflowX === "visible" || overflowY === "visible") {
-        // TODO: Instead of just returning true here, loop through each
-        // child of the sibling and check their bounding box, as well as their
-        // overflow style properties, and if the overflow is visible, repeat
-        // the procedure until all descendants are indirectly or directly
-        // checked this way.
-        return true;
-      }
-    });
-
-    // In case ret is still true, change curDOMNode to its parent for the next
-    // iteration.
-    curDOMNode = curDOMNode.parentNode;
-  }
-
-  return ret;
-}
 
 
 
