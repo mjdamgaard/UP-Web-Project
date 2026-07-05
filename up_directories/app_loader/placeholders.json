@@ -1,7 +1,7 @@
 {
   "this": [
     "semantic_entities",
-    "root_app",
+    "app_loader",
     "file_browser",
     "entity_browser",
     "app_browser",

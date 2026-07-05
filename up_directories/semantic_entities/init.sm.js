@@ -231,7 +231,7 @@ export function postInitialScores01() {
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em2.js;get/webApps"),
           abs("./em1.js;get/members"),
-          abs("./em2.js;get/rootApp"),
+          abs("./em2.js;get/appLoader"),
           firstModID, 7
         ),
         postUserRelationalScoreAndUpdateUserGroups(
@@ -249,7 +249,7 @@ export function postInitialScores01() {
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/components"),
           abs("./em1.js;get/members"),
-          abs("./em2.js;get/rootApp"),
+          abs("./em2.js;get/appLoader"),
           firstModID, 6
         ),
         postUserRelationalScoreAndUpdateUserGroups(

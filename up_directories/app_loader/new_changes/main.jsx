@@ -7,7 +7,7 @@ import {hasType} from 'type';
 import {getFirstSegmentAndTail} from 'path';
 import {parse} from 'json';
 
-import * as AppLoader from "./AppLoader.jsx";
+import * as AppLoader from "./AppLoader.js";
 import * as placeholdersJSON from "./placeholders.json";
 
 const {this: {"file_browser": fileBrowserID, "app_browser": appBrowserID}} =
@@ -19,9 +19,7 @@ export const missingPage = "404 error: Missing page."; // TODO: Improve.
 
 export function initialize() {
   return {
-    ref: {
-      appLoaderProps: undefined,
-    },
+    ref: {appLoaderProps: undefined},
   };
 }
 

@@ -12,32 +12,6 @@ html, body, #up-app-root, #up-app-root > :first-child {
 }
 
 
-/* This rule is important, as it makes it easier to prove that an app scope
-/* component does not have any overlapping elements from other app scopes. */
-:where(#up-app-root *) {
-  overflow: hidden;
-}
-
-/* This targets all the app scope root components and makes their background
-/* color white by default, which is also done for security reasons. */
-:where(#up-app-root .scope-root) {
-  background-color: white;
-}
-
-
-/* Hide native account menu if the root app has a "no-account-menu" class. */
-body:has(> #up-app-root > .no-account-menu) > #account-menu {
-  display: none;
-}
-
-
-
-/* Hide that error overlay for now */
-/* #webpack-dev-server-client-overlay {
-  display: none;
-} */
-
-
 
 /* #account-menu-header::after {
   content: "👤";

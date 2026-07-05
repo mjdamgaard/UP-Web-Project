@@ -64,7 +64,7 @@ export const createJSXApp = new DevFunction(
 
     // Create the app's root component instance (but don't render it yet).
     let rootInstance = new JSXInstance(
-      appComponent, "root", "RootApp", undefined, callerNode, appEnv
+      appComponent, "root", "Root", undefined, callerNode, appEnv
     );
 
     // Add some props to the root instance for getting user data and URL data,

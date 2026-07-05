@@ -3,8 +3,8 @@ import {split, join, substring} from 'string';
 import {indexOf, slice as sliceArray, reduce} from 'array';
 import {hasType} from 'type';
 import {fetchEntityID} from "../semantic_entities/entities.js";
-import {urlActions, urlEvents} from "../root_app/urlActions.js";
-import {missingPage} from "../root_app/main.jsx";
+import {urlActions, urlEvents} from "../app_loader/urlActions.js";
+import {missingPage} from "../app_loader/main.js";
 import * as AppCategoryPage from "./src/AppCategoryPage.jsx";
 import * as AppPage from "./src/AppPage.jsx";
 import {scoreHandler02 as defaultScoreHandler} from
