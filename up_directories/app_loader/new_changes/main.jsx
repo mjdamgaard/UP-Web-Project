@@ -43,10 +43,10 @@ export function render(props) {
     // If the tailURL starts with "a", redirect to the AppLoader. (We also
     // use hideAppLoader and appLoaderProps is part of a scheme to not lose its
     // state once the AppLoader is rendered the first time.
-    case "a-o":
+    case "ao":
       useOriginal = true;
-    case "a-d":
-      useDefault = true;
+    case "ad":
+      useDefault = useOriginal ? false : true;
     case "a": 
       appLoaderProps = {
         ...props, homeURL: newHomeURL, tailURL: newTailURL,

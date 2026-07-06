@@ -91,7 +91,11 @@ export class DirectoryUpdater {
   #writeDirIDSync(dirName, dirID) {
     let domainEntry = this.dirData[this.domain] ??= {};
     let ownDirectories = domainEntry.ownDirectories ??= {};
-    ownDirectories[dirName] = dirID.toString();
+    if (dirID) {
+      ownDirectories[dirName] = dirID.toString();
+    } else {
+      delete ownDirectories[dirName];
+    }
     this.#writeDirDataSync();
   }
 
@@ -502,6 +506,27 @@ export class DirectoryUpdater {
     return await serverQueryHandler.fetchAsAdmin(
       route, {returnLog: returnLog}
     );
+  }
+
+
+
+  async renameDir(curName, newName) {
+    let dirID = this.getDirID(curName, true, true);
+    let otherDirID = this.getDirID(newName, false, true);
+    if (otherDirID) throw (
+      "New directory name already exists in the directories" +
+      (this.domain === "localhost" ? "_local" : "") + ".json file." 
+    );
+    let curPath = this.upDirectoriesPath + "/" + curName;
+    let newPath = this.upDirectoriesPath + "/" + newName;
+    if (fs.existsSync(newPath)) throw (
+      `New directory "./up_directories/${newName} already exists`
+    );
+    this.#writeDirIDSync(curName, undefined);
+    this.#writeDirIDSync(newName, dirID);
+    fs.renameSync(curPath, newPath);
+    // TODO: Also update timestamps.json. But also perhaps change this whole
+    // method to work for all domains at once. 
   }
 
 

@@ -3243,10 +3243,13 @@ export class JSXElement extends ObjectObject {
 
     // If not, and if the "innerStyle" prop is set, mark the JSXElement as
     // being style defining, by moving the innerStyle prop to the JSXElement
-    // itself.
-    else {
+    // itself. And do the same thing for "inheritGlobalStyle", with a default
+    // value of true.
+    else if (this.props["innerStyle"]) {
       this.innerStyle = this.props["innerStyle"];
       delete this.props["innerStyle"];
+      this.inheritGlobalStyle = this.props["inheritGlobalStyle"] ?? true;
+      delete this.props["inheritGlobalStyle"];
     } 
   }
 }

@@ -647,7 +647,9 @@ class JSXInstance {
         let styleSheetArray = this.getCSSStyleSheets(
           jsxElement.innerStyle, callerNode, callerEnv
         );
-        styleSheetArray = [...globalStyleSheets, ...styleSheetArray];
+        styleSheetArray = (jsxElement.inheritGlobalStyle ?? true) ?
+          [...globalStyleSheets, ...styleSheetArray] :
+          styleSheetArray;
         shadowRoot.adoptedStyleSheets = styleSheetArray;
 
         // Change the domNode argument of replaceChildren() to the shadow root.

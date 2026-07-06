@@ -30,7 +30,7 @@ export const exec = new DevFunction(
 
     // Add add special virtual file extension to the modulePath such that it
     // will not match any actual module route.
-    modulePath = modulePath + ".executed";
+    modulePath = modulePath + ";.executed";
 
     // Then call interpreter.executeModule() and return the resulting
     // LiveJSModule instance.

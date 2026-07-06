@@ -266,6 +266,19 @@ async function main() {
         }
       }
     }
+    else if (command === "rename directory") {
+      let curDirName = await read({prompt: "Current directory name: "});
+      let newDirName = await read({prompt: "New directory name: "});
+      try {
+        await directoryUpdater.renameDir(curDirName, newDirName);
+        console.log(
+          `Directory was renamed form "${prevDirName}" to "${newDirName}"`
+        );
+      } catch (err) {
+        console.error(err);
+        continue;
+      }
+    }
     else if (/^([hH]|help)$/.test(command)) {
       console.log(commandOptionsText);
     }
