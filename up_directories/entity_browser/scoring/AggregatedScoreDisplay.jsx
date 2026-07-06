@@ -3,7 +3,7 @@ import {toPrecision} from 'number';
 
 
 export function render({score, weight, qualKey, subjKey, scoreHandler}) {
-  scoreHandler = scoreHandler ?? this.subscribeToContext("scoreHandler");
+  scoreHandler = scoreHandler ?? this.getContext("scoreHandler");
   let {scoreData, isFetching} = this.state;
 
   if (score !== undefined) {

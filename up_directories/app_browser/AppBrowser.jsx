@@ -4,11 +4,12 @@ import {indexOf, slice as sliceArray, reduce} from 'array';
 import {hasType} from 'type';
 import {fetchEntityID} from "../semantic_entities/entities.js";
 import {urlActions, urlEvents} from "../app_loader/urlActions.js";
-import {missingPage} from "../app_loader/main.js";
 import * as AppCategoryPage from "./src/AppCategoryPage.jsx";
 import * as AppPage from "./src/AppPage.jsx";
 import {scoreHandler02 as defaultScoreHandler} from
   "../semantic_entities/score_handling/ScoreHandler01/em.js";
+// import {missingPage} from "../app_loader/main.jsx";
+const missingPage = "404 error: Missing page."; // TODO: Import instead.
 
 const missingPageJSX = <div className="app-browser">
   {(missingPage)}
@@ -117,8 +118,8 @@ export function render({url, homeURL, tailURL}) {
       reduce(appSegments, callback, false);
     if (inValidIDSegment) {
       console.error(
-        `URL contained segment "${inValidIDSegment}" that was expected to be ` +
-        "a hexadecimal string"
+        'URL contained segment "' + inValidIDSegment +'" that was expected ' +
+        "to be a hexadecimal string"
       );
       return missingPageJSX;
     }

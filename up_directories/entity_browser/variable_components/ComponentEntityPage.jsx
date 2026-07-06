@@ -8,8 +8,8 @@ import * as PhishingWarning from "./PhishingWarning.jsx";
 
 
 export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
-  let history = this.subscribeToContext("history");
-  let userID = this.subscribeToContext("userID");
+  let history = this.getContext("history");
+  let userID = this.getContext("userID");
   let {
     componentDef, Component, isTrusted, isFetching,
     hasBeenDismissed, hasBeenReplaced,

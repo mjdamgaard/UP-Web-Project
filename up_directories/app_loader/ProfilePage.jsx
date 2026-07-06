@@ -9,7 +9,7 @@ import * as EntityReference from "../utilities/EntityReference.jsx";
 
 
 export function render({}) {
-  let userEntID = this.subscribeToContext("userEntID");
+  let userEntID = this.getContext("userEntID");
   let {
     entDef, isFetching, isEditingTag, isEditingBio, tagResponse, bioResponse,
   } = this.state;

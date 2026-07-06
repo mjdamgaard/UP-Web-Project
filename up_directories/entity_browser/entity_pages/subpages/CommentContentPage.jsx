@@ -12,8 +12,8 @@ import * as TextDisplay from "../../../utilities/TextDisplay.jsx";
 
 export function render({entID, entKey = entID}) {
   let {entDef, isFetching} = this.state;
-  // let userEntID = this.subscribeToContext("userEntID");
-  // let userID = this.subscribeToContext("userID");
+  // let userEntID = this.getContext("userEntID");
+  // let userID = this.getContext("userID");
   // let userEntPath = "/1/1/em1.js;call/User/1/" + userID;
 
   if (!isFetching) {

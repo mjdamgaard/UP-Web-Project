@@ -18,7 +18,7 @@ const tasksRel = "/1/1/em1.js;get/tasks";
 
 
 export function render({entKey, extQualKeyArr = undefined, isNested = false}) {
-  extQualKeyArr ??= this.subscribeToContext("extQualKeyArr") ?? [];
+  extQualKeyArr ??= this.getContext("extQualKeyArr") ?? [];
   return <EntityPageWithTabs key="0"
     entKey={entKey} initTabKey={isNested ? "subclasses" : "members"}
     isNested={isNested} tabs={{

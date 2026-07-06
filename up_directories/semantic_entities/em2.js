@@ -43,7 +43,7 @@ export const appLoader = {
   "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
-
+export const rootApp = appLoader;
 
 
 

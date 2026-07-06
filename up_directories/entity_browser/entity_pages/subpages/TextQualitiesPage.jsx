@@ -7,7 +7,7 @@ const isCorrectQual = "/1/1/em1.js;get/isCorrect";
 
 
 export function render({objKey, extQualKeyArr = undefined}) {
-  extQualKeyArr ??= this.subscribeToContext("extQualKeyArr") ?? [];
+  extQualKeyArr ??= this.getContext("extQualKeyArr") ?? [];
   let {isSingular, isFetching} = this.state;
 
   if (!isFetching) {

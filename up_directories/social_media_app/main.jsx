@@ -6,9 +6,9 @@ import * as AppMain from "./AppMain.jsx";
 
 
 export function render({url, history, userID, homeURL = ""}) {
-  this.provideContext("history", history);
-  this.provideContext("userID", userID);
-  this.provideContext("homeURL", homeURL);
+  this.setContext("history", history);
+  this.setContext("userID", userID);
+  this.setContext("homeURL", homeURL);
 
   // Subtract the homeURL from url before passing it to AppMain and AppHeader.
   url = substring(url, homeURL.length);

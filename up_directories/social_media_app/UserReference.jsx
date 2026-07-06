@@ -10,7 +10,7 @@ export function initialize({userID}) {
 
 export function render({userID, isLink = true, pushState = undefined}) {
   let {curUserID, isFetching, username} = this.state;
-  pushState ??= isLink ? (this.subscribeToContext("history") ?? {}).pushState :
+  pushState ??= isLink ? (this.getContext("history") ?? {}).pushState :
     undefined;
   let content = "", href = "~/u/" + userID;
 

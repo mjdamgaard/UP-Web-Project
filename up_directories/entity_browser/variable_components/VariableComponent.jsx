@@ -12,7 +12,7 @@ export function initialize({classKey}) {
 
 export function render(props) {
   let {classKey, scoreHandler} = props;
-  scoreHandler = scoreHandler ?? this.subscribeToContext("scoreHandler");
+  scoreHandler = scoreHandler ?? this.getContext("scoreHandler");
   let {curClassKey, relQualPath, topEntry} = this.state;
   let content;
 

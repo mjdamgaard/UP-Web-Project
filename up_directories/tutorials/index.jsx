@@ -14,7 +14,7 @@ import * as ContributionsPage from "./contributions.jsx";
 
 
 export function render({url, homeURL}) {
-  this.provideContext("homeURL", homeURL);
+  this.setContext("homeURL", homeURL);
   let tailURL = substring(url, homeURL.length);
 
 

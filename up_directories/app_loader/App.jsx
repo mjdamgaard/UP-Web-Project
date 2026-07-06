@@ -16,7 +16,7 @@ const fetchTrustClassRouteTemplate = [
 // app is trusted, and to show a warning message/sign if it is not. The warning
 // sign, and whether to show it at all, depends on the "trust class" returned
 // by the SMF of the fetchTrustClassRouteTemplate, which can be either
-// "trusted", "untrusted", or "harmful".
+// "trusted", "semi-trusted", "untrusted", or "harmful".
 // Also, when the warning message is expanded (possibly due to the user
 // clicking on the warning sign), this component needs to trigger the
 // "showHeader" event, and needs to stop any triggering of "hideHeader" from
@@ -65,7 +65,7 @@ export function render({
 }) {
   this.constants(appDirID); // Reinitialize the component if appDirID changes. 
   let {
-    fetchedData: {AppComponent, trustIdent},
+    fetchedData: {AppComponent, trustClass},
     warningIsDismissed,
   } = this.state;
 

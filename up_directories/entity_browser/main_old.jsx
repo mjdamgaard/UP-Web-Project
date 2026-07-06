@@ -18,16 +18,16 @@ export function render({
   url, history, userID, homeURL = "", localStorage, sessionStorage
 }) {
   let {userEntID} = this.state;
-  this.provideContext("history", history);
-  this.provideContext("userID", userID);
-  this.provideContext("userEntID", userEntID ? userEntID : undefined);
-  this.provideContext("homeURL", homeURL);
+  this.setContext("history", history);
+  this.setContext("userID", userID);
+  this.setContext("userEntID", userEntID ? userEntID : undefined);
+  this.setContext("homeURL", homeURL);
   // TODO Implement an item in the AppHeader for going to a score handler
   // settings menu. Where the component from scoreHandler.getSettingsMenu() is
   // shown, followed by an expandable 'Change score handler' sub-menu (with a
   // warning attached), where the user can type in a route for an alternative
   // score handler.
-  this.provideContext("scoreHandler", scoreHandler02);
+  this.setContext("scoreHandler", scoreHandler02);
 
   if (userID && userEntID === undefined) {
     fetchConstructedEntityID("/1/1/em1.js", "User", ["1", userID]).then(

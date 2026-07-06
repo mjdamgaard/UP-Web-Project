@@ -49,8 +49,8 @@ export function render({
   minScore = 0, minWeight = 10, isAscending = false,
   hideMenu = false, paginationLength = 50, paginationIndex = 0,
 }) {
-  scoreHandler ??= this.subscribeToContext("scoreHandler");
-  this.provideContext("extQualKeyArr", extQualKeyArr);
+  scoreHandler ??= this.getContext("scoreHandler");
+  this.setContext("extQualKeyArr", extQualKeyArr);
   let {
     ElementComponent, listArr, isFetching, curMinScore, curMinWeight,
     qualKeyArr, otherQualKeyArr

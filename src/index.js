@@ -32,6 +32,7 @@ import * as dateMod from "./dev_lib/fundamentals/date.js";
 import * as promiseMod from "./dev_lib/fundamentals/promise.js";
 import * as hexMod from "./dev_lib/conversion/hex.js";
 import * as errorMod from "./dev_lib/error.js";
+import * as execMod from "./dev_lib/exec.js";
 import * as typeMod from "./dev_lib/type.js";
 import * as routeMod from "./dev_lib/route.js";
 import * as pathMod from "./dev_lib/path.js";
@@ -62,6 +63,7 @@ staticDevLibs.set("date", dateMod);
 staticDevLibs.set("promise", promiseMod);
 staticDevLibs.set("hex", hexMod);
 staticDevLibs.set("error", errorMod);
+staticDevLibs.set("exec", execMod);
 staticDevLibs.set("type", typeMod);
 staticDevLibs.set("route", routeMod);
 staticDevLibs.set("path", pathMod);
@@ -142,10 +144,11 @@ setInterval(
 );
 
 // The script the initializes the UP app.
-const ROOT_APP_ID = "2";
+const UP_NODE_ID = "1";
+const APP_LOADER_ID = "2";
 const mainScript = `
   import {createJSXApp} from 'jsx';
-  import * as app from "/1/${ROOT_APP_ID}/main.jsx";
+  import * as app from "/${UP_NODE_ID}/${APP_LOADER_ID}/main.jsx";
 
   export function main() {
     createJSXApp(app);

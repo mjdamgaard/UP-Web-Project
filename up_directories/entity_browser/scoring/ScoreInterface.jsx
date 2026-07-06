@@ -14,7 +14,7 @@ import * as AggregatedScoreDisplay from "./AggregatedScoreDisplay.jsx";
 
 
 export function render({subjKey, qualKey, extQualKey = qualKey, scalarKey}) {
-  let userEntID = this.subscribeToContext("userEntID");
+  let userEntID = this.getContext("userEntID");
   let {
     isFetching, metric, intervalLabel, prevScore, newScore, msg,
     subjAndQualKeys = [],
@@ -150,7 +150,7 @@ export const actions = {
     this.setState(state => ({...state,
       msg: <span className="working">{"Submitting score..."}</span>,
     }));
-    let userEntID = this.subscribeToContext("userEntID");
+    let userEntID = this.getContext("userEntID");
     return new Promise(resolve => {
       if (userEntID) {
         this.do("submitScoreWithUserEntID", userEntID).then(
@@ -177,7 +177,7 @@ export const actions = {
     let {subjAndQualKeys = []} = this.state;
     subjKey ??= subjAndQualKeys[0];
     qualKey ??= subjAndQualKeys[1];
-    scoreHandler ??= this.subscribeToContext("scoreHandler");
+    scoreHandler ??= this.getContext("scoreHandler");
     let score = parseFloat(this.call("input", "getValue"));
     return new Promise(resolve => {
       if (isNaN(score)) {
@@ -224,7 +224,7 @@ export const actions = {
     this.setState(state => ({...state,
       msg: <span className="working">{"Deleting score..."}</span>,
     }));
-    let userEntID = this.subscribeToContext("userEntID");
+    let userEntID = this.getContext("userEntID");
     return new Promise(resolve => {
       if (userEntID) {
         this.do("deleteScoreWithUserEntID", userEntID).then(
@@ -251,7 +251,7 @@ export const actions = {
     let {subjAndQualKeys = []} = this.state;
     subjKey ??= subjAndQualKeys[0];
     qualKey ??= subjAndQualKeys[1];
-    scoreHandler ??= this.subscribeToContext("scoreHandler");
+    scoreHandler ??= this.getContext("scoreHandler");
     return new Promise(resolve => {
       scoreHandler.deleteScore(
         qualKey, subjKey, userEntID

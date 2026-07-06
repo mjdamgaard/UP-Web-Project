@@ -6,7 +6,7 @@ from "../entity_browser/variable_components/ComponentEntityComponent.jsx";
 
 
 export function render() {
-  let userID = this.subscribeToContext("userID");
+  let userID = this.getContext("userID");
   return getPage(userID);
 }
 

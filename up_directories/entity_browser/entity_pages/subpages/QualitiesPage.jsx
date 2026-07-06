@@ -9,7 +9,7 @@ const QualityElementPromise = import("../../entity_elements/QualityElement.jsx")
 
 
 export function render({objKey, extQualKeyArr = undefined}) {
-  extQualKeyArr ??= this.subscribeToContext("extQualKeyArr") ?? [];
+  extQualKeyArr ??= this.getContext("extQualKeyArr") ?? [];
   let {QualityElement, isFetching} = this.state;
 
   if (!isFetching) {

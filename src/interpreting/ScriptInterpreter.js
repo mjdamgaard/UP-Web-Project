@@ -281,7 +281,7 @@ export class ScriptInterpreter {
   async executeModule(
     moduleNode, lexArr, strPosArr, script, modulePath, globalEnv, liveModules,
     placeholdersModule = undefined, ancestorModules = [], finalCallbacks = [],
-    isPrivate = false,
+    isPrivate = false, doCache = !isPrivate
   ) {
     // Check against infinite import recursion.
     if (ancestorModules.includes(modulePath)) throw new LoadError(
@@ -315,7 +315,7 @@ export class ScriptInterpreter {
       ).catch(
         err => new ErrorWrapper(err)
       );
-      if (!isPrivate) {
+      if (doCache) {
         liveModules.set(modulePath, liveModulePromise);
         liveModule = await liveModulePromise;
         liveModules.set(modulePath, liveModule);

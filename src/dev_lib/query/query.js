@@ -150,6 +150,11 @@ export async function _query(
   let liveModule = liveModules.get(route);
   let result;
   if (liveModule) {
+    if (ancestorModules.includes(route)) throw new LoadError(
+      `Infinite recursion: Module ${route} imports itself. Ancestor ` +
+      "modules when error happened: " + ancestorModules.join(", ") + ".",
+      callerNode, execEnv
+    );
     if (liveModule instanceof Promise) {
       liveModule = await liveModule;
     }
@@ -335,18 +340,15 @@ export async function _query(
     else if (castingSegment === "stringify") {
       result = jsonStringify(result);
     }
-    else if (
-      castingSegment === "string" ||
-      /^\.txt$/.test(castingSegment)
-    ) {
+    else if (/^(string|text|\.txt)$/.test(castingSegment)) {
       result = getString(result, execEnv, true);
     }
 
     // You can also cast any string-valued result into a JS or JSX module,
     // or a CSS module.
-    else if (/^\.(jsx?|mjs)$/.test(castingSegment)) {
+    else if (/^(exec|\.jsx?|\.mjs)$/.test(castingSegment)) {
       if (result instanceof LiveJSModule) {
-        return result;
+        result = getString(result, execEnv, true);
       }
       let [parsedScript, lexArr, strPosArr] = parseString(
         result, callerNode, execEnv, scriptParser
@@ -366,7 +368,7 @@ export async function _query(
       let liveModule = await interpreter.executeModule(
         parsedScript, lexArr, strPosArr, result, modulePath, globalEnv,
         liveModules, placeholdersModule, ancestorModules, finalCallbacks,
-        isPrivate
+        isPrivate, false
       );
       result = liveModule;
     }
@@ -471,8 +473,9 @@ export async function _query(
 }
 
 
-async function fetchPlaceholdersModule(
-  route, callerNode, execEnv, interpreter, ancestorModules, finalCallbacks
+export async function fetchPlaceholdersModule(
+  route, callerNode, execEnv, interpreter,
+  ancestorModules = undefined, finalCallbacks = undefined
 ) {
   // Parse the nodeID and dirID from the route, as well as the rest of it.
   let [ , homePath, tail] = /^(\/[^/]+\/[^/]+)(\/.+)$/.exec(route) ?? [];

@@ -8,7 +8,7 @@ import * as Tab from "./Tab.jsx";
 
 export function render({tabs, closeInactiveTabs = undefined}) {
   closeInactiveTabs = closeInactiveTabs ??
-    this.subscribeToContext("closeInactiveTabs") ?? false;
+    this.getContext("closeInactiveTabs") ?? false;
   let {openTabKey, loadedPages} = this.state;
   let tabEntries = entries(tabs);
   let loadedPageEntries = entries(loadedPages);
@@ -53,7 +53,7 @@ export const actions = {
   "open-tab": function(tabKey) {
     let {tabs} = this.props;
     let closeInactiveTabs = this.props.closeInactiveTabs ??
-      this.subscribeToContext("closeInactiveTabs") ?? false;
+      this.getContext("closeInactiveTabs") ?? false;
 
     // Change openTabKey, and add a new entry to loadedPages if it has not
     // already been added.

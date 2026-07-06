@@ -114,8 +114,8 @@ class JSXInstance {
     this.style = undefined;
     this.prevState = undefined;
     this.stateIsSet = false;
-    this.contextProvisions = undefined;
-    this.contextSubscriptions = undefined;
+    this.contextProvisions = {};
+    this.contextSubscriptions = {};
     this.callerNode = callerNode;
     this.callerEnv = callerEnv;
     this.compEnv = undefined;
@@ -963,50 +963,60 @@ class JSXInstance {
 
 
 
-  provideContext(key, context, interpreter) {
+  setContext(key, context, force = false, interpreter) {
     this.contextProvisions ??= {};
     let {subscribers, prevContext} = this.contextProvisions[key] ?? {};
-      this.contextProvisions[key] = {subscribers: new Map(), context: context};
-    if (subscribers && !deepCompareExceptMutableAndRef(context, prevContext)) {
+    this.contextProvisions[key] = {
+      subscribers: subscribers ?? new Map(), context: context
+    };
+    if (
+      subscribers && subscribers.size > 0 &&
+      (force || !deepCompareExceptMutableAndRef(context, prevContext))
+    ) {
       subscribers.forEach((_, jsxInstance) => {
         jsxInstance.queueRerender(interpreter);
       });
     }
   }
 
-  subscribeToContext(key) {
-    this.contextSubscriptions ??= new Map();
-    this.contextSubscriptions.set(key, true);
+  getContext(key, ignore = false) {
+    if (!ignore) {
+      this.contextSubscriptions[key] = true;
+    } else {
+      delete this.contextSubscriptions[key];
+    }
     let parentInstance = this.parentInstance;
     while (parentInstance) {
-      let contextProvisions = parentInstance.contextProvisions;
-      if (contextProvisions && contextProvisions[key]) {
-        contextProvisions[key].subscribers.set(this, true);
-        return contextProvisions[key].context;
+      let contextProvision = parentInstance.contextProvisions[key];
+      if (contextProvision) {
+        if (!ignore) {
+          contextProvision.subscribers.set(this, true);
+        } else {
+          contextProvision.subscribers.delete(this);
+        }
+        return contextProvision.context;
       }
       parentInstance = parentInstance.parentInstance;
     }
   }
 
-  unsubscribeFromContext(key) {
-    this.contextSubscriptions ??= new Map();
-    this.contextSubscriptions.delete(key);
+  ignoreContext(key) {
+    delete this.contextSubscriptions[key];
     let parentInstance = this.parentInstance;
     while (parentInstance) {
-      let contextProvisions = parentInstance.contextProvisions;
-      if (contextProvisions && contextProvisions[key]) {
-        contextProvisions[key].subscribers.delete(this);
-        return contextProvisions[key].context;
+      let contextProvision = parentInstance.contextProvisions[key];
+      if (contextProvision) {
+        contextProvision.subscribers.delete(this);
+        return contextProvision.context;
       }
       parentInstance = parentInstance.parentInstance;
     }
   }
 
   unsubscribeFromAllContexts() {
-    let contextSubscriptions = this.contextSubscriptions;
-    if (contextSubscriptions) {
-      contextSubscriptions.forEach((_, key) => {
-        this.unsubscribeFromContext(key);
+    if (this.contextSubscriptions) {
+      Object.keys(this.contextSubscriptions).forEach(key => {
+        this.ignoreContext(key);
       });
     }
   }
@@ -1058,9 +1068,9 @@ export class JSXInstanceInterface extends ObjectObject {
       "setState": this.setState,
       "getCurrent": this.getCurrent,
       "rerender": this.rerender,
-      "provideContext": this.provideContext,
-      "subscribeToContext": this.subscribeToContext,
-      "unsubscribeFromContext": this.unsubscribeFromContext,
+      "setContext": this.setContext,
+      "getContext": this.getContext,
+      "ignoreContext": this.ignoreContext,
       "getOwnContext": this.getOwnContext,
       "constants": this.declareOrCheckConstants,
       "reset": this.reset,
@@ -1168,34 +1178,37 @@ export class JSXInstanceInterface extends ObjectObject {
   });
 
 
-  // provideContext(key, context) provides a context identified by key for all
-  // its descendants, meaning that they can subscribe to it an get the context
-  // value in return. And if this instance ever calls provideContext() with a
-  // different value for that key, all the subscribing instances will rerender.
-  provideContext = new DevFunction(
-    "provideContext", {typeArr: ["object key", "any?"]},
-    ({interpreter}, [key, context]) => {
-      this.jsxInstance.provideContext(key, context, interpreter);
+  // setContext(key, context, force = false) provides a context identified by
+  // key for all its descendants, meaning that they can subscribe to it an get
+  // the context value in return. And if this instance ever calls setContext()
+  // with a different value for that key, or with the force argument set to
+  // true, all the subscribing instances will rerender.
+  setContext = new DevFunction(
+    "setContext", {typeArr: ["object key", "any?", "any?"]},
+    ({interpreter}, [key, context, force = false]) => {
+      this.jsxInstance.setContext(key, context, force, interpreter);
     },
   );
 
-  // subscribeToContext(key) looks through the instance's ancestors and finds
-  // the first one, if any, that has provided a context of that key. If one is
-  // found, the value is returned, and this current instance is "subscribed" to
-  // the context (if not already), meaning that if the context's value changes,
-  // this instance rerenders. If no context is found of the given key, no side-
-  // effect happens, and undefined is returned.
-  subscribeToContext = new DevFunction(
-    "subscribeToContext", {typeArr: ["object key"]}, (_, [key]) => {
-      return this.jsxInstance.subscribeToContext(key);
+  // getContext(key, ignore = false) looks through the instance's ancestors and
+  // finds the first one, if any, that has provided a context of that key. If
+  // one is found, the value is returned, and unless the ignore argument is
+  // true, this current instance is subscribed to the context (if not already),
+  // meaning that if the context's value changes, this instance rerenders. If
+  // no context is found of the given key, no side-effect happens, and
+  // undefined is returned.
+  getContext = new DevFunction(
+    "getContext", {typeArr: ["object key", "any?"]},
+    (_, [key, ignore = false]) => {
+      return this.jsxInstance.getContext(key, ignore);
     }
   );
 
-  // unsubscribeFromContext(key) unsubscribes the instance from a context,
-  // meaning that it will no longer rerender if the context updates.
-  unsubscribeFromContext = new DevFunction(
-    "unsubscribeFromContext", {typeArr: ["object key"]}, (_, [key]) => {
-      return this.jsxInstance.unsubscribeFromContext(key);
+  // ignoreContext(key) unsubscribes the instance from a context, meaning that
+  // it will no longer rerender if the context updates.
+  ignoreContext = new DevFunction(
+    "ignoreContext", {typeArr: ["object key"]}, (_, [key]) => {
+      return this.jsxInstance.ignoreContext(key);
     }
   );
 
