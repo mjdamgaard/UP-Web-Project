@@ -31,19 +31,19 @@ export const webAppsDesc = <div>
 </div>;
 
 
-export const appLoader = {
+export const baseApp = {
   "Class": abs("./em1.js;get/components"),
-  "Name": "App loader",
-  "Component path": abs("../app_loader/main.jsx"),
+  "Name": "Base app",
+  "Component path": abs("../base_app/main.jsx"),
   "Example component path": undefined,
   "No margins": true,
   "Public repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
-    "dir_uploads/up_directories/app_loader",
+    "dir_uploads/up_directories/base_app",
   "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
-export const rootApp = appLoader;
+export const rootApp = baseApp;
 
 
 
@@ -81,11 +81,11 @@ export const indexPagesDesc = <div>
 export const upIndexPage01 = {
   "Class": abs("./em1.js;get/components"),
   "Name": "Index page 1.0",
-  "Component path": abs("../app_loader/index_pages/IndexPage01.jsx"),
+  "Component path": abs("../base_app/index_pages/IndexPage01.jsx"),
   "Example component path": undefined,
   "Public repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
-    "dir_uploads/up_directories/app_loader/index_pages",
+    "dir_uploads/up_directories/base_app/index_pages",
   "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };
@@ -93,11 +93,11 @@ export const upIndexPage01 = {
 export const upIndexPage02 = {
   "Class": abs("./em1.js;get/components"),
   "Name": "Example index page",
-  "Component path": abs("../app_loader/index_pages/IndexPage02.jsx"),
+  "Component path": abs("../base_app/index_pages/IndexPage02.jsx"),
   "Example component path": undefined,
   "Public repository":
     "https://github.com/mjdamgaard/UP-Web-Project/tree/main/" +
-    "dir_uploads/up_directories/app_loader/index_pages",
+    "dir_uploads/up_directories/base_app/index_pages",
   "Creator(s)": getUserEntPath("1", "1"),
   "Description": undefined,
 };

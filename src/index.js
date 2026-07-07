@@ -143,12 +143,24 @@ setInterval(
   10000
 );
 
+
+// TODO: Implement looking in localStorage for an alternative main script,
+// preferred by the user, which, in case they have one, should be gotten along
+// with the userID and authToken when the user logs in. Also implement another
+// HTML server on a subdomain, which the user can go to, log in (since they are
+// never logged in already there), and then reset their main script, in case
+// they have experimented with another one (which they trust not to hack them),
+// and also be able to set a new preferred main script, of course with ample
+// warning that they can get hacked if they don't trust the main script enough,
+// or don't know what they are doing.
+
+
 // The script the initializes the UP app.
 const UP_NODE_ID = "1";
-const APP_LOADER_ID = "2";
+const BASE_APP_ID = "2";
 const mainScript = `
   import {createJSXApp} from 'jsx';
-  import * as app from "/${UP_NODE_ID}/${APP_LOADER_ID}/main.jsx";
+  import * as app from "/${UP_NODE_ID}/${BASE_APP_ID}/main.jsx";
 
   export function main() {
     createJSXApp(app);

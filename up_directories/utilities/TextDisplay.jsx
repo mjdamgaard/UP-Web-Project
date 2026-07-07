@@ -2,7 +2,7 @@
 import {fetch} from 'query';
 
 import * as textDisplayStyle from "./TextDisplay.css";
-import * as mainStyle from "../app_loader/style.css";
+import * as mainStyle from "../base_app/style.css";
 
 
 export function render({

@@ -1,7 +1,7 @@
 
 /* HOISTED IMPORTS */
 import "../semantic_entities/entities.js";
-import "../app_loader/urlActions.js";
+import "../base_app/urlActions.js";
 import "./src/EntityPage.jsx";
 /* END */
 
@@ -17,7 +17,7 @@ import "./src/EntityPage.jsx";
 // file).
 
 import * as AppBrowser from "./AppBrowser.jsx";
-import * as mainStyle from "../app_loader/style.css";
+import * as mainStyle from "../base_app/style.css";
 
 
 export function render(props) {

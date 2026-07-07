@@ -3,7 +3,7 @@
     "nodeID": "1",
     "ownDirectories": {
       "semantic_entities": "1",
-      "app_loader": "2",
+      "base_app": "2",
       "file_browser": "c",
       "entity_browser": "d",
       "app_browser": "e",

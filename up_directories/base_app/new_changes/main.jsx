@@ -81,8 +81,8 @@ export function render(props) {
   }
 
   return (
-    <div className="root-app" innerStyle={mainStyle}>
-      <div className={"app-loader" + (hideAppLoader ? " hidden" : "")}>
+    <div innerStyle={mainStyle}>
+      <div className={"base-app" + (hideAppLoader ? " hidden" : "")}>
         {(appLoaderProps ?
           <AppLoader {...appLoaderProps} key="l" /> :
           undefined

@@ -181,6 +181,6 @@ export const actions = {
 
 
 export const styleSheets = [
-  abs("../../app_loader/style.css"),
+  abs("../../base_app/style.css"),
   abs("./EntityList.css"),
 ];

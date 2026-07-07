@@ -22,8 +22,15 @@ export const CAN_CREATE_APP_FLAG = Symbol("can-create-app");
 // These symbol can be imported by the users and thrown from a render()
 // function in order to make the component instance immediately either
 // both reinitialize and rerender or just rerender, respectively.
-export const REINITIALIZE_SYMBOL = Symbol("reinitialize");
-export const RERENDER_SYMBOL = Symbol("rerender");
+// TODO: Reimplement these symbols as special exceptions instead, and then also
+// implement rerenderNow() and resetNow() methods for JSXInstanceInterface,
+// which throws these exceptions. And make sure to pass thisVal to these
+// exceptions in a way such that JSXInstance.render() can access them and check
+// that they match the current jsxInstance, but where the user can't access
+// them. (And don't just extract thisVal from execEnv, as that doesn't seem
+// robust enough.)  
+/* export */ const reinitializeSymbol = Symbol("reinitialize");
+/* export */ const rerenderSymbol = Symbol("rerender");
 
 
 
@@ -227,9 +234,9 @@ class JSXInstance {
       catch (err) {
         if (
           err instanceof Exception &&
-          (err.val === REINITIALIZE_SYMBOL || err.val === RERENDER_SYMBOL)
+          (err.val === reinitializeSymbol || err.val === rerenderSymbol)
         ) {
-          if (err.val === REINITIALIZE_SYMBOL) {
+          if (err.val === reinitializeSymbol) {
             this.initialize(interpreter, callerNode, compEnv, replaceSelf);
           }
           repeat = true;
@@ -1244,7 +1251,7 @@ export class JSXInstanceInterface extends ObjectObject {
       else if (!deepCompare(constants, prevConstants)) {
         // This symbol exception is meant to be caught by JSXInstance.render(),
         // and signals it to immediately reinitialize and rerender.
-        throw new Exception(REINITIALIZE_SYMBOL, callerNode, execEnv);
+        throw new Exception(reinitializeSymbol, callerNode, execEnv);
       }
     }
   );

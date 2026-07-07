@@ -12,7 +12,7 @@ export class DirectoryUpdater {
     this.domain = domain;
     this.dirData = undefined;
     this.dirDataFileName = (domain === "localhost") ?
-      ".directories_local.json" :
+      "directories_local.json" :
       "directories.json";
     this.#readDirDataSync();
     this.timestamps = undefined;
@@ -153,7 +153,7 @@ export class DirectoryUpdater {
   }
 
 
-  // uploadDir() first looks in '.directories.json' to get the directory ID,
+  // uploadDir() first looks in 'directories.json' to get the directory ID,
   // and if none is found, it requests the server to create a new home
   // directory. Then it loops through all files of the directory at path and
   // uploads all that has a recognized file extension to the (potentially new)

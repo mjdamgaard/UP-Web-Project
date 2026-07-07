@@ -6,6 +6,9 @@
 # Ignore all dot-files in the UP directories
 /up_directories/**/.*
 
+# Ignore timestamps.json and directories_local.json
+/up_directories/directories_local.json
+/up_directories/timestamps.json
 
 
 # dependencies
