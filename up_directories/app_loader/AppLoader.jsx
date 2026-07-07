@@ -34,7 +34,7 @@ export function render(props) {
     let appTailURL = substring(url, appHomeURL.length);
     return (
       <div className="app">
-        <App {...props} key="a"
+        <AppFrame {...props} key="a"
           appDirID={appDirID} homeURL={appHomeURL} tailURL={appTailURL}
         />
       </div>
@@ -124,7 +124,7 @@ export const actions = {
 
 
   "loadNewApp": async function(appDirIDSegment) {
-    verifyType(appDirIDSegment, "hex")
+    verifyType(appDirIDSegment, "hex");
     let {url, userID, useOriginal, useDefault} = this.props;
 
     // If useOriginal is set, simply use the same appDirIDSegment instead of

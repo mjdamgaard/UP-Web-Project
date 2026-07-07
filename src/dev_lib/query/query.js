@@ -135,6 +135,7 @@ export async function _query(
   callerNode, execEnv, interpreter,
   ancestorModules = [], finalCallbacks = [],
 ) {
+  let {liveModules, queryResults, parsedScripts} = execEnv.scriptVars;
   let isPrivate = isPost || getPropertyFromObject(options, "isPrivate");
 
   // First split the input route along each (optional) occurrence of ';',
@@ -143,170 +144,203 @@ export async function _query(
   // which reinterprets/casts the queried result into something else.
   let route, castingSegmentArr;
   [route, ...castingSegmentArr] = extendedRoute.split(';');
-
-  // If the route is a module that has already been executed, get it from the
-  // liveModules cache instead.
-  let {liveModules, parsedScripts} = execEnv.scriptVars;
-  let liveModule = liveModules.get(route);
   let result;
-  if (liveModule) {
-    if (ancestorModules.includes(route)) throw new LoadError(
-      `Infinite recursion: Module ${route} imports itself. Ancestor ` +
-      "modules when error happened: " + ancestorModules.join(", ") + ".",
-      callerNode, execEnv
+
+  // Look ahead to see if the first casting segment equals "cache", and if so
+  // use the queryResults cache, and increment the casting castingSegmentArr
+  // index, i, by one, which is the index that will be used in the for loop
+  // below.
+  let i = 0;
+  let cachedResult, cacheIsNext = castingSegmentArr[i] === "cache";
+  if ( cacheIsNext && (cachedResult = queryResults.get(route)) ) {
+    if (cachedResult instanceof Promise) {
+      result = await cachedResult;
+    }
+    if (result instanceof ErrorWrapper) {
+      throw result.val;
+    }
+    i++;
+  }
+  else if (cacheIsNext) {
+    let resultPromise = _query(
+      route, isPost, postData, options, callerNode, execEnv, interpreter,
+      ancestorModules, finalCallbacks
+    ).catch(
+      err => ErrorWrapper(err)
     );
-    if (liveModule instanceof Promise) {
-      liveModule = await liveModule;
-    }
-    if (liveModule instanceof ErrorWrapper) {
-      throw liveModule.val;
-    }
-    result = liveModule;
+    queryResults.set(route, resultPromise);
+    result = await resultPromise;
+    queryResults.set(route, resultPromise);
+    i++;
   }
 
-  // If route is a dev library path, which always comes in the form of a bare
-  // module specifier (left over in the build step, if any), try to import
-  // the given library.
-  else if (route[0] !== "/") {
-    let devMod = interpreter.staticDevLibs.get(route);
-    if (devMod) {
-      liveModule = new LiveJSModule(
-        route, Object.entries(devMod), execEnv.scriptVars
-      );
-      liveModules.set(route, liveModule);
-    }
-    else {
-      let devLibURL = interpreter.devLibURLs.get(route);
-      if (!devLibURL) throw new LoadError(
-        `Developer library "${route}" not found`,
+  // Else query the route itself (but also using the liveModules cache for JS
+  // and CSS modules).
+  else {
+    // If the route is a module that has already been executed, get it from the
+    // liveModules cache instead.
+    let liveModule = liveModules.get(route);
+    if (liveModule) {
+      if (ancestorModules.includes(route)) throw new LoadError(
+        `Infinite recursion: Module ${route} imports itself. Ancestor ` +
+        "modules when error happened: " + ancestorModules.join(", ") + ".",
         callerNode, execEnv
       );
-      try {
-        let liveModulePromise = import(devLibURL).then(devMod => {
-          return new LiveJSModule(
-            route, Object.entries(devMod), execEnv.scriptVars
-          );
-        }).catch(
-          err => new ErrorWrapper(err)
+      if (liveModule instanceof Promise) {
+        liveModule = await liveModule;
+      }
+      if (liveModule instanceof ErrorWrapper) {
+        throw liveModule.val;
+      }
+      result = liveModule;
+    }
+
+    // If route is a dev library path, which always comes in the form of a bare
+    // module specifier (left over in the build step, if any), try to import
+    // the given library.
+    else if (route[0] !== "/") {
+      let devMod = interpreter.staticDevLibs.get(route);
+      if (devMod) {
+        liveModule = new LiveJSModule(
+          route, Object.entries(devMod), execEnv.scriptVars
         );
-        liveModules.set(route, liveModulePromise);
-        liveModule = await liveModulePromise;
         liveModules.set(route, liveModule);
-        if (liveModule instanceof ErrorWrapper) {
-          throw liveModule.val;
-        }
-      } catch (err) {
-        throw new LoadError(
-          `Developer library "${route}" failed to import ` +
-          `from ${devLibURL}`,
+      }
+      else {
+        let devLibURL = interpreter.devLibURLs.get(route);
+        if (!devLibURL) throw new LoadError(
+          `Developer library "${route}" not found`,
           callerNode, execEnv
         );
+        try {
+          let liveModulePromise = import(devLibURL).then(devMod => {
+            return new LiveJSModule(
+              route, Object.entries(devMod), execEnv.scriptVars
+            );
+          }).catch(
+            err => new ErrorWrapper(err)
+          );
+          liveModules.set(route, liveModulePromise);
+          liveModule = await liveModulePromise;
+          liveModules.set(route, liveModule);
+          if (liveModule instanceof ErrorWrapper) {
+            throw liveModule.val;
+          }
+        } catch (err) {
+          throw new LoadError(
+            `Developer library "${route}" failed to import ` +
+            `from ${devLibURL}`,
+            callerNode, execEnv
+          );
+        }
       }
-    }
-    result = liveModule;
-  }
-
-  // Else if the file has a '.js', '.mjs' or '.jsx' extension, fetch it or get
-  // it from the liveModules cache and create and return a LiveJSModule
-  // instance.
-  else if (SCRIPT_ROUTE_REGEX.test(route)) {
-    // First call fetchPlaceholdersModule() to fetch the ~/placeholders.js
-    // module for the given home directory, if it has not already been fetched.
-    let placeholdersModulePromise = fetchPlaceholdersModule(
-      route, callerNode, execEnv, interpreter, ancestorModules, finalCallbacks
-    ).catch(
-      err => new ErrorWrapper(err)
-    );
-
-    // Then try to get the parsed script from the parsedScripts buffer, or else
-    // try to fetch it from the database.
-    let [parsedScript, lexArr, strPosArr, script] =
-      parsedScripts.get(route) ?? [];
-    if (!parsedScript) {
-      script = await queryRoute.fun(
-        {callerNode, execEnv, interpreter},
-        [route, false, undefined, options],
-      );
-      if (typeof script !== "string") throw new LoadError(
-        `No script was found at ${route}`,
-        callerNode, execEnv
-      );
-      [parsedScript, lexArr, strPosArr] = parseString(
-        script, callerNode, execEnv, scriptParser
-      );
-      if (!isPrivate) {
-        parsedScripts.set(route, [parsedScript, lexArr, strPosArr, script]);
-      }
+      result = liveModule;
     }
 
-    // Now wait for the placeholders.js module.
-    let placeholdersModule = await placeholdersModulePromise;
-    if (placeholdersModule instanceof ErrorWrapper) {
-      let err = placeholdersModule.val;
-      if (err instanceof LoadError) {
-        placeholdersModule = undefined;
-      }
-      else throw err;
-    }
-
-    // Then execute the module, inside the global environment, and return the
-    // resulting liveModule, after also adding it to liveModules.
-    let globalEnv = execEnv.getGlobalEnv();
-    liveModule = await interpreter.executeModule(
-      parsedScript, lexArr, strPosArr, script, route, globalEnv, liveModules,
-      placeholdersModule, ancestorModules, finalCallbacks, isPrivate
-    );
-    result = liveModule;
-  }
-
-  // Else if the file a '.css' file, fetch it or get it from the liveModules
-  // cache and create and return a CSSModule instance.
-  else if (CSS_ROUTE_REGEX.test(route)) {
-    let cssModule = liveModules.get(route);
-    if (cssModule) {
-      if (cssModule instanceof Promise) {
-        cssModule = await cssModule;
-      }
-    }
-    else {
-      let cssModulePromise = queryRoute.fun(
-        {callerNode, execEnv, interpreter}, [route, false, undefined, options],
-      ).then(
-        text => new CSSModule(route, text, execEnv)
+    // Else if the file has a '.js', '.mjs' or '.jsx' extension, fetch it or
+    // get it from the liveModules cache and create and return a LiveJSModule
+    // instance.
+    else if (SCRIPT_ROUTE_REGEX.test(route)) {
+      // First call fetchPlaceholdersModule() to fetch the ~/placeholders.js
+      // module for the given home directory, if it has not already been
+      // fetched.
+      let placeholdersModulePromise = fetchPlaceholdersModule(
+        route, callerNode, execEnv, interpreter, ancestorModules,
+        finalCallbacks
       ).catch(
         err => new ErrorWrapper(err)
       );
-      liveModules.set(route, cssModulePromise);
-      cssModule = await cssModulePromise;
-      liveModules.set(route, cssModule);
+
+      // Then try to get the parsed script from the parsedScripts buffer, or else
+      // try to fetch it from the database.
+      let [parsedScript, lexArr, strPosArr, script] =
+        parsedScripts.get(route) ?? [];
+      if (!parsedScript) {
+        script = await queryRoute.fun(
+          {callerNode, execEnv, interpreter},
+          [route, false, undefined, options],
+        );
+        if (typeof script !== "string") throw new LoadError(
+          `No script was found at ${route}`,
+          callerNode, execEnv
+        );
+        [parsedScript, lexArr, strPosArr] = parseString(
+          script, callerNode, execEnv, scriptParser
+        );
+        if (!isPrivate) {
+          parsedScripts.set(route, [parsedScript, lexArr, strPosArr, script]);
+        }
+      }
+
+      // Now wait for the placeholders.js module.
+      let placeholdersModule = await placeholdersModulePromise;
+      if (placeholdersModule instanceof ErrorWrapper) {
+        let err = placeholdersModule.val;
+        if (err instanceof LoadError) {
+          placeholdersModule = undefined;
+        }
+        else throw err;
+      }
+
+      // Then execute the module, inside the global environment, and return the
+      // resulting liveModule, after also adding it to liveModules.
+      let globalEnv = execEnv.getGlobalEnv();
+      liveModule = await interpreter.executeModule(
+        parsedScript, lexArr, strPosArr, script, route, globalEnv, liveModules,
+        placeholdersModule, ancestorModules, finalCallbacks, isPrivate
+      );
+      result = liveModule;
     }
-    if (cssModule instanceof ErrorWrapper) {
-      throw cssModule.val;
+
+    // Else if the file a '.css' file, fetch it or get it from the liveModules
+    // cache and create and return a CSSModule instance.
+    else if (CSS_ROUTE_REGEX.test(route)) {
+      let cssModule = liveModules.get(route);
+      if (cssModule) {
+        if (cssModule instanceof Promise) {
+          cssModule = await cssModule;
+        }
+      }
+      else {
+        let cssModulePromise = queryRoute.fun(
+          {callerNode, execEnv, interpreter},
+          [route, false, undefined, options],
+        ).then(
+          text => new CSSModule(route, text, execEnv)
+        ).catch(
+          err => new ErrorWrapper(err)
+        );
+        liveModules.set(route, cssModulePromise);
+        cssModule = await cssModulePromise;
+        liveModules.set(route, cssModule);
+      }
+      if (cssModule instanceof ErrorWrapper) {
+        throw cssModule.val;
+      }
+      result = cssModule;
     }
-    result = cssModule;
+
+    // Else if the file is a non-JS, non-CSS text file, fetch it and return
+    // a string of its content.
+    else if (TEXT_FILE_ROUTE_REGEX.test(route)) {
+      let result = await queryRoute.fun(
+        {callerNode, execEnv, interpreter},
+        [route, false, undefined, options],
+      );
+      if (typeof result !== "string") throw new LoadError(
+        `No text was found at ${route}`,
+        callerNode, execEnv
+      );
+    }
+
+    // Else simply redirect to queryRoute().
+    else {
+      result = await queryRoute.fun(
+        {callerNode, execEnv, interpreter},
+        [route, isPost, postData, options],
+      );
+    };
   }
-
-  // Else if the file is a non-JS, non-CSS text file, fetch it and return
-  // a string of its content.
-  else if (TEXT_FILE_ROUTE_REGEX.test(route)) {
-    let result = await queryRoute.fun(
-      {callerNode, execEnv, interpreter},
-      [route, false, undefined, options],
-    );
-    if (typeof result !== "string") throw new LoadError(
-      `No text was found at ${route}`,
-      callerNode, execEnv
-    );
-  }
-
-  // Else simply redirect to queryRoute().
-  else {
-    result = await queryRoute.fun(
-      {callerNode, execEnv, interpreter},
-      [route, isPost, postData, options],
-    );
-  };
-
 
   // We now have the result from querying the route itself, but the extended
   // route might also contain extra segments, separated by semicolons, used
@@ -315,12 +349,38 @@ export async function _query(
   // a particular export of the given module, or ';call/<alias>[/argument]*'
   // segments which calls the exported function and returns what it returns).
   let len = castingSegmentArr.length;
-  for (let i = 0; i < len; i++) {
+  for (i = i; i < len; i++) {
     let castingSegment = castingSegmentArr[i];
+
+    // Here we also look ahead to see if the next casting segment equals
+    // "cache", similarly to above, except that here we wait to for the next
+    // iteration to cache the result if it has not yet been cached.
+    if (castingSegmentArr[i + 1] === "cache") {
+      let cacheRoute = route + ";" +
+        castingSegmentArr.slice(0, i + 2).join(";");
+      let cachedResult = queryResults.get(cacheRoute);
+      if (cachedResult) {
+        if (cachedResult instanceof Promise) {
+          result = await cachedResult;
+        }
+        if (result instanceof ErrorWrapper) {
+          throw result.val;
+        }
+        i++;
+        continue;
+      }
+    }
+
+    // If the casting segment equals cache, simply cache the current result.
+    if (castingSegment === "cache") {
+      let cacheRoute = route + ";" +
+        castingSegmentArr.slice(0, i + 1).join(";");
+      queryResults.set(cacheRoute, result);
+    }
 
     // The following casting segment types are for casting between JSON
     // objects (strings) and actual JS objects.
-    if (castingSegment === "object") {
+    else if (castingSegment === "object") {
       result = jsonParse(result, callerNode, execEnv);
       if (getPrototypeOf(result) !== OBJECT_PROTOTYPE) throw new LoadError(
         "JSON value is not a plain object",

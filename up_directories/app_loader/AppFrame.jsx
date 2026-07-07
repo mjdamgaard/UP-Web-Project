@@ -3,6 +3,13 @@ import {fetch, clearPermissions} from 'query';
 import {join} from 'string';
 import {urlActions, urlEvents} from "./urlActions.js";
 
+
+// TODO: Change this component to load a global header as well as the app
+// gotten from the appDirID. And also let this component handle the warning
+// message, etc. (Note that this component will be able to be exchanged for
+// another by the user settings.)
+
+
 const fetchTrustClassRouteTemplate = [
   abs("./server/apps.sm.js./callSMF/fetchTrustClass/"),
   "",

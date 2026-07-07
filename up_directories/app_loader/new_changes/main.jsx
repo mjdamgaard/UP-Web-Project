@@ -9,6 +9,7 @@ import {parse} from 'json';
 
 import * as AppLoader from "./AppLoader.js";
 import * as placeholdersJSON from "./placeholders.json";
+import * as mainStyle from "./style.css";
 
 const {this: {"file_browser": fileBrowserID, "app_browser": appBrowserID}} =
   parse(placeholdersJSON);
@@ -27,7 +28,8 @@ export function initialize() {
 
 export function render(props) {
   let {
-    url, homeURL = "", nodeID, userID, history, localStorage, sessionStorage
+    url, homeURL = "", nodeID, userID, history, localStorage, sessionStorage,
+    settings,
   } = props;
   let {ref: {appLoaderProps}} = this.state;
 
@@ -37,7 +39,7 @@ export function render(props) {
   let [firstSegment, newTailURL] = getFirstSegmentAndTail(tailURL ?? "");
   let newHomeURL = homeURL + "/" + firstSegment;
 
-  let content, hideAppLoader = true;
+  let hideAppLoader = true;
   let useOriginal, useDefault;
   switch (firstSegment) {
     // If the tailURL starts with "a", redirect to the AppLoader. (We also
@@ -65,36 +67,21 @@ export function render(props) {
     case "":
     case "apps":
       this.do("replaceURL", "~/a/" + appBrowserID + "/apps" + newTailURL);
-      content = <div className="fetching"></div>;
+      hideAppLoader = true;
       break;
     case "files":
       this.do("replaceURL", "~/a/" + fileBrowserID + "/files" + newTailURL);
-      content = <div className="fetching"></div>;
+      hideAppLoader = true;
       break;
     // TODO: Add other shortcuts, in particular for tutorials and the entity
     // browser.
-    
-    // The following cases are some constant built-in pages, such as the
-    // about page and the account page.
-    case "about":
-      content = <AboutPage key="about" />;
-      break;
-    case "account":
-      content = <AccountPage key="account" />;
-      break;
+
     default:
       content = missingPageContent;
   }
 
   return (
-    <div className="root-app">
-      {/* The content div is for non-AppLoader pages with their own URLs */}
-      <div className={"native-page" + (content ? "" : " hidden")}>
-        {(content)}
-      </div>
-      {/* The AppLoader, which we keep rendering once it has the first time,
-      as to not its state, but where we hide it if a native page is open.
-      */}
+    <div className="root-app" innerStyle={mainStyle}>
       <div className={"app-loader" + (hideAppLoader ? " hidden" : "")}>
         {(appLoaderProps ?
           <AppLoader {...appLoaderProps} key="l" /> :

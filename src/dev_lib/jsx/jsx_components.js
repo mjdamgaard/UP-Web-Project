@@ -19,10 +19,11 @@ export const HREF_CD_START_REGEX = /^\.{0,2}\//;
 
 export const CAN_CREATE_APP_FLAG = Symbol("can-create-app");
 
-// This symbol can be imported by the users and thrown from a render() function
-// in order to make the component instance immediately reinitialize it and
-// rerender it.
+// These symbol can be imported by the users and thrown from a render()
+// function in order to make the component instance immediately either
+// both reinitialize and rerender or just rerender, respectively.
 export const REINITIALIZE_SYMBOL = Symbol("reinitialize");
+export const RERENDER_SYMBOL = Symbol("rerender");
 
 
 
@@ -190,8 +191,9 @@ class JSXInstance {
       this.initialize(interpreter, callerNode, compEnv, replaceSelf);
 
       // And store the ref prop.
-      this.ref = props["ref"];
+      this.ref = props["ref"] ?? {};
     }
+    props = {...props, ref: this.ref};
 
 
     // Then get the component's render() function.
@@ -223,8 +225,13 @@ class JSXInstance {
         );
       }
       catch (err) {
-        if (err instanceof Exception && err.val === REINITIALIZE_SYMBOL) {
-          this.initialize(interpreter, callerNode, compEnv, replaceSelf);
+        if (
+          err instanceof Exception &&
+          (err.val === REINITIALIZE_SYMBOL || err.val === RERENDER_SYMBOL)
+        ) {
+          if (err.val === REINITIALIZE_SYMBOL) {
+            this.initialize(interpreter, callerNode, compEnv, replaceSelf);
+          }
           repeat = true;
         }
         else {
@@ -1058,7 +1065,7 @@ export class JSXInstanceInterface extends ObjectObject {
       /* Properties */
       "props": this.jsxInstance.props,
       "state": this.jsxInstance.state ?? {},
-      "ref": this.jsxInstance.ref,
+      "ref": this.jsxInstance.ref ?? {},
       "component": this.jsxInstance.componentObject,
       "isFirstRender": this.jsxInstance.isFirstRender,
       /* Methods */

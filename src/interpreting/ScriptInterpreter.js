@@ -80,6 +80,7 @@ export class ScriptInterpreter {
       flags: flags, contexts: contexts, globalEnv: undefined, interpreter: this,
       isExiting: false, resolveScript: undefined, exitPromise: undefined,
       parsedScripts: parsedScripts, liveModules: liveModules,
+      queryResults: new Map(),
     };
 
     // First create a global environment, which is used as a parent environment
