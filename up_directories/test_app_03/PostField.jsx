@@ -1,7 +1,7 @@
 
 import {post} from 'query';
 import * as JSON from 'json';
-import * as TextArea from 'TextArea.jsx';
+import * as TextArea from 'TextArea';
 import * as CharCount from './CharCount.jsx';
 
 export function render({userID}) {

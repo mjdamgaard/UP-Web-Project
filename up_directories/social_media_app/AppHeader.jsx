@@ -1,5 +1,5 @@
 
-import * as ILink from 'ILink.jsx';
+import * as ILink from 'ILink';
 import * as UserReference from "./UserReference.jsx";
 
 

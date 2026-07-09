@@ -6,7 +6,7 @@ import {mapToArray} from 'object';
 import {stringify} from 'json';
 import {encodeURI} from 'query';
 
-import * as ILink from 'ILink.jsx';
+import * as ILink from 'ILink';
 import * as TextWithSubstitutedLinks
 from "../../../utilities/TextWithSubstitutedLinks.jsx";
 import * as TextDisplay from "../../../utilities/TextDisplay.jsx";

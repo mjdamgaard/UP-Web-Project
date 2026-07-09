@@ -1,6 +1,6 @@
 
-import * as ILink from 'ILink.jsx';
-import * as ELink from 'ELink.jsx';
+import * as ILink from 'ILink';
+import * as ELink from 'ELink';
 
 
 export function render() {
@@ -249,7 +249,7 @@ const page = <div className="text-page">
     }</p>
     <p>
       <code className="jsx">{[
-        'import * as TextArea from \'TextArea.jsx\';',
+        'import * as TextArea from \'TextArea\';',
       ]}</code>
     </p>
     <p>{
@@ -278,11 +278,11 @@ const page = <div className="text-page">
     }</p>
     <p>
       <code className="jsx">{[
-        'import * as InputCheckbox from \'InputCheckbox.jsx\';\n',
-        'import * as InputNumber from \'InputNumber.jsx\';\n',
-        'import * as InputRadio from \'InputRadio.jsx\';\n',
-        'import * as InputRange from \'InputRange.jsx\';\n',
-        'import * as InputText from \'InputText.jsx\';',
+        'import * as InputCheckbox from \'InputCheckbox\';\n',
+        'import * as InputNumber from \'InputNumber\';\n',
+        'import * as InputRadio from \'InputRadio\';\n',
+        'import * as InputRange from \'InputRange\';\n',
+        'import * as InputText from \'InputText\';',
       ]}</code>
     </p>
     <p>{
@@ -307,8 +307,8 @@ const page = <div className="text-page">
     }</p>
     <p>
       <code className="jsx">{[
-        'import * as ILink from \'ILink.jsx\';\n',
-        'import * as ELink from \'ELink.jsx\';',
+        'import * as ILink from \'ILink\';\n',
+        'import * as ELink from \'ELink\';',
       ]}</code>
     </p>
     <p>{

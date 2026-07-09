@@ -380,26 +380,15 @@ export async function _query(
 
     // The following casting segment types are for casting between JSON
     // objects (strings) and actual JS objects.
-    else if (castingSegment === "object") {
-      result = jsonParse(result, callerNode, execEnv);
-      if (getPrototypeOf(result) !== OBJECT_PROTOTYPE) throw new LoadError(
-        "JSON value is not a plain object",
-        callerNode, execEnv
-      );
-    }
-    else if (castingSegment === "array") {
-      result = jsonParse(result, callerNode, execEnv);
-      if (getPrototypeOf(result) !== ARRAY_PROTOTYPE) throw new LoadError(
-        "JSON value is not an array",
-        callerNode, execEnv
-      );
-    }
     else if (castingSegment === "parse") {
       result = jsonParse(result, callerNode, execEnv);
     }
     else if (castingSegment === "stringify") {
       result = jsonStringify(result);
     }
+
+    // You can also get the toString() value, and if the result is a JS or CSS
+    // module, this casting results in the source code text.
     else if (/^(string|text|\.txt)$/.test(castingSegment)) {
       result = getString(result, execEnv, true);
     }

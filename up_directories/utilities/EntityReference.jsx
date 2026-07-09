@@ -4,7 +4,7 @@ import {
 } from "/1/1/entities.js";
 import {encodeURI} from 'query';
 import {replaceReferences} from 'entities';
-import * as ILink from 'ILink.jsx';
+import * as ILink from 'ILink';
 
 
 

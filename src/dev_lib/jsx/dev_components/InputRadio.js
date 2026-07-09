@@ -14,7 +14,7 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    validateJSXInstance(thisVal, "InputRadio.jsx", callerNode, execEnv);
+    validateJSXInstance(thisVal, "InputRadio", callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }
@@ -78,13 +78,13 @@ export const methods = [
 export const actions = {
   "getIsChecked": new DevFunction(
     "getIsChecked", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateJSXInstance(thisVal, "InputRadio.jsx", callerNode, execEnv);
+      validateJSXInstance(thisVal, "InputRadio", callerNode, execEnv);
       return thisVal.jsxInstance.domNode.checked;
     }
   ),
   "setIsChecked": new DevFunction(
     "setIsChecked", {}, function({thisVal, callerNode, execEnv}, [val]) {
-      validateJSXInstance(thisVal, "InputRadio.jsx", callerNode, execEnv);
+      validateJSXInstance(thisVal, "InputRadio", callerNode, execEnv);
       val = val ? true : false;
       let {domNode} = thisVal.jsxInstance;
       domNode.checked = val;
@@ -92,7 +92,7 @@ export const actions = {
   ),
   "clear": new DevFunction(
     "clear", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateJSXInstance(thisVal, "InputRadio.jsx", callerNode, execEnv);
+      validateJSXInstance(thisVal, "InputRadio", callerNode, execEnv);
       let {domNode, props} = thisVal.jsxInstance;
       let {checked: initVal} = props;
       domNode.checked = initVal ? true : false;
@@ -100,7 +100,7 @@ export const actions = {
   ),
   "focus": new DevFunction(
     "focus", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateJSXInstance(thisVal, "InputRadio.jsx", callerNode, execEnv);
+      validateJSXInstance(thisVal, "InputRadio", callerNode, execEnv);
       let {jsxInstance} = thisVal;
       if (jsxInstance.canGrabFocus()) {
         thisVal.jsxInstance.domNode.focus();
@@ -113,7 +113,7 @@ export const actions = {
   ),
   "blur": new DevFunction(
     "blur", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateJSXInstance(thisVal, "InputRadio.jsx", callerNode, execEnv);
+      validateJSXInstance(thisVal, "InputRadio", callerNode, execEnv);
       thisVal.jsxInstance.domNode.blur();
     }
   ),

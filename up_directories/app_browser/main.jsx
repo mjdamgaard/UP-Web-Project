@@ -13,8 +13,7 @@ import "./src/EntityPage.jsx";
 // possibly to "hoist" the imports of the app component (for which we will at
 // some point implement a command in the directory updater program, namely
 // one that creates or updates the list of hoisted imports automatically,
-// formatted like the list seen above, and put/expected at the start of the
-// file).
+// formatted like the list seen above, at the start of the file).
 
 import * as AppBrowser from "./AppBrowser.jsx";
 import * as mainStyle from "../base_app/style.css";

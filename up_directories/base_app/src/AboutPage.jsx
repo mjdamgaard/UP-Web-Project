@@ -1,7 +1,7 @@
 
-import * as ILink from 'ILink.jsx';
-import * as ELink from 'ELink.jsx';
-import * as EntityList from "../entity_browser/entity_lists/EntityList.jsx";
+import * as ILink from 'ILink';
+import * as ELink from 'ELink';
+import * as EntityList from "../../entity_browser/entity_lists/EntityList.jsx";
 
 
 export function render() {

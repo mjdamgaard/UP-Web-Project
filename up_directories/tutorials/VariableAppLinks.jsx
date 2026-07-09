@@ -1,8 +1,8 @@
 
 import {hasType} from 'type';
-import * as InputText from 'InputText.jsx';
-import * as Label from 'Label.jsx';
-import * as ILink from 'ILink.jsx';
+import * as InputText from 'InputText';
+import * as Label from 'Label';
+import * as ILink from 'ILink';
 
 
 export function initialize() {

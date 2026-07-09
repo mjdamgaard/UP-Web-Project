@@ -1571,6 +1571,8 @@ function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
   urlContext.addSubscriberCallback((urlData) => {
     jsxInstance.changePropsAndQueueRerender({
       url: urlData.url,
+      homeURL: "",
+      tailURL: urlData.url,
       history: {
         state: JSON.parse(urlData.stateJSON ?? 'null'),
         pushState: pushState, replaceState: replaceState,
@@ -1589,6 +1591,8 @@ function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
   return {
     ...props,
     url: url,
+    homeURL: "",
+    tailURL: url,
     history: {
       state: JSON.parse(stateJSON ?? 'null'),
       pushState: pushState, replaceState: replaceState,

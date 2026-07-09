@@ -1,6 +1,6 @@
 
-import * as InputCheckbox from 'InputCheckbox.jsx';
-import * as Label from 'Label.jsx';
+import * as InputCheckbox from 'InputCheckbox';
+import * as Label from 'Label';
 
 // TODO: Also fetch some 'Is Trusted' score for the component entity,
 // and only show the warning if the component is not sufficiently

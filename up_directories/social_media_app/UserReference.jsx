@@ -1,7 +1,7 @@
 
 import {fetch} from 'query';
 
-import * as ILink from 'ILink.jsx';
+import * as ILink from 'ILink';
 
 
 export function initialize({userID}) {

@@ -1,7 +1,7 @@
 
 import {substring} from 'string';
 
-import * as ILink from 'ILink.jsx';
+import * as ILink from 'ILink';
 import {urlActions, urlEvents} from '../base_app/urlActions.js';
 import * as EntityList from "../entity_browser/entity_lists/EntityList.jsx";
 import * as GettingStartedPage from "./getting_started.jsx";

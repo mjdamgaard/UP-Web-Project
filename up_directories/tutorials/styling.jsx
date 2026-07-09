@@ -1,6 +1,6 @@
 
-import * as ILink from 'ILink.jsx';
-import * as ELink from 'ELink.jsx';
+import * as ILink from 'ILink';
+import * as ELink from 'ELink';
 import * as Result7_1 from "./hello_world/results/result_7_1.jsx";
 import * as Result7_2 from "./hello_world/results/result_7_2.jsx";
 

@@ -1,6 +1,6 @@
 
 import {clearPermissions} from 'query';
-import {urlActions, urlEvents} from "./urlActions.js";
+import {urlActions, urlEvents} from "../urlActions.js";
 
 import {substring, split, at, slice, join} from 'string';
 import {fetchPrivate, fetch} from 'query';
@@ -145,7 +145,7 @@ export const actions = {
     let appDirID = await fetchFun(fetchBestSubAppRoute);
 
     // Also fetch the app's api.js module in the background.
-    fetch(abs("../" + appDirID + "/api.js")).catch(err => undefined);
+    import("../" + appDirID + "/api.js").catch(err => undefined);
 
     // Check that the URL and the user haven't changed in the meantime, then
     // replace the history state with the resulting appDirID of the best sub-

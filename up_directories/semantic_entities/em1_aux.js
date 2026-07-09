@@ -1,5 +1,5 @@
 
-import * as ILink from 'ILink.jsx';
+import * as ILink from 'ILink';
 
 const tempEM1Desc = <div>
   <section>

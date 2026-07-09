@@ -3,8 +3,8 @@ import {post} from 'query';
 import {substring} from 'string';
 import {fetchEntityDefinition} from "/1/1/entities.js";
 
-import * as InputText from 'InputText.jsx';
-import * as TextArea from 'TextArea.jsx';
+import * as InputText from 'InputText';
+import * as TextArea from 'TextArea';
 import * as EntityReference from "../utilities/EntityReference.jsx";
 
 

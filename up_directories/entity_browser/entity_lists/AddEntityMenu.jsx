@@ -5,10 +5,10 @@ import {
   postEntity, checkDomain, postScalarEntity,
 } from "/1/1/entities.js";
 
-import * as InputText from 'InputText.jsx';
-import * as TextArea from 'TextArea.jsx';
-import * as InputCheckbox from 'InputCheckbox.jsx';
-import * as Label from 'Label.jsx';
+import * as InputText from 'InputText';
+import * as TextArea from 'TextArea';
+import * as InputCheckbox from 'InputCheckbox';
+import * as Label from 'Label';
 
 const textClassPath = "/1/1/em1.js;get/texts";
 const scalarClassPath = "/1/1/em1.js;get/scalars";

@@ -1,7 +1,7 @@
 
 import {fetch, clearPermissions} from 'query';
 import {join} from 'string';
-import {urlActions, urlEvents} from "./urlActions.js";
+import {urlActions, urlEvents} from "../urlActions.js";
 
 
 // TODO: Change this component to load a global header as well as the app

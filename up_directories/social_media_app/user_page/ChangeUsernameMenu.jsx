@@ -1,7 +1,7 @@
 
 import {post} from 'query';
 
-import * as InputText from 'InputText.jsx';
+import * as InputText from 'InputText';
 
 
 export function render() {

@@ -1,6 +1,6 @@
 
 import {post} from 'query';
-import * as TextArea from 'TextArea.jsx';
+import * as TextArea from 'TextArea';
 
 
 

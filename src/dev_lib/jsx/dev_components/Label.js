@@ -15,7 +15,7 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    validateJSXInstance(thisVal, "Label.jsx", callerNode, execEnv);
+    validateJSXInstance(thisVal, "Label", callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }

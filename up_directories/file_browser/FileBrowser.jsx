@@ -8,7 +8,7 @@ import {hasType} from 'type';
 import {fetch, encodeURI} from 'query';
 import {getUserEntPath, postEntity} from "/1/1/entities.js";
 
-import * as ILink from 'ILink.jsx';
+import * as ILink from 'ILink';
 import * as EntityReference from "../utilities/EntityReference.jsx";
 import * as TextDisplay from "../utilities/TextDisplay.jsx";
 

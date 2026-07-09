@@ -492,6 +492,7 @@ export class ScriptInterpreter {
         // been executed, and make this callback import the module and mutate
         // moduleNamespaceObj with the right LiveJSModule.
         if (impStmt.isAwait) {
+          moduleNamespaceObj = {};
           finalCallbacks.push(async () => {
             let submodulePath = getAbsolutePath(
               curModulePath, impStmt.str, imp, curModuleEnv
@@ -499,10 +500,6 @@ export class ScriptInterpreter {
             let liveModule = await this.import(
               submodulePath, impStmt, curModuleEnv, false, true, false,
               undefined, undefined, isPrivate
-            );
-            if (!(liveModule instanceof LiveJSModule)) throw new LoadError(
-              'The ":await" postfix can only be used for JS(X) module imports',
-              imp, curModuleEnv
             );
             Object.assign(moduleNamespaceObj, liveModule);
           });
@@ -512,7 +509,7 @@ export class ScriptInterpreter {
         imp.namedImportArr.forEach(namedImp => {
           let ident = namedImp.ident ?? "default";
           let alias = namedImp.alias ?? ident;
-          let val = liveSubmodule.get(ident);
+          let val = getPropertyFromObject(liveSubmodule, ident);
           if (val === undefined) throw new LoadError(
             "No export found of the name '" + ident + "' in module " +
             liveSubmodule.modulePath,
@@ -522,7 +519,7 @@ export class ScriptInterpreter {
         });
       }
       else if (impType === "default-import") {
-        let val = liveSubmodule.get("default");
+        let val = getPropertyFromObject(liveSubmodule, "default");
         if (val === undefined) throw new LoadError(
           "No default export in module " + liveSubmodule.modulePath,
           imp, curModuleEnv
@@ -605,7 +602,7 @@ export class ScriptInterpreter {
   executeModuleFunction(
     liveModule, funName, inputArr, resolveFun, moduleNode, moduleEnv, flags
   ) {
-    let fun = liveModule.get(funName);
+    let fun = getPropertyFromObject(liveModule, funName);
     if (fun === undefined) throw new RuntimeError(
       `No function called "${funName}" was exported from ` +
       `Module ${liveModule.modulePath}`,

@@ -1,5 +1,5 @@
 
-import * as InputText from 'InputText.jsx';
+import * as InputText from 'InputText';
 import {parseFloat} from 'number';
 import {toString} from 'string';
 

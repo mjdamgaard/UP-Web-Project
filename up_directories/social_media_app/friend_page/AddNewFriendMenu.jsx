@@ -3,7 +3,7 @@ import {fetch, post} from 'query';
 import {substring} from 'string';
 import {hasType} from 'type';
 
-import * as InputText from 'InputText.jsx';
+import * as InputText from 'InputText';
 
 
 

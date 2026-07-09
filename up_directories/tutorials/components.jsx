@@ -1,6 +1,6 @@
 
-import * as ILink from 'ILink.jsx';
-import * as ELink from 'ELink.jsx';
+import * as ILink from 'ILink';
+import * as ELink from 'ELink';
 import * as TextDisplay from "../utilities/TextDisplay.jsx";
 import * as Result0 from "./hello_world/results/result_0.jsx";
 import * as Result1 from "./hello_world/results/result_1.jsx";

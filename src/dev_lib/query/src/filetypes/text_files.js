@@ -1,6 +1,7 @@
 
 import {
   RuntimeError, payGas, CLEAR_FLAG, PromiseObject, FunctionObject, getString,
+  getPropertyFromObject,
 } from "../../../../interpreting/ScriptInterpreter.js";
 
 import {
@@ -97,9 +98,9 @@ export async function query(
     // then return the export of the given alias, except if the result is a
     // promise, in which case also wait for it first.
     let liveModule = await interpreter.import(
-      `/${ownUPNodeID}/${homeDirID}/${localPath}`, callerNode, execEnv, true
+      `/${ownUPNodeID}/${homeDirID}/${localPath}`, callerNode, execEnv, false
     );
-    let result = liveModule.get(alias);
+    let result = getPropertyFromObject(liveModule, alias);
     if (result instanceof PromiseObject) {
       result = await result.promise;
     }
@@ -139,11 +140,12 @@ export async function query(
     // when the liveModule is gotten, get and execute the function, also within
     // the same enclosed execution environment.
     let liveModule = await interpreter.import(
-      `/${ownUPNodeID}/${homeDirID}/${localPath}`, callerNode, execEnv, true
+      `/${ownUPNodeID}/${homeDirID}/${localPath}`, callerNode, execEnv, false
     );
-    let fun = liveModule.get(alias);
+    let fun = getPropertyFromObject(liveModule, alias);
     if (!(fun instanceof FunctionObject)) throw new RuntimeError(
-      `No function of name '${alias}' is exported from ${route}`
+      `No function of name '${alias}' is exported from ${route}`,
+      callerNode, execEnv
     );
     let result = interpreter.executeFunction(
       fun, inputArr, callerNode, execEnv, undefined, [CLEAR_FLAG]
@@ -162,7 +164,7 @@ export async function query(
   // postData (only JSON-encoded).
   if (queryType === "callSMF") {
     if (localPath.slice(-6) !== ".sm.js") throw new RuntimeError(
-      `Invalid route: ${route}`,
+      `Invalid file for a callSMF route: ${route}`,
       callerNode, execEnv
     );
     let [ , alias, ...inputArr] = queryPathSegments;

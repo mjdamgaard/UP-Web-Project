@@ -37,7 +37,7 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    validateJSXInstance(thisVal, "Img.jsx", callerNode, execEnv);
+    validateJSXInstance(thisVal, "Img", callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }

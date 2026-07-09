@@ -1,5 +1,5 @@
 
-import * as ILink from 'ILink.jsx';
+import * as ILink from 'ILink';
 import * as EntityMetadataPage from "./EntityMetadataPage.jsx";
 import {fetchEntityID} from "/1/1/entities.js";
 

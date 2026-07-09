@@ -1,6 +1,6 @@
 
-import * as ILink from 'ILink.jsx';
-import * as ELink from 'ELink.jsx'; 
+import * as ILink from 'ILink';
+import * as ELink from 'ELink'; 
 
 
 export function render() {

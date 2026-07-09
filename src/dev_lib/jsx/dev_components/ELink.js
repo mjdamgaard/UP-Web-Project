@@ -47,7 +47,7 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    validateJSXInstance(thisVal, "ELink.jsx", callerNode, execEnv);
+    validateJSXInstance(thisVal, "ELink", callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }
@@ -121,14 +121,14 @@ export const methods = [
 export const actions = {
   "getIsAllowed": new DevFunction(
     "getIsAllowed", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateJSXInstance(thisVal, "ELink.jsx", callerNode, execEnv);
+      validateJSXInstance(thisVal, "ELink", callerNode, execEnv);
       let {href} = thisVal.jsxInstance.props;
       return getIsAllowed(href, execEnv);
     }
   ),
   "focus": new DevFunction(
     "focus", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateJSXInstance(thisVal, "ELink.jsx", callerNode, execEnv);
+      validateJSXInstance(thisVal, "ELink", callerNode, execEnv);
       let {jsxInstance} = thisVal;
       if (jsxInstance.canGrabFocus()) {
         thisVal.jsxInstance.domNode.focus();
@@ -141,7 +141,7 @@ export const actions = {
   ),
   "blur": new DevFunction(
     "blur", {}, function({thisVal, callerNode, execEnv}, []) {
-      validateJSXInstance(thisVal, "ELink.jsx", callerNode, execEnv);
+      validateJSXInstance(thisVal, "ELink", callerNode, execEnv);
       thisVal.jsxInstance.domNode.blur();
     }
   ),

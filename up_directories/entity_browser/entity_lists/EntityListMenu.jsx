@@ -5,7 +5,7 @@ import {map, concat} from 'array';
 import {fetchOrCreateEntityID} from "/1/1/entities.js";
 
 import * as AddEntityMenu from "./AddEntityMenu.jsx";
-import * as InputText from 'InputText.jsx';
+import * as InputText from 'InputText';
 import * as EntityReference from "../../utilities/EntityReference.jsx";
 import * as DropDownBox from "../../utilities/DropDownBox.jsx";
 
