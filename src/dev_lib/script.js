@@ -34,7 +34,7 @@ export const exec = new DevFunction(
 
     // Then call interpreter.executeModule() and return the resulting
     // LiveJSModule instance.
-    let {liveModules} = execEnv.scriptVars;
+    let {liveModules} = execEnv.globals;
     let globalEnv = execEnv.getGlobalEnv();
     return await interpreter.executeModule(
       parsedScript, lexArr, strPosArr, moduleString, modulePath, globalEnv,

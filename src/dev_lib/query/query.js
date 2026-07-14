@@ -135,7 +135,7 @@ export async function _query(
   callerNode, execEnv, interpreter,
   ancestorModules = [], finalCallbacks = [],
 ) {
-  let {liveModules, queryResults, parsedScripts} = execEnv.scriptVars;
+  let {liveModules, queryResults, parsedScripts} = execEnv.globals;
   let isPrivate = isPost || getPropertyFromObject(options, "isPrivate");
 
   // First split the input route along each (optional) occurrence of ';',
@@ -202,7 +202,7 @@ export async function _query(
       let devMod = interpreter.staticDevLibs.get(route);
       if (devMod) {
         liveModule = new LiveJSModule(
-          route, Object.entries(devMod), execEnv.scriptVars
+          route, Object.entries(devMod), execEnv.globals
         );
         liveModules.set(route, liveModule);
       }
@@ -215,7 +215,7 @@ export async function _query(
         try {
           let liveModulePromise = import(devLibURL).then(devMod => {
             return new LiveJSModule(
-              route, Object.entries(devMod), execEnv.scriptVars
+              route, Object.entries(devMod), execEnv.globals
             );
           }).catch(
             err => new ErrorWrapper(err)

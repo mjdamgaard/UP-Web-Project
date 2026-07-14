@@ -297,8 +297,8 @@ export function openAccountPage() {
 
 export function goToProfilePage(_, urlContext) {
   document.getElementById("up-app-root").click();
-  let url = "/profile", stateJSON = 'null';
-  let urlData = {url: url, stateJSON: stateJSON};
+  let pathname = "/profile";
+  let urlData = {pathname: pathname, state: null};
   urlContext.setVal(urlData);
   window.history.pushState(null, "", "/profile");
 }

@@ -5,34 +5,20 @@ import {
   OBJECT_PROTOTYPE, Environment, ARRAY_PROTOTYPE, FunctionObject, Exception,
   getStringOrSymbol, getPropertyFromObject, getPropertyFromPlainObject,
   jsonStringify, ArgTypeError, decrCompGas, getAbsolutePath, ErrorWrapper,
-  CSSModule, isArray, verifyType,
+  CSSModule, isArray, verifyType, verifyTypes,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
 } from "../query/src/flags.js";
 
-const CLASS_NAME_REGEX = /^ *([a-z][a-z0-9_-]* *)*$/;
+const NODE_ID = "1";
 
+const CLASS_NAME_REGEX = /^ *([a-z][a-z0-9_-]* *)*$/;
 export const HREF_REGEX =
   /^(\.{0,2}\/)?(([;.~a-zA-Z0-9_\-]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+(\/([;.~a-zA-Z0-9_\-]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+)*)?$/;
-export const HREF_CD_START_REGEX = /^\.{0,2}\//;
+export const HREF_REL_START_REGEX = /^(\.~){0,2}\//;
 
 export const CAN_CREATE_APP_FLAG = Symbol("can-create-app");
-
-// These symbol can be imported by the users and thrown from a render()
-// function in order to make the component instance immediately either
-// both reinitialize and rerender or just rerender, respectively.
-// TODO: Reimplement these symbols as special exceptions instead, and then also
-// implement rerenderNow() and resetNow() methods for JSXInstanceInterface,
-// which throws these exceptions. And make sure to pass thisVal to these
-// exceptions in a way such that JSXInstance.render() can access them and check
-// that they match the current jsxInstance, but where the user can't access
-// them. (And don't just extract thisVal from execEnv, as that doesn't seem
-// robust enough.)  
-/* export */ const reinitializeSymbol = Symbol("reinitialize");
-/* export */ const rerenderSymbol = Symbol("rerender");
-
-
 
 const globalStyleSheets = [...document.styleSheets].map(cssStyleSheet => {
   // We copy each cssStyleSheet element and return a new "constructed"
@@ -70,21 +56,22 @@ export const createJSXApp = new DevFunction(
       CLEAR_FLAG, CLIENT_TRUST_FLAG, CAN_POST_FLAG
     ]});
 
-    // Create the app's root component instance (but don't render it yet).
-    let rootInstance = new JSXInstance(
-      appComponent, "root", "Root", undefined, callerNode, appEnv
-    );
+    // Provide some global contexts for getting user data and URL data.
+    let globalContextProvisions = {};
+    addUserContexts(globalContextProvisions, interpreter, appEnv);
+    let [
+      segmentContextProvisions, segmentsRef, historyStateRef
+    ] = getURLContexts(interpreter, appEnv);
 
-    // Add some props to the root instance for getting user data and URL data,
-    // and for pushing/replacing a new browser session history state.
-    props = addUserRelatedProps(
-      props, rootInstance, interpreter, callerNode, appEnv
-    );
-    props = addURLRelatedProps(
-      props, rootInstance, interpreter, callerNode, appEnv
-    );
-    props = addStorageRelatedProps(
-      props, rootInstance, interpreter, callerNode, appEnv
+    // Create the app's root component instance.
+    let rootInstance = new JSXInstance(
+      appComponent, "root", "Root", undefined, callerNode, appEnv, {
+        rerenderQueue: {head: undefined, tail: undefined},
+        globalContextProvisions: globalContextProvisions,
+        segmentContextProvisions: segmentContextProvisions,
+        segmentsRef: segmentsRef,
+        historyStateRef: historyStateRef,
+      }
     );
 
     // Then render the root instance and insert it into the document.
@@ -93,6 +80,26 @@ export const createJSXApp = new DevFunction(
       props, false, interpreter, callerNode, appEnv, false, true,
     );
     rootParent.replaceChildren(appNode);
+
+    // And add a callback for the popstate event (set in index.js) to go
+    // through any mutations in the history.state object and set a new
+    // state.history value for each instance whose data was mutated.
+    execEnv.globals.contexts.urlContext.getVal().popstateCallbacks.set(
+      "updateHistoryStates", (urlData, prevURLData) => {
+        let state = urlData.state;
+        let prevState = prevURLData.state;
+        rootInstance.forAllDifferences(
+          state ?? {}, prevState ?? {}, (instance, histState) => {
+            let newState = {};
+            forEachValue(instance.state, callerNode, execEnv, (val, key) => {
+              newState[key] = val;
+            }, true);
+            newState.history = histState;
+            instance.setState(newState, false, true);
+          },
+        );
+      }
+    );
   }
 );
 
@@ -106,22 +113,21 @@ class JSXInstance {
 
   constructor (
     componentObject, key, tagName, parentInstance = undefined,
-    callerNode, callerEnv
+    callerNode, callerEnv, globals = undefined
   ) {
     verifyType(componentObject, "object");
     this.componentObject = componentObject;
-    this.key = getString(key, callerEnv);
+    this.key = key;
+    this.keyPropStr = undefined;
     this.tagName = tagName;
     this.parentInstance = parentInstance;
+    this.globals = parentInstance?.globals ?? globals;
     this.domNode = undefined;
     this.isDecorated = undefined;
     this.childInstances = new Map();
     this.props = undefined;
-    this.state = undefined;
-    this.ref = undefined;
-    this.style = undefined;
+    this.state = {};
     this.prevState = undefined;
-    this.stateIsSet = false;
     this.contextProvisions = {};
     this.contextSubscriptions = {};
     this.callerNode = callerNode;
@@ -131,11 +137,13 @@ class JSXInstance {
     this.isFailed = undefined;
     this.isFirstRender = true;
     this.renderIsQueued = true;
-    this.forceWhenRerendering = undefined;
+    this.forceWhenRerendering = false;
+    this.depth = (parentInstance?.depth ?? -1) + 1;
     this.actions = {};
     this.methods = {};
     this.events = {};
-    this.constants = undefined;
+    this.segmentIndex = parentInstance?.nextSegmentIndex ?? 0;
+    this.nextSegmentIndex = this.segmentIndex;
   }
 
   get componentPath() {
@@ -146,7 +154,7 @@ class JSXInstance {
 
   render(
     props = {}, isDecorated, interpreter, callerNode, callerEnv,
-    replaceSelf = true, force = false,
+    replaceSelf = true, force = this.forceWhenRerendering,
   ) {
     decrCompGas(callerNode, callerEnv, 5);
     this.isDecorated = isDecorated;
@@ -187,9 +195,8 @@ class JSXInstance {
       new Environment(callerEnv, undefined, {flags: flags});
 
 
-    // On the first render only, initialize the state, and record the 'ref'
-    // prop as well (which cannot be changed by a subsequent render). Also
-    // initialize the actions, methods, and events of the instance.
+    // On the first render only, initialize the state, and also initialize the
+    // actions, methods, and events of the instance, and set the keyPropStr.
     if (this.isFirstRender) {
       // Set the actions, methods, and events.
       this.prepareActionsMethodsAndEvents(callerNode, callerEnv);
@@ -197,10 +204,24 @@ class JSXInstance {
       // Initialize the state.
       this.initialize(interpreter, callerNode, compEnv, replaceSelf);
 
-      // And store the ref prop.
-      this.ref = props["ref"] ?? {};
+      // Set keyPropsStr, which can be used by a component to ensure that it
+      // doesn't inherit or give away unwanted states, including cached states.
+      this.keyPropStr = this.getKeyPropStr(props, callerNode, callerEnv);
     }
-    props = {...props, ref: this.ref};
+
+    // And on all subsequent renders, make sure to reset this.nextSegmentIndex
+    // and unsubscribe from the corresponding URL segments before the render()
+    // function is called.
+    else {
+      let prevNextSegment = this.nextSegmentIndex;
+      if (prevNextSegment > this.segmentIndex) {
+        this.nextSegmentIndex = this.segmentIndex;
+        let {segmentContextProvisions} = this.globals;
+        for (let i = this.segmentIndex; i < prevNextSegment; i++) {
+          JSXInstance.unsubscribeFromContext(this, segmentContextProvisions[i]);
+        }
+      }
+    }
 
 
     // Then get the component's render() function.
@@ -222,31 +243,16 @@ class JSXInstance {
     // "reinitialize" symbol, immediately reinitialize and rerender the
     // component instance.
     let jsxElement;
-    let repeat;
-    do {
-      repeat = false;
-      try {
-        jsxElement = interpreter.executeFunction(
-          renderFun, [props], callerNode, compEnv,
-          new JSXInstanceInterface(this)
-        );
-      }
-      catch (err) {
-        if (
-          err instanceof Exception &&
-          (err.val === reinitializeSymbol || err.val === rerenderSymbol)
-        ) {
-          if (err.val === reinitializeSymbol) {
-            this.initialize(interpreter, callerNode, compEnv, replaceSelf);
-          }
-          repeat = true;
-        }
-        else {
-          return this.failComponentAndGetDOMNode(err, replaceSelf);
-        }
-      }
-      this.isFirstRender = false;
-    } while (repeat);
+    try {
+      jsxElement = interpreter.executeFunction(
+        renderFun, [props], callerNode, compEnv,
+        new JSXInstanceInterface(this)
+      );
+    }
+    catch (err) {
+      return this.failComponentAndGetDOMNode(err, replaceSelf);
+    }
+    this.isFirstRender = false;
 
     // Initialize a marks Map to keep track of which existing child instances
     // was used or created in the render, such that instances that are no
@@ -308,10 +314,6 @@ class JSXInstance {
 
 
   initialize(interpreter, callerNode, compEnv, replaceSelf = true) {
-    this.state ??= {};
-    this.stateIsSet = false;
-    this.constants = undefined;
-
     // Set renderIsQueued = true temporarily to avoid redundant rerenders if
     // setState() is called synchronously within initialize().
     this.renderIsQueued = true;
@@ -331,15 +333,12 @@ class JSXInstance {
       }
     }
 
-    // If this.stateIsSet has not been set to true by a synchronous call to
-    // setState() within initialize(), then set the state to the return value
-    // of initialize(), unless that value is undefined or a promise, in which
-    // case set the state to an empty object.
-    if (!this.stateIsSet) {
-      this.state = (state instanceof PromiseObject) ? {} : state ?? {};
+    // If initialize returns something defined, that is not a PromiseObject,
+    // set the state to the return value.
+    if (state !== undefined && !(state instanceof PromiseObject)) {
+      this.state = state;
     }
 
-    this.stateIsSet = true;
     this.renderIsQueued = false;
   }
 
@@ -441,22 +440,45 @@ class JSXInstance {
       // First we check if the childInstances to see if the child component
       // instance already exists, and if not, create a new one. In both cases,
       // we also make sure to mark the childInstance as being used.
-      let key = getString(jsxElement.key, callerEnv);
+      let key = jsxElement.key ?? jsxElement.tagName;
       if (marks.get(key)) throw new RuntimeError(
         `Key "${key}" is already being used by another child component ` +
         "instance",
         jsxElement.node, jsxElement.decEnv
       );
       let childInstance = this.childInstances.get(key);
-      if (
-        !childInstance ||
-        childInstance.componentObject !== componentObject
-      ) {
+      if (!childInstance) {
         childInstance = new JSXInstance(
           componentObject, key, jsxElement.tagName, this,
           jsxElement.node, jsxElement.decEnv
         );
         this.childInstances.set(key, childInstance);
+      }
+      else if (childInstance.componentObject !== componentObject) {
+        throw new RuntimeError(
+          `The same key, "${key}", was used for different components, ` +
+          `first ${childInstance.tagName}, then ${jsxElement.tegName}`,
+          jsxElement.node, jsxElement.decEnv
+        );
+      }
+      else if (childInstance.segmentIndex !== this.nextSegmentIndex) {
+        throw new RuntimeError(
+          `The same child component, ${childInstance.tagName}, received ` +
+          "different URL advancements on different renders",
+          jsxElement.node, jsxElement.decEnv
+        );
+      }
+      else if (
+        !childInstance.compareKeyProps(jsxElement.props, callerNode, callerEnv)
+      ) {
+        // If the keyProps have changed, which are props whose names are
+        // contained in a 'keyProps' name array export, reset the child
+        // instance, discarding the old one immediately.
+        childInstance.dismount();
+        childInstance = new JSXInstance(
+          componentObject, key, jsxElement.tagName, this,
+          jsxElement.node, jsxElement.decEnv
+        );
       }
       marks.set(key, true);
 
@@ -520,17 +542,6 @@ class JSXInstance {
           }
 
           /* Mouse events */
-          // WARNING: In all documentations of this 'onClick prop, it should be
-          // warned that one should not call a callback from the parent
-          // instance (e.g. handed down through ref), unless one is okay with
-          // bleeding the CAN_POST and REQUEST_ORIGIN privileges granted to
-          // this onClick handler function into the parent instance.
-          // *Well, this is done quite simply: It should be explained how click
-          // event grants the function post privileges. And then it should be
-          // warned that you do not want to call unknown functions, as this
-          // produces a vulnerability where other components can corrupt the
-          // data that the component in question is able to affect. (Okay, not
-          // *so* simple, but doable..)
           case "onClick":
             eventProperty ??= "onclick";
           case "onDBLClick":
@@ -754,6 +765,24 @@ class JSXInstance {
   }
 
 
+  compareKeyProps(props, node, env) {
+    let newKeyPropStr = this.getKeyPropStr(props, node, env);
+    return newKeyPropStr === this.keyPropStr;
+  }
+
+  getKeyPropStr(props, node, env) {
+    let keyProps = getPropertyFromObject(this.componentObject, "keyProps");
+    if (!keyProps) return "";
+    let keyPropStr = "";
+    forEachValue(keyProps, node, env, propName => {
+      propName = getString(propName, env);
+      newKeyPropStr = newKeyPropStr + jsonStringify(props[propName]);
+    }, true);
+    return keyPropStr;
+  }
+
+
+
   getCSSStyleSheets(innerStyleProp, node, env) {
     let ret = [], isValid = true;
     if (innerStyleProp instanceof CSSModule) {
@@ -782,12 +811,33 @@ class JSXInstance {
   }
 
 
-  getFullKey() {
-    return this.parentInstance ?
-      this.parentInstance.getFullKey() + "." + this.key :
-      this.key;
-  }
 
+  setState(newState, force = false, noCacheUpdates = false) {
+    // If the first render has already happened, check if the new state
+    // contains a "history", "session" or "local" property, which are each
+    // backed up by caches in the history.state, the sessionStorage, or the
+    // localStorage object, respectively. And if it does, update the given
+    // caches.
+    if (!this.isFirstRender && !noCacheUpdates) {
+      let newHistoryState = getPropertyFromObject(newState, "history");
+      let prevHistoryState = getPropertyFromObject(this.state, "history");
+      let newSessionState = getPropertyFromObject(newState, "session");
+      let newLocalState = getPropertyFromObject(newState, "local");
+      if (newHistoryState) {
+        // TODO: ...
+      }
+      if (newSessionState) {
+        // TODO: ...
+      }
+      if (newLocalState) {
+        // TODO: ...
+      }
+    }
+
+    // Then set the new state and queue a rerender.
+    this.jsxInstance.state = newState;
+    this.jsxInstance.queueRerender(interpreter, force);
+  }
 
 
 
@@ -940,24 +990,64 @@ class JSXInstance {
 
   queueRerender(interpreter, force = true) {
     this.forceWhenRerendering ||= force;
-
-    // Unless one is already currently queued, queue a rerender that is then
-    // executed on the next tick of the event loop.
-    if (!this.renderIsQueued) {
-      this.renderIsQueued = true;
-      Promise.resolve().then(() => {
-        if (!this.isDiscarded) {
-          // Make sure to use the same callerNode and callerEnv as on the
-          // previous render, which is done in order to not increase the memory
-          // for every single triggered event or call.
-          this.render(
-            this.props, this.isDecorated, interpreter,
-            this.callerNode, this.callerEnv, true, this.forceWhenRerendering
-          );
-        }
-      });
+    if (this.renderIsQueued) {
+      return;
     }
+    this.renderIsQueued = true;
+
+    // Create the callback to add to the rerender queue.
+    let rerenderCallback = () => {
+      if (!this.isDiscarded) {
+        // Make sure to use the same callerNode and callerEnv as on the
+        // previous render, which is done in order to not increase the memory
+        // for every single triggered event or call.
+        this.render(
+          this.props, this.isDecorated, interpreter,
+          this.callerNode, this.callerEnv, true, this.forceWhenRerendering
+        );
+      }
+    }
+
+    // Queue the rerender callback at the last place in the queue where
+    // this.depth is still greater than or equal to those of the entries before
+    // it in the queue.
+    let ownDepth = this.depth;
+    let nextEntry = this.globals.rerenderQueue;
+    if (!nextEntry.head) {
+      nextEntry.head = {depth: ownDepth, callback: rerenderCallback};
+    }
+    else {
+      let prevEntry;
+      while (nextEntry.tail?.head?.depth <= ownDepth) {
+        prevEntry = nextEntry;
+        nextEntry = nextEntry.tail;
+      }
+      let newEntry = {
+        head: {depth: ownDepth, callback: rerenderCallback},
+        tail: prevEntry?.tail
+      };
+      if (prevEntry) {
+        prevEntry.tail = newEntry;
+      }
+      else {
+        this.globals.rerenderQueue = newEntry;
+      }
+    }
+
+    // Then queue a callback to run on the next tick of the event loop, which
+    // goes through every entry of the rerender queue, dequeues it and calls
+    // its rerender callback, and takes care that each callback might queue new
+    // entries itself.
+    Promise.resolve().then(() => {
+      let nextHead, globals = this.globals;
+      while (nextHead = globals.rerenderQueue.head) {
+        globals.rerenderQueue =
+          globals.rerenderQueue.tail ?? {head: undefined, tail: undefined};
+        nextHead.callback();
+      }
+    });
   }
+
 
   queueFullRerender(interpreter, force = true) {
     this.queueRerender(interpreter, force);
@@ -967,31 +1057,64 @@ class JSXInstance {
   }
 
 
-  changePropsAndQueueRerender(newProps, interpreter, deletePrevious = false) {
+  changePropsAndQueueRerender(
+    newProps, interpreter, deletePrevious = false, force = false
+  ) {
     if (deletePrevious) {
       this.props = newProps;
     } else {
       this.props = {...this.props, ...newProps};
     }
-    this.queueRerender(interpreter);
+    this.queueRerender(interpreter, force);
   }
 
 
 
 
-  setContext(key, context, force = false, interpreter) {
-    this.contextProvisions ??= {};
-    let {subscribers, prevContext} = this.contextProvisions[key] ?? {};
-    this.contextProvisions[key] = {
-      subscribers: subscribers ?? new Map(), context: context
-    };
+
+  static createContextProvision(val) {
+    return {subscribers: new Map(), context: val};
+  }
+
+  static updateContextProvision(
+    contextProvision, val, force = false, interpreter
+  ) {
+    let prevVal = contextProvision.context;
+    contextProvision.context = val;
     if (
-      subscribers && subscribers.size > 0 &&
-      (force || !deepCompareExceptMutableAndRef(context, prevContext))
+      subscribers.size > 0 &&
+      (force || !deepCompareExceptMutableAndRef(val, prevVal))
     ) {
       subscribers.forEach((_, jsxInstance) => {
         jsxInstance.queueRerender(interpreter);
       });
+    }
+  }
+
+  static subscribeToContext(jsxInstance, contextProvision, ignore = false) {
+    if (!ignore) {
+      contextProvision.subscribers.set(jsxInstance, true);
+    } else {
+      contextProvision.subscribers.delete(jsxInstance);
+    }
+    return contextProvision.context;
+  }
+
+  static unsubscribeFromContext(jsxInstance, contextProvision) {
+    contextProvision.subscribers.delete(jsxInstance);
+    return contextProvision.context;
+  }
+
+
+  setContext(key, val, force = false, interpreter) {
+    let contextProvision = this.contextProvisions[key];
+    if (!contextProvisions) {
+      this.contextProvisions[key] = JSXInstance.createContextProvision(val);
+    }
+    else {
+      JSXInstance.updateContextProvision(
+        contextProvision, key, val, force, interpreter
+      );
     }
   }
 
@@ -1001,31 +1124,35 @@ class JSXInstance {
     } else {
       delete this.contextSubscriptions[key];
     }
-    let parentInstance = this.parentInstance;
-    while (parentInstance) {
-      let contextProvision = parentInstance.contextProvisions[key];
+    let {parentInstance, globals} = this;
+    let contextProvisions =
+      parentInstance?.contextProvisions ?? globals.globalContextProvisions;
+    while (contextProvisions) {
+      let contextProvision = contextProvisions[key];
       if (contextProvision) {
-        if (!ignore) {
-          contextProvision.subscribers.set(this, true);
-        } else {
-          contextProvision.subscribers.delete(this);
-        }
-        return contextProvision.context;
+        return JSXInstance.subscribeToContext(
+          this, contextProvision, ignore
+        );
       }
-      parentInstance = parentInstance.parentInstance;
+      ({parentInstance, globals} = parentInstance ?? {});
+      contextProvisions =
+        parentInstance?.contextProvisions ?? globals?.globalContextProvisions;
     }
   }
 
   ignoreContext(key) {
     delete this.contextSubscriptions[key];
-    let parentInstance = this.parentInstance;
-    while (parentInstance) {
-      let contextProvision = parentInstance.contextProvisions[key];
+    let {parentInstance, globals} = this;
+    let contextProvisions =
+      parentInstance?.contextProvisions ?? globals.globalContextProvisions;
+    while (contextProvisions) {
+      let contextProvision = contextProvisions[key];
       if (contextProvision) {
-        contextProvision.subscribers.delete(this);
-        return contextProvision.context;
+        return JSXInstance.unsubscribeFromContext(this, contextProvision);
       }
-      parentInstance = parentInstance.parentInstance;
+      ({parentInstance, globals} = parentInstance ?? {});
+      contextProvisions =
+        parentInstance?.contextProvisions ?? globals?.globalContextProvisions;
     }
   }
 
@@ -1035,19 +1162,25 @@ class JSXInstance {
         this.ignoreContext(key);
       });
     }
+    let {nextSegmentIndex, globals: {segmentContextProvisions}} = this;
+    if (nextSegmentIndex > this.segmentIndex) {
+      for (let i = this.segmentIndex; i <= nextSegmentIndex; i++) {
+        JSXInstance.unsubscribeFromContext(this, segmentContextProvisions[i]);
+      }
+    }
   }
 
   getOwnContext(key) {
     let contextProvisions = this.contextProvisions;
     if (contextProvisions) {
-      return contextProvisions.get(key)?.context;
+      return contextProvisions[key].context;
     }
   }
 
 
   reset(interpreter, node, env) {
     this.initialize(interpreter, node, env);
-    this.queueRerender(interpreter);
+    this.queueRerender(interpreter, true);
   }
 
 
@@ -1055,6 +1188,173 @@ class JSXInstance {
     let focusedNode = document.activeElement;
     return !(focusedNode && focusedNode.classList.contains("locked-focus"));
   }
+
+
+  advanceURL(increment = 1) {
+    this.nextSegmentIndex += increment;
+  }
+
+  getSegments(start = 0, end = undefined) {
+    let {segmentRef, segmentContextProvisions} = this.globals;
+    let segments = segmentsRef[0];
+    let firstInd = this.segmentIndex + start;
+    let lastInd = (end === undefined || end < 0) ?
+      segments.length - 1 + (end ?? 0) :
+      this.segmentIndex + end - 1;
+    let ret = segments.slice(firstInd, lastInd);
+    for (let i = firstInd; i <= lastInd; i++) {
+      JSXInstance.subscribeToContext(this, segmentContextProvisions[i]);
+    }
+    return ret;
+  }
+
+
+  pushOrReplaceURLAndState(
+    url, state = null, copyOtherStates = false, doReplace, callerNode, execEnv
+  ) {
+    // Transform the url argument if it is a relative path. Here we also
+    // extend the relative path syntax to include either "~/", or "~~/", or a
+    // sequence of "~~/"'s, at the start, where "~/" goes up to the nearest
+    // point in the URL that was "advanced" to by an advanceURL() call, which
+    // can include the current point as well (meaning the "~/" won't subtract
+    // from the URL), and "~~/" goes up to the second-nearest point (again
+    // where we include the current position as potential "nearest point"). In
+    // other wards, "~/" and "~~/" works very similarly to "./" and "../", only
+    // where whole segment groups, defined by advanceURL() calls, are skipped
+    // at once, rather than only single segments. 
+    let pathname = this.getPathname(url, callerNode, execEnv);
+
+    // Also validate the resulting pathname.
+    this.validatePathname(pathname, callerNode, execEnv);
+
+    // And sanitize state by calling jsonStringify and then parsing it back.
+    state = JSON.parse(jsonStringify(state));
+
+    // If copyOtherStates is false set historyStateRef[0] to an empty object.
+    if (!copyOtherStates) {
+      historyStateRef[0] = {};
+    }
+
+    // Then update the historyStateRef[0], which, if non-empty, has a tree
+    // structure that mirrors the JSXInstance tree, with instance keys as node
+    // keys. The following method call thus sets the state on the corresponding
+    // node in the historyStateRef[0] tree, and creates the node if it was not
+    // there already. (We also append this.keyPropStr to each node in the tree,
+    // namely such that a component is sure not to inherit or give away its
+    // history state to another similar component with different key props.)
+    this.updateInstanceKeyTreeStore(historyStateRef[0] ??= {}, state);
+
+    // Now call window.history.pushState()/replaceState().
+    let funName = doReplace ? "replaceState" : "pushState";
+    window.history[funName](historyStateRef[0], "", pathname);
+  }
+
+
+  getPathname(url, node, env) {
+    // Prepend './' to the url if it doesn't start with /^(\.~){0,2}\//.
+    if (!HREF_REL_START_REGEX.test(url)) url = './' + url;
+
+    // If if it starts with (~/)+, prepend the rest to "/" + segments-
+    // .slice(0, this.segmentIndex + 1).
+    if (url.substring(0, 2) === "~/") {
+      do {
+        url = url.substring(2);
+      } while (url.substring(0, 2) === "~/");
+      let {globals: {segments}, segmentIndex} = this;
+      url = "/" + segments.slice(0, segmentIndex + 1).join("/") + "/" + url;
+    }
+
+    // Else if the url start with a number of  "~~/"'s, go up the ancestor
+    // instances until that number of ancestor instances have had a different
+    // segmentIndex, and then use the last segmentIndex that was reached.
+    if (url.substring(0, 3) === "~~/") {
+      let segmentIndex, parentInstance = this.parentInstance;
+      do {
+        while (parentInstance?.segmentIndex === segmentIndex) {
+          parentInstance = parentInstance.parentInstance;
+        }
+        if (!parentInstance) throw new RuntimeError(
+          'Relative URL using "~~/" goes beyond the start of the current URL',
+          node, env
+        );
+        segmentIndex = parentInstance.segmentIndex;
+        url = url.substring(3);
+      } while (url.substring(0, 3) === "~~/");
+      let {segments} = this.globals;
+      url = "/" + segments.slice(0, segmentIndex + 1).join("/") + "/" + url;
+    }
+
+    // Then call getAbsolutePath() to handle any "./" and "../" segments.
+    let pathname = getAbsolutePath(this.pathname, url,  node, env);
+    pathname = pathname.replace(/\/$/, "");
+    return pathname;
+  }
+
+
+  validatePathname(pathname, callerNode, execEnv) {
+    // Validate url, and prepend './' to it if doesn't start with /.?.?\//.
+    if (!HREF_REGEX.test(pathname)) throw new ArgTypeError(
+      "Invalid URL pathname: " + pathname,
+      callerNode, execEnv
+    );
+  }
+
+
+  updateInstanceKeyTreeStore(treeObject, val) {
+    this.forEachAncestor(true, instance => {
+      treeObject = treeObject["/" + instance.key] ??= {};
+      if (instance.keyPropStr) {
+        treeObject = treeObject[instance.keyPropStr] ??= {};
+      }
+    });
+    let prevVal = treeObject["."];
+    treeObject["."] = val;
+    return prevVal;
+  }
+
+  forAllDifferences(treeObject1, treeObject2, callback) {
+    let keys = [...new Set([
+      ...Object.keys(treeObject1)]), ...Object.keys(treeObject2)
+    ];
+    keys.forEach(key => {
+      let val1 = treeObject1[key], val2 = treeObject2[key];
+
+      // If key == "." representing the node's value, compare the two values to
+      // see if callback should be called on them.
+      if (key === ".") {
+        if (!deepCompare(val1, val1)) {
+          callback(this, val1, val2);
+        }
+      }
+
+      // Else if the key is of the form "/" + instanceKey, get the
+      // corresponding child instance to call method on recursively.
+      else if (key[0] === "/") {
+        key = key.substring(1);
+        let childInstance = this.childInstances.get(key);
+        if (childInstance) {
+          childInstance.forAllDifferences(val1 ?? {}, val2 ?? {}, callback);
+        }
+      }
+
+      // Else if the key is a propKeyStr (which will always start with '"' if
+      // non-empty), call this method recursively on the same instance.
+      else {
+        this.forAllDifferences(val1 ?? {}, val2 ?? {}, callback);
+      }
+    });
+  }
+
+  forEachAncestor(includeSef, callback, indRef = [0]) {
+    let {parentInstance} = this;
+    if (parentInstance) {
+      parentInstance.forEachAncestorKey(true, callback, indRef);
+    }
+    if (includeSef) {
+      callback(this, indRef[0]++);
+    }
+  }
+
 }
 
 
@@ -1072,24 +1372,30 @@ export class JSXInstanceInterface extends ObjectObject {
       /* Properties */
       "props": this.jsxInstance.props,
       "state": this.jsxInstance.state ?? {},
-      "ref": this.jsxInstance.ref ?? {},
       "component": this.jsxInstance.componentObject,
       "isFirstRender": this.jsxInstance.isFirstRender,
       /* Methods */
+      "setState": this.setState,
       "do": this.do,
       "trigger": this.trigger,
       "call": this.call,
       "doAfterRender": this.doAfterRender,
-      "doAfterFirstRender": this.doAfterFirstRender,
-      "setState": this.setState,
       "getCurrent": this.getCurrent,
       "rerender": this.rerender,
       "setContext": this.setContext,
       "getContext": this.getContext,
       "ignoreContext": this.ignoreContext,
       "getOwnContext": this.getOwnContext,
-      "constants": this.declareOrCheckConstants,
       "reset": this.reset,
+      "advanceURL": this.advanceURL,
+      "getSegments": this.getSegments,
+      "getFirstSegment": this.getFirstSegment,
+      "getPath": this.getPath,
+      "pushURL": this.pushURL,
+      "replaceURL": this.replaceURL,
+      "back": this.back,
+      "forward": this.forward,
+      "go": this.go,
       "canGrabFocus": this.canGrabFocus,
       "getBoundingClientRect": this.getBoundingClientRect,
       "getScrollData": this.getScrollData,
@@ -1098,6 +1404,28 @@ export class JSXInstanceInterface extends ObjectObject {
       "loop": this.loop,
     });
   }
+
+  // setState() assigns to jsxInstance.state immediately, but will not reassign
+  // this.state. However, whenever an action is called, method, or event is
+  // called/triggered, the JSXInstanceInterface object bound to 'this' for the
+  // corresponding action will always be a fresh instance with an (initially)
+  // up-to-date this.state. And if wanting to access the current state after it
+  // has potentially been changed, you can always call this.getCurrent().state
+  // rather than this.state.
+  // TODO: Remember to check isFirstRender before updating any caches.
+  setState = new DevFunction(
+    "setState", {}, (
+      {callerNode, execEnv, interpreter}, [newStateOrCallback, force = false]
+    ) => {
+      let newState = newStateOrCallback;
+      if (newState instanceof FunctionObject) {
+        newState = interpreter.executeFunction(
+          newStateOrCallback, [this.jsxInstance.state], callerNode, execEnv
+        );
+      }
+      this.jsxInstance.setState(newState, force);
+    }
+  );
 
 
   // See the comments above for what do(), trigger(), and call() does.
@@ -1142,43 +1470,6 @@ export class JSXInstanceInterface extends ObjectObject {
     }
   );
 
-  // doAfterFirstRender() is similar to doAfterRender(), but it must be called
-  // before the first render() call has returned to have any effect.
-  doAfterFirstRender = new DevFunction(
-    "doAfterFirstRender", {},
-    ({callerNode, execEnv, interpreter}, [actionKey, input]) => {
-      if (!this.jsxInstance.isFirstRender) return;
-      setTimeout(
-        () => this.jsxInstance.do(
-          actionKey, input, interpreter, callerNode, execEnv
-        ),
-        0
-      );
-    }
-  );
-
-  // setState() assigns to jsxInstance.state immediately, which means that the
-  // state changes will be visible to all subsequently triggered events and
-  // calls to this instance. However, since the render() function can only
-  // access the state via 'this.state', the state changes will not be visible
-  // in the continued execution of a render() after it has set the new state,
-  // but only be visible on a subsequent rerender.
-  setState = new DevFunction(
-    "setState", {}, (
-      {callerNode, execEnv, interpreter}, [newStateOrCallback, force = false]
-    ) => {
-      let newState = newStateOrCallback;
-      if (newState instanceof FunctionObject) {
-        newState = interpreter.executeFunction(
-          newStateOrCallback, [this.jsxInstance.state], callerNode, execEnv
-        );
-      }
-      this.jsxInstance.state = newState;
-      this.jsxInstance.stateIsSet = true;
-      this.jsxInstance.queueRerender(interpreter, force);
-    }
-  );
-
   // getCurrent() returns a copy of this JSXInstanceInterface, only with all
   // the properties (like props and state) updated to the current ones.
   getCurrent = new DevFunction(
@@ -1189,9 +1480,11 @@ export class JSXInstanceInterface extends ObjectObject {
 
   // rerender() is equivalent of calling setState() on the current state; it
   // just forces a rerender.
-  rerender = new DevFunction("rerender", {}, ({interpreter}, []) => {
-    this.jsxInstance.queueRerender(interpreter);
-  });
+  rerender = new DevFunction(
+    "rerender", {}, ({interpreter}, [force = true]) => {
+      this.jsxInstance.queueRerender(interpreter, force ? true : false);
+    }
+  );
 
 
   // setContext(key, context, force = false) provides a context identified by
@@ -1200,9 +1493,10 @@ export class JSXInstanceInterface extends ObjectObject {
   // with a different value for that key, or with the force argument set to
   // true, all the subscribing instances will rerender.
   setContext = new DevFunction(
-    "setContext", {typeArr: ["object key", "any?", "any?"]},
+    "setContext", {typeArr: ["object key|array", "any?", "any?"]},
     ({interpreter}, [key, context, force = false]) => {
-      this.jsxInstance.setContext(key, context, force, interpreter);
+      let keyArr = this.getKeyArr(key);
+      this.jsxInstance.setContext(keyArr, context, force, interpreter);
     },
   );
 
@@ -1236,32 +1530,78 @@ export class JSXInstanceInterface extends ObjectObject {
   );
 
 
-  // constants(), which is a shorthand for declareOrCheckConstants(), is used
-  // to declare a set of constants for the instance, that will cause the
-  // instance to reinitialize and rerender should they ever be changed. This is
-  // useful whenever initialize() depends on some props, or in general if the
-  // state depends on some specific props and you want the instance to start
-  // over if these props are changed.
-  declareOrCheckConstants = new DevFunction(
-    "constants", {}, ({interpreter, callerNode, execEnv}, [...constants]) => {
-      let prevConstants = this.jsxInstance.constants;
-      if (prevConstants === undefined || prevConstants === null) {
-        this.jsxInstance.constants = constants;
-      }
-      else if (!deepCompare(constants, prevConstants)) {
-        // This symbol exception is meant to be caught by JSXInstance.render(),
-        // and signals it to immediately reinitialize and rerender.
-        throw new Exception(reinitializeSymbol, callerNode, execEnv);
-      }
-    }
-  );
-
   // reset() reinitializes the state and rerenders the instance. 
   reset = new DevFunction(
     "reset", {}, ({interpreter, callerNode, execEnv}, []) => {
       this.jsxInstance.reset(interpreter, callerNode, execEnv);
     }
   );
+
+
+  // advanceURL() is used to advance the URL a number of segments, which
+  // changes the segments the child instances get by calling getFirstSegment()
+  // or getSegments(). 
+  advanceURL = new DevFunction(
+    "advanceURL", {typeArr: ["integer unsigned?"]}, (_, [increment = 1]) => {
+      this.jsxInstance.advanceURL(increment);
+    }
+  );
+
+  // getSegments(start, end?) returns an array of URL segments starting from
+  // the point that the ancestor instances have advanced the URL to, plus the
+  // start argument, and ending in the segment specified by the end argument,
+  // which can also be undefined or a negative number, similar to how Array-
+  // .slice() works. And the method also subscribes the instance to the
+  // contexts of the returned segments, such that it updates automatically
+  // when they do.
+  getSegments = new DevFunction(
+    "getSegments", {typeArr: ["integer unsigned?", "integer unsigned?"]},
+    (_, [start = 0, end = undefined]) => {
+      this.jsxInstance.getSegments(start, end);
+    }
+  );
+
+  // getFirstSegment() is similar to calling this.getSegments(0, 1)[0].
+  getFirstSegment = new DevFunction("getFirstSegment", {}, () => {
+    let [firstSegment] = this.jsxInstance.getSegments(0, 1);
+    return firstSegment;
+  });
+
+  // getFirstSegment() is similar to "/" + join(this.getSegments(), "/").
+  getPath = new DevFunction("getPath", {}, () => {
+    return "/" + this.jsxInstance.getSegments().join("/");
+  });
+
+
+  pushURL = new DevFunction(
+    "pushURL", {typeArr: ["string", "any?", "any?"]},
+    ({callerNode, execEnv}, [url = 0, state = null, copyOtherStates = false]) => {
+      this.jsxInstance.pushOrReplaceURLAndState(
+        url, state, copyOtherStates, false, callerNode, execEnv
+      );
+    }
+  );
+
+  replaceURL = new DevFunction(
+    "replaceURL", {typeArr: ["string", "any?", "any?"]},
+    ({callerNode, execEnv}, [url = 0, state = null, copyOtherStates = false]) => {
+      this.jsxInstance.pushOrReplaceURLAndState(
+        url, state, copyOtherStates, true, callerNode, execEnv
+      );
+    }
+  );
+
+  back = new DevFunction("back", {}, () => {
+    window.history.back();
+  });
+  forward = new DevFunction("forward", {}, () => {
+    window.history.forward();
+  });
+  go = new DevFunction("go", {typeArr: ["integer"]}, (_, [delta]) => {
+    window.history.go(delta);
+  });
+
+
 
   canGrabFocus = new DevFunction(
     "canGrabFocus", {}, () => {
@@ -1434,11 +1774,20 @@ export function deepCompare(val1, val2, excludeMutableProps = false) {
   }
 
   if (val1 instanceof ObjectObject) {
+    if (!(val2 instanceof ObjectObject)) {
+      return false;
+    }
     if (
       excludeMutableProps && val1.isMutable &&
       val2 instanceof ObjectObject && val2.isMutable
     ) {
       return true;
+    }
+    if (val1.compareWith) {
+      return val1.compareWith(val2);
+    }
+    if (val2.compareWith) {
+      return val2.compareWith(val1);
     }
     if (
       val1.isComparable && val2 instanceof ObjectObject && val2.isComparable
@@ -1447,7 +1796,6 @@ export function deepCompare(val1, val2, excludeMutableProps = false) {
       val1 = val1.members;
       val2 = val2.members;
     }
-    else return false;
   }
 
   let proto1 = Object.getPrototypeOf(val1);
@@ -1502,104 +1850,53 @@ export function getUserID() {
 }
 
 
-function addUserRelatedProps(props, jsxInstance, interpreter, node, env) {
-  let {contexts: {userContext}} = env.scriptVars;
+function addUserContexts(contextProvisions, interpreter, env) {
+  let {contexts: {userContext}} = env.globals;
   let userID = getUserID();
   userContext.setVal({userID: userID});
+  let contextProvision = JSXInstance.createContextProvision(userID);
   userContext.addSubscriberCallback(({userID}) => {
-    jsxInstance.changePropsAndQueueRerender({userID: userID}, interpreter);
-  });
-  return {...props, userID: userID};
-}
-
-
-
-function addURLRelatedProps(props, jsxInstance, interpreter, _, env) {
-  let {contexts: {urlContext}} = env.scriptVars;
-
-  // Define the functions to change the urlContext.
-  let validateAndUpdateURLContext = (stateJSON, url, callerNode, execEnv) => {
-    // Validate url, and prepend './' to it if doesn't start with /.?.?\//.
-    if (!HREF_REGEX.test(url)) throw new ArgTypeError(
-      "Invalid URL pathname: " + url,
-      callerNode, execEnv
+    JSXInstance.updateContextProvision(
+      contextProvision, {userID: userID}, false, interpreter
     );
-    if (!HREF_CD_START_REGEX.test(url)) url = './' + url;
-
-    // Then construct the full URL (or actually the full pathname).
-    let curURL = window.location.pathname;
-    url = getAbsolutePath(curURL, url, callerNode, execEnv);
-    url = url.replace(/\/$/, "");
-
-    let urlData = {url: url, stateJSON: stateJSON};
-    urlContext.setVal(urlData);
-    return url;
-  };
-
-  // Define the methods of the history object.
-  const pushState = new DevFunction(
-    "pushState", {typeArr: ["any?", "string"]},
-    ({callerNode, execEnv}, [state = null, url]) => {
-      let stateJSON = jsonStringify(state);
-      url = validateAndUpdateURLContext(stateJSON, url, callerNode, execEnv);
-      window.history.pushState(stateJSON, "", url);
-    }
-  );
-  const replaceState = new DevFunction(
-    "replaceState", {typeArr: ["any?", "string"]},
-    ({callerNode, execEnv}, [state = null, url]) => {
-      let stateJSON = jsonStringify(state);
-      url = validateAndUpdateURLContext(stateJSON, url, callerNode, execEnv);
-      window.history.replaceState(stateJSON, "", url);
-    }
-  );
-  const back = new DevFunction("back", {}, () => {
-    window.history.back();
   });
-  const forward = new DevFunction("forward", {}, () => {
-    window.history.forward();
-  });
-  const go = new DevFunction("go", {typeArr: ["integer?"]}, ({}, [delta]) => {
-    window.history.go(delta);
-  });
-
-  // Get the current "URL" (which is actually the location.pathname) and the
-  // state JSON.
-  let {url, stateJSON} = urlContext.getVal();
-
-  // Then subscribe the root component's jsxInstance to the urlContext.
-  urlContext.addSubscriberCallback((urlData) => {
-    jsxInstance.changePropsAndQueueRerender({
-      url: urlData.url,
-      homeURL: "",
-      tailURL: urlData.url,
-      history: {
-        state: JSON.parse(urlData.stateJSON ?? 'null'),
-        pushState: pushState, replaceState: replaceState,
-        back: back, forward: forward, go: go,
-      },
-    }, interpreter);
-  });
-
-  // And note that the following popstate event listener is added in index.js:
-  // window.addEventListener("popstate", (event) => {
-  //   let url = window.location.pathname.replace(/\/$/, "");
-  //   let urlData = {url: url, stateJSON: event.state};
-  // });
-
-  // Then return the initial URL-related props. 
-  return {
-    ...props,
-    url: url,
-    homeURL: "",
-    tailURL: url,
-    history: {
-      state: JSON.parse(stateJSON ?? 'null'),
-      pushState: pushState, replaceState: replaceState,
-      back: back, forward: forward, go: go,
-    },
-  };
+  contextProvisions["userID"] = contextProvision;
 }
+
+function getURLContexts(interpreter, env) {
+  let {contexts: {urlContext}} = env.globals;
+
+  let {pathname, segments, state} = urlContext.getVal();
+  let segmentsRef = [segments] = stateRef = [state];
+
+  let segmentContextProvisions = {};
+  segments.forEach((segment, ind) => {
+    segmentContextProvisions[ind] = JSXInstance.createContextProvision(segment);
+  });
+
+  urlContext.addSubscriberCallback(
+    ({segments, state}, {segments: prevSegments, state: prevState}) => {
+      segmentsRef[0] = segments;
+      stateRef[0] = state;
+      let maxLen = Math.max(segments.length, prevSegments.length);
+      for (let i = 0; i < maxLen; i++) {
+        let seg = segments[i], prevSeg = prevSegments[i];
+        if (seg !== prevSeg) {
+          JSXInstance.updateContextProvision(
+            segmentContextProvisions[i] ??=
+              JSXInstance.createContextProvision(seg),
+            seg, true, interpreter
+          );
+        }
+      }
+    }
+  );
+
+  return [segmentContextProvisions, segmentsRef, stateRef];
+}
+
+
+
 
 
 
@@ -1656,7 +1953,7 @@ const localStorageObject = {
   ),
 };
 
-function addStorageRelatedProps(props) {
+function addStorageRelatedContexts(props) {
   return {
     ...props,
     sessionStorage: sessionStorageObject,

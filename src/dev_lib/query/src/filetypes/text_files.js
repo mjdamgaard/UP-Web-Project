@@ -283,7 +283,7 @@ export async function query(
     // object, then add it to the SM's gas reserve and update the DB with the
     // result.
     payGas(callerNode, execEnv, {dbWrite: JSON.stringify(gasReserve).length});
-    let {gas} = execEnv.scriptVars;
+    let {gas} = execEnv.globals;
     assignLeastPositiveOrUndefined(reqGas, gas);
     payGas(callerNode, execEnv, reqGas);
     addTo(gasReserve, reqGas);
@@ -353,7 +353,7 @@ export async function query(
 
     // Take subtract as much of the reqGas as possible from deposited gas
     // reserve, then add it to the gas object.
-    let {gas} = execEnv.scriptVars;
+    let {gas} = execEnv.globals;
     assignLeastPositiveOrUndefined(reqGas, gasReserve);
     addTo(gas, reqGas);
     subtractFrom(gasReserve, reqGas);

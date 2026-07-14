@@ -138,7 +138,7 @@ export async function query(
   // account ID" (meaning that an SM can choose to store its gas on several
   // separate accounts (used for different things)). When a SMF (or an admin)
   // queries these routes, the gas amounts are automatically added or removed
-  // from the live gas object (in scriptVars). This system will then afford a
+  // from the live gas object (in globals). This system will then afford a
   // way for users to be able to pool gas together for costly computations or
   // other actions.
   // *I've implemented this for text files instead, but maybe it would be

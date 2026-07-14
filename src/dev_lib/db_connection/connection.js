@@ -217,7 +217,7 @@ export class Connection extends ObjectObject {
 
 
 function withdrawConnectionGas(node, env, connectionGas) {
-  let {gas} = env.scriptVars;
+  let {gas} = env.globals;
   if ((gas.conn ?? 0) <= 20) throw new OutOfGasError(
     "Ran out of " + GAS_NAMES.conn + " gas",
     node, env
@@ -228,7 +228,7 @@ function withdrawConnectionGas(node, env, connectionGas) {
 }
 
 function depositBackConnectionGas(env, withdrawnGas, connStartedAt) {
-  let {gas} = env.scriptVars;
+  let {gas} = env.globals;
   let timeSinceStarted = Date.now() - connStartedAt;
   let gasToDeposit = withdrawnGas - timeSinceStarted;
   if (gasToDeposit < 0) gasToDeposit = 0;

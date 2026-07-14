@@ -60,8 +60,8 @@ export function initialize() {
 
 
 export function render(props) {
-  let {urlProps, localStorage, sessionStorage, loadUpdatedSelf = true} = props;
-  let {tailSegments: [firstSegment], getChildURLProps} = urlProps;
+  let {location, storage, loadUpdatedSelf = true} = props;
+  let {tailSegments: [firstSegment], getChildLocation} = location;
 
   // If the tail URL is empty, replace the URL by prepending a segment with the
   // directory ID of the root base app, which is this very base app, defined in
@@ -79,13 +79,13 @@ export function render(props) {
   }
 
   // Else if reaching here, it means that the AppLoader component above has
-  // loaded this base app as the bast version. The urlProps will also have been
+  // loaded this base app as the bast version. The location will also have been
   // updated in the process, having advanced to a new tail URL that does not
   // include the baseAppDirID segment. And we can thus continue to render this
   // base app by branching on the next segment after that, which is now
   // contained in firstSegment.
-  let childURLProps = getChildURLProps(1); // Advance by 1 URL segment.
-  let childProps = {...props, urlProps: childURLProps};
+  let childLocation = getChildLocation(1); // Advance by 1 URL segment.
+  let childProps = {...props, location: childLocation};
   let {ref: {appLoaderProps}} = this.state;
   let baseAppPage, useOriginal, useDefault;
   switch (firstSegment) {

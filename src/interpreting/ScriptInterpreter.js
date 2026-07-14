@@ -75,7 +75,7 @@ export class ScriptInterpreter {
     gas, script = "", scriptPath = null, mainInputs = [], flags = [],
     contexts = {}, parsedScripts = new Map(), liveModules = new Map(),
   ) {
-    let scriptVars = {
+    let globals = {
       gas: gas, log: {entries: []}, scriptPath: scriptPath,
       flags: flags, contexts: contexts, globalEnv: undefined, interpreter: this,
       isExiting: false, resolveScript: undefined, exitPromise: undefined,
@@ -85,7 +85,7 @@ export class ScriptInterpreter {
 
     // First create a global environment, which is used as a parent environment
     // for all modules.
-    let globalEnv = this.createGlobalEnvironment(scriptVars);
+    let globalEnv = this.createGlobalEnvironment(globals);
 
     // If script is provided, rather than the scriptPath, first parse it.
     let parsedScript, lexArr, strPosArr;
@@ -108,20 +108,20 @@ export class ScriptInterpreter {
     }
 
     // Create a promise to get the output and log, and store a modified
-    // resolve() callback on scriptVars (which is contained by globalEnv).
+    // resolve() callback on globals (which is contained by globalEnv).
     // This promise is resolved when the resolve() callback of the main
     // function of the script is called.
     let outputAndLogPromise = new Promise(resolve => {
-      scriptVars.resolveScript = (output, error) => {
-        let {log} = scriptVars;
+      globals.resolveScript = (output, error) => {
+        let {log} = globals;
         if (!log.error && error !== undefined) {
           log.error = error;
         }
-        scriptVars.isExiting = true;
+        globals.isExiting = true;
         resolve([output, log]);
       };
     }).catch(err => console.error(err));
-    scriptVars.exitPromise = outputAndLogPromise;
+    globals.exitPromise = outputAndLogPromise;
 
 
     // Now execute the script as a module, followed by an execution of any
@@ -140,22 +140,22 @@ export class ScriptInterpreter {
       // If any non-internal error occurred, log it in log.error and resolve
       // the script with an undefined output.
       if (err instanceof Exception) {
-        scriptVars.resolveScript(undefined, err);
+        globals.resolveScript(undefined, err);
       }
       else if (err instanceof ReturnException) {
-        scriptVars.resolveScript(undefined, new RuntimeError(
+        globals.resolveScript(undefined, new RuntimeError(
           "Cannot return from outside of a function",
           err.node, err.environment
         ));
       }
       else if (err instanceof BreakException) {
-        scriptVars.resolveScript(undefined, new RuntimeError(
+        globals.resolveScript(undefined, new RuntimeError(
           `Invalid break statement outside of loop or switch-case statement`,
           err.node, err.environment
         ));
       }
       else if (err instanceof ContinueException) {
-        scriptVars.resolveScript(undefined, new RuntimeError(
+        globals.resolveScript(undefined, new RuntimeError(
           "Invalid continue statement outside of loop",
           err.node, err.environment
         ));
@@ -168,7 +168,7 @@ export class ScriptInterpreter {
     }
 
     // If isExiting is true, we can return the resulting output and log.
-    if (scriptVars.isExiting) {
+    if (globals.isExiting) {
       return await outputAndLogPromise;
     }
 
@@ -179,7 +179,7 @@ export class ScriptInterpreter {
     // error first.
     else {
       if (gas.time < MINIMAL_TIME_GAS) {
-        scriptVars.resolveScript(undefined, new OutOfGasError(
+        globals.resolveScript(undefined, new OutOfGasError(
           "Ran out of " + GAS_NAMES.time + " gas",
           parsedScript, globalEnv,
         ));
@@ -189,7 +189,7 @@ export class ScriptInterpreter {
         // error.
         setTimeout(
           () => {
-            scriptVars.resolveScript(undefined, new OutOfGasError(
+            globals.resolveScript(undefined, new OutOfGasError(
               "Ran out of " + GAS_NAMES.time + " gas",
               parsedScript, globalEnv,
             ));
@@ -205,11 +205,11 @@ export class ScriptInterpreter {
   }
 
 
-  createGlobalEnvironment(scriptVars) {
+  createGlobalEnvironment(globals) {
     let globalEnv = new Environment(
-      undefined, "global", {scriptVars: scriptVars},
+      undefined, "global", {globals: globals},
     );
-    scriptVars.globalEnv = globalEnv;
+    globals.globalEnv = globalEnv;
 
     globalEnv.declare("IS_SERVER_SIDE", this.isServerSide, true, null);
 
@@ -585,14 +585,14 @@ export class ScriptInterpreter {
     // the input value as the script output.
     let resolveFun = new DevFunction(
       "resolve", {decEnv: scriptEnv}, ({}, [output]) => {
-        scriptEnv.scriptVars.resolveScript(output);
+        scriptEnv.globals.resolveScript(output);
         throw new ExitException();
       }
     );
 
     // Then call executeModuleFunction with that resolve, and with funName =
     // "main".
-    let {flags} = scriptEnv.scriptVars;
+    let {flags} = scriptEnv.globals;
     this.executeModuleFunction(
       liveScriptModule, "main", inputArr, resolveFun, scriptNode, scriptEnv,
       flags,
@@ -680,7 +680,7 @@ export class ScriptInterpreter {
   executeFunctionOffSync(
     fun, inputArr, callerNode, execEnv, thisVal, flags, errRef = [],
   ) {
-    if (execEnv.scriptVars.isExiting) {
+    if (execEnv.globals.isExiting) {
       return;
     }
     try {
@@ -697,7 +697,7 @@ export class ScriptInterpreter {
   handleUncaughtException(err, env) {
     if (err instanceof Exception) {
       if (this.isServerSide) {
-        env.scriptVars.resolveScript(undefined, err);
+        env.globals.resolveScript(undefined, err);
       } else {
         logExtendedErrorAndTrace(err);
       }
@@ -1646,7 +1646,7 @@ export class ScriptInterpreter {
         break;
       }
       case "console-call": {
-        let {isExiting, log} = environment.scriptVars;
+        let {isExiting, log} = environment.globals;
         let expValArr = expNode.expArr.map(
           exp => this.evaluateExpression(exp, environment)
         );
@@ -2043,11 +2043,11 @@ export class Environment {
     parent, scopeType = "block", {
       fun, inputArr, callerNode, callerEnv, thisVal, flags,
       modulePath, lexArr, strPosArr, script, placeholdersModule,
-      scriptVars,
+      globals,
     } = {},
   ) {
-    this.scriptVars = scriptVars ?? parent?.scriptVars ?? (() => {
-      throw "Environment: No scriptVars object provided";
+    this.globals = globals ?? parent?.globals ?? (() => {
+      throw "Environment: No globals object provided";
     })();
     this.parent = parent;
     this.scopeType = scopeType;
@@ -2144,7 +2144,7 @@ export class Environment {
 
 
   getGlobalEnv() {
-    return this.scriptVars.globalEnv;
+    return this.globals.globalEnv;
   }
 
 
@@ -2242,7 +2242,7 @@ export class Environment {
   getLiveJSModule() {
     if (!this.liveModule ) {
       this.liveModule = new LiveJSModule(
-        this.modulePath, this.exports, this.scriptVars, this.script, this
+        this.modulePath, this.exports, this.globals, this.script, this
       );
     }
     return this.liveModule;
@@ -2435,7 +2435,7 @@ export class ObjectObject {
     return (this.isMap) ? `"Map()"` : jsonStringify(this.members);
   }
   toString(env) {
-    let {interpreter} = env.scriptVars;
+    let {interpreter} = env.globals;
     let toStringMethod = this.#get("toString");
     if (toStringMethod instanceof FunctionObject) {
       let ret, isInvalid; 
@@ -2516,7 +2516,7 @@ export class ClassObject extends ObjectObject {
   }
 
   getNewInstance(inputArr, callerNode, callerEnv) {
-    let {interpreter} = callerEnv.scriptVars;
+    let {interpreter} = callerEnv.globals;
     let members = this.instancesAreArrays ? [] :
       this.instancesAreMaps ? new Map() : {};
     let newInst = new ObjectObject(
@@ -3092,13 +3092,13 @@ export function verifyTypes(valArr, typeArr, node, env) {
 
 export class LiveJSModule extends ObjectObject {
   constructor(
-    modulePath, exports, scriptVars, script = undefined, moduleEnv = undefined
+    modulePath, exports, globals, script = undefined, moduleEnv = undefined
   ) {
     super("LiveJSModule");
     this.modulePath = modulePath;
     this.script = script;
     this.moduleEnv = moduleEnv;
-    this.interpreter = scriptVars.interpreter;
+    this.interpreter = globals.interpreter;
     exports.forEach(([alias, val]) => {
       // Filter out any exports from a dev library that isn't meant to imported
       // directly by the users, but only by other dev libraries.
@@ -3170,6 +3170,7 @@ export class JSXElement extends ObjectObject {
     this.isComponent = isComponent;
     if (isComponent) this.componentObject = decEnv.get(tagName, node);
     this.isFragment = isFragment;
+    this.key = undefined;
     this.props = {};
     if (propArr) propArr.forEach(propNode => {
       let expVal = propNode.exp ?
@@ -3177,7 +3178,8 @@ export class JSXElement extends ObjectObject {
         true;
       if (propNode.isSpread) {
         forEachValue(expVal, propNode.exp, decEnv, (val, key) => {
-          this.props[key] = val;
+          if (!isComponent || key !== "key") this.props[key] = val;
+          else this.key = getString(val, decEnv);
         });
       } else {
         this.props[propNode.ident] = expVal;
@@ -3230,20 +3232,11 @@ export class JSXElement extends ObjectObject {
       }
     }
 
-    // If the element is a component, check that the "key" prop is set.
-    if (isComponent) {
-      this.key = this.props["key"];
-      if (this.key === undefined) throw new RuntimeError(
-        'JSX component element defined without a "key" prop',
-        node, decEnv
-      );
-    }
-
-    // If not, and if the "innerStyle" prop is set, mark the JSXElement as
-    // being style defining, by moving the innerStyle prop to the JSXElement
-    // itself. And do the same thing for "inheritGlobalStyle", with a default
-    // value of true.
-    else if (this.props["innerStyle"]) {
+    // If the element not a component and if the "innerStyle" prop is set, mark
+    // the JSXElement as being style defining, by moving the innerStyle prop to
+    // the JSXElement itself. And do the same thing for "inheritGlobalStyle",
+    // with a default value of true.
+    if (!isComponent && this.props["innerStyle"]) {
       this.innerStyle = this.props["innerStyle"];
       delete this.props["innerStyle"];
       this.inheritGlobalStyle = this.props["inheritGlobalStyle"] ?? true;
@@ -3290,7 +3283,7 @@ export class PromiseObject extends ObjectObject {
     else {
       let fun = promiseOrFun;
       this.promise = new Promise((resolve, reject) => {
-        env.scriptVars.exitPromise.then(() => reject(
+        env.globals.exitPromise.then(() => reject(
           new Exception(
             "Script exited before promise resolved",
             node, env
@@ -3596,7 +3589,7 @@ export function getExtendedErrorMsg(err) {
     script.substring(strPos - SNIPPET_BEFORE_MAX_LEN, strPos) +
     " ▶▶▶" + script.substring(strPos, finStrPos) + "◀◀◀ " +
     script.substring(finStrPos, finStrPos + SNIPPET_AFTER_MAX_LEN);
-    let {interpreter, log} = env.scriptVars;
+    let {interpreter, log} = env.globals;
   let traceAndLogAppendix = "";
   if (interpreter.isServerSide) {
     let trace = env.getFlag(NO_TRACE_FLAG) ? [] : env.getCallTrace();
@@ -3780,7 +3773,7 @@ function substituteNodeAndDirIDs(
 
 
 export function payGas(node, environment, gasCost) {
-  let {gas} = environment.scriptVars;
+  let {gas} = environment.globals;
   Object.keys(gasCost).forEach(key => {
     if (gas[key] ??= 0) {
       gas[key] -= gasCost[key];
@@ -3796,7 +3789,7 @@ export function payGas(node, environment, gasCost) {
 }
 
 export function decrCompGas(node, environment, amount = 1) {
-  let {gas} = environment.scriptVars;
+  let {gas} = environment.globals;
   gas.comp = gas.comp - amount;
   if (0 > --gas.comp) {
     gas.comp = gas.comp + amount;
@@ -3808,7 +3801,7 @@ export function decrCompGas(node, environment, amount = 1) {
 }
 
 export function decrGas(node, environment, gasName) {
-  let {gas} = environment.scriptVars;
+  let {gas} = environment.globals;
   if (0 > --gas[gasName]) {
     gas[gasName]++;
     throw new OutOfGasError(

@@ -3,7 +3,7 @@ import {
   DevFunction, ArgTypeError, ObjectObject, verifyTypes, getString,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, HREF_REGEX, HREF_CD_START_REGEX, clearAttributes,
+  DOMNodeObject, HREF_REGEX, HREF_REL_START_REGEX, clearAttributes,
   validateJSXInstance,
 } from "../jsx_components.js";
 import {CAN_POST_FLAG} from "../../query/src/flags.js";
@@ -50,7 +50,7 @@ export const render = new DevFunction(
           callerNode, execEnv
         );
       }
-      if (!HREF_CD_START_REGEX.test(href)) href = './' + href;
+      if (!HREF_REL_START_REGEX.test(href)) href = './' + href;
 
       // Add the href attribute.
       domNode.setAttribute("href", href);

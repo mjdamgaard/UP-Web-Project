@@ -84,7 +84,7 @@ if (typeof(Storage) === "undefined") {
 
 // Create some global contexts which defines some reserved props of the app
 // component (and which will make the app rerender when they change).
-class AppContext {
+class ScriptContext {
   constructor(val) {
     this.val = val;
     this.subscriberCallbacks = [];
@@ -93,27 +93,37 @@ class AppContext {
     return this.val;
   }
   setVal(val) {
+    let prevVal = this.val;
     this.val = val;
-    this.subscriberCallbacks.forEach(callback => callback(val));
-  }
-  update(updateCallback) {
-    updateCallback(this.val);
-    this.subscriberCallbacks.forEach(callback => callback(this.val));
+    this.subscriberCallbacks.forEach(callback => callback(val, prevVal));
+    return prevVal;
   }
   addSubscriberCallback(callback) {
     this.subscriberCallbacks.push(callback);
   }
 }
 
-const userContext = new AppContext({userID: undefined});
-const urlContext = new AppContext({
-  url: window.location.pathname.replace(/\/$/, ""), stateJSON: "null"
+const userContext = new ScriptContext({userID: undefined});
+let pathname = window.location.pathname;
+const urlContext = new ScriptContext({
+  pathname: pathname,
+  segments: pathname.replace(/^\//, "").replace(/\/$/, "").split("/"),
+  state: null,
+  popstateCallbacks: new Map(),
 });
+window.addEventListener("popstate", event => {
+  // Set the new urlData.
+  let pathname = window.location.pathname;
+  let segments = pathname.replace(/^\//, "").replace(/\/$/, "").split("/");
+  let urlData = {pathname: pathname, segments: segments, state: event.state};
 
-// Create a popstate event that updates the urlContext.
-window.addEventListener("popstate", (event) => {
-  let url = window.location.pathname.replace(/\/$/, "");
-  let urlData = {url: url, stateJSON: event.state};
+  // Run the popstateCallbacks on the new and previous urlData.
+  let prevURLData = urlContext.getVal();
+  prevURLData.popstateCallbacks.forEach(
+    callback => callback(urlData, prevURLData)
+  );
+
+  // Set the new urlContext.
   urlContext.setVal(urlData);
 });
 
