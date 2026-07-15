@@ -89,9 +89,6 @@ class ScriptContext {
     this.val = val;
     this.subscriberCallbacks = [];
   }
-  getVal() {
-    return this.val;
-  }
   setVal(val) {
     let prevVal = this.val;
     this.val = val;
@@ -118,7 +115,7 @@ window.addEventListener("popstate", event => {
   let urlData = {pathname: pathname, segments: segments, state: event.state};
 
   // Run the popstateCallbacks on the new and previous urlData.
-  let prevURLData = urlContext.getVal();
+  let prevURLData = urlContext.val;
   prevURLData.popstateCallbacks.forEach(
     callback => callback(urlData, prevURLData)
   );
