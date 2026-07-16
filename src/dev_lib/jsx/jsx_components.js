@@ -1143,7 +1143,7 @@ class JSXInstance {
 
   pushOrReplaceURLAndState(
     url, state = null, copyOtherStates = false, doReplace,
-    triggerPopstate = true, callerNode, execEnv
+    triggerPopstate = true, signal = undefined, callerNode, execEnv
   ) {
     // Transform the url argument if it is a relative path. Here we also
     // extend the relative path syntax to include either "~/", or "~~/", or a
@@ -1163,8 +1163,9 @@ class JSXInstance {
     // If copyOtherStates is true, add a new item to the existing history.state,
     // and else set and keep only that item in the new state.
     let {urlContext} = execEnv.globals.contexts;
+    let prevURLData = urlContext.val;
     let {popstateCallbacks, state: prevState, pathname: prevPathname} =
-      urlContext.val;
+      prevURLData;
     prevState ??= {};
     let itemKey = this.getItemKey("");
     let newState = copyOtherStates ? {...prevState, [itemKey]: state} :
@@ -1179,22 +1180,19 @@ class JSXInstance {
     }
 
     // And finally also update the urlContext, and if triggerPopstate is true,
-    // call all popstateCallbacks, simulating a "popstate" event.
+    // call all popstateCallbacks, simulating a "popstate" event, but
+    // potentially with an added signal argument to the callback.
     let newURLData = {
       pathname: pathname,
       segments: pathname.replace(/^\//, "").replace(/\/$/, "").split("/"),
       state: newState,
       popstateCallbacks: popstateCallbacks,
     };
-    let prevURLData = {
-      pathname: prevPathname,
-      segments: prevPathname.replace(/^\//, "").replace(/\/$/, "").split("/"),
-      state: prevState,
-      popstateCallbacks: popstateCallbacks,
-    };
     urlContext.setVal(newURLData);
     if (triggerPopstate) {
-      popstateCallbacks.forEach(newURLData, prevURLData);
+      popstateCallbacks.forEach(
+        callback => callback(urlData, prevURLData, signal)
+      );
     }
   }
 
@@ -1348,13 +1346,13 @@ class JSXInstance {
     if (onChanceFun) {
       this.hasHistoryState = true;
       popstateCallbacks.set(
-        this, ({state: newState}, {state: prevState}) => {
+        this, ({state: newState}, {state: prevState}, signal) => {
           newState ??= {}, prevState ??= {};
           let newInstanceState = newState[itemKey];
           let prevInstanceState = prevState[itemKey];
           if (!deepCompare(newInstanceState, prevInstanceState)) {
             interpreter.executeFunctionOffSync(
-              onChanceFun, [newInstanceState, prevInstanceState],
+              onChanceFun, [newInstanceState, prevInstanceState, signal],
               callerNode, execEnv, new JSXInstanceInterface(this)
             );
           }
@@ -1601,19 +1599,23 @@ export class JSXInstanceInterface extends ObjectObject {
 
 
   pushURL = new DevFunction(
-    "pushURL", {typeArr: ["string", "any?", "any?"]},
-    ({callerNode, execEnv}, [url = 0, state = null, copyOtherStates = false]) => {
+    "pushURL", {typeArr: ["string", "any?", "any?", "any?"]},
+    ({callerNode, execEnv}, [
+      url = 0, state = null, copyOtherStates = false, signal = undefined
+    ]) => {
       this.jsxInstance.pushOrReplaceURLAndState(
-        url, state, copyOtherStates, false, callerNode, execEnv
+        url, state, copyOtherStates, false, true, signal, callerNode, execEnv
       );
     }
   );
 
   replaceURL = new DevFunction(
-    "replaceURL", {typeArr: ["string", "any?", "any?"]},
-    ({callerNode, execEnv}, [url = 0, state = null, copyOtherStates = false]) => {
+    "replaceURL", {typeArr: ["string", "any?", "any?", "any?"]},
+    ({callerNode, execEnv}, [
+      url = 0, state = null, copyOtherStates = false, signal = undefined
+    ]) => {
       this.jsxInstance.pushOrReplaceURLAndState(
-        url, state, copyOtherStates, true, callerNode, execEnv
+        url, state, copyOtherStates, true, true, signal, callerNode, execEnv
       );
     }
   );
