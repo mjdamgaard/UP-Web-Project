@@ -6,7 +6,7 @@ import {slice} from 'array';
 import {fetchEntityID} from "/1/1/entities.js";
 
 import * as UPIndexPage from "./UPIndexPage.jsx";
-import * as AboutPage from "./about.jsx";
+import * as AboutPage from "./AboutPage.jsx";
 import * as ProfilePage from "./ProfilePage.jsx";
 import * as AppBrowser from "../app_browser/AppBrowser.jsx";
 import * as EntityPage from
@@ -70,7 +70,7 @@ export function renderHelper(thisVal, {
   let indOfSecondSlash = indexOf(tailURL, "/", 1);
   let firstSegment = (indOfSecondSlash === -1) ?
     substring(tailURL, 1) : substring(tailURL, 1, indOfSecondSlash);
-  this.advanceURL(1);
+  thisVal.advanceURL(1);
   if (firstSegment === "i") {
     return [
       "idx",

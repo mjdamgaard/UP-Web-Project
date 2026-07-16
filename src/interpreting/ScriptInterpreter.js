@@ -3182,7 +3182,9 @@ export class JSXElement extends ObjectObject {
           else this.key = getString(val, decEnv);
         });
       } else {
-        this.props[propNode.ident] = expVal;
+        let key = propNode.ident;
+        if (!isComponent || key !== "key") this.props[key] = expVal;
+        else this.key = getString(expVal, decEnv);
       }
     });
     if (children) {

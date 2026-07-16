@@ -109,19 +109,24 @@ const urlContext = new ScriptContext({
   popstateCallbacks: new Map(),
 });
 window.addEventListener("popstate", event => {
+  let prevURLData = urlContext.val;
+
   // Set the new urlData.
   let pathname = window.location.pathname;
-  let segments = pathname.replace(/^\//, "").replace(/\/$/, "").split("/");
-  let urlData = {pathname: pathname, segments: segments, state: event.state};
-
-  // Run the popstateCallbacks on the new and previous urlData.
-  let prevURLData = urlContext.val;
-  prevURLData.popstateCallbacks.forEach(
-    callback => callback(urlData, prevURLData)
-  );
+  let urlData = {
+    pathname: pathname,
+    segments: pathname.replace(/^\//, "").replace(/\/$/, "").split("/"),
+    state: event.state,
+    popstateCallbacks: prevURLData.popstateCallbacks,
+  };
 
   // Set the new urlContext.
   urlContext.setVal(urlData);
+
+  // Run the popstateCallbacks on the new and previous urlData.
+  prevURLData.popstateCallbacks.forEach(
+    callback => callback(urlData, prevURLData)
+  );
 });
 
 

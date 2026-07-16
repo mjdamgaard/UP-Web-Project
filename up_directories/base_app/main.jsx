@@ -24,8 +24,10 @@ import * as tabbedPagesStyle from "../utilities/TabbedPages.css";
 import {scoreHandler02} from "/1/1/score_handling/ScoreHandler01/em.js";
 
 
-export function render({url, homeURL = ""}) {
+export function render() {
   let url = this.getPath();
+  let history, localStorage, sessionStorage, homeURL = "";
+  let userID = this.getContext("userID");
   let {userEntID} = this.state;
   this.setContext("userEntID", userEntID ? userEntID : undefined);
   this.setContext("homeURL", homeURL);
