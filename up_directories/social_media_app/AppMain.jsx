@@ -27,6 +27,7 @@ export function render({url = "", userID}) {
     let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
     let urlUserID = slice(url, 3, endOfID);
     let tailURL = substring(url, 3 + urlUserID.length);
+    this.advanceURL(1);
     return (
       <main className="app-main">
         <UserPage key="u"

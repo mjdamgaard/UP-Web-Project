@@ -29,10 +29,10 @@ const fetchTrustClassRouteTemplate = [
 // "showHeader" event, and needs to stop any triggering of "hideHeader" from
 // the descendants.
 
+export const keyProps = ["appDirID"];
 
 export async function initialize({appDirID}) {
-  // Preserve the fetchedDataCache state property between reinitializations
-  // (caused by the this.constants() call below, namely if appDirID changed).
+  // Preserve the fetchedDataCache state property between reinitializations.
   let {fetchedDataCache = new MutableObject()} = this.state;
   let fetchedData = fetchedDataCache[appDirID] ??= new MutableObject();
   this.setState({
@@ -70,7 +70,6 @@ export async function initialize({appDirID}) {
 export function render({
   appDirID, url, homeURL, tailURL, userID, nodeID, localStorage, sessionStorage
 }) {
-  this.constants(appDirID); // Reinitialize the component if appDirID changes. 
   let {
     fetchedData: {AppComponent, trustClass},
     warningIsDismissed,

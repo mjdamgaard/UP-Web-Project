@@ -37,8 +37,10 @@ export function initialize() {
   return {entityIsMissing: undefined};
 }
 
+
+export const keyProps = ["tailURL"];
+
 export function render({url, homeURL, tailURL}) {
-  this.constants(tailURL);
   let [segment1, segment2, ...restSegments] = split(tailURL ?? "", "/");
 
   // If the tail URL is empty, or if the second segment is empty, redirect to

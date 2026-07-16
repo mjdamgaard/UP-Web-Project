@@ -59,10 +59,10 @@ export const createJSXApp = new DevFunction(
 
     // Provide some global contexts for getting user data and URL data.
     let globalContextProvisions = {};
-    addUserContexts(globalContextProvisions, interpreter, appEnv);
+    addUserContexts(globalContextProvisions, appEnv);
     let [
       segmentContextProvisions, segmentsRef, historyStateRef
-    ] = getURLContexts(interpreter, urlContext);
+    ] = getURLContexts(urlContext);
 
     // Create the app's root component instance.
     let rootInstance = new JSXInstance(
@@ -75,7 +75,7 @@ export const createJSXApp = new DevFunction(
         historyStateRef: historyStateRef,
         caches: {
           history: urlContext.val.state ?? {},
-          session: JSON.parse(window.sessionStorage.getItem("jsx") ?? "{}"),
+          session: JSON.parse(sessionStorage.getItem("jsx") ?? "{}"),
         },
         cacheUpdateIsQueued: false,
       }
@@ -86,7 +86,9 @@ export const createJSXApp = new DevFunction(
     // for each instance whose data was mutated.
     urlContext.val.popstateCallbacks.set(
       "updateHistoryStates", (urlData, prevURLData) => {
-        JSXInstance.updateHistoryStates(rootInstance, urlData, prevURLData);
+        JSXInstance.updateHistoryStates(
+          rootInstance, urlData, prevURLData, callerNode, appEnv
+        );
       }
     );
 
@@ -785,7 +787,7 @@ class JSXInstance {
     let keyPropStr = "";
     forEachValue(keyProps, node, env, propName => {
       propName = getString(propName, env);
-      newKeyPropStr = newKeyPropStr + jsonStringify(props[propName]);
+      keyPropStr = keyPropStr + jsonStringify(props[propName]);
     }, true);
     return keyPropStr;
   }
@@ -827,12 +829,12 @@ class JSXInstance {
     // backed up by caches in the history.state or the sessionStorage object,
     // respectively. And if it does, update the given caches.
     if (!this.isFirstRender && !this.isInitializing && !noCacheUpdates) {
-      this.updateCaches(newState);
+      this.updateCacheStates(newState);
     }
 
     // Then set the new state and queue a rerender.
     this.jsxInstance.state = newState;
-    this.jsxInstance.queueRerender(interpreter, force);
+    this.jsxInstance.queueRerender(force);
   }
 
 
@@ -984,7 +986,7 @@ class JSXInstance {
 
 
 
-  queueRerender(interpreter, force = true) {
+  queueRerender(force = true) {
     this.forceWhenRerendering ||= force;
     if (this.renderIsQueued) {
       return;
@@ -993,6 +995,7 @@ class JSXInstance {
 
     // Create the callback to add to the rerender queue.
     let rerenderCallback = () => {
+      let {interpreter} = this.callerEnv.globals;
       if (!this.isDiscarded) {
         // Make sure to use the same callerNode and callerEnv as on the
         // previous render, which is done in order to not increase the memory
@@ -1045,44 +1048,21 @@ class JSXInstance {
   }
 
 
-  queueFullRerender(interpreter, force = true) {
-    this.queueRerender(interpreter, force);
-    this.childInstances.forEach(jsxInstance => {
-      jsxInstance.queueFullRerender(interpreter, force);
-    });
-  }
-
-
-  changePropsAndQueueRerender(
-    newProps, interpreter, deletePrevious = false, force = false
-  ) {
-    if (deletePrevious) {
-      this.props = newProps;
-    } else {
-      this.props = {...this.props, ...newProps};
-    }
-    this.queueRerender(interpreter, force);
-  }
-
-
-
 
 
   static createContextProvision(val) {
     return {subscribers: new Map(), context: val};
   }
 
-  static updateContextProvision(
-    contextProvision, val, force = false, interpreter
-  ) {
-    let prevVal = contextProvision.context;
+  static updateContextProvision(contextProvision, val, force = false) {
+    let {context: prevVal, subscribers} = contextProvision;
     contextProvision.context = val;
     if (
       subscribers.size > 0 &&
       (force || !deepCompareExceptMutableAndRef(val, prevVal))
     ) {
       subscribers.forEach((_, jsxInstance) => {
-        jsxInstance.queueRerender(interpreter);
+        jsxInstance.queueRerender();
       });
     }
   }
@@ -1102,15 +1082,13 @@ class JSXInstance {
   }
 
 
-  setContext(key, val, force = false, interpreter) {
+  setContext(key, val, force = false) {
     let contextProvision = this.contextProvisions[key];
-    if (!contextProvisions) {
+    if (!contextProvision) {
       this.contextProvisions[key] = JSXInstance.createContextProvision(val);
     }
     else {
-      JSXInstance.updateContextProvision(
-        contextProvision, key, val, force, interpreter
-      );
+      JSXInstance.updateContextProvision(contextProvision, key, val, force);
     }
   }
 
@@ -1176,7 +1154,7 @@ class JSXInstance {
 
   reset(interpreter, node, env) {
     this.initialize(interpreter, node, env);
-    this.queueRerender(interpreter, true);
+    this.queueRerender(true);
   }
 
 
@@ -1193,7 +1171,7 @@ class JSXInstance {
   }
 
   getSegments(start = 0, end = undefined) {
-    let {segmentRef, segmentContextProvisions} = this.globals;
+    let {segmentsRef, segmentContextProvisions} = this.globals;
     let segments = segmentsRef[0];
     let firstInd = this.segmentIndex + start;
     let lastInd = (end === undefined || end < 0) ?
@@ -1220,15 +1198,13 @@ class JSXInstance {
     // other wards, "~/" and "~~/" works very similarly to "./" and "../", only
     // where whole segment groups, defined by advanceURL() calls, are skipped
     // at once, rather than only single segments. 
-    let pathname = this.getPathname(url, callerNode, execEnv);
-
-    // Also validate the resulting pathname.
-    this.validatePathname(pathname, callerNode, execEnv);
+    let pathname = this.getValidatedPathname(url, callerNode, execEnv);
 
     // And sanitize state by calling jsonStringify and then parsing it back.
     state = JSON.parse(jsonStringify(state));
 
     // If copyOtherStates is false set historyStateRef[0] to an empty object.
+    let {historyStateRef} = this.globals;
     if (!copyOtherStates) {
       historyStateRef[0] = {};
     }
@@ -1247,12 +1223,12 @@ class JSXInstance {
     try {
       window.history[funName](historyStateRef[0], "", pathname);
     } catch (_) {
-      console.warn(getCacheExceededWarning("history"));
+      console.warn(JSXInstance.getCacheExceededWarning("history"));
     }
   }
 
 
-  getPathname(url, node, env) {
+  getValidatedPathname(url, node, env) {
     // Prepend './' to the url if it doesn't start with /^(\.~){0,2}\//.
     if (!HREF_REL_START_REGEX.test(url)) url = './' + url;
 
@@ -1289,15 +1265,18 @@ class JSXInstance {
     // Then call getAbsolutePath() to handle any "./" and "../" segments.
     let pathname = getAbsolutePath(this.pathname, url,  node, env);
     pathname = pathname.replace(/\/$/, "");
+
+    // Finally validate pathname before returning it.
+    this.validatePathname(pathname, node, env);
     return pathname;
   }
 
 
-  validatePathname(pathname, callerNode, execEnv) {
+  validatePathname(pathname, node, env) {
     // Validate url, and prepend './' to it if doesn't start with /.?.?\//.
     if (!HREF_REGEX.test(pathname)) throw new ArgTypeError(
-      "Invalid URL pathname: " + pathname,
-      callerNode, execEnv
+      "Invalid URL: " + pathname,
+      node, env
     );
   }
 
@@ -1359,32 +1338,13 @@ class JSXInstance {
     });
   }
 
-  static getCleanedUpInstanceKeyTreeStore(treeObject) {
-    let ret = {};
-    let hasNestedValues = true;
-    Object.entries(treeObject).forEach(([key, val]) => {
-      if (key === ".") {
-        hasNestedValues = true;
-        ret[key] = val;
-      }
-      else {
-        let childTree = JSXInstance.getCleanedUpInstanceKeyTreeStore(val);
-        if (childTree) {
-          hasNestedValues = true;
-          ret[key] = val;
-        }
-      }
-    });
-    return hasNestedValues ? ret : null;
-  }
-
-  static updateHistoryStates(rootInstance, urlData, prevURLData) {
+  static updateHistoryStates(rootInstance, urlData, prevURLData, node, env) {
     let state = urlData.state;
     let prevState = prevURLData.state;
     rootInstance.forAllDifferences(
       state ?? {}, prevState ?? {}, (instance, histState) => {
         let newState = {};
-        forEachValue(instance.state, callerNode, execEnv, (val, key) => {
+        forEachValue(instance.state, node, env, (val, key) => {
           newState[key] = val;
         }, true);
         newState.history = histState;
@@ -1393,64 +1353,95 @@ class JSXInstance {
     );
   }
 
-  static getChildCaches(parentCaches, key, keyPropStr) {
-    let {history, session} = parentCaches;
-    let childHistory = history["/" + key] ??= {};
-    if (keyPropStr) childHistory = childHistory[keyPropStr] ??= {};
-    let childSession = session["/" + key] ??= {};
-    if (keyPropStr) childSession = childSession[keyPropStr] ??= {};
-    return {history: childHistory, session: childSession};
-  }
-
   getCacheValues() {
     let {history, session} = this.cache;
     return {history: history["."], session: session["."]};
   }
 
-  updateCaches(newState) {
+  static getChildCaches(parentCaches, key, keyPropStr) {
+    if (!parentCaches) return undefined;
+    let {history, session} = parentCaches;
+    let childHistory = history && history["/" + key];
+    if (keyPropStr && childHistory) childHistory = childHistory[keyPropStr];
+    let childSession = session && session["/" + key];
+    if (keyPropStr && childSession) childSession = childSession[keyPropStr];
+    return (childHistory || childSession) ?
+      {history: childHistory, session: childSession} : undefined;
+  }
+
+  updateCacheStates(newState) {
     let prevState = this.state;
     let newHistoryState =   getPropertyFromObject(newState, "history");
     let prevHistoryState =  getPropertyFromObject(prevState, "history");
     let newSessionState =   getPropertyFromObject(newState, "session");
     let prevSessionState =  getPropertyFromObject(prevState, "session");
     if (newHistoryState !== prevHistoryState) {
-      this.caches.history = newHistoryState;
+      ((this.caches ??= {}).history ??= {})["."] = newHistoryState;
       this.queueCacheUpdate();
     }
     if (newSessionState !== prevSessionState) {
-      this.caches.session = newSessionState;
+      ((this.caches ??= {}).session ??= {})["."] = newSessionState;
       this.queueCacheUpdate();
     }
   }
 
   queueCacheUpdate() {
-    let {globals} = this;
-    if (globals.cacheUpdateIsQueued) return;
-    globals.cacheUpdateIsQueued = true;
+    if (this.globals.cacheUpdateIsQueued) return;
+    this.globals.cacheUpdateIsQueued = true;
     setTimeout(() => {
-      globals.cacheUpdateIsQueued = false;
-      let {history, session} = globals.caches;
-      history = JSXInstance.getCleanedUpInstanceKeyTreeStore(history) ?? {};
-      session = JSXInstance.getCleanedUpInstanceKeyTreeStore(session) ?? {};
-      let sessionJSON = JSON.stringify(session);
-      try {
-        let pathname = "/" + globals.segmentsRef[0].join("/");
-        window.history.replaceState(history, "", pathname);
-      } catch (_) {
-        console.warn(JSXInstance.getCacheExceededWarning("history"));
-      }
-      try {
-        window.sessionStorage.setItem("jsx", sessionJSON);
-      } catch (_) {
-        console.warn(JSXInstance.getCacheExceededWarning("session storage"));
-      }
+      this.globals.cacheUpdateIsQueued = false;
+      this.updateCaches();
     }, 1);
+  }
+
+  updateCaches() {
+    let {segmentsRef, rootInstance} = this.globals;
+    let {history, session} = rootInstance.getNewCaches();
+    try {
+      let pathname = "/" + segmentsRef[0].join("/");
+      window.history.replaceState(history, "", pathname);
+    } catch (_) {
+      console.warn(JSXInstance.getCacheExceededWarning("history"));
+    }
+    try {
+      let sessionJSON = JSON.stringify(session);
+      sessionStorage.setItem("jsx", sessionJSON);
+    } catch (_) {
+      console.warn(JSXInstance.getCacheExceededWarning("session storage"));
+    }
   }
 
   static getCacheExceededWarning = (type) => (
     `A ${type} state failed to update. This might be due to the maximum ` +
     "cache size being exceeded, likely due to an app using too much space."
   );
+
+  getNewCaches() {
+    return {
+      history: this.getNewCache("history"),
+      session: this.getNewCache("session"),
+    };
+  }
+
+  getNewCache(cacheName) {
+    let hasNestedValues, curCache, ret = {};
+    if (this.caches && (curCache = this.caches[cacheName])) {
+      ret = {...curCache};
+      hasNestedValues = true;
+    }
+    this.childInstances.forEach((childInstance, key) => {
+      let newChildCache = childInstance.getNewCache(cacheName);
+      if (!newChildCache) return;
+      if (childInstance.keyPropStr) {
+        let childRet = ret["/" + key] ??= {};
+        childRet[childInstance.keyPropStr] = newChildCache;
+      } else {
+        ret["/" + key] = newChildCache;
+      }
+      hasNestedValues = true;
+    });
+    return hasNestedValues ? ret : undefined;
+  }
 
 
   /* Local storage methods */
@@ -1463,37 +1454,47 @@ class JSXInstance {
     return ret;
   }
 
-  getItemKey() {
+  getItemKey(key) {
     return "ls-" + this.getFullInstanceKey() + "-" + JSON.stringify(key);
   }
 
   setLocalStorageItem(key, val, expireDelay = 604800000) {
-    let itemKey = this.getItemKey();
-    let ret = window.localStorage.setItem(itemKey, val);
-    JSXInstance.setExpireTime(itemKey, expireDelay);
-  }
-
-  getLocalStorageItem(key, expireDelay = undefined) {
-    let itemKey = this.getItemKey();
-    let ret = window.localStorage.getItem(itemKey);
-    if (expireDelay !== undefined) {
+    let itemKey = this.getItemKey(key);
+    try {
       JSXInstance.setExpireTime(itemKey, expireDelay);
+      localStorage.setItem(itemKey, val);
+    }
+    catch (_) {
+      console.warn("Failed to set local storage item");
     }
   }
 
+  getLocalStorageItem(key, expireDelay = undefined) {
+    let itemKey = this.getItemKey(key);
+    let ret = localStorage.getItem(itemKey);
+    if (expireDelay !== undefined) {
+      try {
+        JSXInstance.setExpireTime(itemKey, expireDelay);
+      }
+      catch (_) {
+        console.warn("Failed to update local storage item expiration time");
+      }
+    }
+    return ret;
+  }
+
   removeLocalStorageItem(key) {
-    let itemKey = this.getItemKey();
-    let ret = window.localStorage.removeItem(itemKey);
-    window.localStorage.removeItem(itemKey + "-expTime");
+    let itemKey = this.getItemKey(key);
+    let ret = localStorage.removeItem(itemKey);
+    localStorage.removeItem(itemKey + "-expTime");
   }
 
   static setExpireTime(itemKey, expireDelay) {
     let expireTime = Date.now() + Math.min(expireDelay, 604800000);
-    window.localStorage.setItem(itemKey + "-expTime", expireTime);
+    localStorage.setItem(itemKey + "-expTime", expireTime);
   }
 
   static removeAllExpiredLocalStorageItems() {
-    let localStorage = window.localStorage;
     let now = Date.now();
     let len = localStorage.length;
     for (let i = 0; i < len; i++) {
@@ -1635,11 +1636,9 @@ export class JSXInstanceInterface extends ObjectObject {
 
   // rerender() is equivalent of calling setState() on the current state; it
   // just forces a rerender.
-  rerender = new DevFunction(
-    "rerender", {}, ({interpreter}, [force = true]) => {
-      this.jsxInstance.queueRerender(interpreter, force ? true : false);
-    }
-  );
+  rerender = new DevFunction("rerender", {}, (_, [force = true]) => {
+    this.jsxInstance.queueRerender(force ? true : false);
+  });
 
 
   // setContext(key, context, force = false) provides a context identified by
@@ -1649,9 +1648,9 @@ export class JSXInstanceInterface extends ObjectObject {
   // true, all the subscribing instances will rerender.
   setContext = new DevFunction(
     "setContext", {typeArr: ["object key|array", "any?", "any?"]},
-    ({interpreter}, [key, context, force = false]) => {
+    (_, [key, context, force = false]) => {
       let keyArr = this.getKeyArr(key);
-      this.jsxInstance.setContext(keyArr, context, force, interpreter);
+      this.jsxInstance.setContext(keyArr, context, force);
     },
   );
 
@@ -2022,22 +2021,22 @@ export function getUserID() {
 }
 
 
-function addUserContexts(contextProvisions, interpreter, env) {
+function addUserContexts(contextProvisions, env) {
   let {contexts: {userContext}} = env.globals;
   let userID = getUserID();
   userContext.setVal({userID: userID});
   let contextProvision = JSXInstance.createContextProvision(userID);
   userContext.addSubscriberCallback(({userID}) => {
     JSXInstance.updateContextProvision(
-      contextProvision, {userID: userID}, false, interpreter
+      contextProvision, {userID: userID}, false
     );
   });
   contextProvisions["userID"] = contextProvision;
 }
 
-function getURLContexts(interpreter, urlContext) {
+function getURLContexts(urlContext) {
   let {pathname, segments, state} = urlContext.val;
-  let segmentsRef = [segments] = stateRef = [state];
+  let segmentsRef = [segments], stateRef = [state];
 
   let segmentContextProvisions = {};
   segments.forEach((segment, ind) => {
@@ -2055,7 +2054,7 @@ function getURLContexts(interpreter, urlContext) {
           JSXInstance.updateContextProvision(
             segmentContextProvisions[i] ??=
               JSXInstance.createContextProvision(seg),
-            seg, true, interpreter
+            seg, true
           );
         }
       }

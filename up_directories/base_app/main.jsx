@@ -24,12 +24,9 @@ import * as tabbedPagesStyle from "../utilities/TabbedPages.css";
 import {scoreHandler02} from "/1/1/score_handling/ScoreHandler01/em.js";
 
 
-export function render({
-  url, history, userID, homeURL = "", localStorage, sessionStorage
-}) {
+export function render({url, homeURL = ""}) {
+  let url = this.getPath();
   let {userEntID} = this.state;
-  this.setContext("history", history);
-  this.setContext("userID", userID);
   this.setContext("userEntID", userEntID ? userEntID : undefined);
   this.setContext("homeURL", homeURL);
   // TODO Implement an item in the AppHeader for going to a score handler

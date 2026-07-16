@@ -20,7 +20,7 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {href, children, onClick} = props;
+    let {href, children, onClick, state, copyOtherStates} = props;
     verifyTypes(
       [href, onClick], ["string?", "function?"], callerNode, execEnv
     );
@@ -38,19 +38,9 @@ export const render = new DevFunction(
 
     // Add the relative href if provided.
     if (href !== undefined) {
-      // Trigger the getURL event in order to get the absolute href. 
-      href = jsxInstance.trigger(
-        "getURL", href, interpreter, callerNode, execEnv
-      ) ?? href;
-
-      // Validate href, and prepend './' to it if doesn't start with /.?.?\//.
-      if (!(typeof href === "string") || !HREF_REGEX.test(href)) {
-        throw new ArgTypeError(
-          "Invalid href: " + getString(href, execEnv),
-          callerNode, execEnv
-        );
-      }
-      if (!HREF_REL_START_REGEX.test(href)) href = './' + href;
+      // Call getValidatedPathname() in order to get the absolute href.
+      href = getString(href, execEnv);
+      href = jsxInstance.getValidatedPathname(href, callerNode, execEnv);
 
       // Add the href attribute.
       domNode.setAttribute("href", href);
@@ -99,15 +89,10 @@ export const render = new DevFunction(
           return true;
         }
         else {
-          let triggerFun = thisVal.members.trigger;
-          let errRef = [];
-          let hasPushed = interpreter.executeFunctionOffSync(
-            triggerFun, ["pushURL", href], callerNode, execEnv, thisVal,
-            [[CAN_POST_FLAG, false]], errRef
+          jsxInstance.pushOrReplaceURLAndState(
+            href, state, copyOtherStates, false, callerNode, execEnv
           );
-          if (hasPushed || errRef[0]) {
-            return false; // Prevents default event propagation.
-          }
+          return false; // Prevents default event propagation.
         }
       }
 

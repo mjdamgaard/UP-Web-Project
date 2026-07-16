@@ -68,6 +68,7 @@ export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
     let newTailURL = slice(tailURL, firstTailSegment.length + 1);
     let newHomeURL = slice(url, 0, -tailURL.length || undefined) +
       "/" + uriSafeComponentName;
+    this.advanceURL(1);
     if (!hasBeenReplaced && firstTailSegment !== uriSafeComponentName) {
       this.setState(state => ({...state, hasBeenReplaced: true}));
       this.trigger("replaceURL", newHomeURL + newTailURL);

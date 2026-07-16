@@ -70,6 +70,7 @@ export function renderHelper(thisVal, {
   let indOfSecondSlash = indexOf(tailURL, "/", 1);
   let firstSegment = (indOfSecondSlash === -1) ?
     substring(tailURL, 1) : substring(tailURL, 1, indOfSecondSlash);
+  this.advanceURL(1);
   if (firstSegment === "i") {
     return [
       "idx",

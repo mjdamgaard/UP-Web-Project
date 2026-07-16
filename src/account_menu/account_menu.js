@@ -14,7 +14,7 @@ export function main(userContext, urlContext) {
   userContext.setVal({userID: userID});
 
   if (!expTime || expTime * 1000 < Date.now() + 86400000) {
-    localStorage.removeItem("userData");
+    localStorage.clear();
     username = "";
   }
   else {
