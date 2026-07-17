@@ -66,23 +66,23 @@ export function render() {
 export const actions = {
   ...urlActions,
   "pushState": function([state, url]) {
-    clearPermissions(() => this.props.history.pushState(state, url));
+    clearPermissions(() => this.pushURL(url, state));
     return true;
   },
   "replaceState": function([state, url]) {
-    clearPermissions(() => this.props.history.replaceState(state, url));
+    clearPermissions(() => this.replaceURL(url, state));
     return true;
   },
   "back": function() {
-    clearPermissions(() => this.props.history.back());
+    clearPermissions(() => this.back());
     return true;
   },
   "forward": function() {
-    clearPermissions(() => this.props.history.forward());
+    clearPermissions(() => this.forward());
     return true;
   },
   "go": function(delta) {
-    clearPermissions(() => this.props.history.go(delta));
+    clearPermissions(() => this.go(delta));
     return true;
   },
   "postUserEntity": function() {

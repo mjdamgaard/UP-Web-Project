@@ -1,35 +1,17 @@
 
-import * as ILink from 'ILink';
+// This component wraps the AppLoader component in order to handle when the
+// the triggers events of loading untrusted apps. 
 
+import * as AppLoader from "./src/AppLoader.jsx";
 
-export function render() {
-  return <header className="app-header">
-    <ILink key="logo" href="~/">
-      <span className="logo">{"UP-Web.org"}</span>
-    </ILink>
-    <div className="items">
-      {/* The About page is under renovation: */}
-      {/* <ILink key="about" href="~/about">
-        <span className="menu-item">{"About"}</span>
-      </ILink> */}
-      <ILink key="tut" href="~/tutorials">
-        <span className="menu-item">{"Tutorials"}</span>
-      </ILink>
-      {/* <ILink key="apps" href="~/apps">
-        <span className="menu-item">{"Apps"}</span>
-      </ILink> */}
-      <ILink key="comp" href="~/ep/1/1/em1.js;get/components">
-        <span className="menu-item">{"Components"}</span>
-      </ILink>
-      {/* <ILink key="proj" href="~/ep/1/1/em1.js;get/projects">
-        <span className="menu-item">{"Projects"}</span>
-      </ILink>
-      <ILink key="disc" href="~/ep/1/1/em1.js;get/discussionsClass">
-        <span className="menu-item">{"Discussions"}</span>
-      </ILink>
-      <ILink key="contr" href="~/ep/1/1/em1.js;get/contributions">
-        <span className="menu-item">{"Contributions"}</span>
-      </ILink> */}
+export function render(props) {
+  let {displayWarning} = this.state;
+  return (
+    <div className="app-loader-wrapper">
+      <div className="warning-container">
+        {/* TODO... */}
+      </div>
+      <AppLoader key="l" {...props} />
     </div>
-  </header>;
+  );
 }

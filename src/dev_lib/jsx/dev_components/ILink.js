@@ -3,8 +3,7 @@ import {
   DevFunction, ArgTypeError, ObjectObject, verifyTypes, getString,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, HREF_REGEX, HREF_REL_START_REGEX, clearAttributes,
-  validateJSXInstance,
+  DOMNodeObject, clearAttributes, validateJSXInstance,
 } from "../jsx_components.js";
 import {CAN_POST_FLAG} from "../../query/src/flags.js";
 
@@ -90,7 +89,8 @@ export const render = new DevFunction(
         }
         else {
           jsxInstance.pushOrReplaceURLAndState(
-            href, state, copyOtherStates, false, callerNode, execEnv
+            href, state, copyOtherStates, false, true, undefined,
+            callerNode, execEnv
           );
           return false; // Prevents default event propagation.
         }

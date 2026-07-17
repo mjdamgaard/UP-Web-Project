@@ -16,7 +16,7 @@ const NODE_ID = "1";
 const CLASS_NAME_REGEX = /^ *([a-z][a-z0-9_-]* *)*$/;
 export const HREF_REGEX =
   /^(\.{0,2}\/)?(([;.~a-zA-Z0-9_\-]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+(\/([;.~a-zA-Z0-9_\-]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+)*)?$/;
-export const HREF_REL_START_REGEX = /^(\.~){0,2}\//;
+export const HREF_REL_START_REGEX = /^(\.\.?|~~?)?\//;
 
 export const CAN_CREATE_APP_FLAG = Symbol("can-create-app");
 
@@ -60,7 +60,8 @@ export const createJSXApp = new DevFunction(
     // Provide some global contexts for getting user data and URL data.
     let globalContextProvisions = {};
     addUserContexts(globalContextProvisions, appEnv);
-    let [segmentContextProvisions, segmentsRef] = getURLContexts(urlContext);
+    let [segmentContextProvisions, segmentsRef, pathnameRef] =
+      getURLContexts(urlContext);
 
     // Create the app's root component instance.
     let rootInstance = new JSXInstance(
@@ -70,6 +71,7 @@ export const createJSXApp = new DevFunction(
         globalContextProvisions: globalContextProvisions,
         segmentContextProvisions: segmentContextProvisions,
         segmentsRef: segmentsRef,
+        pathnameRef: pathnameRef,
       }
     );
 
@@ -113,7 +115,7 @@ class JSXInstance {
     this.state = {};
     this.prevState = undefined;
     this.contextProvisions = {};
-    this.contextSubscriptions = {};
+    this.contextSubscriberMaps = new Map();
     this.callerNode = callerNode;
     this.callerEnv = callerEnv;
     this.compEnv = undefined;
@@ -191,19 +193,9 @@ class JSXInstance {
       this.initialize(interpreter, callerNode, compEnv, replaceSelf);
     }
 
-    // And on all subsequent renders, make sure to reset this.nextSegmentIndex
-    // and unsubscribe from the corresponding URL segments before the render()
-    // function is called.
-    else {
-      let prevNextSegment = this.nextSegmentIndex;
-      if (prevNextSegment > this.segmentIndex) {
-        this.nextSegmentIndex = this.segmentIndex;
-        let {segmentContextProvisions} = this.globals;
-        for (let i = this.segmentIndex; i < prevNextSegment; i++) {
-          JSXInstance.unsubscribeFromContext(this, segmentContextProvisions[i]);
-        }
-      }
-    }
+    // Unsubscribe from all contexts and reset this.nextSegmentIndex.
+    this.unsubscribeFromAllContexts();
+    this.nextSegmentIndex = this.segmentIndex;
 
 
     // Then get the component's render() function.
@@ -355,14 +347,14 @@ class JSXInstance {
     }
   }
 
-  dismount(env) {
+  dismount() {
     this.childInstances.forEach(child => {
       child.dismount();
     });
     this.unsubscribeFromAllContexts();
     if (this.hasHistoryState) {
-      let {popstateCallbacks} = execEnv.globals.contexts.urlContext.val;
-      popstateCallbacks.remove(this);
+      let {popstateCallbacks} = this.callerEnv.globals.contexts.urlContext.val;
+      popstateCallbacks.delete(this);
     }
     this.isDiscarded = true;
   }
@@ -1023,18 +1015,30 @@ class JSXInstance {
     }
   }
 
-  static subscribeToContext(jsxInstance, contextProvision, ignore = false) {
+  subscribeToContext(contextProvision, ignore = false) {
     if (!ignore) {
-      contextProvision.subscribers.set(jsxInstance, true);
+      let subscriberMap = contextProvision.subscribers;
+      subscriberMap.set(this, true);
+      this.contextSubscriberMaps.set(subscriberMap, true);
     } else {
-      contextProvision.subscribers.delete(jsxInstance);
+      let subscriberMap = contextProvision.subscribers;
+      subscriberMap.delete(this);
+      this.contextSubscriberMaps.delete(subscriberMap);
     }
     return contextProvision.context;
   }
 
-  static unsubscribeFromContext(jsxInstance, contextProvision) {
-    contextProvision.subscribers.delete(jsxInstance);
-    return contextProvision.context;
+  unsubscribeFromContext(contextProvision) {
+    let subscriberMap = contextProvision.subscribers;
+    subscriberMap.delete(this);
+    this.contextSubscriberMaps.delete(subscriberMap);
+  }
+
+  unsubscribeFromAllContexts() {
+    this.contextSubscriberMaps.forEach((_, subscriberMap) => {
+      subscriberMap.delete(this);
+    });
+    this.contextSubscriberMaps.clear();
   }
 
 
@@ -1049,54 +1053,19 @@ class JSXInstance {
   }
 
   getContext(key, ignore = false) {
-    if (!ignore) {
-      this.contextSubscriptions[key] = true;
-    } else {
-      delete this.contextSubscriptions[key];
-    }
     let {parentInstance, globals} = this;
     let contextProvisions =
       parentInstance?.contextProvisions ?? globals.globalContextProvisions;
     while (contextProvisions) {
       let contextProvision = contextProvisions[key];
       if (contextProvision) {
-        return JSXInstance.subscribeToContext(
+        return this.subscribeToContext(
           this, contextProvision, ignore
         );
       }
       ({parentInstance, globals} = parentInstance ?? {});
       contextProvisions =
         parentInstance?.contextProvisions ?? globals?.globalContextProvisions;
-    }
-  }
-
-  ignoreContext(key) {
-    delete this.contextSubscriptions[key];
-    let {parentInstance, globals} = this;
-    let contextProvisions =
-      parentInstance?.contextProvisions ?? globals.globalContextProvisions;
-    while (contextProvisions) {
-      let contextProvision = contextProvisions[key];
-      if (contextProvision) {
-        return JSXInstance.unsubscribeFromContext(this, contextProvision);
-      }
-      ({parentInstance, globals} = parentInstance ?? {});
-      contextProvisions =
-        parentInstance?.contextProvisions ?? globals?.globalContextProvisions;
-    }
-  }
-
-  unsubscribeFromAllContexts() {
-    if (this.contextSubscriptions) {
-      Object.keys(this.contextSubscriptions).forEach(key => {
-        this.ignoreContext(key);
-      });
-    }
-    let {nextSegmentIndex, globals: {segmentContextProvisions}} = this;
-    if (nextSegmentIndex > this.segmentIndex) {
-      for (let i = this.segmentIndex; i <= nextSegmentIndex; i++) {
-        JSXInstance.unsubscribeFromContext(this, segmentContextProvisions[i]);
-      }
     }
   }
 
@@ -1135,10 +1104,19 @@ class JSXInstance {
       this.segmentIndex + end - 1;
     let ret = segments.slice(firstInd, lastInd);
     for (let i = firstInd; i <= lastInd; i++) {
-      JSXInstance.subscribeToContext(this, segmentContextProvisions[i]);
+      this.subscribeToContext(segmentContextProvisions[i]);
     }
     return ret;
   }
+
+  // unsubscribeFromAllSegments() {
+  //   let {nextSegmentIndex, globals: {segmentContextProvisions}} = this;
+  //   if (nextSegmentIndex > this.segmentIndex) {
+  //     for (let i = this.segmentIndex; i <= nextSegmentIndex; i++) {
+  //       this.unsubscribeFromContext(segmentContextProvisions[i]);
+  //     }
+  //   }
+  // }
 
 
   pushOrReplaceURLAndState(
@@ -1191,14 +1169,16 @@ class JSXInstance {
     urlContext.setVal(newURLData);
     if (triggerPopstate) {
       popstateCallbacks.forEach(
-        callback => callback(urlData, prevURLData, signal)
+        callback => callback(newURLData, prevURLData, signal)
       );
     }
   }
 
 
   getValidatedPathname(url, node, env) {
-    // Prepend './' to the url if it doesn't start with /^(\.~){0,2}\//.
+      let {globals: {pathnameRef: [prevPathname]}, segmentIndex} = this;
+
+    // Prepend './' to the url if it doesn't start with "/", "./", "~/", etc.
     if (!HREF_REL_START_REGEX.test(url)) url = './' + url;
 
     // If if it starts with (~/)+, prepend the rest to "/" + segments-
@@ -1207,8 +1187,7 @@ class JSXInstance {
       do {
         url = url.substring(2);
       } while (url.substring(0, 2) === "~/");
-      let {globals: {segments}, segmentIndex} = this;
-      url = "/" + segments.slice(0, segmentIndex + 1).join("/") + "/" + url;
+      url = prevPathname + "/" + url;
     }
 
     // Else if the url start with a number of  "~~/"'s, go up the ancestor
@@ -1227,12 +1206,11 @@ class JSXInstance {
         segmentIndex = parentInstance.segmentIndex;
         url = url.substring(3);
       } while (url.substring(0, 3) === "~~/");
-      let {segments} = this.globals;
-      url = "/" + segments.slice(0, segmentIndex + 1).join("/") + "/" + url;
+      url = prevPathname + "/" + url;
     }
 
     // Then call getAbsolutePath() to handle any "./" and "../" segments.
-    let pathname = getAbsolutePath(this.pathname, url,  node, env);
+    let pathname = getAbsolutePath(prevPathname, url, node, env);
     pathname = pathname.replace(/\/$/, "");
 
     // Finally validate pathname before returning it.
@@ -1266,6 +1244,17 @@ class JSXInstance {
   getItemKey(key) {
     return "jsx-" + this.getFullInstanceKey() + "-" + JSON.stringify(key);
   }
+
+  forEachAncestor(includeSef, callback, indRef = [0]) {
+    let {parentInstance} = this;
+    if (parentInstance) {
+      parentInstance.forEachAncestor(true, callback, indRef);
+    }
+    if (includeSef) {
+      callback(this, indRef[0]++);
+    }
+  }
+
 
   setLocalStorageItem(key, val, expireDelay = 604800000) {
     let itemKey = this.getItemKey(key);
@@ -1347,7 +1336,7 @@ class JSXInstance {
       this.hasHistoryState = true;
       popstateCallbacks.set(
         this, ({state: newState}, {state: prevState}, signal) => {
-          newState ??= {}, prevState ??= {};
+          newState ??= {}; prevState ??= {};
           let newInstanceState = newState[itemKey];
           let prevInstanceState = prevState[itemKey];
           if (!deepCompare(newInstanceState, prevInstanceState)) {
@@ -1365,7 +1354,7 @@ class JSXInstance {
   setHistoryState(newInstanceState) {
     newInstanceState = JSON.parse(jsonStringify(newInstanceState));
     let itemKey = this.getItemKey("");
-    let {state, pathname} = execEnv.globals.contexts.urlContext.val;
+    let {state, pathname} = this.callerEnv.globals.contexts.urlContext.val;
     let newState = {...state, [itemKey]: newInstanceState};
     try {
       window.history.replaceState(newState, "", pathname);
@@ -1404,7 +1393,6 @@ export class JSXInstanceInterface extends ObjectObject {
       "rerender": this.rerender,
       "setContext": this.setContext,
       "getContext": this.getContext,
-      "ignoreContext": this.ignoreContext,
       "getOwnContext": this.getOwnContext,
       "reset": this.reset,
       "advanceURL": this.advanceURL,
@@ -1536,14 +1524,6 @@ export class JSXInstanceInterface extends ObjectObject {
     "getContext", {typeArr: ["object key", "any?"]},
     (_, [key, ignore = false]) => {
       return this.jsxInstance.getContext(key, ignore);
-    }
-  );
-
-  // ignoreContext(key) unsubscribes the instance from a context, meaning that
-  // it will no longer rerender if the context updates.
-  ignoreContext = new DevFunction(
-    "ignoreContext", {typeArr: ["object key"]}, (_, [key]) => {
-      return this.jsxInstance.ignoreContext(key);
     }
   );
 
@@ -1941,7 +1921,7 @@ function addUserContexts(contextProvisions, env) {
 
 function getURLContexts(urlContext) {
   let {pathname, segments, state} = urlContext.val;
-  let segmentsRef = [segments];
+  let segmentsRef = [segments], pathnameRef = [pathname];
 
   let segmentContextProvisions = {};
   segments.forEach((segment, ind) => {
@@ -1949,8 +1929,8 @@ function getURLContexts(urlContext) {
   });
 
   urlContext.addSubscriberCallback(
-    ({segments, state}, {segments: prevSegments, state: prevState}) => {
-      segmentsRef[0] = segments;
+    ({pathname, segments, state}, {segments: prevSegments, state: prevState}) => {
+      segmentsRef[0] = segments; pathnameRef[0] = pathname;
       let maxLen = Math.max(segments.length, prevSegments.length);
       for (let i = 0; i < maxLen; i++) {
         let seg = segments[i], prevSeg = prevSegments[i];
@@ -1965,7 +1945,7 @@ function getURLContexts(urlContext) {
     }
   );
 
-  return [segmentContextProvisions, segmentsRef];
+  return [segmentContextProvisions, segmentsRef, pathnameRef];
 }
 
 
