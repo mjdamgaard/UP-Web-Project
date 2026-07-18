@@ -28,7 +28,7 @@ export function initialize({entID}) {
 export function render({entID, qualKey, score, weight}) {
   let {classPath, name} = this.state;
   if (classPath === undefined) {
-    return <div className="entity-element fetching">{"..."}</div>;
+    return <div className="entity-element fetching"></div>;
   }
 
   // Branch according the the class of the entity.

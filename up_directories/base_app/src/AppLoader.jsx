@@ -1,173 +1,117 @@
 
-import {clearPermissions} from 'query';
-import {urlActions, urlEvents} from "../urlActions.js";
-
-import {substring, split, at, slice, join} from 'string';
+import {clearPermissions, fetch, fetchPrivate} from 'query';
+import {substring, split, at, slice, join, replaceAll} from 'string';
 import {fetchPrivate, fetch} from 'query';
 import {hasType, hasTypes, verifyType} from 'type';
-import {getFirstSegment} from 'path';
 
-const fetchBestSubAppRouteTemplate = [
-  abs("./server/apps.sm.js./callSMF/fetchPreferredSubApp/"),
-  "",
-];
-// TODO: Implement a fundamental settings page where users can change this
-// SMF route template for fetching the best sub-app (with ample warnings about
-// doing so).
+import * as MissingPage from "./MissingPage.jsx";
 
 
+// props : {
+//   useOriginal, useDefault, Wrapper, appProps, fetchBestAppRouteTemplate
+// }.
 
 export function render(props) {
-  let {url, homeURL, tailURL, history, userID} = props;
-  let {appDirID, userID: prevUserID} = history.state;
+  let {Wrapper, appProps = {}} = props;
+  let {appDirID, AppComponent, trustClass} = this.state.ref ?? {};
 
   // Parse the appDirIDSegment from the URL.
-  let appDirIDSegment = getFirstSegment(tailURL);
+  let appDirIDSegment = this.getFirstSegment();
   if (!hasType(appDirIDSegment, "hex")) {
-    return "404 error: Missing page."; // TODO: Improve.
+    console.error("Non-hexadecimal appDirID segment: " + appDirIDSegment);
+    return <MissingPage key="m" />;
   }
 
-  // If the history.state.appDirID has already been set, and for the same user,
-  // simply load the app of this appDirID.
-  if (appDirID && prevUserID === userID) {
-    let appHomeURL = homeURL + "/" + appDirIDSegment;
-    let appTailURL = substring(url, appHomeURL.length);
+  // If no app has been loaded yet, or if appDirIDSegment is not the the
+  // appDirID of the currently loaded app, call the "loadNewApp" action.
+  if (appDirIDSegment !== appDirID) {
+    let urlTail = substring(this.getPath(), appDirIDSegment.length + 2);
+    this.do("loadNewApp", [appDirIDSegment, urlTail]);
     return (
       <div className="app">
-        <AppFrame {...props} key="a"
-          appDirID={appDirID} homeURL={appHomeURL} tailURL={appTailURL}
-        />
+        <div className="fetching"></div>
       </div>
     );
   }
 
-  // Else call an action to load a new app derived from the appDirIDSegment.
-  // When resolving, this action triggers the "replaceState" event to update
-  // the history.state.
-  this.do("loadNewApp", appDirIDSegment);
-  return (
-    <div className="app">
-      <div className="fetching">"..."</div>
-    </div>
-  );
+  // Else load the AppComponent set by "loadNewApp", wrapped in the 'wrapper'
+  // component if provided. Note that we make sure to give an unique key to
+  // the app component in order to ensure that its state (including local/
+  // session storage or history states) does not get mixed up with another.
+  if (!AppComponent) {
+    return <MissingPage key="m" />;
+  }
+  if (Wrapper) {
+    return (
+      <Wrapper key="w" trustClass={trustClass} appDirID={appDirID} >
+        <AppComponent key={"a-" + appDirID} {...appProps} />
+      </Wrapper>
+    );
+  } else {
+    this.advanceURL(1);
+    return <AppComponent key={"a-" + appDirID} {...appProps} />;
+  }
 }
 
 
 
-export const events = [
-  ...urlEvents,
-  "pushState",
-  "replaceState",
-];
-
 
 export const actions = {
-  ...urlActions,
-
-  // AppLoader needs to overwrite the push/replaceState actions/events from
-  // urlActions, such that they use the api.js module to transform the
-  // appDirIDSegment to the ID of the most general app that implements the
-  // given tailURL.
-  "pushState": function(stateAndURL) {
-    stateAndURL = this.do("getTransformedStateAndURL", stateAndURL);
-    return this.trigger("pushState", stateAndURL);
-  },
-  "replaceState": function(stateAndURL) {
-    stateAndURL = this.do("getTransformedStateAndURL", stateAndURL);
-    return this.trigger("replaceState", stateAndURL);
-  },
-
-  "getTransformedStateAndURL": function([childState = null, url]) {
-    let {history: {state}, homeURL} = this.props;
-    let {appDirID} = state ??= {};
-
-    // First put the childState on a state within its own property, as to not
-    // overwrite e.g. the appDirID property of state, used by this component.
-    state = {...state, childState: childState};
-
-    // Then parse home and tail URL of the <App /> child component.
-    let tailURL = substring(url, homeURL.length);
-    let appDirIDSegment = getFirstSegment(tailURL);
-    let appHomeURL = homeURL + "/" + appDirIDSegment;
-    let appTailURL = substring(url, appHomeURL.length);
-    
-    // If appDirID is undefined, meaning that the current app hasn't loaded
-    // yet, or if url does not start with appHomeURL, simply return the url as
-    // is along with a null state.
-    if (!appDirID || substring(url, 0, appHomeURL.length) !== appHomeURL) {
-      return [null, url];
-    }
-
-    // Else return the transformed state along with the same url for now, but
-    // also call fetchMostGeneralAppDirIDSegment() to run in the background,
-    // and when it resolves, trigger "replaceState" again to adjust the url
-    // with the mostGeneralAppDirID as the new appDirIDSegment, unless this url
-    // has changed in the meantime. Also, if mostGeneralAppDirID is falsy,
-    // simply log a warning, but do not replace the URL.
-    fetchMostGeneralAppDirIDSegment(appDirID, appTailURL).then(
-      mostGeneralAppDirID => {
-        if (!mostGeneralAppDirID) {
-          console.warn(
-            "An URL was used outside the given app's declared API: " + url
-          );
-          return;
-        }
-        let {url: curURL} = this.getCurrent().props;
-        if (curURL === url) {
-        let transformedURL = homeURL + "/" + mostGeneralAppDirID + appTailURL;
-          this.trigger("replaceState", [state, transformedURL]);
-        }
-      }
-    );
-    return [state, url];
-  },
-
-
-  "loadNewApp": async function(appDirIDSegment) {
+  "loadNewApp": async function([appDirIDSegment, urlTail]) {
     verifyType(appDirIDSegment, "hex");
-    let {url, userID, useOriginal, useDefault} = this.props;
+    let {useOriginal, useDefault, fetchBestAppRouteTemplate} = this.props;
 
     // If useOriginal is set, simply use the same appDirIDSegment instead of
     // querying for the best sub-app.
     if (useOriginal) {
-      this.trigger("replaceState", [
-        {appDirID: appDirIDSegment, userID: userID}, url
-      ]);
+      this.setState(state => ({...state, appDirID: appDirIDSegment}));
       return;
     }
 
-    // Else query the route of fetchBestSubAppRouteTemplate.join(
-    // appDirIDSegment), and make it a private query iff the user is logged in
-    // and useDefault is falsy.
-    let fetchBestSubAppRoute =
-      join(fetchBestSubAppRouteTemplate, appDirIDSegment);
-    let fetchFun = userID && !useDefault ? fetchPrivate : fetch;
-    let appDirID = await fetchFun(fetchBestSubAppRoute);
+    // Else use the app's api.js file to get the most general app version that
+    // implements this urlTail.
+    let genAppDirID = await fetchMostGeneralAppDirID(appDirIDSegment, urlTail);
 
-    // Also fetch the app's api.js module in the background.
-    import("../" + appDirID + "/api.js").catch(err => undefined);
-
-    // Check that the URL and the user haven't changed in the meantime, then
-    // replace the history state with the resulting appDirID of the best sub-
-    // app to load for the user.
-    let {curURL, curUserID} = this.getCurrent().props;
-    if (curURL === url && curUserID === userID) {
-      this.trigger("replaceState", [{appDirID: appDirID, userID: userID}, url]);
+    // If this procedure failed, also simply load the app of the current
+    // appDirSegment itself.
+    if (!genAppDirID) {
+      this.setState(state => ({...state, appDirID: appDirIDSegment}));
+      return;
     }
+
+    // Else query the fetchBestAppRouteTemplate, with "?"'s replaced with
+    // geAppDirID, and make it a private query iff the user is logged in and
+    // useDefault is falsy.
+    let fetchAppRoute = replaceAll(fetchBestAppRouteTemplate, "?", genAppDirID);
+    let userID = this.getContext("userID", true);
+    let fetchFun = userID && !useDefault ? fetchPrivate : fetch;
+    let {appDirID, trustClass} = await fetchFun(fetchAppRoute);
+
+    // Fetch the app component found at main.jsx in the app's home directory.
+    let AppComponent = await import("~/../" + appDirID + "/main.jsx").catch(
+      err => console.error(err)
+    );
+
+    // And finally replace the appDirIDSegment with the appDirID of the app to
+    // be loaded, and set the appDirID, trustClass, and AppComponent states.
+    this.replaceURL("replaceState", "~/" + appDirIDSegment + "/" + urlTail);
+    this.setState(state => ({...state,
+      appDirID: appDirID, trustClass: trustClass, AppComponent: AppComponent,
+    }));
   },
 };
 
 
 
 
-export async function fetchMostGeneralAppDirIDSegment(appDirID, appTailURL) {
+export async function fetchMostGeneralAppDirID(appDirIDSegment, urlTail) {
   // First fetch the api.js module, which is expected to be in the app's home
   // directory.
-  let apiModule = await fetch(abs("../" + appDirID + "/api.js")).catch(
+  let apiModule = await fetch(abs("../" + appDirIDSegment + "/api.js")).catch(
     err => false
   );
   if (!apiModule) throw (
-    "Missing api.js module (in directory #" + appDirID + ")"
+    "Missing api.js module (in directory #" + appDirIDSegment + ")"
   );
 
   // Go through each entry in the default export, which ought to be an array
@@ -191,12 +135,12 @@ export async function fetchMostGeneralAppDirIDSegment(appDirID, appTailURL) {
     [urlSubstring, appIdent] = urlSubstringAndAppIdentPair;
 
     // If urlSubstring matches appTailURL, break the loop.
-    if (urlSubstring === appTailURL) {
+    if (urlSubstring === urlTail) {
       break;
     }
     let lastChar = at(urlSubstring, -1);
     if (
-      lastChar === "*" && substring(appTailURL, 0, urlSubstring.length - 1) ===
+      lastChar === "*" && substring(urlTail, 0, urlSubstring.length - 1) ===
         slice(urlSubstring, 0, -1)
     ) {
       break;
@@ -220,7 +164,7 @@ export async function fetchMostGeneralAppDirIDSegment(appDirID, appTailURL) {
   // .directories[appIdent].
   try {
     let placeholdersModule = 
-      await fetch(abs("../" + appDirID + "/placeholders.js"));
+      await fetch(abs("../" + appDirIDSegment + "/placeholders.js"));
     let mostGeneralAppDirID =
       placeholdersModule.default.this.directories[appIdent];
     if (!hasType(mostGeneralAppDirID, "hex")) throw "";

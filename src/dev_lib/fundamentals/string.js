@@ -1,5 +1,5 @@
 
-import {DevFunction, getString, ObjectObject} from
+import {DevFunction, FunctionObject, getString, ObjectObject} from
   "../../interpreting/ScriptInterpreter.js";
 
 
@@ -69,6 +69,30 @@ export const toLowerCase = new DevFunction(
 export const trim = new DevFunction(
   "trim", {typeArr: ["string"]}, ({}, [str]) => {
     return str.trim();
+  }
+);
+
+export const replace = new DevFunction(
+  "replace", {typeArr: ["string", "string", "string|function"]},
+  ({callerNode, execEnv, interpreter}, [str, pattern, replacement]) => {
+    if (replacement instanceof FunctionObject) {
+      replacement = (match) => interpreter.executeFunction(
+        replacement, [match], callerNode, execEnv
+      );
+    }
+    return str.replace(pattern, replacement);
+  }
+);
+
+export const replaceAll = new DevFunction(
+  "replaceAll", {typeArr: ["string", "string", "string|function"]},
+  ({callerNode, execEnv, interpreter}, [str, pattern, replacement]) => {
+    if (replacement instanceof FunctionObject) {
+      replacement = (match) => interpreter.executeFunction(
+        replacement, [match], callerNode, execEnv
+      );
+    }
+    return str.replaceAll(pattern, replacement);
   }
 );
 

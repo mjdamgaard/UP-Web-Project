@@ -5,7 +5,8 @@ import {hasType} from 'type';
 
 import {urlActions, urlEvents} from "./src/urlActions.js";
 
-import * as AppLoaderWrapper from "./src/AppLoaderWrapper.jsx";
+import * as AppLoader from "./src/AppLoader.jsx";
+import * as WarningWrapper from "./src/WarningWrapper.jsx";
 import * as MissingPage from "./src/MissingPage.jsx";
 import * as AppFrame from "./src/AppFrame.jsx";
 import * as AboutPage from "./src/AboutPage.jsx";
@@ -20,7 +21,11 @@ const {
   },
 } = placeholders;
 
-export const missingPage = "404 error: Missing page."; // TODO: Improve.
+const fetchBestAppRouteTemplate =
+  abs("./server/apps.sm.js./callSMF/fetchPreferredSubApp/?");
+// Todo for future version: Implement a fundamental settings page where users
+// can change this SMF route template for fetching the best sub-app (with ample
+// warnings about doing so).
 
 
 // The main job(s) of a "base app" is to define a header menu for the website
@@ -30,38 +35,29 @@ export const missingPage = "404 error: Missing page."; // TODO: Improve.
 // updated version of itself first, and then gives it a false loadUpdatedSelf
 // prop to let it know not to load any other versions of itself, but to
 // continue as it is.
-// The first segment of the URL is then the most general version of the base
-// app that implements the tail URL, which is looked up in the api.js module.
-// This "most general version" of an app is basically the earliest ancestor
-// version of the current app in the version tree to implement the given tail
-// URL.
-// If the base app points to another app, rather than a page defined by the
-// base app itself (such as an 'about' page, etc.), then the base app loads
-// that app within itself. And here it ought to also use a similar system of
-// setting the "most general version" of that app that implements *its* tail
-// URL as an initial segment.
-// This general system of letting the URLs point to the "most general version"
-// is a bit complicated, but the purpose is to allow users to share URLs while
-// using different settings for what their preferred app version are, in such a
-// way that the the shared URLs always have the same semantics, but where two
-// different users might see the same page rendered a bit differently depending
-// on their settings.
-// But all in all, the base app's responsibility is mainly to load the app that
-// is (typically) pointed to by the URL, and then to also define the global
-// header, and general frame around the loaded app.
+// This base app uses an AppLoader component which looks at the next segment
+// in the URL, which is supposed to be the directory ID of an app's home
+// directory (an "appDirID"). It then uses the api.js module in the same home
+// directory to find the most general version of the given app that implements
+// the tail URL that comes after the appDirID segment. It then queries about
+// the best app version to load in the app version tree, starting from this
+// "most general version," which is the first version implement tail URLs of
+// the given type. This "best version" might then depend on user preferences if
+// the user is logged in. And finally it loads that app, and changes the
+// appDirID segment to match the loaded app.
+// The point of this system is thus to allow users to share URLs with each
+// other, even though they have different app preferences, where this base app
+// will then automatically load the best app version for the given user that
+// implements the given tail URL.
 
 
 
 export function initialize() {
-  return {
-    ref: {appLoaderProps: undefined},
-  };
+  return {ref: {appLoaderProps: undefined}};
 }
 
 
-export function render(props) {
-  let {loadUpdatedSelf = true} = props;
-
+export function render({loadUpdatedSelf = true}) {
   // If loadUpdatedSelf is true, redirect to the AppLoader.
   if (loadUpdatedSelf) {
     // If the tail URL is empty, replace the URL by prepending a segment with
@@ -76,7 +72,10 @@ export function render(props) {
     // Redirect to the AppLoader, which reads the first segment of the tail
     // URL, which ought to an app's directory ID, and then finds the best
     // version of that app to load instead.
-    return <AppLoaderWrapper key="0" {...props} loadUpdatedSelf={false} />;
+    return <AppLoader key="0"
+      Wrapper={WarningWrapper} appProps={{loadUpdatedSelf: false}}
+      fetchBestAppRouteTemplate={fetchBestAppRouteTemplate}
+    />;
   }
 
   // Else if reaching here, it means that the AppLoader component above has
@@ -99,7 +98,9 @@ export function render(props) {
       useDefault = useOriginal ? false : true;
     case "a": {
       appLoaderProps = {
-        ...props, useOriginal: useOriginal, useDefault: useDefault,
+        useOriginal: useOriginal, useDefault: useDefault,
+        Wrapper: WarningWrapper,
+        fetchBestAppRouteTemplate: fetchBestAppRouteTemplate
       };
       this.setState(state => ({
         ...state, ref: {...state.ref, appLoaderProps: appLoaderProps},
@@ -107,6 +108,22 @@ export function render(props) {
       // (Since we only alter state.ref here, this will not cause a rerender.)
       break;
     }
+
+    // The fallowing cases are some shortcut segments that each redirects to
+    // a URL of the "/a/..." type.
+    case "":
+    case "apps":
+      let tailURL = this.getPath();
+      this.replaceURL("~/a/" + appBrowserDirID + tailURL);
+      hideAppLoader = true;
+      break;
+    case "files":
+      let tailURL = this.getPath();
+      this.replaceURL("~/a/" + fileBrowserDirID + tailURL);
+      hideAppLoader = true;
+      break;
+    // TODO: Add other shortcuts, in particular for tutorials and the entity
+    // browser.
 
     // The following cases are URLs that are defined by the base app. When
     // going to these URLs, this base app will keep the currently loaded app,
@@ -120,7 +137,7 @@ export function render(props) {
     // URL. These are pages such as the login page and settings page, etc.
 
     default:
-      baseAppPage = missingPage;
+      baseAppPage = <MissingPage key="m" />;
   }
 
   return (
@@ -131,7 +148,7 @@ export function render(props) {
         </div>
         <div className={"app-loader" + (baseAppPage ? " hidden" : "")}>
           {(appLoaderProps ?
-            <AppLoaderWrapper {...appLoaderProps} key="l" /> :
+            <AppLoader key="l" {...appLoaderProps} /> :
             undefined
           )}
         </div>

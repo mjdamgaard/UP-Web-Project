@@ -19,11 +19,11 @@ export function render({}) {
     fetchEntityDefinition(userEntID, ["Name", "Bio"]).then(entDef => {
       this.setState(state => ({...state, entDef: entDef ?? false}));
     });
-    return <div className="profile-page fetching">{"..."}</div>;
+    return <div className="profile-page fetching"></div>;
   }
 
   else if (entDef === undefined) {
-    return <div className="profile-page fetching">{"..."}</div>;
+    return <div className="profile-page fetching"></div>;
   }
 
   else if (!entDef) {

@@ -3173,9 +3173,8 @@ export class JSXElement extends ObjectObject {
     this.key = undefined;
     this.props = {};
     if (propArr) propArr.forEach(propNode => {
-      let expVal = propNode.exp ?
-        interpreter.evaluateExpression(propNode.exp, decEnv) :
-        true;
+      let expVal = !propNode.exp ? true :
+        interpreter.evaluateExpression(propNode.exp, decEnv);
       if (propNode.isSpread) {
         forEachValue(expVal, propNode.exp, decEnv, (val, key) => {
           if (!isComponent || key !== "key") this.props[key] = val;

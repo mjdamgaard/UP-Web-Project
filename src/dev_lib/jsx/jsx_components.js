@@ -417,7 +417,7 @@ class JSXInstance {
       // First we check if the childInstances to see if the child component
       // instance already exists, and if not, create a new one. In both cases,
       // we also make sure to mark the childInstance as being used.
-      let key = jsxElement.key ?? jsxElement.tagName;
+      let key = jsxElement.key || jsxElement.tagName;
       if (marks.get(key)) throw new RuntimeError(
         `Key "${key}" is already being used by another child component ` +
         "instance",

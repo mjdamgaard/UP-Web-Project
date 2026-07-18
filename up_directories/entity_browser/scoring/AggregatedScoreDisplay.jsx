@@ -27,8 +27,8 @@ export function render({score, weight, qualKey, subjKey, scoreHandler}) {
   else if (scoreData === undefined) {
     return (
       <div className="aggregated-score fetching">
-        <div className="score fetching">{"..."}</div>
-        <div className="weight fetching">{"..."}</div>
+        <div className="score fetching"></div>
+        <div className="weight fetching"></div>
       </div>
     );
   }

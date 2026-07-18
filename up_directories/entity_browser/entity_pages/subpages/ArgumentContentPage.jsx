@@ -22,11 +22,11 @@ export function render({
     fetchTextEntDefIfTruthScalar(subjScalarKey).then(textEntDef => {
       this.setState(state => ({...state, textEntDef: textEntDef ?? false}));
     });
-    return <div className="content-page fetching">{"..."}</div>;
+    return <div className="content-page fetching"></div>;
   }
 
   else if (textEntDef === undefined) {
-    return <div className="content-page fetching">{"..."}</div>;
+    return <div className="content-page fetching"></div>;
   }
 
   let scoreInterfaces = [

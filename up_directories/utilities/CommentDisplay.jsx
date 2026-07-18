@@ -17,11 +17,11 @@ export function render({entKey, cutOff = false}) {
     ]).then(entDef => {
       this.setState(state => ({...state, entDef: entDef ?? false}));
     });
-    return <div className="content-page fetching">{"..."}</div>;
+    return <div className="content-page fetching"></div>;
   }
 
   else if (entDef === undefined) {
-    return <div className="content-page fetching">{"..."}</div>;
+    return <div className="content-page fetching"></div>;
   }
 
   else if (!entDef) {
