@@ -8,7 +8,7 @@ import * as MissingPage from "./MissingPage.jsx";
 
 
 // props : {
-//   useOriginal, useDefault, Wrapper, appProps, fetchBestAppRouteTemplate
+//   useOriginal, useDefault, Wrapper, appProps, fetchBestVersionRouteTemplate
 // }.
 
 export function render(props) {
@@ -44,12 +44,14 @@ export function render(props) {
   if (Wrapper) {
     return (
       <Wrapper key="w" trustClass={trustClass} appDirID={appDirID} >
-        <AppComponent key={"a-" + appDirID} {...appProps} />
+        <AppComponent key={"a-" + appDirID}
+          {...appProps} untrusted={trustClass !== "trusted"}
+        />
       </Wrapper>
     );
   } else {
     this.advanceURL(1);
-    return <AppComponent key={"a-" + appDirID} {...appProps} />;
+    return <AppComponent key={"a-" + appDirID} untrusted {...appProps} />;
   }
 }
 
@@ -59,7 +61,7 @@ export function render(props) {
 export const actions = {
   "loadNewApp": async function([appDirIDSegment, urlTail]) {
     verifyType(appDirIDSegment, "hex");
-    let {useOriginal, useDefault, fetchBestAppRouteTemplate} = this.props;
+    let {useOriginal, useDefault, fetchBestVersionRouteTemplate} = this.props;
 
     // If useOriginal is set, simply use the same appDirIDSegment instead of
     // querying for the best sub-app.
@@ -79,10 +81,11 @@ export const actions = {
       return;
     }
 
-    // Else query the fetchBestAppRouteTemplate, with "?"'s replaced with
+    // Else query the fetchBestVersionRouteTemplate, with "?"'s replaced with
     // geAppDirID, and make it a private query iff the user is logged in and
     // useDefault is falsy.
-    let fetchAppRoute = replaceAll(fetchBestAppRouteTemplate, "?", genAppDirID);
+    let fetchAppRoute =
+      replaceAll(fetchBestVersionRouteTemplate, "?", genAppDirID);
     let userID = this.getContext("userID", true);
     let fetchFun = userID && !useDefault ? fetchPrivate : fetch;
     let {appDirID, trustClass} = await fetchFun(fetchAppRoute);

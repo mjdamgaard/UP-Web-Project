@@ -17,6 +17,15 @@ const versionsRelKey = abs("../../semantic_entities/em3.js;get/versionsRel");
 const maxRecLevel = 3;
 
 
+
+
+// NOTE: This algorithm has not been tested yet, and is not actually used by
+// this version of the base app, as we have instead opted to use a more simple
+// system of likes and dislikes at first, found in ~/../app_browser/server.
+
+
+
+
 // The algorithm that this SM implements for getting the best sub-app to load
 // a given input appDirID uses a cache with a PK of a scoreHandlerID and the
 // input appDirID, and with a string(/text)-valued payload consisting of a list
@@ -249,7 +258,9 @@ export async function fetchUserPreferences() {
     "User is not logged in"
   );
 
-  let prefJSON = fetchPrivate(abs("./_userPreferences.att./entry/k/" + userID));
+  let prefJSON = fetchPrivate(abs(
+    "~/.../app_browser/server/apps/_userPreferences.att./entry/k/" + userID
+  ));
   let preferences = parse(prefJSON);
   return preferences;
 }
@@ -261,7 +272,11 @@ export async function updateUserPreference(appDirID, subAppDirID) {
   preferences = {...preferences, [appDirID]: subAppDirID};
   let newPrefJSON = stringify(preferences)
   return await post(
-    abs("./_userPreferences.att./_insert/k/" + userID), newPrefJSON
+    abs(
+      "~/.../app_browser/server/apps/_userPreferences.att./_insert/k/" +
+      userID
+    ),
+    newPrefJSON
   );
 }
 

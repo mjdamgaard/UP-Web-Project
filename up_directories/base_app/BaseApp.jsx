@@ -21,7 +21,7 @@ const {
   },
 } = placeholders;
 
-const fetchBestAppRouteTemplate =
+const fetchBestVersionRouteTemplate =
   abs("./server/apps.sm.js./callSMF/fetchPreferredSubApp/?");
 // Todo for future version: Implement a fundamental settings page where users
 // can change this SMF route template for fetching the best sub-app (with ample
@@ -74,7 +74,7 @@ export function render({loadUpdatedSelf = true}) {
     // version of that app to load instead.
     return <AppLoader key="0"
       Wrapper={WarningWrapper} appProps={{loadUpdatedSelf: false}}
-      fetchBestAppRouteTemplate={fetchBestAppRouteTemplate}
+      fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
     />;
   }
 
@@ -100,7 +100,7 @@ export function render({loadUpdatedSelf = true}) {
       appLoaderProps = {
         useOriginal: useOriginal, useDefault: useDefault,
         Wrapper: WarningWrapper,
-        fetchBestAppRouteTemplate: fetchBestAppRouteTemplate
+        fetchBestVersionRouteTemplate: fetchBestVersionRouteTemplate
       };
       this.setState(state => ({
         ...state, ref: {...state.ref, appLoaderProps: appLoaderProps},
