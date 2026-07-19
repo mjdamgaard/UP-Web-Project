@@ -5,7 +5,7 @@ import {fetchEntityDefinition} from "/1/1/entities.js";
 
 import * as InputText from 'InputText';
 import * as TextArea from 'TextArea';
-import * as EntityReference from "../utilities/EntityReference.jsx";
+import * as EntityReference from "../../utilities/EntityReference.jsx";
 
 
 export function render({}) {
