@@ -494,35 +494,6 @@ export const hexToValue = new DevFunction(
 
 
 
-export const arrayToHexArray = new DevFunction(
-  "arrayToHexArray", {typeArr: ["array", "array"]},
-  function({callerNode, execEnv}, [valArr, typeArr]) {
-    if (valArr instanceof ObjectObject) valArr = valArr.members;
-    if (typeArr instanceof ObjectObject) typeArr = typeArr.members;
-    else return valArr.map((val, ind) => {
-      let type = typeArr[ind];
-      type = getString(type, execEnv);
-      return valueToHex.fun({callerNode, execEnv}, [val, type]);
-    });
-  }
-);
-
-
-export const hexArrayToArray = new DevFunction(
-  "hexArrayToArray", {typeArr: ["array", "array"]},
-  function({callerNode, execEnv}, [hexArr, typeArr]) {
-    if (hexArr instanceof ObjectObject) hexArr = hexArr.members;
-    if (typeArr instanceof ObjectObject) typeArr = typeArr.members;
-    else return hexArr.map((hexStr, ind) => {
-      let type = typeArr[ind];
-      hexStr = getString(hexStr, execEnv);
-      type = getString(type, execEnv);
-      return hexToValue.fun({callerNode, execEnv}, [hexStr, type]);
-    });
-  }
-);
-
-
 
 
 

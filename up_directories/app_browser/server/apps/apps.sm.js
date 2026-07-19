@@ -1,7 +1,7 @@
 
-import {post, fetch, fetchPrivate, clearPermissions} from 'query';
+import {post, fetch, fetchPrivate} from 'query';
 import {getRequestingUserID, checkRequestOrigin} from 'request';
-import {verifyType, verifyTypes, hasType} from 'type';
+import {verifyType, verifyTypes} from 'type';
 import {parse, stringify} from 'json';
 import {split} from 'string';
 import {at} from 'array';
@@ -106,7 +106,7 @@ export async function updatePreferredSubApp(appDirID) {
   // Fetch the top liked sub apps for this app, then go through the list until
   // reaching the first sub-app on the list that is also (semi-)trusted. 
   let topSubApps = await fetch(abs(
-    "../likes/likedSubApps./skList/l/" + appDirID + "/n/100"
+    "../likes/mixedSums.bbt./skList/l/" + appDirID + "/n/25"
   )) ?? [];
   let subAppDirID;
   let len = topSubApps.length;
