@@ -73,24 +73,28 @@ export const trim = new DevFunction(
 );
 
 export const replace = new DevFunction(
-  "replace", {typeArr: ["string", "string", "string|function"]},
+  "replace", {typeArr: ["string", "string", "any"]},
   ({callerNode, execEnv, interpreter}, [str, pattern, replacement]) => {
     if (replacement instanceof FunctionObject) {
       replacement = (match) => interpreter.executeFunction(
         replacement, [match], callerNode, execEnv
       );
+    } else {
+      replacement = getString(replacement, execEnv);
     }
     return str.replace(pattern, replacement);
   }
 );
 
 export const replaceAll = new DevFunction(
-  "replaceAll", {typeArr: ["string", "string", "string|function"]},
+  "replaceAll", {typeArr: ["string", "string", "any"]},
   ({callerNode, execEnv, interpreter}, [str, pattern, replacement]) => {
     if (replacement instanceof FunctionObject) {
       replacement = (match) => interpreter.executeFunction(
         replacement, [match], callerNode, execEnv
       );
+    } else {
+      replacement = getString(replacement, execEnv);
     }
     return str.replaceAll(pattern, replacement);
   }

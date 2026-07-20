@@ -1,10 +1,12 @@
 
 import {clearPermissions, fetch, fetchPrivate} from 'query';
-import {substring, split, at, slice, join, replaceAll} from 'string';
+import {substring, split, at, slice, join, replaceAll, toString} from 'string';
 import {fetchPrivate, fetch} from 'query';
 import {hasType, hasTypes, verifyType} from 'type';
+import {forEach} from 'array';
 
 import * as MissingPage from "./MissingPage.jsx";
+import { format } from 'url';
 
 
 // props : {
@@ -13,7 +15,7 @@ import * as MissingPage from "./MissingPage.jsx";
 
 export function render(props) {
   let {Wrapper, appProps = {}} = props;
-  let {appDirID, AppComponent, trustClass} = this.state.ref ?? {};
+  let {appDirID, AppComponent, trustClass, additionalURLs} = this.state;
 
   // Parse the appDirIDSegment from the URL.
   let appDirIDSegment = this.getFirstSegment();
@@ -23,15 +25,28 @@ export function render(props) {
   }
 
   // If no app has been loaded yet, or if appDirIDSegment is not the the
-  // appDirID of the currently loaded app, call the "loadNewApp" action.
+  // appDirID of the currently loaded app, call the "loadNewApp" action. That
+  // is, unless the URL matches an entry in additionalURLs.
   if (appDirIDSegment !== appDirID) {
-    let urlTail = substring(this.getPath(), appDirIDSegment.length + 2);
-    this.do("loadNewApp", [appDirIDSegment, urlTail]);
-    return (
-      <div className="app">
-        <div className="fetching"></div>
-      </div>
-    );
+    let localURL = substring(this.getPath(), 1); // removes the "/" in front.
+    let urlTail = substring(localURL, appDirIDSegment.length + 1);
+    let shouldLoadNewApp = true;
+    if (additionalURLs && hasType(additionalURLs, "array")) {
+      forEach(additionalURLs, urlFormat => {
+        urlFormat = toString(urlFormat);
+        if (compareWildcardFormatToString(urlFormat, localURL)) {
+          shouldLoadNewApp = false;
+        }
+      });
+    }
+    if (shouldLoadNewApp) {
+      this.do("loadNewApp", [appDirIDSegment, urlTail]);
+      return (
+        <div className="app">
+          <div className="fetching"></div>
+        </div>
+      );
+    }
   }
 
   // Else load the AppComponent set by "loadNewApp", wrapped in the 'wrapper'
@@ -63,29 +78,22 @@ export const actions = {
     verifyType(appDirIDSegment, "hex");
     let {useOriginal, useDefault, fetchBestVersionRouteTemplate} = this.props;
 
-    // If useOriginal is set, simply use the same appDirIDSegment instead of
-    // querying for the best sub-app.
-    if (useOriginal) {
-      this.setState(state => ({...state, appDirID: appDirIDSegment}));
-      return;
-    }
+    // Use the app's metadata.json file to get the most general app version
+    // that implements the same URL API, along with a set of URLs for which the
+    // AppLoader is not supposed to direct away from the current app, even if
+    // they have a different appDirID segment.
+    let [genAppDirID, additionalURLs] =
+      await fetchMostGeneralAppDirID(appDirIDSegment, urlTail);
 
-    // Else use the app's api.js file to get the most general app version that
-    // implements this urlTail.
-    let genAppDirID = await fetchMostGeneralAppDirID(appDirIDSegment, urlTail);
-
-    // If this procedure failed, also simply load the app of the current
-    // appDirSegment itself.
-    if (!genAppDirID) {
-      this.setState(state => ({...state, appDirID: appDirIDSegment}));
-      return;
-    }
-
-    // Else query the fetchBestVersionRouteTemplate, with "?"'s replaced with
-    // geAppDirID, and make it a private query iff the user is logged in and
-    // useDefault is falsy.
-    let fetchAppRoute =
-      replaceAll(fetchBestVersionRouteTemplate, "?", genAppDirID);
+    // Then query the fetchBestVersionRouteTemplate, with placeholders
+    // appropriately replaced, and make it a private query iff the user is
+    // logged in and useDefault is falsy.
+    let fetchAppRoute = replaceAll(fetchBestVersionRouteTemplate,
+      "$appDirID", useOriginal ? appDirIDSegment : genAppDirID
+    );
+    fetchAppRoute = replaceAll(fetchAppRoute,
+      "$useOriginal", useOriginal ? "1" : "0"
+    );
     let userID = this.getContext("userID", true);
     let fetchFun = userID && !useDefault ? fetchPrivate : fetch;
     let {appDirID, trustClass} = await fetchFun(fetchAppRoute);
@@ -100,6 +108,7 @@ export const actions = {
     this.replaceURL("replaceState", "~/" + appDirIDSegment + "/" + urlTail);
     this.setState(state => ({...state,
       appDirID: appDirID, trustClass: trustClass, AppComponent: AppComponent,
+      additionalURLs: additionalURLs,
     }));
   },
 };
@@ -108,75 +117,33 @@ export const actions = {
 
 
 export async function fetchMostGeneralAppDirID(appDirIDSegment, urlTail) {
-  // First fetch the api.js module, which is expected to be in the app's home
-  // directory.
-  let apiModule = await fetch(abs("../" + appDirIDSegment + "/api.js")).catch(
-    err => false
+  // First fetch the the parsed metadata.json object.
+  let metadata = await fetch(
+    abs("../" + appDirIDSegment + "/metadata.json;parse")
+  ).catch(
+    err => undefined
   );
-  if (!apiModule) throw (
-    "Missing api.js module (in directory #" + appDirIDSegment + ")"
-  );
+  
+  // Then get the "apiDefiningAppDirID" property, and return that if it is
+  // defined, and otherwise return appDirIDSegment back.
+  let genAppDirID = metadata?.apiDefiningAppDirID ?? appDirIDSegment;
 
-  // Go through each entry in the default export, which ought to be an array
-  // of url substring and appDirID identifier pairs, until the first match is
-  // found.
-  let urlSubstringAndAppIdentPairArr = apiModule.default;
-  if (!hasType(urlSubstringAndAppIdentPairArr, "array")) throw (
-    "Default export of api.js module is not an array"
-  );
-  let len = urlSubstringAndAppIdentPairArr.length;
-  let urlSubstring, appIdent;
-  for (let i = 0; i < len; i++) {
-    // Extract urlSubstring and appIdent.
-    let urlSubstringAndAppIdentPair = urlSubstringAndAppIdentPairArr[i];
-    if (!hasType(urlSubstringAndAppIdentPair, "array")) throw (
-      "Default export of api.js module contains a non-array entry"
-    );
-    if (!hasTypes(urlSubstringAndAppIdentPair, ["string", "string"])) throw (
-      "Default export of api.js module contains nested non-string values"
-    );
-    [urlSubstring, appIdent] = urlSubstringAndAppIdentPair;
+  // Also get an array of URLs (starting with the appDirID segment and no "/"
+  // in front) for which the AppLoader is not supposed to direct away from the
+  // current app.
+  let additionalURLs = metadata?.additionalURLs;
 
-    // If urlSubstring matches appTailURL, break the loop.
-    if (urlSubstring === urlTail) {
-      break;
-    }
-    let lastChar = at(urlSubstring, -1);
-    if (
-      lastChar === "*" && substring(urlTail, 0, urlSubstring.length - 1) ===
-        slice(urlSubstring, 0, -1)
-    ) {
-      break;
-    }
+  return [genAppDirID, additionalURLs];
+}
+
+
+
+export function compareWildcardFormatToString(format, str) {
+  if (at(format, -1) === "*") {
+    let subStr = slice(format, 0, -1);
+    return subStr === substring(str, 0, subStr.length);
   }
-
-  // If no match was found, return false to signify this.
-  if (!appIdent) {
-    return false;
-  }
-
-  // Else if a match was found, check whether it is a hexadecimal string, in
-  // which case interpret as the appDirID itself and return it as is.
-  if (hasType(appIdent, "hex")) {
-    let mostGeneralAppDirID = appIdent;
-    return mostGeneralAppDirID;
-  }
-
-  // And if it is not a hexadecimal string, look in the placeholders module
-  // expecting to find the appDirID at placeholdersModule.default.this-
-  // .directories[appIdent].
-  try {
-    let placeholdersModule = 
-      await fetch(abs("../" + appDirIDSegment + "/placeholders.js"));
-    let mostGeneralAppDirID =
-      placeholdersModule.default.this.directories[appIdent];
-    if (!hasType(mostGeneralAppDirID, "hex")) throw "";
-    return mostGeneralAppDirID;
-  }
-  catch (err) {
-    throw (
-      `Error when looking up "${appIdent}", obtained from the api.js ` +
-      "module, in the placeholders.js module."
-    );
+  else {
+    return format === str;
   }
 }

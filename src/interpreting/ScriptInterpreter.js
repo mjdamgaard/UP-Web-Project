@@ -3312,16 +3312,13 @@ export class PromiseObject extends ObjectObject {
     // Wait until after all currently executing code has finished, allowing
     // users to catch the promise on the same tick of the event loop, before
     // handling this.promise if it fails/has failed and isn't caught.
-    setTimeout(
-      () => {
-        this.promise.then(res => {
-          if (res instanceof ErrorWrapper && !this.isCaught) {
-            interpreter.handleUncaughtException(res.val, env);
-          }
-        });
-      },
-      0
-    );
+    Promise.resolve().then(() => {
+      this.promise.then(res => {
+        if (res instanceof ErrorWrapper && !this.isCaught) {
+          interpreter.handleUncaughtException(res.val, env);
+        }
+      });
+    });
 
     // Define the instance methods.
     this.members["then"] = new ThenFunction(this);

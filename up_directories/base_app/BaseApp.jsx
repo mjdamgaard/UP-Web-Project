@@ -21,8 +21,9 @@ const {
   },
 } = placeholders;
 
-const fetchBestVersionRouteTemplate =
-  abs("./server/apps.sm.js./callSMF/fetchPreferredSubApp/?");
+const fetchBestVersionRouteTemplate = abs(
+  "./server/apps.sm.js./callSMF/fetchPreferredSubApp/$appDirID/$useOriginal"
+);
 // Todo for future version: Implement a fundamental settings page where users
 // can change this SMF route template for fetching the best sub-app (with ample
 // warnings about doing so).
