@@ -4,10 +4,10 @@ import {verifyTypes} from 'type';
 import {parse} from 'json';
 
 // 'Apps' is a subclass of Components that are meant as standalone
-// applications. Rather than being defined by a"Component path," they are
+// applications. Rather than being defined by a "Component path," they are
 // defined by a home directory, which is supposed to contain a main.jsx module
-// defining the app. (This directory is also meant to contain an api.js module
-// defining the URL API of the app, by the way.)
+// defining the app, as well as a metadata.json file which can define other
+// (entity) properties.
 export async function App(appDirID, upNodeID = undefined) {
   verifyTypes([appDirID, upNodeID], ["hex", "hex?"]);
 

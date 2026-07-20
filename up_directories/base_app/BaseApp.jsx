@@ -32,24 +32,16 @@ const fetchBestVersionRouteTemplate = abs(
 // The main job(s) of a "base app" is to define a header menu for the website
 // (which apps can choose to hide and use their own headers), and the outer
 // frame of the website in general, and then to load the given app, pointed to
-// by the URL within that frame. However, it actually also potentially loads an
-// updated version of itself first, and then gives it a false loadUpdatedSelf
-// prop to let it know not to load any other versions of itself, but to
-// continue as it is.
-// This base app uses an AppLoader component which looks at the next segment
-// in the URL, which is supposed to be the directory ID of an app's home
-// directory (an "appDirID"). It then uses the api.js module in the same home
-// directory to find the most general version of the given app that implements
-// the tail URL that comes after the appDirID segment. It then queries about
-// the best app version to load in the app version tree, starting from this
-// "most general version," which is the first version implement tail URLs of
-// the given type. This "best version" might then depend on user preferences if
-// the user is logged in. And finally it loads that app, and changes the
-// appDirID segment to match the loaded app.
-// The point of this system is thus to allow users to share URLs with each
-// other, even though they have different app preferences, where this base app
-// will then automatically load the best app version for the given user that
-// implements the given tail URL.
+// by the URL within that frame. However, it also potentially loads an updated
+// version of itself first, and then gives it a false loadUpdatedSelf prop to
+// let it know not to load any other versions of itself, but to continue as it
+// is.
+// This base app uses an AppLoader component both to load both an updated
+// version of itself and to load the app itself. This AppLoader component
+// implements a special system that allows users to share URLs with each other,
+// where the semantics of the shares web pages are preserved, but where the
+// exact app that is used to render them might differ for each user that loads
+// the page. See ./src/AppLoader.jsx for more information.
 
 
 

@@ -9,13 +9,35 @@ import * as MissingPage from "./MissingPage.jsx";
 import { format } from 'url';
 
 
+// The AppLoader loads the app that is defined by the first segment (from where
+// its ancestor instances has advanced the URL to), but does so in a way that
+// allows users to share URLs with each other, preserving the semantics of the
+// shared pages, while still allowing the users to have the same pages
+// rendered by their own preferred app versions.
+// It does so by using a route template prop, 'fetchBestVersionRouteTemplate,'
+// which is supposed to find the user's preferred app version for the given
+// first segment, the "appDirIDSegment". And at the same time, it also looks
+// for the most general app version that implements the same URL API, and
+// actually replaces the "appDirIDSegment" with that such that when sharing the
+// URL with other users, those user's will load their own preferred apps in
+// place of that most general version. (TODO: Rewrite at some point to make the
+// system more clear.)
+
+
+
+
 // props : {
 //   useOriginal, useDefault, Wrapper, appProps, fetchBestVersionRouteTemplate
 // }.
 
-export function render(props) {
-  let {Wrapper, appProps = {}} = props;
-  let {appDirID, AppComponent, trustClass, additionalURLs} = this.state;
+// This component should reinitialize if either the useDefault or the
+// useOriginal prop changes. 
+export const keyProps = ["useOriginal", "useDefault"];
+
+export function render({Wrapper, appProps = {}}) {
+  let {
+    appDirID, curAppDirIDSegment, AppComponent, trustClass, additionalURLs
+  } = this.state;
 
   // Parse the appDirIDSegment from the URL.
   let appDirIDSegment = this.getFirstSegment();
@@ -24,10 +46,10 @@ export function render(props) {
     return <MissingPage key="m" />;
   }
 
-  // If no app has been loaded yet, or if appDirIDSegment is not the the
-  // appDirID of the currently loaded app, call the "loadNewApp" action. That
-  // is, unless the URL matches an entry in additionalURLs.
-  if (appDirIDSegment !== appDirID) {
+  // If no app has been loaded yet, or if appDirIDSegment has changed, call the
+  // "loadNewApp" action. That is, unless the URL matches an entry in
+  // additionalURLs.
+  if (appDirIDSegment !== curAppDirIDSegment && appDirIDSegment !== appDirID) {
     let localURL = substring(this.getPath(), 1); // removes the "/" in front.
     let urlTail = substring(localURL, appDirIDSegment.length + 1);
     let shouldLoadNewApp = true;
@@ -84,12 +106,13 @@ export const actions = {
     // they have a different appDirID segment.
     let [genAppDirID, additionalURLs] =
       await fetchMostGeneralAppDirID(appDirIDSegment, urlTail);
+    let newAppDirIDSegment = useOriginal ? appDirIDSegment : genAppDirID;
 
     // Then query the fetchBestVersionRouteTemplate, with placeholders
     // appropriately replaced, and make it a private query iff the user is
     // logged in and useDefault is falsy.
     let fetchAppRoute = replaceAll(fetchBestVersionRouteTemplate,
-      "$appDirID", useOriginal ? appDirIDSegment : genAppDirID
+      "$appDirID", appDirIDSegment
     );
     fetchAppRoute = replaceAll(fetchAppRoute,
       "$useOriginal", useOriginal ? "1" : "0"
@@ -105,9 +128,10 @@ export const actions = {
 
     // And finally replace the appDirIDSegment with the appDirID of the app to
     // be loaded, and set the appDirID, trustClass, and AppComponent states.
-    this.replaceURL("replaceState", "~/" + appDirIDSegment + "/" + urlTail);
-    this.setState(state => ({...state,
-      appDirID: appDirID, trustClass: trustClass, AppComponent: AppComponent,
+    this.replaceURL("replaceState", "~/" + newAppDirIDSegment + "/" + urlTail);
+    this.setState(state => ({
+      ...state, appDirID: appDirID, curAppDirIDSegment: newAppDirIDSegment,
+      trustClass: trustClass, AppComponent: AppComponent,
       additionalURLs: additionalURLs,
     }));
   },
