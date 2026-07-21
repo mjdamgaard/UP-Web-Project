@@ -1,26 +1,23 @@
 
 import {fetch} from 'query';
 import {verifyTypes} from 'type';
-import {parse} from 'json';
 
 // 'Apps' is a subclass of Components that are meant as standalone
 // applications. Rather than being defined by a "Component path," they are
 // defined by a home directory, which is supposed to contain a main.jsx module
-// defining the app, as well as a metadata.json file which can define other
+// defining the app, as well as a metadata.js file which can define other
 // (entity) properties.
 export async function App(appDirID, upNodeID = undefined) {
   verifyTypes([appDirID, upNodeID], ["hex", "hex?"]);
 
-  // Import and parse the metadata.json file in the app directory, then add its
+  // Import and parse the metadata.js file in the app directory, then add its
   // properties to the returned entity definition.
   let metadata = await fetch(
-    upNodeID ? abs(`/${upNodeID}/${appDirID}/metadata.json`) :
-      abs(`~/../${appDirID}/metadata.json`)
-  ).then(
-    metadataJSON => parse(metadataJSON)
+    upNodeID ? abs(`/${upNodeID}/${appDirID}/metadata.js;get/default`) :
+      abs(`~/../${appDirID}/metadata.js;get/default`)
   ).catch(err => {
     console.warn(
-      "App directory #" + appDirID + " is either missing a metadata.json " +
+      "App directory #" + appDirID + " is either missing a metadata.js " +
       "file or its content is ill-formed."
     );
     return {};

@@ -51,6 +51,8 @@ export function initialize() {
 
 
 export function render({loadUpdatedSelf = true}) {
+  let userID = this.getContext("userID");
+
   // If loadUpdatedSelf is true, redirect to the AppLoader.
   if (loadUpdatedSelf) {
     // If the tail URL is empty, replace the URL by prepending a segment with
@@ -65,7 +67,7 @@ export function render({loadUpdatedSelf = true}) {
     // Redirect to the AppLoader, which reads the first segment of the tail
     // URL, which ought to an app's directory ID, and then finds the best
     // version of that app to load instead.
-    return <AppLoader key="0"
+    return <AppLoader key="0" userID={userID} useOriginal={0} useDefault={0}
       Wrapper={WarningWrapper} appProps={{loadUpdatedSelf: false}}
       fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
     />;
@@ -86,12 +88,12 @@ export function render({loadUpdatedSelf = true}) {
     // (We also use the appLoaderProps state ref in a scheme designed to keep
     // the AppLoader child component alive once it is rendered the first time.)
     case "o":
-      useOriginal = true;
+      useOriginal = 1;
     case "d":
-      useDefault = useOriginal ? false : true;
+      useDefault = useOriginal ? 0 : 1;
     case "a": {
       appLoaderProps = {
-        useOriginal: useOriginal, useDefault: useDefault,
+        userID: userID, useOriginal: useOriginal, useDefault: useDefault,
         Wrapper: WarningWrapper,
         fetchBestVersionRouteTemplate: fetchBestVersionRouteTemplate
       };

@@ -21,12 +21,10 @@ const defaultTailURL = "~/apps/cat/path" + appsClassEntPath;
 
 // The URL API for this app browser prototype is that the (tail) URLs of "" and
 // "/apps" both redirect to the default app category page. And the URLs for
-// category pages of the form
-// '/apps/cat(/<entID>)*(/<entID>|/path<entPath>)'
-// for class/category pages, and
-// '/apps(/cat(/<entID>)*)?/app(/<entID>)*(/<entID>|/path<entPath>)'
-// for app pages. And if a "/cat" or "/app" URL ends in '/path<entPath>', we
-// query for the corresponding entID and redirect to the URL that ends in
+// category pages of the form '/apps/c/(<entID>|path<entPath>)' for class/
+// category pages, and '/apps(/a/(<entID>)*(<entID>|/path<entPath>)' for app
+// pages. And if a "/c/" or "/a/" URL ends in '/path<entPath>', we query for
+// the corresponding entity ID (entID) and redirect to the URL that ends in
 // '/<entID>' instead.
 
 export function initialize() {

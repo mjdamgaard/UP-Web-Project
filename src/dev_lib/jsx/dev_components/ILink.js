@@ -19,7 +19,7 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {href, children, onClick, state, copyOtherStates} = props;
+    let {href, children, onClick, state} = props;
     verifyTypes(
       [href, onClick], ["string?", "function?"], callerNode, execEnv
     );
@@ -89,8 +89,7 @@ export const render = new DevFunction(
         }
         else {
           jsxInstance.pushOrReplaceURLAndState(
-            href, state, copyOtherStates, false, true, undefined,
-            callerNode, execEnv
+            href, state, false, true, undefined, callerNode, execEnv
           );
           return false; // Prevents default event propagation.
         }

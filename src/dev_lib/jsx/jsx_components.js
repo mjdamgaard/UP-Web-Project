@@ -353,8 +353,14 @@ class JSXInstance {
     });
     this.unsubscribeFromAllContexts();
     if (this.hasHistoryState) {
-      let {popstateCallbacks} = this.callerEnv.globals.contexts.urlContext.val;
+      let {popstateCallbacks, state, pathname} =
+        this.callerEnv.globals.contexts.urlContext.val;
       popstateCallbacks.delete(this);
+      let itemKey = this.getItemKey("");
+      if (state && (state[itemKey] ?? undefined) !== undefined) {
+        let newState =  {...state, [itemKey]: undefined};
+        window.history.replaceState(newState, "", pathname);
+      }
     }
     this.isDiscarded = true;
   }
@@ -750,7 +756,7 @@ class JSXInstance {
     let keyPropStr = "";
     forEachValue(keyProps, node, env, propName => {
       propName = getString(propName, env);
-      keyPropStr = keyPropStr + jsonStringify(props[propName]);
+      keyPropStr = keyPropStr + "," + jsonStringify(props[propName]);
     }, true);
     return keyPropStr;
   }
@@ -1120,8 +1126,8 @@ class JSXInstance {
 
 
   pushOrReplaceURLAndState(
-    url, state = null, copyOtherStates = false, doReplace,
-    triggerPopstate = true, signal = undefined, callerNode, execEnv
+    url, state = null, doReplace, triggerPopstate = true, signal = undefined,
+    callerNode, execEnv, copyOtherStates = true,
   ) {
     // Transform the url argument if it is a relative path. Here we also
     // extend the relative path syntax to include either "~/", or "~~/", or a
@@ -1235,8 +1241,9 @@ class JSXInstance {
 
   getFullInstanceKey() {
     let ret = "";
-    this.forEachAncestor(true, instance => {
-      ret = ret + JSON.stringify(instance.key) + instance.keyPropStr;
+    this.forEachAncestor(true, ({key, keyPropStr}) => {
+      keyPropStr &&= ":" + keyPropStr;
+      ret = ret + JSON.stringify(key) + keyPropStr + ";";
     });
     return ret;
   }
@@ -1580,22 +1587,18 @@ export class JSXInstanceInterface extends ObjectObject {
 
   pushURL = new DevFunction(
     "pushURL", {typeArr: ["string", "any?", "any?", "any?"]},
-    ({callerNode, execEnv}, [
-      url = 0, state = null, copyOtherStates = false, signal = undefined
-    ]) => {
+    ({callerNode, execEnv}, [url = 0, state = null, signal = undefined]) => {
       this.jsxInstance.pushOrReplaceURLAndState(
-        url, state, copyOtherStates, false, true, signal, callerNode, execEnv
+        url, state, false, true, signal, callerNode, execEnv
       );
     }
   );
 
   replaceURL = new DevFunction(
     "replaceURL", {typeArr: ["string", "any?", "any?", "any?"]},
-    ({callerNode, execEnv}, [
-      url = 0, state = null, copyOtherStates = false, signal = undefined
-    ]) => {
+    ({callerNode, execEnv}, [url = 0, state = null, signal = undefined]) => {
       this.jsxInstance.pushOrReplaceURLAndState(
-        url, state, copyOtherStates, true, true, signal, callerNode, execEnv
+        url, state, true, true, signal, callerNode, execEnv
       );
     }
   );
