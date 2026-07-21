@@ -75,7 +75,7 @@ export function render({Wrapper, appProps = {}}) {
   // and if these are not yet cached, fetch them and cache them first.
   let appData = cache[appDirID];
   if (!appData) {
-    this.do("fetchAppData", appDirID);
+    this.do("fetchAppData", [appDirID, trustClass]);
     return (
       <div className="app">
         <div className="fetching"></div>
@@ -153,7 +153,7 @@ export const actions = {
     let {appDirID, trustClass} = await fetchFun(fetchAppRoute);
 
     // Fetch the appData (inserting it in the cache).
-    let {genAppDirID} = await this.do("fetchAppData", appDirID);
+    let {genAppDirID} = await this.do("fetchAppData", [appDirID, trustClass]);
 
     // Finally, replace the appDirIDSegment with genAppDirID, also setting
     // the history state in the process, and update the regular state as well.
@@ -164,7 +164,7 @@ export const actions = {
       appDirID: appDirID, trustClass: trustClass, curAppDirID: appDirID
     }));
   },
-  "fetchAppData": async function(appDirID) {
+  "fetchAppData": async function([appDirID, trustClass]) {
     // Fetch the app component found at main.jsx in the app's home directory,
     // as well as the metadata in the same directory.
     let [AppComponent, metadata] = await Promise.all([
@@ -178,9 +178,14 @@ export const actions = {
 
     // Get the "apiDefiningAppDirID" metadata property, which we shorten here
     // to "genAppDirID" ("gen" for "general"), as well as the additionalURLs
-    // property.
+    // property. But if trustClass !== "trusted", use some trivial values
+    // instead, such that the app can't hijack URLs of other apps.
     let genAppDirID = metadata?.apiDefiningAppDirID ?? appDirIDSegment;
     let additionalURLs = metadata?.additionalURLs;
+    if (trustClass !== "trusted") {
+      genAppDirID = appDirID;
+      additionalURLs = undefined;
+    }
 
     // Then cache and return this data.
     let appData = {
