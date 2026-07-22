@@ -259,7 +259,7 @@ export async function fetchUserPreferences() {
   );
 
   let prefJSON = fetchPrivate(abs(
-    "~/.../app_browser/server/apps/_userPreferences.att./entry/k/" + userID
+    "~/server/apps/_userPreferences.att./entry/k/" + userID
   ));
   let preferences = parse(prefJSON);
   return preferences;
@@ -273,7 +273,7 @@ export async function updateUserPreference(appDirID, subAppDirID) {
   let newPrefJSON = stringify(preferences)
   return await post(
     abs(
-      "~/.../app_browser/server/apps/_userPreferences.att./_insert/k/" +
+      "~/server/apps/_userPreferences.att./_insert/k/" +
       userID
     ),
     newPrefJSON

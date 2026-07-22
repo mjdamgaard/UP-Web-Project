@@ -13,7 +13,6 @@ export const parseRoute = new DevFunction(
     }
     catch (msg) {
       throw new ArgTypeError(msg, callerNode, execEnv);
-
     }
   },
 );
@@ -26,10 +25,35 @@ export const isTextFileExtension = new DevFunction(
 );
 
 
-
 export const getAbsolutePath = new DevFunction(
   "getAbsolutePath", {typeArr: ["string", "string"]},
   ({callerNode, execEnv}, [curPath, path]) => {
     return _getAbsolutePath(curPath, path, callerNode, execEnv);
+  },
+);
+
+
+export const getHomePath = new DevFunction(
+  "getHomePath", {typeArr: ["string"]}, (_, [route]) => {
+    let [ , homePath] = /^(\/[^/]*\/[^/]*)/.exec(route) ?? [];
+  },
+);
+
+export const getHomeDirID = new DevFunction(
+  "getHomeDirID", {typeArr: ["string"]}, (_, [route]) => {
+    let [ , homeDirID] = /^\/[^/]*\/([^/]*)/.exec(route) ?? [];
+  },
+);
+
+export const getNodeID = new DevFunction(
+  "getNodeID", {typeArr: ["string"]}, (_, [route]) => {
+    let [ , nodeID] = /^\/([^/]*)\/[^/]*/.exec(route) ?? [];
+  },
+);
+
+export const getNodeAndHomeDirID = new DevFunction(
+  "getNodeID", {typeArr: ["string"]}, (_, [route]) => {
+    let [ , nodeID, homeDirID] = /^\/([^/]*)\/([^/]*)/.exec(route) ?? [];
+    return [nodeID, homeDirID];
   },
 );

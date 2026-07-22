@@ -26,8 +26,8 @@ import { format } from 'url';
 
 
 // props : {
-//   useOriginal, useDefault, userID, Wrapper, appProps,
-//   fetchBestVersionRouteTemplate,
+//   useOriginal, useDefault, userID, fetchBestVersionRouteTemplate, Wrapper,
+//   appProps,
 // }.
 
 // This component should reinitialize if either the userID, the useDefault, or

@@ -106,7 +106,7 @@ export async function updatePreferredSubApp(appDirID) {
   // Fetch the top liked sub apps for this app, then go through the list until
   // reaching the first sub-app on the list that is also (semi-)trusted. 
   let topSubApps = await fetch(abs(
-    "~/../app_browser/server/mixedSums.bbt./skList/l/" + appDirID + "/n/25"
+    "../rates/mixedSums.bbt./skList/l/" + appDirID + "/n/25"
   )) ?? [];
   let subAppDirID;
   let len = topSubApps.length;

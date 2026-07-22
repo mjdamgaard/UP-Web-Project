@@ -21,13 +21,6 @@ const {
   },
 } = placeholders;
 
-const fetchBestVersionRouteTemplate = abs(
-  "./server/apps.sm.js./callSMF/fetchPreferredSubApp/$appDirID/$useOriginal"
-);
-// Todo for future version: Implement a fundamental settings page where users
-// can change this SMF route template for fetching the best sub-app (with ample
-// warnings about doing so).
-
 
 // The main job(s) of a "base app" is to define a header menu for the website
 // (which apps can choose to hide and use their own headers), and the outer
@@ -50,7 +43,9 @@ export function initialize() {
 }
 
 
-export function render({loadUpdatedSelf = true}) {
+export function render({
+  fetchBestVersionRouteTemplate, loadUpdatedSelf = true
+}) {
   let userID = this.getContext("userID");
 
   // If loadUpdatedSelf is true, redirect to the AppLoader.
@@ -68,8 +63,10 @@ export function render({loadUpdatedSelf = true}) {
     // URL, which ought to an app's directory ID, and then finds the best
     // version of that app to load instead.
     return <AppLoader key="0" userID={userID} useOriginal={0} useDefault={0}
-      Wrapper={WarningWrapper} appProps={{loadUpdatedSelf: false}}
       fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
+      Wrapper={WarningWrapper} appProps={{
+        loadUpdatedSelf: false
+      }}
     />;
   }
 
@@ -94,8 +91,8 @@ export function render({loadUpdatedSelf = true}) {
     case "a": {
       appLoaderProps = {
         userID: userID, useOriginal: useOriginal, useDefault: useDefault,
+        fetchBestVersionRouteTemplate: fetchBestVersionRouteTemplate,
         Wrapper: WarningWrapper,
-        fetchBestVersionRouteTemplate: fetchBestVersionRouteTemplate
       };
       this.setState(state => ({
         ...state, ref: {...state.ref, appLoaderProps: appLoaderProps},

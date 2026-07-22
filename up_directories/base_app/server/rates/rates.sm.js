@@ -21,6 +21,8 @@ export async function updateUpOrDownRate(objID, relID, subjID, rateValue) {
   );
   checkRequestOrigin(true, [
     abs("~/main.jsx"),
+    abs("~/../app_browser/main.jsx"),
+    // TODO: Add the other app browser versions, and likewise below.
   ]);
 
   let userID = getRequestingUserID();
@@ -71,6 +73,7 @@ export function fetchUserLikeValue(objID, relID, subjID) {
   verifyTypes([objID, relID, subjID], ["hex", "hex", "hex"]);
   checkRequestOrigin(true, [
     abs("~/main.jsx"),
+    abs("~/../app_browser/main.jsx"),
   ]);
 
   let userID = getRequestingUserID();
