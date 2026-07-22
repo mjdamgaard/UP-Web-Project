@@ -2,6 +2,7 @@
 import {fetchEntityDefinition, fetchEntityID} from
   "~/../semantic_entities/entities.js";
 import {fetchList} from "../semantic_entities/entities.js";
+import * as PageHeader from "./PageHeader.jsx";
 import * as MissingPage from "~/../base_app/src/MissingPage.jsx";
 
 const missingPageJSX = <div className="app-page">
@@ -33,7 +34,8 @@ export function initialize({entID}) {
   });
 }
 
-export function render({entID}) {
+export function render(props) {
+  let {entID, ancCatIDs, ancAppIDs} = props;
   let {entDef, list} = this.state;
   if (entDef === undefined || list === undefined) {
     return fetchingPageJSX;
@@ -43,7 +45,10 @@ export function render({entID}) {
   }
 
   return <div className="app-page">
-    
+    <PageHeader key="h" {...props} entDef={entDef} />
+    <AppList key="l" list={list} objID={entID}
+      ancCatIDs={ancCatIDs} ancAppIDs={[...ancAppIDs, entID]}
+    />
   </div>;
 
 }
