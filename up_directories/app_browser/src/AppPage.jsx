@@ -43,7 +43,7 @@ export function render({entID}) {
   }
 
   return <div className="app-page">
-    {/* TODO... */}
+    
   </div>;
 
 }

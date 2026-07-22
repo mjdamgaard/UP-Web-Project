@@ -36,16 +36,16 @@ export const keyProps = ["userID", "useOriginal", "useDefault"];
 
 
 export function initialize() {
-  // histState : {appDirID, trustClass}.
-  return this.getHistoryState(newHistState => {
-    // If the history state changes due to user navigation (but not due to
-    // setHistoryState() calls, or due to pushURL()/replaceURL() calls from
-    // other component instances), update the relevant states.
-    this.setState(state => ({
-      ...state, ...(newHistState ?? {}), cache: new MutableObject(),
-      curAppDirIDRef = new MutableArray(),
-    }));
+  let {appDirID, trustClass} = this.getHistoryState(newHistState => {
+    // If the history state changes in a "popstate" event, namely if navigating
+    // to an existing history stack entry (but not due to setHistoryState()
+    // calls nor push/replaceURL() calls), update the state accordingly.
+    this.setState(state => ({...state, ...(newHistState ?? {})}));
   }) ?? {};
+  return {
+    appDirID: appDirID, trustClass: trustClass,
+    cache: new MutableObject(), curAppDirIDRef: new MutableArray(),
+  };
 }
 
 
