@@ -1556,13 +1556,13 @@ export class JSXInstanceInterface extends ObjectObject {
     }
   );
 
-  // getFirstSegment() is similar to calling this.getSegments(0, 1)[0].
+  // getFirstSegment() is similar to calling this.getSegments(0, 1)[0] ?? "".
   getFirstSegment = new DevFunction("getFirstSegment", {}, () => {
-    let [firstSegment] = this.jsxInstance.getSegments(0, 1);
+    let [firstSegment = ""] = this.jsxInstance.getSegments(0, 1);
     return firstSegment;
   });
 
-  // getFirstSegment() is similar to "/" + join(this.getSegments(), "/").
+  // getPath() is similar to "/" + join(this.getSegments(), "/").
   getPath = new DevFunction("getPath", {}, () => {
     return "/" + this.jsxInstance.getSegments().join("/");
   });

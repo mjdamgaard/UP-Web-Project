@@ -899,10 +899,10 @@ export class ScriptInterpreter {
           let stmtArr = stmtNode.stmtArr;
           if (state) {
             state.env ??= newEnv;
-            state.i ??= 0;
+            state.i ??= startInd;
             state.children ??= stmtArr.map(() => ({}));
           }
-          let i = state?.i ?? 0;
+          let i = state?.i ?? startInd;
           let len = stmtArr.length;
           try {
             while(i < len) {
@@ -2953,7 +2953,7 @@ function verifyTypeHelper(val, type, isOptional, node, env) {
     case "hex-string":
     case "hex string":
     case "hex":
-      if (typeOfVal !== "string" || !/^[0-9a-fA-F]*$/.test(val)) {
+      if (typeOfVal !== "string" || !/^[0-9a-fA-F]+$/.test(val)) {
         throw new ArgTypeError(
           `Value is not a hexadecimal string: ${getString(val, env)}`,
           node, env

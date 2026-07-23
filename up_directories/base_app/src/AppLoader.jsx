@@ -53,7 +53,9 @@ export function render({Wrapper, appProps = {}}) {
   // Get (and subscribe to) the appDirIDSegment from the URL.
   let appDirIDSegment = this.getFirstSegment();
   if (!hasType(appDirIDSegment, "hex")) {
-    console.error("Non-hexadecimal appDirID segment: " + appDirIDSegment);
+    console.error(
+      'Non-hexadecimal appDirID segment: "' + appDirIDSegment + '"'
+    );
     return <MissingPage key="m" />;
   }
 
