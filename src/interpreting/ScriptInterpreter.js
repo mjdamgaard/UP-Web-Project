@@ -1947,11 +1947,14 @@ export class ScriptInterpreter {
     // Evaluate the chained expression accumulatively, one postfix at a time.
     let initIVal = isNew ? 1 : 0;
     let iState = state ? state.iState ??= [initIVal] : undefined;
+    let valState = state ? state.valState ??= [val] : undefined;
+    val = valState ? valState[0] : val;
     let stateArr = state ? state.stateArr ??= [] : undefined;
     let curState;
     for (let i = iState ? iState[0] : initIVal; i < len; i++) {
       if (state) {
         iState[0] = i;
+        valState[0] = val;
         curState = stateArr ? stateArr[i] ??= {} : undefined;
       }
       postfix = postfixArr[i];
@@ -3663,7 +3666,7 @@ export function logExtendedErrorAndTrace(err) {
 
 
 const FILENAME_REGEX = /\/[^./]+(?<=[~a-zA-Z0-9_\-])\.[^/]+$/;
-const SEGMENT_TO_REPLACE_REGEX = /(\/\.\/|\/[^/]+\/\.\.\/|\/?\+)/g;
+const SEGMENT_TO_REPLACE_REGEX = /(\/\.?\/|\/[^/]+\/\.\.\/|\/?\+)/g;
 const RELATIVE_PATH_START_REGEX = /^(\.\.?\/|~\/|\+)/;
 const HOME_PATH_REGEX = /^\/[0-9a-f]+\/[0-9a-f]+(?=(\/|$))/g;
 const SLASH_END_REGEX = /\/$/;

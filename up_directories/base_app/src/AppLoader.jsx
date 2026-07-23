@@ -114,17 +114,18 @@ export function render({Wrapper, appProps = {}}) {
   if (!AppComponent) {
     return <MissingPage key="m" />;
   }
+  this.advanceURL(1);
   if (Wrapper) {
-    // (The wrapper is supposed to advance the URL beyond the appDirID segment.)
     return (
-      <Wrapper key="w" trustClass={trustClass} appDirID={appDirID} >
+      <Wrapper key="w" trustClass={trustClass} appDirID={appDirID}
+        appDirIDSegment={appDirIDSegment}
+      >
         <AppComponent key={"a-" + appDirID}
           {...appProps} untrusted={trustClass !== "trusted"}
         />
       </Wrapper>
     );
   } else {
-    this.advanceURL(1);
     return <AppComponent key={"a-" + appDirID} {...appProps} untrusted />;
   }
 }
@@ -155,9 +156,8 @@ export const actions = {
 
     // Finally, replace the appDirIDSegment with genAppDirID, also setting
     // the history state in the process, and update the regular state as well.
-    this.replaceURL("~/" + genAppDirID + "/" + urlTail, {
-      appDirID: appDirID, trustClass: trustClass
-    });
+    this.replaceURL("~/" + genAppDirID + "/" + urlTail);
+    this.setHistoryState({appDirID: appDirID, trustClass: trustClass});
     this.setState(state => ({...state,
       appDirID: appDirID, trustClass: trustClass, curAppDirID: appDirID
     }));
@@ -166,9 +166,9 @@ export const actions = {
     // Fetch the app component found at main.jsx in the app's home directory,
     // as well as the metadata in the same directory.
     let [AppComponent, metadata] = await Promise.all([
-      import("~/../" + appDirID + "/main.jsx"), /* .catch(
+      import("~/../" + appDirID + "/main.jsx").catch(
         err => console.error(toString(err))
-      ), */
+      ),
       import("../" + appDirID + "/metadata.js;get/default").catch(
         err => undefined
       ),

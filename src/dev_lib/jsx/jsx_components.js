@@ -1108,7 +1108,8 @@ class JSXInstance {
       this.segmentIndex + end - 1;
     let ret = segments.slice(firstInd, lastInd + 1);
     for (let i = firstInd; i <= lastInd; i++) {
-      this.subscribeToContext(segmentContextProvisions[i]);
+      let contextProvision = segmentContextProvisions[i];
+      if (contextProvision) this.subscribeToContext(contextProvision);
     }
     return ret;
   }
@@ -1161,7 +1162,10 @@ class JSXInstance {
 
 
   getValidatedPathname(url, node, env) {
-      let {globals: {pathnameRef: [prevPathname]}, segmentIndex} = this;
+      let {
+        segmentIndex,
+        globals: {segmentsRef: [segments], pathnameRef: [prevPathname]}
+      } = this;
 
     // Prepend './' to the url if it doesn't start with "/", "./", "~/", etc.
     if (!HREF_REL_START_REGEX.test(url)) url = './' + url;
@@ -1172,7 +1176,7 @@ class JSXInstance {
       do {
         url = url.substring(2);
       } while (url.substring(0, 2) === "~/");
-      url = prevPathname + (prevPathname.at(-1) === "/" ? "" : "/") + url;
+      url = "/" + segments.slice(0, segmentIndex).join("/") + "/" + url;
     }
 
     // Else if the url start with a number of  "~~/"'s, go up the ancestor
@@ -1191,7 +1195,7 @@ class JSXInstance {
         segmentIndex = parentInstance.segmentIndex;
         url = url.substring(3);
       } while (url.substring(0, 3) === "~~/");
-      url = prevPathname + (prevPathname.at(-1) === "/" ? "" : "/") + url;
+      url = "/" + segments.slice(0, segmentIndex).join("/") + "/" + url;
     }
 
     // Then call getAbsolutePath() to handle any "./" and "../" segments.
