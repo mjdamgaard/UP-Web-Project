@@ -70,7 +70,7 @@ export function render({
   // advanced in the process to a new tail URL that does not include the
   // baseAppDirID segment. And we can thus continue to render this base app by
   // branching on the next segment after that.
-  let firstSegment = this.getFirstSegment();
+  let firstSegment = this.getFirstSegment() ?? "";
   this.advanceURL(1); // Advance by 1 URL segment for child components.
   let {ref: {appLoaderProps}} = this.state;
   let baseAppPage, useOriginal, useDefault;

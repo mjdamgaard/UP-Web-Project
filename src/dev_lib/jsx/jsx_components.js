@@ -1106,12 +1106,15 @@ class JSXInstance {
     let lastInd = (end === undefined || end < 0) ?
       segments.length - 1 + (end ?? 0) :
       this.segmentIndex + end - 1;
-    let ret = segments.slice(firstInd, lastInd + 1);
+
+    // Subscribe to all segment contexts from firstInd to lastInd, including
+    // the trailing "" segment. Then return the same segments but without that
+    // same trailing "" segment if otherwise included.
     for (let i = firstInd; i <= lastInd; i++) {
       let contextProvision = segmentContextProvisions[i];
       if (contextProvision) this.subscribeToContext(contextProvision);
     }
-    return ret;
+    return segments.slice(0, -1).slice(firstInd, lastInd + 1);
   }
 
   // unsubscribeFromAllSegments() {
@@ -1558,9 +1561,7 @@ export class JSXInstanceInterface extends ObjectObject {
     }
   );
 
-  // getFirstSegment() is similar to calling this.getSegments(0, 1)[0]. Note
-  // that the segments array always has an empty string as its last entry, after
-  // the last non-empty segment.
+  // getFirstSegment() is similar to calling this.getSegments(0, 1)[0].
   getFirstSegment = new DevFunction("getFirstSegment", {}, () => {
     let [firstSegment] = this.jsxInstance.getSegments(0, 1);
     return firstSegment;
