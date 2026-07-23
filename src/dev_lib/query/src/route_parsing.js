@@ -1,12 +1,13 @@
 
 const lockedRouteRegex = /\/_/;
 
+const queryPathRegEx = /(\.\/|[a-zA-Z0-9_-]+\.[a-z]+\/)(.*)$/;
 const hexIDRegEx = /^[0-9a-f]+$/;
-const dirSegmentRegEx = /^\.*[a-zA-Z0-9_\-]+$/;
+const dirSegmentRegEx = /^\.*[a-zA-Z0-9_-]+$/;
 const fileNameRegEx =
-  /^\.*[a-zA-Z0-9_\-]+\.([a-zA-Z0-9_\-]+\.)*([a-zA-Z0-9_\-]+)$/;
+  /^\.*[a-zA-Z0-9_-]+\.([a-zA-Z0-9_-]+\.)*([a-zA-Z0-9_-]+)$/;
 const queryPathSegmentRegEx =
-  /^([.~a-zA-Z0-9_\-]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+$/;
+  /^([.~a-zA-Z0-9_-]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+$/;
 
 
 
@@ -15,17 +16,12 @@ export function parseRoute(route) {
   // or query path segment that starts with an underscore).
   let isLocked = lockedRouteRegex.test(route);
 
-  // Then split the route along the first occurrence of "./", into the path
-  // and the query path.
-  let indOfQueryPathDelimiter = route.indexOf("./");
-  let path, queryPath;
-  if (indOfQueryPathDelimiter === -1) {
-    path = route;
-  }
-  else {
-    path = route.substring(0, indOfQueryPathDelimiter);
-    queryPath = route.substring(indOfQueryPathDelimiter + 2);
-  }
+  // Then split the route either along the first occurrence of "./", or the
+  // first occurrence of "/" after a file name, into the "path" and the "query
+  // path."
+  let [ , , queryPath = ""] = queryPathRegEx.exec(route) ?? [];
+  let path = !queryPath ? route : route.slice(0, -queryPath.length - 1);
+  if (path.at(-1) === ".") path = path.slice(0, -1);
 
   // And split these two parts further along all occurrences of "/".
   if (path && path[0] !== "/") throw (
