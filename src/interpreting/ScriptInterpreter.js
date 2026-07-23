@@ -1100,7 +1100,10 @@ export class ScriptInterpreter {
       }
       case "array-destructuring-assignment" :
       case "object-destructuring-assignment" : {
-        let val = this.evaluateExpression(expNode.valExp, environment);
+        let valState = state ? state.valState ??= {} : undefined;
+        let val = this.evaluateExpression(
+          expNode.valExp, environment, valState
+        );
         ret = this.executeDestructuring(expNode.destExp, val, environment);
         break;
       }
@@ -1491,13 +1494,10 @@ export class ScriptInterpreter {
         }
         break;
       }
-      // TODO: Continue impl. async handling for the following expression
-      // types (and until then, 'await' will just fail in the following
-      // expressions).
       case "chained-expression": {
         let val;
         try {
-          [val] = this.evaluateChainedExpression(expNode, environment);
+          [val] = this.evaluateChainedExpression(expNode, environment, state);
         }
         catch (err) {
           if (err instanceof BrokenOptionalChainException) {
@@ -1516,10 +1516,13 @@ export class ScriptInterpreter {
         break;
       }
       case "array": {
+        let stateArr = state ? state.stateArr ??= [] : undefined;
         ret = [];
-        expNode.children.forEach(exp => {
+        expNode.children.forEach((exp, ind) => {
+          let expState = stateArr ? stateArr[ind] ??= {} : undefined;
           if (exp.type === "spread") {
-            let spreadExpVal = this.evaluateExpression(exp.exp, environment);
+            let spreadExpVal =
+              this.evaluateExpression(exp.exp, environment, expState);
             if (spreadExpVal instanceof ObjectObject && spreadExpVal.isArray) {
               spreadExpVal = spreadExpVal.members;
             }
@@ -1530,16 +1533,20 @@ export class ScriptInterpreter {
             ret = ret.concat(spreadExpVal);
           }
           else {
-            ret.push(this.evaluateExpression(exp, environment));
+            ret.push(this.evaluateExpression(exp, environment, expState));
           }
         });
         break;
       }
       case "object": {
+        let expStateArr = state ? state.expStateArr ??= [] : undefined;
+        let keyStateArr = state ? state.keyStateArr ??= [] : undefined;
         ret = {};
-        expNode.members.forEach(member => {
+        expNode.members.forEach((member, ind) => {
+          let expState = expStateArr ? expStateArr[ind] ??= {} : undefined;
           if (member.type === "spread") {
-            let spreadExpVal = this.evaluateExpression(member.exp, environment);
+            let spreadExpVal =
+              this.evaluateExpression(member.exp, environment, expState);
             forEachValue(spreadExpVal, member, environment, (val, key) => {
               ret[key] = val;
             });
@@ -1547,8 +1554,9 @@ export class ScriptInterpreter {
           else {
             let key = member.ident;
             if (key === undefined) {
+              let keyState = keyStateArr ? keyStateArr[ind] ??= {} : undefined;
               key = getStringOrSymbol(
-                this.evaluateExpression(member.keyExp, environment),
+                this.evaluateExpression(member.keyExp, environment, keyState),
                 expNode, environment
               );
             }
@@ -1556,13 +1564,15 @@ export class ScriptInterpreter {
               "Invalid, falsy object key",
               expNode, environment
             );
-            ret[key] = this.evaluateExpression(member.valExp, environment);
+            ret[key] = this.evaluateExpression(
+              member.valExp, environment, expState
+            );
           }
         });
         break;
       }
       case "jsx-element": {
-        ret = new JSXElement(expNode, environment, this);
+        ret = new JSXElement(expNode, environment, this, state);
         break;
       }
       case "identifier": {
@@ -1593,12 +1603,12 @@ export class ScriptInterpreter {
         break;
       }
       case "promise-call": {
-        let expVal = this.evaluateExpression(expNode.exp, environment);
+        let expVal = this.evaluateExpression(expNode.exp, environment, state);
         ret = new PromiseObject(expVal, this, expNode.exp, environment);
         break;
       }
       case "promise-all-call": {
-        let expVal = this.evaluateExpression(expNode.exp, environment);
+        let expVal = this.evaluateExpression(expNode.exp, environment, state);
         if (expVal instanceof ObjectObject) expVal = expVal.members;
         if (!(expVal instanceof Array)) throw new RuntimeError(
           "Value is not iterable",
@@ -1628,13 +1638,13 @@ export class ScriptInterpreter {
       }
       case "symbol-call": {
         let expVal = (expNode.exp === undefined) ? undefined : getString(
-          this.evaluateExpression(expNode.exp, environment), environment
+          this.evaluateExpression(expNode.exp, environment, state), environment
         );
         ret = Symbol(expVal);
         break;
       }
       case "import-call": {
-        let path = this.evaluateExpression(expNode.pathExp, environment);
+        let path = this.evaluateExpression(expNode.pathExp, environment, state);
         let liveModulePromise = this.import(
           path, expNode, environment, false, false, true
         ).then(
@@ -1648,7 +1658,7 @@ export class ScriptInterpreter {
       case "console-call": {
         let {isExiting, log} = environment.globals;
         let expValArr = expNode.expArr.map(
-          exp => this.evaluateExpression(exp, environment)
+          exp => this.evaluateExpression(exp, environment, state)
         );
         if (expNode.subtype === "log") {
           if (!this.isServerSide && !isExiting) {
@@ -1703,11 +1713,13 @@ export class ScriptInterpreter {
         break;
       }
       case "super-call": {
+        let stateArr = state ? state.stateArr ??= [] : undefined;
         let superclass = environment.getSuperclass(expNode, environment);
         let thisVal = environment.getThisVal();
-        let inputArr = expNode.params.map(
-          param => this.evaluateExpression(param, environment)
-        );
+        let inputArr = expNode.params.map((param, ind) => {
+          let paramState = stateArr ? stateArr[ind] ??= {} : undefined;
+          return this.evaluateExpression(param, environment, paramState);
+        });
         this.executeFunction(
           superclass.instanceConstructor, inputArr, expNode, environment,
           thisVal,
@@ -1728,7 +1740,7 @@ export class ScriptInterpreter {
         break;
       }
       case "abs-call": {
-        let expVal = this.evaluateExpression(expNode.exp, environment);
+        let expVal = this.evaluateExpression(expNode.exp, environment, state);
         let expType = typeof expVal;
         if (expType === "string") {
           let curPath = environment.getModuleEnv().modulePath;
@@ -1788,8 +1800,8 @@ export class ScriptInterpreter {
         );
       }
       expNode.children.forEach(paramMemExp => {
-        let ident = paramMemExp.ident;
-        let propVal = getPropertyFromObject(val, ident);
+        let key = paramMemExp.key;
+        let propVal = getPropertyFromObject(val, key);
         this.assignToParameter(
           paramMemExp, propVal, environment, isDeclaration, isConst
         );
@@ -1893,10 +1905,12 @@ export class ScriptInterpreter {
   // a BrokenOptionalChainException. Here, val is the value of the whole
   // expression, and objVal, is the value of the object before the last member
   // accessor (if the last postfix is a member accessor and not a tuple).
-  evaluateChainedExpression(expNode, environment) {
+  evaluateChainedExpression(expNode, environment, state) {
+    let rootState = state ? state.rootState ??= {} : undefined;
+    let paramStateArr = state ? state.paramStateArr ??= [] : undefined;
     let {rootExp, postfixArr, isNew} = expNode;
     let postfix, objVal, key;
-    let val = this.evaluateExpression(rootExp, environment);
+    let val = this.evaluateExpression(rootExp, environment, rootState);
     let len = postfixArr.length;
     if (len === 0) {
       return [val];
@@ -1906,14 +1920,14 @@ export class ScriptInterpreter {
     // In case of a 'new' expression, we handle the initial first part of the
     // chain in a special way, and then continue to the subsequent for loop,
     // but with i starting at 1 instead of 0.
-
     if (isNew) {
       // (Note that the parser has failed if not the postfixArr[0] is an
       // expression tuple.)
       let expTuple = postfixArr[0];
-      let inputArr = expTuple.children.map(
-        param => this.evaluateExpression(param, environment)
-      );
+      let inputArr = expTuple.children.map((param, ind) => {
+        let paramState = paramStateArr ? paramStateArr[ind] ??= {} : undefined;
+        return this.evaluateExpression(param, environment, paramState)
+      });
       if (val instanceof ClassObject) {
         val = val.getNewInstance(inputArr, expTuple, environment);
       }
@@ -1933,14 +1947,22 @@ export class ScriptInterpreter {
     }
 
     // Evaluate the chained expression accumulatively, one postfix at a time.
-    for (let i = isNew ? 1 : 0; i < len; i++) {
+    let initIVal = isNew ? 1 : 0;
+    let iState = state ? state.iState ??= [initIVal] : undefined;
+    let stateArr = state ? state.stateArr ??= [] : undefined;
+    let curState;
+    for (let i = iState ? iState[0] : initIVal; i < len; i++) {
+      if (state) {
+        iState[0] = i;
+        curState = stateArr ? stateArr[i] ??= {} : undefined;
+      }
       postfix = postfixArr[i];
 
       // If postfix is a member accessor, get the member value, and assign the
       // current val to objVal.
       if (postfix.type === "member-accessor") {
         objVal = val;
-        [val, key] = this.getProperty(objVal, postfix, environment);
+        [val, key] = this.getProperty(objVal, postfix, environment, curState);
       }
 
       // Else if postfix is an expression tuple, execute the current val as a
@@ -1948,9 +1970,11 @@ export class ScriptInterpreter {
       else if (postfix.type === "expression-tuple") {
         // Evaluate the expressions inside the tuple.
         let inputExpArr = postfix.children;
-        let inputValArr = inputExpArr.map(exp => (
-          this.evaluateExpression(exp, environment)
-        ));
+        let expStateArr = curState ? curState.expStateArr ??= [] : undefined;
+        let inputValArr = inputExpArr.map((exp, ind) => {
+          let expState = expStateArr ? expStateArr[ind] ??= {} : undefined;
+          return this.evaluateExpression(exp, environment, expState);
+        });
 
         // Then execute the function and assign its return value to val.
         val = this.executeFunction(
@@ -1969,7 +1993,7 @@ export class ScriptInterpreter {
   }
 
 
-  getProperty(objVal, accessor, environment) {
+  getProperty(objVal, accessor, environment, state) {
     let val, key;
     // Throw a BrokenOptionalChainException if an optional chaining is
     // broken.
@@ -1981,7 +2005,7 @@ export class ScriptInterpreter {
     key = accessor.ident;
     if (key === undefined) {
       key = getStringOrSymbol(
-        this.evaluateExpression(accessor.exp, environment),
+        this.evaluateExpression(accessor.exp, environment, state),
         accessor, environment
       );
     }
@@ -3159,9 +3183,10 @@ function getValidatedStyleSheet(styleSheet, node, env) {
 
 
 
-
+ 
 export class JSXElement extends ObjectObject {
-  constructor(node, decEnv, interpreter) {
+  // TODO: Impl. allowing nested await keywords via the 'state' argument.
+  constructor(node, decEnv, interpreter, state = undefined) {
     super("JSXElement");
     this.node = node;
     this.decEnv = decEnv;

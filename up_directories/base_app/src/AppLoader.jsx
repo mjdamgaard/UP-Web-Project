@@ -1,12 +1,10 @@
 
-import {clearPermissions, fetch, fetchPrivate} from 'query';
+import {fetch, fetchPrivate} from 'query';
 import {substring, split, at, slice, join, replaceAll, toString} from 'string';
-import {fetchPrivate, fetch} from 'query';
 import {hasType, hasTypes, verifyType} from 'type';
 import {forEach} from 'array';
 
 import * as MissingPage from "./MissingPage.jsx";
-import { format } from 'url';
 
 
 // The AppLoader loads the app that is defined by the first segment (from where
@@ -168,10 +166,10 @@ export const actions = {
     // Fetch the app component found at main.jsx in the app's home directory,
     // as well as the metadata in the same directory.
     let [AppComponent, metadata] = await Promise.all([
-      import("~/../" + appDirID + "/main.jsx").catch(
-        err => console.error(err)
-      ),
-      import("../" + appDirIDSegment + "/metadata.js;get/default").catch(
+      import("~/../" + appDirID + "/main.jsx"), /* .catch(
+        err => console.error(toString(err))
+      ), */
+      import("../" + appDirID + "/metadata.js;get/default").catch(
         err => undefined
       ),
     ]);
@@ -180,7 +178,7 @@ export const actions = {
     // to "genAppDirID" ("gen" for "general"), as well as the additionalURLs
     // property. But if trustClass !== "trusted", use some trivial values
     // instead, such that the app can't hijack URLs of other apps.
-    let genAppDirID = metadata?.apiDefiningAppDirID ?? appDirIDSegment;
+    let genAppDirID = metadata?.apiDefiningAppDirID ?? appDirID;
     let additionalURLs = metadata?.additionalURLs;
     if (trustClass !== "trusted") {
       genAppDirID = appDirID;

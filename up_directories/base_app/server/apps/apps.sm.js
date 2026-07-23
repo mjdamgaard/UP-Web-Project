@@ -40,7 +40,7 @@ export async function fetchPreferredSubApp(appDirID) {
   }
   
   // Then redirect to the recursive fetchPreferredSubAppHelper(). 
-  let preferredAppDirID =  await fetchPreferredSubAppHelper(
+  let preferredAppDirID = await fetchPreferredSubAppHelper(
     appDirID, preferences, subAppIDListString
   );
 
@@ -49,7 +49,7 @@ export async function fetchPreferredSubApp(appDirID) {
   let trustClass = await fetch(abs(
     "./trustClasses.att./entry/k/" + preferredAppDirID
   ));
-  return [preferredAppDirID, trustClass || "untrusted"];
+  return {appDirID: preferredAppDirID, trustClass: trustClass || "untrusted"};
 }
 
 
@@ -177,8 +177,10 @@ export async function fetchUserPreferences() {
     "User is not logged in"
   );
 
-  let prefJSON = fetchPrivate(abs("./_userPreferences.att./entry/k/" + userID));
-  let preferences = parse(prefJSON);
+  let prefJSON = await fetchPrivate(abs(
+    "./_userPreferences.att./entry/k/" + userID
+  ));
+  let preferences = prefJSON ? parse(prefJSON) : {};
   return preferences;
 }
 

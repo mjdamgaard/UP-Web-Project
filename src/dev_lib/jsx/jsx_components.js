@@ -1065,9 +1065,7 @@ class JSXInstance {
     while (contextProvisions) {
       let contextProvision = contextProvisions[key];
       if (contextProvision) {
-        return this.subscribeToContext(
-          this, contextProvision, ignore
-        );
+        return this.subscribeToContext(contextProvision, ignore);
       }
       ({parentInstance, globals} = parentInstance ?? {});
       contextProvisions =
@@ -1108,7 +1106,7 @@ class JSXInstance {
     let lastInd = (end === undefined || end < 0) ?
       segments.length - 1 + (end ?? 0) :
       this.segmentIndex + end - 1;
-    let ret = segments.slice(firstInd, lastInd);
+    let ret = segments.slice(firstInd, lastInd + 1);
     for (let i = firstInd; i <= lastInd; i++) {
       this.subscribeToContext(segmentContextProvisions[i]);
     }
@@ -1137,9 +1135,6 @@ class JSXInstance {
     // where whole segment groups, defined by advanceURL() calls, are skipped
     // at once, rather than only single segments. 
     let pathname = this.getValidatedPathname(url, callerNode, execEnv);
-
-    // And sanitize state by calling jsonStringify and then parsing it back.
-    state = JSON.parse(jsonStringify(state));
 
     // Get relevant data.
     let {urlContext} = execEnv.globals.contexts;
@@ -1177,7 +1172,7 @@ class JSXInstance {
       do {
         url = url.substring(2);
       } while (url.substring(0, 2) === "~/");
-      url = prevPathname + "/" + url;
+      url = prevPathname + (prevPathname.at(-1) === "/" ? "" : "/") + url;
     }
 
     // Else if the url start with a number of  "~~/"'s, go up the ancestor
@@ -1196,7 +1191,7 @@ class JSXInstance {
         segmentIndex = parentInstance.segmentIndex;
         url = url.substring(3);
       } while (url.substring(0, 3) === "~~/");
-      url = prevPathname + "/" + url;
+      url = prevPathname + (prevPathname.at(-1) === "/" ? "" : "/") + url;
     }
 
     // Then call getAbsolutePath() to handle any "./" and "../" segments.
@@ -1553,7 +1548,7 @@ export class JSXInstanceInterface extends ObjectObject {
   getSegments = new DevFunction(
     "getSegments", {typeArr: ["integer unsigned?", "integer unsigned?"]},
     (_, [start = 0, end = undefined]) => {
-      this.jsxInstance.getSegments(start, end);
+      return this.jsxInstance.getSegments(start, end);
     }
   );
 

@@ -1,24 +1,18 @@
 
-import {clearPermissions} from 'query';
-import {substring, indexOf} from 'string';
-import {hasType} from 'type';
-
-import {urlActions, urlEvents} from "./src/urlActions.js";
-
 import * as AppLoader from "./src/AppLoader.jsx";
 import * as WarningWrapper from "./src/WarningWrapper.jsx";
 import * as MissingPage from "./src/MissingPage.jsx";
 import * as AppFrame from "./src/AppFrame.jsx";
 import * as AboutPage from "./src/AboutPage.jsx";
 
-import * as placeholders from "./placeholders.json;parse";
+import placeholders from "./placeholders.js";
 
 const {
-  this: {
+  this: {directories: {
     "base_app": baseAppDirID,
     "app_browser": appBrowserDirID,
     "file_browser": fileBrowserDirID,
-  },
+  }},
 } = placeholders;
 
 

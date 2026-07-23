@@ -313,23 +313,33 @@ export const scriptGrammar = {
   },
   "parameter-member": {
     rules: [
-      ["identifier", "/:/", "parameter!"],
+      ["object-key", "/:/", "parameter!"],
       ["identifier", "/=/", "expression!"],
       ["identifier"],
     ],
     process: (children, ruleInd) => (
       (ruleInd === 0) ? {
         type: "parameter-member",
-        ident: children[0].ident,
+        key: children[0].key,
         targetExp: children[2].targetExp,
         defaultExp: children[2].defaultExp,
       } : {
         type: "parameter-member",
-        ident: children[0].ident,
+        key: children[0].ident,
         targetExp: children[0],
         defaultExp: children[2],
       }
     ),
+  },
+  "object-key": {
+    rules: [
+      [/[_\$a-zA-Z][_\$a-zA-Z0-9]*/],
+      ["string"],
+    ],
+    process: (children, ruleInd) => ({
+      type: "object-key",
+      key: (ruleInd === 0) ? children[0] : children[0].str
+    }),
   },
   "function-declaration": {
     rules: [
