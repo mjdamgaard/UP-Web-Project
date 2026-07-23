@@ -336,10 +336,15 @@ export const scriptGrammar = {
       [/[_\$a-zA-Z][_\$a-zA-Z0-9]*/],
       ["string"],
     ],
-    process: (children, ruleInd) => ({
-      type: "object-key",
-      key: (ruleInd === 0) ? children[0] : children[0].str
-    }),
+    process: (children, ruleInd) => {
+      if (ruleInd === 1 && !children[0].str) {
+        return "Object keys cannot be empty";
+      }
+      return {
+        type: "object-key",
+        key: (ruleInd === 0) ? children[0] : children[0].str
+      };
+    },
   },
   "function-declaration": {
     rules: [

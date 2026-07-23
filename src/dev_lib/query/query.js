@@ -206,6 +206,12 @@ export async function _query(
         );
         liveModules.set(route, liveModule);
       }
+      else if (/^(\.\.?|~)\//.test(route)) {
+        throw new LoadError(
+          `Excepted absolute route but received: "${route}"`,
+          callerNode, execEnv
+        );
+      }
       else {
         let devLibURL = interpreter.devLibURLs.get(route);
         if (!devLibURL) throw new LoadError(

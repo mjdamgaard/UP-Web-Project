@@ -38,7 +38,7 @@ export function initialize() {
 
 
 export function render({
-  fetchBestVersionRouteTemplate, loadUpdatedSelf = true
+  fetchBestVersionRouteTemplate, loadUpdatedSelf = false
 }) {
   let userID = this.getContext("userID");
 
@@ -59,7 +59,8 @@ export function render({
     return <AppLoader key="0" userID={userID} useOriginal={0} useDefault={0}
       fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
       Wrapper={WarningWrapper} appProps={{
-        loadUpdatedSelf: false
+        fetchBestVersionRouteTemplate: fetchBestVersionRouteTemplate,
+        loadUpdatedSelf: false,
       }}
     />;
   }
@@ -86,7 +87,10 @@ export function render({
       appLoaderProps = {
         userID: userID, useOriginal: useOriginal, useDefault: useDefault,
         fetchBestVersionRouteTemplate: fetchBestVersionRouteTemplate,
-        Wrapper: WarningWrapper,
+        Wrapper: WarningWrapper, appProps: {
+          fetchBestVersionRouteTemplate: fetchBestVersionRouteTemplate,
+          loadUpdatedSelf: false,
+        }
       };
       this.setState(state => ({
         ...state, ref: {...state.ref, appLoaderProps: appLoaderProps},
@@ -127,7 +131,7 @@ export function render({
   }
 
   return (
-    <div innerStyle={mainStyle}>
+    <div className="base-app">
       <AppFrame key="0">
         <div className={"base-app-page" + (baseAppPage ? "" : " hidden")}>
           {(baseAppPage)}

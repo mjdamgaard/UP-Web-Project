@@ -42,7 +42,7 @@ export const checkRequestOrigin = new DevFunction(
     
     // Throw if the request origin was not accepted.
     if (!isAllowed) throw new NetworkError(
-      "Request origin not allowed",
+      "Request origin not allowed: " + requestOrigin,
       callerNode, execEnv
     );
   }

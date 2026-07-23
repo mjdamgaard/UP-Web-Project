@@ -430,9 +430,7 @@ export class ScriptInterpreter {
     // If modulePath is a relative path, compute the absolute path from the
     // current modulePath.
     let curPath = callerEnv.getModuleEnv().modulePath;
-    if (/^\.\.?\//.test(route)) {
-      route = getAbsolutePath(curPath, route, callerNode, callerEnv);
-    }
+    route = getAbsolutePath(curPath, route, callerNode, callerEnv);
 
     // Then simply redirect to this.fetch(), and if assertJSModule is true,
     // assert that the returned value is a LiveJSModule instance.
