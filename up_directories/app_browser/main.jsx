@@ -1,8 +1,9 @@
 
 /* HOISTED IMPORTS */
 import "../semantic_entities/entities.js";
-import "../base_app/urlActions.js";
-import "./src/EntityPage.jsx";
+import "./src/AppCategoryPage.jsx";
+import "./src/AppPage.jsx";
+import "../base_app/src/MissingPage.jsx";
 /* END */
 
 // TODO: Update the above list, and make sure to include some descendants down

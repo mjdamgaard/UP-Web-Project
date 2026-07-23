@@ -102,9 +102,11 @@ class ScriptContext {
 
 const userContext = new ScriptContext({userID: undefined});
 let pathname = window.location.pathname;
+let segments = pathname.replace(/^\//, "").replace(/\/$/, "").split("/");
+if (segments.at(-1) !== "") segments.push("");
 const urlContext = new ScriptContext({
   pathname: pathname,
-  segments: pathname.replace(/^\//, "").replace(/\/$/, "").split("/"),
+  segments: segments,
   state: null,
   popstateCallbacks: new Map(),
 });
@@ -114,9 +116,11 @@ window.addEventListener("popstate", event => {
 
   // Set the new urlData.
   let pathname = window.location.pathname;
+  let segments = pathname.replace(/^\//, "").replace(/\/$/, "").split("/");
+  if (segments.at(-1) !== "") segments.push("");
   let urlData = {
     pathname: pathname,
-    segments: pathname.replace(/^\//, "").replace(/\/$/, "").split("/"),
+    segments: segments,
     state: event.state,
     popstateCallbacks: popstateCallbacks,
   };

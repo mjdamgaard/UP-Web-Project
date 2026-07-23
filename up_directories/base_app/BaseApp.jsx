@@ -105,12 +105,10 @@ export function render({
     case "apps":
       let tailURL = this.getPath();
       this.replaceURL("~/a/" + appBrowserDirID + tailURL);
-      hideAppLoader = true;
       break;
     case "files":
       let tailURL = this.getPath();
       this.replaceURL("~/a/" + fileBrowserDirID + tailURL);
-      hideAppLoader = true;
       break;
     // TODO: Add other shortcuts, in particular for tutorials and the entity
     // browser.

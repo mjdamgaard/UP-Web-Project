@@ -1,7 +1,7 @@
 
 import {fetchEntityDefinition, fetchEntityID} from
   "~/../semantic_entities/entities.js";
-import {fetchList} from "../semantic_entities/entities.js";
+import {fetchList} from "../server/entity_lists.sm.js";
 import * as PageHeader from "./PageHeader.jsx";
 import * as MissingPage from "~/../base_app/src/MissingPage.jsx";
 

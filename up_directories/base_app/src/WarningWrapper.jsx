@@ -7,7 +7,7 @@ import * as AppLoader from "./AppLoader.jsx";
 export function render({children}) {
   let {displayWarning} = this.state;
   return (
-    <div className="app-loader-wrapper">
+    <div className="wrapper">
       <div className="warning-container">
         {/* TODO... */}
       </div>

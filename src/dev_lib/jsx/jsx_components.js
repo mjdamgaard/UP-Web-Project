@@ -1151,9 +1151,11 @@ class JSXInstance {
     }
 
     // And finally also update the urlContext.
+    let segments = pathname.replace(/^\//, "").replace(/\/$/, "").split("/");
+    if (segments.at(-1) !== "") segments.push("");
     let newURLData = {
       pathname: pathname,
-      segments: pathname.replace(/^\//, "").replace(/\/$/, "").split("/"),
+      segments: segments,
       state: prevState,
       popstateCallbacks: popstateCallbacks,
     };
@@ -1556,9 +1558,11 @@ export class JSXInstanceInterface extends ObjectObject {
     }
   );
 
-  // getFirstSegment() is similar to calling this.getSegments(0, 1)[0] ?? "".
+  // getFirstSegment() is similar to calling this.getSegments(0, 1)[0]. Note
+  // that the segments array always has an empty string as its last entry, after
+  // the last non-empty segment.
   getFirstSegment = new DevFunction("getFirstSegment", {}, () => {
-    let [firstSegment = ""] = this.jsxInstance.getSegments(0, 1);
+    let [firstSegment] = this.jsxInstance.getSegments(0, 1);
     return firstSegment;
   });
 
@@ -1908,22 +1912,22 @@ function getURLContexts(urlContext) {
     segmentContextProvisions[ind] = JSXInstance.createContextProvision(segment);
   });
 
-  urlContext.addSubscriberCallback(
-    ({pathname, segments, state}, {segments: prevSegments, state: prevState}) => {
-      segmentsRef[0] = segments; pathnameRef[0] = pathname;
-      let maxLen = Math.max(segments.length, prevSegments.length);
-      for (let i = 0; i < maxLen; i++) {
-        let seg = segments[i], prevSeg = prevSegments[i];
-        if (seg !== prevSeg) {
-          JSXInstance.updateContextProvision(
-            segmentContextProvisions[i] ??=
-              JSXInstance.createContextProvision(seg),
-            seg, true
-          );
-        }
+  urlContext.addSubscriberCallback((
+    {pathname, segments, state}, {segments: prevSegments, state: prevState}
+  ) => {
+    segmentsRef[0] = segments; pathnameRef[0] = pathname;
+    let maxLen = Math.max(segments.length, prevSegments.length);
+    for (let i = 0; i < maxLen; i++) {
+      let seg = segments[i], prevSeg = prevSegments[i];
+      if (seg !== prevSeg) {
+        JSXInstance.updateContextProvision(
+          segmentContextProvisions[i] ??=
+            JSXInstance.createContextProvision(seg),
+          seg, true
+        );
       }
     }
-  );
+  });
 
   return [segmentContextProvisions, segmentsRef, pathnameRef];
 }
