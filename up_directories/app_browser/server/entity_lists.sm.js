@@ -7,10 +7,12 @@ import {fetchEntityPath, fetchEntityID} from
 const versionsPath = abs("~/../semantic_entities/em3.js;get/versionsRel");
 const membersPath = abs("~/../semantic_entities/em1.js;get/members");
 const appsPath = abs("~/../semantic_entities/em3.js;get/apps");
-const browserAppPath = abs("~/../semantic_entities/em3.js;call/App/") +
+const appBrowserPath = abs("~/../semantic_entities/em3.js;call/App") + "/" +
   getHomeDirID(abs("~/"));
-const baseAppPath = abs("~/../semantic_entities/em3.js;call/App/") +
+const baseAppPath = abs("~/../semantic_entities/em3.js;call/App") + "/" +
   getHomeDirID(abs("~/../base_app"));
+const fileBrowserPath = abs("~/../semantic_entities/em3.js;call/App") + "/" +
+  getHomeDirID(abs("~/../file_browser"));
 
 
 
@@ -20,17 +22,18 @@ const baseAppPath = abs("~/../semantic_entities/em3.js;call/App/") +
 // side.
 
 
-export async function fetchList(objID, relID) {
+export async function fetchList(objKey, relKey) {
   let [objPath, relPath] = await Promise.all([
-    fetchEntityPath(objID),
-    fetchEntityPath(relID),
+    fetchEntityPath(objKey),
+    fetchEntityPath(relKey),
   ]);
 
-  let subAppIDArr = [];
-  if (relPath === versionsPath) {
+  let subjIDArr = [];
+  if (relPath === membersPath) {
     if (objPath === appsPath) {
       subjIDArr = await Promise.all([
-        fetchEntityID(browserAppPath),
+        fetchEntityID(appBrowserPath),
+        fetchEntityID(fileBrowserPath),
         fetchEntityID(baseAppPath),
       ]);
     }

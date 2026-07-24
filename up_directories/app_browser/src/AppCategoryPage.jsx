@@ -1,8 +1,9 @@
 
-import {fetchEntityDefinition, fetchEntityID} from
+import {fetchEntityDefinition} from
   "../../semantic_entities/entities.js";
 import {fetchList} from "../server/entity_lists.sm.js";
 import * as PageHeader from "./PageHeader.jsx";
+import * as AppList from "./AppList.jsx";
 import * as MissingPage from "../../base_app/src/MissingPage.jsx";
 
 const missingPageJSX = <div className="app-page">
@@ -12,9 +13,7 @@ const fetchingPageJSX = <div className="app-page">
   <div className="fetching"></div>
 </div>;
 
-const versionsRelIDProm = fetchEntityID(
-  abs("~/../semantic_entities/em3.js;get/versionsRel")
-);
+const membersRelPath = abs("~/../semantic_entities/em1.js;get/members");
 
 
 export const keyProps = ["entID"];
@@ -27,15 +26,13 @@ export function initialize({entID}) {
     console.error(err);
     this.setState({entDef: null})
   });
-  versionsRelIDProm.then(versionsRelID => {
-    fetchList(entID, versionsRelID).then(list => {
-      this.setState(state => ({...state, list: list}))
-    });
+  fetchList(entID, membersRelPath).then(list => {
+    this.setState(state => ({...state, list: list}))
   });
 }
 
 export function render(props) {
-  let {entID, ancCatIDs, ancAppIDs} = props;
+  let {entID, ancCatIDs = []} = props;
   let {entDef, list} = this.state;
   if (entDef === undefined || list === undefined) {
     return fetchingPageJSX;
@@ -46,8 +43,9 @@ export function render(props) {
 
   return <div className="app-category-page">
     <PageHeader key="h" {...props} entDef={entDef} />
-    {/* <AppList key="l" list={list} objID={entID}
-      ancCatIDs={ancCatIDs} ancAppIDs={[...ancAppIDs, entID]}
-    /> */}
+    <hr/>
+    <AppList key="l" list={list} objID={entID}
+      ancCatIDs={[...ancCatIDs, entID]}
+    />
   </div>;
 }

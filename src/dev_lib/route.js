@@ -36,18 +36,21 @@ export const getAbsolutePath = new DevFunction(
 export const getHomePath = new DevFunction(
   "getHomePath", {typeArr: ["string"]}, (_, [route]) => {
     let [ , homePath] = /^(\/[^/]*\/[^/]*)/.exec(route) ?? [];
+    return homePath;
   },
 );
 
 export const getHomeDirID = new DevFunction(
   "getHomeDirID", {typeArr: ["string"]}, (_, [route]) => {
     let [ , homeDirID] = /^\/[^/]*\/([^/]*)/.exec(route) ?? [];
+    return homeDirID;
   },
 );
 
 export const getNodeID = new DevFunction(
   "getNodeID", {typeArr: ["string"]}, (_, [route]) => {
     let [ , nodeID] = /^\/([^/]*)\/[^/]*/.exec(route) ?? [];
+    return nodeID;
   },
 );
 
