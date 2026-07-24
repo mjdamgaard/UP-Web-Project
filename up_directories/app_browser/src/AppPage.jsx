@@ -50,5 +50,4 @@ export function render(props) {
       ancCatIDs={ancCatIDs} ancAppIDs={[...ancAppIDs, entID]}
     />
   </div>;
-
 }

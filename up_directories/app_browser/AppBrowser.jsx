@@ -54,7 +54,7 @@ export function render() {
   let indOfPathSegment = indexOf(restSegments, "path");
   if (indOfPathSegment !== -1) {
     let {entIDIsMissing, curEntPathRef} = this.state;
-    let entPath = "/" + join(slice(restSegments, indOfPathSegment), "/");
+    let entPath = "/" + join(slice(restSegments, indOfPathSegment + 1), "/");
     if (curEntPathRef[0] === entPath && entIDIsMissing) {
       return missingPageJSX;
     }

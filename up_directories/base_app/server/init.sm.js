@@ -12,7 +12,23 @@ const {
 } = placeholders;
 
 
-export async function _init_1() {
+export function _init_1() {
+  checkAdminPrivileges();
+
+  return Promise.all([
+    postAllEntitiesFromModule(abs("~/em1.js")),
+    postAllEntitiesFromModule(
+      abs("~/score_handling/ScoreHandler01/em.js")
+    ),
+    postAllEntitiesFromModule(abs("~/em2.js")),
+    postAllEntitiesFromModule(abs("~/em3.js")),
+  ]);
+}
+
+
+export async function _init_2() {
+  checkAdminPrivileges();
+
   let em3Path = abs("~/../semantic_entities/em3.js");
   await Promise.all([
     postConstructedEntity(em3Path, "App", [baseAppDirID]),

@@ -1164,16 +1164,21 @@ export const scriptGrammar = {
   },
   "template-text": {
     rules: [
-      [/[^`$}\\]+/],
+      [/[^`$\\]+/],
       [/\\[\s\S]/],
-      [/\$|\}/],
+      [/\$/],
     ],
     process: (children, ruleInd) => {
       let str = children[0];
       if (ruleInd === 1) {
-        str = str[1];
-        if (str === "\n") {
+        if (str[1] === "\n") {
           str = "";
+        } else {
+          try {
+            str = JSON.parse('"' + str + '"');
+          } catch (_) {
+            return "Invalid character: " + str;
+          }
         }
       }
       return {
@@ -1303,10 +1308,10 @@ export class ScriptParser extends Parser {
         },
         "template-content": {
           lexemes: [
-            /[^`$}\\]+/,
+            /[^`$\\]+/,
             /\\[\s\S]/,
             /\$(?!\{)/,
-            /\$\{|\}/,
+            /\$\{/,
           ],
         },
       },
