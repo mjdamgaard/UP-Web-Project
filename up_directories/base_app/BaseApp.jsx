@@ -70,7 +70,7 @@ export function render({
   // advanced in the process to a new tail URL that does not include the
   // baseAppDirID segment. And we can thus continue to render this base app by
   // branching on the next segment after that.
-  let firstSegment = this.getFirstSegment() ?? "";
+  let firstSegment = this.getFirstSegment();
   this.advanceURL(1); // Advance by 1 URL segment for child components.
   let {ref: {appLoaderProps}} = this.state;
   let baseAppPage, useOriginal, useDefault;
@@ -101,7 +101,7 @@ export function render({
 
     // The fallowing cases are some shortcut segments that each redirects to
     // a URL of the "/a/..." type.
-    case "":
+    case undefined:
     case "apps":
       let tailURL = this.getPath();
       this.replaceURL("~/a/" + appBrowserDirID + tailURL);
@@ -145,3 +145,17 @@ export function render({
   );
 }
 
+
+
+export const actions = {
+  "goToApp": function([
+    appDirID, tailURL = "", useOriginal = false, useDefault = false
+  ]) {
+    let firstSegment = useOriginal ? "o" : useDefault ? "d" : "a";
+    this.pushURL("~/" + firstSegment + "/" + appDirID + "/" + tailURL);
+  },
+};
+
+export const events = [
+  "goToApp",
+];
