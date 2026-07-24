@@ -2,10 +2,10 @@
 import {join} from 'string';
 import {indexOf, slice, at, reduce} from 'array';
 import {hasType} from 'type';
-import {fetchEntityID} from "~/../semantic_entities/entities.js";
+import {fetchEntityID} from "../semantic_entities/entities.js";
 import * as AppCategoryPage from "./src/AppCategoryPage.jsx";
 import * as AppPage from "./src/AppPage.jsx";
-import * as MissingPage from "~/../base_app/src/MissingPage.jsx";
+import * as MissingPage from "../base_app/src/MissingPage.jsx";
 
 const missingPageJSX = <div className="app-browser">
   <MissingPage key="m" />

@@ -195,7 +195,7 @@ export const scriptGrammar = {
   },
   "identifier": {
     rules: [
-      [/[_\$a-zA-Z][_\$a-zA-Z0-9]*/],
+      [/[_$a-zA-Z][_$a-zA-Z0-9]*/],
     ],
     process: (children) => {
       let lexeme = children[0];
@@ -1102,6 +1102,7 @@ export const scriptGrammar = {
   "literal": {
     rules: [
       ["string"],
+      ["template-literal"],
       ["number"],
       ["constant"],
     ],
@@ -1127,6 +1128,58 @@ export const scriptGrammar = {
         return `Invalid string: ${stringLiteral}`;
       }
       return {type: "string", str: str};
+    },
+  },
+  "template-literal": {
+    rules: [
+      ["/`/", "template-content!1*", "/`/!"],
+    ],
+    process: (children) => ({
+      type: "template-literal",
+      contentArr: children[1],
+    }),
+  },
+  "template-content": {
+    lexicon: "template-content",
+    rules: [
+      [/\$\{/, "computed-string-and-end-brace!"],
+      ["template-text"],
+    ],
+    process: (children, ruleInd) => {
+      return (ruleInd === 0) ? children[1] : children[0];
+    },
+  },
+  "computed-string-and-end-brace": {
+    lexicon: "script",
+    rules: [
+      ["expression", /\}/],
+      [/\}/],
+    ],
+    process: (children, ruleInd) => {
+      return {
+        type: "computed-string",
+        exp: (ruleInd === 0) ? children[0] : undefined,
+      }
+    },
+  },
+  "template-text": {
+    rules: [
+      [/[^`$}\\]+/],
+      [/\\[\s\S]/],
+      [/\$|\}/],
+    ],
+    process: (children, ruleInd) => {
+      let str = children[0];
+      if (ruleInd === 1) {
+        str = str[1];
+        if (str === "\n") {
+          str = "";
+        }
+      }
+      return {
+        type: "template-text",
+        str: str,
+      };
     },
   },
   "number": {
@@ -1238,7 +1291,7 @@ export class ScriptParser extends Parser {
             /&&|\|\||\?\?|\+\+|\-\-|\*\*/,
             /\?\.|\.\.\.|=>|<\/?>|\/>|<\//,
             /===|==|!==|!=|<=|>=/,
-            /[.,:;\[\]{}()<>?=+\-*|^&!%/]/,
+            /[.,:;\[\]{}()<>?=+\-*|^&!%/`]/,
             /[_$a-zA-Z0-9]+/,
           ],
           whitespace: /\s+|\/\/.*(\n\s*|$)|\/\*([^*]|\*(?!\/))*(\*\/\s*|$)/,
@@ -1246,6 +1299,14 @@ export class ScriptParser extends Parser {
         "text-literal": {
           lexemes: [
             /[^<>{}]+/,
+          ],
+        },
+        "template-content": {
+          lexemes: [
+            /[^`$}\\]+/,
+            /\\[\s\S]/,
+            /\$(?!\{)/,
+            /\$\{|\}/,
           ],
         },
       },

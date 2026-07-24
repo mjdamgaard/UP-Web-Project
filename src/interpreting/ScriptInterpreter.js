@@ -1569,6 +1569,23 @@ export class ScriptInterpreter {
         });
         break;
       }
+      case "template-literal": {
+        let stateArr = state ? state.stateArr ??= [] : undefined;
+        ret = "";
+        expNode.contentArr.forEach((contentNode, ind) => {
+          if (contentNode.type === "template-text") {
+            ret = ret + contentNode.str;
+          }
+          else if (contentNode.exp) {
+            let expState = stateArr ? stateArr[ind] ??= {} : undefined;
+            ret = ret + getString(
+              this.evaluateExpression(contentNode.exp, environment, expState),
+              environment
+            );
+          }
+        });
+        break;
+      }
       case "jsx-element": {
         ret = new JSXElement(expNode, environment, this, state);
         break;
@@ -1701,11 +1718,10 @@ export class ScriptInterpreter {
           log.error = expValArr[0];
         }
         else if (expNode.subtype === "warn") {
-          if (this.isServerSide) throw new RuntimeError(
-            "console.warn() is not implemented server-side yet",
-            expNode, environment
-          );
-          console.warn(...expValArr);
+          if (!this.isServerSide && !isExiting) {
+            console.warn(...expValArr);
+          }
+          // TODO: Implement server-side behavior of console.warn(). 
         }
         ret = undefined;
         break;
