@@ -1,32 +1,69 @@
 
+import {logout} from 'account';
+
 
 export function render({isLoggedIn}) {
+  let {isOpen} = this.state;
+  let username = getContext("username");
   return (
-    <div className="account-menu">
+    <div className={"account-menu" + (isOpen ? " open" : "")}
+      onClick={() => this.do("toggle")}
+    >
       <div id="account-menu-header">
-        <div id="user-name-display"></div>
-        <div id="user-icon">
-          <img className="general-user-icon" src="/assets/user-4254.svg" alt="" />
-        </div>
+        <div id="user-name-display">{username}</div>
+        <div id="user-icon"><span>👤</span></div>
       </div>
 
       <div className="items">
-        <div id="account-page-item" className="when-logged-in">
+        <div className={isLoggedIn ? "" : " inactive"} onClick={() => {
+          this.trigger("showOverlayPage", accountPage);
+        }}>
           <span>Account</span>
         </div>
-        <div id="profile-page-item" className="when-logged-in">
+        <div className={isLoggedIn ? "" : " inactive"} onClick={() => {
+          this.trigger("showOverlayPage", profilePage);
+        }}>
           <span>Profile</span>
         </div>
-        <div id="logout-item" className="when-logged-in">
+        <div className={isLoggedIn ? "" : " inactive"} onClick={() => {
+          logout().then(errMsg => {
+            if (errMsg) {
+              console.error(errMsg);
+            } else {
+              this.do("close");
+            }
+          });
+        }}>
           <span>Log out</span>
         </div>
-        <div id="login-item" className="when-logged-out">
-            <span>Log in</span>
+        <div className={isLoggedIn ? " inactive" : ""} onClick={() => {
+          this.trigger("showOverlayPage", loginPage);
+        }}>
+          <span>Log in</span>
         </div>
-        <div id="create-account-item" className="when-logged-out">
+        <div className={isLoggedIn ? " inactive" : ""} onClick={() => {
+          this.trigger("showOverlayPage", signUpPage);
+        }}>
           <span>Sign up</span>
         </div>
       </div>
     </div>
   );
 }
+
+
+export const actions = {
+  "toggle": function() {
+    this.setState(state => ({...state, isOpen: !state.isOpen}));
+  },
+  "open": function() {
+    this.setState(state => ({...state, isOpen: true}));
+  },
+  "close": function() {
+    this.setState(state => ({...state, isOpen: false}));
+  },
+};
+
+export const methods = [
+  "close",
+]

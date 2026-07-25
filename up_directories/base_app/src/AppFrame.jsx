@@ -5,22 +5,36 @@ import * as AccountMenu from "./AccountMenu.jsx";
 
 
 export function render({baseAppPage, appLoaderProps}) {
-  let {hideHeader, hideMargins} = this.state;
+  let userID = getContext("userID");
+  let {hideHeader, hideMargins, overlayPageContent} = this.state;
+  this.setContext("headerIsHidden", hideHeader);
+  this.setContext("marginsAreHidden", hideMargins);
   return (
     <div className="app-frame">
-      <div className={"app-header" + (hideHeader ? " hidden": "")}>
+      <div className={
+        "overlay-page-container" + (overlayPageContent ? " open" : "")
+      }>
+        {(overlayPageContent)}
+      </div>
+      <header className={"app-header" + (hideHeader ? " hidden": "")}>
         <ILink key="logo" href="~/">
           <span className="logo">UP Web</span>
         </ILink>
         <div className="items">
           {(headerItems)}
         </div>
-        <AccountMenu key="menu" isLoggedIn={} />
-      </div>
-      <div className={"base-app-page" + (baseAppPage ? "" : " hidden")}>
-        {(baseAppPage)}
-      </div>
-      {(appLoaderProps ? <AppLoader key="l" {...appLoaderProps} /> : undefined)}
+        <AccountMenu key="menu" isLoggedIn={userID ? true : false} />
+      </header>
+      <main className="app-main">
+        <div className="margin left"></div>
+        <div className={"base-app-page" + (baseAppPage ? "" : " hidden")}>
+          {(baseAppPage)}
+        </div>
+        {(appLoaderProps ?
+          <AppLoader key="l" {...appLoaderProps} /> : undefined
+        )}
+        <div className="margin right"></div>
+      </main>
     </div>
   );
 }
@@ -56,29 +70,38 @@ const headerItems = <>
 
 
 
-const accountMenuContent = <>
-  <div id="account-menu-header">
-    <div id="user-name-display"></div>
-    <div id="user-icon">
-      <img className="general-user-icon" src="/assets/user-4254.svg" alt="" />
-    </div>
-  </div>
 
-  <div className="items">
-    <div id="account-page-item" className="when-logged-in">
-      <span>Account</span>
-    </div>
-    <div id="profile-page-item" className="when-logged-in">
-      <span>Profile</span>
-    </div>
-    <div id="logout-item" className="when-logged-in">
-      <span>Log out</span>
-    </div>
-    <div id="login-item" className="when-logged-out">
-        <span>Log in</span>
-    </div>
-    <div id="create-account-item" className="when-logged-out">
-      <span>Sign up</span>
-    </div>
-  </div>
-</>;
+export const actions = {
+  "showOverlayPage": function(overlayPageContent) {
+    this.setState(
+      state => ({...state, overlayPageContent: overlayPageContent})
+    );
+    this.call("menu", "close");
+  },
+  "removeOverlayPage": function() {
+    this.setState(
+      state => ({...state, overlayPageContent: undefined})
+    );
+    this.call("menu", "close");
+  },
+  "hideHeader": function() {
+    this.setState(state => ({...state, hideHeader: true}));
+  },
+  "showHeader": function() {
+    this.setState(state => ({...state, hideHeader: false}));
+  },
+  "hideMargins": function() {
+    this.setState(state => ({...state, hideMargins: true}));
+  },
+  "showMargins": function() {
+    this.setState(state => ({...state, hideMargins: false}));
+  },
+};
+
+export const events = [
+  "showOverlayPage",
+  "removeOverlayPage",
+  "showHeader",
+  "hideMargins",
+  "showMargins",
+];
