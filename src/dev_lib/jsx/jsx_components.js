@@ -439,6 +439,7 @@ class JSXInstance {
           jsxElement.node, jsxElement.decEnv
         );
         this.childInstances.set(key, childInstance);
+        marks.set(key, true);
       }
       else if (childInstance.componentObject !== componentObject) {
         throw new RuntimeError(
@@ -464,7 +465,9 @@ class JSXInstance {
           jsxElement.node, jsxElement.decEnv
         );
       }
-      marks.set(key, true);
+      else {
+        marks.set(key, true);
+      }
 
       // Then we call childInstance.render() to render/rerender (if its props
       // have changed) the child instance and get its DOM node.
@@ -977,7 +980,7 @@ class JSXInstance {
       }
       let newEntry = {
         head: {depth: ownDepth, callback: rerenderCallback},
-        tail: prevEntry?.tail
+        tail: nextEntry
       };
       if (prevEntry) {
         prevEntry.tail = newEntry;

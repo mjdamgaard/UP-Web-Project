@@ -5,10 +5,10 @@ import * as PageHeader from "./PageHeader.jsx";
 import * as AppList from "./AppList.jsx";
 import * as MissingPage from "../../base_app/src/MissingPage.jsx";
 
-const missingPageJSX = <div className="app-category-page">
+const missingPageJSX = <div className="entity-page">
   <MissingPage key="m" />
 </div>;
-const fetchingPageJSX = <div className="app-category-page">
+const fetchingPageJSX = <div className="entity-page">
   <div className="fetching"></div>
 </div>;
 
@@ -38,7 +38,7 @@ export function render(props) {
     return missingPageJSX;
   }
 
-  return <div className="app-category-page">
+  return <div className="entity-page">
     <PageHeader key="h" {...props} entDef={entDef} />
     <hr/>
     <AppList key="l" list={list} objID={entID}

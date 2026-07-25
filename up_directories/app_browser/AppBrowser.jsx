@@ -3,7 +3,7 @@ import {join} from 'string';
 import {indexOf, slice, at, reduce} from 'array';
 import {hasType} from 'type';
 import {fetchEntityID} from "../semantic_entities/entities.js";
-import * as AppOrCategoryPage from "./src/AppOrCategoryPage.jsx";
+import * as EntityPage from "./src/EntityPage.jsx";
 import * as MissingPage from "../base_app/src/MissingPage.jsx";
 
 const missingPageJSX = <div className="app-browser">
@@ -110,7 +110,7 @@ export function render() {
   }
 
   return <div className="app-browser">
-    <AppOrCategoryPage key="c" type={type} entID={entID}
+    <EntityPage key="c" type={type} entID={entID}
       ancCatIDs={ancCatIDs} ancAppIDs={ancAppIDs}
     />
   </div>;

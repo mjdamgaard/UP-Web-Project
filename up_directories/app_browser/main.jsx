@@ -1,7 +1,7 @@
 
 /* HOISTED IMPORTS */
 import "../semantic_entities/entities.js";
-import "./src/AppOrCategoryPage.jsx";
+import "./src/EntityPage.jsx";
 import "../base_app/src/MissingPage.jsx";
 /* END */
 
