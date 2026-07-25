@@ -4,43 +4,13 @@ html, body, #up-app-root, #up-app-root > :first-child {
   width: 100%;
 }
 
+/*
 #account-menu {
   position: absolute;
   right: 0px;
   top: 0px;
   z-index: 1;
 }
-
-
-
-/* #account-menu-header::after {
-  content: "👤";
-}
-#account-menu-header {
-  font-size: 30px;
-  margin: 2px;
-  padding: 0px 2px;
-  border: 2px ridge lightblue;
-  border-radius: 5px;
-  background-color: rgb(240, 241, 245);
-  box-shadow: 2px 2px 3px rgb(191, 191, 191);
-} */
-
-/* #account-menu-header::after {
-  content: "≡";
-  position: relative;
-  top: -4px;
-}
-#account-menu-header {
-  font-size: 30px;
-  height: 45px;
-  margin: 3px;
-  padding: 0px 7px;
-  border: 2px ridge lightblue;
-  border-radius: 5px;
-  background-color: rgb(240, 241, 245);
-  box-shadow: 2px 2px 3px rgb(191, 191, 191);
-} */
 
 
 #account-menu-header {
@@ -91,12 +61,10 @@ html, body, #up-app-root, #up-app-root > :first-child {
 
 
 #account-menu.open:not(.logged-in) .items > .when-logged-in {
-  /* display: none; */
   pointer-events: none;
   opacity: 0.4;
 }
 #account-menu.open.logged-in .items > .when-logged-out {
-  /* display: none; */
   pointer-events: none;
   opacity: 0.4;
 }
@@ -128,7 +96,6 @@ html, body, #up-app-root, #up-app-root > :first-child {
   display: none;
 }
 
-
 #overlay-page-container {
   display: none;
 }
@@ -137,8 +104,6 @@ html, body, #up-app-root, #up-app-root > :first-child {
   width: 100%;
   height: 100%;
   display: inline-block;
-  /* grid-template-columns: 1fr minmax(500px, 800px) 1fr;
-  grid-template-rows: 1fr; */
 }
 
 #overlay-page-container.open > .page-content {
@@ -182,3 +147,4 @@ html, body, #up-app-root, #up-app-root > :first-child {
 #overlay-page-container.open dt, dd {
   display: inline;
 }
+*/

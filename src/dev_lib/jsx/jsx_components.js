@@ -1879,26 +1879,21 @@ export function deepCompare(val1, val2, excludeMutableProps = false) {
 
 
 
-
-export function getUserID() {
-  let {userID} = JSON.parse(
-    localStorage.getItem("userData") ?? "{}"
-  );
-  return userID;
-}
-
-
 function addUserContexts(contextProvisions, env) {
   let {contexts: {userContext}} = env.globals;
-  let userID = getUserID();
-  userContext.setVal({userID: userID});
-  let contextProvision = JSXInstance.createContextProvision(userID);
-  userContext.addSubscriberCallback(({userID}) => {
+  let {userID, username} = userContext.val;
+  let userIDContextProvision = JSXInstance.createContextProvision(userID);
+  let usernameContextProvision = JSXInstance.createContextProvision(username);
+  userContext.addSubscriberCallback(({userID, username}) => {
     JSXInstance.updateContextProvision(
-      contextProvision, {userID: userID}, false
+      userIDContextProvision, {userID: userID}, false
+    );
+    JSXInstance.updateContextProvision(
+      usernameContextProvision, {username: username}, false
     );
   });
-  contextProvisions["userID"] = contextProvision;
+  contextProvisions["userID"] = userIDContextProvision;
+  contextProvisions["username"] = usernameContextProvision;
 }
 
 function getURLContexts(urlContext) {

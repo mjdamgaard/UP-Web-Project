@@ -4,8 +4,7 @@ import {
 } from "./interpreting/ScriptInterpreter.js";
 import {queryServer} from "./dev_lib/query/src/queryServer.js";
 import {CAN_CREATE_APP_FLAG} from "./dev_lib/jsx/jsx_components.js";
-
-import {main as constructAccountMenu} from "./account_menu/account_menu.js"
+import {ServerQueryHandler} from "./server/ajax_io/ServerQueryHandler.js";
 
 
 /* Static developer libraries */
@@ -100,7 +99,39 @@ class ScriptContext {
   }
 }
 
-const userContext = new ScriptContext({userID: undefined});
+// Get data about whether the user is logged in or not (automatically treating
+// the user as not logged in if the user session expires within a day).
+let {userID, username, expTime} =
+    JSON.parse(localStorage.getItem("userData") ?? "{}");
+if (!expTime || expTime * 1000 < Date.now() + 86400000) {
+  localStorage.clear();
+  userID = username = expTime = undefined;
+}
+
+// Also send a request to replace the token if the expTime is close enough
+// to the present.
+else if (expTime * 1000 < Date.now() + 2678400000) {
+  let serverQueryHandler = new ServerQueryHandler();
+  let {authToken} = JSON.parse(localStorage.getItem("userData") ?? "{}");
+  serverQueryHandler.queryLoginServer(
+    "replaceToken", undefined, {authToken: authToken}
+  ).then(res => {
+    let [newAuthToken, expTime] = res;
+    localStorage.setItem("userData", JSON.stringify({
+      userID: userID, username: username,
+      authToken: newAuthToken, expTime: expTime,
+    }));
+  }).catch(err => {
+    console.error(err);
+  });
+}
+
+// Create the user context.
+const userContext = new ScriptContext({
+  userID: userID, username: username, expTime: expTime
+});
+
+// Create the URL (and history state) context.
 let pathname = window.location.pathname;
 let segments = pathname.replace(/^\//, "").replace(/\/$/, "").split("/");
 if (segments.at(-1) !== "") segments.push("");
@@ -133,16 +164,12 @@ window.addEventListener("popstate", event => {
 });
 
 
-// Set up the account menu, used for account-related settings and user
-// preferences.
-constructAccountMenu(userContext, urlContext); // TODO: Remove.
 
 
 // Initialize the interpreter.
 const scriptInterpreter = new ScriptInterpreter(
   false, queryServer, undefined, staticDevLibs, undefined
 );
-
 
 // Initialize a continuously self-refilling gas object for the app.
 const FRESH_APP_GAS = {
@@ -168,7 +195,6 @@ setInterval(
 // and also be able to set a new preferred main script, of course with ample
 // warning that they can get hacked if they don't trust the main script enough,
 // or don't know what they are doing.
-
 
 // The script the initializes the UP app.
 const UP_NODE_ID = "1";

@@ -118,16 +118,19 @@ export function render({Wrapper, appProps = {}}) {
   }
   this.advanceURL(1);
   if (Wrapper) {
+    let isUntrusted = trustClass !== "trusted";
+    if (isUntrusted) this.setContext("username", undefined);
     return (
       <Wrapper key="w" trustClass={trustClass} appDirID={appDirID}
         appDirIDSegment={appDirIDSegment}
       >
         <AppComponent key={"a-" + appDirID}
-          {...appProps} untrusted={trustClass !== "trusted"}
+          {...appProps} untrusted={isUntrusted}
         />
       </Wrapper>
     );
   } else {
+    this.setContext("username", undefined);
     return <AppComponent key={"a-" + appDirID} {...appProps} untrusted />;
   }
 }
