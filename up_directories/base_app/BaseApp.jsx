@@ -32,11 +32,6 @@ const {
 
 
 
-export function initialize() {
-  return {ref: {appLoaderProps: undefined}};
-}
-
-
 export function render({
   fetchBestVersionRouteTemplate, loadUpdatedSelf = false
 }) {
@@ -72,13 +67,10 @@ export function render({
   // branching on the next segment after that.
   let firstSegment = this.getFirstSegment();
   this.advanceURL(1); // Advance by 1 URL segment for child components.
-  let {ref: {appLoaderProps}} = this.state;
-  let baseAppPage, useOriginal, useDefault;
+  let baseAppPage, appLoaderProps, useOriginal, useDefault;
   switch (firstSegment) {
     // If the tailURL starts with "a", redirect to the AppLoader. And if its
     // starts with "o" or "d", also set the useOriginal and useDefault props.
-    // (We also use the appLoaderProps state ref in a scheme designed to keep
-    // the AppLoader child component alive once it is rendered the first time.)
     case "o":
       useOriginal = 1;
     case "d":
@@ -92,10 +84,6 @@ export function render({
           loadUpdatedSelf: false,
         }
       };
-      this.setState(state => ({
-        ...state, ref: {...state.ref, appLoaderProps: appLoaderProps},
-      }));
-      // (Since we only alter state.ref here, this will not cause a rerender.)
       break;
     }
 
@@ -113,9 +101,7 @@ export function render({
     // TODO: Add other shortcuts, in particular for tutorials and the entity
     // browser.
 
-    // The following cases are URLs that are defined by the base app. When
-    // going to these URLs, this base app will keep the currently loaded app,
-    // if any, alive in the background, hidden, while showing the page.
+    // The following cases are URLs that are defined by the base app.
     case "about":
       baseAppPage = <AboutPage key="about" {...props} />
       break;
@@ -129,19 +115,9 @@ export function render({
   }
 
   return (
-    <div className="base-app">
-      <AppFrame key="0">
-        <div className={"base-app-page" + (baseAppPage ? "" : " hidden")}>
-          {(baseAppPage)}
-        </div>
-        <div className={"app-loader" + (baseAppPage ? " hidden" : "")}>
-          {(appLoaderProps ?
-            <AppLoader key="l" {...appLoaderProps} /> :
-            undefined
-          )}
-        </div>
-      </AppFrame>
-    </div>
+    <AppFrame key="0"
+      baseAppPage={baseAppPage} appLoaderProps={appLoaderProps}
+    />
   );
 }
 

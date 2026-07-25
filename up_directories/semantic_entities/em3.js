@@ -18,7 +18,7 @@ export async function App(appDirID, upNodeID = undefined) {
   ).catch(err => {
     console.warn(
       "App directory #" + appDirID + " is either missing a metadata.js " +
-      "file or its content is ill-formed."
+      "file or its contents are ill-formed."
     );
     return {};
   });
@@ -34,7 +34,8 @@ export const apps = {
   "Superclass": abs("./em1.js;get/components"),
   "constructor": App,
   "Common properties": [
-    "App directory ID", "Public repository", "Creator(s)", "Is a prototype",
+    "App directory ID", "Version", "Public repository", "Creator(s)",
+    "Is a prototype",
   ],
   "Description": "The class of all user-programmed apps.",
 };

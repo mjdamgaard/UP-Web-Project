@@ -968,26 +968,20 @@ class JSXInstance {
     // this.depth is still greater than or equal to those of the entries before
     // it in the queue.
     let ownDepth = this.depth;
-    let nextEntry = this.globals.rerenderQueue;
-    if (!nextEntry.head) {
-      nextEntry.head = {depth: ownDepth, callback: rerenderCallback};
+    let prevEntry, nextEntry = this.globals.rerenderQueue;
+    while (nextEntry?.head?.depth ?? Infinity <= ownDepth) {
+      prevEntry = nextEntry;
+      nextEntry = nextEntry.tail;
+    }
+    let newEntry = {
+      head: {depth: ownDepth, callback: rerenderCallback},
+      tail: nextEntry
+    };
+    if (prevEntry) {
+      prevEntry.tail = newEntry;
     }
     else {
-      let prevEntry;
-      while (nextEntry.tail?.head?.depth <= ownDepth) {
-        prevEntry = nextEntry;
-        nextEntry = nextEntry.tail;
-      }
-      let newEntry = {
-        head: {depth: ownDepth, callback: rerenderCallback},
-        tail: nextEntry
-      };
-      if (prevEntry) {
-        prevEntry.tail = newEntry;
-      }
-      else {
-        this.globals.rerenderQueue = newEntry;
-      }
+      this.globals.rerenderQueue = newEntry;
     }
 
     // Then queue a callback to run on the next tick of the event loop, which

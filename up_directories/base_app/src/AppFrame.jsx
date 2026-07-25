@@ -1,9 +1,13 @@
 
+import * as AppLoader from "./AppLoader.jsx";
 
-export function render({children}) {
+export function render({baseAppPage, appLoaderProps}) {
   return (
     <div className="app-frame">
-      {(children)}
+      <div className={"base-app-page" + (baseAppPage ? "" : " hidden")}>
+        {(baseAppPage)}
+      </div>
+      {(appLoaderProps ? <AppLoader key="l" {...appLoaderProps} /> : undefined)}
     </div>
   );
 }
