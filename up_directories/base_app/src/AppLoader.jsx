@@ -2,9 +2,13 @@
 import {fetch, fetchPrivate} from 'query';
 import {substring, split, at, slice, join, replaceAll, toString} from 'string';
 import {hasType, hasTypes, verifyType} from 'type';
-import {forEach} from 'array';
+import {some} from 'array';
 
 import * as MissingPage from "./MissingPage.jsx";
+
+const missingPageJSX = <div className="app-loader">
+  <MissingPage key="m" />
+</div>;
 
 
 // The AppLoader loads the app that is defined by the first segment (from where
@@ -24,13 +28,12 @@ import * as MissingPage from "./MissingPage.jsx";
 
 
 // props : {
-//   useOriginal, useDefault, userID, fetchBestVersionRouteTemplate, Wrapper,
-//   appProps,
+//   userID, fetchBestVersionRouteTemplate, AppWrapper?, appWrapperStyle?,
+//   goBackToSafety, appProps?,
 // }.
 
-// This component should reinitialize if either the userID, the useDefault, or
-// the useOriginal prop changes. 
-export const keyProps = ["userID", "useOriginal", "useDefault"];
+// This component should reinitialize if the userID prop changes. 
+export const keyProps = ["userID"];
 
 
 export function initialize() {
@@ -41,31 +44,48 @@ export function initialize() {
     this.setState(state => ({...state, ...(newHistState ?? {})}));
   }) ?? {};
   return {
-    appDirID: appDirID, trustClass: trustClass,
-    cache: new MutableObject(), curAppDirIDRef: new MutableArray(),
+    appDirID: appDirID, trustClass: trustClass, cache: new MutableObject(),
   };
 }
 
 
-export function render({Wrapper, appProps = {}}) {
-  let {appDirID, trustClass, cache, curAppDirID} = this.state;
+export function render({
+  AppWrapper, appWrapperStyle, goBackToSafety, appProps = {}
+}) {
+  let {appDirID, trustClass, cache} = this.state;
 
-  // Get (and subscribe to) the appDirIDSegment from the URL.
-  let appDirIDSegment = this.getFirstSegment();
+  // Parse useOriginal, useStandard and appDirIDSegment from the URL.
+  let appDirIDSegment, useOriginal, useStandard;
+  let firstSegment = this.getSegment(0);
+  this.advanceURL(1);
+  if (!firstSegment) {
+    console.error('Invalid segment for the AppLoader: ""');
+    return missingPageJSX;
+  }
+  let fstChar = firstSegment[0];
+  if (fstChar === "o" || fstChar === "s") {
+    if (firstSegment[1] !== "-") {
+    console.error(`Invalid segment for the AppLoader: "${firstSegment}"`);
+    return missingPageJSX;
+    }
+    useOriginal = fstChar === "o";
+    useStandard = fstChar === "s";
+    appDirIDSegment = substring(firstSegment, 2);
+  }
+  else {
+    appDirIDSegment = firstSegment;
+  }
   if (!hasType(appDirIDSegment, "hex")) {
-    console.error(
-      'Non-hexadecimal appDirID segment: "' + appDirIDSegment + '"'
-    );
-    return <MissingPage key="m" />;
+    console.error(`Invalid segment for the AppLoader: "${firstSegment}"`);
+    return missingPageJSX;
   }
 
-  // If no app has been loaded yet, or if appDirID is different from
-  // curAppDirID, load a new app.
-  if (!appDirID || appDirID !== curAppDirID) {
-    let urlTail = substring(this.getPath(), appDirIDSegment.length + 2);
-    this.do("loadNewApp", [appDirIDSegment, urlTail]);
+  // If no app has been loaded yet, call the "loadNewApp" action.
+  if (!appDirID) {
+    let urlTail = substring(this.getPath(), firstSegment.length + 2);
+    this.do("loadNewApp", [appDirIDSegment, urlTail, useOriginal, useStandard]);
     return (
-      <div className="app">
+      <div className="app-loader">
         <div className="fetching"></div>
       </div>
     );
@@ -75,63 +95,78 @@ export function render({Wrapper, appProps = {}}) {
   // and if these are not yet cached, fetch them and cache them first.
   let appData = cache[appDirID];
   if (!appData) {
-    this.do("fetchAppData", [appDirID, trustClass]);
+    this.do("fetchAppData", appDirID);
     return (
-      <div className="app">
+      <div className="app-loader">
         <div className="fetching"></div>
       </div>
     );
   }
-  let {AppComponent, additionalURLs, genAppDirID} = appData;
+  let {AppComponent, additionalURLs, stdFirstSegment} = appData;
 
-  // Then if appDirIDSegment is not equal to genAppDirID, check the app's
-  // additionalURLs to see if the URL matches one of its entries, and if not,
-  // also load a new app.
-  if (appDirIDSegment !== genAppDirID) {
-    let shouldLoadNewApp = true;
+  // Then if firstSegment is not equal to stdFirstSegment, check the app's
+  // additionalURLs, if any, to see if the URL matches one of its entries, and
+  // if not, load a new app.
+  if (firstSegment !== stdFirstSegment) {
     let localURL = substring(this.getPath(), 1); // removes the "/" in front.
-    let urlTail = substring(localURL, appDirIDSegment.length + 1);
+    let urlTail = substring(localURL, firstSegment.length + 1);
+    let shouldLoadNewApp = true;
     if (additionalURLs && hasType(additionalURLs, "array")) {
-      forEach(additionalURLs, urlFormat => {
+      some(additionalURLs, urlFormat => {
         urlFormat = toString(urlFormat);
-        if (compareWildcardFormatToString(urlFormat, localURL)) {
+        if (compareStringToFormat(localURL, urlFormat)) {
+          let [firstFormatSegment] = split(urlFormat, "/");
+          if (!hasType(firstFormatSegment, "hex")) {
+            // Ignore any formats that does not start with a hexadecimal
+            // segment. (So no "o-" or "s-" segments allowed.)
+            return false; // continue the some() loop.
+          }
           shouldLoadNewApp = false;
+          return true; // break the some() loop.
         }
       });
     }
     if (shouldLoadNewApp) {
-      this.do("loadNewApp", [appDirIDSegment, urlTail]);
+      this.do("loadNewApp", [
+        appDirIDSegment, urlTail, useOriginal, useStandard
+      ]);
       return (
-        <div className="app">
+        <div className="app-loader">
           <div className="fetching"></div>
         </div>
       );
     }
   }
 
-  // Then render the AppComponent, wrapped in the 'Wrapper' component if
+  // Then render the AppComponent, wrapped in the 'AppWrapper' component if
   // provided. Note that we make sure to give an unique key to the app
   // component in order to ensure that its states (including local/session
   // storage or history states) do not get mixed up with another.
   if (!AppComponent) {
-    return <MissingPage key="m" />;
+    return missingPageJSX;
   }
-  this.advanceURL(1);
-  if (Wrapper) {
+  if (AppWrapper) {
     let isUntrusted = trustClass !== "trusted";
     if (isUntrusted) this.setContext("username", undefined);
     return (
-      <Wrapper key="w" trustClass={trustClass} appDirID={appDirID}
-        appDirIDSegment={appDirIDSegment}
-      >
-        <AppComponent key={"a-" + appDirID}
-          {...appProps} untrusted={isUntrusted}
-        />
-      </Wrapper>
+      <div className="app-loader" innerStyle={appWrapperStyle}>
+        <AppWrapper key="w" trustClass={trustClass} appDirID={appDirID}
+          isOriginal={useOriginal} isStandard={useStandard}
+          goBackToSafety={goBackToSafety} appDirIDSegment={appDirIDSegment}
+        >
+          <AppComponent key={"a-" + appDirID}
+            {...appProps} untrusted={isUntrusted}
+          />
+        </AppWrapper>
+      </div>
     );
   } else {
     this.setContext("username", undefined);
-    return <AppComponent key={"a-" + appDirID} {...appProps} untrusted />;
+    return  (
+      <div className="app-loader">
+        <AppComponent key={"a-" + appDirID} {...appProps} untrusted />
+      </div>
+    );
   }
 }
 
@@ -139,60 +174,61 @@ export function render({Wrapper, appProps = {}}) {
 
 
 export const actions = {
-  "loadNewApp": async function([appDirIDSegment, urlTail]) {
+  "loadNewApp": async function([
+    appDirIDSegment, urlTail, useOriginal, useStandard
+  ]) {
     verifyType(appDirIDSegment, "hex");
-    let {useOriginal, useDefault, fetchBestVersionRouteTemplate} = this.props;
+    let {userID, fetchBestVersionRouteTemplate} = this.props;
 
     // Then query the fetchBestVersionRouteTemplate, with placeholders
     // appropriately replaced, and make it a private query iff the user is
-    // logged in and useDefault is falsy.
+    // logged in and useStandard is falsy.
     let fetchAppRoute = replaceAll(fetchBestVersionRouteTemplate,
       "$appDirID", appDirIDSegment
     );
     fetchAppRoute = replaceAll(fetchAppRoute,
       "$useOriginal", useOriginal ? "1" : "0"
     );
-    let userID = this.getContext("userID", true);
-    let fetchFun = userID && !useDefault ? fetchPrivate : fetch;
+    let fetchFun = userID && !useStandard ? fetchPrivate : fetch;
     let {appDirID, trustClass} = await fetchFun(fetchAppRoute);
 
     // Fetch the appData (inserting it in the cache).
-    let {genAppDirID} = await this.do("fetchAppData", [appDirID, trustClass]);
+    let {stdFirstSegment} = await this.do("fetchAppData", appDirID);
 
-    // Finally, replace the appDirIDSegment with genAppDirID, also setting
+    // Finally, replace the first segment with stdFirstSegment, also setting
     // the history state in the process, and update the regular state as well.
-    this.replaceURL("~/" + genAppDirID + "/" + urlTail);
+    this.replaceURL("~/" + stdFirstSegment + "/" + urlTail);
     this.setHistoryState({appDirID: appDirID, trustClass: trustClass});
-    this.setState(state => ({...state,
-      appDirID: appDirID, trustClass: trustClass, curAppDirID: appDirID
+    this.setState(state => ({
+      ...state, appDirID: appDirID, trustClass: trustClass,
     }));
   },
-  "fetchAppData": async function([appDirID, trustClass]) {
+  "fetchAppData": async function(appDirID) {
     // Fetch the app component found at main.jsx in the app's home directory,
     // as well as the metadata in the same directory.
     let [AppComponent, metadata] = await Promise.all([
-      import("~/../" + appDirID + "/main.jsx"), /* .catch(
-        err => console.error(toString(err))
-      ), */
-      import("../" + appDirID + "/metadata.js;get/default").catch(
-        err => undefined
+      import("~/../" + appDirID + "/main.jsx").catch(err => console.error(
+        'Missing ' + abs("~/../" + appDirID + "/main.jsx") + 'file'
+      )),
+      import("../" + appDirID + "/metadata.js;get/default").catch(err =>
+        undefined
       ),
     ]);
 
-    // Get the "apiDefiningAppDirID" metadata property, which we shorten here
-    // to "genAppDirID" ("gen" for "general"), as well as the additionalURLs
-    // property. But if trustClass !== "trusted", use some trivial values
-    // instead, such that the app can't hijack URLs of other apps.
-    let genAppDirID = metadata?.apiDefiningAppDirID ?? appDirID;
-    let additionalURLs = metadata?.additionalURLs;
-    if (trustClass !== "trusted") {
-      genAppDirID = appDirID;
-      additionalURLs = undefined;
-    }
+    // Get the "apiDefiningAppDirID" and "additionalURLs" metadata properties.
+    let {apiDefiningAppDirID, additionalURLs} = metadata ?? {};
+    
+    // If apiDefiningAppDirID is defined, it should be standard first segment
+    // of the app, namely such that other users can have different preferences
+    // that branches off from that point in the app tree (or directed graph,
+    // rather). And if it is undefined, use "o-" + appDirID as the standard
+    // first segment such that the URL will always lead to this specific app.
+    let stdFirstSegment = apiDefiningAppDirID ? apiDefiningAppDirID :
+      "o-" + appDirID;
 
     // Then cache and return this data.
     let appData = {
-      AppComponent: AppComponent, genAppDirID: genAppDirID,
+      AppComponent: AppComponent, stdFirstSegment: stdFirstSegment,
       additionalURLs: additionalURLs
     };
     return this.state.cache[appDirID] = appData;
@@ -202,12 +238,26 @@ export const actions = {
 
 
 
-export function compareWildcardFormatToString(format, str) {
-  if (at(format, -1) === "*") {
-    let subStr = slice(format, 0, -1);
-    return subStr === substring(str, 0, subStr.length);
+export function compareStringToFormat(str, format) {
+  let [inclusion, exclusions] = split(str, "!");
+  let doesCompare = compareStringToWildcardFormat(inclusion, format);
+  if (doesCompare && exclusions) {
+    some(split(exclusions, "|"), exclusion => {
+      if (compareStringToWildcardFormat(exclusion, format)) {
+        doesCompare = false;
+        return true; // break the some() loop.
+      }
+    });
+  }
+  return doesCompare;
+}
+
+export function compareStringToWildcardFormat(str, format) {
+  if (at(str, -1) === "*") {
+    let subStr = slice(str, 0, -1);
+    return substring(str, 0, subStr.length) === subStr;
   }
   else {
-    return format === str;
+    return str === format;
   }
 }

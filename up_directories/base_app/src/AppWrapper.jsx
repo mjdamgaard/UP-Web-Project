@@ -4,10 +4,10 @@
 
 import * as AppLoader from "./AppLoader.jsx";
 
-export function render({children}) {
+export function render({children, trustClass, appDirID, appDirIDSegment}) {
   let {displayWarning} = this.state;
   return (
-    <div className="wrapper">
+    <div className="app-wrapper">
       <div className="warning-container">
         {/* TODO... */}
       </div>

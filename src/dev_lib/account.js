@@ -111,7 +111,7 @@ export const createAccount = new DevFunction(
 // fetchGasReserves() returns a gas object on success, and returns an error
 // message string on failure.
 export const fetchGasReserves = new DevFunction(
-  "fetchGasReserves", {}, ({callerNode, execEnv}, []) => {
+  "fetchGasReserves", {isAsync: true}, async ({callerNode, execEnv}, []) => {
     checkAccountLibraryPermission(callerNode, execEnv);
     let {userID, authToken} = JSON.parse(
       localStorage.getItem("userData") ?? "{}"
@@ -154,6 +154,8 @@ function checkAccountLibraryPermission(callerNode, execEnv) {
   );
 }
 
+
+const EMAIL_REGEX = /^[a-zA-Z][a-zA-Z0-9.\-_]*@[a-zA-Z][a-zA-Z0-9.\-_]*$/;
 
 function validateUsernamePWAndEmailFormats(
   username, password, emailAddr = ""

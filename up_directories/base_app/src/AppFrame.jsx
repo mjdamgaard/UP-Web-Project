@@ -4,6 +4,18 @@ import * as AppLoader from "./AppLoader.jsx";
 import * as AccountMenu from "./AccountMenu.jsx";
 
 
+// IMPORTANT: For anyone looking to build a different AppFrame, note that any
+// link that does not start with "o-" or "s-" can potentially be hijacked by
+// a currently loaded app, namely via its "stdFirstSegment" and/or its
+// "additionalURLs" (see ./AppLoader.jsx). So if a link is in anyway sensitive,
+// and should not be hijacked by an untrusted loaded app, use an "o-" or "s-"
+// app URL. (And for sensitive pages like the login page, etc., it's a good
+// idea to use, what we here call "overlay pages," i.e. pages without their own
+// URLs that just goes on top if the current page.
+// By the way, for such pages, make sure to only use input fields that do not
+// allow their focus to be grabbed from elsewhere. 
+
+
 export function render({baseAppPage, appLoaderProps}) {
   let userID = getContext("userID");
   let {hideHeader, hideMargins, overlayPageContent} = this.state;

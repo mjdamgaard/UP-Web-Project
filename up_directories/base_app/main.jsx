@@ -1,9 +1,7 @@
 
 /* HOISTED IMPORTS */
 import "./src/AppLoader.jsx";
-import "./src/WarningWrapper.jsx";
-import "./src/AppFrame.jsx";
-import "./src/AboutPage.jsx";
+import "./src/VariableApp.jsx";
 /* END */
 
 // Here we use a convention where the main.jsx module's only responsibilities
@@ -15,6 +13,10 @@ import "./src/AboutPage.jsx";
 
 import * as BaseApp from "./BaseApp.jsx";
 import * as mainStyle from "./style.css";
+import * as AppFrame from "./src/AppFrame.jsx";
+import * as AppFrameStyle from "./src/AppFrame.css";
+import * as AppWrapper from "./src/AppWrapper.jsx";
+import * as AppWrapperStyle from "./src/AppWrapper.css";
 
 const fetchBestVersionRouteTemplate = abs(
   "./server/apps/apps.sm.js./callSMF/fetchPreferredSubApp/" +
@@ -26,7 +28,9 @@ export function render(props) {
   return <div innerStyle={mainStyle}>
     <BaseApp key="0"
       fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
-      loadUpdatedSelf={true} {...props}
+      loadUpdatedSelf={true} mainStyle={mainStyle} AppFrame={AppFrame}
+      AppFrameStyle={AppFrameStyle} AppWrapper={AppWrapper}
+      AppWrapperStyle={AppWrapperStyle} {...props}
     />
   </div>;
 }

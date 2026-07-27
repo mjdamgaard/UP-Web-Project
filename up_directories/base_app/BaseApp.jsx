@@ -1,8 +1,7 @@
 
 import * as AppLoader from "./src/AppLoader.jsx";
-import * as WarningWrapper from "./src/WarningWrapper.jsx";
+import * as VariableApp from "./src/VariableApp.jsx";
 import * as MissingPage from "./src/MissingPage.jsx";
-import * as AppFrame from "./src/AppFrame.jsx";
 import * as AboutPage from "./src/AboutPage.jsx";
 
 import placeholders from "./placeholders.js";
@@ -11,7 +10,6 @@ const {
   this: {directories: {
     "base_app": baseAppDirID,
     "app_browser": appBrowserDirID,
-    "file_browser": fileBrowserDirID,
   }},
 } = placeholders;
 
@@ -27,108 +25,88 @@ const {
 // version of itself and to load the app itself. This AppLoader component
 // implements a special system that allows users to share URLs with each other,
 // where the semantics of the shares web pages are preserved, but where the
-// exact app that is used to render them might differ for each user that loads
-// the page. See ./src/AppLoader.jsx for more information.
+// exact app that is used to render the pages might differ for each user that
+// loads the page. See ./src/AppLoader.jsx for more information.
 
 
+export function initialize() {
+  return{
+    goToDefaultBaseApp: (_, wasDefault = false) => {
+      this.pushURL("~/base/" + (wasDefault ? "o" : "s") + "-" + baseAppDirID);
+    },
+    goToAppPage: (appDirID) => {
+      this.pushURL("~/s-" + appBrowserDirID + "/app/" + appDirID);
+    },
+  };
+}
 
-export function render({
-  fetchBestVersionRouteTemplate, loadUpdatedSelf = false
-}) {
+
+export function render(props) {
+  let {
+    fetchBestVersionRouteTemplate, loadUpdatedSelf,
+    mainStyle, AppFrame, appFrameStyle, AppWrapper, appWrapperStyle
+  } = props;
+  let {goToDefaultBaseApp, goToAppPage} = this.state;
   let userID = this.getContext("userID");
 
-  // If loadUpdatedSelf is true, redirect to the AppLoader.
-  if (loadUpdatedSelf) {
-    // If the tail URL is empty, replace the URL by prepending a segment with
-    // the directory ID of the root base app, which is this very base app,
-    // defined in in this directory.
-    let firstSegment = this.getFirstSegment();
-    if (!firstSegment) {
-      this.replaceURL("~/" + baseAppDirID);
-      return <div></div>;
-    }
+  // If the tail URL is empty, go to the app browser as the default app.
+  let firstSegment = this.getSegment(0);
+  if (!firstSegment) {
+    this.replaceURL("~/" + appBrowserDirID);
+    return <div></div>;
+  }
 
-    // Redirect to the AppLoader, which reads the first segment of the tail
-    // URL, which ought to an app's directory ID, and then finds the best
-    // version of that app to load instead.
-    return <AppLoader key="0" userID={userID} useOriginal={0} useDefault={0}
+  // Else if the URL starts with "/base(/[os])?/<appDirID>", use the AppLoader
+  // component to load the base app pointed to by the "(/[os])?/<appDirID>"
+  // segment(s). (The optional "/o" or "/s" segment respectively either makes
+  // the AppLoader load the "original" app rather than looking for an updated
+  // version, or loads the "standard"/default updated app without using the
+  // user's individual preferences.)
+  if (firstSegment === "base") {
+    this.advanceURL(1);
+    return <AppLoader key="b" userID={userID}
       fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
-      Wrapper={WarningWrapper} appProps={{
-        fetchBestVersionRouteTemplate: fetchBestVersionRouteTemplate,
-        loadUpdatedSelf: false,
-      }}
+      AppWrapper={AppWrapper} appWrapperStyle={[mainStyle, appWrapperStyle]}
+      goBackToSafety={goToDefaultBaseApp} appProps={{loadUpdatedSelf: false}}
     />;
   }
 
-  // Else if reaching here, it means that the AppLoader component above has
-  // loaded this base app as the best version. The URL will also have been
-  // advanced in the process to a new tail URL that does not include the
-  // baseAppDirID segment. And we can thus continue to render this base app by
-  // branching on the next segment after that.
-  let firstSegment = this.getFirstSegment();
-  this.advanceURL(1); // Advance by 1 URL segment for child components.
-  let baseAppPage, appLoaderProps, useOriginal, useDefault;
-  switch (firstSegment) {
-    // If the tailURL starts with "a", redirect to the AppLoader. And if its
-    // starts with "o" or "d", also set the useOriginal and useDefault props.
-    case "o":
-      useOriginal = 1;
-    case "d":
-      useDefault = useOriginal ? 0 : 1;
-    case "a": {
-      appLoaderProps = {
-        userID: userID, useOriginal: useOriginal, useDefault: useDefault,
-        fetchBestVersionRouteTemplate: fetchBestVersionRouteTemplate,
-        Wrapper: WarningWrapper, appProps: {
-          fetchBestVersionRouteTemplate: fetchBestVersionRouteTemplate,
-          loadUpdatedSelf: false,
-        }
-      };
-      break;
-    }
-
-    // The fallowing cases are some shortcut segments that each redirects to
-    // a URL of the "/a/..." type.
-    case undefined:
-    case "apps":
-      let tailURL = this.getPath();
-      this.replaceURL("~/a/" + appBrowserDirID + tailURL);
-      break;
-    case "files":
-      let tailURL = this.getPath();
-      this.replaceURL("~/a/" + fileBrowserDirID + tailURL);
-      break;
-    // TODO: Add other shortcuts, in particular for tutorials and the entity
-    // browser.
-
-    // The following cases are URLs that are defined by the base app.
-    case "about":
-      baseAppPage = <AboutPage key="about" {...props} />
-      break;
-    
-    // There are also pages which the AppFrame component below just renders on
-    // top of the existing page, regardless of what it is, without changing the
-    // URL. These are pages such as the login page and settings page, etc.
-
-    default:
-      baseAppPage = <MissingPage key="m" />;
+  // Else if loadUpdatedSelf is true, use the VariableApp component to load the
+  // the best up-to-date base app that also matches the user preferences, and
+  // make sure to set the loadUpdatedSelf to false for this updated base app.
+  if (loadUpdatedSelf) {
+    return <VariableApp key="v" appDirID={baseAppDirID} userID={userID}
+      fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
+      AppWrapper={AppWrapper} appWrapperStyle={[mainStyle, appWrapperStyle]}
+      goBackToSafety={goToDefaultBaseApp} appProps={{loadUpdatedSelf: false}}
+    />;
   }
 
-  return (
-    <AppFrame key="0"
-      baseAppPage={baseAppPage} appLoaderProps={appLoaderProps}
-    />
-  );
+  // Else expect the URL to be of the form "(/[os])?/<appDirID>" (similar to
+  // the above case but without the "/base" segment in front), and redirect to
+  // the AppLoader component to load the app pointed to be appDirID. And in
+  // this case, also wrap the AppLoader component in the AppFrame component,
+  // which defines a global header for the webpage, and the global page margins,
+  // etc. (both of which the loaded app can potentially hide).
+  return <div innerStyle={[mainStyle, appFrameStyle]}>
+    <AppFrame key="f">
+      <AppLoader key="a" userID={userID}
+        fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
+        AppWrapper={AppWrapper} appWrapperStyle={[mainStyle, appWrapperStyle]}
+        goBackToSafety={goToAppPage}
+      />
+    </AppFrame>
+  </div>;
 }
 
 
 
 export const actions = {
   "goToApp": function([
-    appDirID, tailURL = "", useOriginal = false, useDefault = false
+    appDirID, tailURL = "", useOriginal = false, useStandard = false
   ]) {
-    let firstSegment = useOriginal ? "o" : useDefault ? "d" : "a";
-    this.pushURL("~/" + firstSegment + "/" + appDirID + "/" + tailURL);
+    let initSegment = useOriginal ? "/o" : useStandard ? "/s" : "";
+    this.pushURL("~" + initSegment + "/" + appDirID + "/" + tailURL);
   },
 };
 

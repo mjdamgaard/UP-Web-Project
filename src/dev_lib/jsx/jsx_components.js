@@ -15,7 +15,7 @@ const NODE_ID = "1";
 
 const CLASS_NAME_REGEX = /^ *([a-z][a-z0-9_-]* *)*$/;
 export const HREF_REGEX =
-  /^(\.{0,2}\/)?(([;.~a-zA-Z0-9_\-]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+(\/([;.~a-zA-Z0-9_\-]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+)*)?$/;
+  /^(\.{0,2}\/)?(([;.~a-zA-Z0-9_-]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+(\/([;.~a-zA-Z0-9_-]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+)*)?$/;
 export const HREF_REL_START_REGEX = /^(\.\.?|~~?)?\//;
 
 export const CAN_CREATE_APP_FLAG = Symbol("can-create-app");
@@ -1389,7 +1389,7 @@ export class JSXInstanceInterface extends ObjectObject {
       "reset": this.reset,
       "advanceURL": this.advanceURL,
       "getSegments": this.getSegments,
-      "getFirstSegment": this.getFirstSegment,
+      "getSegment": this.getSegment,
       "getPath": this.getPath,
       "pushURL": this.pushURL,
       "replaceURL": this.replaceURL,
@@ -1536,8 +1536,8 @@ export class JSXInstanceInterface extends ObjectObject {
 
 
   // advanceURL() is used to advance the URL a number of segments, which
-  // changes the segments the child instances get by calling getFirstSegment()
-  // or getSegments(). 
+  // changes the segments the child instances get by calling getSegments() or
+  // getSegment(). 
   advanceURL = new DevFunction(
     "advanceURL", {typeArr: ["integer unsigned?"]}, (_, [increment = 1]) => {
       this.jsxInstance.advanceURL(increment);
@@ -1552,16 +1552,17 @@ export class JSXInstanceInterface extends ObjectObject {
   // contexts of the returned segments, such that it updates automatically
   // when they do.
   getSegments = new DevFunction(
-    "getSegments", {typeArr: ["integer unsigned?", "integer unsigned?"]},
+    "getSegments", {typeArr: ["integer unsigned?", "integer?"]},
     (_, [start = 0, end = undefined]) => {
       return this.jsxInstance.getSegments(start, end);
     }
   );
 
-  // getFirstSegment() is similar to calling this.getSegments(0, 1)[0].
-  getFirstSegment = new DevFunction("getFirstSegment", {}, () => {
-    let [firstSegment] = this.jsxInstance.getSegments(0, 1);
-    return firstSegment;
+  // getSegment(ind) is similar to calling this.getSegments(ind, ind + 1)[0].
+  getSegment = new DevFunction(
+    "getSegment", {typeArr: ["integer unsigned"]}, (_, [ind]) => {
+    let [segment] = this.jsxInstance.getSegments(ind, ind + 1);
+    return segment;
   });
 
   // getPath() is similar to "/" + join(this.getSegments(), "/").
