@@ -14,9 +14,9 @@ import "./src/VariableApp.jsx";
 import * as BaseApp from "./BaseApp.jsx";
 import * as mainStyle from "./style.css";
 import * as AppFrame from "./src/AppFrame.jsx";
-import * as AppFrameStyle from "./src/AppFrame.css";
+import * as appFrameStyle from "./src/AppFrame.css";
 import * as AppWrapper from "./src/AppWrapper.jsx";
-import * as AppWrapperStyle from "./src/AppWrapper.css";
+import * as appWrapperStyle from "./src/AppWrapper.css";
 
 const fetchBestVersionRouteTemplate = abs(
   "./server/apps/apps.sm.js./callSMF/fetchPreferredSubApp/" +
@@ -29,8 +29,8 @@ export function render(props) {
     <BaseApp key="0"
       fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
       loadUpdatedSelf={true} mainStyle={mainStyle} AppFrame={AppFrame}
-      AppFrameStyle={AppFrameStyle} AppWrapper={AppWrapper}
-      AppWrapperStyle={AppWrapperStyle} {...props}
+      appFrameStyle={appFrameStyle} AppWrapper={AppWrapper}
+      appWrapperStyle={appWrapperStyle} {...props}
     />
   </div>;
 }

@@ -210,7 +210,7 @@ export const actions = {
       import("~/../" + appDirID + "/main.jsx").catch(err => console.error(
         'Missing ' + abs("~/../" + appDirID + "/main.jsx") + 'file'
       )),
-      import("../" + appDirID + "/metadata.js;get/default").catch(err =>
+      import("~/../" + appDirID + "/metadata.js;get/default").catch(err =>
         undefined
       ),
     ]);

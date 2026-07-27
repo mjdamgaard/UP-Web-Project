@@ -4,14 +4,14 @@ import {logout} from 'account';
 
 export function render({isLoggedIn}) {
   let {isOpen} = this.state;
-  let username = getContext("username");
+  let username = this.getContext("username");
   return (
     <div className={"account-menu" + (isOpen ? " open" : "")}
       onClick={() => this.do("toggle")}
     >
-      <div id="account-menu-header">
-        <div id="user-name-display">{username}</div>
-        <div id="user-icon"><span>👤</span></div>
+      <div className="account-menu-header">
+        <div className="user-name-display">{username}</div>
+        <div className="user-icon"><span>👤</span></div>
       </div>
 
       <div className="items">

@@ -28,40 +28,41 @@ export async function initialize({
 }) { 
   // Query the fetchBestVersionRouteTemplate, with placeholders
   // appropriately replaced, and make it a private query iff the user is
-  // logged in and useDefault is falsy.
+  // logged in and useStandard is falsy.
   verifyType(appDirID, "hex");
   let fetchAppRoute = replaceAll(fetchBestVersionRouteTemplate,
-    "$appDirID", appDirIDSegment
+    "$appDirID", appDirID
   );
   fetchAppRoute = replaceAll(fetchAppRoute,
     "$useOriginal", useOriginal ? "1" : "0"
   );
-  let fetchFun = userID && !useDefault ? fetchPrivate : fetch;
-  let {appDirID, trustClass} = await fetchFun(fetchAppRoute);
+  let fetchFun = userID && !useStandard ? fetchPrivate : fetch;
+  let {appDirID: resAppDirID, trustClass} = await fetchFun(fetchAppRoute);
   let AppComponent = await import("~/../" + appDirID + "/main.jsx").catch(
     err => undefined
   );
-  return {
-    AppComponent: AppComponent, appDirID: appDirID, trustClass: trustClass,
-  };
+  this.setState({
+    AppComponent: AppComponent, appDirID: resAppDirID, trustClass: trustClass,
+  });
 }
 
 
 export function render({
-  AppWrapper, appWrapperStyle, goBackToSafety, appProps = {}
+  AppWrapper, appWrapperStyle, goBackToSafety, appProps = {},
+  useOriginal = false, useStandard = false
 }) {
   let {AppComponent, appDirID, trustClass} = this.state;
   if (appDirID === undefined) {
-    <div className="variable-app">
+    return <div className="variable-app">
       <div className="fetching"></div>
-    </div>
+    </div>;
   }
 
   // Render the AppComponent, wrapped in the 'AppWrapper' component if provided.
   // Note that we make sure to give an unique key to the app component in order
   // to ensure that its states (including local/session storage or history
   // states) do not get mixed up with another.
-  if (!AppComponent) {
+  if (!AppComponent) {throw "debug";
     console.error(abs("~/../" + appDirID + "/main.jsx") + " file is missing");
     return <MissingPage key="m" />;
   }

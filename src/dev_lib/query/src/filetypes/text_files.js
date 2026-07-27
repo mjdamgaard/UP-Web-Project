@@ -29,6 +29,10 @@ export async function query(
       "readTextFile", [homeDirID, localPath],
       route, options, callerNode, execEnv,
     ) ?? [];
+    if (text === undefined) throw new RuntimeError(
+      `No file found at "${route}"`,
+      callerNode, execEnv
+    );
     return text;
   }
 

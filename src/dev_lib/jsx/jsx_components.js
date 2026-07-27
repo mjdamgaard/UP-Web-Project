@@ -657,7 +657,7 @@ class JSXInstance {
         // Get the CSSStyleSheets from the innerStyle prop, and add the
         // document's outer style sheets to the shadow root as well.
         let styleSheetArray = this.getCSSStyleSheets(
-          jsxElement.innerStyle, callerNode, callerEnv
+          jsxElement.innerStyle, jsxNode, jsxDecEnv
         );
         styleSheetArray = (jsxElement.inheritGlobalStyle ?? true) ?
           [...globalStyleSheets, ...styleSheetArray] :

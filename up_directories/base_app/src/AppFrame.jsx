@@ -16,8 +16,8 @@ import * as AccountMenu from "./AccountMenu.jsx";
 // allow their focus to be grabbed from elsewhere. 
 
 
-export function render({baseAppPage, appLoaderProps}) {
-  let userID = getContext("userID");
+export function render({children, appLoaderProps}) {
+  let userID = this.getContext("userID");
   let {hideHeader, hideMargins, overlayPageContent} = this.state;
   this.setContext("headerIsHidden", hideHeader);
   this.setContext("marginsAreHidden", hideMargins);
@@ -39,8 +39,8 @@ export function render({baseAppPage, appLoaderProps}) {
       </header>
       <main className="app-main">
         <div className="margin left"></div>
-        <div className={"base-app-page" + (baseAppPage ? "" : " hidden")}>
-          {(baseAppPage)}
+        <div className="app-container">
+          {(children)}
         </div>
         {(appLoaderProps ?
           <AppLoader key="l" {...appLoaderProps} /> : undefined
