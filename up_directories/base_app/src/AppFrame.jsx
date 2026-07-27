@@ -1,7 +1,7 @@
 
 import * as ILink from 'ILink';
 import * as AppLoader from "./AppLoader.jsx";
-import * as AccountMenu from "./AccountMenu.jsx";
+import * as AccountMenu from "./account_menu/AccountMenu.jsx";
 
 
 // IMPORTANT: For anyone looking to build a different AppFrame, note that any
@@ -22,7 +22,7 @@ export function render({children, appLoaderProps}) {
   this.setContext("headerIsHidden", hideHeader);
   this.setContext("marginsAreHidden", hideMargins);
   return (
-    <div className="app-frame">
+    <div className="app-frame" onClick={() => this.call("am", "close")}>
       <div className={
         "overlay-page-container" + (overlayPageContent ? " open" : "")
       }>
@@ -35,9 +35,10 @@ export function render({children, appLoaderProps}) {
         <div className="items">
           {(headerItems)}
         </div>
-        <AccountMenu key="menu" isLoggedIn={userID ? true : false} />
+        <AccountMenu key="am" isLoggedIn={userID ? true : false} />
       </header>
       <main className="app-main">
+        <div className="click-blocker"></div>
         <div className="margin left"></div>
         <div className="app-container">
           {(children)}

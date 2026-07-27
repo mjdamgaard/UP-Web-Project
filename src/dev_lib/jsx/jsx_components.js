@@ -560,9 +560,12 @@ class JSXInstance {
                 ctrlKey: ctrlKey, altKey: altKey, shiftKey: shiftKey,
                 metaKey: metaKey,
               };
-              interpreter.executeFunctionOffSync(
+              let ret = interpreter.executeFunctionOffSync(
                 val, [e], callerNode, callerEnv, new JSXInstanceInterface(this)
               );
+              if (!(ret ?? true)) {
+                event.stopPropagation();
+              }
             };
             break;
 
@@ -602,9 +605,12 @@ class JSXInstance {
                 key: key, repeat: repeat, ctrlKey: ctrlKey, altKey: altKey,
                 shiftKey: shiftKey, metaKey: metaKey,
               };
-              interpreter.executeFunctionOffSync(
+              let ret = interpreter.executeFunctionOffSync(
                 val, [e], callerNode, callerEnv, new JSXInstanceInterface(this)
               );
+              if (!(ret ?? true)) {
+                event.stopPropagation();
+              }
             };
             break;
 
