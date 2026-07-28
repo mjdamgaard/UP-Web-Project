@@ -278,7 +278,7 @@ export const cssGrammar = {
       } catch (error) {
         return `Invalid string: ${stringLiteral}`;
       }
-      return {type: "string", lexeme: str};
+      return {type: "string", lexeme: JSON.stringify(str)};
     },
   },
   "number": {
