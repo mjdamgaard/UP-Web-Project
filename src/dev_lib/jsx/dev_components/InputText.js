@@ -5,6 +5,7 @@ import {
 import {
   DOMNodeObject, validateJSXInstanceAndGetDOMNode, validateJSXInstance,
 } from "../jsx_components.js";
+import {CLIENT_TRUST_FLAG} from "../../query/src/flags.js";
 import {getID} from "./getID.js";
 
 
@@ -18,7 +19,8 @@ export const render = new DevFunction(
       props = props.members;
     }
     let {
-      className, idKey, size, value, placeholder, onChange, onInput, lockFocus
+      className, idKey, size, value, placeholder, onChange, onInput, lockFocus,
+      autocomplete, type,
     } = props;
     if (lockFocus) className = !className ? "lock-focus" :
       getString(className, execEnv) + " lock-focus";
@@ -39,7 +41,16 @@ export const render = new DevFunction(
       thisVal, "InputText", "input", className, callerNode, execEnv,
       domNode => domNode.setAttribute("value", value ?? ""),
     );
-    domNode.setAttribute("type", "text");
+    if (type && type !== "text" && execEnv.getFlag(CLIENT_TRUST_FLAG)) {
+      domNode.setAttribute("type", getString(type, execEnv));
+    } else {
+      domNode.setAttribute("type", "text");
+    }
+    if (autocomplete === "on" && execEnv.getFlag(CLIENT_TRUST_FLAG)) {
+      domNode.setAttribute("autocomplete", "on");
+    } else {
+      domNode.setAttribute("autocomplete", "off");
+    }
     if (id !== undefined) domNode.setAttribute("id", id);
     if (size !== undefined) domNode.setAttribute("size", size);
     if (placeholder !== undefined) {

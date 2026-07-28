@@ -40,3 +40,25 @@ export const render = new DevFunction(
     return new DOMNodeObject(domNode, marks);
   }
 );
+
+
+
+export const methods = [
+  "call",
+];
+
+export const actions = {
+  "call": new DevFunction(
+    "call", {typeArr: ["array"]},
+    function({thisVal, callerNode, execEnv, interpreter}, [inputArr]) {
+    validateJSXInstance(thisVal, "Label", callerNode, execEnv);
+    if (inputArr instanceof ObjectObject) {
+      inputArr = inputArr.members;
+    }
+    let [childKey, methodKey, input] = inputArr;
+    return thisVal.jsxInstance.call(
+      childKey, methodKey, input, interpreter, callerNode, execEnv
+    );
+    }
+  ),
+};

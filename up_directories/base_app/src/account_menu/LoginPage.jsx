@@ -18,13 +18,13 @@ export function render({}) {
       <div className="form-group">
         <Label key="l-usr" forKey={userNameIDKey}>Username</Label>
         <InputText key="i-usr" className="form-control username"
-          idKey={userNameIDKey}
+          idKey={userNameIDKey} autocomplete="on"
         />
       </div>
       <div className="form-group">
         <Label key="l-pw" forKey={passwordIDKey}>Password</Label>
         <InputText key="i-pw" className="form-control password"
-          idKey={passwordIDKey}
+          idKey={passwordIDKey} type="password" autocomplete="on"
         />
       </div>
       <button className="btn btn-primary" onClick={() => this.do("submit")}>
@@ -39,8 +39,8 @@ export function render({}) {
 
 export const actions = {
   "submit": function() {
-    let username = this.call("i-usr", "getValue");
-    let password = this.call("i-pw", "getValue");
+    let username = this.call("f", "call", ["i-usr", "getValue"]);
+    let password = this.call("f", "call", ["i-pw", "getValue"]);
     login(username, password).then(response => {
       if (response) {
         this.setState({response: response});

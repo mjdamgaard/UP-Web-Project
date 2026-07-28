@@ -98,6 +98,7 @@ export const render = new DevFunction(
 export const methods = [
   "focus",
   "blur",
+  "call",
 ];
 
 export const actions = {
@@ -118,6 +119,19 @@ export const actions = {
     "blur", {}, function({thisVal, callerNode, execEnv}, []) {
       validateJSXInstance(thisVal, "ILink", callerNode, execEnv);
       thisVal.jsxInstance.domNode.blur();
+    }
+  ),
+  "call": new DevFunction(
+    "call", {typeArr: ["array"]},
+    function({thisVal, callerNode, execEnv, interpreter}, [inputArr]) {
+    validateJSXInstance(thisVal, "ILink", callerNode, execEnv);
+    if (inputArr instanceof ObjectObject) {
+      inputArr = inputArr.members;
+    }
+    let [childKey, methodKey, input] = inputArr;
+    return thisVal.jsxInstance.call(
+      childKey, methodKey, input, interpreter, callerNode, execEnv
+    );
     }
   ),
 };

@@ -5,6 +5,7 @@ import {
 import {
   DOMNodeObject, validateJSXInstanceAndGetDOMNode, validateJSXInstance,
 } from "../jsx_components.js";
+import {CLIENT_TRUST_FLAG} from "../../query/src/flags.js";
 import {getID} from "./getID.js";
 
 
@@ -18,7 +19,8 @@ export const render = new DevFunction(
       props = props.members;
     }
     let {
-      className, idKey, placeholder, children, onChange, onInput, lockFocus
+      className, idKey, placeholder, children, onChange, onInput, lockFocus,
+      autocomplete,
     } = props;
     if (lockFocus) className = !className ? "lock-focus" :
       getString(className, execEnv) + " lock-focus";
@@ -38,6 +40,11 @@ export const render = new DevFunction(
     if (id !== undefined) domNode.setAttribute("id", id);
     if (placeholder !== undefined) {
       domNode.setAttribute("placeholder", placeholder);
+    }
+    if (autocomplete === "on" && execEnv.getFlag(CLIENT_TRUST_FLAG)) {
+      domNode.setAttribute("autocomplete", "on");
+    } else {
+      domNode.setAttribute("autocomplete", "off");
     }
 
     // Set the onchange event if props.onChange is supplied.

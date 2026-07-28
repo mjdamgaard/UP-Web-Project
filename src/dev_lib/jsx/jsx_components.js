@@ -1894,10 +1894,10 @@ function addUserContexts(contextProvisions, env) {
   let usernameContextProvision = JSXInstance.createContextProvision(username);
   userContext.addSubscriberCallback(({userID, username}) => {
     JSXInstance.updateContextProvision(
-      userIDContextProvision, {userID: userID}, false
+      userIDContextProvision, userID, false
     );
     JSXInstance.updateContextProvision(
-      usernameContextProvision, {username: username}, false
+      usernameContextProvision, username, false
     );
   });
   contextProvisions["userID"] = userIDContextProvision;
