@@ -22,6 +22,7 @@ export const render = new DevFunction(
     let domNode = validateJSXInstanceAndGetDOMNode(
       thisVal, "Form", "form", className, callerNode, execEnv
     );
+    domNode.setAttribute("action", "javascript:void(0);");
 
     // If the children prop is defined, use jsxInstance.replaceChildren() to
     // render and append those children, also making sure to record the marks

@@ -73,15 +73,17 @@ const maxRecLevel = 3;
 export async function fetchPreferredSubApp(appDirID, scoreHandlerID = "0") {
   verifyTypes([appDirID, scoreHandlerID], ["hex", "hex"]);
 
-  // Check that the post request was sent from the ../main.jsx app or the
-  // the app browser app.
-  checkRequestOrigin(true, [
-    abs("../main.jsx"),
-    abs("../../app_browser/main.jsx"),
-  ]);
-
   // Get the ID of the requesting user, which is undefined if not logged in.
   let userID = getRequestingUserID();
+
+  // If the user is logged in, check that the post request was sent from the
+  // ../main.jsx app or the app browser app.
+  if (userID) {
+    checkRequestOrigin(true, [
+      abs("~/main.jsx"),
+      abs("~/../app_browser/main.jsx"),
+    ]);
+  }
 
   // If the user is logged in, fetch the preferences object, alongside the
   // subApps.att ("cache") entry for scoreHandlerID and appDirID, and else just
@@ -94,8 +96,9 @@ export async function fetchPreferredSubApp(appDirID, scoreHandlerID = "0") {
     ]);
   }
   else {
-    subAppIDListString =
-      fetch(abs("./subApps.att./entry/l/" + scoreHandlerID + "/k/" + appDirID));
+    subAppIDListString = await fetch(
+      abs("./subApps.att./entry/l/" + scoreHandlerID + "/k/" + appDirID)
+    );
   }
   
   // Then redirect to the recursive fetchPreferredSubAppHelper(). 

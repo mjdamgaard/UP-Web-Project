@@ -88,13 +88,13 @@ export const actions = {
     this.setState(
       state => ({...state, overlayPageContent: overlayPageContent})
     );
-    this.call("menu", "close");
+    this.call("am", "close");
   },
   "removeOverlayPage": function() {
     this.setState(
       state => ({...state, overlayPageContent: undefined})
     );
-    this.call("menu", "close");
+    this.call("am", "close");
   },
   "hideHeader": function() {
     this.setState(state => ({...state, hideHeader: true}));

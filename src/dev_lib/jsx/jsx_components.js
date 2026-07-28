@@ -1967,7 +1967,7 @@ export function validateJSXInstanceAndGetDOMNode(
     if (onCreation) onCreation(domNode);
   }
   else {
-    window.clearAttributes(domNode);
+    clearAttributes(domNode);
   }
   if (className) {
     className = getString(className, execEnv);

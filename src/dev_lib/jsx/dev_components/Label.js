@@ -19,12 +19,12 @@ export const render = new DevFunction(
       props = props.members;
     }
     let {className, forKey, children} = props;
-    let forVal = forKey === undefined ? undefined : getID(forKey);
-    if (forVal !== undefined) domNode.setAttribute("for", forVal);
 
     let domNode = validateJSXInstanceAndGetDOMNode(
       thisVal, "Label", "label", className, callerNode, execEnv
     );
+    let forVal = forKey === undefined ? undefined : getID(forKey);
+    if (forVal !== undefined) domNode.setAttribute("for", forVal);
 
     // If the children prop is defined, use jsxInstance.replaceChildren() to
     // render and append those children, also making sure to record the marks

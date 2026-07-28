@@ -14,15 +14,18 @@ const maxRecLevel = 3;
 export async function fetchPreferredSubApp(appDirID) {
   verifyType(appDirID, "hex");
 
-  // Check that the post request was sent from the ../main.jsx app or the
-  // the base app.
-  checkRequestOrigin(true, [
-    abs("~/main.jsx"),
-    abs("~/../app_browser/main.jsx"),
-  ]);
-
   // Get the ID of the requesting user, which is undefined if not logged in.
   let userID = getRequestingUserID();
+
+  // If the user is logged in, check that the post request was sent from the
+  // ../main.jsx app or the app browser app.
+  if (userID) {
+    checkRequestOrigin(true, [
+      abs("~/main.jsx"),
+      abs("~/../app_browser/main.jsx"),
+    ]);
+  }
+
 
   // If the user is logged in, fetch the preferences object, alongside the
   // subApps.att ("cache") entry for the appDirID, and else just fetch the
@@ -35,8 +38,7 @@ export async function fetchPreferredSubApp(appDirID) {
     ]);
   }
   else {
-    subAppIDListString =
-      fetch(abs("./subApps.att./entry/k/" + appDirID));
+    subAppIDListString = await fetch(abs("./subApps.att./entry/k/" + appDirID));
   }
   
   // Then redirect to the recursive fetchPreferredSubAppHelper(). 

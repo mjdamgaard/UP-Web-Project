@@ -1,11 +1,10 @@
 
 import {logout} from 'account';
-import * as InputText from 'InputText';
-import * as Label from 'Label';
+import * as LoginPage from "./LoginPage.jsx";
 
 
 export function render({isLoggedIn}) {
-  let {isOpen} = this.state;
+  let {isOpen, response} = this.state;
   let username = this.getContext("username");
   return (
     <div className={"account-menu" + (isOpen ? " open" : "")} onClick={() => {
@@ -39,7 +38,7 @@ export function render({isLoggedIn}) {
           <span>Log out</span>
         </div>
         <div className={isLoggedIn ? " inactive" : ""} onClick={() => {
-          this.trigger("showOverlayPage", loginPage);
+          this.trigger("showOverlayPage", <LoginPage />);
         }}>
           <span>Log in</span>
         </div>
@@ -69,35 +68,3 @@ export const actions = {
 export const methods = [
   "close",
 ]
-
-
-
-
-
-
-
-
-const userNameIDKey = Symbol("input-username");
-
-const loginPage = <>
-  {/* <div className="go-back-button"></div>
-  <div className="page-content">
-    <h2>Log in</h2>
-    <form action="javascript:void(0);">
-      <div className="form-group">
-        <Label key="l-ent" forKey={userNameIDKey}>Username</Label>
-        <InputText key="i" idKey={userNameIDKey} size={60} />
-        <label>Username</label>
-        <input type="text" className="form-control username"></input>
-      </div>
-      <div className="form-group">
-        <label>Password</label>
-        <input type="password" className="form-control password"></input>
-      </div>
-      <button type="submit" className="btn btn-primary">
-        Log in
-      </button>
-    </form>
-    <div className="response-display text-warning"></div>
-    </div> */}
-</>;
