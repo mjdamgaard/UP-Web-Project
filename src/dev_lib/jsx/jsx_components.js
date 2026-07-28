@@ -13,7 +13,7 @@ import {
 
 const NODE_ID = "1";
 
-const CLASS_NAME_REGEX = /^ *([a-z][a-z0-9_-]* *)*$/;
+export const CLASS_NAME_REGEX = /^ *([a-z][a-z0-9_-]* *)*$/;
 export const HREF_REGEX =
   /^(\.{0,2}\/)?(([;.~a-zA-Z0-9_-]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+(\/([;.~a-zA-Z0-9_-]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+)*)?$/;
 export const HREF_REL_START_REGEX = /^(\.\.?|~~?)?\//;
@@ -502,6 +502,7 @@ class JSXInstance {
       let childArr = [];
       let {node: jsxNode, decEnv: jsxDecEnv} = jsxElement;
       forEachValue(jsxElement.props, jsxNode, jsxDecEnv, (val, key) => {
+        if (val === undefined) return;
         let eventProperty;
         switch (key) {
           case "children" : {
@@ -1950,4 +1951,31 @@ export function validateJSXInstance(
       callerNode, execEnv
     );
   }
+}
+
+export function validateJSXInstanceAndGetDOMNode(
+  thisVal, expectedModulePath, tagName, className, callerNode, execEnv,
+  onCreation = undefined,
+) {
+  validateJSXInstance(thisVal, expectedModulePath, callerNode, execEnv);
+
+  // Create the DOM node if it has no been so already.
+  let jsxInstance = thisVal.jsxInstance;
+  let domNode = jsxInstance.domNode;
+  if (!domNode || domNode.tagName !== tagName.toUpperCase()) {
+    domNode = document.createElement(tagName);
+    if (onCreation) onCreation(domNode);
+  }
+  else {
+    window.clearAttributes(domNode);
+  }
+  if (className) {
+    className = getString(className, execEnv);
+    if (!CLASS_NAME_REGEX.test(className)) throw new RuntimeError(
+      `Invalid class name: "${className}"`,
+      callerNode, execEnv
+    );
+    domNode.setAttribute("class", className);
+  }
+  return domNode;
 }

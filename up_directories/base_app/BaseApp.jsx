@@ -88,15 +88,13 @@ export function render(props) {
   // this case, also wrap the AppLoader component in the AppFrame component,
   // which defines a global header for the webpage, and the global page margins,
   // etc. (both of which the loaded app can potentially hide).
-  return <div innerStyle={[mainStyle, appFrameStyle]}>
-    <AppFrame key="f">
-      <AppLoader key="a" userID={userID}
-        fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
-        AppWrapper={AppWrapper} appWrapperStyle={[mainStyle, appWrapperStyle]}
-        goBackToSafety={goToAppPage}
-      />
-    </AppFrame>
-  </div>;
+  return <AppFrame key="f" style={[mainStyle, appFrameStyle]}>
+    <AppLoader key="a" userID={userID}
+      fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
+      AppWrapper={AppWrapper} appWrapperStyle={[mainStyle, appWrapperStyle]}
+      goBackToSafety={goToAppPage}
+    />
+  </AppFrame>;
 }
 
 

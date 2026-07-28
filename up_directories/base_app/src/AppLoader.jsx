@@ -6,10 +6,6 @@ import {some} from 'array';
 
 import * as MissingPage from "./MissingPage.jsx";
 
-const missingPageJSX = <div className="app-loader">
-  <MissingPage key="m" />
-</div>;
-
 
 // The AppLoader loads the app that is defined by the first segment (from where
 // its ancestor instances has advanced the URL to), but does so in a way that
@@ -28,7 +24,7 @@ const missingPageJSX = <div className="app-loader">
 
 
 // props : {
-//   userID, fetchBestVersionRouteTemplate, AppWrapper?, appWrapperStyle?,
+//   userID, fetchBestVersionRouteTemplate, AppWrapper, appWrapperStyle?,
 //   goBackToSafety, appProps?,
 // }.
 
@@ -60,13 +56,13 @@ export function render({
   this.advanceURL(1);
   if (!firstSegment) {
     console.error('Invalid segment for the AppLoader: ""');
-    return missingPageJSX;
+    return <MissingPage key="m" />;
   }
   let fstChar = firstSegment[0];
   if (fstChar === "o" || fstChar === "s") {
     if (firstSegment[1] !== "-") {
     console.error(`Invalid segment for the AppLoader: "${firstSegment}"`);
-    return missingPageJSX;
+    return <MissingPage key="m" />;
     }
     useOriginal = fstChar === "o";
     useStandard = fstChar === "s";
@@ -77,18 +73,14 @@ export function render({
   }
   if (!hasType(appDirIDSegment, "hex")) {
     console.error(`Invalid segment for the AppLoader: "${firstSegment}"`);
-    return missingPageJSX;
+    return <MissingPage key="m" />;
   }
 
   // If no app has been loaded yet, call the "loadNewApp" action.
   if (!appDirID) {
     let urlTail = substring(this.getPath(), firstSegment.length + 2);
     this.do("loadNewApp", [appDirIDSegment, urlTail, useOriginal, useStandard]);
-    return (
-      <div className="app-loader">
-        <div className="fetching"></div>
-      </div>
-    );
+    return <div className="fetching"></div>;
   }
 
   // Else fist get the AppComponent and additionalURLs array from the cache,
@@ -96,11 +88,7 @@ export function render({
   let appData = cache[appDirID];
   if (!appData) {
     this.do("fetchAppData", appDirID);
-    return (
-      <div className="app-loader">
-        <div className="fetching"></div>
-      </div>
-    );
+    return <div className="fetching"></div>;
   }
   let {AppComponent, additionalURLs, stdFirstSegment} = appData;
 
@@ -130,11 +118,7 @@ export function render({
       this.do("loadNewApp", [
         appDirIDSegment, urlTail, useOriginal, useStandard
       ]);
-      return (
-        <div className="app-loader">
-          <div className="fetching"></div>
-        </div>
-      );
+      return <div className="fetching"></div>;
     }
   }
 
@@ -143,29 +127,26 @@ export function render({
   // component in order to ensure that its states (including local/session
   // storage or history states) do not get mixed up with another.
   if (!AppComponent) {
-    return missingPageJSX;
+    console.error(abs("~/../" + appDirID + "/main.jsx") + " file is missing");
+    return <MissingPage key="m" />;
   }
-  if (AppWrapper) {
-    let isUntrusted = trustClass !== "trusted";
-    if (isUntrusted) this.setContext("username", undefined);
+  let isTrusted = trustClass === "trusted";
+  if (isTrusted) {
+    return <AppComponent key={"a-" + appDirID} {...appProps} />;
+  }
+  else {
+    let isSemiTrusted = trustClass === "semi-trusted";
+    if (!isSemiTrusted) {
+      this.setContext("username", undefined);
+    }
     return (
-      <div className="app-loader" innerStyle={appWrapperStyle}>
-        <AppWrapper key="w" trustClass={trustClass} appDirID={appDirID}
-          isOriginal={useOriginal} isStandard={useStandard}
-          goBackToSafety={goBackToSafety} appDirIDSegment={appDirIDSegment}
-        >
-          <AppComponent key={"a-" + appDirID}
-            {...appProps} untrusted={isUntrusted}
-          />
-        </AppWrapper>
-      </div>
-    );
-  } else {
-    this.setContext("username", undefined);
-    return  (
-      <div className="app-loader">
+      <AppWrapper key="w" trustClass={trustClass} appDirID={appDirID}
+        isOriginal={useOriginal} isStandard={useStandard}
+        goBackToSafety={goBackToSafety} appDirIDSegment={appDirIDSegment}
+        style={appWrapperStyle}
+      >
         <AppComponent key={"a-" + appDirID} {...appProps} untrusted />
-      </div>
+      </AppWrapper>
     );
   }
 }
@@ -207,11 +188,9 @@ export const actions = {
     // Fetch the app component found at main.jsx in the app's home directory,
     // as well as the metadata in the same directory.
     let [AppComponent, metadata] = await Promise.all([
-      import("~/../" + appDirID + "/main.jsx").catch(err => console.error(
-        'Missing ' + abs("~/../" + appDirID + "/main.jsx") + 'file'
-      )),
-      import("~/../" + appDirID + "/metadata.js;get/default").catch(err =>
-        undefined
+      import("~/../" + appDirID + "/main.jsx").catch(err => undefined),
+      import("~/../" + appDirID + "/metadata.js;get/default").catch(
+        err => undefined
       ),
     ]);
 

@@ -16,13 +16,15 @@ import * as AccountMenu from "./account_menu/AccountMenu.jsx";
 // allow their focus to be grabbed from elsewhere. 
 
 
-export function render({children, appLoaderProps}) {
+export function render({children, style}) {
   let userID = this.getContext("userID");
   let {hideHeader, hideMargins, overlayPageContent} = this.state;
   this.setContext("headerIsHidden", hideHeader);
   this.setContext("marginsAreHidden", hideMargins);
   return (
-    <div className="app-frame" onClick={() => this.call("am", "close")}>
+    <div className="app-frame" innerStyle={style} onClick={() =>
+      this.call("am", "close")
+    }>
       <div className={
         "overlay-page-container" + (overlayPageContent ? " open" : "")
       }>
@@ -40,12 +42,9 @@ export function render({children, appLoaderProps}) {
       <main className="app-main">
         <div className="click-blocker"></div>
         <div className="margin left"></div>
-        <div className="app-container">
+        <div className="app-container no-overflow">
           {(children)}
         </div>
-        {(appLoaderProps ?
-          <AppLoader key="l" {...appLoaderProps} /> : undefined
-        )}
         <div className="margin right"></div>
       </main>
     </div>

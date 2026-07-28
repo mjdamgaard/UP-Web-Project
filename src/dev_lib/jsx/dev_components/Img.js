@@ -1,9 +1,9 @@
 
 import {
-  DevFunction, ObjectObject, verifyTypes,
+  DevFunction, ObjectObject, verifyTypes, getString,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, clearAttributes, validateJSXInstance,
+  DOMNodeObject, validateJSXInstanceAndGetDOMNode, validateJSXInstance,
 } from "../jsx_components.js";
 
 
@@ -37,11 +37,10 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    validateJSXInstance(thisVal, "Img", callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {src = "", alt} = props;
+    let {className, src = "", alt} = props;
     verifyTypes(
       [src, alt], ["string", "string?"], callerNode, execEnv
     );
@@ -49,17 +48,10 @@ export const render = new DevFunction(
     // Check whether the src is whitelisted.
     let isWhiteListed = getIsWhitelisted(src);
 
-    // Create the DOM node if it has no been so already.
-    let jsxInstance = thisVal.jsxInstance;
-    let domNode = jsxInstance.domNode;
-    if (!domNode || domNode.tagName !== "IMG") {
-      domNode = document.createElement("img");
-    }
-    else {
-      clearAttributes(domNode);
-    }
-    domNode.setAttribute(
-      "class", "img" + (isWhiteListed ? "" : " invalid")
+    if (!isWhiteListed) className = !className ? "invalid" :
+      getString(className, execEnv) + " invalid";
+    let domNode = validateJSXInstanceAndGetDOMNode(
+      thisVal, "Img", "img", className, callerNode, execEnv
     );
     if (src) {
       if (isWhiteListed) domNode.setAttribute("src", src);

@@ -1,82 +1,9 @@
 
 
-.app {
-  height: 100%;
-  display: grid;
-  grid-template-rows: 50px auto;
-  background-color: #f8f8f8;
-}
-
-.app-header {
-  height: 50px;
-  font-size: 22px;
-  background-color: #d4dfe4;
-}
-.app-header > .items {
-  display: inline-block;
-  height: 100%;
-  width: calc(100% - 290px);
-  text-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-gutter: stable both-edges;
-}
-.app-header > .items > * {
-  display: inline-block;
-}
-.app-header a {
-  padding: 6px 10px;
-  overflow: hidden;
-}
-.app-header a:hover {
-  background-color: #bfc8ce;
-  cursor: pointer;
-}
-.app-header > :first-child {
-  display: inline-block;
-  font-size: 28px;
-  font-family: Garamond, Georgia, 'Times New Roman', Times, serif;
-  font-style: oblique;
-  letter-spacing: -0.05em;
-}
-.app-header > :first-child:hover {
-  background-color: unset;
-  text-decoration: none;
-}
-
-
-.app-main-container {
-  overflow-y: scroll;
-  background-color: white;
-  margin: 0px 20%;
-  padding: 20px 50px;
-}
-.app-main-container:has(> .open > .app-main > .no-margins) {
-  margin: 0 0;
-  padding: 0 0;
-}
-@media (max-width: 600px) {
-  .app-main-container {
-    margin: 0 0;
-    padding: 10px 20px;
-  }
-}
-@media (min-width: 600px) and (max-width: 900px) {
-  .app-main-container {
-    margin: 0px 10%;
-    padding: 20px 50px;
-  }
-}
-@media (min-width: 900px) and (max-width: 1200px) {
-  .app-main-container {
-    margin: 0px 15%;
-    padding: 20px 50px;
-  }
-}
 
 section > :is(h1, h2, h3, h4, h5, h6, :first-child) {
   margin-top: 0.5em;
 }
-
 
 
 
@@ -89,13 +16,15 @@ section > :is(h1, h2, h3, h4, h5, h6, :first-child) {
   text-decoration: underline;
 }
 
-.app-header .i-link {
-  color: black;
-}
-
 
 .hidden {
   display: none;
+}
+
+.no-overflow {
+  position: relative;
+  z-index: 0;
+  overflow: hidden;
 }
 
 
@@ -143,8 +72,4 @@ code.css {
 
 ul, ol, li {
   overflow: visible;
-}
-
-.tutorial-list {
-  font-size: 25px;
 }

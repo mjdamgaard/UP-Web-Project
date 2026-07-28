@@ -25,12 +25,10 @@ const fetchBestVersionRouteTemplate = abs(
 
 
 export function render(props) {
-  return <div innerStyle={mainStyle}>
-    <BaseApp key="0"
-      fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
-      loadUpdatedSelf={true} mainStyle={mainStyle} AppFrame={AppFrame}
-      appFrameStyle={appFrameStyle} AppWrapper={AppWrapper}
-      appWrapperStyle={appWrapperStyle} {...props}
-    />
-  </div>;
+  return <BaseApp key="0"
+    fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
+    loadUpdatedSelf={true} mainStyle={mainStyle} AppFrame={AppFrame}
+    appFrameStyle={appFrameStyle} AppWrapper={AppWrapper}
+    appWrapperStyle={appWrapperStyle} {...props}
+  />;
 }

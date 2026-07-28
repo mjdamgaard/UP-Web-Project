@@ -1,9 +1,9 @@
 
 import {
-  DevFunction, getString, ObjectObject, verifyTypes,
+  DevFunction, ObjectObject, verifyTypes, getString,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, clearAttributes, validateJSXInstance,
+  DOMNodeObject, validateJSXInstanceAndGetDOMNode, validateJSXInstance,
 } from "../jsx_components.js";
 import {getID} from "./getID.js";
 
@@ -14,11 +14,14 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    validateJSXInstance(thisVal, "TextArea", callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {idKey, placeholder, children, onChange, onInput, lockFocus} = props;
+    let {
+      className, idKey, placeholder, children, onChange, onInput, lockFocus
+    } = props;
+    if (lockFocus) className = !className ? "lock-focus" :
+      getString(className, execEnv) + " lock-focus";
     verifyTypes(
       [placeholder, onChange, onInput], ["string?", "function?", "function?"],
       callerNode, execEnv
@@ -28,18 +31,9 @@ export const render = new DevFunction(
       children = getString(children, execEnv);
     }
 
-    // Create the DOM node if it has no been so already.
-    let jsxInstance = thisVal.jsxInstance;
-    let domNode = jsxInstance.domNode;
-    if (!domNode || domNode.tagName !== "TEXTAREA") {
-      domNode = document.createElement("textarea");
-      domNode.value = children ?? "";
-    }
-    else {
-      clearAttributes(domNode);
-    }
-    domNode.setAttribute(
-      "class", "textarea" + (lockFocus ? " lock-focus" : "")
+    let domNode = validateJSXInstanceAndGetDOMNode(
+      thisVal, "TextArea", "textarea", className, callerNode, execEnv,
+      domNode => domNode.setAttribute("value", children ?? ""),
     );
     if (id !== undefined) domNode.setAttribute("id", id);
     if (placeholder !== undefined) {

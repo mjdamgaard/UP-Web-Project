@@ -1,9 +1,9 @@
 
 import {
-  DevFunction, ObjectObject, verifyTypes,
+  DevFunction, ObjectObject, verifyTypes, getString,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, clearAttributes, validateJSXInstance,
+  DOMNodeObject, clearAttributes, validateJSXInstance, CLASS_NAME_REGEX
 } from "../jsx_components.js";
 import {getID} from "./getID.js";
 
@@ -18,7 +18,7 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {idKey, min, max, value, step, onChange, onInput} = props;
+    let {className, idKey, min, max, value, step, onChange, onInput} = props;
     verifyTypes(
       [min, max, value, step, onChange, onInput],
       ["number?", "number?", "number?", "number?", "function?", "function?"],
@@ -35,6 +35,14 @@ export const render = new DevFunction(
     }
     else {
       clearAttributes(domNode, ["type", "value", "min", "max", "step"]);
+    }
+    if (className) {
+      className = getString(className, execEnv);
+      if (!CLASS_NAME_REGEX.test(className)) throw new RuntimeError(
+        `Invalid class name: "${className}"`,
+        callerNode, execEnv
+      );
+      domNode.setAttribute("class", className);
     }
     domNode.setAttribute("type", "range");
     domNode.setAttribute("class", "input-range");

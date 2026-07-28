@@ -1,16 +1,16 @@
 
 import {
-  DevFunction, ObjectObject,
+  DevFunction, ObjectObject
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, validateJSXInstanceAndGetDOMNode, validateJSXInstance,
+  DOMNodeObject, validateJSXInstanceAndGetDOMNode
 } from "../jsx_components.js";
 import {getID} from "./getID.js";
 
 
 
 export const render = new DevFunction(
-  "Label.render", {typeArr: ["object?"]},
+  "Form.render", {typeArr: ["object?"]},
   function(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
@@ -18,12 +18,9 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {className, forKey, children} = props;
-    let forVal = forKey === undefined ? undefined : getID(forKey);
-    if (forVal !== undefined) domNode.setAttribute("for", forVal);
-
+    let {className, children} = props;
     let domNode = validateJSXInstanceAndGetDOMNode(
-      thisVal, "Label", "label", className, callerNode, execEnv
+      thisVal, "Form", "form", className, callerNode, execEnv
     );
 
     // If the children prop is defined, use jsxInstance.replaceChildren() to

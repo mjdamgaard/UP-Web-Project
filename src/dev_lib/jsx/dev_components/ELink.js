@@ -1,9 +1,9 @@
 
 import {
-  DevFunction, ObjectObject, verifyTypes,
+  DevFunction, ObjectObject, verifyTypes, getString,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, clearAttributes, validateJSXInstance,
+  DOMNodeObject, validateJSXInstanceAndGetDOMNode, validateJSXInstance,
 } from "../jsx_components.js";
 import {CAN_POST_FLAG, CLIENT_TRUST_FLAG} from "../../query/src/flags.js";
 
@@ -47,11 +47,10 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    validateJSXInstance(thisVal, "ELink", callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {href = "", children, onClick} = props;
+    let {className = "e-link", href = "", children, onClick} = props;
     verifyTypes(
       [href, onClick], ["string", "function?"], callerNode, execEnv
     );
@@ -59,17 +58,10 @@ export const render = new DevFunction(
     // Check whether the href is whitelisted.
     let isAllowed = getIsAllowed(href, execEnv);
 
-    // Create the DOM node if it has no been so already.
-    let jsxInstance = thisVal.jsxInstance;
-    let domNode = jsxInstance.domNode;
-    if (!domNode || domNode.tagName !== "A") {
-      domNode = document.createElement("a");
-    }
-    else {
-      clearAttributes(domNode);
-    }
-    domNode.setAttribute(
-      "class", "e-link" + (isAllowed ? " allowed" : " not-allowed")
+    if (!isAllowed) className = !className ? "not-allowed" :
+      getString(className, execEnv) + " not-allowed";
+    let domNode = validateJSXInstanceAndGetDOMNode(
+      thisVal, "ELink", "a", className, callerNode, execEnv
     );
     if (href) {
       if (isAllowed) domNode.setAttribute("href", href);
@@ -81,7 +73,7 @@ export const render = new DevFunction(
     // as well (which will be attached to the returned DOMNodeObject).
     let marks = new Map();
     if (children !== undefined) {
-      jsxInstance.replaceChildren(
+      thisVal.jsxInstance.replaceChildren(
         domNode, [children], marks, interpreter, callerNode, execEnv,
         props
       );

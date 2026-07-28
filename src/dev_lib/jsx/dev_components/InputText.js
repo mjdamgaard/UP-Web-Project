@@ -3,7 +3,7 @@ import {
   DevFunction, getString, ObjectObject, verifyTypes,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, clearAttributes, validateJSXInstance,
+  DOMNodeObject, validateJSXInstanceAndGetDOMNode, validateJSXInstance,
 } from "../jsx_components.js";
 import {getID} from "./getID.js";
 
@@ -14,11 +14,14 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    validateJSXInstance(thisVal, "InputText", callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {idKey, size, value, placeholder, onChange, onInput, lockFocus} = props;
+    let {
+      className, idKey, size, value, placeholder, onChange, onInput, lockFocus
+    } = props;
+    if (lockFocus) className = !className ? "lock-focus" :
+      getString(className, execEnv) + " lock-focus";
     verifyTypes(
       [size, onChange, onInput],
       ["integer positive?", "function?", "function?"],
@@ -32,21 +35,11 @@ export const render = new DevFunction(
       value = getString(value, execEnv);
     }
 
-    // Create the DOM node if it has no been so already.
-    let jsxInstance = thisVal.jsxInstance;
-    let domNode = jsxInstance.domNode;
-    if (!domNode || domNode.tagName !== "INPUT") {
-      domNode = document.createElement("input");
-      domNode.setAttribute("value", value ?? "");
-
-    }
-    else {
-      clearAttributes(domNode, ["type", "value"]);
-    }
-    domNode.setAttribute("type", "text");
-    domNode.setAttribute(
-      "class", "input-text" + (lockFocus ? " lock-focus" : "")
+    let domNode = validateJSXInstanceAndGetDOMNode(
+      thisVal, "InputText", "input", className, callerNode, execEnv,
+      domNode => domNode.setAttribute("value", value ?? ""),
     );
+    domNode.setAttribute("type", "text");
     if (id !== undefined) domNode.setAttribute("id", id);
     if (size !== undefined) domNode.setAttribute("size", size);
     if (placeholder !== undefined) {

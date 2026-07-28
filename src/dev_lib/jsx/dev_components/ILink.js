@@ -3,7 +3,7 @@ import {
   DevFunction, ArgTypeError, ObjectObject, verifyTypes, getString,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, clearAttributes, validateJSXInstance,
+  DOMNodeObject, validateJSXInstanceAndGetDOMNode, validateJSXInstance,
 } from "../jsx_components.js";
 import {CAN_POST_FLAG} from "../../query/src/flags.js";
 
@@ -15,27 +15,20 @@ export const render = new DevFunction(
     {callerNode, execEnv, interpreter, thisVal},
     [props = {}]
   ) {
-    validateJSXInstance(thisVal, "ILink", callerNode, execEnv);
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {href, children, onClick} = props;
+    let {className = "i-link", href, children, onClick} = props;
     verifyTypes(
       [href, onClick], ["string?", "function?"], callerNode, execEnv
     );
 
-    // Create the DOM node if it has no been so already.
-    let jsxInstance = thisVal.jsxInstance;
-    let domNode = jsxInstance.domNode;
-    if (!domNode || domNode.tagName !== "A") {
-      domNode = document.createElement("a");
-    }
-    else {
-      clearAttributes(domNode);
-    }
-    domNode.setAttribute("class", "i-link");
+    let domNode = validateJSXInstanceAndGetDOMNode(
+      thisVal, "ILink", "a", className, callerNode, execEnv
+    );
 
     // Add the relative href if provided.
+    let jsxInstance = thisVal.jsxInstance;
     if (href !== undefined) {
       // Call getValidatedPathname() in order to get the absolute href.
       href = getString(href, execEnv);

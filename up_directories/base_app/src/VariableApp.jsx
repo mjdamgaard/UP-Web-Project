@@ -13,7 +13,7 @@ import * as MissingPage from "./MissingPage.jsx";
 
 
 // props : {
-//   appDirID, userID, fetchBestVersionRouteTemplate, AppWrapper?,
+//   appDirID, userID, fetchBestVersionRouteTemplate, AppWrapper,
 //   appWrapperStyle?, goBackToSafety, appProps?, useOriginal?, useStandard?,
 // }.
 
@@ -53,40 +53,34 @@ export function render({
 }) {
   let {AppComponent, appDirID, trustClass} = this.state;
   if (appDirID === undefined) {
-    return <div className="variable-app">
-      <div className="fetching"></div>
-    </div>;
+    return <div className="fetching"></div>;
   }
 
   // Render the AppComponent, wrapped in the 'AppWrapper' component if provided.
   // Note that we make sure to give an unique key to the app component in order
   // to ensure that its states (including local/session storage or history
   // states) do not get mixed up with another.
-  if (!AppComponent) {throw "debug";
+  if (!AppComponent) {
     console.error(abs("~/../" + appDirID + "/main.jsx") + " file is missing");
     return <MissingPage key="m" />;
   }
-  if (AppWrapper) {
-    let isUntrusted = trustClass !== "trusted";
-    if (isUntrusted) this.setContext("username", undefined);
+  let isTrusted = trustClass === "trusted";
+  if (isTrusted) {
+    return <AppComponent key={"a-" + appDirID} {...appProps} />;
+  }
+  else {
+    let isSemiTrusted = trustClass === "semi-trusted";
+    if (!isSemiTrusted) {
+      this.setContext("username", undefined);
+    }
     return (
-      <div className="variable-app" innerStyle={appWrapperStyle} >
-        <AppWrapper key="w" trustClass={trustClass} appDirID={appDirID}
-          isOriginal={useOriginal} isStandard={useStandard}
-          goBackToSafety={goBackToSafety}
-        >
-          <AppComponent key={"a-" + appDirID}
-            {...appProps} untrusted={isUntrusted}
-          />
-        </AppWrapper>
-      </div>
-    );
-  } else {
-    this.setContext("username", undefined);
-    return  (
-      <div className="variable-app">
+      <AppWrapper key="w" trustClass={trustClass} appDirID={appDirID}
+        isOriginal={useOriginal} isStandard={useStandard}
+        goBackToSafety={goBackToSafety} appDirIDSegment={appDirIDSegment}
+        style={appWrapperStyle}
+      >
         <AppComponent key={"a-" + appDirID} {...appProps} untrusted />
-      </div>
+      </AppWrapper>
     );
   }
 }

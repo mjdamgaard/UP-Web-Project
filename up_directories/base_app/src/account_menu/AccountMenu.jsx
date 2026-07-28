@@ -1,5 +1,7 @@
 
 import {logout} from 'account';
+import * as InputText from 'InputText';
+import * as Label from 'Label';
 
 
 export function render({isLoggedIn}) {
@@ -75,6 +77,7 @@ export const methods = [
 
 
 
+const userNameIDKey = Symbol("input-username");
 
 const loginPage = <>
   {/* <div className="go-back-button"></div>
@@ -82,6 +85,8 @@ const loginPage = <>
     <h2>Log in</h2>
     <form action="javascript:void(0);">
       <div className="form-group">
+        <Label key="l-ent" forKey={userNameIDKey}>Username</Label>
+        <InputText key="i" idKey={userNameIDKey} size={60} />
         <label>Username</label>
         <input type="text" className="form-control username"></input>
       </div>

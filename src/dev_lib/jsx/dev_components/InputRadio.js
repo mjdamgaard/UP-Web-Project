@@ -1,9 +1,9 @@
 
 import {
-  DevFunction, ObjectObject, verifyTypes,
+  DevFunction, ObjectObject, verifyTypes, getString,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
-  DOMNodeObject, clearAttributes, validateJSXInstance,
+  DOMNodeObject, clearAttributes, validateJSXInstance, CLASS_NAME_REGEX,
 } from "../jsx_components.js";
 import {getID} from "./getID.js";
 
@@ -18,7 +18,7 @@ export const render = new DevFunction(
     if (props instanceof ObjectObject) {
       props = props.members;
     }
-    let {idKey, name, checked, onChange, onInput} = props;
+    let {className, idKey, name, checked, onChange, onInput} = props;
     verifyTypes(
       [name, onChange, onInput], ["string?", "function?", "function?"],
       callerNode, execEnv
@@ -34,6 +34,14 @@ export const render = new DevFunction(
     }
     else {
       clearAttributes(domNode, ["type", "checked"]);
+    }
+    if (className) {
+      className = getString(className, execEnv);
+      if (!CLASS_NAME_REGEX.test(className)) throw new RuntimeError(
+        `Invalid class name: "${className}"`,
+        callerNode, execEnv
+      );
+      domNode.setAttribute("class", className);
     }
     domNode.setAttribute("type", "radio");
     domNode.setAttribute("class", "input-radio");
