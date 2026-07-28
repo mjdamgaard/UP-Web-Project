@@ -84,13 +84,13 @@ const headerItems = <>
 
 
 export const actions = {
-  "showOverlayPage": function(overlayPageContent) {
+  "openOverlayPage": function(overlayPageContent) {
     this.setState(
       state => ({...state, overlayPageContent: overlayPageContent})
     );
     this.call("am", "close");
   },
-  "removeOverlayPage": function() {
+  "closeOverlayPage": function() {
     this.setState(
       state => ({...state, overlayPageContent: undefined})
     );
@@ -111,8 +111,8 @@ export const actions = {
 };
 
 export const events = [
-  "showOverlayPage",
-  "removeOverlayPage",
+  "openOverlayPage",
+  "closeOverlayPage",
   "showHeader",
   "hideMargins",
   "showMargins",

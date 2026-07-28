@@ -1209,7 +1209,9 @@ class JSXInstance {
 
     // Then call getAbsolutePath() to handle any "./" and "../" segments.
     let pathname = getAbsolutePath(prevPathname, url, node, env);
-    pathname = pathname.replace(/\/$/, "");
+    if (pathname !== "/") {
+      pathname = pathname.replace(/\/$/, "");
+    }
 
     // Finally validate pathname before returning it.
     this.validatePathname(pathname, node, env);

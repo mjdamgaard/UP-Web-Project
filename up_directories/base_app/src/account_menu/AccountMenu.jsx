@@ -17,12 +17,12 @@ export function render({isLoggedIn}) {
 
       <div className="items">
         <div className={isLoggedIn ? "" : " inactive"} onClick={() => {
-          this.trigger("showOverlayPage", accountPage);
+          this.trigger("openOverlayPage", accountPage);
         }}>
           <span>Account</span>
         </div>
         <div className={isLoggedIn ? "" : " inactive"} onClick={() => {
-          this.trigger("showOverlayPage", profilePage);
+          this.trigger("openOverlayPage", profilePage);
         }}>
           <span>Profile</span>
         </div>
@@ -38,12 +38,12 @@ export function render({isLoggedIn}) {
           <span>Log out</span>
         </div>
         <div className={isLoggedIn ? " inactive" : ""} onClick={() => {
-          this.trigger("showOverlayPage", <LoginPage />);
+          this.trigger("openOverlayPage", <LoginPage />);
         }}>
           <span>Log in</span>
         </div>
         <div className={isLoggedIn ? " inactive" : ""} onClick={() => {
-          this.trigger("showOverlayPage", signUpPage);
+          this.trigger("openOverlayPage", signUpPage);
         }}>
           <span>Sign up</span>
         </div>

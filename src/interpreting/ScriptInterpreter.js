@@ -3681,7 +3681,7 @@ export function logExtendedErrorAndTrace(err) {
 
 
 
-const FILENAME_REGEX = /\/[^./]+(?<=[~a-zA-Z0-9_\-])\.[^/]+$/;
+const FILENAME_REGEX = /\/[^./]+(?<=[~a-zA-Z0-9_-])\.[^/]+$/;
 const SEGMENT_TO_REPLACE_REGEX = /(\/\.?\/|\/[^/]+\/\.\.\/|\/?\+)/g;
 const RELATIVE_PATH_START_REGEX = /^(\.\.?\/|~\/|\+)/;
 const HOME_PATH_REGEX = /^\/[0-9a-f]+\/[0-9a-f]+(?=(\/|$))/g;

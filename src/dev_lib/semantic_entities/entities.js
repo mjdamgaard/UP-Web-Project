@@ -3,7 +3,7 @@ import {DevFunction} from "../../interpreting/ScriptInterpreter.js";
 
 const onlyEntPathRegEx = /^\/\S+$/;
 const segmentRegEx = /\$\{[^\s}]+\}|\\([\s\S]|$)|[^\\$]+|[\s\S]/g;
-const internalReferenceRegEx = /^\$\{([/~.a-zA-Z0-9_\-]+)\}$/;
+const internalReferenceRegEx = /^\$\{([/~.a-zA-Z0-9_-]+)\}$/;
 
 
 // replaceReferences() parses a string and returns an array of segments, where

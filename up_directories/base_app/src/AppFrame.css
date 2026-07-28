@@ -201,6 +201,7 @@
 
 
 .overlay-page-container.open .go-back-button {
+  /* TODO: The width extends to the full width of the page. Fix. */
   font-size: 40px;
   padding: 10px;
   margin: 2px 7px;

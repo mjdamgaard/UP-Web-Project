@@ -10,7 +10,7 @@ const ESCAPED_SINGLE_QUOTE_REGEX_G = /(?<!(\\\\)*\\)\\'/g;
 
 const ELEMENT_TYPE_PATTERN = "[a-z][a-z0-9]*";
 
-const ATOMIC_PSEUDO_CLASS_PATTERN = "[a-z][a-z\\-]*";
+const ATOMIC_PSEUDO_CLASS_PATTERN = "[a-z][a-z-]*";
 
 const SELECTOR_DEFINED_PSEUDO_CLASS_PATTERN =
   "(is|where|not)";
@@ -20,13 +20,13 @@ const RELATIVE_SELECTOR_DEFINED_PSEUDO_CLASS_PATTERN =
 
 const INTEGER_DEFINED_PSEUDO_CLASS_PATTERN = "nth-(last-)?(child|of-type)";
 
-const PSEUDO_ELEMENT_PATTERN = "[a-z][a-z\\-]*";
+const PSEUDO_ELEMENT_PATTERN = "[a-z][a-z-]*";
 
 const FLAG_PATTERN =
   "([^\\s\\S])";
 
 
-const PROPERTY_PATTERN = "[a-z\\-]+";
+const PROPERTY_PATTERN = "[a-z-]+";
 
 // We include the comma here as a quick hack to allow for fallback values for
 // e.g. font-family declarations. TODO: Implement this comma in a not-so-hacky
@@ -161,7 +161,7 @@ export const cssGrammar = {
   },
   "class-selector": {
     rules: [
-      [/\./, /[a-z_][a-z0-9_\-]*/],
+      [/\./, /[a-z_][a-z0-9_-]*/],
     ],
     process: (children) => ({
       type: "class-selector",
@@ -201,7 +201,7 @@ export const cssGrammar = {
   },
   // "id-selector": {
   //   rules: [
-  //     [/#[a-z][a-z0-9\-]*/],
+  //     [/#[a-z][a-z0-9-]*/],
   //   ],
   //   process: copyLexemeFromChild,
   //   params: ["id-selector"],
@@ -396,7 +396,7 @@ export const cssGrammar = {
   },
   "identifier": {
     rules: [
-      [/[a-z][a-z\-]*/, "S*"],
+      [/[a-z][a-z-]*/, "S*"],
     ],
     process: (children) => ({
       type: "identifier",
@@ -555,8 +555,8 @@ export class CSSParser extends Parser {
           lexemes: [
             /"([^"\\]|\\[.\n])*"/,
             /'([^'\\]|\\[.\n])*'/,
-/((?<=\s)\-)?(0|[1-9][0-9]*)?(\.[0-9]+)?(?<=[0-9])([eE][\-\+]?(0|[1-9][0-9]*))?[%a-zA-Z0-9_\-]*/,
-            /@?[a-zA-Z0-9_\-]+/,
+/((?<=\s)\-)?(0|[1-9][0-9]*)?(\.[0-9]+)?(?<=[0-9])([eE][\-\+]?(0|[1-9][0-9]*))?[%a-zA-Z0-9_-]*/,
+            /@?[a-zA-Z0-9_-]+/,
             /\|\||::|[.,:;\[\]{}()<>?=+~\-*|^&!%/#]/,
             /[ \t\r\n\f]+/
           ],

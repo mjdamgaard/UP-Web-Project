@@ -11,7 +11,7 @@ const NULL_CHAR_REGEX = /\0/;
 const LEADING_ZERO_PAIRS_REGEX = /^(00)+/;
 const INTEGER_TYPE_REGEX = /^(u)?int(\([1-9][0-9]*\))?$/;
 const FLOAT_TYPE_REGEX =
-  /^float\( *([0-9.E+\-]+)?, *([0-9.E+\-]+)?, *([1-9][0-9]*) *\)$/;
+  /^float\( *([0-9.E+-]+)?, *([0-9.E+-]+)?, *([1-9][0-9]*) *\)$/;
 
 const maxUInts = [
   255,

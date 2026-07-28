@@ -11,7 +11,7 @@ const passwordIDKey = Symbol("input-username");
 export function render({}) {
   let {response} = this.state;
   return <div className="login-page">
-    <div className="go-back-button"></div>
+    <div className="go-back-button" onClick={() => this.do("goBack")}></div>
     <div className="page-content">
     <h2>Log in</h2>
     <Form key="f">
@@ -38,6 +38,9 @@ export function render({}) {
 
 
 export const actions = {
+  "goBack": function() {
+    this.trigger("closeOverlayPage");
+  },
   "submit": function() {
     let username = this.call("f", "call", ["i-usr", "getValue"]);
     let password = this.call("f", "call", ["i-pw", "getValue"]);
