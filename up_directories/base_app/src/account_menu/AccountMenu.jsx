@@ -1,6 +1,9 @@
 
 import {logout} from 'account';
 import * as LoginPage from "./LoginPage.jsx";
+import * as SignupPage from "./SignupPage.jsx";
+import * as AccountPage from "./AccountPage.jsx";
+import * as ProfilePage from "./ProfilePage.jsx";
 
 
 export function render({isLoggedIn}) {
@@ -17,12 +20,12 @@ export function render({isLoggedIn}) {
 
       <div className="items">
         <div className={isLoggedIn ? "" : " inactive"} onClick={() => {
-          this.trigger("openOverlayPage", accountPage);
+          this.trigger("openOverlayPage", <AccountPage />);
         }}>
           <span>Account</span>
         </div>
         <div className={isLoggedIn ? "" : " inactive"} onClick={() => {
-          this.trigger("openOverlayPage", profilePage);
+          this.trigger("openOverlayPage", <ProfilePage />);
         }}>
           <span>Profile</span>
         </div>
@@ -43,7 +46,7 @@ export function render({isLoggedIn}) {
           <span>Log in</span>
         </div>
         <div className={isLoggedIn ? " inactive" : ""} onClick={() => {
-          this.trigger("openOverlayPage", signUpPage);
+          this.trigger("openOverlayPage", <SignupPage />);
         }}>
           <span>Sign up</span>
         </div>

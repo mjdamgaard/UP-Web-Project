@@ -1713,7 +1713,11 @@ export class ScriptInterpreter {
         }
         else if (expNode.subtype === "error") {
           if (!this.isServerSide && !isExiting) {
-            console.error(...expValArr);
+            if (expValArr.length === 1 && expValArr[0] instanceof Exception) {
+              logExtendedErrorAndTrace(expValArr[0]);
+            } else {
+              console.error(...expValArr);
+            }
           }
           log.error = expValArr[0];
         }
