@@ -5,70 +5,70 @@ const serverQueryHandler = new ServerQueryHandler();
 
 
 
-// export function main(userContext, urlContext) {
-//   // Determine whether the user is logged in or not (automatically treating the
-//   // user as logged out if the user session expires within a day). and set a
-//   // CSS class on #account-menu depending on this.
-//   let {userID, username, expTime} =
-//     JSON.parse(localStorage.getItem("userData") ?? "{}");
-//   userContext.setVal({userID: userID});
+export function main(userContext, urlContext) {
+  // Determine whether the user is logged in or not (automatically treating the
+  // user as logged out if the user session expires within a day). and set a
+  // CSS class on #account-menu depending on this.
+  let {userID, username, expTime} =
+    JSON.parse(localStorage.getItem("userData") ?? "{}");
+  userContext.setVal({userID: userID});
 
-//   if (!expTime || expTime * 1000 < Date.now() + 86400000) {
-//     localStorage.clear();
-//     username = "";
-//   }
-//   else {
-//     document.getElementById("account-menu").classList.add("logged-in");
-//     document.getElementById("user-name-display").replaceChildren(username);
+  if (!expTime || expTime * 1000 < Date.now() + 86400000) {
+    localStorage.clear();
+    username = "";
+  }
+  else {
+    document.getElementById("account-menu").classList.add("logged-in");
+    document.getElementById("user-name-display").replaceChildren(username);
 
-//     // Also send a request to replace the token if the expTime is close enough
-//     // to the present.
-//     if (expTime * 1000 < Date.now() + 2678400000) {
-//       let {authToken, userID} =
-//         JSON.parse(localStorage.getItem("userData") ?? "{}");
-//       queryLoginServer(
-//         "replaceToken", undefined, {authToken: authToken}
-//       ).then(res => {
-//         let [newAuthToken, expTime] = res;
-//         localStorage.setItem("userData", JSON.stringify({
-//           userID: userID, username: username,
-//           authToken: newAuthToken, expTime: expTime,
-//         }));
-//       }).catch(err => {
-//         console.error(err);
-//       });
-//     }
-//   }
+    // Also send a request to replace the token if the expTime is close enough
+    // to the present.
+    if (expTime * 1000 < Date.now() + 2678400000) {
+      let {authToken, userID} =
+        JSON.parse(localStorage.getItem("userData") ?? "{}");
+      queryLoginServer(
+        "replaceToken", undefined, {authToken: authToken}
+      ).then(res => {
+        let [newAuthToken, expTime] = res;
+        localStorage.setItem("userData", JSON.stringify({
+          userID: userID, username: username,
+          authToken: newAuthToken, expTime: expTime,
+        }));
+      }).catch(err => {
+        console.error(err);
+      });
+    }
+  }
 
-//   // Add onclick events open and close the account menu.
-//   document.getElementById("account-menu-header").onclick = () => {
-//     document.getElementById("account-menu").classList.add("open");
-//     document.getElementById("up-app-root").onclick = () => {
-//       document.getElementById("account-menu").classList.remove("open");
-//       document.getElementById("up-app-root").onclick = undefined;
-//     };
+  // Add onclick events open and close the account menu.
+  document.getElementById("account-menu-header").onclick = () => {
+    document.getElementById("account-menu").classList.add("open");
+    document.getElementById("up-app-root").onclick = () => {
+      document.getElementById("account-menu").classList.remove("open");
+      document.getElementById("up-app-root").onclick = undefined;
+    };
 
-//   }; 
+  }; 
 
-//   // Add onclick events to the account menu items.
-//   document.getElementById("logout-item").onclick = () => {
-//       logout(userContext, urlContext);
-//   };
-//   document.getElementById("login-item").onclick = () => {
-//       document.getElementById("account-menu").classList.remove("open");
-//       openLoginPage(userContext, urlContext);
-//   };
-//   document.getElementById("create-account-item").onclick = () => {
-//       document.getElementById("account-menu").classList.remove("open");
-//       openCreateAccountPage(userContext, urlContext);
-//   };
-//   document.getElementById("account-page-item").onclick = () => {
-//       openAccountPage(userContext, urlContext);
-//   };
-//   document.getElementById("profile-page-item").onclick = () => {
-//       goToProfilePage(userContext, urlContext);
-//   };
-// }
+  // Add onclick events to the account menu items.
+  document.getElementById("logout-item").onclick = () => {
+      logout(userContext, urlContext);
+  };
+  document.getElementById("login-item").onclick = () => {
+      document.getElementById("account-menu").classList.remove("open");
+      openLoginPage(userContext, urlContext);
+  };
+  document.getElementById("create-account-item").onclick = () => {
+      document.getElementById("account-menu").classList.remove("open");
+      openCreateAccountPage(userContext, urlContext);
+  };
+  document.getElementById("account-page-item").onclick = () => {
+      openAccountPage(userContext, urlContext);
+  };
+  document.getElementById("profile-page-item").onclick = () => {
+      goToProfilePage(userContext, urlContext);
+  };
+}
 
 
 

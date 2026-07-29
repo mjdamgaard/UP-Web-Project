@@ -29,7 +29,7 @@ export function render({}) {
           />
         </div>
         <div className="form-group">
-          <Label key="l-email" forKey={emailIDKey}>E-mail</Label>
+          <Label key="l-email" forKey={emailIDKey}>E-mail (not required)</Label>
           <InputText key="i-email" className="form-control email"
             idKey={emailIDKey}
           />
