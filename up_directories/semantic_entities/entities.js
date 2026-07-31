@@ -9,7 +9,6 @@ import {verifyType, hasType} from 'type';
 import {toUpperCase} from 'string';
 import {mapToArray, keys} from 'object';
 import {forEach, map, reduce} from 'array';
-import {TypeError} from 'error';
 
 const membersRelationPath = "/1/1/em1.js;get/members";
 const entitiesClassPath = "/1/1/em1.js;get/entities";

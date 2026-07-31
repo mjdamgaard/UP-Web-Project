@@ -102,6 +102,12 @@ And here's another point that almost deserves to be included as a footnote as we
 -->
 
 
+<!--
+These "IOU tokens," as we call them here, can also be seen as a kind of
+'corporate bond,' in particular a kind of 'zero-coupon bond' (https://en.wikipedia.org/wiki/Zero-coupon_bond), only where there isn't a fixed payment deadline, a.k.a. "maturity date," but where the maturity date is instead determined by the revenue curve. 
+-->
+
+
 
 ## Utilizing a user-programmable platform
 

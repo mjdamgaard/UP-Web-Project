@@ -188,9 +188,11 @@ export const actions = {
     // Fetch the app component found at main.jsx in the app's home directory,
     // as well as the metadata in the same directory.
     let [AppComponent, metadata] = await Promise.all([
-      import("~/../" + appDirID + "/main.jsx").catch(err => undefined),
+      import("~/../" + appDirID + "/main.jsx").catch(
+        err => console.error(err)
+      ),
       import("~/../" + appDirID + "/metadata.js;get/default").catch(
-        err => undefined
+        err => console.error(err)
       ),
     ]);
 

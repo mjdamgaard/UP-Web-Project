@@ -32,7 +32,7 @@ export function render({children, style}) {
       </div>
       <header className={"app-header" + (hideHeader ? " hidden": "")}>
         <ILink key="logo" href="~/">
-          <span className="logo">UP Web</span>
+          <span className="logo">UP-Web.org</span>
         </ILink>
         <div className="items">
           {(headerItems)}

@@ -3,7 +3,6 @@ import {logout} from 'account';
 import * as LoginPage from "./LoginPage.jsx";
 import * as SignupPage from "./SignupPage.jsx";
 import * as AccountPage from "./AccountPage.jsx";
-import * as ProfilePage from "./ProfilePage.jsx";
 
 
 export function render({isLoggedIn}) {
@@ -24,11 +23,11 @@ export function render({isLoggedIn}) {
         }}>
           <span>Account</span>
         </div>
-        <div className={isLoggedIn ? "" : " inactive"} onClick={() => {
+        {/* <div className={isLoggedIn ? "" : " inactive"} onClick={() => {
           this.trigger("openOverlayPage", <ProfilePage />);
         }}>
           <span>Profile</span>
-        </div>
+        </div> */}
         <div className={isLoggedIn ? "" : " inactive"} onClick={() => {
           logout().then(errMsg => {
             if (errMsg) {

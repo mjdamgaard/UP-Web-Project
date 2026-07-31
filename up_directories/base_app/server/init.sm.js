@@ -1,8 +1,12 @@
 
 import {post} from 'query';
-import {postConstructedEntity} from "../../semantic_entities/entities.js";
+import {checkAdminPrivileges} from 'request';
+import {getNodeID} from 'route';
+import {postConstructedEntity, postAllEntitiesFromModule} from
+  "../../semantic_entities/entities.js";
 import placeholders from "~/placeholders.js";
 
+const upNodeID = getNodeID();
 const {
   this: {directories: {
     "base_app": baseAppDirID,
@@ -16,12 +20,12 @@ export function _init_1() {
   checkAdminPrivileges();
 
   return Promise.all([
-    postAllEntitiesFromModule(abs("~/em1.js")),
+    postAllEntitiesFromModule(abs("~/../semantic_entities/em1.js")),
     postAllEntitiesFromModule(
-      abs("~/score_handling/ScoreHandler01/em.js")
+      abs("~/../semantic_entities/score_handling/ScoreHandler01/em.js")
     ),
-    postAllEntitiesFromModule(abs("~/em2.js")),
-    postAllEntitiesFromModule(abs("~/em3.js")),
+    postAllEntitiesFromModule(abs("~/../semantic_entities/em2.js")),
+    postAllEntitiesFromModule(abs("~/../semantic_entities/em3.js")),
   ]);
 }
 
@@ -31,9 +35,9 @@ export async function _init_2() {
 
   let em3Path = abs("~/../semantic_entities/em3.js");
   await Promise.all([
-    postConstructedEntity(em3Path, "App", [baseAppDirID]),
-    postConstructedEntity(em3Path, "App", [appBrowserDirID]),
-    postConstructedEntity(em3Path, "App", [fileBrowserDirID]),
+    postConstructedEntity(em3Path, "App", [upNodeID, baseAppDirID]),
+    postConstructedEntity(em3Path, "App", [upNodeID, appBrowserDirID]),
+    postConstructedEntity(em3Path, "App", [upNodeID, fileBrowserDirID]),
   ]);
 
   let insertTCRouteSubstr = "./apps/trustClasses.att./_insert/k/";

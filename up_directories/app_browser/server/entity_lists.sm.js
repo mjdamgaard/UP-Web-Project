@@ -1,18 +1,20 @@
 
-import {getHomeDirID} from 'route';
+import {getHomeDirID, getNodeID} from 'route';
 import {map} from 'array';
 import {fetchEntityPath, fetchEntityID} from
   "~/../semantic_entities/entities.js";
+
+const nodeID = getNodeID();
 
 const versionsPath = abs("~/../semantic_entities/em3.js;get/versionsRel");
 const membersPath = abs("~/../semantic_entities/em1.js;get/members");
 const appsPath = abs("~/../semantic_entities/em3.js;get/apps");
 const appBrowserPath = abs("~/../semantic_entities/em3.js;call/App") + "/" +
-  getHomeDirID(abs("~/"));
+  nodeID + "/" + getHomeDirID();
 const baseAppPath = abs("~/../semantic_entities/em3.js;call/App") + "/" +
-  getHomeDirID(abs("~/../base_app"));
+  nodeID + "/" + getHomeDirID(abs("~/../base_app"));
 const fileBrowserPath = abs("~/../semantic_entities/em3.js;call/App") + "/" +
-  getHomeDirID(abs("~/../file_browser"));
+  nodeID + "/" + getHomeDirID(abs("~/../file_browser"));
 
 
 

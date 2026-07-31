@@ -26,36 +26,41 @@ export const isTextFileExtension = new DevFunction(
 
 
 export const getAbsolutePath = new DevFunction(
-  "getAbsolutePath", {typeArr: ["string", "string"]},
-  ({callerNode, execEnv}, [curPath, path]) => {
+  "getAbsolutePath", {typeArr: ["string", "string?"]},
+  ({callerNode, execEnv}, [path, curPath]) => {
+    curPath ??= execEnv.getModuleEnv().modulePath;
     return _getAbsolutePath(curPath, path, callerNode, execEnv);
   },
 );
 
 
 export const getHomePath = new DevFunction(
-  "getHomePath", {typeArr: ["string"]}, (_, [route]) => {
+  "getHomePath", {typeArr: ["string?"]}, ({execEnv}, [route]) => {
+    route ??= execEnv.getModuleEnv().modulePath;
     let [ , homePath] = /^(\/[^/]*\/[^/]*)/.exec(route) ?? [];
     return homePath;
   },
 );
 
 export const getHomeDirID = new DevFunction(
-  "getHomeDirID", {typeArr: ["string"]}, (_, [route]) => {
+  "getHomeDirID", {typeArr: ["string?"]}, ({execEnv}, [route]) => {
+    route ??= execEnv.getModuleEnv().modulePath;
     let [ , homeDirID] = /^\/[^/]*\/([^/]*)/.exec(route) ?? [];
     return homeDirID;
   },
 );
 
 export const getNodeID = new DevFunction(
-  "getNodeID", {typeArr: ["string"]}, (_, [route]) => {
+  "getNodeID", {typeArr: ["string?"]}, ({execEnv}, [route]) => {
+    route ??= execEnv.getModuleEnv().modulePath;
     let [ , nodeID] = /^\/([^/]*)\/[^/]*/.exec(route) ?? [];
     return nodeID;
   },
 );
 
 export const getNodeAndHomeDirID = new DevFunction(
-  "getNodeID", {typeArr: ["string"]}, (_, [route]) => {
+  "getNodeID", {typeArr: ["string?"]}, ({execEnv}, [route]) => {
+    route ??= execEnv.getModuleEnv().modulePath;
     let [ , nodeID, homeDirID] = /^\/([^/]*)\/([^/]*)/.exec(route) ?? [];
     return [nodeID, homeDirID];
   },

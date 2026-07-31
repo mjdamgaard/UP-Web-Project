@@ -3,8 +3,8 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  height: 50px;
-  font-size: 22px;
+  height: 40px;
+  font-size: 18px;
   background-color: #d4dfe4;
 }
 .app-header > .items {
@@ -13,22 +13,26 @@
   width: calc(100% - 290px);
   text-wrap: nowrap;
   overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-gutter: stable both-edges;
 }
 .app-header > .items > * {
   display: inline-block;
+  height: 100%;
+  text-align: center;
 }
 .app-header a {
-  padding: 6px 10px;
+  padding: 4px 8px;
   overflow: hidden;
 }
 .app-header a:hover {
-  background-color: #bfc8ce;
+  /* background-color: #bfc8ce; */
   cursor: pointer;
 }
 .app-header > :first-child {
   display: inline-block;
-  font-size: 28px;
+  margin-right: 5px;
+  font-size: 22px;
   font-family: Garamond, Georgia, 'Times New Roman', Times, serif;
   font-style: oblique;
   letter-spacing: -0.05em;
@@ -102,18 +106,22 @@
   cursor: pointer;
 }
 .account-menu-header img.general-user-icon {
-  height: 40px;
-  width: 40px;
+  height: 32px;
+  width: 32px;
 }
 .account-menu-header .user-icon {
   display: inline-block;
   background-color: darkgray;
-  height: 40px;
-  width: 40px;
-  margin: 6px 6px 2px 6px;
-  border-radius: 20px;
+  height: 32px;
+  width: 32px;
+  margin: 2px 5px 4px 5px;
+  border-radius: 16px;
   box-shadow: 2px 2px 4px rgb(133, 133, 133),
     -1px -1px 2px rgb(165, 165, 165);
+  text-align: center;
+}
+.account-menu-header .user-icon > * {
+  color: black;
 }
 .account-menu:not(.open) .account-menu-header .user-icon:hover {
   box-shadow: 2px 2px 4px rgb(133, 133, 133),
@@ -125,6 +133,7 @@
   display: inline-block;
   margin: 6px 2px 2px 6px;
   color:rgb(67, 67, 255);
+  font-size: 17px;
 }
 
 .account-menu .items {
@@ -201,8 +210,8 @@
 
 
 .overlay-page-container.open .go-back-button {
-  /* TODO: The width extends to the full width of the page. Fix. */
   font-size: 40px;
+  width: 50px;
   padding: 10px;
   margin: 2px 7px;
 }

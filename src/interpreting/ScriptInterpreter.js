@@ -935,7 +935,11 @@ export class ScriptInterpreter {
         } else if (type === "return-statement") {
           throw new ReturnException(expVal, stmtNode, environment);
         } else {
-          throw new Exception(expVal, stmtNode, environment);
+          let errNode = stmtNode, errEnv = environment;
+          if (expVal instanceof ObjectObject && expVal.errNode !== undefined) {
+            ({errNode, errEnv} = expVal);
+          }
+          throw new Exception(expVal, errNode, errEnv);
         }
       }
       case "try-catch-statement": {
@@ -1713,8 +1717,14 @@ export class ScriptInterpreter {
         }
         else if (expNode.subtype === "error") {
           if (!this.isServerSide && !isExiting) {
-            if (expValArr.length === 1 && expValArr[0] instanceof Exception) {
-              logExtendedErrorAndTrace(expValArr[0]);
+            let expVal = expValArr[0];
+            if (
+              expValArr.length === 1 && expVal instanceof ObjectObject &&
+              expVal.errNode !== undefined
+            ) {
+              let {errNode, errEnv} = expVal;
+              let err = new Exception(expVal, errNode, errEnv);
+              logExtendedErrorAndTrace(err);
             } else {
               console.error(...expValArr);
             }
@@ -3525,6 +3535,8 @@ export class ExceptionClassObject extends ClassObject {
       this.instancesAreArrays, this.instancesAreMaps,
     );
     newInst.isMutable = this.instancesAreMutable;
+    newInst.errNode = undefined;
+    newInst.errEnv = undefined;
     return newInst;
   }
 }
@@ -3557,6 +3569,7 @@ export class ParserError extends Exception {
     super(syntaxErrorClass.getNewInstance(
       [message], node, environment), node, environment
     );
+    Object.assign(this.val, {errNode: node, errEnv: environment});
   }
 }
 export class RuntimeError extends Exception {
@@ -3564,6 +3577,7 @@ export class RuntimeError extends Exception {
     super(runtimeErrorClass.getNewInstance(
       [message], node, environment), node, environment
     );
+    Object.assign(this.val, {errNode: node, errEnv: environment});
   }
 }
 export class LoadError extends Exception {
@@ -3571,6 +3585,7 @@ export class LoadError extends Exception {
     super(loadErrorClass.getNewInstance(
       [message], node, environment), node, environment
     );
+    Object.assign(this.val, {errNode: node, errEnv: environment});
   }
 }
 export class NetworkError extends Exception {
@@ -3578,6 +3593,7 @@ export class NetworkError extends Exception {
     super(networkErrorClass.getNewInstance(
       [message], node, environment), node, environment
     );
+    Object.assign(this.val, {errNode: node, errEnv: environment});
   }
 }
 export class OutOfGasError extends Exception {
@@ -3585,6 +3601,7 @@ export class OutOfGasError extends Exception {
     super(outOfGasErrorClass.getNewInstance(
       [message], node, environment), node, environment
     );
+    Object.assign(this.val, {errNode: node, errEnv: environment});
   }
 }
 export class ArgTypeError extends Exception {
@@ -3592,6 +3609,7 @@ export class ArgTypeError extends Exception {
     super(typeErrorClass.getNewInstance(
       [message], node, environment), node, environment
     );
+    Object.assign(this.val, {errNode: node, errEnv: environment});
   }
 }
 

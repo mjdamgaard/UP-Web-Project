@@ -7,8 +7,8 @@ import {verifyTypes} from 'type';
 // defined by a home directory, which is supposed to contain a main.jsx module
 // defining the app, as well as a metadata.js file which can define other
 // (entity) properties.
-export async function App(appDirID, upNodeID = undefined) {
-  verifyTypes([appDirID, upNodeID], ["hex", "hex?"]);
+export async function App(upNodeID, appDirID) {
+  verifyTypes([appDirID, upNodeID], ["hex", "hex"]);
 
   // Import and parse the metadata.js file in the app directory, then add its
   // properties to the returned entity definition.

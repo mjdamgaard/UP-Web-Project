@@ -39,7 +39,7 @@ export async function initialize({
   let fetchFun = userID && !useStandard ? fetchPrivate : fetch;
   let {appDirID: resAppDirID, trustClass} = await fetchFun(fetchAppRoute);
   let AppComponent = await import("~/../" + appDirID + "/main.jsx").catch(
-    err => undefined
+    err => console.error(err)
   );
   this.setState({
     AppComponent: AppComponent, appDirID: resAppDirID, trustClass: trustClass,

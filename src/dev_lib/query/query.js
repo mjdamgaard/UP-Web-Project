@@ -642,16 +642,6 @@ export const post = new DevFunction(
 
 
 
-export const getCurrentHomePath = new DevFunction(
-  "getCurrentHomePath", {},
-  function({execEnv}, []) {
-    let curRoute = execEnv.getModuleEnv().modulePath ?? "";
-    let [ret] = curRoute.match(/^\/[^/]+\/[^/]+/g) ?? [];
-    return ret; 
-  }
-);
-
-
 
 
 export const encodeURIComponent = new DevFunction(
