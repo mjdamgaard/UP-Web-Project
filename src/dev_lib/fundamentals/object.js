@@ -2,6 +2,7 @@
 import {
   DevFunction, forEachValue, mapValues, ObjectObject, verifyType,
 } from "../../interpreting/ScriptInterpreter.js";
+export {toString} from "./string.js";
 
 
 

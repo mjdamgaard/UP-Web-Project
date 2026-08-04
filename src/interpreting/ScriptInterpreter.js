@@ -16,6 +16,18 @@ export const OBJECT_PROTOTYPE = Object.getPrototypeOf({});
 export const ARRAY_PROTOTYPE = Object.getPrototypeOf([]);
 export const MAP_PROTOTYPE = Object.getPrototypeOf(new Map());
 
+const objectMethods = ["toString"];
+const arrayMethods = [
+  "toString", "at", "slice", "map", "reduce", "forEach", "some", "every",
+  "join", "concat", "includes", "indexOf", // TODO: Continue when implemented.
+];
+const stringMethods = [
+  "toString", "at", "substring", "slice", "indexOf", "split", "toUpperCase",
+  "toLowerCase", "trim", "replace", "replaceAll", // TODO: Continue when impl.
+];
+const numberMethods = ["toString", "toPrecision"];
+
+
 const MAX_ARRAY_INDEX = Number.MAX_SAFE_INTEGER;
 const MINIMAL_TIME_GAS = 10;
 const TRACE_LENGTH_CS = 15;
@@ -2046,41 +2058,62 @@ export class ScriptInterpreter {
     // property. Also check against accessing members of a non-object.
     let objProto = getPrototypeOf(objVal);
     if (objProto === OBJECT_PROTOTYPE) {
-      val = Object.hasOwn(objVal, key) ? objVal[key] : undefined;
+      val = Object.hasOwn(objVal, key) ? objVal[key] :
+        objectMethods.includes(key) ?
+          this.getDevMethod(objVal, 'object', key) : undefined;
     }
-    else {
-      if (objProto === ARRAY_PROTOTYPE) {
-        if (key === "length"){
-          val = objVal.length;
-        } else {
-          val = Object.hasOwn(objVal, key) ? objVal[key] : undefined;
-        }
+    else if (objProto === ARRAY_PROTOTYPE) {
+      if (key === "length"){
+        val = objVal.length;
+      } else {
+        val = Object.hasOwn(objVal, key) ? objVal[key] :
+          arrayMethods.includes(key) ?
+            this.getDevMethod(objVal, 'array', key) : undefined;
       }
-      else if (objVal instanceof ObjectObject) {
-        val = objVal.get(key);
+    }
+    else if (objVal instanceof ObjectObject) {
+      val = objVal.get(key);
+      if (val === undefined && objectMethods.includes(key)) {
+        val = this.getDevMethod(objVal, 'object', key);
       }
-      else if (typeof objVal === "string") {
-        if (key === "length") {
-          val = objVal.length;
+    }
+    else if (typeof objVal === "string") {
+      if (key === "length") {
+        val = objVal.length;
+      }
+      else {
+        let intKey = parseInt(key);
+        if (!Number.isNaN(intKey) && intKey == key) {
+          val = objVal[intKey];
         }
         else {
-          let intKey = parseInt(key);
-          if (!Number.isNaN(intKey) && intKey == key) {
-            val = objVal[intKey];
-          }
-          else {
-            val = undefined;
-          }
+          val = stringMethods.includes(key) ?
+            this.getDevMethod(objVal, 'string', key) : undefined
         }
       }
-      else throw new RuntimeError(
-        "Trying to access a member of a non-object: " +
-        getString(objVal, environment),
-        accessor, environment
-      );
     }
+    else if (typeof objVal === "number") {
+      val = numberMethods.includes(key) ?
+        this.getDevMethod(objVal, 'number', key) : undefined
+    }
+    else throw new RuntimeError(
+      "Trying to access a member of a non-object: " +
+      getString(objVal, environment),
+      accessor, environment
+    );
 
     return [val, key];
+  }
+
+  getDevMethod(objVal, devLibName, key) {
+    let methodFun = this.staticDevLibs.get(devLibName)[key];
+    return new DevFunction(
+      key, {}, ({callerEnv, execEnv}, inputArr) => {
+        return this.executeFunction(
+          methodFun, [objVal, ...inputArr], callerEnv, execEnv
+        );
+      }
+    );
   }
 
 }

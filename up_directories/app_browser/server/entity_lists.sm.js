@@ -1,6 +1,5 @@
 
 import {getHomeDirID, getNodeID} from 'route';
-import {map} from 'array';
 import {fetchEntityPath, fetchEntityID} from
   "~/../semantic_entities/entities.js";
 
@@ -41,5 +40,5 @@ export async function fetchList(objKey, relKey) {
     }
   }
 
-  return map(subjIDArr, subjID => [subjID, 5]);
+  return subjIDArr.map(subjID => [subjID, 5]);
 }

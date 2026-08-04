@@ -1,5 +1,6 @@
 
 import {DevFunction} from "../../interpreting/ScriptInterpreter.js";
+export {toString} from "./string.js";
 
 
 

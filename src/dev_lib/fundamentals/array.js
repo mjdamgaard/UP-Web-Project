@@ -2,6 +2,7 @@
 import {
   DevFunction, forEachValue, ObjectObject, getString, mapValues, verifyType,
 } from "../../interpreting/ScriptInterpreter.js";
+export {toString} from "./string.js";
 
 
 export const at = new DevFunction(
@@ -61,13 +62,28 @@ export const forEach = new DevFunction(
 export const some = new DevFunction(
   "some", {typeArr: ["any", "function"]},
   ({callerNode, execEnv, interpreter}, [arr, fun]) => {
-    let stop = false;
+    let found = false;
     forEachValue(arr, callerNode, execEnv, (val, ind) => {
-      if (stop) return;
-      stop = interpreter.executeFunction(
+      if (found) return;
+      found = interpreter.executeFunction(
         fun, [val, ind], callerNode, execEnv
       );
     });
+    return found;
+  }
+);
+
+export const every = new DevFunction(
+  "every", {typeArr: ["any", "function"]},
+  ({callerNode, execEnv, interpreter}, [arr, fun]) => {
+    let found = false;
+    forEachValue(arr, callerNode, execEnv, (val, ind) => {
+      if (found) return;
+      found = !interpreter.executeFunction(
+        fun, [val, ind], callerNode, execEnv
+      );
+    });
+    return !found;
   }
 );
 

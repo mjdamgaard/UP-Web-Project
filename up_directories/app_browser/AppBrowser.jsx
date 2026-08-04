@@ -1,6 +1,4 @@
 
-import {join} from 'string';
-import {indexOf, slice, at, reduce} from 'array';
 import {hasType} from 'type';
 import {fetchEntityID} from "../semantic_entities/entities.js";
 import * as EntityPage from "./src/EntityPage.jsx";
@@ -50,10 +48,10 @@ export function render() {
 
   // If the URL is of the form '/apps/.../path<entPath>', fetch the
   // corresponding entity ID, and replace the URL.
-  let indOfPathSegment = indexOf(restSegments, "path");
+  let indOfPathSegment = restSegments.indexOf("path");
   if (indOfPathSegment !== -1) {
     let {entIDIsMissing, curEntPathRef} = this.state;
-    let entPath = "/" + join(slice(restSegments, indOfPathSegment + 1), "/");
+    let entPath = "/" + restSegments.slice(indOfPathSegment + 1).join("/");
     if (curEntPathRef[0] === entPath && entIDIsMissing) {
       return missingPageJSX;
     }
@@ -62,7 +60,7 @@ export function render() {
       if (entID) {
         this.replaceURL(
           "~/apps/" + segment2 + "/" +
-          join(slice(restSegments, 0, indOfPathSegment), "/") + "/" + entID
+          restSegments.slice(0, indOfPathSegment).join("/") + "/" + entID
         );
       } else if (curEntPathRef[0] === entPath) {
         this.setState(state => ({...state, entIDIsMissing: true}))
@@ -75,30 +73,30 @@ export function render() {
   // '/apps/cat(/<entID>)+' parse the ancestor category IDs, the ancestor app
   // IDs, and the final entity ID in the URL.
   let type, ancCatIDs = [], ancAppIDs = [];
-  let entID = at(restSegments, -1);
+  let entID = restSegments.at(-1);
   if (segment2 === "app") {
     type = "app";
-    ancAppIDs = slice(restSegments, 0, -1);
+    ancAppIDs = restSegments.slice(0, -1);
   }
   else {
-    let indOfAppSegment = indexOf(restSegments, "app");
+    let indOfAppSegment = restSegments.indexOf("app");
     if (indOfAppSegment === -1) {
       type = "cat";
-      ancCatIDs = slice(restSegments, 0, -1);
+      ancCatIDs = restSegments.slice(0, -1);
     }
     else {
       type = "app";
-      ancCatIDs = slice(restSegments, 0, indOfAppSegment);
-      ancAppIDs = slice(restSegments, indOfAppSegment + 1, -1);
+      ancCatIDs = restSegments.slice(0, indOfAppSegment);
+      ancAppIDs = restSegments.slice(indOfAppSegment + 1, -1);
     }
   }
 
   // Then validate the extracted entity IDs.
-  let isValid = hasType(entID, "hex") && reduce(
-    ancCatIDs, (acc, val) => acc && hasType(val, "hex"),
+  let isValid = hasType(entID, "hex") && ancCatIDs.reduce(
+    (acc, val) => acc && hasType(val, "hex"),
     true
-  ) && reduce(
-    ancAppIDs, (acc, val) => acc && hasType(val, "hex"),
+  ) && ancAppIDs.reduce(
+    (acc, val) => acc && hasType(val, "hex"),
     true
   );
   if (!isValid) {
