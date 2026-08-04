@@ -1,25 +1,35 @@
 
-import {
-  split, at as atStr, toString, slice as sliceStr, indexOf
-} from 'string';
-import {slice as sliceArr, at as atArr, join, map} from 'array';
-import {parseRoute, isTextFileExtension} from 'route';
-import {hasType} from 'type';
+import {split, trim} from 'string';
+import {join, map} from 'array';
+import {parseRoute, isTextFileExtension, getAbsolutePath} from 'route';
 import {fetch, encodeURI} from 'query';
-import {getUserEntPath, postEntity} from "/1/1/entities.js";
 
 import * as ILink from 'ILink';
+import * as InputText from 'InputText';
+import * as MissingPage from "../base_app/src/MissingPage.jsx";
 import * as EntityReference from "../utilities/EntityReference.jsx";
-import * as TextDisplay from "../utilities/TextDisplay.jsx";
+import * as FileBrowserPage from "./src/FileBrowserPage.jsx";
 
 
 
-// initialize() parses the input route, and in the special case where the
-// route includes only directories, it reinterprets the route by adding a ';'
-// right after the homeDirID, which casts the "/<upNodeID>/<homeDirID>" result
-// into a list of children of the specific subdirectory pointed to by route.
-export function initialize({route: extRoute}) {
-  if (atStr(extRoute, -1) === "/") extRoute = sliceStr(extRoute, 0, -1);
+export function render({style}) {
+  let content;
+
+  // First we parse the input route, and in the special case where the route
+  // includes only directories, we reinterpret the route by adding a ';' right
+  // after the homeDirID, which casts the "/<upNodeID>/<homeDirID>" result into
+  // a list of children of the specific subdirectory pointed to by route.
+  let [firstSegment, ...restSegments] = this.getSegments();
+  let extRoute = "/" + join(restSegments, "/");
+  if (firstSegment !== "files") {
+    this.replaceURL("~/files" + (restSegments[0] ? extRoute : ""));
+    return <div className="fetching"></div>;
+  }
+
+  if (!restSegments[0]) {
+    content = <div className="fetching"></div>;
+  }
+
   // Parse and the (extended) route.
   let [route, ...castingSegments] = split(extRoute, ";");
   let isLocked, upNodeID, homeDirID, localPath, dirSegments, fileName,
@@ -30,8 +40,9 @@ export function initialize({route: extRoute}) {
       queryPathSegments
     ] = parseRoute(route);
   }
-  catch (_) {
-    return {isInvalid: true};
+  catch (err) {
+    console.error(err);
+    return <div className="invalid-route">{"Invalid route: "}{route}</div>;
   }
 
   // Calculate the home path of the route.
@@ -67,14 +78,45 @@ export function initialize({route: extRoute}) {
   // Record wether a separate query for the text file should be made.
   let fetchFile = isTextFileQuery || isTextFile && castingSegments.length > 0;
 
-  return {
-    extRoute: extRoute, isLocked: isLocked, routeHomePath: routeHomePath,
-    localPath: localPath,
-    transformedRoute: transformedRoute, isDirectoryPath: isDirectoryPath,
-    fetchFile: fetchFile, isTextFile: isTextFile,
-    routeJSXWithSubLinks: routeJSXWithSubLinks,
-  };
-} 
+  if (isLocked || !routeHomePath) {
+    content ??= <div className="invalid-route">{"Invalid route: "}{route}</div>;
+  }
+
+  content ??= <FileBrowserPage key="p"
+    extRoute={extRoute} routeHomePath={routeHomePath} localPath={localPath}
+    transformedRoute={transformedRoute} isDirectoryPath={isDirectoryPath}
+    fetchFile={fetchFile} isTextFile={isTextFile} route={route}
+    routeJSXWithSubLinks={routeJSXWithSubLinks}
+  />;
+
+  // Redirect to FileBrowserPage which fetches the necessary data and renders
+  // the file browser from there. 
+  return <div className="app-browser" innerStyle={style}>
+    <div className="search-bar">
+      <InputText key="i-search" size={60} placeholder="Insert route here"
+        onKeyDown={e => (!e.repeat && e.key === "Enter") && this.do("go")}
+      />
+      <button onClick={() => this.do("go")}>Go</button>
+    </div>
+    {(content)}
+  </div>;
+}
+
+
+
+export const actions = {
+  "go": function() {
+    let relExtRoute = this.call("i-search", "getValue");
+    relExtRoute = trim(relExtRoute ?? "");
+    if (relExtRoute) {
+      let [ , ...restSegments] = this.getSegments();
+      let curExtRoute = "/" + join(restSegments, "/");
+      let newExtRoute = getAbsolutePath(relExtRoute, curExtRoute);
+      this.call("i-search", "setValue", "");
+      this.replaceURL("~/files/" + newExtRoute);
+    }
+  }
+};
 
 
 
@@ -129,139 +171,4 @@ function getRouteJSXWithSubLinks(
     ...map(castingLinks, link => [semicolonDelimiter, link]),
   ];
 }
-
-
-
-
-export function render({route}) {
-  if (atStr(route, -1) === "/") route = sliceStr(route, 0, -1);
-  let {
-    isInvalid, isMissing, extRoute, isLocked, routeHomePath, localPath,
-    transformedRoute, isDirectoryPath, fetchFile, isTextFile,
-    routeJSXWithSubLinks,
-    adminID, fileText, result
-  } = this.state;
-  let content;
-
-  // If the route changes (significantly), reset adminID, fileText, and result.
-  if (route !== extRoute) {
-    this.setState(initialize(this.props));
-  }
-
-  if (isLocked || isInvalid || !routeHomePath) {
-    content = <div className="invalid-route">{"invalid route: "}{route}</div>;
-  }
-  else if (isMissing) {
-    content = <div className="missing">{"missing"}</div>;
-  }
-
-  // Before any fetches has been made, fetch the admin ID, the result pointed
-  // to by the route, and potentially the text file content as well if the
-  // route is a path to a text file plus a query path.
-  else if (adminID === undefined) {
-    this.setState(state => ({...state, adminID: false}));
-    fetch(routeHomePath + "./admin").then(adminID => {
-      this.setState(state => ({...state, adminID: adminID ? adminID : "None"}));
-    });
-    fetch(transformedRoute).then(result => {
-      this.setState(state => ({...state, result: result}));
-    });
-    if (fetchFile) {
-      fetch(routeHomePath + "/" + localPath + ";string").then(text => {
-        this.setState(state => ({...state, fileText: text}));
-      });
-    }
-    content = <div className="fetching"></div>;
-  }
-
-  else if (
-    !adminID || result === undefined || fetchFile && fileText === undefined
-  ) {
-    content = <div className="fetching"></div>;
-  }
-
-  else {
-    // Break up the result into lines with line numbers in front, unless the
-    // route is a directory route, in which case let each line be an ILink
-    // to the given child of the directory.
-    let transformedResult = isDirectoryPath ?
-      map((result ?? []), (child, ind) => {
-        let isFile = (indexOf(child, ".") !== -1);
-        return <div className={isFile ? "file-link" : "directory-link"}>
-          <ILink key={"child" + ind} href={
-            "~/f" + encodeURI(route + "/" + child)
-          }>
-            {child}
-          </ILink> 
-        </div>;
-      }) :
-      (hasType(result, "JSXElement")) ?
-        <TextDisplay key="_result" untrusted jsxElement={result} /> :
-        isTextFile ?
-          <code className="jsx numbered">{toString(result, true)}</code> :
-          <div>{toString(result, true)}</div>;
-        // map(split(toString(result, true), "\n"), (line, ind) => (
-        //   <code className="line">{ind + 1}{": "}{line}<br/></code>
-        // ));
-
-    // // And in case of a text file query, break up the fileText into individual
-    // // lines with line numbers in front.
-    // let brokenUpText = fetchFile ? map(
-    //   split(fileText, "\n"), (line, ind) => (
-    //     <code className="line">{ind + 1}{": "}{line}<br/></code>
-    //   )
-    // ) : undefined;
-
-    // Then construct the final content.
-    content = [
-      <hr/>,
-      result?.Class ? [
-        <div className="submit-entity">
-          {
-            "The result seems to be a semantic entity. Want to submit it " +
-            "and go to its entity page?"
-          }
-          <div>
-            <button onClick={() => {
-              postEntity(route).then(entID => {
-                this.trigger("pushURL", "~/e/" + entID);
-              });
-            }}>{"Submit and go to page"}</button>
-          </div>
-        </div>,
-        <hr/>,
-      ] : undefined,
-      <div className="admin">{"Admin: "}{(
-        adminID ? <EntityReference key="admin"
-          entKey={getUserEntPath("1", adminID)}
-        /> : "None"
-      )}</div>,
-      <hr/>,
-      <div className="result">{(
-        isTextFile && !fetchFile ? <h3>{"File contents"}</h3> :
-          isDirectoryPath ? <h3>{"Directory contents"}</h3> :
-            <h3>{"Result"}</h3>
-        )}
-        <div>{(transformedResult)}</div>
-      </div>,
-      <hr/>,
-      fetchFile ? <div className="text-file-content">
-        <h3>{"File contents"}</h3>
-        {/* TODO: Use different CSS classes for different file types. */}
-        {/* TODO: And at some later point, implement syntax highlighting. */}
-        <code className="jsx numbered">
-          {fetchFile ? fileText : undefined}
-        </code>
-      </div> : undefined,
-    ];
-  }
-
-  return (
-    <div className="file-browser">
-      <div className="route">{(routeJSXWithSubLinks)}</div>
-      {(content)}
-    </div>
-  );
-}
-
 

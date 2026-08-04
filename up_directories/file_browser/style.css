@@ -1,0 +1,6 @@
+.search-bar {
+  margin: 10px;
+}
+.search-bar + * {
+  margin: 10px;
+}

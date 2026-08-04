@@ -19,14 +19,14 @@ export const render = new DevFunction(
       props = props.members;
     }
     let {
-      className, idKey, size, value, placeholder, onChange, onInput, lockFocus,
-      autocomplete, type,
+      className, idKey, size, value, placeholder, lockFocus, autocomplete,
+      type, onChange, onInput, onKeyDown, onKeyUp,
     } = props;
     if (lockFocus) className = !className ? "lock-focus" :
       getString(className, execEnv) + " lock-focus";
     verifyTypes(
-      [size, onChange, onInput],
-      ["integer positive?", "function?", "function?"],
+      [size, onChange, onInput, onKeyDown, onKeyUp],
+      ["integer positive?", "function?", "function?", "function?", "function?"],
       callerNode, execEnv
     );
     let id = idKey === undefined ? undefined : getID(idKey);
@@ -76,6 +76,38 @@ export const render = new DevFunction(
         interpreter.executeFunctionOffSync(
           onInput, [e], callerNode, execEnv, thisVal
         );
+      };
+    }
+
+    // Set the oninput event if onKeyDown and/or onKeyUp is supplied.
+    if (onKeyDown) {
+      domNode.onkeydown = (event) => {
+        let {key, repeat, ctrlKey, altKey, shiftKey, metaKey} = event;
+        let e = {
+          key: key, repeat: repeat, ctrlKey: ctrlKey, altKey: altKey,
+          shiftKey: shiftKey, metaKey: metaKey,
+        };
+        let ret = interpreter.executeFunctionOffSync(
+          onKeyDown, [e], callerNode, execEnv, thisVal
+        );
+        if (!(ret ?? true)) {
+          event.stopPropagation();
+        }
+      };
+    }
+    if (onKeyUp) {
+      domNode.onkeyup = (event) => {
+        let {key, repeat, ctrlKey, altKey, shiftKey, metaKey} = event;
+        let e = {
+          key: key, repeat: repeat, ctrlKey: ctrlKey, altKey: altKey,
+          shiftKey: shiftKey, metaKey: metaKey,
+        };
+        let ret = interpreter.executeFunctionOffSync(
+          onKeyUp, [e], callerNode, execEnv, thisVal
+        );
+        if (!(ret ?? true)) {
+          event.stopPropagation();
+        }
       };
     }
 

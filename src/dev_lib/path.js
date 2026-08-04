@@ -5,8 +5,9 @@ import {
 
 
 export const getAbsolutePath = new DevFunction(
-  "getAbsolutePath", {typeArr: ["string", "string"]},
-  ({callerNode, execEnv}, [curPath, path]) => {
+  "getAbsolutePath", {typeArr: ["string", "string?"]},
+  ({callerNode, execEnv}, [path, curPath]) => {
+    curPath ??= execEnv.getModuleEnv().modulePath;
     return _getAbsolutePath(curPath, path, callerNode, execEnv);
   },
 );
