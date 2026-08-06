@@ -59,11 +59,9 @@ The platform thus keeps track of the resources that each user consumes, but does
 Note that since the platform is able to host any kind of app, including any kind of website that you can imagine, personal or otherwise, you will thus be able to have any kind of website that you want hosted essentially for free and in perpetuity by a user-programmable platform: You only pay the small cost of storing the source code for your website (which might even be covered by a free plan), and the visitors/users of your site will carry the rest of the costs.
 
 
-
 ### User authentication is handled globally on the platform
 
 The apps of a user-programmable platform never have to (and should never) implement their own user authentication procedures. Instead user authentication is handled by the platform on a global level. And whenever a user-programmed server function is called, any authentication will have already taken place beforehand, and the function will have access to the user's global ID if the authentication succeeded.
-
 
 
 ### An open and decentralized network
@@ -71,6 +69,19 @@ The apps of a user-programmable platform never have to (and should never) implem
 A user-programmable platform also ought to allow for decentralization, namely by allowing apps on one platform to communicate and transfer data with other platforms, in particular other user-programmable platforms, as well as any other platform that utilizes open protocols.  
 
 
+
+## Proposed business model
+
+Each user of the platform has an amount of resources that they can use for free each month, both in terms of storage space and computational resources. And if they need to use more than what the free plan allows, they can either subscribe to a paid plan, or turn on ads for the platform. In other words, the platform can utilize the same common sources of revenue as other platforms.
+
+And since the platform is open-source at its core, it can also potentially attract individual donations, sponsorships, and grants, similarly to other open-source projects.
+
+Additionally, while the platform itself is open-source, the user-uploaded apps do not necessarily have to be. Some developers thus might want to use a different kind of license for their software that allows them to monetize it more efficiently, instead of relying purely on voluntary donations. The platform should help facilitate this, and thus provide several options of monetization for the developers to choose from. And in return, the platform can require a cut of the revenue that these apps generate.
+
+Lastly, it is also worth mentioning that the platform can choose to differentiate between regular, private users and users who use the software on behalf of a company, and require the latter to use a different set of subscription plans, perhaps charging them more.
+
+
+<!--
 
 ## Proposed core business model
 
@@ -84,7 +95,7 @@ And apart from subscription models, the platform can also potentially allow its 
 [...] The users just determines themselves whether ads should be shown or not, how many ads should be shown, and how intrusive vs. non-intrusive they should be. The latter will then be a global setting, i.e. the intrusiveness, and so will whether to see any ads or not, such that all ad-showing (dev) components will just automatically collapse if that setting is off. And in terms of volume, this is technically just a matter for the apps to decide. But they are supposed to read and adhere to the user's ad volume setting (and they don't benefit from not doing this, only on the contrary). But the ad-showing components can also perhaps make this easier by adjusting the ad volume automatically.
 
 And here's the important point: The ads then ought to once in a while show a CAPTCHA, that the user is supposed to react to and answer in order to get more gas/tokens. Then these CAPTCHA samples are supposed to be random, and only occur with low enough frequency, and with high enough gas rewards, that the user will benefit from and generally be interested in submitting the CAPTCHA answers.  
--->
+- ->
 
 
 
@@ -92,7 +103,7 @@ And here's the important point: The ads then ought to once in a while show a CAP
 
 While a user-programmable platform could certainly be based purely on open-source contributions, and on the willingness of its users to improve the platform for themselves and others, there are also other possible models which allow the developing users to actually be rewarded for their contributions, and which can also make the platform more interesting for investors.
 
-<!-- Such a model might be especially interesting if a user-programmable platform wants to succeed in the space of business applications, and not just web and mobile applications, since business customers will generally happily pay more in order to get quick and reliable updates and maintenance of the software. -->
+<!-- Such a model might be especially interesting if a user-programmable platform wants to succeed in the space of business applications, and not just web and mobile applications, since business customers will generally happily pay more in order to get quick and reliable updates and maintenance of the software. - ->
 
 We thus propose utilizing the model of an '[open tech cooperative](open_tech_cooperative.md),' on top of the proposed core business model, in order for the platform to be able to attract more contributions, and more investments as well.
 
@@ -102,6 +113,7 @@ And by promising investors a share of this profit as well, this model can thus a
 
 You can read more about this model of an 'open tech cooperative' [here](open_tech_cooperative.md).
 
+-->
 
 
 ## The evolution of AI increases the advantages of user-programmable platforms
@@ -120,6 +132,28 @@ And due to the sandboxing of the all user-uploaded code, a user-programmable pla
 
 ## Use cases
 
+* A great use case for a user-programmable platform is to implement a social media app that allows its users to extend and modify the feed algorithms arbitrarily, and not least allows each individual user to choose exactly the algorithm that suits them the best, both in terms of what is and is not shown in their feed, as well as what data is and is not collected about them.
+
+* Such a social media app would also be able to allow its users to create their own profile pages, with endless possibilities for customization, similarly to creating your own website. And by allowing users to upload and share templates for such profile pages with each other, it will not necessarily require any experience with programming in order to get a profile page that suits you.
+
+* In a similar vein, this social media app could also allow users to customize their user group pages arbitrarily, also by allowing users to upload and share their own templates, which anyone that creates a new user group can then freely choose from. And since such templates can implement their own accompanying back end as well, there is no limit to what kind of apps and widgets you can get for your user group:
+    - Maybe you want more than just a single wall of posts for your user group? Maybe you want to be able to create specific sub-threads for specific subjects, and with a specific set of moderators?
+    - Maybe you want a shared calender widget where you can see all the events that relates to the group in one place?
+    - Maybe you want to be able to create formal votes for the members of the group, with a fixed deadline, and where the members get notifications that help remind them to cast their vote?
+    - Maybe you want a tool to help you organize things for the group, such as planning responsibilities, scheduling carpools, etc.?
+    - Maybe you want some shared documents that only the members of the group have access to, and where the members can potentially edit these documents, or at least submit proposed edits?
+    - And maybe you want non-members to also have access to some public pages of the user group, where they can update themselves on the goings-on of the group, and potentially submit questions or requests to it?
+Everything that that you can imagine for a website or app is also possible for these customized user groups. And as AI continues to develop, more and more users will likely be able to participate in the making of new user group templates, adding more useful features and layouts to choose from. 
+
+<!-- * Another great use case for a user-programmable platform is for building and sharing business applications, and templates for such. With the development of AI, it has become harder to make it as a SaaS provider, namely since the customers will now often try build the same software themselves with the help of AI rather than buying a SaaS solution. However, once a company has already build a piece of software for their own sake, they might as well sell it to other companies, if only there is a system that facilitates this ... Hm, I'm not sure that I can make this point efficiently, without it being too complicated and also a bit out-of-place with rest...
+*I'll try again with a simpler point: -->
+
+* If the customizable user groups described above really take off, it is also natural to expect that some companies might want to use these as a cheap and easy way to get a business application that they need. And if the platform strives to be able to fullfil the requirements of data security that such companies might have, the platform could thus also end up being a provider of business applications.
+
+* And as a general use case, whenever someone has an idea for a website or an app that they want to their friends and/or the public to use, and they do not aim for this website/app to make enough ad money to be profitable, they can choose to publish it on a user-programmable platform and thereby save all the costs and the effort of running the servers themselves. And in addition to the saved costs, choosing a user-programmable platform also means that they can give other users the freedom to help extend, modify, and maintain their app.
+
+<!--
+
 * If you want more control over the algorithms of your platforms, as well as over how your data is handled, a user-programmable platform will be beneficial to you, namely since it puts its users completely in charge of the algorithms, and lets each user choose which one they want to use.
 
 * If you are tired of updates turning things worse for you as a user, either intentionally (known as [enshittification](https://en.wikipedia.org/wiki/Enshittification)) or unintentionally, a user-programmable platform will also benefit you. Here you never have to accept a new update, but can freely choose whichever fork of the platform you like, and switch any time you want.
@@ -129,12 +163,14 @@ And due to the sandboxing of the all user-uploaded code, a user-programmable pla
     - Or it could be if you had the idea to add 'quizzes' and/or 'surveys' as a new type of post that you can post to you friends/connections on a social media platform.
     - It could also be if you had the idea to create a way to organize posts and threads in a group according to topics, such that you can find related posts and threads in one place, instead of only relying on a chronologically ordered feed.
     - Or if you had an idea for how to structure comment sections in a better way, such that reactions, jokes, and personal anecdotes are grouped separately from the purely factual comments and questions about the given post/resource.
-    <!-- - Or in a similar vein, you might have an idea for how to structure discussion threads more like [argument maps](https://en.wikipedia.org/wiki/Argument_map), where each argument has a list of the most relevant arguments and counterarguments, as rated by the users, and where this structure repeats itself to form a whole tree of arguments and counterarguments for the given discussion. -->
-    <!-- - Or another idea might be to introduce more parameters that users can rate for any given type resource (such as a post, a video, a movie, etc.), other than just the normal 'good vs. bad' parameter. Think of [tags](https://en.wikipedia.org/wiki/Tag_(metadata)), but where each tag forms its own rating scale, which can be rated by all users on the platform. Such "ratable tags" could then be used to improve search results, and to improve algorithms on the platform in general. -->
+    <!-- - Or in a similar vein, you might have an idea for how to structure discussion threads more like [argument maps](https://en.wikipedia.org/wiki/Argument_map), where each argument has a list of the most relevant arguments and counterarguments, as rated by the users, and where this structure repeats itself to form a whole tree of arguments and counterarguments for the given discussion. - ->
+    <!-- - Or another idea might be to introduce more parameters that users can rate for any given type resource (such as a post, a video, a movie, etc.), other than just the normal 'good vs. bad' parameter. Think of [tags](https://en.wikipedia.org/wiki/Tag_(metadata)), but where each tag forms its own rating scale, which can be rated by all users on the platform. Such "ratable tags" could then be used to improve search results, and to improve algorithms on the platform in general. - ->
     - And as a last example, it would also be a natural idea for any social media app on a user-programmable platform to allow its users to freely build their own individual profile pages however they want, almost like a personal website.
 
 * If you have an idea for some website or app that you want the world to see/use, and you do not aim for this website/app to make enough ad money to make it profitable, you can choose to publish it on a user-programmable platform and save all the costs of running the servers.
-<!-- On a user-programmable platform, the only cost to the developer is paying for the storage space for the source code, which is usually miniscule, and the users pay the rest of the costs. Thus, on a user-programmable platform, there is no ad money to win, but there is also no money to lose either. And your website/app will stay up for as long as the user-programmable platform stays up, regardless of how many users it has. -->
+<!-- On a user-programmable platform, the only cost to the developer is paying for the storage space for the source code, which is usually miniscule, and the users pay the rest of the costs. Thus, on a user-programmable platform, there is no ad money to win, but there is also no money to lose either. And your website/app will stay up for as long as the user-programmable platform stays up, regardless of how many users it has. - ->
+
+-->
 
 
 
@@ -193,4 +229,4 @@ these components get enough attention and up-rates/likes, the user community and
 
 * The cost of the resources that an app consumes is instead carried by the users of the platform, who generally pay either via subscriptions or by watching ads on the platform (unless they qualify for a free plan).
 
-* An [extended business model](open_tech_cooperative.md), if utilized, will allow the developing users to get paid fairly for their contributions, and can also allow the platform to attract more investments on top of that.
+<!-- * An [extended business model](open_tech_cooperative.md), if utilized, will allow the developing users to get paid fairly for their contributions, and can also allow the platform to attract more investments on top of that. -->

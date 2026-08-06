@@ -49,19 +49,13 @@ export function render(props) {
   let {goToDefaultBaseApp, goToAppPage} = this.state;
   let userID = this.getContext("userID");
 
-  // If the tail URL is empty, go to the app browser as the default app.
-  let firstSegment = this.getSegment(0);
-  if (!firstSegment) {
-    this.replaceURL("~/" + appBrowserDirID);
-    return <div></div>;
-  }
-
-  // Else if the URL starts with "/base(/[os])?/<appDirID>", use the AppLoader
+  // If the URL starts with "/base(/[os])?/<appDirID>", use the AppLoader
   // component to load the base app pointed to by the "(/[os])?/<appDirID>"
   // segment(s). (The optional "/o" or "/s" segment respectively either makes
   // the AppLoader load the "original" app rather than looking for an updated
   // version, or loads the "standard"/default updated app without using the
   // user's individual preferences.)
+  let firstSegment = this.getSegment(0);
   if (firstSegment === "base") {
     this.advanceURL(1);
     return <AppLoader key="b" userID={userID}
@@ -80,6 +74,12 @@ export function render(props) {
       AppWrapper={AppWrapper} appWrapperStyle={[mainStyle, appWrapperStyle]}
       goBackToSafety={goToDefaultBaseApp} appProps={{loadUpdatedSelf: false}}
     />;
+  }
+
+  // Else if the tail URL is empty, go to the app browser as the default app.
+  if (!firstSegment) {
+    this.replaceURL("~/" + appBrowserDirID);
+    return <div></div>;
   }
 
   // Else expect the URL to be of the form "(/[os])?/<appDirID>" (similar to

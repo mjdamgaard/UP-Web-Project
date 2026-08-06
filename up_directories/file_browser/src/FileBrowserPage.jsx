@@ -90,7 +90,7 @@ export function render({
       ] : undefined,
       <div className="admin">{"Admin: "}{(
         adminID ? <EntityReference key="admin"
-          entKey={getUserEntPath("1", adminID)}
+          entKey={getUserEntPath("1", adminID)} hasLinks={false}
         /> : "None"
       )}</div>,
       <hr/>,

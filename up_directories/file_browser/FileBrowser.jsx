@@ -7,7 +7,6 @@ import {fetch, encodeURI} from 'query';
 import * as ILink from 'ILink';
 import * as InputText from 'InputText';
 import * as MissingPage from "../base_app/src/MissingPage.jsx";
-import * as EntityReference from "../utilities/EntityReference.jsx";
 import * as FileBrowserPage from "./src/FileBrowserPage.jsx";
 
 
@@ -29,65 +28,68 @@ export function render({style}) {
   if (!restSegments[0]) {
     content = <div className="fetching"></div>;
   }
+  else {
+    // Parse and the (extended) route.
+    let [route, ...castingSegments] = split(extRoute, ";");
+    let isLocked, upNodeID, homeDirID, localPath, dirSegments, fileName,
+      fileExt, queryPathSegments;
+    try {
+      [
+        isLocked, upNodeID, homeDirID, localPath, dirSegments, fileName,
+        fileExt, queryPathSegments
+      ] = parseRoute(route);
+    }
+    catch (err) {
+      console.error(err);
+      return <div className="invalid-route">{"Invalid route: "}{route}</div>;
+    }
 
-  // Parse and the (extended) route.
-  let [route, ...castingSegments] = split(extRoute, ";");
-  let isLocked, upNodeID, homeDirID, localPath, dirSegments, fileName,
-    fileExt, queryPathSegments;
-  try {
-    [
-      isLocked, upNodeID, homeDirID, localPath, dirSegments, fileName, fileExt,
-      queryPathSegments
-    ] = parseRoute(route);
+    // Calculate the home path of the route.
+    let routeHomePath = homeDirID ? "/" + upNodeID + "/" + homeDirID :
+      undefined;
+
+    // If there is no fileName or casting segments, record that route is a
+    // "directory path."
+    let isDirectoryPath = (!fileName && castingSegments.length === 0);
+
+    // If if it is a directory path, reinterpret the route by putting a ';'
+    // after the homeDirID, which means that the route becomes a casted as a
+    // subdirectory route.
+    let transformedRoute = extRoute;
+    if (isDirectoryPath) {
+      let subdirectoryPath = join(dirSegments, "/");
+      transformedRoute = routeHomePath + ";/" + subdirectoryPath;
+    }
+
+    // Also record if the route is a text file, and whether is has a query path,
+    // e.g. a "./call" or "./get" query path.
+    let isTextFile = fileExt && isTextFileExtension(fileExt);
+    let isTextFileQuery = isTextFile && queryPathSegments.length > 0;
+
+    // Then call getRouteJSXWithSubLinks() to get a <span> element with the
+    // route where every single queryable segment is an individual ILink,
+    // meaning that the user can navigate to ancestor directories, or to pre-
+    // casted versions of a casted route.
+    let routeJSXWithSubLinks = getRouteJSXWithSubLinks(
+      castingSegments, routeHomePath, dirSegments, fileName, queryPathSegments,
+      isTextFileQuery
+    );
+
+    // Record wether a separate query for the text file should be made.
+    let fetchFile = isTextFileQuery || isTextFile && castingSegments.length > 0;
+
+    if (isLocked || !routeHomePath) {
+      content = <div className="invalid-route">{"Invalid route: "}{route}</div>;
+    }
+    else {
+      content = <FileBrowserPage key="p"
+        extRoute={extRoute} routeHomePath={routeHomePath} localPath={localPath}
+        transformedRoute={transformedRoute} isDirectoryPath={isDirectoryPath}
+        fetchFile={fetchFile} isTextFile={isTextFile} route={route}
+        routeJSXWithSubLinks={routeJSXWithSubLinks}
+      />;
+    }
   }
-  catch (err) {
-    console.error(err);
-    return <div className="invalid-route">{"Invalid route: "}{route}</div>;
-  }
-
-  // Calculate the home path of the route.
-  let routeHomePath = homeDirID ? "/" + upNodeID + "/" + homeDirID : undefined;
-
-  // If there is no fileName or casting segments, record that route is a
-  // "directory path."
-  let isDirectoryPath = (!fileName && castingSegments.length === 0);
-
-  // If if it is a directory path, reinterpret the route by putting a ';' after
-  // the homeDirID, which means that the route becomes a casted as a
-  // subdirectory route.
-  let transformedRoute = extRoute;
-  if (isDirectoryPath) {
-    let subdirectoryPath = join(dirSegments, "/");
-    transformedRoute = routeHomePath + ";/" + subdirectoryPath;
-  }
-
-  // Also record if the route is a text file, and whether is has a query path,
-  // e.g. a "./call" or "./get" query path.
-  let isTextFile = fileExt && isTextFileExtension(fileExt);
-  let isTextFileQuery = isTextFile && queryPathSegments.length > 0;
-
-  // Then call getRouteJSXWithSubLinks() to get a <span> element with the route
-  // where every single queryable segment is an individual ILink, meaning that
-  // the user can navigate to ancestor directories, or to pre-casted versions
-  // of a casted route.
-  let routeJSXWithSubLinks = getRouteJSXWithSubLinks(
-    castingSegments, routeHomePath, dirSegments, fileName, queryPathSegments,
-    isTextFileQuery
-  );
-
-  // Record wether a separate query for the text file should be made.
-  let fetchFile = isTextFileQuery || isTextFile && castingSegments.length > 0;
-
-  if (isLocked || !routeHomePath) {
-    content ??= <div className="invalid-route">{"Invalid route: "}{route}</div>;
-  }
-
-  content ??= <FileBrowserPage key="p"
-    extRoute={extRoute} routeHomePath={routeHomePath} localPath={localPath}
-    transformedRoute={transformedRoute} isDirectoryPath={isDirectoryPath}
-    fetchFile={fetchFile} isTextFile={isTextFile} route={route}
-    routeJSXWithSubLinks={routeJSXWithSubLinks}
-  />;
 
   // Redirect to FileBrowserPage which fetches the necessary data and renders
   // the file browser from there. 
