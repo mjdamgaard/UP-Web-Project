@@ -16,13 +16,13 @@ And if an app extends an existing one, then once this new version is reviewed an
 
 For instance, if a user uploads a new version of an existing SoMe app with some added feature, such as a different algorithm or some new tool, then once the user community has ensured that this new version behaves as intended, and does not try to trick its users in any way, it can go from accessing a temporary, mock-up data structure to accessing the same data structure as its predecessor.
 
-For more on user-programmable platforms, follow [this link](user-programmable_platform.md).
+For more on user-programmable platforms, follow [this link](/README.md).
 
 
 
 ## Business model
 
-This platform is currently fully open-source, and will likely continue to have a fully open-source branch in the future. However, in order to be able to actually pay the developers who contribute source code to the platform, we also propose a model which is designed to be a golden middle way between open and closed source. We call this model an [open tech cooperative](open_tech_cooperative.md).
+This platform is currently fully open-source, and will likely continue to have a fully open-source branch in the future. However, in order to be able to actually pay the developers who contribute source code to the platform, we also propose a model which is designed to be a golden middle way between open and closed source. We call this model an [open tech cooperative](./open_tech_cooperative.md).
 
 In this model, the developers who contribute source code to the platform does so under a license that allows anyone to extend the source code, as long as they publish it under the same license. However, the rights to use the software is not given to the public at large, but is instead given specifically to the platform, allowing it to use the software to earn a profit.
 
@@ -32,7 +32,7 @@ However, in order to assure the contributing developers and the end users that t
 
 This platform will thus not only put its users in charge of its development, but will even put the users in charge of everything eventually, by essentially turning into a [consumers' cooperative](https://en.wikipedia.org/wiki/Consumers%27_co-operative) (or a "user's cooperative," if you will), once a certain level of maturity has been reached.
 
-For more on the model of open tech cooperatives, follow [this link](open_tech_cooperative.md).
+For more on the model of open tech cooperatives, follow [this link](./open_tech_cooperative.md).
 
 
 
@@ -93,6 +93,6 @@ And if a part of the user base wants a new feature, it is only a matter time bef
 
 ## More information
 
-For more information on what sets a user-programmable platform apart from other platforms, follow [this link](user-programmable_platform.md).
+For more information on what sets a user-programmable platform apart from other platforms, follow [this link](/README.md).
 
-And for more information about the proposed governance structure and business model of the platform, follow [this link](open_tech_cooperative.md).
+And for more information about the proposed governance structure and business model of the platform, follow [this link](./open_tech_cooperative.md).
