@@ -165,6 +165,8 @@ window.addEventListener("popstate", event => {
   popstateCallbacks.forEach(callback => callback(urlData, prevURLData));
 });
 
+// Prevent automatic scroll restoration; users should control this themselves.
+window.history.scrollRestoration = "manual";
 
 
 

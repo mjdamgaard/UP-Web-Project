@@ -18,13 +18,13 @@ export function render({}) {
         <div className="form-group">
           <Label key="l-usr" forKey={userNameIDKey}>Username</Label>
           <InputText key="i-usr" className="form-control username"
-            idKey={userNameIDKey} autocomplete="on"
+            idKey={userNameIDKey} lockFocus autocomplete="on"
           />
         </div>
         <div className="form-group">
           <Label key="l-pw" forKey={passwordIDKey}>Password</Label>
           <InputText key="i-pw" className="form-control password"
-            idKey={passwordIDKey} type="password" autocomplete="on"
+            idKey={passwordIDKey} type="password" lockFocus autocomplete="on"
           />
         </div>
         <button className="btn btn-primary" onClick={() => this.do("submit")}>

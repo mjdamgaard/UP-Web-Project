@@ -19,19 +19,19 @@ export function render({}) {
         <div className="form-group">
           <Label key="l-usr" forKey={userNameIDKey}>Username</Label>
           <InputText key="i-usr" className="form-control username"
-            idKey={userNameIDKey}
+            idKey={userNameIDKey} lockFocus
           />
         </div>
         <div className="form-group">
           <Label key="l-pw" forKey={passwordIDKey}>Password</Label>
           <InputText key="i-pw" className="form-control password"
-            idKey={passwordIDKey} type="password"
+            idKey={passwordIDKey} type="password" lockFocus
           />
         </div>
         <div className="form-group">
           <Label key="l-email" forKey={emailIDKey}>E-mail (not required)</Label>
           <InputText key="i-email" className="form-control email"
-            idKey={emailIDKey}
+            idKey={emailIDKey} lockFocus
           />
         </div>
         <button className="btn btn-primary" onClick={() => this.do("submit")}>

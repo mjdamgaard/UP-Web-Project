@@ -21,10 +21,8 @@ export function render({children, style}) {
   let {hideHeader, hideMargins, overlayPageContent} = this.state;
   this.setContext("headerIsHidden", hideHeader);
   this.setContext("marginsAreHidden", hideMargins);
-  return (
-    <div className="app-frame" innerStyle={style} onClick={() =>
-      this.call("am", "close")
-    }>
+  return <div innerStyle={style}>
+    <div className="app-frame" onClick={() => this.call("am", "close")}>
       <div className={
         "overlay-page-container" + (overlayPageContent ? " open" : "")
       }>
@@ -48,7 +46,7 @@ export function render({children, style}) {
         <div className="margin right"></div>
       </main>
     </div>
-  );
+  </div>;
 }
 
 

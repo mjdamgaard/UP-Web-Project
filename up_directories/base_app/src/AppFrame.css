@@ -1,4 +1,10 @@
 
+.app-frame {
+  height: 100%;
+  width: 100%;
+}
+
+
 .app-header {
   position: sticky;
   top: 0;
@@ -47,35 +53,34 @@
 }
 
 
-.app-main > .margin {
+.app-main {
   background-color: #f8f8f8;
+  min-height: calc(100% - 40px);
 }
-
-
-.app-main-container {
-  overflow-y: scroll;
+.app-main > .app-container {
+  min-height: 100%;
   background-color: white;
   margin: 0px 20%;
   padding: 20px 50px;
 }
-.app-main-container:has(> .open > .app-main > .no-margins) {
+/* .app-main-container:has(> .open > .app-main > .no-margins) {
   margin: 0 0;
   padding: 0 0;
-}
+} */
 @media (max-width: 600px) {
-  .app-main-container {
+  .app-main > .app-container {
     margin: 0 0;
     padding: 10px 20px;
   }
 }
 @media (min-width: 600px) and (max-width: 900px) {
-  .app-main-container {
+  .app-main > .app-container {
     margin: 0px 10%;
     padding: 20px 50px;
   }
 }
 @media (min-width: 900px) and (max-width: 1200px) {
-  .app-main-container {
+  .app-main > .app-container {
     margin: 0px 15%;
     padding: 20px 50px;
   }
@@ -88,13 +93,10 @@
 
 
 
-
-
-
 .account-menu {
   position: absolute;
-  right: 0px;
-  top: 0px;
+  right: 5px;
+  top: 1px;
   z-index: 3;
 }
 
