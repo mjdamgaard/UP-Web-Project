@@ -15,11 +15,11 @@ export function render(props) {
         this.setState(state => ({...state, Component: Component ?? false}));
       });
     });
-    return <div className="fetching"></div>;
+    return <div className="loading"></div>;
   }
 
   else if (Component === undefined) {
-    return <div className="fetching"></div>;
+    return <div className="loading"></div>;
   }
 
   else if (!Component) {

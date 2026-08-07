@@ -73,3 +73,26 @@ code.css {
 ul, ol, li {
   overflow: visible;
 }
+
+
+
+
+/* ".hide-loading" elements hide their content if it contains a ".loading"
+ * element.
+**/
+.hide-loading:where(:has(> .loading, > * .loading)) >
+  :not(.loading-placeholder)
+{
+  display: none;
+}
+.hide-loading .hide-loading > :not(.loading-placeholder) {
+  display: unset;
+}
+.loading-placeholder {
+  display: none;
+}
+.hide-loading:where(:has(> .loading, > * .loading)) >
+  .loading-placeholder
+{
+  display: unset;
+}

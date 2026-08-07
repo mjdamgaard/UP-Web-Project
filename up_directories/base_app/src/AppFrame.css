@@ -55,10 +55,10 @@
 
 .app-main {
   background-color: #f8f8f8;
-  min-height: calc(100% - 40px);
+  min-height: calc(100vh - 40px);
 }
-.app-main > .app-container {
-  min-height: 100%;
+.app-container {
+  min-height: calc(100vh - 40px);
   background-color: white;
   margin: 0px 20%;
   padding: 20px 50px;
@@ -68,19 +68,19 @@
   padding: 0 0;
 } */
 @media (max-width: 600px) {
-  .app-main > .app-container {
+  .app-container {
     margin: 0 0;
     padding: 10px 20px;
   }
 }
 @media (min-width: 600px) and (max-width: 900px) {
-  .app-main > .app-container {
+  .app-container {
     margin: 0px 10%;
     padding: 20px 50px;
   }
 }
 @media (min-width: 900px) and (max-width: 1200px) {
-  .app-main > .app-container {
+  .app-container {
     margin: 0px 15%;
     padding: 20px 50px;
   }

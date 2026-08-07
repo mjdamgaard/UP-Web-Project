@@ -17,10 +17,12 @@ import "../base_app/src/MissingPage.jsx";
 
 import * as AppBrowser from "./AppBrowser.jsx";
 import * as mainStyle from "../base_app/style.css";
+import * as tabbedPagesStyle from "../utilities/TabbedPages.css";
 
 
 export function render(props) {
-  return <div innerStyle={mainStyle}>
+  this.trigger("showFrame");
+  return <div innerStyle={[mainStyle, tabbedPagesStyle]}>
     <AppBrowser {...props} key="0" />
   </div>;
 }

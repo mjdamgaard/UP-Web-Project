@@ -53,7 +53,7 @@ export function render({
 }) {
   let {AppComponent, appDirID, trustClass} = this.state;
   if (appDirID === undefined) {
-    return <div className="fetching"></div>;
+    return <div className="loading"></div>;
   }
 
   // Render the AppComponent, wrapped in the 'AppWrapper' component if provided.

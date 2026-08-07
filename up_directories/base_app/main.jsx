@@ -25,6 +25,7 @@ const fetchBestVersionRouteTemplate = abs(
 
 
 export function render(props) {
+  this.trigger("hideFrame");
   return <BaseApp key="0"
     fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
     loadUpdatedSelf={true} mainStyle={mainStyle} AppFrame={AppFrame}

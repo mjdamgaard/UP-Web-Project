@@ -22,11 +22,11 @@ export function render({style}) {
   let extRoute = "/" + join(restSegments, "/");
   if (firstSegment !== "files") {
     this.replaceURL("~/files" + (restSegments[0] ? extRoute : ""));
-    return <div className="fetching"></div>;
+    return <div className="loading"></div>;
   }
 
   if (!restSegments[0]) {
-    content = <div className="fetching"></div>;
+    content = <div className="loading"></div>;
   }
   else {
     // Parse and the (extended) route.

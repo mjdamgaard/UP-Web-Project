@@ -21,7 +21,7 @@ export function render({}) {
           <dt>User ID</dt><dd>{userID}</dd>
       </dl>
       <h4>User gas reserve</h4>
-        {(!gas ? <div className="fetching"></div> :
+        {(!gas ? <div className="loading"></div> :
           <dl className="user-gas-list">
             <dt>Computation gas</dt><dd>{gas.comp}</dd>
             <dt>DB reading gas</dt><dd>{gas.dbRead}</dd>

@@ -1181,11 +1181,11 @@ export const members = {
 // more subcategories of it (or to see which subcategories there are).
 export const subclasses = {
   "Class": abs("./em1.js;get/relations"),
-  "Name": "Subclasses",
-  "getQualityName": objKey => "Is a subclass of ${" + objKey + "}",
-  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a subclass " +
-    "of ${" + objKey + "}",
-  "getClassName": objKey => "Subclasses of ${" + objKey + "}",
+  "Name": "Subcategories",
+  "getQualityName": objKey => "Is a relevant subcategory of ${" + objKey + "}",
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} is a relevant " +
+    "subcategory of ${" + objKey + "}",
+  "getClassName": objKey => "Subcategories of ${" + objKey + "}",
   "Object domain": abs("./em1.js;get/classes"),
   "Subject domain": abs("./em1.js;get/classes"),
   "Metric": abs("./em1.js;get/gradingMetric"),

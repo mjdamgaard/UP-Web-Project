@@ -74,7 +74,7 @@ A user-programmable platform also ought to allow for decentralization, namely by
 
 Each user of the platform has an amount of resources that they can use for free each month, both in terms of storage space and computational resources. And if they need to use more than what the free plan allows, they can either subscribe to a paid plan, or turn on ads for the platform. In other words, the platform can utilize the same common sources of revenue as other platforms.
 
-And since the platform is open-source at its core, it can also potentially attract individual donations, sponsorships, and grants, similarly to other open-source projects.
+<!-- And since the platform is open-source at its core, it can also potentially attract individual donations, sponsorships, and grants, similarly to other open-source projects. -->
 
 Additionally, while the platform itself is open-source, the user-uploaded apps do not necessarily have to be. Some developers thus might want to use a different kind of license for their software that allows them to monetize it more efficiently, instead of relying purely on voluntary donations. The platform should help facilitate this, and thus provide several options of monetization for the developers to choose from. And in return, the platform can require a cut of the revenue that these apps generate.
 
@@ -146,8 +146,6 @@ And due to the sandboxing of the all user-uploaded code, a user-programmable pla
 
     Everything that that you can imagine for a website or app is also possible for these customized user groups. And as AI continues to develop, more and more users will likely be able to participate in the making of new user group templates, adding more useful features and layouts to choose from. 
 
-<!-- * Another great use case for a user-programmable platform is for building and sharing business applications, and templates for such. With the development of AI, it has become harder to make it as a SaaS provider, namely since the customers will now often try build the same software themselves with the help of AI rather than buying a SaaS solution. However, once a company has already build a piece of software for their own sake, they might as well sell it to other companies, if only there is a system that facilitates this ... Hm, I'm not sure that I can make this point efficiently, without it being too complicated and also a bit out-of-place with rest...
-*I'll try again with a simpler point: -->
 
 * If the customizable user groups described above really take off, it is also natural to expect that some companies might want to use these as a cheap and easy way to get a business application that they need. And if the platform strives to be able to fullfil the requirements of data security that such companies might have, the platform could thus also end up being a provider of business applications.
 

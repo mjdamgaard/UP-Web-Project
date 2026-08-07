@@ -36,6 +36,6 @@
 }
 
 
-.entity-reference.fetching::after {
+.entity-reference.loading::after {
   content: "...";
 }

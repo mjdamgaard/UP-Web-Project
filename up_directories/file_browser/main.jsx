@@ -8,6 +8,7 @@ import * as theme from "../base_app/style.css";
 import * as ownStyle from "./style.css";
 
 export function render(props) {
+  this.trigger("showFrame");
   return <div>
     <FileBrowser key="f" style={[theme, ownStyle]} {...props}/>
   </div>;

@@ -59,7 +59,7 @@ export function renderHelper(thisVal, {
     return [
       "fetching",
       <main className="app-main">
-        <div className="fetching"></div>
+        <div className="loading"></div>
       </main>
     ];
   }
@@ -120,7 +120,7 @@ export function renderHelper(thisVal, {
     return [
       "fetching",
       <main className="app-main">
-        <div className="fetching"></div>
+        <div className="loading"></div>
       </main>
     ];
   }

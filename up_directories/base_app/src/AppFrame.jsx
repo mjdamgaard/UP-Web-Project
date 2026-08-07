@@ -106,12 +106,21 @@ export const actions = {
   "showMargins": function() {
     this.setState(state => ({...state, hideMargins: false}));
   },
+  "hideFrame": function() {
+    this.setState(state => ({...state, hideMargins: true, hideHeader: true}));
+  },
+  "showFrame": function() {
+    this.setState(state => ({...state, hideMargins: false, hideHeader: false}));
+  },
 };
 
 export const events = [
   "openOverlayPage",
   "closeOverlayPage",
+  "hideHeader",
   "showHeader",
   "hideMargins",
   "showMargins",
+  "hideFrame",
+  "showFrame",
 ];

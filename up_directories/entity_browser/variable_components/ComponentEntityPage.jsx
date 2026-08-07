@@ -33,11 +33,11 @@ export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
     fetchIsTrusted(entKey).then(isTrusted => {
       this.setState(state => ({...state, isTrusted: isTrusted}));
     });
-    return <div className="fetching"></div>;
+    return <div className="loading"></div>;
   }
 
   else if (Component === undefined || isTrusted === undefined) {
-    return <div className="fetching"></div>;
+    return <div className="loading"></div>;
   }
 
   else if (!Component) {
@@ -72,7 +72,7 @@ export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
     if (!hasBeenReplaced && firstTailSegment !== uriSafeComponentName) {
       this.setState(state => ({...state, hasBeenReplaced: true}));
       this.trigger("replaceURL", newHomeURL + newTailURL);
-      return <div className="fetching"></div>;
+      return <div className="loading"></div>;
     }
 
     // Create the set of props to pass to component entity component.

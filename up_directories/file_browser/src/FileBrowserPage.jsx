@@ -34,7 +34,7 @@ export function render({
   let {adminID, fileText, result} = this.state;
   let content;
   if (adminID === undefined) {
-    content = <div className="fetching"></div>;
+    content = <div className="loading"></div>;
   }
 
   else {

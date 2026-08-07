@@ -8,7 +8,7 @@ const missingPageJSX = <div className="app-browser">
   <MissingPage key="m" />
 </div>;
 const fetchingPageJSX = <div className="app-browser">
-  <div className="fetching"></div>
+  <div className="loading"></div>
 </div>;
 
 // The entity path of the general 'Apps' class.

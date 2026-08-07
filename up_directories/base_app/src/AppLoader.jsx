@@ -80,7 +80,7 @@ export function render({
   if (!appDirID) {
     let urlTail = substring(this.getPath(), firstSegment.length + 2);
     this.do("loadNewApp", [appDirIDSegment, urlTail, useOriginal, useStandard]);
-    return <div className="fetching"></div>;
+    return <div className="loading"></div>;
   }
 
   // Else fist get the AppComponent and additionalURLs array from the cache,
@@ -88,7 +88,7 @@ export function render({
   let appData = cache[appDirID];
   if (!appData) {
     this.do("fetchAppData", appDirID);
-    return <div className="fetching"></div>;
+    return <div className="loading"></div>;
   }
   let {AppComponent, additionalURLs, stdFirstSegment} = appData;
 
@@ -118,7 +118,7 @@ export function render({
       this.do("loadNewApp", [
         appDirIDSegment, urlTail, useOriginal, useStandard
       ]);
-      return <div className="fetching"></div>;
+      return <div className="loading"></div>;
     }
   }
 
