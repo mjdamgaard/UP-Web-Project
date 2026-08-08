@@ -1,7 +1,7 @@
 
 import {
   fetchRelationalQualityPath, fetchEntityProperty
-} from "/1/1/entities.js";
+} from "~/../semantic_entities/entities.js";
 
 import * as GeneralEntityElement
 from "../entity_elements/GeneralEntityElement.jsx";
@@ -9,7 +9,8 @@ import * as MissingEntityElement
 from "../entity_elements/MissingEntityElement.jsx";
 import * as ComponentEntityComponent from "./ComponentEntityComponent.jsx";
 
-const entityElementRelPath = "/1/1/em1.js;get/entityElement";
+const entityElementRelPath =
+  abs("~/../semantic_entities/em1.js;get/entityElement");
 
 
 

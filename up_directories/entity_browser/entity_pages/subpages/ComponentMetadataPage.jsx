@@ -1,7 +1,7 @@
 
 import * as ILink from 'ILink';
 import * as EntityMetadataPage from "./EntityMetadataPage.jsx";
-import {fetchEntityID} from "/1/1/entities.js";
+import {fetchEntityID} from "~/../semantic_entities/entities.js";
 
 
 export function render({entKey}) {

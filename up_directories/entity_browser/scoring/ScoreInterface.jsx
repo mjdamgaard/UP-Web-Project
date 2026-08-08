@@ -1,7 +1,7 @@
 
 import {parseFloat, isNaN} from 'number';
-import {fetchMetric, fetchUserScore} from "/1/1/scores.js";
-import {fetchEntityDefinition} from '/1/1/entities.js';
+import {fetchMetric, fetchUserScore} from "~/../semantic_entities/scores.js";
+import {fetchEntityDefinition} from "~/../semantic_entities/entities.js";
 import {fetchQualityKey} from '../entity_lists/quality_keys.js';
 
 import * as InputRangeAndValue from "../../utilities/InputRangeAndValue.jsx";

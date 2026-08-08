@@ -5,7 +5,7 @@ import {fetchQualityKey, fetchQualityKeyArray} from "./quality_keys.js";
 
 import * as EntityListMenu from "./EntityListMenu.jsx";
 
-const membersRel = "/1/1/em1.js;get/members";
+const membersRel = abs("~/../semantic_entities/em1.js;get/members");
 
 const VariableEntityElementPromise = import(
   "../variable_components/VariableEntityElement.jsx"

@@ -1,6 +1,7 @@
 
 import {hasType} from 'type';
-import {fetchRelationalQualityPath, fetchEntityPath} from "/1/1/entities.js";
+import {fetchRelationalQualityPath, fetchEntityPath} from
+  "~/../semantic_entities/entities.js";
 
 export function fetchQualityKeyArray(extQualKeyArr) {
   return new Promise(resolve => {

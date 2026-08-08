@@ -2,18 +2,18 @@
 import {post} from 'query';
 import {
   postEntity, checkDomain, postScalarEntity,
-} from "/1/1/entities.js";
+} from "~/../semantic_entities/entities.js";
 
 import * as InputText from 'InputText';
 import * as TextArea from 'TextArea';
 import * as InputCheckbox from 'InputCheckbox';
 import * as Label from 'Label';
 
-const textClassPath = "/1/1/em1.js;get/texts";
-const scalarClassPath = "/1/1/em1.js;get/scalars";
-const probabilityQual = "/1/1/em1.js;get/probability";
-const isCorrectQual = "/1/1/em1.js;get/isCorrect";
-const membersRelPath = "/1/1/em1.js;get/members";
+const textClassPath = abs("~/../semantic_entities/em1.js;get/texts");
+const scalarClassPath = abs("~/../semantic_entities/em1.js;get/scalars");
+const probabilityQual = abs("~/../semantic_entities/em1.js;get/probability");
+const isCorrectQual = abs("~/../semantic_entities/em1.js;get/isCorrect");
+const membersRelPath = abs("~/../semantic_entities/em1.js;get/members");
 
 const QualityElementPromise = import(
   "../entity_elements/QualityElement.jsx"
@@ -161,7 +161,7 @@ export const actions = {
         return;
       }
       post(
-        "/1/1/comments/comments.sm.js./callSMF/postComment",
+        abs("~/../semantic_entities/comments/comments.sm.js./callSMF/postComment"),
         [text, objKey, isSingular, true],
       ).then(textEntID => {
         // Post the relevant scalar, then update the state.

@@ -1,12 +1,12 @@
 
 import {
   fetchEntityProperty, fetchRelationalQualityPath,
-} from "/1/1/entities.js";
+} from "~/../semantic_entities/entities.js";
 
 import * as GeneralEntityPage from "../entity_pages/GeneralEntityPage.jsx";
 import * as ComponentEntityComponent from "./ComponentEntityComponent.jsx";
 
-const entityPageRel = "/1/1/em1.js;get/entityPage";
+const entityPageRel = abs("~/../semantic_entities/em1.js;get/entityPage");
 
 
 

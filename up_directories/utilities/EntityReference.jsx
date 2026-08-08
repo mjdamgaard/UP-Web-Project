@@ -1,7 +1,7 @@
 
 import {
   fetchEntityDefinition, fetchEntityPath, fetchEntityID,
-} from "/1/1/entities.js";
+} from "~/../semantic_entities/entities.js";
 import {encodeURI} from 'query';
 import {replaceReferences} from 'entities';
 import * as ILink from 'ILink';

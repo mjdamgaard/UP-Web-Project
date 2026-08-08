@@ -1,5 +1,5 @@
 
-import {fetchEntityDefinition} from "/1/1/entities.js";
+import {fetchEntityDefinition} from "~/../semantic_entities/entities.js";
 import * as TextDisplay from "../../../utilities/TextDisplay.jsx";
 
 
@@ -13,7 +13,7 @@ export function render({entID, entKey = entID}) {
   let {entDef, isFetching} = this.state;
   // let userEntID = this.getContext("userEntID");
   // let userID = this.getContext("userID");
-  // let userEntPath = "/1/1/em1.js;call/User/1/" + userID;
+  // let userEntPath = abs("~/../semantic_entities/em1.js;call/User/1/") + userID;
 
   if (!isFetching) {
     this.setState(state => ({...state, isFetching: true}));

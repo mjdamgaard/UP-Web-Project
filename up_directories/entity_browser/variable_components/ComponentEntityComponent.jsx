@@ -1,5 +1,5 @@
 
-import {fetchEntityDefinition} from "/1/1/entities.js";
+import {fetchEntityDefinition} from "~/../semantic_entities/entities.js";
 
 
 export function render(props) {

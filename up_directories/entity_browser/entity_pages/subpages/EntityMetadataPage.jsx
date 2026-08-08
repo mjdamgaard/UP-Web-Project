@@ -1,7 +1,7 @@
 
 import {
   fetchEntityDefinition, fetchEntityPath, fetchEntityID,
-} from "/1/1/entities.js";
+} from "~/../semantic_entities/entities.js";
 import {mapToArray} from 'object';
 import {stringify} from 'json';
 import {encodeURI} from 'query';

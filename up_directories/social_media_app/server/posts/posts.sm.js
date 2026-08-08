@@ -20,7 +20,7 @@ export function createPost(text) {
 
     // Add the post to the user's own post wall, by first inserting the text in
     // texts.att (auto-generating an ID for the text in the process), and then
-    // inserting the textID into posts.btt, along with the userID and timestamp.  
+    // inserting the textID into posts.btt, along with the userID and timestamp.
     post(abs("./_texts.att") + "./_insert/l/" + userID, text).then(textID => {
       // Get the timestamp, and convert it to a hexadecimal string. (Note that
       // both userID and textID are already hexadecimal strings, so these don't

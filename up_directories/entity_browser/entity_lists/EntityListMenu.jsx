@@ -1,6 +1,6 @@
 
 import {parseFloat, isNaN} from 'number';
-import {fetchOrCreateEntityID} from "/1/1/entities.js";
+import {fetchOrCreateEntityID} from "~/../semantic_entities/entities.js";
 
 import * as AddEntityMenu from "./AddEntityMenu.jsx";
 import * as InputText from 'InputText';

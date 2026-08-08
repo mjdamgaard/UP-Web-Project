@@ -257,8 +257,8 @@ export async function _query(
         err => new ErrorWrapper(err)
       );
 
-      // Then try to get the parsed script from the parsedScripts buffer, or else
-      // try to fetch it from the database.
+      // Then try to get the parsed script from the parsedScripts buffer, or
+      // else try to fetch it from the database.
       let [parsedScript, lexArr, strPosArr, script] =
         parsedScripts.get(route) ?? [];
       if (!parsedScript) {

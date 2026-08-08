@@ -1,6 +1,6 @@
 
 import {post} from 'query';
-import {fetchEntityDefinition} from "/1/1/entities.js";
+import {fetchEntityDefinition} from "~/../semantic_entities/entities.js";
 
 import * as InputText from 'InputText';
 import * as TextArea from 'TextArea';
@@ -81,7 +81,8 @@ export const actions = {
     }
     else {
       post(
-        "/1/1/users/profiles.sm.js./callSMF/requestNewUserTag", newTag
+        abs("~/../semantic_entities/users/profiles.sm.js./callSMF/requestNewUserTag"),
+        newTag
       ).then(wasChanged => {
         if (wasChanged) {
           this.setState(state => ({
@@ -99,7 +100,8 @@ export const actions = {
   "submitBio": function() {
     let newBio = this.call("i-bio", "getValue");
     post(
-      "/1/1/users/profiles.sm.js./callSMF/putUserBio", newBio
+      abs("~/../semantic_entities/users/profiles.sm.js./callSMF/putUserBio"),
+      newBio
     ).then(wasChanged => {
       if (wasChanged) {
         this.setState(state => ({

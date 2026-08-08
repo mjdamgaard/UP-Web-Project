@@ -1,7 +1,7 @@
 
 import {hasType} from 'type';
 import {fetch, encodeURI} from 'query';
-import {getUserEntPath, postEntity} from "/1/1/entities.js";
+import {getUserEntPath, postEntity} from "~/../semantic_entities/entities.js";
 
 import * as ILink from 'ILink';
 import * as EntityReference from "../../utilities/EntityReference.jsx";

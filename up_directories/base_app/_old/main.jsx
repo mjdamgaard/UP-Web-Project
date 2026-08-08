@@ -2,7 +2,7 @@
 import {clearPermissions} from 'query';
 import {
   fetchConstructedEntityID, postConstructedEntity,
-} from "/1/1/entities.js";
+} from "~/../semantic_entities/entities.js";
 import {urlActions, urlEvents} from "./urlActions.js";
 
 import * as AppHeader from "./AppHeader.jsx";
@@ -21,7 +21,8 @@ import * as entPageWTabsStyle from "../utilities/EntityPageWithTabs.css";
 import * as tabbedPagesStyle from "../utilities/TabbedPages.css";
 
 
-import {scoreHandler02} from "/1/1/score_handling/ScoreHandler01/em.js";
+import {scoreHandler02} from
+  "~/../semantic_entities/score_handling/ScoreHandler01/em.js";
 
 
 export function render() {
@@ -39,7 +40,9 @@ export function render() {
   this.setContext("scoreHandler", scoreHandler02);
 
   if (userID && userEntID === undefined) {
-    fetchConstructedEntityID("/1/1/em1.js", "User", ["1", userID]).then(
+    fetchConstructedEntityID(
+      abs("~/../semantic_entities/em1.js"), "User", ["1", userID]
+    ).then(
       entID => {
         this.setState(state => ({...state, userEntID: entID ?? false}));
       }
@@ -96,7 +99,9 @@ export const actions = {
         resolve(userEntID);
       }
       else {
-        postConstructedEntity("/1/1/em1.js", "User", ["1", userID]).then(
+        postConstructedEntity(
+          abs("~/../semantic_entities/em1.js"), "User", ["1", userID]
+        ).then(
           entID => {
             this.setState(state => ({...state, userEntID: entID}));
             resolve(entID);

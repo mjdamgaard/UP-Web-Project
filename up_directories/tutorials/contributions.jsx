@@ -83,7 +83,7 @@ const page = <div className="text-page">
     <p>
       <code className="jsx">{[
         'export const app = {\n',
-        '  "Class": "/1/1/em1.js;get/components",\n',
+        '  "Class": abs("~/../semantic_entities/em1.js;get/components"),\n',
         '  "Name": APP_NAME,\n',
         '  "Component path": abs(COMPONENT_PATH),\n',
         '  "Example component path": undefined,\n',

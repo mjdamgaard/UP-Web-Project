@@ -1,9 +1,9 @@
 
-import {fetchEntityProperty} from "/1/1/entities.js";
+import {fetchEntityProperty} from "~/../semantic_entities/entities.js";
 import * as QualitiesPage from "./QualitiesPage.jsx";
 
-const probabilityQual = "/1/1/em1.js;get/probability";
-const isCorrectQual = "/1/1/em1.js;get/isCorrect";
+const probabilityQual = abs("~/../semantic_entities/em1.js;get/probability");
+const isCorrectQual = abs("~/../semantic_entities/em1.js;get/isCorrect");
 
 
 export function render({objKey, extQualKeyArr = undefined}) {

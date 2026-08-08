@@ -2,7 +2,8 @@
 import {hasType} from 'type';
 import * as EntityList from "../../entity_lists/EntityList.jsx";
 
-const relevantQualitiesRel = "/1/1/em1.js;get/relevantQualities";
+const relevantQualitiesRel =
+  abs("~/../semantic_entities/em1.js;get/relevantQualities");
 
 const QualityElementPromise = import("../../entity_elements/QualityElement.jsx");
 

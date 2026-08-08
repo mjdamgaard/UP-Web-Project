@@ -8,8 +8,8 @@ import {valueToHex} from 'hex';
 import {verifyType, hasType} from 'type';
 import {mapToArray, keys} from 'object';
 
-const membersRelationPath = "/1/1/em1.js;get/members";
-const entitiesClassPath = "/1/1/em1.js;get/entities";
+const membersRelationPath = abs("~/../semantic_entities/em1.js;get/members");
+const entitiesClassPath = abs("~/../semantic_entities/em1.js;get/entities");
 
 
 

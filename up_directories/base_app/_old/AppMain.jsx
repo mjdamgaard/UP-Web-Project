@@ -1,7 +1,7 @@
 
 import {encodeURI, decodeURI} from 'query';
 import {entries, fromEntries, mapToArray} from 'object';
-import {fetchEntityID} from "/1/1/entities.js";
+import {fetchEntityID} from "~/../semantic_entities/entities.js";
 
 import * as UPIndexPage from "./UPIndexPage.jsx";
 import * as AboutPage from "./AboutPage.jsx";

@@ -1,12 +1,13 @@
 
-import {fetchEntityDefinition, fetchScalarEntityPath} from "/1/1/entities.js";
+import {fetchEntityDefinition, fetchScalarEntityPath} from
+  "~/../semantic_entities/entities.js";
 import * as EntityList from "../../entity_lists/EntityList.jsx";
 import * as ScoreInterface from "../../scoring/ScoreInterface.jsx";
 
-const argumentsRel = "/1/1/em1.js;get/argumentsRelation";
-const impactRel = "/1/1/em1.js;get/impact";
-const probabilityQual = "/1/1/em1.js;get/probability";
-const isCorrectQual = "/1/1/em1.js;get/isCorrect";
+const argumentsRel = abs("~/../semantic_entities/em1.js;get/argumentsRelation");
+const impactRel = abs("~/../semantic_entities/em1.js;get/impact");
+const probabilityQual = abs("~/../semantic_entities/em1.js;get/probability");
+const isCorrectQual = abs("~/../semantic_entities/em1.js;get/isCorrect");
 
 const ArgumentElementPromise =
   import("../../entity_elements/ArgumentElement.jsx");

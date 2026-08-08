@@ -6,11 +6,11 @@ import * as EntityList from "../entity_lists/EntityList.jsx";
 import * as GeneralEntityElement 
 from "../entity_elements/GeneralEntityElement.jsx";
 
-const commentsRel = "/1/1/em1.js;get/commentsRelation";
-const membersRel = "/1/1/em1.js;get/members";
-const subclassesRel = "/1/1/em1.js;get/subclasses";
-const discussionsRel = "/1/1/em1.js;get/discussions";
-const tasksRel = "/1/1/em1.js;get/tasks";
+const commentsRel = abs("~/../semantic_entities/em1.js;get/commentsRelation");
+const membersRel = abs("~/../semantic_entities/em1.js;get/members");
+const subclassesRel = abs("~/../semantic_entities/em1.js;get/subclasses");
+const discussionsRel = abs("~/../semantic_entities/em1.js;get/discussions");
+const tasksRel = abs("~/../semantic_entities/em1.js;get/tasks");
 
 
 // TODO: Handle "derived classes" such that the membersRel isn't used for their

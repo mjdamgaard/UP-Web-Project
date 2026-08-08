@@ -23,9 +23,9 @@ export function postComment(
     // Construct the new comment entity definition and insert it in the
     // comments.att table.
     let newCommentEMSource =
-      'import {fetchEntityID} from "/1/1/entities.js";\n' +
+      'import {fetchEntityID} from "~/../semantic_entities/entities.js";\n' +
       'export const comment = {\n' +
-      '  "Class": "/1/1/em1.js;get/commentsClass",\n' +
+      '  "Class": abs("~/../semantic_entities/em1.js;get/commentsClass"),\n' +
       '  "Name": () => new Promise(resolve => {\n' +
       '    fetchEntityID(abs("+;get/comment")).then(\n' +
       '      entID => resolve("Comment " + entID)\n' +
@@ -86,7 +86,7 @@ export function editComment(commentEntKey, text, targetEntKey = undefined) {
         // Then construct the new comment entity definition and insert it in
         // the comments.att table, using textID as the entry key.
         let newCommentDef = {
-          "Class": "/1/1/em1.js;get/commentsClass",
+          "Class": abs("~/../semantic_entities/em1.js;get/commentsClass"),
           "Author": authorPath,
           "Target entity": targetEntKey,
           "Content": text,

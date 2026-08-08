@@ -85,7 +85,7 @@ const getPage = (userID) => <div className="text-page">
     <p>
       <div className="text-frame">
         <ComponentEntityComponent key="app-example"
-          compEntKey={"/1/1/em2.js;get/messageAppExample"} userID={userID}
+          compEntKey={abs("~/../semantic_entities/em2.js;get/messageAppExample")} userID={userID}
         />
       </div>
     </p>

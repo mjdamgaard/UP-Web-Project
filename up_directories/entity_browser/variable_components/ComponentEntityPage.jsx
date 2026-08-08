@@ -1,6 +1,7 @@
 
 import {encodeURIComponent} from 'query';
-import {fetchEntityDefinition, fetchEntityPath} from "/1/1/entities.js";
+import {fetchEntityDefinition, fetchEntityPath} from
+  "~/../semantic_entities/entities.js";
 import * as PhishingWarning from "./PhishingWarning.jsx";
 
 

@@ -1,6 +1,6 @@
 
 import {fetch} from 'query';
-import {getUserEntPath} from "/1/1/entities.js";
+import {getUserEntPath} from "~/../semantic_entities/entities.js";
 
 
 const APP_NAME = "YOUR_APP_NAME";
@@ -12,7 +12,7 @@ const NO_HEADER = false;
 
 
 export const app = {
-  "Class": "/1/1/em1.js;get/components",
+  "Class": abs("~/../semantic_entities/em1.js;get/components"),
   "Name": APP_NAME,
   "Component path": abs(COMPONENT_PATH),
   "Example component path": undefined,

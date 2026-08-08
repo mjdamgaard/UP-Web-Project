@@ -1,6 +1,7 @@
 
 import {MainDBConnection, getProcCallSQL} from "./DBConnection.js";
-import {ArgTypeError, NetworkError} from '../../interpreting/ScriptInterpreter.js';
+import {ArgTypeError, NetworkError} from
+  "../../interpreting/ScriptInterpreter.js";
 import {Connection} from "../../dev_lib/db_connection/connection.js";
 
 

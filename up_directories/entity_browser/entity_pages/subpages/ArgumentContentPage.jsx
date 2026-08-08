@@ -1,12 +1,13 @@
 
-import {fetchEntityDefinition, fetchEntityPath} from "/1/1/entities.js";
+import {fetchEntityDefinition, fetchEntityPath} from
+  "~/../semantic_entities/entities.js";
 import * as TextDisplay from "../../../utilities/TextDisplay.jsx";
 import * as ScoreInterface from "../../scoring/ScoreInterface.jsx";
 import {fetchSubjectAndQualityIDs} from "../../scoring/ScoreInterface.jsx";
 
-const probabilityQual = "/1/1/em1.js;get/probability";
-const isCorrectQual = "/1/1/em1.js;get/isCorrect";
-const impactRel = "/1/1/em1.js;get/impact";
+const probabilityQual = abs("~/../semantic_entities/em1.js;get/probability");
+const isCorrectQual = abs("~/../semantic_entities/em1.js;get/isCorrect");
+const impactRel = abs("~/../semantic_entities/em1.js;get/impact");
 
 // TODO: Cut off long texts, using some expandable component.
 

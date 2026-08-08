@@ -1,5 +1,5 @@
 
-import {fetchRelationalQualityPath} from "/1/1/entities.js";
+import {fetchRelationalQualityPath} from "~/../semantic_entities/entities.js";
 
 import * as QualityEntityElement from "./QualityEntityElement.jsx";
 

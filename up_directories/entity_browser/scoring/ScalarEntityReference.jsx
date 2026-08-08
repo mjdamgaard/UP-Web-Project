@@ -1,6 +1,6 @@
 
 import * as EntityReference from "../../utilities/EntityReference.jsx";
-import {fetchScalarEntityPath} from "/1/1/entities.js";
+import {fetchScalarEntityPath} from "~/../semantic_entities/entities.js";
 
 
 export function render({

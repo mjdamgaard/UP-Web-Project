@@ -1,5 +1,5 @@
 
-import {fetchEntityDefinition} from "/1/1/entities.js";
+import {fetchEntityDefinition} from "~/../semantic_entities/entities.js";
 import * as TextDisplay from "./TextDisplay.jsx";
 
 

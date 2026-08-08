@@ -2,11 +2,12 @@
 import * as TabbedPages from "../../../utilities/TabbedPages.jsx";
 import * as EntityList from "../../entity_lists/EntityList.jsx";
 
-const commentsRel = "/1/1/em1.js;get/commentsRelation";
-const reactionsRel = "/1/1/em1.js;get/reactions";
-const questionsAndFactsRel = "/1/1/em1.js;get/questionsAndFacts";
-const discussionsRel = "/1/1/em1.js;get/discussions";
-const tasksRel = "/1/1/em1.js;get/tasks";
+const commentsRel = abs("~/../semantic_entities/em1.js;get/commentsRelation");
+const reactionsRel = abs("~/../semantic_entities/em1.js;get/reactions");
+const questionsAndFactsRel =
+  abs("~/../semantic_entities/em1.js;get/questionsAndFacts");
+const discussionsRel = abs("~/../semantic_entities/em1.js;get/discussions");
+const tasksRel = abs("~/../semantic_entities/em1.js;get/tasks");
 
 
 export function render({entKey, isNested = false}) {
