@@ -4,6 +4,7 @@ import * as TabbedPages from "../../utilities/TabbedPages.jsx";
 import * as MissingPage from "../../base_app/src/MissingPage.jsx";
 import * as PageHeader from "./PageHeader.jsx";
 import * as EntityList from "./EntityList.jsx";
+import * as EntityElement from "./EntityElement.jsx";
 import * as InfoPage from "./InfoPage.jsx";
 import * as SubmissionPage from "./SubmissionPage.jsx";
 
@@ -83,7 +84,7 @@ export function render(props) {
         title: "Versions",
         Component: EntityList,
         props: {
-          objKey: entKey,
+          objKey: entID,
           relKey: versionsRelPath,
           Element: EntityElement, elemProps: {
             type: "app",

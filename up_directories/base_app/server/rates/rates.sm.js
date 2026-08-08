@@ -27,7 +27,7 @@ export async function updateUpOrDownRate(objID, relID, subjID, rateValue) {
 
   let userID = getRequestingUserID();
   if (!userID) {
-    throw "User must be logged in order to submit a like or dislike";
+    throw "User must be logged in order to submit a rating";
   }
 
   // Combine objID and relID into a single hexadecimal listID for all table
@@ -43,23 +43,23 @@ export async function updateUpOrDownRate(objID, relID, subjID, rateValue) {
   let options = {connection: conn};
 
   // Get the relevant current data.
-  let [prevLikeValue, prevMixedSum, prevLikeSum] = await Promise.all([
-    _fetchUserLikeValue(listID, entryKey, options),
+  let [prevRateValue, prevMixedSum, prevUpRateSum] = await Promise.all([
+    _fetchUserRateValue(listID, entryKey, options),
     _fetchMixedSum(listID, subjID, options),
-    _fetchLikeSum(listID, subjID, options),
+    _fetchUpRateSum(listID, subjID, options),
   ]);
 
   // Now compute the new sums, i.e. of the total number of up rates and the
   // total number up rates minus down rates.
-  let newLikeSum = prevLikeSum - (prevLikeValue === 1 ? 1 : 0) +
+  let newUpRateSum = prevUpRateSum - (prevRateValue === 1 ? 1 : 0) +
     (rateValue === 1 ? 1 : 0);
-  let newMixedSum = prevLikeSum - prevLikeValue + rateValue;
+  let newMixedSum = prevUpRateSum - prevRateValue + rateValue;
 
   // Finally update the data, and end end the connection (committing the
   // transaction and releasing the lock).
   await Promise.all([
-    _postUserLikeValue(listID, entryKey, rateValue, options),
-    _postLikeSum(listID, subjID, newLikeSum, options),
+    _postUserRateValue(listID, entryKey, rateValue, options),
+    _postUpRateSum(listID, subjID, newUpRateSum, options),
     _postMixedSum(listID, subjID, newMixedSum, options),
   ]);
   await conn.end();
@@ -69,7 +69,7 @@ export async function updateUpOrDownRate(objID, relID, subjID, rateValue) {
 
 /* Functions concerning _userRates.bt */ 
 
-export function fetchUserLikeValue(objID, relID, subjID) {
+export function fetchUserRateValue(objID, relID, subjID) {
   verifyTypes([objID, relID, subjID], ["hex", "hex", "hex"]);
   checkRequestOrigin(true, [
     abs("~/main.jsx"),
@@ -78,27 +78,27 @@ export function fetchUserLikeValue(objID, relID, subjID) {
 
   let userID = getRequestingUserID();
   if (!userID) {
-    throw "User must be logged in order to fetch their like/dislike data";
+    throw "User must be logged in order to fetch their rating data";
   }
 
   let listID = arrayToHex([objID, relID], ["hex-int", "hex-int"]);
   let entryKey = arrayToHex([subjID, userID], ["hex-int", "hex-int"]);
-  return _fetchUserLikeValue(listID, entryKey);
+  return _fetchUserRateValue(listID, entryKey);
 }
 
 
-async function _fetchUserLikeValue(listID, entryKey, options = undefined) {
-  let likePayload = await fetchPrivate(
+async function _fetchUserRateValue(listID, entryKey, options = undefined) {
+  let ratePayload = await fetchPrivate(
     abs("./_userRates.bt./entry/l/" + listID + "/k/" + entryKey),
     options
   );
-  let rateValue = (likePayload === undefined) ? 0 :
-    (likePayload === "1") ? 1 : -1;
+  let rateValue = (ratePayload === undefined) ? 0 :
+    (ratePayload === "1") ? 1 : -1;
   return rateValue;
 }
 
 
-async function _postUserLikeValue(
+async function _postUserRateValue(
   listID, entryKey, rateValue, options = undefined
 ) {
   if (rateValue === 0) {
@@ -107,10 +107,10 @@ async function _postUserLikeValue(
       undefined, options
     );
   } else {
-    let likePayload = (rateValue === 1) ? "1" : "2";
+    let ratePayload = (rateValue === 1) ? "1" : "2";
     await post(
       abs("./_userRates.bt./_insert/l/" + listID + "/k/" + entryKey),
-      likePayload, options
+      ratePayload, options
     );
   }
 }
@@ -118,33 +118,33 @@ async function _postUserLikeValue(
 
 /* Functions concerning upRateSums.bbt */
 
-export function fetchLikeSum(objID, relID, subjID) {
+export function fetchUpRateSum(objID, relID, subjID) {
   verifyTypes([objID, relID, subjID], ["hex", "hex", "hex"]);
   let listID = arrayToHex([objID, relID], ["hex-int", "hex-int"]);
-  return _fetchLikeSum(listID, subjID);
+  return _fetchUpRateSum(listID, subjID);
 }
 
-async function _fetchLikeSum(listID, subjID, options = undefined) {
-  let [likeSumHex] = await fetch(
+async function _fetchUpRateSum(listID, subjID, options = undefined) {
+  let [upRateSumHex] = await fetch(
     abs("./_upRateSums.bbt./entry/l/" + listID + "/k/" + subjID),
     options
   ) ?? [];
-  if (likeSumHex === undefined) {
+  if (upRateSumHex === undefined) {
     return 0;
   }
   else {
-    return hexToValue(likeSumHex, "uint(6)");
+    return hexToValue(upRateSumHex, "uint(6)");
   }
 }
 
-async function _postLikeSum(
-  listID, subjID, likeSum, options = undefined
+async function _postUpRateSum(
+  listID, subjID, upRateSum, options = undefined
 ) {
-  let likeSumHex = valueToHex(likeSum, "uint(6)");
+  let upRateSumHex = valueToHex(upRateSum, "uint(6)");
   await post(
     abs(
       "./_upRateSums.bbt./entry/l/" + listID + "/k/" + subjID +
-      "/s/" + likeSumHex
+      "/s/" + upRateSumHex
     ),
     undefined, options
   )
@@ -153,7 +153,7 @@ async function _postLikeSum(
 
 /* Functions concerning mixedSums.bbt */ 
 
-export function fetchMixedSum(objID, subjID) {
+export function fetchMixedSum(objID, relID, subjID) {
   verifyTypes([objID, relID, subjID], ["hex", "hex", "hex"]);
   let listID = arrayToHex([objID, relID], ["hex-int", "hex-int"]);
   return _fetchMixedSum(listID, entryKey);
@@ -189,7 +189,7 @@ async function _postMixedSum(
 
 /* Function for fetching a list of the best rated subject entities */
 
-export function fetchLikedSubApps(
+export function fetchRatedEntities(
   objID, relID, disregardDownRates = "0",  maxNum = "1000", offSet = "0"
 ) {
   verifyTypes([objID, relID], ["hex", "hex"]);
@@ -209,4 +209,18 @@ export function fetchLikedSubApps(
     "./skList/l/" + listID + "/n/" + maxNum + "/o/" + offSet
   )) ?? [];
   return map(topSubApps, ([subjID]) => subjID);
+}
+
+
+
+
+/* Misc. */
+
+export async function fetchUpAndDownRates(objID, relID, subjID) {
+  let [mixedSum, upRateSum] = await Promise.all([
+    fetchMixedSum(objID, relID, subjID),
+    fetchUpRateSum(objID, relID, subjID),
+  ]);
+  let downRateSum = upRateSum - mixedSum;
+  return [upRateSum, downRateSum];
 }

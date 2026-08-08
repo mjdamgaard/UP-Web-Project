@@ -19,7 +19,8 @@ export const MAP_PROTOTYPE = Object.getPrototypeOf(new Map());
 const objectMethods = ["toString"];
 const arrayMethods = [
   "toString", "at", "slice", "map", "reduce", "forEach", "some", "every",
-  "join", "concat", "includes", "indexOf", // TODO: Continue when implemented.
+  "join", "concat", "includes", "indexOf", "filter",
+  // TODO: Continue when implemented.
 ];
 const stringMethods = [
   "toString", "at", "substring", "slice", "indexOf", "split", "toUpperCase",

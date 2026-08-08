@@ -22,18 +22,30 @@ const fileBrowserPath = abs("~/../semantic_entities/em3.js;call/App") + "/" +
 
 
 
-// For this root version of the app browser, we just use hard-coded lists
-// for all the app and category/class pages. The SMFs below thus do not need
-// to be called server-side, but can also just be imported and called client-
-// side.
+// For this root version of the app browser, we use hard-coded lists that
+// always comes first for certain entity lists.
 
 
-export async function fetchList(objKey, relKey) {
+
+export async function fetchList(objID, relID) {
   let [objPath, relPath] = await Promise.all([
-    fetchEntityPath(objKey),
-    fetchEntityPath(relKey),
+    fetchEntityPath(objID),
+    fetchEntityPath(relID),
   ]);
 
+  let [constSubjects, likedSubjects] = await Promise.all([
+    fetchHardCodedList(objPath, relPath),
+    fetchedLikedEntities(objID, relID),
+  ]);
+
+  return [
+    ...constSubjects,
+    ...likedSubjects.filter(subjID => !constSubjects.includes(subjID))
+  ];
+}
+
+
+export async function fetchHardCodedList(objPath, relPath) {
   let subjIDArr = [];
   if (relPath === membersPath) {
     if (objPath === appsPath) {
@@ -44,6 +56,8 @@ export async function fetchList(objKey, relKey) {
       ]);
     }
   }
+  // TODO: Continue.
 
-  return subjIDArr.map(subjID => [subjID, 5]);
+  return subjIDArr;
 }
+

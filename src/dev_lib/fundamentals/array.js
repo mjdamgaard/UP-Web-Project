@@ -123,6 +123,21 @@ export const indexOf = new DevFunction(
   }
 );
 
+export const filter = new DevFunction(
+  "filter", {typeArr: ["any", "function"]},
+  ({callerNode, execEnv, interpreter}, [arr, fun]) => {
+    let ret = [];
+    forEachValue(arr, callerNode, execEnv, (val, ind) => {
+      if (
+        interpreter.executeFunction(fun, [val, ind], callerNode, execEnv)
+      ) {
+        ret.push(val);
+      }
+    });
+    return ret;
+  }
+);
+
 // TODO: Continue.
 
 

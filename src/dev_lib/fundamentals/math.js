@@ -36,4 +36,21 @@ export const max = new DevFunction(
   }
 );
 
+
+export const log = new DevFunction(
+  "log", {typeArr: ["number"]}, ({}, [x]) => {
+    return Math.log(x);
+  }
+);
+export const log2 = new DevFunction(
+  "log2", {typeArr: ["number"]}, ({}, [x]) => {
+    return Math.log2(x);
+  }
+);
+export const log10 = new DevFunction(
+  "log10", {typeArr: ["number"]}, ({}, [x]) => {
+    return Math.log10(x);
+  }
+);
+
 // TODO: Continue implementing all other standard Math functions/methods.

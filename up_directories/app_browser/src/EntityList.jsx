@@ -1,5 +1,5 @@
 
-import {fetch} from 'query';
+import {fetchList} from "../server/entities.js";
 import {fetchEntityID} from '../../semantic_entities/entities.js';
 
 
@@ -7,14 +7,12 @@ export async function initialize({objKey, relKey}) {
   let [objID, relID] = await Promise.all([
     fetchEntityID(objKey), fetchEntityID(relKey)
   ]);
-  let list = await fetch(abs(
-    `../server/entity_lists.sm.js/callSMF/fetchList/${objID}/${relID}`
-  ));
-  this.setState({list: list ?? null});
+  let list = await fetchList(objID, relID);
+  this.setState({list: list ?? null, objID: objID, relID: relID});
 }
 
-export function render({objKey, Element, elemProps}) {
-  let {list} = this.state;
+export function render({Element, elemProps}) {
+  let {list, objID, relID} = this.state;
   if (list === undefined) {
     return <div className="entity-list loading"></div>;
   }
@@ -24,7 +22,9 @@ export function render({objKey, Element, elemProps}) {
 
   return <div className="entity-list">
     {(list.map(([subjID]) => (
-      <Element key={subjID} {...elemProps} entID={subjID} objKey={objKey} />
+      <Element key={"e-" + subjID} {...elemProps}
+        entID={subjID} objID={objID} relID={relID}
+      />
     )))}
   </div>;
 }

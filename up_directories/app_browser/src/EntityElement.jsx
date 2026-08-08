@@ -1,5 +1,6 @@
 
 import {fetchEntityDefinition} from "../../semantic_entities/entities.js";
+import * as RatingDisplay from "./RatingDisplay.jsx";
 
 const missingJSX = <div className="app-element">
   Missing data
@@ -16,7 +17,7 @@ export function initialize({entID}) {
 }
 
 export function render(props) {
-  let {entID, type, ancCatIDs, ancAppIDs} = props;
+  let {entID, type, objID, relID, ancCatIDs, ancAppIDs} = props;
   let {entDef} = this.state;
   if (entDef === undefined) {
     return fetchingJSX;
