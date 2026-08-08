@@ -2,14 +2,8 @@
 
 
 
-export function render({entDef, entID, ancCatIDs, ancAppIDs}) {
-  return <div className="page-header">
-    <div>
-      Name: {entDef["Name"]} 
-    </div>
-    <div>
-      entID: {entID} 
-    </div>
-    <hr/>
+export function render() {
+  return <div>
+    TODO: Impl. info page.
   </div>
 }

@@ -1,14 +1,12 @@
 
-import {slice, substring, at, indexOf} from 'string';
-
 import * as HomePage from "./Homepage.jsx";
 import * as UserPage from "./user_page/UserPage.jsx";
 import * as FriendsPage from "./friend_page/FriendsPage.jsx";
 
 
 export function render({url = "", userID}) {
-  if (at(url, -1) === "/") {
-    url = slice(url, 0, -1);
+  if (url.at(-1) === "/") {
+    url = url.slice(0, -1);
   }
 
   // If the url is equal to "", go to the home page.
@@ -21,12 +19,12 @@ export function render({url = "", userID}) {
   }
 
   // Else if url is of the form "/u/" + userID, go to the UserPage.
-  let urlStart = slice(url, 0, 3);
+  let urlStart = url.slice(0, 3);
   if (urlStart === "/u/") {
-    let indOfThirdSlash = indexOf(url, "/", 3);
+    let indOfThirdSlash = url.indexOf("/", 3);
     let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
-    let urlUserID = slice(url, 3, endOfID);
-    let tailURL = substring(url, 3 + urlUserID.length);
+    let urlUserID = url.slice(3, endOfID);
+    let tailURL = url.substring(3 + urlUserID.length);
     this.advanceURL(1);
     return (
       <main className="app-main">

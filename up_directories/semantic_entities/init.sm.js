@@ -4,7 +4,6 @@
 
 import {checkAdminPrivileges} from 'request';
 import {post, upNodeID} from 'query';
-import {map} from 'array';
 import {valueToHex, arrayToHex} from 'hex';
 import {getSequentialPromise} from 'promise';
 import {
@@ -44,7 +43,7 @@ export function insertInitialModerators() {
 
   return new Promise(resolve => {
     let transformedInitialModeratorListProm = Promise.all(
-      map(initialModerators, ([userID, weight, weightWeight]) => {
+      initialModerators.map(([userID, weight, weightWeight]) => {
         return new Promise(resolve => {
           let userEntPath = abs(
             "~/em1.js;call/User/" + upNodeID + "/" + userID
@@ -97,7 +96,7 @@ export function postInitialScores01() {
 
   // Fetch the moderator IDs.
   let initModeratorIDArrProm = Promise.all(
-    map(initialModerators, ([userID]) => {
+    initialModerators.map(([userID]) => {
       return new Promise(res => {
         let userEntPath = abs("~/em1.js;call/User/" + upNodeID + "/" + userID);
         postEntity(userEntPath).then(
@@ -129,7 +128,7 @@ export function postInitialScores01() {
     () => {
       let trustedQualKey = abs("./em1.js;get/isTrusted");
       let trustScoreArr = [9, 9, 9, 8, 8, 6, 6];
-      return getSequentialPromise(map(initModArr, (modID, ind) => {
+      return getSequentialPromise(initModArr.map((modID, ind) => {
         let score = trustScoreArr[ind] ?? 5;
         return () => postUserPredicateScoreAndUpdateUserGroups(
           trustedQualKey, modID, firstModID, score

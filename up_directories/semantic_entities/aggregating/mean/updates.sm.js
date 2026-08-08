@@ -129,7 +129,7 @@ export function updateList() {
 //     Promise.all([
 //       qualIDProm, subjIDProm, userGroupIDProm, userListProm
 //     ]).then(([qualID, subjID, userGroupID, userList]) => {
-//       forEach(userList, ([userID, _]) => {
+//       userList.forEach(([userID, _]) => {
 //         updateScoreForUser(user) // ...
 //       });
 //     });

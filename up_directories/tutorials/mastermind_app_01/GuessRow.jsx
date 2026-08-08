@@ -1,5 +1,5 @@
 
-import {map, createArray} from 'array';
+import {createArray} from 'array';
 import * as Peg from "./Peg.jsx";
 
 export function render({
@@ -7,7 +7,7 @@ export function render({
 }) {
   let guessRow = (
     <div className="guess-row">{(
-      map(slots, (colorID, ind) => {
+      slots.map((colorID, ind) => {
         let className = (ind === curSlot) ? "selected" : "";
         let onClick = !isActive ? undefined : () => {
           this.trigger("changeCurrentSlot", ind);
@@ -22,7 +22,7 @@ export function render({
   );
   let answerGroup = (
     <div className="answer">{(
-      map(answer, (colorID, ind) => (
+      answer.map((colorID, ind) => (
         <Peg key={"p-a-" + ind} colorID={colorID}/>
       ))
     )}</div>

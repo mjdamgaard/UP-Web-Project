@@ -1,6 +1,4 @@
 
-import {substring} from 'string';
-
 import * as ILink from 'ILink';
 import {urlActions, urlEvents} from '../base_app/urlActions.js';
 import * as EntityList from "../entity_browser/entity_lists/EntityList.jsx";
@@ -15,7 +13,7 @@ import * as ContributionsPage from "./contributions.jsx";
 
 export function render({url, homeURL}) {
   this.setContext("homeURL", homeURL);
-  let tailURL = substring(url, homeURL.length);
+  let tailURL = url.substring(homeURL.length);
 
 
   if (!tailURL) {

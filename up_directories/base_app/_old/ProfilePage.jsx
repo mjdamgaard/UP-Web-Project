@@ -1,6 +1,5 @@
 
 import {post} from 'query';
-import {substring} from 'string';
 import {fetchEntityDefinition} from "/1/1/entities.js";
 
 import * as InputText from 'InputText';
@@ -75,7 +74,7 @@ export const actions = {
         ...state, tagResponse: "Write a new user tag before submitting."
       }));
     }
-    else if (substring(newTag, 0, 5) === "User ") {
+    else if (newTag.substring(0, 5) === "User ") {
       this.setState(state => ({
         ...state, tagResponse: 'User tag cannot start with "User ".'
       }));

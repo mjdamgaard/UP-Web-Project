@@ -1,6 +1,4 @@
 
-import {split, trim} from 'string';
-import {join, map} from 'array';
 import {parseRoute, isTextFileExtension, getAbsolutePath} from 'route';
 import {fetch, encodeURI} from 'query';
 
@@ -19,7 +17,7 @@ export function render({style}) {
   // after the homeDirID, which casts the "/<upNodeID>/<homeDirID>" result into
   // a list of children of the specific subdirectory pointed to by route.
   let [firstSegment, ...restSegments] = this.getSegments();
-  let extRoute = "/" + join(restSegments, "/");
+  let extRoute = "/" + restSegments.join("/");
   if (firstSegment !== "files") {
     this.replaceURL("~/files" + (restSegments[0] ? extRoute : ""));
     return <div className="loading"></div>;
@@ -30,7 +28,7 @@ export function render({style}) {
   }
   else {
     // Parse and the (extended) route.
-    let [route, ...castingSegments] = split(extRoute, ";");
+    let [route, ...castingSegments] = extRoute.split(";");
     let isLocked, upNodeID, homeDirID, localPath, dirSegments, fileName,
       fileExt, queryPathSegments;
     try {
@@ -57,7 +55,7 @@ export function render({style}) {
     // subdirectory route.
     let transformedRoute = extRoute;
     if (isDirectoryPath) {
-      let subdirectoryPath = join(dirSegments, "/");
+      let subdirectoryPath = dirSegments.join("/");
       transformedRoute = routeHomePath + ";/" + subdirectoryPath;
     }
 
@@ -109,10 +107,10 @@ export function render({style}) {
 export const actions = {
   "go": function() {
     let relExtRoute = this.call("i-search", "getValue");
-    relExtRoute = trim(relExtRoute ?? "");
+    relExtRoute = (relExtRoute ?? "").trim();
     if (relExtRoute) {
       let [ , ...restSegments] = this.getSegments();
-      let curExtRoute = "/" + join(restSegments, "/");
+      let curExtRoute = "/" + restSegments.join("/");
       let newExtRoute = getAbsolutePath(relExtRoute, curExtRoute);
       this.call("i-search", "setValue", "");
       this.replaceURL("~/files/" + newExtRoute);
@@ -135,7 +133,7 @@ function getRouteJSXWithSubLinks(
   let homeILink = <ILink key="h" href={href}>{routeHomePath}</ILink>;
 
   // Then create an array of ILinks to each additional subdirectory, if any.
-  let subdirectoryLinks = map(dirSegments, (val, ind) => {
+  let subdirectoryLinks = dirSegments.map((val, ind) => {
     acc += "/" + val;
     href = acc;
     return <ILink key={"s" + ind} href={href}>{val}</ILink>;
@@ -149,14 +147,14 @@ function getRouteJSXWithSubLinks(
   
   // Then create an ILink to the result as it is before any casting.
   let resultSegment = fileName ? fileName + (
-    queryPathSegments.length === 0 ? "" : join(queryPathSegments, "/")
+    queryPathSegments.length === 0 ? "" : queryPathSegments.join("/")
   ) : undefined;
   acc += "/" + resultSegment;
   href = encodeURI(acc);
   let resultLink = <ILink key={"r"} href={href}>{resultSegment}</ILink>;
 
   // Then create an ILink for each casting segment.
-  let castingLinks = map(castingSegments, (segment, ind) => {
+  let castingLinks = castingSegments.map((segment, ind) => {
     acc += ";" + segment;
     href = encodeURI(acc);
     return <ILink key={"cast" + ind} href={href}>{segment}</ILink>;

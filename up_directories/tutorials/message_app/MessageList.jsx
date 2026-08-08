@@ -1,6 +1,5 @@
 
 import {fetchPrivate} from 'query';
-import {map} from 'array';
 import * as MessageDisplay from "./MessageDisplay.jsx";
 
 
@@ -16,7 +15,7 @@ export function render({userID}) {
     return <div className="message-list"></div>;
   }
 
-  let children = map(messageList, ([id, message, authorID]) => (
+  let children = messageList.map(([id, message, authorID]) => (
     <MessageDisplay key={"m-" + id}
       message={message} authorID={authorID} userID={userID} messageID={id}
     />

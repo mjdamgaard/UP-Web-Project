@@ -3,7 +3,6 @@ import {post, fetch, fetchPrivate} from 'query';
 import {getRequestingUserID, checkRequestOrigin} from 'request';
 import {valueToHex, hexToValue} from 'hex';
 import {verifyType} from 'type';
-import {substring} from 'string';
 import {getConnection} from 'connection';
 
 
@@ -13,7 +12,7 @@ export function requestNewUserTag(userTag) {
     "/1/2/ProfilePage.jsx",
   ]);
   verifyType(userTag, "string");
-  if (substring(userTag, 0, 5) === "User ") throw (
+  if (userTag.substring(0, 5) === "User ") throw (
     'User tag cannot start with "User "'
   );
   return new Promise(resolve => {

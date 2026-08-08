@@ -1,8 +1,6 @@
 
 import {fetch, fetchPrivate} from 'query';
-import {substring, split, at, slice, join, replaceAll, toString} from 'string';
 import {hasType, hasTypes, verifyType} from 'type';
-import {forEach} from 'array';
 
 import * as MissingPage from "./MissingPage.jsx";
 
@@ -30,10 +28,10 @@ export async function initialize({
   // appropriately replaced, and make it a private query iff the user is
   // logged in and useStandard is falsy.
   verifyType(appDirID, "hex");
-  let fetchAppRoute = replaceAll(fetchBestVersionRouteTemplate,
+  let fetchAppRoute = fetchBestVersionRouteTemplate.replaceAll(
     "$appDirID", appDirID
   );
-  fetchAppRoute = replaceAll(fetchAppRoute,
+  fetchAppRoute = fetchAppRoute.replaceAll(
     "$useOriginal", useOriginal ? "1" : "0"
   );
   let fetchFun = userID && !useStandard ? fetchPrivate : fetch;

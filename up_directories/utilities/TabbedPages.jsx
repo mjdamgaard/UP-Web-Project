@@ -1,6 +1,5 @@
 
 import {entries} from 'object';
-import {map, forEach} from 'array';
 
 import * as Tab from "./Tab.jsx";
 
@@ -16,7 +15,7 @@ export function render({tabs, closeInactiveTabs = undefined}) {
   return (
     <div className="tabbed-pages">
       <div className="tab-menu">{(
-        map(tabEntries, ([tabKey, tabData]) => {
+        tabEntries.map(([tabKey, tabData]) => {
           if (!tabData) return undefined;
           let {title} = tabData;
           return <Tab key={"t-" + tabKey} tabKey={tabKey} children={title}
@@ -25,7 +24,7 @@ export function render({tabs, closeInactiveTabs = undefined}) {
         })
       )}</div>
       <div className="page-container">{(
-        map(loadedPageEntries, ([tabKey, tabData]) => {
+        loadedPageEntries.map(([tabKey, tabData]) => {
           if (!tabData) return undefined;
           let isOpen = tabKey === openTabKey;
           let {Component, props: pageProps} = tabData;
@@ -81,7 +80,7 @@ export const actions = {
     if (tabKey === openTabKey) {
       let loadedPageEntries = entries(newLoadedPages);
       let newTabKey = "";
-      forEach(loadedPageEntries, ([loadedTabKey, tabData]) => {
+      loadedPageEntries.forEach(([loadedTabKey, tabData]) => {
         if (tabData) newTabKey = loadedTabKey;
       });
       openTabKey = newTabKey;

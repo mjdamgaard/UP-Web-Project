@@ -1,6 +1,5 @@
 
 import {fetchPrivate} from 'query';
-import {map} from 'array';
 import * as Post from "./Post.jsx";
 
 
@@ -43,7 +42,7 @@ export function render({userID, ownUserID}) {
   // Else if the postList has returned (where each entry is of the form
   // [textID, timestamp]), render the list of posts.
   else {
-    content = map(postList, ([textID, timestamp]) => (
+    content = postList.map(([textID, timestamp]) => (
       <Post key={"p-" + textID} textID={textID}
         userID={userID} ownUserID={ownUserID} timestamp={timestamp}
       />

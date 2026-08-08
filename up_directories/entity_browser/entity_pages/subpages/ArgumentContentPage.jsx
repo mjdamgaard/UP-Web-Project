@@ -1,5 +1,4 @@
 
-import {toString} from 'string';
 import {fetchEntityDefinition, fetchEntityPath} from "/1/1/entities.js";
 import * as TextDisplay from "../../../utilities/TextDisplay.jsx";
 import * as ScoreInterface from "../../scoring/ScoreInterface.jsx";
@@ -36,7 +35,7 @@ export function render({
     />,
   ];
 
-  let content = textEntDef ? toString(textEntDef["Content"]) : undefined;
+  let content = textEntDef ? textEntDef["Content"].toString() : undefined;
   return <div className="content-page">
     <div className="text">
       <TextDisplay key="_0" untrusted jsxElement={content} />

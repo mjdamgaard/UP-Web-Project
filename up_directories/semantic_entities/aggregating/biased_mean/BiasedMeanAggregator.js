@@ -1,5 +1,4 @@
 
-import {map, slice} from 'array';
 import MeanAggregator from "../mean/MeanAggregator.js";
 
 
@@ -36,7 +35,7 @@ export class BiasedMeanAggregator extends MeanAggregator {
   fetchList(userGroupKey, qualKey, options) {
     return new Promise(resolve => {
       super.fetchList(userGroupKey, qualKey, options).then(list => {
-        let newList = map(list, scoreData => {
+        let newList = list.map(scoreData => {
           return transformScoreData(scoreData, this);
         });
         resolve(newList);

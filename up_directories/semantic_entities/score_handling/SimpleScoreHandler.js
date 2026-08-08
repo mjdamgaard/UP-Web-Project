@@ -3,7 +3,6 @@ import {
   fetchUserScore, fetchUserScoreList, postUserScore, deleteUserScore
 } from "../scores.js";
 import {filterScoredListWRTWeight} from 'scored_lists';
-import {map} from 'array';
 import {getSequentialPromise} from 'promise';
 
 
@@ -140,7 +139,7 @@ export class SimpleScoreHandler {
   updateScoreForUser(qualKey, subjKey, userKey, options = {}) {
     return new Promise(resolve => {
       this.fetchUserGroupsForUpdate(qualKey, options).then(userGroupKeyArr => {
-        getSequentialPromise(map(userGroupKeyArr, userGroupKey => {
+        getSequentialPromise(userGroupKeyArr.map(userGroupKey => {
           return () => this.aggregator.updateScoreForUser(
             userGroupKey, qualKey, subjKey, userKey, options
           );
@@ -156,7 +155,7 @@ export class SimpleScoreHandler {
   updateScoreForGroup(qualKey, subjKey, options = {}) {
     return new Promise(resolve => {
       this.fetchUserGroupsForUpdate(qualKey, options).then(userGroupKeyArr => {
-        getSequentialPromise(map(userGroupKeyArr, userGroupKey => {
+        getSequentialPromise(userGroupKeyArr.map(userGroupKey => {
           return () => this.aggregator.updateScoreForGroup(
             userGroupKey, qualKey, subjKey, options
           );
@@ -172,7 +171,7 @@ export class SimpleScoreHandler {
   updateList(qualKey, options = {}) {
     return new Promise(resolve => {
       this.fetchUserGroupsForUpdate(qualKey, options).then(userGroupKeyArr => {
-        getSequentialPromise(map(userGroupKeyArr, userGroupKey => {
+        getSequentialPromise(userGroupKeyArr.map(userGroupKey => {
           return () => this.aggregator.updateList(
             userGroupKey, qualKey, options
           );

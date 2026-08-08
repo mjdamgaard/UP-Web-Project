@@ -5,7 +5,6 @@ import {getConnection} from 'connection';
 import {arrayToHex, hexToArray, valueToHex, hexToValue} from 'hex';
 import {verifyTypes} from 'type';
 import {parseInt, isNaN} from 'number';
-import {map} from 'array';
 
 
 
@@ -208,7 +207,7 @@ export function fetchRatedEntities(
     "./" + (disregardDownRates ? "upRateSums.bbt" : "mixedSums.bbt") +
     "./skList/l/" + listID + "/n/" + maxNum + "/o/" + offSet
   )) ?? [];
-  return map(topSubApps, ([subjID]) => subjID);
+  return topSubApps.map(([subjID]) => subjID);
 }
 
 

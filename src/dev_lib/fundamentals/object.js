@@ -81,3 +81,20 @@ export const mapToArray = new DevFunction(
     });
   }
 );
+
+
+
+export const filter = new DevFunction(
+  "filter", {typeArr: ["any", "function"]},
+  ({callerNode, execEnv, interpreter}, [obj, callback]) => {
+    let ret = {};
+    forEachValue(obj, callerNode, execEnv, (val, key) => {
+      if (
+        interpreter.executeFunction(callback, [val, key], callerNode, execEnv)
+      ) {
+        ret[key] = val;
+      }
+    });
+    return ret;
+  }
+);

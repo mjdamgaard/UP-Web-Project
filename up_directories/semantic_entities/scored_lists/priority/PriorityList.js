@@ -1,6 +1,5 @@
 
 import {ScoredList} from "../ScoredList.js";
-import {join} from 'array';
 
 
 
@@ -17,7 +16,7 @@ export class PriorityList extends ScoredList {
       <h1>{"Priority list"}</h1>
       <p>{
         "This scored list is combined from the following lists: " +
-        join(listKeyArr, ", ") + ", by taking the score and the weight from " +
+        listKeyArr.join(", ") + ", by taking the score and the weight from " +
         "the first list in which the given subject appears."
       }</p>
     </div>;

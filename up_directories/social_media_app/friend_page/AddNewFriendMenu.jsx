@@ -1,6 +1,5 @@
 
 import {fetch, post} from 'query';
-import {substring} from 'string';
 import {hasType} from 'type';
 
 import * as InputText from 'InputText';
@@ -42,7 +41,7 @@ export const actions = {
     // If the input value is a user ID, validate it and then call the helper
     // function, submitFriendRequestHelper(), directly.
     if (usernameOrID[0] === "#") {
-      let otherUserID = substring(usernameOrID, 1);
+      let otherUserID = usernameOrID.substring(1);
       if (!otherUserID || !hasType(otherUserID, "hex-string")) {
         this.setState(state => ({
           ...state, response: <span className="warning">{

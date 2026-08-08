@@ -1,6 +1,5 @@
 
 import {fetchPrivate} from 'query';
-import {map} from 'array';
 import * as FriendDisplay from "./FriendDisplay.jsx";
 import * as FriendRequestDisplay from "./FriendRequestDisplay.jsx";
 import * as AddNewFriendMenu from "./AddNewFriendMenu.jsx";
@@ -57,7 +56,7 @@ export function render({userID}) {
   else {
     content = [
       <div className="friend-requests">{(
-        map(friendRequestList, ([otherUserID, timestamp, isDeclined]) => (
+        friendRequestList.map(([otherUserID, timestamp, isDeclined]) => (
           isDeclined ? undefined :
             <FriendRequestDisplay key={"f-req-" + otherUserID}
               otherUserID={otherUserID} ownUserID={userID}
@@ -67,7 +66,7 @@ export function render({userID}) {
       )}</div>,
       <hr/>,
       <div className="friend-list">{(
-        map(friendList, ([friendID, timestamp]) => (
+        friendList.map(([friendID, timestamp]) => (
           <FriendDisplay key={"f-" + friendID}
             friendID={friendID} ownUserID={userID} timestamp={timestamp}
           />

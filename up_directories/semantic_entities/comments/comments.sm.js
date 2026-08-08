@@ -1,7 +1,6 @@
 
 import {post} from 'query';
 import {getRequestingUserID, checkRequestOrigin} from 'request';
-import {substring, indexOf} from 'string';
 import {verifyType} from 'type';
 import {stringify} from 'json';
 import {
@@ -61,7 +60,7 @@ export function editComment(commentEntKey, text, targetEntKey = undefined) {
     fetchEntityPath(commentEntKey).then(commentEntPath => {
       // Extract the textID from commentEntPath and validate the latter.
       let textID = substring(
-        commentEntPath, commentPathPrefix.length, indexOf(commentEntPath, ";")
+        commentEntPath, commentPathPrefix.length, commentEntPath.indexOf(";")
       );
       verifyType(textID, "hex-string");
       if (commentEntPath !== commentPathPrefix + textID + ";.js;get/comment") {

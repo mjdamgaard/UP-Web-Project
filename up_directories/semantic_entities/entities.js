@@ -6,9 +6,7 @@
 import {post, fetch, clearPermissions} from 'query';
 import {valueToHex} from 'hex';
 import {verifyType, hasType} from 'type';
-import {toUpperCase} from 'string';
 import {mapToArray, keys} from 'object';
-import {forEach, map, reduce} from 'array';
 
 const membersRelationPath = "/1/1/em1.js;get/members";
 const entitiesClassPath = "/1/1/em1.js;get/entities";
@@ -108,12 +106,12 @@ export async function fetchEntityDefinition(
   // Then call substituteIfGetterProperty on all the properties, wait
   // for the resulting promises in parallel, and use substitute the
   // obtained properties in entDef before returning it.
-  let propValuePromiseArr = map(propArr, propName => (
+  let propValuePromiseArr = propArr.map(propName => (
     substituteIfGetterProperty(propName, entDef[propName])
   ));
   let subbedPropArr = await Promise.all(propValuePromiseArr);
   let partialSubbedEntDef = new MutableObject();
-  forEach(subbedPropArr, (subbedProp, ind) => {
+  subbedPropArr.forEach((subbedProp, ind) => {
     partialSubbedEntDef[propArr[ind]] = subbedProp;
   });
   let subbedEntDef = {...entDef, ...partialSubbedEntDef};
@@ -127,7 +125,7 @@ export function substituteIfGetterProperty(propName, propValue) {
   // with propValue, and else call substituteIfGetterPropertyHelper().
   return new Promise(resolve => {
     let startChar = propName[0];
-    if (startChar !== toUpperCase(startChar)) {
+    if (startChar !== startChar.toUpperCase()) {
       resolve(propValue);
     }
     else {
@@ -256,7 +254,7 @@ export function postConstructedEntity(
   modulePath, constructorAlias, argArr
 ) {
   let entPath = modulePath + ";call/" + constructorAlias;
-  forEach(argArr, arg => {
+  argArr.forEach(arg => {
     entPath = entPath + "/" + arg;
   });
   return postEntity(entPath);
@@ -266,7 +264,7 @@ export function getConstructedEntityPath(
   modulePath, constructorAlias, argArr
 ) {
   let entPath = modulePath + ";call/" + constructorAlias;
-  forEach(argArr, arg => {
+  argArr.forEach(arg => {
     entPath = entPath + "/" + arg;
   });
   return entPath;
@@ -284,7 +282,7 @@ export function postEntityKeyConstructedEntity(
   modulePath, constructorAlias, entKeyArr
 ) {
   return new Promise(resolve => {
-    let entIDPromArr = map(entKeyArr, entKey => fetchOrCreateEntityID(entKey));
+    let entIDPromArr = entKeyArr.map(entKey => fetchOrCreateEntityID(entKey));
     Promise.all(entIDPromArr).then(entIDArr => {
       postConstructedEntity(modulePath, constructorAlias, entIDArr).then(
         entID => resolve(entID)
@@ -297,7 +295,7 @@ export function fetchEntityKeyConstructedEntityPath(
   modulePath, constructorAlias, entKeyArr
 ) {
   return new Promise(resolve => {
-    let entIDPromArr = map(entKeyArr, entKey => fetchEntityID(entKey));
+    let entIDPromArr = entKeyArr.map(entKey => fetchEntityID(entKey));
     Promise.all(entIDPromArr).then(entIDArr => resolve(
       getConstructedEntityPath(modulePath, constructorAlias, entIDArr)
     ));
@@ -308,7 +306,7 @@ export function fetchEntityKeyConstructedEntityID(
   modulePath, constructorAlias, entKeyArr
 ) {
   return new Promise(resolve => {
-    let entIDPromArr = map(entKeyArr, entKey => fetchEntityID(entKey));
+    let entIDPromArr = entKeyArr.map(entKey => fetchEntityID(entKey));
     Promise.all(entIDPromArr).then(entIDArr => {
       fetchConstructedEntityID(modulePath, constructorAlias, entIDArr).then(
         entID => resolve(entID)

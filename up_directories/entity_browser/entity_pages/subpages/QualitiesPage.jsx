@@ -1,5 +1,4 @@
 
-import {map} from 'array';
 import {hasType} from 'type';
 import * as EntityList from "../../entity_lists/EntityList.jsx";
 
@@ -23,7 +22,7 @@ export function render({objKey, extQualKeyArr = undefined}) {
   }
 
   let contextQualityElements = (extQualKeyArr[0] === undefined) ? undefined :
-    map(extQualKeyArr, extKey => {
+    extQualKeyArr.map(extKey => {
       if (hasType(extKey, "array")) {
         let subjKey = objKey;
         let [objKey, relKey] = extKey; 

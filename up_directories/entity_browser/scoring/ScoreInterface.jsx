@@ -1,7 +1,5 @@
 
-import {toPrecision, parseFloat, isNaN} from 'number';
-import {forEach} from 'array';
-import {slice} from 'string';
+import {parseFloat, isNaN} from 'number';
 import {fetchMetric, fetchUserScore} from "/1/1/scores.js";
 import {fetchEntityDefinition} from '/1/1/entities.js';
 import {fetchQualityKey} from '../entity_lists/quality_keys.js';
@@ -50,7 +48,7 @@ export function render({subjKey, qualKey, extQualKey = qualKey, scalarKey}) {
         });
         if (userEntID) {
           fetchUserScore(qualKey, subjKey, userEntID).then(score => {
-            score &&= parseFloat(toPrecision(score, 4));
+            score &&= parseFloat(score.toPrecision(4));
             this.setState(state => ({...state, prevScore: score ?? false}));
           });
         } else {
@@ -293,7 +291,7 @@ export function getIntervalLabel(metric, score) {
   let intervalLabels = metric["Interval labels"];
   if (!intervalLabels) return undefined;
   let ret;
-  forEach(intervalLabels, ([lo, hi, label]) => {
+  intervalLabels.forEach(([lo, hi, label]) => {
     if (lo <= score && score <= hi) {
       ret = ret ? ret + "/" + label : label;
     }
@@ -305,8 +303,8 @@ export function getIntervalLabel(metric, score) {
 export function fetchSubjectAndQualityIDs(scalarKey) {
   return new Promise(resolve => {
     fetchEntityDefinition(scalarKey, ["Subject", "Quality"]).then(entDef => {
-      let subjID = slice(entDef["Subject"], 2, -1);
-      let qualID = slice(entDef["Quality"], 2, -1);
+      let subjID = entDef["Subject"].slice(2, -1);
+      let qualID = entDef["Quality"].slice(2, -1);
       resolve([subjID, qualID]);
     });
   });

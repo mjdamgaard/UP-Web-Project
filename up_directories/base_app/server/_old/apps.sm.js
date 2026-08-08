@@ -3,8 +3,6 @@ import {post, fetch, fetchPrivate, clearPermissions} from 'query';
 import {getRequestingUserID, checkRequestOrigin} from 'request';
 import {verifyTypes, hasType} from 'type';
 import {parse, stringify} from 'json';
-import {split} from 'string';
-import {at} from 'array';
 
 import {fetchEntityDefinition, fetchRelationalQualityPath} from 
   "../../../semantic_entities/entities.js";
@@ -115,12 +113,12 @@ async function fetchPreferredSubAppHelper(
   // itself in front of the list.
   let appIDListString = !subAppIDListString ? appDirID :
     appDirID + "," + subAppIDListString;
-  let appIDArr = split(appIDListString, ",");
+  let appIDArr = appIDListString.split(",");
 
   // If the user is not logged in, or if the maximal recursion level has been
   // reached, simply return the last entry of this list.
   if (!preferences || recLevel >= maxRecLevel) {
-    return at(appIDArr, -1);
+    return appIDArr.at(-1);
   }
 
   // Else loop through the appIDArr until a user preference overwrites the next
@@ -237,7 +235,7 @@ export async function fetchPreferredSubAppList(appDirID, scoreHandlerID = "0") {
   ));
 
   // Return the list as an array for convenience.
-  return subAppIDListString ? split(subAppIDListString, ",") : [];
+  return subAppIDListString ? subAppIDListString.split(",") : [];
 }
 
 

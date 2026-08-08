@@ -1,8 +1,6 @@
 
 import {fetch, fetchPrivate} from 'query';
-import {substring, split, at, slice, join, replaceAll, toString} from 'string';
 import {hasType, hasTypes, verifyType} from 'type';
-import {some} from 'array';
 
 import * as MissingPage from "./MissingPage.jsx";
 
@@ -66,7 +64,7 @@ export function render({
     }
     useOriginal = fstChar === "o";
     useStandard = fstChar === "s";
-    appDirIDSegment = substring(firstSegment, 2);
+    appDirIDSegment = firstSegment.substring(2);
   }
   else {
     appDirIDSegment = firstSegment;
@@ -97,13 +95,13 @@ export function render({
   // if not, load a new app.
   if (firstSegment !== stdFirstSegment) {
     let localURL = substring(this.getPath(), 1); // removes the "/" in front.
-    let urlTail = substring(localURL, firstSegment.length + 1);
+    let urlTail = localURL.substring(firstSegment.length + 1);
     let shouldLoadNewApp = true;
     if (additionalURLs && hasType(additionalURLs, "array")) {
-      some(additionalURLs, urlFormat => {
-        urlFormat = toString(urlFormat);
+      additionalURLs.some(urlFormat => {
+        urlFormat = urlFormat.toString();
         if (compareStringToFormat(localURL, urlFormat)) {
-          let [firstFormatSegment] = split(urlFormat, "/");
+          let [firstFormatSegment] = urlFormat.split("/");
           if (!hasType(firstFormatSegment, "hex")) {
             // Ignore any formats that does not start with a hexadecimal
             // segment. (So no "o-" or "s-" segments allowed.)
@@ -164,10 +162,10 @@ export const actions = {
     // Then query the fetchBestVersionRouteTemplate, with placeholders
     // appropriately replaced, and make it a private query iff the user is
     // logged in and useStandard is falsy.
-    let fetchAppRoute = replaceAll(fetchBestVersionRouteTemplate,
+    let fetchAppRoute = fetchBestVersionRouteTemplate.replaceAll(
       "$appDirID", appDirIDSegment
     );
-    fetchAppRoute = replaceAll(fetchAppRoute,
+    fetchAppRoute = fetchAppRoute.replaceAll(
       "$useOriginal", useOriginal ? "1" : "0"
     );
     let fetchFun = userID && !useStandard ? fetchPrivate : fetch;
@@ -220,10 +218,10 @@ export const actions = {
 
 
 export function compareStringToFormat(str, format) {
-  let [inclusion, exclusions] = split(str, "!");
+  let [inclusion, exclusions] = str.split("!");
   let doesCompare = compareStringToWildcardFormat(inclusion, format);
   if (doesCompare && exclusions) {
-    some(split(exclusions, "|"), exclusion => {
+    exclusions.split("|").some(exclusion => {
       if (compareStringToWildcardFormat(exclusion, format)) {
         doesCompare = false;
         return true; // break the some() loop.
@@ -234,9 +232,9 @@ export function compareStringToFormat(str, format) {
 }
 
 export function compareStringToWildcardFormat(str, format) {
-  if (at(str, -1) === "*") {
-    let subStr = slice(str, 0, -1);
-    return substring(str, 0, subStr.length) === subStr;
+  if (str.at(-1) === "*") {
+    let subStr = str.slice(0, -1);
+    return str.substring(0, subStr.length) === subStr;
   }
   else {
     return str === format;

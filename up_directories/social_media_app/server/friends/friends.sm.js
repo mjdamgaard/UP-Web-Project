@@ -4,7 +4,6 @@ import {getRequestingUserID, checkRequestOrigin} from 'request';
 import {valueToHex, hexToValue} from 'hex';
 import {verifyType} from 'type';
 import {now} from 'date';
-import {map} from 'array';
 import {getConnection} from 'connection';
 
 
@@ -226,7 +225,7 @@ export function fetchFriendList(
         (offset ? "/n/" + offset : "") +
         (sortOldestToNewest ? "/a/1" : "/a/0")
       ).then(list => {
-        list = map(list, ([friendUserID, timestampHex]) => (
+        list = list.map(([friendUserID, timestampHex]) => (
           [friendUserID, hexToValue(timestampHex, "uint(6)")]
         ));
         resolve(list);
@@ -254,7 +253,7 @@ export function fetchFriendRequestList(
       (offset ? "/n/" + offset : "") +
       (sortOldestToNewest ? "/a/1" : "/a/0")
     ).then(list => {
-      list = map(list, ([otherUserID, timestampHex]) => [
+      list = list.map(([otherUserID, timestampHex]) => [
         otherUserID, hexToValue(timestampHex, "uint(6)")
       ]);
       resolve(list);

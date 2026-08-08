@@ -1,5 +1,5 @@
 
-import {fetchList} from "../server/entities.js";
+import {fetchList} from "../server/lists.js";
 import {fetchEntityID} from '../../semantic_entities/entities.js';
 
 

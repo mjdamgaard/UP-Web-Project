@@ -3,7 +3,6 @@ import {post, fetchPrivate} from 'query';
 import {getRequestingUserID, checkRequestOrigin} from 'request';
 import {valueToHex, hexToValue} from 'hex';
 import {now} from 'date';
-import {map} from 'array';
 import {getConnection} from 'connection';
 import {fetchIsFriendOrSelf} from "../friends/friends.sm.js";
 
@@ -109,7 +108,7 @@ export function fetchPostList(
         (offset ? "/n/" + offset : "") +
         (sortOldestToNewest ? "/a/1" : "/a/0")
       ).then(list => {
-        list = map(list, ([textID, timestampHex]) => (
+        list = list.map(([textID, timestampHex]) => (
           [textID, hexToValue(timestampHex, "uint(6)")]
         ));
         resolve(list);

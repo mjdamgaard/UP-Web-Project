@@ -3,8 +3,6 @@ import {post, fetch, fetchPrivate} from 'query';
 import {getRequestingUserID, checkRequestOrigin} from 'request';
 import {verifyTypes} from 'type';
 import {parseInt} from 'number';
-import {indexOf, substring} from 'string';
-import {map} from 'array';
 
 
 
@@ -48,8 +46,8 @@ export async function deleteMessage(messageID) {
   let storedText = await fetchPrivate(
     abs("./_messages.att./entry/l/" + userID + "/k/" + messageID)
   );
-  let indOfSemicolon = indexOf(storedText, ";");
-  let authorID = substring(storedText, 0, indOfSemicolon);
+  let indOfSemicolon = storedText.indexOf(";");
+  let authorID = storedText.substring(0, indOfSemicolon);
 
   // Authenticate.
   if (userID !== authorID) {
@@ -81,8 +79,8 @@ export async function editMessage(messageID, newText) {
   let storedText = await fetchPrivate(
     abs("./_messages.att./entry/l/" + userID + "/k/" + messageID)
   );
-  let indOfSemicolon = indexOf(storedText, ";");
-  let authorID = substring(storedText, 0, indOfSemicolon);
+  let indOfSemicolon = storedText.indexOf(";");
+  let authorID = storedText.substring(0, indOfSemicolon);
 
   // Authenticate.
   if (userID !== authorID) {
@@ -119,10 +117,10 @@ export async function fetchMessages(maxNum = "1000", offset = "0") {
 
   // Return a transformed list where the entries are of the form
   // [messageID, text, authorID].
-  return map(list, ([messageID, storedText]) => {
-    let indOfSemicolon = indexOf(storedText, ";");
-    let authorID = substring(storedText, 0, indOfSemicolon);
-    let text = substring(storedText, indOfSemicolon + 1);
+  return list.map(([messageID, storedText]) => {
+    let indOfSemicolon = storedText.indexOf(";");
+    let authorID = storedText.substring(0, indOfSemicolon);
+    let text = storedText.substring(indOfSemicolon + 1);
     return [messageID, text, authorID];
   });
 }

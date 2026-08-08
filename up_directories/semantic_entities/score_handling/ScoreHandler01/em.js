@@ -1,7 +1,6 @@
 
 import {fetchScoreAndWeight, fetchScoreAndWeightList} from "../../scores.js";
 import {fetchEntityID, fetchEntityPath} from "../../entities.js";
-import {map} from 'array';
 import ModeratedList from "../../scored_lists/moderated/ModeratedList.js";
 import CombinedList from "../../scored_lists/comb/CombinedList.js";
 import PriorityList from "../../scored_lists/priority/PriorityList.js";
@@ -89,7 +88,7 @@ export const allUsersList = {
         (offset !== undefined ? "/o/" + offset : "") +
         (isAscending !== undefined ? "/a/" + isAscending : "")
       ).then(list => {
-        resolve(map(list, ([userEntID]) => [userEntID, 1]));
+        resolve(list.map(([userEntID]) => [userEntID, 1]));
       });
     });
   },

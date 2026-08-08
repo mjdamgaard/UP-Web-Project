@@ -1,6 +1,5 @@
 
 import {fetch} from 'query';
-import {map} from 'array';
 
 
 export function initialize({isAscending = true}) {
@@ -16,7 +15,7 @@ export function render() {
     return <div></div>;
   }
 
-  let retChildren = map(postList, ([, message], ind) => (
+  let retChildren = postList.map(([, message], ind) => (
     <div>
       <span>{ind + 1}{"\t"}</span>
       <span>{message}</span>

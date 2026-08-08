@@ -2,7 +2,6 @@
 import {fetch, fetchPrivate, post} from 'query';
 import {round, floor, log10} from 'math';
 import {parseInt, isNaN} from 'number';
-import {fetchUpAndDownRates} from "../server/entities.js";
 
 
 export const keyProps = ["userID", "objID", "relID", "subjID"];
@@ -29,19 +28,21 @@ export function render({userID}) {
   let {upRateSum, downRateSum, userRateVal, isPostingRef} = this.state;
   upRateSum   = shortenNumber(upRateSum);
   downRateSum = shortenNumber(downRateSum);
+  let upButtonClassName = "up-rate-button" +
+    (userRateVal === 1 ? " pressed" : "") + (userID ? "" : " inactive");
+  let downButtonClassName = "down-rate-button" +
+    (userRateVal === -1 ? " pressed" : "") + (userID ? "" : " inactive");
   return <div className={"rating-display" + (userID ? "" : " inactive")}>
     <div className="up-rates">
-      <div
-        className={"up-rate-button" + (userRateVal === 1 ? " pressed" : "")}
-        onClick={() => userID && !isPostingRef[0] && this.do("toggleUpRate")}
-      ></div>
+      <div className={upButtonClassName} onClick={
+        () => userID && !isPostingRef[0] && this.do("toggleUpRate")
+      }></div>
       <div className="up-rate-sum">{upRateSum}</div>
     </div>
     <div className="down-rates">
-      <div
-        className={"down-rate-button" + (userRateVal === -1 ? " pressed" : "")}
-        onClick={() => userID && !isPostingRef[0] && this.do("toggleDownRate")}
-      ></div>
+      <div className={downButtonClassName} onClick={
+        () => userID && !isPostingRef[0] && this.do("toggleDownRate")
+      }></div>
       <div className="down-rate-sum">{downRateSum}</div>
     </div>
   </div>;
@@ -49,11 +50,11 @@ export function render({userID}) {
 
 
 export const actions = {
-  "toggleUpRate": async function() {
-    this.do("toggleRate", "up");
+  "toggleUpRate": function() {
+    return this.do("toggleRate", "up");
   },
   "toggleDownRate": function() {
-    this.do("toggleRate", "down");
+    return this.do("toggleRate", "down");
   },
   "toggleRate": async function(type) {
     let {upRateSum, downRateSum, userRateVal, isPostingRef} = this.state;

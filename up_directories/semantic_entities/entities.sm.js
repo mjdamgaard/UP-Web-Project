@@ -8,7 +8,6 @@
 import {post, fetch} from 'query';
 import {valueToHex} from 'hex';
 import {verifyType} from 'type';
-import {substring} from 'string';
 import {
   postAllEntitiesFromModule as _postAllEntitiesFromModule
 } from "./entities.js";
@@ -36,7 +35,7 @@ export function postEntity(entPath, useSecIdx = true) {
       ).then(entID => {
         // If the entPath already has an entID, resolve with that.
         if (entID) {
-          if (entID[0] === "0") entID = substring(entID, 1);
+          if (entID[0] === "0") entID = entID.substring(1);
           return resolve(entID);
         }
         

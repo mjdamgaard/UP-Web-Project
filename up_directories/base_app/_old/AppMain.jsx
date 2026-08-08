@@ -1,8 +1,6 @@
 
-import {substring, indexOf} from 'string';
 import {encodeURI, decodeURI} from 'query';
 import {entries, fromEntries, mapToArray} from 'object';
-import {slice} from 'array';
 import {fetchEntityID} from "/1/1/entities.js";
 
 import * as UPIndexPage from "./UPIndexPage.jsx";
@@ -50,7 +48,7 @@ export function render(props) {
 export function renderHelper(thisVal, {
   url = "", homeURL, localStorage, sessionStorage
 }) {
-  let tailURL = substring(url, homeURL.length);
+  let tailURL = url.substring(homeURL.length);
 
   // If the tailURL is empty, replace it with "up" ('up' for 'user-programmed'),
   // taking the user to the user-defined home page.
@@ -67,9 +65,9 @@ export function renderHelper(thisVal, {
   // If the tailURL is of the form "/i[/...]", go to a page with the current
   // top-rated user-programmed page component for redirecting the the user
   // further to page/app that fits the subsequent part of the url.
-  let indOfSecondSlash = indexOf(tailURL, "/", 1);
+  let indOfSecondSlash = tailURL.indexOf("/", 1);
   let firstSegment = (indOfSecondSlash === -1) ?
-    substring(tailURL, 1) : substring(tailURL, 1, indOfSecondSlash);
+    tailURL.substring(1) : tailURL.substring(1, indOfSecondSlash);
   thisVal.advanceURL(1);
   if (firstSegment === "i") {
     return [
@@ -93,7 +91,7 @@ export function renderHelper(thisVal, {
   // Else if tailURL starts with "/apps", go to the Apps page. 
   if (firstSegment === "apps") {
     let newHomeURL = homeURL + "/apps";
-    let newTailURL = substring(tailURL, 5);
+    let newTailURL = tailURL.substring(5);
     return [
       "_apps",
       <main className="app-main">
@@ -107,7 +105,7 @@ export function renderHelper(thisVal, {
   // Else if tailURL is of the form "/ep" + encodedEntPath, fetch the
   // entity ID and then redirect to the "/e/" + entID tailURL.
   if (firstSegment === "ep") {
-    let entPath = decodeURI(substring(tailURL, 3));
+    let entPath = decodeURI(tailURL.substring(3));
     fetchEntityID(entPath).then(entID => {
       if (entID) {
         thisVal.trigger("replaceURL", "~/e/" + entID);
@@ -128,10 +126,10 @@ export function renderHelper(thisVal, {
   // Else if tailURL is of the form "/e/<entID>", go to the EntityPage of the
   // given entity.
   if (firstSegment === "e") {
-    let indOfThirdSlash = indexOf(tailURL, "/", 3);
+    let indOfThirdSlash = tailURL.indexOf("/", 3);
     let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
-    let entID = substring(tailURL, 3, endOfID);
-    let newTailURL = substring(tailURL, 3 + entID.length);
+    let entID = tailURL.substring(3, endOfID);
+    let newTailURL = tailURL.substring(3 + entID.length);
     return [
       "e-" + entID,
       <main className="app-main">
@@ -145,10 +143,10 @@ export function renderHelper(thisVal, {
   // Else if tailURL is of the form "/c/<entID>[/<name>/...]", go to the
   // componentPage of the given entity, expecting it to be a component entity.
   if (firstSegment === "c") {
-    let indOfThirdSlash = indexOf(tailURL, "/", 3);
+    let indOfThirdSlash = tailURL.indexOf("/", 3);
     let endOfID = (indOfThirdSlash === -1) ? undefined : indOfThirdSlash;
-    let entID = substring(tailURL, 3, endOfID);
-    let newTailURL = substring(tailURL, 3 + entID.length);
+    let entID = tailURL.substring(3, endOfID);
+    let newTailURL = tailURL.substring(3 + entID.length);
     return [
       "c-" + entID,
       <main className="app-main">
@@ -164,7 +162,7 @@ export function renderHelper(thisVal, {
   // stand for 'file' or 'fetch' if you will), go to the file browser app with
   // that route.
   if (firstSegment === "f") {
-    let route = decodeURI(substring(tailURL, 2));
+    let route = decodeURI(tailURL.substring(2));
     return [
       "f-" + route,
       <main className="app-main">

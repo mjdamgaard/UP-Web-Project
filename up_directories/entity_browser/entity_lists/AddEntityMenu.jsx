@@ -1,6 +1,5 @@
 
 import {post} from 'query';
-import {map} from 'array';
 import {
   postEntity, checkDomain, postScalarEntity,
 } from "/1/1/entities.js";
@@ -135,7 +134,7 @@ export const actions = {
             ...state,
             response: "Entity has been assigned the ID of " +
               entID + ". Now give it some relevant scores.",
-            qualityElements: map(qualKeyArr, qualKey => (
+            qualityElements: qualKeyArr.map(qualKey => (
               <QualityElement key={"_" + qualKey}
                 subjKey={entID} qualKey={qualKey} startOpen
               />
@@ -174,7 +173,7 @@ export const actions = {
               ...state,
               response: "Scalar entity has been assigned the ID of " +
                 scalarEntID + ". Now give it some relevant scores.",
-              qualityElements: map(qualKeyArr, qualKey => (
+              qualityElements: qualKeyArr.map(qualKey => (
                 <QualityElement key={"_" + qualKey}
                   subjKey={scalarEntID} qualKey={qualKey} startOpen
                 />
@@ -186,7 +185,7 @@ export const actions = {
               ...state,
               response: "Text entity has been assigned the ID of " +
                 textEntID + ". Now give it some relevant scores.",
-              qualityElements: map(qualKeyArr, qualKey => (
+              qualityElements: qualKeyArr.map(qualKey => (
                 <QualityElement key={"_" + qualKey}
                   subjKey={textEntID} qualKey={qualKey} startOpen
                 />

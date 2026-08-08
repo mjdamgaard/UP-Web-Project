@@ -1,7 +1,5 @@
 
-import {slice, indexOf} from 'string';
 import {encodeURIComponent} from 'query';
-import {includes} from 'array';
 import {fetchEntityDefinition, fetchEntityPath} from "/1/1/entities.js";
 import * as PhishingWarning from "./PhishingWarning.jsx";
 
@@ -62,11 +60,11 @@ export function render({entKey, url, tailURL, localStorage, sessionStorage}) {
     // for the name of the component, or an abbreviation for "no name," if you
     // will.
     let uriSafeComponentName = encodeURIComponent(componentName);
-    let indOfSecondSlash = indexOf(tailURL, "/", 1);
+    let indOfSecondSlash = tailURL.indexOf("/", 1);
     if (indOfSecondSlash === -1) indOfSecondSlash = undefined;
-    let firstTailSegment = slice(tailURL, 1, indOfSecondSlash);
-    let newTailURL = slice(tailURL, firstTailSegment.length + 1);
-    let newHomeURL = slice(url, 0, -tailURL.length || undefined) +
+    let firstTailSegment = tailURL.slice(1, indOfSecondSlash);
+    let newTailURL = tailURL.slice(firstTailSegment.length + 1);
+    let newHomeURL = url.slice(0, -tailURL.length || undefined) +
       "/" + uriSafeComponentName;
     this.advanceURL(1);
     if (!hasBeenReplaced && firstTailSegment !== uriSafeComponentName) {
@@ -110,13 +108,13 @@ export function initialize({
   let hasBeenDismissed;
   if (sessionStorage) {
     let acceptedComponents = sessionStorage.getItem("acceptedComponents") ?? [];
-    if (includes(acceptedComponents, entKey)) {
+    if (acceptedComponents.includes(entKey)) {
       hasBeenDismissed = true;
     }
   }
   if (localStorage && !hasBeenDismissed) {
     let acceptedComponents = localStorage.getItem("acceptedComponents") ?? [];
-    if (includes(acceptedComponents, entKey)) {
+    if (acceptedComponents.includes(entKey)) {
       hasBeenDismissed = true;
     }
   }
@@ -159,7 +157,7 @@ export const actions = {
 export function fetchIsTrusted(entKey) {
   return new Promise(resolve => {
     fetchEntityPath(entKey).then(entPath => {
-      if (slice(entPath, 0, 7) === "/1/1/em") {
+      if (entPath.slice(0, 7) === "/1/1/em") {
         resolve(true);
       }
       else {

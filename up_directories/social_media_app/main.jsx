@@ -1,6 +1,4 @@
 
-import {substring} from 'string';
-
 import * as AppHeader from "./AppHeader.jsx";
 import * as AppMain from "./AppMain.jsx";
 
@@ -11,7 +9,7 @@ export function render({url, history, userID, homeURL = ""}) {
   this.setContext("homeURL", homeURL);
 
   // Subtract the homeURL from url before passing it to AppMain and AppHeader.
-  url = substring(url, homeURL.length);
+  url = url.substring(homeURL.length);
 
   return (
     <div className="app">

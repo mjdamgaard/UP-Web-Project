@@ -1,5 +1,4 @@
 
-import {toString} from 'string';
 import {fetchEntityDefinition} from "/1/1/entities.js";
 import * as TextDisplay from "./TextDisplay.jsx";
 
@@ -28,7 +27,7 @@ export function render({entKey, cutOff = false}) {
     return <div className="content-page missing">{"missing"}</div>;
   }
 
-  let content = toString(entDef["Content"]);
+  let content = entDef["Content"].toString();
   return <div className="content-page">
     <div className="text">
       <TextDisplay key="_0" untrusted jsxElement={content} />

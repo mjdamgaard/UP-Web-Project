@@ -1,6 +1,5 @@
 
 import {ScoredList} from "../ScoredList.js";
-import {join} from 'array';
 
 
 
@@ -21,8 +20,8 @@ export class CombinedList extends ScoredList {
       <h1>{"Combined list"}</h1>
       <p>{
         "This scored list is combined from merging the lists: " +
-        join(listKeyArr, ", ") + ", using the respective weight factors: " +
-        join(weightFactorArr, ", ") + "."
+        listKeyArr.join(", ") + ", using the respective weight factors: " +
+        weightFactorArr.join(", ") + "."
       }</p>
     </div>;
   }

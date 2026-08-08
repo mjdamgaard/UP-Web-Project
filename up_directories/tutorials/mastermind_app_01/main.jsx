@@ -3,7 +3,7 @@
 // And can so far only be controlled by mouse (since keyboard events aren't
 // implemented yet for the JSX components).
 
-import {createArray, map, slice, at, forEach} from 'array';
+import {createArray} from 'array';
 import {random, floor} from 'math';
 import * as HeaderMenu from "./HeaderMenu.jsx";
 import * as GuessRow from "./GuessRow.jsx";
@@ -61,7 +61,7 @@ export const actions = {
     // Insert the new peg, and check if the row is now complete as a result,
     // having one peg in each slot.
     let isComplete = true;
-    let newSlots = map(slots, (prevColorID, ind) => {
+    let newSlots = slots.map((prevColorID, ind) => {
       let newColorID = (ind === curSlot) ? colorID : prevColorID;
       if (newColorID === undefined) {
         isComplete = false;
@@ -104,7 +104,7 @@ export const actions = {
   },
   "changeCurrentSlot": function(newSlot) {
     let {guesses} = this.state;
-    let {slots} = at(guesses, -1);
+    let {slots} = guesses.at(-1);
     let newGuesses = [
       ...slice(guesses, 0, -1),
       {curSlot: newSlot, slots: slots},
@@ -139,7 +139,7 @@ export function getAnswer(newSlots, secret) {
   // Count the red answer pegs (right place, right color), and mark them
   // in the usedSecretSlots array such that we can omit them when counting
   // the wite answer pegs.
-  forEach(newSlots, (colorID, ind) => {
+  newSlots.forEach((colorID, ind) => {
     if (colorID === secret[ind]) {
       redCount++;
       usedSecretSlots[ind] = usedGuessSlots[ind] = true;
@@ -150,8 +150,8 @@ export function getAnswer(newSlots, secret) {
   // Now count the white answer pegs, also marking the secret slots used in
   // the process as to not double count a white answer peg from the same
   // secret slot.
-  forEach(newSlots, (guessColorID, guessSlotInd) => {
-    forEach(secret, (secretColorID, secretSlotInd) => {
+  newSlots.forEach((guessColorID, guessSlotInd) => {
+    secret.forEach((secretColorID, secretSlotInd) => {
       if (usedGuessSlots[guessSlotInd] || usedSecretSlots[secretSlotInd]) {
         return;
       }

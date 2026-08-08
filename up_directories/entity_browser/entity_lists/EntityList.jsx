@@ -1,5 +1,4 @@
 
-import {map, slice} from 'array';
 import {hasType} from 'type';
 import {combineLists, sortListWRTScore} from 'scored_lists';
 import {fetchQualityKey, fetchQualityKeyArray} from "./quality_keys.js";
@@ -65,13 +64,13 @@ export function render({
     // objKey--relKey pair, then fetch the list. We also make sure to get an
     // array of all the resulting qualKeys in the process, which we can pass to
     // EntityListMenu below.
-    let qualKeyPromArr = map(extQualKeyArr, extQualKey => (
+    let qualKeyPromArr = extQualKeyArr.map(extQualKey => (
       fetchQualityKey(extQualKey)
     ));
     Promise.all(qualKeyPromArr).then(qualKeyArr => {
       this.setState(state => ({...state, qualKeyArr: qualKeyArr}));
     });
-    let listPromArr = map(qualKeyPromArr, qualKeyProm => 
+    let listPromArr = qualKeyPromArr.map(qualKeyProm => 
       new Promise(resolve => qualKeyProm.then(qualKey => {
         scoreHandler.fetchList(qualKey, options).then(
           list => resolve(list)
@@ -119,7 +118,7 @@ export function render({
       constList ?
         combineLists([constList, ...listArr], factorArr, isAscending) :
         combineLists(listArr, factorArr, isAscending);
-    list = slice(list, 0, paginationLength);
+    list = list.slice(0, paginationLength);
 
     // Then generate the content of the component.
     content = [
@@ -129,7 +128,7 @@ export function render({
       />,
       <div className="list-container">
         {(constElementArr)}
-        {(map(list, ([entID, score, weight]) => (
+        {(list.map(([entID, score, weight]) => (
           (
             curMinScore !== undefined && score < curMinScore ||
             curMinWeight !== undefined && weight < curMinWeight

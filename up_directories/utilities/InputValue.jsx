@@ -1,7 +1,6 @@
 
 import * as InputText from 'InputText';
 import {parseFloat} from 'number';
-import {toString} from 'string';
 
 
 export function render({
@@ -13,7 +12,7 @@ export function render({
         size={size} value={value} placeholder={placeholder}
         onInput={({value}) => {
           let floatValue = parseFloat(value);
-          if (toString(floatValue) !== value) return;
+          if (floatValue.toString() !== value) return;
           this.call("r", "setValue", floatValue);
           if (onChange) {
             onChange(value);
