@@ -1,6 +1,6 @@
 
 import {fetchEntityDefinition} from "../../semantic_entities/entities.js";
-import * as RatingDisplay from "./RatingDisplay.jsx";
+import * as ExtRatingDisplay from "./ratings/ExtRatingDisplay.jsx";
 
 const missingJSX = <div className="app-element">
   Missing data
@@ -39,7 +39,10 @@ export function render(props) {
           ≡
         </button>
       </div>
-      <RatingDisplay key="r" {...props} />
+      <ExtRatingDisplay key="r"
+        entID={entID} entDef={entDef} type={type} objID={objID} relID={relID}
+        ancAppIDs={ancAppIDs}
+      />
     </div>
   </div>;
 }

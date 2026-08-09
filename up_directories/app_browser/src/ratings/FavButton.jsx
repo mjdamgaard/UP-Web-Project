@@ -36,7 +36,7 @@ export const actions = {
       "~/../base_app/server/apps/apps.sm.js/callSMF/updateUserPreference/" +
       appDirID + (isFavorite ? "" : "/" + subAppDirID)
     ));
-    isPostingRef[0] = false;
     this.reset();
+    isPostingRef[0] = false;
   },
 };

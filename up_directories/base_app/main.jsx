@@ -19,7 +19,7 @@ import * as AppWrapper from "./src/AppWrapper.jsx";
 import * as appWrapperStyle from "./src/AppWrapper.css";
 
 const fetchBestVersionRouteTemplate = abs(
-  "./server/apps/apps.sm.js./callSMF/fetchPreferredSubApp/" +
+  "./server/apps/apps.sm.js./callSMF/fetchBestSubApp/" +
   "$appDirID/$useOriginal"
 );
 

@@ -59,15 +59,15 @@ export const actions = {
   "toggleRate": async function(type) {
     let {upRateSum, downRateSum, userRateVal, isPostingRef} = this.state;
     isPostingRef[0] = true;
+    let newUserRateValue = type === "up" ? (userRateVal !== 1 ? 1 : 0) : 
+      (userRateVal !== -1 ? -1 : 0);
     await post(abs(
       "~/../base_app/server/rates/rates.sm.js/callSMF/updateUpOrDownRate/" +
-      objID + "/" + relID + "/" + subjID + "/" + (type === "up" ?
-        (userRateVal !== 1 ? "1" : "0") : 
-        (userRateVal !== -1 ? "-1" : "0")
-      )
+      objID + "/" + relID + "/" + subjID + "/" + newUserRateValue
     ));
-    isPostingRef[0] = false;
+    this.trigger("rating-changed", newUserRateValue);
     this.reset();
+    isPostingRef[0] = false;
   },
 };
 

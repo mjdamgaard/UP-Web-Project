@@ -9,7 +9,7 @@ const maxRecLevel = 3;
 
 /* SMFs for fetching and updating user preferences */
 
-export async function fetchPreferredSubApp(appDirID) {
+export async function fetchBestSubApp(appDirID) {
   verifyType(appDirID, "hex");
 
   // Get the ID of the requesting user, which is undefined if not logged in.
@@ -39,8 +39,8 @@ export async function fetchPreferredSubApp(appDirID) {
     subAppIDListString = await fetch(abs("./subApps.att./entry/k/" + appDirID));
   }
   
-  // Then redirect to the recursive fetchPreferredSubAppHelper(). 
-  let preferredAppDirID = await fetchPreferredSubAppHelper(
+  // Then redirect to the recursive fetchBestSubAppHelper(). 
+  let preferredAppDirID = await fetchBestSubAppHelper(
     appDirID, preferences, subAppIDListString
   );
 
@@ -53,7 +53,7 @@ export async function fetchPreferredSubApp(appDirID) {
 }
 
 
-async function fetchPreferredSubAppHelper(
+async function fetchBestSubAppHelper(
   appDirID, preferences, subAppIDListString, recLevel = 0
 ) {
   // Parse the subAppIDListString into an array, putting the initial appDirID
@@ -79,7 +79,7 @@ async function fetchPreferredSubAppHelper(
       subAppIDListString = await fetch(abs(
         "./subApps.att./entry/k/" + substituteAppID
       ));
-      return await fetchPreferredSubAppHelper(
+      return await fetchBestSubAppHelper(
         substituteAppID, preferences, subAppIDListString, recLevel + 1
       );
     }
@@ -93,25 +93,20 @@ async function fetchPreferredSubAppHelper(
 
 
 
-export async function updatePreferredSubApp(appDirID) {
+export async function updateBestSubApp(appDirID) {
   verifyType(appDirID, "hex");
 
-  // Check that the post request was sent from the ../main.jsx app or the
-  // the app browser app.
-  checkRequestOrigin(true, [
-    abs("~/main.jsx"),
-    abs("~/../app_browser/main.jsx"),
-  ]);
-
   // Fetch the top liked sub apps for this app, then go through the list until
-  // reaching the first sub-app on the list that is also (semi-)trusted. 
+  // reaching the first sub-app on the list that has 20 up-rates or more and
+  // is also (semi-)trusted. 
   let topSubApps = await fetch(abs(
     "../rates/mixedSums.bbt./skList/l/" + appDirID + "/n/25"
   )) ?? [];
   let subAppDirID;
   let len = topSubApps.length;
   for (let i = 0; i < len; i++) {
-    subAppDirID = topSubApps[i][0];
+    [subAppDirID, score] = topSubApps[i];
+    if (!score || score < 20) continue;
     let trustClass = await fetch(abs(
       "./trustClasses.att./entry/k/" + subAppDirID
     ));
@@ -143,7 +138,7 @@ export async function updatePreferredSubApp(appDirID) {
 
 
 
-export async function fetchPreferredSubAppList(appDirID) {
+export async function fetchBestSubAppList(appDirID) {
   verifyType(appDirID, "hex");
   // (This SMF does not query any private data, and we thus do not need to
   // check the origin.)
