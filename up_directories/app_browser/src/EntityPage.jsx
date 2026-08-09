@@ -6,7 +6,7 @@ import * as PageHeader from "./PageHeader.jsx";
 import * as EntityList from "./EntityList.jsx";
 import * as EntityElement from "./EntityElement.jsx";
 import * as InfoPage from "./InfoPage.jsx";
-import * as SubmissionPage from "./SubmissionPage.jsx";
+import * as SubmissionPage from "./submissions/SubmissionPage.jsx";
 
 const missingPageJSX = <div className="entity-page">
   <MissingPage key="m" />

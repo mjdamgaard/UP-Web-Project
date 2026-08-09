@@ -1,5 +1,6 @@
 export default {
   "Name": "Base app",
+  "Is ready for use": true,
   "Description": <div>
     <p>
       A "base app" is the fundamental app that used to load other apps within

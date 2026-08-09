@@ -82,33 +82,33 @@ export const versionsRel = {
 
 
 // Some app subclasses:
-export const socialMedia = {
+
+export const AppClass = (name, description)  => ({
   "Class": abs("./em1.js;get/classes"),
-  "Name": "Social media",
+  "Name": name,
   "Superclass": abs("./em3.js;get/apps"),
-  "Description": "Apps related to social media.",
-};
-export const games = {
-  "Class": abs("./em1.js;get/classes"),
-  "Name": "Games",
-  "Superclass": abs("./em3.js;get/apps"),
-  "Description": "Apps that implement specific games, or serves as indexes " +
-  "where users can browse several games.",
-};
-export const fundamentalApps = {
-  "Class": abs("./em1.js;get/classes"),
-  "Name": "Fundamental apps",
-  "Superclass": abs("./em3.js;get/apps"),
-  "Description": "Fundamental apps such as base apps, file browsers, " +
-    "app browsers, and general entity browsers.",
-};
-export const blogging = {
-  "Class": abs("./em1.js;get/classes"),
-  "Name": "Blogging",
-  "Superclass": abs("./em3.js;get/apps"),
-  "Description": "Apps related to blogging, both specific " +
-    "blogs as well as apps that serve as indexes for various blogs.",
-};
+  "Description": description,
+});
+
+export const socialMedia = AppClass(
+  "Social media",
+  "Apps related to social media."
+);
+export const games = AppClass(
+  "Games",
+  "Apps that implement specific games, or serves as indexes where users can " +
+  "browse several games."
+);
+export const fundamentalApps = AppClass(
+  "Fundamental apps",
+  "Fundamental apps such as base apps, file browsers, app browsers, and " +
+  "general entity browsers."
+);
+export const blogging = AppClass(
+  "Blogging",
+  "Apps related to blogging, both specific blogs as well as apps that serve " +
+  "as indexes for various blogs."
+);
 
 
 

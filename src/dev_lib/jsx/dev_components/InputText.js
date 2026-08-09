@@ -19,8 +19,8 @@ export const render = new DevFunction(
       props = props.members;
     }
     let {
-      className, idKey, size, value, placeholder, lockFocus, autocomplete,
-      type, onChange, onInput, onKeyDown, onKeyUp,
+      className, idKey, size, value, placeholder, lockFocus = true,
+      autocomplete, type, onChange, onInput, onKeyDown, onKeyUp,
     } = props;
     if (lockFocus) className = !className ? "lock-focus" :
       getString(className, execEnv) + " lock-focus";

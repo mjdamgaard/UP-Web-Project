@@ -1,5 +1,6 @@
 export default {
   "Name": "File browser",
+  "Is ready for use": true,
   "Description": <div>
     <p>
       A file browser is used to browse the files that have been uploaded to the

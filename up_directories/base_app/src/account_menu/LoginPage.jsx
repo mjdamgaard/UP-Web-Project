@@ -4,12 +4,13 @@ import * as Form from 'Form';
 import * as InputText from 'InputText';
 import * as Label from 'Label';
 
-const userNameIDKey = Symbol("input-username");
-const passwordIDKey = Symbol("input-password");
 
 
 export function render({}) {
   let {response} = this.state;
+  let userNameIDKey = Symbol("input-username");
+  let passwordIDKey = Symbol("input-password");
+
   return <div className="login-page">
     <div className="go-back-button" onClick={() => this.do("goBack")}></div>
     <div className="page-content">
