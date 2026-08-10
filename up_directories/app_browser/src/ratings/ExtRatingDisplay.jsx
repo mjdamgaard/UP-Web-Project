@@ -1,6 +1,6 @@
 
 import {post} from 'query';
-import {fetchEntityDefinition} from "../../semantic_entities/entities.js";
+import {fetchEntityDefinition} from "../../../semantic_entities/entities.js";
 import * as RatingDisplay from "./RatingDisplay.jsx";
 import * as FavButton from "./FavButton.jsx";
 

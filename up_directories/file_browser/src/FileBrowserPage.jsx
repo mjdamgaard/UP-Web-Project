@@ -40,7 +40,7 @@ export function render({
     // route is a directory route, in which case let each line be an ILink
     // to the given child of the directory.
     let transformedResult = isDirectoryPath ?
-      map((result ?? []), (child, ind) => {
+      (result ?? []).map((child, ind) => {
         let isFile = (child.indexOf(".") !== -1);
         return <div className={isFile ? "file-link" : "directory-link"}>
           <ILink key={"child" + ind} href={

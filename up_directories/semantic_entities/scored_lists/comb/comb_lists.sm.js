@@ -58,8 +58,8 @@ export function updateScore(listKey, subjKey) {
           scoreDataArrProm.then(scoreDataArr => {
             // Aggregate the score and weight into one combined pair (ignoring
             // all other score data if any).
-            let combinedScoreData = reduce(
-              scoreDataArr, (acc, val, ind) => {
+            let combinedScoreData = scoreDataArr.reduce(
+              (acc, val, ind) => {
                 val ??= [0, 0];
                 let factor = listDef.weightFactorArr[ind];
                 return [

@@ -59,8 +59,8 @@ export function editComment(commentEntKey, text, targetEntKey = undefined) {
   return new Promise(resolve => {
     fetchEntityPath(commentEntKey).then(commentEntPath => {
       // Extract the textID from commentEntPath and validate the latter.
-      let textID = substring(
-        commentEntPath, commentPathPrefix.length, commentEntPath.indexOf(";")
+      let textID = commentEntPath.substring(
+        commentPathPrefix.length, commentEntPath.indexOf(";")
       );
       verifyType(textID, "hex-string");
       if (commentEntPath !== commentPathPrefix + textID + ";.js;get/comment") {

@@ -72,7 +72,7 @@ export function render({subjKey, qualKey, extQualKey = qualKey, scalarKey}) {
     let min = metric["Lower limit"];
     let max = metric["Upper limit"];
     let isBounded = (min !== undefined && max !== undefined);
-    let step = isBounded ? parseFloat(toPrecision((max - min) / 100, 3)) :
+    let step = isBounded ? parseFloat(((max - min) / 100).toPrecision(3)) :
       undefined;
     intervalLabel ??= hasPrevScore ? getIntervalLabel(metric, prevScore) :
       undefined;

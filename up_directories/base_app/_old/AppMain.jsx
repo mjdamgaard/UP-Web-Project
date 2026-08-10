@@ -34,7 +34,7 @@ export function render(props) {
   // Update the cache, throwing out the least recently used cached page if the
   // PAGE_CACHE_SIZE is exceeded.
   cache = {[newKey]: jsxElement, ...cache, [newKey]: jsxElement};
-  cache = fromEntries(slice(entries(cache), 0, PAGE_CACHE_SIZE));
+  cache = fromEntries(entries(cache).slice(0, PAGE_CACHE_SIZE));
   cacheRef[0] = cache;
 
   return <div className="app-main-container">{(

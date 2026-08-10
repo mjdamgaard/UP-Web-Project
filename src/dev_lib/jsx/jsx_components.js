@@ -1574,7 +1574,7 @@ export class JSXInstanceInterface extends ObjectObject {
     return segment;
   });
 
-  // getPath() is similar to "/" + join(this.getSegments(), "/").
+  // getPath() is similar to "/" + this.getSegments().join("/").
   getPath = new DevFunction("getPath", {}, () => {
     return "/" + this.jsxInstance.getSegments().join("/");
   });

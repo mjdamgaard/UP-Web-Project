@@ -76,7 +76,7 @@ export function render({
 
   // If no app has been loaded yet, call the "loadNewApp" action.
   if (!appDirID) {
-    let urlTail = substring(this.getPath(), firstSegment.length + 2);
+    let urlTail = this.getPath().substring(firstSegment.length + 2);
     this.do("loadNewApp", [appDirIDSegment, urlTail, useOriginal, useStandard]);
     return <div className="loading"></div>;
   }
@@ -94,7 +94,7 @@ export function render({
   // additionalURLs, if any, to see if the URL matches one of its entries, and
   // if not, load a new app.
   if (firstSegment !== stdFirstSegment) {
-    let localURL = substring(this.getPath(), 1); // removes the "/" in front.
+    let localURL = this.getPath().substring(1); // removes the "/" in front.
     let urlTail = localURL.substring(firstSegment.length + 1);
     let shouldLoadNewApp = true;
     if (additionalURLs && hasType(additionalURLs, "array")) {

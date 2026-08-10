@@ -2708,6 +2708,9 @@ export function getString(val, env, getSourceCode = false) {
       ).join(", ") +
     "}";
   }
+  else if (typeof val !== "object") {
+    return val.toString();
+  }
   else throw (
     "toString(): Invalid argument"
   );

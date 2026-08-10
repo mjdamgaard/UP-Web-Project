@@ -57,8 +57,8 @@ export function updateScore(listKey, subjKey) {
           )));
           scoreDataArrProm.then(scoreDataArr => {
             // Take the first score tat is defined.
-            let combinedScoreData = reduce(
-              scoreDataArr, (acc, val, ind) => {
+            let combinedScoreData = scoreDataArr.reduce(
+              (acc, val, ind) => {
                 let minWeight = listDef.minWeightArr[ind] ?? 0;
                 return acc ?? (val && val[1] > minWeight ? val : undefined);
               },

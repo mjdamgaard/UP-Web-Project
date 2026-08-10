@@ -170,8 +170,8 @@ export function fetchScoreHex(
 ) {
   return new Promise(resolve => {
     let keyIDProm = fetchEntityID(subjKey);
-    let listIDPartsPromArr = map(
-      listIDKeyArr, entKey => fetchEntityID(entKey)
+    let listIDPartsPromArr = listIDKeyArr.map(
+      entKey => fetchEntityID(entKey)
     );
     Promise.all([
       keyIDProm, ...listIDPartsPromArr
@@ -218,8 +218,8 @@ export function fetchScoreHexList(
   options
 ) {
   return new Promise(resolve => {
-    let listIDPartsPromArr = map(
-      listIDKeyArr, entKey => fetchEntityID(entKey)
+    let listIDPartsPromArr = listIDKeyArr.map(
+      entKey => fetchEntityID(entKey)
     );
     Promise.all(
       listIDPartsPromArr
@@ -269,8 +269,8 @@ export function postScoreAndWeightHex(
 ) {
   return new Promise(resolve => {
     let keyIDProm = fetchEntityID(subjKey);
-    let listIDPartsPromArr = map(
-      listIDKeyArr, entKey => fetchEntityID(entKey)
+    let listIDPartsPromArr = listIDKeyArr.map(
+      entKey => fetchEntityID(entKey)
     );
     Promise.all([
       keyIDProm, ...listIDPartsPromArr
