@@ -1,4 +1,5 @@
 
+import {fetch} from 'query';
 import {getHomeDirID, getNodeID} from 'route';
 import {fetchEntityPath, fetchEntityID} from
   "~/../semantic_entities/entities.js";
@@ -33,14 +34,14 @@ export async function fetchList(objID, relID) {
     fetchEntityPath(relID),
   ]);
 
-  let [constSubjects, likedSubjects] = await Promise.all([
+  let [constSubjects, ratedSubjects] = await Promise.all([
     fetchHardCodedList(objPath, relPath),
-    fetchedLikedEntities(objID, relID),
+    fetchRatedEntities(objID, relID),
   ]);
 
   return [
     ...constSubjects,
-    ...likedSubjects.filter(subjID => !constSubjects.includes(subjID))
+    ...ratedSubjects.filter(subjID => !constSubjects.includes(subjID))
   ];
 }
 
@@ -61,3 +62,10 @@ export async function fetchHardCodedList(objPath, relPath) {
   return subjIDArr;
 }
 
+
+export function fetchRatedEntities(objID, relID, maxNum = 50) {
+  return fetch(abs(
+    "~/../base_app/server/rates/rates.sm.js/callSMF/fetchRatedEntities/" +
+    objID + "/" + relID + "/0/" + maxNum
+  ));
+}

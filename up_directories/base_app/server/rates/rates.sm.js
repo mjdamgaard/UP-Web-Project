@@ -125,7 +125,7 @@ export function fetchUpRateSum(objID, relID, subjID) {
 
 async function _fetchUpRateSum(listID, subjID, options = undefined) {
   let [upRateSumHex] = await fetch(
-    abs("./_upRateSums.bbt./entry/l/" + listID + "/k/" + subjID),
+    abs("./upRateSums.bbt./entry/l/" + listID + "/k/" + subjID),
     options
   ) ?? [];
   if (upRateSumHex === undefined) {
@@ -142,7 +142,7 @@ async function _postUpRateSum(
   let upRateSumHex = valueToHex(upRateSum, "uint(6)");
   await post(
     abs(
-      "./_upRateSums.bbt./entry/l/" + listID + "/k/" + subjID +
+      "./upRateSums.bbt./entry/l/" + listID + "/k/" + subjID +
       "/s/" + upRateSumHex
     ),
     undefined, options
@@ -155,12 +155,12 @@ async function _postUpRateSum(
 export function fetchMixedSum(objID, relID, subjID) {
   verifyTypes([objID, relID, subjID], ["hex", "hex", "hex"]);
   let listID = arrayToHex([objID, relID], ["hex-int", "hex-int"]);
-  return _fetchMixedSum(listID, entryKey);
+  return _fetchMixedSum(listID, subjID);
 }
 
 async function _fetchMixedSum(listID, subjID, options = undefined) {
   let [mixedSumHex] = await fetch(
-    abs("./_mixedSums.bbt./entry/l/" + listID + "/k/" + subjID),
+    abs("./mixedSums.bbt./entry/l/" + listID + "/k/" + subjID),
     options
   ) ?? [];
   if (mixedSumHex === undefined) {
@@ -177,7 +177,7 @@ async function _postMixedSum(
   let mixedSumHex = valueToHex(mixedSum, "int(6)");
   await post(
     abs(
-      "./_mixedSums.bbt./entry/l/" + listID + "/k/" + subjID +
+      "./mixedSums.bbt./entry/l/" + listID + "/k/" + subjID +
       "/s/" + mixedSumHex
     ),
     undefined, options
@@ -188,7 +188,7 @@ async function _postMixedSum(
 
 /* Function for fetching a list of the best rated subject entities */
 
-export function fetchRatedEntities(
+export async function fetchRatedEntities(
   objID, relID, disregardDownRates = "0",  maxNum = "1000", offSet = "0"
 ) {
   verifyTypes([objID, relID], ["hex", "hex"]);

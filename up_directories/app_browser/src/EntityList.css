@@ -1,0 +1,36 @@
+
+
+.entity-element {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 100px;
+  border: 2px ridge lightgray;
+}
+
+.main-area {
+  display: flex;
+  align-items: center;
+  font-size: 24px;
+}
+.main-area:hover {
+  cursor: pointer;
+  background-color: #f0f0f0;
+}
+
+.info-area {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+  padding: 5px;
+  background-color: #f8f8f8;
+  border-left: 1px ridge lightgray;
+}
+.info-area > .entity-page-link {
+  text-align: center;
+  font-size: 25px;
+}
+.info-area > .entity-page-link > button {
+  text-align: center;
+  width: 40px;
+  height: 40px;
+}

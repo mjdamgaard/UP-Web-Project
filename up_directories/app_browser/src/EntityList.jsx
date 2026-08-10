@@ -21,7 +21,7 @@ export function render({Element, elemProps}) {
   }
 
   return <div className="entity-list">
-    {(list.map(([subjID]) => (
+    {(list.map(subjID => (
       <Element key={"e-" + subjID} {...elemProps}
         entID={subjID} objID={objID} relID={relID}
       />

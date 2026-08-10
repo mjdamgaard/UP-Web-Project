@@ -17,12 +17,13 @@ import "../base_app/src/MissingPage.jsx";
 
 import * as AppBrowser from "./AppBrowser.jsx";
 import * as mainStyle from "../base_app/style.css";
+import * as entListStyle from "./src/EntityList.css";
 import * as tabbedPagesStyle from "../utilities/TabbedPages.css";
 
 
 export function render(props) {
   this.trigger("showFrame");
-  return <div innerStyle={[mainStyle, tabbedPagesStyle]}>
+  return <div innerStyle={[mainStyle, entListStyle, tabbedPagesStyle]}>
     <AppBrowser {...props} key="0" />
   </div>;
 }

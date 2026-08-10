@@ -27,8 +27,8 @@ export function render(props) {
   }
 
   let appDirID = entDef["App directory ID"];
-  return <div className="app-element">
-    <div className="main-area clickable" 
+  return <div className="entity-element">
+    <div className="main-area" 
       onClick={() => this.do("followMainLink")}
     >
       <span className="title">{entDef["Name"]}</span>
