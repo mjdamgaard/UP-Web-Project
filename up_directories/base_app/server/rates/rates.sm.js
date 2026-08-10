@@ -38,7 +38,7 @@ export async function updateUpOrDownRate(objID, relID, subjID, rateValue) {
   // Start a connection in order to update _userRates.bt, mixedSums.bbt, and
   // upRateSums.bbt simultaneously.
   let lockName = abs("./rates.sm.js/" + objID + "/" + relID + "/" + subjID);
-  let conn = await getConnection(1000, true, lockName);
+  let conn = await getConnection(10000, true, lockName);
   let options = {connection: conn};
 
   // Get the relevant current data.

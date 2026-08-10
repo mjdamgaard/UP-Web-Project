@@ -103,7 +103,7 @@ const indexPage = <div className="text-page">
     }</p>
     {/* TODO: Change the class. * /}
     <div>
-      <EntityList key="_basic-list" classKey="/1/1/em2.js;get/introTutorials"
+      <EntityList key="_basic-list" classKey="/1/1/em2_old.js;get/introTutorials"
         paginationLength={10}
       />
     </div>
@@ -117,7 +117,7 @@ const indexPage = <div className="text-page">
     }</p>
     {/* TODO: Change the class. * /}
     <div>
-      <EntityList key="_advanced-list" classKey="/1/1/em2.js;get/advTutorials"
+      <EntityList key="_advanced-list" classKey="/1/1/em2_old.js;get/advTutorials"
         paginationLength={10}
       />
     </div>

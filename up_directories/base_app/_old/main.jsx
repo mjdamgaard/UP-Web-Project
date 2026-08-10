@@ -22,7 +22,7 @@ import * as tabbedPagesStyle from "../utilities/TabbedPages.css";
 
 
 import {scoreHandler02} from
-  "~/../semantic_entities/score_handling/ScoreHandler01/em.js";
+  "~/../semantic_entities/em2.js";
 
 
 export function render() {

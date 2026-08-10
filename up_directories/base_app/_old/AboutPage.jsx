@@ -53,7 +53,7 @@ const page = <div className="text-page">
       "as that of the current index page."
     }</p>
     <p>
-      <EntityList key="_idx-list" classKey="/1/1/em2.js;get/indexPages"
+      <EntityList key="_idx-list" classKey="/1/1/em2_old.js;get/indexPages"
         paginationLength={10}
       />
     </p>

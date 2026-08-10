@@ -141,6 +141,7 @@ export async function query(
     }
     // TODO: Verify that hi === undefined makes it NULL when inserted in the
     // SQL (and otherwise perhaps use a hack of using a non-hex string).
+    // TODO: Consider impl. an 'n' (maxNum) parameter as well.
     let {l: listID = "", lo: lo = "", hi: hi} = paramObj;
     let [[wasDeleted] = []] = await dbQueryHandler.queryDBProc(
       procName, [homeDirID, localPath, listID, lo, hi],

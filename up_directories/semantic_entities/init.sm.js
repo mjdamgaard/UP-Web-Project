@@ -10,11 +10,11 @@ import {
   fetchOrCreateEntityID, postAllEntitiesFromModule, fetchRelationalQualityPath,
   getUserEntPath, fetchEntityID, postEntity,
 } from "./entities.js";
-import {scoreHandler02} from "./score_handling/ScoreHandler01/em.js";
+import {scoreHandler02} from "./em2.js";
 
 const userGroupsForUpdate = [
-  abs("./score_handling/ScoreHandler01/em.js;get/initialModeratorGroup"),
-  abs("./score_handling/ScoreHandler01/em.js;get/moderatedAllUsersGroup"),
+  abs("./em2.js;get/initialModeratorGroup"),
+  abs("./em2.js;get/moderatedAllUsersGroup"),
 ];
 
 
@@ -28,9 +28,9 @@ export function uploadInitialEntities() {
   return Promise.all([
     postAllEntitiesFromModule(abs("~/em1.js")),
     postAllEntitiesFromModule(
-      abs("~/score_handling/ScoreHandler01/em.js")
+      abs("~/em2.js")
     ),
-    postAllEntitiesFromModule(abs("~/em2.js")),
+    postAllEntitiesFromModule(abs("~/em2_old.js")),
     postAllEntitiesFromModule(abs("~/em3.js")),
   ]);
 }
@@ -59,10 +59,10 @@ export function insertInitialModerators() {
     );
     transformedInitialModeratorListProm.then(initModList => {
       post(
-        abs("~/score_handling/ScoreHandler01/init_mods.bbt./_put")
+        abs("~/score_handling/init_mods.bbt./_put")
       ).then(() => {
         post(
-          abs("~/score_handling/ScoreHandler01/init_mods.bbt./_insertList"),
+          abs("~/score_handling/init_mods.bbt./_insertList"),
           initModList
         ).then(
           wasUpdated => resolve(wasUpdated)
@@ -228,39 +228,39 @@ export function postInitialScores01() {
     () => {
       return Promise.all([
         postUserRelationalScoreAndUpdateUserGroups(
-          abs("./em2.js;get/webApps"),
+          abs("./em2_old.js;get/webApps"),
           abs("./em1.js;get/members"),
-          abs("./em2.js;get/rootApp"),
+          abs("./em2_old.js;get/rootApp"),
           firstModID, 7
         ),
         postUserRelationalScoreAndUpdateUserGroups(
-          abs("./em2.js;get/indexPages"),
+          abs("./em2_old.js;get/indexPages"),
           abs("./em1.js;get/members"),
-          abs("./em2.js;get/upIndexPage01"),
+          abs("./em2_old.js;get/upIndexPage01"),
           firstModID, 6
         ),
         postUserRelationalScoreAndUpdateUserGroups(
-          abs("./em2.js;get/indexPages"),
+          abs("./em2_old.js;get/indexPages"),
           abs("./em1.js;get/members"),
-          abs("./em2.js;get/upIndexPage02"),
+          abs("./em2_old.js;get/upIndexPage02"),
           firstModID, -4
         ),
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/components"),
           abs("./em1.js;get/members"),
-          abs("./em2.js;get/rootApp"),
+          abs("./em2_old.js;get/rootApp"),
           firstModID, 6
         ),
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/components"),
           abs("./em1.js;get/members"),
-          abs("./em2.js;get/flipGame"),
+          abs("./em2_old.js;get/flipGame"),
           firstModID, 2
         ),
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/components"),
           abs("./em1.js;get/members"),
-          abs("./em2.js;get/mastermindGame"),
+          abs("./em2_old.js;get/mastermindGame"),
           firstModID, 4
         ),
     // TODO: Investigate a bug here when including one too many elements here
@@ -276,25 +276,25 @@ export function postInitialScores01() {
         // postUserRelationalScoreAndUpdateUserGroups(
         //   abs("./em1.js;get/components"),
         //   abs("./em1.js;get/members"),
-        //   abs("./em2.js;get/messageAppExample"),
+        //   abs("./em2_old.js;get/messageAppExample"),
         //   firstModID, 4
         // ),
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/classes"),
           abs("./em1.js;get/entityPage"),
-          abs("./em2.js;get/classEntityPage"),
+          abs("./em2_old.js;get/classEntityPage"),
           firstModID, 5
         ),
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/commentsClass"),
           abs("./em1.js;get/entityPage"),
-          abs("./em2.js;get/commentEntityPage"),
+          abs("./em2_old.js;get/commentEntityPage"),
           firstModID, 4
         ),
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/commentsClass"),
           abs("./em1.js;get/entityElement"),
-          abs("./em2.js;get/commentElement"),
+          abs("./em2_old.js;get/commentElement"),
           firstModID, 5
         ),
       ]);
@@ -304,37 +304,37 @@ export function postInitialScores01() {
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/scalars"),
           abs("./em1.js;get/entityPage"),
-          abs("./em2.js;get/scalarEntityPage"),
+          abs("./em2_old.js;get/scalarEntityPage"),
           firstModID, 4
         ),
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/qualities"),
           abs("./em1.js;get/entityPage"),
-          abs("./em2.js;get/qualityEntityPage"),
+          abs("./em2_old.js;get/qualityEntityPage"),
           firstModID, 4
         ),
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/relationalQualities"),
           abs("./em1.js;get/entityPage"),
-          abs("./em2.js;get/qualityEntityPage"),
+          abs("./em2_old.js;get/qualityEntityPage"),
           firstModID, 4
         ),
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/relations"),
           abs("./em1.js;get/entityPage"),
-          abs("./em2.js;get/generalEntityPage2"),
+          abs("./em2_old.js;get/generalEntityPage2"),
           firstModID, 4
         ),
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/users"),
           abs("./em1.js;get/entityPage"),
-          abs("./em2.js;get/generalEntityPage2"),
+          abs("./em2_old.js;get/generalEntityPage2"),
           firstModID, 4
         ),
         postUserRelationalScoreAndUpdateUserGroups(
           abs("./em1.js;get/components"),
           abs("./em1.js;get/entityPage"),
-          abs("./em2.js;get/componentEntityPage"),
+          abs("./em2_old.js;get/componentEntityPage"),
           firstModID, 4
         ),
       ]);
@@ -367,7 +367,7 @@ export async function postInitialScores03() {
     postUserRelationalScoreAndUpdateUserGroups(
       abs("./em1.js;get/components"),
       abs("./em1.js;get/members"),
-      abs("./em2.js;get/messageAppExample"),
+      abs("./em2_old.js;get/messageAppExample"),
       firstModID, 4
     ),
     postUserRelationalScoreAndUpdateUserGroups(
@@ -390,15 +390,15 @@ export async function postInitialScores03() {
     ),
     // Temporary:
     postUserRelationalScoreAndUpdateUserGroups(
-      abs("./em2.js;get/webApps"),
+      abs("./em2_old.js;get/webApps"),
       abs("./em1.js;get/members"),
-      abs("./em2.js;get/homeApp"),
+      abs("./em2_old.js;get/homeApp"),
       firstModID, -10
     ),
     postUserRelationalScoreAndUpdateUserGroups(
       abs("./em1.js;get/components"),
       abs("./em1.js;get/members"),
-      abs("./em2.js;get/homeApp"),
+      abs("./em2_old.js;get/homeApp"),
       firstModID, -10
     ),
   ]);

@@ -451,13 +451,13 @@ export class ScriptInterpreter {
       route, callerNode, callerEnv, ancestorModules, finalCallbacks, isPrivate
     );
     if (assertJSModule && !(ret instanceof LiveJSModule)) throw new LoadError(
-      `No script was found at ${route.toString()}`,
+      `No script was found at ${getString(route, callerEnv)}`,
       callerNode, callerEnv
     );
     else if (
       assertModule && !(ret instanceof LiveJSModule || ret instanceof CSSModule)
     ) throw new LoadError(
-      `No script or style sheet was found at ${route.toString()}`,
+      `No script or style sheet was found at ${getString(route, callerEnv)}`,
       callerNode, callerEnv
     );
 
@@ -2551,7 +2551,7 @@ export class ObjectObject {
       if (isInvalid) {
         ret = "[" + this.className + ".toString() error]";
       }
-      return ret.toString();
+      return getString(ret, env);
     }
     else {
       return `[object ${this.className}]`;
@@ -2707,9 +2707,6 @@ export function getString(val, env, getSourceCode = false) {
         )
       ).join(", ") +
     "}";
-  }
-  else if (val.toString instanceof Function) {
-    return val.toString();
   }
   else throw (
     "toString(): Invalid argument"

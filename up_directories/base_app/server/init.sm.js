@@ -22,9 +22,9 @@ export function _init_1() {
   return Promise.all([
     postAllEntitiesFromModule(abs("~/../semantic_entities/em1.js")),
     postAllEntitiesFromModule(
-      abs("~/../semantic_entities/score_handling/ScoreHandler01/em.js")
+      abs("~/../semantic_entities/em2.js")
     ),
-    postAllEntitiesFromModule(abs("~/../semantic_entities/em2.js")),
+    postAllEntitiesFromModule(abs("~/../semantic_entities/em2_old.js")),
     postAllEntitiesFromModule(abs("~/../semantic_entities/em3.js")),
   ]);
 }

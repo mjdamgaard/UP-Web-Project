@@ -31,8 +31,13 @@ export const actions = {
         You must be logged in to submit an app.
       </span>});
     }
-    let appDirID = this.call("i", "getValue");
-    if (!appDirID) return;
+
+    let appDirID = this.call("i", "getValue").trim();
+    if (!appDirID) {
+      return this.setState({response: <span className="text-warning">
+        Insert app directory ID in the field before submitting.
+      </span>});
+    }
     if (!hasType(appDirID, "hex")) {
       return this.setState({response: <span className="text-warning">
         App directory ID must be a hexadecimal string.

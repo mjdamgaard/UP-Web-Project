@@ -8,7 +8,7 @@ import {fetchEntityDefinition, fetchRelationalQualityPath} from
   "../../../semantic_entities/entities.js";
 
 import {scoreHandler02 as defaultScoreHandler} from
-  "../../../semantic_entities/score_handling/ScoreHandler01/em.js";
+  "../../../semantic_entities/em2.js";
 
 const versionsRelKey = abs("../../semantic_entities/em3.js;get/versionsRel");
 
