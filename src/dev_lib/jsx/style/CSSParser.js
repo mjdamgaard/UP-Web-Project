@@ -65,13 +65,31 @@ export const cssGrammar = {
   },
   "ruleset": {
     rules: [
-      ["selector-list", /\{/, "S*", "declaration!1+", /\}/, "S*"],
+      ["selector-list", /\{/, "S*", "declaration-or-ruleset!1+", /\}/, "S*"],
     ],
     process: (children) => ({
       type: "ruleset",
       selectorList: children[0],
       decArr: children[3],
     }),
+  },
+  "nested-ruleset": {
+    rules: [
+      ["nested-selector-list", 
+        /\{/, "S*", "declaration-or-ruleset!1+", /\}/, "S*"],
+    ],
+    process: (children) => ({
+      type: "ruleset",
+      selectorList: children[0],
+      decArr: children[3],
+    }),
+  },
+  "declaration-or-ruleset": {
+    rules: [
+      ["declaration"],
+      ["nested-ruleset"],
+    ],
+    process: copyFromChild,
   },
   "selector-list": {
     rules: [
@@ -99,6 +117,14 @@ export const cssGrammar = {
     process: straightenListSyntaxTree,
     params: ["relative-selector-list"],
   },
+  "nested-selector-list": {
+    rules: [
+      ["nested-selector", "/,/", "S*", "nested-selector-list!1"],
+      ["nested-selector"],
+    ],
+    process: straightenListSyntaxTree,
+    params: ["relative-selector-list"],
+  },
   "relative-selector": {
     rules: [
       ["non-space-combinator", "selector!"],
@@ -108,6 +134,20 @@ export const cssGrammar = {
       type: "relative-selector",
       combinator: (ruleInd === 0) ? children[0] : undefined,
       selector: (ruleInd === 0) ? children[1] : children[0],
+    }),
+  },
+  "nested-selector": {
+    rules: [
+      ["/&/", "selector"],
+      ["/&/"],
+      ["non-space-combinator", "selector!"],
+      ["selector"],
+    ],
+    process: (children, ruleInd) => ({
+      type: "nested-selector",
+      combinator: (ruleInd === 2) ? children[0] : undefined,
+      nestingSelector: (ruleInd < 2) ? children[0] : undefined,
+      selector: (ruleInd === 3) ? children[0] : children[1],
     }),
   },
   "non-space-combinator": {

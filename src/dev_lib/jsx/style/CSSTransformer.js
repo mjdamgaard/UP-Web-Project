@@ -17,7 +17,7 @@ export class CSSTransformer {
 
   transformStatement(stmt, indentSpace) {
     let type = stmt.type;
-    if (type === "ruleset") {
+    if (type === "ruleset" || type === "nested-ruleset") {
       return this.transformRuleset(stmt, indentSpace);
     }
     else if (type === "at-rule") {
@@ -38,7 +38,9 @@ export class CSSTransformer {
     return (
       indentSpace + transformedSelectorList + " {\n" +
         stmt.decArr.map(dec => (
-          this.transformDeclaration(dec, indentSpace + "  ")
+          dec.type === "declaration" ?
+            this.transformDeclaration(dec, indentSpace + "  ") :
+            this.transformRuleset(dec, indentSpace + "  ")
       )).join("") +
       indentSpace + "}\n"
     );
@@ -81,6 +83,10 @@ export class CSSTransformer {
 
 
   transformSelector(selector) {
+    if (selector.type === "nested-selector") {
+      return this.transformNestedSelector(selector);
+    }
+
     if (selector.type === "compound-selector") {
       return this.transformCompoundSelector(selector);
     }
@@ -108,6 +114,15 @@ export class CSSTransformer {
     return (combinator) ?
       combinator.lexeme + " " + transformedSelector :
       transformedSelector;
+  }
+
+  transformNestedSelector(nestedSelector) {
+    let {nestingSelector, selector, combinator} = nestedSelector;
+    let transformedSelector = this.transformSelector(selector);
+    return (combinator) ?
+      combinator.lexeme + " " + this.transformSelector(selector) :
+      (nestingSelector || "") +
+        (selector ? this.transformSelector(selector) : "")
   }
 
 

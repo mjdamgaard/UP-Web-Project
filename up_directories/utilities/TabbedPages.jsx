@@ -23,7 +23,7 @@ export function render({tabs, closeInactiveTabs = undefined}) {
           />;
         })
       )}</div>
-      <div className="page-container">{(
+      <div className="page-container hide-loading">{(
         loadedPageEntries.map(([tabKey, tabData]) => {
           if (!tabData) return undefined;
           let isOpen = tabKey === openTabKey;
