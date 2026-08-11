@@ -61,8 +61,8 @@ export function render({
 
     // // And in case of a text file query, break up the fileText into individual
     // // lines with line numbers in front.
-    // let brokenUpText = fetchFile ? map(
-    //   fileText.split("\n"), (line, ind) => (
+    // let brokenUpText = fetchFile ? fileText.split("\n").map(
+    //   (line, ind) => (
     //     <code className="line">{ind + 1}{": "}{line}<br/></code>
     //   )
     // ) : undefined;

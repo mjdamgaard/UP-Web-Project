@@ -8,7 +8,7 @@ export async function initialize({userID, appDirID, subAppDirID}) {
   let preferences;
   if (userID && appDirID) {
     preferences = await fetchPrivate(abs(
-      "~/../base_app/server/rates/rates.sm.js/callSMF/fetchUserPreferences"
+      "~/../base_app/server/apps/apps.sm.js/callSMF/fetchUserPreferences"
     ));
   }
   preferences ??= {};

@@ -113,7 +113,7 @@ export const actions = {
       let curExtRoute = "/" + restSegments.join("/");
       let newExtRoute = getAbsolutePath(relExtRoute, curExtRoute);
       this.call("i-search", "setValue", "");
-      this.replaceURL("~/files/" + newExtRoute);
+      this.pushURL("~/files/" + newExtRoute);
     }
   }
 };
@@ -165,10 +165,10 @@ function getRouteJSXWithSubLinks(
   let slashDelimiter = <span className='slash'>{"/"}</span>;
   let semicolonDelimiter = <span className='semicolon'>{";"}</span>;
   return [
-    homeILink, ...map(subdirectoryLinks, link => [slashDelimiter, link]),
+    homeILink, ...subdirectoryLinks.map(link => [slashDelimiter, link]),
     ...(fileLink ? [slashDelimiter, fileLink] : []),
     ...(resultLink ? [slashDelimiter, resultLink] : []),
-    ...map(castingLinks, link => [semicolonDelimiter, link]),
+    ...castingLinks.map(link => [semicolonDelimiter, link]),
   ];
 }
 

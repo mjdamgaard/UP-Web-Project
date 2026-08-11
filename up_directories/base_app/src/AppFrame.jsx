@@ -13,7 +13,12 @@ import * as AccountMenu from "./account_menu/AccountMenu.jsx";
 // idea to use, what we here call "overlay pages," i.e. pages without their own
 // URLs that just goes on top if the current page.
 // By the way, for such pages, make sure to only use input fields that do not
-// allow their focus to be grabbed from elsewhere. 
+// allow their focus to be grabbed from elsewhere.
+
+// TODO: Remove overlay pages, turning them into actual pages with their own
+// URL, and then also introduce a blacklist of URLs (using substrings ending in
+// wildcards) that the stdFirstSegment and additionalURLs cannot use. Then
+// correct the above warning/instruction.
 
 
 export function render({children, style}) {

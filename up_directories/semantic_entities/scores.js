@@ -297,8 +297,8 @@ export function deleteScore(
 ) {
   return new Promise(resolve => {
     let keyIDProm = fetchEntityID(subjKey);
-    let listIDPartsPromArr = map(
-      listIDKeyArr, entKey => fetchEntityID(entKey)
+    let listIDPartsPromArr = listIDKeyArr.map(
+      entKey => fetchEntityID(entKey)
     );
     Promise.all([
       keyIDProm, ...listIDPartsPromArr
