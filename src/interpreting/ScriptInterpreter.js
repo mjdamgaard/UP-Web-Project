@@ -3017,7 +3017,7 @@ function verifyTypeHelper(val, type, isOptional, node, env) {
     case "hex-string":
     case "hex string":
     case "hex":
-      if (typeOfVal !== "string" || !/^[0-9a-fA-F]+$/.test(val)) {
+      if (typeOfVal !== "string" || !/^[0-9a-f]+$/.test(val)) {
         throw new ArgTypeError(
           `Value is not a hexadecimal string: ${getString(val, env)}`,
           node, env

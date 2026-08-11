@@ -19,6 +19,9 @@ import * as AccountMenu from "./account_menu/AccountMenu.jsx";
 // URL, and then also introduce a blacklist of URLs (using substrings ending in
 // wildcards) that the stdFirstSegment and additionalURLs cannot use. Then
 // correct the above warning/instruction.
+// UPDATE: Now I've blacklisted all additionalURLs that doesn't start with a
+// hexadecimal first segment, and all stdFirstSegments that isn't of the form
+// /(o-)?[0-9a-f]+/. Next up: reimplementing the overlay pages.
 
 
 export function render({children, style}) {

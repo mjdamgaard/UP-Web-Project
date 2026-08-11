@@ -1,6 +1,7 @@
 
 import {fetch, fetchPrivate} from 'query';
 import {hasType, hasTypes, verifyType} from 'type';
+import {getFirstSegment} from 'path';
 
 import * as MissingPage from "./MissingPage.jsx";
 
@@ -99,7 +100,12 @@ export function render({
     let shouldLoadNewApp = true;
     if (additionalURLs && hasType(additionalURLs, "array")) {
       additionalURLs.some(urlFormat => {
-        urlFormat = urlFormat.toString();
+        if (
+          !hasType(urlFormat, "string") || 
+          !hasType(getFirstSegment(urlFormat), "hex")
+        ) {
+          return;
+        }
         if (compareStringToFormat(localURL, urlFormat)) {
           let [firstFormatSegment] = urlFormat.split("/");
           if (!hasType(firstFormatSegment, "hex")) {
@@ -204,6 +210,16 @@ export const actions = {
     // first segment such that the URL will always lead to this specific app.
     let stdFirstSegment = apiDefiningAppDirID ? apiDefiningAppDirID :
       "o-" + appDirID;
+
+    // Disallow stdFirstSegment that isn't on the form /(o-)?[0-9a-f]+/.
+    if (
+      !hasType(stdFirstSegment, "hex") && (
+        stdFirstSegment.slice(0, 2) !== "o-" ||
+        !hasType(stdFirstSegment.slice(2), "hex")
+      )
+    ) {
+      stdFirstSegment = "o-" + appDirID;
+    }
 
     // Then cache and return this data.
     let appData = {

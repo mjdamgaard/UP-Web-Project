@@ -303,7 +303,7 @@ function getValidatedDirectoryNameOrUndefined(dirName) {
     console.log("Invalid directory name");
     return undefined;
   }
-  if (/^[0-9a-fA-F]+$/.test(dirName)) {
+  if (/^[0-9a-f]+$/.test(dirName)) {
       console.log(
         "Error: Directory name must include other symbols than [0-9a-f]."
       );
