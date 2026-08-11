@@ -34,10 +34,12 @@ export function render(props) {
       <span className="title">{entDef["Name"]}</span>
     </div>
     <div className="info-area">
-      <ExtRatingDisplay key="r"
-        entID={entID} entDef={entDef} type={type} objID={objID} relID={relID}
-        ancAppIDs={ancAppIDs}
-      />
+      <div className="ratings">
+        <ExtRatingDisplay key="r"
+          entID={entID} entDef={entDef} type={type} objID={objID} relID={relID}
+          ancAppIDs={ancAppIDs}
+        />
+      </div>
       <div className="entity-page-link">
         <div onClick={() => this.do("goToEntityPage")}>
           ≡
