@@ -1,0 +1,27 @@
+
+
+.page-header > .go-up-button {
+  position: relative;
+  left: -30px;
+  font-size: 24px;
+  width: 1em;
+  border-radius: 5px;
+  &:after {
+    content: "➜";
+    display: inline-block;
+    transform: rotate(-90deg);
+  }
+  &.inactive {
+    opacity: 30%;
+  }
+  &:not(.inactive):hover {
+    cursor: pointer;
+    background-color: lightgray;
+  }
+}
+
+
+.page-header > .links {
+  font-size: 20px;
+  margin-top: 5px;
+}
