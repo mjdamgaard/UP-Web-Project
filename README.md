@@ -173,7 +173,7 @@ And due to the sandboxing of the all user-uploaded code, a user-programmable pla
 
 
 
-## Existing platforms can also adopt the same technology
+<!-- ## Existing platforms can also adopt the same technology
 
 A platform does not need to be built as a user-programmable platform from the ground up in order to get the same benefits. Existing platforms can also adopt the same technology.
 
@@ -183,7 +183,7 @@ The benefits of doing this is the same as described above, which is to allow dev
 
 It is also even possible for closed-source platforms to adopt the technology, opening up parts of their platform for the users to extend and modify.[^2]
 
-[^2]: This would of course require isolation between the original and the user-programmable part of the platform. And if the platform wants its user-programmed modules to be able to interact with the original data structure of the platform, it thus ought to use a mockup of that data, which new user-made modules can access temporarily while they wait to be approved for accessing the real data structure.
+[^2]: This would of course require isolation between the original and the user-programmable part of the platform. And if the platform wants its user-programmed modules to be able to interact with the original data structure of the platform, it thus ought to use a mockup of that data, which new user-made modules can access temporarily while they wait to be approved for accessing the real data structure. -->
 
 
 

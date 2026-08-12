@@ -12,18 +12,25 @@ const {this: {
   }
 }} = placeholders;
 
-const [membersRelIDProm, subclassesRelIDProm, versionsRelIDProm] = [
+const relIDPromArr = [
   fetchEntityID(abs("~/../semantic_entities/em1.js;get/members")),
   fetchEntityID(abs("~/../semantic_entities/em1.js;get/subclasses")),
   fetchEntityID(abs("~/../semantic_entities/em3.js;get/versionsRel")),
 ];
 
 
-export function initialize({type}) {
-
+export async function initialize() {
+  let relIDArr = await Promise.all(relIDPromArr);
+  this.setState({relIDArr: relIDArr});
 }
 
 export function render({entDef, type, entID, ancCatIDs, ancAppIDs}) {
+  let {relIDArr} = this.state;
+  if (!relIDArr) {
+    return <div className="page-header loading"></div>;
+  }
+  let [membersRelID, subclassesRelID, versionsRelID] = relIDArr;
+
   let name = entDef["Name"];
   let appDirID = entDef["App directory ID"];
   let parentApp = ancAppIDs.at(-1);
@@ -39,35 +46,37 @@ export function render({entDef, type, entID, ancCatIDs, ancAppIDs}) {
       <div className="type-field">
         Type: {type === "cat" ? "Category" : "App"}
       </div>
-      <ul className="links">{(type !== "app" ? undefined : <>
-        <li className="files-link">
+      <div className="links">{(type !== "app" ? undefined : <>
+        <div className="files-link">
           <ILink key="files"
             href={`/${fileBrowserDirID}/files/${nodeID}/${appDirID}`}
           >
             View source code files
           </ILink>
-        </li>
-        <li className="app-link">
+        </div>
+        <div className="app-link">
           <ILink key="app" href={`/${appDirID}`}>
             View app
           </ILink>
-        </li>
-        <li className="original-version-link">
+        </div>
+        <div className="original-version-link">
           <ILink key="orig" href={`/o-${appDirID}`}>
             View original version
           </ILink>
-        </li>
+        </div>
         {/* TODO: At some point add link(s) to go to the app page of the
         current top/preferred version of this app. */}
-      </>)}</ul>
+      </>)}</div>
     </div>
-    {/* <div className="ratings">{(!parent ? undefined :
+    <div className="ratings">{(!parent ? undefined :
       <ExtRatingDisplay key="r"
-        entID={entID} entDef={entDef} type={type} objID={parent}
-        relID={type === "cat" ? relID : "..."}
-        ancAppIDs={ancAppIDs}
+        entID={entID} entDef={entDef} type={type} ancAppIDs={ancAppIDs}
+        objID={parent} relID={type === "cat" ?
+          subclassesRelID :
+          parentApp ? versionsRelID : membersRelID
+        }
       />
-    )}</div> */}
+    )}</div>
     <hr/>
   </div>
 }

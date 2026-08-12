@@ -2,7 +2,7 @@
 
 .page-header > .go-up-button {
   position: relative;
-  left: -30px;
+  left: -15px;
   font-size: 24px;
   width: 1em;
   border-radius: 5px;
@@ -21,7 +21,16 @@
 }
 
 
-.page-header > .links {
-  font-size: 20px;
-  margin-top: 5px;
+.page-header .links {
+  font-size: 18px;
+  margin-top: 6px;
+}
+
+.page-header {
+  position: relative;
+}
+.page-header > .ratings {
+  position: absolute;
+  right: 70px;
+  bottom: 22px;
 }
