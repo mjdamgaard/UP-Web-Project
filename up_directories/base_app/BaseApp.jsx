@@ -69,6 +69,7 @@ export function render(props) {
   // the best up-to-date base app that also matches the user preferences, and
   // make sure to set the loadUpdatedSelf to false for this updated base app.
   if (loadUpdatedSelf) {
+    // TODO: Insert URL check.
     return <VariableApp key="v" appDirID={baseAppDirID} userID={userID}
       fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
       AppWrapper={AppWrapper} appWrapperStyle={[mainStyle, appWrapperStyle]}

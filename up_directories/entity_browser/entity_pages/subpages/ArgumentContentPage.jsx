@@ -36,7 +36,7 @@ export function render({
     />,
   ];
 
-  let content = textEntDef ? textEntDef["Content"].toString() : undefined;
+  let content = textEntDef ? `${textEntDef["Content"]}` : undefined;
   return <div className="content-page">
     <div className="text">
       <TextDisplay key="_0" untrusted jsxElement={content} />

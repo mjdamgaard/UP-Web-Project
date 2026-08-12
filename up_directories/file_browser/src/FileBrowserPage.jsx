@@ -1,5 +1,7 @@
 
 import {hasType} from 'type';
+import {map} from 'array';
+import {toString, indexOf} from 'string';
 import {fetch, encodeURI} from 'query';
 import {getUserEntPath, postEntity} from "~/../semantic_entities/entities.js";
 
@@ -40,8 +42,8 @@ export function render({
     // route is a directory route, in which case let each line be an ILink
     // to the given child of the directory.
     let transformedResult = isDirectoryPath ?
-      (result ?? []).map((child, ind) => {
-        let isFile = (child.indexOf(".") !== -1);
+      map(result ?? [], (child, ind) => {
+        let isFile = (indexOf(child, ".") !== -1);
         return <div className={isFile ? "file-link" : "directory-link"}>
           <ILink key={"child" + ind} href={
             "~/f" + encodeURI(route + "/" + child)
@@ -53,15 +55,15 @@ export function render({
       (hasType(result, "JSXElement")) ?
         <TextDisplay key="_result" untrusted jsxElement={result} /> :
         isTextFile ?
-          <code className="jsx numbered">{result.toString(true)}</code> :
-          <div>{result.toString(true)}</div>;
-        // split(toString(result.map(true), "\n"), (line, ind) => (
+          <code className="jsx numbered">{toString(result, true)}</code> :
+          <div>{toString(result, true)}</div>;
+        // map(split(toString(result, true), "\n"), (line, ind) => (
         //   <code className="line">{ind + 1}{": "}{line}<br/></code>
         // ));
 
     // // And in case of a text file query, break up the fileText into individual
     // // lines with line numbers in front.
-    // let brokenUpText = fetchFile ? fileText.split("\n").map(
+    // let brokenUpText = fetchFile ? split(fileText, "\n").map(
     //   (line, ind) => (
     //     <code className="line">{ind + 1}{": "}{line}<br/></code>
     //   )

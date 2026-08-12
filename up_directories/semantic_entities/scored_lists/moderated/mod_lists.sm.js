@@ -1,6 +1,7 @@
 
 import {fetchEntityDefinition} from "../../entities.js";
 import {clearPermissions} from 'query';
+import {slice, map} from 'array';
 
 
 
@@ -45,7 +46,7 @@ export function fetchList(listKey, loHex, hiHex, maxNum, offset, isAscending) {
           if (!convert) {
             resolve(list);
           } else {
-            resolve(list.map(entry => {
+            resolve(map(list, entry => {
               let convertedScore = clearPermissions(() => convert(entry[0]));
               resolve([convertedScore, ...slice(entry, 1)]);
             }));

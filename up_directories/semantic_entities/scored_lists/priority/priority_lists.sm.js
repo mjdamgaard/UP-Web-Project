@@ -4,6 +4,7 @@ import {
 } from "../../scores.js";
 import {fetchEntityDefinition, fetchEntityID} from "../../entities.js";
 import {clearPermissions, clearPrivileges} from 'query';
+import {slice, map, reduce} from 'array';
 
 
 
@@ -42,23 +43,23 @@ export function updateScore(listKey, subjKey) {
       let listIDProm = fetchEntityID(listDef.ownEntPath);
       let listKeyArr = listDef.listKeyArr;
       let listDefArrProm = Promise.all(
-        listKeyArr.map(listKey => fetchEntityDefinition(listKey))
+        map(listKeyArr, listKey => fetchEntityDefinition(listKey))
       );
       listDefArrProm.then(listDefArr => {
         // Update the underlying lists before fetching the scores from them.
-        Promise.all(listDefArr.map(listDef => (
+        Promise.all(map(listDefArr, listDef => (
           clearPrivileges(() => (
             listDef.updateScore ? listDef.updateScore(subjKey) :
               new Promise(res => res())
           ))
         ))).then(() => {
-          let scoreDataArrProm = Promise.all(listDefArr.map(listDef => (
+          let scoreDataArrProm = Promise.all(map(listDefArr, listDef => (
             clearPermissions(() => listDef.fetchScoreData(subjKey))
           )));
           scoreDataArrProm.then(scoreDataArr => {
             // Take the first score tat is defined.
-            let combinedScoreData = scoreDataArr.reduce(
-              (acc, val, ind) => {
+            let combinedScoreData = reduce(
+              scoreDataArr, (acc, val, ind) => {
                 let minWeight = listDef.minWeightArr[ind] ?? 0;
                 return acc ?? (val && val[1] > minWeight ? val : undefined);
               },

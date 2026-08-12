@@ -202,6 +202,7 @@ export const actions = {
 
     // Get the "apiDefiningAppDirID" and "additionalURLs" metadata properties.
     let {apiDefiningAppDirID, additionalURLs} = metadata ?? {};
+    verifyTypes([apiDefiningAppDirID, additionalURLs], ["string?", "array?"]);
     
     // If apiDefiningAppDirID is defined, it should be standard first segment
     // of the app, namely such that other users can have different preferences

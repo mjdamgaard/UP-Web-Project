@@ -50,7 +50,7 @@ function transformScoreData(scoreData, {biasScore, biasWeight}) {
   let newScore = (
     scoreData[1] * scoreData[2] + biasScore * biasWeight
   ) / (scoreData[2] + biasWeight);
-  return [scoreData[0], newScore, scoreData[2], ...slice(scoreData, 3)];
+  return [scoreData[0], newScore, scoreData[2], ...scoreData.slice(3)];
 }
 
 

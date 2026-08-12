@@ -1,5 +1,6 @@
 
 import {parseFloat, isNaN} from 'number';
+import {verifyType} from 'type';
 import {fetchMetric, fetchUserScore} from "~/../semantic_entities/scores.js";
 import {fetchEntityDefinition} from "~/../semantic_entities/entities.js";
 import {fetchQualityKey} from '../entity_lists/quality_keys.js';
@@ -291,6 +292,7 @@ export function getIntervalLabel(metric, score) {
   let intervalLabels = metric["Interval labels"];
   if (!intervalLabels) return undefined;
   let ret;
+  verifyType(intervalLabels, "array");
   intervalLabels.forEach(([lo, hi, label]) => {
     if (lo <= score && score <= hi) {
       ret = ret ? ret + "/" + label : label;
@@ -303,8 +305,8 @@ export function getIntervalLabel(metric, score) {
 export function fetchSubjectAndQualityIDs(scalarKey) {
   return new Promise(resolve => {
     fetchEntityDefinition(scalarKey, ["Subject", "Quality"]).then(entDef => {
-      let subjID = entDef["Subject"].slice(2, -1);
-      let qualID = entDef["Quality"].slice(2, -1);
+      let subjID = `${entDef["Subject"]}`.slice(2, -1);
+      let qualID = `${entDef["Quality"]}`.slice(2, -1);
       resolve([subjID, qualID]);
     });
   });

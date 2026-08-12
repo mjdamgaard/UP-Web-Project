@@ -74,7 +74,7 @@ export const actions = {
     // a new (active) row to the guesses array.
     let newSlot = (curSlot + 1) % 4;
     let newGuesses = [
-      ...slice(guesses, 0, -1),
+      ...guesses.slice(0, -1),
       {curSlot: newSlot, slots: newSlots},
       ...(isComplete ? [{slots: createArray(4), curSlot: 0}] : []),
     ];
@@ -106,7 +106,7 @@ export const actions = {
     let {guesses} = this.state;
     let {slots} = guesses.at(-1);
     let newGuesses = [
-      ...slice(guesses, 0, -1),
+      ...guesses.slice(0, -1),
       {curSlot: newSlot, slots: slots},
     ];
     this.setState(state => ({...state, guesses: newGuesses}));

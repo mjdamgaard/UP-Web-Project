@@ -33,7 +33,7 @@ export function render({entID, entKey = entID}) {
     return <div className="content-page missing">{"missing"}</div>;
   }
 
-  let content = entDef["Content"].toString();
+  let content = `${entDef["Content"]}`;
   return <div className="content-page">
     <div className="text">
       <TextDisplay key="_0" untrusted jsxElement={content} />
