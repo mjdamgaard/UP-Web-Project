@@ -1688,9 +1688,10 @@ export class ScriptInterpreter {
         break;
       }
       case "console-call": {
+        let stateArr = state ? state.stateArr ??= [] : undefined;
         let {isExiting, log} = environment.globals;
-        let expValArr = expNode.expArr.map(
-          exp => this.evaluateExpression(exp, environment, state)
+        let expValArr = expNode.expArr.map((exp, ind) =>
+          this.evaluateExpression(exp, environment, stateArr[ind] ??= {})
         );
         if (expNode.subtype === "log") {
           if (!this.isServerSide && !isExiting) {

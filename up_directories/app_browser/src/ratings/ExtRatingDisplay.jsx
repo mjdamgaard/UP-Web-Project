@@ -6,13 +6,13 @@ import * as FavButton from "./FavButton.jsx";
 
 
 
-export function render({entID, entDef, type, objID, relID, ancAppIDs}) {
+export function render({entID, entDef, type, objID, relID, ancAppIDs = []}) {
   let userID = this.getContext("userID");
   return <div className="extended-rating-display">
     <RatingDisplay key="r"
       userID={userID} objID={objID} relID={relID} subjID={entID}
     />
-    {(type !== "app" || !objID ? undefined :
+    {(type !== "app" || !ancAppIDs[0] ? undefined :
       <FavButton key="f" userID={userID} appDirID={objID}
         subAppDirID={entDef["App directory ID"]}
       />

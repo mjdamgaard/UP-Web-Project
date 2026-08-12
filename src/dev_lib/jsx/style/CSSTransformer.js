@@ -117,12 +117,16 @@ export class CSSTransformer {
   }
 
   transformNestedSelector(nestedSelector) {
-    let {nestingSelector, selector, combinator} = nestedSelector;
-    let transformedSelector = this.transformSelector(selector);
-    return (combinator) ?
-      combinator.lexeme + " " + this.transformSelector(selector) :
-      (nestingSelector || "") +
-        (selector ? this.transformSelector(selector) : "")
+    let {combinator, selector, relativeSelector} = nestedSelector;
+    if (combinator) {
+      return "& " + combinator.lexeme + " " + this.transformSelector(selector);
+    }
+    if (selector) {
+      return "&" + this.transformSelector(selector);
+    }
+    else {
+      return this.transformRelativeSelector(relativeSelector);
+    }
   }
 
 

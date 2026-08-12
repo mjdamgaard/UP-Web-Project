@@ -20,7 +20,6 @@
   }
 }
 
-
 .page-header .links {
   font-size: 18px;
   margin-top: 6px;
@@ -31,6 +30,15 @@
 }
 .page-header > .ratings {
   position: absolute;
-  right: 70px;
+  right: 40px;
   bottom: 22px;
+}
+
+
+
+.form-group > * {
+  display: block;
+}
+.form-group + button {
+  margin-top: 5px;
 }

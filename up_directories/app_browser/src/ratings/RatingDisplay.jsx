@@ -57,6 +57,7 @@ export const actions = {
     return this.do("toggleRate", "down");
   },
   "toggleRate": async function(type) {
+    let {objID, relID, subjID} = this.props;
     let {upRateSum, downRateSum, userRateVal, isPostingRef} = this.state;
     isPostingRef[0] = true;
     let newUserRateValue = type === "up" ? (userRateVal !== 1 ? 1 : 0) : 

@@ -138,16 +138,15 @@ export const cssGrammar = {
   },
   "nested-selector": {
     rules: [
-      ["/&/", "selector"],
-      ["/&/"],
-      ["non-space-combinator", "selector!"],
-      ["selector"],
+      ["/&/", "non-space-combinator", "selector!"],
+      ["/&/", "selector!"],
+      ["relative-selector"],
     ],
     process: (children, ruleInd) => ({
       type: "nested-selector",
-      combinator: (ruleInd === 2) ? children[0] : undefined,
-      nestingSelector: (ruleInd < 2) ? children[0] : undefined,
-      selector: (ruleInd === 3) ? children[0] : children[1],
+      combinator: (ruleInd === 0) ? children[1] : undefined,
+      selector: (ruleInd < 2) ? children[2 - ruleInd] : undefined,
+      relativeSelector: (ruleInd == 2) ? children[0] : undefined,
     }),
   },
   "non-space-combinator": {

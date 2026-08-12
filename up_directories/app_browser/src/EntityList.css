@@ -1,5 +1,13 @@
 
 
+.entity-list:not(:has(.entity-element)):after {
+  content: "No elements yet";
+  font-style: italic;
+  opacity: 70%;
+  margin: 4px 10px;
+}
+
+
 .entity-element {
   width: 100%;
   display: grid;
