@@ -1,6 +1,6 @@
 
 import {fetch, fetchPrivate} from 'query';
-import {hasType, hasTypes, verifyType} from 'type';
+import {hasType, hasTypes, verifyType, verifyTypes} from 'type';
 import {getFirstSegment} from 'path';
 
 import * as MissingPage from "./MissingPage.jsx";

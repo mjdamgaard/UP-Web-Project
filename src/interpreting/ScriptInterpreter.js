@@ -1166,7 +1166,8 @@ export class ScriptInterpreter {
                 let val = this.evaluateExpression(
                   expNode.exp2, environment, exp2State
                 );
-                let newVal = parseFloat(prevVal) - parseFloat(val);
+                let newVal = verifyFloat(prevVal, expNode.exp1, environment) -
+                  verifyFloat(val, expNode.exp2, environment);
                 return [newVal, newVal];
               }
             );
@@ -1177,7 +1178,8 @@ export class ScriptInterpreter {
                 let val = this.evaluateExpression(
                   expNode.exp2, environment, exp2State
                 );
-                let newVal = parseFloat(prevVal) * parseFloat(val);
+                let newVal = verifyFloat(prevVal, expNode.exp1, environment) *
+                  verifyFloat(val, expNode.exp2, environment);
                 return [newVal, newVal];
               }
             );
@@ -1188,7 +1190,8 @@ export class ScriptInterpreter {
                 let val = this.evaluateExpression(
                   expNode.exp2, environment, exp2State
                 );
-                let newVal = parseFloat(prevVal) / parseFloat(val);
+                let newVal = verifyFloat(prevVal, expNode.exp1, environment) /
+                  verifyFloat(val, expNode.exp2, environment);
                 return [newVal, newVal];
               }
             );
@@ -1287,13 +1290,16 @@ export class ScriptInterpreter {
           );
           switch (op) {
             case "|":
-              acc = parseInt(acc) | parseInt(nextVal);
+              acc = verifyInt(acc, expNode, environment) |
+                verifyInt(nextVal, expNode, environment);
               break;
             case "^":
-              acc = parseInt(acc) ^ parseInt(nextVal);
+              acc = verifyInt(acc, expNode, environment) ^
+                verifyInt(nextVal, expNode, environment);
               break;
             case "&":
-              acc = parseInt(acc) & parseInt(nextVal);
+              acc = verifyInt(acc, expNode, environment) &
+                verifyInt(nextVal, expNode, environment);
               break;
             case "===":
               acc = acc === nextVal;
@@ -1309,16 +1315,20 @@ export class ScriptInterpreter {
               acc = acc != nextVal;
               break;
             case ">":
-              acc = parseFloat(acc) > parseFloat(nextVal);
+              acc = verifyFloatOrUndefined(acc, expNode, environment) >
+                verifyFloatOrUndefined(nextVal, expNode, environment);
               break;
             case "<":
-              acc = parseFloat(acc) < parseFloat(nextVal);
+              acc = verifyFloatOrUndefined(acc, expNode, environment) <
+                verifyFloatOrUndefined(nextVal, expNode, environment);
               break;
             case "<=":
-              acc = parseFloat(acc) <= parseFloat(nextVal);
+              acc = verifyFloatOrUndefined(acc, expNode, environment) <=
+                verifyFloatOrUndefined(nextVal, expNode, environment);
               break;
             case ">=":
-              acc = parseFloat(acc) >= parseFloat(nextVal);
+              acc = verifyFloatOrUndefined(acc, expNode, environment) >=
+                verifyFloatOrUndefined(nextVal, expNode, environment);
               break;
             case "instanceof":
               acc = (
@@ -1329,31 +1339,39 @@ export class ScriptInterpreter {
               ) ? acc = nextVal.isInstanceOfThis(acc) : false;
               break;
             case "<<":
-              acc = parseInt(acc) << parseInt(nextVal);
+              acc = verifyInt(acc, expNode, environment) <<
+                verifyInt(nextVal, expNode, environment);
               break;
             case ">>":
-              acc = parseInt(acc) >> parseInt(nextVal);
+              acc = verifyInt(acc, expNode, environment) >>
+                verifyInt(nextVal, expNode, environment);
               break;
             case ">>>":
-              acc = parseInt(acc) >>> parseInt(nextVal);
+              acc = verifyInt(acc, expNode, environment) >>>
+                verifyInt(nextVal, expNode, environment);
               break;
             case "+":
               acc = (typeof acc === "string" || typeof nextVal === "string") ?
                 getString(acc, environment) +
                   getString(nextVal, environment) :
-                parseFloat(acc) + parseFloat(nextVal);
+                verifyFloat(acc, expNode, environment) +
+                  verifyFloat(nextVal, expNode, environment);
               break;
             case "-":
-              acc = parseFloat(acc) - parseFloat(nextVal);
+              acc = verifyFloat(acc, expNode, environment) -
+                verifyFloat(nextVal, expNode, environment);
               break;
             case "*":
-              acc = parseFloat(acc) * parseFloat(nextVal);
+              acc = verifyFloat(acc, expNode, environment) *
+                verifyFloat(nextVal, expNode, environment);
               break;
             case "/":
-              acc = parseFloat(acc) / parseFloat(nextVal);
+              acc = verifyFloat(acc, expNode, environment) /
+                verifyFloat(nextVal, expNode, environment);
               break;
             case "%":
-              acc = parseFloat(acc) % parseFloat(nextVal);
+              acc = verifyFloat(acc, expNode, environment) %
+                verifyFloat(nextVal, expNode, environment);
               break;
             default: throw (
               "ScriptInterpreter.evaluateExpression(): Unrecognized " +
@@ -1382,12 +1400,8 @@ export class ScriptInterpreter {
         if (op === "++") {
           ret = this.assignToVariableOrMember(
             expNode.exp, environment, prevVal => {
-              let int = parseFloat(prevVal);
-              if (!int && int !== 0) throw new RuntimeError(
-                "Increment of a non-numeric value",
-                expNode, environment
-              );
-              let newVal = int + 1;
+              verifyFloat(prevVal, expNode, environment);
+              let newVal = prevVal + 1;
               return [newVal, newVal];
             }
           );
@@ -1396,12 +1410,8 @@ export class ScriptInterpreter {
         else if (op === "--") {
           ret = this.assignToVariableOrMember(
             expNode.exp, environment, prevVal => {
-              let int = parseFloat(prevVal);
-              if (!int && int !== 0) throw new RuntimeError(
-                "Decrement of a non-numeric value",
-                expNode, environment
-              );
-              let newVal = int - 1;
+              verifyFloat(prevVal, expNode, environment);
+              let newVal = prevVal - 1;
               return [newVal, newVal];
             }
           );
@@ -1479,12 +1489,8 @@ export class ScriptInterpreter {
           case "++":
             ret = this.assignToVariableOrMember(
               expNode.exp, environment, prevVal => {
-                let int = parseFloat(prevVal);
-                if (!int && int !== 0) throw new RuntimeError(
-                  "Increment of a non-numeric value",
-                  expNode, environment
-                );
-                let newVal = int + 1;
+                verifyFloat(prevVal, expNode, environment);
+                let newVal = prevVal + 1;
                 return [newVal, prevVal];
               }
             );
@@ -1492,12 +1498,8 @@ export class ScriptInterpreter {
           case "--":
             ret = this.assignToVariableOrMember(
               expNode.exp, environment, prevVal => {
-                let int = parseFloat(prevVal);
-                if (!int && int !== 0) throw new RuntimeError(
-                  "Decrement of a non-numeric value",
-                  expNode, environment
-                );
-                let newVal = int - 1;
+                verifyFloat(prevVal, expNode, environment);
+                let newVal = prevVal - 1;
                 return [newVal, prevVal];
               }
             );
@@ -3171,6 +3173,31 @@ export function verifyTypes(valArr, typeArr, node, env) {
     let [ , type, isOptional] = TYPE_AND_QM_REGEX.exec(typeStr);
     verifyType(valArr[ind], type, isOptional, node, env);
   });
+}
+
+
+
+export function verifyInt(x, node, env) {
+  let ret = parseInt(x);
+  if (ret !== x) throw new ArgTypeError(
+    "Invalid integer", node, env
+  )
+  return ret;
+}
+export function verifyFloat(x, node, env) {
+  let ret = parseFloat(x);
+  if (ret !== x) throw new ArgTypeError(
+    "Invalid number", node, env
+  )
+  return ret;
+}
+export function verifyFloatOrUndefined(x, node, env) {
+  if (x === undefined) return x;
+  let ret = parseFloat(x);
+  if (ret !== x) throw new ArgTypeError(
+    "Invalid number", node, env
+  )
+  return ret;
 }
 
 

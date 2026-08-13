@@ -52,7 +52,7 @@ export async function updateUpOrDownRate(objID, relID, subjID, rateValue) {
   // total number up rates minus down rates.
   let newUpRateSum = prevUpRateSum - (prevRateValue === 1 ? 1 : 0) +
     (rateValue === 1 ? 1 : 0);
-  let newMixedSum = prevUpRateSum - prevRateValue + rateValue;
+  let newMixedSum = prevMixedSum - prevRateValue + rateValue;
 
   // Finally update the data, and end end the connection (committing the
   // transaction and releasing the lock).
@@ -92,7 +92,7 @@ async function _fetchUserRateValue(listID, entryKey, options = undefined) {
     options
   );
   let rateValue = (ratePayload === undefined) ? 0 :
-    (ratePayload === "1") ? 1 : -1;
+    (ratePayload === "01") ? 1 : -1;
   return rateValue;
 }
 
@@ -106,7 +106,7 @@ async function _postUserRateValue(
       undefined, options
     );
   } else {
-    let ratePayload = (rateValue === 1) ? "1" : "2";
+    let ratePayload = (rateValue === 1) ? "01" : "02";
     await post(
       abs("./_userRates.bt./_insert/l/" + listID + "/k/" + entryKey),
       ratePayload, options
@@ -142,11 +142,11 @@ async function _postUpRateSum(
   let upRateSumHex = valueToHex(upRateSum, "uint(6)");
   await post(
     abs(
-      "./upRateSums.bbt./entry/l/" + listID + "/k/" + subjID +
+      "./upRateSums.bbt./_insert/l/" + listID + "/k/" + subjID +
       "/s/" + upRateSumHex
     ),
     undefined, options
-  )
+  );
 }
 
 
@@ -177,11 +177,11 @@ async function _postMixedSum(
   let mixedSumHex = valueToHex(mixedSum, "int(6)");
   await post(
     abs(
-      "./mixedSums.bbt./entry/l/" + listID + "/k/" + subjID +
+      "./mixedSums.bbt./_insert/l/" + listID + "/k/" + subjID +
       "/s/" + mixedSumHex
     ),
     undefined, options
-  )
+  );
 }
 
 

@@ -488,7 +488,7 @@ export const hexToValue = new DevFunction(
         else throw err;
       }
     }
-    else return hexToArray.fun({callerNode, execEnv}, [hexStr, [type]]);
+    else return hexToArray.fun({callerNode, execEnv}, [hexStr, [type]])[0];
   }
 );
 
