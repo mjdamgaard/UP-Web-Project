@@ -89,17 +89,17 @@ export function render(props) {
     />;
   }
 
-  // Else if the tail URL is empty, go to the app browser as the default app.
-  if (!firstSegment) {
-    this.replaceURL("~/" + appBrowserDirID);
-    return <div className="loading"></div>;
-  }
-
-  // If the first segment equals "o-" + baseAppDirID, skip the AppLoader, which
-  // would otherwise load this base app itself again, and go directly to the
+  // Else if the first segment equals "o-" + baseAppDirID, skip the AppLoader,
+  // which would otherwise load this base app itself again, and go to the
   // switch-case statement below.
   if (firstSegment === "o-" + baseAppDirID) {
     firstSegment = this.getSegment(1);
+  }
+
+  // And if the tail URL is empty, go to the app browser as the default app.
+  if (!firstSegment) {
+    this.replaceURL("./" + appBrowserDirID);
+    return <div className="loading"></div>;
   }
 
   // Else if the URL is of the form "(/[os])?/<appDirID>" (similar to the above

@@ -63,24 +63,25 @@
   margin: 0px 20%;
   padding: 20px 50px;
 }
-/* .app-main-container:has(> .open > .app-main > .no-margins) {
-  margin: 0 0;
-  padding: 0 0;
-} */
+.no-margins > .app-container {
+  margin: 0px 0px;
+  padding: 0px 0px;
+}
+
 @media (max-width: 600px) {
-  .app-container {
+  :not(.no-margins) > .app-container {
     margin: 0 0;
     padding: 10px 20px;
   }
 }
 @media (min-width: 600px) and (max-width: 900px) {
-  .app-container {
+  :not(.no-margins) > .app-container {
     margin: 0px 10%;
     padding: 20px 50px;
   }
 }
 @media (min-width: 900px) and (max-width: 1200px) {
-  .app-container {
+  :not(.no-margins) > .app-container {
     margin: 0px 15%;
     padding: 20px 50px;
   }
@@ -96,7 +97,7 @@
 .account-menu {
   position: absolute;
   right: 5px;
-  top: 1px;
+  top: 0px;
   z-index: 3;
 }
 

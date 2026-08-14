@@ -40,7 +40,7 @@ export function render({children, style}) {
         </div>
         <AccountMenu key="am" isLoggedIn={userID ? true : false} />
       </header>
-      <main className="app-main">
+      <main className={"app-main" + (hideMargins ? " no-margins" : "")}>
         <div className="click-blocker"></div>
         <div className="margin left"></div>
         <div className="app-container no-overflow">
