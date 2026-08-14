@@ -28,7 +28,7 @@ export function render(props) {
   this.trigger("hideFrame");
   return <BaseApp key="0"
     fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
-    loadUpdatedSelf={true} mainStyle={mainStyle} AppFrame={AppFrame}
+    loadUpdatedSelf={props.isRoot} mainStyle={mainStyle} AppFrame={AppFrame}
     appFrameStyle={appFrameStyle} AppWrapper={AppWrapper}
     appWrapperStyle={appWrapperStyle} {...props}
   />;

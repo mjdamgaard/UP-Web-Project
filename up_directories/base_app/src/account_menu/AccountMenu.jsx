@@ -1,8 +1,13 @@
 
 import {logout} from 'account';
-import * as LoginPage from "./LoginPage.jsx";
-import * as SignupPage from "./SignupPage.jsx";
-import * as AccountPage from "./AccountPage.jsx";
+
+import placeholders from "~/placeholders.js";
+
+const {this: {
+  directories: {
+    "base_app": baseAppDirID,
+  },
+}} = placeholders;
 
 
 export function render({isLoggedIn}) {
@@ -19,15 +24,10 @@ export function render({isLoggedIn}) {
 
       <div className="items">
         <div className={isLoggedIn ? "" : " inactive"} onClick={() => {
-          this.trigger("openOverlayPage", <AccountPage />);
+          this.do("goTo", `/o-${baseAppDirID}/account`);
         }}>
           <span>Account</span>
         </div>
-        {/* <div className={isLoggedIn ? "" : " inactive"} onClick={() => {
-          this.trigger("openOverlayPage", <ProfilePage />);
-        }}>
-          <span>Profile</span>
-        </div> */}
         <div className={isLoggedIn ? "" : " inactive"} onClick={() => {
           logout().then(errMsg => {
             if (errMsg) {
@@ -40,12 +40,12 @@ export function render({isLoggedIn}) {
           <span>Log out</span>
         </div>
         <div className={isLoggedIn ? " inactive" : ""} onClick={() => {
-          this.trigger("openOverlayPage", <LoginPage />);
+          this.do("goTo", `/o-${baseAppDirID}/login`);
         }}>
           <span>Log in</span>
         </div>
         <div className={isLoggedIn ? " inactive" : ""} onClick={() => {
-          this.trigger("openOverlayPage", <SignupPage />);
+          this.do("goTo", `/o-${baseAppDirID}/signup`);
         }}>
           <span>Sign up</span>
         </div>
@@ -64,6 +64,10 @@ export const actions = {
   },
   "close": function() {
     this.setState(state => ({...state, isOpen: false}));
+  },
+  "goTo": function(url) {
+    this.do("close");
+    this.pushURL(url);
   },
 };
 

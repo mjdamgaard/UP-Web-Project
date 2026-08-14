@@ -26,16 +26,11 @@ import * as AccountMenu from "./account_menu/AccountMenu.jsx";
 
 export function render({children, style}) {
   let userID = this.getContext("userID");
-  let {hideHeader, hideMargins, overlayPageContent} = this.state;
+  let {hideHeader, hideMargins} = this.state;
   this.setContext("headerIsHidden", hideHeader);
   this.setContext("marginsAreHidden", hideMargins);
   return <div innerStyle={style}>
     <div className="app-frame" onClick={() => this.call("am", "close")}>
-      <div className={
-        "overlay-page-container" + (overlayPageContent ? " open" : "")
-      }>
-        {(overlayPageContent)}
-      </div>
       <header className={"app-header" + (hideHeader ? " hidden": "")}>
         <ILink key="logo" href="~/">
           <span className="logo">UP-Web.org</span>
@@ -90,18 +85,6 @@ const headerItems = <>
 
 
 export const actions = {
-  "openOverlayPage": function(overlayPageContent) {
-    this.setState(
-      state => ({...state, overlayPageContent: overlayPageContent})
-    );
-    this.call("am", "close");
-  },
-  "closeOverlayPage": function() {
-    this.setState(
-      state => ({...state, overlayPageContent: undefined})
-    );
-    this.call("am", "close");
-  },
   "hideHeader": function() {
     this.setState(state => ({...state, hideHeader: true}));
   },
@@ -123,8 +106,6 @@ export const actions = {
 };
 
 export const events = [
-  "openOverlayPage",
-  "closeOverlayPage",
   "hideHeader",
   "showHeader",
   "hideMargins",

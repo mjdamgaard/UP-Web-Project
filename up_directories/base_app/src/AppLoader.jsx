@@ -86,7 +86,7 @@ export function render({
   // and if these are not yet cached, fetch them and cache them first.
   let appData = cache[appDirID];
   if (!appData) {
-    this.do("fetchAppData", appDirID);
+    this.do("fetchAppData", appDirID).then(() => this.rerender());
     return <div className="loading"></div>;
   }
   let {AppComponent, additionalURLs, stdFirstSegment} = appData;
@@ -209,18 +209,8 @@ export const actions = {
     // that branches off from that point in the app tree (or directed graph,
     // rather). And if it is undefined, use "o-" + appDirID as the standard
     // first segment such that the URL will always lead to this specific app.
-    let stdFirstSegment = apiDefiningAppDirID ? apiDefiningAppDirID :
-      "o-" + appDirID;
-
-    // Disallow stdFirstSegment that isn't on the form /(o-)?[0-9a-f]+/.
-    if (
-      !hasType(stdFirstSegment, "hex") && (
-        stdFirstSegment.slice(0, 2) !== "o-" ||
-        !hasType(stdFirstSegment.slice(2), "hex")
-      )
-    ) {
-      stdFirstSegment = "o-" + appDirID;
-    }
+    let stdFirstSegment = getIsAppDirSegment(apiDefiningAppDirID) ?
+      apiDefiningAppDirID : "o-" + appDirID;
 
     // Then cache and return this data.
     let appData = {
@@ -257,3 +247,14 @@ export function compareStringToWildcardFormat(str, format) {
     return str === format;
   }
 }
+
+
+
+export function getIsAppDirSegment(segment) {
+  if (typeof segment !== "string") return false;
+  let prefix = segment.slice(0, 2);
+  return hasType(segment, "hex") || (
+    (prefix === "o-" || prefix === "s-") &&
+    hasType(segment.substring(2), "hex")
+  );
+} 

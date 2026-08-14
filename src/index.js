@@ -208,7 +208,7 @@ const mainScript = `
   import * as app from "/${UP_NODE_ID}/${BASE_APP_ID}/main.jsx";
 
   export function main() {
-    createJSXApp(app);
+    createJSXApp(app, {isRoot: true});
   }
 `;
 

@@ -1014,7 +1014,7 @@ export class ScriptInterpreter {
         } else if (stmtNode.lexeme === "continue") {
           throw new ContinueException(stmtNode, environment);
         } else if (stmtNode.lexeme === "debugger") {
-          // debugger; // Let us remove this for the time being.
+          debugger;
         }
         break;
       }

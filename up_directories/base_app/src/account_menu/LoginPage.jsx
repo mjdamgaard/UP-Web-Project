@@ -11,8 +11,8 @@ export function render({}) {
   let userNameIDKey = Symbol("input-username");
   let passwordIDKey = Symbol("input-password");
 
-  return <div className="login-page">
-    <div className="go-back-button" onClick={() => this.do("goBack")}></div>
+  return <div className="login-page full-page">
+    <div className="go-back-button" onClick={() => this.back()}></div>
     <div className="page-content">
       <h2>Log in</h2>
       <Form key="f">
@@ -39,15 +39,14 @@ export function render({}) {
 
 
 export const actions = {
-  "goBack": function() {
-    this.trigger("closeOverlayPage");
-  },
   "submit": function() {
     let username = this.call("f", "call", ["i-usr", "getValue"]);
     let password = this.call("f", "call", ["i-pw", "getValue"]);
     login(username, password).then(response => {
       if (response) {
         this.setState({response: response});
+      } else {
+        this.back();
       }
     }).catch(err => {
       console.error(err);

@@ -11,8 +11,8 @@ export function render({}) {
   let userID = this.getContext("userID");
   let username = this.getContext("username");
   let {gas} = this.state;
-  return <div className="account-page">
-    <div className="go-back-button" onClick={() => this.do("goBack")}></div>
+  return <div className="account-page full-page">
+    <div className="go-back-button" onClick={() => this.back()}></div>
     <div className="page-content">
       <h2>My account</h2>
       <h4>User info</h4>
@@ -36,12 +36,5 @@ export function render({}) {
     </div>
   </div>;
 }
-
-
-export const actions = {
-  "goBack": function() {
-    this.trigger("closeOverlayPage");
-  },
-};
 
 

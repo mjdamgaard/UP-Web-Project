@@ -1,17 +1,21 @@
 
+import {getIsAppDirSegment} from "./src/AppLoader.jsx";
 import * as AppLoader from "./src/AppLoader.jsx";
 import * as VariableApp from "./src/VariableApp.jsx";
 import * as MissingPage from "./src/MissingPage.jsx";
+import * as LoginPage from "./src/account_menu/LoginPage.jsx";
+import * as SignupPage from "./src/account_menu/SignupPage.jsx";
+import * as AccountPage from "./src/account_menu/AccountPage.jsx";
 import * as AboutPage from "./src/AboutPage.jsx";
 
 import placeholders from "./placeholders.js";
 
-const {
-  this: {directories: {
+const {this: {
+  directories: {
     "base_app": baseAppDirID,
     "app_browser": appBrowserDirID,
-  }},
-} = placeholders;
+  },
+}} = placeholders;
 
 
 // The main job(s) of a "base app" is to define a header menu for the website
@@ -68,8 +72,16 @@ export function render(props) {
   // Else if loadUpdatedSelf is true, use the VariableApp component to load the
   // the best up-to-date base app that also matches the user preferences, and
   // make sure to set the loadUpdatedSelf to false for this updated base app.
+  // Also check that the URL is of the form /([os]-)?[0-9a-f]+/. (A base app
+  // can implement other URLs as well, but only when it is loaded by another
+  // base app, or itself, meaning that the first segment of the absolute URL
+  // is the appDirID of the given base app, and thus still of the form
+  // /([os]-)?[0-9a-f]+/.)
+  let isAppDirSegment = getIsAppDirSegment(firstSegment);
   if (loadUpdatedSelf) {
-    // TODO: Insert URL check.
+    if (firstSegment && !isAppDirSegment) {
+      return <MissingPage />;
+    }
     return <VariableApp key="v" appDirID={baseAppDirID} userID={userID}
       fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
       AppWrapper={AppWrapper} appWrapperStyle={[mainStyle, appWrapperStyle]}
@@ -80,22 +92,53 @@ export function render(props) {
   // Else if the tail URL is empty, go to the app browser as the default app.
   if (!firstSegment) {
     this.replaceURL("~/" + appBrowserDirID);
-    return <div></div>;
+    return <div className="loading"></div>;
   }
 
-  // Else expect the URL to be of the form "(/[os])?/<appDirID>" (similar to
-  // the above case but without the "/base" segment in front), and redirect to
-  // the AppLoader component to load the app pointed to be appDirID. And in
-  // this case, also wrap the AppLoader component in the AppFrame component,
-  // which defines a global header for the webpage, and the global page margins,
-  // etc. (both of which the loaded app can potentially hide).
-  return <AppFrame key="f" style={[mainStyle, appFrameStyle]}>
-    <AppLoader key="a" userID={userID}
-      fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
-      AppWrapper={AppWrapper} appWrapperStyle={[mainStyle, appWrapperStyle]}
-      goBackToSafety={goToAppPage}
-    />
-  </AppFrame>;
+  // If the first segment equals "o-" + baseAppDirID, skip the AppLoader, which
+  // would otherwise load this base app itself again, and go directly to the
+  // switch-case statement below.
+  if (firstSegment === "o-" + baseAppDirID) {
+    firstSegment = this.getSegment(1);
+  }
+
+  // Else if the URL is of the form "(/[os])?/<appDirID>" (similar to the above
+  // case but without the "/base" segment in front), redirect to the AppLoader
+  // component to load the app pointed to be appDirID. And in this case, also
+  // wrap the AppLoader component in the AppFrame component, which defines a
+  // global header for the webpage, and the global page margins, etc. (both of
+  // which the loaded app can potentially hide).
+  else if (isAppDirSegment) {
+    return <AppFrame key="f" style={[mainStyle, appFrameStyle]}>
+      <AppLoader key="a" userID={userID}
+        fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
+        AppWrapper={AppWrapper} appWrapperStyle={[mainStyle, appWrapperStyle]}
+        goBackToSafety={goToAppPage}
+      />
+    </AppFrame>;
+  }
+
+  // If the URL is of the form "(o-<baseAppDirID>/)?<page-segment>", where
+  // <page-segment> is one of the page segments below redirect to that page.
+  let content;
+  switch(firstSegment) {
+    case "login":
+      content = <LoginPage />;
+      break;
+    case "signup":
+      content = <SignupPage />;
+      break;
+    case "account":
+      content = <AccountPage />;
+      break;
+    case "about":
+      content = <AboutPage />;
+      break;
+    default:
+      content = <MissingPage />;
+      break;
+  }
+  return <div innerStyle={[mainStyle, appFrameStyle]}>{(content)}</div>;
 }
 
 
