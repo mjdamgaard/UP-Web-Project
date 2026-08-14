@@ -12,7 +12,10 @@ const fetchingJSX = <div className="app-element">
 
 export function initialize({entID}) {
   fetchEntityDefinition(entID, ["Name", "App directory ID"]).then(entDef => {
-    this.setState({entDef: entDef ?? null})
+    this.setState({entDef: entDef ?? null});
+  }).catch(err => {
+    console.error(err);
+    this.setState({entDef: null});
   });
 }
 
@@ -55,7 +58,7 @@ export const actions = {
     let {entID, type} = this.props;
     let {entDef} = this.state;
     if (type === "app") {
-      this.trigger("goToApp", entDef["App directory ID"]);
+      this.trigger("goToApp", [entDef["App directory ID"]]);
     } else {
       this.trigger("goToCatPage", entID);
     }

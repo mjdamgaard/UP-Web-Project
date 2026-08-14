@@ -109,7 +109,7 @@ export function render(props) {
   // global header for the webpage, and the global page margins, etc. (both of
   // which the loaded app can potentially hide).
   else if (isAppDirSegment) {
-    return <AppFrame key="f" style={[mainStyle, appFrameStyle]}>
+    return <AppFrame key="f" style={appFrameStyle}>
       <AppLoader key="a" userID={userID}
         fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
         AppWrapper={AppWrapper} appWrapperStyle={[mainStyle, appWrapperStyle]}
@@ -138,7 +138,7 @@ export function render(props) {
       content = <MissingPage />;
       break;
   }
-  return <div innerStyle={[mainStyle, appFrameStyle]}>{(content)}</div>;
+  return <div innerStyle={appFrameStyle}>{(content)}</div>;
 }
 
 

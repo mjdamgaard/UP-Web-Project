@@ -3,9 +3,6 @@
     "semantic_entities",
     "base_app",
     "file_browser",
-    "entity_browser",
-    "app_browser",
-    "utilities",
-    "tutorials"
+    "app_browser"
   ]
 }

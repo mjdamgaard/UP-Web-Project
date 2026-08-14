@@ -1,6 +1,6 @@
 
 
-.entity-list:not(:has(.entity-element)):after {
+.entity-list:not(:has(*)):after {
   content: "No elements yet";
   font-style: italic;
   opacity: 70%;

@@ -15,7 +15,7 @@ export function render({entID, entDef}) {
     "App directory ID: " + entDef["App directory ID"]
     }</div>
     <div>
-      <h4>Description</h4>
+      <h4>Description:</h4>
       <TextDisplay key="t" untrusted>{(entDef["Description"])}</TextDisplay>
     </div>
   </div>

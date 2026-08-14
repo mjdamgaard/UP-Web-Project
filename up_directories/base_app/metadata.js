@@ -2,6 +2,7 @@ export default {
   "Name": "Base app",
   "Is ready for use": true,
   "Description": <div>
+    <h2>Base app</h2>
     <p>
       A "base app" is the fundamental app that used to load other apps within
       it, depending on the URL. And it also defines a global header menu and

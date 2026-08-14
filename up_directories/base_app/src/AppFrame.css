@@ -122,9 +122,6 @@
     -1px -1px 2px rgb(165, 165, 165);
   text-align: center;
 }
-.account-menu-header .user-icon > * {
-  color: black;
-}
 .account-menu:not(.open) .account-menu-header .user-icon:hover {
   box-shadow: 2px 2px 4px rgb(133, 133, 133),
     -1px -1px 2px rgb(165, 165, 165),

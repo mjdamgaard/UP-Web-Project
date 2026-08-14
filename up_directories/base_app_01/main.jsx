@@ -1,12 +1,5 @@
 
 /* HOISTED IMPORTS */
-import "./src/AppLoader.jsx";
-import "./src/VariableApp.jsx";
-import "./src/MissingPage.jsx";
-import "./src/account_menu/LoginPage.jsx";
-import "./src/account_menu/SignupPage.jsx";
-import "./src/account_menu/AccountPage.jsx";
-import "./src/AboutPage.jsx";
 /* END */
 
 // Here we use a convention where the main.jsx module's only responsibilities
@@ -16,15 +9,16 @@ import "./src/AboutPage.jsx";
 // point implement a command in the directory updater program, namely one that
 // creates or updates this list of hoisted imports automatically.
 
-import * as BaseApp from "./BaseApp.jsx";
-import * as mainStyle from "./style.css";
-import * as AppFrame from "./src/AppFrame.jsx";
-import * as appFrameStyle from "./src/AppFrame.css";
-import * as AppWrapper from "./src/AppWrapper.jsx";
-import * as appWrapperStyle from "./src/AppWrapper.css";
+import * as BaseApp from "../base_app/BaseApp.jsx";
+import * as mainStyle from "../base_app/style.css";
+import * as AppFrame from "../base_app/src/AppFrame.jsx";
+import * as appFrameStyle from "../base_app/src/AppFrame.css";
+import * as AppWrapper from "../base_app/src/AppWrapper.jsx";
+import * as appWrapperStyle from "../base_app/src/AppWrapper.css";
+import * as ownStyle from "./style.css";
 
 const fetchBestVersionRouteTemplate = abs(
-  "./server/apps/apps.sm.js./callSMF/fetchBestSubApp/" +
+  "../base_app/server/apps/apps.sm.js./callSMF/fetchBestSubApp/" +
   "$appDirID/$useOriginal"
 );
 
@@ -34,7 +28,7 @@ export function render(props) {
   return <BaseApp key="0"
     fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
     loadUpdatedSelf={props.isRoot} mainStyle={mainStyle} AppFrame={AppFrame}
-    appFrameStyle={[mainStyle, appFrameStyle]} AppWrapper={AppWrapper}
+    appFrameStyle={[mainStyle, appFrameStyle, ownStyle]} AppWrapper={AppWrapper}
     appWrapperStyle={appWrapperStyle} {...props}
   />;
 }

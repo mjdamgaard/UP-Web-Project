@@ -7,13 +7,14 @@ import {postConstructedEntity, postAllEntitiesFromModule} from
 import placeholders from "~/placeholders.js";
 
 const upNodeID = getNodeID();
-const {
-  this: {directories: {
+const {this: {
+  directories: {
     "base_app": baseAppDirID,
     "app_browser": appBrowserDirID,
     "file_browser": fileBrowserDirID,
-  }},
-} = placeholders;
+    "base_app_01": baseApp01DirID,
+  },
+}} = placeholders;
 
 
 export function _init_1() {
@@ -21,10 +22,7 @@ export function _init_1() {
 
   return Promise.all([
     postAllEntitiesFromModule(abs("~/../semantic_entities/em1.js")),
-    postAllEntitiesFromModule(
-      abs("~/../semantic_entities/em2.js")
-    ),
-    postAllEntitiesFromModule(abs("~/../semantic_entities/em2_old.js")),
+    postAllEntitiesFromModule(abs("~/../semantic_entities/em2.js")),
     postAllEntitiesFromModule(abs("~/../semantic_entities/em3.js")),
   ]);
 }
@@ -38,12 +36,14 @@ export async function _init_2() {
     postConstructedEntity(em3Path, "App", [upNodeID, baseAppDirID]),
     postConstructedEntity(em3Path, "App", [upNodeID, appBrowserDirID]),
     postConstructedEntity(em3Path, "App", [upNodeID, fileBrowserDirID]),
+    postConstructedEntity(em3Path, "App", [upNodeID, baseApp01DirID]),
   ]);
 
   let insertTCRouteSubstr = "./apps/trustClasses.att./_insert/k/";
   await Promise.all([
     post(abs(insertTCRouteSubstr + baseAppDirID),     "trusted"),
     post(abs(insertTCRouteSubstr + appBrowserDirID),  "trusted"),
-    post(abs(insertTCRouteSubstr + fileBrowserDirID), "trusted"),
+    post(abs(insertTCRouteSubstr + fileBrowserDirID), "semi-trusted"),
+    post(abs(insertTCRouteSubstr + baseApp01DirID),   "trusted"),
   ]);
 }

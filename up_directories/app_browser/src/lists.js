@@ -20,6 +20,8 @@ const baseAppPath = abs("~/../semantic_entities/em3.js;call/App") + "/" +
   nodeID + "/" + getHomeDirID(abs("~/../base_app"));
 const fileBrowserPath = abs("~/../semantic_entities/em3.js;call/App") + "/" +
   nodeID + "/" + getHomeDirID(abs("~/../file_browser"));
+const baseApp01Path = abs("~/../semantic_entities/em3.js;call/App") + "/" +
+  nodeID + "/" + getHomeDirID(abs("~/../base_app_01"));
 
 
 
@@ -46,6 +48,15 @@ export async function fetchList(objID, relID) {
 }
 
 
+export function fetchRatedEntities(objID, relID, maxNum = 50) {
+  return fetch(abs(
+    "~/../base_app/server/rates/rates.sm.js/callSMF/fetchRatedEntities/" +
+    objID + "/" + relID + "/0/" + maxNum
+  ));
+}
+
+
+
 export async function fetchHardCodedList(objPath, relPath) {
   let subjIDArr = [];
   if (relPath === membersPath) {
@@ -57,15 +68,14 @@ export async function fetchHardCodedList(objPath, relPath) {
       ]);
     }
   }
+  if (relPath === versionsPath) {
+    if (objPath === baseAppPath) {
+      subjIDArr = await Promise.all([
+        fetchEntityID(baseApp01Path),
+      ]);
+    }
+  }
   // TODO: Continue.
 
   return subjIDArr;
-}
-
-
-export function fetchRatedEntities(objID, relID, maxNum = 50) {
-  return fetch(abs(
-    "~/../base_app/server/rates/rates.sm.js/callSMF/fetchRatedEntities/" +
-    objID + "/" + relID + "/0/" + maxNum
-  ));
 }

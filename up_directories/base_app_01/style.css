@@ -1,0 +1,70 @@
+
+.app-header:is(.app-header) {
+  height: 50px;
+  font-size: 22px;
+  background-color: #be96d8;
+
+  > :first-child {
+    display: inline-block;
+    margin-right: 7px;
+    font-size: 24px;
+    font-family: Garamond, Georgia, 'Times New Roman', Times, serif;
+    font-style: oblique;
+    letter-spacing: -0.05em;
+  }
+  .i-link {
+    color: rgb(174, 241, 73);
+  }
+  .app-header a {
+    padding: 6px 10px;
+    overflow: hidden;
+  }
+}
+
+
+@media (max-width: 600px) {
+  .app-container:is(.app-container) {
+    margin: 0 0;
+    padding: 10px 20px;
+  }
+}
+@media (min-width: 600px) and (max-width: 900px) {
+  .app-container:is(.app-container) {
+    margin: 0px 2%;
+    padding: 20px 50px;
+  }
+}
+@media (min-width: 900px) and (max-width: 1200px) {
+  .app-container:is(.app-container) {
+    margin: 0px 5%;
+    padding: 20px 50px;
+  }
+}
+
+
+.account-menu:is(.account-menu) {
+  right: 7px;
+  top: 2px;
+
+  img.general-user-icon {
+    height: 38px;
+    width: 38px;
+  }
+  .user-icon {
+    display: inline-block;
+    background-color: darkgray;
+    height: 38px;
+    width: 38px;
+    margin: 2px 5px 4px 5px;
+    border-radius: 19px;
+    box-shadow: 2px 2px 4px rgb(133, 133, 133),
+      -1px -1px 2px rgb(165, 165, 165);
+    text-align: center;
+  }
+  .user-name-display {
+    display: inline-block;
+    margin: 6px 2px 2px 6px;
+    color:rgb(67, 255, 177);
+    font-size: 17px;
+  }
+}
