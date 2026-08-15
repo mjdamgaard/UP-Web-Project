@@ -22,6 +22,8 @@ const fileBrowserPath = abs("~/../semantic_entities/em3.js;call/App") + "/" +
   nodeID + "/" + getHomeDirID(abs("~/../file_browser"));
 const baseApp01Path = abs("~/../semantic_entities/em3.js;call/App") + "/" +
   nodeID + "/" + getHomeDirID(abs("~/../base_app_01"));
+const flipGamePath = abs("~/../semantic_entities/em3.js;call/App") + "/" +
+  nodeID + "/" + getHomeDirID(abs("~/../flip_game"));
 
 
 
@@ -62,6 +64,7 @@ export async function fetchHardCodedList(objPath, relPath) {
   if (relPath === membersPath) {
     if (objPath === appsPath) {
       subjIDArr = await Promise.all([
+        fetchEntityID(flipGamePath),
         fetchEntityID(appBrowserPath),
         fetchEntityID(fileBrowserPath),
         fetchEntityID(baseAppPath),
