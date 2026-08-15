@@ -8,7 +8,9 @@ import * as GameSquare from "./GameSquare.jsx";
 // The render() function takes a props object and returns a JSX element, just
 // like the component functions in React.
 
-export function render({rowNum = 3, colNum = 3}) {
+export function render() {
+  let rowNum = 3, colNum = 3;
+
   // Create a random rowNum-by-colNum matrix of GameSquare instances, which
   // each chooses its own initial state at random.
   let gameSquares = createArray(rowNum, rowInd => (
@@ -41,7 +43,7 @@ export function render({rowNum = 3, colNum = 3}) {
 export const actions = {
   // The "new-move" event is triggered when a square is selected by the user.
   "new-move": function([rowInd, colInd]) {
-    let {rowNum = 3, colNum = 3} = this.props;
+    let rowNum = 3, colNum = 3;
 
     // Call the flip() method of the square at (rowInd, colInd), as well as all
     // its neighbors.
