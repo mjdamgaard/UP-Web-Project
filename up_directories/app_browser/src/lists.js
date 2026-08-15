@@ -71,7 +71,18 @@ export async function fetchHardCodedList(objPath, relPath) {
   if (relPath === versionsPath) {
     if (objPath === baseAppPath) {
       subjIDArr = await Promise.all([
+        fetchEntityID(baseAppPath),
         fetchEntityID(baseApp01Path),
+      ]);
+    }
+    else if (objPath === appBrowserPath) {
+      subjIDArr = await Promise.all([
+        fetchEntityID(appBrowserPath),
+      ]);
+    }
+    else if (objPath === fileBrowserPath) {
+      subjIDArr = await Promise.all([
+        fetchEntityID(fileBrowserPath),
       ]);
     }
   }

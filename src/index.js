@@ -140,7 +140,7 @@ if (segments.at(-1) !== "") segments.push("");
 const urlContext = new ScriptContext({
   pathname: pathname,
   segments: segments,
-  state: null,
+  state: window.history.state,
   popstateCallbacks: new Map(),
 });
 window.addEventListener("popstate", event => {

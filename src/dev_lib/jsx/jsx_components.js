@@ -1355,13 +1355,15 @@ class JSXInstance {
   setHistoryState(newInstanceState) {
     newInstanceState = JSON.parse(jsonStringify(newInstanceState));
     let itemKey = this.getItemKey("");
-    let {state, pathname} = this.callerEnv.globals.contexts.urlContext.val;
-    let newState = {...state, [itemKey]: newInstanceState};
+    let {urlContext} = this.callerEnv.globals.contexts;
+    let {state, pathname} = urlContext.val;
+    let newState = {...(state ?? {}), [itemKey]: newInstanceState};
     try {
       window.history.replaceState(newState, "", pathname);
     } catch (_) {
       console.warn(JSXInstance.getCacheExceededWarning("history"));
     }
+    urlContext.val.state = newState;
   }
 
 

@@ -1,6 +1,7 @@
 
 import {post, fetch, fetchPrivate} from 'query';
-import {getRequestingUserID, checkRequestOrigin} from 'request';
+import {getRequestingUserID, checkRequestOrigin, checkAdminPrivileges} from
+  'request';
 import {getConnection} from 'connection';
 import {verifyType} from 'type';
 import {stringify} from 'json';
@@ -44,26 +45,17 @@ export async function submitReport(text) {
 
 
 export async function fetchReports(maxNum = 1) {
-  let userID = getRequestingUserID();
-  let creatorID = await fetch(abs("~./creator"));
-  if (userID !== creatorID) throw "Access denied";
-
+  checkAdminPrivileges();
   return await fetchPrivate(abs("./_reports.att/list/n/" + maxNum));
 }
 
 export async function deleteReports(maxID) {
-  let userID = getRequestingUserID();
-  let creatorID = await fetch(abs("~./creator"));
-  if (userID !== creatorID) throw "Access denied";
-
+  checkAdminPrivileges();
   return await post(abs("./_reports.att/_deleteList/hi/" + maxID));
 }
 
 export async function deleteReport(id) {
-  let userID = getRequestingUserID();
-  let creatorID = await fetch(abs("~./creator"));
-  if (userID !== creatorID) throw "Access denied";
-
+  checkAdminPrivileges();
   return await post(abs("./_reports.att/_deleteEntry/k/" + id));
 }
 
@@ -78,7 +70,7 @@ export async function deleteReport(id) {
 // even the source code of said SMF, meaning that the user group can also hand
 // over the privileges to a successor user group whenever they want). So if we
 // for instance look at the report SMFs above, which currently only allow the
-// creator of the directory to read and delete them, these will first of all
+// admin of the directory to read and delete them, these will first of all
 // likely be edited before the creator signs off as an admin. And in any case,
 // the user group that is handed the admin privileges (in the procedure just
 // describes) will be able to continue to edit them.
