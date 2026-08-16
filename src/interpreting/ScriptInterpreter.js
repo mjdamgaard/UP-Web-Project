@@ -229,6 +229,7 @@ export class ScriptInterpreter {
     globalEnv.declare("MutableArray", mutableArrayClass, true, null);
     globalEnv.declare("MutableObject", mutableObjectClass, true, null);
     globalEnv.declare("MutableMap", mutableMapClass, true, null);
+    globalEnv.declare("ImmutableMap", immutableMapClass, true, null);
 
     let clearPermissions = new DevFunction(
       "clearPermissions", {typeArr: ["function"]},
@@ -2453,7 +2454,8 @@ export class ObjectObject {
 
   get(key, node, env) {
     let memKey = this.getValidatedMemberKey(key, node, env);
-    let ret = memKey && this.members[memKey];
+    let ret = (memKey !== undefined && Object.hasOwn(this.members, memKey)) ?
+      this.members[memKey] : undefined;
     if (ret !== undefined) return ret;
     ret = getPropertyFromObject(this.proto, key, node, env);
     if (ret !== undefined) return ret;
@@ -2463,7 +2465,8 @@ export class ObjectObject {
       if (ret !== undefined) break;
       classObj = classObj.superclass;
     }
-    return ret;
+    if (ret !== undefined) return ret;
+    return this.getFundamentalMethod(key, node, env);
   }
 
   assign(key, assignFun, node, env) {
@@ -2472,7 +2475,7 @@ export class ObjectObject {
       node, env
     );
     let memKey = this.getValidatedMemberKey(key, node, env);
-    if (!memKey) throw new RuntimeError(
+    if (memKey === undefined) throw new RuntimeError(
       "Invalid key for array entry assignment",
       node, env
     );
@@ -2489,8 +2492,12 @@ export class ObjectObject {
       "Assignment to a member of an immutable object",
       node, env
     );
-    key = this.getValidatedMemberKey(key, node, env);
-    this.members[key] = val;
+    let memKey = this.getValidatedMemberKey(key, node, env);
+    if (memKey === undefined) throw new RuntimeError(
+      "Invalid key for array entry assignment",
+      node, env
+    );
+    this.members[memKey] = val;
   }
 
   getValidatedMemberKey(key, node, env) {
@@ -2507,6 +2514,18 @@ export class ObjectObject {
     }
     else {
       return getStringOrSymbol(key, node, env);
+    }
+  }
+
+  getFundamentalMethod(key, node, env) {
+    key = getString(key, node, env);
+    if (this.isArray) {
+      return !arrayMethods.includes(key) ? undefined :
+        env.globals.interpreter.getDevMethod(this, 'array', key);
+    }
+    else {
+      return !objectMethods.includes(key) ? undefined :
+        env.globals.interpreter.getDevMethod(this, 'object', key);
     }
   }
 
@@ -2955,8 +2974,87 @@ export const mutableArrayClass = new ClassObject(
   ), undefined, undefined, true, true, true
 );
 export const mutableMapClass = new ClassObject(
-  "MutableMap", undefined, undefined, undefined, false, false, false, true
+  "MutableMap", new DevFunction(
+    "MutableMap", {typeArr: ["array?"]},
+    ({callerNode, execEnv, interpreter, thisVal}, [entries = []]) => {
+      thisVal.map = new Map();
+      forEachValue(entries, callerNode, execEnv, (entry) => {
+        verifyType(entry, "array", false, callerNode, execEnv);
+        if (entry instanceof ObjectObject) entry = entry.members;
+        let [key, val] = entry;
+        this.map.set(key, val);
+      });
+      thisVal.members = {
+        ...getImmutableMapMethods(callerNode, execEnv, interpreter, thisVal),
+        set: new DevFunction(
+          "Map.set()", {typeArr: ["any", "any?"]}, (_, [key, val]) =>
+            thisVal.map.set(key, val)
+        ),
+        delete: new DevFunction(
+          "Map.delete()", {typeArr: ["any"]}, (_, [key]) =>
+            thisVal.map.delete(key)
+        ),
+        clear: new DevFunction(
+          "Map.delete()", {}, () => thisVal.map.clear()
+        ),
+        turnImmutable: new DevFunction(
+          "Map.turnImmutable()", {}, () => {
+            let {members} = thisVal;
+            delete members.set;
+            delete members.delete;
+            delete members.clear;
+            delete members.turnImmutable;
+          }
+        ),
+      };
+    }
+  ), undefined, undefined, false, false, false, true
 );
+
+export const immutableMapClass = new ClassObject(
+  "ImmutableMap", new DevFunction(
+    "ImmutableMap", {typeArr: ["array?"]},
+    ({callerNode, execEnv, interpreter, thisVal}, [entries = []]) => {
+      thisVal.map = new Map();
+      forEachValue(entries, callerNode, execEnv, (entry) => {
+        verifyType(entry, "array", false, callerNode, execEnv);
+        if (entry instanceof ObjectObject) entry = entry.members;
+        let [key, val] = entry;
+        this.map.set(key, val);
+      });
+      thisVal.members =
+        getImmutableMapMethods(callerNode, execEnv, interpreter, thisVal);
+    }
+  ), undefined, undefined, false, false, false, true
+);
+
+
+const getImmutableMapMethods = (thisVal) => ({
+  get: new DevFunction("Map.get()", {typeArr: ["any"]}, (_, [key]) =>
+    thisVal.map.get(key)
+  ),
+  has: new DevFunction("Map.has()", {typeArr: ["any"]}, (_, [key]) =>
+    thisVal.map.has(key)
+  ),
+  entries: new DevFunction("Map.entries()", {}, () =>
+    thisVal.map.entries()
+  ),
+  keys: new DevFunction("Map.keys()", {}, () =>
+    thisVal.map.keys()
+  ),
+  values: new DevFunction("Map.values()", {}, () =>
+    thisVal.map.values()
+  ),
+  forEach: new DevFunction(
+    "Map.entries()", {typeArr: ["function"]},
+    ({callerNode, execEnv, interpreter}, [fun]) => (
+      thisVal.map.forEach((val, key) => {
+        interpreter.executeFunction(fun, [val, key], callerNode, execEnv);
+      })
+    )
+  ),
+
+});
 
 
 
