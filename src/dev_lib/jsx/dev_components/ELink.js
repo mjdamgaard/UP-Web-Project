@@ -59,7 +59,7 @@ export const render = new DevFunction(
     let isAllowed = getIsAllowed(href, execEnv);
 
     if (!isAllowed) className = !className ? "not-allowed" :
-      getString(className, execEnv) + " not-allowed";
+      getString(className, callerNode, execEnv) + " not-allowed";
     let domNode = validateJSXInstanceAndGetDOMNode(
       thisVal, "ELink", "a", className, callerNode, execEnv
     );

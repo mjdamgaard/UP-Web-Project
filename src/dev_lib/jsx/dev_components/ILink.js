@@ -31,7 +31,7 @@ export const render = new DevFunction(
     let jsxInstance = thisVal.jsxInstance;
     if (href !== undefined) {
       // Call getValidatedPathname() in order to get the absolute href.
-      href = getString(href, execEnv);
+      href = getString(href, callerNode, execEnv);
       href = jsxInstance.getValidatedPathname(href, callerNode, execEnv);
 
       // Add the href attribute.

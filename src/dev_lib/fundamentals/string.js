@@ -6,8 +6,8 @@ import {DevFunction, FunctionObject, getString, ObjectObject} from
 
 export const toString = new DevFunction(
   "toString", {typeArr: ["any?", "any?"]},
-  ({execEnv}, [val, getSourceCode]) => {
-    return getString(val, execEnv, getSourceCode);
+  ({callerNode, execEnv}, [val, getSourceCode]) => {
+    return getString(val, callerNode, execEnv, getSourceCode);
   }
 );
 
@@ -47,9 +47,9 @@ export const split = new DevFunction(
 
 export const join = new DevFunction(
   "join", {typeArr: ["array", "string?"]},
-  ({execEnv}, [arr, separator]) => {
+  ({callerNode, execEnv}, [arr, separator]) => {
     if (arr instanceof ObjectObject) arr = arr.members;
-    return arr.map(val => getString(val, execEnv)).join(separator);
+    return arr.map(val => getString(val, callerNode, execEnv)).join(separator);
   }
 );
 
@@ -80,7 +80,7 @@ export const replace = new DevFunction(
         replacement, [match], callerNode, execEnv
       );
     } else {
-      replacement = getString(replacement, execEnv);
+      replacement = getString(replacement, callerNode, execEnv);
     }
     return str.replace(pattern, replacement);
   }
@@ -94,7 +94,7 @@ export const replaceAll = new DevFunction(
         replacement, [match], callerNode, execEnv
       );
     } else {
-      replacement = getString(replacement, execEnv);
+      replacement = getString(replacement, callerNode, execEnv);
     }
     return str.replaceAll(pattern, replacement);
   }

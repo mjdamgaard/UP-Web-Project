@@ -200,9 +200,11 @@ class JSXInstance {
 
     // Then get the component's render() function.
     let renderFun = (this.componentObject instanceof FunctionObject) ?
-      this.componentObject :
-      getPropertyFromObject(this.componentObject, "render") ??
-        getPropertyFromObject(this.componentObject, "default");
+      this.componentObject : getPropertyFromObject(
+        this.componentObject, "render", callerNode, callerEnv
+      ) ?? getPropertyFromObject(
+        this.componentObject, "default", callerNode, callerEnv
+      );
     if (!renderFun) {
       return this.failComponentAndGetDOMNode(
         new RuntimeError(
@@ -294,7 +296,9 @@ class JSXInstance {
 
     // Get the initialize() function if the component module declares one.
     let state;
-    let initialize = getPropertyFromObject(this.componentObject, "initialize");
+    let initialize = getPropertyFromObject(
+      this.componentObject, "initialize", callerNode, compEnv
+    );
     if (initialize) {
       try {
         state = interpreter.executeFunction(
@@ -385,7 +389,7 @@ class JSXInstance {
     let isArray = jsxElement instanceof Array;
     if (!(jsxElement instanceof JSXElement) && !isArray) {
       if (jsxElement !== undefined) {
-        newDOMNode = new Text(getString(jsxElement, callerEnv));
+        newDOMNode = new Text(getString(jsxElement, callerNode, callerEnv));
       }
       else {
         newDOMNode = new Text();
@@ -520,7 +524,7 @@ class JSXInstance {
           }
 
           case "className" : {
-            let className = val.toString();
+            let className = getString(val, jsxNode, jsxDecEnv);
             if (!CLASS_NAME_REGEX.test(className)) throw new RuntimeError(
               `Invalid class name: "${className}"`,
               jsxNode, jsxDecEnv
@@ -761,11 +765,12 @@ class JSXInstance {
 
 
   static getKeyPropStr(componentObject, props, node, env) {
-    let keyProps = getPropertyFromObject(componentObject, "keyProps");
+    let keyProps =
+      getPropertyFromObject(componentObject, "keyProps", node, env);
     if (!keyProps) return "";
     let keyPropStr = "";
     forEachValue(keyProps, node, env, propName => {
-      propName = getString(propName, env);
+      propName = getString(propName, node, env);
       keyPropStr = keyPropStr + "," + jsonStringify(props[propName]);
     }, true);
     return keyPropStr;
@@ -805,42 +810,45 @@ class JSXInstance {
 
   prepareActionsMethodsAndEvents(node, env) {
     forEachValue(
-      getPropertyFromObject(this.componentObject, "actions"), node, env,
+      getPropertyFromObject(this.componentObject, "actions", node, env),
+      node, env,
       (fun, key) => {
-        key = getStringOrSymbol(key, env) || " ";
+        key = getStringOrSymbol(key, node, env) || " ";
         this.actions[key] = fun;
       },
       true
     );
     forEachValue(
-      getPropertyFromObject(this.componentObject, "methods"), node, env,
+      getPropertyFromObject(this.componentObject, "methods", node, env),
+      node, env,
       keyOrAliasKeyPair => {
         if (typeof keyOrAliasKeyPair === "string") {
           let key = keyOrAliasKeyPair || " ";
           this.methods[key] = this.actions[key];
         }
         else {
-          let alias = getPropertyFromObject(keyOrAliasKeyPair, "0");
-          let key = getPropertyFromObject(keyOrAliasKeyPair, "1");
-          alias = getStringOrSymbol(alias, env) || " ";
-          key = getStringOrSymbol(key, env);
+          let alias = getPropertyFromObject(keyOrAliasKeyPair, "0", node, env);
+          let key = getPropertyFromObject(keyOrAliasKeyPair, "1", node, env);
+          alias = getStringOrSymbol(alias, node, env) || " ";
+          key = getStringOrSymbol(key, node, env);
           this.methods[alias] = this.actions[key];
         }
       },
       true
     );
     forEachValue(
-      getPropertyFromObject(this.componentObject, "events"), node, env,
+      getPropertyFromObject(this.componentObject, "events", node, env),
+      node, env,
       keyOrAliasKeyPair => {
         if (typeof keyOrAliasKeyPair === "string") {
           let key = keyOrAliasKeyPair || " ";
           this.events[key] = this.actions[key];
         }
         else {
-          let alias = getPropertyFromObject(keyOrAliasKeyPair, "0");
-          let key = getPropertyFromObject(keyOrAliasKeyPair, "1");
-          alias = getStringOrSymbol(alias, env) || " ";
-          key = getStringOrSymbol(key, env);
+          let alias = getPropertyFromObject(keyOrAliasKeyPair, "0", node, env);
+          let key = getPropertyFromObject(keyOrAliasKeyPair, "1", node, env);
+          alias = getStringOrSymbol(alias, node, env) || " ";
+          key = getStringOrSymbol(key, node, env);
           this.events[alias] = this.actions[key];
         }
       },
@@ -853,7 +861,7 @@ class JSXInstance {
   // actionKey, and with the optional second argument as the argument of the
   // action function.
   do(actionKey, input, interpreter, node, env) {
-    actionKey = getStringOrSymbol(actionKey, env);
+    actionKey = getStringOrSymbol(actionKey, node, env);
     let eventFun = getPropertyFromPlainObject(this.actions, actionKey);
     if (eventFun) {
       return interpreter.executeFunction(
@@ -881,7 +889,7 @@ class JSXInstance {
     originScope ??= env.getFlag(REQUESTING_COMPONENT_FLAG);
     if (!this.parentInstance) return;
     let events = this.parentInstance.events;
-    eventKey = getStringOrSymbol(eventKey, env);
+    eventKey = getStringOrSymbol(eventKey, node, env);
     let eventFun = getPropertyFromPlainObject(events, eventKey);
     if (eventFun) {
       let childKey = this.key;
@@ -914,7 +922,7 @@ class JSXInstance {
   call(
     instanceKey, methodKey, input, interpreter, node, env
   ) {
-    instanceKey = getStringOrSymbol(instanceKey, env);
+    instanceKey = getStringOrSymbol(instanceKey, node, env);
 
     // First get the targeted child instance.
     let targetInstance = this.childInstances.get(instanceKey);
@@ -925,7 +933,7 @@ class JSXInstance {
 
     // Then find and call its targeted method.
     let methods = targetInstance.methods;
-    methodKey = getStringOrSymbol(methodKey, env);
+    methodKey = getStringOrSymbol(methodKey, node, env);
     let methodFun = getPropertyFromPlainObject(methods, methodKey);
     if (methodFun) {
       let [clientTrust, reqCompPath] = targetInstance.compEnv.getFlags([
@@ -1974,7 +1982,7 @@ export function validateJSXInstanceAndGetDOMNode(
     clearAttributes(domNode);
   }
   if (className) {
-    className = getString(className, execEnv);
+    className = getString(className, callerNode, execEnv);
     if (!CLASS_NAME_REGEX.test(className)) throw new RuntimeError(
       `Invalid class name: "${className}"`,
       callerNode, execEnv

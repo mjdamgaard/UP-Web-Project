@@ -1,6 +1,6 @@
 
 import {
-  DevFunction, ObjectObject, verifyTypes, getString,
+  DevFunction, ObjectObject, verifyTypes, getString, RuntimeError,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
   DOMNodeObject, clearAttributes, validateJSXInstance, CLASS_NAME_REGEX,
@@ -36,7 +36,7 @@ export const render = new DevFunction(
       clearAttributes(domNode, ["type", "checked"]);
     }
     if (className) {
-      className = getString(className, execEnv);
+      className = getString(className, callerNode, execEnv);
       if (!CLASS_NAME_REGEX.test(className)) throw new RuntimeError(
         `Invalid class name: "${className}"`,
         callerNode, execEnv

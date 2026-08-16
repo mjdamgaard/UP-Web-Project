@@ -14,16 +14,14 @@ const soMeAppsPath = abs("~/../semantic_entities/em3.js;get/socialMedia");
 const fundAppsPath = abs("~/../semantic_entities/em3.js;get/fundamentalApps");
 const gamesPath = abs("~/../semantic_entities/em3.js;get/games");
 
-const appBrowserPath = abs("~/../semantic_entities/em3.js;call/App") + "/" +
-  nodeID + "/" + getHomeDirID();
-const baseAppPath = abs("~/../semantic_entities/em3.js;call/App") + "/" +
-  nodeID + "/" + getHomeDirID(abs("~/../base_app"));
-const fileBrowserPath = abs("~/../semantic_entities/em3.js;call/App") + "/" +
-  nodeID + "/" + getHomeDirID(abs("~/../file_browser"));
-const baseApp01Path = abs("~/../semantic_entities/em3.js;call/App") + "/" +
-  nodeID + "/" + getHomeDirID(abs("~/../base_app_01"));
-const flipGamePath = abs("~/../semantic_entities/em3.js;call/App") + "/" +
-  nodeID + "/" + getHomeDirID(abs("~/../flip_game"));
+const appPathSubstr = abs("~/../semantic_entities/em3.js;call/App") + "/" +
+  nodeID + "/";
+const appBrowserPath = appPathSubstr + getHomeDirID();
+const baseAppPath = appPathSubstr + getHomeDirID(abs("~/../base_app"));
+const fileBrowserPath = appPathSubstr + getHomeDirID(abs("~/../file_browser"));
+const baseApp01Path = appPathSubstr + getHomeDirID(abs("~/../base_app_01"));
+const flipGamePath = appPathSubstr + getHomeDirID(abs("~/../flip_game"));
+const flipGame01Path = appPathSubstr + getHomeDirID(abs("~/../flip_game_01"));
 
 
 
@@ -86,6 +84,12 @@ export async function fetchHardCodedList(objPath, relPath) {
     else if (objPath === fileBrowserPath) {
       subjIDArr = await Promise.all([
         fetchEntityID(fileBrowserPath),
+      ]);
+    }
+    else if (objPath === flipGamePath) {
+      subjIDArr = await Promise.all([
+        fetchEntityID(flipGamePath),
+        fetchEntityID(flipGame01Path),
       ]);
     }
   }

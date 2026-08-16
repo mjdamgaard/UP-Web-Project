@@ -23,7 +23,7 @@ export const render = new DevFunction(
       autocomplete, type, onChange, onInput, onKeyDown, onKeyUp,
     } = props;
     if (lockFocus) className = !className ? "lock-focus" :
-      getString(className, execEnv) + " lock-focus";
+      getString(className, callerNode, execEnv) + " lock-focus";
     verifyTypes(
       [size, onChange, onInput, onKeyDown, onKeyUp],
       ["integer positive?", "function?", "function?", "function?", "function?"],
@@ -31,10 +31,10 @@ export const render = new DevFunction(
     );
     let id = idKey === undefined ? undefined : getID(idKey);
     if (placeholder !== undefined) {
-      placeholder = getString(placeholder, execEnv);
+      placeholder = getString(placeholder, callerNode, execEnv);
     }
     if (value !== undefined) {
-      value = getString(value, execEnv);
+      value = getString(value, callerNode, execEnv);
     }
 
     let domNode = validateJSXInstanceAndGetDOMNode(
@@ -42,7 +42,7 @@ export const render = new DevFunction(
       domNode => domNode.setAttribute("value", value ?? ""),
     );
     if (type && type !== "text" && execEnv.getFlag(CLIENT_TRUST_FLAG)) {
-      domNode.setAttribute("type", getString(type, execEnv));
+      domNode.setAttribute("type", getString(type, callerNode, execEnv));
     } else {
       domNode.setAttribute("type", "text");
     }
@@ -134,7 +134,7 @@ export const actions = {
   "setValue": new DevFunction(
     "setValue", {}, function({thisVal, callerNode, execEnv}, [val]) {
       validateJSXInstance(thisVal, "InputText", callerNode, execEnv);
-      val = getString(val, execEnv);
+      val = getString(val, callerNode, execEnv);
       let domNode = thisVal.jsxInstance.domNode;
       domNode.value = val;
     }

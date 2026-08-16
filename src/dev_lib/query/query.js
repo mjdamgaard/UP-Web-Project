@@ -62,7 +62,8 @@ export const queryRoute = new DevFunction(
 
     // Check against querying a locked route without the isPrivate option being
     // true, or without it being a post request.
-    let isPrivate = isPost || getPropertyFromObject(options, "isPrivate");
+    let isPrivate = isPost ||
+      getPropertyFromObject(options, "isPrivate", callerNode, execEnv);
     if (isLocked && !isPrivate) throw new ArgTypeError(
       "Fetching from a locked route without the 'isPrivate' option set",
       callerNode, execEnv
@@ -97,7 +98,8 @@ export const queryRoute = new DevFunction(
 
     // Else query a server at the given UP node.
     else {
-      let isPrivate = isPost || getPropertyFromObject(options, "isPrivate");
+      let isPrivate = isPost ||
+        getPropertyFromObject(options, "isPrivate", callerNode, execEnv);
       result = await interpreter.queryServer(
         isPrivate, route, isPost, postData, options, routeUPNodeID,
         callerNode, execEnv
@@ -136,7 +138,8 @@ export async function _query(
   ancestorModules = [], finalCallbacks = [],
 ) {
   let {liveModules, queryResults, parsedScripts} = execEnv.globals;
-  let isPrivate = isPost || getPropertyFromObject(options, "isPrivate");
+  let isPrivate = isPost ||
+    getPropertyFromObject(options, "isPrivate", callerNode, execEnv);
 
   // First split the input route along each (optional) occurrence of ';',
   // where the first part is then the actual route that is queried, and any
@@ -312,7 +315,7 @@ export async function _query(
           {callerNode, execEnv, interpreter},
           [route, false, undefined, options],
         ).then(
-          text => new CSSModule(route, text, execEnv)
+          text => new CSSModule(route, text, callerNode, execEnv)
         ).catch(
           err => new ErrorWrapper(err)
         );
@@ -396,14 +399,14 @@ export async function _query(
     // You can also get the toString() value, and if the result is a JS or CSS
     // module, this casting results in the source code text.
     else if (/^(string|text|\.txt)$/.test(castingSegment)) {
-      result = getString(result, execEnv, true);
+      result = getString(result, callerNode, execEnv, true);
     }
 
     // You can also cast any string-valued result into a JS or JSX module,
     // or a CSS module.
     else if (/^(exec|\.jsx?|\.mjs)$/.test(castingSegment)) {
       if (result instanceof LiveJSModule) {
-        result = getString(result, execEnv, true);
+        result = getString(result, callerNode, execEnv, true);
       }
       let [parsedScript, lexArr, strPosArr] = parseString(
         result, callerNode, execEnv, scriptParser
@@ -433,7 +436,7 @@ export async function _query(
       }
       let modulePath = route + ";" +
         castingSegmentArr.slice(0, i + 1).join(";");
-      result = new CSSModule(modulePath, result, execEnv);
+      result = new CSSModule(modulePath, result, callerNode, execEnv);
     }
 
     // And then we have the ';get' and ';call' casting segments, which work
@@ -449,7 +452,7 @@ export async function _query(
         ),
         callerNode, execEnv
       );
-      result = result.get(alias);
+      result = result.get(alias, callerNode, execEnv);
       if (result === undefined) throw new LoadError(
         "No export of the name '" + alias + "' found in " + route + (
           (i > 0) ? castingSegmentArr.slice(0, i).join(";") : ""
@@ -572,7 +575,9 @@ export async function _fetch(
 ) {
   // If returnLog is true, also automatically set isPrivate: true, before
   // calling _query().
-  if (options && getPropertyFromObject(options, "returnLog")) {
+  if (
+    options && getPropertyFromObject(options, "returnLog", callerNode, execEnv)
+  ) {
     let modifiedOptions = {};
     forEachValue(options, callerNode, execEnv, (val, key) => {
       modifiedOptions[key] = val;

@@ -23,7 +23,7 @@ export const render = new DevFunction(
       autocomplete, onChange, onInput, onKeyDown, onKeyUp,
     } = props;
     if (lockFocus) className = !className ? "lock-focus" :
-      getString(className, execEnv) + " lock-focus";
+      getString(className, callerNode, execEnv) + " lock-focus";
     verifyTypes(
       [placeholder, onChange, onInput, onKeyDown, onKeyUp],
       ["string?", "function?", "function?", "function?", "function?"],
@@ -31,7 +31,7 @@ export const render = new DevFunction(
     );
     let id = idKey === undefined ? undefined : getID(idKey);
     if (children !== undefined) {
-      children = getString(children, execEnv);
+      children = getString(children, callerNode, execEnv);
     }
 
     let domNode = validateJSXInstanceAndGetDOMNode(
@@ -126,7 +126,7 @@ export const actions = {
   "setValue": new DevFunction(
     "setValue", {}, function({thisVal, callerNode, execEnv}, [val]) {
       validateJSXInstance(thisVal, "TextArea", callerNode, execEnv);
-      val = getString(val, execEnv);
+      val = getString(val, callerNode, execEnv);
       let domNode = thisVal.jsxInstance.domNode;
       domNode.value = val;
     }

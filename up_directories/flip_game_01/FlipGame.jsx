@@ -1,7 +1,6 @@
 
 import {createArray} from 'array';
 import {random} from 'math';
-import * as GameSquare from "./GameSquare.jsx";
 
 
 export function initialize() {
@@ -15,7 +14,7 @@ export function initialize() {
 }
 
 export function render() {
-  let {rowNum, colNum, moveCount} = this.state;
+  let {rowNum, colNum, moveCount, gameState} = this.state;
 
   // Create the rowNum-by-colNum matrix of game squares.
   let gameSquares = gameState.map((row, rowInd) => (

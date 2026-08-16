@@ -89,9 +89,9 @@ export const every = new DevFunction(
 
 export const join = new DevFunction(
   "join", {typeArr: ["array", "string?"]},
-  ({execEnv}, [arr, delimiter]) => {
+  ({callerNode, execEnv}, [arr, delimiter]) => {
     if (arr instanceof ObjectObject) arr = arr.members;
-    return arr.map(val => getString(val, execEnv)).join(delimiter);
+    return arr.map(val => getString(val, callerNode, execEnv)).join(delimiter);
   }
 );
 

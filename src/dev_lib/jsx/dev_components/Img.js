@@ -49,7 +49,7 @@ export const render = new DevFunction(
     let isWhiteListed = getIsWhitelisted(src);
 
     if (!isWhiteListed) className = !className ? "invalid" :
-      getString(className, execEnv) + " invalid";
+      getString(className, callerNode, execEnv) + " invalid";
     let domNode = validateJSXInstanceAndGetDOMNode(
       thisVal, "Img", "img", className, callerNode, execEnv
     );

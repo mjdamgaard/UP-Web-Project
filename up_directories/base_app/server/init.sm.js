@@ -14,6 +14,7 @@ const {this: {
     "file_browser": fileBrowserDirID,
     "base_app_01": baseApp01DirID,
     "flip_game": flipGameDirID,
+    "flip_game_01": flipGame01DirID,
   },
 }} = placeholders;
 
@@ -39,6 +40,7 @@ export async function _init_2() {
     postConstructedEntity(em3Path, "App", [upNodeID, fileBrowserDirID]),
     postConstructedEntity(em3Path, "App", [upNodeID, baseApp01DirID]),
     postConstructedEntity(em3Path, "App", [upNodeID, flipGameDirID]),
+    postConstructedEntity(em3Path, "App", [upNodeID, flipGame01DirID]),
   ]);
 
   let insertTCRouteSubstr = "./apps/trustClasses.att./_insert/k/";
@@ -48,5 +50,6 @@ export async function _init_2() {
     post(abs(insertTCRouteSubstr + fileBrowserDirID), "semi-trusted"),
     post(abs(insertTCRouteSubstr + baseApp01DirID),   "trusted"),
     post(abs(insertTCRouteSubstr + flipGameDirID),   "semi-trusted"),
+    post(abs(insertTCRouteSubstr + flipGame01DirID),   "semi-trusted"),
   ]);
 }

@@ -46,7 +46,7 @@ export async function query(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
     );
-    let text = getString(postData, execEnv);
+    let text = getString(postData, callerNode, execEnv);
     payGas(callerNode, execEnv, {dbWrite: text.length});
     let [[wasCreated] = []] = await dbQueryHandler.queryDBProc(
       "putTextFile", [homeDirID, localPath, text],
@@ -104,7 +104,7 @@ export async function query(
     let liveModule = await interpreter.import(
       `/${ownUPNodeID}/${homeDirID}/${localPath}`, callerNode, execEnv, false
     );
-    let result = getPropertyFromObject(liveModule, alias);
+    let result = getPropertyFromObject(liveModule, alias, callerNode, execEnv);
     if (result instanceof PromiseObject) {
       result = await result.promise;
     }
@@ -146,7 +146,7 @@ export async function query(
     let liveModule = await interpreter.import(
       `/${ownUPNodeID}/${homeDirID}/${localPath}`, callerNode, execEnv, false
     );
-    let fun = getPropertyFromObject(liveModule, alias);
+    let fun = getPropertyFromObject(liveModule, alias, callerNode, execEnv);
     if (!(fun instanceof FunctionObject)) throw new RuntimeError(
       `No function of name '${alias}' is exported from ${route}`,
       callerNode, execEnv
@@ -201,7 +201,7 @@ export async function query(
     let liveModule = await interpreter.import(
       `/${ownUPNodeID}/${homeDirID}/${localPath}`, callerNode, execEnv, true
     );
-    let fun = liveModule.get(alias);
+    let fun = liveModule.get(alias, callerNode, execEnv);
     if (!(fun instanceof FunctionObject)) throw new RuntimeError(
       `No function of name '${alias}' is exported from ${route}`,
       callerNode, execEnv

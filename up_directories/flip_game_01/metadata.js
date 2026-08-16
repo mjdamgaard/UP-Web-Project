@@ -4,6 +4,7 @@ import * as ILink from 'ILink';
 
 import placeholders from "~/placeholders.js";
 const {this: {
+  nodeID,
   directories: {
     "app_browser": appBrowserDirID,
     "flip_game": flipGameDirID,

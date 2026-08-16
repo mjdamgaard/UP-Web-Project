@@ -1,6 +1,5 @@
 
 /* HOISTED IMPORTS */
-import "./GameSquare.jsx";
 /* END */
 
 import * as FlipGame from "./FlipGame.jsx";

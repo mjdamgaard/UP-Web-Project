@@ -451,13 +451,14 @@ export class ScriptInterpreter {
       route, callerNode, callerEnv, ancestorModules, finalCallbacks, isPrivate
     );
     if (assertJSModule && !(ret instanceof LiveJSModule)) throw new LoadError(
-      `No script was found at ${getString(route, callerEnv)}`,
+      `No script was found at ${getString(route, callerNode, callerEnv)}`,
       callerNode, callerEnv
     );
     else if (
       assertModule && !(ret instanceof LiveJSModule || ret instanceof CSSModule)
     ) throw new LoadError(
-      `No script or style sheet was found at ${getString(route, callerEnv)}`,
+      "No script or style sheet was found at " +
+      getString(route, callerNode, callerEnv),
       callerNode, callerEnv
     );
 
@@ -520,7 +521,8 @@ export class ScriptInterpreter {
         imp.namedImportArr.forEach(namedImp => {
           let ident = namedImp.ident ?? "default";
           let alias = namedImp.alias ?? ident;
-          let val = getPropertyFromObject(liveSubmodule, ident);
+          let val =
+            getPropertyFromObject(liveSubmodule, ident, namedImp, curModuleEnv);
           if (val === undefined) throw new LoadError(
             "No export found of the name '" + ident + "' in module " +
             liveSubmodule.modulePath,
@@ -530,7 +532,8 @@ export class ScriptInterpreter {
         });
       }
       else if (impType === "default-import") {
-        let val = getPropertyFromObject(liveSubmodule, "default");
+        let val =
+          getPropertyFromObject(liveSubmodule, "default", imp, curModuleEnv);
         if (val === undefined) throw new LoadError(
           "No default export in module " + liveSubmodule.modulePath,
           imp, curModuleEnv
@@ -613,7 +616,7 @@ export class ScriptInterpreter {
   executeModuleFunction(
     liveModule, funName, inputArr, resolveFun, moduleNode, moduleEnv, flags
   ) {
-    let fun = getPropertyFromObject(liveModule, funName);
+    let fun = getPropertyFromObject(liveModule, funName, moduleNode, moduleEnv);
     if (fun === undefined) throw new RuntimeError(
       `No function called "${funName}" was exported from ` +
       `Module ${liveModule.modulePath}`,
@@ -1144,8 +1147,8 @@ export class ScriptInterpreter {
                 );
                 let newVal;
                 if (typeof prevVal === "string" || typeof val === "string") {
-                  newVal = getString(prevVal, environment) +
-                    getString(val, environment);
+                  newVal = getString(prevVal, expNode, environment) +
+                    getString(val, expNode, environment);
                 }
                 else if (
                   typeof prevVal === "number" && typeof val === "number"
@@ -1352,8 +1355,8 @@ export class ScriptInterpreter {
               break;
             case "+":
               acc = (typeof acc === "string" || typeof nextVal === "string") ?
-                getString(acc, environment) +
-                  getString(nextVal, environment) :
+                getString(acc, expNode, environment) +
+                  getString(nextVal, expNode, environment) :
                 verifyFloat(acc, expNode, environment) +
                   verifyFloat(nextVal, expNode, environment);
               break;
@@ -1462,7 +1465,8 @@ export class ScriptInterpreter {
               throw new AwaitException(whenReady, expNode, environment);
             }
             else throw new RuntimeError(
-              "Awaiting a non-promise value: " + getString(val, environment),
+              "Awaiting a non-promise value: " +
+              getString(val, expNode, environment),
               expNode, environment
             );
           case "delete":
@@ -1599,7 +1603,7 @@ export class ScriptInterpreter {
             let expState = stateArr ? stateArr[ind] ??= {} : undefined;
             ret = ret + getString(
               this.evaluateExpression(contentNode.exp, environment, expState),
-              environment
+              contentNode.exp, environment
             );
           }
         });
@@ -1672,7 +1676,8 @@ export class ScriptInterpreter {
       }
       case "symbol-call": {
         let expVal = (expNode.exp === undefined) ? undefined : getString(
-          this.evaluateExpression(expNode.exp, environment, state), environment
+          this.evaluateExpression(expNode.exp, environment, state),
+          expNode.exp, environment
         );
         ret = Symbol(expVal);
         break;
@@ -1702,7 +1707,7 @@ export class ScriptInterpreter {
             console.log(...expValArr);
           }
           log.entries.push(
-            expValArr.map(val => getString(val, environment))
+            expValArr.map(val => getString(val, expNode, environment))
           );
         }
         // We experiment here with another API for console.trace(), which is:
@@ -1717,7 +1722,7 @@ export class ScriptInterpreter {
             maxNum;
           let stringify = expValArr[0];
           let trace = environment.getCallTrace(maxNum, stringify);
-          let varReadout = environment.getVariableReadout();
+          let varReadout = environment.getVariableReadout(expNode);
           if (!this.isServerSide && !isExiting) {
             console.log("Trace:");
             trace.forEach(str => console.log(str));
@@ -1841,13 +1846,13 @@ export class ScriptInterpreter {
       if (valProto !== OBJECT_PROTOTYPE && !(val instanceof ObjectObject)) {
         throw new RuntimeError(
           "Destructuring an object with a non-object value: " +
-          getString(val, environment),
+          getString(val, expNode, environment),
           expNode, environment
         );
       }
       expNode.children.forEach(paramMemExp => {
         let key = paramMemExp.key;
-        let propVal = getPropertyFromObject(val, key);
+        let propVal = getPropertyFromObject(val, key, paramMemExp, environment);
         this.assignToParameter(
           paramMemExp, propVal, environment, isDeclaration, isConst
         );
@@ -2078,7 +2083,7 @@ export class ScriptInterpreter {
       }
     }
     else if (objVal instanceof ObjectObject) {
-      val = objVal.get(key);
+      val = objVal.get(key, accessor, environment);
       if (val === undefined && objectMethods.includes(key)) {
         val = this.getDevMethod(objVal, 'object', key);
       }
@@ -2104,7 +2109,7 @@ export class ScriptInterpreter {
     }
     else throw new RuntimeError(
       "Trying to access a member of a non-object: " +
-      getString(objVal, environment),
+      getString(objVal, accessor, environment),
       accessor, environment
     );
 
@@ -2387,17 +2392,17 @@ export class Environment {
     }
   }
 
-  getVariableReadout() {
+  getVariableReadout(node) {
     if (this.getFlag(NO_TRACE_FLAG)) return "";
     let scopeReadout = "<" + this.scopeType + " scope>:\n" +
       [...this.variables.entries()].map(([ident, [val]]) => {
         val = (val === UNDEFINED) ? "undefined" :
           typeof val === "string" ? JSON.stringify(val) :
-            getString(val, this)
+            getString(val, node, this)
         return ident + " = " + val;
     }).join("\n");
     return scopeReadout + (
-      this.parent ? "\n" + this.parent.getVariableReadout() : ""
+      this.parent ? "\n" + this.parent.getVariableReadout(node) : ""
     );
   }
 
@@ -2416,7 +2421,7 @@ function getCallString(callNode, callEnv, execEnv, stringify) {
     inputArr.map(val => (
       (val === undefined) ? "undefined" :
         (typeof val === "string") ? JSON.stringify(val) :
-          stringify ? jsonStringify(val) : getString(val, callEnv)
+          stringify ? jsonStringify(val) : getString(val, callNode, callEnv)
     )).join(", ") +
   ")";
 }
@@ -2447,8 +2452,18 @@ export class ObjectObject {
   }
 
   get(key, node, env) {
-    key = this.validateKey(key, node, env);
-    return this.#get(key)
+    let memKey = this.getValidatedMemberKey(key, node, env);
+    let ret = memKey && this.members[memKey];
+    if (ret !== undefined) return ret;
+    ret = getPropertyFromObject(this.proto, key, node, env);
+    if (ret !== undefined) return ret;
+    let classObj = this.class;
+    while (classObj !== undefined) {
+      ret = getPropertyFromObject(classObj.instanceProto, key, node, env);
+      if (ret !== undefined) break;
+      classObj = classObj.superclass;
+    }
+    return ret;
   }
 
   assign(key, assignFun, node, env) {
@@ -2456,11 +2471,16 @@ export class ObjectObject {
       "Assignment to a member of an immutable object",
       node, env
     );
-    key = this.validateKey(key, node, env);
-    let prevVal = this.#get(key, node, env);
+    let memKey = this.getValidatedMemberKey(key, node, env);
+    if (!memKey) throw new RuntimeError(
+      "Invalid key for array entry assignment",
+      node, env
+    );
+
+    let prevVal = this.get(key, node, env);
 
     let [newVal, ret] = assignFun(prevVal);
-    this.#set(key, newVal, node, env)
+    this.members[memKey] = newVal;
     return ret;
   }
 
@@ -2469,68 +2489,33 @@ export class ObjectObject {
       "Assignment to a member of an immutable object",
       node, env
     );
-    key = this.validateKey(key, node, env);
-    return this.#set(key, val, node, env);
+    key = this.getValidatedMemberKey(key, node, env);
+    this.members[key] = val;
   }
 
-  #get(key) {
-    let ret = this.isMap ? this.members.get(key) :
-      Object.hasOwn(this.members, key) ? this.members[key] : undefined;
-    if (ret === undefined) {
-      ret = getPropertyFromObject(this.proto, key)
-    }
-    if (ret === undefined) {
-      let classObj = this.class;
-      while (classObj !== undefined) {
-        ret = getPropertyFromObject(classObj.instanceProto, key);
-        if (ret !== undefined) break;
-        classObj = classObj.superclass;
-      }
-    }
-    return ret;
-  }
-  #set(key, val) {
-    if (this.isMap) this.members.set(key, val);
-    else this.members[key] = val;
-  }
-
-  validateKey(key, node, env) {
+  getValidatedMemberKey(key, node, env) {
     if (this.isArray) {
-      if (key !== "length") {
-        key = parseInt(key);
-        if (
-          key != parseInt(key) ||
-          Number.isNaN(key) || key < 0 || key > MAX_ARRAY_INDEX
-        ) {
-          throw new RuntimeError(
-            "Invalid key for array entry assignment",
-            node, env
-          );
-        }
+      if (key === "length") {
+        return key;
       }
-    }
-    else if (this.isMap) {
-      if (key === undefined) throw new RuntimeError(
-        "Invalid key for map entry assignment",
-        node, env
-      );
+      else if (
+        key == parseInt(key) &&
+        !Number.isNaN(key) && key >= 0 && key <= MAX_ARRAY_INDEX
+      ) {
+        return key;
+      }
     }
     else {
-      key = getStringOrSymbol(key, env);
-      if (!key) throw new RuntimeError(
-        "Invalid key for object property assignment",
-        node, env
-      );
+      return getStringOrSymbol(key, node, env);
     }
-    return key;
   }
 
   stringify() {
-    return (this.isMap) ? `"Map()"` : jsonStringify(this.members);
+    return jsonStringify(this.members);
   }
-  toString(env) {
+  toString(node, env) {
     let {interpreter} = env.globals;
-    let toStringMethod = this.#get("toString");
+    let toStringMethod = this.get("toString", null, env);
     if (toStringMethod instanceof FunctionObject) {
       let ret, isInvalid; 
       try {
@@ -2540,7 +2525,7 @@ export class ObjectObject {
           this instanceof ObjectObject &&
           this.class instanceof ExceptionClassObject
         ) {
-          ret = this.#get("message");
+          ret = this.get("message", null, env);
         }
         else {
           ret = interpreter.executeFunction(
@@ -2556,7 +2541,7 @@ export class ObjectObject {
       if (isInvalid) {
         ret = "[" + this.className + ".toString() error]";
       }
-      return getString(ret, env);
+      return getString(ret, node, env);
     }
     else {
       return `[object ${this.className}]`;
@@ -2649,9 +2634,9 @@ export class ClassObject extends ObjectObject {
 
 
 
-export function getPropertyFromObject(obj, key) {
+export function getPropertyFromObject(obj, key, node, env) {
   if (obj instanceof ObjectObject) {
-    return obj.get(key);
+    return obj.get(key, node, env);
   }
   else if (obj instanceof Object) {
     return getPropertyFromPlainObject(obj, key);
@@ -2683,7 +2668,7 @@ export function setPropertyOfObject(obj, key, val, node, env) {
 
 
 
-export function getString(val, env, getSourceCode = false) {
+export function getString(val, node, env, getSourceCode = false) {
   if (val === undefined) {
     return "undefined";
   }
@@ -2691,14 +2676,14 @@ export function getString(val, env, getSourceCode = false) {
     return "null";
   }
   else if (val instanceof ObjectObject) {
-    return val.toString(env, getSourceCode);
+    return val.toString(node, env, getSourceCode);
   }
   else if (val instanceof Array) {
     return "[" +
       val.map(entry => (
         typeof entry === "string" ?
           JSON.stringify(entry) :
-          getString(entry, env)
+          getString(entry, node, env)
       )).join(", ") +
     "]";
   }
@@ -2708,7 +2693,7 @@ export function getString(val, env, getSourceCode = false) {
         ([key, prop]) => key + ": " + (
           typeof prop === "string" ?
             JSON.stringify(prop) :
-            getString(prop, env)
+            getString(prop, node, env)
         )
       ).join(", ") +
     "}";
@@ -2721,8 +2706,8 @@ export function getString(val, env, getSourceCode = false) {
   );
 }
 
-export function getStringOrSymbol(val, env) {
-  return (typeof val === "symbol") ? val : getString(val, env);
+export function getStringOrSymbol(val, node, env) {
+  return (typeof val === "symbol") ? val : getString(val, node, env);
 }
 
 
@@ -2768,8 +2753,11 @@ export function jsonParse(val, node, env) {
 
 export function forEachValue(value, node, env, callback, ignore = false) {
   if (value instanceof ObjectObject) {
-    if (value.isArray || value.isMap) {
+    if (value.isArray) {
       value.members.forEach(callback);
+    }
+    if (value.isMap) {
+      value.map.forEach(callback);
     }
     else {
       Object.entries(value.members).forEach(([key, val]) => callback(val, key));
@@ -2784,7 +2772,7 @@ export function forEachValue(value, node, env, callback, ignore = false) {
       Object.entries(value).forEach(([key, val]) => callback(val, key));
     }
     else if (!ignore) throw new RuntimeError(
-      "Iterating over a non-iterable value: " + getString(value, env),
+      "Iterating over a non-iterable value: " + getString(value, node, env),
       node, env
     );
   }
@@ -2796,7 +2784,7 @@ export function mapValues(value, node, env, callback) {
       return value.members.map((val, ind) => callback(val, ind, ind));
     }
     else if (value.isMap) {
-      return [...value.members.entries()].map(
+      return [...value.map.entries()].map(
         ([key, val], ind) => callback(val, key, ind)
       );
     }
@@ -2817,7 +2805,7 @@ export function mapValues(value, node, env, callback) {
       );
     }
     else throw new RuntimeError(
-      "Iterating over a non-iterable value: " + getString(value, env),
+      "Iterating over a non-iterable value: " + getString(value, node, env),
       node, env
     );
   }
@@ -2967,7 +2955,7 @@ export const mutableArrayClass = new ClassObject(
   ), undefined, undefined, true, true, true
 );
 export const mutableMapClass = new ClassObject(
-  "MutableMap", undefined, undefined, undefined, false, true, false, true
+  "MutableMap", undefined, undefined, undefined, false, false, false, true
 );
 
 
@@ -2994,8 +2982,8 @@ export function verifyType(val, type, isOptional, node, env) {
       break;
     }
     if (!isValid) throw new ArgTypeError(
-      'Value did not match any of the types in "' + getString(type, env) +
-      '": ' + getString(val, env),
+      'Value did not match any of the types in "' + getString(type, node, env) +
+      '": ' + getString(val, node, env),
       node, env
     );
   }
@@ -3007,7 +2995,7 @@ function verifyTypeHelper(val, type, isOptional, node, env) {
       return;
     }
     else throw new ArgTypeError(
-      "Value is undefined, expected " + getString(type, env),
+      "Value is undefined, expected " + getString(type, node, env),
       node, env
     );
   }
@@ -3015,7 +3003,7 @@ function verifyTypeHelper(val, type, isOptional, node, env) {
   switch (type) {
     case "string":
       if (typeOfVal !== "string") throw new ArgTypeError(
-        `Value is not a string: ${getString(val, env)}`,
+        `Value is not a string: ${getString(val, node, env)}`,
         node, env
       );
       break;
@@ -3024,21 +3012,21 @@ function verifyTypeHelper(val, type, isOptional, node, env) {
     case "hex":
       if (typeOfVal !== "string" || !/^[0-9a-f]+$/.test(val)) {
         throw new ArgTypeError(
-          `Value is not a hexadecimal string: ${getString(val, env)}`,
+          `Value is not a hexadecimal string: ${getString(val, node, env)}`,
           node, env
         );
       }
       break;
     case "number":
       if (typeOfVal !== "number") throw new ArgTypeError(
-        `Value is not a number: ${getString(val, env)}`,
+        `Value is not a number: ${getString(val, node, env)}`,
         node, env
       );
       break;
     case "integer":
       if (typeOfVal !== "number" || parseInt(val) !== val) {
         throw new ArgTypeError(
-          `Value is not an integer: ${getString(val, env)}`,
+          `Value is not an integer: ${getString(val, node, env)}`,
           node, env
         );
       }
@@ -3047,7 +3035,7 @@ function verifyTypeHelper(val, type, isOptional, node, env) {
     case "integer nonnegative":
       if (typeOfVal !== "number" || parseInt(val) !== val || val < 0) {
         throw new ArgTypeError(
-          `Value is not an non-negative integer: ${getString(val, env)}`,
+          `Value is not an non-negative integer: ${getString(val, node, env)}`,
           node, env
         );
       }
@@ -3055,27 +3043,27 @@ function verifyTypeHelper(val, type, isOptional, node, env) {
     case "integer positive":
       if (typeOfVal !== "number" || parseInt(val) !== val || val <= 0) {
         throw new ArgTypeError(
-          `Value is not a positive integer: ${getString(val, env)}`,
+          `Value is not a positive integer: ${getString(val, node, env)}`,
           node, env
         );
       }
       break;
     case "boolean":
       if (typeOfVal !== "boolean") throw new ArgTypeError(
-        `Value is not a boolean: ${getString(val, env)}`,
+        `Value is not a boolean: ${getString(val, node, env)}`,
         node, env
       );
       break;
     case "symbol":
       if (typeOfVal !== "symbol") throw new ArgTypeError(
-        `Value is not a Symbol: ${getString(val, env)}`,
+        `Value is not a Symbol: ${getString(val, node, env)}`,
         node, env
       );
       break;
     case "object key":
       if (!val || (typeOfVal !== "string" && typeOfVal !== "symbol")) {
         throw new ArgTypeError(
-          `Value is not a valid object key: ${getString(val, env)}`,
+          `Value is not a valid object key: ${getString(val, node, env)}`,
           node, env
         );
       }
@@ -3086,7 +3074,7 @@ function verifyTypeHelper(val, type, isOptional, node, env) {
         !(val instanceof ObjectObject)
       ) {
         throw new ArgTypeError(
-          `Value is not an object: ${getString(val, env)}`,
+          `Value is not an object: ${getString(val, node, env)}`,
           node, env
         );
       }
@@ -3097,7 +3085,7 @@ function verifyTypeHelper(val, type, isOptional, node, env) {
         (!(val instanceof ObjectObject) || !val.isArray)
       ) {
         throw new ArgTypeError(
-          `Value is not an array: ${getString(val, env)}`,
+          `Value is not an array: ${getString(val, node, env)}`,
           node, env
         );
       }
@@ -3105,7 +3093,7 @@ function verifyTypeHelper(val, type, isOptional, node, env) {
     case "function":
       if (!(val instanceof FunctionObject)) {
         throw new ArgTypeError(
-          `Value is not a function: ${getString(val, env)}`,
+          `Value is not a function: ${getString(val, node, env)}`,
           node, env
         );
       }
@@ -3113,7 +3101,7 @@ function verifyTypeHelper(val, type, isOptional, node, env) {
     case "module":
       if (!(val instanceof LiveJSModule)) {
         throw new ArgTypeError(
-          `Value is not a live module object: ${getString(val, env)}`,
+          `Value is not a live module object: ${getString(val, node, env)}`,
           node, env
         );
       }
@@ -3121,7 +3109,7 @@ function verifyTypeHelper(val, type, isOptional, node, env) {
     case "promise":
         if (!(val instanceof PromiseObject)) {
           throw new ArgTypeError(
-            `Value is not a promise object: ${getString(val, env)}`,
+            `Value is not a promise object: ${getString(val, node, env)}`,
             node, env
           );
         }
@@ -3129,7 +3117,7 @@ function verifyTypeHelper(val, type, isOptional, node, env) {
     case "class":
       if (!(val instanceof ClassObject)) {
         throw new ArgTypeError(
-          `Value is not a class: ${getString(val, env)}`,
+          `Value is not a class: ${getString(val, node, env)}`,
           node, env
         );
       }
@@ -3230,26 +3218,26 @@ export class LiveJSModule extends ObjectObject {
     });
   }
 
-  toString(env, getSourceCode) {
+  toString(node, env, getSourceCode) {
     return getSourceCode ? (
       this.script ??
       "***Casting to the source code of a dev lib not implemented yet***"
-    ) : super.toString(env);
+    ) : super.toString(node, env);
   }
 }
 
 // TODO: Include CSSModules in the liveModules cache.
 export class CSSModule extends ObjectObject {
-  constructor(modulePath, styleSheet, env) {
+  constructor(modulePath, styleSheet, node, env) {
     super("CSSModule");
     this.modulePath = modulePath;
-    this.styleSheet = getString(styleSheet, env);
+    this.styleSheet = getString(styleSheet, node, env);
     this.members["styleSheet"] = styleSheet;
     this.cssStyleSheet = undefined;
   }
 
-  toString(env, getSourceCode) {
-    return getSourceCode ? this.styleSheet : super.toString(env);
+  toString(node, env, getSourceCode) {
+    return getSourceCode ? this.styleSheet : super.toString(node, env);
   }
 
   getCSSStyleSheet(node, env) {
@@ -3268,7 +3256,7 @@ export class CSSModule extends ObjectObject {
 }
 
 function getValidatedStyleSheet(styleSheet, node, env) {
-    styleSheet = getString(styleSheet, env);
+    styleSheet = getString(styleSheet, node, env);
     let [styleSheetNode] = parseString(styleSheet, node, env, cssParser);
     let validatedStyleSheet =
       cssTransformer.transformParsedStyleSheet(styleSheetNode);
@@ -3298,12 +3286,12 @@ export class JSXElement extends ObjectObject {
       if (propNode.isSpread) {
         forEachValue(expVal, propNode.exp, decEnv, (val, key) => {
           if (!isComponent || key !== "key") this.props[key] = val;
-          else this.key = getString(val, decEnv);
+          else this.key = getString(val, node, decEnv);
         });
       } else {
         let key = propNode.ident;
         if (!isComponent || key !== "key") this.props[key] = expVal;
-        else this.key = getString(expVal, decEnv);
+        else this.key = getString(expVal, node, decEnv);
       }
     });
     if (children) {
@@ -3575,9 +3563,9 @@ export const exceptionClass = new ClassObject(
   ),
   {
     toString: new DevFunction(
-      "toString", {}, ({thisVal}) => {
+      "toString", {}, ({callerNode, execEnv, thisVal}) => {
         if (thisVal instanceof ObjectObject) {
-          return thisVal.get("message");
+          return thisVal.get("message", callerNode, execEnv);
         }
       }
     )
@@ -3624,7 +3612,7 @@ export class Exception {
     this.environment = environment;
   }
   toString() {
-    return getString(this.val, this.environment);
+    return getString(this.val, this.node, this.environment);
   }
 }
 
@@ -3693,21 +3681,21 @@ export function getExtendedErrorMsg(err) {
   }
 
   // Get the error message.
-  let env = err.environment;
-  let msg = getString(err.val, env);
+  let {node, environment: env} = err;
+  let msg = getString(err.val, node, env);
 
   // If error is thrown from the global environment, also return the
   // toString()'ed error as is.
   let {
     modulePath, lexArr, strPosArr, script
   } = env.getModuleEnv() ?? {};
-  if (!lexArr) {
+  if (!lexArr || !lexArr[0]) {
     return msg;
   }
 
   // Else construct an error message containing the line and column number, as
   // well as a code snippet around where the error occurred.
-  let {pos, nextPos} = err.node;
+  let {pos, nextPos} = node ?? {pos: 0, nextPos: lexArr.length};
   let strPos = strPosArr[pos];
   let finStrPos = strPosArr[nextPos - 1] + lexArr[nextPos - 1].length;
   let [ln, col] = getLnAndCol(script.substring(0, strPos));
@@ -3719,7 +3707,7 @@ export function getExtendedErrorMsg(err) {
   let traceAndLogAppendix = "";
   if (interpreter.isServerSide) {
     let trace = env.getFlag(NO_TRACE_FLAG) ? [] : env.getCallTrace();
-    let varReadout = env.getVariableReadout();
+    let varReadout = env.getVariableReadout(node);
     traceAndLogAppendix = "\n\nTrace when error occurred:\n" +
       trace.join(",\n\n") + "\n\nAnd Declared variables:\n" + varReadout +
       "\n\nAnd log:\n" +
@@ -3751,7 +3739,7 @@ export function getNodeString(node, env, appendModuleLocation = false) {
 export function logExtendedErrorAndTrace(err) {
   let msg = getExtendedErrorMsg(err);
   let trace = err.environment.getCallTrace();
-  let varReadout = err.environment.getVariableReadout();
+  let varReadout = err.environment.getVariableReadout(err.node);
   console.error(msg);
   console.error(
     "Trace when the previous error occurred:\n" + trace.join(",\n\n")
@@ -3870,18 +3858,25 @@ function substituteNodeAndDirIDs(
   let shouldSubstituteNode = nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment);
   let shouldSubstituteDir = dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment);
   if (shouldSubstituteNode || shouldSubstituteDir) {
-    let placeholders = getPropertyFromObject(placeholdersModule, "default");
+    let placeholders = getPropertyFromObject(
+      placeholdersModule, "default", callerNode, callerEnv
+    );
     let domain = shouldSubstituteNode ? nodeIDSegment : "this";
-    let domainPlaceholders = getPropertyFromObject(placeholders, domain);
+    let domainPlaceholders =
+      getPropertyFromObject(placeholders, domain, callerNode, callerEnv);
     if (shouldSubstituteNode) {
-      nodeID = getPropertyFromObject(domainPlaceholders, "nodeID");
+      nodeID = getPropertyFromObject(
+        domainPlaceholders, "nodeID", callerNode, callerEnv
+      );
       // If nodeIDs[nodeIDSegment] is nullish, just use nodeIdSegment as it was,
       // expecting an error to be thrown by query().
       nodeID ??= nodeIDSegment;
     }
     if (shouldSubstituteDir) {
-      let dirs = getPropertyFromObject(domainPlaceholders, "directories");
-      dirID = getPropertyFromObject(dirs, dirIDSegment);
+      let dirs = getPropertyFromObject(
+        domainPlaceholders, "directories", callerNode, callerEnv
+      );
+      dirID = getPropertyFromObject(dirs, dirIDSegment, callerNode, callerEnv);
       // If dirIDs[dirIDSegment] is nullish, just use dirIDSegment as it was,
       // expecting an error to be thrown by query().
       dirID ??= dirIDSegment;
