@@ -545,7 +545,7 @@ export const scriptGrammar = {
   },
   "return-statement": {
     rules: [
-      ["/return/", "expression", "/;/?"],
+      ["/return/", "expression!1", "/;/?"],
       ["/return/", "/;/?"],
     ],
     process: (children, ruleInd) => ({

@@ -1493,12 +1493,15 @@ export class JSXInstanceInterface extends ObjectObject {
   doAfterRender = new DevFunction(
     "doAfterRender", {},
     ({callerNode, execEnv, interpreter}, [actionKey, input]) => {
-      setTimeout(
-        () => this.jsxInstance.do(
-          actionKey, input, interpreter, callerNode, execEnv
-        ),
-        0
-      );
+      setTimeout(() => {
+        try {
+          this.jsxInstance.do(
+            actionKey, input, interpreter, callerNode, execEnv
+          );
+        } catch (err) {
+          interpreter.handleUncaughtException(err, execEnv);
+        }
+      }, 0);
     }
   );
 

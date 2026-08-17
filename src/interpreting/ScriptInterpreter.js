@@ -19,7 +19,7 @@ export const MAP_PROTOTYPE = Object.getPrototypeOf(new Map());
 const objectMethods = ["toString"];
 const arrayMethods = [
   "toString", "at", "slice", "map", "reduce", "forEach", "some", "every",
-  "join", "concat", "includes", "indexOf", "filter",
+  "join", "concat", "includes", "indexOf", "filter", "push",
   // TODO: Continue when implemented.
 ];
 const stringMethods = [
@@ -29,7 +29,7 @@ const stringMethods = [
 const numberMethods = ["toString", "toPrecision"];
 
 
-const MAX_ARRAY_INDEX = Number.MAX_SAFE_INTEGER;
+export const MAX_ARRAY_INDEX = Number.MAX_SAFE_INTEGER;
 const MINIMAL_TIME_GAS = 10;
 const TRACE_LENGTH_CS = 15;
 const TRACE_LENGTH_SS = 40;
@@ -2214,9 +2214,14 @@ export class Environment {
   }
 
   assign(ident, assignFun, node, nodeEnvironment = this) {
-    let [prevVal, isConst] = this.variables.get(ident) ?? [];
+    let variable = this.variables.get(ident);
+    if (!variable) throw new RuntimeError(
+      "Assignment to an undeclared variable: '" + ident + "'",
+      node, this
+    );
+    let [prevVal, isConst] = variable;
     if (isConst) throw new RuntimeError(
-      "Reassignment of constant variable or function '" + ident + "'",
+      "Reassignment of constant variable: '" + ident + "'",
       node, this
     );
     if (prevVal !== undefined) {
@@ -2475,10 +2480,17 @@ export class ObjectObject {
       "Invalid key for array entry assignment",
       node, env
     );
-
     let prevVal = this.get(key, node, env);
-
     let [newVal, ret] = assignFun(prevVal);
+    if (this.isArray && memKey === "length" && (
+      newVal != parseInt(newVal) || Number.isNaN(newVal) ||
+      newVal < 0 || newVal > MAX_ARRAY_INDEX
+    )) {
+      throw new RuntimeError(
+        "Invalid array length assignment",
+        node, env
+      );
+    }
     this.members[memKey] = newVal;
     return ret;
   }
@@ -2493,6 +2505,15 @@ export class ObjectObject {
       "Invalid key for array entry assignment",
       node, env
     );
+    if (this.isArray && memKey === "length" && (
+      val != parseInt(val) || Number.isNaN(val) ||
+      val < 0 || val > MAX_ARRAY_INDEX
+    )) {
+      throw new RuntimeError(
+        "Invalid array length assignment",
+        node, env
+      );
+    }
     this.members[memKey] = val;
   }
 
@@ -2502,8 +2523,8 @@ export class ObjectObject {
         return key;
       }
       else if (
-        key == parseInt(key) &&
-        !Number.isNaN(key) && key >= 0 && key <= MAX_ARRAY_INDEX
+        key == parseInt(key) && !Number.isNaN(key) &&
+        key >= 0 && key <= MAX_ARRAY_INDEX
       ) {
         return key;
       }
@@ -2553,7 +2574,7 @@ export class ObjectObject {
       if (!isInvalid && typeof ret === "object" && ret !== null) {
         isInvalid = true
       }
-      if (isInvalid) {
+      if (isInvalid) {console.log("fail");debugger;
         ret = "[" + this.className + ".toString() error]";
       }
       return getString(ret, node, env);
@@ -2968,12 +2989,10 @@ export const mutableObjectClass = new ClassObject(
 export const mutableArrayClass = new ClassObject(
   "MutableArray", new DevFunction(
     "MutableArray", {typeArr: ["array?"]},
-    ({callerNode, execEnv, thisVal}, [arr]) => {
-      if (arr) {
-        forEachValue(arr, callerNode, execEnv, (val, ind) => {
-          setPropertyOfObject(thisVal, ind, val, callerNode, execEnv);
-        });
-      }
+    ({callerNode, execEnv, thisVal}, [arr = []]) => {
+      forEachValue(arr, callerNode, execEnv, (val, ind) => {
+        setPropertyOfObject(thisVal, ind, val, callerNode, execEnv);
+      });
     }
   ), undefined, undefined, true, true, true
 );

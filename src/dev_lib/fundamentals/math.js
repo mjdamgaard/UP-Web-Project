@@ -16,6 +16,11 @@ export const floor = new DevFunction(
     return Math.floor(x);
   }
 );
+export const abs = new DevFunction(
+  "abs", {typeArr: ["number"]}, ({}, [x]) => {
+    return Math.abs(x);
+  }
+);
 
 export const random = new DevFunction(
   "random", {}, () => {

@@ -1,6 +1,7 @@
 
 import {
   DevFunction, forEachValue, ObjectObject, getString, mapValues, verifyType,
+  MAX_ARRAY_INDEX, RuntimeError,
 } from "../../interpreting/ScriptInterpreter.js";
 export {toString} from "./string.js";
 
@@ -135,6 +136,24 @@ export const filter = new DevFunction(
       }
     });
     return ret;
+  }
+);
+
+
+export const push = new DevFunction(
+  "push", {typeArr: ["array", "any?"]},
+  ({callerNode, execEnv}, [arr, val]) => {
+    if (arr instanceof ObjectObject && arr.isMutable) {
+      if (arr.members.length - 1 >= MAX_ARRAY_INDEX) throw new RuntimeError(
+        "Array.push(): Array length exceeded the maximum value",
+        callerNode, execEnv
+      );
+      arr.members.push(val);
+    }
+    else throw new RuntimeError(
+      "Trying to push value to an immutable array",
+      callerNode, execEnv
+    );
   }
 );
 
