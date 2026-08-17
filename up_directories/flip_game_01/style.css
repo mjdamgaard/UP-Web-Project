@@ -7,15 +7,20 @@
 
 .game {
   margin-top: 10px;
-  display: grid;
-  grid-template-rows: 100px 100px 100px;
+  display: flex;
+  flex-direction: column;
   width: 300px;
+  height: 300px;
   background-color: lightgray;
 }
 .game .game-row {
-  display: grid;
-  grid-template-columns: 100px 100px 100px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: row;
   background-color: lightgray;
+}
+.game .game-row > .game-square {
+  flex-grow: 1;
 }
 
 .game-square {
@@ -37,6 +42,10 @@
 
 .menu {
   width: 300px;
+}
+
+.mode-menu {
+  margin-top: 15px;
 }
 
 button {

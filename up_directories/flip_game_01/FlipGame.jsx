@@ -2,6 +2,7 @@
 import {createArray} from 'array';
 import {random, min, max} from 'math';
 import {parseInt, isNaN} from 'number';
+import * as ILink from 'ILink';
 
 const minSize = 2;
 const maxSize = 10;
@@ -56,7 +57,11 @@ export function render() {
         <button onClick={() => this.do("redo")}>Redo</button>
       </div>
       <div className="mode-menu">
-        {/* TODO: Impl. */}
+        <h5>Other game modes</h5>
+        <div><ILink key="l-3" href="~/3">3-by-3</ILink></div>
+        <div><ILink key="l-4" href="~/4">4-by-4</ILink></div>
+        <div><ILink key="l-5" href="~/5">5-by-5</ILink></div>
+        <div><ILink key="l-6" href="~/6">6-by-6</ILink></div>
       </div>
     </div>
   </div>;
@@ -68,7 +73,7 @@ export const actions = {
   "newMove": function([rowInd, colInd]) {
     let {size = 3, gameState, moveCount, moves, winningMoveCount} = this.state;
     if (moves.length > moveCount) moves.length = moveCount;
-    if (!winningMoveCount) moveCount++;
+    moveCount++;
     flipSquareAndNeighbors(gameState, rowInd, colInd, size);
     winningMoveCount ||= getIsComplete(gameState, size) ? moveCount : false;
     moves.push(
@@ -103,7 +108,9 @@ export const actions = {
     let {size = 3, gameState, moveCount, moves} = this.state;
     if (moveCount <= 0) return;
     let prevMove = moves[moveCount - 1];
-    let {rowInd, colInd, winningMoveCount} = prevMove;
+    let {rowInd, colInd} = prevMove;
+    let winningMoveCount = moveCount <= 1 ? false :
+      moves[moveCount - 2].winningMoveCount;
     flipSquareAndNeighbors(gameState, rowInd, colInd, size);
     this.setState(state => ({
       ...state, moveCount: moveCount - 1, winningMoveCount: winningMoveCount
