@@ -1577,15 +1577,11 @@ export class ScriptInterpreter {
             let key = member.ident;
             if (key === undefined) {
               let keyState = keyStateArr ? keyStateArr[ind] ??= {} : undefined;
-              key = getStringOrSymbol(
+              key = getObjectKey(
                 this.evaluateExpression(member.keyExp, environment, keyState),
                 expNode, environment
               );
             }
-            if (!key) throw new RuntimeError(
-              "Invalid, falsy object key",
-              expNode, environment
-            );
             ret[key] = this.evaluateExpression(
               member.valExp, environment, expState
             );
@@ -2059,7 +2055,7 @@ export class ScriptInterpreter {
     // Else, first get the key.
     key = accessor.ident;
     if (key === undefined) {
-      key = getStringOrSymbol(
+      key = getObjectKey(
         this.evaluateExpression(accessor.exp, environment, state),
         accessor, environment
       );
@@ -2513,7 +2509,7 @@ export class ObjectObject {
       }
     }
     else {
-      return getStringOrSymbol(key, node, env);
+      return getObjectKey(key, node, env);
     }
   }
 
@@ -2717,8 +2713,8 @@ export function getString(val, node, env, getSourceCode = false) {
       ).join(", ") +
     "}";
   }
-  else if (typeof val !== "object") {
-    return val.toString();
+  else if (!val || typeof val !== "object") {
+    return `${val}`;
   }
   else throw (
     "toString(): Invalid argument"
@@ -2727,6 +2723,14 @@ export function getString(val, node, env, getSourceCode = false) {
 
 export function getStringOrSymbol(val, node, env) {
   return (typeof val === "symbol") ? val : getString(val, node, env);
+}
+export function getObjectKey(val, node, env) {
+  let ret = (typeof val === "symbol") ? val : getString(val, node, env);
+  if (!ret) throw new RuntimeError(
+    "Object key cannot be an empty string",
+    node, env
+  );
+  return ret;
 }
 
 
@@ -3775,7 +3779,8 @@ export function getExtendedErrorMsg(err) {
   // If the error is internal, return it as a string (using its toString()
   // method if it has one).
   if (!(err instanceof Exception)) {
-    return (err ?? "undefined").toString();
+    console.error(err);
+    return "Internal error!";
   }
 
   // Get the error message.

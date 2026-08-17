@@ -31,7 +31,7 @@ export default {
       </ILink>.
       It introduces more game modes, namely by allowing you to select a row
       and column number yourself. It also records the number of moves, and
-      congratulates you if you win.
+      shows when you have won the game.
     </p>
     <h3>Additional notes</h3>
     <p>

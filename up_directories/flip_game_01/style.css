@@ -2,20 +2,19 @@
 .flip-game {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
 }
 
 .game {
   margin-top: 10px;
   display: grid;
-  grid-template-rows: 80px 80px 80px;
-  width: 240px;
+  grid-template-rows: 100px 100px 100px;
+  width: 300px;
   background-color: lightgray;
 }
 .game .game-row {
   display: grid;
-  grid-template-columns: 80px 80px 80px;
+  grid-template-columns: 100px 100px 100px;
   background-color: lightgray;
 }
 
@@ -33,4 +32,9 @@
 .game-square:hover {
   cursor: pointer;
   opacity: 70%;
+}
+
+
+.menu {
+  width: 300px;
 }

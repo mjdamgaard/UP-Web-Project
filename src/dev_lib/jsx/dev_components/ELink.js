@@ -1,6 +1,6 @@
 
 import {
-  DevFunction, ObjectObject, verifyTypes, getString, getStringOrSymbol,
+  DevFunction, ObjectObject, verifyTypes, getString,
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
   DOMNodeObject, validateJSXInstanceAndGetDOMNode, validateJSXInstance,

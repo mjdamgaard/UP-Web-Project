@@ -19,7 +19,7 @@ export const getSequentialPromise = new DevFunction(
     if (callbackArr instanceof ObjectObject) callbackArr = callbackArr.members;
 
     let len = callbackArr.length;
-    for (let i=0; i<len; i++) {
+    for (let i = 0; i < len; i++) {
       let callback = callbackArr[i];
       let promiseObj = interpreter.executeFunction(
         callback, [input], callerNode, execEnv

@@ -3,7 +3,7 @@ import {
   DevFunction, JSXElement, LiveJSModule, RuntimeError, getString, ObjectObject,
   forEachValue, CLEAR_FLAG, PromiseObject, logExtendedErrorAndTrace,
   OBJECT_PROTOTYPE, Environment, ARRAY_PROTOTYPE, FunctionObject, Exception,
-  getStringOrSymbol, getPropertyFromObject, getPropertyFromPlainObject,
+  getObjectKey, getPropertyFromObject, getPropertyFromPlainObject,
   jsonStringify, ArgTypeError, decrCompGas, getAbsolutePath, ErrorWrapper,
   CSSModule, isArray, verifyType, verifyTypes,
 } from "../../interpreting/ScriptInterpreter.js";
@@ -771,7 +771,8 @@ class JSXInstance {
     let keyPropStr = "";
     forEachValue(keyProps, node, env, propName => {
       propName = getString(propName, node, env);
-      keyPropStr = keyPropStr + "," + jsonStringify(props[propName]);
+      keyPropStr = keyPropStr + "," +
+        jsonStringify(getPropertyFromObject(props, propName, node, env));
     }, true);
     return keyPropStr;
   }
@@ -813,7 +814,7 @@ class JSXInstance {
       getPropertyFromObject(this.componentObject, "actions", node, env),
       node, env,
       (fun, key) => {
-        key = getStringOrSymbol(key, node, env) || " ";
+        key = getObjectKey(key, node, env);
         this.actions[key] = fun;
       },
       true
@@ -823,15 +824,17 @@ class JSXInstance {
       node, env,
       keyOrAliasKeyPair => {
         if (typeof keyOrAliasKeyPair === "string") {
-          let key = keyOrAliasKeyPair || " ";
-          this.methods[key] = this.actions[key];
+          let key = getObjectKey(keyOrAliasKeyPair, node, env);
+          this.methods[key] =
+            getPropertyFromObject(this.actions, key, node, env);
         }
         else {
           let alias = getPropertyFromObject(keyOrAliasKeyPair, "0", node, env);
           let key = getPropertyFromObject(keyOrAliasKeyPair, "1", node, env);
-          alias = getStringOrSymbol(alias, node, env) || " ";
-          key = getStringOrSymbol(key, node, env);
-          this.methods[alias] = this.actions[key];
+          alias = getObjectKey(alias, node, env);
+          key = getObjectKey(key, node, env);
+          this.methods[alias] =
+            getPropertyFromObject(this.actions, key, node, env);
         }
       },
       true
@@ -841,15 +844,17 @@ class JSXInstance {
       node, env,
       keyOrAliasKeyPair => {
         if (typeof keyOrAliasKeyPair === "string") {
-          let key = keyOrAliasKeyPair || " ";
-          this.events[key] = this.actions[key];
+          let key = getObjectKey(keyOrAliasKeyPair, node, env);
+          this.events[key] =
+            getPropertyFromObject(this.actions, key, node, env);
         }
         else {
           let alias = getPropertyFromObject(keyOrAliasKeyPair, "0", node, env);
           let key = getPropertyFromObject(keyOrAliasKeyPair, "1", node, env);
-          alias = getStringOrSymbol(alias, node, env) || " ";
-          key = getStringOrSymbol(key, node, env);
-          this.events[alias] = this.actions[key];
+          alias = getObjectKey(alias, node, env);
+          key = getObjectKey(key, node, env);
+          this.events[alias] =
+            getPropertyFromObject(this.actions, key, node, env);
         }
       },
       true
@@ -861,7 +866,7 @@ class JSXInstance {
   // actionKey, and with the optional second argument as the argument of the
   // action function.
   do(actionKey, input, interpreter, node, env) {
-    actionKey = getStringOrSymbol(actionKey, node, env);
+    actionKey = getObjectKey(actionKey, node, env);
     let eventFun = getPropertyFromPlainObject(this.actions, actionKey);
     if (eventFun) {
       return interpreter.executeFunction(
@@ -889,7 +894,7 @@ class JSXInstance {
     originScope ??= env.getFlag(REQUESTING_COMPONENT_FLAG);
     if (!this.parentInstance) return;
     let events = this.parentInstance.events;
-    eventKey = getStringOrSymbol(eventKey, node, env);
+    eventKey = getObjectKey(eventKey, node, env);
     let eventFun = getPropertyFromPlainObject(events, eventKey);
     if (eventFun) {
       let childKey = this.key;
@@ -922,7 +927,7 @@ class JSXInstance {
   call(
     instanceKey, methodKey, input, interpreter, node, env
   ) {
-    instanceKey = getStringOrSymbol(instanceKey, node, env);
+    instanceKey = getObjectKey(instanceKey, node, env);
 
     // First get the targeted child instance.
     let targetInstance = this.childInstances.get(instanceKey);
@@ -933,7 +938,7 @@ class JSXInstance {
 
     // Then find and call its targeted method.
     let methods = targetInstance.methods;
-    methodKey = getStringOrSymbol(methodKey, node, env);
+    methodKey = getObjectKey(methodKey, node, env);
     let methodFun = getPropertyFromPlainObject(methods, methodKey);
     if (methodFun) {
       let [clientTrust, reqCompPath] = targetInstance.compEnv.getFlags([
@@ -1061,7 +1066,8 @@ class JSXInstance {
 
 
   setContext(key, val, force = false) {
-    let contextProvision = this.contextProvisions[key];
+    let contextProvision = Object.hasOwn(this.contextProvisions, key) &&
+      this.contextProvisions[key];
     if (!contextProvision) {
       this.contextProvisions[key] = JSXInstance.createContextProvision(val);
     }
@@ -1075,7 +1081,8 @@ class JSXInstance {
     let contextProvisions =
       parentInstance?.contextProvisions ?? globals.globalContextProvisions;
     while (contextProvisions) {
-      let contextProvision = contextProvisions[key];
+      let contextProvision = Object.hasOwn(contextProvisions, key) &&
+        contextProvisions[key];
       if (contextProvision) {
         return this.subscribeToContext(contextProvision, ignore);
       }
@@ -1086,10 +1093,8 @@ class JSXInstance {
   }
 
   getOwnContext(key) {
-    let contextProvisions = this.contextProvisions;
-    if (contextProvisions) {
-      return contextProvisions[key].context;
-    }
+    return !Object.hasOwn(this.contextProvisions, key) ? undefined :
+      this.contextProvisions[key]?.context;
   }
 
 
@@ -1518,7 +1523,7 @@ export class JSXInstanceInterface extends ObjectObject {
   // with a different value for that key, or with the force argument set to
   // true, all the subscribing instances will rerender.
   setContext = new DevFunction(
-    "setContext", {typeArr: ["object key|array", "any?", "any?"]},
+    "setContext", {typeArr: ["object key", "any?", "any?"]},
     (_, [key, context, force = false]) => {
       this.jsxInstance.setContext(key, context, force);
     },
