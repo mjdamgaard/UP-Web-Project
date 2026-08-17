@@ -7,27 +7,20 @@ const minSize = 2;
 const maxSize = 10;
 
 
-export function initialize() {
-  let gameState = [
-    new MutableArray([false, false, false]),
-    new MutableArray([false, false, false]),
-    new MutableArray([false, false, false]),
-  ];
-  return {
-    size: 3, moveCount: 0, gameState: gameState, winningMoveCount: false,
-    initGameState: copy(gameState), moves: new MutableArray(),
-  };
-}
-
 export function render() {
-  let {size, moveCount, gameState, winningMoveCount} = this.state;
-  // let sizeSegment = min(
-  //   max(parseInt(this.getSegment(0)) || 3, minSize), maxSize
-  // );
-  // if (!isNaN(sizeSegment) && size !== sizeSegment) {
-  //   this.setState(state => ({...state, size: sizeSegment}));
-  //   this.do("startNewGame");
-  // }
+  let {size = 3, moveCount, gameState, winningMoveCount} = this.state;
+  if (!gameState) {
+    this.do("startNewGame");
+    return <div></div>;
+  }
+
+  let sizeSegment = min(
+    max(parseInt(this.getSegment(0)) || 3, minSize), maxSize
+  );
+  if (!isNaN(sizeSegment) && size !== sizeSegment) {
+    this.setState(state => ({...state, size: sizeSegment}));
+    this.do("startNewGame");
+  }
 
   // Create the matrix of game squares.
   let gameSquares = gameState.map((row, rowInd) => (
@@ -41,7 +34,7 @@ export function render() {
   ));
 
   // If this is the first render, initiate a new game.
-  // if (this.isFirstRender) this.doAfterRender("startNewGame");
+  if (this.isFirstRender) this.doAfterRender("startNewGame");
 
   // Return the JSX element of the game app.
   return <div className="flip-game"
@@ -57,10 +50,10 @@ export function render() {
         Size: {size}-by-{size}, Moves: {winningMoveCount || moveCount}
       </div>
       <div className="buttons">
-        <button onClick={() => this.do("undo")}>Undo</button>
-        <button onClick={() => this.do("redo")}>Redo</button>
         <button onClick={() => this.do("restart")}>Restart</button>
         <button onClick={() => this.do("startNewGame")}>New game</button>
+        <button onClick={() => this.do("undo")}>Undo</button>
+        <button onClick={() => this.do("redo")}>Redo</button>
       </div>
       <div className="mode-menu">
         {/* TODO: Impl. */}
@@ -72,20 +65,21 @@ export function render() {
 
 
 export const actions = {
-  "newMove": function([rowInd, colInd]) {console.log("newMove")
-    let {size, gameState, moveCount, moves, winningMoveCount} = this.state;
+  "newMove": function([rowInd, colInd]) {
+    let {size = 3, gameState, moveCount, moves, winningMoveCount} = this.state;
     if (moves.length > moveCount) moves.length = moveCount;
     if (!winningMoveCount) moveCount++;
     flipSquareAndNeighbors(gameState, rowInd, colInd, size);
-    winCount ||= getIsComplete(gameState, size) ? moveCount : false;
-    moves.push({rowInd: rowInd, colInd: colInd, winningMoveCount: winCount});
+    winningMoveCount ||= getIsComplete(gameState, size) ? moveCount : false;
+    moves.push(
+      {rowInd: rowInd, colInd: colInd, winningMoveCount: winningMoveCount});
     this.setState(state => ({
-      ...state, moveCount: moveCount, winningMoveCount: winCount
+      ...state, moveCount: moveCount, winningMoveCount: winningMoveCount
     }));
     this.rerender();
   },
   "startNewGame": function() {
-    let {size} = this.state;
+    let {size = 3} = this.state;
     let newGameState = createArray(size, () => (
       new MutableArray(createArray(size, () => false))
     ));
@@ -96,17 +90,17 @@ export const actions = {
         }
       }
     }
-    if (getIsComplete(newGameState)) {throw "debug"
+    if (getIsComplete(newGameState, size)) {
       return this.do("startNewGame");
     }
     this.setState(state => ({
-      ...state, moveCount: 0, gameState: newGameState, winningMoveCount: false,
-      moves: new MutableArray(),
+      ...state, moveCount: 0, winningMoveCount: false, gameState: newGameState,
+      initGameState: copy(newGameState), moves: new MutableArray(),
     }));
     this.rerender();
   },
   "undo": function() {
-    let {size, gameState, moveCount, moves} = this.state;
+    let {size = 3, gameState, moveCount, moves} = this.state;
     if (moveCount <= 0) return;
     let prevMove = moves[moveCount - 1];
     let {rowInd, colInd, winningMoveCount} = prevMove;
@@ -117,7 +111,7 @@ export const actions = {
     this.rerender();
   },
   "redo": function() {
-    let {size, gameState, moveCount, moves} = this.state;
+    let {size = 3, gameState, moveCount, moves} = this.state;
     if (moveCount >= moves.length) return;
     let nextMove = moves[moveCount];
     let {rowInd, colInd, winningMoveCount} = nextMove;
@@ -135,11 +129,11 @@ export const actions = {
     }));
     this.rerender();
   },
-  "handleKeyPress": function(e) {console.log("key: ", e.key);
-    if (e.key === "U") {
+  "handleKeyPress": function(e) {
+    if (e.key === "u") {
       this.do("undo");
     }
-    else if (e.key === "U") {
+    else if (e.key === "r") {
       this.do("redo");
     }
 
@@ -153,7 +147,7 @@ function copy(gameState) {
 }
 
 
-function flipSquareAndNeighbors(gameState, rowInd, colInd, size) {return;
+function flipSquareAndNeighbors(gameState, rowInd, colInd, size) {
   gameState[rowInd][colInd] = !gameState[rowInd][colInd];
   if (rowInd > 0) {
     gameState[rowInd - 1][colInd] = !gameState[rowInd - 1][colInd];
@@ -166,15 +160,15 @@ function flipSquareAndNeighbors(gameState, rowInd, colInd, size) {return;
   }
   if (colInd < size - 1) {
     gameState[rowInd][colInd + 1] = !gameState[rowInd][colInd + 1];
-  }console.log("end")
+  }
 }
 
-function getIsComplete(gameState, size) {return;
+function getIsComplete(gameState, size) {
   let ret = true;
   for (let rowInd = 0; rowInd < size && ret; rowInd++) {
-    for (let colInd = 0; colInd < size && ret; colInd++) {console.log(rowInd, colInd)
+    for (let colInd = 0; colInd < size && ret; colInd++) {
       ret = !gameState[rowInd][colInd];
     }
-  }console.log("ret: ", ret);
+  }
   return ret;
 }

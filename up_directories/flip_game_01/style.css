@@ -38,3 +38,7 @@
 .menu {
   width: 300px;
 }
+
+button {
+  margin: 2px;
+}

@@ -2214,12 +2214,7 @@ export class Environment {
   }
 
   assign(ident, assignFun, node, nodeEnvironment = this) {
-    let variable = this.variables.get(ident);
-    if (!variable) throw new RuntimeError(
-      "Assignment to an undeclared variable: '" + ident + "'",
-      node, this
-    );
-    let [prevVal, isConst] = variable;
+    let [prevVal, isConst] = this.variables.get(ident) ?? [];
     if (isConst) throw new RuntimeError(
       "Reassignment of constant variable: '" + ident + "'",
       node, this
@@ -2237,7 +2232,7 @@ export class Environment {
     }
     else {
       throw new RuntimeError(
-        `Undeclared variable "${ident}"`,
+        `Undeclared  "${ident}"`,
         node, nodeEnvironment
       );
     }
@@ -2550,38 +2545,7 @@ export class ObjectObject {
     return jsonStringify(this.members);
   }
   toString(node, env) {
-    let {interpreter} = env.globals;
-    let toStringMethod = this.get("toString", null, env);
-    if (toStringMethod instanceof FunctionObject) {
-      let ret, isInvalid; 
-      try {
-        // If this.class is an instance of the ExceptionClassObject, get the
-        // message directly in order to avoid spending further computation gas.
-        if (
-          this instanceof ObjectObject &&
-          this.class instanceof ExceptionClassObject
-        ) {
-          ret = this.get("message", null, env);
-        }
-        else {
-          ret = interpreter.executeFunction(
-            toStringMethod, [], null, env, this, [CLEAR_FLAG]
-          );
-        }
-      } catch (_) {
-        isInvalid = true;
-      }
-      if (!isInvalid && typeof ret === "object" && ret !== null) {
-        isInvalid = true
-      }
-      if (isInvalid) {console.log("fail");debugger;
-        ret = "[" + this.className + ".toString() error]";
-      }
-      return getString(ret, node, env);
-    }
-    else {
-      return `[object ${this.className}]`;
-    }
+    return `[object ${this.className}]`;
   }
 }
 
@@ -2980,7 +2944,8 @@ export const mutableObjectClass = new ClassObject(
     ({callerNode, execEnv, thisVal}, [obj]) => {
       if (obj) {
         forEachValue(obj, callerNode, execEnv, (val, key) => {
-          setPropertyOfObject(thisVal, key, val, callerNode, execEnv);
+          key = getObjectKey(key, callerNode, execEnv);
+          thisVal.members[key] = val;
         });
       }
     }
@@ -2989,10 +2954,18 @@ export const mutableObjectClass = new ClassObject(
 export const mutableArrayClass = new ClassObject(
   "MutableArray", new DevFunction(
     "MutableArray", {typeArr: ["array?"]},
-    ({callerNode, execEnv, thisVal}, [arr = []]) => {
-      forEachValue(arr, callerNode, execEnv, (val, ind) => {
-        setPropertyOfObject(thisVal, ind, val, callerNode, execEnv);
-      });
+    ({callerNode, execEnv, thisVal}, [arr]) => {
+      if (arr) {
+        if (arr instanceof ObjectObject) arr = arr.members;
+        arr.forEach((val, ind) => {
+          thisVal.members[ind] = val;
+        });
+      }
+      thisVal.toString = () => "MutableArray([" +
+        thisVal.members.map(
+          val => getString(val, callerNode, execEnv)
+        ).join(", ") +
+      "])";
     }
   ), undefined, undefined, true, true, true
 );
@@ -3030,6 +3003,12 @@ export const mutableMapClass = new ClassObject(
           }
         ),
       };
+      thisVal.toString = () => "MutableMap(" +
+        thisVal.map.entries(([key, val]) =>
+          getString(key, callerNode, execEnv) + " => " +
+            getString(val, callerNode, execEnv)
+        ).join(", ") +
+      ")";
     }
   ), undefined, undefined, false, false, false, true
 );
@@ -3045,8 +3024,15 @@ export const immutableMapClass = new ClassObject(
         let [key, val] = entry;
         this.map.set(key, val);
       });
-      thisVal.members =
-        getImmutableMapMethods(callerNode, execEnv, interpreter, thisVal);
+      thisVal.members = getImmutableMapMethods(
+        callerNode, execEnv, interpreter, thisVal
+      );
+      thisVal.toString = () => "ImmutableMap(" +
+        thisVal.map.entries(([key, val]) =>
+          getString(key, callerNode, execEnv) + " => " +
+            getString(val, callerNode, execEnv)
+        ).join(", ") +
+      ")";
     }
   ), undefined, undefined, false, false, false, true
 );
@@ -3680,17 +3666,9 @@ export const exceptionClass = new ClassObject(
       if (thisVal instanceof ObjectObject) {
         thisVal.set("message", message);
       }
+      thisVal.toString = () => message;
     }
   ),
-  {
-    toString: new DevFunction(
-      "toString", {}, ({callerNode, execEnv, thisVal}) => {
-        if (thisVal instanceof ObjectObject) {
-          return thisVal.get("message", callerNode, execEnv);
-        }
-      }
-    )
-  }
 );
 
 export class ExceptionClassObject extends ClassObject {
@@ -3710,6 +3688,7 @@ export class ExceptionClassObject extends ClassObject {
     newInst.isMutable = this.instancesAreMutable;
     newInst.errNode = undefined;
     newInst.errEnv = undefined;
+    newInst.toString = () => message;
     return newInst;
   }
 }
