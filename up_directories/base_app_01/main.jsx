@@ -13,8 +13,6 @@ import * as BaseApp from "../base_app/BaseApp.jsx";
 import * as mainStyle from "../base_app/style.css";
 import * as AppFrame from "../base_app/src/AppFrame.jsx";
 import * as appFrameStyle from "../base_app/src/AppFrame.css";
-import * as AppWrapper from "../base_app/src/AppWrapper.jsx";
-import * as appWrapperStyle from "../base_app/src/AppWrapper.css";
 import * as ownStyle from "./style.css";
 
 const fetchBestVersionRouteTemplate = abs(
@@ -28,7 +26,6 @@ export function render(props) {
   return <BaseApp key="0"
     fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
     loadUpdatedSelf={props.isRoot} mainStyle={mainStyle} AppFrame={AppFrame}
-    appFrameStyle={[mainStyle, appFrameStyle, ownStyle]} AppWrapper={AppWrapper}
-    appWrapperStyle={appWrapperStyle} {...props}
+    appFrameStyle={[mainStyle, appFrameStyle, ownStyle]} {...props}
   />;
 }

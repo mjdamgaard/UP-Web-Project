@@ -20,6 +20,7 @@ export async function App(upNodeID, appDirID) {
       "App directory #" + appDirID + " is either missing a metadata.js " +
       "file or its contents are ill-formed."
     );
+    console.error(err);
     return {};
   });
   return {

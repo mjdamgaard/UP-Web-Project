@@ -4,6 +4,7 @@ import * as TextDisplay from "../../utilities/TextDisplay.jsx";
 
 export function render({entID, entDef}) {
   let appDirID = entDef["App directory ID"];
+  let desc = entDef["Description"] || undefined;
   return <div>
     <div>
       Title: {entDef["Name"]}
@@ -16,7 +17,10 @@ export function render({entID, entDef}) {
     }</div>
     <div>
       <h4>Description:</h4>
-      <TextDisplay key="t" untrusted>{(entDef["Description"])}</TextDisplay>
+      {(desc ?
+        <TextDisplay key="t" untrusted>{(desc)}</TextDisplay> :
+        <i>None</i>
+      )}
     </div>
   </div>
 }

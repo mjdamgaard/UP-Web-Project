@@ -78,6 +78,11 @@ Each user of the platform has an amount of resources that they can use for free 
 
 Additionally, while the platform itself is open-source, the user-uploaded apps do not necessarily have to be. Some developers thus might want to use a different kind of license for their software that allows them to monetize it more efficiently, instead of relying purely on voluntary donations. The platform should help facilitate this, and thus provide several options of monetization for the developers to choose from. And in return, the platform can require a cut of the revenue that these apps generate.
 
+<!--
+I actually think that the model I want to pitch now is that source code contributors can be paid in RSUs (restricted stock units), i.e. promises for future stock if certain conditions are met. And I think these conditions could just essentially be that they don't license the source code to competitors in the meantime, and then you could choose a vesting period of maybe 10 years or so. But in any case, the idea is to pay the contributors in RSUs, which then gives them a vested interest in the company's growth, and gives them a share of the vote as well eventually. And it of course also means that you get to pay contributors very early on, before you have a lot of money to do so. *(And even if you do have a lot of investments from the start, the idea still makes sense, namely due to the vested interests that the contributors thereby get.)
+TODO: Consider rewriting this section such that this idea is included.
+-->
+
 Lastly, it is also worth mentioning that the platform can choose to differentiate between regular, private users and users who use the software on behalf of a company, and require the latter to use a different set of subscription plans, perhaps charging them more.
 
 

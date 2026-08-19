@@ -117,12 +117,12 @@ export class CSSTransformer {
   }
 
   transformNestedSelector(nestedSelector) {
-    let {combinator, selector, relativeSelector} = nestedSelector;
+    let {combinator, selector, hasSpace, relativeSelector} = nestedSelector;
     if (combinator) {
       return "& " + combinator.lexeme + " " + this.transformSelector(selector);
     }
     if (selector) {
-      return "&" + this.transformSelector(selector);
+      return "&" + (hasSpace ? " " : "") + this.transformSelector(selector);
     }
     else {
       return this.transformRelativeSelector(relativeSelector);

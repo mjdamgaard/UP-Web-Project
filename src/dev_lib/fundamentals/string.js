@@ -38,6 +38,12 @@ export const indexOf = new DevFunction(
   }
 );
 
+export const repeat = new DevFunction(
+  "repeat", {typeArr: ["string", "integer unsigned"]}, ({}, [str, count]) => {
+    return str.repeat(count);
+  }
+);
+
 export const split = new DevFunction(
   "split", {typeArr: ["string", "string", "integer unsigned?"]},
   ({}, [str, separator, limit]) => {

@@ -1,6 +1,7 @@
 
 import * as ILink from 'ILink';
 import * as AppLoader from "./AppLoader.jsx";
+import * as Warning from "./Warning.jsx";
 import * as AccountMenu from "./account_menu/AccountMenu.jsx";
 
 
@@ -26,7 +27,7 @@ import * as AccountMenu from "./account_menu/AccountMenu.jsx";
 
 export function render({children, style}) {
   let userID = this.getContext("userID");
-  let {hideHeader, hideMargins} = this.state;
+  let {hideHeader, hideMargins, warningProps} = this.state;
   this.setContext("headerIsHidden", hideHeader);
   this.setContext("marginsAreHidden", hideMargins);
   return <div innerStyle={style}>
@@ -40,11 +41,14 @@ export function render({children, style}) {
         </div>
         <AccountMenu key="am" isLoggedIn={userID ? true : false} />
       </header>
+      <div className="warning-container">
+        {(!warningProps ? undefined : <Warning key="w" {...warningProps} />)}
+      </div>
       <main className={"app-main" + (hideMargins ? " no-margins" : "")}>
         <div className="click-blocker"></div>
         <div className="margin left"></div>
         <div className="app-container no-overflow">
-          {(children)}
+          {(warningProps?.isHarmful ? undefined : children)}
         </div>
         <div className="margin right"></div>
       </main>
@@ -55,7 +59,7 @@ export function render({children, style}) {
 
 const headerItems = <>
   <ILink key="about" href="~/about">
-    <span>About</span>
+    {/* <span>About</span> */}
   </ILink>
 
   {/* <ILink key="tut" href="~/tutorials">
@@ -81,6 +85,12 @@ const headerItems = <>
   </ILink> */}
 </>;
 
+const warning = <div>
+  <div>
+    This app has not 
+  </div>
+</div>
+
 
 
 
@@ -103,6 +113,12 @@ export const actions = {
   "showFrame": function() {
     this.setState(state => ({...state, hideMargins: false, hideHeader: false}));
   },
+  "hideWarning": function() {
+    this.setState(state => ({...state, warningProps: undefined}));
+  },
+  "showWarning": function(warningProps) {
+    this.setState(state => ({...state, warningProps: warningProps}));
+  },
 };
 
 export const events = [
@@ -112,4 +128,6 @@ export const events = [
   "showMargins",
   "hideFrame",
   "showFrame",
+  "hideWarning",
+  "showWarning",
 ];

@@ -230,3 +230,39 @@
   display: inline;
 }
 
+
+
+
+
+
+
+.warning-container > .warning {
+  background-color: rgba(255, 238, 0, 0.411);
+  border: 3px ridge rgb(45, 42, 0);
+}
+.warning-container > .warning > .warning-bar {
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
+  color: red;
+}
+.warning-container > .warning.closed > .warning-bar {
+  cursor: pointer;
+}
+.warning-container > .warning > .warning-main {
+  padding: 15px;
+  button {
+    margin-right: 3px;
+  }
+}
+.warning-container > .warning.closed > .warning-main {
+  display: none;
+}
+
+.app-frame:has(> .warning-container > .warning:not(.closed)) > .app-main {
+  pointer-events: none;
+  filter: blur(4px);
+  opacity: 40%;
+}

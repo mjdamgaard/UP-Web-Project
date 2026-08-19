@@ -29,9 +29,9 @@ export default {
       }>
         Flip game app
       </ILink>.
-      It introduces more game modes, namely by allowing you to select a row
-      and column number yourself. It also records the number of moves, and
-      shows when you have won the game.
+      It introduces more game modes, namely by allowing you to different sizes
+      of the game. It also records the number of moves, and shows when you have
+      won the game.
     </p>
     <h3>Additional notes</h3>
     <p>
@@ -39,7 +39,7 @@ export default {
       is no established convention for naming new versions of existing apps at
       the moment of writing.
       So naming apps like "Flip game - more game modes" might not end up being
-      the convention that we want to go.
+      the convention that we want to go with.
     </p>
   </div>,
 };

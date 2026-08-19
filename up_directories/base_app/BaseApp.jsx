@@ -47,8 +47,8 @@ export function initialize() {
 
 export function render(props) {
   let {
-    fetchBestVersionRouteTemplate, loadUpdatedSelf,
-    mainStyle, AppFrame, appFrameStyle, AppWrapper, appWrapperStyle
+    fetchBestVersionRouteTemplate, loadUpdatedSelf, mainStyle, AppFrame,
+    appFrameStyle,
   } = props;
   let {goToDefaultBaseApp, goToAppPage} = this.state;
   let userID = this.getContext("userID");
@@ -62,10 +62,9 @@ export function render(props) {
   let firstSegment = this.getSegment(0);
   if (firstSegment === "base") {
     this.advanceURL(1);
-    return <AppLoader key="b" userID={userID}
+    return <AppLoader key="b"
+      userID={userID} appProps={{loadUpdatedSelf: false}}
       fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
-      AppWrapper={AppWrapper} appWrapperStyle={[mainStyle, appWrapperStyle]}
-      goBackToSafety={goToDefaultBaseApp} appProps={{loadUpdatedSelf: false}}
     />;
   }
 
@@ -82,10 +81,10 @@ export function render(props) {
     if (firstSegment && !isAppDirSegment) {
       return <MissingPage />;
     }
-    return <VariableApp key="v" appDirID={baseAppDirID} userID={userID}
+    return <VariableApp key="v"
+      appDirID={baseAppDirID} userID={userID}
+      appProps={{loadUpdatedSelf: false}}
       fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
-      AppWrapper={AppWrapper} appWrapperStyle={[mainStyle, appWrapperStyle]}
-      goBackToSafety={goToDefaultBaseApp} appProps={{loadUpdatedSelf: false}}
     />;
   }
 
@@ -112,8 +111,6 @@ export function render(props) {
     return <AppFrame key="f" style={appFrameStyle}>
       <AppLoader key="a" userID={userID}
         fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
-        AppWrapper={AppWrapper} appWrapperStyle={[mainStyle, appWrapperStyle]}
-        goBackToSafety={goToAppPage}
       />
     </AppFrame>;
   }

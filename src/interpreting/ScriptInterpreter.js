@@ -23,8 +23,9 @@ const arrayMethods = [
   // TODO: Continue when implemented.
 ];
 const stringMethods = [
-  "toString", "at", "substring", "slice", "indexOf", "split", "toUpperCase",
-  "toLowerCase", "trim", "replace", "replaceAll", // TODO: Continue when impl.
+  "toString", "at", "substring", "slice", "indexOf", "repeat", "split",
+  "toUpperCase", "toLowerCase", "trim", "replace", "replaceAll",
+  // TODO: Continue when implemented.
 ];
 const numberMethods = ["toString", "toPrecision"];
 

@@ -11,8 +11,8 @@ import * as MissingPage from "./MissingPage.jsx";
 
 
 // props : {
-//   appDirID, userID, fetchBestVersionRouteTemplate, AppWrapper,
-//   appWrapperStyle?, goBackToSafety, appProps?, useOriginal?, useStandard?,
+//   appDirID, userID, fetchBestVersionRouteTemplate, appProps?,
+//   useOriginal?, useStandard?,
 // }.
 
 // This component should reinitialize if either the appDirID or the userID prop
@@ -46,40 +46,61 @@ export async function initialize({
 
 
 export function render({
-  AppWrapper, appWrapperStyle, goBackToSafety, appProps = {},
-  useOriginal = false, useStandard = false
+  appProps = {}, useOriginal = false, useStandard = false
 }) {
   let {AppComponent, appDirID, trustClass} = this.state;
   if (appDirID === undefined) {
     return <div className="loading"></div>;
   }
 
-  // Render the AppComponent, wrapped in the 'AppWrapper' component if provided.
-  // Note that we make sure to give an unique key to the app component in order
-  // to ensure that its states (including local/session storage or history
-  // states) do not get mixed up with another.
+  // Then render the AppComponent. Note that we make sure to give an unique key
+  // to the app component in order to ensure that its states (including local/
+  // session storage or history states) do not get mixed up with another.
   if (!AppComponent) {
+    this.trigger("hideWarning");
     console.error(abs("~/../" + appDirID + "/main.jsx") + " file is missing");
     return <MissingPage key="m" />;
   }
   let isTrusted = trustClass === "trusted";
-  if (isTrusted) {
-    return <AppComponent key={"a-" + appDirID} {...appProps} />;
+  if (isTrusted || trustClass === "semi-trusted") {
+    this.trigger("hideWarning");
   }
   else {
-    let isSemiTrusted = trustClass === "semi-trusted";
-    if (!isSemiTrusted) {
-      this.setContext("username", undefined);
-    }
-    return (
-      <AppWrapper key="w" trustClass={trustClass} appDirID={appDirID}
-        isOriginal={useOriginal} isStandard={useStandard}
-        goBackToSafety={goBackToSafety} appDirIDSegment={appDirIDSegment}
-        style={appWrapperStyle}
-      >
-        <AppComponent key={"a-" + appDirID} {...appProps} untrusted />
-      </AppWrapper>
-    );
+    this.setContext("username", undefined);
+    this.trigger("showWarning", {isHarmful: trustClass === "harmful"});
   }
+  return <AppComponent key={"a-" + appDirID}
+    {...appProps} untrusted={!isTrusted}
+  />;
 }
 
+
+
+
+
+export const actions = {
+  // We deny access to triggering the "hideWarning" event for descendants, and
+  // deny hiding the header for untrusted apps.
+  "hideWarning": function() {},
+  "hideHeader": function() {
+    let {trustClass} = this.state;
+    if (trustClass === "trusted" || trustClass === "semi-trusted") {
+      this.trigger("hideHeader");
+    }
+  },
+  "hideFrame": function() {
+    let {trustClass} = this.state;
+    if (trustClass === "trusted" || trustClass === "semi-trusted") {
+      this.trigger("hideFrame");
+    } else {
+      this.trigger("hideMargins");
+    }
+  },
+};
+
+
+export const events = [
+  "hideWarning",
+  "hideHeader",
+  "hideFrame",
+];

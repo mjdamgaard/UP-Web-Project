@@ -313,8 +313,8 @@ class JSXInstance {
 
     // If initialize returns something defined, that is not a PromiseObject,
     // set the state to the return value.
-    this.state = (state === undefined || state instanceof PromiseObject) ?
-      {} : state;
+    this.prevState = this.state =
+      (state === undefined || state instanceof PromiseObject) ? {} : state;
 
     this.isInitializing = false;
   }
