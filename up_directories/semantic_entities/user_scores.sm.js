@@ -41,9 +41,9 @@ export function postUserScoreHex(
       }
       else {
         let listIDHex = valueToHex(qualID + "-" + userEntID, "string");
-        post(abs("~/users.bt./_insert/k/" + userEntID));
+        post(abs("~/users.bt/_insert/k/" + userEntID));
         post(abs(
-          "~/userScores.bbt./_insert/l/" + listIDHex + "/k/" + subjID +
+          "~/userScores.bbt/_insert/l/" + listIDHex + "/k/" + subjID +
           "/s/" + scoreHex + (payloadHex ? "/p/" + payloadHex : "")
         )).then(
           wasUpdated => resolve(wasUpdated)
@@ -76,7 +76,7 @@ export function deleteUserScore(qualKey, subjKey, userKey) {
       else {
         let listIDHex = valueToHex(qualID + "-" + userEntID, "string");
         post(abs(
-          "~/userScores.bbt./_deleteEntry/l/" + listIDHex + "/k/" + subjID
+          "~/userScores.bbt/_deleteEntry/l/" + listIDHex + "/k/" + subjID
         )).then(
           wasDeleted => resolve(wasDeleted)
         );

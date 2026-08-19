@@ -24,14 +24,14 @@ export function postEntity(entPath, useSecIdx = true) {
     // If the user does not want to use the secondary index, just post to
     // the entPaths.att table.
     if (!useSecIdx) {
-      post(abs("~/entPaths.att./_insert"), entPath).then(
+      post(abs("~/entPaths.att/_insert"), entPath).then(
         entID => resolve(entID)
       );
     }
     else {
       let entPathHex = valueToHex(entPath, "string");
       fetch(
-        abs("~/entIDs.bt./entry/k/" + entPathHex)
+        abs("~/entIDs.bt/entry/k/" + entPathHex)
       ).then(entID => {
         // If the entPath already has an entID, resolve with that.
         if (entID) {
@@ -42,9 +42,9 @@ export function postEntity(entPath, useSecIdx = true) {
         // Else post a new entity, and when the new entID is gotten, try to
         // insert it in the entIDs.bt table if an entry has not been inserted
         // for that same entPath in the meantime.
-        post(abs("~/entPaths.att./_insert"), entPath).then(entID => {
+        post(abs("~/entPaths.att/_insert"), entPath).then(entID => {
           post(abs(
-            "~/entIDs.bt./_insert/k/" + entPathHex + "/p/" + entID + "/i/1"
+            "~/entIDs.bt/_insert/k/" + entPathHex + "/p/" + entID + "/i/1"
           ));
           resolve(entID);
         });
@@ -58,12 +58,12 @@ export function addSecondaryIndex(entID) {
   verifyType(entID, "hex-string");
   return new Promise(resolve => {
     fetch(
-      abs("~/entPaths.att./entry/k/" + entID)
+      abs("~/entPaths.att/entry/k/" + entID)
     ).then(entPath => {
       if (!entPath) return resolve(false);
       let entPathHex = valueToHex(entPath, "string");
       fetch(
-        abs("~/entIDs.bt./entry/k/" + entPathHex)
+        abs("~/entIDs.bt/entry/k/" + entPathHex)
       ).then(existingEntID => {
         // If the entPath already has another entID, resolve with false, and
         // if it already has the same ID, resolve with true.
@@ -74,7 +74,7 @@ export function addSecondaryIndex(entID) {
         // Else try to insert that entID in the entIDs.bt table if an entry has
         // not been inserted for that same entPath in the meantime.
         post(
-          abs("~/entIDs.bt./_insert/k/" + entPathHex + "/p/" + entID + "/i/1")
+          abs("~/entIDs.bt/_insert/k/" + entPathHex + "/p/" + entID + "/i/1")
         ).then(wasUpdated => resolve(wasUpdated));
       });
     });

@@ -22,7 +22,7 @@ export async function postMessage(text) {
 
   // Insert the massage in the messages.att table.
   return await post(
-    abs("./messages.att./_insert"),
+    abs("./messages.att/_insert"),
     storedText
   );
 }
@@ -44,7 +44,7 @@ export async function deleteMessage(messageID) {
 
   // Fetch the message in order to authenticate the user as the author.
   let storedText = await fetch(
-    abs("./messages.att./entry/k/" + messageID)
+    abs("./messages.att/entry/k/" + messageID)
   );
   let indOfSemicolon = storedText.indexOf(";");
   let authorID = storedText.substring(0, indOfSemicolon);
@@ -56,7 +56,7 @@ export async function deleteMessage(messageID) {
 
   // Delete the massage. 
   return await post(
-    abs("./messages.att./_deleteEntry/k/" + messageID)
+    abs("./messages.att/_deleteEntry/k/" + messageID)
   );
 }
 
@@ -77,7 +77,7 @@ export async function editMessage(messageID, newText) {
 
   // Fetch the message in order to authenticate the user as the author.
   let storedText = await fetch(
-    abs("./messages.att./entry/k/" + messageID)
+    abs("./messages.att/entry/k/" + messageID)
   );
   let indOfSemicolon = storedText.indexOf(";");
   let authorID = storedText.substring(0, indOfSemicolon);
@@ -92,7 +92,7 @@ export async function editMessage(messageID, newText) {
   // key for such insert queries.)
   let newStoredText = authorID + ";" + newText;
   return await post(
-    abs("./messages.att./_insert/k/" + messageID),
+    abs("./messages.att/_insert/k/" + messageID),
     newStoredText
   );
 }
@@ -109,7 +109,7 @@ export async function fetchMessages(maxNum = "1000", offset = "0") {
 
   // Fetch the list of messages.
   let list = await fetch(
-    abs("./messages.att./list/a/1/n/" + maxNum + "/o/" + offset)
+    abs("./messages.att/list/a/1/n/" + maxNum + "/o/" + offset)
   );
 
   // Return a transformed list where the entries are of the form

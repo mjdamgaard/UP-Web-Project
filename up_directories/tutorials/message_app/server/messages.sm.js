@@ -22,7 +22,7 @@ export async function postMessage(text) {
 
   // Insert the massage in the _messages.att table.
   return await post(
-    abs("./_messages.att./_insert/l/" + authorID),
+    abs("./_messages.att/_insert/l/" + authorID),
     storedText
   );
 }
@@ -44,7 +44,7 @@ export async function deleteMessage(messageID) {
 
   // Fetch the message in order to authenticate the user as the author.
   let storedText = await fetchPrivate(
-    abs("./_messages.att./entry/l/" + userID + "/k/" + messageID)
+    abs("./_messages.att/entry/l/" + userID + "/k/" + messageID)
   );
   let indOfSemicolon = storedText.indexOf(";");
   let authorID = storedText.substring(0, indOfSemicolon);
@@ -56,7 +56,7 @@ export async function deleteMessage(messageID) {
 
   // Delete the massage. 
   return await post(
-    abs("./_messages.att./_deleteEntry/l/" + userID + "/k/" + messageID)
+    abs("./_messages.att/_deleteEntry/l/" + userID + "/k/" + messageID)
   );
 }
 
@@ -77,7 +77,7 @@ export async function editMessage(messageID, newText) {
 
   // Fetch the message in order to authenticate the user as the author.
   let storedText = await fetchPrivate(
-    abs("./_messages.att./entry/l/" + userID + "/k/" + messageID)
+    abs("./_messages.att/entry/l/" + userID + "/k/" + messageID)
   );
   let indOfSemicolon = storedText.indexOf(";");
   let authorID = storedText.substring(0, indOfSemicolon);
@@ -92,7 +92,7 @@ export async function editMessage(messageID, newText) {
   // key for such insert queries.)
   let newStoredText = authorID + ";" + newText;
   return await post(
-    abs("./_messages.att./_insert/l/" + userID + "/k/" + messageID),
+    abs("./_messages.att/_insert/l/" + userID + "/k/" + messageID),
     newStoredText
   );
 }
@@ -112,7 +112,7 @@ export async function fetchMessages(maxNum = "1000", offset = "0") {
 
   // Fetch the list of messages.
   let list = await fetchPrivate(abs(
-    "./_messages.att./list/l/" + userID + "/a/1/n/" + maxNum + "/o/" + offset
+    "./_messages.att/list/l/" + userID + "/a/1/n/" + maxNum + "/o/" + offset
   ));
 
   // Return a transformed list where the entries are of the form

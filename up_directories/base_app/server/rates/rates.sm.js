@@ -88,7 +88,7 @@ export function fetchUserRateValue(objID, relID, subjID) {
 
 async function _fetchUserRateValue(listID, entryKey, options = undefined) {
   let ratePayload = await fetchPrivate(
-    abs("./_userRates.bt./entry/l/" + listID + "/k/" + entryKey),
+    abs("./_userRates.bt/entry/l/" + listID + "/k/" + entryKey),
     options
   );
   let rateValue = (ratePayload === undefined) ? 0 :
@@ -102,13 +102,13 @@ async function _postUserRateValue(
 ) {
   if (rateValue === 0) {
     await post(
-      abs("./_userRates.bt./_deleteEntry/l/" + listID + "/k/" + entryKey),
+      abs("./_userRates.bt/_deleteEntry/l/" + listID + "/k/" + entryKey),
       undefined, options
     );
   } else {
     let ratePayload = (rateValue === 1) ? "01" : "02";
     await post(
-      abs("./_userRates.bt./_insert/l/" + listID + "/k/" + entryKey),
+      abs("./_userRates.bt/_insert/l/" + listID + "/k/" + entryKey),
       ratePayload, options
     );
   }
@@ -125,7 +125,7 @@ export function fetchUpRateSum(objID, relID, subjID) {
 
 async function _fetchUpRateSum(listID, subjID, options = undefined) {
   let [upRateSumHex] = await fetch(
-    abs("./upRateSums.bbt./entry/l/" + listID + "/k/" + subjID),
+    abs("./upRateSums.bbt/entry/l/" + listID + "/k/" + subjID),
     options
   ) ?? [];
   if (upRateSumHex === undefined) {
@@ -142,7 +142,7 @@ async function _postUpRateSum(
   let upRateSumHex = valueToHex(upRateSum, "uint(6)");
   await post(
     abs(
-      "./upRateSums.bbt./_insert/l/" + listID + "/k/" + subjID +
+      "./upRateSums.bbt/_insert/l/" + listID + "/k/" + subjID +
       "/s/" + upRateSumHex
     ),
     undefined, options
@@ -160,7 +160,7 @@ export function fetchMixedSum(objID, relID, subjID) {
 
 async function _fetchMixedSum(listID, subjID, options = undefined) {
   let [mixedSumHex] = await fetch(
-    abs("./mixedSums.bbt./entry/l/" + listID + "/k/" + subjID),
+    abs("./mixedSums.bbt/entry/l/" + listID + "/k/" + subjID),
     options
   ) ?? [];
   if (mixedSumHex === undefined) {
@@ -177,7 +177,7 @@ async function _postMixedSum(
   let mixedSumHex = valueToHex(mixedSum, "int(6)");
   await post(
     abs(
-      "./mixedSums.bbt./_insert/l/" + listID + "/k/" + subjID +
+      "./mixedSums.bbt/_insert/l/" + listID + "/k/" + subjID +
       "/s/" + mixedSumHex
     ),
     undefined, options

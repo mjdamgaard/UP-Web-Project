@@ -1,11 +1,15 @@
 
 
+// By using "appDirID" as a key prop, we ensure that the session storage items
+// don't get mixed, meaning that the user dismissed the warning only for the
+// current app.
+export const keyProps = ["appDirID"];
 
 export function initialize() {
   return {dismissed: this.getSessionStorageItem("dismissed")};
 }
 
-export function render({isHarmful}) {
+export function render({appDirID, isHarmful}) {
   let {dismissed} = this.state; 
   return <div className={
     "warning" + (dismissed && !isHarmful ? " closed" : "")
@@ -24,9 +28,10 @@ export function render({isHarmful}) {
       </div> :
       <div className="warning-main">
         <p>
-          <b>PROCEED WITH CAUTION!</b> This app has not yet been reviewed and declared
-          as safe yet by the community, and therefore cannot be guaranteed to be
-          free from phishing attempts and free from inappropriate content.
+          <b>PROCEED WITH CAUTION!</b> This app has not yet been reviewed and
+          declared as safe yet by the community, and therefore cannot be
+          guaranteed to be free from phishing attempts and free from
+          inappropriate content.
         </p>
         <p>
           Proceed only if you 18 years or older, and know not to fall for any

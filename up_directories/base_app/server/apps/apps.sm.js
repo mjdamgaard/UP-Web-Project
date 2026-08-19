@@ -32,11 +32,11 @@ export async function fetchBestSubApp(appDirID) {
   if (userID) {
     [preferences, subAppIDListString] = await Promise.all([
       fetchUserPreferences(),
-      fetch(abs("./subApps.att./entry/k/" + appDirID))
+      fetch(abs("./subApps.att/entry/k/" + appDirID))
     ]);
   }
   else {
-    subAppIDListString = await fetch(abs("./subApps.att./entry/k/" + appDirID));
+    subAppIDListString = await fetch(abs("./subApps.att/entry/k/" + appDirID));
   }
   
   // Then redirect to the recursive fetchBestSubAppHelper(). 
@@ -47,7 +47,7 @@ export async function fetchBestSubApp(appDirID) {
   // And finally get the recorded trust class for the app, defaulting to
   // "untrusted", and return this along with the preferredAppDirID.
   let trustClass = await fetch(abs(
-    "./trustClasses.att./entry/k/" + preferredAppDirID
+    "./trustClasses.att/entry/k/" + preferredAppDirID
   ));
   return {appDirID: preferredAppDirID, trustClass: trustClass || "untrusted"};
 }
@@ -77,7 +77,7 @@ async function fetchBestSubAppHelper(
     let substituteAppID = preferences[subAppDirID];
     if (substituteAppID && substituteAppID !== subAppIDArr[i + 1]) {
       subAppIDListString = await fetch(abs(
-        "./subApps.att./entry/k/" + substituteAppID
+        "./subApps.att/entry/k/" + substituteAppID
       ));
       return await fetchBestSubAppHelper(
         substituteAppID, preferences, subAppIDListString, recLevel + 1
@@ -100,7 +100,7 @@ export async function updateBestSubApp(appDirID) {
   // reaching the first sub-app on the list that has 20 up-rates or more and
   // is also (semi-)trusted. 
   let topSubApps = await fetch(abs(
-    "../rates/mixedSums.bbt./skList/l/" + appDirID + "/n/25"
+    "../rates/mixedSums.bbt/skList/l/" + appDirID + "/n/25"
   )) ?? [];
   let subAppDirID;
   let len = topSubApps.length;
@@ -108,7 +108,7 @@ export async function updateBestSubApp(appDirID) {
     [subAppDirID, score] = topSubApps[i];
     if (!score || score < 20) continue;
     let trustClass = await fetch(abs(
-      "./trustClasses.att./entry/k/" + subAppDirID
+      "./trustClasses.att/entry/k/" + subAppDirID
     ));
     if (trustClass === "trusted" || trustClass === "semi-trusted") {
       break;
@@ -125,7 +125,7 @@ export async function updateBestSubApp(appDirID) {
   // Else fetch the subApps list for the subAppDirID, prepend subAppDirID
   // itself to it, and insert that string as the subApps.att entry for appDirID.
   let subSubAppIDListString = await fetch(abs(
-    "./subApps.att./entry/k/" + subAppDirID
+    "./subApps.att/entry/k/" + subAppDirID
   ));
   let subAppIDListString = subAppDirID + (
     subSubAppIDListString ? "," + subSubAppIDListString : ""
@@ -144,7 +144,7 @@ export async function fetchBestSubAppList(appDirID) {
   // check the origin.)
 
   let subAppIDListString = await fetch(abs(
-    "./subApps.att./entry/k/" + appDirID
+    "./subApps.att/entry/k/" + appDirID
   ));
 
   // Return the list as an array for convenience.
@@ -173,7 +173,7 @@ export async function fetchUserPreferences() {
   );
 
   let prefJSON = await fetchPrivate(abs(
-    "./_userPreferences.att./entry/k/" + userID
+    "./_userPreferences.att/entry/k/" + userID
   ));
   let preferences = prefJSON ? parse(prefJSON) : {};
   return preferences;
@@ -186,7 +186,7 @@ export async function updateUserPreference(appDirID, subAppDirID) {
   preferences = {...preferences, [appDirID]: subAppDirID};
   let newPrefJSON = stringify(preferences)
   return await post(
-    abs("./_userPreferences.att./_insert/k/" + userID), newPrefJSON
+    abs("./_userPreferences.att/_insert/k/" + userID), newPrefJSON
   );
 }
 

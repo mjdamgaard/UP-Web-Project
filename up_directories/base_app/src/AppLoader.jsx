@@ -137,7 +137,10 @@ export function render({appProps = {}}) {
   }
   else {
     this.setContext("username", undefined);
-    this.trigger("showWarning", {isHarmful: trustClass === "harmful"});
+    this.trigger("showWarning", {
+      appDirID: appDirID,
+      isHarmful: trustClass === "harmful"
+    });
   }
   return <AppComponent key={"a-" + appDirID}
     {...appProps} untrusted={!isTrusted}

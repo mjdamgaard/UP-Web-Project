@@ -59,10 +59,10 @@ export function insertInitialModerators() {
     );
     transformedInitialModeratorListProm.then(initModList => {
       post(
-        abs("~/score_handling/init_mods.bbt./_put")
+        abs("~/score_handling/init_mods.bbt/_put")
       ).then(() => {
         post(
-          abs("~/score_handling/init_mods.bbt./_insertList"),
+          abs("~/score_handling/init_mods.bbt/_insertList"),
           initModList
         ).then(
           wasUpdated => resolve(wasUpdated)
@@ -428,9 +428,9 @@ function postUserScoreHex(
       qualIDProm, subjIDProm, userEntIDProm
     ]).then(([qualID, subjID, userEntID]) => {
       let listIDHex = valueToHex(qualID + "-" + userEntID, "string");
-      post(abs("~/users.bt./_insert/k/" + userEntID));
+      post(abs("~/users.bt/_insert/k/" + userEntID));
       post(abs(
-        "~/userScores.bbt./_insert/l/" + listIDHex + "/k/" + subjID +
+        "~/userScores.bbt/_insert/l/" + listIDHex + "/k/" + subjID +
         "/s/" + scoreHex + (payloadHex ? "/p/" + payloadHex : "")
       )).then(
         wasUpdated => resolve(wasUpdated)

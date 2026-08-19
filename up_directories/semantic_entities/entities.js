@@ -19,7 +19,7 @@ export async function fetchEntityID(entKey) {
   // If entKey is a path, fetch the entID from ./entIDs.bt.
   if (entKey[0] === "/") {
     let entPathHex = valueToHex(entKey, "string");
-    return await fetch(abs("~/entIDs.bt./entry/k/" + entPathHex));
+    return await fetch(abs("~/entIDs.bt/entry/k/" + entPathHex));
   }
 
   // Else if of the form '<entID>', return a trivial promise to that entID.
@@ -56,7 +56,7 @@ export async function fetchEntityPath(entKey) {
   // the entPaths.att table.
   else {
     verifyType(entKey, "hex-string");
-    return await fetch(abs("~/entPaths.att./entry/k/" + entKey));
+    return await fetch(abs("~/entPaths.att/entry/k/" + entKey));
   }
 }
 

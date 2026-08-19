@@ -47,7 +47,7 @@ export function fetchUserScoreHex(
     ]).then(([qualID, subjID, userID]) => {
       let listIDHex = valueToHex(qualID + "-" + userID, "string");
       fetch(
-        abs("~/userScores.bbt./entry/l/" + listIDHex + "/k/" + subjID),
+        abs("~/userScores.bbt/entry/l/" + listIDHex + "/k/" + subjID),
         options
       ).then(entry => {
         let [userScoreHex] = entry ?? [];
@@ -121,7 +121,7 @@ export function fetchUserScoreHexList(
       let listIDHex = valueToHex(qualID + "-" + userID, "string");
       fetch(
         abs(
-          "~/userScores.bbt./skList/l/" + listIDHex +
+          "~/userScores.bbt/skList/l/" + listIDHex +
           (!loHex ? "" : "/lo/" + loHex) +
           (!hiHex ? "" : "/hi/" + hiHex) +
           (maxNum === undefined ? "" : "/n/" + maxNum) +

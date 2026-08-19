@@ -90,12 +90,12 @@ export async function fetchPreferredSubApp(appDirID, scoreHandlerID = "0") {
   if (userID) {
     [preferences, subAppIDListString] = await Promise.all([
       fetchUserPreferences(),
-      fetch(abs("./subApps.att./entry/l/" + scoreHandlerID + "/k/" + appDirID))
+      fetch(abs("./subApps.att/entry/l/" + scoreHandlerID + "/k/" + appDirID))
     ]);
   }
   else {
     subAppIDListString = await fetch(
-      abs("./subApps.att./entry/l/" + scoreHandlerID + "/k/" + appDirID)
+      abs("./subApps.att/entry/l/" + scoreHandlerID + "/k/" + appDirID)
     );
   }
   
@@ -130,7 +130,7 @@ async function fetchPreferredSubAppHelper(
     let substituteAppID = preferences[subAppDirID];
     if (substituteAppID && substituteAppID !== subAppIDArr[i + 1]) {
       subAppIDListString = await fetch(abs(
-        "./subApps.att./entry/l/" + scoreHandlerID + "/k/" + substituteAppID
+        "./subApps.att/entry/l/" + scoreHandlerID + "/k/" + substituteAppID
       ));
       return await fetchPreferredSubAppHelper(
         substituteAppID, scoreHandlerID, preferences, subAppIDListString,
@@ -211,7 +211,7 @@ export async function updatePreferredSubApp(appDirID, scoreHandlerID = "0") {
   // Else fetch the subApps list for the subAppDirID, prepend subAppDirID
   // itself to it, and insert that string as the subApps.att entry for appDirID.
   let subSubAppIDListString = await fetch(abs(
-    "./subApps.att./entry/l/" + scoreHandlerID + "/k/" + subAppDirID
+    "./subApps.att/entry/l/" + scoreHandlerID + "/k/" + subAppDirID
   ));
   let subAppIDListString = subAppDirID + (
     subSubAppIDListString ? "," + subSubAppIDListString : ""
@@ -231,7 +231,7 @@ export async function fetchPreferredSubAppList(appDirID, scoreHandlerID = "0") {
   // check the origin.)
 
   let subAppIDListString = await fetch(abs(
-    "./subApps.att./entry/l/" + scoreHandlerID + "/k/" + appDirID
+    "./subApps.att/entry/l/" + scoreHandlerID + "/k/" + appDirID
   ));
 
   // Return the list as an array for convenience.
@@ -260,7 +260,7 @@ export async function fetchUserPreferences() {
   );
 
   let prefJSON = fetchPrivate(abs(
-    "~/server/apps/_userPreferences.att./entry/k/" + userID
+    "~/server/apps/_userPreferences.att/entry/k/" + userID
   ));
   let preferences = parse(prefJSON);
   return preferences;
@@ -274,7 +274,7 @@ export async function updateUserPreference(appDirID, subAppDirID) {
   let newPrefJSON = stringify(preferences)
   return await post(
     abs(
-      "~/server/apps/_userPreferences.att./_insert/k/" +
+      "~/server/apps/_userPreferences.att/_insert/k/" +
       userID
     ),
     newPrefJSON
