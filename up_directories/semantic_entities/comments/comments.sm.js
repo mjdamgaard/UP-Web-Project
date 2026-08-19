@@ -8,7 +8,7 @@ import {
   fetchEntityDefinition, fetchEntityPath, getUserEntPath, postEntity,
 } from "../entities.js";
 
-const commentPathPrefix = abs("./comments.att") + "./entry/k/";
+const commentPathPrefix = abs("./comments.att") + "/entry/k/";
 
 
 
@@ -40,7 +40,7 @@ export function postComment(
             (isSingular ? "true" : "false") + ",\n" +
       "};";
     post(
-      abs("./comments.att") + "./_insert", newCommentEMSource
+      abs("./comments.att") + "/_insert", newCommentEMSource
     ).then(textID => {
       let newEntPath = commentPathPrefix + textID + ";.js;get/comment";
       postEntity(newEntPath).then(
@@ -96,7 +96,7 @@ export function editComment(commentEntKey, text, targetEntKey = undefined) {
           stringify(newCommentDef) +
           ';';
         post(
-          abs("./comments.att") + "./_insertEntry/k/" + textID,
+          abs("./comments.att") + "/_insertEntry/k/" + textID,
           newCommentEMSource
         ).then(
           wasUpdated => resolve(!!wasUpdated)

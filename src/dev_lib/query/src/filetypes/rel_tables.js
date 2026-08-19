@@ -150,7 +150,7 @@ export async function query(
     return wasDeleted;
   }
 
-  // If route equals ".../<homeDirID>/<filepath>./entry[/l/<listID>]" +
+  // If route equals ".../<homeDirID>/<filepath>/entry[/l/<listID>]" +
   // "/k/<elemKey>", read and return the table entry with the given list ID and
   // element key. Note that for binary and UTF-8 keys, listID and elemKey
   // should be hex-encoded.
@@ -184,7 +184,7 @@ export async function query(
     }
   }
 
-  // If route equals ".../<homeDirID>/<filepath>./list[/l/<listID][/lo/<lo>]" +
+  // If route equals ".../<homeDirID>/<filepath>/list[/l/<listID][/lo/<lo>]" +
   // "[/hi/<hi>][/o/<numOffset>]/n/<maxNum>/a/<isAscending>", read and return
   // the primary-key-indexed list where the elemKey is limited by lo and hi if
   // any of them are provided, and limited by a maximum number of naxNum
@@ -226,7 +226,7 @@ export async function query(
     );
   }
 
-  // If route equals ".../<homeDirID>/<filepath>./skList[/lo/<lo>][/hi/<hi>]" +
+  // If route equals ".../<homeDirID>/<filepath>/skList[/lo/<lo>][/hi/<hi>]" +
   // "[/o/<numOffset>]n=<maxNum>[/a/<isAscending>]", verify the the file type
   // is a '.bbt' file, and then read and return a list where entries are
   // ordered by their elemScore instead, i.e. by their secondary key (SK).

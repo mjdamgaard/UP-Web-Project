@@ -206,7 +206,7 @@ export class DirectoryUpdater {
         // timestamp upon return.
         deletionPromiseGenerators.push(
           () => serverQueryHandler.postAsAdmin(
-            serverFilePath + "./_rm"
+            serverFilePath + "/_rm"
           ).then(x => {
             this.#removeUploadTimestampSync(curDir + "/" + relClientPath);
             return x;
@@ -421,7 +421,7 @@ export class DirectoryUpdater {
     });
     if (/^[yY]$/.test(confResponse)) {
       let deletionPromiseGenerators = serverFilePaths.map(serverFilePath => (
-        () => serverQueryHandler.postAsAdmin(serverFilePath + "./_put")
+        () => serverQueryHandler.postAsAdmin(serverFilePath + "/_put")
       ));
       let colorStr = "\x1b[31m%s\x1b[0m"; // red color
       let len = deletionPromiseGenerators.length;

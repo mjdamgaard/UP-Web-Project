@@ -205,7 +205,7 @@ export async function fetchRatedEntities(
   let listID = arrayToHex([objID, relID], ["hex-int", "hex-int"]);
   let topSubApps = await fetch(abs(
     "./" + (disregardDownRates ? "upRateSums.bbt" : "mixedSums.bbt") +
-    "./skList/l/" + listID + "/n/" + maxNum + "/o/" + offSet
+    "/skList/l/" + listID + "/n/" + maxNum + "/o/" + offSet
   )) ?? [];
   return topSubApps.map(([subjID]) => subjID);
 }
