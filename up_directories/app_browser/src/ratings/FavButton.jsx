@@ -8,7 +8,7 @@ export async function initialize({userID, appDirID, subAppDirID}) {
   let preferences;
   if (userID && appDirID) {
     preferences = await fetchPrivate(abs(
-      "~/../base_app/server/apps/apps.sm.js/callSMF/fetchUserPreferences"
+      "~/../home_app/server/apps/apps.sm.js/callSMF/fetchUserPreferences"
     ));
   }
   preferences ??= {};
@@ -33,7 +33,7 @@ export const actions = {
     let {isFavorite} = this.state;
     isPostingRef[0] = true;
     await post(abs(
-      "~/../base_app/server/apps/apps.sm.js/callSMF/updateUserPreference/" +
+      "~/../home_app/server/apps/apps.sm.js/callSMF/updateUserPreference/" +
       appDirID + (isFavorite ? "" : "/" + subAppDirID)
     ));
     this.reset();

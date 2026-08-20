@@ -1,11 +1,11 @@
 {
   "this": [
     "semantic_entities",
-    "base_app",
+    "home_app",
     "file_browser",
     "app_browser",
     "utilities",
-    "base_app_01",
+    "home_app_01",
     "flip_game",
     "flip_game_01",
     "untrusted_example"

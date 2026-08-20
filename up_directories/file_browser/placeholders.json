@@ -1,7 +1,7 @@
 {
   "this": [
     "semantic_entities",
-    "base_app",
+    "home_app",
     "file_browser",
     "app_browser",
     "utilities"

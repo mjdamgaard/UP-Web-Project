@@ -9,11 +9,11 @@ export const keyProps = ["userID", "objID", "relID", "subjID"];
 export async function initialize({userID, objID, relID, subjID}) {
   let [[upRateSum, downRateSum], userRateVal] = await Promise.all([
     fetch(abs(
-      "~/../base_app/server/rates/rates.sm.js/callSMF/fetchUpAndDownRates/" +
+      "~/../home_app/server/rates/rates.sm.js/callSMF/fetchUpAndDownRates/" +
       objID + "/" + relID + "/" + subjID
     )),
     userID ? fetchPrivate(abs(
-      "~/../base_app/server/rates/rates.sm.js/callSMF/fetchUserRateValue/" +
+      "~/../home_app/server/rates/rates.sm.js/callSMF/fetchUserRateValue/" +
       objID + "/" + relID + "/" + subjID
     )) : new Promise(res => res()),
   ]);
@@ -63,7 +63,7 @@ export const actions = {
     let newUserRateValue = type === "up" ? (userRateVal !== 1 ? 1 : 0) : 
       (userRateVal !== -1 ? -1 : 0);
     await post(abs(
-      "~/../base_app/server/rates/rates.sm.js/callSMF/updateUpOrDownRate/" +
+      "~/../home_app/server/rates/rates.sm.js/callSMF/updateUpOrDownRate/" +
       objID + "/" + relID + "/" + subjID + "/" + newUserRateValue
     ));
     this.trigger("rating-changed", newUserRateValue);

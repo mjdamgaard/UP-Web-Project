@@ -18,7 +18,7 @@ const maxRecLevel = 3;
 
 
 // NOTE: This algorithm has not been tested yet, and is not actually used by
-// this version of the base app, as we have instead opted to use a more simple
+// this version of the home app, as we have instead opted to use a more simple
 // system of likes and dislikes at first, found in ~/../app_browser/server.
 
 

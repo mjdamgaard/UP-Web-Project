@@ -4,7 +4,7 @@ import {fetch, encodeURI} from 'query';
 
 import * as ILink from 'ILink';
 import * as InputText from 'InputText';
-import * as MissingPage from "../base_app/src/MissingPage.jsx";
+import * as MissingPage from "../home_app/src/MissingPage.jsx";
 import * as FileBrowserPage from "./src/FileBrowserPage.jsx";
 
 

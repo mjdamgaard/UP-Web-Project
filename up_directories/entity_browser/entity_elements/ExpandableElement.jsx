@@ -54,6 +54,6 @@ export const actions = {
 
 
 export const styleSheets = [
-  abs("../../base_app/style.css"),
+  abs("../../home_app/style.css"),
   abs("./ExpandableElement.css"),
 ];

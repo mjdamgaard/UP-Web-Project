@@ -2,7 +2,7 @@
 /* HOISTED IMPORTS */
 import "../semantic_entities/entities.js";
 import "./src/EntityPage.jsx";
-import "../base_app/src/MissingPage.jsx";
+import "../home_app/src/MissingPage.jsx";
 /* END */
 
 // TODO: Update the above list, and make sure to include some descendants down
@@ -16,7 +16,7 @@ import "../base_app/src/MissingPage.jsx";
 // formatted like the list seen above, at the start of the file).
 
 import * as AppBrowser from "./AppBrowser.jsx";
-import * as sharedStyle from "../base_app/style.css";
+import * as sharedStyle from "../home_app/style.css";
 import * as mainStyle from "./style.css";
 import * as entListStyle from "./src/EntityList.css";
 import * as ratingsStyle from "./src/ratings/style.css";

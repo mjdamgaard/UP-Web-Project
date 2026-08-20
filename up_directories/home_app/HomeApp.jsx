@@ -12,20 +12,20 @@ import placeholders from "./placeholders.js";
 
 const {this: {
   directories: {
-    "base_app": baseAppDirID,
+    "home_app": homeAppDirID,
     "app_browser": appBrowserDirID,
   },
 }} = placeholders;
 
 
-// The main job(s) of a "base app" is to define a header menu for the website
+// The main job(s) of a "home app" is to define a header menu for the website
 // (which apps can choose to hide and use their own headers), and the outer
 // frame of the website in general, and then to load the given app, pointed to
 // by the URL within that frame. However, it also potentially loads an updated
 // version of itself first, and then gives it a false loadUpdatedSelf prop to
 // let it know not to load any other versions of itself, but to continue as it
 // is.
-// This base app uses an AppLoader component both to load both an updated
+// This home app uses an AppLoader component both to load both an updated
 // version of itself and to load the app itself. This AppLoader component
 // implements a special system that allows users to share URLs with each other,
 // where the semantics of the shares web pages are preserved, but where the
@@ -35,8 +35,8 @@ const {this: {
 
 export function initialize() {
   return{
-    goToDefaultBaseApp: (_, wasDefault = false) => {
-      this.pushURL("~/base/" + (wasDefault ? "o" : "s") + "-" + baseAppDirID);
+    goToDefaultHomeApp: (_, wasDefault = false) => {
+      this.pushURL("~/home/" + (wasDefault ? "o" : "s") + "-" + homeAppDirID);
     },
     goToAppPage: (appDirID) => {
       this.pushURL("~/s-" + appBrowserDirID + "/app/" + appDirID);
@@ -50,17 +50,17 @@ export function render(props) {
     fetchBestVersionRouteTemplate, loadUpdatedSelf, mainStyle, AppFrame,
     appFrameStyle,
   } = props;
-  let {goToDefaultBaseApp, goToAppPage} = this.state;
+  let {goToDefaultHomeApp, goToAppPage} = this.state;
   let userID = this.getContext("userID");
 
-  // If the URL starts with "/base(/[os])?/<appDirID>", use the AppLoader
-  // component to load the base app pointed to by the "(/[os])?/<appDirID>"
+  // If the URL starts with "/home(/[os])?/<appDirID>", use the AppLoader
+  // component to load the home app pointed to by the "(/[os])?/<appDirID>"
   // segment(s). (The optional "/o" or "/s" segment respectively either makes
   // the AppLoader load the "original" app rather than looking for an updated
   // version, or loads the "standard"/default updated app without using the
   // user's individual preferences.)
   let firstSegment = this.getSegment(0);
-  if (firstSegment === "base") {
+  if (firstSegment === "home") {
     this.advanceURL(1);
     return <AppLoader key="b"
       userID={userID} appProps={{loadUpdatedSelf: false}}
@@ -69,12 +69,12 @@ export function render(props) {
   }
 
   // Else if loadUpdatedSelf is true, use the VariableApp component to load the
-  // the best up-to-date base app that also matches the user preferences, and
-  // make sure to set the loadUpdatedSelf to false for this updated base app.
-  // Also check that the URL is of the form /([os]-)?[0-9a-f]+/. (A base app
+  // the best up-to-date home app that also matches the user preferences, and
+  // make sure to set the loadUpdatedSelf to false for this updated home app.
+  // Also check that the URL is of the form /([os]-)?[0-9a-f]+/. (A home app
   // can implement other URLs as well, but only when it is loaded by another
-  // base app, or itself, meaning that the first segment of the absolute URL
-  // is the appDirID of the given base app, and thus still of the form
+  // home app, or itself, meaning that the first segment of the absolute URL
+  // is the appDirID of the given home app, and thus still of the form
   // /([os]-)?[0-9a-f]+/.)
   let isAppDirSegment = getIsAppDirSegment(firstSegment);
   if (loadUpdatedSelf) {
@@ -82,16 +82,16 @@ export function render(props) {
       return <MissingPage />;
     }
     return <VariableApp key="v"
-      appDirID={baseAppDirID} userID={userID}
+      appDirID={homeAppDirID} userID={userID}
       appProps={{loadUpdatedSelf: false}}
       fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
     />;
   }
 
-  // Else if the first segment equals "o-" + baseAppDirID, skip the AppLoader,
-  // which would otherwise load this base app itself again, and go to the
+  // Else if the first segment equals "o-" + homeAppDirID, skip the AppLoader,
+  // which would otherwise load this home app itself again, and go to the
   // switch-case statement below.
-  if (firstSegment === "o-" + baseAppDirID) {
+  if (firstSegment === "o-" + homeAppDirID) {
     firstSegment = this.getSegment(1);
   }
 
@@ -102,7 +102,7 @@ export function render(props) {
   }
 
   // Else if the URL is of the form "(/[os])?/<appDirID>" (similar to the above
-  // case but without the "/base" segment in front), redirect to the AppLoader
+  // case but without the "/home" segment in front), redirect to the AppLoader
   // component to load the app pointed to be appDirID. And in this case, also
   // wrap the AppLoader component in the AppFrame component, which defines a
   // global header for the webpage, and the global page margins, etc. (both of
@@ -115,7 +115,7 @@ export function render(props) {
     </AppFrame>;
   }
 
-  // If the URL is of the form "(o-<baseAppDirID>/)?<page-segment>", where
+  // If the URL is of the form "(o-<homeAppDirID>/)?<page-segment>", where
   // <page-segment> is one of the page segments below redirect to that page.
   let content;
   switch(firstSegment) {

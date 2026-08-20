@@ -103,7 +103,7 @@ export const games = AppClass(
 );
 export const fundamentalApps = AppClass(
   "Fundamental apps",
-  "Fundamental apps such as base apps, file browsers, app browsers, and " +
+  "Fundamental apps such as home apps, file browsers, app browsers, and " +
   "general entity browsers."
 );
 export const blogging = AppClass(

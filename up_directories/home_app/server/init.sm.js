@@ -9,10 +9,10 @@ import placeholders from "~/placeholders.js";
 const upNodeID = getNodeID();
 const {this: {
   directories: {
-    "base_app": baseAppDirID,
+    "home_app": homeAppDirID,
     "app_browser": appBrowserDirID,
     "file_browser": fileBrowserDirID,
-    "base_app_01": baseApp01DirID,
+    "home_app_01": homeApp01DirID,
     "flip_game": flipGameDirID,
     "flip_game_01": flipGame01DirID,
     "untrusted_example": untrustedAppDirID,
@@ -36,10 +36,10 @@ export async function _init_2() {
 
   let em3Path = abs("~/../semantic_entities/em3.js");
   await Promise.all([
-    postConstructedEntity(em3Path, "App", [upNodeID, baseAppDirID]),
+    postConstructedEntity(em3Path, "App", [upNodeID, homeAppDirID]),
     postConstructedEntity(em3Path, "App", [upNodeID, appBrowserDirID]),
     postConstructedEntity(em3Path, "App", [upNodeID, fileBrowserDirID]),
-    postConstructedEntity(em3Path, "App", [upNodeID, baseApp01DirID]),
+    postConstructedEntity(em3Path, "App", [upNodeID, homeApp01DirID]),
     postConstructedEntity(em3Path, "App", [upNodeID, flipGameDirID]),
     postConstructedEntity(em3Path, "App", [upNodeID, flipGame01DirID]),
     postConstructedEntity(em3Path, "App", [upNodeID, untrustedAppDirID]),
@@ -47,10 +47,10 @@ export async function _init_2() {
 
   let insertTCRouteSubstr = "./apps/trustClasses.att/_insert/k/";
   await Promise.all([
-    post(abs(insertTCRouteSubstr + baseAppDirID),     "trusted"),
+    post(abs(insertTCRouteSubstr + homeAppDirID),     "trusted"),
     post(abs(insertTCRouteSubstr + appBrowserDirID),  "trusted"),
     post(abs(insertTCRouteSubstr + fileBrowserDirID), "semi-trusted"),
-    post(abs(insertTCRouteSubstr + baseApp01DirID),   "trusted"),
+    post(abs(insertTCRouteSubstr + homeApp01DirID),   "trusted"),
     post(abs(insertTCRouteSubstr + flipGameDirID),   "semi-trusted"),
     post(abs(insertTCRouteSubstr + flipGame01DirID),   "semi-trusted"),
     // No post for untrustedAppDirID.

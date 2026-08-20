@@ -52,7 +52,7 @@ export const actions = {
     );
     let relID = await relIDProm;
     await post(abs(
-      "~/../base_app/server/rates/rates.sm.js/callSMF/updateUpOrDownRate/" +
+      "~/../home_app/server/rates/rates.sm.js/callSMF/updateUpOrDownRate/" +
       objID + "/" + relID + "/" + catID + "/1"
     ));
     return this.setState({

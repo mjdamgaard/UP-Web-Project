@@ -44,7 +44,7 @@ export async function updateBestSubApp(appEntID) {
   let appDirID = entDef["App directory ID"];
   if (appDirID) {
     await post(abs(
-      "~/../base_app/server/apps/apps.sm.js/callSMF/updateBestSubApp/" +
+      "~/../home_app/server/apps/apps.sm.js/callSMF/updateBestSubApp/" +
       appDirID
     ));
   }

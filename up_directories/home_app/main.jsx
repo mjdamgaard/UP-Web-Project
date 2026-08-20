@@ -17,7 +17,7 @@ import "./src/AboutPage.jsx";
 // point implement a command in the directory updater program, namely one that
 // creates or updates this list of hoisted imports automatically.
 
-import * as BaseApp from "./BaseApp.jsx";
+import * as HomeApp from "./HomeApp.jsx";
 import * as mainStyle from "./style.css";
 import * as AppFrame from "./src/AppFrame.jsx";
 import * as appFrameStyle from "./src/AppFrame.css";
@@ -30,7 +30,7 @@ const fetchBestVersionRouteTemplate = abs(
 
 export function render(props) {
   this.trigger("hideFrame");
-  return <BaseApp key="0"
+  return <HomeApp key="0"
     fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
     loadUpdatedSelf={props.isRoot} mainStyle={mainStyle} AppFrame={AppFrame}
     appFrameStyle={[mainStyle, appFrameStyle]} {...props}

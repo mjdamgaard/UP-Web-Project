@@ -5,7 +5,7 @@ import placeholders from "~/placeholders.js";
 
 const {this: {
   directories: {
-    "base_app": baseAppDirID,
+    "home_app": homeAppDirID,
   },
 }} = placeholders;
 
@@ -24,7 +24,7 @@ export function render({isLoggedIn}) {
 
       <div className="items">
         <div className={isLoggedIn ? "" : " inactive"} onClick={() => {
-          this.do("goTo", `/o-${baseAppDirID}/account`);
+          this.do("goTo", `/o-${homeAppDirID}/account`);
         }}>
           <span>Account</span>
         </div>
@@ -40,12 +40,12 @@ export function render({isLoggedIn}) {
           <span>Log out</span>
         </div>
         <div className={isLoggedIn ? " inactive" : ""} onClick={() => {
-          this.do("goTo", `/o-${baseAppDirID}/login`);
+          this.do("goTo", `/o-${homeAppDirID}/login`);
         }}>
           <span>Log in</span>
         </div>
         <div className={isLoggedIn ? " inactive" : ""} onClick={() => {
-          this.do("goTo", `/o-${baseAppDirID}/signup`);
+          this.do("goTo", `/o-${homeAppDirID}/signup`);
         }}>
           <span>Sign up</span>
         </div>

@@ -1,7 +1,7 @@
 
 import {fetchEntityDefinition} from "../../semantic_entities/entities.js";
 import * as TabbedPages from "../../utilities/TabbedPages.jsx";
-import * as MissingPage from "../../base_app/src/MissingPage.jsx";
+import * as MissingPage from "../../home_app/src/MissingPage.jsx";
 import * as PageHeader from "./PageHeader.jsx";
 import * as EntityList from "./EntityList.jsx";
 import * as EntityElement from "./EntityElement.jsx";

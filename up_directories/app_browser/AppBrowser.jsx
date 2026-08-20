@@ -2,7 +2,7 @@
 import {hasType} from 'type';
 import {fetchEntityID} from "../semantic_entities/entities.js";
 import * as EntityPage from "./src/EntityPage.jsx";
-import * as MissingPage from "../base_app/src/MissingPage.jsx";
+import * as MissingPage from "../home_app/src/MissingPage.jsx";
 
 const missingPageJSX = <div className="app-browser">
   <MissingPage key="m" />

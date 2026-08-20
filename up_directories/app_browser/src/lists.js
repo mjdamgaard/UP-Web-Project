@@ -17,9 +17,9 @@ const gamesPath = abs("~/../semantic_entities/em3.js;get/games");
 const appPathSubstr = abs("~/../semantic_entities/em3.js;call/App") + "/" +
   nodeID + "/";
 const appBrowserPath = appPathSubstr + getHomeDirID();
-const baseAppPath = appPathSubstr + getHomeDirID(abs("~/../base_app"));
+const homeAppPath = appPathSubstr + getHomeDirID(abs("~/../home_app"));
 const fileBrowserPath = appPathSubstr + getHomeDirID(abs("~/../file_browser"));
-const baseApp01Path = appPathSubstr + getHomeDirID(abs("~/../base_app_01"));
+const homeApp01Path = appPathSubstr + getHomeDirID(abs("~/../home_app_01"));
 const flipGamePath = appPathSubstr + getHomeDirID(abs("~/../flip_game"));
 const flipGame01Path = appPathSubstr + getHomeDirID(abs("~/../flip_game_01"));
 const untrustPath = appPathSubstr + getHomeDirID(abs("~/../untrusted_example"));
@@ -51,7 +51,7 @@ export async function fetchList(objID, relID) {
 
 export function fetchRatedEntities(objID, relID, maxNum = 50) {
   return fetch(abs(
-    "~/../base_app/server/rates/rates.sm.js/callSMF/fetchRatedEntities/" +
+    "~/../home_app/server/rates/rates.sm.js/callSMF/fetchRatedEntities/" +
     objID + "/" + relID + "/0/" + maxNum
   ));
 }
@@ -66,16 +66,16 @@ export async function fetchHardCodedList(objPath, relPath) {
         fetchEntityID(flipGamePath),
         fetchEntityID(appBrowserPath),
         fetchEntityID(fileBrowserPath),
-        fetchEntityID(baseAppPath),
+        fetchEntityID(homeAppPath),
         fetchEntityID(untrustPath),
       ]);
     }
   }
   if (relPath === versionsPath) {
-    if (objPath === baseAppPath) {
+    if (objPath === homeAppPath) {
       subjIDArr = await Promise.all([
-        fetchEntityID(baseAppPath),
-        fetchEntityID(baseApp01Path),
+        fetchEntityID(homeAppPath),
+        fetchEntityID(homeApp01Path),
       ]);
     }
     else if (objPath === appBrowserPath) {

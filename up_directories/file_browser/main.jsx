@@ -4,7 +4,7 @@ import "./src/FileBrowserPage.jsx";
 /* END */
 
 import * as FileBrowser from "./FileBrowser.jsx";
-import * as theme from "../base_app/style.css";
+import * as theme from "../home_app/style.css";
 import * as ownStyle from "./style.css";
 
 export function render(props) {

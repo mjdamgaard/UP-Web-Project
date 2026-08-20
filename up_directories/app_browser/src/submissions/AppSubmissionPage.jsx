@@ -82,7 +82,7 @@ export const actions = {
     // up rate as well by default.
     let relID = await fetchEntityID(relKey);
     await post(abs(
-      "~/../base_app/server/rates/rates.sm.js/callSMF/updateUpOrDownRate/" +
+      "~/../home_app/server/rates/rates.sm.js/callSMF/updateUpOrDownRate/" +
       objID + "/" + relID + "/" + subjID + "/1"
     ));
     return this.setState({response: <span className="text-success">
