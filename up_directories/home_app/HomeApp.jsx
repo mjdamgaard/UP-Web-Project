@@ -6,7 +6,9 @@ import * as MissingPage from "./src/MissingPage.jsx";
 import * as LoginPage from "./src/account_menu/LoginPage.jsx";
 import * as SignupPage from "./src/account_menu/SignupPage.jsx";
 import * as AccountPage from "./src/account_menu/AccountPage.jsx";
-import * as AboutPage from "./src/AboutPage.jsx";
+import * as AboutPage from "./src/pages/About.jsx";
+import * as UseCasesPage from "./src/pages/UseCases.jsx";
+import * as TutorialIndexPage from "./src/pages/TutorialIndex.jsx";
 
 import placeholders from "./placeholders.js";
 
@@ -130,6 +132,12 @@ export function render(props) {
       break;
     case "about":
       content = <AboutPage />;
+      break;
+    case "use-cases":
+      content = <UseCasesPage />;
+      break;
+    case "tutorials":
+      content = <TutorialIndexPage />;
       break;
     default:
       content = <MissingPage />;

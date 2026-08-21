@@ -7,7 +7,7 @@ import "./src/Warning.jsx";
 import "./src/account_menu/LoginPage.jsx";
 import "./src/account_menu/SignupPage.jsx";
 import "./src/account_menu/AccountPage.jsx";
-import "./src/AboutPage.jsx";
+import "./src/pages/About.jsx";
 /* END */
 
 // Here we use a convention where the main.jsx module's only responsibilities
