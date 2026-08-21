@@ -1,10 +1,14 @@
 
+import {getHomeDirID} from 'route';
 import * as ILink from 'ILink';
+
+const homeDirID = getHomeDirID();
+
 
 export function render() {
   return <div className="page about-page">
 
-    <h1>A user-programmable platform</h1>
+    <h2>A user-programmable platform</h2>
     <p>
       This is a "user-programmable" platform, which is one where the users
       themselves can actually extend and fork the apps on the platform,
@@ -20,7 +24,7 @@ export function render() {
     </p>
 
 
-    <h2>Explore this website</h2>
+    <h3>Explore this website</h3>
     <p>
       On the home page of this website, you will see a list of user uploaded
       apps of a few different varieties that you can try out by clicking on
@@ -59,7 +63,7 @@ export function render() {
     </p>
 
 
-    <h2>An easy-to-use framework</h2>
+    <h3>An easy-to-use framework</h3>
     <p>
       This platform offers a high-level development framework that is very easy
       to use. As long as you just know a little bit of JavaScript/Typescript,
@@ -72,12 +76,11 @@ export function render() {
     </p>
     <p>
       <i>A tutorial for how to get started creating and uploading your own
-      "user-programmed" apps will be available very soon, and will then linked
-      to here.</i>
+      "user-programmed" apps will be available very soon!</i>
     </p>
 
 
-    <h2>Business model</h2>
+    <h3>Business model</h3>
     <p>
       As an app-developing user, it will actually be basically free for you to
       upload your apps and have them hosted by on the platform, except only for
@@ -108,7 +111,7 @@ export function render() {
     </p>
 
 
-    <h2>Advantages</h2>
+    <h3>Advantages</h3>
     <p>
       One of the great advantages of a user-programmable platform is first of
       all that the users will be able to trust that they can get things how
@@ -147,20 +150,20 @@ export function render() {
 
 
 
-    <h2>More information</h2>
+    <h3>More information</h3>
     <p>
-      To read more about some particularly exciting use cases for this
+      To read more about some particularly exciting <b>use cases</b> for this
       technology, follow
-      <ILink key="l-use-cases" href="~/use-cases">this link</ILink>!
+      <ILink key="l-uc" href={`/o-${homeDirID}/use-cases`}>this link</ILink>!
     </p>
     <p>
       And to get started on creating your own "user-programmed" apps, see
-      the
-      <ILink key="l-tut" href="~/tutorials">tutorials</ILink>.
+      the <b>tutorials</b>{" "}
+      <ILink key="l-tut" href={`/o-${homeDirID}/tutorials`}>here</ILink>!
     </p>
     <p>
-      Or to go back and explore the current app examples further, follow 
-      <ILink key="l-home" href="~/">this link</ILink>.
+      Or to go back and <b>explore</b> the current app examples further, follow 
+      <ILink key="l-home" href="/">this link</ILink>.
     </p>
 
   </div>;

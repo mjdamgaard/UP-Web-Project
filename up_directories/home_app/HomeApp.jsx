@@ -143,7 +143,9 @@ export function render(props) {
       content = <MissingPage />;
       break;
   }
-  return <div innerStyle={appFrameStyle}>{(content)}</div>;
+  return <AppFrame key="f" style={appFrameStyle}>
+    {(content)}
+  </AppFrame>;
 }
 
 

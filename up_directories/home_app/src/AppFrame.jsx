@@ -1,8 +1,10 @@
 
+import {getHomeDirID} from 'route';
 import * as ILink from 'ILink';
-import * as AppLoader from "./AppLoader.jsx";
 import * as Warning from "./Warning.jsx";
 import * as AccountMenu from "./account_menu/AccountMenu.jsx";
+
+const homeDirID = getHomeDirID();
 
 
 // IMPORTANT: For anyone looking to build a different AppFrame, note that any
@@ -33,7 +35,7 @@ export function render({children, style}) {
   return <div innerStyle={style}>
     <div className="app-frame" onClick={() => this.call("am", "close")}>
       <header className={"app-header" + (hideHeader ? " hidden": "")}>
-        <ILink key="logo" href="~/">
+        <ILink key="logo" href="/">
           <span className="logo">UP-Web.org</span>
         </ILink>
         <div className="items">
@@ -58,31 +60,12 @@ export function render({children, style}) {
 
 
 const headerItems = <>
-  <ILink key="about" href="~/about">
-    {/* <span>About</span> */}
+  <ILink key="about" href={`/o-${homeDirID}/about`}>
+    <span>About</span>
   </ILink>
-
-  {/* <ILink key="tut" href="~/tutorials">
-    <span className="menu-item">{"Tutorials"}</span>
-  </ILink> */}
-
-  {/* <ILink key="apps" href="~/apps">
-    <span className="menu-item">{"Apps"}</span>
-  </ILink> */}
-
-  {/* <ILink key="comp" href="~/ep/1/1/em1.js;get/components">
-    <span className="menu-item">{"Components"}</span>
-  </ILink> */}
-
-  {/* <ILink key="proj" href="~/ep/1/1/em1.js;get/projects">
-    <span className="menu-item">{"Projects"}</span>
+  <ILink key="tut" href={`/o-${homeDirID}/tutorials`} >
+    <span>Tutorials</span>
   </ILink>
-  <ILink key="disc" href="~/ep/1/1/em1.js;get/discussionsClass">
-    <span className="menu-item">{"Discussions"}</span>
-  </ILink>
-  <ILink key="contr" href="~/ep/1/1/em1.js;get/contributions">
-    <span className="menu-item">{"Contributions"}</span>
-  </ILink> */}
 </>;
 
 const warning = <div>
