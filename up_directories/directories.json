@@ -4,11 +4,13 @@
     "ownDirectories": {
       "semantic_entities": "1",
       "home_app": "2",
-      "file_browser": "c",
-      "entity_browser": "d",
-      "app_browser": "e",
-      "utilities": "10",
-      "tutorials": "f"
+      "app_browser": "3",
+      "file_browser": "4",
+      "utilities": "5",
+      "home_app_01": "6",
+      "flip_game": "7",
+      "flip_game_01": "8",
+      "untrusted_example": "9"
     },
     "foreignDirectories": {}
   }

@@ -32,7 +32,7 @@ export function render(props) {
   this.trigger("hideFrame");
   return <HomeApp key="0"
     fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
-    loadUpdatedSelf={props.isRoot} mainStyle={mainStyle} AppFrame={AppFrame}
+    loadUpdatedSelf={props.isRoot} AppFrame={AppFrame}
     appFrameStyle={[mainStyle, appFrameStyle]} {...props}
   />;
 }

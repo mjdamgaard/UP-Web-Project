@@ -35,24 +35,11 @@ const {this: {
 // loads the page. See ./src/AppLoader.jsx for more information.
 
 
-export function initialize() {
-  return{
-    goToDefaultHomeApp: (_, wasDefault = false) => {
-      this.pushURL("~/home/" + (wasDefault ? "o" : "s") + "-" + homeAppDirID);
-    },
-    goToAppPage: (appDirID) => {
-      this.pushURL("~/s-" + appBrowserDirID + "/app/" + appDirID);
-    },
-  };
-}
-
 
 export function render(props) {
   let {
-    fetchBestVersionRouteTemplate, loadUpdatedSelf, mainStyle, AppFrame,
-    appFrameStyle,
+    fetchBestVersionRouteTemplate, loadUpdatedSelf, AppFrame, appFrameStyle,
   } = props;
-  let {goToDefaultHomeApp, goToAppPage} = this.state;
   let userID = this.getContext("userID");
 
   // If the URL starts with "/home(/[os])?/<appDirID>", use the AppLoader
