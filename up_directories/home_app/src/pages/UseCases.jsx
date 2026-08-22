@@ -8,27 +8,27 @@ export function render() {
     <h3>Allowing users to program their own profile pages</h3>
     <p>
       The same sandbox technology that prevents the apps on the platform from
-      hacking the users, and from interfering with each other, can also be
+      hacking the users and from interfering with other apps can also be
       used by a social media app on the platform to allow the users to program
       their own profile pages.
-    {/* </p>
-    <p>
+    </p>
+    {/* <p>
       Of course, users can always try to misinform or trick others with
       phishing attempts. But by allowing users to report malicious profile
       pages, we can catch and stop any one that tries to do this. 
-    </p>
-    <p> */}
+    </p> */}
+    <p>
       And since there is essentially no limit to what can be programmed, the
       users will thus be able to program their profile pages with the same
       amount of freedom as when programming a website. 
     </p>
     <p>
       This use case might especially be interesting for graphic designers and
-      for web developers, and programmers in general, who might want to show
+      web developers, and programmers in general, who might want to show
       off their skills on their profile pages.
     </p>
     <p>
-      Incidentally, this is <i>exactly</i> the user segment that a
+      Incidentally, this is exactly the user segment that a
       user-programmable platform have the biggest interest in attracting,
       namely since these users are exactly the kind of users who will be the
       most willing and able to help extend the apps on the platform, which
@@ -41,7 +41,7 @@ export function render() {
     </p>
 
 
-    <h3>Allowing user groups to program their own pages</h3>
+    <h3>Allowing user groups to program their own group pages</h3>
     <p>
       A social media app on a user-programmable platform can similarly also
       allow its users to create and customize their user group pages, and
@@ -88,13 +88,13 @@ export function render() {
       And with the high-level framework offered by this platform, it only takes
       a reasonably experienced developing user a single afternoon or two
       to implement a tool such as e.g. shared calender, even without using AI.
-      And once implemented, it can immediately be shared with all other users,
-      allowing them to use it for their user group pages. 
+      {/* And once implemented, it can immediately be shared with all other users,
+      allowing them to use it for their user group pages. */}
     </p>
-    <p>
+    {/* <p>
       Other users can then also immediately fork the given tool if they want,
       extending it or simply giving it another style or layout.
-    </p>
+    </p> */}
     <p>
       Thus, if the platform can only attract a reasonably-sized user base, it
       will not take long before the platform will be teeming with possibilities
@@ -107,6 +107,8 @@ export function render() {
       If the customizable user groups described above really take off, it is
       also natural to expect that some companies might want to use these as a
       cheap and easy way to get a business application that they need.
+    </p>
+    <p>
       And if the platform can also meet the data security requirements
       of such companies, which this platform will indeed strive for, it can
       thus also end up being a provider of business applications.
@@ -115,7 +117,7 @@ export function render() {
 
     <h3>Users in complete control over their algorithms</h3>
     <p>
-      Apps on a user-programmable platform can also not least allow their users
+      Apps on a user-programmable platform can also allow their users
       to be able to customize and have complete control over their algorithms.
     {/* </p> */}
     <ul>
@@ -139,17 +141,18 @@ export function render() {
         Are you tired of your data being sold to third parties, or of the
         lack of transparency in this regard?
       </i></li>
-      <li><i>
+      {/* <li><i>
         Are you tired of ads that just keep increasing in volume?
       </i></li>
       <li><i>
         Or are you tired of updates in general that make things worse?
-      </i></li>
+      </i></li> */}
     </ul>
     {/* <p> */}
       With a user-programmable platform, you will no longer have
-      to worry about any of these problems. Just choose to only use apps that
-      allows the users themselves to customize and choose their own algorithms. 
+      to worry about any of these problems. Just choose to use only apps that
+      allow you to select and customize your feed and search algorithms however
+      you want. 
     </p>
 
 

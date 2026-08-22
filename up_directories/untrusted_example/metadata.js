@@ -7,7 +7,7 @@ export const description = <div>
   <p>
     This app is an example of an app that has not been declared as trusted by
     the community. And since it is meant to serve as an example for showcasing
-    how the such apps are rendered, in particular in terms of the warnings
+    how the such apps are rendered, in particular in terms of the warning
     displayed, it is meant to stay that way, even though the app is completely
     harmless. (Of course, a harmful app might claim this as well.) 
   </p>
