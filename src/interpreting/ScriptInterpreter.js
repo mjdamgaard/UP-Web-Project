@@ -2635,6 +2635,10 @@ export class ClassObject extends ObjectObject {
 
 
 
+export function getPropertiesFromObject(obj, keyArr, node, env) {
+  return keyArr.map(key => getPropertyFromObject(obj, key, node, env));
+}
+
 export function getPropertyFromObject(obj, key, node, env) {
   if (obj instanceof ObjectObject) {
     return obj.get(key, node, env);

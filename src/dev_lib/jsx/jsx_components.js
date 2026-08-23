@@ -4,8 +4,8 @@ import {
   forEachValue, CLEAR_FLAG, PromiseObject, logExtendedErrorAndTrace,
   OBJECT_PROTOTYPE, Environment, ARRAY_PROTOTYPE, FunctionObject, Exception,
   getObjectKey, getPropertyFromObject, getPropertyFromPlainObject,
-  jsonStringify, ArgTypeError, decrCompGas, getAbsolutePath, ErrorWrapper,
-  CSSModule, isArray, verifyType, verifyTypes,
+  jsonStringify, ArgTypeError, decrCompGas, getAbsolutePath, CSSModule,
+  isArray, verifyType, verifyTypes, getPropertiesFromObject,
 } from "../../interpreting/ScriptInterpreter.js";
 import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
@@ -72,6 +72,32 @@ export const createJSXApp = new DevFunction(
         segmentContextProvisions: segmentContextProvisions,
         segmentsRef: segmentsRef,
         pathnameRef: pathnameRef,
+        globalEvents: {
+          "scrollTo": new DevFunction("scrollTo", {isAsync: true},
+            async ({callerNode, execEnv}, argArr) => {
+              return await scrollToOrBy(
+                false, null, argArr, callerNode, execEnv,
+                document.documentElement
+              );
+            }
+          ),
+          "scrollBy": new DevFunction("scrollBy", {isAsync: true},
+            async ({callerNode, execEnv}, argArr) => {
+              return await scrollToOrBy(
+                true, null, argArr, callerNode, execEnv,
+                document.documentElement
+              );
+            }
+          ),
+          "getScrollData": new DevFunction("getScrollData", {}, () => {
+            let {scrollTop, scrollHeight, scrollLeft, scrollWidth} =
+              document.documentElement;
+            return {
+              scrollTop: scrollTop, scrollHeight: scrollHeight,
+              scrollLeft: scrollLeft, scrollWidth: scrollWidth
+            };
+          }),
+        },
       }
     );
 
@@ -892,7 +918,14 @@ class JSXInstance {
   ) {
     if (this.isDiscarded) return;
     originScope ??= env.getFlag(REQUESTING_COMPONENT_FLAG);
-    if (!this.parentInstance) return;
+    if (!this.parentInstance) {
+      let eventFun = getPropertyFromPlainObject(
+        this.globals.globalEvents, eventKey
+      );
+      return !eventFun ? undefined : interpreter.executeFunction(
+        eventFun, input, node, env,
+      );
+    }
     let events = this.parentInstance.events;
     eventKey = getObjectKey(eventKey, node, env);
     let eventFun = getPropertyFromPlainObject(events, eventKey);
@@ -1380,6 +1413,30 @@ class JSXInstance {
   }
 
 
+
+  selectDOMNode(selector = undefined, node, env) {
+    let {domNode} = this;
+    if (!domNode) throw new RuntimeError(
+      "Trying to access DOM node of a JSX instance before it has been mounted",
+      node, env
+    );
+    if (!selector) return domNode;
+    try {
+      domNode = domNode.querySelector(selector);
+    } catch (_) {
+      throw new ArgTypeError(
+        `Invalid selector: "${selector}"`,
+        node, env
+      );
+    }
+    if (!domNode) new ArgTypeError(
+      `Selector did not match any descendants: "${selector}"`,
+      node, env
+    );
+    return domNode;
+  }
+
+
 }
 
 
@@ -1431,6 +1488,9 @@ export class JSXInstanceInterface extends ObjectObject {
       "canGrabFocus": this.canGrabFocus,
       "getBoundingClientRect": this.getBoundingClientRect,
       "getScrollData": this.getScrollData,
+      "scrollTo": this.scrollTo,
+      "scrollBy": this.scrollBy,
+      "scrollIntoView": this.scrollIntoView,
       "blur": this.blur,
       "delay": this.delay,
       "loop": this.loop,
@@ -1677,11 +1737,10 @@ export class JSXInstanceInterface extends ObjectObject {
 
 
   getBoundingClientRect = new DevFunction(
-    "getBoundingClientRect", {}, () => {
-      let domNode = this.jsxInstance.domNode;
-      if (!domNode.getBoundingClientRect) {
-        return undefined;
-      }
+    "getBoundingClientRect", {typeArr: ["string?"]},
+    ({callerNode, execEnv}, [selector]) => {
+      let domNode =
+        this.jsxInstance.selectDOMNode(selector, callerNode, execEnv);
       let {
         x, y, width, height, top, right, bottom, left
       } = domNode.getBoundingClientRect();
@@ -1694,13 +1753,71 @@ export class JSXInstanceInterface extends ObjectObject {
 
 
   getScrollData = new DevFunction(
-    "getScrollData", {}, () => {
-      let domNode = this.jsxInstance.domNode;
+    "getScrollData", {typeArr: ["string?"]},
+    ({callerNode, execEnv}, [selector]) => {
+      let domNode =
+        this.jsxInstance.selectDOMNode(selector, callerNode, execEnv);
       let {scrollTop, scrollHeight, scrollLeft, scrollWidth} = domNode;
       return {
         scrollTop: scrollTop, scrollHeight: scrollHeight,
         scrollLeft: scrollLeft, scrollWidth: scrollWidth
       };
+    }
+  );
+
+  scrollTo = new DevFunction(
+    "scrollTo", {isAsync: true}, async ({callerNode, execEnv}, argArr) => {
+      return await scrollToOrBy(false, this, argArr, callerNode, execEnv);
+    }
+  );
+
+  scrollBy = new DevFunction(
+    "scrollBy", {isAsync: true}, async ({callerNode, execEnv}, argArr) => {
+      return await scrollToOrBy(true, this, argArr, callerNode, execEnv);
+    }
+  );
+
+  scrollIntoView = new DevFunction(
+    "scrollIntoView", {isAsync: true, typeArr: ["boolean|object?", "string?"]},
+    async ({callerNode, execEnv}, [arg1, selector]) => {
+      arg1 ??= undefined;
+      if (typeof arg1 === "object") {
+        let [behavior, block, container, inline] = getPropertiesFromObject(
+          arg1, ["behavior", "block", "container", "inline"],
+          callerNode, execEnv
+        );
+        if (behavior && !["smooth, instant", "auto"].includes(behavior)) {
+          throw new ArgTypeError(
+            `Invalid behavior option: "${behavior}"`,
+            callerNode, execEnv
+          );
+        }
+        if (block && !["start, center", "end", "nearest"].includes(block)) {
+          throw new ArgTypeError(
+            `Invalid block option: "${block}"`,
+            callerNode, execEnv
+          );
+        }
+        if (container && !["all", "nearest"].includes(container)) {
+          throw new ArgTypeError(
+            `Invalid container option: "${container}"`,
+            callerNode, execEnv
+          );
+        }
+        if (inline && !["start, center", "end", "nearest"].includes(inline)) {
+          throw new ArgTypeError(
+            `Invalid inline option: "${inline}"`,
+            callerNode, execEnv
+          );
+        }
+        arg1 = {
+          behavior: behavior || undefined, block: block || undefined,
+          container: container || undefined, inline: inline || undefined
+        };
+      }
+      let domNode = 
+        this.jsxInstance.selectDOMNode(selector, callerNode, execEnv);
+      return await domNode.scrollIntoView(arg1);
     }
   );
 
@@ -1768,6 +1885,43 @@ export class JSXInstanceInterface extends ObjectObject {
   );
 }
 
+
+async function scrollToOrBy(
+  isBy, thisVal, argArr, node, env, domNode = undefined
+) {
+  let xCoord, yCoord, options, selector;
+  if (typeof argArr[0] === "number") {
+    isBy ? verifyTypes(argArr, ["integer", "integer", "string?"]) :
+      verifyTypes(argArr, ["integer unsigned", "integer unsigned", "string?"]);
+    [xCoord, yCoord, selector] = argArr;
+  }
+  else {
+    verifyTypes(argArr, ["object", "string?"]);
+    [options, selector] = argArr;
+  }
+  domNode ??= thisVal.jsxInstance.selectDOMNode(selector, node, env);
+  if (xCoord !== undefined) {
+    return isBy ? await domNode.scrollBy(xCoord, yCoord) :
+      await domNode.scrollTo(xCoord, yCoord);
+  }
+  else {
+    let optArr = getPropertiesFromObject(
+      options, ["top", "left", "behavior"], node, env
+    );
+    isBy ? verifyTypes(optArr, ["integer?", "integer?", "string?"]) :
+      verifyTypes(optArr, ["integer unsigned", "integer unsigned", "string?"]);
+    let [top, left, behavior] = optArr;
+    if (behavior && !["smooth, instant", "auto"].includes(behavior)) {
+      throw new ArgTypeError(
+        `Invalid behavior option: "\${behavior}"`,
+        node, env
+      );
+    }
+    let options = {top: top, left: left, behavior: behavior};
+    return isBy ? await domNode.scrollBy(options) :
+      await domNode.scrollTo(options);
+  }
+}
 
 
 
