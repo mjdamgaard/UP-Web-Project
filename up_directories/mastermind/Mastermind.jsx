@@ -1,14 +1,10 @@
 
-// Simple mastermind game app. No high score table, or backend data in general.
-// And can so far only be controlled by mouse (since keyboard events aren't
-// implemented yet for the JSX components).
-
 import {createArray} from 'array';
 import {random, floor} from 'math';
-import * as HeaderMenu from "./HeaderMenu.jsx";
-import * as GuessRow from "./GuessRow.jsx";
-import * as PegSelection from "./PegSelection.jsx";
-import * as GameOverPrompt from "./GameOverPrompt.jsx";
+import * as HeaderMenu from "./src/HeaderMenu.jsx";
+import * as GuessRow from "./src/GuessRow.jsx";
+import * as PegSelection from "./src/PegSelection.jsx";
+import * as GameOverPrompt from "./src/GameOverPrompt.jsx";
 import * as mainStyle from "./style.css";
 
 
@@ -113,15 +109,17 @@ export const actions = {
   },
   "newGame": function() {
     this.setState(initialize(this.props));
-  }
+  },
+  "exit": function() {
+    this.back();
+  },
 };
 
 export const events = [
   ["peg-selected", "insertPeg"],
   "changeCurrentSlot",
   "newGame",
-  ["exit", "newGame"], // "exit" isn't implement yet; just redirects to
-  // "new-game".
+  "exit",
 ];
 
 
@@ -177,8 +175,3 @@ export function getAnswer(newSlots, secret) {
   });
   return [answer, hasWon];
 }
-
-
-export const styleSheets = [
-  abs("./style.css"),
-];
