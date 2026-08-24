@@ -2,6 +2,7 @@
 /* HOISTED IMPORTS */
 import "./src/AppLoader.jsx";
 import "./src/VariableApp.jsx";
+import "./src/ScrollHandler.jsx";
 import "./src/MissingPage.jsx";
 import "./src/Warning.jsx";
 import "./src/account_menu/LoginPage.jsx";

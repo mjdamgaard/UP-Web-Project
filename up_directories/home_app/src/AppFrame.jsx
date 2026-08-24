@@ -3,35 +3,14 @@ import {getHomeDirID} from 'route';
 import * as ILink from 'ILink';
 import * as Warning from "./Warning.jsx";
 import * as AccountMenu from "./account_menu/AccountMenu.jsx";
-import { initialize } from './AppLoader.jsx';
 
 const homeDirID = getHomeDirID();
 
-
-// IMPORTANT: For anyone looking to build a different AppFrame, note that any
-// link that does not start with "o-" or "s-" can potentially be hijacked by
-// a currently loaded app, namely via its "stdFirstSegment" and/or its
-// "additionalURLs" (see ./AppLoader.jsx). So if a link is in anyway sensitive,
-// and should not be hijacked by an untrusted loaded app, use an "o-" or "s-"
-// app URL. (And for sensitive pages like the login page, etc., it's a good
-// idea to use, what we here call "overlay pages," i.e. pages without their own
-// URLs that just goes on top if the current page.
-// By the way, for such pages, make sure to only use input fields that do not
-// allow their focus to be grabbed from elsewhere.
-
-// TODO: Remove overlay pages, turning them into actual pages with their own
-// URL, and then also introduce a blacklist of URLs (using substrings ending in
-// wildcards) that the stdFirstSegment and additionalURLs cannot use. Then
-// correct the above warning/instruction.
-// UPDATE: Now I've blacklisted all additionalURLs that doesn't start with a
-// hexadecimal first segment, and all stdFirstSegments that isn't of the form
-// /(o-)?[0-9a-f]+/. Next up: reimplementing the overlay pages.
 
 
 export function render({children}) {
   let userID = this.getContext("userID");
   let {hideHeader, hideMargins, warningProps} = this.state;
-  this.do("handleScroll");
   this.setContext("headerIsHidden", hideHeader);
   this.setContext("marginsAreHidden", hideMargins);
   return <div className="app-frame" onClick={() => this.call("am", "close")}>
@@ -44,9 +23,9 @@ export function render({children}) {
       </div>
       <AccountMenu key="am" isLoggedIn={userID ? true : false} />
     </header>
-    {/* <div className="warning-container">
+    <div className="warning-container">
       {(!warningProps ? undefined : <Warning key="w" {...warningProps} />)}
-    </div> */}
+    </div>
     <main className={"app-main" + (hideMargins ? " no-margins" : "")}>
       <div className="click-blocker"></div>
       <div className="margin left"></div>
@@ -95,19 +74,6 @@ export const actions = {
   },
   "showWarning": function(warningProps) {
     this.setState(state => ({...state, warningProps: warningProps}));
-  },
-  "handleScroll": function() {
-    let hasScrollHandler = this.getContext("hasScrollHandler");
-    if (!hasScrollHandler) {
-      this.setContext("hasScrollHandler", true);
-      this.trigger("setOnScroll", ({scrollTop}) =>
-        this.setHistoryState(scrollTop)
-      );
-      let scrollTop = this.getHistoryState(() => this.rerender()) ?? 0;
-      this.doAfterRender(() =>
-        this.trigger("scrollTo", {top: scrollTop, behavior: "instant"})
-      );
-    }
   },
 };
 

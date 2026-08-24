@@ -6,7 +6,11 @@
 
 
 .app-header {
+  position: fixed;
+  top: 0;
+  z-index: 2;
   height: 40px;
+  width: 100%;
   font-size: 18px;
   background-color: #d4dfe4;
 }
@@ -51,8 +55,24 @@
 
 
 .app-main {
+  position: relative;
+  top: 40px;
   background-color: #f8f8f8;
   min-height: calc(100vh - 40px);
+}
+.app-frame:has(> .app-header.hidden) > .app-main {
+  top: 0;
+}
+.app-frame:has(> .warning-container > .warning.closed) > .app-main {
+  top: 60px;
+}
+.app-frame:has(> .warning-container > .warning:not(.closed)) {
+  > .app-main {
+    top: 300px;
+  }
+  > .warning-container {
+    width: 100%;
+  }
 }
 .app-container {
   min-height: calc(100vh - 40px);
@@ -233,8 +253,13 @@
 
 
 
+.warning-container {
+  position: fixed;
+  top: 40px;
+  z-index: 2;
+  background-color: rgb(255, 248, 143);
+}
 .warning-container > .warning {
-  background-color: rgba(255, 238, 0, 0.411);
   border: 3px ridge rgb(45, 42, 0);
 }
 .warning-container > .warning > .warning-bar {

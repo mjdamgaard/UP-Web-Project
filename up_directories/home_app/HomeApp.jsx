@@ -2,6 +2,7 @@
 import {getIsAppDirSegment} from "./src/AppLoader.jsx";
 import * as AppLoader from "./src/AppLoader.jsx";
 import * as VariableApp from "./src/VariableApp.jsx";
+import * as ScrollHandler from "./src/ScrollHandler.jsx";
 import * as MissingPage from "./src/MissingPage.jsx";
 import * as LoginPage from "./src/account_menu/LoginPage.jsx";
 import * as SignupPage from "./src/account_menu/SignupPage.jsx";
@@ -133,7 +134,9 @@ export function render(props) {
       break;
   }
   return <div className="home-app" innerStyle={appFrameStyle}>
-    <AppFrame key="f">{(content)}</AppFrame>
+    <ScrollHandler key={firstSegment}>
+      <AppFrame key="f">{(content)}</AppFrame>
+    </ScrollHandler>
   </div>;
 }
 

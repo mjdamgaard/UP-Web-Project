@@ -10,7 +10,8 @@ export function initialize() {
 }
 
 export function render({appDirID, isHarmful}) {
-  let {dismissed} = this.state; 
+  let {dismissed} = this.state;
+  this.trigger("showHeader");
   return <div className={
     "warning" + (dismissed && !isHarmful ? " closed" : "")
   }>
