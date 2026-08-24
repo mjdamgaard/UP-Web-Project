@@ -3,6 +3,7 @@ import {getHomeDirID} from 'route';
 import * as ILink from 'ILink';
 import * as Warning from "./Warning.jsx";
 import * as AccountMenu from "./account_menu/AccountMenu.jsx";
+import { initialize } from './AppLoader.jsx';
 
 const homeDirID = getHomeDirID();
 
@@ -27,34 +28,33 @@ const homeDirID = getHomeDirID();
 // /(o-)?[0-9a-f]+/. Next up: reimplementing the overlay pages.
 
 
-export function render({children, style}) {
+export function render({children}) {
   let userID = this.getContext("userID");
   let {hideHeader, hideMargins, warningProps} = this.state;
+  this.do("handleScroll");
   this.setContext("headerIsHidden", hideHeader);
   this.setContext("marginsAreHidden", hideMargins);
-  return <div innerStyle={style}>
-    <div className="app-frame" onClick={() => this.call("am", "close")}>
-      <header className={"app-header" + (hideHeader ? " hidden": "")}>
-        <ILink key="logo" href="/">
-          <span className="logo">UP-Web.org</span>
-        </ILink>
-        <div className="items">
-          {(headerItems)}
-        </div>
-        <AccountMenu key="am" isLoggedIn={userID ? true : false} />
-      </header>
-      <div className="warning-container">
-        {(!warningProps ? undefined : <Warning key="w" {...warningProps} />)}
+  return <div className="app-frame" onClick={() => this.call("am", "close")}>
+    <header className={"app-header" + (hideHeader ? " hidden": "")}>
+      <ILink key="logo" href="/">
+        <span className="logo">UP-Web.org</span>
+      </ILink>
+      <div className="items">
+        {(headerItems)}
       </div>
-      <main className={"app-main" + (hideMargins ? " no-margins" : "")}>
-        <div className="click-blocker"></div>
-        <div className="margin left"></div>
-        <div className="app-container no-overflow">
-          {(warningProps?.isHarmful ? undefined : children)}
-        </div>
-        <div className="margin right"></div>
-      </main>
-    </div>
+      <AccountMenu key="am" isLoggedIn={userID ? true : false} />
+    </header>
+    {/* <div className="warning-container">
+      {(!warningProps ? undefined : <Warning key="w" {...warningProps} />)}
+    </div> */}
+    <main className={"app-main" + (hideMargins ? " no-margins" : "")}>
+      <div className="click-blocker"></div>
+      <div className="margin left"></div>
+      <div className="app-container no-overflow">
+        {(warningProps?.isHarmful ? undefined : children)}
+      </div>
+      <div className="margin right"></div>
+    </main>
   </div>;
 }
 
@@ -67,12 +67,6 @@ const headerItems = <>
     <span>Tutorials</span>
   </ILink>
 </>;
-
-const warning = <div>
-  <div>
-    This app has not 
-  </div>
-</div>
 
 
 
@@ -101,6 +95,19 @@ export const actions = {
   },
   "showWarning": function(warningProps) {
     this.setState(state => ({...state, warningProps: warningProps}));
+  },
+  "handleScroll": function() {
+    let hasScrollHandler = this.getContext("hasScrollHandler");
+    if (!hasScrollHandler) {
+      this.setContext("hasScrollHandler", true);
+      this.trigger("setOnScroll", ({scrollTop}) =>
+        this.setHistoryState(scrollTop)
+      );
+      let scrollTop = this.getHistoryState(() => this.rerender()) ?? 0;
+      this.doAfterRender(() =>
+        this.trigger("scrollTo", {top: scrollTop, behavior: "instant"})
+      );
+    }
   },
 };
 

@@ -97,11 +97,13 @@ export function render(props) {
   // global header for the webpage, and the global page margins, etc. (both of
   // which the loaded app can potentially hide).
   else if (isAppDirSegment) {
-    return <AppFrame key="f" style={appFrameStyle}>
-      <AppLoader key="a" userID={userID}
-        fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
-      />
-    </AppFrame>;
+    return <div className="home-app" innerStyle={appFrameStyle}>
+      <AppFrame key="f">
+        <AppLoader key="a" userID={userID}
+          fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
+        />
+      </AppFrame>
+    </div>;
   }
 
   // If the URL is of the form "(o-<homeAppDirID>/)?<page-segment>", where
@@ -130,9 +132,9 @@ export function render(props) {
       content = <MissingPage />;
       break;
   }
-  return <AppFrame key="f" style={appFrameStyle}>
-    {(content)}
-  </AppFrame>;
+  return <div className="home-app" innerStyle={appFrameStyle}>
+    <AppFrame key="f">{(content)}</AppFrame>
+  </div>;
 }
 
 

@@ -11,7 +11,6 @@ import {
   CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
 } from "../query/src/flags.js";
 
-const NODE_ID = "1";
 
 export const CLASS_NAME_REGEX = /^ *([a-z][a-z0-9_-]* *)*$/;
 export const HREF_REGEX =
@@ -74,17 +73,17 @@ export const createJSXApp = new DevFunction(
         pathnameRef: pathnameRef,
         globalEvents: {
           "scrollTo": new DevFunction("scrollTo", {isAsync: true},
-            async ({callerNode, execEnv}, argArr) => {
+            async ({callerNode, execEnv}, [options]) => {
               return await scrollToOrBy(
-                false, null, argArr, callerNode, execEnv,
+                false, null, [options], callerNode, execEnv,
                 document.documentElement
               );
             }
           ),
           "scrollBy": new DevFunction("scrollBy", {isAsync: true},
-            async ({callerNode, execEnv}, argArr) => {
+            async ({callerNode, execEnv}, [options]) => {
               return await scrollToOrBy(
-                true, null, argArr, callerNode, execEnv,
+                true, null, [options], callerNode, execEnv,
                 document.documentElement
               );
             }
@@ -96,6 +95,25 @@ export const createJSXApp = new DevFunction(
               scrollTop: scrollTop, scrollHeight: scrollHeight,
               scrollLeft: scrollLeft, scrollWidth: scrollWidth
             };
+          }),
+          "setOnScroll": new DevFunction(
+            "setOnScroll", {typeArr: ["function"]},
+            ({callerNode, execEnv, interpreter}, [fun]) => {
+              window.onscroll = ({target}) => {
+                let {scrollHeight, scrollWidth} = target;
+                let {scrollY, scrollX} = window;
+                let e = {
+                  scrollTop: scrollY, scrollHeight: scrollHeight,
+                  scrollLeft: scrollX, scrollWidth: scrollWidth,
+                };
+                interpreter.executeFunctionOffSync(
+                  fun, [e], callerNode, execEnv
+                );
+              };
+            }
+          ),
+          "removeOnScroll": new DevFunction("removeOnScroll", {}, () => {
+            document.documentElement.removeAttribute("onscroll");
           }),
         },
       }
@@ -125,7 +143,7 @@ class JSXInstance {
     componentObject, key, keyPropStr = "", tagName, parentInstance = undefined,
     callerNode, callerEnv, globals = undefined
   ) {
-    verifyType(componentObject, "object");
+    verifyType(componentObject, "object", callerNode, callerEnv);
     this.componentObject = componentObject;
     this.key = key;
     this.keyPropStr = keyPropStr;
@@ -670,6 +688,29 @@ class JSXInstance {
             };
             break;
 
+          /* Scroll events */
+          case "onScroll":
+            eventProperty ??= "onscroll";
+          case "onScrollEnd":
+            eventProperty ??= "onscrollend";
+            if (!val) break;
+            else if (!(val instanceof FunctionObject)) throw new ArgTypeError(
+              key + " event received a non-function value",
+              jsxNode, jsxDecEnv
+            );
+
+            newDOMNode[eventProperty] = ({target}) => {
+              let {scrollTop, scrollHeight, scrollLeft, scrollWidth} = target;
+              let e = {
+                scrollTop: scrollTop, scrollHeight: scrollHeight,
+                scrollLeft: scrollLeft, scrollWidth: scrollWidth,
+              };
+              interpreter.executeFunctionOffSync(
+                val, [e], callerNode, callerEnv, new JSXInstanceInterface(this)
+              );
+            };
+            break;
+
           // TODO: Add more events, and more element properties in general, if/
           // when desired.
 
@@ -923,7 +964,7 @@ class JSXInstance {
         this.globals.globalEvents, eventKey
       );
       return !eventFun ? undefined : interpreter.executeFunction(
-        eventFun, input, node, env,
+        eventFun, [input], node, env,
       );
     }
     let events = this.parentInstance.events;
@@ -1429,7 +1470,7 @@ class JSXInstance {
         node, env
       );
     }
-    if (!domNode) new ArgTypeError(
+    if (!domNode) throw new ArgTypeError(
       `Selector did not match any descendants: "${selector}"`,
       node, env
     );
@@ -1491,6 +1532,7 @@ export class JSXInstanceInterface extends ObjectObject {
       "scrollTo": this.scrollTo,
       "scrollBy": this.scrollBy,
       "scrollIntoView": this.scrollIntoView,
+      "focus": this.focus,
       "blur": this.blur,
       "delay": this.delay,
       "loop": this.loop,
@@ -1555,6 +1597,12 @@ export class JSXInstanceInterface extends ObjectObject {
     ({callerNode, execEnv, interpreter}, [actionKey, input]) => {
       setTimeout(() => {
         try {
+          if (actionKey instanceof FunctionObject) {
+            let fun = actionKey;
+            return interpreter.executeFunctionOffSync(
+              fun, [], callerNode, execEnv
+            );
+          }
           this.jsxInstance.do(
             actionKey, input, interpreter, callerNode, execEnv
           );
@@ -1786,13 +1834,13 @@ export class JSXInstanceInterface extends ObjectObject {
           arg1, ["behavior", "block", "container", "inline"],
           callerNode, execEnv
         );
-        if (behavior && !["smooth, instant", "auto"].includes(behavior)) {
+        if (behavior && !["smooth", "instant", "auto"].includes(behavior)) {
           throw new ArgTypeError(
             `Invalid behavior option: "${behavior}"`,
             callerNode, execEnv
           );
         }
-        if (block && !["start, center", "end", "nearest"].includes(block)) {
+        if (block && !["start", "center", "end", "nearest"].includes(block)) {
           throw new ArgTypeError(
             `Invalid block option: "${block}"`,
             callerNode, execEnv
@@ -1804,7 +1852,7 @@ export class JSXInstanceInterface extends ObjectObject {
             callerNode, execEnv
           );
         }
-        if (inline && !["start, center", "end", "nearest"].includes(inline)) {
+        if (inline && !["start", "center", "end", "nearest"].includes(inline)) {
           throw new ArgTypeError(
             `Invalid inline option: "${inline}"`,
             callerNode, execEnv
@@ -1820,6 +1868,33 @@ export class JSXInstanceInterface extends ObjectObject {
       return await domNode.scrollIntoView(arg1);
     }
   );
+
+
+  focus = new DevFunction(
+    "focus", {typeArr: ["object?", "string?"]},
+    ({callerNode, execEnv}, [options, selector]) => {
+      if (options) {
+        let [preventScroll, focusVisible] = getPropertiesFromObject(
+          options, ["preventScroll", "focusVisible"], callerNode, execEnv
+        );
+        options = {
+          preventScroll: !!preventScroll, focusVisible: !!focusVisible
+        };
+      }
+      let domNode =
+        this.jsxInstance.selectDOMNode(selector, callerNode, execEnv);
+      domNode.focus(options);
+    }
+  );
+  blur = new DevFunction(
+    "blur", {typeArr: ["string?"]},
+    ({callerNode, execEnv}, [selector]) => {
+      let domNode =
+        this.jsxInstance.selectDOMNode(selector, callerNode, execEnv);
+      domNode.blur();
+    }
+  );
+
 
   // delay() and loop() are much like setTimeout() and setInterval(),
   // respectively, only where the arguments are switched, where the return
@@ -1891,12 +1966,13 @@ async function scrollToOrBy(
 ) {
   let xCoord, yCoord, options, selector;
   if (typeof argArr[0] === "number") {
-    isBy ? verifyTypes(argArr, ["integer", "integer", "string?"]) :
-      verifyTypes(argArr, ["integer unsigned", "integer unsigned", "string?"]);
+    let typeArr = isBy ? ["integer", "integer", "string?"] :
+      ["integer unsigned", "integer unsigned", "string?"];
+    verifyTypes(argArr, typeArr, node, env);
     [xCoord, yCoord, selector] = argArr;
   }
   else {
-    verifyTypes(argArr, ["object", "string?"]);
+    verifyTypes(argArr, ["object", "string?"], node, env);
     [options, selector] = argArr;
   }
   domNode ??= thisVal.jsxInstance.selectDOMNode(selector, node, env);
@@ -1908,16 +1984,17 @@ async function scrollToOrBy(
     let optArr = getPropertiesFromObject(
       options, ["top", "left", "behavior"], node, env
     );
-    isBy ? verifyTypes(optArr, ["integer?", "integer?", "string?"]) :
-      verifyTypes(optArr, ["integer unsigned", "integer unsigned", "string?"]);
+    let typeArr = isBy ? ["integer?", "integer?", "string?"] :
+      ["integer unsigned?", "integer unsigned?", "string?"];
+    verifyTypes(optArr, typeArr, node, env);
     let [top, left, behavior] = optArr;
-    if (behavior && !["smooth, instant", "auto"].includes(behavior)) {
+    if (behavior && !["smooth", "instant", "auto"].includes(behavior)) {
       throw new ArgTypeError(
-        `Invalid behavior option: "\${behavior}"`,
+        `Invalid behavior option: "${behavior}"`,
         node, env
       );
     }
-    let options = {top: top, left: left, behavior: behavior};
+    options = {top: top, left: left, behavior: behavior};
     return isBy ? await domNode.scrollBy(options) :
       await domNode.scrollTo(options);
   }
