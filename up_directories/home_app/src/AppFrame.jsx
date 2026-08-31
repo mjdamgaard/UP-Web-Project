@@ -42,9 +42,9 @@ const headerItems = <>
   <ILink key="about" href={`/o-${homeDirID}/about`}>
     <span>About</span>
   </ILink>
-  <ILink key="tut" href={`/o-${homeDirID}/tutorials`} >
+  {/* <ILink key="tut" href={`/o-${homeDirID}/tutorials`} >
     <span>Tutorials</span>
-  </ILink>
+  </ILink> */}
 </>;
 
 

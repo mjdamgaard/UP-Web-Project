@@ -76,7 +76,7 @@ const getPage = (userID) => <div className="text-page">
     </p>
     <p>
       <code className="command">{[
-        '$ node ./update_dir.js ./up_directories/message_app up-web.org',
+        '$ node ./server_interface.js ./up_directories/message_app up-web.org',
       ]}</code>
     </p>
     <p>

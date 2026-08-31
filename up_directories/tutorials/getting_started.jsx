@@ -120,7 +120,7 @@ const page = <div className="text-page">
     }</p>
     <p>
       <code className="command">{[
-        '$ node ./update_dir.js ./up_directories/hello_world up-web.org',
+        '$ node ./server_interface.js ./up_directories/hello_world up-web.org',
       ]}</code>
     </p>
     <p>{

@@ -32,6 +32,7 @@ for (let i = 0; i < optArgsLen; i++) {
     switch (flag) {
       case "-d": flag = "--directory"; break;
       case "-u": flag = "--user"; break;
+      case "-c": flag = "--create-user"; break;
       default: throw (
         'Unrecognized optional argument "' + flag + '". Expected a flag ' +
         'starting with "-".'
@@ -48,7 +49,7 @@ for (let i = 0; i < optArgsLen; i++) {
   let flagArg;
   switch (flag) {
     // Handle all boolean flags.
-    case "": // (Can be replaced with a list of actual flag names.)
+    case "--create-user":
       flagArg = true;
     break;
 
@@ -72,16 +73,42 @@ for (let i = 0; i < optArgsLen; i++) {
 let curDir = false;
 
 async function main() {
+  let createUser = optArgObj["create-user"];
+  if (createUser) {
+    let confResponse = await read({
+      prompt: "Are you use you wish to create a new user account? [y/n] "
+    });
+    if (!/^[yY]$/.test(confResponse)) {
+      console.log("Aborted");
+      return;
+    }
+  }
+
   // Prompt for the user's username and password, then try to log in.
   let username = optArgObj["user"];
   if (!username) {
     username = await read({prompt: "Username: "});
   }
-  let password = await read({prompt: "Password: ", silent: true});
+  let password, email;
+  if (createUser) {
+    email = await read({prompt: "E-mail address (can be left blank): "});
+    email = email.trim() || undefined;
+    password = await read({prompt: "Password: ", silent: true});
+    let repeatPW = await read({prompt: "Repeat password: ", silent: true});
+    if (repeatPW !== password) {
+      console.log("Repeated password did not match");
+      return;
+    }
+  }
+  else {
+    password = await read({prompt: "Password: ", silent: true});
+  }
   console.log("");
-  let userID = await directoryUpdater.login(username, password);
+  let userID = createUser ?
+    await directoryUpdater.createAccount(username, password, email) :
+    await directoryUpdater.login(username, password);
   if (!userID) {
-    console.log("Login failed");
+    console.log(createUser ? "Account creation failed" : "Login failed");
     return;
   }
   console.log(`Logged in with user #${userID}`);

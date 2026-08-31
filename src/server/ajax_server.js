@@ -256,11 +256,12 @@ async function requestHandler(req, res, returnGasRef) {
   }
   if (userID) {
     returnGasRef[0] = returnGas;
-  } else {
-    if (isPrivate) {
-      endWithUnauthenticatedError(res);
-      return;
-    }
+  }
+  else if (isPrivate) {
+    endWithUnauthenticatedError(res);
+    return;
+  }
+  else {
     gas = Object.assign({}, stdGetReqGas);
   }
 

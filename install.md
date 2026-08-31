@@ -3,7 +3,7 @@
 
 If you want to install this system as a server on your localhost, you need to:
 
-1. Install a MySQL database on your computer.
+1. Install a MySQL/MariaDB database on your computer.
 
 2. Go to the ./sql directory and follow the install.md instructions there.
 
@@ -13,38 +13,57 @@ If you want to install this system as a server on your localhost, you need to:
 
 6. With two of these terminals, start the two Node.js servers for AJAX requests, respectively located at ./src/server/ajax_server.js and ./src/server/ajax_server.js. This is done by running 'node ./src/server/ajax_server.js' in one terminal, then 'node ./src/server/login_server.js' in the other. (The node program should already be installed if you have installed npm.)
 
-7. Now go to a third terminal and run 'npm start'. After a short while, this will open your browser with the website running. However, since the database is currently empty, you will get some errors. But you should still be able to access the account menu at the top right and create a new user. Do so.
+7. Now go to a third terminal and run
+        node ./server_interface.js localhost -c
 
-8. Then go to the fourth terminal and run
-        node ./update_dir.js ./up_directories/semantic_entities
-        
-    and log in with the username and password of the account that you just created.
+    to create a new user account.
 
-9. When logged in type in 'u' (for 'upload') and press Enter. This uploads the 'semantic_entities' UP directory to your database. After you have done this, also check that the prompt has now turned into 'dir #1>', which means that your new UP directory has the ID of '1' in the database.
+8. When logged into this CLI program, first type in the command
+        cd semantic_entities
 
-10. Then, while logged in this way, you should also post the initial data for this UP directory. Do so by pressing 'p' (for 'post') followed by Enter. Then you are prompted for a "relative route" (after a '~#'), where you type in (or copy-paste) 'init.sm.js./callSMF/uploadInitialEntities'. This has the effect of calling the 'uploadInitialEntities()' server module function (SMF) located in ./up_directories/semantic_entities/init.sm.js. You then need to do the same thing for all the other functions exported by this module. So type in 'p' once again (followed by Enter), and then run 'init.sm.js./callSMF/insertInitialModerators', and then do the same for the 'postInitialScores01()' SMF, etc.
+    to change to the 'semantic_entities' directory. Then type in the single-letter command 'u' (for 'upload') in order to upload the './up_directories/semantic_entities' directory to the server.
 
-11. Now exit this program (or open up another terminal) and run 'node ./update_dir.js ./up_directories/home_app', and then log in with the same user. Here you don't need to upload any initial data, so just type 'u' followed by Enter, and that's it. And afterwards, also make sure that prompt now says 'dir #2>', as we need the semantic_entities and the home_app directories to get the IDs of '1' and '2', respectively.
+9. Repeat this process for the 'home_app' directory again (which ought to be your second upload.) In other words, run the 'cd home_app' command, followed by the 'u' command. And continue this process for all the directories listed in the './up_directories/home_app/placeholders.json' file, whose list ought to look something like this:
+    - "semantic_entities"
+    - "home_app"
+    - "file_browser"
+    - "app_browser"
+    - "utilities"
+    - "home_app_01"
+    - "flip_game"
+    - "flip_game_01"
+    - "untrusted_example"
+    - "mastermind"
 
-12. And that's it, you should now be able to go to your browser and refresh the localhost page, in which case you should have a functional version of the website running on a local server.
+    Note that some of these directories might report a failure, but that is okay for now.
 
-*Correction: There are now several more directories you need to upload. But soon this will also be easier with a new implementation, and these install instructions will be edited and corrected afterwards.*
+10. Now try to exit the program and start it again with the command
+        node ./server_interface.js localhost -d all
+
+    And after having logged in with the same user account. Run the command 'u'. This should now re-upload all these directories with no error (hopefully). (And if you ever make a change to one of the directories, you just run 'u' to upload the changes, after having logged in the same way.)
+
+11. Next, while logged into the 'server_interface.js' CLI program, run the command 'cd semantic_entities', followed by the command 'p' (for 'post'). You are then prompted for route that defines a post request. Copy and paste "init.sm.js./callSMF/uploadInitialEntities" (without the quotation marks) into this prompt and hit enter. That will insert some essential data into some database tables for this directory. 
+
+12. Then do a similar thing for the 'home_app' directory: First run 'cd home_app' to go to that directory. Then run the 'p' command and insert the string "./server/init.sm.js./callSMF/_init_1" into the prompt that follows. And afterwards run 'p' once again, this time inserting "./server/init.sm.js./callSMF/_init_2" instead.
+
+13. Now you should have uploaded and prepared all the data needed. You can then run
+        npm start
+   
+   in the last of the four terminals that you have opened, and this should start the main HTTP server on your localhost, and make your default browser open up that localhost server for you.
 
 
 
 ## Restarting the server
 
-If you want to restart the server as localhost, possibly after having restarted your computer, you then just need to go through Steps 4–6 again above, needing only three terminals this time. This is of course unless you also want to make updates to a UP directory, in which case you should also run the 'node ./update_dir.js ./up_directories/YOUR_DIRECTORY' command as well in a separate terminal.
+If you want to restart the server as localhost, possibly after having restarted your computer, you then just need to go through Steps 4–6 again above, needing only three terminals this time. This is of course unless you also want to make updates to a UP directory, in which case you should also run the 'node ./server_interface.js localhost -d all' command as well in a separate terminal.
 
 
 ## Uploading to the web instead of your localhost
 
-If wanting to upload to e.g. up-web.org (or another website with the same API), instead running the command as in Step 8 above, add 'up-web.org' as a third argument above, such that the full command instead becomes:
-
-        node ./update_dir.js ./up_directories/YOUR_UP_DIRECTORY up-web.org
+If wanting to upload to e.g. up-web.org (or another website with the same API), just change 'localhost' with 'up-web.org' in all of the above.
 
 
 
 ## Troubleshooting
 
-If you run into trouble with any of this, please don't hesitate to contact me (see ./contact_info.md).
+If you run into trouble with any of this, please don't hesitate to contact us (see ./contact_info.md).

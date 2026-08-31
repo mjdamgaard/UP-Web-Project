@@ -152,6 +152,17 @@ export class DirectoryUpdater {
     return userID;
   }
 
+  async createAccount(username, password, email = undefined) {
+    let serverQueryHandler = new ServerQueryHandler(
+      this.authToken, Infinity, fetch, this.domain
+    );
+    let [userID, authToken] = await serverQueryHandler.queryLoginServer(
+      "createAccount", email, {username: username, password: password}
+    );
+    this.authToken = authToken;
+    return userID;
+  }
+
 
   // uploadDir() first looks in 'directories.json' to get the directory ID,
   // and if none is found, it requests the server to create a new home
@@ -387,7 +398,7 @@ export class DirectoryUpdater {
 
     // If no dirID was provided, fail.
     if (!dirID) {
-      console.error("Failure: No dirID was provided.");
+      console.error("Failure: No dirID was provided");
       return;
     }
 
@@ -431,10 +442,10 @@ export class DirectoryUpdater {
           colorStr, "- Deleted data from " + serverFilePaths[i]
         );
       }
-      console.log("Data successfully deleted.");
+      console.log("Data successfully deleted");
     }
     else {
-      console.log("Aborted.");
+      console.log("Aborted");
     }
   }
 
@@ -515,7 +526,7 @@ export class DirectoryUpdater {
     let otherDirID = this.getDirID(newName, false, true);
     if (otherDirID) throw (
       "New directory name already exists in the directories" +
-      (this.domain === "localhost" ? "_local" : "") + ".json file." 
+      (this.domain === "localhost" ? "_local" : "") + ".json file" 
     );
     let curPath = this.upDirectoriesPath + "/" + curName;
     let newPath = this.upDirectoriesPath + "/" + newName;
