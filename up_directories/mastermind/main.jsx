@@ -1,9 +1,9 @@
 
 
 /* HOISTED IMPORTS */
-import "./src/HeaderMenu.jsx";
 import "./src/GuessRow.jsx";
 import "./src/PegSelection.jsx";
+import "./src/Peg.jsx";
 import "./src/GameOverPrompt.jsx";
 /* END */
 

@@ -24,6 +24,7 @@ const flipGamePath = appPathSubstr + getHomeDirID(abs("~/../flip_game"));
 const flipGame01Path = appPathSubstr + getHomeDirID(abs("~/../flip_game_01"));
 const untrustPath = appPathSubstr + getHomeDirID(abs("~/../untrusted_example"));
 const mastermindPath = appPathSubstr + getHomeDirID(abs("~/../mastermind"));
+const mastermind01Path = appPathSubstr + getHomeDirID(abs("~/../mastermind_01"));
 
 
 
@@ -94,6 +95,12 @@ export async function fetchHardCodedList(objPath, relPath) {
       subjIDArr = await Promise.all([
         fetchEntityID(flipGamePath),
         fetchEntityID(flipGame01Path),
+      ]);
+    }
+    else if (objPath === mastermindPath) {
+      subjIDArr = await Promise.all([
+        fetchEntityID(mastermindPath),
+        fetchEntityID(mastermind01Path),
       ]);
     }
   }

@@ -1,11 +1,9 @@
 
 import {createArray} from 'array';
 import {random, floor} from 'math';
-import * as HeaderMenu from "./src/HeaderMenu.jsx";
 import * as GuessRow from "./src/GuessRow.jsx";
 import * as PegSelection from "./src/PegSelection.jsx";
 import * as GameOverPrompt from "./src/GameOverPrompt.jsx";
-import * as mainStyle from "./style.css";
 
 
 export function render({maxGuesses = 10}) {
@@ -21,17 +19,14 @@ export function render({maxGuesses = 10}) {
   });
 
   return (
-    <div innerStyle={mainStyle}>
-      <div className="app">
-        <HeaderMenu key="menu" />
-        <div className="game-area">
-          <PegSelection key="pegs" />
-          <div className="rows">{(rows)}</div>
-        </div>
-        <GameOverPrompt key="prompt"
-          isDone={isDone} hasWon={hasWon} answers={answers}
-        />
+    <div className="app">
+      <div className="game-area">
+        <PegSelection key="pegs" />
+        <div className="rows">{(rows)}</div>
       </div>
+      <GameOverPrompt key="prompt"
+        isDone={isDone} hasWon={hasWon} answers={answers}
+      />
     </div>
   );
 }

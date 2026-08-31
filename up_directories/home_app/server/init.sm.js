@@ -17,6 +17,7 @@ const {this: {
     "flip_game_01": flipGame01DirID,
     "untrusted_example": untrustedAppDirID,
     "mastermind": mastermindDirID,
+    "mastermind_01": mastermind01DirID,
   },
 }} = placeholders;
 
@@ -45,6 +46,7 @@ export async function _init_2() {
     postConstructedEntity(em3Path, "App", [upNodeID, flipGame01DirID]),
     postConstructedEntity(em3Path, "App", [upNodeID, untrustedAppDirID]),
     postConstructedEntity(em3Path, "App", [upNodeID, mastermindDirID]),
+    postConstructedEntity(em3Path, "App", [upNodeID, mastermind01DirID]),
   ]);
 
   let insertTCRouteSubstr = "./apps/trustClasses.att/_insert/k/";
@@ -57,5 +59,6 @@ export async function _init_2() {
     post(abs(insertTCRouteSubstr + flipGame01DirID),   "semi-trusted"),
     // No post for untrustedAppDirID.
     post(abs(insertTCRouteSubstr + mastermindDirID),   "semi-trusted"),
+    post(abs(insertTCRouteSubstr + mastermind01DirID),   "semi-trusted"),
   ]);
 }
