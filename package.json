@@ -1,25 +1,13 @@
 {
-  "name": "my-react-app",
+  "name": "up-web-app",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
     "bcrypt": "^6.0.0",
-    "bootstrap": "^5.3.7",
-    "bootstrap-icons": "^1.13.1",
-    "buffer": "^6.0.3",
-    "jquery": "^3.7.1",
     "mysql2": "^3.14.1",
     "node-fetch": "^3.3.2",
-    "react": "^18.2.0",
     "react-scripts": "5.0.1",
-    "read": "^4.1.0",
-    "sass": "^1.89.2",
-    "tls": "^0.0.1",
-    "uint8arrays": "^5.1.0",
-    "url": "^0.11.4"
+    "read": "^4.1.0"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -44,10 +32,6 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "@types/jquery": "^3.5.18",
-    "react-router-dom": "^6.30.3"
   },
   "type": "module"
 }
