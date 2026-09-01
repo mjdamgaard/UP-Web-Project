@@ -86,7 +86,7 @@ export function render(props) {
   }
 
   // And if the tail URL is empty, go to the app browser as the default app.
-  if (!firstSegment) {
+  else if (!firstSegment) {
     this.replaceURL("./" + appBrowserDirID);
     return <div className="loading"></div>;
   }

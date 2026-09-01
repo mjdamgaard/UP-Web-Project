@@ -5,7 +5,6 @@ import {
 import {
   DOMNodeObject, validateJSXInstanceAndGetDOMNode, validateJSXInstance,
 } from "../jsx_components.js";
-import {getID} from "./getID.js";
 
 
 
@@ -23,6 +22,7 @@ export const render = new DevFunction(
       thisVal, "Form", "form", className, callerNode, execEnv
     );
     domNode.setAttribute("action", "javascript:void(0);");
+    domNode.onsubmit = () => false;
 
     // If the children prop is defined, use jsxInstance.replaceChildren() to
     // render and append those children, also making sure to record the marks

@@ -74,8 +74,11 @@ export function render({appProps = {}}) {
 
   // If no app has been loaded yet, call the "loadNewApp" action.
   if (!appDirID) {
-    let urlTail = this.getPath().substring(firstSegment.length + 2);
-    this.do("loadNewApp", [appDirIDSegment, urlTail, useOriginal, useStandard]);
+    let curPath = this.getPath();
+    let urlTail = curPath.substring(firstSegment.length + 2);
+    this.do("loadNewApp", [
+      appDirIDSegment, urlTail, curPath, useOriginal, useStandard
+    ]);
     return <div className="loading"></div>;
   }
 
@@ -92,8 +95,8 @@ export function render({appProps = {}}) {
   // additionalURLs, if any, to see if the URL matches one of its entries, and
   // if not, load a new app.
   if (firstSegment !== stdFirstSegment) {
-    let localURL = this.getPath().substring(1); // removes the "/" in front.
-    let urlTail = localURL.substring(firstSegment.length + 1);
+    let curPath = this.getPath();
+    let urlTail = curPath.substring(firstSegment.length + 2);
     let shouldLoadNewApp = true;
     if (additionalURLs && hasType(additionalURLs, "array")) {
       additionalURLs.some(urlFormat => {
@@ -103,7 +106,7 @@ export function render({appProps = {}}) {
         ) {
           return;
         }
-        if (compareStringToFormat(localURL, urlFormat)) {
+        if (compareStringToFormat(curPath.substring(1), urlFormat)) {
           let [firstFormatSegment] = urlFormat.split("/");
           if (!hasType(firstFormatSegment, "hex")) {
             // Ignore any formats that does not start with a hexadecimal
@@ -117,7 +120,7 @@ export function render({appProps = {}}) {
     }
     if (shouldLoadNewApp) {
       this.do("loadNewApp", [
-        appDirIDSegment, urlTail, useOriginal, useStandard
+        appDirIDSegment, urlTail, curPath, useOriginal, useStandard
       ]);
       return <div className="loading"></div>;
     }
@@ -152,7 +155,7 @@ export function render({appProps = {}}) {
 
 export const actions = {
   "loadNewApp": async function([
-    appDirIDSegment, urlTail, useOriginal, useStandard
+    appDirIDSegment, urlTail, curPath, useOriginal, useStandard
   ]) {
     verifyType(appDirIDSegment, "hex");
     let {userID, fetchBestVersionRouteTemplate} = this.props;
@@ -172,13 +175,16 @@ export const actions = {
     // Fetch the appData (inserting it in the cache).
     let {stdFirstSegment} = await this.do("fetchAppData", appDirID);
 
-    // Finally, replace the first segment with stdFirstSegment, also setting
-    // the history state in the process, and update the regular state as well.
-    this.replaceURL("~/" + stdFirstSegment + "/" + urlTail);
-    this.setHistoryState({appDirID: appDirID, trustClass: trustClass});
-    this.setState(state => ({
-      ...state, appDirID: appDirID, trustClass: trustClass,
-    }));
+    // Finally, if the URL hasn't changed in the meantime, replace the first
+    // segment with stdFirstSegment, also setting the history state in the
+    // process, and update the regular state as well.
+    if (this.getPath() === curPath) {
+      this.replaceURL("~/" + stdFirstSegment + "/" + urlTail);
+      this.setHistoryState({appDirID: appDirID, trustClass: trustClass});
+      this.setState(state => ({
+        ...state, appDirID: appDirID, trustClass: trustClass,
+      }));
+    }
   },
   "fetchAppData": async function(appDirID) {
     // Fetch the app component found at main.jsx in the app's home directory,
