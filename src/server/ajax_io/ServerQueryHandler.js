@@ -55,12 +55,36 @@ export class ServerQueryHandler {
     route = route.replace(/^\/this(?![a-zA-Z0-9_-])/, "/" + this.nodeID);
 
     // Construct the reqBody.
-    let reqData = {};
     let headers = {};
+    let prefStr = "";
     if (isPrivate) {
-      if (options !== undefined) reqData.options = options;
-      if (flags !== undefined) reqData.flags = flags;
+      // Add the flags to the Prefer header string.
+      Object.entries(flags).forEach(([key, val]) => {
+        if (!val) return;
+        if (prefStr) prefStr += ", ";
+        prefStr += key;
+        if (typeof val === "string") {
+          prefStr += "=" + val;
+        }
+      });
 
+      // Add the (so-far-implemented) options to the Prefer header string.
+      if (options?.returnLog) {
+        if (prefStr) prefStr += ", ";
+        prefStr += "return-log";
+      }
+      if (options?.gas) {
+        // TODO: Implement options for specifying the gas. And also perhaps
+        // implement an option to specify whether to use the user's own gas.
+        // (Right now, the default is to use the user's own gas when
+        // isPrivate == true.) The idea of not using gas would either be to be
+        // able to deposit gas via SMFs, or to get your request handled even if
+        // the server is stressed. However, in terms of the latter reason, it
+        // would be more optimal to handle this in the HTTP API layer, and not
+        // in the user-programmed application layer.
+      }
+
+      // Get the authentication token and set the Authorization header.
       let {authToken, expTime} = this.getTokenData();
       if (expTime && expTime * 1000 < Date.now() + 20) {
         throw new NetworkError(
@@ -75,13 +99,16 @@ export class ServerQueryHandler {
         "logged in"
       );
     }
-    if (isPost) {
-      reqData.isPost = true;
-      if (postData !== undefined) reqData.data = postData;
+
+    if (prefStr) {
+      headers["Prefer"] = prefStr;
     }
 
-    let reqBody = JSON.stringify(reqData);
-    return await this.request("ajax", route, !isPrivate, reqBody, headers);
+    let reqBody;
+    if (isPost) {
+      reqBody = JSON.stringify(postData);
+    }
+    return await this.#request("ajax", route, isPost, reqBody, headers);
   }
 
 
@@ -95,7 +122,7 @@ export class ServerQueryHandler {
         `Basic ${btoa(`${authOptions.username}:${authOptions.password}`)}`
     } : {};
 
-    return await this.request("login", route, false, reqBody, headers);
+    return await this.#request("login", route, true, reqBody, headers);
   }
 
 
@@ -103,10 +130,10 @@ export class ServerQueryHandler {
   #requestBuffer = new Map();
 
 
-  async request(
-    serverKey, route, isGET = true, reqBody = undefined, headers = {}
+  async #request(
+    serverKey, route, isPost = false, reqBody = undefined, headers = {}
   ) {
-    let reqKey = JSON.stringify([serverKey, route, isGET, reqBody, headers]);
+    let reqKey = JSON.stringify([serverKey, route, isPost, reqBody, headers]);
 
     // If there is already an ongoing request with this reqData object,
     // simply return the promise of that.
@@ -120,7 +147,7 @@ export class ServerQueryHandler {
 
     // Send the request.
     responsePromise = this.#requestHelper(
-      serverKey, route, isGET, reqBody, headers
+      serverKey, route, isPost, reqBody, headers
     ).then(
       x => x, err => new ErrorWrapper(err)
     );
@@ -137,14 +164,14 @@ export class ServerQueryHandler {
   }
 
 
-  async #requestHelper(serverKey, route, isGET, reqBody, headers) {
+  async #requestHelper(serverKey, route, isPost, reqBody, headers) {
     // Send the request.
-    let options = isGET ? {
-      headers: headers,
-    } : {
+    let options = isPost ? {
       method: "POST",
       headers: headers,
       body: reqBody,
+    } : {
+      headers: headers,
     };
     let fetch = this.fetch;
     let response;

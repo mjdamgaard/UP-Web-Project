@@ -11,7 +11,8 @@
       "flip_game": "7",
       "flip_game_01": "8",
       "untrusted_example": "9",
-      "mastermind": "a"
+      "mastermind": "a",
+      "mastermind_01": "b"
     },
     "foreignDirectories": {}
   }

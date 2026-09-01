@@ -170,85 +170,39 @@ http.createServer(async function(req, res) {
 
 async function requestHandler(req, res, returnGasRef) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Headers", "Authorization");
+  res.setHeader("Access-Control-Allow-Headers", "Authorization, Prefer");
   if (req.method === "OPTIONS") {
     res.setHeader("Cache-Control", "max-age=604800");
     res.end("");
     return;
   }
 
-  // The server only implements GET and POST requests, where for the POST 
-  // requests the request body is a JSON object.
-  let route = req.url;
-  let reqParams = {};
-  let isPrivate = false;
-  if (req.method === "POST") {
-    // Set isPrivate as true, and get and parse the request params.
-    isPrivate = true;
-    let reqBody = await getData(req);
-    let isValidJSON = true;
-    try {
-      reqParams = JSON.parse(reqBody || "{}");
-    }
-    catch (err) {
-      isValidJSON = false;
-    }
-    if (!isValidJSON || !reqParams || typeof reqParams !== "object") {
-      throw new ClientError(
-        "Post request body not a JSON object"
-      );
-    }
-  }
-  else if (req.method !== "GET") throw new ClientError(
-    "Server only accepts the GET and POST methods"
-  );
-
-  // Get optional isPost and postData, as well as the optional user credentials
-  // (username and password/token), and the options parameter.
-  let {
-    isPost = false, data: postData, flags: reqFlags = {}, options = {},
-  } = reqParams;
-
-  // Also extract some additional optional parameters from options.
-  if (!options || typeof options !== "object") {
-    options = {};
-  }
-  if (isPrivate) {
+  // Parse the flags and options from the Prefer header, along with some other
+  // parameters obtained from the headers and the method.
+  let isPost = req.method === "POST";
+  let authHeader = req.headers["authorization"];
+  let preferences = parsePreferHeader(req.headers["prefer"]);
+  let flags = FlagTransmitter.receiveFlags(preferences);
+  let returnLog = preferences["return-log"];
+  let options = {};
+  if (authHeader) {
     options.isPrivate = true;
   }
-  let {returnLog, gas: reqGas = {}} = options;
-
-  // For now, we ignore the reqGas object, as this gives the early developers/
-  // user programmers the possibility not to use database transactions. When we
-  // then implement database transactions (which won't take long), we can give
-  // these devs/users a little time to correct their SMs before we remove the
-  // following line again.
-  reqGas = {};  
-
-
-  // Call FlagTransmitter.receiveFlags(), with the optional reqFlags array
-  // determined by the client, to get the flags which are raised initially for
-  // when the main() function is executed.
-  let flags = FlagTransmitter.receiveFlags(reqFlags);
 
 
   // If the header includes an Authorization header, query the DB in order to
-  // authenticate the user. We obtain the userID in this process as well, which
-  // we use it to set the "user ID context" (which has this form due to
-  // compatibility with the front-end interpreter). We also get the gas for the
-  // interpretation in the same process.
+  // authenticate the user. We obtain the userID in this process as well, and
+  // we also get the gas for the interpretation in the same process.
+  // (For now we always use the users own gas in case if isPrivate == true.)
   let userID, gas, returnGas;
   let requestAdminPrivileges = flags.includes(REQUEST_ADMIN_PRIVILEGES_FLAG);
-  let authHeader = req.headers["authorization"];
   if (authHeader) {
     let [ , authToken] = AUTH_TOKEN_REGEX.exec(authHeader) ?? [];
     if (!authToken) throw new ClientError(
       "Invalid or unrecognized authorization header"
     );
     let stdGas = requestAdminPrivileges ? stdElevatedPostReqGas : stdPostReqGas;
-    [userID, gas, returnGas] = await getUserIDAndGas(
-      authToken, stdGas, reqGas
-    );
+    [userID, gas, returnGas] = await getUserIDAndGas(authToken, stdGas, {});
     if (!userID) {
       endWithUnauthenticatedError(res);
       return;
@@ -257,13 +211,41 @@ async function requestHandler(req, res, returnGasRef) {
   if (userID) {
     returnGasRef[0] = returnGas;
   }
-  else if (isPrivate) {
+  else if (isPost) {
     endWithUnauthenticatedError(res);
     return;
   }
   else {
     gas = Object.assign({}, stdGetReqGas);
   }
+
+
+  // The server currently only implements GET and POST requests, where for the
+  // POST requests the request body is a JSON object. We will also implement
+  // binary request bodies at some point for BLOB uploads.
+  let route = req.url;
+  let postData;
+  if (req.method === "POST") {
+    // Get and parse the post request body.
+    let reqBody = await getData(req);
+    let isValidJSON = true;
+    if (reqBody) {
+      try {
+        postData = JSON.parse(reqBody);
+      }
+      catch (err) {
+        isValidJSON = false;
+      }
+    }
+    if (!isValidJSON) {
+      throw new ClientError(
+        "Post request body must be a JSON object"
+      );
+    }
+  }
+  else if (req.method !== "GET") throw new ClientError(
+    "Server only accepts the GET and POST methods"
+  );
 
 
 
@@ -357,6 +339,21 @@ function serialize(val) {
   // TODO: Implement other MIME types if and when needed. 
 }
 
+
+
+
+function parsePreferHeader(prefStr) {
+  let ret = {}
+  if (prefStr) {
+    let prefArr = prefStr.split(",");
+    prefArr.forEach(pref => {
+      let [key, val] = pref.trim().split("=");
+      if (val === undefined) val = true;
+      if (key) ret[key] = val;
+    });
+  }
+  return ret
+}
 
 
 
