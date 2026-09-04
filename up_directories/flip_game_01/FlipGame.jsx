@@ -28,7 +28,7 @@ export function render() {
     <div className="game-row">{(
       row.map((val, colInd) => (
         <div className={"game-square" + (val ? " colored" : "")}
-          onClick={() => this.do("newMove", [rowInd, colInd])}
+          onClick={() => this.do("newMove", rowInd, colInd)}
         ></div>
       ))
     )}</div>
@@ -70,7 +70,7 @@ export function render() {
 
 
 export const actions = {
-  "newMove": function([rowInd, colInd]) {
+  "newMove": function(rowInd, colInd) {
     let {size = 3, gameState, moveCount, moves, winningMoveCount} = this.state;
     if (moves.length > moveCount) moves.length = moveCount;
     moveCount++;

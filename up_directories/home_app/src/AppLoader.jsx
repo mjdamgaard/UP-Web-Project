@@ -76,9 +76,9 @@ export function render({appProps = {}}) {
   if (!appDirID) {
     let curPath = this.getPath();
     let urlTail = curPath.substring(firstSegment.length + 2);
-    this.do("loadNewApp", [
+    this.do("loadNewApp",
       appDirIDSegment, urlTail, curPath, useOriginal, useStandard
-    ]);
+    );
     return <div className="loading"></div>;
   }
 
@@ -119,9 +119,9 @@ export function render({appProps = {}}) {
       });
     }
     if (shouldLoadNewApp) {
-      this.do("loadNewApp", [
+      this.do("loadNewApp",
         appDirIDSegment, urlTail, curPath, useOriginal, useStandard
-      ]);
+      );
       return <div className="loading"></div>;
     }
   }
@@ -154,9 +154,9 @@ export function render({appProps = {}}) {
 
 
 export const actions = {
-  "loadNewApp": async function([
+  "loadNewApp": async function(
     appDirIDSegment, urlTail, curPath, useOriginal, useStandard
-  ]) {
+  ) {
     verifyType(appDirIDSegment, "hex");
     let {userID, fetchBestVersionRouteTemplate} = this.props;
 

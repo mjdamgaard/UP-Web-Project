@@ -58,7 +58,7 @@ export const actions = {
     let {entID, type} = this.props;
     let {entDef} = this.state;
     if (type === "app") {
-      this.trigger("goToApp", [entDef["App directory ID"]]);
+      this.trigger("goToApp", entDef["App directory ID"]);
     } else {
       this.trigger("goToCatPage", entID);
     }

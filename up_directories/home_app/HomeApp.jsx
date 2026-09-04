@@ -99,11 +99,10 @@ export function render(props) {
   // which the loaded app can potentially hide).
   else if (isAppDirSegment) {
     return <div className="home-app" innerStyle={appFrameStyle}>
-      <AppFrame key="f">
-        <AppLoader key="a" userID={userID}
-          fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
-        />
-      </AppFrame>
+      <AppFrame key="f" appLoaderProps={{
+        userID: userID,
+        fetchBestVersionRouteTemplate: fetchBestVersionRouteTemplate,
+      }} />
     </div>;
   }
 
@@ -143,9 +142,9 @@ export function render(props) {
 
 
 export const actions = {
-  "goToApp": function([
+  "goToApp": function(
     appDirID, tailURL = "", useOriginal = false, useStandard = false
-  ]) {
+  ) {
     let initSegment = useOriginal ? "/o" : useStandard ? "/s" : "";
     this.pushURL("~" + initSegment + "/" + appDirID + "/" + tailURL);
   },

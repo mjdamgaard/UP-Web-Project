@@ -170,7 +170,7 @@ export const events = [
 
 
 export const actions = {
-  "updateListLimits": function([minScore, minWeight]) {
+  "updateListLimits": function(minScore, minWeight) {
     this.setState(state => ({
       ...state, curMinScore: minScore, curMinWeight: minWeight,
     }));

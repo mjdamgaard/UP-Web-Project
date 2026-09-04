@@ -7,9 +7,15 @@ import * as Label from 'Label';
 
 
 export function render({}) {
-  let {response} = this.state;
+  let {response, hasGoneBack} = this.state;
   let userNameIDKey = Symbol("input-username");
   let passwordIDKey = Symbol("input-password");
+
+  let userID = this.getContext("userID");
+  if (userID && !hasGoneBack) {
+    this.setState({response: response, hasGoneBack: true});
+    this.back();
+  }
 
   return <div className="login-page full-page">
     <div className="go-back-button" onClick={() => this.back()}></div>
@@ -40,13 +46,11 @@ export function render({}) {
 
 export const actions = {
   "submit": function() {
-    let username = this.call("f", "call", ["i-usr", "getValue"]);
-    let password = this.call("f", "call", ["i-pw", "getValue"]);
+    let username = this.call("f", "call", "i-usr", "getValue");
+    let password = this.call("f", "call", "i-pw", "getValue");
     login(username, password).then(response => {
       if (response) {
         this.setState({response: response});
-      } else {
-        this.back();
       }
     }).catch(err => {
       console.error(err);

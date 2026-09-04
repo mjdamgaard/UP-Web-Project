@@ -7,10 +7,16 @@ import * as Label from 'Label';
 
 
 export function render({}) {
-  let {response} = this.state;
+  let {response, hasGoneBack} = this.state;
   let userNameIDKey = Symbol("input-username");
   let passwordIDKey = Symbol("input-password");
   let emailIDKey = Symbol("input-email");
+
+  let userID = this.getContext("userID");
+  if (userID && !hasGoneBack) {
+    this.setState({response: response, hasGoneBack: true});
+    this.back();
+  }
 
   return <div className="signup-page full-page">
     <div className="go-back-button" onClick={() => this.back()}></div>
@@ -47,14 +53,12 @@ export function render({}) {
 
 export const actions = {
   "submit": function() {
-    let username = this.call("f", "call", ["i-usr", "getValue"]);
-    let password = this.call("f", "call", ["i-pw", "getValue"]);
-    let email = this.call("f", "call", ["i-email", "getValue"]) || undefined;
+    let username = this.call("f", "call", "i-usr", "getValue");
+    let password = this.call("f", "call", "i-pw", "getValue");
+    let email = this.call("f", "call", "i-email", "getValue") || undefined;
     createAccount(username, password, email).then(response => {
       if (response) {
         this.setState({response: response});
-      } else {
-        this.back();
       }
     }).catch(err => {
       console.error(err);

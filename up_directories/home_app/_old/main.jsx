@@ -68,11 +68,11 @@ export function render() {
 
 export const actions = {
   ...urlActions,
-  "pushState": function([state, url]) {
+  "pushState": function(state, url) {
     clearPermissions(() => this.pushURL(url, state));
     return true;
   },
-  "replaceState": function([state, url]) {
+  "replaceState": function(state, url) {
     clearPermissions(() => this.replaceURL(url, state));
     return true;
   },

@@ -42,7 +42,7 @@ export function render() {
 // desired JSXInstance object.)
 export const actions = {
   // The "new-move" event is triggered when a square is selected by the user.
-  "new-move": function([rowInd, colInd]) {
+  "new-move": function(rowInd, colInd) {
     let rowNum = 3, colNum = 3;
 
     // Call the flip() method of the square at (rowInd, colInd), as well as all
@@ -67,7 +67,7 @@ export const actions = {
 // The 'events' export of a component declares all the actions that should be
 // elevated as "events" of the component, which can then be triggered by
 // any of its descendant instances. An event is triggered by a descendant
-// instance via 'this.trigger(<event key>, [input])'.
+// instance via 'this.trigger(<event key>, ...arguments)'.
 export const events = [
   "new-move",
 ];

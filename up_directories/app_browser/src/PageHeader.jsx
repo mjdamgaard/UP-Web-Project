@@ -37,7 +37,7 @@ export function render({entDef, type, entID, ancCatIDs, ancAppIDs}) {
   let parent = parentApp ?? ancCatIDs.at(-1);
   return <div className="page-header">
     <div className={"go-up-button" + (parent ? "" : " inactive")}
-      onClick={() => parent && this.do("goUpOnePage", [parentApp, parent])}>
+      onClick={() => parent && this.do("goUpOnePage", parentApp, parent)}>
     </div>
     <div className="title-and-links">
       <h2>
@@ -84,7 +84,7 @@ export function render({entDef, type, entID, ancCatIDs, ancAppIDs}) {
 
 
 export const actions = {
-  "goUpOnePage": function([parentApp, parent]) {
+  "goUpOnePage": function(parentApp, parent) {
     if (parentApp) {
       this.pushURL("../");
     }

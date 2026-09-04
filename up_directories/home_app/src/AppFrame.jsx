@@ -3,16 +3,22 @@ import {getHomeDirID} from 'route';
 import * as ILink from 'ILink';
 import * as Warning from "./Warning.jsx";
 import * as AccountMenu from "./account_menu/AccountMenu.jsx";
+import * as AppLoader from "./AppLoader.jsx";
 
 const homeDirID = getHomeDirID();
 
 
 
-export function render({children}) {
+export function render({children, appLoaderProps}) {
   let userID = this.getContext("userID");
   let {hideHeader, hideMargins, warningProps} = this.state;
   this.setContext("headerIsHidden", hideHeader);
   this.setContext("marginsAreHidden", hideMargins);
+
+  if (appLoaderProps) {
+    children = <AppLoader key="a" {...appLoaderProps} />;
+  }
+
   return <div className="app-frame" onClick={() => this.call("am", "close")}>
     <header className={"app-header" + (hideHeader ? " hidden": "")}>
       <ILink key="logo" href="/">

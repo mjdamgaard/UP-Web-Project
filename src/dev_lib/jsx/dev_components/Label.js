@@ -49,16 +49,14 @@ export const methods = [
 
 export const actions = {
   "call": new DevFunction(
-    "call", {typeArr: ["array"]},
-    function({thisVal, callerNode, execEnv, interpreter}, [inputArr]) {
-    validateJSXInstance(thisVal, "Label", callerNode, execEnv);
-    if (inputArr instanceof ObjectObject) {
-      inputArr = inputArr.members;
-    }
-    let [childKey, methodKey, input] = inputArr;
-    return thisVal.jsxInstance.call(
-      childKey, methodKey, input, interpreter, callerNode, execEnv
-    );
+    "call", {}, function(
+      {thisVal, callerNode, execEnv, interpreter},
+      [childKey, methodKey, ...inputArr]
+    ) {
+      validateJSXInstance(thisVal, "Label", callerNode, execEnv);
+      return thisVal.jsxInstance.call(
+        childKey, methodKey, inputArr, interpreter, callerNode, execEnv
+      );
     }
   ),
 };

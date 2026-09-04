@@ -28,7 +28,7 @@ export function render({children, keepAlive = true}) {
 
 
 export const actions = {
-  "call": function([key, input]) {
+  "call": function(key, input) {
     return this.call(key, input);
   }
 };

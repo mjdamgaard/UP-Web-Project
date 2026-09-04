@@ -73,17 +73,17 @@ export const createJSXApp = new DevFunction(
         pathnameRef: pathnameRef,
         globalEvents: {
           "scrollTo": new DevFunction("scrollTo", {isAsync: true},
-            async ({callerNode, execEnv}, [options]) => {
+            async ({callerNode, execEnv}, argArr) => {
               return await scrollToOrBy(
-                false, null, [options], callerNode, execEnv,
+                false, null, argArr, callerNode, execEnv,
                 document.documentElement
               );
             }
           ),
           "scrollBy": new DevFunction("scrollBy", {isAsync: true},
-            async ({callerNode, execEnv}, [options]) => {
+            async ({callerNode, execEnv}, argArr) => {
               return await scrollToOrBy(
-                true, null, [options], callerNode, execEnv,
+                true, null, argArr, callerNode, execEnv,
                 document.documentElement
               );
             }
@@ -143,7 +143,7 @@ class JSXInstance {
     componentObject, key, keyPropStr = "", tagName, parentInstance = undefined,
     callerNode, callerEnv, globals = undefined
   ) {
-    verifyType(componentObject, "object", callerNode, callerEnv);
+    verifyType(componentObject, "object", false, callerNode, callerEnv);
     this.componentObject = componentObject;
     this.key = key;
     this.keyPropStr = keyPropStr;
@@ -173,6 +173,14 @@ class JSXInstance {
     this.actions = {};
     this.methods = {};
     this.events = {};
+    let [contextTransformer, eventTransformer] = getPropertiesFromObject(
+      componentObject, ["contextTransformer", "eventTransformer"],
+      callerNode, callerEnv
+    );
+    verifyType(contextTransformer, "function", true, callerNode, callerEnv);
+    verifyType(eventTransformer, "function", true, callerNode, callerEnv);
+    this.contextTransformer = contextTransformer;
+    this.eventTransformer = eventTransformer;
     this.segmentIndex = parentInstance?.nextSegmentIndex ?? 0;
     this.nextSegmentIndex = this.segmentIndex;
     this.hasHistoryState = undefined;
@@ -929,15 +937,15 @@ class JSXInstance {
   }
 
 
-  // do(actionKey, input?) triggers the action of the instance with the given
+  // do(actionKey, ...args) triggers the action of the instance with the given
   // actionKey, and with the optional second argument as the argument of the
   // action function.
-  do(actionKey, input, interpreter, node, env) {
+  do(actionKey, inputArr, interpreter, node, env) {
     actionKey = getObjectKey(actionKey, node, env);
     let eventFun = getPropertyFromPlainObject(this.actions, actionKey);
     if (eventFun) {
       return interpreter.executeFunction(
-        eventFun, [input], node, env, new JSXInstanceInterface(this),
+        eventFun, inputArr, node, env, new JSXInstanceInterface(this),
       );
     }
     else throw new RuntimeError(
@@ -947,37 +955,64 @@ class JSXInstance {
     );
   }
 
-  // trigger(eventKey, input?) triggers an event to the first among the
+  // trigger(eventKey, ...args) triggers an event to the first among the
   // instance's ancestors who has an event that matches the eventKey. The
   // events are declared by the 'events' object exported by the component
   // module, which is an array of action keys or [eventKey, actionKey] pair
   // arrays (or a mix). If no ancestors has an event of a matching key, then
   // trigger() just fails silently.
-  trigger(
-    eventKey, input, interpreter, node, env, originScope = undefined,
-    originKey = this.key
-  ) {
-    if (this.isDiscarded) return;
-    originScope ??= env.getFlag(REQUESTING_COMPONENT_FLAG);
-    if (!this.parentInstance) {
+  trigger(eventKey, inputArr, interpreter, node, env) {
+    let {parentInstance, isDiscarded} = this;
+    if (isDiscarded) return;
+    if (!parentInstance) {
       let eventFun = getPropertyFromPlainObject(
         this.globals.globalEvents, eventKey
       );
       return !eventFun ? undefined : interpreter.executeFunction(
-        eventFun, [input], node, env,
+        eventFun, inputArr, node, env
       );
     }
-    let events = this.parentInstance.events;
+    let events = parentInstance.events;
     eventKey = getObjectKey(eventKey, node, env);
+
+    // If parentInstance.eventTransformer is defined, we call it on
+    // (childKey, eventKey, ...inputArr) to get either a falsy value, blocking
+    // the event from propagating further, or a value of true, meaning no
+    // changes to the event, or an [eventKey, ...inputArr] array, which then
+    // transforms the triggered event before it even reaches the
+    // parentInstance's own event handlers (or any of its ancestors).
+    if (parentInstance.eventTransformer) {
+      let transformedTriggerArguments = interpreter.executeFunction(
+        parentInstance.eventTransformer, [this.key, eventKey, ...inputArr],
+        node, env, new JSXInstanceInterface(parentInstance)
+      );
+      if (!transformedTriggerArguments) {
+        return transformedTriggerArguments;
+      }
+      else if (transformedTriggerArguments !== true) {
+        if (transformedTriggerArguments instanceof ObjectObject) {
+          transformedTriggerArguments = transformedTriggerArguments.members;
+        }
+        if (!(transformedTriggerArguments instanceof Array)) {
+          throw new RuntimeError(
+            parentInstance.tagName + ".eventTransformer() returned a " +
+            "truthy, non-boolean, non-array value",
+            node, env
+          );
+        }
+        [eventKey, ...inputArr] = transformedTriggerArguments;
+        eventKey = getObjectKey(eventKey, node, env);
+      }
+    }
+
     let eventFun = getPropertyFromPlainObject(events, eventKey);
     if (eventFun) {
-      let childKey = this.key;
-      let [clientTrust, reqCompPath] = this.parentInstance.compEnv.getFlags([
+      let [clientTrust, reqCompPath] = parentInstance.compEnv.getFlags([
         CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
       ]);
       return interpreter.executeFunction(
-        eventFun, [input, childKey, originScope, originKey],
-        node, env, new JSXInstanceInterface(this.parentInstance), [
+        eventFun, inputArr, node, env,
+        new JSXInstanceInterface(parentInstance), [
           CLEAR_FLAG, CAN_POST_FLAG,
           [CLIENT_TRUST_FLAG, clientTrust],
           [REQUESTING_COMPONENT_FLAG, reqCompPath]
@@ -985,21 +1020,20 @@ class JSXInstance {
       );
     }
     else {
-      return this.parentInstance.trigger(
-        eventKey, input, interpreter, node, env, originScope, originKey
+      return parentInstance.trigger(
+        eventKey, inputArr, interpreter, node, env
       );
     }
-
   }
 
-  // call(instanceKey, methodKey, input?) calls the method of the given
+  // call(instanceKey, methodKey, ...args) calls the method of the given
   // methodKey on the the child instance of the given instanceKey. The methods
   // of an instance is declared by the 'methods' object exported by the
   // component module. As for the events, the methods are defined by an array
   // of action keys, or alias--actionKey pairs, such that all methods are
   // redirected to an action.
   call(
-    instanceKey, methodKey, input, interpreter, node, env
+    instanceKey, methodKey, inputArr, interpreter, node, env
   ) {
     instanceKey = getObjectKey(instanceKey, node, env);
 
@@ -1019,7 +1053,7 @@ class JSXInstance {
         CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
       ]);
       return interpreter.executeFunction(
-        methodFun, [input], node, env,
+        methodFun, inputArr, node, env,
         new JSXInstanceInterface(targetInstance), [
           CLEAR_FLAG, CAN_POST_FLAG,
           [CLIENT_TRUST_FLAG, clientTrust],
@@ -1150,29 +1184,43 @@ class JSXInstance {
     }
   }
 
-  getContext(key, ignore = false) {
+  getContext(
+    key, ignore = false, node, env, interpreter, callerInstance = this
+  ) {
     let {parentInstance, globals} = this;
+    let context;
     let contextProvisions =
       parentInstance?.contextProvisions ?? globals.globalContextProvisions;
-    while (contextProvisions) {
-      let contextProvision = Object.hasOwn(contextProvisions, key) &&
-        contextProvisions[key];
-      if (contextProvision) {
-        return this.subscribeToContext(contextProvision, ignore);
-      }
-      ({parentInstance, globals} = parentInstance ?? {});
-      contextProvisions =
-        parentInstance?.contextProvisions ?? globals?.globalContextProvisions;
+    if (!contextProvisions) {
+      return;
     }
+    let contextProvision = Object.hasOwn(contextProvisions, key) &&
+      contextProvisions[key];
+    if (contextProvision) {
+      context = callerInstance.subscribeToContext(contextProvision, ignore);
+    }
+    else if (parentInstance) {
+      context = parentInstance.getContext(
+        key, ignore, node, env, interpreter, callerInstance
+      );
+    }
+    if (parentInstance?.contextTransformer) {
+      context = interpreter.executeFunction(
+        parentInstance.contextTransformer, [key, context, this.key],
+        node, env, new JSXInstanceInterface(parentInstance)
+      );
+    }
+    return context;
   }
 
-  getOwnContext(key) {
-    return !Object.hasOwn(this.contextProvisions, key) ? undefined :
-      this.contextProvisions[key]?.context;
-  }
+  // getOwnContext(key) {
+  //   return !Object.hasOwn(this.contextProvisions, key) ? undefined :
+  //     this.contextProvisions[key]?.context;
+  // }
 
 
   reset(interpreter, node, env) {
+    if (this.isDiscarded) return;
     this.initialize(interpreter, node, env);
     this.queueRerender(true);
   }
@@ -1219,6 +1267,8 @@ class JSXInstance {
 
 
   pushOrReplaceURL(url, doReplace, callerNode, execEnv) {
+    if (this.isDiscarded) return;
+
     // Transform the url argument if it is a relative path. Here we also
     // extend the relative path syntax to include either "~/", or "~~/", or a
     // sequence of "~~/"'s, at the start, where "~/" goes up to the nearest
@@ -1507,7 +1557,7 @@ export class JSXInstanceInterface extends ObjectObject {
       "rerender": this.rerender,
       "setContext": this.setContext,
       "getContext": this.getContext,
-      "getOwnContext": this.getOwnContext,
+      // "getOwnContext": this.getOwnContext,
       "reset": this.reset,
       "advanceURL": this.advanceURL,
       "getSegments": this.getSegments,
@@ -1565,27 +1615,27 @@ export class JSXInstanceInterface extends ObjectObject {
   // See the comments above for what do(), trigger(), and call() does.
   do = new DevFunction(
     "do", {},
-    ({callerNode, execEnv, interpreter}, [actionKey, input]) => {
+    ({callerNode, execEnv, interpreter}, [actionKey, ...inputArr]) => {
       return this.jsxInstance.do(
-        actionKey, input, interpreter, callerNode, execEnv
+        actionKey, inputArr, interpreter, callerNode, execEnv
       );
     }
   );
 
   trigger = new DevFunction(
     "trigger", {},
-    ({callerNode, execEnv, interpreter}, [eventKey, input]) => {
+    ({callerNode, execEnv, interpreter}, [eventKey, ...inputArr]) => {
       return this.jsxInstance.trigger(
-        eventKey, input, interpreter, callerNode, execEnv
+        eventKey, inputArr, interpreter, callerNode, execEnv
       );
     }
   );
 
   call = new DevFunction(
     "call", {},
-    ({callerNode, execEnv, interpreter}, [instanceKey, methodKey, input]) => {
+    ({callerNode, execEnv, interpreter}, [instKey, methodKey, ...inputArr]) => {
       return this.jsxInstance.call(
-        instanceKey, methodKey, input, interpreter, callerNode, execEnv
+        instKey, methodKey, inputArr, interpreter, callerNode, execEnv
       );
     }
   );
@@ -1594,8 +1644,9 @@ export class JSXInstanceInterface extends ObjectObject {
   // before calling do(). And it therefore also doesn't return anything.
   doAfterRender = new DevFunction(
     "doAfterRender", {},
-    ({callerNode, execEnv, interpreter}, [actionKey, input]) => {
+    ({callerNode, execEnv, interpreter}, [actionKey, ...inputArr]) => {
       setTimeout(() => {
+        if (this.jsxInstance.isDiscarded) return;
         try {
           if (actionKey instanceof FunctionObject) {
             let fun = actionKey;
@@ -1604,7 +1655,7 @@ export class JSXInstanceInterface extends ObjectObject {
             );
           }
           this.jsxInstance.do(
-            actionKey, input, interpreter, callerNode, execEnv
+            actionKey, inputArr, interpreter, callerNode, execEnv
           );
         } catch (err) {
           interpreter.handleUncaughtException(err, execEnv);
@@ -1649,15 +1700,11 @@ export class JSXInstanceInterface extends ObjectObject {
   // undefined is returned.
   getContext = new DevFunction(
     "getContext", {typeArr: ["object key", "any?"]},
-    (_, [key, ignore = false]) => {
-      return this.jsxInstance.getContext(key, ignore);
-    }
-  );
-
-  // getOwnContext(key) the instance's own context of the given key.
-  getOwnContext = new DevFunction(
-    "getOwnContext", {typeArr: ["object key"]}, (_, [key]) => {
-      return this.jsxInstance.getOwnContext(key);
+    ({callerNode, execEnv, interpreter}, [key, ignore = false]) => {
+      if (this.jsxInstance.isDiscarded) return;
+      return this.jsxInstance.getContext(
+        key, ignore, callerNode, execEnv, interpreter
+      );
     }
   );
 
@@ -1719,12 +1766,15 @@ export class JSXInstanceInterface extends ObjectObject {
   );
 
   back = new DevFunction("back", {}, () => {
+    if (this.jsxInstance.isDiscarded) return;
     window.history.back();
   });
   forward = new DevFunction("forward", {}, () => {
+    if (this.jsxInstance.isDiscarded) return;
     window.history.forward();
   });
   go = new DevFunction("go", {typeArr: ["integer"]}, (_, [delta]) => {
+    if (this.jsxInstance.isDiscarded) return;
     window.history.go(delta);
   });
 
@@ -1787,6 +1837,7 @@ export class JSXInstanceInterface extends ObjectObject {
   getBoundingClientRect = new DevFunction(
     "getBoundingClientRect", {typeArr: ["string?"]},
     ({callerNode, execEnv}, [selector]) => {
+      if (this.jsxInstance.isDiscarded) return;
       let domNode =
         this.jsxInstance.selectDOMNode(selector, callerNode, execEnv);
       let {
@@ -1803,6 +1854,7 @@ export class JSXInstanceInterface extends ObjectObject {
   getScrollData = new DevFunction(
     "getScrollData", {typeArr: ["string?"]},
     ({callerNode, execEnv}, [selector]) => {
+      if (this.jsxInstance.isDiscarded) return;
       let domNode =
         this.jsxInstance.selectDOMNode(selector, callerNode, execEnv);
       let {scrollTop, scrollHeight, scrollLeft, scrollWidth} = domNode;
@@ -1815,12 +1867,14 @@ export class JSXInstanceInterface extends ObjectObject {
 
   scrollTo = new DevFunction(
     "scrollTo", {isAsync: true}, async ({callerNode, execEnv}, argArr) => {
+      if (this.jsxInstance.isDiscarded) return;
       return await scrollToOrBy(false, this, argArr, callerNode, execEnv);
     }
   );
 
   scrollBy = new DevFunction(
     "scrollBy", {isAsync: true}, async ({callerNode, execEnv}, argArr) => {
+      if (this.jsxInstance.isDiscarded) return;
       return await scrollToOrBy(true, this, argArr, callerNode, execEnv);
     }
   );
@@ -1828,6 +1882,7 @@ export class JSXInstanceInterface extends ObjectObject {
   scrollIntoView = new DevFunction(
     "scrollIntoView", {isAsync: true, typeArr: ["boolean|object?", "string?"]},
     async ({callerNode, execEnv}, [arg1, selector]) => {
+      if (this.jsxInstance.isDiscarded) return;
       arg1 ??= undefined;
       if (typeof arg1 === "object") {
         let [behavior, block, container, inline] = getPropertiesFromObject(
@@ -1873,6 +1928,7 @@ export class JSXInstanceInterface extends ObjectObject {
   focus = new DevFunction(
     "focus", {typeArr: ["object?", "string?"]},
     ({callerNode, execEnv}, [options, selector]) => {
+      if (this.jsxInstance.isDiscarded) return;
       if (options) {
         let [preventScroll, focusVisible] = getPropertiesFromObject(
           options, ["preventScroll", "focusVisible"], callerNode, execEnv
@@ -1889,6 +1945,7 @@ export class JSXInstanceInterface extends ObjectObject {
   blur = new DevFunction(
     "blur", {typeArr: ["string?"]},
     ({callerNode, execEnv}, [selector]) => {
+      if (this.jsxInstance.isDiscarded) return;
       let domNode =
         this.jsxInstance.selectDOMNode(selector, callerNode, execEnv);
       domNode.blur();
@@ -1903,6 +1960,7 @@ export class JSXInstanceInterface extends ObjectObject {
   delay = new DevFunction(
     "delay", {typeArr: ["integer unsigned", "function"]},
     ({callerNode, execEnv, interpreter}, [delay, callback, ...rest]) => {
+      if (this.jsxInstance.isDiscarded) return;
       let timeoutID;
       timeoutID = setTimeout(
         () => {
@@ -1930,6 +1988,7 @@ export class JSXInstanceInterface extends ObjectObject {
   loop = new DevFunction(
     "loop", {typeArr: ["integer positive", "function"]},
     ({callerNode, execEnv, interpreter}, [delay, callback, ...rest]) => {
+      if (this.jsxInstance.isDiscarded) return;
       let intervalID;
       intervalID = setInterval(
         () => {

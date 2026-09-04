@@ -56,8 +56,8 @@ export function render({
 
 export const actions = {
   "updateListLimits": function() {
-    let minScoreTextVal = this.call("ddb", "call", ["msi", "getValue"]);
-    let minWeightTextVal = this.call("ddb", "call", ["mwi", "getValue"]);
+    let minScoreTextVal = this.call("ddb", "call", "msi", "getValue");
+    let minWeightTextVal = this.call("ddb", "call", "mwi", "getValue");
     let minScore = (minScoreTextVal !== undefined) ?
       parseFloat(minScoreTextVal) : undefined;
     let minWeight = (minScoreTextVal !== undefined) ?
@@ -78,7 +78,7 @@ export const actions = {
     }
 
     // Else trigger 'updateListLimits' in the parent EntityList.
-    this.trigger("updateListLimits", [minScore, minWeight]);
+    this.trigger("updateListLimits", minScore, minWeight);
   },
   "post-all-relevant-qualities": function() {
     let {qualKeyArr = [], otherQualKeyArr = []} = this.props;

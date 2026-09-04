@@ -66,6 +66,9 @@
 .app-frame:has(> .warning-container > .warning.closed) > .app-main {
   top: 60px;
 }
+.app-frame:has(> .warning-container > .warning.closed.hidden) > .app-main {
+  top: 40px;
+}
 .app-frame:has(> .warning-container > .warning:not(.closed)) {
   > .app-main {
     top: 300px;
@@ -262,6 +265,9 @@
 .warning-container > .warning {
   border: 3px ridge rgb(45, 42, 0);
 }
+.warning-container > .warning.hidden {
+  display: none;
+}
 .warning-container > .warning > .warning-bar {
   height: 20px;
   display: flex;
@@ -282,12 +288,16 @@
 .warning-container > .warning.closed > .warning-main {
   display: none;
 }
+.warning-container .checkbox > * {
+  margin-right: 4px;
+}
 
 .app-frame:has(> .warning-container > .warning:not(.closed)) > .app-main {
   pointer-events: none;
   filter: blur(4px);
   opacity: 40%;
 }
+
 
 
 

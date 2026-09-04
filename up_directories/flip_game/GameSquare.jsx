@@ -20,7 +20,7 @@ export function render({rowInd, colInd}) {
   // onClick callback that triggers the "new-move" event for the parent
   // instance (or another ancestor instance) to handle.
   return <div className={className} onClick={() => {
-    this.trigger("new-move", [rowInd, colInd]);
+    this.trigger("new-move", rowInd, colInd);
   }}></div>;
 }
 
@@ -44,7 +44,7 @@ export const actions = {
 // The 'methods' export of a component declares all the actions that should be
 // elevated as "public methods" of the component, which can then be called by
 // the parent instance. The methods are called by the parent instance via
-// 'this.call(<method key>, [input])'.
+// 'this.call(<method key>, ...arguments)'.
 export const methods = [
   "flip",
   "getValue",

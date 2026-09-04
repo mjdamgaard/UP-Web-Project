@@ -1,4 +1,7 @@
 
+import * as InputCheckbox from 'InputCheckbox';
+import * as Label from 'Label';
+
 
 // By using "appDirID" as a key prop, we ensure that the session storage items
 // don't get mixed, meaning that the user dismissed the warning only for the
@@ -6,15 +9,19 @@
 export const keyProps = ["appDirID"];
 
 export function initialize() {
-  return {dismissed: this.getSessionStorageItem("dismissed")};
+  return {
+    dismissed: this.getSessionStorageItem("dismissed"),
+    cbIDKey: Symbol("checkbox"),
+  };
 }
 
 export function render({appDirID, isHarmful}) {
-  let {dismissed} = this.state;
+  let {dismissed, cbIDKey} = this.state;
   this.trigger("showHeader");
-  return <div className={
-    "warning" + (dismissed && !isHarmful ? " closed" : "")
-  }>
+  return <div className={"warning" + (
+    (isHarmful || !dismissed) ? "" :
+      (dismissed === "fully") ? " closed hidden" : " closed"
+  )}>
     <div className="warning-bar" 
       onClick={() => this.do("openWarning")}
     >{"⚠".repeat(500)}</div>
@@ -44,6 +51,12 @@ export function render({appDirID, isHarmful}) {
           </button>
           <button onClick={() => this.back()}>Take me back!</button>
         </div>
+        <div className="checkbox">
+          <InputCheckbox key="cb" idKey={cbIDKey} />
+          <Label key="l-rem" forKey={cbIDKey}>
+            I trust the author of this app
+          </Label>
+        </div>
       </div>
     )}
   </div>
@@ -52,8 +65,10 @@ export function render({appDirID, isHarmful}) {
 
 export const actions = {
   "closeWarning": function() {
-    this.setState({dismissed: "true"});
-    this.setSessionStorageItem("dismissed", "true");
+    let isChecked = this.call("cb", "getIsChecked");
+    let dismissed = isChecked ? "fully" : "true";
+    this.setState({dismissed: dismissed});
+    this.setSessionStorageItem("dismissed", dismissed);
   },
   "openWarning": function() {
     this.setState({dismissed: undefined});
