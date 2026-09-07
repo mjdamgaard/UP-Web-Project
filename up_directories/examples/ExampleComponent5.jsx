@@ -1,11 +1,11 @@
 
 
 
-export function render({num = 1}) {
+export function render({increment = 1}) {
   let {counter = 0} = this.state;
   return <div>
     <button onClick={() => this.do("increaseCounter")}>
-      {"Increase counter by " + num}
+      {"Increase counter by " + increment}
     </button>
     <div className="counter-display">
       {"Counter value: " + counter}
@@ -15,9 +15,9 @@ export function render({num = 1}) {
 
 export const actions = {
   "increaseCounter": function() {
-    let {num} = this.props;
+    let {increment} = this.props;
     let {counter = 0} = this.state;
-    this.setState(state => ({...state, counter: counter + num}));
+    this.setState(state => ({...state, counter: counter + increment}));
   }
 };
 

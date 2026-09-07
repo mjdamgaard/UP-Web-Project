@@ -1,5 +1,8 @@
 
 
+// export function initialize({}) {
+//   return {counter: 100};
+// }
 
 export function render({}) {
   let {counter = 0} = this.state;

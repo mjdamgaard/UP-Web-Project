@@ -53,7 +53,7 @@ code {
   display: inline-block;
   white-space: pre;
   color: rgb(15, 29, 29);
-  padding-left: 0.5em;
+  padding-left: 12px;
   padding-right: 40px;
   overflow-x: auto;
 }

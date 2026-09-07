@@ -109,6 +109,7 @@ export function render(props) {
   // If the URL is of the form "(o-<homeAppDirID>/)?<page-segment>", where
   // <page-segment> is one of the page segments below redirect to that page.
   let content;
+  this.advanceURL(2);
   switch(firstSegment) {
     case "login":
       content = <LoginPage />;

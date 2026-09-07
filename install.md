@@ -28,6 +28,8 @@ If you want to install this system as a server on your localhost, you need to:
     - "flip_game_01"
     - "untrusted_example"
     - "mastermind"
+    - "mastermind_01"
+    - "examples"
 
     Note that some of these directories might report a failure, but that is okay for now.
 

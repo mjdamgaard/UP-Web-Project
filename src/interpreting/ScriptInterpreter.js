@@ -16,7 +16,8 @@ export const OBJECT_PROTOTYPE = Object.getPrototypeOf({});
 export const ARRAY_PROTOTYPE = Object.getPrototypeOf([]);
 export const MAP_PROTOTYPE = Object.getPrototypeOf(new Map());
 
-const objectMethods = ["toString"];
+const objectMethods = []; // Let's not include any object methods for now,
+// so that users don't have to deal with object injections. 
 const arrayMethods = [
   "toString", "at", "slice", "map", "reduce", "forEach", "some", "every",
   "join", "concat", "includes", "indexOf", "filter", "push",

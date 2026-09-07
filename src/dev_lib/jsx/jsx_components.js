@@ -1742,7 +1742,7 @@ export class JSXInstanceInterface extends ObjectObject {
 
   // getSegment(ind) is similar to calling this.getSegments(ind, ind + 1)[0].
   getSegment = new DevFunction(
-    "getSegment", {typeArr: ["integer unsigned"]}, (_, [ind]) => {
+    "getSegment", {typeArr: ["integer unsigned?"]}, (_, [ind = 0]) => {
     let [segment] = this.jsxInstance.getSegments(ind, ind + 1);
     return segment;
   });

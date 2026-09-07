@@ -59,7 +59,7 @@ export class ServerQueryHandler {
     let prefStr = "";
     if (isPrivate) {
       // Add the flags to the Prefer header string.
-      Object.entries(flags).forEach(([key, val]) => {
+      if (flags) Object.entries(flags).forEach(([key, val]) => {
         if (!val) return;
         if (prefStr) prefStr += ", ";
         prefStr += key;

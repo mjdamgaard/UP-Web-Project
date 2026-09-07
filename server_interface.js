@@ -176,9 +176,8 @@ async function main() {
       }
       console.log("Success");
     }
-    // TODO: Instead of implementing a bundle command, I might implement a
-    // command to just "hoist" all descendant imports of a module up to the
-    // module itself. 
+    // TODO: Implement a command to "hoist" all descendant imports of a module
+    // up to the module itself. 
     // TODO: Also implement a 'compile' command which request the server to
     // compile a module into a dev library/module instead, where the JS(X) is
     // transformed into some safe JS instead (with variable re-namings and
@@ -186,9 +185,9 @@ async function main() {
     // extension for these compiled modules, which means that the client can
     // import them in a way where the actual (safe) JS module is imported and
     // used (similar to importing a dev module).
-    else if (/^([bB]|build|bundle)$/.test(command)) {
-      console.log("Bundling not implemented yet");
-    }
+    // else if (/^([bB]|build|bundle)$/.test(command)) {
+    //   console.log("Bundling not implemented yet");
+    // }
     else if (/^([pP]|post)$/.test(command)) {
       console.log("Usage: ~# relative_route [--log] [--data json_file]");
       let answer = await read({prompt: `~# `});
@@ -286,11 +285,18 @@ async function main() {
           let dirID = directoryUpdater.getDirID(curDir, false);
           if (dirID) {
             console.log(`Directory ID: ${dirID}`);
-          }
-          else {
+          } else {
             console.log(`Directory has not yet been uploaded`);
           }
         }
+      }
+    }
+    else if (command === "id") {
+      let dirID = directoryUpdater.getDirID(curDir, false);
+      if (dirID) {
+        console.log(`Directory ID: ${dirID}`);
+      } else {
+        console.log(`Directory has not yet been uploaded`);
       }
     }
     else if (command === "rename directory") {
