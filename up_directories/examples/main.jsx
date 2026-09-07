@@ -22,7 +22,6 @@ export function render1() {
 
 export function render2() {
   return <div>
-    <h1>Hello, World!</h1>
     <h2>Some child component examples</h2>
     <p>
       <ExampleComponent2 key="ex-2-1"
@@ -43,7 +42,6 @@ export function render2() {
 
 export function render3() {
   return <div>
-    <h1>Hello, World!</h1>
     <h2>An example of a stateful component</h2>
     <p>
       <ExampleComponent3 key="ex-3" />
@@ -53,8 +51,7 @@ export function render3() {
 
 export function render4() {
   return <div>
-    <h1>Hello, World!</h1>
-    <h2>An example of a stateful component</h2>
+    <h2>Another example of a stateful component</h2>
     <p>
       <ExampleComponent4 key="ex-4" />
     </p>
@@ -114,7 +111,7 @@ export function render7() {
   let {colorIndex = 0} = this.state;
   return <div innerStyle={style}>
     <h1>I am a blue header!</h1>
-    <h2>I am a red and cursive subheader!</h2>
+    <h2>I am a red and cursive sub-header!</h2>
     <div className="color-grid">
       <div className="red">I am red!</div>
       <div className="blue">I am blue!</div>

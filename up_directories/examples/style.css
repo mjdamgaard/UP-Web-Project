@@ -1,7 +1,52 @@
 
 h1{
   color: blue;
+  font-family: serif;
 }
 h2 {
   color: red;
+  font-family: cursive;
+}
+
+.color-grid {
+  display: grid;
+  grid-template-columns: auto auto;
+}
+.button, .color-grid > * {
+  text-align: center;
+  border: 2px ridge lightcyan;
+  height: 40px;
+  font-size: 25px;
+  font-family: serif;
+}
+.button:hover {
+  cursor: pointer;
+  user-select: none;
+}
+
+.red {
+  background-color: red;
+}
+.blue {
+  background-color: blue;
+  color: rgb(230, 230, 230);
+}
+.green {
+  background-color: rgb(23, 217, 23);
+}
+.yellow {
+  background-color: rgb(235, 255, 15);
+}
+.purple {
+  background-color: purple;
+  color: rgb(230, 230, 230);
+}
+.gray {
+  background-color: lightgray;
+}
+.orange {
+  background-color: orange;
+}
+.pink {
+  background-color: deeppink;
 }

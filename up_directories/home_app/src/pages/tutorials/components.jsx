@@ -336,7 +336,7 @@ const page = <div className="text-page">
     </p>
     <p>
       <code className="jsx">{[
-        'export function render({isItalic = false, children}) {\n',
+        'export function render() {\n',
         '  return <div>\n',
         '      <h2>An example of a stateful component</h2>\n',
         '      <p>\n',
