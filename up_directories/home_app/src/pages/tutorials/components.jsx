@@ -21,7 +21,7 @@ export function render() {
 
 
 
-const page = <div className="text-page">
+const page = <div className="page text-page">
   <h2>Front-end JSX components</h2>
 
   <h3>Introduction</h3>
@@ -318,13 +318,12 @@ const page = <div className="text-page">
     The returned JSX element of each component instance is not
     determined solely by the props of the instance, but can also depend
     on its "state." This state can be updated during the lifespan
-    of the instance via a setState() function, which works similarly to
-    the setState() function of React. But this also where the
-    similarities with React stop.
+    of the instance via a setState() function, which works quite similarly to
+    the setState() functions of React.
   </p>
   <p>
-    In this framework, the state of a component instance is accessed on an
-    object that is bound to the 'this' keyword for the render() function.
+    In this framework, however, the state of a component instance is accessed
+    on an object that is bound to the 'this' keyword for the render() function.
     More precisely, the instance's state is accessed via 'this.state'.
     And the setState() function is called via 'this.setState()'.
   </p>
@@ -600,11 +599,11 @@ const page = <div className="text-page">
       '      Increase Child 2\'s counter\n',
       '    </button>\n',
       '  </p>\n',
-      '  <h2>Child instance 1</h2>\n',
+      '  <h3>Child instance 1</h3>\n',
       '  <p>\n',
       '    <ExampleComponent5 key="c-1" increment={1} />\n',
       '  </p>\n',
-      '  <h2>Child instance 2</h2>\n',
+      '  <h3>Child instance 2</h3>\n',
       '  <p>\n',
       '    <ExampleComponent5 key="c-2" increment={5} />\n',
       '  </p>\n',
@@ -711,7 +710,7 @@ const page = <div className="text-page">
       '  <div className="counter-display">\n',
       '    {"Counter value: " + (this.state.counter ?? 0)}\n',
       '  </div>\n',
-      '  <h2>Child instance</h2>\n',
+      '  <h3>Child instance</h3>\n',
       '  <p>\n',
       '    <ExampleComponent6 key="c-1" />\n',
       '  </p>\n',
@@ -793,17 +792,146 @@ const page = <div className="text-page">
   <p>
     You now know the basics of how to build responsive components. But you
     are still missing the last ingredient, which is how to give apply a style
-    to them. In this framework, components can be styled simply by setting
-    a reserved attribute called 'innerStyle' on any HTML element whose
-    content you wish to style.
+    to them.
   </p>
   <p>
-    TODO: Finish this section...
+    In this framework, components can be styled simply by setting
+    a special attribute called 'innerStyle' on any HTML element whose
+    content you wish to style. This 'innerStyle' attribute accepts values of
+    so-called 'CSSModule' objects, which are imported similarly to how you
+    import a component module, and where target file is a '.css' file. 
+  </p>
+  <p>
+    For instance, if you comment in the following import statement at the top
+    of the 'main.jsx' file, this has the effect of importing the 'style.css'
+    style sheet from the same directory. And the resulting 'myStyle' variable
+    is now ready to used to be used as the values of 'innerStyle' attributes.
+  </p>
+  <p>
+    <code className="jsx">{[
+      'import * as myStyle from "./style.css";',
+    ]}</code>
+  </p>
+  <p>
+    To see this in action, comment in the final render() function in
+    'main.jsx', along with the constants defined above it. (Also remember to
+    comment out the previous render() function). This section reads
+  </p>
+  <p>
+    <code className="jsx">{[
+      'const colorArray = [\n',
+      '  "orange", "red", "blue", "green", "yellow", "purple", "gray", "pink",\n',
+      '];\n',
+      'const len = colorArray.length;\n',
+      '\n',
+      'export function render() {\n',
+      '  let {colorIndex = 0} = this.state;\n',
+      '  return <div innerStyle={myStyle}>\n',
+      '    <h1>I am a blue header</h1>\n',
+      '    <h2>I am a red and cursive sub-header</h2>\n',
+      '    <div className="color-grid">\n',
+      '      <div className="red">I am red</div>\n',
+      '      <div className="blue">I am blue</div>\n',
+      '      <div className="green">I am green</div>\n',
+      '      <div className="yellow">I am yellow</div>\n',
+      '      <div className="purple">I am purple</div>\n',
+      '      <div className="gray">I am gray</div>\n',
+      '    </div>\n',
+      '    <div className={"button " + colorArray[colorIndex]} onClick={() => {\n',
+      '      this.setState(state => ({\n',
+      '        ...state, colorIndex: (colorIndex + 1) % len\n',
+      '      }));\n',
+      '    }}>\n',
+      '      Click me to change my color!\n',
+      '    </div>\n',
+      '  </div>;\n',
+      '}',
+    ]}</code>
+  </p>
+  <p>
+    Note in particular how the 'innerStyle' attribute of the outer {"<div>"}
+    element is set to the 'myStyle' object.  
+  </p>
+  <p>
+    And if you open up the 'style.css' file which defines this object, you will
+    see that is contains the following style sheet. 
+  </p>
+  <p>
+    <code className="css">{[
+      'h1{\n',
+      '  color: blue;\n',
+      '  font-family: serif;\n',
+      '}\n',
+      'h2 {\n',
+      '  color: red;\n',
+      '  font-family: cursive;\n',
+      '}\n',
+      '.color-grid {\n',
+      '  display: grid;\n',
+      '  grid-template-columns: auto auto;\n',
+      '}\n',
+      '.button, .color-grid > * {\n',
+      '  text-align: center;\n',
+      '  border: 2px ridge lightcyan;\n',
+      '  height: 40px;\n',
+      '  font-size: 25px;\n',
+      '  font-family: serif;\n',
+      '}\n',
+      '.button:hover {\n',
+      '  cursor: pointer;\n',
+      '  user-select: none;\n',
+      '}\n',
+      '.red {\n',
+      '  background-color: red;\n',
+      '}\n',
+      '.blue {\n',
+      '  background-color: blue;\n',
+      '  color: rgb(208, 208, 208);\n',
+      '}\n',
+      '.green {\n',
+      '  background-color: rgb(23, 217, 23);\n',
+      '}\n',
+      '.yellow {\n',
+      '  background-color: rgb(235, 255, 15);\n',
+      '}\n',
+      '.purple {\n',
+      '  background-color: purple;\n',
+      '  color: rgb(230, 230, 230);\n',
+      '}\n',
+      '.gray {\n',
+      '  background-color: lightgray;\n',
+      '}\n',
+      '.orange {\n',
+      '  background-color: orange;\n',
+      '}\n',
+      '.pink {\n',
+      '  background-color: deeppink;\n',
+      '}',
+    ]}</code>
+  </p>
+  <p>
+    (If you are new to CSS style sheets like this one, go and have a look at
+    this
+    <ELink key="link-css-1" href="https://www.w3schools.com/css/" >
+      this tutorial
+    </ELink> (at w3schools.com),
+    which will introduce you to the wonderful world of CSS!)
+  </p>
+  <p>
+    Then if you re-upload your app, you should see the following result.
   </p>
   <p>
     <div className="text-frame">
       <Result7 key="r7" />
     </div>
+  </p>
+  <p>
+    You now know how to style your app!
+  </p>
+  <p>
+    As a final remark, note that the 'innerStyle attribute also accepts a whole
+    array of CSSModule objects, which means that you can also style your
+    elements using several different style sheets at once.
   </p>
 
 

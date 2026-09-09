@@ -7,7 +7,6 @@ h2 {
   color: red;
   font-family: cursive;
 }
-
 .color-grid {
   display: grid;
   grid-template-columns: auto auto;
@@ -23,7 +22,6 @@ h2 {
   cursor: pointer;
   user-select: none;
 }
-
 .red {
   background-color: red;
 }

@@ -10,7 +10,7 @@ export function render() {
 
 
 
-const page = <div className="text-page">
+const page = <div className="page text-page">
   <h2>Getting started</h2>
 
   <h3>Introduction</h3>
@@ -83,23 +83,6 @@ const page = <div className="text-page">
       'npm install',
     ]}</code>
   </p>
-
-
-  {/* <section>
-    <h3>Use an editor that supports JSX syntax highlighting</h3>
-    <p>
-      While it is not a strict requirement, it is also strongly
-      recommended that you use an editor/IDE that supports syntax
-      highlighting for JSX files, and especially if you want to proceed to
-      the next tutorials after this one.
-    </p>
-    <p>
-      An example of an IDE that supports JSX syntax highlighting is
-      <ELink key="link-vscode" href="https://code.visualstudio.com/" >
-        {"VS Code"}
-      </ELink>.
-    </p>
-  </section> */}
 
 
   <h3>Uploading your first UP app</h3>
@@ -240,39 +223,39 @@ const page = <div className="text-page">
     You have now edited your first UP app!
   </p>
 
+
   <h3>Deleting an uploaded directory</h3>
   <p>
-    If you ever want to delete your uploaded UP directory again, ... <i>TODO:
-    Implement the command to remove a directory, then finish this section.</i>
+    If you ever want to delete your uploaded UP directory again (along with
+    all files and any data uploaded to it), simply open that directory in the
+    server_interface.js program, and type in the command 'remove directory'. 
+  </p>
+  <p>
+    For instance, if you want to delete the "Hello, World!" app that you just
+    uploaded, run the following command.
+  </p>
+  <p>
+    <code className="command">{[
+      'hello_world> remove directory',
+    ]}</code>
   </p>
 
 
-  {/* <section>
-    <h3>Final remarks</h3>
-    <p>{([
-      "You now know how to upload and edit UP apps. The following couple " +
-      "of tutorials will then teach you how to create more advanced " +
-      "components, as well as how to " +
-      "style these components. And once you finish ",
-      <ILink key="link-tut-4" href="~/useful-things-to-know">
-        {"Tutorial 4"}
-      </ILink>,
-      ", you should have all the knowledge required to start making " +
-      "your own client-side apps."
-    ])}</p>
-    <p>
-      Then once you are ready to move on to creating apps that upload
-      and download data from the database, Tutorials
-      <ILink key="link-tut-5" href="~/server-modules">
-        5
-      </ILink>
-      and
-      <ILink key="link-tut-6" href="~/db-queries">
-        6
-      </ILink>
-      will teach you how.
-    </p>
-  </section> */}
+  <h3>Final remarks</h3>
+  <p>
+    You now know how to upload and edit UP apps. And if you continue to the
+    next tutorial, it will then teach you more about the front-end framework,
+    including how to make your apps responsive to user input, as well as how to
+    style them.
+  </p>
+  <p>
+    And if you continue from there, the following tutorials will also teach
+    you how to implement a back end for your apps, allowing users to upload
+    and download data from them.
+  </p>
+  <p>
+    Happy programming!
+  </p>
 
   <footer>
     <div className="prev-link"></div>

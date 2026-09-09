@@ -73,11 +73,11 @@ export function render5() {
         Increase Child 2's counter
       </button>
     </p>
-    <h2>Child instance 1</h2>
+    <h3>Child instance 1</h3>
     <p>
       <ExampleComponent5 key="c-1" increment={1} />
     </p>
-    <h2>Child instance 2</h2>
+    <h3>Child instance 2</h3>
     <p>
       <ExampleComponent5 key="c-2" increment={5} />
     </p>
@@ -93,7 +93,7 @@ export function render6() {
     <div className="counter-display">
       {"Counter value: " + (this.state.counter ?? 0)}
     </div>
-    <h2>Child instance</h2>
+    <h3>Child instance</h3>
     <p>
       <ExampleComponent6 key="ex-6" />
     </p>
@@ -121,7 +121,9 @@ export function render7() {
       <div className="gray">I am gray</div>
     </div>
     <div className={"button " + colorArray[colorIndex]} onClick={() => {
-      this.setState(state => ({...state, colorIndex: (colorIndex + 1) % len }));
+      this.setState(state => ({
+        ...state, colorIndex: (colorIndex + 1) % len
+      }));
     }}>
       Click me to change my color!
     </div>
