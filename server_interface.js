@@ -21,7 +21,7 @@ const upDirectoriesPath = path.normalize(
 const directoryUpdater = new DirectoryUpdater(upDirectoriesPath, domain);
 
 
-// Construct plain object with optional argument values.
+// Construct plain object containing the optional arguments.
 const optArgObj = {};
 let optArgsLen = optArgs.length;
 for (let i = 0; i < optArgsLen; i++) {
@@ -318,9 +318,32 @@ async function main() {
     else if (/^([eE]|exit)$/.test(command)) {
       hasExited = true;
     }
-    // TODO: Add command to remove a whole directory server-side (while also
-    // untracking it from directories.json), as well as a command just to
-    // untrack an uploaded directory client-side (from directories.json).
+    else if (command === "remove directory") {
+      let confResponse = await read({
+        prompt: "Are you use you wish to remove this home directory and " +
+          "all its files and data? [y/n] "
+      });
+      if (!/^[yY]$/.test(confResponse)) {
+        console.log("Aborted");
+        return;
+      }
+      await directoryUpdater.removeDir(curDir);
+      console.log("Directory was successfully removed");
+    }
+    else if (command === "untrack directory") {
+      let confResponse = await read({
+        prompt: "Are you use you wish to untrack this home directory? [y/n] "
+      });
+      if (!/^[yY]$/.test(confResponse)) {
+        console.log("Aborted");
+        return;
+      }
+      await directoryUpdater.untrackDir(curDir);
+      console.log(
+        "Directory was successfully untracked, and an entry was added to " +
+        "untracked_directories.json"
+      );
+    }
     else {
       console.log("Unrecognized command");
     }

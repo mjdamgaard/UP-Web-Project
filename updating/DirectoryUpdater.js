@@ -209,7 +209,7 @@ export class DirectoryUpdater {
     let curDirPath = this.upDirectoriesPath + "/" + curDir;
     filePaths.forEach(relPath => {
       let relClientPath = (relPath === "placeholders.js") ?
-        "placeholders.json" : relPath
+        "placeholders.json" : relPath;
       let clientFilePath = curDirPath + "/" + relClientPath;
       let serverFilePath = normalizePath(`/${nodeID}/${dirID}/${relPath}`);
       if (!fs.existsSync(clientFilePath)) {
@@ -378,6 +378,102 @@ export class DirectoryUpdater {
     `export default ${JSON.stringify(transformedPlaceholders, null, 2)};`
     );
   }
+
+
+
+
+  async removeDir(curDir) {
+    let serverQueryHandler = new ServerQueryHandler(
+      this.authToken, Infinity, fetch, this.domain
+    );
+    let nodeID = await serverQueryHandler.fetchNodeID();
+    let dirID = this.getDirID(curDir, true);
+
+    // Request a list of all the files in the server-side directory, and then
+    // go through and delete each one of them.
+    let filePaths = await serverQueryHandler.fetchAsAdmin(
+      `/this/${dirID}./_all`
+    );
+    let deletionPromiseGenerators = [];
+    let serverFilePathsToDelete = [];
+    filePaths.forEach(relPath => {
+      let relClientPath = (relPath === "placeholders.js") ?
+        "placeholders.json" : relPath;
+      let serverFilePath = normalizePath(`/${nodeID}/${dirID}/${relPath}`);
+
+      // Push a promise to delete the file server-side, and delete the file's
+      // timestamp upon return.
+      deletionPromiseGenerators.push(
+        () => serverQueryHandler.postAsAdmin(
+          serverFilePath + "/_rm"
+        ).then(x => {
+          this.#removeUploadTimestampSync(curDir + "/" + relClientPath);
+          return x;
+        })
+      );
+      serverFilePathsToDelete.push(serverFilePath);
+    });
+    let colorStr = "\x1b[31m%s\x1b[0m"; // red color
+    let len = deletionPromiseGenerators.length;
+    for (let i = 0; i < len; i++) {
+      await deletionPromiseGenerators[i]();
+      console.log(colorStr, "- Removed " + serverFilePathsToDelete[i]);
+    }
+
+    // Then remove the directory itself server-side, and remove directory entry
+    // in directories.json.
+    let wasRemoved = serverQueryHandler.postAsAdmin(`/${nodeID}/${dirID}./_rm`);
+    if (!wasRemoved) {
+      throw "Something went wrong when removing directory";
+    }
+    this.#writeDirIDSync(curDir, undefined);
+
+    return dirID;
+  }
+
+
+  async untrackDir(curDir) {
+    let serverQueryHandler = new ServerQueryHandler(
+      this.authToken, Infinity, fetch, this.domain
+    );
+    let nodeID = await serverQueryHandler.fetchNodeID();
+    let dirID = this.getDirID(curDir, true);
+
+    // Request a list of all the files in the server-side directory, and then
+    // go through and remove their timestamps
+    let filePaths = await serverQueryHandler.fetchAsAdmin(
+      `/this/${dirID}./_all`
+    );
+    filePaths.forEach(relPath => {
+      let relClientPath = (relPath === "placeholders.js") ?
+        "placeholders.json" : relPath;
+      this.#removeUploadTimestampSync(curDir + "/" + relClientPath);
+    });
+
+    // Read and parse the untracked_directories.json file.
+    let filePath = this.upDirectoriesPath + "/" + "untracked_directories.json";
+    let contents = (!fs.existsSync(filePath)) ? "{}" :
+      fs.readFileSync(filePath, 'utf8');
+    let propObj;
+    try {
+      propObj = JSON.parse(contents);
+    } catch (err) {
+      throw "Error when parsing " + fileName;
+    }
+
+    // Then push the dirID to an array located at propObj[nodeID][dirName].
+    let dirNameDirIDArrObj = propObj[nodeID] ??= {};
+    let dirIDArr = dirNameDirIDArrObj[curDir] ??= [];
+    dirIDArr.push(dirID);
+    let newContents = JSON.stringify(propObj, null, 2);
+    fs.writeFileSync(filePath, newContents);
+
+    // Then remove the dirID from directories.json.
+    this.#writeDirIDSync(curDir, undefined);
+
+    return dirID;
+  }
+
 
 
 
