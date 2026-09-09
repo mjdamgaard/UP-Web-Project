@@ -2704,6 +2704,9 @@ export function getString(val, node, env, getSourceCode = false) {
       ).join(", ") +
     "}";
   }
+  else if (typeof val === "symbol") {
+    return val.toString();
+  }
   else if (!val || typeof val !== "object") {
     return `${val}`;
   }

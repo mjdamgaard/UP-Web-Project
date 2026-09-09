@@ -288,9 +288,6 @@
 .warning-container > .warning.closed > .warning-main {
   display: none;
 }
-.warning-container .checkbox > * {
-  margin-right: 4px;
-}
 
 .app-frame:has(> .warning-container > .warning:not(.closed)) > .app-main {
   pointer-events: none;
@@ -298,6 +295,14 @@
   opacity: 40%;
 }
 
+
+.warning-container .checkbox > * {
+  margin-right: 4px;
+}
+.warning-container:has(.checkbox.author-trust input:not(:checked))
+  .checkbox.do-not-show {
+  display: none;
+}
 
 
 

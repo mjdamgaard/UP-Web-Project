@@ -5,7 +5,7 @@ import * as ExampleComponent3 from "./ExampleComponent3.jsx";
 import * as ExampleComponent4 from "./ExampleComponent4.jsx";
 import * as ExampleComponent5 from "./ExampleComponent5.jsx";
 import * as ExampleComponent6 from "./ExampleComponent6.jsx";
-import * as style from "./style.css";
+import * as myStyle from "./style.css";
 
 
 
@@ -109,16 +109,16 @@ const len = colorArray.length;
 
 export function render7() {
   let {colorIndex = 0} = this.state;
-  return <div innerStyle={style}>
-    <h1>I am a blue header!</h1>
-    <h2>I am a red and cursive sub-header!</h2>
+  return <div innerStyle={myStyle}>
+    <h1>I am a blue header</h1>
+    <h2>I am a red and cursive sub-header</h2>
     <div className="color-grid">
-      <div className="red">I am red!</div>
-      <div className="blue">I am blue!</div>
-      <div className="green">I am green!</div>
-      <div className="yellow">I am yellow!</div>
-      <div className="purple">I am purple!</div>
-      <div className="gray">I am gray!</div>
+      <div className="red">I am red</div>
+      <div className="blue">I am blue</div>
+      <div className="green">I am green</div>
+      <div className="yellow">I am yellow</div>
+      <div className="purple">I am purple</div>
+      <div className="gray">I am gray</div>
     </div>
     <div className={"button " + colorArray[colorIndex]} onClick={() => {
       this.setState(state => ({...state, colorIndex: (colorIndex + 1) % len }));

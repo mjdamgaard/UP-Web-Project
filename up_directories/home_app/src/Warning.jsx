@@ -3,20 +3,22 @@ import * as InputCheckbox from 'InputCheckbox';
 import * as Label from 'Label';
 
 
-// By using "appDirID" as a key prop, we ensure that the session storage items
-// don't get mixed, meaning that the user dismissed the warning only for the
-// current app.
+// By using "appDirID" as a key prop, we ensure that the session and local
+// storage items don't get mixed, meaning that the user dismissed the warning
+// only for the current app.
 export const keyProps = ["appDirID"];
 
 export function initialize() {
   return {
-    dismissed: this.getSessionStorageItem("dismissed"),
-    cbIDKey: Symbol("checkbox"),
+    dismissed: this.getLocalStorageItem("dismissed") ||
+      this.getSessionStorageItem("dismissed"),
+    trustInputKey: Symbol("author-trust"),
+    doNotShowInputKey: Symbol("do-not-show-again"),
   };
 }
 
 export function render({appDirID, isHarmful}) {
-  let {dismissed, cbIDKey} = this.state;
+  let {dismissed, trustInputKey, doNotShowInputKey} = this.state;
   this.trigger("showHeader");
   return <div className={"warning" + (
     (isHarmful || !dismissed) ? "" :
@@ -51,10 +53,16 @@ export function render({appDirID, isHarmful}) {
           </button>
           <button onClick={() => this.back()}>Take me back!</button>
         </div>
-        <div className="checkbox">
-          <InputCheckbox key="cb" idKey={cbIDKey} />
-          <Label key="l-rem" forKey={cbIDKey}>
+        <div className="checkbox author-trust">
+          <InputCheckbox key="cb-trust" idKey={trustInputKey} />
+          <Label key="l-trust" forKey={trustInputKey}>
             I trust the author of this app
+          </Label>
+        </div>
+        <div className="checkbox do-not-show">
+          <InputCheckbox key="cb-no-show" idKey={doNotShowInputKey} />
+          <Label key="l-no-show" forKey={doNotShowInputKey}>
+            Do not show this again
           </Label>
         </div>
       </div>
@@ -65,10 +73,16 @@ export function render({appDirID, isHarmful}) {
 
 export const actions = {
   "closeWarning": function() {
-    let isChecked = this.call("cb", "getIsChecked");
-    let dismissed = isChecked ? "fully" : "true";
+    let trustIsChecked = this.call("cb-trust", "getIsChecked");
+    let dismissed = trustIsChecked ? "fully" : "true";
+    let doNotShowAgain = trustIsChecked &&
+      this.call("cb-no-show", "getIsChecked");
     this.setState({dismissed: dismissed});
-    this.setSessionStorageItem("dismissed", dismissed);
+    if (doNotShowAgain) {
+      this.setLocalStorageItem("dismissed", dismissed);
+    } else {
+      this.setSessionStorageItem("dismissed", dismissed);
+    }
   },
   "openWarning": function() {
     this.setState({dismissed: undefined});
