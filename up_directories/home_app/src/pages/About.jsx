@@ -1,68 +1,64 @@
 
-// import {getHomeDirID} from 'route';
-// import * as ILink from 'ILink';
-
-// const homeDirID = getHomeDirID();
-
+import * as ILink from 'ILink';
 
 
 export function render() {
   return <div className="page about-page">
 
-    <h2>About this platform</h2>
+    <h2>A user-programmable platform</h2>
     <h3>A platform where the users are in control</h3>
     <p>
       This is a "user-programmable" platform, which is finally a platform that
-      puts the users in complete control over their apps and their algorithms.
+      puts the users in complete control over their apps and their algorithms!
     </p>
     <p>
       Here the users are actually free to extend and fork the apps on the
-      platform themselves, and build completely new ones. And each new version
-      of each app is made available to all other users<sup>*</sup> on the
-      platform, meaning that each user is free to choose to use whichever
-      versions they like.
+      platform themselves, or build new ones. And each new version
+      of each app is made available to all other users{/*<sup>*</sup>*/} on the
+      platform, meaning that each individual user is free to choose to use
+      whichever version of each app that they like.
     {/* </p> */}
     <ul>
-      <li><i>
+      <li>
         Are you tired of platforms whose algorithms always tries to funnel
         you into a dopamine loop, without being able to adjust this?
-      </i></li>
-      <li><i>
+      </li>
+      <li>
         Are you tired of rude comments and posts not being sufficiently
         suppressed, or of misinformation and inappropriate content not being
         sufficiently moderated?
-      </i></li>
-      <li><i>
-        Are you tired of not being able to control and restrict the apps that
-        your kids use however <i>you</i> want?
-      </i></li>
-      <li><i>
+      </li>
+      <li>
+        Are you tired of not being able to restrict and control the apps that
+        your kids use how you want?
+      </li>
+      <li>
         Are you tired of search results being dominated by paid-for entires,
         rather than just showing you the things that are the most relevant?
-      </i></li>
-      <li><i>
+      </li>
+      <li>
         Are you tired of AI slop and clickbait?
-      </i></li>
-      <li><i>
+      </li>
+      <li>
         Are you tired of your data being sold to third parties, or of the
         lack of transparency in this regard?
-      </i></li>
-      <li><i>
+      </li>
+      <li>
         Are you tired of a lack of data portability or ability to synchronize
         with other platforms, making it hard to leave a platform once
         your friends and connections are all there?
-      </i></li>
-      <li><i>
+      </li>
+      <li>
         Are you tired of missing useful features in your apps, and then having
         to rely on only a small central group of developers for implementing
         those features?
-      </i></li>
-      <li><i>
+      </li>
+      <li>
         Are you tired of ads that just keep increasing in volume?
-      </i></li>
-      <li><i>
+      </li>
+      <li>
         Or are you tired of updates in general that make things worse?
-      </i></li>
+      </li>
     </ul>
     {/* <p> */}
       With a user-programmable platform, you will no longer have
@@ -70,18 +66,22 @@ export function render() {
       their apps themselves with whatever modifications they like. And if
       several users have a similar need for a specific update, they can simply
       join together and persuade or hire other users to make those updates for
-      them, not having to rely on any central group of developers.
+      them, not having to rely on a central group of developers.
+    </p>
+    <p>
+      Each user can accept or reject any new update as they please. And users
+      with completely different preferences can still be a part of the same
+      network.
     </p>
     <p>
       The platform is furthermore open-source and decentralized, which
       means that the users do not have to rely on any single company for
-      sticking to its course and not taking these freedoms away again all of a
-      sudden.
+      not taking these freedoms away again all of a sudden.
     </p>
-    <p className="footnote">
+    {/* <p className="footnote">
       * Kids are of course an exception to this rule of freedom of choice:
       Here it is instead the parents/guardians who should be free to choose.
-    </p>
+    </p> */}
 
 
     <h3>AI makes user-programmable platforms inevitable</h3>
@@ -107,7 +107,7 @@ export function render() {
     </p>
 
 
-    <h3>Allowing the users to donate towards specific tasks</h3>
+    {/* <h3>Allowing users to donate towards specific tasks</h3>
     <p>
       As part of engaging the user community and giving them more control and
       autonomy, we (at up-web.org) also intend to implement an app on the
@@ -116,7 +116,7 @@ export function render() {
     </p>
     <p>
       The users will then be able to vote on which tickets they think are the
-      most important ones, and will even be able to donate money towards
+      most important, and will even be able to donate money towards
       these tickets. The tickets are then auctioned off to developing users
       who are willing to bid on them. And if the winner of the auction
       then completes the given ticket to a satisfactory degree, that user will
@@ -124,13 +124,13 @@ export function render() {
     </p>
     <p>
       This will increase autonomy of the users, allowing them to take matters
-      into their own hands for getting the updates that they desire, again
-      rather than having to rely on just a central group of developers for
-      doing everything. 
-    </p>
+      into their own hands for getting the updates that they desire, rather
+      than having to rely on a central group of developers for deciding what is
+      important. 
+    </p> */}
 
 
-    <h3>A sandbox technology makes development quick and free</h3>
+    <h3>A sandbox technology makes development fast and free</h3>
     <p>
       The user-uploaded apps are all interpreted in a safe sandbox, which
       prevents users from hacking each other. And this sandbox even extends to
@@ -140,11 +140,10 @@ export function render() {
     <p>
       This allows the users to upload and share new apps and app versions
       quickly with each other, with minimal central oversight needed, thus
-      allowing for a very decentralized and fast-moving development of the
-      platform.
+      allowing for very decentralized and fast-moving development.
     </p>
     <p>
-      Furthermore, another important feature of this technology is that the
+      Furthermore, the 
       user-uploaded apps do not have to allocate any computational or
       storage-related resources in advance (apart from the storage of the
       source code itself). Instead these resources are only allocated on demand
@@ -154,7 +153,7 @@ export function render() {
       This crucially means that the costs of the platform does not really
       increase much with the amount of apps and app versions that it hosts.
       Instead the costs primarily depend on how many end users actually use
-      these these apps. And since these users also happen to be the source of
+      these apps. And since these users also happen to be the source of
       revenue for the platform, the revenue will thus be able to follow the
       costs.
     </p>
@@ -173,23 +172,33 @@ export function render() {
       watching ads, or through individual donations.
     </p>
     <p>
-      There are also other possible sources of income on top of this, including
-      things like sponsorships, grants, and public funding.
-      And if a lot of users end up donating to each other through the software
-      tickets mentioned above, we can also potentially take a cut and let a
-      part of this money go towards covering the operational costs. 
-    </p>
-    <p>
       The company behind up-web.org (which is just one node in a decentralized
       network) seeks to be completely transparent about its costs, and seeks
       to take the user community on board in terms of how they prefer to
-      pay them.
+      pay these costs.
+    </p>
+    {/* <p>
+      There are also other possible sources of income on top of this, such as
+      sponsorships, grants, and public funding.
+      And if a lot of users end up donating to each other through the software
+      tickets mentioned above, we can also potentially take a cut of this
+      money if the users are on-board.
+    </p> */}
+    <p>
+      Additionally, while the developing users are always free to use
+      open-source licenses for their apps and software components, we will also
+      allow them to choose other kinds of licenses if they wish to have more
+      specific control over how their apps and components are monetized. And in
+      return, we will require a cut of the revenue that these apps and
+      components generate.
     </p>
 
 
     <h3>Explore this website</h3>
     <p>
-      On the home page of this website, you will see a list of user uploaded
+      On the
+      <ILink key="l-home" href={`/`}>home page</ILink>
+      of this website, you will see a list of user uploaded
       apps. Try clicking e.g. on the app titled 'Flip game,' and you will
       see a little puzzle game as an example.
     </p>
@@ -206,7 +215,7 @@ export function render() {
       course).
     </p>
     <p>
-      And if you want a different version than the most popular one of a given
+      And if you want a different version than the most popular one for a given
       app, you can click a star (☆) button to mark that version as
       your favorite, making it the one that is loaded the next time you open
       the app.
@@ -221,11 +230,28 @@ export function render() {
     <p>
       This even includes the page header and the account menu of the website,
       as well as the algorithms behind which apps are shown on the home page,
-      and how these apps are updated automatically, etc. Everything you see on
+      and how these apps are updated automatically. Everything you see on
       this website can be forked and modified!
     </p>
 
 
+
+    <h3>An easy-to-use framework</h3>
+    <p>
+      This platform offers a high-level development framework that is very easy
+      to use. As long as you just know a little bit of JavaScript/TypeScript,
+      and preferably also a bit of React, you will be able to make your own
+      new apps and features in no time!
+    </p>
+    <p>
+      And it will not be long before we will also be able to assist you in
+      using AI to help you build your apps and features even more quickly!
+    </p>
+    <p>
+      In order to get started building your own user-programmed (UP) apps, head
+      to the
+      <ILink key="l-tut" href={`~/../tutorials`}>tutorials</ILink>.
+    </p>
 
 
 
