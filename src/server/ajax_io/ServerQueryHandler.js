@@ -41,6 +41,12 @@ export class ServerQueryHandler {
   async queryAJAXServer(
     isPrivate, route, isPost, postData, options, flags, upNodeID = this.nodeID
   ) {
+    if (upNodeID !== this.nodeID) {
+      console.log("curDomain: ", curDomain);
+      console.log("this.domain: ", this.domain);
+      console.log("upNodeID: ", JSON.stringify(upNodeID));
+      console.log("this.nodeID: ", JSON.stringify(this.nodeID));
+    }
     if (upNodeID !== this.nodeID) throw new NetworkError(
       `Unrecognized UP node ID: "${upNodeID}" (queries to routes of foreign ` +
       "UP nodes are not implemented yet)"
