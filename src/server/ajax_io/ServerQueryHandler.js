@@ -1,6 +1,6 @@
 
 export const curDomain = (typeof window === "undefined") ? "localhost" :
-  /^https?:\/\/((www\.)?)([^:/]*)/.exec(window.location.href)[2];
+  /^https?:\/\/(www\.)?([^:/]*)/.exec(window.location.href)[2];
 
 export const upNodeIDs = {
   "localhost": "1",
