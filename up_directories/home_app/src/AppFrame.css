@@ -334,3 +334,11 @@
 .page :is(ol, ul) {
   margin-top: 0.5em;
 }
+
+
+
+
+.tutorial-list {
+  font-size: x-large;
+  padding-top: 0.25em;
+}

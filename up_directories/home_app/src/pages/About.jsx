@@ -15,7 +15,7 @@ export function render() {
       Here the users are actually free to extend and fork the apps on the
       platform themselves, or build new ones. And each new version
       of each app is made available to all other users{/*<sup>*</sup>*/} on the
-      platform, meaning that each individual user is free to choose to use
+      platform, meaning that each individual user is free to choose
       whichever version of each app that they like.
     {/* </p> */}
     <ul>
@@ -30,7 +30,7 @@ export function render() {
       </li>
       <li>
         Are you tired of not being able to restrict and control the apps that
-        your kids use how you want?
+        your kids use the way you want?
       </li>
       <li>
         Are you tired of search results being dominated by paid-for entires,
@@ -44,7 +44,7 @@ export function render() {
         lack of transparency in this regard?
       </li>
       <li>
-        Are you tired of a lack of data portability or ability to synchronize
+        Are you tired of a lack of data portability and ability to synchronize
         with other platforms, making it hard to leave a platform once
         your friends and connections are all there?
       </li>
@@ -75,8 +75,8 @@ export function render() {
     </p>
     <p>
       The platform is furthermore open-source and decentralized, which
-      means that the users do not have to rely on any single company for
-      not taking these freedoms away again all of a sudden.
+      means that the users do not have to rely on any single company to
+      not take these freedoms away again all of a sudden.
     </p>
     {/* <p className="footnote">
       * Kids are of course an exception to this rule of freedom of choice:
@@ -97,8 +97,9 @@ export function render() {
       valuable as AI continues to advance as a development tool. In a future
       where almost anyone can engage in software development, using just
       their natural language as a programming language, the concept of
-      relying on a central group of developers and designers will no doubt
-      seem more and more meaningless as time goes on.
+      relying on a central group of developers and designers
+      for determining what our apps can and cannot do
+      will no doubt seem more and more meaningless as time goes on.
     </p>
     <p>
       The only way to truly embrace the powers of AI is thus to also embrace
@@ -138,8 +139,8 @@ export function render() {
       to implement their own back end as well.
     </p>
     <p>
-      This allows the users to upload and share new apps and app versions
-      quickly with each other, with minimal central oversight needed, thus
+      This allows the users to upload and share new apps and new features
+      quickly with each other, and with minimal central oversight needed, thus
       allowing for very decentralized and fast-moving development.
     </p>
     <p>
@@ -171,12 +172,13 @@ export function render() {
       the apps on it. These users will either pay through subscriptions, or by
       watching ads, or through individual donations.
     </p>
-    <p>
-      The company behind up-web.org (which is just one node in a decentralized
-      network) seeks to be completely transparent about its costs, and seeks
+    {/* <p>
+      The company behind up-web.org
+      {/* (which is just one node in a decentralized network) * /}
+      seeks to be completely transparent about its costs, and seeks
       to take the user community on board in terms of how they prefer to
       pay these costs.
-    </p>
+    </p> */}
     {/* <p>
       There are also other possible sources of income on top of this, such as
       sponsorships, grants, and public funding.
@@ -189,8 +191,8 @@ export function render() {
       open-source licenses for their apps and software components, we will also
       allow them to choose other kinds of licenses if they wish to have more
       specific control over how their apps and components are monetized. And in
-      return, we will require a cut of the revenue that these apps and
-      components generate.
+      return, we will require a cut of the revenue that these closed-source
+      apps and components generate.
     </p>
 
 
@@ -211,8 +213,8 @@ export function render() {
       When logged in, you can also rate the app versions via the arrow (⇧⇩)
       buttons. This user input can then be used gauge the popularity of
       each app version, and makes it possible to always load the most popular
-      version of the app by default (after it has been verified for safety, of
-      course).
+      version of the app by default.
+      {/* (after it has been verified for safety, of course). */}
     </p>
     <p>
       And if you want a different version than the most popular one for a given
@@ -248,8 +250,8 @@ export function render() {
       using AI to help you build your apps and features even more quickly!
     </p>
     <p>
-      In order to get started building your own user-programmed (UP) apps, head
-      to the
+      In order to get started building your own user-programmed (UP) apps, go
+      check out the
       <ILink key="l-tut" href={`~/../tutorials`}>tutorials</ILink>.
     </p>
 

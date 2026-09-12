@@ -49,7 +49,7 @@ export function render() {
 
   return <div className="page tutorials-page">
     <h2>Tutorials</h2>
-    <ol>
+    <ol className="tutorial-list">
       <li>
         <ILink key="l-started" href="./getting-started" >
           Getting started
