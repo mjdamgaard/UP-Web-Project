@@ -1,5 +1,6 @@
 
 import * as ILink from 'ILink';
+import * as ELink from 'ELink';
 
 
 export function render() {
@@ -12,17 +13,17 @@ export function render() {
       to the platform, as well as their own modifications to existing apps.
     </p>
     <p>
-      Each of the user-uploaded apps and modifications will generally be made
-      available to all other users as well, meaning
-      that each user is free to choose exactly which version of each app that
-      they prefer, without having to go to a different web domain or
+      Each of the user-uploaded apps and modifications will generally also be
+      available to all other users on the platform, meaning
+      that each user is free to choose exactly which version of each app
+      they want, without having to go to a different web domain or
       download a different mobile app.
     </p>
     <p>
       The user-uploaded apps are all interpreted in a safe sandbox, which makes
       it possible for users to share their new apps and modifications quickly
-      and safely with the rest of the community, without the risk of them
-      hacking each other.
+      and safely with the rest of the community, without them being able to
+      hack each other.
       {/* This sandbox even extends
       to the back end as well, which means that the user-uploaded apps are not
       limited to one particular back end, but are free to implement their own. */}
@@ -32,22 +33,14 @@ export function render() {
       upload the source code to be executed server-side, and
       thereby implement their own back-end data structures and algorithms.
     </p> */}
-    {/* <p>
-      Furthermore, the platform does not require the user-uploaded apps to
-      allocate any computational resources or storage space in advance (apart
-      from the space for the source code itself). Instead these
-      resources are simply allocated only on demand, which means that platform
-      will generally be able to accept and host any new user-uploaded app or
-      modifications for free, or at least for a miniscule cost.
-    </p> */}
     <p>
       Furthermore, the platform does not require the user-uploaded apps to
       allocate any resources in advance, apart from just the storage space for
       the source code itself. This means that costs of platform will not
       depend much on the number of apps and app versions that it hosts, but
-      mostly on how many users use those apps. The platform is therefore able
-      accept and host new apps and app versions at a miniscule cost to the
-      uploading users.
+      rather on how many regular users it has in total. The platform is
+      therefore able accept and host new apps and app versions at a miniscule
+      cost to the uploading users.
     </p>
 
 
@@ -119,7 +112,7 @@ export function render() {
     </p> */}
 
   
-    <h3>Core business model</h3>
+    {/* <h3>Core business model</h3>
     <p>
       The costs of the platform will mainly be carried by the end users who use
       the apps on it. These users will either pay through subscriptions, or by
@@ -138,7 +131,7 @@ export function render() {
       And if a lot of users end up donating to each other through the software
       tickets mentioned above, we can also potentially take a cut of this
       money if the users are on-board.
-    </p> */}
+    </p> * /}
     <p>
       Additionally, while the developing users are always free to use
       open-source licenses for their apps and software components, we will also
@@ -146,7 +139,44 @@ export function render() {
       specific control over how their apps and components are monetized. And in
       return, we will require a cut of the revenue that these closed-source
       apps and components generate.
+    </p> */}
+
+
+    {/* <h3>The Fediverse, the ATmosphere, and now the UP Web</h3>
+    <p>
+      The goal of this platform is to create a decentralized ecosystem of
+      apps, operating across multiple independent servers, much like the
+      <ELink key="link-fediverse"
+        href="https://en.wikipedia.org/wiki/Fediverse"
+      >
+        Fediverse
+      </ELink>
+      and the
+      <ELink key="link-atmosphere"
+        href="https://en.wikipedia.org/wiki/AT_Protocol"
+      >
+        ATmosphere
+      </ELink>,
+      which are most know for their flagship apps
+      <ELink key="link-mastodon"
+        href="https://en.wikipedia.org/wiki/Mastodon_(social_network)"
+      >
+        Mastodon
+      </ELink>
+      and
+      <ELink key="link-bluesky"
+        href="https://en.wikipedia.org/wiki/Bluesky"
+      >
+        Bluesky
+      </ELink>.
     </p>
+    <p>
+      This platform even seeks to implement its own social media app as a
+      starting point for the user community. 
+    </p>
+    <p>
+      However, ...
+    </p> */}
 
 
     <h3>Explore this website</h3>
