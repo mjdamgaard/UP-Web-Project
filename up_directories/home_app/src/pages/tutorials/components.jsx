@@ -30,7 +30,7 @@ const page = <div className="page text-page">
     components, and to make them responsive.
   </p>
   <p>
-    The system used for building front-end components is inspired by
+    The framework offered here is inspired a lot by
     <ELink key="link-wiki-react"
       href="https://en.wikipedia.org/wiki/React_(software)"
     >
@@ -61,6 +61,15 @@ const page = <div className="page text-page">
       w3schools.com
     </ELink>
     first, before you continue with this tutorial.
+  </p>
+  <p>
+    The framework introduced here is currently the only one that is supported
+    by the sandbox of this platform, which is what allows you to upload and
+    share your apps and prototypes immediately with the community. In the
+    <ILink key="link-tut-3-1" href="~/useful-tips">
+      next tutorial
+    </ILink>,
+    we discuss how you can technically also program in other frameworks as well.
   </p>
 
 

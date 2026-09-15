@@ -175,7 +175,13 @@ export function render() {
       starting point for the user community. 
     </p>
     <p>
-      However, ...
+      However, ... *(The idea was to write about how we're not technically a
+      competitor to these, but just brings something new to the table, as the
+      two/three technologies can coexist. For instance, the ATmosphere can
+      utilize our technology to make user-programmable apps that allow for
+      faster development. And the users of this platform are (or at least will
+      be) free to use the AT Protocol as much as they want, either partially or
+      fully.)
     </p> */}
 
 
