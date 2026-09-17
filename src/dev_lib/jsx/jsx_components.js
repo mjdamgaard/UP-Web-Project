@@ -1435,7 +1435,7 @@ class JSXInstance {
     let len = localStorage.length;
     for (let i = 0; i < len; i++) {
       let key = localStorage.key(i);
-      if (key.slice(0, 4) === "jsx-" && key.slice(-8) === "-expTime") {
+      if (key && key.slice(0, 4) === "jsx-" && key.slice(-8) === "-expTime") {
         let expTime = parseInt(localStorage.getItem(key));
         if (expTime < now) {
           localStorage.removeItem(key.slice(0, -8));

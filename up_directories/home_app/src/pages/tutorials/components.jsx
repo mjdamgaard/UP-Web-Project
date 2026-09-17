@@ -69,7 +69,8 @@ const page = <div className="page text-page">
     <ILink key="link-tut-3-1" href="~/useful-tips">
       next tutorial
     </ILink>,
-    we discuss how you can technically also program in other frameworks as well.
+    last section, we will discuss how one can technically also program in
+    other frameworks as well, but without the benefits that the sandbox offers.
   </p>
 
 

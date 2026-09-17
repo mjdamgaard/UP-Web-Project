@@ -30,8 +30,8 @@ export async function query(
       route, options, callerNode, execEnv,
     ) ?? [];
     if (text === undefined) {
-      if (localPath === "placeholders.js") {
-        // If the special placeholders.js file is missing, return a default one.
+      if (localPath === "dependencies.js") {
+        // If the special dependencies.js file is missing, return a default one.
         return "export default {};";
       }
       throw new RuntimeError(

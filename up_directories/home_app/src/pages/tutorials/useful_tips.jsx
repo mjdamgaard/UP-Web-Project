@@ -26,7 +26,7 @@ const page = <div className="page text-page">
 
   <h3>Debugging</h3>
   <p>
-    In regular JavaScript, you can use a 'debugger;' statement to halt and
+    In regular JavaScript (JS), you can use a 'debugger;' statement to halt and
     investigate the code at a certain breakpoint. And while this framework
     technically also implement a 'debugger;' statement, it will halt inside
     native code of the interpreter of the sandbox rather than in your own code,
@@ -48,12 +48,12 @@ const page = <div className="page text-page">
     cause of an error just be investigating the immediate error message.
   </p>
   <p>
-    So when you open your web console, do not be frightened or panic whenever
+    So when you open your web console, do not panic whenever
     you see a large wall of red text. Just click within the console and hit
     your 'Home' key to go to the top of the console. And there you immediately
     read the original error message, followed by a code snippet pointing to
     where the error occurred, which is again followed by list of information
-    about each function call on the stack, and ending with a list of defined
+    about each function calls on the stack, and finally a list of defined
     variables in the environment where the error occurred.
   </p>
 
@@ -85,7 +85,7 @@ const page = <div className="page text-page">
     This is possible because the file located at
     up_directories/directories.json, which keeps track of the IDs of each of
     your uploaded directories.
-    ... Well, this is only possible if you also include the placeholders.json
+    ... Well, this is only possible if you also include the dependencies.json
     file, and I think that might be a bit complicated to introduce here; it
     should probably wait to another tutorial..(?)
   </p> */}
@@ -113,8 +113,8 @@ const page = <div className="page text-page">
   <p>
     CAUTION: Before you import from the directories of other users, make sure
     to check that these modules are open-source, or that you meet the license
-    requirements to use the code. Otherwise your directory might get reported
-    and removed.
+    requirements to use the code. Otherwise your uploaded directory might get
+    removed without further notice.
   </p>
 
 
@@ -151,196 +151,98 @@ const page = <div className="page text-page">
     ]}</code>
   </p>
   <p>
-    And by using the spread operator, you can also often achieve the same
-    result, even when working with immutable objects:
+    CAUTION: Refrain from exporting mutable objects from a module, nor any
+    object that contains an accessible reference to a mutable object, since
+    this will allow other users to mutate it, intentionally or not, and may
+    thus cause your code to break. 
   </p>
   <p>
-    <code className="jsx">{[
-      'let obj1 = {a: "foo", b: "bar"};\n',
-      'let obj2 = {...obj1, b: "baz"};',
-      '\n',
-      'let arr1 = [0, 1, 2];\n',
-      'let arr2 = [...arr1, 3];\n',
-    ]}</code>
+    It is also worth noting, by the way, that even when working with immutable
+    objects, one can often easily achieve a similar result by utilizing
+    the spread ('...') operator:
   </p>
-
-
-
-
-
-
-  <h3>{"Objects are immutable by default"}</h3>
-  <p>{
-    "All objects are immutable by default in this version of JS, " +
-    "including arrays. This is also due to the fact that in this UP " +
-    "system, you generally cannot count on all other users, as some might " +
-    "in principle have malicious intentions. " +
-    "And this is why you must never export a mutable " +
-    "object from a module, nor any object that holds a reference to a " +
-    "mutable object. For if you do, other users might import and corrupt " +
-    "the data held in that object, causing failures and errors elsewhere."
-  }</p>
-  <p>{
-    "And in order to make preventing exporting mutable objects a feasible " +
-    "task for the users, " +
-    "all objects are therefore immutable by default."
-  }</p>
-  <p>{
-    "So if you for instance have a standard plain object and you want to " +
-    "change one of its properties, the following code would throw an error."
-  }</p>
   <p>
     <code className="jsx">{[
       'let obj = {a: "foo", b: "bar"};\n',
-      'obj.b = "baz"; // Will throw an error!',
-    ]}</code>
-  </p>
-  <p>{
-    "But what you might do instead is to make use of the spread operator " +
-    "to create the new desired object, and then simply reassign it to the " +
-    "same variable, like so:"
-  }</p>
-  <p>
-    <code className="jsx">{[
-      'let obj = {a: "foo", b: "bar"};\';\n',
       'obj = {...obj, b: "baz"};',
+      '\n',
+      'let arr = [0, 1, 2];\n',
+      'arr = [...arr1, 3];\n',
     ]}</code>
   </p>
-  {/* <p>{
-    "(By the way, whereas React recommends using the 'const' keyword as " +
-    "much as possible, this framework recommends using the 'let' keyword " +
-    "as much as possible, except at the module scope, and in particular " +
-    "for exports.)"
-  }</p> */}
-  <p>{
-    "However, if you do want to use a mutable object or array, you can " +
-    "just use either the MutableObject() or the MutableArray() " +
-    "constructor, respectively. For example, the following code will " +
-    "also succeed."
-  }</p>
+
+
+
+  <h3>Built-in JSX components</h3>
+  <p>
+    ...
+  </p>
+
+
+
+  <h3>Global variables and built-in libraries</h3>
+  <p>
+    As part of ensuring that users cannot hack each other, the sandbox of
+    course also restrict access to the global variables of regular JS.
+    Otherwise malicious users could easily gain access to
+    credentials of other users, or do other types of XSS attacks. 
+  </p>
+  <p>
+    This means that you cannot expect to have access to all the same globals
+    that you are perhaps used to from regular JS. And conversely, there are
+    also variables that are part of this framework which is not part of regular
+    JS, such as the MutableObject() and MutableArray() constructors that was
+    introduced above. 
+  </p>
+  <p>
+    There are also some built-in libraries as part of this framework which is
+    not part of regular JS. For instance, in the 
+    <ILink key="link-tut-4-1" href="~/server_modules">
+      next tutorial
+    </ILink>,
+    you will learn how to import certain functions related to fetching and
+    posting data from a library called 'query', like so:
+  </p>
   <p>
     <code className="jsx">{[
-      'let obj = new MutableObject({a: "foo", b: "bar"});\';\n',
-      'obj.b = "baz";\n',
-      '\n',
-      'let arr = new MutableArray([0, 1, 2, 2]);\';\n',
-      'arr[3] = 3;',
+      'import {post, fetch, fetchPrivate} from \'query\';',
     ]}</code>
   </p>
-  <p>{
-    "Just make sure that you do not export any such mutable object from the " +
-    "module, nor any object that contains a reference to one. And for the " +
-    "same reason you also should not export any functions that mutates " +
-    "an object that is not either created by that function, or comes from " +
-    "one of the arguments."
-  }</p>
-
-
-
-
-
-
-
-
-  <h3>{"Module paths"}</h3>
-  <p>{
-    "It is important to note, however, that the paths in the import " +
-    "statements, like the one seen " +
-    "above, must be relative paths that stay within the directory that " +
-    "you have uploaded."
-  }</p>
-  <p>{
-    "That is, unless you want to import components (or " +
-    "functions, etc.) from another directory altogether, either another " +
-    "one of yours, or of another user."
-  }</p>
-  <p>{
-    "In that case, you need " +
-    "to use the absolute path to the foreign module, not in relation to " +
-    "your local file system, but to the server-side file system. This " +
-    "means that the absolute paths should be of the form " +
-    "\"/<UP node ID>/<home directory ID>/<path from that directory>\". " +
-    "Here <UP node ID> is the ID of the UP node, which in the case of " +
-    "up-web.org is just \"1\". " +
-    "And <home directory ID> is the ID that was assigned to the uploaded " +
-    "directory. (You can see this when you upload or re-upload your " +
-    "directory.)"
-  }</p>
-  <p>{
-    "For instance, if someone wants to import your new app2.jsx " +
-    "component, and your home directory ID is, say, \"123ab\", " +
-    "they could import it via the following statement."
-  }</p>
   <p>
-    <code className="jsx">
-      {'import * as App from "/1/123ab/app2.jsx";'}
-    </code>
+    Unfortunately, we do not yet offer a complete documentation of which global
+    variables and built-in libraries are available. And since this framework is
+    still in alpha, more variables and libraries might be added in the future,
+    and some of the existing ones might even undergo changes. 
+  </p>
+  <p>
+    However, if you some a common function from regular JS, such as e.g.
+    Object.entries() or Number.isNan(), which poses no security threat, there
+    is a good chance that it is already available. And the same goes for a lot
+    of the built-in methods of regular JS such as e.g. the map() method
+    for arrays, or the split() method for strings, etc.
+  </p>
+  <p>
+    And until a comprehensive documentation is made available, benefit a lot
+    from you looking at existing apps and copy what they are doing, whenever
+    you want to achieve something similar. 
+  </p>
+  <p>
+    Lastly, you are of course also welcome to inspect the source code at ...
   </p>
 
+
+
+
+  <h3></h3>
 
 
   <h3>{"This framework uses its own JS interpreter"}</h3>
-  <p>{
-    "It is important to note, while using this framework, that the JS " +
-    "interpreter does not behave exactly like you are (perhaps) used to. " +
-    "This is because this framework actually employs its own JS " +
-    "interpreter in order to be able to sandbox the user-uploaded source " +
-    "code, and execute it in a way that prevents users from hacking each " +
-    "other."
-  }</p>
-  <p>{
-    "So whenever a line of your uploaded source code is executed, the " +
-    "native JS interpreter of your browser is actually running another " +
-    "interpreter, which then runs your code."
-  }</p>
   <p>{
     "The implications of this sandboxing is first of all that you " +
     "do not have access to all the same functions as in the " +
     "native JS interpreter, nor to all the same built-in object methods " +
     "and properties."
   }</p>
-  <p>{
-    "In fact, all the regular object prototypes of this modified version " +
-    "of JS, " +
-    "such as for strings, numbers, arrays, and plain objects, " +
-    "contain no methods at all. And the only built-in properties are the " +
-    "'length' property for strings and arrays, and also the integer " +
-    "indices that can by used to access either a specific character " +
-    "of a string or a specific entry of an array."
-  }</p>
-  <p>{
-    "So to give an example, if you want to map an array to another array, " +
-    "you would normally write something like the following when using " +
-    "regular JS."
-  }</p>
-  <p>
-    <code className="jsx">{[
-      'let numbers = [1, 2, 3, 4];\n',
-      'let squares = numbers.map(num => num * num); // Wrong!\n',
-    ]}</code>
-  </p>
-  <p>
-    But this is wrong in this framework, as the
-    <ELink key="link-map-1"
-      href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map" >
-      map()
-    </ELink>
-    method is not defined. And instead you need to import an equivalent
-    function from one of the so-called 'developer libraries' (as
-    opposed to user-made libraries). In particular for the map() method,
-    you would write the following instead.
-  </p>
-  <p>
-    <code className="jsx">{[
-      '/* At the top of the module */\n',
-      'import {map} from \'array\';\n',
-      '\n',
-      '/* Anywhere inside the module */\n',
-      'let numbers = [1, 2, 3, 4];\n',
-      'let squares = map(numbers, num => num * num);\n',
-    ]}</code>
-  </p>
-
 
 
   <h3>{"Developer functions"}</h3>
@@ -617,7 +519,7 @@ const page = <div className="page text-page">
 
 
 
-  <h3>{"Additional details about the components"}</h3>
+  {/* <h3>{"Additional details about the components"}</h3>
   <h4>{"The 'ref' prop and mutable props/states"}</h4>
   <p>{
     "There is one more prop with a special implementation for the JSX " +
@@ -681,40 +583,8 @@ const page = <div className="page text-page">
     "fragment, or an array. But this will then be automatically wrapped " +
     "in either a <span> element, in case of a returned string, or in a " +
     "<div> element in the case of a returned JSX fragment or array."
-  }</p>
+  }</p> */}
 
 
-
-  <h3>{"Final remarks"}</h3>
-  <p>{
-    "These were all of the most pressing points that you ought to " +
-    "know before you start developing your first UP apps."
-  }</p>
-  <p>{
-    "There are also several other points that are worth mentioning at " +
-    "some point, but these can wait to a later tutorial."
-  }</p>
-  <p>{
-    "You should now have what you need to start building your first " +
-    "client-side UP apps. Good luck!"
-  }</p>
-  {/* <p>{([
-    "And as was said in ",
-    <ILink key="link-tut-1" href="~/getting-started">
-      {"Tutorial 1"}
-    </ILink>,
-    ", if you run into any problems, or have any questions at all, please " +
-    "feel free to contact up-web.org, e.g. by writing an " +
-    "e-mail to mads@up-web.org. We are happy to help you."
-  ])}</p> */}
-
-
-
-    {/* Trigger() is better than callback props. *Well, this should be 
-      * explained after (or as part of) the SM tutorial instead.. */}
-    {/* Future compiler. *Hm, maybe I will skip this one.. */}
-    {/* Extended syntax for relative routes. *Yeah, maybe I should add
-      * another miscellaneous tutorial as a later one.. */}
-    {/* Maybe also a note about the extended relative urls */}
   
 </div>;

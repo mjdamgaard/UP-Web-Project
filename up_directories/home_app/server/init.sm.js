@@ -4,7 +4,7 @@ import {checkAdminPrivileges} from 'request';
 import {getNodeID} from 'route';
 import {postConstructedEntity, postAllEntitiesFromModule} from
   "../../semantic_entities/entities.js";
-import placeholders from "~/placeholders.js";
+import dependencies from "~/dependencies.js";
 
 const upNodeID = getNodeID();
 const {this: {
@@ -19,7 +19,7 @@ const {this: {
     "mastermind": mastermindDirID,
     "mastermind_01": mastermind01DirID,
   },
-}} = placeholders;
+}} = dependencies;
 
 
 export function _init_1() {

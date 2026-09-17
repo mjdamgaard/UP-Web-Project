@@ -4,13 +4,13 @@ import * as InputText from 'InputText';
 import * as Label from 'Label';
 import * as ILink from 'ILink';
 
-import placeholders from "~/placeholders.js";
+import dependencies from "~/dependencies.js";
 
 const {this: {
   directories: {
     "file_browser": fileBrowserDirID,
   },
-}} = placeholders;
+}} = dependencies;
 
 export function initialize() {
   let homeDirID = this.getHistoryState(homeDirID => 

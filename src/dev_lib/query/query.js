@@ -250,10 +250,10 @@ export async function _query(
     // get it from the liveModules cache and create and return a LiveJSModule
     // instance.
     else if (SCRIPT_ROUTE_REGEX.test(route)) {
-      // First call fetchPlaceholdersModule() to fetch the ~/placeholders.js
+      // First call fetchDependenciesModule() to fetch the ~/dependencies.js
       // module for the given home directory, if it has not already been
       // fetched.
-      let placeholdersModulePromise = fetchPlaceholdersModule(
+      let dependenciesModulePromise = fetchDependenciesModule(
         route, callerNode, execEnv, interpreter, ancestorModules,
         finalCallbacks
       ).catch(
@@ -281,12 +281,12 @@ export async function _query(
         }
       }
 
-      // Now wait for the placeholders.js module.
-      let placeholdersModule = await placeholdersModulePromise;
-      if (placeholdersModule instanceof ErrorWrapper) {
-        let err = placeholdersModule.val;
+      // Now wait for the dependencies.js module.
+      let dependenciesModule = await dependenciesModulePromise;
+      if (dependenciesModule instanceof ErrorWrapper) {
+        let err = dependenciesModule.val;
         if (err instanceof LoadError) {
-          placeholdersModule = undefined;
+          dependenciesModule = undefined;
         }
         else throw err;
       }
@@ -296,7 +296,7 @@ export async function _query(
       let globalEnv = execEnv.getGlobalEnv();
       liveModule = await interpreter.executeModule(
         parsedScript, lexArr, strPosArr, script, route, globalEnv, liveModules,
-        placeholdersModule, ancestorModules, finalCallbacks, isPrivate
+        dependenciesModule, ancestorModules, finalCallbacks, isPrivate
       );
       result = liveModule;
     }
@@ -414,7 +414,7 @@ export async function _query(
       let globalEnv = execEnv.getGlobalEnv();
       let modulePath = route + ";" +
         castingSegmentArr.slice(0, i + 1).join(";");
-      let placeholdersModule = await fetchPlaceholdersModule(
+      let dependenciesModule = await fetchDependenciesModule(
         route, callerNode, execEnv, interpreter, ancestorModules,
         finalCallbacks
       ).catch(err => {
@@ -425,7 +425,7 @@ export async function _query(
       });
       let liveModule = await interpreter.executeModule(
         parsedScript, lexArr, strPosArr, result, modulePath, globalEnv,
-        liveModules, placeholdersModule, ancestorModules, finalCallbacks,
+        liveModules, dependenciesModule, ancestorModules, finalCallbacks,
         isPrivate, false
       );
       result = liveModule;
@@ -531,21 +531,21 @@ export async function _query(
 }
 
 
-export async function fetchPlaceholdersModule(
+export async function fetchDependenciesModule(
   route, callerNode, execEnv, interpreter,
   ancestorModules = undefined, finalCallbacks = undefined
 ) {
   // Parse the nodeID and dirID from the route, as well as the rest of it.
   let [ , homePath, tail] = /^(\/[^/]+\/[^/]+)(\/.+)$/.exec(route) ?? [];
 
-  // If the route is itself a placeholders route, simply return undefined.
-  if (!tail || tail === "/placeholders.js") {
+  // If the route is itself a dependencies route, simply return undefined.
+  if (!tail || tail === "/dependencies.js") {
     return undefined;
   }
 
-  // Else simply call _fetch() an homePath + "" to get the placeholders module.
+  // Else simply call _fetch() an homePath + "" to get the dependencies module.
   return await _fetch(
-    homePath + "/placeholders.js", {},
+    homePath + "/dependencies.js", {},
     callerNode, execEnv, interpreter, ancestorModules, finalCallbacks,
   );
 }

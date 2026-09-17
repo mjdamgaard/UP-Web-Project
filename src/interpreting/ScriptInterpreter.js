@@ -297,7 +297,7 @@ export class ScriptInterpreter {
 
   async executeModule(
     moduleNode, lexArr, strPosArr, script, modulePath, globalEnv, liveModules,
-    placeholdersModule = undefined, ancestorModules = [], finalCallbacks = [],
+    dependenciesModule = undefined, ancestorModules = [], finalCallbacks = [],
     isPrivate = false, doCache = !isPrivate
   ) {
     // Check against infinite import recursion.
@@ -325,7 +325,7 @@ export class ScriptInterpreter {
     else {
       let liveModulePromise = this.executeModuleHelper(
         moduleNode, lexArr, strPosArr, script, modulePath, globalEnv,
-        liveModules, placeholdersModule, ancestorModules, finalCallbacks,
+        liveModules, dependenciesModule, ancestorModules, finalCallbacks,
         isPrivate,
       ).then(
         liveModule => liveModule
@@ -361,7 +361,7 @@ export class ScriptInterpreter {
 
   async executeModuleHelper(
     moduleNode, lexArr, strPosArr, script, modulePath, globalEnv, liveModules,
-    placeholdersModule, ancestorModules, finalCallbacks, isPrivate,
+    dependenciesModule, ancestorModules, finalCallbacks, isPrivate,
   ) {
     decrCompGas(moduleNode, globalEnv);
 
@@ -369,7 +369,7 @@ export class ScriptInterpreter {
     let moduleEnv = new Environment(
       globalEnv, "module", {
        modulePath: modulePath, lexArr: lexArr, strPosArr: strPosArr,
-       script: script, placeholdersModule: placeholdersModule,
+       script: script, dependenciesModule: dependenciesModule,
       }
     );
 
@@ -2140,7 +2140,7 @@ export class Environment {
   constructor(
     parent, scopeType = "block", {
       fun, inputArr, callerNode, callerEnv, thisVal, flags,
-      modulePath, lexArr, strPosArr, script, placeholdersModule,
+      modulePath, lexArr, strPosArr, script, dependenciesModule,
       globals,
     } = {},
   ) {
@@ -2175,7 +2175,7 @@ export class Environment {
       this.lexArr = lexArr;
       this.strPosArr = strPosArr;
       this.script = script;
-      this.placeholdersModule = placeholdersModule;
+      this.dependenciesModule = dependenciesModule;
       this.exports = [];
       this.liveModule = undefined;
     }
@@ -3941,7 +3941,7 @@ export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
 
   // And before returning the absolute path, if either the nodeID or the dirID
   // segments are non-hexadecimal placeholders, call substituteNodeAndDirIDs()
-  // to substitute these placeholders with IDs gotten from the placeholder.js
+  // to substitute these placeholders with IDs gotten from the dependencies.js
   // module.
   let [_, nodeIDSegment, dirIDSegment, ...restSegments] = fullPath.split("/");
   if (
@@ -3961,22 +3961,22 @@ export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
 function substituteNodeAndDirIDs(
   nodeIDSegment, dirIDSegment, routeTail, callerNode, callerEnv,
 ) {
-  let {placeholdersModule} = callerEnv.getModuleEnv();
+  let {dependenciesModule} = callerEnv.getModuleEnv();
 
   // Substitute any non-hexadecimal node or dir placeholder.
   let nodeID = nodeIDSegment, dirID = dirIDSegment;
   let shouldSubstituteNode = nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment);
   let shouldSubstituteDir = dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment);
   if (shouldSubstituteNode || shouldSubstituteDir) {
-    let placeholders = getPropertyFromObject(
-      placeholdersModule, "default", callerNode, callerEnv
+    let dependencies = getPropertyFromObject(
+      dependenciesModule, "default", callerNode, callerEnv
     );
     let domain = shouldSubstituteNode ? nodeIDSegment : "this";
-    let domainPlaceholders =
-      getPropertyFromObject(placeholders, domain, callerNode, callerEnv);
+    let domainDependencies =
+      getPropertyFromObject(dependencies, domain, callerNode, callerEnv);
     if (shouldSubstituteNode) {
       nodeID = getPropertyFromObject(
-        domainPlaceholders, "nodeID", callerNode, callerEnv
+        domainDependencies, "nodeID", callerNode, callerEnv
       );
       // If nodeIDs[nodeIDSegment] is nullish, just use nodeIdSegment as it was,
       // expecting an error to be thrown by query().
@@ -3984,7 +3984,7 @@ function substituteNodeAndDirIDs(
     }
     if (shouldSubstituteDir) {
       let dirs = getPropertyFromObject(
-        domainPlaceholders, "directories", callerNode, callerEnv
+        domainDependencies, "directories", callerNode, callerEnv
       );
       dirID = getPropertyFromObject(dirs, dirIDSegment, callerNode, callerEnv);
       // If dirIDs[dirIDSegment] is nullish, just use dirIDSegment as it was,

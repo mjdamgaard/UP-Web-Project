@@ -1,13 +1,13 @@
 
 import {logout} from 'account';
 
-import placeholders from "~/placeholders.js";
+import dependencies from "~/dependencies.js";
 
 const {this: {
   directories: {
     "home_app": homeAppDirID,
   },
-}} = placeholders;
+}} = dependencies;
 
 
 export function render({isLoggedIn}) {

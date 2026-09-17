@@ -17,7 +17,7 @@ If you want to install this system as a server on your localhost, you need to:
 
 8. When logged into this CLI program, first type in the command 'cd semantic_entities' to change to the 'semantic_entities' directory. Then type in the single-letter command 'u' (for 'upload') in order to upload the './up_directories/semantic_entities' directory to the server.
 
-9. Repeat this process for the 'home_app' directory again (which ought to be your second upload.) In other words, run the 'cd home_app' command, followed by the 'u' command. And continue this process for all the directories listed in the './up_directories/home_app/placeholders.json' file, whose list ought to look something like this:
+9. Repeat this process for the 'home_app' directory again (which ought to be your second upload.) In other words, run the 'cd home_app' command, followed by the 'u' command. And continue this process for all the directories listed in the './up_directories/home_app/dependencies.json' file, whose list ought to look something like this:
     - "semantic_entities"
     - "home_app"
     - "file_browser"

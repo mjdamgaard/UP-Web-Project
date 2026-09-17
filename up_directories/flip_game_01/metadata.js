@@ -2,14 +2,14 @@
 import {getHomeDirID} from 'route';
 import * as ILink from 'ILink';
 
-import placeholders from "~/placeholders.js";
+import dependencies from "~/dependencies.js";
 const {this: {
   nodeID,
   directories: {
     "app_browser": appBrowserDirID,
     "flip_game": flipGameDirID,
   },
-}} = placeholders;
+}} = dependencies;
 
 const homeDirID = getHomeDirID();
 const flipGamePath = abs("~/../semantic_entities/em3.js;call/App") + "/" +

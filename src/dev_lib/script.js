@@ -3,7 +3,7 @@ import {
   DevFunction, LoadError, parseString, 
 } from '../interpreting/ScriptInterpreter.js';
 import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
-import {fetchPlaceholdersModule} from "./query/query.js";
+import {fetchDependenciesModule} from "./query/query.js";
 
 
 export const exec = new DevFunction(
@@ -13,8 +13,8 @@ export const exec = new DevFunction(
   ) => {
     modulePath ??= execEnv.getModuleEnv().modulePath;
 
-    // Fetch the placeholders module.
-    let placeholdersModule = await fetchPlaceholdersModule(
+    // Fetch the dependencies module.
+    let dependenciesModule = await fetchDependenciesModule(
       modulePath, callerNode, execEnv, interpreter
     ).catch(err => {
       if (err instanceof LoadError) {
@@ -38,7 +38,7 @@ export const exec = new DevFunction(
     let globalEnv = execEnv.getGlobalEnv();
     return await interpreter.executeModule(
       parsedScript, lexArr, strPosArr, moduleString, modulePath, globalEnv,
-      liveModules, undefined, undefined, undefined, isPrivate, false
+      liveModules, dependenciesModule, undefined, undefined, isPrivate, false
     );
   },
 );
