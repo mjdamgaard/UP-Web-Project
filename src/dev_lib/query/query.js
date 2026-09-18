@@ -547,7 +547,12 @@ export async function fetchDependenciesModule(
   return await _fetch(
     homePath + "/dependencies.js", {},
     callerNode, execEnv, interpreter, ancestorModules, finalCallbacks,
-  );
+  ).catch(err => {
+    if (err instanceof LoadError) {
+      return {default: {}};
+    }
+    else throw err;
+  });
 }
 
 

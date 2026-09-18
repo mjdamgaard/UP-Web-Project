@@ -29,16 +29,6 @@ export async function query(
       "readTextFile", [homeDirID, localPath],
       route, options, callerNode, execEnv,
     ) ?? [];
-    if (text === undefined) {
-      if (localPath === "dependencies.js") {
-        // If the special dependencies.js file is missing, return a default one.
-        return "export default {};";
-      }
-      throw new RuntimeError(
-        `No file found at "${route}"`,
-        callerNode, execEnv
-      );
-    }
     return text;
   }
 

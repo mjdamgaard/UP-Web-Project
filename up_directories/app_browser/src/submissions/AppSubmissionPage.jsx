@@ -1,5 +1,6 @@
 
 import {hasType} from 'type';
+import {fetch} from 'query';
 import {fetchEntityID} from "../../../semantic_entities/entities.js";
 import * as InputText from 'InputText';
 import * as Label from 'Label';
@@ -44,8 +45,8 @@ export const actions = {
       </span>});
     }
     let [mainRenderFun, metadata] = Promise.all([
-      import("~/../" + appDirID + "/main.jsx;get/render"),
-      import("~/../" + appDirID + "/metadata.js;get/default"),
+      fetch(abs("~/../" + appDirID + "/main.jsx;get/render")),
+      fetch(abs("~/../" + appDirID + "/metadata.js;get/default")),
     ]).catch(err => {
       console.error(err);
       return [];

@@ -428,7 +428,7 @@ export class ScriptInterpreter {
       curModulePath, impStmt.str, impStmt, callerModuleEnv
     );
     let ret = await this.import(
-      submodulePath, impStmt, callerModuleEnv, false, true, false,
+      submodulePath, impStmt, callerModuleEnv, false,
       ancestorModules, finalCallbacks, impStmt.isPrivate,
     );
     return ret;
@@ -436,8 +436,7 @@ export class ScriptInterpreter {
 
 
   async import(
-    route, callerNode, callerEnv,
-    assertJSModule = false, assertModule = false, prepareJSXImmediately = false,
+    route, callerNode, callerEnv, assertJSModule = false,
     ancestorModules = [], finalCallbacks = [], isPrivate = false,
   ) {
     decrCompGas(callerNode, callerEnv);
@@ -453,15 +452,12 @@ export class ScriptInterpreter {
     let ret = await this.fetch(
       route, callerNode, callerEnv, ancestorModules, finalCallbacks, isPrivate
     );
-    if (assertJSModule && !(ret instanceof LiveJSModule)) throw new LoadError(
-      `No script was found at ${getString(route, callerNode, callerEnv)}`,
+    if (ret === undefined || ret === null) throw new LoadError(
+      `Missing file or undefined value at ${route}`,
       callerNode, callerEnv
     );
-    else if (
-      assertModule && !(ret instanceof LiveJSModule || ret instanceof CSSModule)
-    ) throw new LoadError(
-      "No script or style sheet was found at " +
-      getString(route, callerNode, callerEnv),
+    if (assertJSModule && !(ret instanceof LiveJSModule)) throw new LoadError(
+      `No script was found at ${getString(route, callerNode, callerEnv)}`,
       callerNode, callerEnv
     );
 
@@ -479,17 +475,10 @@ export class ScriptInterpreter {
 
     // Iterate through all the imports and add each import to the environment.
     impStmt.importArr.forEach(imp => {
-      // If liveSubmodule is a string, accept only a "namespace import", which
-      // has the effect of assigning the string to the import variable. And if
-      // the import string has the ":await" postfix, also only accept
+      // If the import string has the ":await" postfix, also only accept
       // namespace imports.
-      if (imp.importType !== "namespace-import") {
-        if (typeof liveSubmodule === "string") throw new LoadError(
-          "Only imports of the form '* as <variable>' are allowed for text " +
-          "file imports",
-          imp, curModuleEnv
-        );
-        if (impStmt.isAwait) throw new LoadError(
+      if (impStmt.isAwait && imp.importType !== "namespace-import") {
+        throw new LoadError(
           "The \":await\" postfix is only allowed for imports of the " +
           "form '* as <variable>'",
           imp, curModuleEnv
@@ -513,7 +502,7 @@ export class ScriptInterpreter {
               curModulePath, impStmt.str, imp, curModuleEnv
             );
             let liveModule = await this.import(
-              submodulePath, impStmt, curModuleEnv, false, true, false,
+              submodulePath, impStmt, curModuleEnv, true,
               undefined, undefined, isPrivate
             );
             Object.assign(moduleNamespaceObj, liveModule);
@@ -527,8 +516,8 @@ export class ScriptInterpreter {
           let val =
             getPropertyFromObject(liveSubmodule, ident, namedImp, curModuleEnv);
           if (val === undefined) throw new LoadError(
-            "No export found of the name '" + ident + "' in module " +
-            liveSubmodule.modulePath,
+            "No export found of the name '" + ident + "' in " +
+            impStmt.str,
             namedImp, curModuleEnv
           );
           curModuleEnv.declare(alias, val, true, namedImp);
@@ -538,7 +527,7 @@ export class ScriptInterpreter {
         let val =
           getPropertyFromObject(liveSubmodule, "default", imp, curModuleEnv);
         if (val === undefined) throw new LoadError(
-          "No default export in module " + liveSubmodule.modulePath,
+          "No default export in " + impStmt.str,
           imp, curModuleEnv
         );
         curModuleEnv.declare(imp.ident, val, true, imp);
@@ -1684,7 +1673,7 @@ export class ScriptInterpreter {
       case "import-call": {
         let path = this.evaluateExpression(expNode.pathExp, environment, state);
         let liveModulePromise = this.import(
-          path, expNode, environment, false, false, true
+          path, expNode, environment, false
         ).then(
           x => x, err => new ErrorWrapper(err)
         );
