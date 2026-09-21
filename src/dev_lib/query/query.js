@@ -5,7 +5,7 @@ import {
   CLEAR_FLAG, PromiseObject, Environment, LiveJSModule, parseString,
   TEXT_FILE_ROUTE_REGEX, SCRIPT_ROUTE_REGEX, CSS_ROUTE_REGEX, CSSModule,
   getString, getPropertyFromObject, ArgTypeError, forEachValue, ObjectObject,
-  ErrorWrapper, HEX_ID_REGEX, getAbsolutePath,
+  ErrorWrapper, HEX_ID_REGEX, getAbsolutePath, PathMap,
 } from '../../interpreting/ScriptInterpreter.js';
 import {scriptParser} from "../../interpreting/parsing/ScriptParser.js";
 import {parseRoute} from './src/route_parsing.js';
@@ -140,14 +140,31 @@ export async function _query(
   let {liveModules, queryResults, parsedScripts} = execEnv.globals;
   let isPrivate = isPost ||
     getPropertyFromObject(options, "isPrivate", callerNode, execEnv);
+  let result;
 
-  // First split the input route along each (optional) occurrence of ';',
+  // First get the path and the pathMap, if any, from the caller module, and
+  // use it to get the absolute version of extendedRoute (possibly transformed
+  // by the pathMap). However, if the resulting route itself points to a
+  // pathMap module, starting with "/<nodeID>/<homeDirID>/path_map.js", use an
+  // undefined pathMap instead.
+  let {modulePath, pathMap} = execEnv.getModuleEnv() ?? {};
+  extendedRoute = getAbsolutePath(
+    modulePath, extendedRoute, callerNode, execEnv, pathMap
+  );
+  if (/^\/[^/]+\/[^/]+\/path_map\.js$/.test(extendedRoute)) {
+    pathMap = undefined;
+  }
+
+  // Then split the input route along each (optional) occurrence of ';',
   // where the first part is then the actual route that is queried, and any
   // and all of the subsequent parts are what we can call "casting paths",
   // which reinterprets/casts the queried result into something else.
   let route, castingSegmentArr;
   [route, ...castingSegmentArr] = extendedRoute.split(';');
-  let result;
+
+  // If the pathMap is defined, we append the homePath as a suffix to the keys
+  // for the liveModules cache, since the live modules depend on the pathMap. 
+  let moduleKey = route + (pathMap ? ":" + pathMap.homePath : "");
 
   // Look ahead to see if the first casting segment equals "cache", and if so
   // use the queryResults cache, and increment the casting castingSegmentArr
@@ -155,26 +172,29 @@ export async function _query(
   // below.
   let i = 0;
   let cachedResult, cacheIsNext = castingSegmentArr[i] === "cache";
-  if ( cacheIsNext && (cachedResult = queryResults.get(route)) ) {
-    if (cachedResult instanceof Promise) {
-      result = await cachedResult;
+  if (cacheIsNext) {
+    cachedResult = queryResults.get(route)
+    if ((cachedResult) ) {
+      if (cachedResult instanceof Promise) {
+        result = await cachedResult;
+      }
+      if (result instanceof ErrorWrapper) {
+        throw result.val;
+      }
+      i++;
     }
-    if (result instanceof ErrorWrapper) {
-      throw result.val;
+    else {
+      let resultPromise = _query(
+        route, isPost, postData, options, callerNode, execEnv, interpreter,
+        ancestorModules, finalCallbacks
+      ).catch(
+        err => ErrorWrapper(err)
+      );
+      queryResults.set(route, resultPromise);
+      result = await resultPromise;
+      queryResults.set(route, resultPromise);
+      i++;
     }
-    i++;
-  }
-  else if (cacheIsNext) {
-    let resultPromise = _query(
-      route, isPost, postData, options, callerNode, execEnv, interpreter,
-      ancestorModules, finalCallbacks
-    ).catch(
-      err => ErrorWrapper(err)
-    );
-    queryResults.set(route, resultPromise);
-    result = await resultPromise;
-    queryResults.set(route, resultPromise);
-    i++;
   }
 
   // Else query the route itself (but also using the liveModules cache for JS
@@ -182,7 +202,7 @@ export async function _query(
   else {
     // If the route is a module that has already been executed, get it from the
     // liveModules cache instead.
-    let liveModule = liveModules.get(route);
+    let liveModule = liveModules.get(moduleKey);
     if (liveModule) {
       if (ancestorModules.includes(route)) throw new LoadError(
         `Infinite recursion: Module ${route} imports itself. Ancestor ` +
@@ -207,7 +227,7 @@ export async function _query(
         liveModule = new LiveJSModule(
           route, Object.entries(devMod), execEnv.globals
         );
-        liveModules.set(route, liveModule);
+        liveModules.set(moduleKey, liveModule);
       }
       else if (/^(\.\.?|~)\//.test(route)) {
         throw new LoadError(
@@ -229,9 +249,9 @@ export async function _query(
           }).catch(
             err => new ErrorWrapper(err)
           );
-          liveModules.set(route, liveModulePromise);
+          liveModules.set(moduleKey, liveModulePromise);
           liveModule = await liveModulePromise;
-          liveModules.set(route, liveModule);
+          liveModules.set(moduleKey, liveModule);
           if (liveModule instanceof ErrorWrapper) {
             throw liveModule.val;
           }
@@ -250,15 +270,18 @@ export async function _query(
     // get it from the liveModules cache and create and return a LiveJSModule
     // instance.
     else if (SCRIPT_ROUTE_REGEX.test(route)) {
-      // First call fetchDependenciesModule() to fetch the ~/dependencies.js
-      // module for the given home directory, if it has not already been
-      // fetched.
-      let dependenciesModulePromise = fetchDependenciesModule(
-        route, callerNode, execEnv, interpreter, ancestorModules,
-        finalCallbacks
-      ).catch(
-        err => new ErrorWrapper(err)
-      );
+      // First check if the route is among the current pathMap's targets to
+      // see if that pathMap is inherited by the new module, and if not, start
+      // fetching the new pathMap that will be used instead.
+      let newPathMapPromise;
+      if (!pathMap || !pathMap.getIsATarget(route, callerNode, execEnv)) {
+        newPathMapPromise = fetchPathMap(
+          route, callerNode, execEnv, interpreter, ancestorModules,
+          finalCallbacks
+        ).catch(
+          err => new ErrorWrapper(err)
+        );
+      }
 
       // Then try to get the parsed script from the parsedScripts buffer, or
       // else try to fetch it from the database.
@@ -281,14 +304,10 @@ export async function _query(
         }
       }
 
-      // Now wait for the dependencies.js module.
-      let dependenciesModule = await dependenciesModulePromise;
-      if (dependenciesModule instanceof ErrorWrapper) {
-        let err = dependenciesModule.val;
-        if (err instanceof LoadError) {
-          dependenciesModule = undefined;
-        }
-        else throw err;
+      // Now wait for the newPathMapPromise if defined, and get the newPathMap.
+      let newPathMap = newPathMapPromise ? await newPathMapPromise : pathMap;
+      if (newPathMap instanceof ErrorWrapper) {
+        throw newPathMap.val;
       }
 
       // Then execute the module, inside the global environment, and return the
@@ -296,7 +315,7 @@ export async function _query(
       let globalEnv = execEnv.getGlobalEnv();
       liveModule = await interpreter.executeModule(
         parsedScript, lexArr, strPosArr, script, route, globalEnv, liveModules,
-        dependenciesModule, ancestorModules, finalCallbacks, isPrivate
+        newPathMap, ancestorModules, finalCallbacks, isPrivate
       );
       result = liveModule;
     }
@@ -304,7 +323,7 @@ export async function _query(
     // Else if the file a '.css' file, fetch it or get it from the liveModules
     // cache and create and return a CSSModule instance.
     else if (CSS_ROUTE_REGEX.test(route)) {
-      let cssModule = liveModules.get(route);
+      let cssModule = liveModules.get(moduleKey);
       if (cssModule) {
         if (cssModule instanceof Promise) {
           cssModule = await cssModule;
@@ -319,9 +338,9 @@ export async function _query(
         ).catch(
           err => new ErrorWrapper(err)
         );
-        liveModules.set(route, cssModulePromise);
+        liveModules.set(moduleKey, cssModulePromise);
         cssModule = await cssModulePromise;
-        liveModules.set(route, cssModule);
+        liveModules.set(moduleKey, cssModule);
       }
       if (cssModule instanceof ErrorWrapper) {
         throw cssModule.val;
@@ -414,18 +433,16 @@ export async function _query(
       let globalEnv = execEnv.getGlobalEnv();
       let modulePath = route + ";" +
         castingSegmentArr.slice(0, i + 1).join(";");
-      let dependenciesModule = await fetchDependenciesModule(
-        route, callerNode, execEnv, interpreter, ancestorModules,
-        finalCallbacks
-      ).catch(err => {
-        if (err instanceof LoadError) {
-          return undefined;
-        }
-        else throw err;
-      });
+      let newPathMap = pathMap;
+      if (!pathMap || !pathMap.getIsATarget(route, callerNode, execEnv)) {
+        newPathMap = await fetchPathMap(
+          extendedRoute, callerNode, execEnv, interpreter, ancestorModules,
+          finalCallbacks
+        );
+      }
       let liveModule = await interpreter.executeModule(
         parsedScript, lexArr, strPosArr, result, modulePath, globalEnv,
-        liveModules, dependenciesModule, ancestorModules, finalCallbacks,
+        liveModules, newPathMap, ancestorModules, finalCallbacks,
         isPrivate, false
       );
       result = liveModule;
@@ -531,28 +548,41 @@ export async function _query(
 }
 
 
-export async function fetchDependenciesModule(
+export async function fetchPathMap(
   route, callerNode, execEnv, interpreter,
   ancestorModules = undefined, finalCallbacks = undefined
 ) {
-  // Parse the nodeID and dirID from the route, as well as the rest of it.
+  // Parse the home path from the route, as well as the rest of it.
   let [ , homePath, tail] = /^(\/[^/]+\/[^/]+)(\/.+)$/.exec(route) ?? [];
 
-  // If the route is itself a dependencies route, simply return undefined.
-  if (!tail || tail === "/dependencies.js") {
+  // If the route itself is a path_map.js route, simply return undefined.
+  if (!tail || tail.substring(0, 12) === "/path_map.js") {
     return undefined;
   }
 
-  // Else simply call _fetch() an homePath + "" to get the dependencies module.
-  return await _fetch(
-    homePath + "/dependencies.js", {},
+  // And else if the PathMap has already been created and cached, return the
+  // one from the cache.
+  let {pathMaps} = execEnv.globals;
+  let pathMap = pathMaps.get(homePath);
+  if (pathMap) {
+    return pathMap;
+  }
+
+  // Else fetch the path_map.js module at that homePath.
+  let pathMapModule = await _fetch(
+    homePath + "/path_map.js", {},
     callerNode, execEnv, interpreter, ancestorModules, finalCallbacks,
-  ).catch(err => {
-    if (err instanceof LoadError) {
-      return {default: {}};
-    }
-    else throw err;
-  });
+  ).catch(
+    err => (err instanceof LoadError) ? {default: {}} : new ErrorWrapper(err)
+  );
+  if (pathMapModule instanceof ErrorWrapper) throw pathMapModule.val;
+
+  // Finally construct the pathMap, unless another one has already been cached
+  // in the meantime, then cache and return it.
+  pathMap = pathMaps.get(homePath) ||
+    new PathMap(pathMapModule, homePath, callerNode, execEnv);
+  pathMaps.set(homePath, pathMap);
+  return pathMap;
 }
 
 

@@ -119,7 +119,7 @@ export class DirectoryUpdater {
       return true;
     }
     else if (dependsOnDirectoriesFile) {
-      return this.#isModifiedSince("directories.json", timestamp);
+      return this.#isModifiedSince(this.dirDataFileName, timestamp);
     }
     else {
       return false;
@@ -173,12 +173,8 @@ export class DirectoryUpdater {
   // '.att', '.bt', and '.bbt') when "uploaded" will have the effect of
   // creating a corresponding relational table (effectively) server-side, if it
   // has not already been created before.
-  // The file name of 'dependencies.json' is treated in a special way, namely
-  // since it is transformed before being uploaded, by replacing the contained
-  // dirName arrays with dirName--ID objects, where the IDs are read from the
-  // shared directories.json file (i.e. the file from which this.dirData is
-  // parsed). And instead of a JSON file, it also gets transformed to a '.js'
-  // module instead, with the object as its default export.
+  // The file ~/path_map.js, if there, is treated in a special way, as it will
+  // have certain placeholders replaced with node and directory IDs.
   async uploadDir(userID, curDir) {
     let serverQueryHandler = new ServerQueryHandler(
       this.authToken, Infinity, fetch, this.domain
@@ -192,6 +188,8 @@ export class DirectoryUpdater {
     if (!dirID) {
       dirID = await serverQueryHandler.post(`/this./mkdir/a/${userID}`);
       if (!dirID) throw "mkdir error";
+      console.log("New directory was successfully created");
+      console.log("Directory ID: " + dirID);
       this.#writeDirIDSync(curDir, dirID);
     }
 
@@ -208,9 +206,7 @@ export class DirectoryUpdater {
     let serverFilePathsToDelete = [];
     let curDirPath = this.upDirectoriesPath + "/" + curDir;
     filePaths.forEach(relPath => {
-      let relClientPath = (relPath === "dependencies.js") ?
-        "dependencies.json" : relPath;
-      let clientFilePath = curDirPath + "/" + relClientPath;
+      let clientFilePath = curDirPath + "/" + relPath;
       let serverFilePath = normalizePath(`/${nodeID}/${dirID}/${relPath}`);
       if (!fs.existsSync(clientFilePath)) {
         // Push a promise to delete the file server-side, and delete the file's
@@ -219,7 +215,7 @@ export class DirectoryUpdater {
           () => serverQueryHandler.postAsAdmin(
             serverFilePath + "/_rm"
           ).then(x => {
-            this.#removeUploadTimestampSync(curDir + "/" + relClientPath);
+            this.#removeUploadTimestampSync(curDir + "/" + relPath);
             return x;
           })
         );
@@ -268,9 +264,9 @@ export class DirectoryUpdater {
     relClientPath, relServerPath, uploadPromiseGenerators,
     serverFilePathBuffer, serverQueryHandler, nodeID, depth = 0
   ) {
-    let absClientPath = this.upDirectoriesPath + "/" + relClientPath;
     // Get each file in the directory at path, and loop through and handle each
     // one according to its extension (or lack thereof).
+    let absClientPath = this.upDirectoriesPath + "/" + relClientPath;
     let fileNames;
     try {
       fileNames = fs.readdirSync(absClientPath);
@@ -291,28 +287,32 @@ export class DirectoryUpdater {
         );
       }
 
-      // Else if the file is a text file, upload it as is to the server, unless
-      // it is ~/dependencies.json, in which case transform it first to
-      // ~/dependencies.json.
+      // Else if the file is a text file, upload it as is to the server. And if
+      // in case of the ~/path_map.js file, also substitute its ID placeholders.
       else if (/\.(jsx?|mjs|txt|json|html|xml|svg|css|md)$/.test(name)) {
         let contentText = fs.readFileSync(absChildClientPath, 'utf8');
         // Consult .timestamps.json to see if the file should be skipped, and
-        // if the the file is the special dependencies.json file (at depth = 0),
+        // if the the file is the special path_map.js file (at depth = 0),
         // then also check the the modifiedAt time for the directories.json
-        // file. And in case of the dependencies.json file, also transform the
-        // JSON file to a JS module, with inserted dirIDs, before uploading. 
-        if (depth === 0 && name === "dependencies.json") {
-          if (!this.#isModifiedSinceLastUpload(relChildClientPath, true)) {
-            return;
-          }
-          relChildServerPath = relServerPath + "/dependencies.js";
-          contentText = this.#transformDependenciesFileText(contentText);
+        // file. And in case of the path_map.js file, also transform the
+        // file by substituting placeholders within it.
+        let isPathMap = depth === 0 && name === "path_map.js";
+        if (!this.#isModifiedSinceLastUpload(relChildClientPath, isPathMap)) {
+          return;
         }
-        else {
-          if (!this.#isModifiedSinceLastUpload(relChildClientPath)) {
-            return;
+        if (isPathMap) {
+          let errRef = [];
+          contentText = this.#transformPathMapFileText(contentText, errRef);
+          let [err] = errRef;
+          if (err) {
+            let colorStr = "\x1b[33m%s\x1b[0m"; // yellow color
+            console.log(
+              colorStr, "Warning: Not all placeholders in path_map.js file " +
+              "was successfully substituted. Error: \n" + err + "."
+            );
           }
         }
+
         // Push a promise to upload the file, and update the file's timestamp
         // upon return.
         uploadPromiseGenerators.push(
@@ -327,7 +327,7 @@ export class DirectoryUpdater {
         serverFilePathBuffer.push([`/${nodeID}/${relChildServerPath}`, false]);
       }
 
-      // Else if it is a database table file, simply touch the file serer-side.
+      // Else if it is a database table file, simply touch the file server-side.
       else if (/\.(att|bt|ct|bbt|ftt)$/.test(name)) {
         if (!this.#isModifiedSinceLastUpload(relChildClientPath)) {
           return;
@@ -347,35 +347,29 @@ export class DirectoryUpdater {
     });
   }
 
-  #transformDependenciesFileText(jsonText) {
-    let dependencies, transformedDependencies = {};
-    try {
-      dependencies = JSON.parse(jsonText);
-    } catch (err) {
-      throw "Error when parsing dependencies.json"
-    }
-    Object.entries(dependencies).forEach(([domain, dirNameArr]) => {
-      // Put the nodeID property on transformedDependencies[domain], and create
-      // a new directory property by looping over all directory names from
-      // dirNameArr, looking up the ID for each in this.dirData, and then
-      // storing each dirName--ID pair in transformedDependencies[domain]-
-      // .directories.
-      let actualDomain = (domain === "this") ? this.domain : domain;
-      let nodeID = this.dirData[actualDomain]?.nodeID;
-      if (!nodeID) throw (
-        "No nodeID found in directories.json for domain = " + actualDomain
-      );
-      transformedDependencies[domain] = {
-        nodeID: nodeID.toString(), directories: {}
-      };
-      let directories = transformedDependencies[domain].directories;
-      dirNameArr.forEach(dirName => {
-        let dirID = this.getDirID(dirName, true, true, actualDomain);
-        directories[dirName] = dirID;
-      });
-    });
-    return (
-    `export default ${JSON.stringify(transformedDependencies, null, 2)};`
+  #transformPathMapFileText(text, errRef = []) {
+    return text.replaceAll(
+      /\{\{([/.a-zA-Z0-9_-]+)\}((\/)?\{([a-zA-Z0-9_-]+)\})?\}/g,
+      (match, domain, _tail, slash, dirName) => {
+        let actualDomain = (domain === "this") ? this.domain : domain;
+        let nodeID = this.dirData[actualDomain]?.nodeID;
+        if (!nodeID) {
+          errRef[0] ??= `No nodeID found for domain "${actualDomain}"`;
+          return match;
+        }
+        if (dirName) {
+          let dirID = this.getDirID(dirName, false, true, actualDomain);
+          if (!dirID) {
+            errRef[0] ??= `No directory ID found for "${dirName}" ` +
+              `under domain "${actualDomain}"`;
+            return match;
+          }
+          return slash ? nodeID + "/" + dirID : dirID;
+        }
+        else {
+          return nodeID;
+        }
+      }
     );
   }
 
@@ -397,8 +391,6 @@ export class DirectoryUpdater {
     let deletionPromiseGenerators = [];
     let serverFilePathsToDelete = [];
     filePaths.forEach(relPath => {
-      let relClientPath = (relPath === "dependencies.js") ?
-        "dependencies.json" : relPath;
       let serverFilePath = normalizePath(`/${nodeID}/${dirID}/${relPath}`);
 
       // Push a promise to delete the file server-side, and delete the file's
@@ -407,7 +399,7 @@ export class DirectoryUpdater {
         () => serverQueryHandler.postAsAdmin(
           serverFilePath + "/_rm"
         ).then(x => {
-          this.#removeUploadTimestampSync(curDir + "/" + relClientPath);
+          this.#removeUploadTimestampSync(curDir + "/" + relPath);
           return x;
         })
       );
@@ -445,13 +437,12 @@ export class DirectoryUpdater {
       `/this/${dirID}./_all`
     );
     filePaths.forEach(relPath => {
-      let relClientPath = (relPath === "dependencies.js") ?
-        "dependencies.json" : relPath;
-      this.#removeUploadTimestampSync(curDir + "/" + relClientPath);
+      this.#removeUploadTimestampSync(curDir + "/" + relPath);
     });
 
     // Read and parse the untracked_directories.json file.
-    let filePath = this.upDirectoriesPath + "/" + "untracked_directories.json";
+    let filePath = this.upDirectoriesPath + "/" +
+      "untracked_" + this.dirDataFileName;
     let contents = (!fs.existsSync(filePath)) ? "{}" :
       fs.readFileSync(filePath, 'utf8');
     let propObj;

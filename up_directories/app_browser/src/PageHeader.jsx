@@ -3,14 +3,12 @@ import {fetchEntityID} from "../../semantic_entities/entities.js";
 import * as ILink from 'ILink';
 import * as ExtRatingDisplay from "./ratings/ExtRatingDisplay.jsx";
 
-import dependencies from "~/dependencies.js";
+import {nodeID, directories} from "~/path_map.js";
 
-const {this: {
-  nodeID: nodeID,
-  directories: {
-    "file_browser": fileBrowserDirID,
-  }
-}} = dependencies;
+const {
+  "file_browser": fileBrowserDirID,
+} = directories;
+
 
 const relIDPromArr = [
   fetchEntityID(abs("~/../semantic_entities/em1.js;get/members")),

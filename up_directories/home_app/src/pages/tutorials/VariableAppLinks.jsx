@@ -4,13 +4,11 @@ import * as InputText from 'InputText';
 import * as Label from 'Label';
 import * as ILink from 'ILink';
 
-import dependencies from "~/dependencies.js";
+import {directories} from "~/path_map.js";
 
-const {this: {
-  directories: {
-    "file_browser": fileBrowserDirID,
-  },
-}} = dependencies;
+const {
+  "file_browser": fileBrowserDirID,
+} = directories;
 
 export function initialize() {
   let homeDirID = this.getHistoryState(homeDirID => 

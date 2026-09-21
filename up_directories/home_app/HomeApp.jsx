@@ -11,14 +11,12 @@ import * as AboutPage from "./src/pages/About.jsx";
 import * as UseCasesPage from "./src/pages/UseCases.jsx";
 import * as TutorialIndexPage from "./src/pages/TutorialIndex.jsx";
 
-import dependencies from "./dependencies.js";
+import {directories} from "~/path_map.js";
 
-const {this: {
-  directories: {
-    "home_app": homeAppDirID,
-    "app_browser": appBrowserDirID,
-  },
-}} = dependencies;
+const {
+  "home_app": homeAppDirID,
+  "app_browser": appBrowserDirID,
+} = directories;
 
 
 // The main job(s) of a "home app" is to define a header menu for the website

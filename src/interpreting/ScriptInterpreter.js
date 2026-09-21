@@ -89,13 +89,14 @@ export class ScriptInterpreter {
   async interpretScript(
     gas, script = "", scriptPath = null, mainInputs = [], flags = [],
     contexts = {}, parsedScripts = new Map(), liveModules = new Map(),
+    pathMaps = new Map(),
   ) {
     let globals = {
       gas: gas, log: {entries: []}, scriptPath: scriptPath,
       flags: flags, contexts: contexts, globalEnv: undefined, interpreter: this,
       isExiting: false, resolveScript: undefined, exitPromise: undefined,
       parsedScripts: parsedScripts, liveModules: liveModules,
-      queryResults: new Map(),
+      pathMaps: pathMaps, queryResults: new Map(),
     };
 
     // First create a global environment, which is used as a parent environment
@@ -297,7 +298,7 @@ export class ScriptInterpreter {
 
   async executeModule(
     moduleNode, lexArr, strPosArr, script, modulePath, globalEnv, liveModules,
-    dependenciesModule = undefined, ancestorModules = [], finalCallbacks = [],
+    pathMap = undefined, ancestorModules = [], finalCallbacks = [],
     isPrivate = false, doCache = !isPrivate
   ) {
     // Check against infinite import recursion.
@@ -309,7 +310,8 @@ export class ScriptInterpreter {
 
     // Before executing the module, first check if it, or a promise for it, is
     // already recorded in the liveModules cache.
-    let liveModule = liveModules.get(modulePath);
+    let moduleKey = modulePath + (pathMap ? ":" + pathMap.homePath : "");
+    let liveModule = liveModules.get(moduleKey);
     if (liveModule) {
       if (liveModule instanceof Promise) {
         liveModule = await liveModule;
@@ -325,7 +327,7 @@ export class ScriptInterpreter {
     else {
       let liveModulePromise = this.executeModuleHelper(
         moduleNode, lexArr, strPosArr, script, modulePath, globalEnv,
-        liveModules, dependenciesModule, ancestorModules, finalCallbacks,
+        liveModules, pathMap, ancestorModules, finalCallbacks,
         isPrivate,
       ).then(
         liveModule => liveModule
@@ -333,9 +335,9 @@ export class ScriptInterpreter {
         err => new ErrorWrapper(err)
       );
       if (doCache) {
-        liveModules.set(modulePath, liveModulePromise);
+        liveModules.set(moduleKey, liveModulePromise);
         liveModule = await liveModulePromise;
-        liveModules.set(modulePath, liveModule);
+        liveModules.set(moduleKey, liveModule);
       } else {
         liveModule = await liveModulePromise;
       }
@@ -361,7 +363,7 @@ export class ScriptInterpreter {
 
   async executeModuleHelper(
     moduleNode, lexArr, strPosArr, script, modulePath, globalEnv, liveModules,
-    dependenciesModule, ancestorModules, finalCallbacks, isPrivate,
+    pathMap, ancestorModules, finalCallbacks, isPrivate,
   ) {
     decrCompGas(moduleNode, globalEnv);
 
@@ -369,7 +371,7 @@ export class ScriptInterpreter {
     let moduleEnv = new Environment(
       globalEnv, "module", {
        modulePath: modulePath, lexArr: lexArr, strPosArr: strPosArr,
-       script: script, dependenciesModule: dependenciesModule,
+       script: script, pathMap: pathMap,
       }
     );
 
@@ -378,7 +380,7 @@ export class ScriptInterpreter {
     let liveSubmoduleArr = await Promise.all(
       moduleNode.importStmtArr.map(impStmt => (
         this.executeSubmoduleOfImportStatement(
-          impStmt, modulePath, moduleEnv,
+          impStmt, modulePath, moduleEnv, pathMap,
           [...ancestorModules, modulePath], finalCallbacks, isPrivate
         )
       ))
@@ -390,7 +392,7 @@ export class ScriptInterpreter {
     moduleNode.importStmtArr.forEach((impStmt, ind) => {
       let liveSubmodule = liveSubmoduleArr[ind];
       this.finalizeImportStatement(
-        impStmt, liveSubmodule, moduleEnv, modulePath,
+        impStmt, liveSubmodule, moduleEnv, modulePath, pathMap,
         finalCallbacks, isPrivate
       );
     });
@@ -410,7 +412,7 @@ export class ScriptInterpreter {
 
 
   async executeSubmoduleOfImportStatement(
-    impStmt, curModulePath, callerModuleEnv,
+    impStmt, curModulePath, callerModuleEnv, pathMap,
     ancestorModules, finalCallbacks, isPrivate,
   ) {
     // If the import statement has the ":await" postfix, return an empty object
@@ -425,7 +427,7 @@ export class ScriptInterpreter {
     );
 
     let submodulePath = getAbsolutePath(
-      curModulePath, impStmt.str, impStmt, callerModuleEnv
+      curModulePath, impStmt.str, impStmt, callerModuleEnv, pathMap
     );
     let ret = await this.import(
       submodulePath, impStmt, callerModuleEnv, false,
@@ -444,8 +446,8 @@ export class ScriptInterpreter {
 
     // If modulePath is a relative path, compute the absolute path from the
     // current modulePath.
-    let curPath = callerEnv.getModuleEnv().modulePath;
-    route = getAbsolutePath(curPath, route, callerNode, callerEnv);
+    let {modulePath: curPath, pathMap} = callerEnv.getModuleEnv();
+    route = getAbsolutePath(curPath, route, callerNode, callerEnv, pathMap);
 
     // Then simply redirect to this.fetch(), and if assertJSModule is true,
     // assert that the returned value is a LiveJSModule instance.
@@ -468,7 +470,7 @@ export class ScriptInterpreter {
 
 
   finalizeImportStatement(
-    impStmt, liveSubmodule, curModuleEnv, curModulePath,
+    impStmt, liveSubmodule, curModuleEnv, curModulePath, pathMap,
     finalCallbacks, isPrivate
   ) {
     decrCompGas(impStmt, curModuleEnv);
@@ -499,7 +501,7 @@ export class ScriptInterpreter {
           moduleNamespaceObj = {};
           finalCallbacks.push(async () => {
             let submodulePath = getAbsolutePath(
-              curModulePath, impStmt.str, imp, curModuleEnv
+              curModulePath, impStmt.str, imp, curModuleEnv, pathMap
             );
             let liveModule = await this.import(
               submodulePath, impStmt, curModuleEnv, true,
@@ -1782,8 +1784,10 @@ export class ScriptInterpreter {
         let expVal = this.evaluateExpression(expNode.exp, environment, state);
         let expType = typeof expVal;
         if (expType === "string") {
-          let curPath = environment.getModuleEnv().modulePath;
-          ret = getAbsolutePath(curPath, expVal, expNode.exp, environment);
+          let {modulePath: curPath, pathMap} = environment.getModuleEnv();
+          ret = getAbsolutePath(
+            curPath, expVal, expNode.exp, environment, pathMap
+          );
         }
         else if (expType === "number") {
           ret = Math.abs(expVal);
@@ -2129,7 +2133,7 @@ export class Environment {
   constructor(
     parent, scopeType = "block", {
       fun, inputArr, callerNode, callerEnv, thisVal, flags,
-      modulePath, lexArr, strPosArr, script, dependenciesModule,
+      modulePath, lexArr, strPosArr, script, pathMap,
       globals,
     } = {},
   ) {
@@ -2164,7 +2168,7 @@ export class Environment {
       this.lexArr = lexArr;
       this.strPosArr = strPosArr;
       this.script = script;
-      this.dependenciesModule = dependenciesModule;
+      this.pathMap = pathMap;
       this.exports = [];
       this.liveModule = undefined;
     }
@@ -3861,15 +3865,18 @@ const HOME_PATH_REGEX = /^\/[0-9a-f]+\/[0-9a-f]+(?=(\/|$))/g;
 const SLASH_END_REGEX = /\/$/;
 
 
-export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
+export function getAbsolutePath(
+  curPath, path, callerNode, callerEnv, pathMap = undefined
+) {
   if (!curPath) curPath = "/";
 
   if (!path) throw new LoadError(
-    `Ill-formed path: "${path}"`, callerNode, callerEnv
+    `Ill-formed path: "${path}"`,
+    callerNode, callerEnv
   );
 
-  // If path is either an absolute path or a a bare one, return that, also
-  // removing any trailing slash, unless the slash is the full path.
+  // If path is either an absolute path or a a bare one, only remove any
+  // trailing slash, unless the slash is the full path.
   let fullPath;
   if (path[0] === "/" || !RELATIVE_PATH_START_REGEX.test(path)) {
     fullPath = (path === "/") ? path : path.replace(SLASH_END_REGEX, "");
@@ -3896,7 +3903,8 @@ export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
   else if (path[0] === "~") {
     let [homePath] = curPath.match(HOME_PATH_REGEX) ?? [];
     if (!homePath) throw new LoadError(
-      `Invalid path in this context: "${path}"`, callerNode, callerEnv
+      `Invalid path in this context: "${path}"`,
+      callerNode, callerEnv
     );
     fullPath = homePath + path.substring(1); 
   }
@@ -3920,7 +3928,8 @@ export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
   while (fullPath !== prevFullPath);
 
   if (fullPath.includes("/../")) throw new LoadError(
-    `Ill-formed path: "${path}"`, callerNode, callerEnv
+    `Ill-formed path: "${path}"`,
+    callerNode, callerEnv
   );
 
   // Then remove any trailing "/" from fullPath, unless that is the whole path.
@@ -3928,67 +3937,106 @@ export function getAbsolutePath(curPath, path, callerNode, callerEnv) {
     fullPath = fullPath.replace(SLASH_END_REGEX, "");
   }
 
-  // And before returning the absolute path, if either the nodeID or the dirID
-  // segments are non-hexadecimal placeholders, call substituteNodeAndDirIDs()
-  // to substitute these placeholders with IDs gotten from the dependencies.js
-  // module.
-  let [_, nodeIDSegment, dirIDSegment, ...restSegments] = fullPath.split("/");
-  if (
-    nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment) ||
-    dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment)
-  ) {
-    let routeTail = !restSegments[0] ? "" : "/" + restSegments.join("/");
-    fullPath = substituteNodeAndDirIDs(
-      nodeIDSegment, dirIDSegment, routeTail, callerNode, callerEnv
-    );
+  // And before returning the absolute path, use the pathMap to potentially
+  // re-map the obtained full path.
+  if (pathMap) {
+    fullPath = pathMap.transformPath(curPath, fullPath, callerNode, callerEnv);
   }
 
   return fullPath;
 }
 
 
-function substituteNodeAndDirIDs(
-  nodeIDSegment, dirIDSegment, routeTail, callerNode, callerEnv,
-) {
-  let {dependenciesModule} = callerEnv.getModuleEnv();
 
-  // Substitute any non-hexadecimal node or dir placeholder.
-  let nodeID = nodeIDSegment, dirID = dirIDSegment;
-  let shouldSubstituteNode = nodeIDSegment && !HEX_ID_REGEX.test(nodeIDSegment);
-  let shouldSubstituteDir = dirIDSegment && !HEX_ID_REGEX.test(dirIDSegment);
-  if (shouldSubstituteNode || shouldSubstituteDir) {
-    let dependencies = getPropertyFromObject(
-      dependenciesModule, "default", callerNode, callerEnv
-    );
-    let domain = shouldSubstituteNode ? nodeIDSegment : "this";
-    let domainDependencies =
-      getPropertyFromObject(dependencies, domain, callerNode, callerEnv);
-    if (shouldSubstituteNode) {
-      nodeID = getPropertyFromObject(
-        domainDependencies, "nodeID", callerNode, callerEnv
-      );
-      // If nodeIDs[nodeIDSegment] is nullish, just use nodeIdSegment as it was,
-      // expecting an error to be thrown by query().
-      nodeID ??= nodeIDSegment;
-    }
-    if (shouldSubstituteDir) {
-      let dirs = getPropertyFromObject(
-        domainDependencies, "directories", callerNode, callerEnv
-      );
-      dirID = getPropertyFromObject(dirs, dirIDSegment, callerNode, callerEnv);
-      // If dirIDs[dirIDSegment] is nullish, just use dirIDSegment as it was,
-      // expecting an error to be thrown by query().
-      dirID ??= dirIDSegment;
-    }
+
+export class PathMap {
+  constructor(pathMapModule, homePath, node, env) {
+    /* Public */
+    this.homePath = homePath;
+    /* Private */
+    this.pathMap = getPropertyFromObject(pathMapModule, "default", node, env);
   }
-  
-  // Then construct and return the full substituted route.
-  let ret = "";
-  if (nodeID) ret += "/" + nodeID;
-  if (dirID) ret += "/" + dirID;
-  ret += routeTail;
+
+  transformPath(curPath, path, node, env) {
+    let maps = getPropertyFromObject(this.pathMap, "maps", node, env);
+    let map = getValueAtFirstMatchingPathKey(maps, curPath, node, env, true);
+    let newPath = getFirstTransformedPath(map, path, node, env, true);
+    return newPath || path;
+  }
+
+  getIsATarget(path, node, env) {
+    let targets = getPropertyFromObject(this.pathMap, "targets", node, env) ??
+      [this.homePath];
+    let exceptions =
+      getPropertyFromObject(this.pathMap, "exceptions", node, env);
+    let ret = hasMatchingPathValue(targets, path, node, env, true);
+    ret &&= !hasMatchingPathValue(exceptions, path, node, env, true);
+    return ret;
+  }
+}
+
+
+
+export function getValueAtFirstMatchingPathKey(
+  object, path, node, env, ignore = false
+) {
+  let ret;
+  forEachValue(object, node, env, (val, key) => {
+    if (ret !== undefined) return;
+    if (isAMatchingPath(key, path)) {
+      ret = val;
+    }
+  }, ignore);
   return ret;
 }
+
+export function getFirstTransformedPath(
+  object, path, node, env, ignore = false
+) {
+  let ret;
+  forEachValue(object, node, env, (val, key) => {
+    if (ret !== undefined) return;
+    if (isAMatchingPath(key, path)) {
+      ret = (typeof val !== "string") ? path :
+        val + path.substring(key.length);
+    }
+  }, ignore);
+  return ret;
+}
+
+export function hasMatchingPathValue(
+  object, path, node, env, ignore = false
+) {
+  let ret;
+  forEachValue(object, node, env, (val) => {
+    if (ret) return;
+    if (isAMatchingPath(val, path)) {
+      ret = true;
+    }
+  }, ignore);
+  return ret;
+}
+
+
+const NOT_LAST_CHAR_OF_FILENAME_REGEX = /^[.a-zA-Z0-9_-]\.?[a-zA-Z0-9_-]/;
+
+export function isAMatchingPath(pathSubstr, path) {
+  let len = pathSubstr.length;
+  return (
+    typeof pathSubstr === "string" &&
+    path.substring(0, len) === pathSubstr &&
+    !NOT_LAST_CHAR_OF_FILENAME_REGEX.test(path.substring(len - 1))
+  );
+}
+
+
+
+
+
+
+
+
+
 
 
 

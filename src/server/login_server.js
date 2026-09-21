@@ -269,7 +269,7 @@ async function readUserIDGas(authToken) {
   ) ?? [];
   let [userID = "", gasJSON = '{}'] = resultRow;
   let gas = JSON.parse(gasJSON);
-  userID = userID.toString();
+  userID = `${userID}`;
 
   userDBConnection.end();
   return [userID, gas];

@@ -1,13 +1,11 @@
 
 import {logout} from 'account';
 
-import dependencies from "~/dependencies.js";
+import {directories} from "~/path_map.js";
 
-const {this: {
-  directories: {
-    "home_app": homeAppDirID,
-  },
-}} = dependencies;
+const {
+  "home_app": homeAppDirID,
+} = directories;
 
 
 export function render({isLoggedIn}) {

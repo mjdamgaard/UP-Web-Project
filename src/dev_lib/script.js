@@ -3,42 +3,42 @@ import {
   DevFunction, LoadError, parseString, 
 } from '../interpreting/ScriptInterpreter.js';
 import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
-import {fetchDependenciesModule} from "./query/query.js";
+// import {fetchDependenciesModule} from "./query/query.js";
 
 
-export const exec = new DevFunction(
-  "exec", {isAsync: true, typeArr: ["string", "boolean?", "string?"]}, async (
-    {callerNode, execEnv, interpreter},
-    [moduleString, isPrivate = false, modulePath = undefined]
-  ) => {
-    modulePath ??= execEnv.getModuleEnv().modulePath;
+// export const exec = new DevFunction(
+//   "exec", {isAsync: true, typeArr: ["string", "boolean?"]}, async (
+//     {callerNode, execEnv, interpreter},
+//     [moduleString, isPrivate = false]
+//   ) => {
+//     let modulePath = execEnv.getModuleEnv().modulePath;
 
-    // Fetch the dependencies module.
-    let dependenciesModule = await fetchDependenciesModule(
-      modulePath, callerNode, execEnv, interpreter
-    ).catch(err => {
-      if (err instanceof LoadError) {
-        return undefined;
-      }
-      else throw err;
-    });
+//     // Fetch the dependencies module.
+//     let dependenciesModule = await fetchDependenciesModule(
+//       modulePath, callerNode, execEnv, interpreter
+//     ).catch(err => {
+//       if (err instanceof LoadError) {
+//         return undefined;
+//       }
+//       else throw err;
+//     });
 
-    // Parse the module.
-    let [parsedScript, lexArr, strPosArr] = parseString(
-      moduleString, callerNode, execEnv, scriptParser
-    );
+//     // Parse the module.
+//     let [parsedScript, lexArr, strPosArr] = parseString(
+//       moduleString, callerNode, execEnv, scriptParser
+//     );
 
-    // Add add special virtual file extension to the modulePath such that it
-    // will not match any actual module route.
-    modulePath = modulePath + ";.executed";
+//     // Add add special virtual file extension to the modulePath such that it
+//     // will not match any actual module route.
+//     modulePath = modulePath + ";.executed";
 
-    // Then call interpreter.executeModule() and return the resulting
-    // LiveJSModule instance.
-    let {liveModules} = execEnv.globals;
-    let globalEnv = execEnv.getGlobalEnv();
-    return await interpreter.executeModule(
-      parsedScript, lexArr, strPosArr, moduleString, modulePath, globalEnv,
-      liveModules, dependenciesModule, undefined, undefined, isPrivate, false
-    );
-  },
-);
+//     // Then call interpreter.executeModule() and return the resulting
+//     // LiveJSModule instance.
+//     let {liveModules} = execEnv.globals;
+//     let globalEnv = execEnv.getGlobalEnv();
+//     return await interpreter.executeModule(
+//       parsedScript, lexArr, strPosArr, moduleString, modulePath, globalEnv,
+//       liveModules, dependenciesModule, undefined, undefined, isPrivate, false
+//     );
+//   },
+// );
