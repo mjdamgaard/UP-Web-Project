@@ -1,11 +1,9 @@
 
 import {
   DevFunction, RuntimeError, LoadError, jsonParse, jsonStringify,
-  getPrototypeOf, OBJECT_PROTOTYPE, ARRAY_PROTOTYPE, FunctionObject,
-  CLEAR_FLAG, PromiseObject, Environment, LiveJSModule, parseString,
-  TEXT_FILE_ROUTE_REGEX, SCRIPT_ROUTE_REGEX, CSS_ROUTE_REGEX, CSSModule,
-  getString, getPropertyFromObject, ArgTypeError, forEachValue, ObjectObject,
-  ErrorWrapper, HEX_ID_REGEX, getAbsolutePath, PathMap,
+  FunctionObject, CLEAR_FLAG, PromiseObject, Environment, LiveJSModule,
+  parseString, CSSModule, getString, getPropertyFromObject, ArgTypeError,
+  forEachValue, ErrorWrapper, getAbsolutePath, PathMap,
 } from '../../interpreting/ScriptInterpreter.js';
 import {scriptParser} from "../../interpreting/parsing/ScriptParser.js";
 import {parseRoute} from './src/route_parsing.js';
@@ -17,6 +15,11 @@ import {
 
 
 export const upNodeID = "1";
+
+const SCRIPT_ROUTE_REGEX = /^\/.+\.(jsx?|mjs)$/;
+const TEXT_FILE_ROUTE_REGEX =
+  /^\/.+\.(jsx?|mjs|txt|json|html|xml|svg|md)$/;
+const CSS_ROUTE_REGEX = /^\/.+\.css$/;
 
 
 
@@ -159,12 +162,26 @@ export async function _query(
   // where the first part is then the actual route that is queried, and any
   // and all of the subsequent parts are what we can call "casting paths",
   // which reinterprets/casts the queried result into something else.
-  let route, castingSegmentArr;
-  [route, ...castingSegmentArr] = extendedRoute.split(';');
+  let [route, ...castingSegmentArr] = extendedRoute.split(';');
 
-  // If the pathMap is defined, we append the homePath as a suffix to the keys
-  // for the liveModules cache, since the live modules depend on the pathMap. 
-  let moduleKey = route + (pathMap ? ":" + pathMap.homePath : "");
+  // If the route is a script module, then if the given module is not among the
+  // so-called "targets" of the pathMap, fetch a potentially new pathMap to be
+  // used by the given module. Also change the module's key for the liveModules
+  // cache by appending the new pathMap's homePath to it in either case.
+  let moduleKey;
+  let isScriptRoute = SCRIPT_ROUTE_REGEX.test(route);
+  if (!isScriptRoute) {
+    moduleKey = route;
+  }
+  else {
+    if (!pathMap || !pathMap.getIsATarget(route, callerNode, execEnv)) {
+      pathMap = await fetchPathMap(
+        route, callerNode, execEnv, interpreter, ancestorModules,
+        finalCallbacks
+      );
+    }
+    moduleKey = route + (pathMap ? ":" + pathMap.homePath : "");
+  }
 
   // Look ahead to see if the first casting segment equals "cache", and if so
   // use the queryResults cache, and increment the casting castingSegmentArr
@@ -227,7 +244,7 @@ export async function _query(
         liveModule = new LiveJSModule(
           route, Object.entries(devMod), execEnv.globals
         );
-        liveModules.set(moduleKey, liveModule);
+        liveModules.set(route, liveModule);
       }
       else if (/^(\.\.?|~)\//.test(route)) {
         throw new LoadError(
@@ -249,9 +266,9 @@ export async function _query(
           }).catch(
             err => new ErrorWrapper(err)
           );
-          liveModules.set(moduleKey, liveModulePromise);
+          liveModules.set(route, liveModulePromise);
           liveModule = await liveModulePromise;
-          liveModules.set(moduleKey, liveModule);
+          liveModules.set(route, liveModule);
           if (liveModule instanceof ErrorWrapper) {
             throw liveModule.val;
           }
@@ -269,21 +286,8 @@ export async function _query(
     // Else if the file has a '.js', '.mjs' or '.jsx' extension, fetch it or
     // get it from the liveModules cache and create and return a LiveJSModule
     // instance.
-    else if (SCRIPT_ROUTE_REGEX.test(route)) {
-      // First check if the route is among the current pathMap's targets to
-      // see if that pathMap is inherited by the new module, and if not, start
-      // fetching the new pathMap that will be used instead.
-      let newPathMapPromise;
-      if (!pathMap || !pathMap.getIsATarget(route, callerNode, execEnv)) {
-        newPathMapPromise = fetchPathMap(
-          route, callerNode, execEnv, interpreter, ancestorModules,
-          finalCallbacks
-        ).catch(
-          err => new ErrorWrapper(err)
-        );
-      }
-
-      // Then try to get the parsed script from the parsedScripts buffer, or
+    else if (isScriptRoute) {
+      // First try to get the parsed script from the parsedScripts buffer, or
       // else try to fetch it from the database.
       let [parsedScript, lexArr, strPosArr, script] =
         parsedScripts.get(route) ?? [];
@@ -304,18 +308,12 @@ export async function _query(
         }
       }
 
-      // Now wait for the newPathMapPromise if defined, and get the newPathMap.
-      let newPathMap = newPathMapPromise ? await newPathMapPromise : pathMap;
-      if (newPathMap instanceof ErrorWrapper) {
-        throw newPathMap.val;
-      }
-
       // Then execute the module, inside the global environment, and return the
       // resulting liveModule, after also adding it to liveModules.
       let globalEnv = execEnv.getGlobalEnv();
       liveModule = await interpreter.executeModule(
         parsedScript, lexArr, strPosArr, script, route, globalEnv, liveModules,
-        newPathMap, ancestorModules, finalCallbacks, isPrivate
+        pathMap, ancestorModules, finalCallbacks, isPrivate
       );
       result = liveModule;
     }
@@ -323,7 +321,7 @@ export async function _query(
     // Else if the file a '.css' file, fetch it or get it from the liveModules
     // cache and create and return a CSSModule instance.
     else if (CSS_ROUTE_REGEX.test(route)) {
-      let cssModule = liveModules.get(moduleKey);
+      let cssModule = liveModules.get(route);
       if (cssModule) {
         if (cssModule instanceof Promise) {
           cssModule = await cssModule;
@@ -338,9 +336,9 @@ export async function _query(
         ).catch(
           err => new ErrorWrapper(err)
         );
-        liveModules.set(moduleKey, cssModulePromise);
+        liveModules.set(route, cssModulePromise);
         cssModule = await cssModulePromise;
-        liveModules.set(moduleKey, cssModule);
+        liveModules.set(route, cssModule);
       }
       if (cssModule instanceof ErrorWrapper) {
         throw cssModule.val;
@@ -433,16 +431,9 @@ export async function _query(
       let globalEnv = execEnv.getGlobalEnv();
       let modulePath = route + ";" +
         castingSegmentArr.slice(0, i + 1).join(";");
-      let newPathMap = pathMap;
-      if (!pathMap || !pathMap.getIsATarget(route, callerNode, execEnv)) {
-        newPathMap = await fetchPathMap(
-          extendedRoute, callerNode, execEnv, interpreter, ancestorModules,
-          finalCallbacks
-        );
-      }
       let liveModule = await interpreter.executeModule(
         parsedScript, lexArr, strPosArr, result, modulePath, globalEnv,
-        liveModules, newPathMap, ancestorModules, finalCallbacks,
+        liveModules, pathMap, ancestorModules, finalCallbacks,
         isPrivate, false
       );
       result = liveModule;

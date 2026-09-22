@@ -36,10 +36,6 @@ const MINIMAL_TIME_GAS = 10;
 const TRACE_LENGTH_CS = 15;
 const TRACE_LENGTH_SS = 40;
 
-export const TEXT_FILE_ROUTE_REGEX =
-  /.+\.(jsx?|mjs|txt|json|html|xml|svg|md)$/;
-export const SCRIPT_ROUTE_REGEX = /.+\.(jsx?|mjs)$/;
-export const CSS_ROUTE_REGEX = /.+\.css$/;
 export const HEX_ID_REGEX = /^[0-9a-f]+$/;
 
 export const GAS_NAMES = {
@@ -251,11 +247,6 @@ export class ScriptInterpreter {
 
 
 
-// TODO: Maybe remove the parseScripts buffer; it should be redundant when we
-// also have the liveModules buffer, and already make sure that we never
-// execute a module more than once. *(But only remove it if we still keep a way
-// for the server not having the parse the "main script" for each request.)
-
   async fetchParsedScript(
     scriptPath, parsedScripts, callerNode, callerEnv
   ) {
@@ -310,9 +301,11 @@ export class ScriptInterpreter {
 
     // Before executing the module, first check if it, or a promise for it, is
     // already recorded in the liveModules cache.
-    let moduleKey = modulePath + (pathMap ? ":" + pathMap.homePath : "");
-    let liveModule = liveModules.get(moduleKey);
-    if (liveModule) {
+    let liveModule;
+    let moduleKey = modulePath;
+    if (doCache) {
+      moduleKey = modulePath + (pathMap ? ":" + pathMap.homePath : "");
+      liveModule = liveModules.get(moduleKey);
       if (liveModule instanceof Promise) {
         liveModule = await liveModule;
       }
@@ -324,7 +317,7 @@ export class ScriptInterpreter {
     // Else call the helper function to execute the module, and record the
     // returned promise temporarily in the liveModules cache, and overwrite it
     // again when the promise resolves.
-    else {
+    if (!liveModule) {
       let liveModulePromise = this.executeModuleHelper(
         moduleNode, lexArr, strPosArr, script, modulePath, globalEnv,
         liveModules, pathMap, ancestorModules, finalCallbacks,
@@ -3966,12 +3959,9 @@ export class PathMap {
 
   getIsATarget(path, node, env) {
     let targets = getPropertyFromObject(this.pathMap, "targets", node, env) ??
-      [this.homePath];
-    let exceptions =
-      getPropertyFromObject(this.pathMap, "exceptions", node, env);
-    let ret = hasMatchingPathValue(targets, path, node, env, true);
-    ret &&= !hasMatchingPathValue(exceptions, path, node, env, true);
-    return ret;
+      {[this.homePath]: true};
+    return getValueAtFirstMatchingPathKey(targets, path, node, env, true) ?
+      true : false;
   }
 }
 
@@ -3999,19 +3989,6 @@ export function getFirstTransformedPath(
     if (isAMatchingPath(key, path)) {
       ret = (typeof val !== "string") ? path :
         val + path.substring(key.length);
-    }
-  }, ignore);
-  return ret;
-}
-
-export function hasMatchingPathValue(
-  object, path, node, env, ignore = false
-) {
-  let ret;
-  forEachValue(object, node, env, (val) => {
-    if (ret) return;
-    if (isAMatchingPath(val, path)) {
-      ret = true;
     }
   }, ignore);
   return ret;

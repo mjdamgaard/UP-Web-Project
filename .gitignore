@@ -9,6 +9,7 @@
 # Ignore directories_local.json and untracked_directories.json.
 /up_directories/directories_local.json
 /up_directories/untracked_directories.json
+/up_directories/untracked_directories_local.json
 
 
 # dependencies
