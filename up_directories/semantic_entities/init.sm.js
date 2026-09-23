@@ -428,7 +428,7 @@ function postUserScoreHex(
       qualIDProm, subjIDProm, userEntIDProm
     ]).then(([qualID, subjID, userEntID]) => {
       let listIDHex = valueToHex(qualID + "-" + userEntID, "string");
-      post(abs("~/users.bt/_insert/k/" + userEntID));
+      post("~/users.bt/_insert/k/" + userEntID);
       post(abs(
         "~/userScores.bbt/_insert/l/" + listIDHex + "/k/" + subjID +
         "/s/" + scoreHex + (payloadHex ? "/p/" + payloadHex : "")

@@ -7,9 +7,9 @@ export const keyProps = ["userID", "appDirID", "subAppDirID"];
 export async function initialize({userID, appDirID, subAppDirID}) {
   let preferences;
   if (userID && appDirID) {
-    preferences = await fetchPrivate(abs(
+    preferences = await fetchPrivate(
       "~/../home_app/server/apps/apps.sm.js/callSMF/fetchUserPreferences"
-    ));
+    );
   }
   preferences ??= {};
   let isFavorite = preferences[appDirID] === subAppDirID;
@@ -32,10 +32,10 @@ export const actions = {
     let {appDirID, subAppDirID} = this.props;
     let {isFavorite} = this.state;
     isPostingRef[0] = true;
-    await post(abs(
+    await post(
       "~/../home_app/server/apps/apps.sm.js/callSMF/updateUserPreference/" +
       appDirID + (isFavorite ? "" : "/" + subAppDirID)
-    ));
+    );
     this.reset();
     isPostingRef[0] = false;
   },

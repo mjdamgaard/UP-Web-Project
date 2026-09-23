@@ -38,7 +38,7 @@ export const appDescription = <div>
 
 function fetchCreatorEntPath() {
   return new Promise(resolve => {
-    fetch(abs("~./creator")).then(
+    fetch("~./creator").then(
       creatorID => resolve(getUserEntPath("1", creatorID))
     );
   })

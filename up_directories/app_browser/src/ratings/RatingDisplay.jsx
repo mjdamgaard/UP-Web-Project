@@ -8,14 +8,14 @@ export const keyProps = ["userID", "objID", "relID", "subjID"];
 
 export async function initialize({userID, objID, relID, subjID}) {
   let [[upRateSum, downRateSum], userRateVal] = await Promise.all([
-    fetch(abs(
+    fetch(
       "~/../home_app/server/rates/rates.sm.js/callSMF/fetchUpAndDownRates/" +
       objID + "/" + relID + "/" + subjID
-    )),
-    userID ? fetchPrivate(abs(
+    ),
+    userID ? fetchPrivate(
       "~/../home_app/server/rates/rates.sm.js/callSMF/fetchUserRateValue/" +
       objID + "/" + relID + "/" + subjID
-    )) : new Promise(res => res()),
+    ) : new Promise(res => res()),
   ]);
   this.setState({
     upRateSum: upRateSum, downRateSum: downRateSum, userRateVal: userRateVal,
@@ -62,10 +62,10 @@ export const actions = {
     isPostingRef[0] = true;
     let newUserRateValue = type === "up" ? (userRateVal !== 1 ? 1 : 0) : 
       (userRateVal !== -1 ? -1 : 0);
-    await post(abs(
+    await post(
       "~/../home_app/server/rates/rates.sm.js/callSMF/updateUpOrDownRate/" +
       objID + "/" + relID + "/" + subjID + "/" + newUserRateValue
-    ));
+    );
     this.trigger("rating-changed", newUserRateValue);
     this.reset();
     isPostingRef[0] = false;

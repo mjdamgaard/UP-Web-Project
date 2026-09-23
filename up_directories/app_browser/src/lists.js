@@ -52,10 +52,10 @@ export async function fetchList(objID, relID) {
 
 
 export function fetchRatedEntities(objID, relID, maxNum = 50) {
-  return fetch(abs(
+  return fetch(
     "~/../home_app/server/rates/rates.sm.js/callSMF/fetchRatedEntities/" +
     objID + "/" + relID + "/0/" + maxNum
-  ));
+  );
 }
 
 

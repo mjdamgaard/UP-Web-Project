@@ -51,10 +51,10 @@ export const actions = {
       [name, desc]
     );
     let relID = await relIDProm;
-    await post(abs(
+    await post(
       "~/../home_app/server/rates/rates.sm.js/callSMF/updateUpOrDownRate/" +
       objID + "/" + relID + "/" + catID + "/1"
-    ));
+    );
     return this.setState({
       response: <span className="text-success">
         App category was successfully submitted.

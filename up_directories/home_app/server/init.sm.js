@@ -48,14 +48,14 @@ export async function _init_2() {
 
   let insertTCRouteSubstr = "./apps/trustClasses.att/_insert/k/";
   await Promise.all([
-    post(abs(insertTCRouteSubstr + homeAppDirID),     "trusted"),
-    post(abs(insertTCRouteSubstr + appBrowserDirID),  "trusted"),
-    post(abs(insertTCRouteSubstr + fileBrowserDirID), "semi-trusted"),
-    post(abs(insertTCRouteSubstr + homeApp01DirID),   "trusted"),
-    post(abs(insertTCRouteSubstr + flipGameDirID),   "semi-trusted"),
-    post(abs(insertTCRouteSubstr + flipGame01DirID),   "semi-trusted"),
+    post(insertTCRouteSubstr + homeAppDirID,      "trusted"),
+    post(insertTCRouteSubstr + appBrowserDirID,   "trusted"),
+    post(insertTCRouteSubstr + fileBrowserDirID,  "semi-trusted"),
+    post(insertTCRouteSubstr + homeApp01DirID,    "trusted"),
+    post(insertTCRouteSubstr + flipGameDirID,     "semi-trusted"),
+    post(insertTCRouteSubstr + flipGame01DirID,   "semi-trusted"),
     // No post for untrustedAppDirID.
-    post(abs(insertTCRouteSubstr + mastermindDirID),   "semi-trusted"),
-    post(abs(insertTCRouteSubstr + mastermind01DirID),   "semi-trusted"),
+    post(insertTCRouteSubstr + mastermindDirID,   "semi-trusted"),
+    post(insertTCRouteSubstr + mastermind01DirID, "semi-trusted"),
   ]);
 }

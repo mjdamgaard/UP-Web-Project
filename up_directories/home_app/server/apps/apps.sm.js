@@ -32,11 +32,11 @@ export async function fetchBestSubApp(appDirID) {
   if (userID) {
     [preferences, subAppIDListString] = await Promise.all([
       fetchUserPreferences(),
-      fetch(abs("./subApps.att/entry/k/" + appDirID))
+      fetch("./subApps.att/entry/k/" + appDirID)
     ]);
   }
   else {
-    subAppIDListString = await fetch(abs("./subApps.att/entry/k/" + appDirID));
+    subAppIDListString = await fetch("./subApps.att/entry/k/" + appDirID);
   }
   
   // Then redirect to the recursive fetchBestSubAppHelper(). 
@@ -118,7 +118,7 @@ export async function updateBestSubApp(appDirID) {
   // If no (semi-)trusted sub-app was found, or if subAppDirID == appDirID,
   // delete any existing entry in subApps.att. 
   if (!subAppDirID || subAppDirID === appDirID) {
-    await post(abs("./subApps.att/_deleteEntry/k/" + appDirID));
+    await post("./subApps.att/_deleteEntry/k/" + appDirID);
     return false;
   }
 

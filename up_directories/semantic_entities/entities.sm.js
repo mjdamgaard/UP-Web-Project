@@ -24,7 +24,7 @@ export function postEntity(entPath, useSecIdx = true) {
     // If the user does not want to use the secondary index, just post to
     // the entPaths.att table.
     if (!useSecIdx) {
-      post(abs("~/entPaths.att/_insert"), entPath).then(
+      post("~/entPaths.att/_insert", entPath).then(
         entID => resolve(entID)
       );
     }
@@ -42,7 +42,7 @@ export function postEntity(entPath, useSecIdx = true) {
         // Else post a new entity, and when the new entID is gotten, try to
         // insert it in the entIDs.bt table if an entry has not been inserted
         // for that same entPath in the meantime.
-        post(abs("~/entPaths.att/_insert"), entPath).then(entID => {
+        post("~/entPaths.att/_insert", entPath).then(entID => {
           post(abs(
             "~/entIDs.bt/_insert/k/" + entPathHex + "/p/" + entID + "/i/1"
           ));

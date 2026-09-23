@@ -19,8 +19,8 @@ export async function submitAppCategory(nameAndDescriptionArr) {
 
   let conn = await getConnection(10000, true, "cat");
   let options = {connection: conn};
-  let id = await post(abs("./appCatData.att/_insert"), jsonData, options);
-  await post(abs("./_appCatAuthors.bt/_insert/k/" + id), userID, options);
+  let id = await post("./appCatData.att/_insert", jsonData, options);
+  await post("./_appCatAuthors.bt/_insert/k/" + id, userID, options);
   await conn.end();
 
   let entPath = abs("../em.js;call/AppCat/" + id);
@@ -38,25 +38,24 @@ export async function submitReport(text) {
     abs("~/main.jsx"),
   ]);
 
-  let userID = getRequestingUserID();
   let jsonData = stringify([text, userID]);
-  await post(abs("./_reports.att/_insert"), jsonData, options);
+  await post("./_reports.att/_insert", jsonData, options);
 }
 
 
 export async function fetchReports(maxNum = 1) {
   checkAdminPrivileges();
-  return await fetchPrivate(abs("./_reports.att/list/n/" + maxNum));
+  return await fetchPrivate("./_reports.att/list/n/" + maxNum);
 }
 
 export async function deleteReports(maxID) {
   checkAdminPrivileges();
-  return await post(abs("./_reports.att/_deleteList/hi/" + maxID));
+  return await post("./_reports.att/_deleteList/hi/" + maxID);
 }
 
 export async function deleteReport(id) {
   checkAdminPrivileges();
-  return await post(abs("./_reports.att/_deleteEntry/k/" + id));
+  return await post("./_reports.att/_deleteEntry/k/" + id);
 }
 
 

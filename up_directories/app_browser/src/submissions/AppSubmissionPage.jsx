@@ -45,8 +45,8 @@ export const actions = {
       </span>});
     }
     let [mainRenderFun, metadata] = Promise.all([
-      fetch(abs("~/../" + appDirID + "/main.jsx;get/render")),
-      fetch(abs("~/../" + appDirID + "/metadata.js;get/default")),
+      fetch("~/../" + appDirID + "/main.jsx;get/render"),
+      fetch("~/../" + appDirID + "/metadata.js;get/default"),
     ]).catch(err => {
       console.error(err);
       return [];
@@ -82,10 +82,10 @@ export const actions = {
     // If these checks succeeded, submit the app to the list, and give it an
     // up rate as well by default.
     let relID = await fetchEntityID(relKey);
-    await post(abs(
+    await post(
       "~/../home_app/server/rates/rates.sm.js/callSMF/updateUpOrDownRate/" +
       objID + "/" + relID + "/" + subjID + "/1"
-    ));
+    );
     return this.setState({response: <span className="text-success">
       App was successfully submitted.
     </span>});

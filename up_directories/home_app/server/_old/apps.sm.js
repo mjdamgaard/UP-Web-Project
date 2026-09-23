@@ -90,7 +90,7 @@ export async function fetchPreferredSubApp(appDirID, scoreHandlerID = "0") {
   if (userID) {
     [preferences, subAppIDListString] = await Promise.all([
       fetchUserPreferences(),
-      fetch(abs("./subApps.att/entry/l/" + scoreHandlerID + "/k/" + appDirID))
+      fetch("./subApps.att/entry/l/" + scoreHandlerID + "/k/" + appDirID)
     ]);
   }
   else {
