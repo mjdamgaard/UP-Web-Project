@@ -5,8 +5,14 @@ import {
 import {
   DOMNodeObject, validateJSXInstanceAndGetDOMNode, validateJSXInstance,
 } from "../jsx_components.js";
-import {CLIENT_TRUST_FLAG} from "../../query/src/flags.js";
+import {CLIENT_PERMISSIONS_FLAG} from "../../query/src/flags.js";
 import {getID} from "./getID.js";
+
+
+function getHasPermission(env) {
+  return env.getFlag(CLIENT_PERMISSIONS_FLAG) === "all";
+  // TODO: At some point introduce the specific permission property. 
+}
 
 
 export const render = new DevFunction(
@@ -42,7 +48,7 @@ export const render = new DevFunction(
     if (placeholder !== undefined) {
       domNode.setAttribute("placeholder", placeholder);
     }
-    if (autocomplete === "on" && execEnv.getFlag(CLIENT_TRUST_FLAG)) {
+    if (autocomplete === "on" && getHasPermission(execEnv)) {
       domNode.setAttribute("autocomplete", "on");
     } else {
       domNode.setAttribute("autocomplete", "off");

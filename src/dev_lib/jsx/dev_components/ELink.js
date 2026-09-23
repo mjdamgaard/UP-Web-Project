@@ -4,39 +4,21 @@ import {
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
   DOMNodeObject, validateJSXInstanceAndGetDOMNode, validateJSXInstance,
+  checkPathPermission,
 } from "../jsx_components.js";
-import {CAN_POST_FLAG, CLIENT_TRUST_FLAG} from "../../query/src/flags.js";
+import {CAN_POST_FLAG, CLIENT_PERMISSIONS_FLAG} from "../../query/src/flags.js";
 
 
-// TODO: Call a method from the SettingsObject instead in order to get the
-// URL whitelist, which then allows it to be user-dependent.
-// And in the meantime, a todo is also to expand the list below.
 
 const URL_VALID_CHARACTERS_REGEX =
   /^https:\/(\/([.~a-zA-Z0-9_\-?=:#()\[\]]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+)+\/?$/;
 
-const urlWhitelist = [
-  /^https:\/\/(www\.)?up-web\.org($|\/)/,
-  /^https:\/\/([a-z]+\.)?wikipedia\.org($|\/)/,
-  /^https:\/\/(www\.)?github\.com($|\/)/,
-  /^https:\/\/(www\.)?nodejs\.org($|\/)/,
-  /^https:\/\/(www\.)?w3schools\.com($|\/)/,
-  /^https:\/\/developer\.mozilla\.org($|\/)/,
-  /^https:\/\/(www\.)?reddit\.com($|\/)/,
-  /^https:\/\/(www\.)?facebook\.com($|\/)/,
-  /^https:\/\/(www\.)?linkedin\.com($|\/)/,
-  /^https:\/\/(www\.)?youtube\.com($|\/)/,
-  /^https:\/\/code\.visualstudio\.com($|\/)/,
-];
 
-function getIsAllowed(href, execEnv) {
-  return !href || execEnv.getFlag(CLIENT_TRUST_FLAG) || (
-    URL_VALID_CHARACTERS_REGEX.test(href) &&
-    urlWhitelist.reduce(
-      (acc, val) => acc || val.test(href),
-      false
-    )
-  );
+function getIsAllowed(href, node, env) {
+  if (!href) return true;
+  if (!URL_VALID_CHARACTERS_REGEX.test(href)) return false;
+  let permissions = env.getFlag(CLIENT_PERMISSIONS_FLAG);
+  return checkPathPermission(permissions, "linkTo", href, node, env);
 }
 
 
@@ -55,8 +37,8 @@ export const render = new DevFunction(
       [href, onClick], ["string", "function?"], callerNode, execEnv
     );
 
-    // Check whether the href is whitelisted.
-    let isAllowed = getIsAllowed(href, execEnv);
+    // Check whether the href is allowed.
+    let isAllowed = getIsAllowed(href, callerNode, execEnv);
 
     if (!isAllowed) className = !className ? "not-allowed" :
       getString(className, callerNode, execEnv) + " not-allowed";
@@ -116,7 +98,7 @@ export const actions = {
     "getIsAllowed", {}, function({thisVal, callerNode, execEnv}, []) {
       validateJSXInstance(thisVal, "ELink", callerNode, execEnv);
       let {href} = thisVal.jsxInstance.props;
-      return getIsAllowed(href, execEnv);
+      return getIsAllowed(href, callerNode, execEnv);
     }
   ),
   "focus": new DevFunction(

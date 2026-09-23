@@ -39,7 +39,7 @@ export function render({
   let content = textEntDef ? `${textEntDef["Content"]}` : undefined;
   return <div className="content-page">
     <div className="text">
-      <TextDisplay key="_0" untrusted jsxElement={content} />
+      <TextDisplay key="_0" permissions={false} jsxElement={content} />
     </div>
     <div className="quality-elements">
       {(scoreInterfaces)}

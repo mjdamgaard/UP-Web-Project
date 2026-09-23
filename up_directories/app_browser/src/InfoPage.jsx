@@ -18,7 +18,7 @@ export function render({entID, entDef}) {
     <div>
       <h4>Description:</h4>
       {(desc ?
-        <TextDisplay key="t" untrusted>{(desc)}</TextDisplay> :
+        <TextDisplay key="t" permissions={false}>{(desc)}</TextDisplay> :
         <i>None</i>
       )}
     </div>

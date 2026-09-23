@@ -6,10 +6,9 @@ import {
   getObjectKey, getPropertyFromObject, getPropertyFromPlainObject,
   jsonStringify, ArgTypeError, decrCompGas, getAbsolutePath, CSSModule,
   isArray, verifyType, verifyTypes, getPropertiesFromObject,
+  getValueForFirstMatchingPath,
 } from "../../interpreting/ScriptInterpreter.js";
-import {
-  CAN_POST_FLAG, CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
-} from "../query/src/flags.js";
+import {CAN_POST_FLAG, CLIENT_PERMISSIONS_FLAG} from "../query/src/flags.js";
 
 
 export const CLASS_NAME_REGEX = /^ *([a-z][a-z0-9_-]* *)*$/;
@@ -51,9 +50,10 @@ export const createJSXApp = new DevFunction(
     );
 
     // Create a new environment clearing the CAN_CREATE_APP_FLAG (as well as
-    // other flags), and adding a CLIENT_TRUST_FLAG and CAN_POST_FLAG.
+    // other flags), and adding and CAN_POST_FLAG and CLIENT_PERMISSIONS_FLAG
+    // = "all".
     let appEnv = new Environment(execEnv, undefined, {flags: [
-      CLEAR_FLAG, CLIENT_TRUST_FLAG, CAN_POST_FLAG
+      CLEAR_FLAG, CAN_POST_FLAG, [CLIENT_PERMISSIONS_FLAG, "all"],
     ]});
 
     // Provide some global contexts for getting user data and URL data.
@@ -216,19 +216,17 @@ class JSXInstance {
     this.prevState = this.state;
 
     // Create a new environment for the component instance, and if the
-    // 'untrusted' prop is true, query the CLIENT_TRUST_FLAG about whether the
-    // parent instance was trusted. If so, remove the CLIENT_TRUST_FLAG, but
-    // set the REQUESTING_COMPONENT_FLAG instead, allowing the untrusted
-    // component to make requests with itself as the request origin (when it
-    // is nested in a trusted component). But if the parent was not trusted,
-    // simply clear both flags.
+    // 'permissions' prop is set, check the current CLIENT_PERMISSIONS_FLAG and
+    // suppress any new permissions that were not already there.
     let flags = undefined;
-    if (props["untrusted"]) {
-      let parentIsTrusted = callerEnv.getFlag(CLIENT_TRUST_FLAG);
-      flags = !parentIsTrusted ? [CLEAR_FLAG] : [
-        CLEAR_FLAG,
-        CAN_POST_FLAG,
-        [REQUESTING_COMPONENT_FLAG, this.componentPath],
+    let permissions = props["permissions"];
+    if (permissions !== undefined) {
+      let parentPermissions = callerEnv.getFlag(CLIENT_PERMISSIONS_FLAG);
+      permissions = getPermissionSubset(
+        parentPermissions, permissions, callerNode, callerEnv
+      );
+      flags = [
+        CLEAR_FLAG, CAN_POST_FLAG, [CLIENT_PERMISSIONS_FLAG, permissions],
       ];
     }
     let compEnv = this.compEnv =
@@ -1007,15 +1005,12 @@ class JSXInstance {
 
     let eventFun = getPropertyFromPlainObject(events, eventKey);
     if (eventFun) {
-      let [clientTrust, reqCompPath] = parentInstance.compEnv.getFlags([
-        CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
-      ]);
+      let permissions = parentInstance.compEnv.getFlag(CLIENT_PERMISSIONS_FLAG);
       return interpreter.executeFunction(
         eventFun, inputArr, node, env,
         new JSXInstanceInterface(parentInstance), [
           CLEAR_FLAG, CAN_POST_FLAG,
-          [CLIENT_TRUST_FLAG, clientTrust],
-          [REQUESTING_COMPONENT_FLAG, reqCompPath]
+          [CLIENT_PERMISSIONS_FLAG, permissions],
         ],
       );
     }
@@ -1049,15 +1044,12 @@ class JSXInstance {
     methodKey = getObjectKey(methodKey, node, env);
     let methodFun = getPropertyFromPlainObject(methods, methodKey);
     if (methodFun) {
-      let [clientTrust, reqCompPath] = targetInstance.compEnv.getFlags([
-        CLIENT_TRUST_FLAG, REQUESTING_COMPONENT_FLAG
-      ]);
+      let permissions = targetInstance.compEnv.getFlag(CLIENT_PERMISSIONS_FLAG);
       return interpreter.executeFunction(
         methodFun, inputArr, node, env,
         new JSXInstanceInterface(targetInstance), [
           CLEAR_FLAG, CAN_POST_FLAG,
-          [CLIENT_TRUST_FLAG, clientTrust],
-          [REQUESTING_COMPONENT_FLAG, reqCompPath]
+          [CLIENT_PERMISSIONS_FLAG, permissions],
         ],
       );
     }
@@ -2193,6 +2185,50 @@ export function deepCompare(val1, val2, excludeMutableProps = false) {
 }
 
 
+
+
+
+// TODO: Consider making getPermissionSubset() allow for general paths to turn
+// into more specific ones. For instance, if you have a "read" or "write"
+// parent permission on ".../my_dir", and want a new permission on
+// ".../my_dir/my_module.js" or ".../my_dir/my_child_dir", then we could let
+// getPermissionSubset() allow for that.
+// ...Oh, but I already need to include array values as well, so it might
+// actually be easiest if I just impl. this already.. 
+
+export function getPermissionSubset(
+  parentPermissions, permissions, node, env
+) {
+  if (permissions === "all") {
+    return parentPermissions;
+  }
+  else if (parentPermissions === "all") {
+    return permissions;
+  }
+  else if (!permissions) {
+    return false;
+  }
+  else if (permissions === parentPermissions) {
+    return parentPermissions;
+  }
+  
+  let ret = {};
+  forEachValue(permissions, node, env, (val, key) => {
+    let parentVal = getPropertyFromObject(parentPermissions, key, node, env);
+    let newVal = getPermissionSubset(parentVal, val, node, env);
+    if (newVal) ret[key] = newVal;
+  }, true);
+  return ret;
+}
+
+export function checkPathPermission(permissions, propName, path, node, env) {
+  if (permissions === "all") {
+    return true;
+  }
+  let propVal = getPropertyFromObject(permissions, propName, node, env);
+  return getValueForFirstMatchingPath(propVal, path, node, env, true) ?
+    true : false;
+}
 
 
 

@@ -4,29 +4,21 @@ import {
 } from "../../../interpreting/ScriptInterpreter.js";
 import {
   DOMNodeObject, validateJSXInstanceAndGetDOMNode, validateJSXInstance,
+  checkPathPermission,
 } from "../jsx_components.js";
+import {CLIENT_PERMISSIONS_FLAG} from "../../query/src/flags.js";
 
 
-// TODO: Call a method from the SettingsObject instead in order to get the
-// URL whitelist, which then allows it to be user-dependent.
-// And in the meantime, a todo is also to expand the list below.
 
 const URL_VALID_CHARACTERS_REGEX =
-  /^https:\/(\/([.~a-zA-Z0-9_\-?=:]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+)+$/;
+  /^https:\/(\/([.~a-zA-Z0-9_\-?=:#()\[\]]|%(2[0-9A-CF]|3[A-F]|[46]0|5[B-E]|7[B-E]))+)+\/?$/;
 
-const urlWhitelist = [
-  /^https:\/\/en\.wikipedia\.org($|\/)/,
-  /^\/assets\/.+$/,
-];
 
-function getIsWhitelisted(src) {
-  return !src || (
-    URL_VALID_CHARACTERS_REGEX.test(src) &&
-    urlWhitelist.reduce(
-      (acc, val) => acc || val.test(src),
-      false
-    )
-  );
+function getIsAllowed(src, node, env) {
+  if (!src) return true;
+  if (!URL_VALID_CHARACTERS_REGEX.test(src)) return false;
+  let permissions = env.getFlag(CLIENT_PERMISSIONS_FLAG);
+  return checkPathPermission(permissions, "imageFrom", src, node, env);
 }
 
 
@@ -45,16 +37,16 @@ export const render = new DevFunction(
       [src, alt], ["string", "string?"], callerNode, execEnv
     );
 
-    // Check whether the src is whitelisted.
-    let isWhiteListed = getIsWhitelisted(src);
+    // Check whether the src is allowed.
+    let isAllowed = getIsAllowed(src, callerNode, execEnv);
 
-    if (!isWhiteListed) className = !className ? "invalid" :
+    if (!isAllowed) className = !className ? "invalid" :
       getString(className, callerNode, execEnv) + " invalid";
     let domNode = validateJSXInstanceAndGetDOMNode(
       thisVal, "Img", "img", className, callerNode, execEnv
     );
     if (src) {
-      if (isWhiteListed) domNode.setAttribute("src", src);
+      if (isAllowed) domNode.setAttribute("src", src);
       else domNode.setAttribute("data-src", src);
     }
     if (alt !== undefined) domNode.setAttribute("alt", alt);
@@ -63,3 +55,18 @@ export const render = new DevFunction(
   }
 );
 
+
+
+export const methods = [
+  "getIsAllowed",
+];
+
+export const actions = {
+  "getIsAllowed": new DevFunction(
+    "getIsAllowed", {}, function({thisVal, callerNode, execEnv}, []) {
+      validateJSXInstance(thisVal, "Img", callerNode, execEnv);
+      let {href} = thisVal.jsxInstance.props;
+      return getIsAllowed(href, callerNode, execEnv);
+    }
+  ),
+};

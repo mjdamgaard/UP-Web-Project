@@ -1,6 +1,6 @@
 
 import {DevFunction, RuntimeError} from "../interpreting/ScriptInterpreter.js";
-import {CLIENT_TRUST_FLAG} from './query/src/flags.js';
+import {CLIENT_PERMISSIONS_FLAG} from './query/src/flags.js';
 
 import {ServerQueryHandler} from "../server/ajax_io/ServerQueryHandler.js";
 
@@ -138,20 +138,23 @@ export const fetchGasReserves = new DevFunction(
 
 
 
+// TODO: At some point we might want to introduce a specific client permissions
+// property for using the account library, instead of just requiring
+// permissions == "all".
+
 export const canUseAccountLibrary = new DevFunction(
   "canUseAccountLibrary", {}, ({execEnv}, []) => {
-    return execEnv.getFlag(CLIENT_TRUST_FLAG) ? true : false;
+    return execEnv.getFlag(CLIENT_PERMISSIONS_FLAG) === "all";
   },
 );
 
-
-
-
 function checkAccountLibraryPermission(callerNode, execEnv) {
-  if (!execEnv.getFlag(CLIENT_TRUST_FLAG)) throw new RuntimeError(
-    "Permission to use account library not granted in this context",
-    callerNode, execEnv
-  );
+  if (execEnv.getFlag(CLIENT_PERMISSIONS_FLAG) !== "all") {
+    throw new RuntimeError(
+      "Permission to use account library not granted in this context",
+      callerNode, execEnv
+    );
+  }
 }
 
 

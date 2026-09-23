@@ -3959,13 +3959,32 @@ export class PathMap {
 
   getIsATarget(path, node, env) {
     let targets = getPropertyFromObject(this.pathMap, "targets", node, env) ??
-      {[this.homePath]: true};
-    return getValueAtFirstMatchingPathKey(targets, path, node, env, true) ?
+      [this.homePath];
+    return getValueForFirstMatchingPath(targets, path, node, env, true) ?
       true : false;
   }
 }
 
 
+
+export function getValueForFirstMatchingPath(
+  object, path, node, env, ignore = false
+) {
+  return (isArray(object)) ?
+    getIsPathIncluded(object, path, node, env, ignore) :
+    getValueAtFirstMatchingPathKey(object, path, node, env, ignore);
+}
+
+export function getIsPathIncluded(
+  array, path, node, env, ignore = false
+) {
+  let ret;
+  forEachValue(array, node, env, (val) => {
+    if (ret) return;
+    ret = isAMatchingPath(val, path);
+  }, ignore);
+  return ret;
+}
 
 export function getValueAtFirstMatchingPathKey(
   object, path, node, env, ignore = false

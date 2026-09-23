@@ -797,8 +797,8 @@ const getPage = (userID) => <div className="text-page">
     <p>
       And lastly, the post() function keeps track of both the "request origin,"
       as introduced above, as well as the requesting user, meaning that
-      functions such as checkRequestOrigin(), getRequestOrigin(), and
-      getRequestingUserID(), all exported from the 'request' library, work
+      functions such as checkRequestOrigin() and
+      getRequestingUserID(), exported from the 'request' library, work
       for post() requests.
     </p>
 

@@ -36,7 +36,7 @@ export function render({entID, entKey = entID}) {
   let content = `${entDef["Content"]}`;
   return <div className="content-page">
     <div className="text">
-      <TextDisplay key="_0" untrusted jsxElement={content} />
+      <TextDisplay key="_0" permissions={false} jsxElement={content} />
     </div>
   </div>;
 }

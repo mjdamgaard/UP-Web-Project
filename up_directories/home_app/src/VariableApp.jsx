@@ -73,7 +73,7 @@ export function render({
     });
   }
   return <AppComponent key={"a-" + appDirID}
-    {...appProps} untrusted={!isTrusted}
+    {...appProps} permissions={isTrusted ? "all" : false}
   />;
 }
 

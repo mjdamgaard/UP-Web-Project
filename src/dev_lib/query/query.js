@@ -768,6 +768,12 @@ export const clearPrivileges = new DevFunction(
 );
 
 
+// TODO: Implement a setPermissions() function to reduce the permissions, not
+// least the "client permissions" object. Do this here and/or in request.js.
+
+
+
+
 
 // noTrace() suppresses traces from being generated and logged alongside any
 // errors thrown while the flag is raised. And if the SMF calls another SMF

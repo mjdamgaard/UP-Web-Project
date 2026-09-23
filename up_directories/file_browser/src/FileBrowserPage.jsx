@@ -53,7 +53,7 @@ export function render({
         </div>;
       }) :
       (hasType(result, "JSXElement")) ?
-        <TextDisplay key="_result" untrusted jsxElement={result} /> :
+        <TextDisplay key="_result" permissions={false} jsxElement={result} /> :
         isTextFile ?
           <code className="jsx numbered">{toString(result, true)}</code> :
           <div>{toString(result, true)}</div>;

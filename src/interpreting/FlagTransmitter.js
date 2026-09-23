@@ -1,9 +1,9 @@
 
 import {
-  REQUESTING_COMPONENT_FLAG, CLIENT_TRUST_FLAG, REQUEST_ADMIN_PRIVILEGES_FLAG,
+  CLIENT_PERMISSIONS_FLAG, REQUEST_ADMIN_PRIVILEGES_FLAG,
 } from "../dev_lib/query/src/flags.js";
+import {jsonParse, jsonStringify} from "./ScriptInterpreter.js";
 
-const SM_EXT_REGEX = /\.sm\.js/;
 
 
 
@@ -15,20 +15,16 @@ export class FlagTransmitter {
     // Transmit the "request-admin-privileges" flag if the user is the admin
     // and wants to elevate their privileges for the request.
     let reqAdminPriv = environment.getFlag(REQUEST_ADMIN_PRIVILEGES_FLAG);
-    if (reqAdminPriv) ret["request-admin-privileges"] = true;
+    if (reqAdminPriv) ret["request-admin-privileges"] = "true";
 
-    // Transmit the "requesting-component" flag (holding the route of the last
-    // JSX component that declared itself as a request origin).
-    let reqComp = environment.getFlag(REQUESTING_COMPONENT_FLAG);
-    if (reqComp && !SM_EXT_REGEX.test(reqComp)) {
-      ret["requesting-component"] = reqComp;
+    // Transmit the "client-permissions" flag (holding an object that includes
+    // permissions such as "read" and "write", which allows the client to
+    // override the checkRequestOrigin() checks in a server module).
+    let clientPermissions = environment.getFlag(CLIENT_PERMISSIONS_FLAG);
+    if (clientPermissions) {
+      ret["client-permissions"] =
+        encodeURIComponent(jsonStringify(clientPermissions));
     }
-
-    // Transmit the "client-trust" flag (holding a boolean of whether the
-    // client trusts the POST request to have only the results that they
-    // expect).
-    let clientTrust = environment.getFlag(CLIENT_TRUST_FLAG);
-    if (clientTrust) ret["client-trust"] = true;
 
     return ret;
   }
@@ -41,13 +37,12 @@ export class FlagTransmitter {
     let reqAdminPriv = flags["request-admin-privileges"];
     if (reqAdminPriv) ret.push(REQUEST_ADMIN_PRIVILEGES_FLAG);
 
-    // The "requesting-component" flag is transmitted.
-    let reqComp = flags["requesting-component"];
-    if (reqComp) ret.push([REQUESTING_COMPONENT_FLAG, reqComp]);
-
-    // And the CLIENT_TRUST flag if transmitted.
-    let clientTrust = flags["client-trust"];
-    if (clientTrust) ret.push(CLIENT_TRUST_FLAG);
+    // And the CLIENT_PERMISSIONS_FLAG flag if transmitted.
+    let clientPermissions = flags["client-permissions"];
+    if (clientPermissions) {
+      clientPermissions = jsonParse(decodeURIComponent(clientPermissions));
+      ret.push([CLIENT_PERMISSIONS_FLAG, clientPermissions]);
+    }
 
     return ret;
   }
