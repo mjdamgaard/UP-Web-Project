@@ -230,6 +230,14 @@ export class ScriptInterpreter {
     globalEnv.declare("MutableMap", mutableMapClass, true, null);
     globalEnv.declare("ImmutableMap", immutableMapClass, true, null);
 
+    globalEnv.declare("Object", this.staticDevLibs.get('object'), true, null);
+    globalEnv.declare("Array", this.staticDevLibs.get('array'), true, null);
+    globalEnv.declare("Number", this.staticDevLibs.get('number'), true, null);
+    globalEnv.declare("String", this.staticDevLibs.get('string'), true, null);
+    globalEnv.declare("JSON", this.staticDevLibs.get('json'), true, null);
+    globalEnv.declare("Math", this.staticDevLibs.get('math'), true, null);
+    globalEnv.declare("Date", this.staticDevLibs.get('date'), true, null);
+
     let clearPermissions = new DevFunction(
       "clearPermissions", {typeArr: ["function"]},
       ({callerNode, execEnv, interpreter}, [callback]) => {
