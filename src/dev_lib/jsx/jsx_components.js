@@ -2188,17 +2188,8 @@ export function deepCompare(val1, val2, excludeMutableProps = false) {
 
 
 
-// TODO: Consider making getPermissionSubset() allow for general paths to turn
-// into more specific ones. For instance, if you have a "read" or "write"
-// parent permission on ".../my_dir", and want a new permission on
-// ".../my_dir/my_module.js" or ".../my_dir/my_child_dir", then we could let
-// getPermissionSubset() allow for that.
-// ...Oh, but I already need to include array values as well, so it might
-// actually be easiest if I just impl. this already.. 
 
-export function getPermissionSubset(
-  parentPermissions, permissions, node, env
-) {
+export function getPermissionSubset(parentPermissions, permissions, node, env) {
   if (permissions === "all") {
     return parentPermissions;
   }
@@ -2211,15 +2202,57 @@ export function getPermissionSubset(
   else if (permissions === parentPermissions) {
     return parentPermissions;
   }
-  
-  let ret = {};
-  forEachValue(permissions, node, env, (val, key) => {
-    let parentVal = getPropertyFromObject(parentPermissions, key, node, env);
-    let newVal = getPermissionSubset(parentVal, val, node, env);
-    if (newVal) ret[key] = newVal;
-  }, true);
-  return ret;
+  else {
+    let ret = {};
+    forEachValue(permissions, node, env, (val, key) => {
+      let parentVal = getPropertyFromObject(parentPermissions, key, node, env);
+      let newVal = getPermissionPropertySubset(parentVal, val, node, env);
+      if (newVal) ret[key] = newVal;
+    }, true);
+    return ret;
+  }
 }
+
+export function getPermissionPropertySubset(parentVal, childVal, node, env) {
+  if (childVal === "all") {
+    return parentVal;
+  }
+  else if (parentVal === "all") {
+    return childVal;
+  }
+  else if (!childVal) {
+    return false;
+  }
+  else if (childVal === parentVal) {
+    return parentVal;
+  }
+  else if (isArray(childVal)) {
+    let ret = [];
+    forEachValue(childVal, node, env, (pathSubStr) => {
+      if (
+        typeof pathSubStr === "string" &&
+        getValueForFirstMatchingPath(parentVal, pathSubStr, node, env, true)
+      ) {
+        ret.push(pathSubStr);
+      }
+    }, true);
+    return ret;
+  }
+  else {
+    let ret = {};
+    forEachValue(childVal, node, env, (val, pathSubStr) => {
+      if (
+        typeof pathSubStr === "string" && (
+          !val ||
+          getValueForFirstMatchingPath(parentVal, pathSubStr, node, env, true)
+        )
+      ) {
+        ret[pathSubStr] = val;
+      }
+    }, true);
+  }
+}
+
 
 export function checkPathPermission(permissions, propName, path, node, env) {
   if (permissions === "all") {

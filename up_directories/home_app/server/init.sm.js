@@ -1,7 +1,6 @@
 
 import {post} from 'query';
 import {checkAdminPrivileges} from 'request';
-import {getNodeID} from 'route';
 import {postConstructedEntity, postAllEntitiesFromModule} from
   "../../semantic_entities/entities.js";
 import {nodeID, directories} from "~/path_map.js";
