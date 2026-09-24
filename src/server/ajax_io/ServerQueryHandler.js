@@ -227,7 +227,7 @@ export class ServerQueryHandler {
   fetchAsAdmin(route, options) {
     return this.queryAJAXServer(
       true, route, false, undefined, options,
-      {["request-admin-privileges"]: true}
+      {["request-admin-privileges"]: "true"}
     );
   }
 
@@ -239,7 +239,7 @@ export class ServerQueryHandler {
 
   postAsAdmin(route, postData, options) {
     return this.post(
-      route, postData, options, {["request-admin-privileges"]: true}
+      route, postData, options, {["request-admin-privileges"]: "true"}
     );
   }
 

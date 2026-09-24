@@ -25,15 +25,21 @@ export const checkRequestOrigin = new DevFunction(
       if (clientPermissions === "all") {
         return;
       }
-      let canPost = execEnv.getFlag(CAN_POST_FLAG);
-      let permissionsPropName = canPost ? "write" : "read";
-      let permissionProp = getPropertyFromObject(
-        clientPermissions, permissionsPropName, callerNode, execEnv
-      );
       let {modulePath} = execEnv.getModuleEnv();
-      let isAllowed = getValueForFirstMatchingPath(
-        permissionProp, modulePath, callerNode, execEnv, true
+      let writePermissions = getPropertyFromObject(
+        clientPermissions, "write", callerNode, execEnv
       );
+      let isAllowed = getValueForFirstMatchingPath(
+        writePermissions, modulePath, callerNode, execEnv, true
+      );
+      if (!isAllowed && !execEnv.getFlag(CAN_POST_FLAG)) {
+        let readPermissions = getPropertyFromObject(
+          clientPermissions, "read", callerNode, execEnv
+        );
+        isAllowed = getValueForFirstMatchingPath(
+          readPermissions, modulePath, callerNode, execEnv, true
+        );
+      }
       if (isAllowed) {
         return;
       }

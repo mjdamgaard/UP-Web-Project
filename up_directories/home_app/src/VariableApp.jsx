@@ -72,8 +72,10 @@ export function render({
       isHarmful: trustClass === "harmful"
     });
   }
-  return <AppComponent key={"a-" + appDirID}
-    {...appProps} permissions={isTrusted ? "all" : false}
+  return <AppComponent key={"a-" + appDirID} {...appProps}
+    permissions={isTrusted ? "all" : {write: [
+      abs("~/../" + appDirID),
+    ]}}
   />;
 }
 
