@@ -14,7 +14,6 @@ import * as TutorialIndexPage from "./src/pages/TutorialIndex.jsx";
 import {directories} from "~/path_map.js";
 
 const {
-  "home_app": homeAppDirID,
   "app_browser": appBrowserDirID,
 } = directories;
 
@@ -38,6 +37,7 @@ const {
 export function render(props) {
   let {
     fetchBestVersionRouteTemplate, loadUpdatedSelf, AppFrame, appFrameStyle,
+    homeAppDirID,
   } = props;
   let userID = this.getContext("userID");
 
@@ -76,26 +76,31 @@ export function render(props) {
     />;
   }
 
-  // Else if the first segment equals "o-" + homeAppDirID, skip the AppLoader,
-  // which would otherwise load this home app itself again, and go to the
-  // switch-case statement below.
-  if (firstSegment === "o-" + homeAppDirID) {
-    firstSegment = this.getSegment(1);
-  }
-
-  // And if the tail URL is empty, go to the app browser as the default app.
-  else if (!firstSegment) {
-    this.replaceURL("./" + appBrowserDirID);
+  // If the tail URL is empty, go to the app browser as the default app.
+  if (!firstSegment) {
+    this.replaceURL("~/" + appBrowserDirID);
     return <div className="loading"></div>;
   }
 
-  // Else if the URL is of the form "(/[os])?/<appDirID>" (similar to the above
+  // Else if the first segment equals "o-" + homeAppDirID, just skip that first
+  // segment of the URL (rather than having the Home app load itself).
+  if (firstSegment === "o-" + homeAppDirID) {
+    firstSegment = this.getSegment(1);
+    if (!firstSegment) {
+      this.replaceURL("~/" + appBrowserDirID);
+      return <div className="loading"></div>;
+    }
+    isAppDirSegment = getIsAppDirSegment(firstSegment);
+  }
+
+
+  // And if the URL is of the form "(/[os])?/<appDirID>" (similar to the above
   // case but without the "/home" segment in front), redirect to the AppLoader
   // component to load the app pointed to be appDirID. And in this case, also
   // wrap the AppLoader component in the AppFrame component, which defines a
   // global header for the webpage, and the global page margins, etc. (both of
   // which the loaded app can potentially hide).
-  else if (isAppDirSegment) {
+  if (isAppDirSegment) {
     return <div className="home-app" innerStyle={appFrameStyle}>
       <AppFrame key="f" appLoaderProps={{
         userID: userID,
@@ -104,7 +109,7 @@ export function render(props) {
     </div>;
   }
 
-  // If the URL is of the form "(o-<homeAppDirID>/)?<page-segment>", where
+  // Else if the URL is of the form "(o-<homeAppDirID>/)?<page-segment>", where
   // <page-segment> is one of the page segments below redirect to that page.
   let content;
   this.advanceURL(2);

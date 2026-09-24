@@ -23,6 +23,12 @@ import * as mainStyle from "./style.css";
 import * as AppFrame from "./src/AppFrame.jsx";
 import * as appFrameStyle from "./src/AppFrame.css";
 
+import {directories} from "~/path_map.js";
+
+const {
+  "home_app": homeAppDirID,
+} = directories;
+
 const fetchBestVersionRouteTemplate = abs(
   "./server/apps/apps.sm.js./callSMF/fetchBestSubApp/" +
   "$appDirID/$useOriginal"
@@ -35,5 +41,6 @@ export function render(props) {
     fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
     loadUpdatedSelf={props.isRoot} AppFrame={AppFrame}
     appFrameStyle={[mainStyle, appFrameStyle]} {...props}
+    homeAppDirID={homeAppDirID}
   />;
 }
