@@ -18,6 +18,7 @@ export default {
   "Name": "Flip game - more game modes",
   "Is ready for use": true,
   "apiDefiningAppDirID": homeDirID,
+  "Public repository": "https://github.com/mjdamgaard/UP-Web-Project/tree/main/up_directories/flip_game_01",
   "Description": <div>
     <h2>Flip game - more game modes</h2>
     <h3>Summary</h3>

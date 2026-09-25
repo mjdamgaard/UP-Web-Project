@@ -6,6 +6,7 @@ export default {
   "Name": "File browser",
   "Is ready for use": true,
   "apiDefiningAppDirID": fileBrowserDirID,
+  "Public repository": "https://github.com/mjdamgaard/UP-Web-Project/tree/main/up_directories/file_browser",
   "Description": <div>
     <h2>File browser</h2>
     <p>

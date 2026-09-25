@@ -6,6 +6,7 @@ export default {
   "Name": "Flip game",
   "Is ready for use": true,
   "apiDefiningAppDirID": homeDirID,
+  "Public repository": "https://github.com/mjdamgaard/UP-Web-Project/tree/main/up_directories/flip_game",
   "Description": <div>
     <h2>Flip game</h2>
     <p>

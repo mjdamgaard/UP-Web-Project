@@ -42,5 +42,6 @@ export default {
   "Name": "Untrusted app example",
   "Is ready for use": true,
   "apiDefiningAppDirID": homeDirID,
+  "Public repository": "https://github.com/mjdamgaard/UP-Web-Project/tree/main/up_directories/untrusted_example",
   "Description": description,
 };

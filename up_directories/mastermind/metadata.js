@@ -1,6 +1,7 @@
 export default {
   "Name": "Mastermind",
   "Is ready for use": true,
+  "Public repository": "https://github.com/mjdamgaard/UP-Web-Project/tree/main/up_directories/mastermind",
   "Description": <div>
     <h2>Mastermind</h2>
     <p>

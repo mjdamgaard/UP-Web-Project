@@ -1,6 +1,7 @@
 export default {
   "Name": "Home app - restyling example",
   "Is ready for use": true,
+  "Public repository": "https://github.com/mjdamgaard/UP-Web-Project/tree/main/up_directories/home_app_01",
   "Description": <div>
     <h2>Home app - restyling example</h2>
     <p>

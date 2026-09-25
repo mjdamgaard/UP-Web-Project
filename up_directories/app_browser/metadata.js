@@ -6,6 +6,7 @@ export default {
   "Name": "App browser",
   "Is ready for use": true,
   "apiDefiningAppDirID": appBrowserDirID,
+  "Public repository": "https://github.com/mjdamgaard/UP-Web-Project/tree/main/up_directories/app_browser",
   "Description": <div>
     <h2>App browser</h2>
     <p>

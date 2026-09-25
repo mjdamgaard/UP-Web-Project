@@ -10,6 +10,7 @@ export default {
   "Name": appName,
   "Is ready for use": false,
   "apiDefiningAppDirID": homeDirID,
+  "Public repository": "INSERT_URL_TO_PUBLIC_REPOSITORY_HERE",
   "Description": <div>
     <h2>{appName}</h2>
     <p>
