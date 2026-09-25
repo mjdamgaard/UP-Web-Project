@@ -113,6 +113,53 @@ export const blogging = AppClass(
 
 
 
+
+
+// Component entities (short for 'JSX components') represent internal JSX
+// components in the database/network, that can be imported into scripts.
+// The component entities are defined simply by the path/route to the component.
+// And all other properties, such as e.g. whether the component is finished or
+// still under development, needs to be declared either via scalar predicates
+// (qualities) or via a metadata.js file in proximity to the component file.
+// And since components generally need props to be rendered, and possibly a
+// surrounding context to be understood, users are also meant to up-rate
+// "examples" to a given component, which are JSX elements that wrap the given
+// component in order to showcase it.
+export const Component = (componentPath) => ({
+  "Class": abs("./em1.js;get/components"),
+  "Component path": componentPath,
+  "Name": "Component at " + componentPath,
+  "Description": "The JSX component defined at " + componentPath + ".",
+});
+export const components = {
+  "Class": abs("./em1.js;get/classes"),
+  "Name": "Components",
+  "constructor": Component,
+  "Description": "A class of all JSX components.",
+};
+
+
+export const examples = {
+  "Class": abs("./em1.js;get/relations"),
+  "Name": "Component examples",
+  "getQualityName": objKey => "Showcases ${" + objKey + "}",
+  "getScalarName": (objKey, subjKey) => "${" + subjKey + "} showcases " +
+    "${" + objKey + "}",
+  "getClassName": objKey => "Examples showcasing ${" + objKey + "}",
+  "Object domain": abs("./em1.js;get/components"),
+  "Subject domain": abs("./em1.js;get/texts"),
+  "Metric": abs("./em1.js;get/gradingMetric"),
+  "Description": "A relation between JSX components and corresponding " +
+    "example texts (including JSX elements) that showcases the given JSX " +
+    "component.",
+};
+
+
+
+
+
+
+
 // // Features can be anything regarding the UI or the functions of an app. It can
 // // for instance be a specific component with a specific purpose, or a specific
 // // algorithm, or a layout/style of an app, or a new button/option that is
