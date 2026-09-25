@@ -32,7 +32,7 @@ export function render(props) {
   return <HomeApp key="0"
     fetchBestVersionRouteTemplate={fetchBestVersionRouteTemplate}
     loadUpdatedSelf={props.isRoot} AppFrame={AppFrame}
-    appFrameStyle={[mainStyle, appFrameStyle, ownStyle]} {...props}
-    homeAppDirID={homeAppDirID}
+    appFrameStyle={[mainStyle, appFrameStyle, ownStyle]}
+    homeAppDirID={homeAppDirID} {...props}
   />;
 }

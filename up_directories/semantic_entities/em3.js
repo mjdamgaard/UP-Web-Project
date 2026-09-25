@@ -32,7 +32,6 @@ export async function App(upNodeID, appDirID) {
 export const apps = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Apps",
-  "Superclass": abs("./em1.js;get/components"),
   "constructor": App,
   "Common properties": [
     "App directory ID", "Is ready for use", "apiDefiningAppDirID",

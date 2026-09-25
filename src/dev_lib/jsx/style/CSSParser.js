@@ -43,7 +43,7 @@ const FUNCTION_NAME_PATTERN =
   "radial-gradient|ray|rect|rem|repeat|" +
   "repeating-(conic|linear|radial)-gradient|rgba?|" +
   "rotate(3d|X|Y|Z)?|scale(3d|X|Y|Z)?|skew[XYZ]?|translate(3d|X|Y|Z)?|" +
-  "round|saturate|scroll|sepia|shape|sign|sin|sqrt|steps|tan|view|xywh)";
+  "round|saturate|scroll|sepia|shape|sign|sin|sqrt|steps|tan|var|view|xywh)";
 
 
 export const cssGrammar = {
@@ -363,7 +363,7 @@ export const cssGrammar = {
   },
   "hex-color": {
     rules: [
-      ["/#/", "/([0-9a-fA-F]{2}){3,4}/", "S*"],
+      ["/#/", "/([0-9a-fA-F]{1,2}){3,4}/", "S*"],
     ],
     process: (children) => ({
       type: "hex-color",
@@ -392,7 +392,10 @@ export const cssGrammar = {
   },
   "function-call": {
     rules: [
-      ["/" + FUNCTION_NAME_PATTERN + "/", /\(/, "value-or-operator!1*", /\)/],
+      [
+        "/" + FUNCTION_NAME_PATTERN + "/", /\(/, "value-or-operator!1*", /\)/,
+        "S*"
+      ],
     ],
     process: (children) => ({
       type: "function-call",

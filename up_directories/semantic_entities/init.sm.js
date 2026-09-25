@@ -27,17 +27,20 @@ export function uploadInitialEntities() {
 
   return Promise.all([
     postAllEntitiesFromModule(abs("~/em1.js")),
-    postAllEntitiesFromModule(
-      abs("~/em2.js")
-    ),
-    postAllEntitiesFromModule(abs("~/em2_old.js")),
+    postAllEntitiesFromModule(abs("~/em2.js")),
+    // postAllEntitiesFromModule(abs("~/em2_old.js")),
     postAllEntitiesFromModule(abs("~/em3.js")),
   ]);
 }
 
 
 
-export function insertInitialModerators() {
+// The below initialization SMFs are outdated, and the 'export' keyword has
+// therefore been removed for them.
+
+
+
+/*export*/ function insertInitialModerators() {
   // Only the admin can call this SMF.
   checkAdminPrivileges();
 
@@ -90,7 +93,7 @@ export const initialModerators = [
 // functions. TODO: Consider refactoring it.
 
 
-export function postInitialScores01() {
+/*export*/ function postInitialScores01() {
   // Only the admin can call this SMF.
   checkAdminPrivileges();
 
@@ -352,13 +355,13 @@ export function postInitialScores01() {
 // There's a bug where postInitialScores01() actually needs to be executed two
 // times before the scores of the user groups are fully updated. TODO: Fix this
 // bug, and in the meantime just run it again:
-export function postInitialScores02() {
+/*export*/ function postInitialScores02() {
   return postInitialScores01();
 }
 
 
 
-export async function postInitialScores03() {
+/*export*/ async function postInitialScores03() {
   let firstModID = await fetchEntityID(
     getUserEntPath("1", initialModerators[0][0])
   );

@@ -855,31 +855,24 @@ export const scoreHandlers = {
 
 // Component entities (short for 'JSX components') represent internal JSX
 // components in the database/network, that can be imported into scripts.
-// A defining property is obviously the path (or "route," if you will) to
-// the given component's module. And then there are some optional metadata
-// properties, including an URL to the GitHub repo from which the module stems,
-// and also not least an "Example component path", which leads to another,
-// props-independent component that showcases the given component (either by
-// "decorating" it with specific properties, or by showing different examples
-// on a page, possibly with accompanying text that explains each example, and
-// the intended usage of the component in general). If the component is a self-
-// contained app, simply omit the "Example component path" property, which
-// means that the component itself will be rendered. And if it is almost self-
-// contained, but only need to example props to showcase, define the "Example 
-// props" property instead.
+// The component entities are defined simply by the path/route to the component.
+// And all other properties, such as e.g. whether the component is finished or
+// still under development, needs to be declared either via scalar predicates
+// (qualities) or via a metadata.js file in proximity to the component file.
+// And since components generally need props to be rendered, and possibly a
+// surrounding context to be understood, users are also meant to up-rate
+// "examples" to a given component, which are JSX elements that wrap the given
+// component in order to showcase it.
+export const Component = (componentPath) => ({
+  "Class": abs("./em1.js;get/components"),
+  "Component path": componentPath,
+  "Name": "Component at " + componentPath,
+  "Description": "The JSX component defined at " + componentPath + ".",
+});
 export const components = {
   "Class": abs("./em1.js;get/classes"),
   "Name": "Components",
-  "Superclass": abs("./em1.js;get/entities"),
-  "Common properties": [
-    "Component path", "Example component path", "Example props",
-    "getExampleProps", "No margins", "No header", "Is a prototype",
-
-    // (These properties obviously have to been checked by the user community,
-    // and the entity ought to be down-rated as a member of this class if they
-    // are not true:)
-    "Public repository", "Creator(s)",
-  ],
+  "constructor": Component,
   "Description": abs("./em1_aux.js;get/componentsDesc"),
 };
 
