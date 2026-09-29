@@ -257,7 +257,7 @@ const page = <div className="page text-page">
     Happy programming!
   </p>
 
-  <footer>
+  <footer className="prev-and-next-link">
     <div className="prev-link"></div>
     <div className="next-link">
       <ILink key="link-tut-2" href="../jsx-components">

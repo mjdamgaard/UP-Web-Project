@@ -37,7 +37,7 @@ If you want to install this system as a server on your localhost, you need to:
 
 11. Next, while logged into the 'server_interface.js' CLI program, run the command 'cd semantic_entities', followed by the command 'p' (for 'post'). You are then prompted for route that defines a post request. Copy and paste "init.sm.js./callSMF/uploadInitialEntities" (without the quotation marks) into this prompt and hit enter. That will insert some essential data into some database tables for this directory. 
 
-12. Then do a similar thing for the 'home_app' directory: First run 'cd home_app' to go to that directory. Then run the 'p' command and insert the string "./server/init.sm.js./callSMF/_init_1" into the prompt that follows. And afterwards run 'p' once again, this time inserting "./server/init.sm.js./callSMF/_init_2" instead.
+12. Then do a similar thing for the 'home_app' directory: First run 'cd home_app' to go to that directory. Then run the 'p' command and insert the string "./server/init.sm.js./callSMF/init_1" into the prompt that follows. And afterwards run 'p' once again, this time inserting "./server/init.sm.js./callSMF/init_2" instead.
 
 13. Now you should have uploaded and prepared all the data needed. You can then run 'npm start' in the last of the four terminals that you have opened, and this should start the main HTTP server on your localhost, and make your default browser open up that localhost server for you.
 

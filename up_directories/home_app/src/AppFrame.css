@@ -335,7 +335,25 @@
   margin-top: 0.5em;
 }
 
+footer.prev-and-next-link {
+  margin-top: 3em;
+  display: grid;
+  grid-template-columns: auto auto;
+  .prev-link {
+    justify-self: start;
+  }
+  .next-link {
+    justify-self: end;
+  }
+}
+.page:has(> footer) {
+  padding-bottom: 10px;
+}
 
+
+code {
+  font-size: 0.9em;
+}
 
 
 .tutorial-list {

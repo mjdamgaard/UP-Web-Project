@@ -62,16 +62,17 @@ const page = <div className="page text-page">
     </ELink>
     first, before you continue with this tutorial.
   </p>
-  <p>
+  {/* <p>
     The framework introduced here is currently the only one that is supported
     by the sandbox of this platform, which is what allows you to upload and
-    share your apps and prototypes immediately with the community. In the
+    share your apps and prototypes immediately with the community.
+    In the
     <ILink key="link-tut-3-1" href="~/useful-tips">
       next tutorial
     </ILink>,
     last section, we will discuss how one can technically also program in
     other frameworks as well, but without the benefits that the sandbox offers.
-  </p>
+  </p> */}
 
 
   <h3>Follow along</h3>
@@ -946,11 +947,12 @@ const page = <div className="page text-page">
 
 
 
-  <footer>
-    <div className="prev-link"></div>
+  <footer className="prev-and-next-link">
+    <div className="prev-link">
       <ILink key="link-tut-1-2" href="../getting-started">
         Previous tutorial
       </ILink>
+    </div>
     <div className="next-link">
       <ILink key="link-tut-3" href="../useful-tips">
         Next tutorial

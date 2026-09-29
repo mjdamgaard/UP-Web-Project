@@ -18,7 +18,7 @@ const {
 } = directories;
 
 
-export function _init_1() {
+export function init_1() {
   checkAdminPrivileges();
 
   return Promise.all([
@@ -29,7 +29,7 @@ export function _init_1() {
 }
 
 
-export async function _init_2() {
+export async function init_2() {
   checkAdminPrivileges();
 
   let em3Path = abs("~/../semantic_entities/em3.js");

@@ -5,6 +5,15 @@ import * as ComponentEntityComponent
 from "../entity_browser/variable_components/ComponentEntityComponent.jsx";
 
 
+
+// New disp:
+// - Server modules, with a private file example.
+// - Database table files, att and then bt.
+// - A message app example.
+// - Additional notes (e.g. of things not yet covered for the message app).
+// ..Maybe the connection library might also be worth explaining..
+
+
 export function render() {
   let userID = this.getContext("userID");
   return getPage(userID);
