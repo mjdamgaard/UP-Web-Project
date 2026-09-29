@@ -26,7 +26,7 @@ export async function query(
 
   // If route equals ".../<homeDirID>/<filepath>./_touch" create a table file
   // if not already there, but do not delete its content if there.
-  if (queryType === "_touch") {
+  if (queryType === "_touch" || queryType === "touch") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -41,7 +41,7 @@ export async function query(
 
   // If route equals ".../<homeDirID>/<filepath>./_put" create a table file
   // if not already there, and delete its content if it does exist already.
-  if (queryType === "_put") {
+  if (queryType === "_put" || queryType === "put") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -63,7 +63,7 @@ export async function query(
 
   // If route equals ".../<homeDirID>/<filepath>./_rm", delete the table file
   // (and its content) if its there.
-  if (queryType === "_rm") {
+  if (queryType === "_rm" || queryType === "rm") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -85,7 +85,7 @@ export async function query(
   // If route equals ".../<homeDirID>/<filepath>./_deleteEntry[/l/<listID>]" +
   // "/k/<elemKey>", delete a single table entry with that primary key, where
   // the default value for listID is "".
-  if (queryType === "_deleteEntry") {
+  if (queryType === "_deleteEntry" || queryType === "deleteEntry") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -118,7 +118,7 @@ export async function query(
   // "[/lo/<loElemKey>]"[/hi/<hiElemKey>]", delete all entries with elemKeys
   // between lo and hi. The default value for lo is "", and if hi is missing,
   // all entries are deleted with an elemKey >= lo.
-  if (queryType === "_deleteList") {
+  if (queryType === "_deleteList" || queryType === "deleteList") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -272,7 +272,7 @@ export async function query(
   // of the same key, unless the ignore parameter (i) is defined and truthy.
   // This does not apply .att files, but for these, if elemKey is defined and
   // not the empty string, the entry will be overwritten if one already exist.
-  if (queryType === "_insert") {
+  if (queryType === "_insert" || queryType === "insert") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -323,7 +323,7 @@ export async function query(
   // for the .bt, .ct, and .bbt files, the form should be '\[<elemKeyHex>,' +
   // '[<elemScoreHex>,][<elemPayloadHex>]\]', but where elemScoreHex should of
   // course only be present in the case of a .bbt file. 
-  if (queryType === "_insertList") {
+  if (queryType === "_insertList" || queryType === "insertList") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv

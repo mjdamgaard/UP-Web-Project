@@ -303,7 +303,8 @@ export async function query(
   // "<gasJSON>" verify that filePath ends in '.sm.js', and if so, withdraw the
   // requested amount of gas (adding it to the gas object of the current
   // execution environment).
-  if (queryType === "_withdrawGas") {throw new RuntimeError(
+  if (queryType === "_withdrawGas" || queryType === "withdrawGas") {
+    throw new RuntimeError(
       "This route has not been tested yet, and might be obsolete", // as we
       // might reimplement it as a route related to the home directory instead.
       callerNode, execEnv
