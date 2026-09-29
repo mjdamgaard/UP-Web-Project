@@ -6,7 +6,7 @@ import {DBQueryHandler} from "../../../../server/db_io/DBQueryHandler.js";
 
 const dbQueryHandler = new DBQueryHandler();
 
-const LOCKED_ROUTE_REGEX = /\/_/;
+const LOCKED_PATH_REGEX = /\/_/;
 
 
 export async function query(
@@ -65,7 +65,7 @@ export async function query(
       route, options, callerNode, execEnv,
     ) ?? [];
     return filePathTable.map(([filePath]) => filePath)
-      .filter((filePath) => (!LOCKED_ROUTE_REGEX.test(filePath)));
+      .filter((filePath) => (!LOCKED_PATH_REGEX.test(filePath)));
   }
 
   // If route equals just ".../<homeDirID>./_all", return a list of all nested

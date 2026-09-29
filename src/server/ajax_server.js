@@ -14,6 +14,7 @@ import {queryDB} from '../dev_lib/query/src/queryDB.js';
 import {UserDBConnection, MainDBConnection} from './db_io/DBConnection.js';
 import {FlagTransmitter} from "../interpreting/FlagTransmitter.js";
 import {scriptParser} from "../interpreting/parsing/ScriptParser.js";
+import {lockedRouteRegex} from '../dev_lib/query/src/route_parsing.js';
 
 import {
   ELEVATED_PRIVILEGES_FLAG, CAN_POST_FLAG, USER_ID_FLAG,
@@ -129,10 +130,6 @@ const parsedMainScript = syntaxTree.res;
 const scriptInterpreter = new ScriptInterpreter(
   true, undefined, queryDB, staticDevLibs, undefined
 );
-
-// Locked routes are all routes where any file name, directory name, or
-// query path segment that starts with an underscore.
-const LOCKED_ROUTE_REGEX = /\/_/;
 
 const AUTH_TOKEN_REGEX = /^Bearer (.+)$/;
 const HOME_DIR_ID_REGEX = /^\/[0-9a-f]+\/([0-9a-f]+)/;
@@ -255,7 +252,7 @@ async function requestHandler(req, res, returnGasRef) {
   // indeed locked, query for the adminID of the home directory and verify that
   // userID == adminID, and that the user has requested admin privileges, then
   // add the "elevated-privileges" flag to the 'flags' array.
-  let isLocked = LOCKED_ROUTE_REGEX.test(route);
+  let isLocked = lockedRouteRegex.test(route);
   if (isPost) flags.push(CAN_POST_FLAG);
   if (isLocked || requestAdminPrivileges) {
     if (!userID || isLocked && !requestAdminPrivileges) {

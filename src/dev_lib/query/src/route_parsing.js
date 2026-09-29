@@ -1,5 +1,5 @@
 
-const lockedRouteRegex =
+export const lockedRouteRegex =
   /\/_|(\.\/|[a-zA-Z0-9_-]\.[a-z]+\/)(all|setAdmin|rm|touch|put|delete|insert|withdrawGas)/;
 
 const queryPathRegEx = /(\.\/|[a-zA-Z0-9_-]\.[a-z]+\/)(.*)$/;
