@@ -56,7 +56,7 @@ export function render({style}) {
     let transformedRoute = extRoute;
     if (isDirectoryPath) {
       let subdirectoryPath = dirSegments.join("/");
-      transformedRoute = routeHomePath + ";/" + subdirectoryPath;
+      transformedRoute = routeHomePath + ";dir/" + subdirectoryPath;
     }
 
     // Also record if the route is a text file, and whether is has a query path,

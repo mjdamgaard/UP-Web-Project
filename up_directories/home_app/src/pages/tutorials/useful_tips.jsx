@@ -240,7 +240,7 @@ const getPage = (
   </p>
   <p>
     Once again, a comprehensive documentation of the built-in libraries are
-    not available yet, unfortunately, but will be in the near future.
+    not available yet, unfortunately, but will be in a near future.
   </p>
 
 

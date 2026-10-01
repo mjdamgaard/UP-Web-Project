@@ -1,6 +1,7 @@
 
 import * as ILink from 'ILink';
 import * as ELink from 'ELink';
+import * as VariableAppLinks from "./VariableAppLinks.jsx";
 import * as ComponentEntityComponent
 from "../entity_browser/variable_components/ComponentEntityComponent.jsx";
 
@@ -21,9 +22,78 @@ export function render() {
 
 
 const getPage = (userID) => <div className="text-page">
-  <h1>Server modules</h1>
+  <h2>Server modules</h2>
+
+  <h3>Introduction</h3>
+  <p>
+    The sandbox also extends into the back end of the platform, allowing users
+    to create their own back-end data structures and algorithms for their apps.
+  </p>
+  <p>
+    This is achieved by uploading what is called 'server modules' (SMs),
+    which are JS modules with a special file extension, '.sm.js'. The server
+    recognizes this file extension and allows the functions exported by the
+    module to be called by the client and executed server-side.
+  </p>
+  <p>
+    When a server module function (SMF) is called by a client, the function
+    get special privileges to write data to the files in the same home
+    directory as the SM, and to read data of private files in that directory.
+  </p>
+  <p>
+    In this tutorial, you will learn the basics of how to use these SMs. 
+  </p>
+
+  <h3>Follow along</h3>
+  <p>
+    Similarly to some of the earlier tutorials, we have also prepared a
+    directory for this tutorial which you can upload an edit in order to
+    follow along. To do so, run the following command in a terminal opened
+    inside the downloaded directory.
+  </p>
+  <p>
+    <code className="command">{[
+      'node ./server_interface.js up-web.org -d sm_examples',
+    ]}</code>
+  </p>
+  <p>
+    (Or if you already have the program open, just run 'cd sm_examples'
+    inside it.) Then run the 'u' command to upload this 'sm_examples' directory.
+  </p>
+  <p>
+    <code className="command">{[
+      'sm_examples> u',
+    ]}</code>
+  </p>
+  <p>
+    And insert the resulting home directory ID in the following field to get a
+    link to the uploaded app.
+  </p>
+  <p>
+    <div className="text-frame">
+      <VariableAppLinks key="var-app-links" />
+    </div>
+  </p>
+
+
+  <h3>An example of reading a private file</h3>
+  <p>
+    We will now show a short example of using a server module function (SMF) to
+    read from a private file.
+  </p>
+  <p>
+    Files are declared as private by either letting their file name start with
+    an underscore, or by putting them inside a directory that starts with an
+    underscore.
+  </p>
+
+
+
+
+
+
   <section>
-    <h2>Introduction</h2>
+    <h3>Introduction</h3>
     <p>
       When an app needs to store data on the server, it can do so by creating a
       server module (SM), which is a JS module whose exported
@@ -46,7 +116,7 @@ const getPage = (userID) => <div className="text-page">
   </section>
 
   <section>
-    <h2>Example of a server module</h2>
+    <h3>Example of a server module</h3>
     <p>
       Before we explain the server modules in more detail, let us first look at
       an example of an app that uses a backend.
@@ -229,7 +299,7 @@ const getPage = (userID) => <div className="text-page">
   </section>
 
   <section>
-    <h2>Database table files</h2>
+    <h3>Database table files</h3>
     <p>
       The 'message.att' file is an example of a database table file. The file
       itself does not contain any data, as you can see if you open it up. But
@@ -499,7 +569,7 @@ const getPage = (userID) => <div className="text-page">
   </section>
 
   <section>
-    <h2>Calling a server module function</h2>
+    <h3>Calling a server module function</h3>
     <p>
       To make a call to a given SMF from the client side, we can use routes of
       the form
@@ -592,7 +662,7 @@ const getPage = (userID) => <div className="text-page">
 
 
   <section>
-    <h2>Request origins</h2>
+    <h3>Request origins</h3>
     <p>
       Whenever an SMF is queried using either post() or fetchPrivate(), the
       so-called 'request origin' is recorded for the given query, which is a
@@ -721,7 +791,7 @@ const getPage = (userID) => <div className="text-page">
 
 
   <section>
-    <h2>Admin privileges</h2>
+    <h3>Admin privileges</h3>
     <p>
       When admin privileges are granted, typically at the beginning of the
       execution of a given SMF, they allow the SMF to make queries to "locked"
@@ -774,7 +844,7 @@ const getPage = (userID) => <div className="text-page">
 
 
   <section>
-    <h2>Query functions</h2>
+    <h3>Query functions</h3>
     <p>
       The three main functions to choose between when making a query to a
       given route are post(), fetch(), and fetchPrivate(),
@@ -850,7 +920,7 @@ const getPage = (userID) => <div className="text-page">
 
 
   <section>
-    <h2>Exercise</h2>
+    <h3>Exercise</h3>
     <p>
       Now that you have learned how to make data private, why not have a go at
       modifying the message app such that the message thread is no longer open

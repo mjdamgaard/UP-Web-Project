@@ -29,7 +29,7 @@ If you want to install this system as a server on your localhost, you need to:
     - "untrusted_example"
     - "mastermind"
     - "mastermind_01"
-    - "examples"
+    - "comp_examples"
 
     Note that some of these directories might report a failure, but that is okay for now.
 

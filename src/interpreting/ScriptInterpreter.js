@@ -326,15 +326,11 @@ export class ScriptInterpreter {
     // returned promise temporarily in the liveModules cache, and overwrite it
     // again when the promise resolves.
     if (!liveModule) {
-      let liveModulePromise = this.executeModuleHelper(
+      let liveModulePromise = wrapAsync(() => this.executeModuleHelper(
         moduleNode, lexArr, strPosArr, script, modulePath, globalEnv,
         liveModules, pathMap, ancestorModules, finalCallbacks,
         isPrivate,
-      ).then(
-        liveModule => liveModule
-      ).catch(
-        err => new ErrorWrapper(err)
-      );
+      ));
       if (doCache) {
         liveModules.set(moduleKey, liveModulePromise);
         liveModule = await liveModulePromise;
@@ -671,9 +667,7 @@ export class ScriptInterpreter {
     // If the dev function is asynchronous, call it and return a PromiseObject.
     if (isAsync) {
       let ret;
-      let promise = devFun.fun(execVars, inputArr).then(
-        x => x, err => new ErrorWrapper(err)
-      );
+      let promise = wrapAsync(() => devFun.fun(execVars, inputArr));
       ret = new PromiseObject(promise, this, callerNode, execEnv);
       return ret;
     }
@@ -730,10 +724,8 @@ export class ScriptInterpreter {
     });
 
     if (funNode.isAsync) {
-      let retPromise = this.#executeDefinedFunctionAsyncHelper(
-        funNode, execEnv
-      ).then(
-        x => x, err => new ErrorWrapper(err)
+      let retPromise = wrapAsync(() =>
+        this.#executeDefinedFunctionAsyncHelper(funNode, execEnv)
       );
       return new PromiseObject(
         retPromise, this, funNode, execEnv
@@ -753,7 +745,7 @@ export class ScriptInterpreter {
       catch (err) {
         if (err instanceof AwaitException) {
           err = await err.whenReady;
-          if (err) throw err;
+          // if (err) throw err;
         }
         else throw err;
       }
@@ -973,9 +965,9 @@ export class ScriptInterpreter {
           }
         }
         catch (err) {
-          let initErr = err;
-          if (state) state.err = err;
           if (err instanceof Exception) {
+            let initErr = err;
+            if (state) state.err = err;
             try {
               let catchEnv = state?.catchEnv;
               if (!catchEnv) {
@@ -1675,10 +1667,8 @@ export class ScriptInterpreter {
       }
       case "import-call": {
         let path = this.evaluateExpression(expNode.pathExp, environment, state);
-        let liveModulePromise = this.import(
-          path, expNode, environment, false
-        ).then(
-          x => x, err => new ErrorWrapper(err)
+        let liveModulePromise = wrapAsync(() =>
+          this.import(path, expNode, environment, false)
         );
         ret = new PromiseObject(
           liveModulePromise, this, expNode, environment
@@ -3501,7 +3491,7 @@ export class PromiseObject extends ObjectObject {
     }
     else {
       let fun = promiseOrFun;
-      this.promise = new Promise((resolve, reject) => {
+      this.promise = wrapAsync(() => new Promise((resolve, reject) => {
         env.globals.exitPromise.then(() => reject(
           new Exception(
             "Script exited before promise resolved",
@@ -3519,12 +3509,7 @@ export class PromiseObject extends ObjectObject {
         interpreter.executeFunction(
           fun, [userResolve, userReject], node, env
         );
-      }).then(x => x, err => {
-        if (err instanceof Exception) {
-          return new ErrorWrapper(err)
-        }
-        else throw err;
-      });
+      }));
     }
 
     // Wait until after all currently executing code has finished, allowing
@@ -3612,6 +3597,17 @@ export class ErrorWrapper {
     this.val = val;
   }
 };
+
+export async function wrapAsync(asyncFun) {
+  let ret;
+  try {
+    ret = await asyncFun();
+  }
+  catch (err) {
+    ret = new ErrorWrapper(err);
+  }
+  return ret;
+}
 
 
 

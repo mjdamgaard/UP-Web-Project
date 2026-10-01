@@ -13,7 +13,7 @@ export default {
     "/{{this}}/untrusted_example":  "/{{this}/{untrusted_example}}",
     "/{{this}}/mastermind":         "/{{this}/{mastermind}}",
     "/{{this}}/mastermind_01":      "/{{this}/{mastermind_01}}",
-    "/{{this}}/examples":           "/{{this}/{examples}}",
+    "/{{this}}/comp_examples":           "/{{this}/{comp_examples}}",
   }},
 }
 
@@ -31,5 +31,5 @@ export const directories = {
   "untrusted_example":  "{{this}{untrusted_example}}",
   "mastermind":         "{{this}{mastermind}}",
   "mastermind_01":      "{{this}{mastermind_01}}",
-  "examples":           "{{this}{examples}}",
+  "comp_examples":           "{{this}{comp_examples}}",
 };

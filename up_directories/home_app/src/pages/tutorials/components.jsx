@@ -6,7 +6,7 @@ import {
   render1 as Result1, render2 as Result2, render3 as Result3,
   render4 as Result4, render5 as Result5, render6, render7 as Result7,
   actions as exActions, events as exEvents,
-} from "~/../examples/main.jsx";
+} from "~/../comp_examples/main.jsx";
 
 const Result6 = {
   render: render6,
@@ -62,17 +62,15 @@ const page = <div className="page text-page">
     </ELink>
     first, before you continue with this tutorial.
   </p>
-  {/* <p>
+  <p>
     The framework introduced here is currently the only one that is supported
-    by the sandbox of this platform, which is what allows you to upload and
-    share your apps and prototypes immediately with the community.
-    In the
-    <ILink key="link-tut-3-1" href="~/useful-tips">
-      next tutorial
-    </ILink>,
-    last section, we will discuss how one can technically also program in
-    other frameworks as well, but without the benefits that the sandbox offers.
-  </p> */}
+    by the sandbox of this platform, but other frameworks can also be added in
+    the future. 
+  </p>
+  <p>
+    DISCLAIMER: This framework is currently at an alpha stage, and things might
+    still change and evolve.
+  </p>
 
 
   <h3>Follow along</h3>
@@ -89,17 +87,17 @@ const page = <div className="page text-page">
   </p>
   <p>
     <code className="command">{[
-      'node ./server_interface.js up-web.org -d examples',
+      'node ./server_interface.js up-web.org -d comp_examples',
     ]}</code>
   </p>
   <p>
     Or if you already have the program open from the previous tutorial, you
-    can simple change to the 'up_directories/examples' directory from inside
+    can simple change to the 'up_directories/comp_examples' directory from inside
     the program via the following command.  
   </p>
   <p>
     <code className="command">{[
-      'hello_world> cd examples',
+      'hello_world> cd comp_examples',
     ]}</code>
   </p>
   <p>
@@ -108,7 +106,7 @@ const page = <div className="page text-page">
   </p>
   <p>
     <code className="command">{[
-      'examples> u',
+      'comp_examples> u',
     ]}</code>
   </p>
   <p>
@@ -132,7 +130,7 @@ const page = <div className="page text-page">
     of your app in a modular way.
   </p>
   <p>
-    To see an example of this, go to the 'up_directories/examples/main.jsx'
+    To see an example of this, go to the 'up_directories/comp_examples/main.jsx'
     file, where you will see that this module's render() function currently
     just returns the same "Hello, World!" as in the previous tutorial: 
   </p>

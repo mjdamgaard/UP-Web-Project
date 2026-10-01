@@ -3,7 +3,7 @@ import {post, fetch, fetchPrivate} from 'query';
 import {getRequestingUserID, checkRequestOrigin, checkAdminPrivileges} from
   'request';
 import {getConnection} from 'connection';
-import {verifyType} from 'type';
+import {verifyType, verifyTypes} from 'type';
 import {stringify} from 'json';
 import {postEntity} from "../../../../semantic_entities/entities.js";
 

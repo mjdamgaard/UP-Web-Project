@@ -146,10 +146,8 @@ export class ServerQueryHandler {
     }
 
     // Send the request.
-    responsePromise = this.#requestHelper(
-      serverKey, route, isPost, reqBody, headers
-    ).then(
-      x => x, err => new ErrorWrapper(err)
+    responsePromise = wrapAsync(() =>
+      this.#requestHelper(serverKey, route, isPost, reqBody, headers)
     );
 
     // Then add it to requestBuffer, and also give it a then-callback to remove
@@ -265,6 +263,16 @@ class ErrorWrapper {
   }
 };
 
+async function wrapAsync(asyncFun) {
+  let ret;
+  try {
+    ret = await asyncFun();
+  }
+  catch (err) {
+    ret = new ErrorWrapper(err);
+  }
+  return ret;
+}
 
 
 

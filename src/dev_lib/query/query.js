@@ -3,7 +3,7 @@ import {
   DevFunction, RuntimeError, LoadError, jsonParse, jsonStringify,
   FunctionObject, CLEAR_FLAG, PromiseObject, Environment, LiveJSModule,
   parseString, CSSModule, getString, getPropertyFromObject, ArgTypeError,
-  forEachValue, ErrorWrapper, getAbsolutePath, PathMap,
+  forEachValue, ErrorWrapper, wrapAsync, getAbsolutePath, PathMap,
 } from '../../interpreting/ScriptInterpreter.js';
 import {scriptParser} from "../../interpreting/parsing/ScriptParser.js";
 import {parseRoute} from './src/route_parsing.js';
@@ -67,7 +67,7 @@ export const queryRoute = new DevFunction(
     // true, or without it being a post request.
     let isPrivate = isPost ||
       getPropertyFromObject(options, "isPrivate", callerNode, execEnv);
-    if (isLocked && !isPrivate) throw new ArgTypeError(
+    if (isLocked && !isPrivate) throw new RuntimeError(
       "Fetching from a locked route without the 'isPrivate' option set",
       callerNode, execEnv
     );
@@ -259,12 +259,12 @@ export async function _query(
           callerNode, execEnv
         );
         try {
-          let liveModulePromise = import(devLibURL).then(devMod => {
-            return new LiveJSModule(
-              route, Object.entries(devMod), execEnv.globals
-            );
-          }).catch(
-            err => new ErrorWrapper(err)
+          let liveModulePromise = wrapAsync(() =>
+            import(devLibURL).then(devMod => {
+              return new LiveJSModule(
+                route, Object.entries(devMod), execEnv.globals
+              );
+            })
           );
           liveModules.set(route, liveModulePromise);
           liveModule = await liveModulePromise;
@@ -328,13 +328,13 @@ export async function _query(
         }
       }
       else {
-        let cssModulePromise = queryRoute.fun(
-          {callerNode, execEnv, interpreter},
-          [route, false, undefined, options],
-        ).then(
-          text => new CSSModule(route, text, callerNode, execEnv)
-        ).catch(
-          err => new ErrorWrapper(err)
+        let cssModulePromise = wrapAsync(() =>
+          queryRoute.fun(
+            {callerNode, execEnv, interpreter},
+            [route, false, undefined, options]
+          ).then(
+            text => new CSSModule(route, text, callerNode, execEnv)
+          )
         );
         liveModules.set(route, cssModulePromise);
         cssModule = await cssModulePromise;
@@ -484,14 +484,13 @@ export async function _query(
     }
 
     // We can also cast a list of all home directory descendants, namely when
-    // route is of the form "If route is of the form "/<upNodeID>/" +
-    // "<homeDirID>", such that we instead get a list of only the children
-    // of a given subdirectory. More precisely, if the casting segment has
-    // the form ';/<dirPath>', where dirPath is either an empty string or a
-    // string of the form "(<dirName>/)+", we check that the previous result
-    // is an array of strings, and if so, we treat it as an array of all
-    // descendants and extract the children of the given subdirectory.
-    else if (/^\/([^/]+\/)*/.test(castingSegment)) {
+    // route is of the form "/<upNodeID>/"<homeDirID>", such that we instead
+    // get a list of only the children of a given subdirectory. More precisely,
+    // if the casting segment has the form ';dir(/<dirSegment)*>', we check
+    // that the previous result is an array of strings, and if so, we treat it
+    // as an array of all descendants and extract the children of the given
+    // subdirectory pointed to by (/<dirSegment)*.
+    else if (/^dir(\/[^/]+)*/.test(castingSegment)) {
       // Throw is result is not an array of strings.
       if (
         !(result instanceof Array) ||
@@ -507,7 +506,7 @@ export async function _query(
 
       // First transform the result such that each file path is cut off at
       // the first slash that comes after the subdirectory path.
-      let subdirectoryPath = castingSegment.substring(1);
+      let subdirectoryPath = castingSegment.substring(4);
       if (subdirectoryPath && subdirectoryPath.at(-1) !== "/") {
         subdirectoryPath += "/";
       }
@@ -560,11 +559,13 @@ export async function fetchPathMap(
   }
 
   // Else fetch the path_map.js module at that homePath.
-  let pathMapModule = await _fetch(
-    homePath + "/path_map.js", {},
-    callerNode, execEnv, interpreter, ancestorModules, finalCallbacks,
-  ).catch(
-    err => (err instanceof LoadError) ? {default: {}} : new ErrorWrapper(err)
+  let pathMapModule = await wrapAsync(() =>
+    _fetch(
+      homePath + "/path_map.js", {},
+      callerNode, execEnv, interpreter, ancestorModules, finalCallbacks,
+    ).catch(
+      err => (err instanceof LoadError) ? {default: {}} : new ErrorWrapper(err)
+    )
   );
   if (pathMapModule instanceof ErrorWrapper) throw pathMapModule.val;
 
