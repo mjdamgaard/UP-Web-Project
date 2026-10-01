@@ -1,22 +1,24 @@
 
-import {fetch, fetchPrivate} from 'query';
+import {fetchPrivate} from 'query';
 
 
 export function render() {
-  let {response, text} = this.state;
+  let {error, text} = this.state;
   return <div>
     <h2>Click to fetch private file</h2>
     <p>
       Click this button to fetch and display the contents of the private file
       located at ~/server/_prv_file.txt.
     </p>
-    <button onClick={() => this.do("fetchFile")}>
-      Click me!
-    </button>
-    <div className="response-display">
-      {response}
+    <p>
+      <button onClick={() => this.do("fetchFile")}>
+        Click me!
+      </button>
+    </p>
+    <div className="error-display text-warning">
+      {error}
     </div>
-    <div className={"text-display" + (text ? "" : " hidden")}>
+    <div className={"contents-display" + (text ? "" : " hidden")}>
       <h3>File contents</h3>
       <div>{text}</div>
     </div>
@@ -26,26 +28,22 @@ export function render() {
 
 export const actions = {
   "fetchFile": async function() {
-    let {userID} = this.props;
-    let text;
-    try {
-      // If the user is logged in, use fetchPrivate() to try to fetch the file,
-      // and if not, try to fetch the file anyway, and just catch the expected
-      // error.
-      if (userID) {
-        text = await fetchPrivate("./server/_prv_file.txt");
-      }
-      else {
-        text = await fetch("./server/_prv_file.txt");
-      }
-      this.setState(state => ({...state, text: text, response: undefined}));
-    }
-    catch (err) {
-      console.error(err);
+    let userID = this.getContext("userID");
+
+    // If the user is not logged in, fail immediately.
+    if (!userID) {
       this.setState(state => ({
         ...state, text: undefined,
-        response: "Did not have permission to read the file.",
+        error: "You must be logged in in order to fetch private file.",
       }));
+      return;
     }
+
+    // Else query the readFile() SMF in ./server/example.sm.js, and display
+    // the result.
+    let {text, error} = await fetchPrivate(
+      "./server/example.sm.js/callSMF/readFile"
+    );
+    this.setState(state => ({...state, text: text, error: error}));
   }
 };

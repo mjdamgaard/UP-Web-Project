@@ -349,7 +349,7 @@ export async function _query(
     // Else if the file is a non-JS, non-CSS text file, fetch it and return
     // a string of its content.
     else if (TEXT_FILE_ROUTE_REGEX.test(route)) {
-      let result = await queryRoute.fun(
+      result = await queryRoute.fun(
         {callerNode, execEnv, interpreter},
         [route, false, undefined, options],
       );

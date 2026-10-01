@@ -230,13 +230,13 @@ export class ScriptInterpreter {
     globalEnv.declare("MutableMap", mutableMapClass, true, null);
     globalEnv.declare("ImmutableMap", immutableMapClass, true, null);
 
-    globalEnv.declare("Object", this.staticDevLibs.get('object'), true, null);
-    globalEnv.declare("Array", this.staticDevLibs.get('array'), true, null);
-    globalEnv.declare("Number", this.staticDevLibs.get('number'), true, null);
-    globalEnv.declare("String", this.staticDevLibs.get('string'), true, null);
-    globalEnv.declare("JSON", this.staticDevLibs.get('json'), true, null);
-    globalEnv.declare("Math", this.staticDevLibs.get('math'), true, null);
-    globalEnv.declare("Date", this.staticDevLibs.get('date'), true, null);
+    globalEnv.declare("Object", this.getDevLib('object', globals), true, null);
+    globalEnv.declare("Array", this.getDevLib('array', globals), true, null);
+    globalEnv.declare("Number", this.getDevLib('number', globals), true, null);
+    globalEnv.declare("String", this.getDevLib('string', globals), true, null);
+    globalEnv.declare("JSON", this.getDevLib('json', globals), true, null);
+    globalEnv.declare("Math", this.getDevLib('math', globals), true, null);
+    globalEnv.declare("Date", this.getDevLib('date', globals), true, null);
 
     let clearPermissions = new DevFunction(
       "clearPermissions", {typeArr: ["function"]},
@@ -2110,6 +2110,15 @@ export class ScriptInterpreter {
     );
   }
 
+  getDevLib(devLibName, globals) {
+    let devLib = this.staticDevLibs.get(devLibName);
+    let liveModule = new LiveJSModule(
+      devLibName, Object.entries(devLib), globals
+    );
+    globals.liveModules.set(devLibName, liveModule);
+    return liveModule;
+  }
+
 }
 
 
@@ -2353,7 +2362,7 @@ export class Environment {
     else if (this.scopeType === "function") {
       let {callerNode, callerEnv} = this;
       let callStr = (callerEnv.isDevFun) ?
-        "<call inside of " + callerEnv.name + ">" :
+        "<call inside of " + callerEnv.name + "()>" :
         getCallString(callerNode, callerEnv, this, stringify);
       let ret = callerEnv.getCallTraceHelper(maxLen - 1, stringify);
       ret.push(callStr);
