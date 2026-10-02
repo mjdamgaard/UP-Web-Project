@@ -185,7 +185,8 @@ const getPage = (
     them is not available yet, but will be in the future. And in the meantime,
     it might help to go to
     <ELink key="link-dev-components"
-      href="https://github.com/mjdamgaard/UP-Web-Project/tree/main/src/dev_lib/jsx/dev_components" >
+      href="https://github.com/mjdamgaard/UP-Web-Project/tree/main/src/dev_lib/jsx/dev_components"
+    >
       {"github.com/mjdamgaard/UP-Web-Project/blob/main/src/dev_lib/jsx/dev_components"}
     </ELink>
     to get an idea of which built-in components are available, and what props
@@ -204,17 +205,20 @@ const getPage = (
   <p>
     However, a lot of the most common methods are available, such as the
     <ELink key="link-array-map"
-      href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map" >
+      href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map"
+    >
       Array.prototype.map()
     </ELink>,
     the
     <ELink key="link-string-split"
-      href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/split" >
+      href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/split"
+    >
       String.prototype.split()
     </ELink>
     method, or the
     <ELink key="link-object-entries"
-      href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries" >
+      href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries"
+    >
       Object.entries()
     </ELink>
     method, just to name a few.

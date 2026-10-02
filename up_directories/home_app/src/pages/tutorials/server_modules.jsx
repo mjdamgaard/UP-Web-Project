@@ -2,8 +2,6 @@
 import * as ILink from 'ILink';
 import * as ELink from 'ELink';
 import * as VariableAppLinks from "./VariableAppLinks.jsx";
-import * as ComponentEntityComponent
-from "../entity_browser/variable_components/ComponentEntityComponent.jsx";
 
 
 
@@ -21,7 +19,7 @@ export function render() {
 }
 
 
-const getPage = (userID) => <div className="text-page">
+const getPage = (userID) => <div className="page text-page">
   <h2>Server modules</h2>
 
   <h3>Introduction</h3>
@@ -76,22 +74,171 @@ const getPage = (userID) => <div className="text-page">
   </p>
 
 
-  <h3>An example of reading a private file</h3>
+  <h3>A simple example</h3>
   <p>
     We will now show a short example of using a server module function (SMF) to
-    read from a private file.
+    read a private file.
   </p>
   <p>
-    Files are declared as private by either letting their file name start with
-    an underscore, or by putting them inside a directory that starts with an
-    underscore.
+    Files are private in this system if their name starts with an underscore,
+    or if they reside inside a directory that starts with an underscore.
+    For instance, if you look inside the
+    <ELink key="link-server-dir"
+      href="https://github.com/mjdamgaard/up-server-interface/tree/main/up_directories/sm_examples/server"
+    >
+      sm_examples/server/
+    </ELink>
+    directory, you will see a file called '_prv_file.txt'. But if you follow
+    the link to the server-side files above, after having inserted the home
+    directory ID in the field at the end of the previous section, you will not
+    see the server/_prv_file.txt file, since it is private.
+  </p>
+  <p>
+    The only way to access a private file, apart from using the
+    server_interface.js program (if you are the admin), is to access it via a
+    call to an SMF.
+  </p>
+  <p>
+    An example of an SMF that does exactly this can be seen in the
+    server/read_prv.sm.js file, which reads:
+  </p>
+  <p>
+    <code className="jsx">{[
+      'import {fetchPrivate} from \'query\';\n',
+      'import {getRequestingUserID} from \'request\';\n',
+      ' \n',
+      'export async function readFile() {\n',
+      '  let userID = getRequestingUserID();\n',
+      '  if (userID == "INSERT_YOUR_USER_ID_HERE") {\n',
+      '    let text = await fetchPrivate("./_prv_file.txt");\n',
+      '    return {text: text};\n',
+      '  } else {\n',
+      '    return {error: "You do not have permission to read this file."};\n',
+      '  }\n',
+      '}',
+    ]}</code>
+  </p>
+  <p>
+    Note again that the 'sm.js' file extension declares that the file is an
+    SM, which allows its exported functions, in this case readFile(),
+    to be called by the client.
+  </p>
+  <p>
+    The module can be seen to import two different functions from the built-in
+    libraries, 'query' and 'request'. The first of these functions,
+    fetchPrivate() is used to make private queries, such as in this case where
+    it is used to read server/_prv_file.txt. And
+    getRequestingUserID() is used to get the ID of the requesting user, if the
+    request contains that information.
+  </p>
+  <p>
+    The way to call an SMF, like this readFile() function, is to use an
+    extended path to the given '.sm.js' file where one appends "/callSMF" at
+    the end, followed by another segment specifying the name of the given
+    SMF, as well as an optional list of segments that will become the
+    arguments of the call.
+    (Will will also sometimes refer to such extended paths as 'routes.')
+  </p>
+  <p>
+    For example, if you look at the
+    <ELink key="link-read-prv-sm"
+      href="https://github.com/mjdamgaard/up-server-interface/blob/main/up_directories/sm_examples/ReadFileApp.jsx"
+    >
+      sm_examples/ReadFileApp.jsx
+    </ELink>
+    module, you will see that this component displays a button, which when
+    clicked, will result in the following call to fetchPrivate().
+  </p>
+  <p>
+    <code className="jsx">{[
+      'let {text, error} = await fetchPrivate(\n',
+      '  "./server/read_prv.sm.js/callSMF/readFile"\n',
+      ');',
+    ]}</code>
+  </p>
+  <p>
+    This client-side call to fetchPrivate() will
+    result in the readFile() SMF to be called an executed server-side, with
+    information about the requesting user's ID.
+  </p>
+  <p>
+    The only step left is then for
+    you to edit the string in server/read_prv.sm.js that says
+    "INSERT_YOUR_USER_ID_HERE" and replace it
+    with your own user ID. (Your user ID is displayed when you log into the
+    server_interface.js program, or on your 'Account' page accessed by the
+    user menu at the top right of the website.)
+    If you do this, and re-upload your directory, you will now see that
+    your app displays the contents of the file after you click the
+    button, provided that you are logged in as the right user.
+    And unless you have edited the file (which you are free to try), these
+    file contents should read: "I am a private text from a private file."
+  </p>
+  <p>
+    You now know how to create an SMF that can be called from the
+    client-side app and executed server-side, and know how to use such an SMF
+    to provide access to files that are otherwise inaccessible to the public.
+  </p>
+
+
+  <h3>Query functions</h3>
+  <p>
+    Apart from fetchPrivate() which you saw in the previous section, the
+    built-in 'query' library also contains a fetch() function and a post()
+    function. All these three functions can be used both client-side and
+    server-side, and have different degrees of permissions.
+  </p>
+  <p>
+    The post() function will allow you both to write to files, and to read from
+    private files as well as public ones. The fetchPrivate() function, as we
+    saw before, will not allow you write to files, but will still allow you to
+    read from any file. And lastly, fetch() will only allow you to read from
+    public files, and it will also not provide any information about the
+    requesting user to the server, which means that getRequestingUserID() from
+    before will return undefined.
+  </p>
+  <p>
+    The increased permissions of post() and fetchPrivate() also comes with the
+    requirements that the same permissions are already present when they
+    are called. For instance, an SMF that tries to call post() will throw an
+    error if it was called by either fetch() or fetchPrivate(). And a
+    server module that
+    tries to call fetchPrivate() will throw if it was called by fetch().
+    Additionally, fetchPrivate() will also throw if called client-side when
+    the user is not logged in.
+  </p>
+
+
+  <h3>Database table files</h3>
+  <p>
+    ...
   </p>
 
 
 
+  <footer className="prev-and-next-link">
+    <div className="prev-link">
+      <ILink key="link-tut-2-3" href="../jsx-components">
+        Previous tutorial
+      </ILink>
+    </div>
+    <div className="next-link">
+      <ILink key="link-tut-5-2" href="../server-modules">
+        Next tutorial
+      </ILink>
+    </div>
+  </footer>
+</div>;
 
 
 
+
+
+
+
+let ComponentEntityComponent;
+
+const old = (userID) => <div>
   <section>
     <h3>Introduction</h3>
     <p>

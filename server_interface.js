@@ -111,7 +111,7 @@ async function main() {
     console.log(createUser ? "Account creation failed" : "Login failed");
     return;
   }
-  console.log(`Logged in with user #${userID}`);
+  console.log(`Logged in with user ID: ${userID}`);
 
   // If the -d/--directory flag is set, change curDir to that directory name.
   let initDir = optArgObj["directory"];
@@ -344,6 +344,11 @@ async function main() {
         "untracked_directories.json"
       );
     }
+    // TODO: Add a command to match the contents of a directory with the
+    // current one (without uploading anything), which should also be able to
+    // be used on any foreign directory as well, thus allowing users to e.g.
+    // confirm that the contents of an uploaded directory matches the contents
+    // of e.g. a GitHub repo (or any public repo).
     else {
       console.log("Unrecognized command");
     }
