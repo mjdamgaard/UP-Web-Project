@@ -85,7 +85,10 @@ export async function query(
   // If route equals ".../<homeDirID>/<filepath>./_deleteEntry[/l/<listID>]" +
   // "/k/<elemKey>", delete a single table entry with that primary key, where
   // the default value for listID is "".
-  if (queryType === "_deleteEntry" || queryType === "deleteEntry") {
+  if (
+    queryType === "_deleteEntry" || queryType === "deleteEntry" ||
+    queryType === "_delete" || queryType === "delete"
+  ) {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv

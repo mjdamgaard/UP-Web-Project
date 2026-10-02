@@ -96,7 +96,7 @@ const getPage = (userID) => <div className="page text-page">
   <p>
     The only way to access a private file, apart from using the
     server_interface.js program (if you are the admin), is to access it via a
-    call to an SMF.
+    call to an SMF from a module within the same home directory.
   </p>
   <p>
     An example of an SMF that does exactly this can be seen in the
@@ -207,13 +207,85 @@ const getPage = (userID) => <div className="page text-page">
     Additionally, fetchPrivate() will also throw if called client-side when
     the user is not logged in.
   </p>
+  <p>
+    It is also worth noting that the post() function accepts a second argument,
+    after the route argument, which can be used to supply any kind data,
+    including serializable objects, to the query. In particular for "/callSMF"
+    routes, this post data can be used to supply an array of arguments to the
+    given SMF.
+  </p>
+
 
 
   <h3>Database table files</h3>
   <p>
-    ...
+    While you can create while you can make an SMF create or write to text
+    files, it is not recommended, since the changes will be discarded as soon
+    as you use the server_interface.js program to update your directory again.
+    Instead you can use a special type of files called 'database table
+    files,' whose contents the server_interface.js program will ignore when
+    you update your directory (as long as you do not move or rename the file).
+  </p>
+  <p>
+    A database table file is a file that implements a database relation
+    similarly to a
+    <ELink key="link-sql" href="https://www.w3schools.com/sql/sql_intro.asp" >
+      SQL
+    </ELink>
+    table (using the
+    <ELink key="link-InnoDB"
+      href="https://dev.mysql.com/doc/refman/9.7/en/innodb-introduction.html"
+    >
+      InnoDB
+    </ELink>
+    engine.)
+    Its contents are not read from or written to it directly, but is instead
+    accessed via queries.
+    Similarly to the "/callSMF" routes that we introduced above, the queries
+    to database table files are also made by appending instructions to the
+    file path.
+  </p>
+  <p>
+    For instance, suppose we have a database table file called 'posts.att'.
+    (The '.att' file extension can be used to store texts, as we will see
+    in a moment.)
+    The entries of this 'posts' table can then be fetched via the following
+    kind of route (with all upper snake case placeholders appropriately
+    replaced).
+  </p>
+  <p>
+    <code className="jsx">{[
+      'let text = await fetch(\n',
+      '  "DIRECTORY_PATH/posts.att/entry/k/ENTRY_KEY"\n',
+      ');',
+    ]}</code>
+  </p>
+  <p>
+    Or if you want to insert an entry, you can use the following kind of route.
+  </p>
+  <p>
+    <code className="jsx">{[
+      'let entryKey = await post(\n',
+      '  "DIRECTORY_PATH/posts.att/insert",\n',
+      '  "CONTENT_TEXT_OF_THE_NEW_POST",\n',
+      ');',
+    ]}</code>
+  </p>
+  <p>
+    (The 'a' in '.att' stands for 'auto-increment key', meaning that if you do
+    not specify the key of a new entry when inserting it, one will
+    automatically be generated, and returned by the query.)
+  </p>
+  <p>
+    CAUTION: Do not move or rename a database table file once it contains data,
+    unless you have already extracted all the data from it that you
+    need, since the server_interface.js program will treat this as a file
+    deletion when you re-upload the directory, and will remove the server-side
+    file along with all its data.
   </p>
 
+
+  <h2>ATT tables</h2>
 
 
   <footer className="prev-and-next-link">
