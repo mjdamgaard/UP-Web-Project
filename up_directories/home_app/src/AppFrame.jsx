@@ -8,6 +8,9 @@ import * as AppLoader from "./AppLoader.jsx";
 const homeDirID = getHomeDirID();
 
 
+// TODO: Set "write" permissions to false for the app when the warning is not
+// yet dismissed. 
+
 
 export function render({children, appLoaderProps}) {
   let userID = this.getContext("userID");

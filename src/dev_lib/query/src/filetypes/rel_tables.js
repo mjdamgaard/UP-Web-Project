@@ -86,8 +86,8 @@ export async function query(
   // "/k/<elemKey>", delete a single table entry with that primary key, where
   // the default value for listID is "".
   if (
-    queryType === "_deleteEntry" || queryType === "deleteEntry" ||
-    queryType === "_delete" || queryType === "delete"
+    queryType === "_delete" || queryType === "delete" ||
+    queryType === "_deleteEntry" || queryType === "deleteEntry"
   ) {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
@@ -157,7 +157,7 @@ export async function query(
   // "/k/<elemKey>", read and return the table entry with the given list ID and
   // element key. Note that for binary and UTF-8 keys, listID and elemKey
   // should be hex-encoded.
-  if (queryType === "entry") {
+  if (queryType === "entry" || queryType === "row") {
     payGas(callerNode, execEnv, {dbRead: 1});
     let procName =
       (fileExt === "att") ? "readATTEntry" :

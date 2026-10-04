@@ -2,6 +2,7 @@
 import * as ILink from 'ILink';
 import * as ELink from 'ELink';
 import * as VariableAppLinks from "./VariableAppLinks.jsx";
+import {hexToArray, arrayToHex} from 'hex';
 
 
 
@@ -106,7 +107,7 @@ const getPage = (userID) => <div className="page text-page">
     <code className="jsx">{[
       'import {fetchPrivate} from \'query\';\n',
       'import {getRequestingUserID} from \'request\';\n',
-      ' \n',
+      '\n',
       'export async function readFile() {\n',
       '  let userID = getRequestingUserID();\n',
       '  if (userID == "INSERT_YOUR_USER_ID_HERE") {\n',
@@ -176,8 +177,7 @@ const getPage = (userID) => <div className="page text-page">
   </p>
   <p>
     You now know how to create an SMF that can be called from the
-    client-side app and executed server-side, and know how to use such an SMF
-    to provide access to files that are otherwise inaccessible to the public.
+    client-side app and executed server-side.
   </p>
 
 
@@ -186,26 +186,25 @@ const getPage = (userID) => <div className="page text-page">
     Apart from fetchPrivate() which you saw in the previous section, the
     built-in 'query' library also contains a fetch() function and a post()
     function. All these three functions can be used both client-side and
-    server-side, and have different degrees of permissions.
+    server-side, and they each have a different levels of permissions.
   </p>
   <p>
     The post() function will allow you both to write to files, and to read from
-    private files as well as public ones. The fetchPrivate() function, as we
-    saw before, will not allow you write to files, but will still allow you to
+    private files as well as public ones. The fetchPrivate() function, on the
+    other hand, will not allow you write to files, but will still allow you to
     read from any file. And lastly, fetch() will only allow you to read from
     public files, and it will also not provide any information about the
-    requesting user to the server, which means that getRequestingUserID() from
-    before will return undefined.
+    requesting user to the server, which means that the getRequestingUserID()
+    function from before will return undefined.
   </p>
   <p>
-    The increased permissions of post() and fetchPrivate() also comes with the
+    The increased permissions of post() and fetchPrivate() also come with the
     requirements that the same permissions are already present when they
     are called. For instance, an SMF that tries to call post() will throw an
-    error if it was called by either fetch() or fetchPrivate(). And a
-    server module that
+    error if it was called by either fetch() or fetchPrivate(). And an SMF that
     tries to call fetchPrivate() will throw if it was called by fetch().
-    Additionally, fetchPrivate() will also throw if called client-side when
-    the user is not logged in.
+    Additionally, post() and fetchPrivate() will also both throw if called
+    client-side when the user is not logged in.
   </p>
   <p>
     It is also worth noting that the post() function accepts a second argument,
@@ -249,9 +248,8 @@ const getPage = (userID) => <div className="page text-page">
     For instance, suppose we have a database table file called 'posts.att'.
     (The '.att' file extension can be used to store texts, as we will see
     in a moment.)
-    The entries of this 'posts' table can then be fetched via the following
-    kind of route (with all upper snake case placeholders appropriately
-    replaced).
+    The entries/rows of this 'posts' table can then be fetched via the
+    following kind of route,
   </p>
   <p>
     <code className="jsx">{[
@@ -261,7 +259,13 @@ const getPage = (userID) => <div className="page text-page">
     ]}</code>
   </p>
   <p>
-    Or if you want to insert an entry, you can use the following kind of route.
+    where "DIRECTORY_PATH" is a placeholder for the path to the directory where
+    the 'posts.att' file is located, and "ENTRY_KEY" as a placeholder for a
+    unique hexadecimal string that identifies the given entry/row of the table. 
+  </p>
+  <p>
+    Or if you want to insert an entry, you can use the following kind of route
+    (with upper snake case placeholders appropriately replaced).
   </p>
   <p>
     <code className="jsx">{[
@@ -285,7 +289,205 @@ const getPage = (userID) => <div className="page text-page">
   </p>
 
 
-  <h2>ATT tables</h2>
+  <h2>ATT files</h2>
+  <p>
+    The '.att' files implement simple database tables that stores texts. ATT
+    stands for "Auto-increment key Text Tables." Their equivalent in SQL would
+    look as follows,
+  </p>
+  <p>
+    <code className="sql">{[
+      'CREATE TABLE AutoKeyTexts (\n',
+      '  entry_key BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n',
+      '  entry_payload TEXT\n',
+      ')',
+    ]}</code>
+  </p>
+  <p>
+    except that the "entry_key" is always a hexadecimal string
+    rather than a decimal number in the API of the queries.
+  </p>
+  <p>
+    We have already seen examples of the "/entry" and "/insert" queries above,
+    which respectively fetch an existing entry/row and insert a new one. You
+    can also delete a given entry with a "/delete" query, as in the following
+    example.
+  </p>
+  <p>
+    <code className="jsx">{[
+      'let wasDeleted = await post(\n',
+      '  "DIRECTORY_PATH/posts.att/delete/k/ENTRY_KEY",\n',
+      ');',
+    ]}</code>
+  </p>
+  <p>
+    And you can fetch several entries/rows at once using a "/list" query, as
+    in the following example, which also shows how the return value is a
+    two-dimensional array where each row contains the key and the text payload
+    of the given entry.
+  </p>
+  <p>
+    <code className="jsx">{[
+      'let list = await fetch(\n',
+      '  "DIRECTORY_PATH/posts.att/list"\n',
+      ');\n',
+      '// list: [\n',
+      '//   ["ENTRY_KEY_0", "TEXT_PAYLOAD_0"]\n',
+      '//   ["ENTRY_KEY_1", "TEXT_PAYLOAD_1"]\n',
+      '//   ..."\n',
+      '// ]',
+    ]}</code>
+  </p>
+  <p>
+    The "/list" queries can also take an optional list of parameters,
+    which appended after the "/list" segment in segment pairs of
+    "/PARAMETER_NAME/PARAMETER_VALUE".
+    For instance, if you want to use a different offset for the list query, and
+    start at e.g. the 100th entry in the list, you can append "/o/100" to the
+    route, like so.
+  </p>
+  <p>
+    <code className="jsx">{[
+      'let list = await fetch(\n',
+      '  "DIRECTORY_PATH/posts.att/list/o/100"\n',
+      ');\n',
+      '// list: [\n',
+      '//   ["ENTRY_KEY_100", "TEXT_PAYLOAD_100"]\n',
+      '//   ["ENTRY_KEY_101", "TEXT_PAYLOAD_101"]\n',
+      '//   ..."\n',
+      '// ]',
+    ]}</code>
+  </p>
+  <p>
+    The 'o' parameter thus stands for 'offset,' its values represent (decimal
+    and zero-indexed) offset values, with a default value of 0.
+  </p>
+  <p>
+    There is also an 'n' parameter, which represents a maximal (decimal) number
+    of entries/rows you wish to receive. And there are 'lo' and 'hi' parameters,
+    which respectively put a lower and a upper limit on the hexadecimal entry
+    key. So for example, if you want to get a list of all entries with keys in
+    the interval between "8888" and "aaaa", and you want skip the first 100
+    entries in this interval, and want to limit by 1000 entries at most, you
+    can use the following query.
+  </p>
+  <p>
+    <code className="jsx">{[
+      'let list = await fetch(\n',
+      '  "DIRECTORY_PATH/posts.att/list/lo/8888/hi/aaaa/o/100/n/1000"\n',
+      ');',
+    ]}</code>
+  </p>
+  <p>
+    Note that these parameter segments should always come in adjacent
+    name--value pairs, such that every odd segment is a name and every even
+    segment is a corresponding value. But apart from that, the order of the
+    parameter segments does not matter. And for the "/list" queries, all the
+    parameters are optional.
+  </p>
+
+
+  <h2>BT files</h2>
+  <p>
+    There are also database table files that store binary columns of data, in
+    particular the '.bt' files, where BT stands for "Binary key Table."
+    Their SQL equivalents are tables of the following form.
+  </p>
+  <p>
+    <code className="sql">{[
+      'CREATE TABLE BinaryKeyEntries (\n',
+      '  entry_key VARBINARY(255) NOT NULL,\n',
+      '  entry_payload VARBINARY(255) NOT NULL DEFAULT "",\n',
+      '  PRIMARY KEY (\n',
+      '    entry_key,\n',
+      '    entry_payload\n',
+      '  )\n',
+      ')',
+    ]}</code>
+  </p>
+  <p>
+    These tables thus have both a binary entry key and a binary payload.
+    (A binary payload column is regarded as the standard, which is why the
+    file extension only refers to the fact that the key column is binary.)
+  </p>
+  <p>
+    The the '.bt' files support the same types of queries as the '.att'
+    files, namely "/insert", "/delete", "/entry", and "/list", and with a
+    similar set of parameters. But the main difference is that the API expects
+    the entry keys to be hexadecimal strings (which are converted to binary
+    strings when stored), and similarly for the entry payloads, with a maximal
+    length of 2×255. Also, the entry key is a mandatory parameter for "/insert"
+    queries. 
+  </p>
+  <p>
+    An "/insert" and an "/entry" query to a '.bt' file could thus look as
+    follows.
+  </p>
+  <p>
+    <code className="jsx">{[
+      'await post(\n',
+      '  "DIRECTORY_PATH/my_binary_data.bt/insert/k/1a1a1a1a",\n',
+      '  "2b2b2b2b",\n',
+      ');',
+      'let payload = await fetch(\n',
+      '  "DIRECTORY_PATH/my_binary_data.bt/entry/k/1a1a1a1a"\n',
+      '); // returns "2b2b2b2b"',
+    ]}</code>
+  </p>
+  <p>
+    However, being able to insert raw hexadecimal strings manually is not very
+    useful on its own, which is why we also offer a built-in library called
+    'hex', which allows you to easily convert primitive data types, such as
+    strings and numbers, into hexadecimal strings and back, by using the
+    functions valueToHex() and hexToValue():
+  </p>
+  <p>
+    <code className="jsx">{[
+      'import {valueToHex, hexToValue} from \'hex\';\n',
+      '\n',
+      'let hexStr = valueToHex(15,     "uint(2)"); // returns "000f"\n',
+      'let value  = hexToValue(hexStr, "uint(2)"); // returns 15',
+    ]}</code>
+  </p>
+  <p>
+    And the library even exports functions arrayToHex() and hexToArray() which
+    allow you to convert whole arrays of primitive data into hexadecimal
+    strings and back:  
+  </p>
+  <p>
+    <code className="jsx">{[
+      'import {arrayToHex, hexToArray} from \'hex\';\n',
+      '\n',
+      'let valArr  = ["John Doe", -42, 3.14];\n',
+      'let typeArr = ["string", "int(1)", "float(-10,10,2)"];\n',
+      'let hexStr = arrayToHex(valArr, typeArr);\n',
+      'let newArr = hexToArray(hexStr, typeArr); // returns valArr back',
+    ]}</code>
+  </p>
+  <p>
+    test: {(() => {
+      let valArr  = ["John Doe", -42, 3.14];
+      let typeArr = ["string", "int(1)", "float(-10,10,2)"];
+      let hexStr = arrayToHex(valArr, typeArr);
+      let newArr = hexToArray(hexStr, typeArr);
+      return newArr;
+    })()}
+  </p>
+  <p>
+    These functions can thus be used to encode the data columns in a table.
+    For instance, suppose you want to have a table over  
+  </p>
+
+
+
+
+
+
+
+
+
+
+
 
 
   <footer className="prev-and-next-link">

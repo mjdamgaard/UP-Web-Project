@@ -23,7 +23,7 @@ export function render() {
       The user-uploaded apps are all interpreted in a safe sandbox, which makes
       it possible for users to share their new apps and modifications quickly
       and safely with the rest of the community, without them being able to
-      hack each other.
+      hack one another.
       {/* This sandbox even extends
       to the back end as well, which means that the user-uploaded apps are not
       limited to one particular back end, but are free to implement their own. */}
@@ -38,7 +38,7 @@ export function render() {
       allocate any resources in advance, apart from just the storage space for
       the source code itself. This means that costs of platform will not
       depend much on the number of apps and app versions that it hosts, but
-      rather on how many regular users it has in total. The platform is
+      rather on how many active end users it has in total. The platform is
       therefore able accept and host new apps and app versions at a miniscule
       cost to the uploading users.
     </p>
@@ -213,21 +213,63 @@ export function render() {
     </p>
     <p>
       Lastly, if you try clicking on the app called 'Home app,' you will see
-      that you are led to an app that is identical to the home page.
-      This is because the home page itself is actually a
-      user-uploaded app, and can therefore also be forked and modified freely
-      by the users as well!
+      that you are lead to an app that is identical to the home page.
+      This is because the home page is a user-uploaded app itself, and can
+      therefore also be forked and modified freely by the users, like any other
+      app!
     </p>
     <p>
       This even includes the page header and the account menu of the website,
-      as well as the algorithms behind which apps are shown on the home page,
-      and how these apps are updated automatically. Everything you see on
-      this website can be forked and modified!
+      as well as the algorithms that decide which apps are shown on the home
+      page, as well as how these apps are updated automatically. Everything you
+      see on this website can be forked and modified!
     </p>
 
 
 
     <h3>An easy-to-use framework</h3>
+    <p>
+      This platform offers a high-level development framework that is easy
+      to use. To upload an app, all you need to do is to upload a repository
+      containing its JavaScript modules and JSX components (including a
+      'main.jsx' component), and your app will then immediately be online and
+      ready for other users to try.
+      The <ILink key="l-tut-1" href={`~/../tutorials`}>tutorials</ILink> will
+      teach you how to do this.
+    </p>
+    <p>
+      And if your app needs a back end, you only need to include one or more
+      modules in your repository with a special file extension, '.sm.js',
+      which will allow your app to call the functions of the module from the
+      client side and have them be executed on the server.
+    </p>
+    <p>
+      The uploaded code is always executed within a sandbox, both client-side
+      and server-side, which prevents other apps from making unauthorized calls
+      to your back end, and makes it safe for users to try out new apps without
+      worry.
+    </p>
+
+    <h3>Join the project</h3>
+    <p>
+      The platform is currently at an alpha/early beta stage. And all who wish
+      to take part in testing our framework are more than welcome to join us!
+    </p>
+    <p>
+      Feel free to follow the 
+      <ILink key="l-tut-2" href={`~/../tutorials`}>tutorials</ILink>
+      and upload some test apps. And also
+      feel free to join one of our discussion forums.
+    </p>
+    <p>
+      <i>
+        Contact information and links to discussion forums will be available
+        soon.
+      </i>
+    </p>
+  
+
+    {/* <h3>An easy-to-use framework</h3>
     <p>
       This platform offers a high-level development framework that is easy
       to use. As long as you just know a little bit of JavaScript/TypeScript,
@@ -242,6 +284,7 @@ export function render() {
       In order to get started building your own user-programmed (UP) apps, go
       check out the
       <ILink key="l-tut" href={`~/../tutorials`}>tutorials</ILink>.
-    </p>
+    </p> */}
+
   </div>;
 }

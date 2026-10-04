@@ -8,7 +8,6 @@ const subpages = {
   "jsx-components": "components.jsx",
   "useful-tips": "useful_tips.jsx",
   "server-modules": "server_modules.jsx",
-  "db-tables": "db_tables.jsx",
 };
 
 
@@ -68,11 +67,6 @@ export function render() {
       <li>
         <ILink key="l-server-modules" href="./server-modules" >
           Server modules
-        </ILink>
-      </li>
-      <li>
-        <ILink key="l-db-tables" href="./db-tables" >
-          Database tables
         </ILink>
       </li>
     </ol>

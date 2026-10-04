@@ -853,30 +853,28 @@ class JSXInstance {
 
 
   getCSSStyleSheets(innerStyleProp, node, env) {
-    let ret = [], isValid = true;
-    if (innerStyleProp instanceof CSSModule) {
+    let ret = [];
+    this.#getCSSStyleSheetsHelper(innerStyleProp, node, env, ret);
+    return ret;
+  }
+
+  #getCSSStyleSheetsHelper(innerStyleProp, node, env, ret) {
+    if (!innerStyleProp) {
+      return;
+    }
+    else if (innerStyleProp instanceof CSSModule) {
       ret.push(innerStyleProp.getCSSStyleSheet(node, env));
     }
     else if (isArray(innerStyleProp)) {
-      forEachValue(innerStyleProp, node, env, cssModule => {
-        if (cssModule instanceof CSSModule) {
-          ret.push(cssModule.getCSSStyleSheet(node, env));
-        }
-        else {
-          isValid = false;
-        }
+      forEachValue(innerStyleProp, node, env, (val) => {
+        this.#getCSSStyleSheetsHelper(val, node, env, ret);
       });
     }
-    else {
-      isValid = false;
-    }
-
-    if (!isValid) throw new ArgTypeError(
-      'The "innerStyle" attribute must be a either a CSSModule object or ' +
-      'an array of such objects',
+    else throw new ArgTypeError(
+      'The "innerStyle" attribute expects either a CSSModule object or ' +
+      'an (n-dimensional) array of such objects',
        node, env
     );
-    return ret;
   }
 
 
