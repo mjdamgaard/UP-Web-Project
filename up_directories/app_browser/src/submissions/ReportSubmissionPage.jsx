@@ -38,7 +38,7 @@ export const actions = {
     }
 
     await post(
-      abs("./server/submissions.sm.js/callSMF/submitReport"), text
+      "./server/submissions.sm.js/callSMF/submitReport", text
     );
     return this.setState({
       response: <span className="text-success">

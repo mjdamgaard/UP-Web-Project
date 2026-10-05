@@ -37,7 +37,7 @@ export const actions = {
     let {userID} = this.props;
     if (!userID) return;
     fetchPrivate(
-      abs("./server/messages.sm.js./callSMF/fetchMessages/1000")
+      "./server/messages.sm.js./callSMF/fetchMessages/1000"
     ).then(messageList => {
       this.setState(state => ({...state, messageList: messageList}));
     });

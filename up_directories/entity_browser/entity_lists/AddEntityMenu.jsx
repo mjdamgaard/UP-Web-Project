@@ -161,7 +161,7 @@ export const actions = {
         return;
       }
       post(
-        abs("~/../semantic_entities/comments/comments.sm.js./callSMF/postComment"),
+        "~/../semantic_entities/comments/comments.sm.js./callSMF/postComment",
         [text, objKey, isSingular, true],
       ).then(textEntID => {
         // Post the relevant scalar, then update the state.

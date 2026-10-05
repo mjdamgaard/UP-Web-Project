@@ -291,7 +291,7 @@ const getPage = (userID) => <div className="page text-page">
 
   <h2>ATT files</h2>
   <p>
-    The '.att' files implement simple database tables that stores texts. ATT
+    The '.att' files implement simple database tables that store texts. ATT
     stands for "Auto-increment key Text Tables." Their equivalent in SQL would
     look as follows,
   </p>
@@ -434,6 +434,62 @@ const getPage = (userID) => <div className="page text-page">
       '); // returns "2b2b2b2b"',
     ]}</code>
   </p>
+  <p>
+    However, being able to insert raw hexadecimal strings manually is not very
+    useful on its own, which is why we also offer a built-in library called
+    'hex', which allows you to convert primitive data values into hexadecimal
+    strings and back, and even allows you to convert whole arrays of primitive
+    data at a time.
+  </p>
+  <p>
+    To give an example, suppose you want a table of movies, identified by a
+    title and a year, and you want to store a floating-point rating score 
+    for each movie, going from -10 to 10, and with a precision of 2 bytes,
+    along with the number of users who has rated the movie. You can achieve
+    this by using the functions arrayToHex() and hexToArray() as follows.
+  </p>
+  <p>
+    <code className="jsx">{[
+      'import {arrayToHex, hexToArray} from \'hex\';\n',
+      '\n',
+      'export async function example() {\n',
+      '  let movieKeyArr = ["The Matrix", 1999];\n',
+      '  let keyTypeArr  = ["string", "uint(2)"];\n',
+      '  let payloadArr     = [7.4, 123456];\n',
+      '  let payloadTypeArr = ["float(-10,10,2)", "uint(4)"];\n',
+      '\n',
+      '  let movieKeyHex = arrayToHex(movieKeyArr, keyTypeArr);\n',
+      '  let payloadHex  = arrayToHex(payloadArr, payloadTypeArr);\n',
+      '\n',
+      '  await post(\n',
+      '    "DIRECTORY_PATH/movie_ratings.bt/insert/k/" + movieKeyHex,\n',
+      '    payloadHex,\n',
+      '  );',
+      '  payloadHex = await fetch(\n',
+      '    "DIRECTORY_PATH/my_binary_data.bt/entry/k/" + movieKeyHex\n',
+      '  ); // returns the same payloadHex string as was inserted\n',
+      '\n',
+      '  payloadArr = hexToArray(payloadHex, payloadTypeArr);\n',
+      '  // returns [7.4, 123456] (approximately)\n',
+      '}',
+    ]}</code>
+  </p>
+  <p>
+    With this 'hex' library, you can thus implement a wide range of database
+    tables. We will return to this library and give a brief overview of the
+    different available types below.
+  </p>
+
+
+  <h2>BBT files</h2>
+  <p>
+    BBT files, which stands for "Binary key, Binary score Table," are 
+  </p>
+
+
+
+
+  <h3>Obsolete</h3>
   <p>
     However, being able to insert raw hexadecimal strings manually is not very
     useful on its own, which is why we also offer a built-in library called

@@ -28,7 +28,7 @@ export function createPost(text) {
       let timestamp = now();
       let timestampHex = valueToHex(timestamp, "uint(6)");
       post(
-        abs("./_posts.bbt") + "/_insert/l/" + userID + "/k/" + textID +
+        "./_posts.bbt" + "/_insert/l/" + userID + "/k/" + textID +
         "/s/" + timestampHex
       ).then((wasUpdated) => {
         resolve(wasUpdated);
@@ -54,7 +54,7 @@ export function deletePost(textID) {
     getConnection(5000, true, lockName).then(conn => {
       let options = {connection: conn};
       post(
-        abs("./_posts.bbt") + "/_deleteEntry/l/" + userID + "/k/" + textID,
+        "./_posts.bbt" + "/_deleteEntry/l/" + userID + "/k/" + textID,
         undefined, options
       ).then(wasDeleted => {
         if (!wasDeleted) {
@@ -64,7 +64,7 @@ export function deletePost(textID) {
           return resolve(false);
         }
         post(
-          abs("./_texts.att") + "/_deleteEntry/l/" + userID + "/k/" + textID,
+          "./_texts.att" + "/_deleteEntry/l/" + userID + "/k/" + textID,
           undefined, options
         ).then(wasDeleted => {
           if (!wasDeleted) {
@@ -101,12 +101,12 @@ export function fetchPostList(
       if (!hasAccess) return resolve(false);
 
       fetchPrivate(
-        abs("./_posts.bbt") + "/skList/l/" + userID +
+        "./_posts.bbt" + "/skList/l/" + userID +
+        (sortOldestToNewest ? "/d/0" : "/d/1") +
         (minTime ? "/lo/" + valueToHex(minTime, "uint(6)") : "") +
         (maxTime ? "/hi/" + valueToHex(maxTime, "uint(6)") : "") +
         (maxNumber ? "/n/" + maxNumber : "") +
-        (offset ? "/n/" + offset : "") +
-        (sortOldestToNewest ? "/a/1" : "/a/0")
+        (offset ? "/n/" + offset : "")
       ).then(list => {
         list = list.map(([textID, timestampHex]) => (
           [textID, hexToValue(timestampHex, "uint(6)")]
@@ -129,7 +129,7 @@ export function fetchPostText(userID, textID) {
     fetchIsFriendOrSelf(userID).then(hasAccess => {
       if (!hasAccess) return resolve(false);
       fetchPrivate(
-        abs("./_texts.att") + "/entry/l/" + userID + "/k/" + textID
+        "./_texts.att" + "/entry/l/" + userID + "/k/" + textID
       ).then(
         text => resolve(text)
       );

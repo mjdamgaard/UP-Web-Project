@@ -44,7 +44,7 @@ export const actions = {
     
     // Post the message by calling the postMessage() SMF.
     post(
-      abs("./server/messages.sm.js./callSMF/postMessage"),
+      "./server/messages.sm.js./callSMF/postMessage",
       textVal
     ).then(wasCreated => {
       if (wasCreated) {

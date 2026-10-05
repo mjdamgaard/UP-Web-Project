@@ -45,7 +45,7 @@ export async function submitReport(text) {
 
 export async function fetchReports(maxNum = 1) {
   checkAdminPrivileges();
-  return await fetchPrivate("./_reports.att/list/n/" + maxNum);
+  return await fetchPrivate("./_reports.att/list/d/1/n/" + maxNum);
 }
 
 export async function deleteReports(maxID) {

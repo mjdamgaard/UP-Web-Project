@@ -66,7 +66,7 @@ export const actions = {
   "deleteMessage": function() {
     let {messageID} = this.props;
     post(
-      abs("./server/messages.sm.js./callSMF/deleteMessage/" + messageID)
+      "./server/messages.sm.js./callSMF/deleteMessage/" + messageID
     ).then(wasDeleted => {
       if (wasDeleted) {
         this.trigger("refresh");

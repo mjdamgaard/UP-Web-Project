@@ -50,7 +50,7 @@ export const actions = {
     // data, which is the second argument of post(), is an array, it is always
     // treated as an input array for "callSMF" queries.)
     post(
-      abs("./server/messages.sm.js./callSMF/editMessage"),
+      "./server/messages.sm.js./callSMF/editMessage",
       [messageID, textVal]
     ).then(wasEdited => {
       if (wasEdited) {

@@ -47,7 +47,7 @@ export function fetchUserScoreHex(
     ]).then(([qualID, subjID, userID]) => {
       let listIDHex = valueToHex(qualID + "-" + userID, "string");
       fetch(
-        abs("~/userScores.bbt/entry/l/" + listIDHex + "/k/" + subjID),
+        "~/userScores.bbt/entry/l/" + listIDHex + "/k/" + subjID,
         options
       ).then(entry => {
         let [userScoreHex] = entry ?? [];
@@ -120,14 +120,12 @@ export function fetchUserScoreHexList(
     Promise.all([qualIDProm, userIDProm]).then(([qualID, userID]) => {
       let listIDHex = valueToHex(qualID + "-" + userID, "string");
       fetch(
-        abs(
-          "~/userScores.bbt/skList/l/" + listIDHex +
+        "~/userScores.bbt/skList/l/" + listIDHex +
+          (isAscending ? "/d/0" : "/d/1") +
           (!loHex ? "" : "/lo/" + loHex) +
           (!hiHex ? "" : "/hi/" + hiHex) +
           (maxNum === undefined ? "" : "/n/" + maxNum) +
-          (offset === undefined ? "" : "/o/" + offset) +
-          (isAscending === undefined ? "" : "/a/" + isAscending ? "1" : "0")
-        ),
+          (offset === undefined ? "" : "/o/" + offset),
         options
       ).then(userScoreHexList => {
         userScoreHexList ??= [];
@@ -228,11 +226,11 @@ export function fetchScoreHexList(
       let listIDSegment = listID ? "/l/" + valueToHex(listID, "string") : "";
       fetch(
         tableFilePath + "/skList" + listIDSegment +
-        (!loHex ? "" : "/lo/" + loHex) +
-        (!hiHex ? "" : "/hi/" + hiHex) +
-        (maxNum === undefined ? "" : "/n/" + maxNum) +
-        (offset === undefined ? "" : "/o/" + offset) +
-        (isAscending === undefined ? "" : "/a/" + isAscending ? "1" : "0"),
+          (isAscending ? "/d/0" : "/d/1") +
+          (!loHex ? "" : "/lo/" + loHex) +
+          (!hiHex ? "" : "/hi/" + hiHex) +
+          (maxNum === undefined ? "" : "/n/" + maxNum) +
+          (offset === undefined ? "" : "/o/" + offset),
         options
       ).then(
         list => resolve(list)
@@ -338,7 +336,7 @@ export function postUserScore(
       // TODO: Verify hex-string types of the IDs here. 
       let scoreHex = getScoreHex(score, metric);
       post(
-        abs("~/user_scores.sm.js./callSMF/postUserScoreHex"),
+        "~/user_scores.sm.js./callSMF/postUserScoreHex",
         [qualID, subjID, userID, scoreHex, payloadHex], options
       ).then(
         wasUpdated => resolve(wasUpdated)
@@ -359,7 +357,7 @@ export function deleteUserScore(
     ]).then(([qualID, subjID, userID]) => {
       // TODO: Verify hex-string types of the IDs here. 
       post(
-        abs("~/user_scores.sm.js./callSMF/deleteUserScore"),
+        "~/user_scores.sm.js./callSMF/deleteUserScore",
         [qualID, subjID, userID], options
       ).then(
         wasUpdated => resolve(wasUpdated)

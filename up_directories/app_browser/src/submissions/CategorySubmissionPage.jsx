@@ -47,7 +47,7 @@ export const actions = {
 
     let relIDProm = fetchEntityID(relKey);
     let [catID] = await post(
-      abs("./server/submissions.sm.js/callSMF/submitAppCategory"),
+      "./server/submissions.sm.js/callSMF/submitAppCategory",
       [name, desc]
     );
     let relID = await relIDProm;

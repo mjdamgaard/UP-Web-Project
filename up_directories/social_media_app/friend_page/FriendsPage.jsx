@@ -23,13 +23,13 @@ export function render({userID}) {
   if (!isFetching) {
     this.setState(state => ({...state, isFetching: true}));
     fetchPrivate(
-      abs("../server/friends/friends.sm.js") +
+      "../server/friends/friends.sm.js" +
       "./callSMF/fetchFriendList/" + userID
     ).then(friendList => {
       this.setState(state => ({...state, friendList: friendList ?? false}));
     });
     fetchPrivate(
-      abs("../server/friends/friends.sm.js") +
+      "../server/friends/friends.sm.js" +
       "./callSMF/fetchFriendRequestList"
     ).then(friendRequestList => {
       this.setState(state => ({

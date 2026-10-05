@@ -416,7 +416,7 @@ export function fetchScalarEntityID(subjKey, extQualKey) {
 export async function postEntity(moduleOrEntPath, alias = undefined) {
   let entPath = alias ? moduleOrEntPath + ";get/" + alias : moduleOrEntPath;
   let entID = await post(
-    abs("~/entities.sm.js./callSMF/postEntity"), entPath
+    "~/entities.sm.js./callSMF/postEntity", entPath
   );
   return entID;
 }

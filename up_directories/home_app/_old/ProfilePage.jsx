@@ -81,7 +81,7 @@ export const actions = {
     }
     else {
       post(
-        abs("~/../semantic_entities/users/profiles.sm.js./callSMF/requestNewUserTag"),
+        "~/../semantic_entities/users/profiles.sm.js./callSMF/requestNewUserTag",
         newTag
       ).then(wasChanged => {
         if (wasChanged) {
@@ -100,7 +100,7 @@ export const actions = {
   "submitBio": function() {
     let newBio = this.call("i-bio", "getValue");
     post(
-      abs("~/../semantic_entities/users/profiles.sm.js./callSMF/putUserBio"),
+      "~/../semantic_entities/users/profiles.sm.js./callSMF/putUserBio",
       newBio
     ).then(wasChanged => {
       if (wasChanged) {

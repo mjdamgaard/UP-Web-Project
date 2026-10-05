@@ -24,7 +24,7 @@ export function render({userID}) {
         // particular, and use it here:
         if (textVal) {
           post(
-            abs("~/posts.sm.js./callSMF/postText"), textVal
+            "~/posts.sm.js./callSMF/postText", textVal
           ).then(wasCreated => {this.call(0, "clear");
             if (wasCreated) {
               this.call(0, "clear");

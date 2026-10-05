@@ -95,7 +95,7 @@ export async function fetchPreferredSubApp(appDirID, scoreHandlerID = "0") {
   }
   else {
     subAppIDListString = await fetch(
-      abs("./subApps.att/entry/l/" + scoreHandlerID + "/k/" + appDirID)
+      "./subApps.att/entry/l/" + scoreHandlerID + "/k/" + appDirID
     );
   }
   
@@ -129,9 +129,9 @@ async function fetchPreferredSubAppHelper(
     subAppDirID = appIDArr[i];
     let substituteAppID = preferences[subAppDirID];
     if (substituteAppID && substituteAppID !== subAppIDArr[i + 1]) {
-      subAppIDListString = await fetch(abs(
+      subAppIDListString = await fetch(
         "./subApps.att/entry/l/" + scoreHandlerID + "/k/" + substituteAppID
-      ));
+      );
       return await fetchPreferredSubAppHelper(
         substituteAppID, scoreHandlerID, preferences, subAppIDListString,
         recLevel + 1
@@ -187,9 +187,9 @@ export async function updatePreferredSubApp(appDirID, scoreHandlerID = "0") {
   // If no top entry was found, given the score >= 5, weight >= 10 threshold,
   // remove the current entry in subApps.att if one exists.
   if (!topSubAppEntID) {
-    await post(abs(
+    await post(
       "./subApps.att/_deleteEntry/l/" + scoreHandlerID + "/k/" + appDirID
-    ));
+    );
     return;
   } 
 
@@ -202,22 +202,22 @@ export async function updatePreferredSubApp(appDirID, scoreHandlerID = "0") {
   // If the subAppDirID is invalid, or is the appDirID itself, also remove any
   // current entry in subApps.att
   if (!hasType(subAppDirID, "hex") || subAppDirID === appDirID) {
-    await post(abs(
+    await post(
       "./subApps.att/_deleteEntry/l/" + scoreHandlerID + "/k/" + appDirID
-    ));
+    );
     return;
   }
 
   // Else fetch the subApps list for the subAppDirID, prepend subAppDirID
   // itself to it, and insert that string as the subApps.att entry for appDirID.
-  let subSubAppIDListString = await fetch(abs(
+  let subSubAppIDListString = await fetch(
     "./subApps.att/entry/l/" + scoreHandlerID + "/k/" + subAppDirID
-  ));
+  );
   let subAppIDListString = subAppDirID + (
     subSubAppIDListString ? "," + subSubAppIDListString : ""
   );
   await post(
-    abs("./subApps.att/_insert/l/" + scoreHandlerID + "/k/" + appDirID),
+    "./subApps.att/_insert/l/" + scoreHandlerID + "/k/" + appDirID,
     subAppIDListString
   );
   return;
@@ -230,9 +230,9 @@ export async function fetchPreferredSubAppList(appDirID, scoreHandlerID = "0") {
   // (This SMF does not query any private data, and we thus do not need to
   // check the origin.)
 
-  let subAppIDListString = await fetch(abs(
+  let subAppIDListString = await fetch(
     "./subApps.att/entry/l/" + scoreHandlerID + "/k/" + appDirID
-  ));
+  );
 
   // Return the list as an array for convenience.
   return subAppIDListString ? subAppIDListString.split(",") : [];
@@ -259,9 +259,9 @@ export async function fetchUserPreferences() {
     "User is not logged in"
   );
 
-  let prefJSON = fetchPrivate(abs(
+  let prefJSON = fetchPrivate(
     "~/server/apps/_userPreferences.att/entry/k/" + userID
-  ));
+  );
   let preferences = parse(prefJSON);
   return preferences;
 }
@@ -273,10 +273,7 @@ export async function updateUserPreference(appDirID, subAppDirID) {
   preferences = {...preferences, [appDirID]: subAppDirID};
   let newPrefJSON = stringify(preferences)
   return await post(
-    abs(
-      "~/server/apps/_userPreferences.att/_insert/k/" +
-      userID
-    ),
+    "~/server/apps/_userPreferences.att/_insert/k/" + userID,
     newPrefJSON
   );
 }

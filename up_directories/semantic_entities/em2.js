@@ -81,12 +81,12 @@ export const allUsersList = {
   fetchList: (lo, hi, maxNum, offset, isAscending) => {
     return new Promise(resolve => {
       fetch(
-        abs("../.././users.bt/skList") +
+        "../.././users.bt/skList" +
+        (isAscending ? "/d/0" : "/d/1") +
         (lo !== undefined ? "/lo/" + lo : "") +
         (hi !== undefined ? "/hi/" + hi : "") +
         (maxNum !== undefined ? "/n/" + maxNum : "") +
-        (offset !== undefined ? "/o/" + offset : "") +
-        (isAscending !== undefined ? "/a/" + isAscending : "")
+        (offset !== undefined ? "/o/" + offset : "")
       ).then(list => {
         resolve(list.map(([userEntID]) => [userEntID, 1]));
       });
