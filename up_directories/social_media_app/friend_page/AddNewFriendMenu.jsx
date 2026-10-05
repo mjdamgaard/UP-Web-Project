@@ -62,7 +62,7 @@ export const actions = {
       let usernameHex = valueToHex(username, "string");
       this.setState(state => ({...state, response: "Submitting..."}));
       fetch(
-        "./server/users/usernames.sm.js" + "/callSMF/fetchUserID/" +
+        "./server/users/usernames.sm.js/callSMF/fetchUserID/" +
         usernameHex
       ).then(otherUserID => {
         if (otherUserID) {
@@ -81,7 +81,7 @@ export const actions = {
 
   "submitFriendRequestHelper": function(otherUserID) {
     post(
-      "../server/friends/friends.sm.js" + "/callSMF/requestFriend",
+      "../server/friends/friends.sm.js/callSMF/requestFriend",
       otherUserID
     ).then(wasUpdated => {
       if (wasUpdated) {

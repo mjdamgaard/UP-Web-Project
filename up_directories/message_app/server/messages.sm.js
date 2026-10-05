@@ -22,7 +22,7 @@ export async function postMessage(text) {
 
   // Insert the massage in the messages.att table.
   return await post(
-    "./messages.att/_insert",
+    "./messages.att/insert",
     storedText
   );
 }
@@ -56,7 +56,7 @@ export async function deleteMessage(messageID) {
 
   // Delete the massage. 
   return await post(
-    "./messages.att/_deleteEntry/k/" + messageID
+    "./messages.att/delete/k/" + messageID
   );
 }
 
@@ -92,7 +92,7 @@ export async function editMessage(messageID, newText) {
   // key for such insert queries.)
   let newStoredText = authorID + ";" + newText;
   return await post(
-    "./messages.att/_insert/k/" + messageID,
+    "./messages.att/insert/k/" + messageID,
     newStoredText
   );
 }

@@ -102,13 +102,13 @@ async function _postUserRateValue(
 ) {
   if (rateValue === 0) {
     await post(
-      "./_userRates.bt/_deleteEntry/l/" + listID + "/k/" + entryKey,
+      "./_userRates.bt/delete/l/" + listID + "/k/" + entryKey,
       undefined, options
     );
   } else {
     let ratePayload = (rateValue === 1) ? "01" : "02";
     await post(
-      "./_userRates.bt/_insert/l/" + listID + "/k/" + entryKey,
+      "./_userRates.bt/insert/l/" + listID + "/k/" + entryKey,
       ratePayload, options
     );
   }
@@ -141,7 +141,7 @@ async function _postUpRateSum(
 ) {
   let upRateSumHex = valueToHex(upRateSum, "uint(6)");
   await post(
-    "./upRateSums.bbt/_insert/l/" + listID + "/k/" + subjID +
+    "./upRateSums.bbt/insert/l/" + listID + "/k/" + subjID +
       "/s/" + upRateSumHex,
     undefined, options
   );
@@ -174,7 +174,7 @@ async function _postMixedSum(
 ) {
   let mixedSumHex = valueToHex(mixedSum, "int(6)");
   await post(
-    "./mixedSums.bbt/_insert/l/" + listID + "/k/" + subjID +
+    "./mixedSums.bbt/insert/l/" + listID + "/k/" + subjID +
       "/s/" + mixedSumHex,
     undefined, options
   );

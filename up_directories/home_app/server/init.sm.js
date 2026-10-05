@@ -45,7 +45,7 @@ export async function init_2() {
     postConstructedEntity(em3Path, "App", [nodeID, mastermind01DirID]),
   ]);
 
-  let insertTCRouteSubstr = "./apps/trustClasses.att/_insert/k/";
+  let insertTCRouteSubstr = "./apps/trustClasses.att/insert/k/";
   await Promise.all([
     post(insertTCRouteSubstr + homeAppDirID,      "trusted"),
     post(insertTCRouteSubstr + appBrowserDirID,   "trusted"),

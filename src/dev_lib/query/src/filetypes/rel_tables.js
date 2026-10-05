@@ -24,9 +24,9 @@ export async function query(
 
   let queryType = queryPathSegments[0];
 
-  // If route equals ".../<homeDirID>/<filepath>./_touch" create a table file
+  // If route equals ".../<homeDirID>/<filePath>/touch" create a table file
   // if not already there, but do not delete its content if there.
-  if (queryType === "_touch" || queryType === "touch") {
+  if (queryType === "touch") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -39,9 +39,9 @@ export async function query(
     return wasCreated;
   }
 
-  // If route equals ".../<homeDirID>/<filepath>./_put" create a table file
+  // If route equals ".../<homeDirID>/<filePath>/put" create a table file
   // if not already there, and delete its content if it does exist already.
-  if (queryType === "_put" || queryType === "put") {
+  if (queryType === "put") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -61,9 +61,9 @@ export async function query(
   }
 
 
-  // If route equals ".../<homeDirID>/<filepath>./_rm", delete the table file
+  // If route equals ".../<homeDirID>/<filePath>/rm", delete the table file
   // (and its content) if its there.
-  if (queryType === "_rm" || queryType === "rm") {
+  if (queryType === "rm") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -82,13 +82,10 @@ export async function query(
   }
 
 
-  // If route equals ".../<homeDirID>/<filepath>./_deleteEntry[/l/<listID>]" +
+  // If route equals ".../<homeDirID>/<filePath>/delete[/l/<listID>]" +
   // "/k/<elemKey>", delete a single table entry with that primary key, where
   // the default value for listID is "".
-  if (
-    queryType === "_delete" || queryType === "delete" ||
-    queryType === "_deleteEntry" || queryType === "deleteEntry"
-  ) {
+  if (queryType === "delete") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -117,11 +114,11 @@ export async function query(
     return wasDeleted;
   }
 
-  // If route equals ".../<homeDirID>/<filepath>./_deleteList[/l/<listID>]" +
+  // If route equals ".../<homeDirID>/<filePath>/deleteList[/l/<listID>]" +
   // "[/lo/<loElemKey>]"[/hi/<hiElemKey>]", delete all entries with elemKeys
   // between lo and hi. The default value for lo is "", and if hi is missing,
   // all entries are deleted with an elemKey >= lo.
-  if (queryType === "_deleteList" || queryType === "deleteList") {
+  if (queryType === "deleteList") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -211,18 +208,20 @@ export async function query(
     }
     let {
       l: listID = "", lo = "", hi, n: maxNum = 4000, o: numOffset = 0,
-      d: isDescending = 0
+      d: isDescending = false,
     } = paramObj;
     maxNum = parseInt(maxNum);
-    isDescending = parseInt(isDescending);
-    if (Number.isNaN(maxNum) || Number.isNaN(isDescending)) {
+    numOffset = parseInt(numOffset);
+    let isAscending =
+      (!isDescending || isDescending === "0" || isDescending === "false") ?
+      1 : 0;
+    if (Number.isNaN(maxNum) || Number.isNaN(numOffset)) {
       throw new RuntimeError(
         `Invalid query path for a list query: ${route}`,
         callerNode, execEnv
       );
     }
     payGas(callerNode, execEnv, {dbRead: maxNum / 100});
-    let isAscending = isDescending ? 0 : 1; 
     return await dbQueryHandler.queryDBProc(
       procName,
       [homeDirID, localPath, listID, lo, hi, maxNum, numOffset, isAscending],
@@ -252,18 +251,20 @@ export async function query(
     }
     let {
       l: listID = "", lo = "", hi, n: maxNum = 4000, o: numOffset = 0,
-      d: isDescending = 0,
+      d: isDescending = false,
     } = paramObj;
     maxNum = parseInt(maxNum);
-    isDescending = parseInt(isDescending);
-    if (Number.isNaN(maxNum) || Number.isNaN(isDescending)) {
+    numOffset = parseInt(numOffset);
+    let isAscending =
+      (!isDescending || isDescending === "0" || isDescending === "false") ?
+      1 : 0;
+    if (Number.isNaN(maxNum) || Number.isNaN(numOffset)) {
       throw new RuntimeError(
         `Invalid query path for a list query: ${route}`,
         callerNode, execEnv
       );
     }
     payGas(callerNode, execEnv, {dbRead: maxNum / 100});
-    let isAscending = isDescending ? 0 : 1; 
     return await dbQueryHandler.queryDBProc(
       procName,
       [homeDirID, localPath, listID, lo, hi, maxNum, numOffset, isAscending],
@@ -271,13 +272,13 @@ export async function query(
     );
   }
 
-  // If route equals ".../<homeDirID>/<filepath>./_insert/[/l/<listID>]" +
+  // If route equals ".../<homeDirID>/<filePath>/insert/[/l/<listID>]" +
   // "[/k/<elemKey>][/s/<elemScore>][/p/<elemPayload>][/i/<ignore>]", insert
   // a single table entry with those row values, overwriting any existing entry
   // of the same key, unless the ignore parameter (i) is defined and truthy.
   // This does not apply .att files, but for these, if elemKey is defined and
   // not the empty string, the entry will be overwritten if one already exist.
-  if (queryType === "_insert" || queryType === "insert") {
+  if (queryType === "insert") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -320,7 +321,7 @@ export async function query(
     return wasUpdatedOrNewID;
   }
 
-  // If route equals ".../<homeDirID>/<filepath>./_insertList[/l/<listID>]" +
+  // If route equals ".../<homeDirID>/<filePath>/insertList[/l/<listID>]" +
   // "[/i/<ignore>]", treat postData as an array of rows to insert into the
   // table. The ignore parameter also determines whether to ignore on
   // duplicate keys or to overwrite. For .att files, if ignore is falsy, the
@@ -328,7 +329,7 @@ export async function query(
   // for the .bt, .ct, and .bbt files, the form should be '\[<elemKeyHex>,' +
   // '[<elemScoreHex>,][<elemPayloadHex>]\]', but where elemScoreHex should of
   // course only be present in the case of a .bbt file. 
-  if (queryType === "_insertList" || queryType === "insertList") {
+  if (queryType === "insertList") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv

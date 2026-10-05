@@ -9,7 +9,7 @@ export function fetchUserTag(userID) {
   verifyType(userID, "hex-string");
   return new Promise(resolve => {
     fetch(
-      "./tags.bt" + "/entry/k/" + userID
+      "./tags.bt/entry/k/" + userID
     ).then(userTagHex => {
       let userTag = userTagHex ?
         hexToValue(userTagHex, "string") : undefined;
@@ -21,7 +21,7 @@ export function fetchUserTag(userID) {
 export function fetchUserID(userTagHex) {
   return new Promise(resolve => {
     fetch(
-      "./ids.ct" + "/entry/k/" + userTagHex
+      "./ids.ct/entry/k/" + userTagHex
     ).then(
       userID => resolve(userID)
     );
@@ -34,7 +34,7 @@ export function fetchUserBio(userID) {
   verifyType(userID, "hex-string");
   return new Promise(resolve => {
     fetch(
-      "./bios.att" + "/entry/k/" + userID
+      "./bios.att/entry/k/" + userID
     ).then(
       bioText => resolve(bioText)
     );

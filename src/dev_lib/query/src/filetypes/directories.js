@@ -68,9 +68,9 @@ export async function query(
       .filter((filePath) => (!LOCKED_PATH_REGEX.test(filePath)));
   }
 
-  // If route equals just ".../<homeDirID>./_all", return a list of all nested
+  // If route equals just ".../<homeDirID>./all", return a list of all nested
   // file paths of the home directory.
-  if (queryType === "_all" || queryType === "all") {
+  if (queryType === "all") {
     let filePathTable = await dbQueryHandler.queryDBProc(
       "readAllHomeDirDescendants", [homeDirID, 4000, 0],
       route, options, callerNode, execEnv,
@@ -98,9 +98,9 @@ export async function query(
     return creatorID;
   }
 
-  // If route equals ".../<homeDirID>./_setAdmin/a/<adminID>", set a new admin
+  // If route equals ".../<homeDirID>./setAdmin/a/<adminID>", set a new admin
   // of the home directory.
-  if (queryType === "_setAdmin" || queryType === "setAdmin") {
+  if (queryType === "setAdmin") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv
@@ -117,10 +117,10 @@ export async function query(
     return wasEdited;
   }
 
-  // If route equals ".../<homeDirID>./_rm", request a deletion of the
+  // If route equals ".../<homeDirID>./rm", request a deletion of the
   // directory, but note that directories can only be deleted after each nested
   // file in it has been deleted (as this query does not delete the files).
-  if (queryType === "_rm" || queryType === "rm") {
+  if (queryType === "rm") {
     if (!isPost) throw new RuntimeError(
       `Unrecognized route for GET-like requests: "${route}"`,
       callerNode, execEnv

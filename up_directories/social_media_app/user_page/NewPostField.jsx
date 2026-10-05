@@ -33,7 +33,7 @@ export const actions = {
     else {
       this.setState(state => ({...state, response: "Posting..."}));
       post(
-        "../server/posts/posts.sm.js" + "/callSMF/createPost",
+        "../server/posts/posts.sm.js/callSMF/createPost",
         text
       ).then(wasUpdated => {
         if (wasUpdated) {

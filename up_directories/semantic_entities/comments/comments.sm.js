@@ -40,7 +40,7 @@ export function postComment(
             (isSingular ? "true" : "false") + ",\n" +
       "};";
     post(
-      "./comments.att" + "/_insert", newCommentEMSource
+      "./comments.att/insert", newCommentEMSource
     ).then(textID => {
       let newEntPath = commentPathPrefix + textID + ";.js;get/comment";
       postEntity(newEntPath).then(
@@ -96,7 +96,7 @@ export function editComment(commentEntKey, text, targetEntKey = undefined) {
           stringify(newCommentDef) +
           ';';
         post(
-          "./comments.att" + "/_insertEntry/k/" + textID,
+          "./comments.att/insertEntry/k/" + textID,
           newCommentEMSource
         ).then(
           wasUpdated => resolve(!!wasUpdated)

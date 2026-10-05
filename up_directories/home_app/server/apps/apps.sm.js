@@ -118,7 +118,7 @@ export async function updateBestSubApp(appDirID) {
   // If no (semi-)trusted sub-app was found, or if subAppDirID == appDirID,
   // delete any existing entry in subApps.att. 
   if (!subAppDirID || subAppDirID === appDirID) {
-    await post("./subApps.att/_deleteEntry/k/" + appDirID);
+    await post("./subApps.att/delete/k/" + appDirID);
     return false;
   }
 
@@ -131,7 +131,7 @@ export async function updateBestSubApp(appDirID) {
     subSubAppIDListString ? "," + subSubAppIDListString : ""
   );
   await post(
-    "./subApps.att/_insert/k/" + appDirID, subAppIDListString
+    "./subApps.att/insert/k/" + appDirID, subAppIDListString
   );
   return;
 }
@@ -186,7 +186,7 @@ export async function updateUserPreference(appDirID, subAppDirID) {
   preferences = {...preferences, [appDirID]: subAppDirID};
   let newPrefJSON = stringify(preferences)
   return await post(
-    "./_userPreferences.att/_insert/k/" + userID, newPrefJSON
+    "./_userPreferences.att/insert/k/" + userID, newPrefJSON
   );
 }
 

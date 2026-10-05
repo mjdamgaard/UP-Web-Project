@@ -366,15 +366,19 @@ const getPage = (userID) => <div className="page text-page">
     There is also an 'n' parameter, which represents a maximal (decimal) number
     of entries/rows you wish to receive. And there are 'lo' and 'hi' parameters,
     which respectively put a lower and a upper limit on the hexadecimal entry
-    key. So for example, if you want to get a list of all entries with keys in
-    the interval between "8888" and "aaaa", and you want skip the first 100
-    entries in this interval, and want to limit by 1000 entries at most, you
-    can use the following query.
+    key. And lastly, there is a boolean 'd' parameter that determines if the
+    list should be in descending order.
+  </p>
+  <p>
+    So for example, if you want to fetch a descending list of all entries with
+    keys in the interval between "8888" and "aaaa", and you want skip the first
+    100 entries in this interval, and want to limit by 1000 entries at most,
+    you can use the following query.
   </p>
   <p>
     <code className="jsx">{[
       'let list = await fetch(\n',
-      '  "DIRECTORY_PATH/posts.att/list/lo/8888/hi/aaaa/o/100/n/1000"\n',
+      '  "DIRECTORY_PATH/posts.att/list/d/1/lo/8888/hi/aaaa/o/100/n/1000"\n',
       ');',
     ]}</code>
   </p>
@@ -719,7 +723,7 @@ const old = (userID) => <div>
         '\n',
         '  // Insert the massage in the messages.att table.\n',
         '  return await post(\n',
-        '    abs("./messages.att./_insert"),\n',
+        '    abs("./messages.att./insert"),\n',
         '    storedText\n',
         '  );\n',
         '}',

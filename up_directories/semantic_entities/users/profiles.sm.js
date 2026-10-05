@@ -27,7 +27,7 @@ export function requestNewUserTag(userTag) {
     getConnection(8000, true, lockName).then(conn => {
       let options = {connection: conn};
       fetchPrivate(
-        "./ids.ct" + "/entry/k/" + userTagHex,
+        "./ids.ct/entry/k/" + userTagHex,
         options
       ).then(existingUserID => {
         if (existingUserID) {
@@ -36,12 +36,12 @@ export function requestNewUserTag(userTag) {
         }
         else {
           let addUserIDProm = post(
-            "./ids.ct" + "/_insert/k/" + userTagHex +
+            "./ids.ct/insert/k/" + userTagHex +
             "/p/" + userID,
             undefined, options
           );
           let addUserTagProm = post(
-            "./tags.bt" + "/_insert/k/" + userID +
+            "./tags.bt/insert/k/" + userID +
             "/p/" + userTagHex,
             undefined, options
           );
@@ -75,7 +75,7 @@ export function fetchUserTag(userID) {
   verifyType(userID, "hex-string");
   return new Promise(resolve => {
     fetch(
-      "./tags.bt" + "/entry/k/" + userID
+      "./tags.bt/entry/k/" + userID
     ).then(userTagHex => {
       let userTag = userTagHex ?
         hexToValue(userTagHex, "string") : undefined;
@@ -87,7 +87,7 @@ export function fetchUserTag(userID) {
 export function fetchUserID(userTagHex) {
   return new Promise(resolve => {
     fetch(
-      "./ids.ct" + "/entry/k/" + userTagHex
+      "./ids.ct/entry/k/" + userTagHex
     ).then(
       userID => resolve(userID)
     );
@@ -109,7 +109,7 @@ export function putUserBio(text) {
     let userID = getRequestingUserID();
     if (!userID) return resolve(false);
     post(
-      "./bios.att" + "/_insert/k/" + userID, text
+      "./bios.att/insert/k/" + userID, text
     ).then(
       wasInserted => resolve(wasInserted)
     );
@@ -121,7 +121,7 @@ export function fetchUserBio(userID) {
   verifyType(userID, "hex-string");
   return new Promise(resolve => {
     fetch(
-      "./bios.att" + "/entry/k/" + userID
+      "./bios.att/entry/k/" + userID
     ).then(
       bioText => resolve(bioText)
     );

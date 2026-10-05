@@ -200,7 +200,7 @@ export class DirectoryUpdater {
     // that generates a promise, and then we generate and wait for each promise
     // in sequence.  
     let filePaths = await serverQueryHandler.fetchAsAdmin(
-      `/this/${dirID}./_all`
+      `/this/${dirID}./all`
     );
     let deletionPromiseGenerators = [];
     let serverFilePathsToDelete = [];
@@ -213,7 +213,7 @@ export class DirectoryUpdater {
         // timestamp upon return.
         deletionPromiseGenerators.push(
           () => serverQueryHandler.postAsAdmin(
-            serverFilePath + "/_rm"
+            serverFilePath + "/rm"
           ).then(x => {
             this.#removeUploadTimestampSync(curDir + "/" + relPath);
             return x;
@@ -317,7 +317,7 @@ export class DirectoryUpdater {
         // upon return.
         uploadPromiseGenerators.push(
           () => serverQueryHandler.postAsAdmin(
-            `/this/${relChildServerPath}./_put`,
+            `/this/${relChildServerPath}./put`,
             contentText,
           ).then(x => {
             this.#updateUploadTimestampSync(relChildClientPath);
@@ -336,7 +336,7 @@ export class DirectoryUpdater {
         // the table already exists), and update the timestamp upon return.
         uploadPromiseGenerators.push(
           () => serverQueryHandler.postAsAdmin(
-            `/this/${relChildServerPath}./_touch`
+            `/this/${relChildServerPath}./touch`
           ).then(x => {
             this.#updateUploadTimestampSync(relChildClientPath);
             return x;
@@ -386,7 +386,7 @@ export class DirectoryUpdater {
     // Request a list of all the files in the server-side directory, and then
     // go through and delete each one of them.
     let filePaths = await serverQueryHandler.fetchAsAdmin(
-      `/this/${dirID}./_all`
+      `/this/${dirID}./all`
     );
     let deletionPromiseGenerators = [];
     let serverFilePathsToDelete = [];
@@ -397,7 +397,7 @@ export class DirectoryUpdater {
       // timestamp upon return.
       deletionPromiseGenerators.push(
         () => serverQueryHandler.postAsAdmin(
-          serverFilePath + "/_rm"
+          serverFilePath + "/rm"
         ).then(x => {
           this.#removeUploadTimestampSync(curDir + "/" + relPath);
           return x;
@@ -414,7 +414,7 @@ export class DirectoryUpdater {
 
     // Then remove the directory itself server-side, and remove directory entry
     // in directories.json.
-    let wasRemoved = serverQueryHandler.postAsAdmin(`/${nodeID}/${dirID}./_rm`);
+    let wasRemoved = serverQueryHandler.postAsAdmin(`/${nodeID}/${dirID}./rm`);
     if (!wasRemoved) {
       throw "Something went wrong when removing directory";
     }
@@ -434,7 +434,7 @@ export class DirectoryUpdater {
     // Request a list of all the files in the server-side directory, and then
     // go through and remove their timestamps
     let filePaths = await serverQueryHandler.fetchAsAdmin(
-      `/this/${dirID}./_all`
+      `/this/${dirID}./all`
     );
     filePaths.forEach(relPath => {
       this.#removeUploadTimestampSync(curDir + "/" + relPath);
@@ -494,7 +494,7 @@ export class DirectoryUpdater {
     // table files (nothing happens to matched text files), and if so add them
     // to an array of serverFilePaths for data deletion.
     let filePaths = await serverQueryHandler.fetchAsAdmin(
-      `/this/${dirID}./_all`
+      `/this/${dirID}./all`
     );
     let serverFilePaths = [];
     let hasWildCard = relativePath.at(-1) === "*";
@@ -519,7 +519,7 @@ export class DirectoryUpdater {
     });
     if (/^[yY]$/.test(confResponse)) {
       let deletionPromiseGenerators = serverFilePaths.map(serverFilePath => (
-        () => serverQueryHandler.postAsAdmin(serverFilePath + "/_put")
+        () => serverQueryHandler.postAsAdmin(serverFilePath + "/put")
       ));
       let colorStr = "\x1b[31m%s\x1b[0m"; // red color
       let len = deletionPromiseGenerators.length;

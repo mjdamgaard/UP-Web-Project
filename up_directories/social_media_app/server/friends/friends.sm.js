@@ -25,7 +25,7 @@ export function requestFriend(otherUserID) {
       if (isFriendOrSelf) return resolve(false);
       let timestampHex = valueToHex(now(), "uint(6)");
       post(
-        "./_friend_requests.bbt" + "/_insert/l/" + otherUserID +
+        "./_friend_requests.bbt/insert/l/" + otherUserID +
         "/k/" + reqUserID + "/s/" + timestampHex +
         "/i/1" // Ignore if the friend request exists already. 
       ).then(
@@ -48,7 +48,7 @@ export function rescindFriendRequest(otherUserID) {
     // Delete any existing friend request from reqUser in the other users
     // friend request list.
     post(
-      "./_friend_requests.bbt" + "/_deleteEntry/l/" + otherUserID +
+      "./_friend_requests.bbt/delete/l/" + otherUserID +
       "/k/" + reqUserID
     ).then(
       wasDeleted => resolve(wasDeleted)
@@ -68,7 +68,7 @@ export function declineFriendRequest(otherUserID) {
 
     // Delete the user's friend request.
     post(
-      "./_friend_requests.bbt" + "/_deleteEntry/l/" + reqUserID +
+      "./_friend_requests.bbt/delete/l/" + reqUserID +
       "/k/" + otherUserID
     ).then(
       wasUpdated => resolve(wasUpdated)
@@ -89,7 +89,7 @@ export function acceptFriendRequest(otherUserID) {
     // Look for the given friend request, and if it's there, add each of the
     // two users to the other's friend list.
     fetchPrivate(
-      "./_friend_requests.bbt" + "/entry/l/" + reqUserID +
+      "./_friend_requests.bbt/entry/l/" + reqUserID +
       "/k/" + otherUserID
     ).then(entry => {
       if (!entry) return resolve(false);
@@ -99,22 +99,22 @@ export function acceptFriendRequest(otherUserID) {
         let options = {connection: conn};
         let timestampHex = valueToHex(now(), "uint(6)");
         let addOtherUserAsFriendProm = post(
-          "./_friends.bbt" + "/_insert/l/" + reqUserID +
+          "./_friends.bbt/insert/l/" + reqUserID +
           "/k/" + otherUserID + "/s/" + timestampHex,
           undefined, options
         );
         let addSelfAsOtherUsersFriendProm = post(
-          "./_friends.bbt" + "/_insert/l/" + otherUserID +
+          "./_friends.bbt/insert/l/" + otherUserID +
           "/k/" + reqUserID + "/s/" + timestampHex,
           undefined, options
         );
         let removeRequestProm = post(
-          "./_friend_requests.bbt" + "/_deleteEntry/l/" + reqUserID +
+          "./_friend_requests.bbt/delete/l/" + reqUserID +
           "/k/" + otherUserID,
           undefined, options
         );
         let removeOtherUsersRequestIfAnyProm = post(
-          "./_friend_requests.bbt" + "/_deleteEntry/l/" + otherUserID +
+          "./_friend_requests.bbt/delete/l/" + otherUserID +
           "/k/" + reqUserID,
           undefined, options
         );
@@ -155,12 +155,12 @@ export function removeFriend(otherUserID) {
     getConnection(5000, true).then(conn => {
       let options = {connection: conn};
       let removeOtherUserAsFriendProm = post(
-        "./_friends.bbt" + "/_deleteEntry/l/" + reqUserID +
+        "./_friends.bbt/delete/l/" + reqUserID +
         "/k/" + otherUserID,
         undefined, options
       );
       let removeSelfAsOtherUsersFriendProm = post(
-        "./_friends.bbt" + "/_deleteEntry/l/" + otherUserID +
+        "./_friends.bbt/delete/l/" + otherUserID +
         "/k/" + reqUserID,
         undefined, options
       );
@@ -191,7 +191,7 @@ export function fetchIsFriendOrSelf(otherUserID) {
     // Fetch the relevant entry on the reqUser's friend list, and if the entry
     // is defined, resolve with true.
     fetchPrivate(
-      "./_friends.bbt" + "/entry/l/" + reqUserID + "/k/" + otherUserID
+      "./_friends.bbt/entry/l/" + reqUserID + "/k/" + otherUserID
     ).then(
       entry => resolve(entry ? true : false)
     );

@@ -276,7 +276,7 @@ export function postScoreAndWeightHex(
       let listID = listIDParts.join("-");
       let listIDSegment = listID ? "/l/" + valueToHex(listID, "string") : "";
       post(
-        tableFilePath + "/_insert" + listIDSegment + "/k/" + keyID +
+        tableFilePath + "/insert" + listIDSegment + "/k/" + keyID +
         "/s/" + scoreAndWeightHex,
         undefined, options
       ).then(
@@ -304,7 +304,7 @@ export function deleteScore(
       let listID = listIDParts.join("-");
       let listIDSegment = listID ? "/l/" + valueToHex(listID, "string") : "";
       post(
-        tableFilePath + "/_deleteEntry" + listIDSegment + "/k/" + keyID,
+        tableFilePath + "/delete" + listIDSegment + "/k/" + keyID,
         undefined, options
       ).then(
         wasDeleted => resolve(wasDeleted)

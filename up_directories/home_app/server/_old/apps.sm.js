@@ -188,7 +188,7 @@ export async function updatePreferredSubApp(appDirID, scoreHandlerID = "0") {
   // remove the current entry in subApps.att if one exists.
   if (!topSubAppEntID) {
     await post(
-      "./subApps.att/_deleteEntry/l/" + scoreHandlerID + "/k/" + appDirID
+      "./subApps.att/delete/l/" + scoreHandlerID + "/k/" + appDirID
     );
     return;
   } 
@@ -203,7 +203,7 @@ export async function updatePreferredSubApp(appDirID, scoreHandlerID = "0") {
   // current entry in subApps.att
   if (!hasType(subAppDirID, "hex") || subAppDirID === appDirID) {
     await post(
-      "./subApps.att/_deleteEntry/l/" + scoreHandlerID + "/k/" + appDirID
+      "./subApps.att/delete/l/" + scoreHandlerID + "/k/" + appDirID
     );
     return;
   }
@@ -217,7 +217,7 @@ export async function updatePreferredSubApp(appDirID, scoreHandlerID = "0") {
     subSubAppIDListString ? "," + subSubAppIDListString : ""
   );
   await post(
-    "./subApps.att/_insert/l/" + scoreHandlerID + "/k/" + appDirID,
+    "./subApps.att/insert/l/" + scoreHandlerID + "/k/" + appDirID,
     subAppIDListString
   );
   return;
@@ -273,7 +273,7 @@ export async function updateUserPreference(appDirID, subAppDirID) {
   preferences = {...preferences, [appDirID]: subAppDirID};
   let newPrefJSON = stringify(preferences)
   return await post(
-    "~/server/apps/_userPreferences.att/_insert/k/" + userID,
+    "~/server/apps/_userPreferences.att/insert/k/" + userID,
     newPrefJSON
   );
 }
